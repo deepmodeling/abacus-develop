@@ -97,52 +97,21 @@ std::string Lattice_Change_Basic::fixed_axes = "None";
 int ModuleSymmetry::Symmetry::symm_flag = 0;
 bool ModuleSymmetry::Symmetry::symm_autoclose = false;
 
-Charge_Mixing::Charge_Mixing()
-{
-}
-Charge_Mixing::~Charge_Mixing()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-ModuleDFTU::DFTU::DFTU()
-{
-}
-ModuleDFTU::DFTU::~DFTU()
-{
-}
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-UnitCell::UnitCell()
-{
-    itia2iat.create(1, 1);
-}
+Charge_Mixing::Charge_Mixing() {}
+Charge_Mixing::~Charge_Mixing() {}
+pseudopot_cell_vnl::pseudopot_cell_vnl() {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
+Soc::~Soc() {}
+Fcoef::~Fcoef() {}
+pseudopot_cell_vl::pseudopot_cell_vl() {}
+pseudopot_cell_vl::~pseudopot_cell_vl() {}
+ORB_gaunt_table::ORB_gaunt_table() {}
+ORB_gaunt_table::~ORB_gaunt_table() {}
+ModuleDFTU::DFTU::DFTU() {}
+ModuleDFTU::DFTU::~DFTU() {}
+Structure_Factor::Structure_Factor() {}
+Structure_Factor::~Structure_Factor() {}
+UnitCell::UnitCell() { itia2iat.create(1, 1); }
 UnitCell::~UnitCell() {}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal() {}
@@ -152,9 +121,7 @@ LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
-void Occupy::decision(const std::string& name,
-                      const std::string& smearing_method,
-                      const double& smearing_sigma) {
+void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma) {
     return;
 }
 // void UnitCell::setup(const std::string&,const int&,const int&,const
@@ -214,9 +181,7 @@ void UnitCell::setup(const std::string& latname_in,
         this->lc[1] = 0;
         this->lc[2] = 0;
     } else {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+        ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
     }
     return;
 }
@@ -226,12 +191,7 @@ void UnitCell::setup(const std::string& latname_in,
 // }
 
 namespace MD_func {
-void current_md_info(const int& my_rank,
-                     const std::string& file_dir,
-                     int& md_step,
-                     double& temperature) {
-    return;
-}
+void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature) { return; }
 } // namespace MD_func
 
 namespace GlobalC {

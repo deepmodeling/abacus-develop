@@ -3,8 +3,7 @@
 
 #include "source_cell/unitcell.h"
 
-UnitCell::UnitCell()
-{
+UnitCell::UnitCell() {
     Coordinate = "Direct";
     latName = "none";
     lat0 = 10.0;
@@ -52,30 +51,20 @@ UnitCell::UnitCell()
     atoms = new Atom[ntype];
     set_atom_flag = true;
 
-    for (int it = 0; it < ntype; it++)
-    {
+    for (int it = 0; it < ntype; it++) {
         Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            for (int ik = 0; ik < 3; ++ik)
-            {
+        for (int ia = 0; ia < atom->na; ia++) {
+            for (int ik = 0; ik < 3; ++ik) {
                 atom->tau[ia][ik] = 3.0 * ia + ik;
                 atom->mbl[ia][ik] = 1;
             }
         }
     }
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Atom::Atom()
-{
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+Atom::Atom() {
     na = 2;
     tau.resize(na);
     dis.resize(na);
@@ -84,27 +73,17 @@ Atom::Atom()
     vel.resize(na);
     taud.resize(na);
 }
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 int ModuleSymmetry::Symmetry::symm_flag = 0;
-void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const {};
-void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v)const {};
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat) const {};
+void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v) const {};
 
 #endif

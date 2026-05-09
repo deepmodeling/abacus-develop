@@ -18,8 +18,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace Input_Conv
-{
+namespace Input_Conv {
 
 /**
  * @brief template bridge codes for converting string to other types
@@ -43,8 +42,7 @@ void Convert();
  *            [1, 1, 1, 0, 0.5, 0.5, 1.5]
  */
 template <typename T>
-void parse_expression(const std::string& fn, std::vector<T>& vec)
-{
+void parse_expression(const std::string& fn, std::vector<T>& vec) {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
 
@@ -56,13 +54,10 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
     std::string section;
 
     // Split the input string into substrings by spaces
-    while (ss >> section)
-    {
+    while (ss >> section) {
         int index = 0;
-        if (str.empty())
-        {
-            while (index < section.size() && std::isspace(section[index]))
-            {
+        if (str.empty()) {
+            while (index < section.size() && std::isspace(section[index])) {
                 index++;
             }
         }
@@ -77,18 +72,15 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
     const size_t nmatch = 1;
 
     // Loop over each section and apply regex to extract numbers
-    for (size_t i = 0; i < str.size(); ++i)
-    {
-        if (str[i] == "")
-        {
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (str[i] == "") {
             continue;
         }
         int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
         std::string sub_str = "";
 
         // Extract the matched substring
-        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
-        {
+        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j) {
             sub_str += str[i][j];
         }
 
@@ -99,21 +91,17 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         regmatch_t sub_pmatch[1];
         const size_t sub_nmatch = 1;
 
-        if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
-        {
+        if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0) {
             size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
             assert(num >= 0);
             T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
-            
+
             // Add the value to the vector `num` times
-            for (size_t k = 0; k != num; k++)
-            {
+            for (size_t k = 0; k != num; k++) {
                 vec.emplace_back(occ);
             }
-        }
-        else
-        {
+        } else {
             // Handle scientific notation and convert to T
             std::stringstream convert;
             convert << sub_str;

@@ -14,8 +14,7 @@
  * of numerical atomic orbitals, or all Kleinman-Bylander beta functions
  * from all elements involved in calculation.
  */
-class RadialCollection
-{
+class RadialCollection {
   public:
     RadialCollection() = default;
     RadialCollection(const RadialCollection& other);          ///< deep copy
@@ -33,29 +32,24 @@ class RadialCollection
     void build(const RadialCollection* nls, double radius = 0.0);
 
     /// builds the collection from quasi hydrogen radial functions
-    void build(const int ntype, 
-               const double* const charges, 
+    void build(const int ntype,
+               const double* const charges,
                const bool with_slater_screening,
-               const int* const nmax, 
+               const int* const nmax,
                const std::string* symbols = nullptr,
                const double conv_thr = 1e-10,
                const std::string* strategies = nullptr,
                const int& rank = 0);
-               
+
     /// builds the collection from pseudopotential pswfc
-    void build(const int ntype, 
-               const std::string* const file, 
+    void build(const int ntype,
+               const std::string* const file,
                const double* const screening_coeff,
                const double conv_thr = 1e-10,
                const int& rank = 0);
 
     /// builds a collection of truncated spherical Bessel functions
-    void build(const int lmax, 
-               const int nbes,
-               const double rcut,
-               const double sigma,
-               const double dr
-               );
+    void build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr);
 
     /**
      * @name Getters
@@ -73,14 +67,12 @@ class RadialCollection
     int nchi() const { return nchi_; }
     int nchi(const int itype) const { return radset_[itype]->nchi(); }
 
-    const NumericalRadial& operator()(const int itype, const int l, const int izeta) const
-    {
+    const NumericalRadial& operator()(const int itype, const int l, const int izeta) const {
         assert(itype >= 0 && itype < ntype_);
         return radset_[itype]->chi(l, izeta);
     }
 
-    const RadialSet& operator()(const int itype) const
-    {
+    const RadialSet& operator()(const int itype) const {
         assert(itype >= 0 && itype < ntype_);
         return *radset_[itype];
     }
@@ -92,28 +84,24 @@ class RadialCollection
      *  Objects are sorted by l first, by itype next, by izeta last.
      */
     ///@{
-    const NumericalRadial** cbegin() const
-    {
+    const NumericalRadial** cbegin() const {
         assert(ntype_ > 0);
         return iter_;
     }
 
-    const NumericalRadial** cend() const
-    {
+    const NumericalRadial** cend() const {
         assert(ntype_ > 0);
         return iter_ + nchi_;
     }
 
     /// *(this->cbegin(l)) returns the address of the first NumericalRadial object with angular momentum l
-    const NumericalRadial** cbegin(const int l) const
-    {
+    const NumericalRadial** cbegin(const int l) const {
         assert(ntype_ > 0 && l >= 0 && l <= lmax_);
         return iter_ + std::accumulate(nl_, nl_ + l, 0);
     }
 
     /// *(this->cend(l)) returns the address of one-past-last NumericalRadial object with angular momentum l
-    const NumericalRadial** cend(const int l) const
-    {
+    const NumericalRadial** cend(const int l) const {
         assert(ntype_ > 0 && l >= 0 && l <= lmax_);
         return iter_ + std::accumulate(nl_, nl_ + l + 1, 0);
     }
@@ -139,13 +127,13 @@ class RadialCollection
 
     /**
      * @brief export all RadialSet objects to a file in a given format.
-     * 
-     * Supported formats:  
+     *
+     * Supported formats:
      * - "abacus_orb" (default): ABACUS Numerical atomic orbital format
      */
-    void to_file(const std::string& appendix,                ///< file name
-                 const std::string& format = "abacus_orb"    ///< file format
-                 ) const;
+    void to_file(const std::string& appendix,             ///< file name
+                 const std::string& format = "abacus_orb" ///< file format
+    ) const;
 
   private:
     int ntype_ = 0;         ///< number of RadialSet in the collection

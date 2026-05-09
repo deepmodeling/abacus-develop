@@ -16,42 +16,30 @@
  *   - Lattice_Change_Methods::get_largest_grad()
  */
 
-Lattice_Change_CG::Lattice_Change_CG()
-{
-}
+Lattice_Change_CG::Lattice_Change_CG() {}
 
-Lattice_Change_CG::~Lattice_Change_CG()
-{
-}
+Lattice_Change_CG::~Lattice_Change_CG() {}
 
-void Lattice_Change_CG::allocate(void)
-{
-}
+void Lattice_Change_CG::allocate(void) {}
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
-{
-}
+void Lattice_Change_CG::start(UnitCell& ucell, const ModuleBase::matrix& stress_in, const double& etot_in) {}
 
 // Define a fixture for the tests
-class LatticeChangeMethodsTest : public ::testing::Test
-{
+class LatticeChangeMethodsTest : public ::testing::Test {
   protected:
     Lattice_Change_Methods lcm;
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         // Initialize variables before each test
     }
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         // Clean up after each test
     }
 };
 
 // Test the allocate function
-TEST_F(LatticeChangeMethodsTest, Allocate)
-{
+TEST_F(LatticeChangeMethodsTest, Allocate) {
     lcm.allocate();
 
     // Assert that the static variable dim is set to 9
@@ -59,8 +47,7 @@ TEST_F(LatticeChangeMethodsTest, Allocate)
 }
 
 // Test the cal_lattice_change function
-TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
-{
+TEST_F(LatticeChangeMethodsTest, CalLatticeChange) {
     int istep = 1;
     int stress_step = 2;
     ModuleBase::matrix stress(3, 3);
@@ -77,8 +64,7 @@ TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
 }
 
 // Test the get_converged function
-TEST_F(LatticeChangeMethodsTest, GetConverged)
-{
+TEST_F(LatticeChangeMethodsTest, GetConverged) {
     lcm.get_converged();
 
     // Assert that the static variable converged is set to false
@@ -86,8 +72,7 @@ TEST_F(LatticeChangeMethodsTest, GetConverged)
 }
 
 // Test the get_ediff function
-TEST_F(LatticeChangeMethodsTest, GetEdiff)
-{
+TEST_F(LatticeChangeMethodsTest, GetEdiff) {
     lcm.get_ediff();
 
     // Assert that the static variable ediff is set to 0.0
@@ -95,8 +80,7 @@ TEST_F(LatticeChangeMethodsTest, GetEdiff)
 }
 
 // Test the get_largest_grad function
-TEST_F(LatticeChangeMethodsTest, GetLargestGrad)
-{
+TEST_F(LatticeChangeMethodsTest, GetLargestGrad) {
     lcm.get_largest_grad();
 
     // Assert that the static variable largest_grad is set to 0.0

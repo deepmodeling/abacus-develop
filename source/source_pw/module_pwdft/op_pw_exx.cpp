@@ -17,15 +17,14 @@
 #include "source_pw/module_pwdft/kernels/mul_potential_op.h"
 #include "source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.h"
 #include "source_io/module_parameter/parameter.h" // use PARAM
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h"     // use GlobalC::exx_info
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <utility>
 
-namespace hamilt
-{
+namespace hamilt {
 template <typename T, typename Device>
 std::vector<typename GetTypeReal<T>::type> OperatorEXXPW<T, Device>::fock_div = {};
 
@@ -36,22 +35,20 @@ template <typename T, typename Device>
 OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const ModulePW::PW_Basis_K* wfcpw_in,
                                         const ModulePW::PW_Basis* rhopw_in,
-                                        K_Vectors *kv_in,
-                                        const UnitCell *ucell)
-    : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell)
-{
-    if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false)
-    {
+                                        K_Vectors* kv_in,
+                                        const UnitCell* ucell)
+    : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell) {
+    if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false) {
         // GlobalV::ofs_running << "EXX Calculation does not support k-point parallelism" << std::endl;
-        ModuleBase::WARNING_QUIT("OperatorEXXPW", "EXX Calculation does not support k-point parallelism when exxace is set to false");
+        ModuleBase::WARNING_QUIT("OperatorEXXPW",
+                                 "EXX Calculation does not support k-point parallelism when exxace is set to false");
     }
     gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
     bool is_mp = kv_in->get_is_mp();
 #ifdef __MPI
     Parallel_Common::bcast_bool(is_mp);
 #endif
-    if (!is_mp)
-    {
+    if (!is_mp) {
         gamma_extrapolation = false;
     }
 
@@ -81,8 +78,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
 
     // initialize rhopw_dev
     double ecut_exx = PARAM.inp.ecutexx;
-    if (ecut_exx == 0.0)
-    {
+    if (ecut_exx == 0.0) {
         ecut_exx = PARAM.inp.ecutrho;
     }
 
@@ -99,8 +95,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     rhopw_dev->collect_local_pw();
 
     auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (auto param: param_fock)
-    {
+    for (auto param: param_fock) {
         fock_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
                                           0.0,
                                           kv,
@@ -111,8 +106,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                           ucell->omega));
     }
     auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (auto param: param_erfc)
-    {
+    for (auto param: param_erfc) {
         erfc_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
                                           std::stod(param["omega"]),
                                           kv,
@@ -123,11 +117,10 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                           ucell->omega));
     }
 
-}   // end of constructor
+} // end of constructor
 
 template <typename T, typename Device>
-OperatorEXXPW<T, Device>::~OperatorEXXPW()
-{
+OperatorEXXPW<T, Device>::~OperatorEXXPW() {
     // use delete_memory_op to delete the allocated pws
     delmem_complex_op()(psi_nk_real);
     delmem_complex_op()(psi_mq_real);
@@ -141,8 +134,7 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
     delmem_complex_op()(h_psi_ace);
     delmem_complex_op()(psi_h_psi_ace);
     delmem_complex_op()(L_ace);
-    for (auto &Xi_ace: Xi_ace_k)
-    {
+    for (auto& Xi_ace: Xi_ace_k) {
         delmem_complex_op()(Xi_ace);
     }
     Xi_ace_k.clear();
@@ -150,20 +142,17 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
 }
 
 template <typename T>
-inline bool is_finite(const T &val)
-{
+inline bool is_finite(const T& val) {
     return std::isfinite(val);
 }
 
 template <>
-inline bool is_finite(const std::complex<float> &val)
-{
+inline bool is_finite(const std::complex<float>& val) {
     return std::isfinite(val.real()) && std::isfinite(val.imag());
 }
 
 template <>
-inline bool is_finite(const std::complex<double> &val)
-{
+inline bool is_finite(const std::complex<double>& val) {
     return std::isfinite(val.real()) && std::isfinite(val.imag());
 }
 
@@ -171,40 +160,35 @@ template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act(const int nbands,
                                    const int nbasis,
                                    const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
+                                   const T* tmpsi_in,
+                                   T* tmhpsi,
                                    const int ngk_ik,
-                                   const bool is_first_node) const
-{
-    if (first_iter) return;
+                                   const bool is_first_node) const {
+    if (first_iter)
+        return;
     // std::cout << cal_exx_energy_ace(&psi) << " EXX energy" << std::endl;
     // MPI_Abort(MPI_COMM_WORLD, 0);
     // return;
 
-    if (is_first_node)
-    {
-        setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
+    if (is_first_node) {
+        setmem_complex_op()(tmhpsi, 0, nbasis * nbands / npol);
     }
 
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
-    {
+    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop) {
         act_op_ace(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
-    }
-    else
-    {
+    } else {
         act_op(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
 }
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op(const int nbands,
-                                   const int nbasis,
-                                   const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
-                                   const int ngk_ik,
-                                   const bool is_first_node) const
-{
+                                      const int nbasis,
+                                      const int npol,
+                                      const T* tmpsi_in,
+                                      T* tmhpsi,
+                                      const int ngk_ik,
+                                      const bool is_first_node) const {
     ModuleBase::timer::start("OperatorEXXPW", "act_op");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
@@ -223,25 +207,29 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     int nk = wfcpw->nks / nk_fac;
 
     // ik fixed here, select band n
-    for (int n_iband = 0; n_iband < nbands; n_iband++)
-    {
-        const T *psi_nk = tmpsi_in + n_iband * nbasis;
+    for (int n_iband = 0; n_iband < nbands; n_iband++) {
+        const T* psi_nk = tmpsi_in + n_iband * nbasis;
         // retrieve \psi_nk in real space
         wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
 
         // for \psi_nk, get the pw of iq and band m
 
         Real nqs = q_points.size();
-        for (int iq: q_points)
-        {
-            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk);
-            for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
-            {
+        for (int iq: q_points) {
+            get_exx_potential<Real, Device>(kv,
+                                            wfcpw,
+                                            rhopw_dev,
+                                            pot,
+                                            tpiba,
+                                            gamma_extrapolation,
+                                            ucell->omega,
+                                            this->ik,
+                                            iq % nk);
+            for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++) {
                 // double wg_mqb_real = GlobalC::exx_helper.wg(iq, m_iband);
                 double wg_mqb_real = (*wg)(this->ik, m_iband);
                 T wg_mqb = wg_mqb_real;
-                if (wg_mqb_real < 1e-12)
-                {
+                if (wg_mqb_real < 1e-12) {
                     continue;
                 }
 
@@ -257,24 +245,16 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 // bring the potential back to real space
                 rho_recip2real(density_recip, density_real);
 
-                if (false)
-                {
+                if (false) {
                     // do nothing
-                }
-                else
-                {
+                } else {
                     vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw->nrxx);
                 }
 
                 T wk_iq = kv->wk[iq];
 
                 T tmp_scalar = wg_mqb / wk_iq / nqs;
-                axpy_complex_op()(wfcpw->nrxx,
-                                  &tmp_scalar,
-                                  density_real,
-                                  1,
-                                  h_psi_real,
-                                  1);
+                axpy_complex_op()(wfcpw->nrxx, &tmp_scalar, density_real, 1, h_psi_real, 1);
 
             } // end of m_iband
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -286,22 +266,19 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
         wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
-
     }
 
     ModuleBase::timer::end("OperatorEXXPW", "act_op");
-
 }
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
-                                   const int nbasis,
-                                   const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
-                                   const int ngk_ik,
-                                   const bool is_first_node) const
-{
+                                           const int nbasis,
+                                           const int npol,
+                                           const T* tmpsi_in,
+                                           T* tmhpsi,
+                                           const int ngk_ik,
+                                           const bool is_first_node) const {
     ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
@@ -317,25 +294,22 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 
     // ik fixed here, select band n
-    for (int iq = 0; iq < nqs; iq++)
-    {
+    for (int iq = 0; iq < nqs; iq++) {
         // for \psi_nk, get the pw of iq and band m
-        get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq);
+        get_exx_potential<Real,
+                          Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq);
 
         // decide which pool does the iq belong to
         int iq_pool = kv->para_k.whichpool[iq];
-        int iq_loc  = iq - kv->para_k.startk_pool[iq_pool];
+        int iq_loc = iq - kv->para_k.startk_pool[iq_pool];
         int iq_loc_spin = iq_loc;
-        if (ispin == 1)
-        {
+        if (ispin == 1) {
             iq_loc_spin += wfcpw->nks / nspin_fac;
         }
 
-        for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
-        {
+        for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++) {
             double wg_mqb = 0;
-            if (iq_pool == GlobalV::MY_POOL)
-            {
+            if (iq_pool == GlobalV::MY_POOL) {
                 wg_mqb = (*wg)(iq_loc_spin, m_iband);
             }
 #ifdef __MPI
@@ -344,8 +318,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
             if (wg_mqb < 1e-12)
                 continue;
 
-            if (iq_pool == GlobalV::MY_POOL)
-            {
+            if (iq_pool == GlobalV::MY_POOL) {
                 const T* psi_mq = get_pw(m_iband, iq_loc_spin);
                 wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
                 // send
@@ -353,12 +326,10 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 #ifdef __MPI
             Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
 #endif
-            for (int n_iband = 0; n_iband < nbands; n_iband++)
-            {
+            for (int n_iband = 0; n_iband < nbands; n_iband++) {
                 const T* psi_nk = tmpsi_in + n_iband * nbasis;
                 // retrieve \psi_nk in real space
                 wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
-
 
                 // direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
                 cal_density_recip(psi_nk_real, psi_mq_real, ucell->omega);
@@ -368,15 +339,11 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 // bring the potential back to real space
                 rho_recip2real(density_recip, density_real);
 
-                if (false)
-                {
+                if (false) {
                     // do nothing
-                }
-                else
-                {
+                } else {
                     vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw->nrxx);
                 }
-
 
                 Real wk_iq = kv->wk[iq];
                 Real wk_ik = kv->wk[this->ik];
@@ -387,26 +354,21 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
                 wfcpw->real_to_recip(ctx, density_real, h_psi_nk, this->ik, true, hybrid_alpha * tmp_scalar);
 
-
             } // end of m_iband
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
             setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
 
         } // end of iq
-
     }
 
     ModuleBase::timer::end("OperatorEXXPW", "act_op_kpar");
-
 }
 
 template <typename T, typename Device>
-std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
-{
+std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const {
     // stored in q_points
-    if (q_points.find(ik) != q_points.end())
-    {
+    if (q_points.find(ik) != q_points.end()) {
         return q_points.find(ik)->second;
     }
 
@@ -414,23 +376,16 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 
     // if () // downsampling
     {
-        for (int iq = 0; iq < wfcpw->nks; iq++)
-        {
-            if (PARAM.inp.nspin ==1 )
-            {
+        for (int iq = 0; iq < wfcpw->nks; iq++) {
+            if (PARAM.inp.nspin == 1) {
                 q_points_ik.push_back(iq);
-            }
-            else if (PARAM.inp.nspin == 2)
-            {
+            } else if (PARAM.inp.nspin == 2) {
                 int nk_fac = 2;
                 int nk = wfcpw->nks / nk_fac;
-                if (iq / nk == ik / nk)
-                {
+                if (iq / nk == ik / nk) {
                     q_points_ik.push_back(iq);
                 }
-            }
-            else
-            {
+            } else {
                 ModuleBase::WARNING_QUIT("OperatorEXXPW", "nspin == 4 not supported");
             }
         }
@@ -448,8 +403,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 }
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int iq) const
-{
+void OperatorEXXPW<T, Device>::multiply_potential(T* density_recip, int ik, int iq) const {
     ModuleBase::timer::start("OperatorEXXPW", "multiply_potential");
     int npw = rhopw_dev->npw;
     int nks = wfcpw->nks;
@@ -462,8 +416,7 @@ void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int 
 }
 
 template <typename T, typename Device>
-const T *OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const
-{
+const T* OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const {
     // return pws[iq].get() + m * wfcpw->npwk[iq];
     psi.fix_kb(iq, m);
     T* psi_mq = psi.get_pointer();
@@ -472,8 +425,7 @@ const T *OperatorEXXPW<T, Device>::get_pw(const int m, const int iq) const
 
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
-OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op)
-{
+OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in>* op) {
     // copy all the datas
     this->isk = op->isk;
     this->wfcpw = op->wfcpw;
@@ -488,27 +440,20 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
     resmem_complex_op()(this->ctx, h_psi_real, rhopw_dev->nrxx);
     resmem_complex_op()(this->ctx, density_recip, rhopw_dev->npw);
     resmem_complex_op()(this->ctx, h_psi_recip, wfcpw->npwk_max);
-//    this->pws.resize(wfcpw->nks);
-
-
+    //    this->pws.resize(wfcpw->nks);
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
-{
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
-    {
+double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device>* psi_) const {
+    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop) {
         return cal_exx_energy_ace(psi_);
-    }
-    else
-    {
+    } else {
         return cal_exx_energy_op(psi_);
     }
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) const
-{
+double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device>* ppsi_) const {
     psi::Psi<T, Device> psi_ = *ppsi_;
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
@@ -520,15 +465,14 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-    if (wg == nullptr) return 0.0;
+    if (wg == nullptr)
+        return 0.0;
     const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     double Eexx_ik_real = 0.0;
-    for (int ik = 0; ik < wfcpw->nks; ik++)
-    {
+    for (int ik = 0; ik < wfcpw->nks; ik++) {
         //        auto k = this->pw_wfc->kvec_c[ik];
         //        std::cout << k << std::endl;
-        for (int n_iband = 0; n_iband < psi.get_nbands(); n_iband++)
-        {
+        for (int n_iband = 0; n_iband < psi.get_nbands(); n_iband++) {
             setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
             setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -537,8 +481,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             // double wg_ikb_real = GlobalC::exx_helper.wg(this->ik, n_iband);
             double wg_ikb_real = (*wg)(ik, n_iband);
             T wg_ikb = wg_ikb_real;
-            if (wg_ikb_real < 1e-12)
-            {
+            if (wg_ikb_real < 1e-12) {
                 continue;
             }
 
@@ -551,43 +494,40 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             // for \psi_nk, get the pw of iq and band m
             // q_points is a vector of integers, 0 to nks-1
             std::vector<int> q_points;
-            if (PARAM.inp.nspin == 1)
-            {
-                for (int iq = 0; iq < wfcpw->nks; iq++)
-                {
+            if (PARAM.inp.nspin == 1) {
+                for (int iq = 0; iq < wfcpw->nks; iq++) {
                     q_points.push_back(iq);
                 }
-            }
-            else if (PARAM.inp.nspin == 2)
-            {
+            } else if (PARAM.inp.nspin == 2) {
                 int nk = wfcpw->nks / nk_fac;
                 int k_spin = ik / nk;
-                for (int iq = 0; iq < wfcpw->nks; iq++)
-                {
+                for (int iq = 0; iq < wfcpw->nks; iq++) {
                     int q_spin = iq / nk;
-                    if (k_spin == q_spin)
-                    {
+                    if (k_spin == q_spin) {
                         q_points.push_back(iq);
                     }
                 }
-            }
-            else
-            {
+            } else {
                 ModuleBase::WARNING_QUIT("OperatorEXXPW", "nspin == 4 not supported");
             }
             double nqs = q_points.size();
 
-            for (int iq: q_points)
-            {
+            for (int iq: q_points) {
                 int nk = wfcpw->nks / nk_fac;
-                get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk);
-                for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
-                {
+                get_exx_potential<Real, Device>(kv,
+                                                wfcpw,
+                                                rhopw_dev,
+                                                pot,
+                                                tpiba,
+                                                gamma_extrapolation,
+                                                ucell->omega,
+                                                ik,
+                                                iq % nk);
+                for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++) {
                     // double wg_f = GlobalC::exx_helper.wg(iq, m_iband);
                     double wg_iqb_real = (*wg)(iq, m_iband);
                     T wg_iqb = wg_iqb_real;
-                    if (wg_iqb_real < 1e-12)
-                    {
+                    if (wg_iqb_real < 1e-12) {
                         continue;
                     }
 
@@ -601,7 +541,10 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                     int nks = wfcpw->nks;
                     int npw = rhopw_dev->npw;
                     // int nk = nks / nk_fac;
-                    Eexx_ik_real += exx_cal_energy_op<T, Device>()(density_recip, pot, wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik], npw);
+                    Eexx_ik_real += exx_cal_energy_op<T, Device>()(density_recip,
+                                                                   pot,
+                                                                   wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik],
+                                                                   npw);
 
                 } // m_iband
 
@@ -612,7 +555,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     } // ik
     Eexx_ik_real *= 0.5 * ucell->omega;
     Parallel_Reduce::reduce_pool(Eexx_ik_real);
-    //    std::cout << "omega = " << this_->pelec->omega << " tpiba = " << this_->pw_rho->tpiba2 << " exx_div = " << exx_div << std::endl;
+    //    std::cout << "omega = " << this_->pelec->omega << " tpiba = " << this_->pw_rho->tpiba2 << " exx_div = " <<
+    //    exx_div << std::endl;
 
     setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
@@ -625,38 +569,44 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 }
 
 template <>
-void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_recip(const std::complex<double>* psi_nk_real,
-                                                                                const std::complex<double>* psi_mq_real,
-                                                                                double omega) const
-{
-    cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_recip(
+    const std::complex<double>* psi_nk_real,
+    const std::complex<double>* psi_mq_real,
+    double omega) const {
+    cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>()(psi_nk_real,
+                                                                         psi_mq_real,
+                                                                         density_real,
+                                                                         omega,
+                                                                         wfcpw->nrxx);
     rhopw_dev->real2recip(density_real, density_recip);
 }
 
 template <>
-void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_recip(const std::complex<float>* psi_nk_real,
-                                                                                const std::complex<float>* psi_mq_real,
-                                                                                double omega) const
-{
-    cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_recip(
+    const std::complex<float>* psi_nk_real,
+    const std::complex<float>* psi_mq_real,
+    double omega) const {
+    cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>()(psi_nk_real,
+                                                                        psi_mq_real,
+                                                                        density_real,
+                                                                        omega,
+                                                                        wfcpw->nrxx);
     rhopw_dev->real2recip(density_real, density_recip);
 }
 
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::rho_recip2real(const std::complex<double>* rho_recip,
-                                                                             std::complex<double>* rho_real,
-                                                                             bool add,
-                                                                             double factor) const
-{
+                                                                                  std::complex<double>* rho_real,
+                                                                                  bool add,
+                                                                                  double factor) const {
     rhopw_dev->recip2real(rho_recip, rho_real, add, factor);
 }
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::rho_recip2real(const std::complex<float>* rho_recip,
-                                                                             std::complex<float>* rho_real,
-                                                                             bool add,
-                                                                             float factor) const
-{
+                                                                                 std::complex<float>* rho_real,
+                                                                                 bool add,
+                                                                                 float factor) const {
     rhopw_dev->recip2real(rho_recip, rho_real, add, factor);
 }
 
@@ -667,38 +617,44 @@ template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
 
 template <>
-void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_recip(const std::complex<double>* psi_nk_real,
-                                                                                const std::complex<double>* psi_mq_real,
-                                                                                double omega) const
-{
-    cal_density_real_op<std::complex<double>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_recip(
+    const std::complex<double>* psi_nk_real,
+    const std::complex<double>* psi_mq_real,
+    double omega) const {
+    cal_density_real_op<std::complex<double>, base_device::DEVICE_GPU>()(psi_nk_real,
+                                                                         psi_mq_real,
+                                                                         density_real,
+                                                                         omega,
+                                                                         wfcpw->nrxx);
     rhopw_dev->real2recip_gpu(density_real, density_recip);
 }
 
 template <>
-void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_recip(const std::complex<float>* psi_nk_real,
-                                                                                const std::complex<float>* psi_mq_real,
-                                                                                double omega) const
-{
-    cal_density_real_op<std::complex<float>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_recip(
+    const std::complex<float>* psi_nk_real,
+    const std::complex<float>* psi_mq_real,
+    double omega) const {
+    cal_density_real_op<std::complex<float>, base_device::DEVICE_GPU>()(psi_nk_real,
+                                                                        psi_mq_real,
+                                                                        density_real,
+                                                                        omega,
+                                                                        wfcpw->nrxx);
     rhopw_dev->real2recip_gpu(density_real, density_recip);
 }
 
 template <>
 void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::rho_recip2real(const std::complex<double>* rho_recip,
-                                                                             std::complex<double>* rho_real,
-                                                                             bool add,
-                                                                             double factor) const
-{
+                                                                                  std::complex<double>* rho_real,
+                                                                                  bool add,
+                                                                                  double factor) const {
     rhopw_dev->recip2real_gpu(rho_recip, rho_real, add, factor);
 }
 
 template <>
 void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::rho_recip2real(const std::complex<float>* rho_recip,
-                                                                             std::complex<float>* rho_real,
-                                                                             bool add,
-                                                                             float factor) const
-{
+                                                                                 std::complex<float>* rho_real,
+                                                                                 bool add,
+                                                                                 float factor) const {
     rhopw_dev->recip2real_gpu(rho_recip, rho_real, add, factor);
 }
 

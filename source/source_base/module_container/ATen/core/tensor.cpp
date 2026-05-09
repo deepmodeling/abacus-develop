@@ -13,37 +13,27 @@ Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({1})) {}
 
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
-        : Tensor(GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
+    : Tensor(GetAllocator(DeviceType::CpuDevice), data_type, DeviceType::CpuDevice, shape) {}
 
 // Construct a new Tensor object with the given data type and shape.
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
-        : Tensor(GetAllocator(device), data_type, device, shape) {}
+    : Tensor(GetAllocator(device), data_type, device, shape) {}
 
 Tensor::Tensor(base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
-        : data_type_(data_type),
-          device_(device),
-          shape_(shape),
-          buffer_(new TensorBuffer(a, shape_.NumElements() * SizeOfType(data_type_))) {}
+    : data_type_(data_type), device_(device), shape_(shape),
+      buffer_(new TensorBuffer(a, shape_.NumElements() * SizeOfType(data_type_))) {}
 
 // Construct a new Tensor object by copying another Tensor.
 Tensor::Tensor(const Tensor& other)
-        : data_type_(other.data_type_),
-          shape_(other.shape_),
-          device_(other.device_),
-          buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
-{
-    TEMPLATE_ALL_2(data_type_, device_,
-            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                    this->data<T_>(), other.data<T_>(), this->NumElements()))
-}
+    : data_type_(other.data_type_), shape_(other.shape_), device_(other.device_),
+      buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_))){TEMPLATE_ALL_2(
+          data_type_,
+          device_,
+          kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(this->data<T_>(), other.data<T_>(), this->NumElements()))}
 
-// Construct a new Tensor object by moving another Tensor.
-Tensor::Tensor(Tensor&& other) noexcept
-        : data_type_(other.data_type_),
-          device_(other.device_),
-          shape_(other.shape_),
-          buffer_(other.buffer_)
-{
+      // Construct a new Tensor object by moving another Tensor.
+      Tensor::Tensor(Tensor && other) noexcept
+    : data_type_(other.data_type_), device_(other.device_), shape_(other.shape_), buffer_(other.buffer_) {
     // Reset the other object.
     other.buffer_ = nullptr;
 }
@@ -53,8 +43,9 @@ Tensor::Tensor(Tensor&& other) noexcept
 // However, Our subclass TensorMap, etc., do not own resources.
 // So, we do not need to declare a virtual destructor here.
 Tensor::~Tensor() {
-    if (buffer_) { buffer_->unref();
-}
+    if (buffer_) {
+        buffer_->unref();
+    }
 }
 
 // Get the data type of the tensor.
@@ -77,7 +68,7 @@ const TensorBuffer& Tensor::buffer() const { return *buffer_; }
 
 // Get the Allocator object according to the given device type.
 base::core::Allocator* Tensor::GetAllocator(DeviceType device) {
-    base::core::Allocator * allocator;
+    base::core::Allocator* allocator;
     if (device == DeviceType::CpuDevice) {
         allocator = new base::core::CPUAllocator();
     }
@@ -95,8 +86,9 @@ base::core::Allocator* Tensor::GetAllocator(DeviceType device) {
 
 // Set the tensor to zero
 void Tensor::zero() {
-    TEMPLATE_ALL_2(this->data_type_, this->device_,
-            kernels::set_memory<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
+    TEMPLATE_ALL_2(this->data_type_,
+                   this->device_,
+                   kernels::set_memory<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
 }
 
 // Reshape the current tensor
@@ -105,7 +97,7 @@ void Tensor::reshape(TensorShape shape) {
     int64_t num = 1;
     int auto_shape = 0, dim_count = -1, dim_idx = -1;
 
-    for (auto dim : shape.dims()) {
+    for (auto dim: shape.dims()) {
         dim_count++;
         if (dim < 1 && dim != -1) {
             throw std::invalid_argument("Invalid shape, dim of tensor must >= 1 or equal to -1(auto shape).");
@@ -127,8 +119,7 @@ void Tensor::reshape(TensorShape shape) {
             throw std::invalid_argument("Invalid shape, total number of elements does not match!");
         }
         shape.set_dim_size(dim_idx, dim_);
-    }
-    else {
+    } else {
         if (num != this->NumElements()) {
             throw std::invalid_argument("Invalid shape, total number of elements does not match!");
         }
@@ -144,14 +135,16 @@ Tensor Tensor::shaped(const TensorShape& shape) const {
 }
 
 // Slice the current tensor object.
-Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size) const {
+Tensor Tensor::slice(const std::vector<int>& start, const std::vector<int>& size) const {
     // check the ndim of input shape
     if (start.size() > 3 || size.size() > 3) {
-        throw std::invalid_argument("TensorSlice: The slice method only supports tensor ranks that are less than or equal to 2.");
+        throw std::invalid_argument(
+            "TensorSlice: The slice method only supports tensor ranks that are less than or equal to 2.");
     }
     // check the dimension size
     if (start.size() != shape_.ndim() || size.size() != shape_.ndim()) {
-        throw std::invalid_argument("TensorSlice: start and size vectors must have same length as number of dimensions");
+        throw std::invalid_argument(
+            "TensorSlice: start and size vectors must have same length as number of dimensions");
     }
 
     // check the boundary
@@ -175,28 +168,32 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     // copy the data from the input tensor to the output tensor
     unsigned int ndim = shape_.ndim();
     if (ndim == 1) {
-        TEMPLATE_ALL_2(this->data_type_, this->device_,
-                       kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                               output.data<T_>(), this->data<T_>() + start[0], size[0]))
-    }
-    else if (ndim == 2) {
+        TEMPLATE_ALL_2(this->data_type_,
+                       this->device_,
+                       kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(output.data<T_>(),
+                                                                           this->data<T_>() + start[0],
+                                                                           size[0]))
+    } else if (ndim == 2) {
         for (int i = 0; i < size[0]; i++) {
             int offset = static_cast<int>((start[0] + i) * shape_.dim_size(1) + start[1]);
             int offset_out = i * size[1];
-            TEMPLATE_ALL_2(this->data_type_, this->device_,
-                           kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                                   output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
+            TEMPLATE_ALL_2(this->data_type_,
+                           this->device_,
+                           kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(output.data<T_>() + offset_out,
+                                                                               this->data<T_>() + offset,
+                                                                               size[1]))
         }
-    }
-    else if (ndim == 3) {
+    } else if (ndim == 3) {
         for (int i = 0; i < size[0]; i++) {
             for (int j = 0; j < size[1]; j++) {
                 int offset = static_cast<int>((i + start[0]) * shape_.dim_size(1) * shape_.dim_size(2) +
-                        (j + start[1]) * shape_.dim_size(2) + start[2]);
+                                              (j + start[1]) * shape_.dim_size(2) + start[2]);
                 int offset_out = i * size[1] * size[2] + j * size[2];
-                TEMPLATE_ALL_2(this->data_type_, this->device_,
-                               kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                                       output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
+                TEMPLATE_ALL_2(this->data_type_,
+                               this->device_,
+                               kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(output.data<T_>() + offset_out,
+                                                                                   this->data<T_>() + offset,
+                                                                                   size[1]))
             }
         }
     }
@@ -209,7 +206,7 @@ void Tensor::resize(const TensorShape& new_shape) {
         return;
     }
     REQUIRES_OK(buffer_->OwnsMemory() || this->NumElements() == 0,
-        "Cannot resize a tensor that mapped from a given data buffer")
+                "Cannot resize a tensor that mapped from a given data buffer")
     if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
         buffer_->unref();
         this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
@@ -224,14 +221,16 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
     this->shape_ = other.shape_;
-    if (buffer_) { buffer_->unref();
-}
+    if (buffer_) {
+        buffer_->unref();
+    }
 
     this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
-    TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                   this->data<T_>(), other.data<T_>(), this->NumElements()))
+    TEMPLATE_ALL_2(
+        this->data_type_,
+        this->device_,
+        kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(this->data<T_>(), other.data<T_>(), this->NumElements()))
     return *this;
 }
 
@@ -242,31 +241,37 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
     this->shape_ = other.shape_;
-   
-    if (buffer_) { buffer_->unref();  // Release current resource
-}
+
+    if (buffer_) {
+        buffer_->unref(); // Release current resource
+    }
     this->buffer_ = other.buffer_;
-    other.buffer_ = nullptr;        // Reset the other TensorBuffer.
+    other.buffer_ = nullptr; // Reset the other TensorBuffer.
     return *this;
 }
 
 bool Tensor::operator==(const Tensor& other) const {
-    if (this->data_type_ != other.data_type_ ||
-        this->device_ != other.device_ ||
-        this->shape_ != other.shape_) 
-    {
+    if (this->data_type_ != other.data_type_ || this->device_ != other.device_ || this->shape_ != other.shape_) {
         return false;
     }
     bool result = false;
     if (this->device_ != DeviceType::CpuDevice) {
         Tensor tmpA = this->to_device<DEVICE_CPU>();
         Tensor tmpB = other.to_device<DEVICE_CPU>();
-        TEMPLATE_ALL_2(tmpA.data_type(), tmpA.device_type(),
-                       result = std::equal(tmpA.data<T_>(), tmpA.data<T_>() + tmpA.NumElements(), tmpB.data<T_>(), element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
+        TEMPLATE_ALL_2(tmpA.data_type(),
+                       tmpA.device_type(),
+                       result = std::equal(tmpA.data<T_>(),
+                                           tmpA.data<T_>() + tmpA.NumElements(),
+                                           tmpB.data<T_>(),
+                                           element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
         return result;
     }
-    TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   result = std::equal(this->data<T_>(), this->data<T_>() + this->NumElements(), other.data<T_>(), element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
+    TEMPLATE_ALL_2(this->data_type_,
+                   this->device_,
+                   result = std::equal(this->data<T_>(),
+                                       this->data<T_>() + this->NumElements(),
+                                       other.data<T_>(),
+                                       element_compare<T_, sizeof(GetTypeReal<T_>::type)>))
     return result;
 }
 
@@ -287,32 +292,33 @@ bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
     data_type_ = other.data_type_;
     device_ = other.device_;
     shape_ = shape;
-    if (buffer_) { buffer_->unref();
-}
+    if (buffer_) {
+        buffer_->unref();
+    }
     buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
 }
 
 void Tensor::sync(const Tensor& rhs) {
-    REQUIRES_OK(this->data_type_ == rhs.data_type_ 
-        && this->device_ == rhs.device_)
+    REQUIRES_OK(this->data_type_ == rhs.data_type_ && this->device_ == rhs.device_)
 
     if (this->shape_ == rhs.shape_) {
-        TEMPLATE_ALL_2(data_type_, device_,
-                kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                        this->data<T_>(), rhs.data<T_>(), this->NumElements()))
-    }
-    else {
-        TEMPLATE_ALL_2(data_type_, device_,
-                kernels::synchronize_memory_stride<T_, DEVICE_, DEVICE_>()(
-                        this->data<T_>(), rhs.data<T_>(), this->shape().dims(), rhs.shape().dims()))
+        TEMPLATE_ALL_2(
+            data_type_,
+            device_,
+            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+    } else {
+        TEMPLATE_ALL_2(data_type_,
+                       device_,
+                       kernels::synchronize_memory_stride<T_, DEVICE_, DEVICE_>()(this->data<T_>(),
+                                                                                  rhs.data<T_>(),
+                                                                                  this->shape().dims(),
+                                                                                  rhs.shape().dims()))
     }
 }
 
 Tensor Tensor::operator[](const int& index) const {
-    REQUIRES_OK(
-        index >= 0 && index < shape_.dim_size(0),
-        "Tensor index is out of bounds.")
+    REQUIRES_OK(index >= 0 && index < shape_.dim_size(0), "Tensor index is out of bounds.")
 
     TensorShape output_shape = this->shape_;
     output_shape.remove_dim(0);
@@ -321,7 +327,7 @@ Tensor Tensor::operator[](const int& index) const {
         output_shape.add_dim(1);
     }
     auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
-    
+
     return TensorMap(data_, this->data_type_, this->device_, output_shape);
 }
 
@@ -335,14 +341,16 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     const TensorShape& shape = tensor.shape();
 
     // Copy the data from device to host for output
-    auto * data_ = tensor.data();
+    auto* data_ = tensor.data();
 #if __CUDA || __ROCM
     if (device_type != DeviceType::CpuDevice) {
         data_ = malloc(num_elements * Tensor::SizeOfType(data_type));
         // Copy data to a specified device
-        TEMPLATE_ALL_2(data_type, device_type,
-                       kernels::synchronize_memory<T_, DEVICE_CPU, DEVICE_>()(
-                               reinterpret_cast<T_ *>(data_), tensor.data<T_>(), num_elements))
+        TEMPLATE_ALL_2(data_type,
+                       device_type,
+                       kernels::synchronize_memory<T_, DEVICE_CPU, DEVICE_>()(reinterpret_cast<T_*>(data_),
+                                                                              tensor.data<T_>(),
+                                                                              num_elements))
     }
 #endif
 
@@ -359,39 +367,39 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     os << ", owns_memory=" << tensor.buffer().OwnsMemory();
     os << ", buffer=\narray(";
     switch (data_type) {
-        case DataType::DT_FLOAT: {
-            const auto* data = static_cast<const float*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        case DataType::DT_DOUBLE: {
-            const auto* data = static_cast<const double*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        case DataType::DT_INT: {
-            const auto* data = static_cast<const int*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        case DataType::DT_INT64: {
-            const auto* data = static_cast<const int64_t*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        case DataType::DT_COMPLEX: {
-            const auto* data = static_cast<const std::complex<float>*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        case DataType::DT_COMPLEX_DOUBLE: {
-            const auto* data = static_cast<const std::complex<double>*>(data_);
-            _internal_output(os, data, shape, num_elements);
-            break;
-        }
-        default:
-            os << "unknown";
-            break;
+    case DataType::DT_FLOAT: {
+        const auto* data = static_cast<const float*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    case DataType::DT_DOUBLE: {
+        const auto* data = static_cast<const double*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    case DataType::DT_INT: {
+        const auto* data = static_cast<const int*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    case DataType::DT_INT64: {
+        const auto* data = static_cast<const int64_t*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    case DataType::DT_COMPLEX: {
+        const auto* data = static_cast<const std::complex<float>*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    case DataType::DT_COMPLEX_DOUBLE: {
+        const auto* data = static_cast<const std::complex<double>*>(data_);
+        _internal_output(os, data, shape, num_elements);
+        break;
+    }
+    default:
+        os << "unknown";
+        break;
     }
     os << "))\n";
 

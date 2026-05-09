@@ -11,17 +11,13 @@
 #include "source_lcao/module_gint/gint_interface.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
-namespace rdmft
-{
-
-
+namespace rdmft {
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, 
+void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
                                ModulePW::PW_Basis& rho_basis_in,
-                               ModuleBase::matrix& vloc_in, 
-                               ModuleBase::ComplexMatrix& sf_in)
-{
+                               ModuleBase::matrix& vloc_in,
+                               ModuleBase::ComplexMatrix& sf_in) {
     ucell = &ucell_in;
     rho_basis = &rho_basis_in;
     vloc = &vloc_in;
@@ -30,14 +26,10 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
     HR_TV->set_zero();
     this->cal_V_TV();
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
-    {
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
+    if (GlobalC::exx_info.info_global.cal_exx) {
+        if (GlobalC::exx_info.info_ri.real_number) {
             Vxc_fromRI_d->cal_exx_ions(ucell_in);
-        }
-        else
-        {
+        } else {
             Vxc_fromRI_c->cal_exx_ions(ucell_in);
         }
     }
@@ -46,20 +38,17 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
     std::cout << "\n\n\n******\ndo rdmft_esolver.update_ion() successfully\n******\n\n\n" << std::endl;
 }
 
-
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::update_elec(UnitCell& ucell,
-                                const ModuleBase::matrix& occ_number_in, 
-                                const psi::Psi<TK>& wfc_in, const Charge* charge_in)
-{
+                                const ModuleBase::matrix& occ_number_in,
+                                const psi::Psi<TK>& wfc_in,
+                                const Charge* charge_in) {
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
     wg = (occ_number);
 
-    for(int ik=0; ik < wg.nr; ++ik)
-    {
-        for(int inb=0; inb < wg.nc; ++inb)
-        {
+    for (int ik = 0; ik < wg.nr; ++ik) {
+        for (int inb = 0; inb < wg.nc; ++inb) {
             wg(ik, inb) *= kv->wk[ik];
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
@@ -68,16 +57,16 @@ void RDMFT<TK, TR>::update_elec(UnitCell& ucell,
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
     TK* pwfc = &wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) { pwfc[i] = pwfc_in[i];
-}
+    for (int i = 0; i < wfc.size(); ++i) {
+        pwfc[i] = pwfc_in[i];
+    }
 
     // update charge
     this->update_charge(ucell);
 
     // "default" = "pbe"
     // if(  !only_exx_type || this->cal_E_type != 1 )
-    if( this->cal_E_type != 1 )
-    {
+    if (this->cal_E_type != 1) {
         // the second cal_E_type need the complete pot to get effctive_V to calEband and so on.
         this->pelec->pot->update_from_charge(charge, &ucell);
     }
@@ -86,52 +75,45 @@ void RDMFT<TK, TR>::update_elec(UnitCell& ucell,
     this->cal_V_XC(ucell);
     // this->cal_Hk_Hpsi();
 
-    std::cout << "\n******\n" << "update elec in rdmft successfully" << "\n******\n" << std::endl;
+    std::cout << "\n******\n"
+              << "update elec in rdmft successfully" << "\n******\n"
+              << std::endl;
 }
-
 
 // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
-{
-    if( PARAM.inp.gamma_only )
-    {
+void RDMFT<TK, TR>::update_charge(UnitCell& ucell) {
+    if (PARAM.inp.gamma_only) {
         // calculate DMK and DMR
         elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, nspin);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
         DM_gamma_only.init_DMR(this->gd, &ucell);
         DM_gamma_only.cal_DMR();
 
-        for (int is = 0; is < nspin; is++)
-        {
+        for (int is = 0; is < nspin; is++) {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
         ModuleGint::cal_gint_rho(DM_gamma_only.get_DMR_vector(), nspin, charge->rho);
 
-        if (XC_Functional::get_ked_flag())
-        {
+        if (XC_Functional::get_ked_flag()) {
             this->pelec->cal_tau(wfc);
         }
 
         charge->renormalize_rho();
-    }
-    else
-    {
+    } else {
         // calculate DMK and DMR
         elecstate::DensityMatrix<TK, double> DM(ParaV, nspin, kv->kvec_d, nk_total);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
         DM.init_DMR(this->gd, &ucell);
         DM.cal_DMR();
 
-        for (int is = 0; is < nspin; is++)
-        {
+        for (int is = 0; is < nspin; is++) {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
         ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, charge->rho);
 
-        if (XC_Functional::get_ked_flag())
-        {
+        if (XC_Functional::get_ked_flag()) {
             this->pelec->cal_tau(wfc);
         }
 
@@ -140,51 +122,37 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
 
     // charge density symmetrization
     Symmetry_rho srho;
-    for (int is = 0; is < nspin; is++)
-    {
+    for (int is = 0; is < nspin; is++) {
         srho.begin(is, *(this->charge), rho_basis, ucell.symm);
     }
-
 }
 
-
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_occNumber(const ModuleBase::matrix& occ_number_in)
-{
+void RDMFT<TK, TR>::update_occNumber(const ModuleBase::matrix& occ_number_in) {
     occ_number = (occ_number_in);
     wg = (occ_number);
-    for(int ik=0; ik < wg.nr; ++ik)
-    {
-        for(int inb=0; inb < wg.nc; ++inb)
-        {
+    for (int ik = 0; ik < wg.nr; ++ik) {
+        for (int inb = 0; inb < wg.nc; ++inb) {
             wg(ik, inb) *= kv->wk[ik];
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
 }
 
-
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_wg(const ModuleBase::matrix& wg_in)
-{
+void RDMFT<TK, TR>::update_wg(const ModuleBase::matrix& wg_in) {
     wg = (wg_in);
     occ_number = (wg);
-    for(int ik=0; ik < wg.nr; ++ik)
-    {
-        for(int inb=0; inb < wg.nc; ++inb)
-        {
+    for (int ik = 0; ik < wg.nr; ++ik) {
+        for (int inb = 0; inb < wg.nc; ++inb) {
             occ_number(ik, inb) /= kv->wk[ik];
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
 }
 
-
 template class RDMFT<double, double>;
 template class RDMFT<std::complex<double>, double>;
 template class RDMFT<std::complex<double>, std::complex<double>>;
 
-}
-
-
-
+} // namespace rdmft

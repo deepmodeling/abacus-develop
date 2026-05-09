@@ -9,27 +9,21 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 
-class Setcell
-{
+class Setcell {
   public:
-    static void setupcell(UnitCell& ucell)
-    {
+    static void setupcell(UnitCell& ucell) {
         ucell.ntype = 1;
 
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
-        
+
         ucell.atom_mass.resize(ucell.ntype);
         ucell.atom_label.resize(ucell.ntype);
         ucell.atom_mass[0] = 39.948;
@@ -79,8 +73,7 @@ class Setcell
         ucell.atoms[0].vel[1].set(0.000153039878532, -0.000146533266608, 9.64491480698e-05);
         ucell.atoms[0].vel[2].set(-0.000133789480226, -3.0451038112e-06, -5.40998380137e-05);
         ucell.atoms[0].vel[3].set(0.000112830338059, 7.82354274358e-05, -2.83313122596e-05);
-        for (int ia = 0; ia < 4; ++ia)
-        {
+        for (int ia = 0; ia < 4; ++ia) {
             ucell.atoms[0].tau[ia] = ucell.atoms[0].taud[ia] * ucell.latvec;
             ucell.atoms[0].mbl[ia].set(1, 1, 1);
         }
@@ -100,13 +93,11 @@ class Setcell
         ucell.set_iat2itia();
     };
 
-    static void parameters(Input_para& input)
-    {
+    static void parameters(Input_para& input) {
         PARAM.sys.global_out_dir = "./";
         PARAM.sys.global_readin_dir = "./";
         PARAM.input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
         PARAM.input.cal_stress = true;
-
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;

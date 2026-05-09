@@ -37,28 +37,25 @@ using ModuleBase::SphericalBesselTransformer;
  *  - to_numerical_orbital
  *      - Overwrites the content of a Numerical_Orbital object with the current object.
  *                                                                      */
-class AtomicRadialsTest : public ::testing::Test
-{
+class AtomicRadialsTest : public ::testing::Test {
   protected:
     void SetUp();
-    void TearDown(){};
+    void TearDown() {};
 
-    AtomicRadials Ti_radials;                                         //!< object under test
+    AtomicRadials Ti_radials;                                                        //!< object under test
     std::string file = "../../../../../tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb"; //!< orbital file to read from
-    std::string log_file = "./test_files/atomic_radials.log";         //!< file for logging
+    std::string log_file = "./test_files/atomic_radials.log";                        //!< file for logging
 
     double tol = 1e-12; //!< numerical tolerance for grid & values
 };
 
-void AtomicRadialsTest::SetUp()
-{
+void AtomicRadialsTest::SetUp() {
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 }
 
-TEST_F(AtomicRadialsTest, ReadAndGet)
-{
+TEST_F(AtomicRadialsTest, ReadAndGet) {
     Ti_radials.build(file, 0, nullptr, GlobalV::MY_RANK);
 
     EXPECT_EQ(Ti_radials.lmax(), 3);
@@ -87,8 +84,7 @@ TEST_F(AtomicRadialsTest, ReadAndGet)
     EXPECT_NEAR(Ti_radials.chi(3, 0).rvalue(1000), 0, tol);
 }
 
-TEST_F(AtomicRadialsTest, BatchSet)
-{
+TEST_F(AtomicRadialsTest, BatchSet) {
     int itype = 5;
     Ti_radials.build(file, itype, nullptr, GlobalV::MY_RANK);
 
@@ -121,8 +117,7 @@ TEST_F(AtomicRadialsTest, BatchSet)
     EXPECT_EQ(Ti_radials.chi(3, 0).rgrid(3), 3.3);
 }
 
-TEST_F(AtomicRadialsTest, Copy)
-{
+TEST_F(AtomicRadialsTest, Copy) {
     /*
      * This test checks whether
      *
@@ -231,8 +226,7 @@ TEST_F(AtomicRadialsTest, Copy)
     delete ptr_Ti_clone;
 }
 
-TEST_F(AtomicRadialsTest, BeginAndEnd)
-{
+TEST_F(AtomicRadialsTest, BeginAndEnd) {
     int itype = 5;
     Ti_radials.build(file, itype, nullptr, GlobalV::MY_RANK);
 
@@ -240,8 +234,7 @@ TEST_F(AtomicRadialsTest, BeginAndEnd)
     EXPECT_EQ(Ti_radials.cend() - 1, &Ti_radials.chi(3, 0));
 }
 
-TEST_F(AtomicRadialsTest, ToNumericalOrbital)
-{
+TEST_F(AtomicRadialsTest, ToNumericalOrbital) {
     int itype = 5;
     Ti_radials.build(file, itype, nullptr, GlobalV::MY_RANK);
 
@@ -258,14 +251,12 @@ TEST_F(AtomicRadialsTest, ToNumericalOrbital)
     EXPECT_EQ(Ti_radials.nchi(), no.getTotal_nchi());
     EXPECT_EQ(Ti_radials.symbol(), no.getLabel());
 
-    for (int l = 0; l <= Ti_radials.lmax(); l++)
-    {
+    for (int l = 0; l <= Ti_radials.lmax(); l++) {
         EXPECT_EQ(Ti_radials.nzeta(l), no.getNchi(l));
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

@@ -12,7 +12,7 @@ LATTICE_VECTORS
 ATOMIC_POSITIONS
 Direct 
 
-Al	// Element type	
-0.0	// magnetism
-1	
+Al    // Element type    
+0.0    // magnetism
+1    
 0.00 0.00 0.00 1 1 1

@@ -2,22 +2,16 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_io/module_parameter/parameter.h"
-Atom_pseudo::Atom_pseudo()
-{
-}
+Atom_pseudo::Atom_pseudo() {}
 
-Atom_pseudo::~Atom_pseudo()
-{
-}
+Atom_pseudo::~Atom_pseudo() {}
 
 // mohan add 2021-05-07
 void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                            const int& nproj_in,
                            const int& nproj_in_so,
-                           const bool has_so)
-{
-    if (this->lmax < -1 || this->lmax > 20)
-    {
+                           const bool has_so) {
+    if (this->lmax < -1 || this->lmax > 20) {
         ModuleBase::WARNING_QUIT("Numerical_Nonlocal", "bad input of lmax : should be between -1 and 20");
     }
 
@@ -26,26 +20,21 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     int spin_dimension = 4;
 
     // optimize
-    for (int is = 0; is < spin_dimension; is++)
-    {
+    for (int is = 0; is < spin_dimension; is++) {
         this->non_zero_count_soc[is] = 0;
         this->index1_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
         this->index2_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
     }
 
-    if (!has_so)
-    {
+    if (!has_so) {
         this->d_real.create(nproj_soc + 1, nproj_soc + 1);
         this->d_so.create(spin_dimension, nproj_soc + 1, nproj_soc + 1); // for noncollinear-spin only case
 
         // calculate the number of non-zero elements in dion
-        for (int L1 = 0; L1 < nproj_soc; L1++)
-        {
-            for (int L2 = 0; L2 < nproj_soc; L2++)
-            {
+        for (int L1 = 0; L1 < nproj_soc; L1++) {
+            for (int L2 = 0; L2 < nproj_soc; L2++) {
                 this->d_real(L1, L2) = d_so_in(L1, L2).real();
-                if (std::fabs(d_real(L1, L2)) > 1.0e-8)
-                {
+                if (std::fabs(d_real(L1, L2)) > 1.0e-8) {
                     this->index1_soc[0][non_zero_count_soc[0]] = L1;
                     this->index2_soc[0][non_zero_count_soc[0]] = L2;
                     this->non_zero_count_soc[0]++;
@@ -53,42 +42,34 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 // for noncollinear-spin only case
                 this->d_so(0, L1, L2) = d_so_in(L1, L2);
                 this->d_so(3, L1, L2) = d_so_in(L1, L2);
-                if (std::fabs(d_real(L1, L2)) > 1.0e-8)
-                {
+                if (std::fabs(d_real(L1, L2)) > 1.0e-8) {
                     this->index1_soc[3][non_zero_count_soc[3]] = L1;
                     this->index2_soc[3][non_zero_count_soc[3]] = L2;
                     this->non_zero_count_soc[3]++;
                 }
             }
         }
-    }
-    else // zhengdy-soc
+    } else // zhengdy-soc
     {
         this->d_so.create(spin_dimension, nproj_soc + 1, nproj_soc + 1);
-        //		std::cout << "lmax=" << lmax << std::endl;
+        //        std::cout << "lmax=" << lmax << std::endl;
 
-        if (this->lmax > -1)
-        {
-            if (PARAM.inp.lspinorb)
-            {
+        if (this->lmax > -1) {
+            if (PARAM.inp.lspinorb) {
                 int is = 0;
-                for (int is1 = 0; is1 < 2; is1++)
-                {
-                    for (int is2 = 0; is2 < 2; is2++)
-                    {
-                        for (int L1 = 0; L1 < nproj_soc; L1++)
-                        {
-                            for (int L2 = 0; L2 < nproj_soc; L2++)
-                            {
+                for (int is1 = 0; is1 < 2; is1++) {
+                    for (int is2 = 0; is2 < 2; is2++) {
+                        for (int L1 = 0; L1 < nproj_soc; L1++) {
+                            for (int L2 = 0; L2 < nproj_soc; L2++) {
                                 this->d_so(is, L1, L2) = d_so_in(L1 + nproj_soc * is1, L2 + nproj_soc * is2);
 
-                                if (fabs(this->d_so(is, L1, L2).real()) > 1.0e-8
-                                    || fabs(this->d_so(is, L1, L2).imag()) > 1.0e-8)
-                                {
-                                    //									std::cout << "tt in atom is=" << is << " L1=" <<
-                                    //L1
+                                if (fabs(this->d_so(is, L1, L2).real()) > 1.0e-8 ||
+                                    fabs(this->d_so(is, L1, L2).imag()) > 1.0e-8) {
+                                    //                                    std::cout << "tt in atom is=" << is << " L1="
+                                    //                                    <<
+                                    // L1
                                     //<< " L2="
-                                    //									<< L2 << " " << d_so(is, L1, L2) << std::endl;
+                                    //                                    << L2 << " " << d_so(is, L1, L2) << std::endl;
 
                                     this->index1_soc[is][non_zero_count_soc[is]] = L1;
                                     this->index2_soc[is][non_zero_count_soc[is]] = L2;
@@ -99,32 +80,22 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                         is++;
                     }
                 }
-            }
-            else
-            {
+            } else {
                 int is = 0;
-                for (int is1 = 0; is1 < 2; is1++)
-                {
-                    for (int is2 = 0; is2 < 2; is2++)
-                    {
+                for (int is1 = 0; is1 < 2; is1++) {
+                    for (int is2 = 0; is2 < 2; is2++) {
                         if (is >= PARAM.inp.nspin) {
                             break;
-}
-                        for (int L1 = 0; L1 < nproj_soc; L1++)
-                        {
-                            for (int L2 = 0; L2 < nproj_soc; L2++)
-                            {
-                                if (is == 1 || is == 2)
-                                {
+                        }
+                        for (int L1 = 0; L1 < nproj_soc; L1++) {
+                            for (int L2 = 0; L2 < nproj_soc; L2++) {
+                                if (is == 1 || is == 2) {
                                     this->d_so(is, L1, L2) = std::complex<double>(0.0, 0.0);
-                                }
-                                else
-                                {
+                                } else {
                                     this->d_so(is, L1, L2) = d_so_in(L1 + nproj_soc * is1, L2 + nproj_soc * is2);
                                 }
-                                if (std::abs(this->d_so(is, L1, L2).real()) > 1.0e-8
-                                    || std::abs(this->d_so(is, L1, L2).imag()) > 1.0e-8)
-                                {
+                                if (std::abs(this->d_so(is, L1, L2).real()) > 1.0e-8 ||
+                                    std::abs(this->d_so(is, L1, L2).imag()) > 1.0e-8) {
                                     this->index1_soc[is][non_zero_count_soc[is]] = L1;
                                     this->index2_soc[is][non_zero_count_soc[is]] = L2;
                                     this->non_zero_count_soc[is]++;
@@ -145,8 +116,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
 #include "source_base/parallel_common.h"
 #ifdef __MPI
 
-void Atom_pseudo::bcast_atom_pseudo()
-{
+void Atom_pseudo::bcast_atom_pseudo() {
     ModuleBase::TITLE("Atom_pseudo", "bcast_atom_pseudo");
     // == pseudo_h ==
     // int
@@ -172,8 +142,7 @@ void Atom_pseudo::bcast_atom_pseudo()
     Parallel_Common::bcast_string(pp_type);
     Parallel_Common::bcast_string(xc_func);
 
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         jjj = std::vector<double>(nbeta, 0.0);
         els = std::vector<std::string>(nchi, "");
         lchi = std::vector<int>(nchi, 0);
@@ -193,8 +162,7 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == pseudo_atom ==
     Parallel_Common::bcast_int(msh);
     Parallel_Common::bcast_double(rcut);
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         assert(mesh != 0);
         r = std::vector<double>(mesh, 0.0);
         rab = std::vector<double>(mesh, 0.0);
@@ -211,8 +179,7 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == end of pseudo_atom ==
 
     // == pseudo_vl ==
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         vloc_at = std::vector<double>(mesh, 0.0);
     }
     Parallel_Common::bcast_double(vloc_at.data(), mesh);
@@ -221,10 +188,9 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == pseudo ==
     if (nbeta == 0) {
         return;
-}
+    }
 
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         lll = std::vector<int>(nbeta, 0);
     }
     Parallel_Common::bcast_int(lll.data(), nbeta);
@@ -232,16 +198,14 @@ void Atom_pseudo::bcast_atom_pseudo()
     Parallel_Common::bcast_int(nh);
 
     int nr, nc;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         nr = betar.nr;
         nc = betar.nc;
     }
     Parallel_Common::bcast_int(nr);
     Parallel_Common::bcast_int(nc);
 
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         betar.create(nr, nc);
         dion.create(nbeta, nbeta);
     }
@@ -254,18 +218,15 @@ void Atom_pseudo::bcast_atom_pseudo()
     // == end of psesudo_nc ==
 
     // uspp   liuyu 2023-10-03
-    if (tvanp)
-    {
+    if (tvanp) {
         Parallel_Common::bcast_int(nqlc);
-        if (GlobalV::MY_RANK != 0)
-        {
+        if (GlobalV::MY_RANK != 0) {
             qfuncl.create(nqlc, nbeta * (nbeta + 1) / 2, mesh);
         }
         const int dim = nqlc * nbeta * (nbeta + 1) / 2 * mesh;
         Parallel_Common::bcast_double(qfuncl.ptr, dim);
 
-        if (GlobalV::MY_RANK != 0)
-        {
+        if (GlobalV::MY_RANK != 0) {
             qqq.create(nbeta, nbeta);
         }
         Parallel_Common::bcast_double(qqq.c, nbeta * nbeta);

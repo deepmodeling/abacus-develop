@@ -5,13 +5,9 @@
 #include "source_base/matrix.h"
 #include "source_cell/klist.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
-
-void write_bands(const Input_para& inp,
-    const ModuleBase::matrix& ekb,
-    const K_Vectors& kv);
+void write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv);
 
 /**
  * @brief calculate the band structure
@@ -25,12 +21,12 @@ void write_bands(const Input_para& inp,
  * @param kv klist
  */
 void nscf_bands(const int& is,
-               const std::string &eig_file, 
-               const int& nband,
-               const double& fermie,
-               const int& precision,
-               const ModuleBase::matrix& ekb,
-               const K_Vectors& kv);
-}
+                const std::string& eig_file,
+                const int& nband,
+                const double& fermie,
+                const int& precision,
+                const ModuleBase::matrix& ekb,
+                const K_Vectors& kv);
+} // namespace ModuleIO
 
 #endif

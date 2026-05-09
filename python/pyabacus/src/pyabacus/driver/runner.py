@@ -17,10 +17,9 @@ import os
 import subprocess
 import re
 
-
 # Unit conversion constants
 RY_TO_EV = 13.605693122994  # 1 Ry = 13.6057 eV
-BOHR_TO_ANG = 0.529177249   # 1 Bohr = 0.529 Angstrom
+BOHR_TO_ANG = 0.529177249  # 1 Bohr = 0.529 Angstrom
 
 
 @dataclass
@@ -57,6 +56,7 @@ class CalculationResult:
     nks : int
         Number of k-points
     """
+
     # Convergence info
     converged: bool = False
     niter: int = 0
@@ -78,7 +78,7 @@ class CalculationResult:
 
     # Electronic structure info
     fermi_energy: float = 0.0  # in eV
-    bandgap: float = 0.0       # in eV
+    bandgap: float = 0.0  # in eV
 
     # System info
     nat: int = 0
@@ -88,7 +88,7 @@ class CalculationResult:
 
     # Output file tracking
     output_dir: str = ""  # Path to OUT.$suffix folder
-    log_file: str = ""    # Path to the main log file (running_*.log)
+    log_file: str = ""  # Path to the main log file (running_*.log)
     output_files: Dict[str, str] = field(default_factory=dict)  # filename -> full path
 
     @property
@@ -100,14 +100,14 @@ class CalculationResult:
     def energies(self) -> Dict[str, float]:
         """Dictionary of all energy components (all in eV)."""
         return {
-            'etot': self.etot,
-            'eband': self.eband,
-            'hartree_energy': self.hartree_energy,
-            'etxc': self.etxc,
-            'ewald_energy': self.ewald_energy,
-            'demet': self.demet,
-            'exx': self.exx,
-            'evdw': self.evdw,
+            "etot": self.etot,
+            "eband": self.eband,
+            "hartree_energy": self.hartree_energy,
+            "etxc": self.etxc,
+            "ewald_energy": self.ewald_energy,
+            "demet": self.demet,
+            "exx": self.exx,
+            "evdw": self.evdw,
         }
 
     @property
@@ -176,14 +176,16 @@ class CalculationResult:
             f"  VdW:          {self.evdw:.8f}",
         ]
 
-        lines.extend([
-            "",
-            "System info:",
-            f"  Atoms: {self.nat}, Types: {self.ntype}",
-            f"  Bands: {self.nbands}, K-points: {self.nks}",
-            f"  Fermi energy: {self.fermi_energy:.6f} eV",
-            f"  Band gap: {self.bandgap:.6f} eV",
-        ])
+        lines.extend(
+            [
+                "",
+                "System info:",
+                f"  Atoms: {self.nat}, Types: {self.ntype}",
+                f"  Bands: {self.nbands}, K-points: {self.nks}",
+                f"  Fermi energy: {self.fermi_energy:.6f} eV",
+                f"  Band gap: {self.bandgap:.6f} eV",
+            ]
+        )
 
         lines.append("")
         lines.append("Forces (eV/Angstrom):")
@@ -191,7 +193,9 @@ class CalculationResult:
             max_force = np.max(np.abs(self.forces))
             lines.append(f"  Calculated ({self.nat} atoms), Max force: {max_force:.6f}")
             for i, f in enumerate(self.forces):
-                lines.append(f"    Atom {i+1}: [{f[0]:12.8f}, {f[1]:12.8f}, {f[2]:12.8f}]")
+                lines.append(
+                    f"    Atom {i+1}: [{f[0]:12.8f}, {f[1]:12.8f}, {f[2]:12.8f}]"
+                )
         else:
             lines.append("  Not calculated")
 
@@ -205,13 +209,15 @@ class CalculationResult:
             lines.append("  Not calculated")
 
         # Output file tracking
-        lines.extend([
-            "",
-            "Output:",
-            f"  Directory: {self.output_dir if self.output_dir else 'N/A'}",
-            f"  Log file: {os.path.basename(self.log_file) if self.log_file else 'N/A'}",
-            f"  Files: {len(self.output_files)} output files",
-        ])
+        lines.extend(
+            [
+                "",
+                "Output:",
+                f"  Directory: {self.output_dir if self.output_dir else 'N/A'}",
+                f"  Log file: {os.path.basename(self.log_file) if self.log_file else 'N/A'}",
+                f"  Files: {len(self.output_files)} output files",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -253,7 +259,7 @@ def _parse_running_log(log_path: str) -> CalculationResult:
     if not os.path.exists(log_path):
         return result
 
-    with open(log_path, 'r') as f:
+    with open(log_path, "r") as f:
         content = f.read()
 
     # Parse convergence - check multiple patterns
@@ -300,7 +306,9 @@ def _parse_running_log(log_path: str) -> CalculationResult:
         result.ntype = int(ntype_matches[-1])
 
     # Parse number of bands
-    nbands_match = re.search(r"Number of electronic states \(NBANDS\)\s*=\s*(\d+)", content)
+    nbands_match = re.search(
+        r"Number of electronic states \(NBANDS\)\s*=\s*(\d+)", content
+    )
     if nbands_match:
         result.nbands = int(nbands_match.group(1))
 
@@ -366,13 +374,13 @@ def _get_suffix_from_input(input_dir: str) -> str:
     suffix = "ABACUS"  # default suffix
 
     if os.path.exists(input_file):
-        with open(input_file, 'r') as f:
+        with open(input_file, "r") as f:
             for line in f:
                 line = line.strip()
-                if line.startswith('#') or not line:
+                if line.startswith("#") or not line:
                     continue
                 # Parse suffix parameter
-                if 'suffix' in line.lower():
+                if "suffix" in line.lower():
                     parts = line.split()
                     if len(parts) >= 2:
                         suffix = parts[1]
@@ -411,7 +419,7 @@ def _parse_forces_from_log(log_path: str, nat: int) -> Optional[np.ndarray]:
     if not os.path.exists(log_path) or nat <= 0:
         return None
 
-    with open(log_path, 'r') as f:
+    with open(log_path, "r") as f:
         content = f.read()
 
     # Try multiple force block formats
@@ -432,7 +440,7 @@ def _parse_forces_from_log(log_path: str, nat: int) -> Optional[np.ndarray]:
         match = re.search(force_pattern2, content, re.DOTALL)
 
     if match:
-        force_lines = match.group(1).strip().split('\n')
+        force_lines = match.group(1).strip().split("\n")
         forces = []
         for line in force_lines:
             parts = line.split()
@@ -455,7 +463,7 @@ def _parse_stress_from_log(log_path: str) -> Optional[np.ndarray]:
     if not os.path.exists(log_path):
         return None
 
-    with open(log_path, 'r') as f:
+    with open(log_path, "r") as f:
         content = f.read()
 
     # Try multiple stress block formats
@@ -475,7 +483,7 @@ def _parse_stress_from_log(log_path: str) -> Optional[np.ndarray]:
         match = re.search(stress_pattern2, content, re.DOTALL | re.IGNORECASE)
 
     if match:
-        stress_lines = match.group(1).strip().split('\n')
+        stress_lines = match.group(1).strip().split("\n")
         stress = []
         for line in stress_lines:
             parts = line.split()
@@ -491,7 +499,9 @@ def _parse_stress_from_log(log_path: str) -> Optional[np.ndarray]:
     return None
 
 
-def _modify_input_file(input_dir: str, calculate_force: bool, calculate_stress: bool) -> Optional[str]:
+def _modify_input_file(
+    input_dir: str, calculate_force: bool, calculate_stress: bool
+) -> Optional[str]:
     """
     Modify INPUT file to add cal_force and cal_stress parameters.
 
@@ -502,7 +512,7 @@ def _modify_input_file(input_dir: str, calculate_force: bool, calculate_stress: 
         return None
 
     # Read original content
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         lines = f.readlines()
 
     # Check if cal_force/cal_stress already exist
@@ -510,9 +520,9 @@ def _modify_input_file(input_dir: str, calculate_force: bool, calculate_stress: 
     has_cal_stress = False
     for line in lines:
         line_lower = line.lower().strip()
-        if line_lower.startswith('cal_force'):
+        if line_lower.startswith("cal_force"):
             has_cal_force = True
-        if line_lower.startswith('cal_stress'):
+        if line_lower.startswith("cal_stress"):
             has_cal_stress = True
 
     # If both already exist, no need to modify
@@ -521,7 +531,7 @@ def _modify_input_file(input_dir: str, calculate_force: bool, calculate_stress: 
 
     # Create backup
     backup_file = input_file + ".pyabacus_backup"
-    with open(backup_file, 'w') as f:
+    with open(backup_file, "w") as f:
         f.writelines(lines)
 
     # Add missing parameters
@@ -532,7 +542,7 @@ def _modify_input_file(input_dir: str, calculate_force: bool, calculate_stress: 
         new_lines.append(f"cal_stress {1 if calculate_stress else 0}\n")
 
     # Write modified file
-    with open(input_file, 'w') as f:
+    with open(input_file, "w") as f:
         f.writelines(new_lines)
 
     return backup_file
@@ -546,9 +556,9 @@ def _restore_input_file(input_dir: str, backup_file: Optional[str]):
     input_file = os.path.join(input_dir, "INPUT")
     if os.path.exists(backup_file):
         # Restore original
-        with open(backup_file, 'r') as f:
+        with open(backup_file, "r") as f:
             content = f.read()
-        with open(input_file, 'w') as f:
+        with open(input_file, "w") as f:
             f.write(content)
         # Remove backup
         os.remove(backup_file)
@@ -631,7 +641,12 @@ def _run_abacus_subprocess(
         # First try the expected output directory based on suffix
         log_path = None
         if os.path.exists(expected_out_dir):
-            for log_name in ["running_scf.log", "running_relax.log", "running_cell-relax.log", "running_nscf.log"]:
+            for log_name in [
+                "running_scf.log",
+                "running_relax.log",
+                "running_cell-relax.log",
+                "running_nscf.log",
+            ]:
                 candidate = os.path.join(expected_out_dir, log_name)
                 if os.path.exists(candidate):
                     log_path = candidate
@@ -639,11 +654,22 @@ def _run_abacus_subprocess(
 
         # Fallback: find the most recently modified OUT.* directory
         if log_path is None:
-            out_dirs = [d for d in os.listdir(input_dir) if d.startswith("OUT.") and os.path.isdir(os.path.join(input_dir, d))]
+            out_dirs = [
+                d
+                for d in os.listdir(input_dir)
+                if d.startswith("OUT.") and os.path.isdir(os.path.join(input_dir, d))
+            ]
             if out_dirs:
-                latest_out = max(out_dirs, key=lambda d: os.path.getmtime(os.path.join(input_dir, d)))
+                latest_out = max(
+                    out_dirs, key=lambda d: os.path.getmtime(os.path.join(input_dir, d))
+                )
                 out_dir_path = os.path.join(input_dir, latest_out)
-                for log_name in ["running_scf.log", "running_relax.log", "running_cell-relax.log", "running_nscf.log"]:
+                for log_name in [
+                    "running_scf.log",
+                    "running_relax.log",
+                    "running_cell-relax.log",
+                    "running_nscf.log",
+                ]:
                     candidate = os.path.join(out_dir_path, log_name)
                     if os.path.exists(candidate):
                         log_path = candidate
@@ -787,6 +813,7 @@ def abacus(
     # Try to use C++ driver first
     try:
         from ._driver_pack import PyDriver
+
         _HAS_CPP_DRIVER = True
     except ImportError:
         _HAS_CPP_DRIVER = False
@@ -881,10 +908,7 @@ def abacus(
     return result
 
 
-def run_scf(
-    input_dir: str,
-    **kwargs
-) -> CalculationResult:
+def run_scf(input_dir: str, **kwargs) -> CalculationResult:
     """
     Convenience function for running SCF calculation.
 
@@ -906,10 +930,7 @@ def run_scf(
     return abacus(input_dir, **kwargs)
 
 
-def run_relax(
-    input_dir: str,
-    **kwargs
-) -> CalculationResult:
+def run_relax(input_dir: str, **kwargs) -> CalculationResult:
     """
     Convenience function for running geometry optimization.
 
@@ -927,5 +948,5 @@ def run_relax(
     CalculationResult
         Calculation results
     """
-    kwargs.setdefault('calculate_force', True)
+    kwargs.setdefault("calculate_force", True)
     return abacus(input_dir, **kwargs)

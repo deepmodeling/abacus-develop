@@ -4,22 +4,18 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_cell/unitcell.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * @brief A class to read the HContainer
  */
 template <typename T>
-class Read_HContainer
-{
+class Read_HContainer {
   public:
-    Read_HContainer(
-        hamilt::HContainer<T>* hcontainer, 
-        const std::string& filename,
-        const int nlocal,
-        const UnitCell* ucell
-    );
+    Read_HContainer(hamilt::HContainer<T>* hcontainer,
+                    const std::string& filename,
+                    const int nlocal,
+                    const UnitCell* ucell);
     // read the matrices of all R vectors to the read stream
     void read();
 

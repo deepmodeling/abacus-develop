@@ -6,12 +6,10 @@
 
 #include <complex>
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename FPTYPE, typename Device>
-struct cal_vnl_op
-{
+struct cal_vnl_op {
     /// @brief Calculate the getvnl for multi-device
     ///
     /// Input Parameters
@@ -64,8 +62,7 @@ struct cal_vnl_op
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vnl_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& ntype,
                     const int& npw,

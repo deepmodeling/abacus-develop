@@ -9,8 +9,7 @@
  *
  * Sep Potential
  */
-class SepPot
-{
+class SepPot {
   public:
     SepPot();
     ~SepPot();

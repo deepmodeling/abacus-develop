@@ -9,7 +9,7 @@ MKLROOT=/home/mohan/intel/oneapi/mkl/021.3.0/
 #------------------------------
 # for serial version: make s
 #------------------------------
-CPLUSPLUS = icpc 
+CPLUSPLUS = icpc
 
 #------------------------------
 # for parallel version: make p
@@ -19,68 +19,68 @@ CPLUSPLUS = icpc
 CXXFLAGS = -std=c++11 -O3
 
 #CXXFLAGS = -std=c++11 -O2 -xCORE-AVX2 -align -fma -ftz -fomit-frame-pointer -finline-functions \
-           -I${MKLROOT}/include -I${MKLROOT}/include/intel64/ilp64 \
-           -lmkl_blacs_intelmpi_lp64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core  -lpthread -limf  
+        -I${MKLROOT}/include -I${MKLROOT}/include/intel64/ilp64 \
+        -lmkl_blacs_intelmpi_lp64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core  -lpthread -limf
 
 LIBS=-L${MKLROOT}/lib/intel64 -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm
 
 TOOLS_OBJS=src_tools/mathzone.o \
-			src_tools/matrix.o \
-			src_tools/matrix3.o \
-			src_tools/realarray.o \
-			src_tools/intarray.o \
-			src_tools/complexmatrix.o \
-			src_tools/complexarray.o\
-			src_tools/timer.o \
-			src_tools/inverse_matrix.o\
-			src_tools/inverse_matrix_iterate.o\
-			src_tools/Simulated_Annealing.o\
-
+        src_tools/matrix.o \
+        src_tools/matrix3.o \
+        src_tools/realarray.o \
+        src_tools/intarray.o \
+        src_tools/complexmatrix.o \
+        src_tools/complexarray.o\
+        src_tools/timer.o \
+        src_tools/inverse_matrix.o\
+        src_tools/inverse_matrix_iterate.o\
+        src_tools/Simulated_Annealing.o\
+        
 SPILLAGE_OBJS=src_spillage/main.o \
-			  src_spillage/read_INPUT.o\
-			  src_spillage/ReadData.o\
-			  src_spillage/Calculate_C4.o\
-			  src_spillage/Coefficients.o\
-			  src_spillage/MultiZeta.o\
-			  src_spillage/SpillageStep.o\
-			  src_spillage/SpillageValue.o\
-			  src_spillage/Step_Data.o\
-			  src_spillage/Inverse_Matrix_S.o\
-			  src_spillage/Orthogonal.o\
-			  src_spillage/Type_Information.o\
-			  src_spillage/Metropolis.o\
-			  src_spillage/Metropolis_2.o\
-			  src_spillage/Out_Orbital.o\
-			  src_spillage/Plot_Psi.o\
-			  src_spillage/Psi_Second.o\
-			  src_spillage/tools.o \
-			  src_spillage/common.o \
-
+        src_spillage/read_INPUT.o\
+        src_spillage/ReadData.o\
+        src_spillage/Calculate_C4.o\
+        src_spillage/Coefficients.o\
+        src_spillage/MultiZeta.o\
+        src_spillage/SpillageStep.o\
+        src_spillage/SpillageValue.o\
+        src_spillage/Step_Data.o\
+        src_spillage/Inverse_Matrix_S.o\
+        src_spillage/Orthogonal.o\
+        src_spillage/Type_Information.o\
+        src_spillage/Metropolis.o\
+        src_spillage/Metropolis_2.o\
+        src_spillage/Out_Orbital.o\
+        src_spillage/Plot_Psi.o\
+        src_spillage/Psi_Second.o\
+        src_spillage/tools.o \
+        src_spillage/common.o \
+        
 PARALLEL_OBJS=src_parallel/parallel_global.o\
-	src_parallel/parallel_common.o\
-	src_parallel/parallel_reduce.o\
-	src_parallel/parallel_kpoints.o	
+        src_parallel/parallel_common.o\
+        src_parallel/parallel_reduce.o\
+        src_parallel/parallel_kpoints.o
 
 PW_OBJS=src_pw/pw_basis.o\
-	src_pw/pw_complement.o\
-	src_pw/heapsort.o\
-	src_pw/numerical_basis.o\
-	src_pw/bessel_basis.o\
-	src_pw/ylm_real.o\
-	src_pw/memory_calculation.o\
-			  
+        src_pw/pw_complement.o\
+        src_pw/heapsort.o\
+        src_pw/numerical_basis.o\
+        src_pw/bessel_basis.o\
+        src_pw/ylm_real.o\
+        src_pw/memory_calculation.o\
+        
 OBJS = ${TOOLS_OBJS} \
-	   ${SPILLAGE_OBJS} \
-	   ${PARALLEL_OBJS} \
-	   ${PW_OBJS}\
-
-help : 
+        ${SPILLAGE_OBJS} \
+        ${PARALLEL_OBJS} \
+        ${PW_OBJS}\
+        
+help :
 	@echo 'make target list: '
 	@echo 's : Series version of Monte Carlo Spillage Program.'
 	@echo 'p : Parallel Version of Monte Carlo Spillage Program.'
 	@echo 'note : some notes.'
 
-s : ${OBJS} 
+s : ${OBJS}
 	${CPLUSPLUS} ${CXXFLAGS} -o SIA_s.exe ${OBJS} ${LIBS}
 
 p : ${OBJS}

@@ -3,8 +3,7 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
-class Ions_Move_SD
-{
+class Ions_Move_SD {
   public:
     Ions_Move_SD();
     ~Ions_Move_SD();

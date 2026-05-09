@@ -13,16 +13,10 @@
  * See Weizsäcker C F. Zeitschrift für Physik, 1935, 96(7): 431-458.
  * @author sunliang on 2022-06
  */
-class KEDF_vW
-{
+class KEDF_vW {
   public:
-    KEDF_vW()
-    {
-        this->stress.create(3, 3);
-    }
-    ~KEDF_vW()
-    {
-    }
+    KEDF_vW() { this->stress.create(3, 3); }
+    ~KEDF_vW() {}
 
     void set_para(double dV, double vw_weight);
 

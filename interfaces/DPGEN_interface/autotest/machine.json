@@ -101,7 +101,7 @@
         "queue_name": "CPU",
         "group_size": 2,
         "local_root":"./",
-	"source_list": ["/opt/intel/oneapi/setvars.sh"]
+    "source_list": ["/opt/intel/oneapi/setvars.sh"]
       }
     }
   ]

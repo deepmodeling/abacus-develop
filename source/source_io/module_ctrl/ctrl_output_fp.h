@@ -3,8 +3,7 @@
 
 #include "source_estate/elecstate_lcao.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 void ctrl_output_fp(UnitCell& ucell,
                     elecstate::ElecState* pelec,

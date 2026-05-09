@@ -11,8 +11,7 @@
 
 #include <set>
 
-class Center2_Orb
-{
+class Center2_Orb {
   public:
     class Orb11;
     class Orb21;
@@ -37,8 +36,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const int& rmesh,
-                               std::vector<double> &rs,
-                               std::vector<double> &drs,
+                               std::vector<double>& rs,
+                               std::vector<double>& drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
     // Peize Lin add 2017-10-13
@@ -47,8 +46,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const std::set<size_t>& radials, // only calculate ir in radials
-                               std::vector<double> &rs,
-                               std::vector<double> &drs,
+                               std::vector<double>& rs,
+                               std::vector<double>& drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 };
 

@@ -5,6 +5,7 @@ from pyabacus import ModuleNAO as nao
 from pyabacus import ModuleBase as base
 import numpy as np
 
+
 def test_nr():
     l = 1
     dr = 0.01
@@ -27,37 +28,42 @@ def test_nr():
     assert chi.l == l
     assert chi.nr == sz
     assert chi.nk == 0
-    assert chi.rmax == grid[sz-1]
+    assert chi.rmax == grid[sz - 1]
     for i in range(sz):
-        assert(chi.rgrid[i] == grid[i])
-        assert(chi.rvalue[i] == f[i])
+        assert chi.rgrid[i] == grid[i]
+        assert chi.rvalue[i] == f[i]
     assert chi.pr == pr
     assert chi.pk == 0
-    assert chi.is_fft_compliant == False 
+    assert chi.is_fft_compliant == False
+
 
 def test_rc():
-    orb_dir = '../../../tests/PP_ORB/'
-    file_list = ["C_gga_8au_100Ry_2s2p1d.orb", "H_gga_8au_60Ry_2s1p.orb", "O_gga_10au_100Ry_2s2p1d.orb", "Fe_gga_9au_100Ry_4s2p2d1f.orb"]
+    orb_dir = "../../../tests/PP_ORB/"
+    file_list = [
+        "C_gga_8au_100Ry_2s2p1d.orb",
+        "H_gga_8au_60Ry_2s1p.orb",
+        "O_gga_10au_100Ry_2s2p1d.orb",
+        "Fe_gga_9au_100Ry_4s2p2d1f.orb",
+    ]
     file_list = [orb_dir + orbfile for orbfile in file_list]
     nfile = len(file_list)
 
     orb = nao.RadialCollection()
-    orb.build(nfile, file_list, 'o')
+    orb.build(nfile, file_list, "o")
 
-    assert orb.symbol(0) == 'C'
-    assert orb.symbol(1) == 'H'
-    assert orb.symbol(2) == 'O'
-    assert orb.symbol(3) == 'Fe'
+    assert orb.symbol(0) == "C"
+    assert orb.symbol(1) == "H"
+    assert orb.symbol(2) == "O"
+    assert orb.symbol(3) == "Fe"
 
     assert orb.ntype == 4
     assert orb.lmax() == 3
     assert orb.rcut_max() == 10.0
 
-    assert orb.nzeta(0,0) == 2
-    assert orb.nzeta(1,0) == 2
-    assert orb.nzeta(2,0) == 2
-    assert orb.nzeta(3,0) == 4
-
+    assert orb.nzeta(0, 0) == 2
+    assert orb.nzeta(1, 0) == 2
+    assert orb.nzeta(2, 0) == 2
+    assert orb.nzeta(3, 0) == 4
 
     assert orb.nzeta_max(0) == 2
     assert orb.nzeta_max(3) == 4
@@ -68,18 +74,19 @@ def test_rc():
 
     # not support index RadialSet now
     # support index NumericalRadial test
-    assert orb(0,0,0).l == 0
-    assert orb(0,1,0).l == 1
-    assert orb(0,1,1).l == 1
-    assert orb(0,2,0).l == 2
+    assert orb(0, 0, 0).l == 0
+    assert orb(0, 1, 0).l == 1
+    assert orb(0, 1, 1).l == 1
+    assert orb(0, 2, 0).l == 2
+
 
 def test_twocenterintegrator():
-    orb_dir = '../../../tests/PP_ORB/'
+    orb_dir = "../../../tests/PP_ORB/"
     file_list = ["C_gga_8au_100Ry_2s2p1d.orb", "O_gga_10au_100Ry_2s2p1d.orb"]
     file_list = [orb_dir + orbfile for orbfile in file_list]
 
     orb = nao.RadialCollection()
-    orb.build(2, file_list, 'o')
+    orb.build(2, file_list, "o")
 
     alpha = nao.RadialCollection()
     alpha.build(1, [file_list[0]])
@@ -89,24 +96,17 @@ def test_twocenterintegrator():
     cutoff = 2.0 * rmax
     nr = int(rmax / dr) + 1
 
-    orb.set_uniform_grid(True, nr, cutoff, 'i', True)
-    alpha.set_uniform_grid(True, nr, cutoff, 'i', True)
+    orb.set_uniform_grid(True, nr, cutoff, "i", True)
+    alpha.set_uniform_grid(True, nr, cutoff, "i", True)
 
     sbt = base.SphericalBesselTransformer()
     orb.set_transformer(sbt)
     alpha.set_transformer(sbt)
 
     integrator = nao.TwoCenterIntegrator()
-    integrator.tabulate(orb, alpha, 'S', nr, cutoff)
+    integrator.tabulate(orb, alpha, "S", nr, cutoff)
 
     overlap = integrator.snap(0, 0, 0, 0, 0, np.array([0.0, 0.0, 0.0]), False)
     assert 1 - overlap[0][0] < 1e-10
     overlap = integrator.snap(1, 0, 0, 0, 0, np.array([3.0, 3.0, 3.0]), False)
     assert abs(overlap[0][0] - 0.031136758774787342) < 1e-10
-
-
-
-
-    
-
-

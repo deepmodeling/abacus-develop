@@ -4,14 +4,12 @@
 #include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
 
-void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime)
-{
+void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis, double* eprime) {
 
     double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / PARAM.inp.sigma_k;
     double epr_z = 0;
     double min = 1e-10;
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         epr_z = log(std::max(PS_TOTN_real[ir], min) / PARAM.inp.nc_k) / sqrt(2) / PARAM.inp.sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
@@ -22,31 +20,27 @@ void eps_pot(const double* PS_TOTN_real,
              const std::complex<double>* phi,
              const ModulePW::PW_Basis* rho_basis,
              double* d_eps,
-             double* vwork)
-{
-    double *eprime = new double[rho_basis->nrxx];
+             double* vwork) {
+    double* eprime = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(eprime, rho_basis->nrxx);
 
     shape_gradn(PS_TOTN_real, rho_basis, eprime);
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         eprime[ir] = eprime[ir] * (PARAM.inp.eb_k - 1);
     }
 
-    ModuleBase::Vector3<double> *nabla_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
-    double *phisq = new double[rho_basis->nrxx];
+    ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+    double* phisq = new double[rho_basis->nrxx];
 
     // nabla phi
     XC_Functional::grad_rho(phi, nabla_phi, rho_basis, tpiba);
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         phisq[ir] = pow(nabla_phi[ir].x, 2) + pow(nabla_phi[ir].y, 2) + pow(nabla_phi[ir].z, 2);
     }
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         vwork[ir] = eprime[ir] * phisq[ir] / (8 * ModuleBase::PI);
     }
 
@@ -55,41 +49,39 @@ void eps_pot(const double* PS_TOTN_real,
     delete[] phisq;
 }
 
-//The interface is changed to use an explicit output parameter to
-//clarify lifetime management and avoid hidden allocations.
+// The interface is changed to use an explicit output parameter to
+// clarify lifetime management and avoid hidden allocations.
 void surchem::cal_vel(const UnitCell& cell,
                       const ModulePW::PW_Basis* rho_basis,
                       std::complex<double>* TOTN,
                       std::complex<double>* PS_TOTN,
                       int nspin,
-                      ModuleBase::matrix& v)
-{
+                      ModuleBase::matrix& v) {
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::start("surchem", "cal_vel");
 
     rho_basis->recip2real(TOTN, TOTN_real);
 
     // -4pi * TOTN(G)
-    std::complex<double> *B = new std::complex<double>[rho_basis->npw];
-    for (int ig = 0; ig < rho_basis->npw; ig++)
-    {
+    std::complex<double>* B = new std::complex<double>[rho_basis->npw];
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
         B[ig] = -4.0 * ModuleBase::PI * TOTN[ig];
     }
 
     // Build a nrxx vector to DO FFT .
-    double *PS_TOTN_real = new double[rho_basis->nrxx];
+    double* PS_TOTN_real = new double[rho_basis->nrxx];
     rho_basis->recip2real(PS_TOTN, PS_TOTN_real);
 
     // build epsilon in real space (nrxx)
-    double *epsilon = new double[rho_basis->nrxx];
-    double *epsilon0 = new double[rho_basis->nrxx];
+    double* epsilon = new double[rho_basis->nrxx];
+    double* epsilon0 = new double[rho_basis->nrxx];
     cal_epsilon(rho_basis, PS_TOTN_real, epsilon, epsilon0);
 
-    std::complex<double> *Sol_phi = new std::complex<double>[rho_basis->npw];
-    std::complex<double> *Sol_phi0 = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* Sol_phi = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* Sol_phi0 = new std::complex<double>[rho_basis->npw];
     int ncgsol = 0;
 
-    double *tmp_Vel = new double[rho_basis->nrxx];
+    double* tmp_Vel = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(tmp_Vel, rho_basis->nrxx);
 
     // Calculate Sol_phi with epsilon.
@@ -100,23 +92,21 @@ void surchem::cal_vel(const UnitCell& cell,
     // Calculate Sol_phi0 with epsilon0.
     minimize_cg(cell, rho_basis, epsilon0, B, Sol_phi0, ncgsol);
 
-    double *phi_tilda_R = new double[rho_basis->nrxx];
-    double *phi_tilda_R0 = new double[rho_basis->nrxx];
+    double* phi_tilda_R = new double[rho_basis->nrxx];
+    double* phi_tilda_R0 = new double[rho_basis->nrxx];
 
     rho_basis->recip2real(Sol_phi, phi_tilda_R);
     rho_basis->recip2real(Sol_phi0, phi_tilda_R0);
 
     // the 1st item of tmp_Vel
-    for (int i = 0; i < rho_basis->nrxx; i++)
-    {
+    for (int i = 0; i < rho_basis->nrxx; i++) {
         delta_phi[i] = phi_tilda_R[i] - phi_tilda_R0[i];
         tmp_Vel[i] += delta_phi[i];
     }
 
     // calculate Ael
     this->Ael = 0.0;
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         this->Ael -= TOTN_real[ir] * delta_phi[ir];
     }
     Parallel_Reduce::reduce_pool(this->Ael);
@@ -125,28 +115,21 @@ void surchem::cal_vel(const UnitCell& cell,
     // the 2nd item of tmp_Vel
     eps_pot(PS_TOTN_real, cell.tpiba, Sol_phi, rho_basis, epsilon, epspot);
 
-    for (int i = 0; i < rho_basis->nrxx; i++)
-    {
+    for (int i = 0; i < rho_basis->nrxx; i++) {
         tmp_Vel[i] += epspot[i];
     }
 
     // ModuleBase::matrix v(nspin, rho_basis->nrxx);
     ModuleBase::GlobalFunc::ZEROS(Vel.c, nspin * rho_basis->nrxx);
 
-    if (nspin == 4)
-    {
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
+    if (nspin == 4) {
+        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
             Vel(0, ir) += tmp_Vel[ir];
             v(0, ir) += Vel(0, ir);
         }
-    }
-    else
-    {
-        for (int is = 0; is < nspin; is++)
-        {
-            for (int ir = 0; ir < rho_basis->nrxx; ir++)
-            {
+    } else {
+        for (int is = 0; is < nspin; is++) {
+            for (int ir = 0; ir < rho_basis->nrxx; ir++) {
                 Vel(is, ir) += tmp_Vel[ir];
                 v(is, ir) += Vel(is, ir);
             }

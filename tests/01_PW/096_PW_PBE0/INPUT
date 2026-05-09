@@ -1,5 +1,5 @@
 INPUT_PARAMETERS 
-#Parameters	(System)
+#Parameters    (System)
 suffix            autotest
 init_wfc          random
 

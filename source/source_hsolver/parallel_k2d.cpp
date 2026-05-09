@@ -13,35 +13,23 @@ void Parallel_K2D<TK>::set_para_env(int nks,
                                     const int& my_rank,
                                     const int& nspin) {
     const int kpar = this->get_kpar();
-    Parallel_Global::divide_mpi_groups(nproc,
-                                       kpar,
-                                       my_rank,
-                                       this->NPROC_IN_POOL,
-                                       this->MY_POOL,
-                                       this->RANK_IN_POOL);
+    Parallel_Global::divide_mpi_groups(nproc, kpar, my_rank, this->NPROC_IN_POOL, this->MY_POOL, this->RANK_IN_POOL);
 #ifdef __MPI
-    MPI_Comm_split(MPI_COMM_WORLD,
-                   this->MY_POOL,
-                   this->RANK_IN_POOL,
-                   &this->POOL_WORLD_K2D);
+    MPI_Comm_split(MPI_COMM_WORLD, this->MY_POOL, this->RANK_IN_POOL, &this->POOL_WORLD_K2D);
 #endif
     this->Pkpoints = new Parallel_Kpoints;
     this->P2D_global = new Parallel_2D;
     this->P2D_pool = new Parallel_2D;
-    this->Pkpoints
-        ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
+    this->Pkpoints->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
     this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD);
     this->P2D_pool->init(nw, nw, nb2d, this->POOL_WORLD_K2D);
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
-                                      const std::vector<int>& ik_kpar,
-                                      const int& nw) {
+void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt, const std::vector<int>& ik_kpar, const int& nw) {
 #ifdef __MPI
     ModuleBase::timer::start("Parallel_K2D", "distribute_hsk");
-    for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
-    {
+    for (int ipool = 0; ipool < ik_kpar.size(); ++ipool) {
         pHamilt->updateHk(ik_kpar[ipool]);
         hamilt::MatrixBlock<TK> HK_global, SK_global;
         pHamilt->matrix(HK_global, SK_global);
@@ -103,8 +91,7 @@ void Parallel_K2D<TK>::unset_para_env() {
 template <typename TK>
 void Parallel_K2D<TK>::set_kpar(int kpar) {
     if (kpar < 1) {
-        ModuleBase::WARNING_QUIT("Parallel_K2D::set_kpar",
-                                 "kpar must be greater than 0.");
+        ModuleBase::WARNING_QUIT("Parallel_K2D::set_kpar", "kpar must be greater than 0.");
     }
     this->kpar_ = kpar;
 }

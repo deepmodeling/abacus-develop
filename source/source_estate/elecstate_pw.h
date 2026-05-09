@@ -11,12 +11,10 @@
 
 class pseudopot_cell_vnl;
 
-namespace elecstate
-{
+namespace elecstate {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class ElecStatePW : public ElecState
-{
+class ElecStatePW : public ElecState {
   private:
     using Real = typename GetTypeReal<T>::type;
 
@@ -50,7 +48,6 @@ class ElecStatePW : public ElecState
     ModulePW::PW_Basis_K* basis = nullptr;
 
   protected:
-
     ModulePW::PW_Basis* rhopw_smooth = nullptr;
 
     UnitCell* ucell = nullptr;
@@ -60,10 +57,10 @@ class ElecStatePW : public ElecState
     //! calculate electronic charge density on grid points or density matrix in real space
     //! the consequence charge density rho saved into rho_out, preparing for charge mixing.
     void updateRhoK(const psi::Psi<T, Device>& psi); // override;
-    
+
     //! sum over all pools for rho and ebands
     void parallelK();
-    
+
     //! calcualte rho for each k
     void rhoBandK(const psi::Psi<T, Device>& psi);
 
@@ -74,7 +71,7 @@ class ElecStatePW : public ElecState
     //! \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
     void addusdens_g(const Real* becsum, T** rhog);
 
-    Device * ctx = {};
+    Device* ctx = {};
 
     bool init_rho = false;
 
@@ -83,7 +80,7 @@ class ElecStatePW : public ElecState
     Real* rho_data = nullptr;
     T* rhog_data = nullptr;
     Real* kin_r_data = nullptr;
-    T* wfcr = nullptr; 
+    T* wfcr = nullptr;
     T* wfcr_another_spin = nullptr;
 
   private:

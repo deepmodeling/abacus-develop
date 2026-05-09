@@ -10,8 +10,7 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 
 void half_Hmatrix(const Parallel_Orbitals* pv,
@@ -22,18 +21,14 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   const std::complex<double>* H_laststep,
                   const std::complex<double>* S_laststep,
                   std::ofstream& ofs_running,
-                  const int print_matrix)
-{
-    if (print_matrix)
-    {
+                  const int print_matrix) {
+    if (print_matrix) {
         ofs_running << std::setprecision(10);
         ofs_running << std::endl;
         ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
-        {
+        for (int i = 0; i < pv->nrow; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
+            for (int j = 0; j < pv->ncol; j++) {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -41,11 +36,9 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
-        {
+        for (int i = 0; i < pv->nrow; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
+            for (int j = 0; j < pv->ncol; j++) {
                 ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -58,15 +51,12 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
     ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->desc, beta, Htmp, 1, 1, pv->desc);
     ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->desc, beta, Stmp, 1, 1, pv->desc);
 
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << std::endl;
         ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
-        {
+        for (int i = 0; i < pv->nrow; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
+            for (int j = 0; j < pv->ncol; j++) {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -84,12 +74,10 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          const ct::Tensor& S_laststep,
                          std::ofstream& ofs_running,
                          const int print_matrix,
-                         CublasMpResources& cublas_res)
-{
+                         CublasMpResources& cublas_res) {
 #ifdef __CUBLASMP
     // 1. Validate resources and ensure the grid is properly initialized
-    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr)
-    {
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr) {
         return;
     }
 
@@ -213,8 +201,7 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 const ct::Tensor& H_laststep,
                                 const ct::Tensor& S_laststep,
                                 std::ofstream& ofs_running,
-                                const int print_matrix)
-{
+                                const int print_matrix) {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU

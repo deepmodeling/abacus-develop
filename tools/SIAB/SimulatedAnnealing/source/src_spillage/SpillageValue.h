@@ -4,52 +4,49 @@
 
 #include "common.h"
 
-class SpillageValue
-{
-	friend class Read_INPUT;
-	
-	friend class MultiZeta;
-	// in multizeta, 'value_old' are calculated.
+class SpillageValue {
+    friend class Read_INPUT;
 
-	friend class Metropolis;
-	// in metropolis, 'value' are set.
+    friend class MultiZeta;
+    // in multizeta, 'value_old' are calculated.
 
-	friend class Out_Orbital;
-	// in OurOrbital, 'value each level' are used.
+    friend class Metropolis;
+    // in metropolis, 'value' are set.
 
-	public:
+    friend class Out_Orbital;
+    // in OurOrbital, 'value each level' are used.
 
-	// 1: get new spillage value.
-	// 0: get old spillage value.
-	double cal_defined_value( bool get_new_flag);
-	
-	void update_value();
-	
-	void out();
-	
-	void save_level( const int &ilevel);
-	 
-	private:
+  public:
+    // 1: get new spillage value.
+    // 0: get old spillage value.
+    double cal_defined_value(bool get_new_flag);
 
-	// spillage value for each structure.
-	double *value;
-	
-	// the previous spillage value for each structure.
-	double *value_old;
+    void update_value();
 
-	// spillage for all structures.
-	matrix value_each_level; 
+    void out();
 
-	// dimension is the number of structures.
-	// eg. 5 different dimers.
-	int dim;
+    void save_level(const int& ilevel);
 
-	void allocate( const int &dim_in );
-	
-	void reset();	
-	
-	SpillageValue();
-	~SpillageValue();
+  private:
+    // spillage value for each structure.
+    double* value;
+
+    // the previous spillage value for each structure.
+    double* value_old;
+
+    // spillage for all structures.
+    matrix value_each_level;
+
+    // dimension is the number of structures.
+    // eg. 5 different dimers.
+    int dim;
+
+    void allocate(const int& dim_in);
+
+    void reset();
+
+    SpillageValue();
+    ~SpillageValue();
 };
 
 #endif

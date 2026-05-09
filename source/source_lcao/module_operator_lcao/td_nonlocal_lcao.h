@@ -8,8 +8,7 @@
 
 #include <unordered_map>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __TD_NONLOCALTEMPLATE
 #define __TD_NONLOCALTEMPLATE
@@ -17,9 +16,7 @@ namespace hamilt
 /// The TDNonlocal class template inherits from class T
 /// It is used to calculate correction term of non-local pseudopotential in time-dependent DFT
 template <class T>
-class TDNonlocal : public T
-{
-};
+class TDNonlocal : public T {};
 
 #endif
 
@@ -29,8 +26,7 @@ class TDNonlocal : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     TDNonlocal<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,

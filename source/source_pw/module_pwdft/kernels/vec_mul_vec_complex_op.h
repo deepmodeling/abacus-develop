@@ -7,10 +7,9 @@
 namespace hamilt {
 
 template <typename T, typename Device>
-struct vec_mul_vec_complex_op
-{
+struct vec_mul_vec_complex_op {
     // Multiply a vector with a complex vector
-    void operator()(const T *vec1, const T *vec2, T *out, int n);
+    void operator()(const T* vec1, const T* vec2, T* out, int n);
 };
 } // namespace hamilt
-#endif //VEC_MUL_VEC_OP_H
+#endif // VEC_MUL_VEC_OP_H

@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'ABACUS'
-copyright = '2024, ABACUS'
-author = 'ABACUS'
+project = "ABACUS"
+copyright = "2024, ABACUS"
+author = "ABACUS"
 
 # The full version, including alpha/beta/rc tags
 # release = '2.3.5'
@@ -31,8 +31,8 @@ author = 'ABACUS'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-        'myst_parser',
-        'deepmodeling_sphinx',
+    "myst_parser",
+    "deepmodeling_sphinx",
 ]
 myst_enable_extensions = [
     "amsmath",
@@ -52,7 +52,7 @@ myst_enable_extensions = [
 myst_heading_anchors = 4
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -65,8 +65,8 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_book_theme'
-html_logo = 'abacus-logo.svg'
+html_theme = "sphinx_book_theme"
+html_logo = "abacus-logo.svg"
 
 # Theme options for sphinx-book-theme
 html_theme_options = {
@@ -91,19 +91,20 @@ if os.environ.get("READTHEDOCS", "") == "True":
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
-latex_engine = 'xelatex'
-mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
+latex_engine = "xelatex"
+mathjax_path = (
+    "https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js"
+)
 # deepmodeling_current_site = 'Tutorials'
-latex_elements = {
-    'extraclassoptions':'openany,oneside'
-}
+latex_elements = {"extraclassoptions": "openany,oneside"}
 
 
 # -- Auto-generate INPUT keyword documentation from YAML parameter dump ------
 
 from pathlib import Path
+
 
 def generate_input_docs(app):
     """Auto-generate input-main.md from parameters.yaml before building.
@@ -113,18 +114,23 @@ def generate_input_docs(app):
         # Then Sphinx calls this hook, which runs generate_input_main.py
     """
     docs_dir = Path(__file__).resolve().parent
-    yaml_path = docs_dir / 'parameters.yaml'
+    yaml_path = docs_dir / "parameters.yaml"
     if not yaml_path.exists():
-        print(f"Warning: {yaml_path} not found. "
-              "Run: abacus --generate-parameters-yaml > docs/parameters.yaml")
+        print(
+            f"Warning: {yaml_path} not found. "
+            "Run: abacus --generate-parameters-yaml > docs/parameters.yaml"
+        )
         return
     import sys
+
     sys.path.insert(0, str(docs_dir))
     from generate_input_main import generate
+
     generate(
         yaml_path=yaml_path,
-        output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
+        output=docs_dir / "advanced" / "input_files" / "input-main.md",
     )
 
+
 def setup(app):
-    app.connect('builder-inited', generate_input_docs)
+    app.connect("builder-inited", generate_input_docs)

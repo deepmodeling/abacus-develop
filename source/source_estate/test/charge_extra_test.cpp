@@ -10,27 +10,15 @@
 #undef protected
 // mock functions for UnitCell
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 #endif
-Magnetism::Magnetism()
-{
-    this->start_mag = nullptr;
-}
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::Magnetism() { this->start_mag = nullptr; }
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 Parallel_Grid::~Parallel_Grid(){};
 
-
 // mock functions for Charge
-Charge::Charge()
-{
+Charge::Charge() {
     rhopw = new ModulePW::PW_Basis;
     rhopw->nrxx = 8;
     rhopw->nx = 2;
@@ -39,13 +27,11 @@ Charge::Charge()
     rho = new double*[1];
     rho[0] = new double[rhopw->nrxx];
     ModuleBase::GlobalFunc::ZEROS(rho[0], rhopw->nrxx);
-    for (int i = 0; i < rhopw->nrxx; ++i)
-    {
+    for (int i = 0; i < rhopw->nrxx; ++i) {
         rho[0][i] = i + 1;
     }
 }
-Charge::~Charge()
-{
+Charge::~Charge() {
     delete[] rho[0];
     delete[] rho;
     delete rhopw;
@@ -54,44 +40,25 @@ void Charge::atomic_rho(const int spin_number_need,
                         const double& omega,
                         double** rho_in,
                         const ModuleBase::ComplexMatrix& strucFac,
-                        const UnitCell& ucell) const
-{
-}
+                        const UnitCell& ucell) const {}
 
 // mock functions for PW_Basis
-namespace ModulePW
-{
-PW_Basis::PW_Basis()
-{
-}
-PW_Basis::~PW_Basis()
-{
-}
-void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut)
-{
-}
+namespace ModulePW {
+PW_Basis::PW_Basis() {}
+PW_Basis::~PW_Basis() {}
+void PW_Basis::initgrids(const double lat0_in, const ModuleBase::Matrix3 latvec_in, const double gridecut) {}
 void PW_Basis::initgrids(const double lat0_in,
                          const ModuleBase::Matrix3 latvec_in,
                          const int nx_in,
                          int ny_in,
-                         int nz_in)
-{
-}
-void PW_Basis::distribute_r()
-{
-}
+                         int nz_in) {}
+void PW_Basis::distribute_r() {}
 } // namespace ModulePW
 
 // mock functions for Structure_Factor
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
-{
-}
+Structure_Factor::Structure_Factor() {}
+Structure_Factor::~Structure_Factor() {}
+void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*) {}
 
 /************************************************
  *  unit test of module_charge/charge_extra.cpp
@@ -109,8 +76,7 @@ void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const Module
  *     - determine alpha and beta
  */
 
-class ChargeExtraTest : public ::testing::Test
-{
+class ChargeExtraTest : public ::testing::Test {
   protected:
     Charge_Extra CE;
     UcellTestPrepare utp = UcellTestLib["Si"];
@@ -118,20 +84,16 @@ class ChargeExtraTest : public ::testing::Test
     Parallel_Grid* pgrid = nullptr;
     Charge charge;
     Structure_Factor sf;
-    void SetUp() override
-    {
+    void SetUp() override {
         PARAM.input.nspin = 1;
         PARAM.sys.global_out_dir = "./support/";
         ucell = utp.SetUcellInfo();
         ucell->omega = 1.0;
     }
-    void TearDown() override
-    {
-    }
+    void TearDown() override {}
 };
 
-TEST_F(ChargeExtraTest, InitCEWarningQuit)
-{
+TEST_F(ChargeExtraTest, InitCEWarningQuit) {
     PARAM.input.chg_extrap = "wwww";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
@@ -141,22 +103,19 @@ TEST_F(ChargeExtraTest, InitCEWarningQuit)
     EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
 }
 
-TEST_F(ChargeExtraTest, InitCECase1)
-{
+TEST_F(ChargeExtraTest, InitCECase1) {
     PARAM.input.chg_extrap = "none";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 0);
 }
 
-TEST_F(ChargeExtraTest, InitCECase2)
-{
+TEST_F(ChargeExtraTest, InitCECase2) {
     PARAM.input.chg_extrap = "atomic";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 1);
 }
 
-TEST_F(ChargeExtraTest, InitCECase3)
-{
+TEST_F(ChargeExtraTest, InitCECase3) {
     PARAM.input.chg_extrap = "first-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 2);
@@ -164,8 +123,7 @@ TEST_F(ChargeExtraTest, InitCECase3)
     EXPECT_NE(CE.delta_rho2.size(), 0);
 }
 
-TEST_F(ChargeExtraTest, InitCECase4)
-{
+TEST_F(ChargeExtraTest, InitCECase4) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 3);
@@ -178,8 +136,7 @@ TEST_F(ChargeExtraTest, InitCECase4)
     EXPECT_NE(CE.dis_now, nullptr);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
-{
+TEST_F(ChargeExtraTest, ExtrapolateChargeCase1) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 0;
@@ -200,8 +157,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
     EXPECT_EQ(CE.rho_extr, 0);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
-{
+TEST_F(ChargeExtraTest, ExtrapolateChargeCase2) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 1;
@@ -222,8 +178,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
     EXPECT_EQ(CE.rho_extr, 1);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
-{
+TEST_F(ChargeExtraTest, ExtrapolateChargeCase3) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 2;
@@ -244,8 +199,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
     EXPECT_EQ(CE.rho_extr, 2);
 }
 
-TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
-{
+TEST_F(ChargeExtraTest, ExtrapolateChargeCase4) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
@@ -266,15 +220,12 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
     std::remove("./support/OLD2_SPIN1_CHG.cube");
 }
 
-TEST_F(ChargeExtraTest, UpdateAllDis)
-{
+TEST_F(ChargeExtraTest, UpdateAllDis) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
-    for (int i = 0; i < ucell->nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < ucell->nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             CE.dis_old1[i][j] = i;
             CE.dis_now[i][j] = j;
         }
@@ -288,15 +239,12 @@ TEST_F(ChargeExtraTest, UpdateAllDis)
     EXPECT_DOUBLE_EQ(CE.dis_now[0][2], 0.0);
 }
 
-TEST_F(ChargeExtraTest, FindAlphaAndBeta)
-{
+TEST_F(ChargeExtraTest, FindAlphaAndBeta) {
     PARAM.input.chg_extrap = "second-order";
     CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
-    for (int i = 0; i < ucell->nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < ucell->nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             CE.dis_old1[i][j] = i;
             CE.dis_now[i][j] = j;
         }

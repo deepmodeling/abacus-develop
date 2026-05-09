@@ -4,13 +4,11 @@
 #include "source_estate/elecstate.h"
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
-namespace hsolver
-{
+namespace hsolver {
 
 // LCAO-in-PW does not support GPU now.
 template <typename T>
-class HSolverLIP
-{
+class HSolverLIP {
   private:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
@@ -18,7 +16,7 @@ class HSolverLIP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in) {};
+    HSolverLIP(ModulePW::PW_Basis_K* wfc_basis_in) : wfc_basis(wfc_basis_in){};
 
     /// @brief solve function for lcao_in_pw
     /// @param pHamilt interface to hamilt

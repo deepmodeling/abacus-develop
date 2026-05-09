@@ -35,35 +35,31 @@ namespace OperatorForceStress {
  * @param stress Output stress matrix (3 x 3)
  */
 template <typename TK, typename TR, typename IntegralFunc, int ForceSign, int StressSign>
-void cal_force_stress_2center(
-    const bool cal_force,
-    const bool cal_stress,
-    const hamilt::HContainer<double>* dmR,
-    const UnitCell* ucell,
-    const Grid_Driver* gridD,
-    const std::vector<double>& orb_cutoff,
-    const Parallel_Orbitals* paraV,
-    IntegralFunc& integral_calculator,
-    ModuleBase::matrix& force,
-    ModuleBase::matrix& stress)
-{
+void cal_force_stress_2center(const bool cal_force,
+                              const bool cal_stress,
+                              const hamilt::HContainer<double>* dmR,
+                              const UnitCell* ucell,
+                              const Grid_Driver* gridD,
+                              const std::vector<double>& orb_cutoff,
+                              const Parallel_Orbitals* paraV,
+                              IntegralFunc& integral_calculator,
+                              ModuleBase::matrix& force,
+                              ModuleBase::matrix& stress) {
     const int npol = ucell->get_npol();
     std::vector<double> stress_tmp(6, 0);
 
-    if (cal_force)
-    {
+    if (cal_force) {
         force.zero_out();
     }
 
-    // Loop over all atom pairs and calculate force/stress contributions
-    #pragma omp parallel
+// Loop over all atom pairs and calculate force/stress contributions
+#pragma omp parallel
     {
         std::vector<double> stress_local(6, 0);
         ModuleBase::matrix force_local(force.nr, force.nc);
 
-        #pragma omp for schedule(dynamic)
-        for (int iat1 = 0; iat1 < ucell->nat; iat1++)
-        {
+#pragma omp for schedule(dynamic)
+        for (int iat1 = 0; iat1 < ucell->nat; iat1++) {
             auto tau1 = ucell->get_tau(iat1);
             int T1 = 0, I1 = 0;
             ucell->iat2iait(iat1, &I1, &T1);
@@ -73,8 +69,7 @@ void cal_force_stress_2center(
             AdjacentAtomInfo adjs;
             gridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
 
-            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-            {
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad) {
                 const int T2 = adjs.ntype[ad];
                 const int I2 = adjs.natom[ad];
                 const int iat2 = ucell->itia2iat(T2, I2);
@@ -82,15 +77,14 @@ void cal_force_stress_2center(
 
                 // Check cutoff
                 ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat2, R_index);
-                if (dtau.norm() * ucell->lat0 >= orb_cutoff[T1] + orb_cutoff[T2])
-                {
+                if (dtau.norm() * ucell->lat0 >= orb_cutoff[T1] + orb_cutoff[T2]) {
                     continue;
                 }
 
                 // Find density matrix for this atom pair
-                const hamilt::BaseMatrix<double>* dm_matrix = dmR->find_matrix(iat1, iat2, R_index[0], R_index[1], R_index[2]);
-                if (dm_matrix == nullptr)
-                {
+                const hamilt::BaseMatrix<double>* dm_matrix =
+                    dmR->find_matrix(iat1, iat2, R_index[0], R_index[1], R_index[2]);
+                if (dm_matrix == nullptr) {
                     continue;
                 }
 
@@ -102,8 +96,7 @@ void cal_force_stress_2center(
                 auto row_indexes = paraV->get_indexes_row(iat1);
                 auto col_indexes = paraV->get_indexes_col(iat2);
 
-                if (row_indexes.size() == 0 || col_indexes.size() == 0)
-                {
+                if (row_indexes.size() == 0 || col_indexes.size() == 0) {
                     continue;
                 }
 
@@ -112,24 +105,21 @@ void cal_force_stress_2center(
 
                 // step_trace = 0 for npol=1; ={0, 1, col_size, col_size+1} for npol=2
                 std::vector<int> step_trace(npol * npol, 0);
-                if (npol == 2)
-                {
+                if (npol == 2) {
                     step_trace[1] = 1;
                     step_trace[2] = col_indexes.size();
                     step_trace[3] = col_indexes.size() + 1;
                 }
 
                 // Loop over orbital pairs
-                for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
-                {
+                for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol) {
                     const int iw1 = row_indexes[iw1l] / npol;
                     const int L1 = atom1.iw2l[iw1];
                     const int N1 = atom1.iw2n[iw1];
                     const int m1 = atom1.iw2m[iw1];
                     const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-                    for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
-                    {
+                    for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol) {
                         const int iw2 = col_indexes[iw2l] / npol;
                         const int L2 = atom2.iw2l[iw2];
                         const int N2 = atom2.iw2n[iw2];
@@ -143,19 +133,16 @@ void cal_force_stress_2center(
                         const double dm_current = dm_pointer[0];
 
                         // Calculate force contribution with compile-time sign
-                        if (cal_force)
-                        {
+                        if (cal_force) {
                             // Factor of 2 for Hermitian matrix will be applied later
-                            for (int i = 0; i < 3; i++)
-                            {
+                            for (int i = 0; i < 3; i++) {
                                 force_tmp1[i] += ForceSign * dm_current * olm[i + 1];
                                 force_tmp2[i] -= ForceSign * dm_current * olm[i + 1];
                             }
                         }
 
                         // Calculate stress contribution with compile-time sign
-                        if (cal_stress)
-                        {
+                        if (cal_stress) {
                             stress_local[0] += StressSign * dm_current * olm[1] * dtau.x; // xx
                             stress_local[1] += StressSign * dm_current * olm[1] * dtau.y; // xy
                             stress_local[2] += StressSign * dm_current * olm[1] * dtau.z; // xz
@@ -171,16 +158,13 @@ void cal_force_stress_2center(
             }
         }
 
-        #pragma omp critical
+#pragma omp critical
         {
-            if (cal_force)
-            {
+            if (cal_force) {
                 force += force_local;
             }
-            if (cal_stress)
-            {
-                for (int i = 0; i < 6; i++)
-                {
+            if (cal_stress) {
+                for (int i = 0; i < 6; i++) {
                     stress_tmp[i] += stress_local[i];
                 }
             }

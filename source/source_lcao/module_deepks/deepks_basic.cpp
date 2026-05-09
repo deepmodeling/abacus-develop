@@ -20,17 +20,14 @@
 void DeePKS_domain::cal_gevdm(const int nat,
                               const DeePKS_Param& deepks_param,
                               const std::vector<torch::Tensor>& pdm,
-                              std::vector<torch::Tensor>& gevdm)
-{
+                              std::vector<torch::Tensor>& gevdm) {
     ModuleBase::TITLE("DeePKS_domain", "cal_gevdm");
     ModuleBase::timer::start("DeePKS_domain", "cal_gevdm");
     // cal gevdm(d(EigenValue(D))/dD)
     int nlmax = deepks_param.inlmax / nat;
-    for (int nl = 0; nl < nlmax; ++nl)
-    {
+    for (int nl = 0; nl < nlmax; ++nl) {
         std::vector<torch::Tensor> avmmv;
-        for (int iat = 0; iat < nat; ++iat)
-        {
+        for (int iat = 0; iat < nat; ++iat) {
             int inl = iat * nlmax + nl;
             int nm = 2 * deepks_param.inl2l[inl] + 1;
             // repeat each block for nm times in an additional dimension
@@ -61,26 +58,21 @@ void DeePKS_domain::cal_gevdm(const int nat,
     return;
 }
 
-void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script::Module& model)
-{
+void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script::Module& model) {
     ModuleBase::TITLE("DeePKS_domain", "load_model");
     ModuleBase::timer::start("DeePKS_domain", "load_model");
 
     // check whether file exists
     std::ifstream ifs(model_file.c_str());
-    if (!ifs)
-    {
+    if (!ifs) {
         ModuleBase::timer::end("DeePKS_domain", "load_model");
         ModuleBase::WARNING_QUIT("DeePKS_domain::load_model", "No model file named " + model_file + ", please check!");
         return;
     }
     ifs.close();
-    try
-    {
+    try {
         model = torch::jit::load(model_file);
-    }
-    catch (const c10::Error& e)
-    {
+    } catch (const c10::Error& e) {
         std::cerr << "error loading the model" << std::endl;
         ModuleBase::timer::end("DeePKS_domain", "load_model");
         return;
@@ -95,17 +87,14 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                           torch::jit::script::Module& model_deepks,
                                           double** gedm,
                                           double& E_delta,
-                                          const int rank)
-{
+                                          const int rank) {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
     ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm_equiv");
 
-    if (rank == 0)
-    {
-        const int basis_size
-            = static_cast<int>(std::llround(std::sqrt(static_cast<double>(deepks_param.des_per_atom))));
-        if (basis_size * basis_size != deepks_param.des_per_atom)
-        {
+    if (rank == 0) {
+        const int basis_size =
+            static_cast<int>(std::llround(std::sqrt(static_cast<double>(deepks_param.des_per_atom))));
+        if (basis_size * basis_size != deepks_param.des_per_atom) {
             ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm_equiv",
                                      "Invalid des_per_atom for equivariant DeePKS: it must be a perfect square.");
         }
@@ -114,8 +103,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
         dm_eig = dm_eig.to(torch::kFloat64).requires_grad_(true);
         torch::Tensor dm = dm_eig.reshape({1, nat, basis_size, basis_size});
 
-        if (static_cast<int>(deepks_param.nchi_d_l.size()) != deepks_param.lmaxd + 1)
-        {
+        if (static_cast<int>(deepks_param.nchi_d_l.size()) != deepks_param.lmaxd + 1) {
             ModuleBase::WARNING_QUIT(
                 "DeePKS_domain::cal_edelta_gedm_equiv",
                 "Invalid nchi_d_l in DeePKS parameters: expected size lmaxd + 1 for equivariant shell construction.");
@@ -123,37 +111,31 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
         std::vector<torch::Tensor> ovlp_shells;
         int total_shells = 0;
-        for (int l = 0; l <= deepks_param.lmaxd; ++l)
-        {
+        for (int l = 0; l <= deepks_param.lmaxd; ++l) {
             total_shells += deepks_param.nchi_d_l[l];
         }
         ovlp_shells.reserve(total_shells);
         int offset = 0;
-        for (int l = 0; l <= deepks_param.lmaxd; ++l)
-        {
+        for (int l = 0; l <= deepks_param.lmaxd; ++l) {
             const int nm = 2 * l + 1;
-            for (int n = 0; n < deepks_param.nchi_d_l[l]; ++n)
-            {
+            for (int n = 0; n < deepks_param.nchi_d_l[l]; ++n) {
                 torch::Tensor po = torch::zeros({basis_size, 1, nm}, torch::TensorOptions().dtype(torch::kFloat64));
                 auto accessor = po.accessor<double, 3>();
-                for (int m = 0; m < nm; ++m)
-                {
+                for (int m = 0; m < nm; ++m) {
                     accessor[offset + m][0][m] = 1.0;
                 }
                 ovlp_shells.push_back(po);
                 offset += nm;
             }
         }
-        if (offset != basis_size)
-        {
+        if (offset != basis_size) {
             ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm_equiv",
                                      "Invalid shell layout: accumulated shell offset does not match basis size.");
         }
 
         std::vector<torch::Tensor> dm_flat;
         dm_flat.reserve(ovlp_shells.size());
-        for (const auto& po : ovlp_shells)
-        {
+        for (const auto& po: ovlp_shells) {
             // Equivalent to python:
             // torch.einsum('rap,...rs,saq->...apq', po, dm, po)
             torch::Tensor pdm_shell = torch::einsum("rap,...rs,saq->...apq", {po, dm, po});
@@ -161,8 +143,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
         }
 
         c10::List<torch::Tensor> model_input;
-        for (const auto& pdm_shell : dm_flat)
-        {
+        for (const auto& pdm_shell: dm_flat) {
             model_input.push_back(pdm_shell);
         }
 
@@ -170,12 +151,9 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
         inputs.emplace_back(model_input);
 
         torch::Tensor ec;
-        try
-        {
+        try {
             ec = model_deepks.forward(inputs).toTensor(); // Hartree
-        }
-        catch (const c10::Error& e)
-        {
+        } catch (const c10::Error& e) {
             ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm_equiv",
                                      "Failed to evaluate equivariant DeePKS model in C++.");
             throw;
@@ -185,25 +163,24 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
         std::vector<torch::Tensor> grad_outputs{torch::ones_like(ec)};
         std::vector<torch::Tensor> grad_inputs{dm_eig};
-        torch::Tensor gedm_tensor = torch::autograd::grad({ec}, grad_inputs, grad_outputs,
-                                                           /*retain_graph=*/false,
-                                                           /*create_graph=*/false,
-                                                           /*allow_unused=*/false)[0];
+        torch::Tensor gedm_tensor = torch::autograd::grad({ec},
+                                                          grad_inputs,
+                                                          grad_outputs,
+                                                          /*retain_graph=*/false,
+                                                          /*create_graph=*/false,
+                                                          /*allow_unused=*/false)[0];
 
         torch::Tensor gedm_nat = gedm_tensor.reshape({nat, deepks_param.des_per_atom});
         auto accessor = gedm_nat.accessor<double, 2>();
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            for (int ides = 0; ides < deepks_param.des_per_atom; ++ides)
-            {
+        for (int iat = 0; iat < nat; ++iat) {
+            for (int ides = 0; ides < deepks_param.des_per_atom; ++ides) {
                 gedm[iat][ides] = accessor[iat][ides] * 2.0; // Hartree to Ry
             }
         }
     }
 
 #ifdef __MPI
-    for (int iat = 0; iat < nat; ++iat)
-    {
+    for (int iat = 0; iat < nat; ++iat) {
         MPI_Bcast(gedm[iat], deepks_param.des_per_atom, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     MPI_Bcast(&E_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -221,8 +198,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     const std::vector<torch::Tensor>& pdm,
                                     torch::jit::script::Module& model_deepks,
                                     double** gedm,
-                                    double& E_delta)
-{
+                                    double& E_delta) {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
     ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm");
 
@@ -232,12 +208,9 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     // input_dim:(natom, des_per_atom)
     inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom}));
     std::vector<torch::Tensor> ec;
-    try
-    {
+    try {
         ec.push_back(model_deepks.forward(inputs).toTensor()); // Hartree
-    }
-    catch (const c10::Error& e)
-    {
+    } catch (const c10::Error& e) {
         ModuleBase::WARNING_QUIT("DeePKS_domain::cal_edelta_gedm",
                                  "Please check whether the input shape required by model file matches the descriptor!");
         throw;
@@ -258,14 +231,11 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                                                    /*allow_unused=*/true);
 
     // gedm_tensor(Hartree) to gedm(Ry)
-    for (int inl = 0; inl < deepks_param.inlmax; ++inl)
-    {
+    for (int inl = 0; inl < deepks_param.inlmax; ++inl) {
         int nm = 2 * deepks_param.inl2l[inl] + 1;
         auto accessor = gedm_tensor[inl].accessor<double, 2>();
-        for (int m1 = 0; m1 < nm; ++m1)
-        {
-            for (int m2 = 0; m2 < nm; ++m2)
-            {
+        for (int m1 = 0; m1 < nm; ++m1) {
+            for (int m2 = 0; m2 < nm; ++m2) {
                 int index = m1 * nm + m2;
                 gedm[inl][index] = accessor[m1][m2] * 2; //*2 is for Hartree to Ry
             }
@@ -275,17 +245,13 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     return;
 }
 
-void DeePKS_domain::check_gedm(const DeePKS_Param& deepks_param, double** gedm)
-{
+void DeePKS_domain::check_gedm(const DeePKS_Param& deepks_param, double** gedm) {
     std::ofstream ofs("gedm.dat");
 
-    for (int inl = 0; inl < deepks_param.inlmax; inl++)
-    {
+    for (int inl = 0; inl < deepks_param.inlmax; inl++) {
         int nm = 2 * deepks_param.inl2l[inl] + 1;
-        for (int m1 = 0; m1 < nm; ++m1)
-        {
-            for (int m2 = 0; m2 < nm; ++m2)
-            {
+        for (int m1 = 0; m1 < nm; ++m1) {
+            for (int m2 = 0; m2 < nm; ++m2) {
                 int index = m1 * nm + m2;
                 //*2 is for Hartree to Ry
                 ofs << gedm[inl][index] << " ";
@@ -295,18 +261,15 @@ void DeePKS_domain::check_gedm(const DeePKS_Param& deepks_param, double** gedm)
     }
 }
 
-void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out)
-{
+void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out) {
     int nat = ucell.nat;
     atom_out = torch::zeros({nat, 4}, torch::TensorOptions().dtype(torch::kFloat64));
 
     // get atom information
     atom_in AtomInfo;
     int index = 0;
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
+    for (int it = 0; it < ucell.ntype; ++it) {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
             atom_out[index][0] = AtomInfo.atom_Z[ucell.atom_label[it]];
 
             // use bohr as unit
@@ -317,8 +280,7 @@ void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out)
         }
     }
 }
-void DeePKS_domain::prepare_box(const UnitCell& ucell, torch::Tensor& box_out)
-{
+void DeePKS_domain::prepare_box(const UnitCell& ucell, torch::Tensor& box_out) {
     box_out = torch::zeros({9}, torch::TensorOptions().dtype(torch::kFloat64));
 
     // use bohr as unit

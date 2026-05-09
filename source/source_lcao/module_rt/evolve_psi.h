@@ -6,14 +6,13 @@
 #ifndef ELEC_PSI_H
 #define ELEC_PSI_H
 
-#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
-namespace module_rt
-{
+namespace module_rt {
 void evolve_psi(const int nband,
                 const int nlocal,
                 const Parallel_Orbitals* pv,

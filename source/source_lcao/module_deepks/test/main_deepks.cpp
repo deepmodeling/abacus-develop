@@ -8,8 +8,7 @@ int calculate();
 template <typename T>
 void run_tests(test_deepks<T>& test);
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif
@@ -18,18 +17,14 @@ int main(int argc, char** argv)
     MPI_Finalize();
 #endif
 
-    if (status > 0)
-    {
+    if (status > 0) {
         return 1;
-    }
-    else
-    {
+    } else {
         return 0;
     }
 }
 
-int calculate()
-{
+int calculate() {
     std::ifstream ifs("INPUT");
     char word[80];
     bool gamma_only_local;
@@ -37,14 +32,11 @@ int calculate()
     ifs >> gamma_only_local;
     ifs.close();
 
-    if (gamma_only_local)
-    {
+    if (gamma_only_local) {
         test_deepks<double> test;
         run_tests(test);
         return test.failed_check;
-    }
-    else
-    {
+    } else {
         test_deepks<std::complex<double>> test;
         run_tests(test);
         return test.failed_check;
@@ -52,8 +44,7 @@ int calculate()
 }
 
 template <typename T>
-void run_tests(test_deepks<T>& test)
-{
+void run_tests(test_deepks<T>& test) {
     test.preparation();
 
     test.check_dstable();
@@ -83,12 +74,9 @@ void run_tests(test_deepks<T>& test)
     test.check_o_delta();
 
     std::cout << " [  ------  ] Total checks : " << test.total_check << std::endl;
-    if (test.failed_check > 0)
-    {
+    if (test.failed_check > 0) {
         std::cout << "\e[1;31m [  FAILED  ]\e[0m Failed checks : " << test.failed_check << std::endl;
-    }
-    else
-    {
+    } else {
         std::cout << "\e[1;32m [  PASS    ]\e[0m All checks passed!" << std::endl;
     }
 }

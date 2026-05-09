@@ -6,21 +6,17 @@
 
 #include "source_base/timer_wrapper.h"
 
-
-namespace OFDFT
-{
+namespace OFDFT {
 
 void print_info(const int iter,
-	ModuleBase::TimePoint &iter_time,
-	const double &energy_current,
-	const double &energy_last,
-	const double &normdLdphi,
-	const elecstate::ElecState *pelec,
-	KEDF_Manager *kedf_manager,
-	const bool conv_esolver);
+                ModuleBase::TimePoint& iter_time,
+                const double& energy_current,
+                const double& energy_last,
+                const double& normdLdphi,
+                const elecstate::ElecState* pelec,
+                KEDF_Manager* kedf_manager,
+                const bool conv_esolver);
 
 }
 
 #endif
-
-

@@ -8,11 +8,8 @@
 #include "source_io/module_parameter/parameter.h"
 
 bool XC_Functional::ked_flag = false;
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
+Charge::Charge() {}
+Charge::~Charge() {
     delete[] rec;
     delete[] dis;
 }
@@ -21,7 +18,7 @@ auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
     for (int i = 0; i < nv; ++i) {
         sum += v[i];
-}
+    }
     return sum;
 };
 /************************************************
@@ -37,38 +34,29 @@ auto sum_array = [](const double* v, const int& nv) {
  *     - using rhopw and GlobalV
  */
 
-class ChargeMpiTest : public ::testing::Test
-{
+class ChargeMpiTest : public ::testing::Test {
   protected:
     Charge* charge;
     std::string output;
     double lat0 = 4;
     ModuleBase::Matrix3 latvec;
-    void SetUp() override
-    {
-        charge = new Charge;
-    }
-    void TearDown() override
-    {
-        delete charge;
-    }
+    void SetUp() override { charge = new Charge; }
+    void TearDown() override { delete charge; }
 };
 
-TEST_F(ChargeMpiTest, reduce_diff_pools1)
-{
-    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
-    {
+TEST_F(ChargeMpiTest, reduce_diff_pools1) {
+    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0) {
         GlobalV::KPAR = 2;
         Parallel_Global::init_pools(GlobalV::NPROC,
-                                      GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
-                                      GlobalV::KPAR,
-                                      GlobalV::NPROC_IN_BNDGROUP,
-                                      GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_BNDGROUP,
-                                      GlobalV::NPROC_IN_POOL,
-                                      GlobalV::RANK_IN_POOL,
-                                      GlobalV::MY_POOL);
+                                    GlobalV::MY_RANK,
+                                    PARAM.input.bndpar,
+                                    GlobalV::KPAR,
+                                    GlobalV::NPROC_IN_BNDGROUP,
+                                    GlobalV::RANK_IN_BPGROUP,
+                                    GlobalV::MY_BNDGROUP,
+                                    GlobalV::NPROC_IN_POOL,
+                                    GlobalV::RANK_IN_POOL,
+                                    GlobalV::MY_POOL);
         ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis();
         rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
         rhopw->initgrids(lat0, latvec, 40);
@@ -81,10 +69,8 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         const int nplane = rhopw->nplane;
         charge->nrxx = nrxx;
         double* array_rho = new double[nrxx];
-        for (int ir = 0; ir < nxy; ++ir)
-        {
-            for (int iz = 0; iz < nplane; ++iz)
-            {
+        for (int ir = 0; ir < nxy; ++ir) {
+            for (int iz = 0; iz < nplane; ++iz) {
                 array_rho[nplane * ir + iz] = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
             }
         }
@@ -100,10 +86,8 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
     }
 }
 
-TEST_F(ChargeMpiTest, reduce_diff_pools2)
-{
-    if (GlobalV::NPROC >= 3)
-    {
+TEST_F(ChargeMpiTest, reduce_diff_pools2) {
+    if (GlobalV::NPROC >= 3) {
         GlobalV::KPAR = 3;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
@@ -128,17 +112,14 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         const int nplane = rhopw->nplane;
         charge->nrxx = nrxx;
         double* array_ref = new double[nxy * nz];
-        for (int ixyz = 0; ixyz < nxy * nz; ++ixyz)
-        {
+        for (int ixyz = 0; ixyz < nxy * nz; ++ixyz) {
             array_ref[ixyz] = ixyz / double(nxy * nz);
         }
         double refsum = sum_array(array_ref, nxy * nz);
 
         double* array_rho = new double[nrxx];
-        for (int ir = 0; ir < nxy; ++ir)
-        {
-            for (int iz = 0; iz < nplane; ++iz)
-            {
+        for (int ir = 0; ir < nxy; ++ir) {
+            for (int iz = 0; iz < nplane; ++iz) {
                 array_rho[nplane * ir + iz] = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
             }
         }
@@ -155,10 +136,8 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
     }
 }
 
-TEST_F(ChargeMpiTest, rho_mpi)
-{
-    if (GlobalV::NPROC >= 2)
-    {
+TEST_F(ChargeMpiTest, rho_mpi) {
+    if (GlobalV::NPROC >= 2) {
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
@@ -201,10 +180,8 @@ TEST_F(ChargeMpiTest, rho_mpi)
     charge->rho_mpi();
 }
 
-TEST_F(ChargeMpiTest, kin_r_mpi)
-{
-    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
-    {
+TEST_F(ChargeMpiTest, kin_r_mpi) {
+    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0) {
         const bool ked_flag_old = XC_Functional::ked_flag;
         XC_Functional::ked_flag = true;
         PARAM.input.nspin = 1;
@@ -236,12 +213,9 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
         charge->kin_r = new double*[1];
         charge->kin_r[0] = new double[nrxx];
 
-        for (int ir = 0; ir < nxy; ++ir)
-        {
-            for (int iz = 0; iz < nplane; ++iz)
-            {
-                charge->kin_r[0][nplane * ir + iz]
-                    = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
+        for (int ir = 0; ir < nxy; ++ir) {
+            for (int iz = 0; iz < nplane; ++iz) {
+                charge->kin_r[0][nplane * ir + iz] = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
             }
         }
         const double refsum = sum_array(charge->kin_r[0], nrxx);
@@ -258,8 +232,7 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);

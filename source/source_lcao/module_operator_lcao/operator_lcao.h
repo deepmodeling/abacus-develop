@@ -11,17 +11,13 @@ namespace hamilt {
 template <typename TK, typename TR>
 class OperatorLCAO : public Operator<TK> {
   public:
+    OperatorLCAO(HS_Matrix_K<TK>* hsk_in,
+                 const std::vector<ModuleBase::Vector3<double>>& kvec_d_in, //! k-point vectors
+                 HContainer<TR>* hR_in) //! H(R) matrix, R is the Bravis lattice vector
+        : hsk(hsk_in), kvec_d(kvec_d_in), hR(hR_in) {}
 
-    OperatorLCAO(
-        HS_Matrix_K<TK>* hsk_in, 
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in, //! k-point vectors
-        HContainer<TR>* hR_in)  //! H(R) matrix, R is the Bravis lattice vector
-        : hsk(hsk_in), kvec_d(kvec_d_in), hR(hR_in){}
-
-    virtual ~OperatorLCAO()
-    {
-        if (this->allocated_smatrix) 
-        {
+    virtual ~OperatorLCAO() {
+        if (this->allocated_smatrix) {
             delete[] this->smatrix_k;
         }
     }
@@ -50,28 +46,23 @@ class OperatorLCAO : public Operator<TK> {
     Gamma_only case (TK = double), SK would not changed during one SCF loop, a template triangle matrix SK_temp is used
     for accelerating. General case (TK = std::complex<double>), only pointers of HK and SK saved in OperatorLCAO
     */
-    void matrixHk(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) 
-    {
+    void matrixHk(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) {
         this->get_hs_pointers();
 #ifdef __MPI
         hk_in = MatrixBlock<TK>{hmatrix_k,
-                               (size_t)this->hsk->get_pv()->nrow,
-                               (size_t)this->hsk->get_pv()->ncol,
-                               this->hsk->get_pv()->desc};
+                                (size_t)this->hsk->get_pv()->nrow,
+                                (size_t)this->hsk->get_pv()->ncol,
+                                this->hsk->get_pv()->desc};
         sk_in = MatrixBlock<TK>{smatrix_k,
-                               (size_t)this->hsk->get_pv()->nrow,
-                               (size_t)this->hsk->get_pv()->ncol,
-                               this->hsk->get_pv()->desc};
+                                (size_t)this->hsk->get_pv()->nrow,
+                                (size_t)this->hsk->get_pv()->ncol,
+                                this->hsk->get_pv()->desc};
 #else
-        hk_in = MatrixBlock<TK>{hmatrix_k, 
-                                (size_t)this->hsk->get_pv()->nrow, 
-                                (size_t)this->hsk->get_pv()->ncol, 
-                                nullptr};
-        
-        sk_in = MatrixBlock<TK>{smatrix_k, 
-                                (size_t)this->hsk->get_pv()->nrow, 
-                                (size_t)this->hsk->get_pv()->ncol, 
-                                nullptr};
+        hk_in =
+            MatrixBlock<TK>{hmatrix_k, (size_t)this->hsk->get_pv()->nrow, (size_t)this->hsk->get_pv()->ncol, nullptr};
+
+        sk_in =
+            MatrixBlock<TK>{smatrix_k, (size_t)this->hsk->get_pv()->nrow, (size_t)this->hsk->get_pv()->ncol, nullptr};
 #endif
     }
 
@@ -117,11 +108,10 @@ class OperatorLCAO : public Operator<TK> {
     bool hr_done = false;
 
   private:
-
     void get_hs_pointers();
 
     //! there are H and S matrix for each k point in reciprocal space
-    //! 'double' type for gamma_only case, 
+    //! 'double' type for gamma_only case,
     //! 'complex<double>' type for multi k-points case
     TK* hmatrix_k = nullptr;
     TK* smatrix_k = nullptr;

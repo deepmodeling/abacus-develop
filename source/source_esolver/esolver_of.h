@@ -7,10 +7,8 @@
 #include "source_pw/module_ofdft/kedf_manager.h"
 #include "source_psi/psi.h"
 
-namespace ModuleESolver
-{
-class ESolver_OF : public ESolver_FP
-{
+namespace ModuleESolver {
+class ESolver_OF : public ESolver_FP {
   public:
     ESolver_OF();
     ~ESolver_OF();
@@ -83,7 +81,7 @@ class ESolver_OF : public ESolver_FP
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
-    void init_elecstate(UnitCell& ucell);                                                                 
+    void init_elecstate(UnitCell& ucell);
     void allocate_array();
 
     // --------------------- calculate physical qualities ---------------
@@ -99,8 +97,7 @@ class ESolver_OF : public ESolver_FP
     void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 
     // --------------------- interface to blas --------------------------
-    double inner_product(double* pa, double* pb, int length, double dV = 1) const
-    {
+    double inner_product(double* pa, double* pb, int length, double dV = 1) const {
         double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
         innerproduct *= dV;
         return innerproduct;

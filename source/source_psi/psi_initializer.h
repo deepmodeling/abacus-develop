@@ -47,8 +47,7 @@ In summary:
 new->initialize->tabulate->init_psig
 */
 template <typename T>
-class psi_initializer
-{
+class psi_initializer {
   private:
     using Real = typename GetTypeReal<T>::type;
 
@@ -65,49 +64,33 @@ class psi_initializer
                             const int& = 0);                     //< rank
 
     /// @brief CENTRAL FUNCTION: calculate the interpolate table if needed
-    virtual void tabulate()
-    {
-        return;
-    };
+    virtual void tabulate() { return; };
 
     /// @brief CENTRAL FUNCTION: init psi in pw basis
     virtual void init_psig(T* psig, const int& ik) = 0;
 
     // ======================== Tool functions ========================
     // getter and setter
-    std::string method() const
-    {
-        return this->method_;
-    }
-    int nbands_start() const
-    {
-        return this->nbands_start_;
-    }
-    int nbands_complem() const
-    {
-        return this->nbands_complem_;
-    }
+    std::string method() const { return this->method_; }
+    int nbands_start() const { return this->nbands_start_; }
+    int nbands_complem() const { return this->nbands_complem_; }
 
     template <typename U>
-    typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in)
-    {
+    typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in) {
         return static_cast<float>(in.real());
     }
     template <typename U>
-    typename std::enable_if<std::is_same<U, double>::value, U>::type cast_to_T(const std::complex<double> in)
-    {
+    typename std::enable_if<std::is_same<U, double>::value, U>::type cast_to_T(const std::complex<double> in) {
         return static_cast<double>(in.real());
     }
     template <typename U>
-    typename std::enable_if<std::is_same<U, std::complex<float>>::value, U>::type cast_to_T(
-        const std::complex<double> in)
-    {
+    typename std::enable_if<std::is_same<U, std::complex<float>>::value, U>::type
+    cast_to_T(const std::complex<double> in) {
         return std::complex<float>(static_cast<float>(in.real()), static_cast<float>(in.imag()));
     }
     template <typename U>
-    typename std::enable_if<std::is_same<U, std::complex<double>>::value, U>::type cast_to_T(
-        const std::complex<double> in)
-    {
+    typename std::enable_if<std::is_same<U, std::complex<double>>::value, U>::type
+    cast_to_T(const std::complex<double> in) {
         return std::complex<double>(in.real(), in.imag());
     }
 

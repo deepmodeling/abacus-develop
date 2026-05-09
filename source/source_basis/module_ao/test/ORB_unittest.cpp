@@ -1,7 +1,6 @@
 #include "ORB_unittest.h"
 
-void test_orb::SetUp()
-{
+void test_orb::SetUp() {
     // test constructor
     /*Center2_Orb::Orb11 testcto = Center2_Orb::Orb11(
         ORB.Phi[0].PhiLN(0, 0),
@@ -20,42 +19,37 @@ void test_orb::SetUp()
     // this->set_center2orbs();
 }
 
-void test_orb::TearDown()
-{
+void test_orb::TearDown() {
     int* nproj = new int[ORB.get_ntype()];
     for (int i = 0; i < ORB.get_ntype(); ++i) {
         nproj[i] = 0;
-}
+    }
     ooo.clear_after_ions(OGT, ORB, 0, nproj);
     delete[] nproj;
     return;
 }
 
-void test_orb::set_ekcut()
-{
+void test_orb::set_ekcut() {
     std::cout << "set lcao_ecut from LCAO files" << std::endl;
     // set as max of ekcut from every element
 
     lcao_ecut = 0.0;
     std::ifstream in_ao;
 
-    for (int it = 0; it < ntype_read; it++)
-    {
+    for (int it = 0; it < ntype_read; it++) {
         double ek_current;
 
         in_ao.open((this->case_dir + ORB.orbital_file[it].c_str()));
-        if (!in_ao)
-        {
+        if (!in_ao) {
             std::cout << "error : cannot find LCAO file : " << ORB.orbital_file[it] << std::endl;
         }
         ORB.orbital_file[it] = this->case_dir + ORB.orbital_file[it].c_str();
         std::string word;
-        while (in_ao.good())
-        {
+        while (in_ao.good()) {
             in_ao >> word;
             if (word == "Cutoff(Ry)") {
                 break;
-}
+            }
         }
         in_ao >> ek_current;
         lcao_ecut = std::max(lcao_ecut, ek_current);
@@ -68,28 +62,27 @@ void test_orb::set_ekcut()
     return;
 }
 
-void test_orb::set_orbs()
-{
+void test_orb::set_orbs() {
 
     ORB.init(ofs_running,
-                       ntype_read,
-                       "./",
-                       orbital_fn.data(),
-                       descriptor_file,
-                       lmax,
-                       lcao_ecut,
-                       lcao_dk,
-                       lcao_dr,
-                       lcao_rmax,
-                       0,
-                       0,
-                       1,  // force
-                       0); // myrank
+             ntype_read,
+             "./",
+             orbital_fn.data(),
+             descriptor_file,
+             lmax,
+             lcao_ecut,
+             lcao_dk,
+             lcao_dr,
+             lcao_rmax,
+             0,
+             0,
+             1,  // force
+             0); // myrank
 
     int* nproj = new int[ORB.get_ntype()];
     for (int i = 0; i < ORB.get_ntype(); ++i) {
         nproj[i] = 0;
-}
+    }
     const Numerical_Nonlocal beta_[ORB.get_ntype()];
 
     ooo.set_orb_tables(ofs_running,
@@ -106,8 +99,7 @@ void test_orb::set_orbs()
     return;
 }
 
-void test_orb::set_files()
-{
+void test_orb::set_files() {
     std::cout << "read names of atomic basis set files" << std::endl;
     std::ifstream ifs((this->case_dir + "STRU"), std::ios::in);
 
@@ -115,8 +107,7 @@ void test_orb::set_files()
 
     orbital_fn.resize(ntype_read);
 
-    for (int it = 0; it < ntype_read; it++)
-    {
+    for (int it = 0; it < ntype_read; it++) {
         ifs >> orbital_fn[it];
         ORB.orbital_file.push_back(orbital_fn[it]);
 
@@ -126,14 +117,12 @@ void test_orb::set_files()
     return;
 }
 
-void test_orb::count_ntype()
-{
+void test_orb::count_ntype() {
     std::cout << "count number of atom types" << std::endl;
     std::cout << this->case_dir + "STRU" << std::endl;
     std::ifstream ifs((this->case_dir + "STRU"), std::ios::in);
 
-    if (!ifs)
-    {
+    if (!ifs) {
         std::cout << "ERROR : file STRU does not exist" << std::endl;
         exit(1);
     }
@@ -144,8 +133,7 @@ void test_orb::count_ntype()
 
     std::string x;
     ifs.rdstate();
-    while (ifs.good())
-    {
+    while (ifs.good()) {
         // read a line
         std::getline(ifs, x);
 
@@ -156,12 +144,12 @@ void test_orb::count_ntype()
 
         if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS") {
             break;
-}
+        }
 
         std::string tmpid = x.substr(0, 1);
         if (!x.empty() && tmpid != "#") {
             ntype_read++;
-}
+        }
     }
     std::cout << "ntype=" << ntype_read << std::endl;
     ifs.close();
@@ -169,29 +157,22 @@ void test_orb::count_ntype()
     return;
 }
 
-void test_orb::set_center2orbs()
-{
+void test_orb::set_center2orbs() {
     // 1. setup Gaunt coeffs
     Center2_MGT.init_Gaunt_CH(lmax);
     Center2_MGT.init_Gaunt(lmax);
     // 2. setup tables
 
-    for (int TA = 0; TA < ORB.get_ntype(); TA++)
-    {
-        for (int TB = 0; TB < ORB.get_ntype(); TB++)
-        {
-            for (int LA = 0; LA <= ORB.Phi[TA].getLmax(); LA++)
-            {
-                for (int NA = 0; NA < ORB.Phi[TA].getNchi(LA); ++NA)
-                {
-                    for (int LB = 0; LB <= ORB.Phi[TB].getLmax(); ++LB)
-                    {
-                        for (int NB = 0; NB < ORB.Phi[TB].getNchi(LB); ++NB)
-                        {
+    for (int TA = 0; TA < ORB.get_ntype(); TA++) {
+        for (int TB = 0; TB < ORB.get_ntype(); TB++) {
+            for (int LA = 0; LA <= ORB.Phi[TA].getLmax(); LA++) {
+                for (int NA = 0; NA < ORB.Phi[TA].getNchi(LA); ++NA) {
+                    for (int LB = 0; LB <= ORB.Phi[TB].getLmax(); ++LB) {
+                        for (int NB = 0; NB < ORB.Phi[TB].getNchi(LB); ++NB) {
                             this->set_single_c2o<Center2_Orb::Orb11>(TA, TB, LA, NA, LB, NB);
                             // test_center2_orb11[TA][TB][LA][NA][LB].insert(
-                            // 	make_pair(NB, MockCenter2Orb11(ORB.Phi[TA].PhiLN(LA, NA),
-                            // 		ORB.Phi[TB].PhiLN(LB, NB), OGT.MOT, Center2_MGT)));
+                            //     make_pair(NB, MockCenter2Orb11(ORB.Phi[TA].PhiLN(LA, NA),
+                            //         ORB.Phi[TB].PhiLN(LB, NB), OGT.MOT, Center2_MGT)));
                         }
                     }
                 }
@@ -208,16 +189,12 @@ void test_orb::set_center2orbs()
                             co6.second->init_radial_table();
 }
 template <class c2o>
-void test_orb::set_single_c2o(int TA, int TB, int LA, int NA, int LB, int NB)
-{
+void test_orb::set_single_c2o(int TA, int TB, int LA, int NA, int LB, int NB) {
     this->test_center2_orb11[TA][TB][LA][NA][LB].insert(std::make_pair(
         NB,
         std::make_unique<c2o>(ORB.Phi[TA].PhiLN(LA, NA), ORB.Phi[TB].PhiLN(LB, NB), OGT.MOT.pSB, Center2_MGT)));
 }
-double test_orb::randr(double Rmax)
-{
-    return double(rand()) / double(RAND_MAX) * Rmax;
-}
+double test_orb::randr(double Rmax) { return double(rand()) / double(RAND_MAX) * Rmax; }
 
 /*
 void test_orb::test() {

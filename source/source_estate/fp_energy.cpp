@@ -3,42 +3,36 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_variable.h"
 
-
 #include "source_base/tool_quit.h"
 
 #include <iomanip>
 #include <iostream>
 
-namespace elecstate
-{
+namespace elecstate {
 
 /// @brief calculate etot
-double fenergy::calculate_etot()
-{
-    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
+double fenergy::calculate_etot() {
+    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield +
+           evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot;
 }
 
 /// @brief calculate etot_harris
-double fenergy::calculate_harris()
-{
-    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
+double fenergy::calculate_harris() {
+    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx +
+                  efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot_harris;
 }
 
 /// @brief set all energies to zero
-void fenergy::clear_all()
-{
-    etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
-        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon
-        = ml_exx = 0.0;
+void fenergy::clear_all() {
+    etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx =
+        efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon =
+            ml_exx = 0.0;
 }
 
 /// @brief print all energies
-void fenergy::print_all() const
-{
+void fenergy::print_all() const {
     std::cout << std::resetiosflags(std::ios::scientific) << std::endl;
     std::cout << std::setprecision(16) << std::endl;
     std::cout << " eband=" << eband << std::endl;
@@ -65,22 +59,14 @@ void fenergy::print_all() const
 /// @brief set Efermi of a specific spin
 /// @param is SPIN
 /// @param ef_in fermi(is)
-void Efermi::set_efval(const int& is, const double& ef_in)
-{
-    if (!two_efermi)
-    {
+void Efermi::set_efval(const int& is, const double& ef_in) {
+    if (!two_efermi) {
         this->ef = ef_in;
-    }
-    else if (is == 0)
-    {
+    } else if (is == 0) {
         this->ef_up = ef_in;
-    }
-    else if (is == 1)
-    {
+    } else if (is == 1) {
         this->ef_dw = ef_in;
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("energy", "Please check NSPIN when TWO_EFERMI is true");
         __builtin_unreachable();
     }
@@ -89,22 +75,14 @@ void Efermi::set_efval(const int& is, const double& ef_in)
 /// @brief get the value of fermi of a specific spin
 /// @param is SPIN
 /// @return value of fermi(is)
-double Efermi::get_efval(const int& is) const
-{
-    if (!two_efermi)
-    {
+double Efermi::get_efval(const int& is) const {
+    if (!two_efermi) {
         return this->ef;
-    }
-    else if (is == 0)
-    {
+    } else if (is == 0) {
         return this->ef_up;
-    }
-    else if (is == 1)
-    {
+    } else if (is == 1) {
         return this->ef_dw;
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("energy", "Please check NSPIN when TWO_EFERMI is true");
         __builtin_unreachable();
     }
@@ -112,14 +90,10 @@ double Efermi::get_efval(const int& is) const
 
 /// @brief get all fermi energies for all spins
 /// @return all fermi energies for all spins
-std::vector<double> Efermi::get_all_ef() const
-{
-    if (two_efermi)
-    {
+std::vector<double> Efermi::get_all_ef() const {
+    if (two_efermi) {
         return {ef_up, ef_dw};
-    }
-    else
-    {
+    } else {
         return {ef, ef}; // For NSPIN=1, ef_up=ef_dw=ef
     }
 }

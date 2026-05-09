@@ -1,83 +1,117 @@
 # Spin-polarization and SOC
 
 ## Non-spin-polarized Calculations
-Setting of **"nspin 1"** in INPUT file means calculation with non-polarized spin. 
-In this case, electrons with spin up and spin down have same occupations at every energy states, weights of bands per k point would be double. 
+
+Setting of **"nspin 1"** in INPUT file means calculation with non-polarized spin. In this case,
+electrons with spin up and spin down have same occupations at every energy states, weights of bands
+per k point would be double.
 
 ## Collinear Spin Polarized Calculations
-Setting of **"nspin 2"** in INPUT file means calculation with polarized spin along z-axis. 
-In this case, electrons with spin up and spin down will be calculated respectively, number of k points would be doubled.
-Potential of electron and charge density will separate to spin-up case and spin-down case.
 
-Magnetic moment Settings in [STRU files](../input_files/stru.md) are not ignored until **"nspin 2"** is set in INPUT file
+Setting of **"nspin 2"** in INPUT file means calculation with polarized spin along z-axis. In this
+case, electrons with spin up and spin down will be calculated respectively, number of k points would
+be doubled. Potential of electron and charge density will separate to spin-up case and spin-down
+case.
+
+Magnetic moment Settings in [STRU files](../input_files/stru.md) are not ignored until **"nspin 2"**
+is set in INPUT file
 
 When **"nspin 2"** is set, the screen output file will contain magnetic moment information. e.g.
+
 ```
  ITER   TMAG      AMAG      ETOT(eV)       EDIFF(eV)      DRHO       TIME(s)    
  GE1    4.16e+00  4.36e+00  -6.440173e+03  0.000000e+00   6.516e-02  1.973e+01
 ```
-where "TMAG" refers to total magnetization and "AMAG" refers to average magnetization.
-For more detailed orbital magnetic moment information, please use [Mulliken charge analysis](../elec_properties/Mulliken.md).
+
+where "TMAG" refers to total magnetization and "AMAG" refers to average magnetization. For more
+detailed orbital magnetic moment information, please use
+[Mulliken charge analysis](../elec_properties/Mulliken.md).
 
 ### Constraint DFT for collinear spin polarized calculations
+
 For some special need, there are two method to constrain electronic spin.
 
-1. **"ocp"** and **"ocp_set"**
-If **"ocp=1"** and **"ocp_set"** is set in INPUT file, the occupations of states would be fixed by **"ocp_set"**, this method is often used for excited states calculation. Be careful that: when **"nspin=1"**, spin-up and spin-down electrons will both be set, and when **"nspin=2"**, you should set spin-up and spin-down respectively.
+1. **"ocp"** and **"ocp_set"** If **"ocp=1"** and **"ocp_set"** is set in INPUT file, the
+   occupations of states would be fixed by **"ocp_set"**, this method is often used for excited
+   states calculation. Be careful that: when **"nspin=1"**, spin-up and spin-down electrons will
+   both be set, and when **"nspin=2"**, you should set spin-up and spin-down respectively.
 
-2. **"nupdown"**
-If **"nupdown"** is set to non-zero, number of spin-up and spin-down electrons will be fixed, and Fermi energy level will split to E_Fermi_up and E_Fermi_down. By the way, total magnetization will also be fixed, and will be the value of **"nupdown"**.
+1. **"nupdown"** If **"nupdown"** is set to non-zero, number of spin-up and spin-down electrons will
+   be fixed, and Fermi energy level will split to E_Fermi_up and E_Fermi_down. By the way, total
+   magnetization will also be fixed, and will be the value of **"nupdown"**.
 
 ## Noncollinear Spin Polarized Calculations
-The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which case the coupling between spin up and spin down will be taken into account.
-In this case, nspin is automatically set to 4, which is usually not required to be specified manually.
-The weight of each band will not change, but the number of occupied states will be double.
-If the nbands parameter is set manually, it is generally set to twice what it would be when nspin<4.
 
-In general, non-collinear magnetic moment settings are often used in calculations considering [SOC effects](#soc-effects). When **"lspinorb 1"** in INPUT file, "nspin" is also automatically set to 4.
+The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which
+case the coupling between spin up and spin down will be taken into account. In this case, nspin is
+automatically set to 4, which is usually not required to be specified manually. The weight of each
+band will not change, but the number of occupied states will be double. If the nbands parameter is
+set manually, it is generally set to twice what it would be when nspin\<4.
+
+In general, non-collinear magnetic moment settings are often used in calculations considering
+[SOC effects](#soc-effects). When **"lspinorb 1"** in INPUT file, "nspin" is also automatically set
+to 4.
 
 Note: different settings for "noncolin" and "lspinorb" correspond to different calculations:
 
-| noncolin | lspinorb | nspin | Effect | When to Use |
-|----------|----------|-------|--------|-------------|
-| 0 | 0 | <4 | No non-collinear magnetism, no SOC | Standard collinear spin-polarized or non-spin-polarized calculations |
-| 0 | 0 | 4 | Same as above, but larger calculation | **Not recommended** - wastes computational resources |
-| 1 | 0 | 4 | Non-collinear magnetism WITHOUT SOC | Systems with complex magnetic structures (e.g., spin spirals, frustrated magnets) where SOC is negligible |
-| 0 | 1 | 4 | SOC WITH z-axis magnetism only | Non-magnetic materials with SOC (e.g., semiconductors with band splitting), or magnetic materials where magnetism is along z-axis |
-| 1 | 1 | 4 | Both SOC AND non-collinear magnetism | Heavy-element magnetic materials where both SOC and non-collinear magnetism are important (e.g., magnetic anisotropy, Dzyaloshinskii-Moriya interaction) |
+| noncolin | lspinorb | nspin | Effect                                | When to Use                                                                                                                                              |
+| -------- | -------- | ----- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0        | 0        | \<4   | No non-collinear magnetism, no SOC    | Standard collinear spin-polarized or non-spin-polarized calculations                                                                                     |
+| 0        | 0        | 4     | Same as above, but larger calculation | **Not recommended** - wastes computational resources                                                                                                     |
+| 1        | 0        | 4     | Non-collinear magnetism WITHOUT SOC   | Systems with complex magnetic structures (e.g., spin spirals, frustrated magnets) where SOC is negligible                                                |
+| 0        | 1        | 4     | SOC WITH z-axis magnetism only        | Non-magnetic materials with SOC (e.g., semiconductors with band splitting), or magnetic materials where magnetism is along z-axis                        |
+| 1        | 1        | 4     | Both SOC AND non-collinear magnetism  | Heavy-element magnetic materials where both SOC and non-collinear magnetism are important (e.g., magnetic anisotropy, Dzyaloshinskii-Moriya interaction) |
 
-**Special case**: `noncolin=0, lspinorb=1` is commonly used for non-magnetic materials with SOC effects (e.g., topological insulators, semiconductors with spin-orbit splitting). In this case, the magnetization is NOT automatically set, implying no magnetic moments in the system.
+**Special case**: `noncolin=0, lspinorb=1` is commonly used for non-magnetic materials with SOC
+effects (e.g., topological insulators, semiconductors with spin-orbit splitting). In this case, the
+magnetization is NOT automatically set, implying no magnetic moments in the system.
 
 ## For the continuation job
-- Continuation job for "nspin 1" need file "SPIN1_CHG.cube" which is generated by setting "out_chg=1" in task before. By setting "init_chg file" in new job's INPUT file, charge density will start from file but not atomic. 
-- Continuation job for "nspin 2" need files "SPIN1_CHG.cube" and "SPIN2_CHG.cube" which are generated by "out_chg 1" with "nspin 2", and refer to spin-up and spin-down charge densities respectively. It should be note that reading "SPIN1_CHG.cube" only for the continuation target magnetic moment job is not supported now.
-- Continuation job for "nspin 4" need files "SPIN%s_CHG.cube", where %s in {1,2,3,4}, which are generated by "out_chg 1" with any variable setting leading to 'nspin'=4, and refer to charge densities in Pauli spin matrixes. It should be note that reading charge density files printing by 'nspin'=2 case is supported, which means only $\sigma_{tot}$ and $\sigma_{z}$ are read.
+
+- Continuation job for "nspin 1" need file "SPIN1_CHG.cube" which is generated by setting
+  "out_chg=1" in task before. By setting "init_chg file" in new job's INPUT file, charge density
+  will start from file but not atomic.
+- Continuation job for "nspin 2" need files "SPIN1_CHG.cube" and "SPIN2_CHG.cube" which are
+  generated by "out_chg 1" with "nspin 2", and refer to spin-up and spin-down charge densities
+  respectively. It should be note that reading "SPIN1_CHG.cube" only for the continuation target
+  magnetic moment job is not supported now.
+- Continuation job for "nspin 4" need files "SPIN%s_CHG.cube", where %s in {1,2,3,4}, which are
+  generated by "out_chg 1" with any variable setting leading to 'nspin'=4, and refer to charge
+  densities in Pauli spin matrixes. It should be note that reading charge density files printing by
+  'nspin'=2 case is supported, which means only $\sigma_{tot}$ and $\sigma_{z}$ are read.
 
 # SOC Effects
+
 ## SOC
+
 `lspinorb` is used for control whether or not SOC(spin-orbit coupling) effects should be considered.
 
 Both `basis_type=pw` and `basis_type=lcao` support `scf` and `nscf` calculation with SOC effects.
 
-Atomic forces and cell stresses can be calculated with SOC effects (supported since ABACUS v3.9.0). 
+Atomic forces and cell stresses can be calculated with SOC effects (supported since ABACUS v3.9.0).
 
 ## Pseudopotentials and Numerical Atomic Orbitals
+
 For Norm-Conserving pseudopotentials, there are differences between SOC version and non-SOC version.
 
-Please check your pseudopotential files before calculating.
-In `PP_HEADER` part, keyword `has_so=1` and `relativistic="full"` refer to SOC effects have been considered, 
-which would lead to different `PP_NONLOCAL` and `PP_PSWFC` parts.
-Please be careful that `relativistic="full"` version can be used for SOC or non-SOC calculation, but `relativistic="scalar"` version only can be used for non-SOC calculation.
-When full-relativistic pseudopotential is used for non-SOC calculation, ABACUS will automatically transform it to scalar-relativistic version.
+Please check your pseudopotential files before calculating. In `PP_HEADER` part, keyword `has_so=1`
+and `relativistic="full"` refer to SOC effects have been considered, which would lead to different
+`PP_NONLOCAL` and `PP_PSWFC` parts. Please be careful that `relativistic="full"` version can be used
+for SOC or non-SOC calculation, but `relativistic="scalar"` version only can be used for non-SOC
+calculation. When full-relativistic pseudopotential is used for non-SOC calculation, ABACUS will
+automatically transform it to scalar-relativistic version.
 
-Numerical atomic orbitals in ABACUS are unrelated with spin, and same orbital file can be used for SOC and non-SOC calculation.
+Numerical atomic orbitals in ABACUS are unrelated with spin, and same orbital file can be used for
+SOC and non-SOC calculation.
 
 ## Partial-relativistic SOC Effect
-Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe the exact spin-orbit coupling.
-Artificial modulation can help for these cases.
 
-`soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect.
-In particular, `soc_lambda 0.0` refers to scalar-relativistic case and `soc_lambda 1.0` refers to full-relativistic case.
+Sometimes, for some real materials, both scalar-relativistic and full-relativistic can not describe
+the exact spin-orbit coupling. Artificial modulation can help for these cases.
+
+`soc_lambda`, which has value range [0.0, 1.0] , is used for modulate SOC effect. In particular,
+`soc_lambda 0.0` refers to scalar-relativistic case and `soc_lambda 1.0` refers to full-relativistic
+case.
 
 ## Pseudopotential Requirements for SOC
 
@@ -86,10 +120,12 @@ When performing SOC calculations (`lspinorb=1`), specific pseudopotential requir
 ### Checking Pseudopotential Files
 
 In the UPF (Unified Pseudopotential Format) file header (`PP_HEADER` section), look for:
+
 - `has_so="T"` or `has_so="1"`: Indicates SOC information is included
 - `relativistic="full"`: Indicates full-relativistic pseudopotential
 
 Example from a full-relativistic UPF file:
+
 ```
 <PP_HEADER
    ...
@@ -102,20 +138,26 @@ Example from a full-relativistic UPF file:
 ### Pseudopotential Usage Rules
 
 1. **For SOC calculations** (`lspinorb=1`):
+
    - **MUST** use full-relativistic pseudopotentials with `has_so=true`
-   - Code will terminate with error: "no soc upf used for lspinorb calculation" if scalar-relativistic PP is used
+   - Code will terminate with error: "no soc upf used for lspinorb calculation" if
+     scalar-relativistic PP is used
 
-2. **For non-SOC calculations** (`lspinorb=0`):
+1. **For non-SOC calculations** (`lspinorb=0`):
+
    - Can use either scalar-relativistic or full-relativistic pseudopotentials
-   - If full-relativistic PP is used, ABACUS automatically transforms it to scalar-relativistic version
+   - If full-relativistic PP is used, ABACUS automatically transforms it to scalar-relativistic
+     version
 
-3. **For ultrasoft pseudopotentials (USPP)**:
+1. **For ultrasoft pseudopotentials (USPP)**:
+
    - Full-relativistic USPP **requires** `lspinorb=true`
    - Code will show warning: "FR-USPP please use lspinorb=.true." if this requirement is not met
 
 ### Where to Find SOC Pseudopotentials
 
-- **SG15_ONCV**: Full-relativistic versions available at [quantum-simulation.org](http://quantum-simulation.org/potentials/sg15_oncv/upf/)
+- **SG15_ONCV**: Full-relativistic versions available at
+  [quantum-simulation.org](http://quantum-simulation.org/potentials/sg15_oncv/upf/)
 - **PseudoDOJO**: Provides both scalar and full-relativistic versions
 - **ABACUS official**: [abacus.ustc.edu.cn](http://abacus.ustc.edu.cn/pseudo/list.htm)
 
@@ -124,45 +166,61 @@ Example from a full-relativistic UPF file:
 When using SOC or non-collinear calculations, ABACUS automatically adjusts several parameters:
 
 ### When `lspinorb=true`:
+
 1. **nspin**: Automatically set to 4 (noncollinear spin representation)
-2. **Symmetry**: Automatically disabled (`symm_flag=-1`) because SOC breaks inversion symmetry
-3. **Magnetization**: NOT automatically set when `noncolin=0` (implies non-magnetic material with SOC)
+1. **Symmetry**: Automatically disabled (`symm_flag=-1`) because SOC breaks inversion symmetry
+1. **Magnetization**: NOT automatically set when `noncolin=0` (implies non-magnetic material with
+   SOC)
 
 ### When `noncolin=true`:
+
 1. **nspin**: Automatically set to 4
-2. **npol**: Set to 2 (wave function has two spinor components)
-3. **Magnetization**: Automatically set if user provides zero values (unless `lspinorb=1` and `noncolin=0`)
+1. **npol**: Set to 2 (wave function has two spinor components)
+1. **Magnetization**: Automatically set if user provides zero values (unless `lspinorb=1` and
+   `noncolin=0`)
 
 ### Important Notes:
+
 - You do NOT need to manually set `nspin=4` when using `lspinorb=1` or `noncolin=1`
 - Symmetry operations are incompatible with SOC, so they are automatically turned off
-- For `lspinorb=1, noncolin=0`: This is a special case for non-magnetic materials with SOC, where magnetization is not initialized
+- For `lspinorb=1, noncolin=0`: This is a special case for non-magnetic materials with SOC, where
+  magnetization is not initialized
 
 ## Common Errors and Solutions
 
 ### Error: "no soc upf used for lspinorb calculation"
+
 **Cause**: Using scalar-relativistic pseudopotentials with `lspinorb=1`
 
-**Solution**: Download and use full-relativistic pseudopotentials with `has_so=true`. Check the UPF file header to verify `relativistic="full"` and `has_so="T"`.
+**Solution**: Download and use full-relativistic pseudopotentials with `has_so=true`. Check the UPF
+file header to verify `relativistic="full"` and `has_so="T"`.
 
 ### Error: "nspin=4(soc or noncollinear-spin) does not support gamma only calculation"
+
 **Cause**: Trying to use `gamma_only=true` with `lspinorb=1` or `noncolin=1`
 
-**Solution**: Set `gamma_only=false` or `gamma_only=0` in your INPUT file. SOC and non-collinear calculations require k-point sampling beyond the gamma point.
+**Solution**: Set `gamma_only=false` or `gamma_only=0` in your INPUT file. SOC and non-collinear
+calculations require k-point sampling beyond the gamma point.
 
 ### Warning: "FR-USPP please use lspinorb=.true."
+
 **Cause**: Using full-relativistic ultrasoft pseudopotentials without enabling SOC
 
-**Solution**: Set `lspinorb=true` in your INPUT file, or switch to scalar-relativistic USPP if SOC is not needed.
+**Solution**: Set `lspinorb=true` in your INPUT file, or switch to scalar-relativistic USPP if SOC
+is not needed.
 
 ### Issue: Forces or stresses not calculated
-**Note**: This issue has been resolved. Atomic forces and cell stresses can now be calculated with SOC effects (supported since ABACUS v3.9.0).
 
-If you are using an older version of ABACUS (before v3.9.0), force and stress calculations with SOC were not supported. Please upgrade to the latest version to use this feature.
+**Note**: This issue has been resolved. Atomic forces and cell stresses can now be calculated with
+SOC effects (supported since ABACUS v3.9.0).
+
+If you are using an older version of ABACUS (before v3.9.0), force and stress calculations with SOC
+were not supported. Please upgrade to the latest version to use this feature.
 
 ## INPUT File Examples
 
 ### Example 1: SOC without Non-collinear Magnetism
+
 For non-magnetic materials with SOC (e.g., GaAs, topological insulators):
 
 ```
@@ -177,6 +235,7 @@ noncolin            0        # No non-collinear magnetism
 ```
 
 ### Example 2: Non-collinear Magnetism without SOC
+
 For systems with complex magnetic structures but negligible SOC:
 
 ```
@@ -190,6 +249,7 @@ noncolin            1        # Enable non-collinear magnetism
 ```
 
 ### Example 3: Both SOC and Non-collinear Magnetism
+
 For heavy-element magnetic materials (e.g., Fe with SOC, materials with DMI):
 
 ```
@@ -205,6 +265,7 @@ noncolin            1        # Enable non-collinear magnetism
 ```
 
 ### Example 4: Partial-relativistic SOC
+
 For fine-tuning SOC strength:
 
 ```

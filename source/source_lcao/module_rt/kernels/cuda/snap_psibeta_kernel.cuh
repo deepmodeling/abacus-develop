@@ -26,10 +26,8 @@
 #include <cuda_runtime.h>
 #include <string>
 
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 //=============================================================================
 // Configuration Constants
@@ -62,8 +60,7 @@ constexpr int MAX_M0_SIZE = 2 * MAX_L + 1;
  * @param theta Phase angle in radians
  * @return Complex exponential as cuDoubleComplex
  */
-__device__ __forceinline__ cuDoubleComplex cu_exp_i(double theta)
-{
+__device__ __forceinline__ cuDoubleComplex cu_exp_i(double theta) {
     double s, c;
     sincos(theta, &s, &c);
     return make_cuDoubleComplex(c, s);
@@ -72,32 +69,26 @@ __device__ __forceinline__ cuDoubleComplex cu_exp_i(double theta)
 /**
  * @brief Complex multiplication: a * b
  */
-__device__ __forceinline__ cuDoubleComplex cu_mul(cuDoubleComplex a, cuDoubleComplex b)
-{
+__device__ __forceinline__ cuDoubleComplex cu_mul(cuDoubleComplex a, cuDoubleComplex b) {
     return make_cuDoubleComplex(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 }
 
 /**
  * @brief Complex addition: a + b
  */
-__device__ __forceinline__ cuDoubleComplex cu_add(cuDoubleComplex a, cuDoubleComplex b)
-{
+__device__ __forceinline__ cuDoubleComplex cu_add(cuDoubleComplex a, cuDoubleComplex b) {
     return make_cuDoubleComplex(a.x + b.x, a.y + b.y);
 }
 
 /**
  * @brief Complex conjugate: conj(a)
  */
-__device__ __forceinline__ cuDoubleComplex cu_conj(cuDoubleComplex a)
-{
-    return make_cuDoubleComplex(a.x, -a.y);
-}
+__device__ __forceinline__ cuDoubleComplex cu_conj(cuDoubleComplex a) { return make_cuDoubleComplex(a.x, -a.y); }
 
 /**
  * @brief Complex times real: a * r
  */
-__device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double r)
-{
+__device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double r) {
     return make_cuDoubleComplex(a.x * r, a.y * r);
 }
 
@@ -117,17 +108,13 @@ __device__ __forceinline__ cuDoubleComplex cu_mul_real(cuDoubleComplex a, double
  * @param distance Radial distance r at which to interpolate
  * @return Interpolated function value
  */
-__device__ __forceinline__ double interpolate_radial_gpu(const double* __restrict__ psi,
-                                                         int mesh,
-                                                         double inv_dk,
-                                                         double distance)
-{
+__device__ __forceinline__ double
+interpolate_radial_gpu(const double* __restrict__ psi, int mesh, double inv_dk, double distance) {
     double position = distance * inv_dk;
     int iq = __double2int_rd(position); // floor(position)
 
     // Boundary checks
-    if (iq > mesh - 4 || iq < 0)
-    {
+    if (iq > mesh - 4 || iq < 0) {
         return 0.0;
     }
 
@@ -145,7 +132,6 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
 // Device Helper Functions - Spherical Harmonics
 //=============================================================================
 
-
 //=============================================================================
 // Data Structures for Kernel Input
 //=============================================================================
@@ -155,8 +141,7 @@ __device__ __forceinline__ double interpolate_radial_gpu(const double* __restric
  *
  * Contains all data needed to evaluate a single projector during integration.
  */
-struct ProjectorData
-{
+struct ProjectorData {
     int L0;           ///< Angular momentum quantum number
     int beta_offset;  ///< Offset into flattened beta radial array
     int beta_mesh;    ///< Number of radial mesh points
@@ -173,8 +158,7 @@ struct ProjectorData
  * to the overlap integral. This enables processing ALL neighbors for a center
  * atom in a single kernel launch, minimizing launch overhead.
  */
-struct NeighborOrbitalData
-{
+struct NeighborOrbitalData {
     int neighbor_idx; ///< Index of neighbor atom (ad index in adjacency list)
     double3 R1;       ///< Neighbor atom position in Cartesian coordinates (tau * lat0)
 

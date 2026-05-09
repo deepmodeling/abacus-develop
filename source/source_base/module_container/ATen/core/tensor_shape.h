@@ -11,7 +11,7 @@ namespace container {
  * @brief A class for representing the shape of a tensor.
  */
 class TensorShape {
-public:
+  public:
     /**
      * @brief Default constructor.
      */
@@ -76,10 +76,10 @@ public:
     void remove_dim(int dim);
 
     /**
-    * @brief Returns the total number of elements in the shape.
-    *
-    * @return int64_t The number of elements.
-    */
+     * @brief Returns the total number of elements in the shape.
+     *
+     * @return int64_t The number of elements.
+     */
     int64_t NumElements() const;
 
     /**
@@ -96,16 +96,16 @@ public:
      */
     bool operator!=(const TensorShape& other) const;
 
-private:
-    std::vector<int64_t> dims_ = {};     // Save dimension sizes of the tensor
+  private:
+    std::vector<int64_t> dims_ = {}; // Save dimension sizes of the tensor
     // Note: strides are not always equals to the dimension sizes.
     // The strides specifies the number of elements to step in each dimension when traversing a tensor.
     // There could be some sparse region in the tensor, and the strides will be larger than the dimension sizes.
-    // For example, given a 2D tensor with shape [3, 4], 
+    // For example, given a 2D tensor with shape [3, 4],
     // and the strides could be [6, 1] if the actual data is stored in a 1D array with size 18 [3, 6].
     // The strides could also be [12, 3] if the actual data is stored in a 1D array with size 36 [3, 12].
     // strides can only be modified by the TensorMap object.
-    std::vector<int64_t> strides_ = {};  // Save dimension strides of the tensor
+    std::vector<int64_t> strides_ = {}; // Save dimension strides of the tensor
 
     /**
      * @brief Compute the strides of the tensor.
@@ -121,6 +121,6 @@ private:
  */
 std::ostream& operator<<(std::ostream& os, const TensorShape& shape);
 
-} // container
+} // namespace container
 
-#endif  // ATEN_CORE_TENSOR_SHAPE_H_
+#endif // ATEN_CORE_TENSOR_SHAPE_H_

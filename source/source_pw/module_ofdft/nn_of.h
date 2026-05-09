@@ -3,33 +3,21 @@
 
 #include <torch/torch.h>
 
-struct NN_OFImpl:torch::nn::Module{
+struct NN_OFImpl : torch::nn::Module {
     // three hidden layers and one output layer
-    NN_OFImpl(
-        int nrxx, 
-        int nrxx_vali, 
-        int ninpt, 
-        int nnode,
-        int nlayer,
-        torch::Device device
-        );
-    ~NN_OFImpl()
-    {
+    NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, torch::Device device);
+    ~NN_OFImpl(){
         // delete[] this->fcs;
     };
 
-
     template <class T>
-    void set_data(
-        T *data,
-        const std::vector<std::string> &descriptor_type,
-        const std::vector<int> &kernel_index,
-        torch::Tensor &nn_input
-    )
-    {
-        if (data->nx_tot <= 0) return;
-        for (int i = 0; i < descriptor_type.size(); ++i)
-        {
+    void set_data(T* data,
+                  const std::vector<std::string>& descriptor_type,
+                  const std::vector<int>& kernel_index,
+                  torch::Tensor& nn_input) {
+        if (data->nx_tot <= 0)
+            return;
+        for (int i = 0; i < descriptor_type.size(); ++i) {
             nn_input.index({"...", i}) = data->get_data(descriptor_type[i], kernel_index[i]);
         }
     }

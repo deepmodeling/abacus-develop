@@ -2,14 +2,12 @@
 #define FFT_BASE_H
 
 #include <complex>
-namespace ModuleBase
-{
+namespace ModuleBase {
 template <typename FPTYPE>
-class FFT_BASE
-{
+class FFT_BASE {
   public:
-    FFT_BASE() {};
-    virtual ~FFT_BASE() {};
+    FFT_BASE(){};
+    virtual ~FFT_BASE(){};
 
     /**
      * @brief Initialize the fft parameters as virtual function.
@@ -58,7 +56,7 @@ class FFT_BASE
     /**
      * @brief Allocate and destory the resoure in FFT running time,
      * Now it only used in the DSP mode.
-     * 
+     *
      * The function is set as pure virtual function.In order to
      * override the function in the derived class.In the derived
      * class, the function is used to allocate and destory the
@@ -100,11 +98,9 @@ class FFT_BASE
      * determined by the xprime flag).Notably, the Y axis operates in
      * "many-many-FFT" mode.
      */
-    virtual __attribute__((weak)) void fftxyfor(std::complex<FPTYPE>* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fftxyfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
-    virtual __attribute__((weak)) void fftxybac(std::complex<FPTYPE>* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fftxybac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
     /**
      * @brief Forward FFT in z direction
@@ -115,11 +111,9 @@ class FFT_BASE
      * It involves only one axis, z. The FFT is applied only once.
      * Notably, the Z axis operates in many FFT with nz*ns.
      */
-    virtual __attribute__((weak)) void fftzfor(std::complex<FPTYPE>* in, 
-                                               std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fftzfor(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
-    virtual __attribute__((weak)) void fftzbac(std::complex<FPTYPE>* in, 
-                                               std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fftzbac(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
     /**
      * @brief Forward FFT in x-y direction with real to complex
@@ -129,11 +123,9 @@ class FFT_BASE
      * This function performs the forward FFT in the x-y direction
      * with real to complex.There is no difference between fftxyfor.
      */
-    virtual __attribute__((weak)) void fftxyr2c(FPTYPE* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fftxyr2c(FPTYPE* in, std::complex<FPTYPE>* out) const;
 
-    virtual __attribute__((weak)) void fftxyc2r(std::complex<FPTYPE>* in, 
-                                                FPTYPE* out) const;
+    virtual __attribute__((weak)) void fftxyc2r(std::complex<FPTYPE>* in, FPTYPE* out) const;
 
     /**
      * @brief Forward FFT in 3D
@@ -144,11 +136,9 @@ class FFT_BASE
      * It involves three axes, x, y, and z. The FFT is applied multiple times
      * for fft3D_forward.
      */
-    virtual __attribute__((weak)) void fft3D_forward(std::complex<FPTYPE>* in, 
-                                                     std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fft3D_forward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
-    virtual __attribute__((weak)) void fft3D_backward(std::complex<FPTYPE>* in, 
-                                                      std::complex<FPTYPE>* out) const;
+    virtual __attribute__((weak)) void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
   protected:
     int nx = 0;

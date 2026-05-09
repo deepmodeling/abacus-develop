@@ -18,8 +18,7 @@ namespace esolver {
 /**
  * @brief SCF convergence status
  */
-enum class SCFStatus
-{
+enum class SCFStatus {
     NotStarted,     ///< SCF has not been started
     Running,        ///< SCF is in progress
     Converged,      ///< SCF converged successfully
@@ -30,8 +29,7 @@ enum class SCFStatus
 /**
  * @brief SCF convergence criteria
  */
-struct SCFConvergenceCriteria
-{
+struct SCFConvergenceCriteria {
     double drho_threshold = 1e-6;   ///< Charge density difference threshold
     double energy_threshold = 1e-6; ///< Energy difference threshold (Ry)
     int max_iterations = 100;       ///< Maximum number of iterations
@@ -52,9 +50,11 @@ struct SCFConvergenceCriteria
 using SCFIterationCallback = std::function<bool(int iter, double drho, double energy)>;
 
 // Forward declarations for component interfaces
-template <typename TK, typename TR> class IHamiltonianBuilder;
+template <typename TK, typename TR>
+class IHamiltonianBuilder;
 class IChargeMixer;
-template <typename TK> class IDiagonalizer;
+template <typename TK>
+class IDiagonalizer;
 
 /**
  * @brief Abstract interface for SCF controller
@@ -63,9 +63,8 @@ template <typename TK> class IDiagonalizer;
  * allowing different implementations (LCAO, PW, etc.) and
  * enabling Python-controlled SCF workflows with breakpoints.
  */
-class ISCFController
-{
-public:
+class ISCFController {
+  public:
     virtual ~ISCFController() = default;
 
     // ==================== Lifecycle ====================
@@ -97,8 +96,7 @@ public:
      * @param callback Optional callback for each iteration
      * @return Final SCF status
      */
-    virtual SCFStatus run_scf(const SCFConvergenceCriteria& criteria,
-                              SCFIterationCallback callback = nullptr) = 0;
+    virtual SCFStatus run_scf(const SCFConvergenceCriteria& criteria, SCFIterationCallback callback = nullptr) = 0;
 
     /**
      * @brief Check if SCF is converged

@@ -34,26 +34,20 @@
  * the configuration-changing subroutine takes force and stress and updates the
  * configuration
  */
-void Driver::driver_run()
-{
+void Driver::driver_run() {
     ModuleBase::TITLE("Driver", "driver_run");
 
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
     if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
-        ModuleBase::WARNING_QUIT("driver",
-                                 "to use LCAO basis, compile with __LCAO");
+        ModuleBase::WARNING_QUIT("driver", "to use LCAO basis, compile with __LCAO");
     }
 #endif
 
     // the life of ucell should begin here, mohan 2024-05-12
     UnitCell ucell;
-    ucell.setup(PARAM.inp.latname,
-                PARAM.inp.ntype,
-                PARAM.inp.lmaxmax,
-                PARAM.inp.init_vel,
-                PARAM.inp.fixed_axes);
+    ucell.setup(PARAM.inp.latname, PARAM.inp.ntype, PARAM.inp.lmaxmax, PARAM.inp.init_vel, PARAM.inp.fixed_axes);
 
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
@@ -74,28 +68,19 @@ void Driver::driver_run()
     const std::string cal = PARAM.inp.calculation;
 
     //! 4: different types of calculations
-    if (cal == "md")
-    {
+    if (cal == "md") {
         Run_MD::md_line(ucell, p_esolver, PARAM);
-    }
-    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
-    {
+    } else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf") {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver, ucell, PARAM.inp);
-    }
-    else if (cal == "get_s")
-    {
+    } else if (cal == "get_s") {
         p_esolver->runner(ucell, 0);
-    }
-    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
-             cal == "test_memory" || cal == "test_neighbour")
-    {
+    } else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
+               cal == "test_memory" || cal == "test_neighbour") {
         const int istep = 0;
         p_esolver->others(ucell, istep);
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Driver::driver_run","cannot recognize the 'calculation' command");
+    } else {
+        ModuleBase::WARNING_QUIT("Driver::driver_run", "cannot recognize the 'calculation' command");
     }
 
     //! 5: clean up esolver
@@ -111,11 +96,9 @@ void Driver::driver_run()
     return;
 }
 
-void Driver::init_hardware()
-{
+void Driver::init_hardware() {
 #if ((defined __CUDA) || (defined __ROCM))
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         ModuleBase::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
         container::kernels::createGpuBlasHandle();
@@ -124,23 +107,18 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
-    if (GlobalV::NPROC > PARAM.inp.kpar && GlobalV::NPROC > PARAM.globalv.kpar_lcao)
-    {
-        ModuleBase::WARNING_QUIT(
-            "Driver::init_hardware",
-            "Number of processors must be equal to KPAR for DSP hardware initialization."
-        );
+    if (GlobalV::NPROC > PARAM.inp.kpar && GlobalV::NPROC > PARAM.globalv.kpar_lcao) {
+        ModuleBase::WARNING_QUIT("Driver::init_hardware",
+                                 "Number of processors must be equal to KPAR for DSP hardware initialization.");
     }
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 }
 
-void Driver::finalize_hardware()
-{
+void Driver::finalize_hardware() {
 #if defined(__CUDA) || defined(__ROCM)
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         ModuleBase::destoryBLAShandle();
         hsolver::destroyGpuSolverHandle();
         container::kernels::destroyGpuBlasHandle();

@@ -35,16 +35,14 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class MSST_test : public testing::Test
-{
+class MSST_test : public testing::Test {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
 
@@ -55,15 +53,13 @@ class MSST_test : public testing::Test
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete mdrun;
         delete p_esolver;
     }
 };
 
-TEST_F(MSST_test, setup)
-{
+TEST_F(MSST_test, setup) {
     EXPECT_NEAR(mdrun->vel[0].x, -0.0001314186733659715, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].y, 7.0985331994796372e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[0].z, -1.3947731701005279e-05, doublethreshold);
@@ -88,8 +84,7 @@ TEST_F(MSST_test, setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.5964231736437884e-06, doublethreshold);
 }
 
-TEST_F(MSST_test, first_half)
-{
+TEST_F(MSST_test, first_half) {
     mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
@@ -132,8 +127,7 @@ TEST_F(MSST_test, first_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8189297471809918e-05, doublethreshold);
 }
 
-TEST_F(MSST_test, second_half)
-{
+TEST_F(MSST_test, second_half) {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
     ;
@@ -178,8 +172,7 @@ TEST_F(MSST_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8200698165338931e-05, doublethreshold);
 }
 
-TEST_F(MSST_test, write_restart)
-{
+TEST_F(MSST_test, write_restart) {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -203,8 +196,7 @@ TEST_F(MSST_test, write_restart)
     ifs.close();
 }
 
-TEST_F(MSST_test, restart)
-{
+TEST_F(MSST_test, restart) {
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
@@ -217,8 +209,7 @@ TEST_F(MSST_test, restart)
     EXPECT_EQ(msst->lag_pos, 0);
 }
 
-TEST_F(MSST_test, print_md)
-{
+TEST_F(MSST_test, print_md) {
     std::ofstream ofs("running_msst.log");
     mdrun->print_md(ofs, true);
     ofs.close();
@@ -226,12 +217,16 @@ TEST_F(MSST_test, print_md)
     std::ifstream ifs("running_msst.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
+    EXPECT_THAT(output_str,
+                testing::HasSubstr(
+                    " IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
-    getline(ifs, output_str);    
+    EXPECT_THAT(output_str,
+                testing::HasSubstr(
+                    " MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
+    getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
@@ -253,5 +248,5 @@ TEST_F(MSST_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-//  remove("running_msst.log");
+    //  remove("running_msst.log");
 }

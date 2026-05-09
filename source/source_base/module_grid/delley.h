@@ -20,7 +20,6 @@ namespace Angular {
  */
 int ngrid_delley(int& lmax);
 
-
 /**
  * @brief Delley's quadrature grid and weights.
  *

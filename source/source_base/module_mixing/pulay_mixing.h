@@ -3,8 +3,7 @@
 #include "mixing.h"
 #include "source_base/matrix.h"
 
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 /**
  * @brief Pulay mixing method.
  *        Ref: Pulay P. Chemical Physics Letters, 1980, 73(2): 393-398.
@@ -16,22 +15,18 @@ namespace Base_Mixing
  *        mixing_data{i} = n_in{i} + mixing_beta*F{i}
  *        n{m+1} = \sum_n coef{i} * mixing_data{i}
  */
-class Pulay_Mixing : public Mixing
-{
+class Pulay_Mixing : public Mixing {
   public:
-    Pulay_Mixing(const int& mixing_ndim)
-    {
+    Pulay_Mixing(const int& mixing_ndim) {
         this->mixing_ndim = mixing_ndim;
         this->data_ndim = mixing_ndim;
         this->coef = std::vector<double>(mixing_ndim);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
     }
-    Pulay_Mixing(const int& mixing_ndim, const double& mixing_beta) : Pulay_Mixing(mixing_ndim)
-    {
+    Pulay_Mixing(const int& mixing_ndim, const double& mixing_beta) : Pulay_Mixing(mixing_ndim) {
         this->mixing_beta = mixing_beta;
     }
-    virtual ~Pulay_Mixing() override
-    {
+    virtual ~Pulay_Mixing() override {
         if (F != nullptr)
             free(F);
     }
@@ -39,8 +34,7 @@ class Pulay_Mixing : public Mixing
      * @brief reset mixing
      *
      */
-    virtual void reset() override
-    {
+    virtual void reset() override {
         this->start_F = 0;
         this->address = nullptr;
     }
@@ -61,18 +55,16 @@ class Pulay_Mixing : public Mixing
                            const double* data_out,
                            std::function<void(double*)> screen,
                            std::function<void(double*, const double*, const double*)> mix,
-                           const bool& need_calcoef) override
-    {
+                           const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
-    virtual void push_data(
-        Mixing_Data& mdata,
-        const std::complex<double>* data_in,
-        const std::complex<double>* data_out,
-        std::function<void(std::complex<double>*)> screen,
-        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
-        const bool& need_calcoef) override
-    {
+    virtual void
+    push_data(Mixing_Data& mdata,
+              const std::complex<double>* data_in,
+              const std::complex<double>* data_out,
+              std::function<void(std::complex<double>*)> screen,
+              std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+              const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
 
@@ -82,13 +74,11 @@ class Pulay_Mixing : public Mixing
      * @param mdata Mixing_Data
      * @param inner_product pointer to the inner dot function
      */
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
-    {
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override {
         tem_cal_coef(mdata, inner_product);
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
-    {
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override {
         tem_cal_coef(mdata, inner_product);
     }
 

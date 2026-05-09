@@ -13,8 +13,7 @@
  *   - Indices used in UnitCell
  **/
 
-class CellIndexTest : public testing::Test
-{
+class CellIndexTest : public testing::Test {
   protected:
     std::vector<std::string> atom_labels = {"C", "H"};
     std::vector<int> atom_counts = {1, 2};
@@ -22,8 +21,7 @@ class CellIndexTest : public testing::Test
     CellIndex cell_index = CellIndex(atom_labels, atom_counts, lnchi_counts, 1);
 };
 
-TEST_F(CellIndexTest, EmptyTest)
-{
+TEST_F(CellIndexTest, EmptyTest) {
     CellIndex cell_index1;
     EXPECT_EQ(0, cell_index1.get_ntype());
     EXPECT_EQ(0, cell_index1.get_nw());
@@ -33,8 +31,7 @@ TEST_F(CellIndexTest, EmptyTest)
     EXPECT_THAT(output, testing::HasSubstr("iat out of range [0, nat)"));
 }
 
-TEST_F(CellIndexTest, Index)
-{
+TEST_F(CellIndexTest, Index) {
     EXPECT_EQ(2, cell_index.get_ntype());
     EXPECT_EQ(3, cell_index.get_nat());
     EXPECT_EQ(1, cell_index.get_nat(0));
@@ -53,8 +50,7 @@ TEST_F(CellIndexTest, Index)
     EXPECT_EQ("H", cell_index.get_atom_label(1));
 }
 
-TEST_F(CellIndexTest, WriteOrbInfo)
-{
+TEST_F(CellIndexTest, WriteOrbInfo) {
     cell_index.write_orb_info("./");
     std::ifstream ifs("./Orbital");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

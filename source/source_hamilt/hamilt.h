@@ -9,12 +9,10 @@
 #include "operator.h"
 #include "hamilt_base.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Hamilt : public HamiltBase
-{
+class Hamilt : public HamiltBase {
   public:
     virtual ~Hamilt(){};
 
@@ -31,32 +29,21 @@ class Hamilt : public HamiltBase
     void* get_ops() override { return static_cast<void*>(ops); }
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
-	virtual void hPsi(
-			const T* psi_in, 
-			T* hpsi, 
-			const size_t size) const
-	{
-		return;
-	}
+    virtual void hPsi(const T* psi_in, T* hpsi, const size_t size) const { return; }
 
     virtual void sPsi(const T* psi_in, // psi
                       T* spsi,         // spsi
                       const int nrow,  // dimension of spsi: nbands * nrow
                       const int npw,   // number of plane waves
                       const int nbands // number of bands
-    ) const
-    {
+    ) const {
         syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
     }
 
-	/// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
-	virtual void matrix(
-			MatrixBlock<std::complex<double>> &hk_in, 
-			MatrixBlock<std::complex<double>> &sk_in){return;}
+    /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
+    virtual void matrix(MatrixBlock<std::complex<double>>& hk_in, MatrixBlock<std::complex<double>>& sk_in) { return; }
 
-	virtual void matrix(
-			MatrixBlock<double> &hk_in, 
-			MatrixBlock<double> &sk_in){return;}
+    virtual void matrix(MatrixBlock<double>& hk_in, MatrixBlock<double>& sk_in) { return; }
 
     virtual std::vector<T> matrix() { return std::vector<T>(); }
 
@@ -65,8 +52,7 @@ class Hamilt : public HamiltBase
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;
 
-protected:
-
+  protected:
     Device* ctx = {};
     using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };

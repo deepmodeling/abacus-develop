@@ -2,13 +2,11 @@
 #include <gtest/gtest.h>
 
 // Test fixture for parse_expression tests
-class ReadInputTool : public ::testing::Test
-{
+class ReadInputTool : public ::testing::Test {
   protected:
 };
 
-TEST_F(ReadInputTool, parse_expression)
-{
+TEST_F(ReadInputTool, parse_expression) {
     // Test case for empty expressions
     {
         std::vector<std::string> expressions = {};
@@ -33,8 +31,7 @@ TEST_F(ReadInputTool, parse_expression)
 
         parse_expression(expressions, result);
         EXPECT_EQ(expected.size(), result.size());
-        for (size_t i = 0; i < expected.size(); i++)
-        {
+        for (size_t i = 0; i < expected.size(); i++) {
             EXPECT_EQ(expected[i], result[i]);
         }
     }
@@ -44,11 +41,9 @@ TEST_F(ReadInputTool, parse_expression)
         std::vector<double> expected = {3.0, 4.2, 4.2, 7.0};
         std::vector<double> result;
 
-        
         parse_expression(expressions, result);
         EXPECT_EQ(expected.size(), result.size());
-        for (size_t i = 0; i < expected.size(); i++)
-        {
+        for (size_t i = 0; i < expected.size(); i++) {
             EXPECT_NEAR(expected[i], result[i], 1e-5);
         }
     }

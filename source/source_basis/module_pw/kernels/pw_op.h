@@ -18,11 +18,7 @@ struct set_3d_fft_box_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
-    void operator() (
-        const int npwk,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator()(const int npwk, const int* box_index, const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE, typename Device>
@@ -37,19 +33,13 @@ struct set_recip_to_real_output_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in real space)
-    void operator() (
-        const int nrxx,
-        const bool add,
-        const FPTYPE factor,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator()(const int nrxx,
+                    const bool add,
+                    const FPTYPE factor,
+                    const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out);
 
-    void operator() (
-        const int nrxx,
-        const bool add,
-        const FPTYPE factor,
-        const std::complex<FPTYPE>* in,
-        FPTYPE* out);
+    void operator()(const int nrxx, const bool add, const FPTYPE factor, const std::complex<FPTYPE>* in, FPTYPE* out);
 };
 
 template <typename FPTYPE, typename Device>
@@ -66,55 +56,43 @@ struct set_real_to_recip_output_op {
     ///
     /// Output Parameters
     /// @param out - output psi within the 3D box(in recip space)
-    void operator() (
-        const int npw_k,
-        const int nxyz,
-        const bool add,
-        const FPTYPE factor,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out);
+    void operator()(const int npw_k,
+                    const int nxyz,
+                    const bool add,
+                    const FPTYPE factor,
+                    const int* box_index,
+                    const std::complex<FPTYPE>* in,
+                    std::complex<FPTYPE>* out);
 
-    void operator() (
-        const int npw_k,
-        const int nxyz,
-        const bool add,
-        const FPTYPE factor,
-        const int* box_index,
-        const std::complex<FPTYPE>* in,
-        FPTYPE* out);
+    void operator()(const int npw_k,
+                    const int nxyz,
+                    const bool add,
+                    const FPTYPE factor,
+                    const int* box_index,
+                    const std::complex<FPTYPE>* in,
+                    FPTYPE* out);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
-struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>
-{
-    void operator()(const int npwk,
-                    const int* box_index,
-                    const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out);
+struct set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const int npwk, const int* box_index, const std::complex<FPTYPE>* in, std::complex<FPTYPE>* out);
 };
 
 template <typename FPTYPE>
-struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const int nrxx,
                     const bool add,
                     const FPTYPE factor,
                     const std::complex<FPTYPE>* in,
                     std::complex<FPTYPE>* out);
 
-    void operator()(const int nrxx,
-                    const bool add,
-                    const FPTYPE factor,
-                    const std::complex<FPTYPE>* in,
-                    FPTYPE* out);
+    void operator()(const int nrxx, const bool add, const FPTYPE factor, const std::complex<FPTYPE>* in, FPTYPE* out);
 };
 
 template <typename FPTYPE>
-struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const int npw_k,
                     const int nxyz,
                     const bool add,
@@ -133,4 +111,4 @@ struct set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace ModulePW
-#endif //MODULE_PW_MULTI_DEVICE_H
+#endif // MODULE_PW_MULTI_DEVICE_H

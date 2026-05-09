@@ -7,14 +7,13 @@
 #include "source_pw/module_stodft/sto_iter.h"
 #include "source_pw/module_stodft/sto_wf.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
-{
+class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device> {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();

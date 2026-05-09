@@ -6,49 +6,48 @@
 #include <vector>
 
 void sparse_format::cal_dS(const UnitCell& ucell,
-    const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    const Grid_Driver& grid,
-    const TwoCenterBundle& two_center_bundle,
-    const LCAO_Orbitals& orb,
-    const double& sparse_thr)
-{
-ModuleBase::TITLE("sparse_format", "cal_dS");
+                           const Parallel_Orbitals& pv,
+                           LCAO_HS_Arrays& HS_Arrays,
+                           const Grid_Driver& grid,
+                           const TwoCenterBundle& two_center_bundle,
+                           const LCAO_Orbitals& orb,
+                           const double& sparse_thr) {
+    ModuleBase::TITLE("sparse_format", "cal_dS");
 
-sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = pv.nnr;
+    sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
+    const int nnr = pv.nnr;
 
-ForceStressArrays fsr_dh;
-fsr_dh.DHloc_fixedR_x = new double[nnr];
-fsr_dh.DHloc_fixedR_y = new double[nnr];
-fsr_dh.DHloc_fixedR_z = new double[nnr];
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
-// the pointers of dS is different from dH, use the dh pointers to reuse the print functions
-fsr_dh.DSloc_Rx = fsr_dh.DHloc_fixedR_x;
-fsr_dh.DSloc_Ry = fsr_dh.DHloc_fixedR_y;
-fsr_dh.DSloc_Rz = fsr_dh.DHloc_fixedR_z;
-// cal dS=<phi|dphi> in LCAO
-const bool cal_deri = true;
-const bool cal_stress = false;
-LCAO_domain::build_ST_new(fsr_dh,
-       'S',
-       cal_deri,
-       cal_stress,
-       ucell,
-       orb,
-       pv,
-       two_center_bundle,
-       &grid,
-       nullptr,
-       false); // delete unused parameter lm.Hloc_fixedR
+    ForceStressArrays fsr_dh;
+    fsr_dh.DHloc_fixedR_x = new double[nnr];
+    fsr_dh.DHloc_fixedR_y = new double[nnr];
+    fsr_dh.DHloc_fixedR_z = new double[nnr];
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
+    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
+    // the pointers of dS is different from dH, use the dh pointers to reuse the print functions
+    fsr_dh.DSloc_Rx = fsr_dh.DHloc_fixedR_x;
+    fsr_dh.DSloc_Ry = fsr_dh.DHloc_fixedR_y;
+    fsr_dh.DSloc_Rz = fsr_dh.DHloc_fixedR_z;
+    // cal dS=<phi|dphi> in LCAO
+    const bool cal_deri = true;
+    const bool cal_stress = false;
+    LCAO_domain::build_ST_new(fsr_dh,
+                              'S',
+                              cal_deri,
+                              cal_stress,
+                              ucell,
+                              orb,
+                              pv,
+                              two_center_bundle,
+                              &grid,
+                              nullptr,
+                              false); // delete unused parameter lm.Hloc_fixedR
 
-sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr);
-delete[] fsr_dh.DHloc_fixedR_x;
-delete[] fsr_dh.DHloc_fixedR_y;
-delete[] fsr_dh.DHloc_fixedR_z;
-return;
+    sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr);
+    delete[] fsr_dh.DHloc_fixedR_x;
+    delete[] fsr_dh.DHloc_fixedR_y;
+    delete[] fsr_dh.DHloc_fixedR_z;
+    return;
 }
 void sparse_format::cal_dH(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
@@ -58,8 +57,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
-                           const ModuleBase::matrix& v_eff)
-{
+                           const ModuleBase::matrix& v_eff) {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
@@ -100,28 +98,31 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                                        *(two_center_bundle.overlap_orb_beta),
                                        &grid);
 
-    sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
 
     delete[] fsr_dh.DHloc_fixedR_x;
     delete[] fsr_dh.DHloc_fixedR_y;
     delete[] fsr_dh.DHloc_fixedR_z;
 
-    if(PARAM.inp.nspin==2)
-    {
-        const double* vr_eff1
-            = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
-        if (!PARAM.globalv.gamma_only_local) 
-        {
-            ModuleGint::cal_dvlocal_R_sparseMatrix(
-                PARAM.inp.nspin, PARAM.globalv.npol, current_spin, PARAM.globalv.nlocal,
-                sparse_thr, vr_eff1, pv, ucell, grid, HS_Arrays);
+    if (PARAM.inp.nspin == 2) {
+        const double* vr_eff1 = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
+        if (!PARAM.globalv.gamma_only_local) {
+            ModuleGint::cal_dvlocal_R_sparseMatrix(PARAM.inp.nspin,
+                                                   PARAM.globalv.npol,
+                                                   current_spin,
+                                                   PARAM.globalv.nlocal,
+                                                   sparse_thr,
+                                                   vr_eff1,
+                                                   pv,
+                                                   ucell,
+                                                   grid,
+                                                   HS_Arrays);
         }
     }
     return;
 }
 
-void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid)
-{
+void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid) {
     int RminX = int(-grid.getGlayerX_minus());
     int RminY = int(-grid.getGlayerY_minus());
     int RminZ = int(-grid.getGlayerZ_minus());
@@ -130,12 +131,9 @@ void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, 
     int Ry = grid.getGlayerY() + grid.getGlayerY_minus();
     int Rz = grid.getGlayerZ() + grid.getGlayerZ_minus();
 
-    for (int ix = 0; ix < Rx; ix++)
-    {
-        for (int iy = 0; iy < Ry; iy++)
-        {
-            for (int iz = 0; iz < Rz; iz++)
-            {
+    for (int ix = 0; ix < Rx; ix++) {
+        for (int iy = 0; iy < Ry; iy++) {
+            for (int iz = 0; iz < Rz; iz++) {
                 Abfs::Vector3_Order<int> temp_R(ix + RminX, iy + RminY, iz + RminZ);
                 all_R_coor.insert(temp_R);
             }
@@ -152,8 +150,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                                const Grid_Driver& grid,
                                const std::vector<double>& orb_cutoff,
                                const int& current_spin,
-                               const double& sparse_thr)
-{
+                               const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_dSTN_R");
 
     int index = 0;
@@ -163,18 +160,15 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
     double temp_value_double = 0.0;
     std::complex<double> temp_value_complex = 0.0;
 
-    for (int T1 = 0; T1 < ucell.ntype; ++T1)
-    {
+    for (int T1 = 0; T1 < ucell.ntype; ++T1) {
         Atom* atom1 = &ucell.atoms[T1];
-        for (int I1 = 0; I1 < atom1->na; ++I1)
-        {
+        for (int I1 = 0; I1 < atom1->na; ++I1) {
             tau1 = atom1->tau[I1];
             grid.Find_atom(ucell, tau1, T1, I1);
             Atom* atom1 = &ucell.atoms[T1];
             const int start = ucell.itiaiw2iwt(T1, I1, 0);
 
-            for (int ad = 0; ad < grid.getAdjacentNum() + 1; ++ad)
-            {
+            for (int ad = 0; ad < grid.getAdjacentNum() + 1; ++ad) {
                 const int T2 = grid.getType(ad);
                 const int I2 = grid.getNatom(ad);
                 Atom* atom2 = &ucell.atoms[T2];
@@ -186,14 +180,10 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
 
                 bool adj = false;
 
-                if (distance < rcut)
-                {
+                if (distance < rcut) {
                     adj = true;
-                }
-                else if (distance >= rcut)
-                {
-                    for (int ad0 = 0; ad0 < grid.getAdjacentNum() + 1; ++ad0)
-                    {
+                } else if (distance >= rcut) {
+                    for (int ad0 = 0; ad0 < grid.getAdjacentNum() + 1; ++ad0) {
                         const int T0 = grid.getType(ad0);
 
                         tau0 = grid.getAdjacentTau(ad0);
@@ -206,60 +196,48 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                         double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
                         double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
 
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
+                        if (distance1 < rcut1 && distance2 < rcut2) {
                             adj = true;
                             break;
                         }
                     }
                 }
 
-                if (adj)
-                {
+                if (adj) {
                     const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
-                    {
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++) {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
 
-                        if (mu < 0)
-                        {
+                        if (mu < 0) {
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
-                        {
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++) {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
 
-                            if (nu < 0)
-                            {
+                            if (nu < 0) {
                                 continue;
                             }
 
-                            if (PARAM.inp.nspin != 4)
-                            {
+                            if (PARAM.inp.nspin != 4) {
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
-                                if (std::abs(temp_value_double) > sparse_thr)
-                                {
+                                if (std::abs(temp_value_double) > sparse_thr) {
                                     HS_Arrays.dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
                                 temp_value_double = fsr.DHloc_fixedR_y[index];
-                                if (std::abs(temp_value_double) > sparse_thr)
-                                {
+                                if (std::abs(temp_value_double) > sparse_thr) {
                                     HS_Arrays.dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
                                 temp_value_double = fsr.DHloc_fixedR_z[index];
-                                if (std::abs(temp_value_double) > sparse_thr)
-                                {
+                                if (std::abs(temp_value_double) > sparse_thr) {
                                     HS_Arrays.dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 ModuleBase::WARNING_QUIT("cal_dSTN_R", "nspin=4 with SOC is not supported yet.");
                             }
                             ++index;
@@ -273,12 +251,10 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
     return;
 }
 
-void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
-{
+void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
-    if (PARAM.inp.nspin != 4)
-    {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRy_sparse_up;
@@ -292,9 +268,7 @@ void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
         HS_Arrays.dHRy_sparse[1].swap(empty_dHRy_sparse_down);
         HS_Arrays.dHRz_sparse[0].swap(empty_dHRz_sparse_up);
         HS_Arrays.dHRz_sparse[1].swap(empty_dHRz_sparse_down);
-    }
-    else
-    {
+    } else {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
             empty_dHRx_soc_sparse;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>

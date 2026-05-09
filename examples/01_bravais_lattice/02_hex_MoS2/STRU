@@ -12,10 +12,10 @@ LATTICE_PARAMETERS
 12
 
 ATOMIC_POSITIONS
-Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
-Mo 			#Name of element	
-0.0			#Magnetic for this element.
-1			#Number of atoms
+Cartesian         #Cartesian(Unit is LATTICE_CONSTANT)
+Mo             #Name of element    
+0.0            #Magnetic for this element.
+1            #Number of atoms
 0.000000000   0.577350270   2.462038339 0 0 0
 S
 0.0

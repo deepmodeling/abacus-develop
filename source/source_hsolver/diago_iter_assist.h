@@ -8,12 +8,10 @@
 
 #include <functional>
 
-namespace hsolver
-{
+namespace hsolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class DiagoIterAssist
-{
+class DiagoIterAssist {
   private:
     using Real = typename GetTypeReal<T>::type;
 
@@ -31,7 +29,7 @@ class DiagoIterAssist
     static int SCF_ITER;
 
     // for psi::Psi structure
-     /**
+    /**
      * @brief Diagonalizes the Hamiltonian in a subspace defined by the given wavefunction.
      *
      * This static function computes the eigenvalues and eigenvectors of the Hamiltonian
@@ -50,7 +48,7 @@ class DiagoIterAssist
     static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
                               const psi::Psi<T, Device>& psi,
                               psi::Psi<T, Device>& evc,
-                              Real *en,
+                              Real* en,
                               int n_band = 0,
                               const bool is_S_orthogonal = false);
 
@@ -61,31 +59,27 @@ class DiagoIterAssist
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
     /// @param en eigenenergies
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
     /// and return all - zero eigenenergies.
     static void diag_subspace_init(
-            hamilt::Hamilt<T, Device>* pHamilt,
-            const T* psi,
-            int psi_nr,
-            int psi_nc,
-            psi::Psi<T, Device> &evc,
-            Real* en,
-            const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
-            const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
+        hamilt::Hamilt<T, Device>* pHamilt,
+        const T* psi,
+        int psi_nr,
+        int psi_nc,
+        psi::Psi<T, Device>& evc,
+        Real* en,
+        const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
+        const std::function<void(const T* const, const int, const int)>& export_vcc =
+            [](const T* null, const int n, const int m) {});
 
-    static void diag_heevx(const int nstart,
-                            const int nbands,
-                            const T *hcc,
-                            const int ldh,
-                            Real *e,
-                            T *vcc);
+    static void diag_heevx(const int nstart, const int nbands, const T* hcc, const int ldh, Real* e, T* vcc);
     static void diag_hegvd(const int nstart,
-                            const int nbands,
-                            const T *hcc,
-                            T *sc,
-                            const int ldh, // nstart
-                            Real *e,
-                            T *vcc);
+                           const int nbands,
+                           const T* hcc,
+                           T* sc,
+                           const int ldh, // nstart
+                           Real* e,
+                           T* vcc);
 
     /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
     /// @param pHamilt : hamiltonian operator carrier
@@ -93,9 +87,9 @@ class DiagoIterAssist
     /// @param hcc : Hamiltonian matrix
     /// @param scc : overlap matrix
     static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                T *hcc, 
-                                                T *scc);
+                                const psi::Psi<T, Device>& psi,           // [in] wavefunction
+                                T* hcc,
+                                T* scc);
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix
@@ -105,20 +99,11 @@ class DiagoIterAssist
     /// @param mat_out : output matrix to be rotated
     /// @param mat_col : number of columns of target matrix
     /// @param en : eigenvalues
-    static void diag_responce(const T* hcc,
-                              T* scc,
-                              const int nbands,
-                              const T* mat_in, 
-                              T* mat_out, 
-                              int mat_col, 
-                              Real* en);
-    
+    static void
+    diag_responce(const T* hcc, T* scc, const int nbands, const T* mat_in, T* mat_out, int mat_col, Real* en);
+
     /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
-    static void diag_subspace_psi(const T* hcc,
-                              T* scc,
-                              const int dim_subspace,
-                              psi::Psi<T, Device>& evc,
-                              Real* en);
+    static void diag_subspace_psi(const T* hcc, T* scc, const int dim_subspace, psi::Psi<T, Device>& evc, Real* en);
 
     static bool test_exit_cond(const int& ntry, const int& notconv);
 
@@ -131,10 +116,10 @@ class DiagoIterAssist
     using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
     using syncmem_var_op = base_device::memory::synchronize_memory_op<Real, Device, Device>;
-    using syncmem_var_h2d_op
-        = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
-    using syncmem_var_d2h_op
-        = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using syncmem_var_h2d_op =
+        base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op =
+        base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;

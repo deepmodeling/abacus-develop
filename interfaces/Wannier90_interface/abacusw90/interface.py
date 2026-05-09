@@ -30,9 +30,7 @@ class ABACUSWannier90:
     # Internal objects
     _wannier_input: Optional[io_utils.Wannier90Input] = field(default=None, init=False)
     _abacus_input: Optional[io_utils.AbacusInput] = field(default=None, init=False)
-    _scf_input: Optional[io_utils.AbacusInput] = field(
-        default=None, init=False
-    )
+    _scf_input: Optional[io_utils.AbacusInput] = field(default=None, init=False)
 
     def __post_init__(self):
         self.work_dir = Path(self.work_dir)

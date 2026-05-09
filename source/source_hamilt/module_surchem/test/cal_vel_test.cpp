@@ -27,15 +27,13 @@
  *     - calculate electrostatic potential
  */
 
-class cal_vel_test : public testing::Test
-{
+class cal_vel_test : public testing::Test {
   protected:
     surchem solvent_model;
     UnitCell ucell;
 };
 
-TEST_F(cal_vel_test, shape_gradn)
-{
+TEST_F(cal_vel_test, shape_gradn) {
     int nrxx = 27000;
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
@@ -46,8 +44,7 @@ TEST_F(cal_vel_test, shape_gradn)
     PS_TOTN_real[0] = 2.081e-03;
     PS_TOTN_real[1] = 1.818e-03;
     PS_TOTN_real[2] = 1.193e-03;
-    for (int i = 3; i < nrxx; i++)
-    {
+    for (int i = 3; i < nrxx; i++) {
         PS_TOTN_real[i] = 0.1;
     }
 
@@ -56,8 +53,7 @@ TEST_F(cal_vel_test, shape_gradn)
     double min = 1e-10;
     double* eprime = new double[nrxx];
 
-    for (int ir = 0; ir < nrxx; ir++)
-    {
+    for (int ir = 0; ir < nrxx; ir++) {
         epr_z = log(std::max(PS_TOTN_real[ir], min) / PARAM.inp.nc_k) / sqrt(2) / PARAM.inp.sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
@@ -68,8 +64,7 @@ TEST_F(cal_vel_test, shape_gradn)
     delete[] PS_TOTN_real;
 }
 
-TEST_F(cal_vel_test, eps_pot)
-{
+TEST_F(cal_vel_test, eps_pot) {
     Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
@@ -119,8 +114,7 @@ TEST_F(cal_vel_test, eps_pot)
     eprime[0] = 5.07288;
     eprime[1] = 10.8251;
     eprime[2] = 83.0605;
-    for (int i = 3; i < nrxx; i++)
-    {
+    for (int i = 3; i < nrxx; i++) {
         PS_TOTN_real[i] = 0.1;
         eprime[i] = 1;
     }
@@ -129,13 +123,11 @@ TEST_F(cal_vel_test, eps_pot)
     phi[0] = {2.116e-05, -9.528e-05};
     phi[1] = {1.608e-04, -1.958e-06};
     phi[2] = {1.500e-05, 7.303e-05};
-    for (int i = 3; i < npw; i++)
-    {
+    for (int i = 3; i < npw; i++) {
         phi[i] = 1e-7;
     }
 
-    for (int ir = 0; ir < nrxx; ir++)
-    {
+    for (int ir = 0; ir < nrxx; ir++) {
         eprime[ir] = eprime[ir] * (PARAM.input.eb_k - 1);
     }
 
@@ -144,13 +136,11 @@ TEST_F(cal_vel_test, eps_pot)
 
     XC_Functional::grad_rho(phi, nabla_phi, &pwtest, ucell.tpiba);
 
-    for (int ir = 0; ir < nrxx; ir++)
-    {
+    for (int ir = 0; ir < nrxx; ir++) {
         phisq[ir] = pow(nabla_phi[ir].x, 2) + pow(nabla_phi[ir].y, 2) + pow(nabla_phi[ir].z, 2);
     }
 
-    for (int ir = 0; ir < nrxx; ir++)
-    {
+    for (int ir = 0; ir < nrxx; ir++) {
         vwork[ir] = eprime[ir] * phisq[ir] / (8 * ModuleBase::PI);
     }
 
@@ -165,8 +155,7 @@ TEST_F(cal_vel_test, eps_pot)
     delete[] vwork;
 }
 
-TEST_F(cal_vel_test, cal_vel)
-{
+TEST_F(cal_vel_test, cal_vel) {
     Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
@@ -174,7 +163,7 @@ TEST_F(cal_vel_test, cal_vel)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -208,8 +197,7 @@ TEST_F(cal_vel_test, cal_vel)
     std::complex<double>* TOTN = new std::complex<double>[npw];
     std::complex<double>* PS_TOTN = new std::complex<double>[npw];
 
-    for (int i = 0; i < npw; i++)
-    {
+    for (int i = 0; i < npw; i++) {
         TOTN[i] = 1e-5;
         PS_TOTN[i] = 1e-7;
     }
@@ -232,8 +220,7 @@ TEST_F(cal_vel_test, cal_vel)
     delete[] TOTN;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);

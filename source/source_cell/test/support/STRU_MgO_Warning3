@@ -7,6 +7,6 @@ Mg_gga_8au_100Ry_4s2p1d.orb
 O_gga_8au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-1.8897259886 	# 1.8897259886 Bohr = 1.0 Angstrom
+1.8897259886     # 1.8897259886 Bohr = 1.0 Angstrom
 
 LATTICE_PARAMETERS

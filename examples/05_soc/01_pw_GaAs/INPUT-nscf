@@ -1,5 +1,5 @@
 INPUT_PARAMETERS
-#Parameters	(General)
+#Parameters    (General)
 pseudo_dir              ../../../tests/PP_ORB
 nbands                  35
 calculation             nscf
@@ -17,7 +17,7 @@ scf_thr                 1e-8
 scf_nmax                100
 pw_diag_thr             0.00001
 lspinorb                1
-nspin		            4
+nspin                    4
 
 #Parameters (LCAO)
 basis_type              pw

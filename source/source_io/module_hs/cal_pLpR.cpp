@@ -15,14 +15,14 @@
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 /**
- * 
+ *
  * FIXME: the following part will be transfered to TwoCenterIntegrator soon
- * 
+ *
  * Notation
  * --------
  * ylm: complex spherical harmonics
  * slm: solid (real) spherical harmonics
- * 
+ *
  * Changelog
  * ---------
  * Switch to support the solid spherical harmonics to keep consistent with
@@ -32,27 +32,31 @@
  */
 
 // L+ylm = sqrt((l-m)(l+m+1))ylm+1, return the sqrt((l-m)(l+m+1))
-double _lambda_plus(const int l, const int m)
-{
+double _lambda_plus(const int l, const int m) {
     return std::sqrt((l - m) * (l + m + 1)); // NOTE: complex spherical harmonics
 }
 
 // L-ylm = sqrt((l+m)(l-m+1))ylm-1, return the sqrt((l+m)(l-m+1))
-double _lambda_minus(const int l, const int m)
-{
+double _lambda_minus(const int l, const int m) {
     return std::sqrt((l + m) * (l - m + 1)); // NOTE: complex spherical harmonics
 }
 
 const std::complex<double> i = {0., 1.};
 const double invsqrt2 = std::sqrt(2) * 0.5;
 
-std::complex<double> ModuleIO::cal_LzijR(
-    const std::unique_ptr<TwoCenterIntegrator>& calculator,
-    const int it, const int ia, const int il, const int iz, const int mi,
-    const int jt, const int ja, const int jl, const int jz, const int mj,
-    const ModuleBase::Vector3<double>& vR)
-{
-    if(mj == 0) {
+std::complex<double> ModuleIO::cal_LzijR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
+                                         const int it,
+                                         const int ia,
+                                         const int il,
+                                         const int iz,
+                                         const int mi,
+                                         const int jt,
+                                         const int ja,
+                                         const int jl,
+                                         const int jz,
+                                         const int mj,
+                                         const ModuleBase::Vector3<double>& vR) {
+    if (mj == 0) {
         return std::complex<double>(0.);
     }
     double val_ = 0;
@@ -60,12 +64,18 @@ std::complex<double> ModuleIO::cal_LzijR(
     return i * static_cast<double>(mj) * val_;
 }
 
-std::complex<double> ModuleIO::cal_LxijR(
-    const std::unique_ptr<TwoCenterIntegrator>& calculator,
-    const int it, const int ia, const int il, const int iz, const int im,
-    const int jt, const int ja, const int jl, const int jz, const int jm,
-    const ModuleBase::Vector3<double>& vR)
-{
+std::complex<double> ModuleIO::cal_LxijR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
+                                         const int it,
+                                         const int ia,
+                                         const int il,
+                                         const int iz,
+                                         const int im,
+                                         const int jt,
+                                         const int ja,
+                                         const int jl,
+                                         const int jz,
+                                         const int jm,
+                                         const ModuleBase::Vector3<double>& vR) {
     const double lmbdp = _lambda_plus(jl, jm);
     const double lmbdm = _lambda_minus(jl, jm);
     // two-center-integral placeholders
@@ -73,10 +83,10 @@ std::complex<double> ModuleIO::cal_LxijR(
     double valm = 0.;
     if (jm > 1) {
         if (std::fabs(lmbdp) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm + 1), vR, &valp);
         }
         if (std::fabs(lmbdm) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm-1), vR, &valm);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm - 1), vR, &valm);
         }
         return i * 0.5 * (lmbdp * valp + lmbdm * valm);
     }
@@ -104,22 +114,28 @@ std::complex<double> ModuleIO::cal_LxijR(
     }
     if (jm < -1) {
         if (std::fabs(lmbdp) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm + 1), vR, &valp);
         }
         if (std::fabs(lmbdm) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm-1), vR, &valm);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm - 1), vR, &valm);
         }
         return -i * 0.5 * (lmbdp * valp + lmbdm * valm);
     }
     assert(false); // inaccessible
 }
 
-std::complex<double> ModuleIO::cal_LyijR(
-    const std::unique_ptr<TwoCenterIntegrator>& calculator,
-    const int it, const int ia, const int il, const int iz, const int im,
-    const int jt, const int ja, const int jl, const int jz, const int jm,
-    const ModuleBase::Vector3<double>& vR)
-{   
+std::complex<double> ModuleIO::cal_LyijR(const std::unique_ptr<TwoCenterIntegrator>& calculator,
+                                         const int it,
+                                         const int ia,
+                                         const int il,
+                                         const int iz,
+                                         const int im,
+                                         const int jt,
+                                         const int ja,
+                                         const int jl,
+                                         const int jz,
+                                         const int jm,
+                                         const ModuleBase::Vector3<double>& vR) {
     const double lmbdp = _lambda_plus(jl, jm);
     const double lmbdm = _lambda_minus(jl, jm);
     // two-center-integral placeholders
@@ -127,10 +143,10 @@ std::complex<double> ModuleIO::cal_LyijR(
     double valm = 0.;
     if (jm > 1) {
         if (std::fabs(lmbdp) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm + 1, vR, &valp);
         }
         if (std::fabs(lmbdm) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, jm-1, vR, &valm);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &valm);
         }
         return -i * 0.5 * (lmbdp * valp - lmbdm * valm);
     }
@@ -158,28 +174,26 @@ std::complex<double> ModuleIO::cal_LyijR(
     }
     if (jm < -1) {
         if (std::fabs(lmbdp) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm + 1, vR, &valp);
         }
         if (std::fabs(lmbdm) > 1e-12) {
-            calculator->calculate(it, il, iz, im, jt, jl, jz, jm-1, vR, &valm);
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &valm);
         }
         return i * 0.5 * (lmbdp * valp - lmbdm * valm);
     }
     assert(false); // inaccessible
 }
 
-ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
-    const std::string& orbital_dir,
-    const UnitCell& ucell,
-    const double& search_radius,
-    const int tdestructor,
-    const int tgrid,
-    const int tatom,
-    const bool searchpbc,
-    std::ofstream* ptr_log,
-    const int rank)
-{
-    
+ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(const std::string& orbital_dir,
+                                                               const UnitCell& ucell,
+                                                               const double& search_radius,
+                                                               const int tdestructor,
+                                                               const int tgrid,
+                                                               const int tatom,
+                                                               const bool searchpbc,
+                                                               std::ofstream* ptr_log,
+                                                               const int rank) {
+
     // ofs_running
     this->ofs_ = ptr_log;
     *ofs_ << "\n\n\n\n";
@@ -199,42 +213,38 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     Parallel_Common::bcast_int(ntype_);
 #endif
     std::vector<std::string> forb(ntype_);
-    if (rank == 0)
-    {
-        for (int i = 0; i < ucell.ntype; ++i)
-        {
+    if (rank == 0) {
+        for (int i = 0; i < ucell.ntype; ++i) {
             forb[i] = orbital_dir + ucell.orbital_fn[i];
         }
     }
 #ifdef __MPI
     Parallel_Common::bcast_string(forb.data(), ntype_);
 #endif
-    
+
     this->orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     this->orb_->build(ucell.ntype, forb.data(), 'o');
-    
+
     ModuleBase::SphericalBesselTransformer sbt(true);
     this->orb_->set_transformer(sbt);
-    
+
     const double rcut_max = orb_->rcut_max();
     const int ngrid = int(rcut_max / 0.01) + 1;
     const double cutoff = 2.0 * rcut_max;
     this->orb_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
-    
+
     this->calculator_ = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     this->calculator_->tabulate(*orb_, *orb_, 'S', ngrid, cutoff);
-    
+
     // Initialize Ylm coefficients
     ModuleBase::Ylm::set_coefficients();
-    
+
     // for neighbor list search
     double temp = -1.0;
-    if (search_radius < rcut_max)
-    {
+    if (search_radius < rcut_max) {
         *ofs_ << "Find the `search_radius` from the input file being smaller than the \n"
                  "`rcut_max` of the orbitals.\n"
-              << "Reset the `search_radius` (" << search_radius << ") "
-              << "to `rcut_max` ("<< rcut_max << ")." 
+              << "Reset the `search_radius` (" << search_radius << ") " << "to `rcut_max` (" << rcut_max << ")."
               << std::endl;
         // we don't really set, but use std::max to mask :)
     }
@@ -245,22 +255,14 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
                                    PARAM.globalv.gamma_only_local);
     temp = std::max(temp, std::max(search_radius, rcut_max));
     this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));
-    atom_arrange::search(searchpbc,
-                         *ofs_,
-                         *neighbor_searcher_,
-                         ucell,
-                         temp,
-                         tatom);
+    atom_arrange::search(searchpbc, *ofs_, *neighbor_searcher_, ucell, temp, tatom);
 }
 
-void ModuleIO::AngularMomentumCalculator::kernel(
-    std::ofstream* ofs,
-    const UnitCell& ucell,
-    const char dir,
-    const int precision)
-{
-    if (!ofs->is_open())
-    {
+void ModuleIO::AngularMomentumCalculator::kernel(std::ofstream* ofs,
+                                                 const UnitCell& ucell,
+                                                 const char dir,
+                                                 const int precision) {
+    if (!ofs->is_open()) {
         return;
     }
     // an easy sanity check
@@ -274,20 +276,18 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     // iz and jz are indexes of the zeta functions
     // im and jm are indexes of the magnetic quantum numbers.
     std::string fmtstr = "%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d";
-    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e";
-    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
+    fmtstr += "%" + std::to_string(precision * 2) + "." + std::to_string(precision) + "e";
+    fmtstr += "%" + std::to_string(precision * 2) + "." + std::to_string(precision) + "e\n";
     FmtCore fmt(fmtstr);
 
     // placeholders
     std::complex<double> val = 0;
     ModuleBase::Vector3<double> taui; // the origin position
     ModuleBase::Vector3<double> dtau; // the displacement
-    AdjacentAtomInfo adjinfo; // adjacent atom information carrier
-    for (int it = 0; it < ucell.ntype; it++)
-    {
+    AdjacentAtomInfo adjinfo;         // adjacent atom information carrier
+    for (int it = 0; it < ucell.ntype; it++) {
         const Atom& atyp_i = ucell.atoms[it];
-        for (int ia = 0; ia < atyp_i.na; ia++)
-        {
+        for (int ia = 0; ia < atyp_i.na; ia++) {
             taui = ucell.get_tau(ucell.itia2iat(it, ia));
             neighbor_searcher_->Find_atom(ucell, taui, it, ia, &adjinfo);
             for (int ia_adj = 0; ia_adj < adjinfo.adj_num + 1; ia_adj++) // "+1" is to include itself
@@ -296,44 +296,41 @@ void ModuleIO::AngularMomentumCalculator::kernel(
                 int ja = adjinfo.natom[ia_adj]; // iat with in atomtype
                 const Atom& atyp_j = ucell.atoms[jt];
                 const ModuleBase::Vector3<int> iR = adjinfo.box[ia_adj];
-                dtau = ucell.cal_dtau(ucell.itia2iat(it, ia), 
-                                      ucell.itia2iat(jt, ja), 
-                                      iR) * ucell.lat0; // convert to unit of Bohr
+                dtau = ucell.cal_dtau(ucell.itia2iat(it, ia),
+                                      ucell.itia2iat(jt, ja),
+                                      iR) *
+                       ucell.lat0; // convert to unit of Bohr
 
                 // nested loop: calculate the two-center-integral
-                for (int li = 0; li < atyp_i.nwl + 1; li++)
-                {
-                    for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++)
-                    {
-                        for (int mi = -li; mi <= li; mi++)
-                        {
-                            for (int lj = 0; lj < atyp_j.nwl + 1; lj++)
-                            {
-                                for (int jz = 0; jz < atyp_j.l_nchi[lj]; jz++)
-                                {
-                                    for (int mj = -lj; mj <= lj; mj++)
-                                    {
-                                        if (dir == 'x')
-                                        {
-                                            val = cal_LxijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
-                                        }
-                                        else if (dir == 'y')
-                                        {
-                                            val = cal_LyijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
-                                        }
-                                        else if (dir == 'z')
-                                        {
-                                            val = cal_LzijR(calculator_, 
-                                                it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                for (int li = 0; li < atyp_i.nwl + 1; li++) {
+                    for (int iz = 0; iz < atyp_i.l_nchi[li]; iz++) {
+                        for (int mi = -li; mi <= li; mi++) {
+                            for (int lj = 0; lj < atyp_j.nwl + 1; lj++) {
+                                for (int jz = 0; jz < atyp_j.l_nchi[lj]; jz++) {
+                                    for (int mj = -lj; mj <= lj; mj++) {
+                                        if (dir == 'x') {
+                                            val = cal_LxijR(calculator_, it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                                        } else if (dir == 'y') {
+                                            val = cal_LyijR(calculator_, it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
+                                        } else if (dir == 'z') {
+                                            val = cal_LzijR(calculator_, it, ia, li, iz, mi, jt, ja, lj, jz, mj, dtau);
                                         }
 
-                                        *ofs << fmt.format(
-                                            it, ia, li, iz, mi,
-                                            iR.x, iR.y, iR.z,
-                                            jt, ja, lj, jz, mj,
-                                            val.real(), val.imag());
+                                        *ofs << fmt.format(it,
+                                                           ia,
+                                                           li,
+                                                           iz,
+                                                           mi,
+                                                           iR.x,
+                                                           iR.y,
+                                                           iR.z,
+                                                           jt,
+                                                           ja,
+                                                           lj,
+                                                           jz,
+                                                           mj,
+                                                           val.real(),
+                                                           val.imag());
                                     }
                                 }
                             }
@@ -345,15 +342,12 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     }
 }
 
-void ModuleIO::AngularMomentumCalculator::calculate(
-    const std::string& prefix,
-    const std::string& outdir,
-    const UnitCell& ucell,
-    const int precision,
-    const int rank)
-{
-    if (rank != 0)
-    {
+void ModuleIO::AngularMomentumCalculator::calculate(const std::string& prefix,
+                                                    const std::string& outdir,
+                                                    const UnitCell& ucell,
+                                                    const int precision,
+                                                    const int rank) {
+    if (rank != 0) {
         return;
     }
     std::ofstream ofout;
@@ -372,9 +366,8 @@ void ModuleIO::AngularMomentumCalculator::calculate(
                               "# jm: magnetic quantum number of the second atom\n"
                               "# Re[<a|L|b>], Im[<a|L|b>]: the real and imaginary parts "
                               "of the value of the matrix element\n";
-    
-    for (char d : dir)
-    {
+
+    for (char d: dir) {
         std::string fn = outdir + prefix + "_L" + d + ".dat";
         ofout.open(fn, std::ios::out);
         ofout << title;

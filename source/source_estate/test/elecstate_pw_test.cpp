@@ -15,69 +15,32 @@
 #include "source_io/module_parameter/parameter.h"
 // mock functions for testing
 int XC_Functional::func_type = 1;
-namespace elecstate
-{
-void Potential::init_pot(Charge const*)
-{
-}
-void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
-{
-}
-void Potential::cal_fixed_v(double* vl_pseudo)
-{
-}
-Potential::~Potential()
-{
-}
+namespace elecstate {
+void Potential::init_pot(Charge const*) {}
+void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) {}
+void Potential::cal_fixed_v(double* vl_pseudo) {}
+Potential::~Potential() {}
 } // namespace elecstate
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Charge::Charge() {}
+Charge::~Charge() {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+ORB_gaunt_table::ORB_gaunt_table() {}
+ORB_gaunt_table::~ORB_gaunt_table() {}
 #endif
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
+pseudopot_cell_vl::pseudopot_cell_vl() {}
+pseudopot_cell_vl::~pseudopot_cell_vl() {}
+pseudopot_cell_vnl::pseudopot_cell_vnl() {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
 template <>
 void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU* ctx,
                                                                       const int ng,
@@ -86,9 +49,7 @@ void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_devic
                                                                       const int itype,
                                                                       const float* qnorm,
                                                                       const float* ylm,
-                                                                      std::complex<float>* qg) const
-{
-}
+                                                                      std::complex<float>* qg) const {}
 template <>
 void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU* ctx,
                                                                        const int ng,
@@ -97,64 +58,41 @@ void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(base_devi
                                                                        const int itype,
                                                                        const double* qnorm,
                                                                        const double* ylm,
-                                                                       std::complex<double>* qg) const
-{
-}
+                                                                       std::complex<double>* qg) const {}
 template <>
-std::complex<float>* pseudopot_cell_vnl::get_vkb_data<float>() const
-{
+std::complex<float>* pseudopot_cell_vnl::get_vkb_data<float>() const {
     return nullptr;
 }
 template <>
-std::complex<double>* pseudopot_cell_vnl::get_vkb_data<double>() const
-{
+std::complex<double>* pseudopot_cell_vnl::get_vkb_data<double>() const {
     return nullptr;
 }
 template <>
 void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
                                                                 const UnitCell&,
                                                                 int const&,
-                                                                std::complex<float>*) const
-{
-}
+                                                                std::complex<float>*) const {}
 template <>
 void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
                                                                  const UnitCell&,
                                                                  int const&,
-                                                                 std::complex<double>*) const
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
+                                                                 std::complex<double>*) const {}
+Soc::~Soc() {}
+Fcoef::~Fcoef() {}
 #include "source_cell/klist.h"
 
-void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
-{
-}
+void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*) {}
 void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
-                      const void*)
-{
-}
-void Charge::set_rhopw(ModulePW::PW_Basis*)
-{
-}
-void Charge::renormalize_rho()
-{
-}
-void Charge::check_rho()
-{
-}
+                      const void*) {}
+void Charge::set_rhopw(ModulePW::PW_Basis*) {}
+void Charge::renormalize_rho() {}
+void Charge::check_rho() {}
 
-void Set_GlobalV_Default()
-{
+void Set_GlobalV_Default() {
     PARAM.input.device = "cpu";
     PARAM.input.precision = "double";
     PARAM.sys.domag = false;
@@ -162,7 +100,7 @@ void Set_GlobalV_Default()
     // Base class dependent
     PARAM.input.nspin = 1;
     PARAM.input.nelec = 10.0;
-    PARAM.input.nupdown  = 0.0;
+    PARAM.input.nupdown = 0.0;
     PARAM.sys.two_fermi = false;
     PARAM.input.nbands = 6;
     PARAM.sys.nlocal = 6;
@@ -189,8 +127,7 @@ void Set_GlobalV_Default()
  *   - todo: psiToRho: elecstate::ElecStatePW::psiToRho()
  */
 
-class ElecStatePWTest : public ::testing::Test
-{
+class ElecStatePWTest : public ::testing::Test {
   protected:
     elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>* elecstate_pw_d = nullptr;
     elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>* elecstate_pw_s = nullptr;
@@ -202,8 +139,7 @@ class ElecStatePWTest : public ::testing::Test
     ModulePW::PW_Basis* rhodpw = nullptr;
     ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis_Big* bigpw = nullptr;
-    void SetUp() override
-    {
+    void SetUp() override {
         Set_GlobalV_Default();
         wfcpw = new ModulePW::PW_Basis_K;
         chg = new Charge;
@@ -218,8 +154,7 @@ class ElecStatePWTest : public ::testing::Test
         bigpw = new ModulePW::PW_Basis_Big;
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         delete wfcpw;
         delete chg;
         delete klist;
@@ -227,19 +162,16 @@ class ElecStatePWTest : public ::testing::Test
         delete ppcell;
         delete rhodpw;
         delete rhopw;
-        if (elecstate_pw_d != nullptr)
-        {
+        if (elecstate_pw_d != nullptr) {
             delete elecstate_pw_d;
         }
-        if (elecstate_pw_s != nullptr)
-        {
+        if (elecstate_pw_s != nullptr) {
             delete elecstate_pw_s;
         }
     }
 };
 
-TEST_F(ElecStatePWTest, ConstructorDouble)
-{
+TEST_F(ElecStatePWTest, ConstructorDouble) {
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
                                                                                                klist,
@@ -253,8 +185,7 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
     EXPECT_EQ(elecstate_pw_d->bigpw, bigpw);
 }
 
-TEST_F(ElecStatePWTest, ConstructorSingle)
-{
+TEST_F(ElecStatePWTest, ConstructorSingle) {
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
                                                                                               chg,
                                                                                               klist,
@@ -268,8 +199,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
     EXPECT_EQ(elecstate_pw_s->bigpw, bigpw);
 }
 
-TEST_F(ElecStatePWTest, InitRhoDataDouble)
-{
+TEST_F(ElecStatePWTest, InitRhoDataDouble) {
     XC_Functional::func_type = 3;
     chg->nrxx = 1000;
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
@@ -285,8 +215,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
     EXPECT_EQ(elecstate_pw_d->kin_r, chg->kin_r);
 }
 
-TEST_F(ElecStatePWTest, InitRhoDataSingle)
-{
+TEST_F(ElecStatePWTest, InitRhoDataSingle) {
     PARAM.input.precision = "single";
     XC_Functional::func_type = 3;
     chg->nspin = PARAM.input.nspin;
@@ -304,9 +233,8 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
     EXPECT_NE(elecstate_pw_s->kin_r, nullptr);
 }
 
-TEST_F(ElecStatePWTest, ParallelKDouble)
-{
-    //this is a trivial call due to removing of __MPI
+TEST_F(ElecStatePWTest, ParallelKDouble) {
+    // this is a trivial call due to removing of __MPI
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
                                                                                                klist,
@@ -317,9 +245,8 @@ TEST_F(ElecStatePWTest, ParallelKDouble)
     EXPECT_NO_THROW(elecstate_pw_d->parallelK());
 }
 
-TEST_F(ElecStatePWTest, ParallelKSingle)
-{
-    //this is a trivial call due to removing of __MPI
+TEST_F(ElecStatePWTest, ParallelKSingle) {
+    // this is a trivial call due to removing of __MPI
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
                                                                                               chg,
                                                                                               klist,

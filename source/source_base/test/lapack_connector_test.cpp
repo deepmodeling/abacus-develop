@@ -17,11 +17,9 @@
  *   - a complex Hermitian-definite generalized eigenproblem
  */
 
-class LapackConnectorTest : public testing::Test
-{
+class LapackConnectorTest : public testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize matrices A and B and the eigenvalue vector
         // (Use appropriate values for your test case)
         A = {
@@ -32,20 +30,13 @@ class LapackConnectorTest : public testing::Test
         };
 
         // Create a random square matrix C with complex elements
-        std::vector<std::complex<double>> C = {
-            {1.0, 2.0},
-            {3.0, 4.0},
-            {5.0, 6.0},
-            {7.0, 8.0}
-        };
+        std::vector<std::complex<double>> C = {{1.0, 2.0}, {3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0}};
 
         // Compute the conjugate transpose of C
-        std::vector<std::complex<double>> C_conj_transpose = {
-            {C[0].real(), -C[0].imag()},
-            {C[1].real(), -C[1].imag()},
-            {C[2].real(), -C[2].imag()},
-            {C[3].real(), -C[3].imag()}
-        };
+        std::vector<std::complex<double>> C_conj_transpose = {{C[0].real(), -C[0].imag()},
+                                                              {C[1].real(), -C[1].imag()},
+                                                              {C[2].real(), -C[2].imag()},
+                                                              {C[3].real(), -C[3].imag()}};
 
         // Compute the product of C_conj_transpose and C to obtain B
         B = {{C_conj_transpose[0] * C[0] + C_conj_transpose[1] * C[1]},
@@ -83,8 +74,7 @@ class LapackConnectorTest : public testing::Test
 };
 
 // Test the zhegv_ function
-TEST_F(LapackConnectorTest, ZHEGV)
-{
+TEST_F(LapackConnectorTest, ZHEGV) {
     // First, query the optimal size of the work array
     std::complex<double> work_query;
     double rwork_query;
@@ -129,26 +119,21 @@ TEST_F(LapackConnectorTest, ZHEGV)
     // Check the computed eigenvalues and eigenvectors
     // (Use appropriate values for your test case)
     std::vector<double> expected_eigenvalues = {0.014371905048252809, 1.0871905949517402};
-    std::vector<std::complex<double>> expected_eigenvectors = {
-        {0.00029066041795582461, -0.042636598658647745},
-        {0.07557994526773984,    0.0                  },
-        {-0.81903769393029213,   -0.083945171943878405},
-        {0.33387897788468901,    0.0                  }
-    };
+    std::vector<std::complex<double>> expected_eigenvectors = {{0.00029066041795582461, -0.042636598658647745},
+                                                               {0.07557994526773984, 0.0},
+                                                               {-0.81903769393029213, -0.083945171943878405},
+                                                               {0.33387897788468901, 0.0}};
 
-    for (size_t i = 0; i < n; ++i)
-    {
+    for (size_t i = 0; i < n; ++i) {
         EXPECT_NEAR(w[i], expected_eigenvalues[i], 1e-8);
-        for (size_t j = 0; j < n; ++j)
-        {
+        for (size_t j = 0; j < n; ++j) {
             EXPECT_NEAR(A[i * n + j].real(), expected_eigenvectors[i * n + j].real(), 1e-8);
             EXPECT_NEAR(A[i * n + j].imag(), expected_eigenvectors[i * n + j].imag(), 1e-8);
         }
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

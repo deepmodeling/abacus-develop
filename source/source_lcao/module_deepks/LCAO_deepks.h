@@ -35,8 +35,7 @@
 // wenfei modified 2022-1-5
 //
 template <typename T>
-class LCAO_Deepks
-{
+class LCAO_Deepks {
 
     //-------------------
     // public variables
@@ -80,14 +79,8 @@ class LCAO_Deepks
     double** gedm = nullptr; //[tot_Inl][(2l+1)*(2l+1)]
 
     // functions for hr status: 1. get value; 2. set value;
-    int get_hr_cal()
-    {
-        return this->hr_cal;
-    }
-    void set_hr_cal(bool cal)
-    {
-        this->hr_cal = cal;
-    }
+    int get_hr_cal() { return this->hr_cal; }
+    void set_hr_cal(bool cal) { this->hr_cal = cal; }
 
     //-------------------
     // LCAO_deepks.cpp
@@ -121,10 +114,8 @@ class LCAO_Deepks
     void allocate_V_delta(const int nat, const int nks = 1);
 
     /// Initialize the dm_r container
-    void init_DMR(const UnitCell& ucell,
-                  const LCAO_Orbitals& orb,
-                  const Parallel_Orbitals& pv,
-                  const Grid_Driver& GridD);
+    void
+    init_DMR(const UnitCell& ucell, const LCAO_Orbitals& orb, const Parallel_Orbitals& pv, const Grid_Driver& GridD);
 
     //! a temporary interface for cal_e_delta_band
     void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);

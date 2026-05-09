@@ -24,19 +24,19 @@ Si 3 3
 read QI: 4 0
 read SI: 4 0
 read VI: 4 0
-Nt_all	['Si']
-Nu	{'Si': [2, 2, 1]}
-Nb_true	[4.0, 4.0, 4.0, 4.0, 4.0]
-weight	[1.0, 1.0, 1.0, 1.0, 1.0]
-Rcut	{'Si': 6}
-dr	{'Si': 0.01}
-Ecut	{'Si': 100}
-lr	0.01
-Nl	{'Si': 3}
-Nst	5
-Nt	[['Si'], ['Si'], ['Si'], ['Si'], ['Si']]
-Na	[{'Si': 2}, {'Si': 2}, {'Si': 2}, {'Si': 2}, {'Si': 2}]
-Nb	[8, 8, 8, 8, 8]
-Ne	{'Si': 19}
+Nt_all    ['Si']
+Nu    {'Si': [2, 2, 1]}
+Nb_true    [4.0, 4.0, 4.0, 4.0, 4.0]
+weight    [1.0, 1.0, 1.0, 1.0, 1.0]
+Rcut    {'Si': 6}
+dr    {'Si': 0.01}
+Ecut    {'Si': 100}
+lr    0.01
+Nl    {'Si': 3}
+Nst    5
+Nt    [['Si'], ['Si'], ['Si'], ['Si'], ['Si']]
+Na    [{'Si': 2}, {'Si': 2}, {'Si': 2}, {'Si': 2}, {'Si': 2}]
+Nb    [8, 8, 8, 8, 8]
+Ne    {'Si': 19}
 See "Spillage.dat" for running status 
-Time:	 370.14801597595215
+Time:     370.14801597595215

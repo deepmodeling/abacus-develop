@@ -4,15 +4,13 @@
 #include <cassert>
 #include <cmath>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /************************************************************************
 LiaoChen add @ 2010/03/09 to add efficient functions in LCAO calculation
 ************************************************************************/
 // Only used in source_basis/module_ao
-class Mathzone_Add1
-{
+class Mathzone_Add1 {
   public:
     Mathzone_Add1();
     ~Mathzone_Add1();
@@ -30,12 +28,8 @@ class Mathzone_Add1
      * @param[in] ypn   f'(n) boundary condition
      * @param[out] y2   f''(x)
      */
-    static void SplineD2(const double* rad,
-                         const double* rad_f,
-                         const int& mesh,
-                         const double& yp1,
-                         const double& ypn,
-                         double* y2);
+    static void
+    SplineD2(const double* rad, const double* rad_f, const int& mesh, const double& yp1, const double& ypn, double* y2);
 
     /**
      * @brief cubic spline interpolation

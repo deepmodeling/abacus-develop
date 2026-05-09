@@ -17,16 +17,11 @@
 #include "source_base/module_external/blas_connector.h"
 #endif
 
-Driver::Driver()
-{
-}
+Driver::Driver() {}
 
-Driver::~Driver()
-{
-}
+Driver::~Driver() {}
 
-void Driver::init()
-{
+void Driver::init() {
     // 1) Let's start by printing a title.
     ModuleBase::TITLE("Driver", "ABACUS_begins");
 
@@ -43,17 +38,15 @@ void Driver::init()
     // 5) All memory recorders are printed.
     ModuleBase::Memory::print_all(GlobalV::ofs_running);
 
-    // 6) Print the final time, hopefully it will not cost too long. 
+    // 6) Print the final time, hopefully it will not cost too long.
     time_t time_finish = std::time(nullptr);
     ModuleIO::print_time(time_start, time_finish);
 
     // 7) Clean up: close all of the running logs
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog,PARAM.inp.calculation);
-
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog, PARAM.inp.calculation);
 }
 
-void Driver::print_start_info()
-{
+void Driver::print_start_info() {
     ModuleBase::TITLE("Driver", "print_start_info");
 #ifdef VERSION
     const char* version = VERSION;
@@ -108,11 +101,10 @@ void Driver::print_start_info()
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", PARAM.globalv.global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card",  PARAM.globalv.global_in_card);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", PARAM.globalv.global_in_card);
 }
 
-void Driver::reading()
-{
+void Driver::reading() {
     ModuleBase::TITLE("Driver", "reading");
     ModuleBase::timer::start("Driver", "reading");
     // temperarily
@@ -140,7 +132,7 @@ void Driver::reading()
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir <<  PARAM.globalv.global_in_card << ".info";
+    ss1 << PARAM.globalv.global_out_dir << PARAM.globalv.global_in_card << ".info";
     input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
@@ -181,12 +173,11 @@ void Driver::reading()
     ModuleBase::timer::end("Driver", "reading");
 }
 
-void Driver::atomic_world()
-{
+void Driver::atomic_world() {
     ModuleBase::TITLE("Driver", "atomic_world");
     ModuleBase::timer::start("Driver", "atomic_world");
 
-    // reading information 
+    // reading information
     this->reading();
 
     // where the actual stuff is done

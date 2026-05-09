@@ -34,8 +34,7 @@ EleCond<FPTYPE, Device>::EleCond(UnitCell* p_ucell_in,
                                  elecstate::ElecState* p_elec_in,
                                  ModulePW::PW_Basis_K* p_wfcpw_in,
                                  psi::Psi<std::complex<FPTYPE>, Device>* p_psi_in,
-                                 pseudopot_cell_vnl* p_ppcell_in)
-{
+                                 pseudopot_cell_vnl* p_ppcell_in) {
     this->p_ppcell = p_ppcell_in;
     this->p_ucell = p_ucell_in;
     this->p_wfcpw = p_wfcpw_in;
@@ -51,8 +50,7 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
                                  const double& dw_in,
                                  const double& dt_in,
                                  const bool& nonlocal,
-                                 ModuleBase::matrix& wg)
-{
+                                 ModuleBase::matrix& wg) {
     //-----------------------------------------------------------
     //               KS conductivity
     //-----------------------------------------------------------
@@ -64,16 +62,11 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     double dt = dt_in;           // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     const double expfactor = 23; // exp(-23) = 1e-10
     int nt = 0;                  // set nt empirically
-    if (smear_type == 1)
-    {
+    if (smear_type == 1) {
         nt = ceil(sqrt(2 * expfactor) / sigma / dt);
-    }
-    else if (smear_type == 2)
-    {
+    } else if (smear_type == 2) {
         nt = ceil(expfactor / gamma / dt);
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW::calcondw", "smear_type should be 0 or 1");
     }
     std::cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -86,11 +79,14 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     std::vector<double> ct12(nt, 0);
     std::vector<double> ct22(nt, 0);
 
-    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
+    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw,
+                                           this->p_kv->isk.data(),
+                                           this->p_ppcell,
+                                           this->p_ucell,
+                                           nonlocal);
     double decut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
     std::cout << "Recommended dt: " << 0.25 * M_PI / decut << " a.u." << std::endl;
-    for (int ik = 0; ik < nk; ++ik)
-    {
+    for (int ik = 0; ik < nk; ++ik) {
         velop.init(ik);
         jjresponse_ks(ik, nt, dt, decut, wg, velop, ct11.data(), ct12.data(), ct22.data());
     }
@@ -102,8 +98,7 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     //------------------------------------------------------------------
     //                    Output
     //------------------------------------------------------------------
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11.data(), ct12.data(), ct22.data());
     }
 }
@@ -117,11 +112,9 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
                                             hamilt::Velocity<FPTYPE, Device>& velop,
                                             double* ct11,
                                             double* ct12,
-                                            double* ct22)
-{
+                                            double* ct22) {
     const int nbands = PARAM.inp.nbands;
-    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0)
-    {
+    if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0) {
         return;
     }
     const int ndim = 3;
@@ -140,8 +133,7 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
     velop.act(this->p_psi, nbands * PARAM.globalv.npol, levc, v_psi.get_pointer());
     std::complex<FPTYPE> one = 1.0;
     std::complex<FPTYPE> zero = 0.0;
-    for (int id = 0; id < ndim; ++id)
-    {
+    for (int id = 0; id < ndim; ++id) {
         ModuleBase::gemm_op<std::complex<FPTYPE>, Device>()('C',
                                                             'N',
                                                             nbands,
@@ -158,34 +150,27 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
 
         std::complex<FPTYPE>* pij_c = nullptr;
         std::vector<std::complex<FPTYPE>> pij_h_;
-        if(std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
+        if (std::is_same<Device, base_device::DEVICE_CPU>::value) {
             pij_c = pij_d;
-        }
-        else
-        {
+        } else {
             pij_h_.resize(nbands * nbands);
             syncmem_complex_d2h_op()(pij_h_.data(), pij_d, nbands * nbands);
             pij_c = pij_h_.data();
         }
-        
+
 #ifdef __MPI
         Parallel_Common::reduce_data(pij_c, nbands * nbands, POOL_WORLD);
 #endif
-        if (!gamma_only)
-        {
-            for (int ib = 0, ijb = 0; ib < nbands; ++ib)
-            {
-                for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
-                {
+        if (!gamma_only) {
+            for (int ib = 0, ijb = 0; ib < nbands; ++ib) {
+                for (int jb = ib + 1; jb < nbands; ++jb, ++ijb) {
                     pij2[ijb] += static_cast<double>(std::norm(pij_c[ib * nbands + jb]));
                 }
             }
         }
     }
 
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
+    if (GlobalV::RANK_IN_POOL == 0) {
         int nkstot = this->p_kv->get_nkstot();
         int ikglobal = p_kv->ik2iktot[ik];
         std::stringstream ss;
@@ -198,32 +183,26 @@ void EleCond<FPTYPE, Device>::jjresponse_ks(const int ik,
 
     int ntper = nt / GlobalV::NPROC_IN_POOL;
     int itstart = ntper * GlobalV::RANK_IN_POOL;
-    if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL)
-    {
+    if (nt % GlobalV::NPROC_IN_POOL > GlobalV::RANK_IN_POOL) {
         ntper++;
         itstart += GlobalV::RANK_IN_POOL;
-    }
-    else
-    {
+    } else {
         itstart += nt % GlobalV::NPROC_IN_POOL;
     }
 
-    for (int it = itstart; it < itstart + ntper; ++it)
-    {
+    for (int it = itstart; it < itstart + ntper; ++it) {
         double tmct11 = 0;
         double tmct12 = 0;
         double tmct22 = 0;
         double* enb = &(this->p_elec->ekb(ik, 0));
-        for (int ib = 0, ijb = 0; ib < nbands; ++ib)
-        {
+        for (int ib = 0, ijb = 0; ib < nbands; ++ib) {
             double ei = enb[ib];
             double fi = wg(ik, ib);
-            for (int jb = ib + 1; jb < nbands; ++jb, ++ijb)
-            {
+            for (int jb = ib + 1; jb < nbands; ++jb, ++ijb) {
                 double ej = enb[jb];
                 if (ej - ei > decut) {
                     continue;
-}
+                }
                 double fj = wg(ik, jb);
                 double tmct = sin((ej - ei) * (it)*dt) * (fi - fj) * pij2[ijb];
                 tmct11 += tmct;
@@ -248,8 +227,7 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
                                        const double dw_in,
                                        double* ct11,
                                        double* ct12,
-                                       double* ct22)
-{
+                                       double* ct22) {
     double factor = FACTOR;
     const int ndim = 3;
     int nw = ceil(wcut / dw_in);
@@ -258,17 +236,12 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
     const double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
     std::vector<double> winfunc(nt);
     // 1: Gaussian, 2: Lorentzian
-    if (smear_type == 1)
-    {
-        for (int it = 0; it < nt; ++it)
-        {
+    if (smear_type == 1) {
+        for (int it = 0; it < nt; ++it) {
             winfunc[it] = exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2));
         }
-    }
-    else if (smear_type == 2)
-    {
-        for (int it = 0; it < nt; ++it)
-        {
+    } else if (smear_type == 2) {
+        for (int it = 0; it < nt; ++it) {
             winfunc[it] = exp(-gamma * (it)*dt);
         }
     }
@@ -279,8 +252,7 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
     std::ofstream ofscond(ss.str());
     ofscond << std::setw(8) << "#t(a.u.)" << std::setw(15) << "c11(t)" << std::setw(15) << "c12(t)" << std::setw(15)
             << "c22(t)" << std::setw(15) << "decay" << std::endl;
-    for (int it = 0; it < nt; ++it)
-    {
+    for (int it = 0; it < nt; ++it) {
         ofscond << std::setw(8) << (it)*dt << std::setw(15) << -2 * ct11[it] << std::setw(15) << -2 * ct12[it]
                 << std::setw(15) << -2 * ct22[it] << std::setw(15) << winfunc[it] << std::endl;
     }
@@ -289,10 +261,8 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
     std::vector<double> cw12(nw, 0);
     std::vector<double> cw22(nw, 0);
     std::vector<double> kappa(nw);
-    for (int iw = 0; iw < nw; ++iw)
-    {
-        for (int it = 0; it < nt; ++it)
-        {
+    for (int iw = 0; iw < nw; ++iw) {
+        for (int it = 0; it < nt; ++it) {
             cw11[iw] += -2 * ct11[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
             cw12[iw] += -2 * ct12[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
             cw22[iw] += -2 * ct22[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
@@ -305,22 +275,21 @@ void EleCond<FPTYPE, Device>::calcondw(const int nt,
     ofscond.open(sso.str());
     ofscond << std::setw(8) << "## w(eV) " << std::setw(20) << "sigma(Sm^-1)" << std::setw(20) << "kappa(W(mK)^-1)"
             << std::setw(20) << "L12/e(Am^-1)" << std::setw(20) << "L22/e^2(Wm^-1)" << std::endl;
-    for (int iw = 0; iw < nw; ++iw)
-    {
+    for (int iw = 0; iw < nw; ++iw) {
         cw11[iw] *= double(2) / ndim / this->p_ucell->omega * factor; // unit in Sm^-1
-        cw12[iw]
-            *= double(2) / ndim / this->p_ucell->omega * factor * 2.17987092759e-18 / 1.6021766208e-19; // unit in Am^-1
-        cw22[iw] *= double(2) / ndim / this->p_ucell->omega * factor
-                    * pow(2.17987092759e-18 / 1.6021766208e-19, 2); // unit in Wm^-1
-        kappa[iw] = (cw22[iw] - pow(cw12[iw], 2) / cw11[iw]) / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV
-                    / 11604.518026;
+        cw12[iw] *=
+            double(2) / ndim / this->p_ucell->omega * factor * 2.17987092759e-18 / 1.6021766208e-19; // unit in Am^-1
+        cw22[iw] *= double(2) / ndim / this->p_ucell->omega * factor *
+                    pow(2.17987092759e-18 / 1.6021766208e-19, 2); // unit in Wm^-1
+        kappa[iw] =
+            (cw22[iw] - pow(cw12[iw], 2) / cw11[iw]) / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026;
         ofscond << std::setw(8) << (iw + 0.5) * dw * ModuleBase::Ry_to_eV << std::setw(20) << cw11[iw] << std::setw(20)
                 << kappa[iw] << std::setw(20) << cw12[iw] << std::setw(20) << cw22[iw] << std::endl;
     }
     double sigma0 = cw11[0] - (cw11[1] - cw11[0]) * 0.5;
     double kappa0 = kappa[0] - (kappa[1] - kappa[0]) * 0.5;
-    double Lorent0 = kappa0 / sigma0 / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026
-                     * pow(1.6021766208e-19 / 1.3806505e-23, 2);
+    double Lorent0 = kappa0 / sigma0 / Occupy::gaussian_parameter / ModuleBase::Ry_to_eV / 11604.518026 *
+                     pow(1.6021766208e-19 / 1.3806505e-23, 2);
     std::cout << std::setprecision(6) << "DC electrical conductivity: " << sigma0 << " Sm^-1" << std::endl;
     std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa0 << " W(mK)^-1" << std::endl;
     std::cout << std::setprecision(6) << "Lorenz number: " << Lorent0 << " k_B^2/e^2" << std::endl;

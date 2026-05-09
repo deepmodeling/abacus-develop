@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-class Sep_Cell
-{
+class Sep_Cell {
   public:
     Sep_Cell() noexcept;
     ~Sep_Cell() noexcept;
@@ -33,28 +32,13 @@ class Sep_Cell
 #endif // __MPI
 
     // Getter methods
-    const std::vector<SepPot>& get_seps() const
-    {
-        return seps;
-    }
-    int get_ntype() const
-    {
-        return ntype;
-    }
-    const std::vector<bool>& get_sep_enable() const
-    {
-        return sep_enable;
-    }
+    const std::vector<SepPot>& get_seps() const { return seps; }
+    int get_ntype() const { return ntype; }
+    const std::vector<bool>& get_sep_enable() const { return sep_enable; }
 
-    double get_omega() const
-    {
-        return omega;
-    }
+    double get_omega() const { return omega; }
 
-    double get_tpiba2() const
-    {
-        return tpiba2;
-    }
+    double get_tpiba2() const { return tpiba2; }
 
   private:
     std::vector<SepPot> seps;     // Self potentials for each atom type

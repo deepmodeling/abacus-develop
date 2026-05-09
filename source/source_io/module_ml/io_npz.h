@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 void read_mat_npz(const Parallel_Orbitals* paraV,
                   const UnitCell& ucell,

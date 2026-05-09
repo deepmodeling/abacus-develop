@@ -3,15 +3,11 @@
 #include "kernels/math_kernel_op.h"
 #include "parallel_device.h"
 #include "source_base/timer.h"
-namespace ModuleBase
-{
+namespace ModuleBase {
 template <typename T, typename Device>
-PGemmCN<T, Device>::PGemmCN()
-{
-}
+PGemmCN<T, Device>::PGemmCN() {}
 template <typename T, typename Device>
-PGemmCN<T, Device>::~PGemmCN()
-{
+PGemmCN<T, Device>::~PGemmCN() {
 #ifdef __MPI
     delmem_dev_op()(C_local_tmp_);
     delmem_dev_op()(A_tmp_device_);
@@ -31,13 +27,11 @@ void PGemmCN<T, Device>::set_dimension(
     const int LDB_in,
     const int nrow_in,
     const int LDC_in,
-    const int mode)
-{
+    const int mode) {
 #ifdef __MPI
     MPI_Comm_rank(comm_col, &col_rank);
     MPI_Comm_size(comm_col, &col_nproc);
-    if (comm_row != MPI_COMM_NULL)
-    {
+    if (comm_row != MPI_COMM_NULL) {
         MPI_Comm_rank(comm_row, &row_rank);
         MPI_Comm_size(comm_row, &row_nproc);
     }
@@ -51,8 +45,7 @@ void PGemmCN<T, Device>::set_dimension(
     this->ncolB = ncolB_in;
     this->nrow = nrow_in;
 #ifdef __MPI
-    switch (mode)
-    {
+    switch (mode) {
     case 1:
         gatherC = true;
         divideCrow = false;
@@ -69,41 +62,33 @@ void PGemmCN<T, Device>::set_dimension(
         break;
     }
 
-    if(col_nproc > 1)
-    {
+    if (col_nproc > 1) {
         requests.resize(col_nproc);
-        if (this->divideCrow)
-        {
+        if (this->divideCrow) {
             colB_loc.resize(col_nproc);
             MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
             int sum = 0;
-            for (int ip = 0; ip < col_nproc; ip++)
-            {
+            for (int ip = 0; ip < col_nproc; ip++) {
                 max_colB = std::max(max_colB, colB_loc[ip]);
                 sum += colB_loc[ip];
             }
             size_C_local = sum * LDC;
 
             // allocate temperory memory
-            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-            {
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
                 resmem_dev_op()(B_tmp_device_, max_colB * LDB);
             }
             B_tmp_.resize(max_colB * LDB);
-        }
-        else
-        {
+        } else {
             colA_loc.resize(col_nproc);
             MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
-            for (int ip = 0; ip < col_nproc; ip++)
-            {
+            for (int ip = 0; ip < col_nproc; ip++) {
                 max_colA = std::max(max_colA, colA_loc[ip]);
             }
             size_C_local = ncolB * LDC;
 
             // allocate temperory memory
-            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-            {
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
                 resmem_dev_op()(A_tmp_device_, max_colA * LDA);
 #ifndef __CUDA_MPI
                 isend_tmp_.resize(max_colA * LDA);
@@ -112,26 +97,22 @@ void PGemmCN<T, Device>::set_dimension(
             A_tmp_.resize(max_colA * LDA);
         }
 
-        if (this->gatherC)
-        {
+        if (this->gatherC) {
             colB_loc.resize(col_nproc);
             recv_counts.resize(col_nproc);
             displs.resize(col_nproc);
             MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
-            for (int ip = 0; ip < col_nproc; ip++)
-            {
+            for (int ip = 0; ip < col_nproc; ip++) {
                 recv_counts[ip] = LDC * colB_loc[ip];
             }
             displs[0] = 0;
-            for (int ip = 1; ip < col_nproc; ip++)
-            {
+            for (int ip = 1; ip < col_nproc; ip++) {
                 displs[ip] = displs[ip - 1] + recv_counts[ip - 1];
             }
             size_C_global = displs[col_nproc - 1] + recv_counts[col_nproc - 1];
 
             // allocate temperory memory
-            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-            {
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
                 resmem_dev_op()(C_local_tmp_, size_C_local);
 #if !defined(__CUDA_MPI) && !defined(__NCCL_PARALLEL_DEVICE)
                 C_global_tmp_.resize(size_C_global);
@@ -144,22 +125,16 @@ void PGemmCN<T, Device>::set_dimension(
 }
 
 template <typename T, typename Device>
-void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C)
-{
+void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C) {
     ModuleBase::timer::start("PGemmCN", "multiply");
 #ifdef __MPI
-    if (this->col_nproc > 1)
-    {
-        if (this->divideCrow)
-        {
+    if (this->col_nproc > 1) {
+        if (this->divideCrow) {
             multiply_row(alpha, A, B, beta, C);
-        }
-        else
-        {
+        } else {
             multiply_col(alpha, A, B, beta, C);
         }
-    }
-    else
+    } else
 #endif
     {
         multiply_single(alpha, A, B, beta, C);
@@ -168,8 +143,7 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
 }
 
 template <typename T, typename Device>
-void PGemmCN<T, Device>::multiply_single(const T alpha, const T* A, const T* B, const T beta, T* C)
-{
+void PGemmCN<T, Device>::multiply_single(const T alpha, const T* A, const T* B, const T beta, T* C) {
     const Device* ctx = {};
 #ifdef __MPI
     T real_beta = row_rank == 0 ? beta : 0;
@@ -178,8 +152,7 @@ void PGemmCN<T, Device>::multiply_single(const T alpha, const T* A, const T* B, 
 #endif
     ModuleBase::gemm_op<T, Device>()('C', 'N', ncolA, ncolB, nrow, &alpha, A, LDA, B, LDB, &real_beta, C, LDC);
 #ifdef __MPI
-    if (this->row_nproc > 1)
-    {
+    if (this->row_nproc > 1) {
         const int size = ncolB * LDC;
         Parallel_Common::reduce_dev<T, Device>(C, size, row_world);
     }
@@ -188,54 +161,41 @@ void PGemmCN<T, Device>::multiply_single(const T alpha, const T* A, const T* B, 
 
 #ifdef __MPI
 template <typename T, typename Device>
-void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, const T beta, T* C)
-{
+void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, const T beta, T* C) {
     const Device* ctx = {};
 
     // send A to other procs
     T* isend_tmp = isend_tmp_.data();
-    for (int ip = 0; ip < col_nproc; ip++)
-    {
-        if (col_rank != ip)
-        {
+    for (int ip = 0; ip < col_nproc; ip++) {
+        if (col_rank != ip) {
             int size = ncolA * LDA;
             Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], isend_tmp);
         }
     }
 
-
-    //init pointers
+    // init pointers
     T* C_local = C;
-    if (this->gatherC)
-    {
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
+    if (this->gatherC) {
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
             C_local = C_local_tmp_;
-        }
-        else
-        {
+        } else {
             C_local = C_tmp_.data();
         }
         syncmem_dev_op()(C_local, C + displs[col_rank], size_C_local);
     }
     T* Atmp_device = nullptr;
-    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-    {
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
         Atmp_device = A_tmp_device_;
-    }
-    else
-    {
+    } else {
         Atmp_device = A_tmp_.data();
     }
 
     // multiply
     int shift = 0;
     T real_beta = row_rank == 0 ? beta : 0;
-    for (int ip = 0; ip < col_nproc; ip++)
-    {
+    for (int ip = 0; ip < col_nproc; ip++) {
         T* C_start = C_local + shift;
-        if (col_rank == ip)
-        {
+        if (col_rank == ip) {
             ModuleBase::gemm_op<T, Device>()('C',
                                              'N',
                                              ncolA,
@@ -250,9 +210,7 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
                                              C_start,
                                              LDC);
             shift += ncolA;
-        }
-        else
-        {
+        } else {
             int m = colA_loc[ip];
             int size = m * LDA;
             MPI_Status status;
@@ -275,19 +233,16 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
         }
     }
 
-    if (this->gatherC)
-    {
+    if (this->gatherC) {
         T* reduce_tmp = nullptr;
         T* gather_tmp = nullptr;
 #if !defined(__CUDA_MPI) && !defined(__NCCL_PARALLEL_DEVICE)
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
             reduce_tmp = C_tmp_.data();
             gather_tmp = C_global_tmp_.data();
         }
 #endif
-        if (this->row_nproc > 1)
-        {
+        if (this->row_nproc > 1) {
             Parallel_Common::reduce_dev<T, Device>(C_local, size_C_local, row_world, reduce_tmp);
         }
         Parallel_Common::gatherv_dev<T, Device>(C_local,
@@ -298,26 +253,20 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
                                                 col_world,
                                                 reduce_tmp,
                                                 gather_tmp);
-    }
-    else
-    {
-        if (this->row_nproc > 1)
-        {
+    } else {
+        if (this->row_nproc > 1) {
             Parallel_Common::reduce_dev<T, Device>(C, size_C_local, row_world);
         }
     }
 }
 
 template <typename T, typename Device>
-void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, const T beta, T* C)
-{
+void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, const T beta, T* C) {
     const Device* ctx = {};
 
     // Send B to other procs
-    for (int ip = 0; ip < col_nproc; ip++)
-    {
-        if (col_rank != ip)
-        {
+    for (int ip = 0; ip < col_nproc; ip++) {
+        if (col_rank != ip) {
             int size = ncolB * LDB;
             Parallel_Common::isend_dev<T, Device>(B, size, ip, 0, col_world, &requests[ip], B_tmp_.data());
         }
@@ -325,23 +274,18 @@ void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, con
 
     // init pointers
     T* Btmp_device = nullptr;
-    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-    {
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
         Btmp_device = B_tmp_device_;
-    }
-    else
-    {
+    } else {
         Btmp_device = B_tmp_.data();
     }
 
     // multiply
     int shift = 0;
     T real_beta = row_rank == 0 ? beta : 0;
-    for (int ip = 0; ip < col_nproc; ip++)
-    {
+    for (int ip = 0; ip < col_nproc; ip++) {
         T* C_start = C + shift;
-        if (col_rank == ip)
-        {
+        if (col_rank == ip) {
             ModuleBase::gemm_op<T, Device>()('C',
                                              'N',
                                              ncolA,
@@ -356,9 +300,7 @@ void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, con
                                              C_start,
                                              LDC);
             shift += ncolB * LDC;
-        }
-        else
-        {
+        } else {
             int m = colB_loc[ip];
             int size = m * LDB;
             MPI_Status status;
@@ -380,8 +322,7 @@ void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, con
             shift += m * LDC;
         }
     }
-    if (this->row_nproc > 1)
-    {
+    if (this->row_nproc > 1) {
         Parallel_Common::reduce_dev<T, Device>(C, size_C_local, row_world);
     }
 }

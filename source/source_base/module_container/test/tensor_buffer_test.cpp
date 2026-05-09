@@ -12,7 +12,7 @@ TEST(TensorBuffer, GetAllocatedBytes) {
     // Create a TensorBuffer.
     container::TensorBuffer tensor_buffer(alloc, 100);
 
-    // Check the allocator 
+    // Check the allocator
     EXPECT_EQ(alloc, tensor_buffer.allocator());
 
     // Check the DeviceType
@@ -31,7 +31,7 @@ TEST(TensorBuffer, resize) {
     // Create a TensorBuffer.
     container::TensorBuffer tensor_buffer(alloc, initial_buffer_size);
 
-    // Check the allocator 
+    // Check the allocator
     EXPECT_EQ(alloc, tensor_buffer.allocator());
 
     // Check the DeviceType
@@ -55,7 +55,7 @@ TEST(TensorBuffer, root_buffer) {
     // Create a root TensorBuffer.
     container::TensorBuffer root_buffer(alloc, buffer_size);
 
-    // Check the allocator 
+    // Check the allocator
     EXPECT_EQ(alloc, root_buffer.allocator());
 
     // Check the DeviceType

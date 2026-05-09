@@ -11,7 +11,7 @@ namespace container {
  * @brief Interface to access the raw ref-counted data buffer.
  */
 class TensorBuffer : public base::core::counted_base {
-   public:
+  public:
     /**
      * @brief Construct a new TensorBuffer object.
      *
@@ -23,12 +23,12 @@ class TensorBuffer : public base::core::counted_base {
     TensorBuffer(base::core::Allocator* alloc, size_t size);
 
     /**
-      * @brief Construct a new TensorBuffer object.
-      *
-      * This is a reference TensorBuffer, does not owns memory itself.
-      *
-      * @param data_ptr Pointer to the given data buffer.
-      */
+     * @brief Construct a new TensorBuffer object.
+     *
+     * This is a reference TensorBuffer, does not owns memory itself.
+     *
+     * @param data_ptr Pointer to the given data buffer.
+     */
     explicit TensorBuffer(void* data_ptr);
 
     /**
@@ -134,14 +134,13 @@ class TensorBuffer : public base::core::counted_base {
      */
     TensorBuffer& operator=(TensorBuffer&& other) noexcept;
 
-
   private:
     base::core::Allocator* alloc_ = nullptr; ///< Pointer to the allocator used for memory allocation.
-    void *data_ = nullptr;       ///< Pointer to the underlying data buffer.
-    bool owns_memory_ = false;    ///< Bool to indicate whether this tensor owns it's memory.
-    int64_t allocated_bytes_ = 0; ///< The number of bytes allocated for this buffer.
+    void* data_ = nullptr;                   ///< Pointer to the underlying data buffer.
+    bool owns_memory_ = false;               ///< Bool to indicate whether this tensor owns it's memory.
+    int64_t allocated_bytes_ = 0;            ///< The number of bytes allocated for this buffer.
 };
 
-}  // namespace container
+} // namespace container
 
-#endif  // ATEN_CORE_TENSOR_BUFFER_H_
+#endif // ATEN_CORE_TENSOR_BUFFER_H_

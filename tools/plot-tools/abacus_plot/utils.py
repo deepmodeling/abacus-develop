@@ -1,9 +1,9 @@
-'''
+"""
 Date: 2021-08-18 11:05:39
 LastEditors: jiyuyang
 LastEditTime: 2021-11-08 15:16:35
 Mail: jiyuyang@mail.ustc.edu.cn, 1041176461@qq.com
-'''
+"""
 
 import json
 import re
@@ -17,26 +17,27 @@ import numpy as np
 
 def remove_empty(a: list) -> list:
     """Remove '' and [] in `a`"""
-    while '' in a:
-        a.remove('')
+    while "" in a:
+        a.remove("")
     while [] in a:
         a.remove([])
 
 
 def handle_data(data):
-    data.remove('')
+    data.remove("")
 
     def handle_elem(elem):
-        elist = elem.split(' ')
+        elist = elem.split(" ")
         remove_empty(elist)  # `list` will be modified in function
         return elist
+
     return list(map(handle_elem, data))
 
 
 def skip_notes(line: str) -> str:
     """Delete comments lines with '#' or '//'
 
-    :params line: line will be handled 
+    :params line: line will be handled
     """
     line = re.compile(r"#.*").sub("", line)
     line = re.compile(r"//.*").sub("", line)
@@ -46,8 +47,10 @@ def skip_notes(line: str) -> str:
 
 def list_elem2strip(a: List[str], ds=string.whitespace) -> List[str]:
     """Strip element of list with `str` type"""
+
     def list_strip(s):
         return s.strip(ds)
+
     return list(map(list_strip, a))
 
 
@@ -90,13 +93,21 @@ def list_elem_2float(a: List[str]) -> List[float]:
     """
     return list(map(float, a))
 
+
 # KPT
 
 
 class Kpt:
     """K-points information"""
 
-    def __init__(self, mode: str, numbers: list = [], special_k: list = [], offset: list = [0.0, 0.0, 0.0], klabel: list = []) -> None:
+    def __init__(
+        self,
+        mode: str,
+        numbers: list = [],
+        special_k: list = [],
+        offset: list = [0.0, 0.0, 0.0],
+        klabel: list = [],
+    ) -> None:
         """Initialize Kpt object
 
         :params mode: 'sGamma', 'MP' or 'Line'
@@ -119,18 +130,21 @@ class Kpt:
         if self.mode in ["Gamma", "MP"]:
             line.append("0")
             line.append(self.mode)
-            line.append(" ".join(list_elem2str(self.numbers+self.offset)))
+            line.append(" ".join(list_elem2str(self.numbers + self.offset)))
         elif self.mode == "Line":
             line.append(str(len(self.special_k)))
             line.append(self.mode)
             for i, k in enumerate(self.special_k):
                 if self.klabel:
-                    line.append(" ".join(list_elem2str(
-                        k+[self.numbers[i]]))+'\t#'+self.klabel[i])
+                    line.append(
+                        " ".join(list_elem2str(k + [self.numbers[i]]))
+                        + "\t#"
+                        + self.klabel[i]
+                    )
                 else:
-                    line.append(" ".join(list_elem2str(k+[self.numbers[i]])))
+                    line.append(" ".join(list_elem2str(k + [self.numbers[i]])))
 
-        return '\n'.join(line)
+        return "\n".join(line)
 
     def write_kpt(self, filename: str):
         """Write k-points file
@@ -138,7 +152,7 @@ class Kpt:
         :params filename: absolute path of k-points file
         """
 
-        with open(filename, 'w') as file:
+        with open(filename, "w") as file:
             file.write(self.get_kpt())
 
     @property
@@ -147,8 +161,9 @@ class Kpt:
 
         total_k = np.sum(self.numbers)
         spec_k_coor = np.array(self.special_k)
-        interval = (np.roll(spec_k_coor, -1, axis=0) - spec_k_coor) / \
-            np.reshape(self.numbers, (-1, 1))
+        interval = (np.roll(spec_k_coor, -1, axis=0) - spec_k_coor) / np.reshape(
+            self.numbers, (-1, 1)
+        )
         max_num = np.max(self.numbers)
         len_num = len(self.numbers)
         k_coor_span = np.zeros((len_num, max_num), dtype=float)
@@ -171,7 +186,8 @@ class Kpt:
         """Label special k-points based on `numbers` list"""
 
         index = np.cumsum(np.concatenate(([1], self.numbers), axis=0))[
-            :len(self.special_k)]
+            : len(self.special_k)
+        ]
         if self.klabel:
             return zip(self.klabel, index)
         else:
@@ -206,16 +222,16 @@ def read_kpt(kpt_file: PathLike) -> Kpt:
                 special_k.append(list_elem_2float(linesplit[:3]))
                 numbers.append(int(linesplit[3]))
                 if len(linesplit) == 5:
-                    klabel.append(linesplit[4].strip('#\n '))
+                    klabel.append(linesplit[4].strip("#\n "))
             return Kpt(mode, numbers, special_k, offset=[], klabel=klabel)
 
 
 def read_json(filename: PathLike) -> dict:
-    """ Read json file and return dict
+    """Read json file and return dict
 
     :params filename: json file
     """
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         text = json.load(file)
     return text
 
@@ -234,10 +250,10 @@ def energy_minus_efermi(energy: Sequence, efermi: float) -> np.ndarray:
     :params efermi: Fermi level in unit eV
     """
 
-    return np.array(energy)-efermi
+    return np.array(energy) - efermi
 
 
-angular_momentum_label = ['s', 'p', 'd', 'f', 'g']
+angular_momentum_label = ["s", "p", "d", "f", "g"]
 
 
 def get_angular_momentum_label(l_index: int) -> str:
@@ -250,13 +266,19 @@ def get_angular_momentum_label(l_index: int) -> str:
 
 
 angular_momentum_name = [
-    ['$s$'],
-    ['$p_z$', '$p_x$', '$p_y$'],
-    ['$d_{z^2}$', '$d_{xz}$', '$d_{yz}$', '$d_{x^2-y^2}$', '$d_{xy}$'],
-    ['$f_{z^3}$', '$f_{xz^2}$', '$f_{yz^2}$', '$f_{z(x^2-y^2)}$', 
-        '$f_{xyz}$', '$f_{x(x^2-3y^2)}$', '$f_{y(3x^2-y^2)}$'],
-    ['$g_1$', '$g_2$', '$g_3$', '$g_4$', '$g_5$',
-        '$g_6$', '$g_7$', '$g_8$', '$g_9$']
+    ["$s$"],
+    ["$p_z$", "$p_x$", "$p_y$"],
+    ["$d_{z^2}$", "$d_{xz}$", "$d_{yz}$", "$d_{x^2-y^2}$", "$d_{xy}$"],
+    [
+        "$f_{z^3}$",
+        "$f_{xz^2}$",
+        "$f_{yz^2}$",
+        "$f_{z(x^2-y^2)}$",
+        "$f_{xyz}$",
+        "$f_{x(x^2-3y^2)}$",
+        "$f_{y(3x^2-y^2)}$",
+    ],
+    ["$g_1$", "$g_2$", "$g_3$", "$g_4$", "$g_5$", "$g_6$", "$g_7$", "$g_8$", "$g_9$"],
 ]
 
 
@@ -270,7 +292,13 @@ def get_angular_momentum_name(l_index: int, m_index: int) -> str:
     return angular_momentum_name[l_index][m_index]
 
 
-def parse_projected_data(orbitals, species: Union[Sequence[Any], Dict[Any, List[int]], Dict[Any, Dict[Any, List[int]]]], keyname=''):
+def parse_projected_data(
+    orbitals,
+    species: Union[
+        Sequence[Any], Dict[Any, List[int]], Dict[Any, Dict[Any, List[int]]]
+    ],
+    keyname="",
+):
     """Extract projected data from file
 
     Args:
@@ -306,10 +334,13 @@ def parse_projected_data(orbitals, species: Union[Sequence[Any], Dict[Any, List[
                     l_data = {}
                     for m_index in mag:
                         m_count = 0
-                        data_temp = np.zeros_like(
-                            orbitals[0]["data"], dtype=float)
+                        data_temp = np.zeros_like(orbitals[0]["data"], dtype=float)
                         for orb in orbitals:
-                            if orb[keyname] == elem and orb["l"] == l_index and orb["m"] == m_index:
+                            if (
+                                orb[keyname] == elem
+                                and orb["l"] == l_index
+                                and orb["m"] == m_index
+                            ):
                                 data_temp += orb["data"]
                                 m_count += 1
                                 l_count += 1
@@ -322,8 +353,7 @@ def parse_projected_data(orbitals, species: Union[Sequence[Any], Dict[Any, List[
             elif isinstance(l[i], list):
                 for l_index in l[i]:
                     count = 0
-                    data_temp = np.zeros_like(
-                        orbitals[0]["data"], dtype=float)
+                    data_temp = np.zeros_like(orbitals[0]["data"], dtype=float)
                     for orb in orbitals:
                         if orb[keyname] == elem and orb["l"] == l_index:
                             data_temp += orb["data"]

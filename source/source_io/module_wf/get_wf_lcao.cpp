@@ -8,14 +8,9 @@
 #include "source_lcao/module_gint/gint_env_gamma.h"
 #include "source_lcao/module_gint/gint_env_k.h"
 
-Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
-{
-    pes_ = pes;
-}
+Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes) { pes_ = pes; }
 
-Get_wf_lcao::~Get_wf_lcao()
-{
-}
+Get_wf_lcao::~Get_wf_lcao() {}
 
 // For gamma_only
 void Get_wf_lcao::begin(const UnitCell& ucell,
@@ -32,8 +27,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const int nspin,
                         const int nlocal,
                         const std::string& global_out_dir,
-                        std::ofstream& ofs_running)
-{
+                        std::ofstream& ofs_running) {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
     // if ucell is odd, it's correct,
@@ -53,14 +47,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     this->select_bands(out_wfc_norm, nbands, fermi_band);
 
     // Calculate out_wfc_norm
-    for (int is = 0; is < nspin; ++is)
-    {
+    for (int is = 0; is < nspin; ++is) {
         psid->fix_k(is);
         ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            if (bands_picked_[ib])
-            {
+        for (int ib = 0; ib < nbands; ++ib) {
+            if (bands_picked_[ib]) {
                 gint_env.cal_env_band(ib);
                 pes_->charge->save_rho_before_sum_band();
 
@@ -93,14 +84,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     this->select_bands(out_wfc_re_im, nbands, fermi_band);
 
     // Calculate out_wfc_re_im
-    for (int is = 0; is < nspin; ++is)
-    {
+    for (int is = 0; is < nspin; ++is) {
         psid->fix_k(is);
         ModuleGint::Gint_env_gamma gint_env(psid->get_pointer(), &para_orb, nbands, nlocal, pes_->charge->rho[is]);
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            if (bands_picked_[ib])
-            {
+        for (int ib = 0; ib < nbands; ++ib) {
+            if (bands_picked_[ib]) {
                 gint_env.cal_env_band(ib);
                 pes_->charge->save_rho_before_sum_band();
 
@@ -118,8 +106,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 // Extract real and imaginary parts
                 std::vector<double> wfc_real(pw_wfc->nrxx);
                 std::vector<double> wfc_imag(pw_wfc->nrxx);
-                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                {
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir) {
                     wfc_real[ir] = wfc_r[ir].real();
                     wfc_imag[ir] = wfc_r[ir].imag();
                 }
@@ -137,10 +124,11 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
+    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
+    ModuleIO::write_wfc_pw(istep,
+                           iter,
+                           GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
                            nbands,
@@ -174,8 +162,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const int nspin,
                         const int nlocal,
                         const std::string& global_out_dir,
-                        std::ofstream& ofs_running)
-{
+                        std::ofstream& ofs_running) {
     ModuleBase::TITLE("Get_wf_lcao", "begin");
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
@@ -195,7 +182,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // Set this->bands_picked_
     this->select_bands(out_wfc_norm, nbands, fermi_band);
 
-   // Calculate out_wfc_norm
+    // Calculate out_wfc_norm
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int ik = 0; ik < nks; ++ik) // the loop of nspin0 is included
     {
@@ -203,22 +190,26 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
         psi->fix_k(ik);
 
-        ModuleGint::Gint_env_k gint_env(psi->get_pointer(), &para_orb, kv.kvec_c, kv.kvec_d,
-                                        nbands, nlocal, ik, PARAM.inp.nspin, PARAM.globalv.npol, pes_->charge->rho[ispin]);
-        
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            if (bands_picked_[ib])
-            {
+        ModuleGint::Gint_env_k gint_env(psi->get_pointer(),
+                                        &para_orb,
+                                        kv.kvec_c,
+                                        kv.kvec_d,
+                                        nbands,
+                                        nlocal,
+                                        ik,
+                                        PARAM.inp.nspin,
+                                        PARAM.globalv.npol,
+                                        pes_->charge->rho[ispin]);
+
+        for (int ib = 0; ib < nbands; ++ib) {
+            if (bands_picked_[ib]) {
                 gint_env.cal_env_band(ib);
 
                 // ik0 is the real k-point index, starting from 0
                 int ik0 = kv.ik2iktot[ik];
-                if (nspin == 2)
-                {
+                if (nspin == 2) {
                     const int half_k = kv.get_nkstot() / 2;
-                    if (ik0 >= half_k)
-                    {
+                    if (ik0 >= half_k) {
                         ik0 -= half_k;
                     }
                 }
@@ -256,8 +247,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
+    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
+    ModuleIO::write_wfc_pw(istep,
+                           iter,
+                           GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
                            nbands,
@@ -277,13 +270,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     this->select_bands(out_wfc_re_im, nbands, fermi_band);
 
     // Calculate out_wfc_re_im
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        if (bands_picked_[ib])
-        {
+    for (int ib = 0; ib < nbands; ++ib) {
+        if (bands_picked_[ib]) {
             const int nspin0 = (nspin == 2) ? 2 : 1;
-            for (int ik = 0; ik < nks; ++ik)
-            {
+            for (int ik = 0; ik < nks; ++ik) {
                 const int ispin = kv.isk[ik];
 
                 psi_g.fix_k(ik);
@@ -295,19 +285,16 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 // Extract real and imaginary parts
                 std::vector<double> wfc_real(pw_wfc->nrxx);
                 std::vector<double> wfc_imag(pw_wfc->nrxx);
-                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                {
+                for (int ir = 0; ir < pw_wfc->nrxx; ++ir) {
                     wfc_real[ir] = wfc_r[ir].real();
                     wfc_imag[ir] = wfc_r[ir].imag();
                 }
 
                 // ik0 is the real k-point index, starting from 0
                 int ik0 = kv.ik2iktot[ik];
-                if (nspin == 2)
-                {
+                if (nspin == 2) {
                     const int half_k = kv.get_nkstot() / 2;
-                    if (ik0 >= half_k)
-                    {
+                    if (ik0 >= half_k) {
                         ik0 -= half_k;
                     }
                 }
@@ -329,8 +316,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     return;
 }
 
-void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nbands, const int fermi_band)
-{
+void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nbands, const int fermi_band) {
     ModuleBase::TITLE("Get_wf_lcao", "select_bands");
 
     this->bands_picked_.resize(nbands);
@@ -338,17 +324,14 @@ void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nba
 
     // Select bands directly using parameter `out_wfc_norm` or `out_wfc_re_im`
     // Check if length of out_wfc_kb is valid
-    if (static_cast<int>(out_wfc_kb.size()) > nbands)
-    {
+    if (static_cast<int>(out_wfc_kb.size()) > nbands) {
         ModuleBase::WARNING_QUIT("Get_wf_lcao::select_bands",
                                  "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the INPUT "
                                  "file exceeds `nbands`!");
     }
     // Check if all elements in out_wfc_kb are 0 or 1
-    for (int value: out_wfc_kb)
-    {
-        if (value != 0 && value != 1)
-        {
+    for (int value: out_wfc_kb) {
+        if (value != 0 && value != 1) {
             ModuleBase::WARNING_QUIT(
                 "Get_wf_lcao::select_bands",
                 "The elements of `out_wfc_norm` or `out_wfc_re_im` must be either 0 or 1. Invalid values found!");
@@ -361,21 +344,16 @@ void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nba
 
     // Check if there are selected bands below the Fermi surface
     bool has_below = false;
-    for (int i = 0; i + 1 <= fermi_band; ++i)
-    {
-        if (bands_picked_[i] == 1)
-        {
+    for (int i = 0; i + 1 <= fermi_band; ++i) {
+        if (bands_picked_[i] == 1) {
             has_below = true;
             break;
         }
     }
-    if (has_below)
-    {
+    if (has_below) {
         std::cout << " Plot wave functions below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
+        for (int i = 0; i + 1 <= fermi_band; ++i) {
+            if (bands_picked_[i] == 1) {
                 std::cout << i + 1 << " ";
             }
         }
@@ -384,21 +362,16 @@ void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nba
 
     // Check if there are selected bands above the Fermi surface
     bool has_above = false;
-    for (int i = fermi_band; i < nbands; ++i)
-    {
-        if (bands_picked_[i] == 1)
-        {
+    for (int i = fermi_band; i < nbands; ++i) {
+        if (bands_picked_[i] == 1) {
             has_above = true;
             break;
         }
     }
-    if (has_above)
-    {
+    if (has_above) {
         std::cout << " Plot wave functions above the Fermi surface: band ";
-        for (int i = fermi_band; i < nbands; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
+        for (int i = fermi_band; i < nbands; ++i) {
+            if (bands_picked_[i] == 1) {
                 std::cout << i + 1 << " ";
             }
         }
@@ -412,10 +385,8 @@ void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
                              const int& ib,
                              const int& nspin,
                              const double* const* const rho,
-                             psi::Psi<std::complex<double>>& wfc_g)
-{
-    if (ib == 0)
-    {
+                             psi::Psi<std::complex<double>>& wfc_g) {
+    if (ib == 0) {
         // once is enough
         ModuleBase::TITLE("Get_wf_lcao", "set_pw_wfc");
     }
@@ -423,10 +394,8 @@ void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
     std::vector<std::complex<double>> Porter(pw_wfc->nrxx);
     // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
     const int nspin0 = (nspin == 2) ? 2 : 1;
-    for (int is = 0; is < nspin0; ++is)
-    {
-        for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-        {
+    for (int is = 0; is < nspin0; ++is) {
+        for (int ir = 0; ir < pw_wfc->nrxx; ++ir) {
             Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
         }
     }
@@ -445,26 +414,20 @@ int Get_wf_lcao::set_wfc_grid(const int naroc[2],
                               const int ipcol,
                               const T* in,
                               T** out,
-                              const std::vector<int>& trace_lo)
-{
+                              const std::vector<int>& trace_lo) {
     ModuleBase::TITLE("Get_wf_lcao", "set_wfc_grid");
-    if (!out)
-    {
+    if (!out) {
         return 0;
     }
-    for (int j = 0; j < naroc[1]; ++j)
-    {
+    for (int j = 0; j < naroc[1]; ++j) {
         int igcol = globalIndex(j, nb, dim1, ipcol);
-        if (igcol >= PARAM.inp.nbands)
-        {
+        if (igcol >= PARAM.inp.nbands) {
             continue;
         }
-        for (int i = 0; i < naroc[0]; ++i)
-        {
+        for (int i = 0; i < naroc[0]; ++i) {
             int igrow = globalIndex(i, nb, dim0, iprow);
             int mu_local = trace_lo[igrow];
-            if (out && mu_local >= 0)
-            {
+            if (out && mu_local >= 0) {
                 out[igcol][mu_local] = in[j * naroc[0] + i];
             }
         }
@@ -496,8 +459,7 @@ template <typename T>
 void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
                                  const Parallel_Orbitals& pv,
                                  T** lowf_grid,
-                                 const std::vector<int>& trace_lo)
-{
+                                 const std::vector<int>& trace_lo) {
     ModuleBase::TITLE("Get_wf_lcao", "wfc_2d_to_grid");
     ModuleBase::timer::start("Get_wf_lcao", "wfc_2d_to_grid");
 
@@ -527,20 +489,15 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
     char top = ' ';
 
     // loop over all processors
-    for (int iprow = 0; iprow < pv.dim0; ++iprow)
-    {
-        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
-        {
-            if (iprow == pv.coord[0] && ipcol == pv.coord[1])
-            {
+    for (int iprow = 0; iprow < pv.dim0; ++iprow) {
+        for (int ipcol = 0; ipcol < pv.dim1; ++ipcol) {
+            if (iprow == pv.coord[0] && ipcol == pv.coord[1]) {
                 BlasConnector::copy(pv.nloc_wfc, lowf_2d, mem_stride, lowf_block.data(), mem_stride);
                 naroc[0] = pv.nrow;
                 naroc[1] = pv.ncol_bands;
                 Cxgebs2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2);
                 Cxgebs2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, lowf_block.data(), buf_size);
-            }
-            else
-            {
+            } else {
                 Cxgebr2d(pv.blacs_ctxt, &scope, &top, 2, 1, naroc, 2, iprow, ipcol);
                 Cxgebr2d(pv.blacs_ctxt, &scope, &top, buf_size, 1, lowf_block.data(), buf_size, iprow, ipcol);
             }
@@ -571,8 +528,7 @@ template void Get_wf_lcao::wfc_2d_to_grid(const std::complex<double>* lowf_2d,
                                           const std::vector<int>& trace_lo);
 #endif
 
-void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
-{
+void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running) {
     ofs_running << "\n\n";
     ofs_running << " GET_WF CALCULATION BEGINS" << std::endl;
 
@@ -590,15 +546,13 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
     ofs_running << std::setprecision(6);
 }
 
-int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc) const
-{
+int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc) const {
     const int iblock = localindex / nblk;
     const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;
 }
 
-int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc) const
-{
+int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc) const {
     myproc = int((globalindex % (nblk * nprocs)) / nblk);
     return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;
 }

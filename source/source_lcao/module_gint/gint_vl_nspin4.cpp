@@ -5,10 +5,8 @@
 #include "phi_operator.h"
 #include "gint_helper.h"
 
-namespace ModuleGint
-{
-void Gint_vl_nspin4::cal_gint()
-{
+namespace ModuleGint {
+void Gint_vl_nspin4::cal_gint() {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
     ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
@@ -17,28 +15,23 @@ void Gint_vl_nspin4::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
-void Gint_vl_nspin4::init_hr_gint_()
-{
+void Gint_vl_nspin4::init_hr_gint_() {
     hr_gint_part_.resize(nspin_);
-    for(int i = 0; i < nspin_; i++)
-    {
+    for (int i = 0; i < nspin_; i++) {
         hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
 }
 
-void Gint_vl_nspin4::cal_hr_gint_()
-{
+void Gint_vl_nspin4::cal_hr_gint_() {
 #pragma omp parallel
     {
         PhiOperator phi_op;
         std::vector<double> phi;
         std::vector<double> phi_vldr3;
 #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
-        {
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++) {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
-            {
+            if (biggrid->get_atoms().size() == 0) {
                 continue;
             }
             phi_op.set_bgrid(biggrid);
@@ -46,10 +39,12 @@ void Gint_vl_nspin4::cal_hr_gint_()
             phi.resize(phi_len);
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
-            for(int is = 0; is < nspin_; is++)
-            {
+            for (int is = 0; is < nspin_; is++) {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
-                phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(phi.data(),
+                                   phi_vldr3.data(),
+                                   hr_gint_part_[is],
+                                   PhiOperator::Triangular_Matrix::Upper);
             }
         }
     }

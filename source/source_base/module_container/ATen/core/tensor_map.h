@@ -16,9 +16,8 @@ namespace container {
  * This class is not thread-safe and should not be accessed by multiple threads
  * concurrently.
  */
- class TensorMap : public Tensor {
- public:
-
+class TensorMap : public Tensor {
+  public:
     /**
      * @brief Constructor that map the given data pointer to a tensor object with the given
      * data type, device type and shape.
@@ -30,7 +29,7 @@ namespace container {
      * @param device The data type of the tensor.
      * @param shape The shape of the tensor.
      */
-    TensorMap(void *data, DataType data_type, DeviceType device, const TensorShape &shape);
+    TensorMap(void* data, DataType data_type, DeviceType device, const TensorShape& shape);
 
     /**
      * @brief Constructs a TensorMap from the provided data, with the specified shape.
@@ -43,7 +42,7 @@ namespace container {
      * @param other The Tensor object to be associated with the TensorMap.
      * @param shape The shape of the data referenced by the TensorMap.
      */
-    TensorMap(void *data, const Tensor& other, const TensorShape& shape);
+    TensorMap(void* data, const Tensor& other, const TensorShape& shape);
 
     /**
      * @brief Constructs a TensorMap from the provided data, using the shape of the provided Tensor.
@@ -56,8 +55,7 @@ namespace container {
      * @param data A pointer to the data to be referenced by the TensorMap.
      * @param other The Tensor object to be associated with the TensorMap, which defines the shape.
      */
-    TensorMap(void *data, const Tensor& other);
-
+    TensorMap(void* data, const Tensor& other);
 };
 
 } // namespace container

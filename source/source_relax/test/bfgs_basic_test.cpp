@@ -41,26 +41,21 @@ double Ions_Move_Basic::relax_bfgs_init = -1.0;
 double Ions_Move_Basic::best_xxx = 1.0;
 int Ions_Move_Basic::out_stru = 0;
 
-double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
-{
+double Ions_Move_Basic::dot_func(const double* a, const double* b, const int& dim_in) {
     double result = 0.0;
-    for (int i = 0; i < dim_in; i++)
-    {
+    for (int i = 0; i < dim_in; i++) {
         result += a[i] * b[i];
     }
     return result;
 }
 
-class BFGSBasicTest : public ::testing::Test
-{
+class BFGSBasicTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Clean up after each test
     }
 
@@ -68,8 +63,7 @@ class BFGSBasicTest : public ::testing::Test
 };
 
 // Test whether the allocate_basic() function can correctly allocate memory space
-TEST_F(BFGSBasicTest, TestAllocate)
-{
+TEST_F(BFGSBasicTest, TestAllocate) {
     Ions_Move_Basic::dim = 4;
     bfgs.allocate_basic();
 
@@ -84,23 +78,20 @@ TEST_F(BFGSBasicTest, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(BFGSBasicTest, TestAllocateWithZeroDimension)
-{
+TEST_F(BFGSBasicTest, TestAllocateWithZeroDimension) {
     Ions_Move_Basic::dim = 0;
     ASSERT_DEATH(bfgs.allocate_basic(), "");
 }
 
 // Test function update_inverse_hessian() assert death
-TEST_F(BFGSBasicTest, UpdateInverseHessianDeath)
-{
+TEST_F(BFGSBasicTest, UpdateInverseHessianDeath) {
     Ions_Move_Basic::dim = 0;
     double lat0 = 1.0;
     ASSERT_DEATH(bfgs.update_inverse_hessian(lat0), "");
 }
 
 // Test function update_inverse_hessian() when sdoty = 0
-TEST_F(BFGSBasicTest, UpdateInverseHessianCase1)
-{
+TEST_F(BFGSBasicTest, UpdateInverseHessianCase1) {
     Ions_Move_Basic::dim = 3;
     double lat0 = 1.0;
     bfgs.allocate_basic();
@@ -109,8 +100,8 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase1)
     bfgs.update_inverse_hessian(lat0);
     GlobalV::ofs_running.close();
 
-    std::string expected_output
-        = " WARINIG: unexpected behaviour in update_inverse_hessian\n Resetting bfgs history \n";
+    std::string expected_output =
+        " WARINIG: unexpected behaviour in update_inverse_hessian\n Resetting bfgs history \n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -120,8 +111,7 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase1)
 }
 
 // Test function update_inverse_hessian()
-TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
-{
+TEST_F(BFGSBasicTest, UpdateInverseHessianCase2) {
     Ions_Move_Basic::dim = 3;
     double lat0 = 1.0;
     bfgs.allocate_basic();
@@ -142,8 +132,7 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
 }
 
 // Test function check_wolfe_conditions()
-TEST_F(BFGSBasicTest, CheckWolfeConditions)
-{
+TEST_F(BFGSBasicTest, CheckWolfeConditions) {
     Ions_Move_Basic::dim = 3;
     Ions_Move_Basic::etot = 10.0;
     PARAM.input.test_relax_method = 1;
@@ -156,13 +145,13 @@ TEST_F(BFGSBasicTest, CheckWolfeConditions)
     bfgs.check_wolfe_conditions();
     GlobalV::ofs_running.close();
 
-    std::string expected_output
-        = "                            etot - etot_p = 10\n                    relax_bfgs_w1 * dot_p = -0\n            "
-          "                          dot = 0\n                    relax_bfgs_w2 * dot_p = -0\n                         "
-          "   relax_bfgs_w1 = -1\n                            relax_bfgs_w2 = -1\n                                   "
-          "wolfe1 = 0\n                                   wolfe2 = 0\n                            etot - etot_p = 10\n "
-          "                   relax_bfgs_w1 * dot_p = -0\n                                   wolfe1 = 0\n              "
-          "                     wolfe2 = 0\n                wolfe condition satisfied = 0\n";
+    std::string expected_output =
+        "                            etot - etot_p = 10\n                    relax_bfgs_w1 * dot_p = -0\n            "
+        "                          dot = 0\n                    relax_bfgs_w2 * dot_p = -0\n                         "
+        "   relax_bfgs_w1 = -1\n                            relax_bfgs_w2 = -1\n                                   "
+        "wolfe1 = 0\n                                   wolfe2 = 0\n                            etot - etot_p = 10\n "
+        "                   relax_bfgs_w1 * dot_p = -0\n                                   wolfe1 = 0\n              "
+        "                     wolfe2 = 0\n                wolfe condition satisfied = 0\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -173,8 +162,7 @@ TEST_F(BFGSBasicTest, CheckWolfeConditions)
 }
 
 // Test function reset_hessian()
-TEST_F(BFGSBasicTest, ResetHessian)
-{
+TEST_F(BFGSBasicTest, ResetHessian) {
     Ions_Move_Basic::dim = 3;
     bfgs.allocate_basic();
 
@@ -192,8 +180,7 @@ TEST_F(BFGSBasicTest, ResetHessian)
 }
 
 // Test function save_bfgs()
-TEST_F(BFGSBasicTest, SaveBfgs)
-{
+TEST_F(BFGSBasicTest, SaveBfgs) {
     Ions_Move_Basic::dim = 2;
     bfgs.save_flag = false;
     bfgs.allocate_basic();
@@ -216,8 +203,7 @@ TEST_F(BFGSBasicTest, SaveBfgs)
 }
 
 // Test function new_step() when update_iter == 1
-TEST_F(BFGSBasicTest, NewStepCase1)
-{
+TEST_F(BFGSBasicTest, NewStepCase1) {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::update_iter = 0;
     Ions_Move_Basic::largest_grad = 0.0;
@@ -249,8 +235,7 @@ TEST_F(BFGSBasicTest, NewStepCase1)
 }
 
 // Test function new_step() when update_iter > 1
-TEST_F(BFGSBasicTest, NewStepCase2)
-{
+TEST_F(BFGSBasicTest, NewStepCase2) {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::update_iter = 2;
     Ions_Move_Basic::largest_grad = 0.0;
@@ -279,8 +264,7 @@ TEST_F(BFGSBasicTest, NewStepCase2)
 }
 
 // Test function new_step() when bfgs_ndim > 1
-TEST_F(BFGSBasicTest, NewStepWarningQuit)
-{
+TEST_F(BFGSBasicTest, NewStepWarningQuit) {
     Ions_Move_Basic::dim = 2;
     bfgs.bfgs_ndim = 2;
     bfgs.allocate_basic();
@@ -293,8 +277,7 @@ TEST_F(BFGSBasicTest, NewStepWarningQuit)
 }
 
 // Test function compute_trust_radius() case 1
-TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
-{
+TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1) {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;
     Ions_Move_Basic::etot_p = 0.0;
@@ -321,8 +304,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
 }
 
 // Test function compute_trust_radius() case 2
-TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
-{
+TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2) {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;
     Ions_Move_Basic::etot_p = 0.0;
@@ -354,8 +336,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
 }
 
 // Test function compute_trust_radius() warning_quit
-TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
-{
+TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit) {
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::etot = 0.0;
     Ions_Move_Basic::etot_p = 0.0;

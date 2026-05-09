@@ -14,8 +14,7 @@
 
 #include <complex>
 
-namespace module_rt
-{
+namespace module_rt {
 void evolve_psi(const int nband,
                 const int nlocal,
                 const Parallel_Orbitals* pv,
@@ -29,8 +28,7 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
-                const int print_matrix)
-{
+                const int print_matrix) {
     ModuleBase::TITLE("module_rt", "evolve_psi");
     time_t time_start = time(nullptr);
 
@@ -60,14 +58,12 @@ void evolve_psi(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (propagator != 2)
-    {
+    if (propagator != 2) {
         half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (propagator != 3)
-    {
+    if (propagator != 3) {
         /// @brief compute U_operator
         /// @input Stmp, Htmp, print_matrix
         /// @output U_operator
@@ -76,25 +72,19 @@ void evolve_psi(const int nband,
     }
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (propagator != 3)
-    {
+    if (propagator != 3) {
         /// @brief apply U_operator to the wave function of the previous step for new wave function
         /// @input U_operator, psi_k_laststep, print_matrix
         /// @output psi_k
         upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
-    }
-    else
-    {
+    } else {
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
-        if (use_td_moving_gauge)
-        {
+        if (use_td_moving_gauge) {
             solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, P_k, psi_k_laststep, psi_k);
-        }
-        else
-        {
-        solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+        } else {
+            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
         }
     }
 
@@ -139,8 +129,7 @@ void evolve_psi_tensor(const int nband,
                        std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack,
-                       CublasMpResources& cublas_res)
-{
+                       CublasMpResources& cublas_res) {
     ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
     time_t time_start = time(nullptr);
 
@@ -149,12 +138,11 @@ void evolve_psi_tensor(const int nband,
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     // Memory operations
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
+    if (ct_device_type == ct::DeviceType::GpuDevice) {
         // Initialize cuBLAS & cuSOLVER handle
         ct::kernels::createGpuSolverHandle();
         ct::kernels::createGpuBlasHandle();
@@ -176,26 +164,19 @@ void evolve_psi_tensor(const int nband,
 
     module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g;
 
-    if (use_lapack)
-    {
-        if (num_procs == 1)
-        {
+    if (use_lapack) {
+        if (num_procs == 1) {
             h_src = h_mat.p;
             s_src = s_mat.p;
-        }
-        else
-        {
+        } else {
             module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
             module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
-            if (myid == root_proc)
-            {
+            if (myid == root_proc) {
                 h_src = h_mat_g.p.get();
                 s_src = s_mat_g.p.get();
             }
         }
-    }
-    else
-    {
+    } else {
         h_src = h_mat.p;
         s_src = s_mat.p;
     }
@@ -204,10 +185,8 @@ void evolve_psi_tensor(const int nband,
 
     ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
-    if (s_src != nullptr)
-    {
-        if (!use_lapack || myid == root_proc)
-        {
+    if (s_src != nullptr) {
+        if (!use_lapack || myid == root_proc) {
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
             ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
@@ -216,10 +195,8 @@ void evolve_psi_tensor(const int nband,
 
     ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
-    if (h_src != nullptr)
-    {
-        if (!use_lapack || myid == root_proc)
-        {
+    if (h_src != nullptr) {
+        if (!use_lapack || myid == root_proc) {
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_src, len_HS);
             ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
@@ -227,10 +204,8 @@ void evolve_psi_tensor(const int nband,
     }
 
     // (1) Compute H(t+dt/2)
-    if (propagator != 2)
-    {
-        if (!use_lapack)
-        {
+    if (propagator != 2) {
+        if (!use_lapack) {
             half_Hmatrix_tensor(pv,
                                 nband,
                                 nlocal,
@@ -241,9 +216,7 @@ void evolve_psi_tensor(const int nband,
                                 ofs_running,
                                 print_matrix,
                                 cublas_res);
-        }
-        else if (myid == root_proc)
-        {
+        } else if (myid == root_proc) {
             half_Hmatrix_tensor_lapack<Device>(pv,
                                                nband,
                                                nlocal,
@@ -272,22 +245,16 @@ void evolve_psi_tensor(const int nband,
                                            cublas_res);
 
     // (3) Apply U_operator (psi_k = U * psi_last)
-    if (!use_lapack)
-    {
+    if (!use_lapack) {
         upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix, cublas_res);
-    }
-    else if (myid == root_proc)
-    {
+    } else if (myid == root_proc) {
         upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
     }
 
     // (4) Normalize psi_k
-    if (!use_lapack)
-    {
+    if (!use_lapack) {
         norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix, cublas_res);
-    }
-    else if (myid == root_proc)
-    {
+    } else if (myid == root_proc) {
         norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
     }
 
@@ -295,29 +262,23 @@ void evolve_psi_tensor(const int nband,
     ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
     // Resync H matrix
-    if (h_src != nullptr)
-    {
-        if (!use_lapack || myid == root_proc)
-        {
+    if (h_src != nullptr) {
+        if (!use_lapack || myid == root_proc) {
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
             ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
-    if (!use_lapack)
-    {
+    if (!use_lapack) {
         compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, cublas_res);
-    }
-    else if (myid == root_proc)
-    {
+    } else if (myid == root_proc) {
         compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
     }
 #endif // __MPI
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
+    if (ct_device_type == ct::DeviceType::GpuDevice) {
         // Destroy cuBLAS & cuSOLVER handle
         ct::kernels::destroyGpuSolverHandle();
         ct::kernels::destroyGpuBlasHandle();

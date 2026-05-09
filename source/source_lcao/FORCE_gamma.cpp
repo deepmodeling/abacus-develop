@@ -23,8 +23,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                                   const TwoCenterBundle& two_center_bundle,
                                   const LCAO_Orbitals& orb,
                                   const int& nks,
-                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
+                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d) {
     ModuleBase::TITLE("Forces", "allocate");
     ModuleBase::timer::start("Forces", "allocate");
 
@@ -46,8 +45,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
     ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_z, pv.nloc);
     ModuleBase::Memory::record("Force::dS_GO", sizeof(double) * pv.nloc * 3);
     // allocate stress part in gamma_only-line, added by zhengdy-stress
-    if (PARAM.inp.cal_stress)
-    {
+    if (PARAM.inp.cal_stress) {
         fsr.DSloc_11 = new double[pv.nloc];
         fsr.DSloc_12 = new double[pv.nloc];
         fsr.DSloc_13 = new double[pv.nloc];
@@ -115,8 +113,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
 }
 
 template <>
-void Force_LCAO<double>::finish_ftable(ForceStressArrays& fsr)
-{
+void Force_LCAO<double>::finish_ftable(ForceStressArrays& fsr) {
     delete[] fsr.DSloc_x;
     delete[] fsr.DSloc_y;
     delete[] fsr.DSloc_z;
@@ -150,10 +147,10 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const UnitCell& ucell,
                                 const Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
-								const elecstate::ElecState* pelec,
-								const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
-								ModuleBase::matrix& foverlap,
-								ModuleBase::matrix& ftvnl_dphi,
+                                const elecstate::ElecState* pelec,
+                                const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+                                ModuleBase::matrix& foverlap,
+                                ModuleBase::matrix& ftvnl_dphi,
                                 ModuleBase::matrix& fvnl_dbeta,
                                 ModuleBase::matrix& fvl_dphi,
                                 ModuleBase::matrix& soverlap,
@@ -167,8 +164,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
                                 const K_Vectors* kv,
-                                Record_adj* ra)
-{
+                                Record_adj* ra) {
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::start("Forces", "ftable");
 
@@ -213,8 +209,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    false /*reset dm to gint*/);
 
 #ifdef __MLALGO
-    if (PARAM.inp.deepks_scf)
-    {
+    if (PARAM.inp.deepks_scf) {
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r,
@@ -233,8 +228,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     }
 #endif
 
-    if (isforce)
-    {
+    if (isforce) {
         Parallel_Reduce::reduce_pool(foverlap.c, foverlap.nr * foverlap.nc);
         Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
@@ -243,8 +237,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
 #endif
     }
-    if (isstress)
-    {
+    if (isstress) {
         Parallel_Reduce::reduce_pool(soverlap.c, soverlap.nr * soverlap.nc);
         Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
@@ -255,8 +248,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     }
 
 #ifdef __MLALGO
-    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
-    {
+    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest) {
         std::ofstream ofs_f("F_delta.dat");
         std::ofstream ofs_s("stress_delta.dat");
         ofs_f << std::setprecision(10);

@@ -8,16 +8,12 @@
 Psi (planewave based wavefunction) initializer: random method
 */
 template <typename T>
-class psi_init_file : public psi_initializer<T>
-{
+class psi_init_file : public psi_initializer<T> {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_file()
-    {
-        this->method_ = "file";
-    };
+    psi_init_file() { this->method_ = "file"; };
     ~psi_init_file(){};
 
     /// @brief initialize the psi_initializer with external data and methods

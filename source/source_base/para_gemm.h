@@ -8,8 +8,7 @@
 #include "mpi.h"
 #endif
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 /**
  * @brief this class is used to perform parallel matrix multiplication
  *        C = alpha * A^H * B + beta * C
@@ -21,8 +20,7 @@ namespace ModuleBase
  * values.
  */
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class PGemmCN
-{
+class PGemmCN {
   public:
     PGemmCN();
     ~PGemmCN();
@@ -101,17 +99,15 @@ class PGemmCN
 
 #ifdef __MPI
   private:
-    std::vector<T> isend_tmp_; ///< temperory memory for sending data
-    std::vector<T> A_tmp_;     ///< temperory memory for A
-    std::vector<T> B_tmp_;     ///< temperory memory for B
-    std::vector<T> C_tmp_;     ///< temperory memory for C
+    std::vector<T> isend_tmp_;    ///< temperory memory for sending data
+    std::vector<T> A_tmp_;        ///< temperory memory for A
+    std::vector<T> B_tmp_;        ///< temperory memory for B
+    std::vector<T> C_tmp_;        ///< temperory memory for C
     std::vector<T> C_global_tmp_; ///< temperory memory for C_global
     T* C_local_tmp_ = nullptr;    ///< temperory memory for C_local
     T* A_tmp_device_ = nullptr;   ///< temperory memory for A
     T* B_tmp_device_ = nullptr;   ///< temperory memory for B
 #endif
-
-
 };
 } // namespace ModuleBase
 #endif

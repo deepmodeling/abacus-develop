@@ -5,12 +5,10 @@
 
 #include <complex>
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename FPTYPE, typename Device>
-struct cal_vkb1_nl_op
-{
+struct cal_vkb1_nl_op {
     /// @brief The prestep to calculate the final forces
     ///
     /// Input Parameters
@@ -39,8 +37,7 @@ struct cal_vkb1_nl_op
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_force_nl_op
-{
+struct cal_force_nl_op {
     /// @brief Calculate the final forces for multi-device
     ///
     /// Input Parameters
@@ -149,39 +146,35 @@ struct cal_force_nl_op
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_force_loc_op{
-    void operator()(
-        const int nat,
-        const int npw,
-        const FPTYPE tpiba_omega,
-        const int* iat2it,
-        const int* ig2igg,
-        const FPTYPE* gcar,
-        const FPTYPE* tau,
-        const std::complex<FPTYPE>* aux,
-        const FPTYPE* vloc,
-        const int vloc_nr,
-        FPTYPE* forcelc) {};
+struct cal_force_loc_op {
+    void operator()(const int nat,
+                    const int npw,
+                    const FPTYPE tpiba_omega,
+                    const int* iat2it,
+                    const int* ig2igg,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const std::complex<FPTYPE>* aux,
+                    const FPTYPE* vloc,
+                    const int vloc_nr,
+                    FPTYPE* forcelc) {};
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_force_ew_op{
-    void operator()(
-        const int nat,
-        const int npw,
-        const int ig_gge0,
-        const int* iat2it,
-        const FPTYPE* gcar,
-        const FPTYPE* tau,
-        const FPTYPE* it_fact,
-        const std::complex<FPTYPE>* aux,
-        FPTYPE* forceion
-    ) {};
+struct cal_force_ew_op {
+    void operator()(const int nat,
+                    const int npw,
+                    const int ig_gge0,
+                    const int* iat2it,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* it_fact,
+                    const std::complex<FPTYPE>* aux,
+                    FPTYPE* forceion) {};
 };
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& nkb,
                     const int& npwx,
@@ -195,8 +188,7 @@ struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 template <typename FPTYPE>
-struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
@@ -305,34 +297,31 @@ void saveVkbValues(const int* gcar_zero_ptrs,
                    int npwx);
 
 template <typename FPTYPE>
-struct cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU>{
-    void operator()(
-        const int nat,
-        const int npw,
-        const FPTYPE tpiba_omega,
-        const int* iat2it,
-        const int* ig2igg,
-        const FPTYPE* gcar,
-        const FPTYPE* tau,
-        const std::complex<FPTYPE>* aux,
-        const FPTYPE* vloc,
-        const int vloc_nr,
-        FPTYPE* forcelc);
+struct cal_force_loc_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const int nat,
+                    const int npw,
+                    const FPTYPE tpiba_omega,
+                    const int* iat2it,
+                    const int* ig2igg,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const std::complex<FPTYPE>* aux,
+                    const FPTYPE* vloc,
+                    const int vloc_nr,
+                    FPTYPE* forcelc);
 };
 
 template <typename FPTYPE>
-struct cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU>{
-    void operator()(
-        const int nat,
-        const int npw,
-        const int ig_gge0,
-        const int* iat2it,
-        const FPTYPE* gcar,
-        const FPTYPE* tau,
-        const FPTYPE* it_fact,
-        const std::complex<FPTYPE>* aux,
-        FPTYPE* forceion
-    );
+struct cal_force_ew_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const int nat,
+                    const int npw,
+                    const int ig_gge0,
+                    const int* iat2it,
+                    const FPTYPE* gcar,
+                    const FPTYPE* tau,
+                    const FPTYPE* it_fact,
+                    const std::complex<FPTYPE>* aux,
+                    FPTYPE* forceion);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

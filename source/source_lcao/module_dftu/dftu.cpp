@@ -19,7 +19,7 @@
 #include <sstream>
 #include <vector>
 
- // mohan add 2025-11-06
+// mohan add 2025-11-06
 double Plus_U::energy_u = 0.0;
 
 std::vector<double> Plus_U::U = {}; // U (Hubbard parameter U)
@@ -30,26 +30,24 @@ std::vector<int> Plus_U::orbital_corr = {}; //
 
 double Plus_U::uramping = 0.0; // increase U by uramping, default is -1.0
 
-int Plus_U::omc=0; // occupation matrix control
+int Plus_U::omc = 0; // occupation matrix control
 
-int Plus_U::mixing_dftu=0; //whether to mix locale
+int Plus_U::mixing_dftu = 0; // whether to mix locale
 
-bool Plus_U::Yukawa=false; // whether to use Yukawa potential
+bool Plus_U::Yukawa = false; // whether to use Yukawa potential
 
-Plus_U::Plus_U()
-{}
+Plus_U::Plus_U() {}
 
-Plus_U::~Plus_U()
-{}
+Plus_U::~Plus_U() {}
 
 void Plus_U::init(UnitCell& cell, // unitcell class
-                const Parallel_Orbitals* pv,
-                const int nks
+                  const Parallel_Orbitals* pv,
+                  const int nks
 #ifdef __LCAO
-                , const LCAO_Orbitals* orb
+                  ,
+                  const LCAO_Orbitals* orb
 #endif
-                )
-{
+) {
     ModuleBase::TITLE("Plus_U", "init");
 
 #ifndef __MPI
@@ -59,10 +57,9 @@ void Plus_U::init(UnitCell& cell, // unitcell class
 
     this->paraV = pv;
 
-#ifdef __LCAO    
+#ifdef __LCAO
     ptr_orb_ = orb;
-    if(ptr_orb_ != nullptr)
-    {
+    if (ptr_orb_ != nullptr) {
         orb_cutoff_ = orb->cutoffs();
     }
     ucell = &cell;
@@ -72,7 +69,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     // global parameters, need to be removed in future
     const int npol = PARAM.globalv.npol;     // number of polarization directions
     const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
-    const int nspin = PARAM.inp.nspin;   // number of spins
+    const int nspin = PARAM.inp.nspin;       // number of spins
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;
@@ -87,10 +84,8 @@ void Plus_U::init(UnitCell& cell, // unitcell class
 
     int num_locale = 0;
     // it:index of type of atom
-    for (int it = 0; it < cell.ntype; ++it)
-    {
-        for (int ia = 0; ia < cell.atoms[it].na; ia++)
-        {
+    for (int it = 0; it < cell.ntype; ++it) {
+        for (int ia = 0; ia < cell.atoms[it].na; ia++) {
             // ia:index of atoms of this type
             // determine the size of locale
             const int iat = cell.itia2iat(it, ia);
@@ -98,21 +93,18 @@ void Plus_U::init(UnitCell& cell, // unitcell class
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
 
-            const int tlp1_npol = (this->orbital_corr[it]*2+1)*npol;
+            const int tlp1_npol = (this->orbital_corr[it] * 2 + 1) * npol;
             this->eff_pot_pw_index[iat] = pot_index;
             pot_index += tlp1_npol * tlp1_npol;
 
-            for (int l = 0; l <= cell.atoms[it].nwl; l++)
-            {
+            for (int l = 0; l <= cell.atoms[it].nwl; l++) {
                 const int N = cell.atoms[it].l_nchi[l];
 
                 locale[iat][l].resize(N);
                 locale_save[iat][l].resize(N);
 
-                for (int n = 0; n < N; n++)
-                {
-                    if (nspin == 1 || nspin == 2)
-                    {
+                for (int n = 0; n < N; n++) {
+                    if (nspin == 1 || nspin == 2) {
                         locale[iat][l][n].resize(2);
                         locale_save[iat][l][n].resize(2);
 
@@ -122,8 +114,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
                         locale_save[iat][l][n][0].create(2 * l + 1, 2 * l + 1);
                         locale_save[iat][l][n][1].create(2 * l + 1, 2 * l + 1);
                         num_locale += (2 * l + 1) * (2 * l + 1) * 2;
-                    }
-                    else if (nspin == 4) // SOC
+                    } else if (nspin == 4) // SOC
                     {
                         locale[iat][l][n].resize(1);
                         locale_save[iat][l][n].resize(1);
@@ -137,23 +128,19 @@ void Plus_U::init(UnitCell& cell, // unitcell class
 
             // initialize the arrry iatlnm2iwt[iat][l][n][m]
             this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl + 1);
-            for (int L = 0; L <= cell.atoms[it].nwl; L++)
-            {
+            for (int L = 0; L <= cell.atoms[it].nwl; L++) {
                 this->iatlnmipol2iwt[iat][L].resize(cell.atoms[it].l_nchi[L]);
 
-                for (int n = 0; n < cell.atoms[it].l_nchi[L]; n++)
-                {
+                for (int n = 0; n < cell.atoms[it].l_nchi[L]; n++) {
                     this->iatlnmipol2iwt[iat][L][n].resize(2 * L + 1);
 
-                    for (int m = 0; m < 2 * L + 1; m++)
-                    {
+                    for (int m = 0; m < 2 * L + 1; m++) {
                         this->iatlnmipol2iwt[iat][L][n][m].resize(npol);
                     }
                 }
             }
 
-            for (int iw = 0; iw < cell.atoms[it].nw * npol; iw++)
-            {
+            for (int iw = 0; iw < cell.atoms[it].nw * npol; iw++) {
                 int iw0 = iw / npol;
                 int ipol = iw % npol;
                 int iwt = cell.itiaiw2iwt(it, ia, iw);
@@ -168,28 +155,24 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     // allocate memory for eff_pot_pw
     this->eff_pot_pw.resize(pot_index, 0.0);
 
-    if (Yukawa)
-    {
+    if (Yukawa) {
         this->Fk.resize(cell.ntype);
 
         this->U_Yukawa.resize(cell.ntype);
         this->J_Yukawa.resize(cell.ntype);
 
-        for (int it = 0; it < cell.ntype; it++)
-        {
+        for (int it = 0; it < cell.ntype; it++) {
             const int NL = cell.atoms[it].nwl + 1;
 
             this->Fk[it].resize(NL);
             this->U_Yukawa[it].resize(NL);
             this->J_Yukawa[it].resize(NL);
 
-            for (int l = 0; l < NL; l++)
-            {
+            for (int l = 0; l < NL; l++) {
                 int N = cell.atoms[it].l_nchi[l];
 
                 this->Fk[it][l].resize(N);
-                for (int n = 0; n < N; n++)
-                {
+                for (int n = 0; n < N; n++) {
                     this->Fk[it][l][n].resize(l + 1, 0.0);
                 }
 
@@ -199,32 +182,26 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         }
     }
 
-    if (omc != 0)
-    {
+    if (omc != 0) {
         std::stringstream sst;
         sst << "initial_onsite.dm";
-        this->read_occup_m(cell,sst.str());
+        this->read_occup_m(cell, sst.str());
 #ifdef __MPI
         this->local_occup_bcast(cell);
 #endif
 
         initialed_locale = true;
         this->copy_locale(cell);
-    }
-    else
-    {
-        if (PARAM.inp.init_chg == "file")
-        {
+    } else {
+        if (PARAM.inp.init_chg == "file") {
             std::stringstream sst;
             sst << PARAM.globalv.global_out_dir << "onsite.dm";
-            this->read_occup_m(cell,sst.str());
+            this->read_occup_m(cell, sst.str());
 #ifdef __MPI
             this->local_occup_bcast(cell);
 #endif
             initialed_locale = true;
-        }
-        else
-        {
+        } else {
             this->zero_locale(cell);
         }
     }
@@ -235,13 +212,10 @@ void Plus_U::init(UnitCell& cell, // unitcell class
 
 #ifdef __LCAO
 
-void Plus_U::cal_energy_correction(const UnitCell& ucell,
-                                 const int istep)
-{
+void Plus_U::cal_energy_correction(const UnitCell& ucell, const int istep) {
     ModuleBase::TITLE("Plus_U", "cal_energy_correction");
     ModuleBase::timer::start("Plus_U", "cal_energy_correction");
-    if (!initialed_locale)
-    {
+    if (!initialed_locale) {
         ModuleBase::timer::end("Plus_U", "cal_energy_correction");
         return;
     }
@@ -251,24 +225,19 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
 
     double energy_dc = 0.0;
 
-    for (int T = 0; T < ucell.ntype; T++)
-    {
+    for (int T = 0; T < ucell.ntype; T++) {
         const int NL = ucell.atoms[T].nwl + 1;
         const int LC = orbital_corr[T];
-        for (int I = 0; I < ucell.atoms[T].na; I++)
-        {
-            if (LC == -1)
-            {
+        for (int I = 0; I < ucell.atoms[T].na; I++) {
+            if (LC == -1) {
                 continue;
             }
 
             const int iat = ucell.itia2iat(T, I);
             const int L = orbital_corr[T];
 
-            for (int l = 0; l < NL; l++)
-            {
-                if (l != orbital_corr[T])
-                {
+            for (int l = 0; l < NL; l++) {
+                if (l != orbital_corr[T]) {
                     continue;
                 }
 
@@ -277,97 +246,73 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                 const int m_tot = 2 * l + 1;
 
                 // part 1: calculate the DFT+U energy correction
-                for (int n = 0; n < N; n++)
-                {
-                    if (n != 0)
-                    {
+                for (int n = 0; n < N; n++) {
+                    if (n != 0) {
                         continue;
                     }
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
-                    {
-                        for (int spin = 0; spin < 2; spin++)
-                        {
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
+                        for (int spin = 0; spin < 2; spin++) {
                             double nm_trace = 0.0;
                             double nm2_trace = 0.0;
 
-                            for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                            {
+                            for (int m0 = 0; m0 < 2 * l + 1; m0++) {
                                 nm_trace += this->locale[iat][l][n][spin](m0, m0);
-                                for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                {
-                                    nm2_trace += this->locale[iat][l][n][spin](m0, m1)
-                                                 * this->locale[iat][l][n][spin](m1, m0);
+                                for (int m1 = 0; m1 < 2 * l + 1; m1++) {
+                                    nm2_trace +=
+                                        this->locale[iat][l][n][spin](m0, m1) * this->locale[iat][l][n][spin](m1, m0);
                                 }
                             }
-                            if (Yukawa)
-                            {
-                                Plus_U::energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
-                                            * (nm_trace - nm2_trace);
-                            }
-                            else
-                            {
+                            if (Yukawa) {
+                                Plus_U::energy_u +=
+                                    0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
+                            } else {
                                 Plus_U::energy_u += 0.5 * this->U[T] * (nm_trace - nm2_trace);
                             }
                         }
-                    }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    } else if (PARAM.inp.nspin == 4) // SOC
                     {
                         double nm_trace = 0.0;
                         double nm2_trace = 0.0;
 
-                        for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                        {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
-                            {
+                        for (int m0 = 0; m0 < 2 * l + 1; m0++) {
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++) {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
                                 nm_trace += this->locale[iat][l][n][0](m0_all, m0_all);
 
-                                for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                                    {
+                                for (int m1 = 0; m1 < 2 * l + 1; m1++) {
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++) {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
 
-                                        nm2_trace += this->locale[iat][l][n][0](m0_all, m1_all)
-                                                     * this->locale[iat][l][n][0](m1_all, m0_all);
+                                        nm2_trace += this->locale[iat][l][n][0](m0_all, m1_all) *
+                                                     this->locale[iat][l][n][0](m1_all, m0_all);
                                     }
                                 }
                             }
                         }
-                        if (Yukawa)
-                        {
-                            Plus_U::energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) 
-                              * (nm_trace - nm2_trace);
-                        }
-                        else
-                        {
+                        if (Yukawa) {
+                            Plus_U::energy_u +=
+                                0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
+                        } else {
                             Plus_U::energy_u += 0.5 * this->U[T] * (nm_trace - nm2_trace);
                         }
                     }
 
                     // calculate the double counting term included in eband
-                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                    {
-                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                        {
+                    for (int m1 = 0; m1 < 2 * l + 1; m1++) {
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++) {
                             const int m1_all = m1 + ipol1 * (2 * l + 1);
-                            for (int m2 = 0; m2 < 2 * l + 1; m2++)
-                            {
-                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
-                                {
+                            for (int m2 = 0; m2 < 2 * l + 1; m2++) {
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++) {
                                     const int m2_all = m2 + ipol2 * (2 * l + 1);
 
-                                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
-                                    {
-                                        for (int is = 0; is < 2; is++)
-                                        {
+                                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
+                                        for (int is = 0; is < 2; is++) {
                                             double VU = 0.0;
                                             VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
                                             energy_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
-                                    }
-                                    else if (PARAM.inp.nspin == 4) // SOC
+                                    } else if (PARAM.inp.nspin == 4) // SOC
                                     {
                                         double VU = 0.0;
                                         VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
@@ -378,9 +323,9 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                         }
                     }
                 } // end n
-            }     // end L
-        }         // end I
-    }             // end T
+            } // end L
+        } // end I
+    } // end T
 
     // substract the double counting energy_dc included in band energy eband
     Plus_U::energy_u -= energy_dc;
@@ -391,32 +336,24 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
 
 #endif
 
-void Plus_U::uramping_update()
-{
+void Plus_U::uramping_update() {
     // if uramping < 0.1, use the original U
     if (this->uramping < 0.01) {
         return;
-}
+    }
     // loop to change U
-    for (int i = 0; i < this->U0.size(); i++)
-    {
-        if (this->U[i] + this->uramping < this->U0[i])
-        {
+    for (int i = 0; i < this->U0.size(); i++) {
+        if (this->U[i] + this->uramping < this->U0[i]) {
             this->U[i] += this->uramping;
-        }
-        else
-        {
+        } else {
             this->U[i] = this->U0[i];
         }
     }
 }
 
-bool Plus_U::u_converged()
-{
-    for (int i = 0; i < this->U0.size(); i++)
-    {
-        if (this->U[i] != this->U0[i])
-        {
+bool Plus_U::u_converged() {
+    for (int i = 0; i < this->U0.size(); i++) {
+        if (this->U[i] != this->U0[i]) {
             return false;
         }
     }
@@ -425,30 +362,22 @@ bool Plus_U::u_converged()
 
 #ifdef __LCAO
 
-void Plus_U::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
-{
+void Plus_U::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr) {
     this->dm_in_dftu_cd = dmr;
     return;
 }
 
-void Plus_U::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
-{
+void Plus_U::set_dmr(const elecstate::DensityMatrix<double, double>* dmr) {
     this->dm_in_dftu_d = dmr;
     return;
 }
 
-const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
-{
-    if (this->dm_in_dftu_d != nullptr)
-    {
+const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const {
+    if (this->dm_in_dftu_d != nullptr) {
         return this->dm_in_dftu_d->get_DMR_pointer(ispin + 1);
-    }
-    else if (this->dm_in_dftu_cd != nullptr)
-    {
+    } else if (this->dm_in_dftu_cd != nullptr) {
         return this->dm_in_dftu_cd->get_DMR_pointer(ispin + 1);
-    }
-    else
-    {
+    } else {
         return nullptr;
     }
 }
@@ -461,9 +390,8 @@ void dftu_cal_occup_m(const int iter,
                       const K_Vectors& kv,
                       const double& mixing_beta,
                       hamilt::Hamilt<double>* p_ham,
-                      Plus_U &dftu)
-{
-    dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
+                      Plus_U& dftu) {
+    dftu.cal_occup_m_gamma(iter, ucell, dm, mixing_beta, p_ham);
 }
 
 //! dftu occupation matrix for multiple k-points using dm(complex)
@@ -474,9 +402,8 @@ void dftu_cal_occup_m(const int iter,
                       const K_Vectors& kv,
                       const double& mixing_beta,
                       hamilt::Hamilt<std::complex<double>>* p_ham,
-                      Plus_U &dftu)
-{
-    dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
+                      Plus_U& dftu) {
+    dftu.cal_occup_m_k(iter, ucell, dm, kv, mixing_beta, p_ham);
 }
 
 #endif

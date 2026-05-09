@@ -7,17 +7,14 @@
 #include "source_base/tool_title.h"
 #include "source_cell/klist.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
 // initialize density matrix DMR from UnitCell (mainly used in UnitTest)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell* ucell)
-{
+void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell* ucell) {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
-    for (auto& it: this->_DMR)
-    {
+    for (auto& it: this->_DMR) {
         delete it;
     }
     this->_DMR.clear();
@@ -25,21 +22,18 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
     // set up a HContainer
-    for (int iat1 = 0; iat1 < ucell->nat; iat1++)
-    {
+    for (int iat1 = 0; iat1 < ucell->nat; iat1++) {
         auto tau1 = ucell->get_tau(iat1);
         int T1, I1;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD_in->Find_atom(*ucell, tau1, T1, I1, &adjs);
         // std::cout << "adjs.adj_num: " <<adjs.adj_num << std::endl;
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-        {
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad) {
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0)
-            {
+            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0) {
                 continue;
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
@@ -49,15 +43,13 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
         }
     }
     // allocate the memory of BaseMatrix in SR, and set the new values to zero
-    if (std::is_same<TK, double>::value)
-    {
+    if (std::is_same<TK, double>::value) {
         tmp_DMR->fix_gamma();
     }
     tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
-    if (this->_nspin == 2)
-    {
+    if (this->_nspin == 2) {
         hamilt::HContainer<TR>* tmp_DMR1;
         tmp_DMR1 = new hamilt::HContainer<TR>(*tmp_DMR);
         this->_DMR.push_back(tmp_DMR1);
@@ -67,12 +59,10 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
 
 /// initialize density matrix DMR from UnitCell and RA (mainly used in UnitTest)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
-{
+void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell) {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
-    for (auto& it: this->_DMR)
-    {
+    for (auto& it: this->_DMR) {
         delete it;
     }
     this->_DMR.clear();
@@ -80,18 +70,15 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
     // set up a HContainer
-    for (int iat1 = 0; iat1 < ucell->nat; iat1++)
-    {
+    for (int iat1 = 0; iat1 < ucell->nat; iat1++) {
         auto tau1 = ucell->get_tau(iat1);
         int T1, I1;
         ucell->iat2iait(iat1, &I1, &T1);
-        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
-        {
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad) {
             const int T2 = ra.info[iat1][ad][3];
             const int I2 = ra.info[iat1][ad][4];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0)
-            {
+            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0) {
                 continue;
             }
             hamilt::AtomPair<TR> tmp_ap(iat1,
@@ -104,15 +91,13 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
         }
     }
     // allocate the memory of BaseMatrix in SR, and set the new values to zero
-    if (std::is_same<TK, double>::value)
-    {
+    if (std::is_same<TK, double>::value) {
         tmp_DMR->fix_gamma();
     }
     tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
-    if (this->_nspin == 2)
-    {
+    if (this->_nspin == 2) {
         hamilt::HContainer<TR>* tmp_DMR1;
         tmp_DMR1 = new hamilt::HContainer<TR>(*tmp_DMR);
         this->_DMR.push_back(tmp_DMR1);
@@ -122,12 +107,10 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
 
 // initialize density matrix DMR from another HContainer (mainly used)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
-{
+void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in) {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
-    for (auto& it: this->_DMR)
-    {
+    for (auto& it: this->_DMR) {
         delete it;
     }
     this->_DMR.clear();
@@ -144,27 +127,22 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
 }
 
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
-{
+void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in) {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty
-    for (auto& it: this->_DMR)
-    {
+    for (auto& it: this->_DMR) {
         delete it;
     }
     this->_DMR.clear();
     // set up a HContainer using another one
     int size_ap = DMR_in.size_atom_pairs();
-    if (size_ap > 0)
-    {
+    if (size_ap > 0) {
         const Parallel_Orbitals* paraV_ = DMR_in.get_atom_pair(0).get_paraV();
         hamilt::HContainer<TR>* tmp_DMR = new hamilt::HContainer<TR>(paraV_);
-        for (int iap = 0; iap < size_ap; iap++)
-        {
+        for (int iap = 0; iap < size_ap; iap++) {
             const int iat1 = DMR_in.get_atom_pair(iap).get_atom_i();
             const int iat2 = DMR_in.get_atom_pair(iap).get_atom_j();
-            for (int ir = 0; ir < DMR_in.get_atom_pair(iap).get_R_size(); ir++)
-            {
+            for (int ir = 0; ir < DMR_in.get_atom_pair(iap).get_R_size(); ir++) {
                 const ModuleBase::Vector3<int> R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
                 hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, paraV_);
                 tmp_DMR->insert_pair(tmp_ap);
@@ -172,8 +150,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
         }
         tmp_DMR->allocate(nullptr, true);
         this->_DMR.push_back(tmp_DMR);
-        if (this->_nspin == 2)
-        {
+        if (this->_nspin == 2) {
             hamilt::HContainer<TR>* tmp_DMR1 = new hamilt::HContainer<TR>(*tmp_DMR);
             this->_DMR.push_back(tmp_DMR1);
         }
@@ -183,8 +160,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 
 // get _DMR pointer
 template <typename TK, typename TR>
-hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const
-{
+hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
 #endif
@@ -193,8 +169,7 @@ hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) 
 
 // get _DMK[ik] pointer
 template <typename TK, typename TR>
-TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
-{
+TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const {
 #ifdef __DEBUG
     assert(ik < this->_nk * this->_nspin);
 #endif
@@ -203,8 +178,7 @@ TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
 
 // set DMK using a pointer
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
-{
+void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in) {
 #ifdef __DEBUG
     assert(ik < this->_nk * this->_nspin);
 #endif
@@ -213,8 +187,7 @@ void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
 
 // set _DMK element
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value)
-{
+void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value) {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
     assert(ik >= 0 && ik < this->_nk);
@@ -225,10 +198,8 @@ void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, 
 
 // set _DMK element
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::set_DMK_zero()
-{
-    for (int ik = 0; ik < _nspin * _nk; ik++)
-    {
+void DensityMatrix<TK, TR>::set_DMK_zero() {
+    for (int ik = 0; ik < _nspin * _nk; ik++) {
         ModuleBase::GlobalFunc::ZEROS(this->_DMK[ik].data(),
                                       this->_paraV->get_row_size() * this->_paraV->get_col_size());
     }
@@ -236,8 +207,7 @@ void DensityMatrix<TK, TR>::set_DMK_zero()
 
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
-TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
-{
+TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
 #endif
@@ -247,8 +217,7 @@ TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, co
 
 // get _DMK nks, nrow, ncol
 template <typename TK, typename TR>
-int DensityMatrix<TK, TR>::get_DMK_nks() const
-{
+int DensityMatrix<TK, TR>::get_DMK_nks() const {
 #ifdef __DEBUG
     assert(this->_DMK.size() == _nk * _nspin);
 #endif
@@ -256,8 +225,7 @@ int DensityMatrix<TK, TR>::get_DMK_nks() const
 }
 
 template <typename TK, typename TR>
-int DensityMatrix<TK, TR>::get_DMK_size() const
-{
+int DensityMatrix<TK, TR>::get_DMK_size() const {
 #ifdef __DEBUG
     assert(this->_DMK.size() != 0);
 #endif
@@ -265,8 +233,7 @@ int DensityMatrix<TK, TR>::get_DMK_size() const
 }
 
 template <typename TK, typename TR>
-int DensityMatrix<TK, TR>::get_DMK_nrow() const
-{
+int DensityMatrix<TK, TR>::get_DMK_nrow() const {
 #ifdef __DEBUG
     assert(this->_DMK.size() != 0);
 #endif
@@ -274,8 +241,7 @@ int DensityMatrix<TK, TR>::get_DMK_nrow() const
 }
 
 template <typename TK, typename TR>
-int DensityMatrix<TK, TR>::get_DMK_ncol() const
-{
+int DensityMatrix<TK, TR>::get_DMK_ncol() const {
 #ifdef __DEBUG
     assert(this->_DMK.size() != 0);
 #endif
@@ -283,34 +249,28 @@ int DensityMatrix<TK, TR>::get_DMK_ncol() const
 }
 
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::save_DMR()
-{
+void DensityMatrix<TK, TR>::save_DMR() {
     ModuleBase::TITLE("DensityMatrix", "save_DMR");
     ModuleBase::timer::start("DensityMatrix", "save_DMR");
 
     const int nnr = this->_DMR[0]->get_nnr();
     // allocate if _DMR_save is empty
-    if (_DMR_save.size() == 0)
-    {
+    if (_DMR_save.size() == 0) {
         _DMR_save.resize(this->_DMR.size());
     }
     // resize if _DMR_save[is].size is not equal to _DMR.size
-    for (int is = 0; is < _DMR_save.size(); is++)
-    {
-        if (_DMR_save[is].size() != nnr)
-        {
+    for (int is = 0; is < _DMR_save.size(); is++) {
+        if (_DMR_save[is].size() != nnr) {
             _DMR_save[is].resize(nnr);
         }
     }
     // save _DMR to _DMR_save
-    for (int is = 0; is < this->_DMR.size(); is++)
-    {
+    for (int is = 0; is < this->_DMR.size(); is++) {
         TR* DMR_pointer = this->_DMR[is]->get_wrapper();
         TR* DMR_save_pointer = _DMR_save[is].data();
         // set to zero
         ModuleBase::GlobalFunc::ZEROS(DMR_save_pointer, nnr);
-        for (int i = 0; i < nnr; i++)
-        {
+        for (int i = 0; i < nnr; i++) {
             DMR_save_pointer[i] = DMR_pointer[i];
         }
     }
@@ -320,8 +280,7 @@ void DensityMatrix<TK, TR>::save_DMR()
 
 // read *.dmk into density matrix dm(k)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispin, const int ik)
-{
+void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispin, const int ik) {
     ModuleBase::TITLE("DensityMatrix", "read_DMK");
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
@@ -335,12 +294,9 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
     std::ifstream ifs;
 
     ifs.open(fn.c_str());
-    if (!ifs)
-    {
+    if (!ifs) {
         quit_abacus = true;
-    }
-    else
-    {
+    } else {
         // if the number is not match,
         // quit the program or not.
         bool quit = false;
@@ -353,10 +309,8 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
     } // If file exist, read in data.
     // Finish reading the first part of density matrix.
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
-    {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
-        {
+    for (int i = 0; i < this->_paraV->nrow; ++i) {
+        for (int j = 0; j < this->_paraV->ncol; ++j) {
             ifs >> this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
@@ -365,8 +319,7 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
 
 // output density matrix dm(k) into *.dmk
 template <>
-void DensityMatrix<double, double>::write_DMK(const std::string directory, const int ispin, const int ik)
-{
+void DensityMatrix<double, double>::write_DMK(const std::string directory, const int ispin, const int ik) {
     ModuleBase::TITLE("DensityMatrix", "write_DMK");
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
@@ -376,8 +329,7 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
     fn = directory + "SPIN" + std::to_string(ispin) + "_" + std::to_string(ik) + ".dmk";
     std::ofstream ofs;
     ofs.open(fn.c_str());
-    if (!ofs)
-    {
+    if (!ofs) {
         ModuleBase::WARNING("elecstate::write_dmk", "Can't create DENSITY MATRIX File!");
     }
     ofs << this->_kvec_d[ik].x << " " << this->_kvec_d[ik].y << " " << this->_kvec_d[ik].z << std::endl;
@@ -386,12 +338,9 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
     ofs << std::setprecision(3);
     ofs << std::scientific;
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
-    {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
-        {
-            if (j % 8 == 0)
-            {
+    for (int i = 0; i < this->_paraV->nrow; ++i) {
+        for (int j = 0; j < this->_paraV->ncol; ++j) {
+            if (j % 8 == 0) {
                 ofs << "\n";
             }
             ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
@@ -402,8 +351,9 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
 }
 
 template <>
-void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string directory, const int ispin, const int ik)
-{
+void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string directory,
+                                                            const int ispin,
+                                                            const int ik) {
     ModuleBase::TITLE("DensityMatrix", "write_DMK");
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
@@ -413,8 +363,7 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     fn = directory + "SPIN" + std::to_string(ispin) + "_" + std::to_string(ik) + ".dmk";
     std::ofstream ofs;
     ofs.open(fn.c_str());
-    if (!ofs)
-    {
+    if (!ofs) {
         ModuleBase::WARNING("elecstate::write_dmk", "Can't create DENSITY MATRIX File!");
     }
     ofs << this->_kvec_d[ik].x << " " << this->_kvec_d[ik].y << " " << this->_kvec_d[ik].z << std::endl;
@@ -423,12 +372,9 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     ofs << std::setprecision(3);
     ofs << std::scientific;
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
-    {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
-        {
-            if (j % 8 == 0)
-            {
+    for (int i = 0; i < this->_paraV->nrow; ++i) {
+        for (int j = 0; j < this->_paraV->ncol; ++j) {
+            if (j % 8 == 0) {
                 ofs << "\n";
             }
             ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j].real();
@@ -439,8 +385,8 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
 }
 
 // T of HContainer can be double or std::complex<double>
-template class DensityMatrix<double, double>;               // Gamma-Only case
-template class DensityMatrix<std::complex<double>, double>; // Multi-k case
+template class DensityMatrix<double, double>;                             // Gamma-Only case
+template class DensityMatrix<std::complex<double>, double>;               // Multi-k case
 template class DensityMatrix<std::complex<double>, std::complex<double>>; // For EXX in future
 
 } // namespace elecstate

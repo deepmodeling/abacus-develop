@@ -8,18 +8,15 @@
 #include <map>
 #include <string>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 /**
  * @brief Tracing computation time
  * @authors Fangwei, Mohan, Peize Lin
  *
  */
-class timer
-{
+class timer {
   public:
-    struct Timer_One
-    {
+    struct Timer_One {
         double cpu_start;
         double cpu_second = 0.0;
         size_t calls = 0;
@@ -36,8 +33,8 @@ class timer
      * @param class_name_in The class name for timing
      * @param name_in The compuational process for timing
      */
-    static void start(const std::string &class_name_in, const std::string &name_in);
-    static void end(const std::string &class_name_in, const std::string &name_in);
+    static void start(const std::string& class_name_in, const std::string& name_in);
+    static void end(const std::string& class_name_in, const std::string& name_in);
 
     /**
      * @brief Start total time calculation
@@ -52,34 +49,25 @@ class timer
      * @param ofs The output file for print out timings
      * @param print_flag Print timings or not
      */
-    static void finish(std::ofstream &ofs, const bool print_flag = true, const bool check_end = true);
+    static void finish(std::ofstream& ofs, const bool print_flag = true, const bool check_end = true);
 
     /**
      * @brief Enable time computation
      *
      */
-    static void enable(void)
-    {
-        disabled = false;
-    }
+    static void enable(void) { disabled = false; }
 
     /**
      * @brief Toggle NVTX range emission for CUDA profiling.
      * Caller-injected; only consulted when built with __CUDA && __USE_NVTX.
      */
-    static void set_nvtx_enabled(bool b)
-    {
-        enable_nvtx_ = b;
-    }
+    static void set_nvtx_enabled(bool b) { enable_nvtx_ = b; }
 
     /**
      * @brief Disable time computation
      *
      */
-    static void disable(void)
-    {
-        disabled = true;
-    }
+    static void disable(void) { disabled = true; }
 
     /**
      * @brief Write all computational processes to json file
@@ -93,7 +81,7 @@ class timer
      *
      * @param ofs The output file for print out timings
      */
-    static void print_all(std::ofstream &ofs, const bool check_end);
+    static void print_all(std::ofstream& ofs, const bool check_end);
 
     /**
      * @brief Stop total time calculation, print total time until now,

@@ -28,19 +28,16 @@
 // mohan add 2025-03-06
 #include "source_io/module_output/cal_test.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
-{
+void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep) {
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::start("ESolver_KS_LCAO", "others");
 
     const std::string cal_type = PARAM.inp.calculation;
 
-    if (cal_type == "test_memory")
-    {
+    if (cal_type == "test_memory") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
         Cal_Test::test_memory(ucell.nat,
                               ucell.ntype,
@@ -51,9 +48,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                               this->p_chgmix->get_mixing_ndim());
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing memory");
         return;
-    }
-    else if (cal_type == "test_neighbour")
-    {
+    } else if (cal_type == "test_neighbour") {
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
         double search_radius = PARAM.inp.search_radius;
@@ -66,9 +61,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
-    }
-    else if (cal_type == "gen_opt_abfs")
-    {
+    } else if (cal_type == "gen_opt_abfs") {
         return;
     }
 
@@ -121,13 +114,11 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // don't need to since initialized in LCAO_domain::set_psi_occ_dm_chg in before_all_runners
 
     // init Hamiltonian
-    if (this->p_hamilt != nullptr)
-    {
+    if (this->p_hamilt != nullptr) {
         delete this->p_hamilt;
         this->p_hamilt = nullptr;
     }
-    if (this->p_hamilt == nullptr)
-    {
+    if (this->p_hamilt == nullptr) {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
@@ -146,8 +137,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // since it depends on ionic positions
     this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
 
-    if (PARAM.inp.sc_mag_switch)
-    {
+    if (PARAM.inp.sc_mag_switch) {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.init_sc(PARAM.inp.sc_thr,
                    PARAM.inp.nsc,
@@ -175,12 +165,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // self consistent calculations for electronic ground state
-    if (cal_type == "get_pchg")
-    {
+    if (cal_type == "get_pchg") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         Get_pchg_lcao get_pchg(this->psi, &(this->pv));
-        if (PARAM.globalv.gamma_only_local)
-        {
+        if (PARAM.globalv.gamma_only_local) {
             get_pchg.begin(this->chr.rho,
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
@@ -195,9 +183,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                            this->kv,
                            PARAM.globalv.global_out_dir,
                            GlobalV::ofs_running);
-        }
-        else
-        {
+        } else {
             get_pchg.begin(this->chr.rho,
                            this->chr.rhog,
                            this->pelec->wg,
@@ -218,13 +204,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                            this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
-    }
-    else if (cal_type == "get_wf")
-    {
+    } else if (cal_type == "get_wf") {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
         Get_wf_lcao get_wf(this->pelec);
-        if (PARAM.globalv.gamma_only_local)
-        {
+        if (PARAM.globalv.gamma_only_local) {
             get_wf.begin(ucell,
                          this->psi,
                          this->pw_wfc,
@@ -240,9 +223,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          PARAM.globalv.nlocal,
                          PARAM.globalv.global_out_dir,
                          GlobalV::ofs_running);
-        }
-        else
-        {
+        } else {
             get_wf.begin(ucell,
                          this->psi,
                          this->pw_wfc,
@@ -260,9 +241,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "CALCULATION type not supported");
     }
 

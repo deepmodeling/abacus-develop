@@ -3,8 +3,7 @@
 
 #include <mpi.h>
 // a simple interface for calling pexsi with 2D block cyclic distributed matrix
-namespace pexsi
-{
+namespace pexsi {
 int simplePEXSI(MPI_Comm comm_PEXSI,
                 MPI_Comm comm_2D,
                 MPI_Group group_2D,

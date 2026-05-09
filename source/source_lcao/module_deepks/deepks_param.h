@@ -2,13 +2,11 @@
 #define LCAO_DEEPKS_PARAM
 
 #include <vector>
-namespace ModuleBase
-{
+namespace ModuleBase {
 struct IntArray;
 }
 
-struct DeePKS_Param
-{
+struct DeePKS_Param {
     int lmaxd = 0;
     int nmaxd = 0;
     int inlmax = 0;

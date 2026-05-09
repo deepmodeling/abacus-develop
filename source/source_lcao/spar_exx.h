@@ -20,15 +20,14 @@
 // Namespace - merged into one block
 // --------------------------------------------------------
 
-namespace sparse_format
-{
+namespace sparse_format {
 
 /**
  * @brief Calculate the Hamiltonian matrix elements in real space using EXX data in sparse format
- * 
+ *
  * This function computes the Hamiltonian matrix elements in real space (HR) from EXX data,
  * which is stored in a sparse tensor format. The results are added to the HS_Arrays structure.
- * 
+ *
  * @tparam Tdata Data type for the matrix elements (double or std::complex<double>)
  * @param ucell Unit cell information
  * @param pv Parallel orbitals information for distributed computation
@@ -65,9 +64,10 @@ extern template void cal_HR_exx<std::complex<double>>(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>&
+        Hexxs);
 
-}
+} // namespace sparse_format
 
 #endif // __EXX
 #endif // SPARSE_FORMAT_EXX_H

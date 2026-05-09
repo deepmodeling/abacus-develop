@@ -4,8 +4,7 @@
 #include <vector>
 #include <cstddef>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /**
  * @brief Cubic spline interplation.
@@ -115,14 +114,12 @@ namespace ModuleBase
  *      // for static functions.
  *
  */
-class CubicSpline
-{    
+class CubicSpline {
     //*****************************************************************
     //                      boundary condition
     //*****************************************************************
 
-public:
-
+  public:
     /**
      * @brief Types of cubic spline boundary conditions.
      *
@@ -137,14 +134,7 @@ public:
      *                  This condition requires that y[0] = y[n-1] and it must be
      *                  applied to both ends
      */
-    enum class BoundaryType
-    {
-        not_a_knot,
-        first_deriv,
-        second_deriv,
-        periodic
-    };
-
+    enum class BoundaryType { not_a_knot, first_deriv, second_deriv, periodic };
 
     /**
      * @brief Boundary condition for cubic spline interpolation.
@@ -153,8 +143,7 @@ public:
      * which contains a type and possibly a value (first/second_deriv only).
      *
      */
-    struct BoundaryCondition
-    {
+    struct BoundaryCondition {
         // for not_a_knot and periodic
         BoundaryCondition(BoundaryType type = BoundaryType::not_a_knot);
 
@@ -165,22 +154,19 @@ public:
         double val = 0.0;
     };
 
-
     //*****************************************************************
     //                      interpolant object
     //*****************************************************************
 
-public:
-
-    CubicSpline()                   = delete;
+  public:
+    CubicSpline() = delete;
     CubicSpline(CubicSpline const&) = default;
-    CubicSpline(CubicSpline &&)     = default;
+    CubicSpline(CubicSpline&&) = default;
 
-    CubicSpline& operator=(CubicSpline const&)  = default;
-    CubicSpline& operator=(CubicSpline &&)      = default;
+    CubicSpline& operator=(CubicSpline const&) = default;
+    CubicSpline& operator=(CubicSpline&&) = default;
 
-    ~CubicSpline() = default; 
-
+    ~CubicSpline() = default;
 
     /**
      * @brief Builds an interpolant object.
@@ -196,14 +182,11 @@ public:
      * @param[in]   bc_end          boundary condition at end
      *
      */
-    CubicSpline(
-        int n,
-        const double* x,
-        const double* y,
-        const BoundaryCondition& bc_start = {},
-        const BoundaryCondition& bc_end = {}
-    );
-
+    CubicSpline(int n,
+                const double* x,
+                const double* y,
+                const BoundaryCondition& bc_start = {},
+                const BoundaryCondition& bc_end = {});
 
     /**
      * @brief Builds an interpolant object with evenly-spaced knots.
@@ -219,15 +202,12 @@ public:
      * @param[in]   bc_end          boundary condition at end
      *
      */
-    CubicSpline(
-        int n,
-        double x0,
-        double dx,
-        const double* y,
-        const BoundaryCondition& bc_start = {},
-        const BoundaryCondition& bc_end = {}
-    );
-
+    CubicSpline(int n,
+                double x0,
+                double dx,
+                const double* y,
+                const BoundaryCondition& bc_start = {},
+                const BoundaryCondition& bc_end = {});
 
     /**
      * @brief Builds an empty object with specified knots only.
@@ -235,7 +215,7 @@ public:
      * An object of this class can hold multiple interpolants with the same knots.
      * This constructor allows the user to initialize the object with knots only,
      * so that interpolants can be added later.
-     * 
+     *
      * @param[in]   n               number of knots
      * @param[in]   x               x coordinates of data points
      *                              ("knots", must be strictly increasing)
@@ -270,12 +250,7 @@ public:
      * @param[in]   bc_end          boundary condition at end
      *
      */
-    void add(
-        const double* y,
-        const BoundaryCondition& bc_start = {},
-        const BoundaryCondition& bc_end = {}
-    );
-
+    void add(const double* y, const BoundaryCondition& bc_start = {}, const BoundaryCondition& bc_end = {});
 
     /**
      * @brief Evaluates a single interpolant at multiple places.
@@ -291,15 +266,12 @@ public:
      * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
-    void eval(
-        int n_interp,
-        const double* x_interp,
-        double* y_interp,
-        double* dy_interp = nullptr,
-        double* d2y_interp = nullptr,
-        int i_spline = 0
-    ) const;
-
+    void eval(int n_interp,
+              const double* x_interp,
+              double* y_interp,
+              double* dy_interp = nullptr,
+              double* d2y_interp = nullptr,
+              int i_spline = 0) const;
 
     /**
      * @brief Evaluates multiple interpolants at a single place.
@@ -315,15 +287,12 @@ public:
      * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
-    void multi_eval(
-        int n_spline,
-        const int* i_spline,
-        double x_interp,
-        double* y_interp,
-        double* dy_interp = nullptr,
-        double* d2y_interp = nullptr
-    ) const;
-
+    void multi_eval(int n_spline,
+                    const int* i_spline,
+                    double x_interp,
+                    double* y_interp,
+                    double* dy_interp = nullptr,
+                    double* d2y_interp = nullptr) const;
 
     /**
      * @brief Evaluates all interpolants at a single place.
@@ -337,13 +306,7 @@ public:
      * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
-    void multi_eval(
-        double x_interp,
-        double* y_interp,
-        double* dy_interp = nullptr,
-        double* d2y_interp = nullptr
-    ) const;
-
+    void multi_eval(double x_interp, double* y_interp, double* dy_interp = nullptr, double* d2y_interp = nullptr) const;
 
     /**
      * @brief Reserves memory for holding more interpolants.
@@ -361,7 +324,6 @@ public:
      */
     void reserve(int n_spline) { y_.reserve(n_spline * n_ * 2); }
 
-
     /// heap memory usage in bytes
     size_t heap_usage() const { return (x_.capacity() + y_.capacity()) * sizeof(double); }
 
@@ -374,9 +336,7 @@ public:
     /// number of interpolants held by this object
     int n_spline() const { return n_spline_; }
 
-
-private:
-
+  private:
     /// number of cubic spline interpolants
     int n_spline_ = 0;
 
@@ -398,13 +358,11 @@ private:
     /// values and first derivatives at knots
     std::vector<double> y_;
 
-
     //*****************************************************************
     //                      static functions
     //*****************************************************************
 
-public:
-
+  public:
     /**
      * @brief Computes the first derivatives at knots for cubic spline
      * interpolation.
@@ -418,15 +376,12 @@ public:
      * @param[out]  dy              first derivatives at knots
      *
      */
-    static void build(
-        int n,
-        const double* x,
-        const double* y,
-        const BoundaryCondition& bc_start,
-        const BoundaryCondition& bc_end,
-        double* dy
-    );
-
+    static void build(int n,
+                      const double* x,
+                      const double* y,
+                      const BoundaryCondition& bc_start,
+                      const BoundaryCondition& bc_end,
+                      double* dy);
 
     /**
      * @brief Computes the first derivatives at evenly-spaced knots for
@@ -440,15 +395,12 @@ public:
      * @param[out]  dy              first derivatives at knots
      *
      */
-    static void build(
-        int n,
-        double dx,
-        const double* y,
-        const BoundaryCondition& bc_start,
-        const BoundaryCondition& bc_end,
-        double* dy
-    );
-
+    static void build(int n,
+                      double dx,
+                      const double* y,
+                      const BoundaryCondition& bc_start,
+                      const BoundaryCondition& bc_end,
+                      double* dy);
 
     /**
      * @brief Evaluates a cubic spline polynomial at multiple places.
@@ -467,18 +419,15 @@ public:
      * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
-    static void eval(
-        int n,
-        const double* x,
-        const double* y,
-        const double* dy,
-        int n_interp,
-        const double* x_interp,
-        double* y_interp,
-        double* dy_interp = nullptr,
-        double* d2y_interp = nullptr
-    );
-
+    static void eval(int n,
+                     const double* x,
+                     const double* y,
+                     const double* dy,
+                     int n_interp,
+                     const double* x_interp,
+                     double* y_interp,
+                     double* dy_interp = nullptr,
+                     double* d2y_interp = nullptr);
 
     /**
      * @brief Evaluates a cubic spline polynomial with evenly spaced knots.
@@ -498,32 +447,25 @@ public:
      * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
-    static void eval(
-        int n,
-        double x0,
-        double dx,
-        const double* y,
-        const double* dy,
-        int n_interp,
-        const double* x_interp,
-        double* y_interp,
-        double* dy_interp = nullptr,
-        double* d2y_interp = nullptr
-    );
+    static void eval(int n,
+                     double x0,
+                     double dx,
+                     const double* y,
+                     const double* dy,
+                     int n_interp,
+                     const double* x_interp,
+                     double* y_interp,
+                     double* dy_interp = nullptr,
+                     double* d2y_interp = nullptr);
 
-
-private:
-
+  private:
     /// Computational routine for building cubic spline interpolant
-    static void _build(
-        int n,
-        const double* dx,
-        const double* y,
-        const BoundaryCondition& bc_start,
-        const BoundaryCondition& bc_end,
-        double* dy
-    );
-
+    static void _build(int n,
+                       const double* dx,
+                       const double* y,
+                       const BoundaryCondition& bc_start,
+                       const BoundaryCondition& bc_end,
+                       double* dy);
 
     /**
      * @brief Segment index lookup.
@@ -535,53 +477,42 @@ private:
      */
     static inline int _index(int n, const double* x, double target);
 
-
     /// Segment index lookup (evenly spaced knots).
     static inline int _index(int n, double x0, double dx, double target);
 
-
     /// Evaluates a batch of cubic polynomials.
-    static inline void _cubic(
-        int n,
-        const double* w,
-        const double* c0,
-        const double* c1,
-        const double* c2,
-        const double* c3,
-        double* y,
-        double* dy,
-        double* d2y
-    );
-
+    static inline void _cubic(int n,
+                              const double* w,
+                              const double* c0,
+                              const double* c1,
+                              const double* c2,
+                              const double* c3,
+                              double* y,
+                              double* dy,
+                              double* d2y);
 
     /// Asserts that the input arguments are valid for constructing a cubic spline.
-    static void _validate_build(
-        int n,
-        const double* dx,
-        const double* y,
-        const BoundaryCondition& bc_start,
-        const BoundaryCondition& bc_end
-    );
-
+    static void _validate_build(int n,
+                                const double* dx,
+                                const double* y,
+                                const BoundaryCondition& bc_start,
+                                const BoundaryCondition& bc_end);
 
     /// Asserts that the input arguments are valid for interpolating a cubic spline.
-    static void _validate_eval(
-        int n,
-        const double (&u)[2],
-        const double* x,
-        const double* y,
-        const double* dy,
-        int n_interp,
-        const double* x_interp
-    );
-
+    static void _validate_eval(int n,
+                               const double (&u)[2],
+                               const double* x,
+                               const double* y,
+                               const double* dy,
+                               int n_interp,
+                               const double* x_interp);
 
     /**
      * @brief Solves a cyclic tridiagonal linear system.
      *
      * A cyclic tridiagonal linear system A*x=b where b is a vector and
      *
-     *        --                                             --   
+     *        --                                             --
      *        |  d[0]   u[0]                           l[n-1] |
      *        |  l[0]   d[1]   u[1]                           |
      *   A =  |         l[1]   d[2]   u[2]                    |

@@ -8,26 +8,19 @@
 #include "source_psi/psi.h"
 #include "module_pot/potential_new.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
-class ElecState
-{
+class ElecState {
   public:
-    ElecState()
-    {
-    }
-    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
-    {
+    ElecState() {}
+    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in) {
         this->charge = chr_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
         this->eferm.two_efermi = PARAM.globalv.two_fermi;
     }
-    virtual ~ElecState()
-    {
-        if (this->pot != nullptr)
-        {
+    virtual ~ElecState() {
+        if (this->pot != nullptr) {
             delete this->pot;
             this->pot = nullptr;
         }
@@ -42,26 +35,11 @@ class ElecState
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
-    virtual void psiToRho(const psi::Psi<std::complex<double>>& psi)
-    {
-        return;
-    }
-    virtual void psiToRho(const psi::Psi<double>& psi)
-    {
-        return;
-    }
-    virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
-    {
-        return;
-    }
-    virtual void cal_tau(const psi::Psi<double>& psi)
-    {
-        return;
-    }
-    virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
-    {
-        return;
-    }
+    virtual void psiToRho(const psi::Psi<std::complex<double>>& psi) { return; }
+    virtual void psiToRho(const psi::Psi<double>& psi) { return; }
+    virtual void cal_tau(const psi::Psi<std::complex<double>>& psi) { return; }
+    virtual void cal_tau(const psi::Psi<double>& psi) { return; }
+    virtual void cal_tau(const psi::Psi<std::complex<float>>& psi) { return; }
 
     // update charge density for next scf step
     // in this function, 1. input rho for construct Hamilt and 2. calculated rho from Psi will mix to 3. new charge
@@ -69,14 +47,11 @@ class ElecState
     // 1. input rho would be store to file for restart
     // 2. calculated rho should be near with input rho when convergence has achieved
     // 3. new rho should be input rho for next scf step.
-    virtual void getNewRho()
-    {
-        return;
-    }
+    virtual void getNewRho() { return; }
 
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
-    
+
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();
@@ -85,14 +60,8 @@ class ElecState
     // for NSPIN=4, it will record total number, magnetization for x, y, z direction
     std::vector<double> nelec_spin;
 
-    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
-    {
-        return;
-    }
-    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1)
-    {
-        return;
-    }
+    virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1) { return; }
+    virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) { return; }
 
     /**
      * @brief Init rho_core, init rho, renormalize rho, init pot
@@ -137,10 +106,7 @@ class ElecState
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
 
-    virtual double get_spin_constrain_energy()
-    {
-        return 0.0;
-    }
+    virtual double get_spin_constrain_energy() { return 0.0; }
 
     double get_dftu_energy();
     double get_local_pp_energy();
@@ -158,7 +124,6 @@ class ElecState
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
   public:
-
     bool skip_weights = false;
 };
 

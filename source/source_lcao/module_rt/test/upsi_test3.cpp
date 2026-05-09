@@ -19,8 +19,7 @@
  *     - apply U_operator to the wave function of the previous step for new wave function.
  */
 
-TEST(UpsiTest, testUpsi3)
-{
+TEST(UpsiTest, testUpsi3) {
     std::complex<double>* U_operator;
     std::complex<double>* psi_k_laststep;
     std::complex<double>* psi_k;
@@ -45,25 +44,18 @@ TEST(UpsiTest, testUpsi3)
     psi_k_laststep = new std::complex<double>[nlocal * nband];
     psi_k = new std::complex<double>[nlocal * nband];
 
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nlocal; ++j) {
+            if (i == j) {
                 U_operator[i * nlocal + j] = std::complex<double>(1.0, 0.0);
-            }
-            else
-            {
+            } else {
                 U_operator[i * nlocal + j] = std::complex<double>(0.0, 0.0);
             }
         }
     }
 
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nband; ++j)
-        {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nband; ++j) {
             psi_k_laststep[i * nband + j] = std::complex<double>(i * nband + j, 0.0);
             psi_k[i * nband + j] = std::complex<double>(0.0, 0.0);
         }
@@ -73,10 +65,8 @@ TEST(UpsiTest, testUpsi3)
     module_rt::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, GlobalV::ofs_running, print_matrix);
 
     // Check the results
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nband; ++j)
-        {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nband; ++j) {
             EXPECT_NEAR(psi_k[i * nband + j].real(), i * nband + j, doublethreshold);
             EXPECT_NEAR(psi_k[i].imag(), 0.0, doublethreshold);
         }

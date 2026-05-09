@@ -9,8 +9,7 @@
 #include <numeric>
 #include <unistd.h>
 
-bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog)
-{
+bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog) {
     ModuleBase::TITLE("ModuleIO", "read_rhog");
     ModuleBase::timer::start("ModuleIO", "read_rhog");
 
@@ -26,11 +25,9 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     int size = 0;
     double b1[3], b2[3], b3[3];
 
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
+    if (GlobalV::RANK_IN_POOL == 0) {
         ifs.open(filename, "r");
-        if (!ifs)
-        {
+        if (!ifs) {
             error = true;
         }
     }
@@ -39,34 +36,27 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(&error, 1, MPI_C_BOOL, 0, POOL_WORLD);
 #endif
 
-    if (error)
-    {
+    if (error) {
         ModuleBase::WARNING("ModuleIO::read_rhog", "Can't open file " + filename);
         ModuleBase::timer::end("ModuleIO", "read_rhog");
         return false;
     }
 
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
+    if (GlobalV::RANK_IN_POOL == 0) {
         ifs >> size >> gamma_only_in >> npwtot_in >> nspin_in >> size;
         ifs >> size >> b1[0] >> b1[1] >> b1[2] >> b2[0] >> b2[1] >> b2[2] >> b3[0] >> b3[1] >> b3[2] >> size;
-        if (gamma_only_in != pw_rhod->gamma_only)
-        {
+        if (gamma_only_in != pw_rhod->gamma_only) {
             // there is a treatment that can transform between gamma_only and non-gamma_only
             // however, it is not implemented here
             error = true;
             ifs.close();
         }
-        if (npwtot_in > pw_rhod->npwtot)
-        {
+        if (npwtot_in > pw_rhod->npwtot) {
             ModuleBase::WARNING("ModuleIO::read_rhog", "some planewaves in file are not used");
-        }
-        else if (npwtot_in < pw_rhod->npwtot)
-        {
+        } else if (npwtot_in < pw_rhod->npwtot) {
             ModuleBase::WARNING("ModuleIO::read_rhog", "some planewaves in file are missing");
         }
-        if (nspin_in < PARAM.inp.nspin)
-        {
+        if (nspin_in < PARAM.inp.nspin) {
             ModuleBase::WARNING("ModuleIO::read_rhog", "some spin channels in file are missing");
         }
     }
@@ -75,8 +65,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(&error, 1, MPI_C_BOOL, 0, POOL_WORLD);
 #endif
 
-    if (error)
-    {
+    if (error) {
         ModuleBase::WARNING("ModuleIO::read_rhog", "gamma_only read from file is inconsistent with INPUT");
         ModuleBase::timer::end("ModuleIO", "read_rhog");
         return false;
@@ -90,17 +79,16 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(b2, 3, MPI_DOUBLE, 0, POOL_WORLD);
     MPI_Bcast(b3, 3, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
-    std::vector<int> miller(npwtot_in * 3); 
-    // once use ModuleBase::Vector3, it is highly bug-prone to assume the memory layout of the class. 
+    std::vector<int> miller(npwtot_in * 3);
+    // once use ModuleBase::Vector3, it is highly bug-prone to assume the memory layout of the class.
     // The x, y and z of Vector3 will not always to be contiguous.
     // Instead, a relatively safe choice is to use std::vector, the memory layout is assumed
     // to be npwtot_in rows and 3 columns.
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
+    if (GlobalV::RANK_IN_POOL == 0) {
         ifs >> size;
         for (int i = 0; i < npwtot_in; ++i) // loop over rows...
         {
-            ifs >> miller[i*3] >> miller[i*3+1] >> miller[i*3+2];
+            ifs >> miller[i * 3] >> miller[i * 3 + 1] >> miller[i * 3 + 2];
         }
         ifs >> size;
     }
@@ -108,14 +96,12 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     MPI_Bcast(miller.data(), miller.size(), MPI_INT, 0, POOL_WORLD);
 #endif
     // set to zero
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         ModuleBase::GlobalFunc::ZEROS(rhog[is], pw_rhod->npw);
     }
     // maps ixyz tp ig
     std::vector<int> fftixyz2ig(pw_rhod->nxyz, -1); // map isz to ig.
-    for (int ig = 0; ig < pw_rhod->npw; ++ig)
-    {
+    for (int ig = 0; ig < pw_rhod->npw; ++ig) {
         int isz = pw_rhod->ig2isz[ig];
         int iz = isz % nz;
         int is = isz / nz;
@@ -124,13 +110,10 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         fftixyz2ig[ixyz] = ig;
     }
     std::vector<std::complex<double>> rhog_in(npwtot_in);
-    for (int is = 0; is < nspin_in; ++is)
-    {
-        if (GlobalV::RANK_IN_POOL == 0)
-        {
+    for (int is = 0; is < nspin_in; ++is) {
+        if (GlobalV::RANK_IN_POOL == 0) {
             ifs >> size;
-            for (int i = 0; i < npwtot_in; ++i)
-            {
+            for (int i = 0; i < npwtot_in; ++i) {
                 ifs >> rhog_in[i];
             }
             ifs >> size;
@@ -139,15 +122,13 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         MPI_Bcast(rhog_in.data(), rhog_in.size(), MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 #endif
 
-        for (int i = 0; i < npwtot_in; ++i)
-        {
+        for (int i = 0; i < npwtot_in; ++i) {
             int ix = miller[i * 3];
             int iy = miller[i * 3 + 1];
             int iz = miller[i * 3 + 2];
 
-            if (ix <= -int((nx + 1) / 2) || ix >= int(nx / 2) + 1 || iy <= -int((ny + 1) / 2) || iy >= int(ny / 2) + 1
-                || iz <= -int((nz + 1) / 2) || iz >= int(nz / 2) + 1)
-            {
+            if (ix <= -int((nx + 1) / 2) || ix >= int(nx / 2) + 1 || iy <= -int((ny + 1) / 2) ||
+                iy >= int(ny / 2) + 1 || iz <= -int((nz + 1) / 2) || iz >= int(nz / 2) + 1) {
                 // these planewaves are not used
                 continue;
             }
@@ -159,18 +140,15 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
             if (iz < 0)
                 iz += nz;
             int fftixy = iy + pw_rhod->fftny * ix;
-            if (GlobalV::RANK_IN_POOL == pw_rhod->fftixy2ip[fftixy])
-            {
+            if (GlobalV::RANK_IN_POOL == pw_rhod->fftixy2ip[fftixy]) {
                 int fftixyz = iz + nz * fftixy;
                 int ig = fftixyz2ig[fftixyz];
                 rhog[is][ig] = rhog_in[i];
             }
         }
 
-        if (nspin_in == 2 && PARAM.inp.nspin == 4 && is == 1)
-        {
-            for (int ig = 0; ig < pw_rhod->npw; ++ig)
-            {
+        if (nspin_in == 2 && PARAM.inp.nspin == 4 && is == 1) {
+            for (int ig = 0; ig < pw_rhod->npw; ++ig) {
                 rhog[3][ig] = rhog[1][ig];
             }
             ModuleBase::GlobalFunc::ZEROS(rhog[1], pw_rhod->npw);
@@ -178,8 +156,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         }
     }
 
-    if (GlobalV::RANK_IN_POOL == 0)
-    {
+    if (GlobalV::RANK_IN_POOL == 0) {
         ifs.close();
     }
     // for debug, write the rhog to a file (not binary)
@@ -201,20 +178,19 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
 }
 
 bool ModuleIO::write_rhog(const std::string& fchg,
-                          const bool gamma_only, // from INPUT
+                          const bool gamma_only,            // from INPUT
                           const ModulePW::PW_Basis* pw_rho, // pw_rho in runtime
-                          const int nspin, // GlobalV
-                          const ModuleBase::Matrix3& GT, // from UnitCell, useful for calculating the miller
+                          const int nspin,                  // GlobalV
+                          const ModuleBase::Matrix3& GT,    // from UnitCell, useful for calculating the miller
                           std::complex<double>** rhog,
                           const int ipool,
                           const int irank,
-                          const int nrank)
-{
+                          const int nrank) {
     ModuleBase::TITLE("ModuleIO", "write_rhog");
     ModuleBase::timer::start("ModuleIO", "write_rhog");
-    if (ipool != 0) { 
+    if (ipool != 0) {
         ModuleBase::timer::end("ModuleIO", "write_rhog");
-        return true; 
+        return true;
     }
     // only one pool writes the rhog, because rhog in all pools are identical.
 
@@ -229,7 +205,6 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     // each time we iterate on ig, then find the rho_g over all the processes
     // for ig in npwtot, then find the local index of ig on processor, ig -> fftixy2ip -> igl
 
-
     // write the header (by rank 0): gamma_only, ngm_g, nspin
     int size = 3;
     // because "reinterpret_cast" cannot drop the "const", so use intermediate variable
@@ -239,37 +214,34 @@ bool ModuleIO::write_rhog(const std::string& fchg,
 
     std::ofstream ofs;
 #ifdef __MPI
-    MPI_Barrier(POOL_WORLD); 
+    MPI_Barrier(POOL_WORLD);
     // this is still a global variable... should be moved into param
     // list as `const MPI_Comm& comm`
-    if (irank == 0)
-    {
+    if (irank == 0) {
         // printf(" CHGDEN >>> Writing header by rank %d...\n", irank);
 #endif
-    ofs.open(fchg, std::ios::binary); // open the file by all processors
-    if (!ofs)
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
-        ModuleBase::timer::end("ModuleIO", "write_rhog");
-        return false;
-    }
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-    ofs.write(reinterpret_cast<char*>(&gam), sizeof(gam));
-    ofs.write(reinterpret_cast<char*>(&ngm_g), sizeof(ngm_g));
-    ofs.write(reinterpret_cast<char*>(&nsp), sizeof(nsp));
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-    // write the lattice vectors, GT is the reciprocal lattice vectors, need 2pi?
-    std::vector<double> b = {GT.e11, GT.e12, GT.e13, GT.e21, GT.e22, GT.e23, GT.e31, GT.e32, GT.e33};
-    size = 9;
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-    for (int i = 0; i < 9; ++i)
-    {
-        ofs.write(reinterpret_cast<char*>(&b[i]), sizeof(b[i]));
-    }
-    ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
-    ofs.close();
+        ofs.open(fchg, std::ios::binary); // open the file by all processors
+        if (!ofs) {
+            ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
+            ModuleBase::timer::end("ModuleIO", "write_rhog");
+            return false;
+        }
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        ofs.write(reinterpret_cast<char*>(&gam), sizeof(gam));
+        ofs.write(reinterpret_cast<char*>(&ngm_g), sizeof(ngm_g));
+        ofs.write(reinterpret_cast<char*>(&nsp), sizeof(nsp));
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        // write the lattice vectors, GT is the reciprocal lattice vectors, need 2pi?
+        std::vector<double> b = {GT.e11, GT.e12, GT.e13, GT.e21, GT.e22, GT.e23, GT.e31, GT.e32, GT.e33};
+        size = 9;
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        for (int i = 0; i < 9; ++i) {
+            ofs.write(reinterpret_cast<char*>(&b[i]), sizeof(b[i]));
+        }
+        ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
+        ofs.close();
 #ifdef __MPI
-    // printf(" CHGDEN >>> Complete header writing by rank %d\n", irank);
+        // printf(" CHGDEN >>> Complete header writing by rank %d\n", irank);
     }
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header
     // printf(" CHGDEN >>> rank %d ready for continue writing...\n", irank);
@@ -280,10 +252,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     // the dot product of the G-vectors and the reciprocal lattice vectors
     // parallelization needed considered here. Because the sequence of the G-vectors
     // is not important, we can write the G-vectors processer by processer
-    size = 3*ngm_g;
+    size = 3 * ngm_g;
 #ifdef __MPI
-    if(irank == 0)
-    {
+    if (irank == 0) {
         // printf(" CHGDEN >>> Writing header of Miller indices by rank %d...\n", irank);
 #endif
         ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
@@ -295,16 +266,15 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of miller indices
 #endif
 #ifdef __MPI
-    for(int i = 0; i < nrank; ++i) // write the miller indices processer by processer
+    for (int i = 0; i < nrank; ++i) // write the miller indices processer by processer
     {
-        if(i == irank)
-        {
+        if (i == irank) {
             // printf(" CHGDEN >>> Writing Miller indices by rank %d...\n", irank);
 #endif
             ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by processer i
-            for(int ig = 0; ig < pw_rho->npw; ++ig)
-            {
-                const ModuleBase::Vector3<double> g = pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
+            for (int ig = 0; ig < pw_rho->npw; ++ig) {
+                const ModuleBase::Vector3<double> g =
+                    pw_rho->gdirect[ig]; // g direct is (ix, iy, iz), miller index (integer), centered at (0, 0, 0)
                 std::vector<int> miller = {int(g.x), int(g.y), int(g.z)};
                 ofs.write(reinterpret_cast<char*>(&miller[0]), sizeof(miller[0]));
                 ofs.write(reinterpret_cast<char*>(&miller[1]), sizeof(miller[1]));
@@ -318,8 +288,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     }
 #endif
 #ifdef __MPI
-    if(irank == 0)
-    {
+    if (irank == 0) {
 #endif
         ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
         ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
@@ -332,11 +301,9 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     // write the rho(G) values
     std::complex<double> sum_check;
     size = ngm_g;
-    for(int ispin = 0; ispin < nspin; ++ispin)
-    {
+    for (int ispin = 0; ispin < nspin; ++ispin) {
 #ifdef __MPI
-        if(irank == 0)
-        {
+        if (irank == 0) {
             // printf(" CHGDEN >>> Writing header of rho(G) values by rank %d...\n", irank);
 #endif
             ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
@@ -348,16 +315,14 @@ bool ModuleIO::write_rhog(const std::string& fchg,
         MPI_Barrier(POOL_WORLD); // wait for rank 0 to finish writing the header of rho(G)
 #endif
 #ifdef __MPI
-        for(int i = 0; i < nrank; ++i) // write the rho(G) values processer by processer
+        for (int i = 0; i < nrank; ++i) // write the rho(G) values processer by processer
         {
-            if(i == irank)
-            {
+            if (i == irank) {
                 // printf(" CHGDEN >>> Writing rho(G) values by rank %d...\n", irank);
 #endif
                 ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by processer i
                 sum_check = 0.0;
-                for(int ig = 0; ig < pw_rho->npw; ++ig)
-                {
+                for (int ig = 0; ig < pw_rho->npw; ++ig) {
                     sum_check += rhog[ispin][ig];
                     ofs.write(reinterpret_cast<char*>(&rhog[ispin][ig]), sizeof(rhog[ispin][ig]));
                 }
@@ -371,8 +336,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
 #endif
 
 #ifdef __MPI
-        if(irank == 0)
-        {
+        if (irank == 0) {
 #endif
             ofs.open(fchg, std::ios::binary | std::ios::app); // open the file by rank 0
             ofs.write(reinterpret_cast<char*>(&size), sizeof(size));

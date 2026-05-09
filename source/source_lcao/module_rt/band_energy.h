@@ -12,8 +12,7 @@
 
 #include <complex>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 /**
  *  @brief compute band energy ekb <psi_i|H|psi_i>

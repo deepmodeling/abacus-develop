@@ -17,18 +17,17 @@
 #include <map>
 #include <vector>
 
-namespace LRI_CV_Tools
-{
+namespace LRI_CV_Tools {
 template <typename Tdata>
-extern RI::Tensor<Tdata> cal_I(const RI::Tensor<Tdata>& m,
-                               const typename Inverse_Matrix<Tdata>::Method method
-                               = Inverse_Matrix<Tdata>::Method::potrf,
-                               const double& threshold_condition_number = 0.);
+extern RI::Tensor<Tdata>
+cal_I(const RI::Tensor<Tdata>& m,
+      const typename Inverse_Matrix<Tdata>::Method method = Inverse_Matrix<Tdata>::Method::potrf,
+      const double& threshold_condition_number = 0.);
 template <typename Tdata>
-extern std::vector<std::vector<RI::Tensor<Tdata>>> cal_I(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms,
-                                                         const typename Inverse_Matrix<Tdata>::Method method
-                                                         = Inverse_Matrix<Tdata>::Method::potrf,
-                                                         const double& threshold_condition_number = 0.);
+extern std::vector<std::vector<RI::Tensor<Tdata>>>
+cal_I(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms,
+      const typename Inverse_Matrix<Tdata>::Method method = Inverse_Matrix<Tdata>::Method::potrf,
+      const double& threshold_condition_number = 0.);
 
 template <typename Tdata>
 inline RI::Tensor<Tdata> transform_Rm(const RI::Tensor<Tdata>& V);
@@ -70,13 +69,13 @@ template <typename T, std::size_t N>
 extern std::vector<std::array<T, N>> minus(const std::vector<std::array<T, N>>& v1,
                                            const std::vector<std::array<T, N>>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> minus(
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2);
+extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
+minus(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
+      std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> minus(
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2);
+inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
+minus(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
+      std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue>
 extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
                                                       std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
@@ -85,12 +84,12 @@ template <typename T, std::size_t N>
 extern std::vector<std::array<T, N>> add(const std::vector<std::array<T, N>>& v1,
                                          const std::vector<std::array<T, N>>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> add(
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
+extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
+add(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
     std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> add(
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
+inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
+add(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
     std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue>
 extern std::map<TkeyA, std::map<TkeyB, Tvalue>> add(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
@@ -112,29 +111,27 @@ std::vector<std::array<T, N>> change_order(std::array<std::vector<T>, N>&& ds_in
 template <typename T, std::size_t N>
 extern std::array<std::vector<std::vector<T>>, N> change_order(std::vector<std::vector<std::array<T, N>>>&& ds_in);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> change_order(
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>&& ds_in);
+extern std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
+change_order(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>&& ds_in);
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-extern std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> change_order(
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>&& ds_in);
+extern std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
+change_order(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>&& ds_in);
 
 template <typename Tcell>
-extern std::array<Tcell, 3> cal_latvec_range(const double& rcut_times,
-                                             const UnitCell& ucell,
-                                             const std::vector<double>& orb_cutoff);
+extern std::array<Tcell, 3>
+cal_latvec_range(const double& rcut_times, const UnitCell& ucell, const std::vector<double>& orb_cutoff);
 
 template <typename TA, typename Tcell, typename Tdata>
-extern std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> get_CVws(
-    const UnitCell& ucell,
-    const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, RI::Tensor<Tdata>>>& CVs);
+extern std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>>
+get_CVws(const UnitCell& ucell,
+         const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, RI::Tensor<Tdata>>>& CVs);
 template <typename TA, typename Tcell, typename Tdata>
-extern std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> get_dCVws(
-    const UnitCell& ucell,
-    const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, std::array<RI::Tensor<Tdata>, 3>>>& dCVs);
+extern std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>>
+get_dCVws(const UnitCell& ucell,
+          const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, std::array<RI::Tensor<Tdata>, 3>>>& dCVs);
 template <typename TA, typename TC, typename Tdata>
-extern std::array<std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>, 3> cal_dMRs(
-    const UnitCell& ucell,
-    const std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>& dMs);
+extern std::array<std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>, 3>
+cal_dMRs(const UnitCell& ucell, const std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>& dMs);
 
 using TC = std::array<int, 3>;
 using TAC = std::pair<int, TC>;
@@ -150,48 +147,36 @@ template <typename T>
 void write_Vs_abf(const TLRI<T>& Vs, const std::string& file_path);
 
 template <typename T>
-struct is_std_array : std::false_type
-{
-};
+struct is_std_array : std::false_type {};
 template <typename T, std::size_t N>
-struct is_std_array<std::array<T, N>> : std::true_type
-{
-};
+struct is_std_array<std::array<T, N>> : std::true_type {};
 template <typename T>
-struct is_tensor : std::false_type
-{
-};
+struct is_tensor : std::false_type {};
 template <typename T>
-struct is_tensor<RI::Tensor<T>> : std::true_type
-{
-};
+struct is_tensor<RI::Tensor<T>> : std::true_type {};
 
 template <typename Tout>
 struct TinType;
 
 template <typename T>
-struct TinType<RI::Tensor<T>>
-{
+struct TinType<RI::Tensor<T>> {
     using type = T;
 };
 
 template <typename T, std::size_t N>
-struct TinType<std::array<RI::Tensor<T>, N>>
-{
+struct TinType<std::array<RI::Tensor<T>, N>> {
     using type = T;
 };
 
 template <typename Tdata, typename = std::enable_if_t<!is_std_array<Tdata>::value>>
-inline void init_elem(Tdata& data, const size_t ndim0, const size_t ndim1)
-{
+inline void init_elem(Tdata& data, const size_t ndim0, const size_t ndim1) {
     data = Tdata({ndim0, ndim1});
 };
 template <typename T, std::size_t N>
 extern void init_elem(std::array<RI::Tensor<T>, N>& data, const size_t ndim0, const size_t ndim1);
 
 template <typename Tdata, typename = std::enable_if_t<!is_std_array<Tdata>::value && !is_tensor<Tdata>::value>>
-inline void add_elem(Tdata& data, const Tdata& val, const Tdata& frac)
-{
+inline void add_elem(Tdata& data, const Tdata& val, const Tdata& frac) {
     data += frac * val;
 };
 template <typename T, std::size_t N>
@@ -201,16 +186,12 @@ inline void add_elem(const Tdata& data,
                      const int lmp,
                      const int lmq,
                      const typename TinType<Tdata>::type& val,
-                     const typename TinType<Tdata>::type& frac)
-{
+                     const typename TinType<Tdata>::type& frac) {
     data(lmp, lmq) += frac * val;
 };
 template <typename T, std::size_t N>
-extern void add_elem(std::array<RI::Tensor<T>, N>& data,
-                     const int lmp,
-                     const int lmq,
-                     const std::array<T, N>& val,
-                     const T& frac);
+extern void
+add_elem(std::array<RI::Tensor<T>, N>& data, const int lmp, const int lmq, const std::array<T, N>& val, const T& frac);
 template <typename Tdata, typename = std::enable_if_t<is_tensor<Tdata>::value>>
 inline void add_elem(Tdata& data,
                      const int lmp0,
@@ -218,8 +199,7 @@ inline void add_elem(Tdata& data,
                      const Tdata& val,
                      const int lmp1,
                      const int lmq1,
-                     const typename TinType<Tdata>::type& frac)
-{
+                     const typename TinType<Tdata>::type& frac) {
     data(lmp0, lmq0) += frac * val(lmp1, lmq1);
 };
 template <typename T, std::size_t N>
@@ -261,10 +241,8 @@ extern std::array<RI::Tensor<Tout>, N> convert(std::array<RI::Tensor<Tin>, N>&& 
 // extern std::array<RI::Tensor<T>, N> check_zero(std::array<RI::Tensor<T>, N>&& data);
 
 template <typename T>
-struct plus
-{
-    T operator()(const T& lhs, const T& rhs) const
-    {
+struct plus {
+    T operator()(const T& lhs, const T& rhs) const {
         using namespace RI::Array_Operator;
         return lhs + rhs;
     }

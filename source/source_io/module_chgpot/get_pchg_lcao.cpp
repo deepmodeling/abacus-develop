@@ -6,18 +6,12 @@
 #include "source_lcao/module_gint/gint_interface.h"
 
 Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
-    : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
-{
-}
+    : psi_gamma(psi_gamma_in), ParaV(ParaV_in) {}
 
 Get_pchg_lcao::Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
-    : psi_k(psi_k_in), ParaV(ParaV_in)
-{
-}
+    : psi_k(psi_k_in), ParaV(ParaV_in) {}
 
-Get_pchg_lcao::~Get_pchg_lcao()
-{
-}
+Get_pchg_lcao::~Get_pchg_lcao() {}
 
 // For gamma_only
 void Get_pchg_lcao::begin(double** rho,
@@ -33,8 +27,7 @@ void Get_pchg_lcao::begin(double** rho,
                           const Grid_Driver* GridD_in,
                           const K_Vectors& kv,
                           const std::string& global_out_dir,
-                          std::ofstream& ofs_running)
-{
+                          std::ofstream& ofs_running) {
     ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
     std::cout << " Calculate |psi(i)|^2 for selected electronic states (gamma only)." << std::endl;
@@ -49,10 +42,8 @@ void Get_pchg_lcao::begin(double** rho,
     // Set this->bands_picked_
     select_bands(out_pchg, nbands, fermi_band);
 
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        if (bands_picked_[ib])
-        {
+    for (int ib = 0; ib < nbands; ++ib) {
+        if (bands_picked_[ib]) {
             // Using new density matrix inplementation (gamma only)
             elecstate::DensityMatrix<double, double> DM(this->ParaV, nspin);
 
@@ -62,8 +53,7 @@ void Get_pchg_lcao::begin(double** rho,
             ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
-            for (int is = 0; is < nspin; ++is)
-            {
+            for (int is = 0; is < nspin; ++is) {
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
@@ -76,13 +66,11 @@ void Get_pchg_lcao::begin(double** rho,
             // Using std::vector to replace the original double** rho_save
             std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
 
-            for (int is = 0; is < nspin; ++is)
-            {
+            for (int is = 0; is < nspin; ++is) {
                 ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
             }
 
-            for (int is = 0; is < nspin; ++is)
-            {
+            for (int is = 0; is < nspin; ++is) {
                 // ssc should be inside the inner loop to reset the string stream each time
                 std::stringstream ssc;
                 ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
@@ -91,11 +79,17 @@ void Get_pchg_lcao::begin(double** rho,
 
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
-		const int precision = 6;
+                const int precision = 6;
                 double ef_spin = ef_all_spin[is];
-                ModuleIO::write_vdata_palgrid(pgrid, 
-				rho_save[is].data(), is, nspin, 0, 
-				ssc.str(), ef_spin, ucell_in, precision);
+                ModuleIO::write_vdata_palgrid(pgrid,
+                                              rho_save[is].data(),
+                                              is,
+                                              nspin,
+                                              0,
+                                              ssc.str(),
+                                              ef_spin,
+                                              ucell_in,
+                                              precision);
             }
         }
     }
@@ -121,8 +115,7 @@ void Get_pchg_lcao::begin(double** rho,
                           const std::string& global_out_dir,
                           std::ofstream& ofs_running,
                           const bool if_separate_k,
-                          const int chr_ngmc)
-{
+                          const int chr_ngmc) {
     ModuleBase::TITLE("Get_pchg_lcao", "begin");
 
     std::cout << " Calculate |psi(i)|^2 for selected electronic states (multi-k)." << std::endl;
@@ -134,10 +127,8 @@ void Get_pchg_lcao::begin(double** rho,
     // Set this->bands_picked_
     select_bands(out_pchg, nbands, fermi_band);
 
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        if (bands_picked_[ib])
-        {
+    for (int ib = 0; ib < nbands; ++ib) {
+        if (bands_picked_[ib]) {
             // Using new density matrix inplementation (multi-k)
             const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin];
             elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV,
@@ -151,31 +142,25 @@ void Get_pchg_lcao::begin(double** rho,
             ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
             // If contribution from different k-points need to be output separately
-            if (if_separate_k)
-            {
+            if (if_separate_k) {
                 // For multi-k, loop over all real k-points
-                for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
-                {
-                    for (int is = 0; is < nspin; ++is)
-                    {
+                for (int ik = 0; ik < kv.get_nks() / nspin; ++ik) {
+                    for (int is = 0; is < nspin; ++is) {
                         ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                     }
 
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
                     ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
-                
 
                     // Using std::vector to replace the original double** rho_save
                     std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
 
-                    for (int is = 0; is < nspin; ++is)
-                    {
+                    for (int is = 0; is < nspin; ++is) {
                         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                     }
 
-                    for (int is = 0; is < nspin; ++is)
-                    {
+                    for (int is = 0; is < nspin; ++is) {
                         // ssc should be inside the inner loop to reset the string stream each time
                         std::stringstream ssc;
                         ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
@@ -183,7 +168,7 @@ void Get_pchg_lcao::begin(double** rho,
                         ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                         double ef_spin = ef_all_spin[is];
-			const int precision = 6;
+                        const int precision = 6;
                         ModuleIO::write_vdata_palgrid(pgrid,
                                                       rho_save[is].data(),
                                                       is,
@@ -191,15 +176,12 @@ void Get_pchg_lcao::begin(double** rho,
                                                       0,
                                                       ssc.str(),
                                                       ef_spin,
-                                                      ucell_in, 
-						      precision);
+                                                      ucell_in,
+                                                      precision);
                     }
                 }
-            }
-            else
-            {
-                for (int is = 0; is < nspin; ++is)
-                {
+            } else {
+                for (int is = 0; is < nspin; ++is) {
                     ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
                 }
 
@@ -209,25 +191,21 @@ void Get_pchg_lcao::begin(double** rho,
                 // Using std::vector to replace the original double** rho_save
                 std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
 
-                for (int is = 0; is < nspin; ++is)
-                {
+                for (int is = 0; is < nspin; ++is) {
                     ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), rhopw_nrxx); // Copy data
                 }
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
                 Symmetry_rho srho;
-                for (int is = 0; is < nspin; ++is)
-                {
+                for (int is = 0; is < nspin; ++is) {
                     std::vector<double*> rho_save_pointers(nspin);
-                    for (int i = 0; i < nspin; ++i)
-                    {
+                    for (int i = 0; i < nspin; ++i) {
                         rho_save_pointers[i] = rho_save[i].data();
                     }
                     srho.begin(is, rho_save_pointers.data(), rhog, chr_ngmc, nullptr, rho_pw, ucell_in->symm);
                 }
 
-                for (int is = 0; is < nspin; ++is)
-                {
+                for (int is = 0; is < nspin; ++is) {
                     // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
@@ -235,7 +213,7 @@ void Get_pchg_lcao::begin(double** rho,
                     ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
                     double ef_spin = ef_all_spin[is];
-		    const int precision = 6;
+                    const int precision = 6;
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_save[is].data(),
                                                   is,
@@ -243,8 +221,8 @@ void Get_pchg_lcao::begin(double** rho,
                                                   0,
                                                   ssc.str(),
                                                   ef_spin,
-                                                  ucell_in, 
-						  precision);
+                                                  ucell_in,
+                                                  precision);
                 }
             }
         }
@@ -253,8 +231,7 @@ void Get_pchg_lcao::begin(double** rho,
     return;
 }
 
-void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band)
-{
+void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band) {
     ModuleBase::TITLE("Get_pchg_lcao", "select_bands");
 
     int bands_below = 0;
@@ -265,16 +242,13 @@ void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nba
 
     // Select bands directly using parameter `out_pchg`
     // Check if length of out_pchg is valid
-    if (static_cast<int>(out_pchg.size()) > nbands)
-    {
+    if (static_cast<int>(out_pchg.size()) > nbands) {
         ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
                                  "The number of bands specified by `out_pchg` in the INPUT file exceeds `nbands`!");
     }
     // Check if all elements in out_pchg are 0 or 1
-    for (int value: out_pchg)
-    {
-        if (value != 0 && value != 1)
-        {
+    for (int value: out_pchg) {
+        if (value != 0 && value != 1) {
             ModuleBase::WARNING_QUIT("Get_pchg_lcao::select_bands",
                                      "The elements of `out_pchg` must be either 0 or 1. Invalid values found!");
         }
@@ -286,21 +260,16 @@ void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nba
 
     // Check if there are selected bands below the Fermi surface
     bool has_below = false;
-    for (int i = 0; i + 1 <= fermi_band; ++i)
-    {
-        if (bands_picked_[i] == 1)
-        {
+    for (int i = 0; i + 1 <= fermi_band; ++i) {
+        if (bands_picked_[i] == 1) {
             has_below = true;
             break;
         }
     }
-    if (has_below)
-    {
+    if (has_below) {
         std::cout << " Plot band-decomposed charge densities below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
+        for (int i = 0; i + 1 <= fermi_band; ++i) {
+            if (bands_picked_[i] == 1) {
                 std::cout << i + 1 << " ";
             }
         }
@@ -309,21 +278,16 @@ void Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg, const int nba
 
     // Check if there are selected bands above the Fermi surface
     bool has_above = false;
-    for (int i = fermi_band; i < nbands; ++i)
-    {
-        if (bands_picked_[i] == 1)
-        {
+    for (int i = fermi_band; i < nbands; ++i) {
+        if (bands_picked_[i] == 1) {
             has_above = true;
             break;
         }
     }
-    if (has_above)
-    {
+    if (has_above) {
         std::cout << " Plot band-decomposed charge densities above the Fermi surface: band ";
-        for (int i = fermi_band; i < nbands; ++i)
-        {
-            if (bands_picked_[i] == 1)
-            {
+        for (int i = fermi_band; i < nbands; ++i) {
+            if (bands_picked_[i] == 1) {
                 std::cout << i + 1 << " ";
             }
         }
@@ -338,22 +302,19 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                              const double& nelec,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<double, double>& DM,
-                             const K_Vectors& kv)
-{
+                             const K_Vectors& kv) {
     ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == nspin);
 
     const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
-    for (int is = 0; is < nspin; ++is)
-    {
+    for (int is = 0; is < nspin; ++is) {
         std::cout << " Calculating density matrix for band " << ib + 1 << ", spin " << is + 1 << std::endl;
 
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
 
-        if (ib_local >= 0)
-        {
+        if (ib_local >= 0) {
             // For unoccupied bands, use occupation of HOMO
             wg_local[ib_local] = (ib < fermi_band) ? wg(is, ib) : wg(is, fermi_band - 1);
         }
@@ -369,8 +330,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                                 true);
         wg_wfc.set_all_psi(this->psi_gamma->get_pointer(), wg_wfc.size());
 
-        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
-        {
+        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir) {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
 
@@ -389,8 +349,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<std::complex<double>, double>& DM,
                              const K_Vectors& kv,
-                             const bool if_separate_k)
-{
+                             const bool if_separate_k) {
     ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
@@ -399,29 +358,23 @@ void Get_pchg_lcao::idmatrix(const int& ib,
     // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
     double wg_sum_k = 0;
     double wg_sum_k_homo = 0;
-    for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks() / nspin; ++ik) {
         wg_sum_k += wg(ik, ib);
         wg_sum_k_homo += wg(ik, fermi_band - 1);
     }
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         std::cout << " Calculating density matrix for band " << ib + 1 << ", k-point "
                   << ik % (kv.get_nks() / nspin) + 1 << ", spin " << kv.isk[ik] + 1 << std::endl;
 
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
 
-        if (ib_local >= 0)
-        {
+        if (ib_local >= 0) {
             double wg_value = 0.0;
-            if (if_separate_k)
-            {
+            if (if_separate_k) {
                 wg_value = (ib < fermi_band) ? wg_sum_k : wg_sum_k_homo;
-            }
-            else
-            {
+            } else {
                 wg_value = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
             }
             wg_local[ib_local] = wg_value;
@@ -436,8 +389,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                                               true);
         wg_wfc.set_all_psi(this->psi_k->get_pointer(), wg_wfc.size());
 
-        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
-        {
+        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir) {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
 
@@ -450,8 +402,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
 }
 #endif // __MPI
 
-void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running)
-{
+void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running) {
     ofs_running << "\n\n";
     ofs_running << " GET_PCHG CALCULATION BEGINS" << std::endl;
 

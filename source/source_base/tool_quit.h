@@ -10,15 +10,14 @@
 #include <valarray>
 #include <vector>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : WARNING( write information into GlobalV::ofs_warning)
 // NAME : QUIT( exit the running program)
 // NAME : WARNING_QUIT( write information into
-// 		  GlobalV::ofs_warning , and then quit)
+//           GlobalV::ofs_warning , and then quit)
 //==========================================================
 /**
  * @brief Print out warning information in warning.log file
@@ -26,7 +25,7 @@ namespace ModuleBase
  * @param file The file where warning happens
  * @param description The warning information
  */
-void WARNING(const std::string &file, const std::string &description);
+void WARNING(const std::string& file, const std::string& description);
 
 /**
  * @brief Inject the global output directory used by QUIT/WARNING_QUIT/CHECK_WARNING_QUIT
@@ -71,7 +70,10 @@ void set_quit_out_dir(const std::string& dir);
  * @param file The file where warning happens
  * @param description The warning information
  */
-void CHECK_WARNING_QUIT(const bool error, const std::string &file,const std::string &calculation,const std::string &description);
+void CHECK_WARNING_QUIT(const bool error,
+                        const std::string& file,
+                        const std::string& calculation,
+                        const std::string& description);
 
 } // namespace ModuleBase
 

@@ -21,8 +21,7 @@
 
 #define doublethreshold 1e-8
 
-TEST(PropagatorTest, testPropagatorETRS)
-{
+TEST(PropagatorTest, testPropagatorETRS) {
     std::complex<double>* U_operator;
     std::complex<double>* Stmp;
     std::complex<double>* Htmp;
@@ -58,16 +57,12 @@ TEST(PropagatorTest, testPropagatorETRS)
     Htmp = new std::complex<double>[nlocal * nlocal];
     Hlaststep = new std::complex<double>[nlocal * nlocal];
 
-    for (int i = 0; i < nlocal * nlocal; ++i)
-    {
+    for (int i = 0; i < nlocal * nlocal; ++i) {
         U_operator[i] = std::complex<double>(0.0, 0.0);
     }
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nlocal; ++j) {
+            if (i == j) {
                 Htmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
                 Hlaststep[i * nlocal + j] = std::complex<double>(1.0, 0.0);
                 Stmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);

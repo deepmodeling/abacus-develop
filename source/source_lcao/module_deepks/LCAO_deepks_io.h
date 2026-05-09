@@ -13,8 +13,7 @@
 #include <torch/torch.h>
 #include <vector>
 
-namespace LCAO_deepks_io
-{
+namespace LCAO_deepks_io {
 
 /// This file contains subroutines that contains interface with libnpy
 /// since many arrays must be saved in numpy format

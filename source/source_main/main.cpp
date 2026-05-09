@@ -12,8 +12,7 @@
 #include <omp.h>
 #endif
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     /*
     read the arguement in the command-line,
     with "abacus -v", the program exit and returns version info,

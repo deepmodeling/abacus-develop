@@ -15,8 +15,7 @@
 #include "mpi.h"
 #endif
 
-TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
-{
+TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue) {
     const std::string directory = "";
     const std::string property = "wf";
     const std::string basis = "nao";
@@ -30,23 +29,30 @@ TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
     // if out_app_flag = true, then the 'g' label will not show up
     const int istep = 0;
 
-	std::string result = ModuleIO::filename_output(
-			directory, property, basis, ik, ik2iktot, nspin, 
-			nkstot, out_type, out_app_flag, gamma_only, istep);
+    std::string result = ModuleIO::filename_output(directory,
+                                                   property,
+                                                   basis,
+                                                   ik,
+                                                   ik2iktot,
+                                                   nspin,
+                                                   nkstot,
+                                                   out_type,
+                                                   out_app_flag,
+                                                   gamma_only,
+                                                   istep);
 
     // output .txt file when out_type=1
-	std::string expected_output = "wf_nao.txt";
+    std::string expected_output = "wf_nao.txt";
 
     EXPECT_EQ(result, expected_output);
 }
 
-TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
-{
+TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse) {
     const std::string directory = "";
     const std::string property = "wf";
     const std::string basis = "nao";
     const int ik = 1;
-    const std::vector<int> ik2iktot = {0,1};
+    const std::vector<int> ik2iktot = {0, 1};
     const int nspin = 2;
     const int nkstot = 2;
     const int out_type = 2;
@@ -55,22 +61,29 @@ TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
     // if out_app_flag = false, then the 'g' label appears
     const int istep = 2;
 
-	std::string result = ModuleIO::filename_output(
-			directory, property, basis, ik, ik2iktot, nspin, 
-			nkstot, out_type, out_app_flag, gamma_only, istep);
+    std::string result = ModuleIO::filename_output(directory,
+                                                   property,
+                                                   basis,
+                                                   ik,
+                                                   ik2iktot,
+                                                   nspin,
+                                                   nkstot,
+                                                   out_type,
+                                                   out_app_flag,
+                                                   gamma_only,
+                                                   istep);
 
     // output .dat file when out_type=2
     std::string expected_output = "wfs2g3_nao.dat";
     EXPECT_EQ(result, expected_output);
 }
 
-TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
-{
+TEST(GenWfcLcaoFnameTest, OutTypeInvalid) {
     const std::string directory = "";
     const std::string property = "wf";
     const std::string basis = "nao";
     const int ik = 2;
-    const std::vector<int> ik2iktot = {0,1,2};
+    const std::vector<int> ik2iktot = {0, 1, 2};
     const int nspin = 1;
     const int nkstot = 3;
     const int out_type = 3;
@@ -81,9 +94,17 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
     // catch the screen output
     testing::internal::CaptureStdout();
 
-	std::string result = ModuleIO::filename_output(
-			directory, property, basis, ik, ik2iktot, nspin, 
-			nkstot, out_type, out_app_flag, gamma_only, istep);
+    std::string result = ModuleIO::filename_output(directory,
+                                                   property,
+                                                   basis,
+                                                   ik,
+                                                   ik2iktot,
+                                                   nspin,
+                                                   nkstot,
+                                                   out_type,
+                                                   out_app_flag,
+                                                   gamma_only,
+                                                   istep);
 
     std::string output = testing::internal::GetCapturedStdout();
 
@@ -93,14 +114,12 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
 }
 
 template <typename T>
-void read_bin(const std::string& name, std::vector<T>& data)
-{
+void read_bin(const std::string& name, std::vector<T>& data) {
     std::ifstream ifs(name, std::ios::binary);
     ifs.seekg(0, std::ios::beg);
-    int nbands=0;
-    int nbasis=0;
-    if (std::is_same<T, std::complex<double>>::value)
-    {
+    int nbands = 0;
+    int nbasis = 0;
+    if (std::is_same<T, std::complex<double>>::value) {
         ifs.ignore(sizeof(int));
         ifs.ignore(sizeof(double) * 3);
     }
@@ -108,20 +127,17 @@ void read_bin(const std::string& name, std::vector<T>& data)
     ifs.read(reinterpret_cast<char*>(&nbasis), sizeof(int));
     data.resize(nbands * nbasis);
 
-    for (int i = 0; i < nbands; i++)
-    {
+    for (int i = 0; i < nbands; i++) {
         ifs.ignore(sizeof(int));
         ifs.ignore(sizeof(double) * 2);
-        for (int j = 0; j < nbasis; j++)
-        {
+        for (int j = 0; j < nbasis; j++) {
             ifs.read(reinterpret_cast<char*>(&data[i * nbasis + j]), sizeof(T));
         }
     }
     ifs.close();
 }
 
-class WriteWfcLcaoTest : public testing::Test
-{
+class WriteWfcLcaoTest : public testing::Test {
   protected:
     ModuleBase::matrix ekb;
     ModuleBase::matrix wg;
@@ -139,26 +155,23 @@ class WriteWfcLcaoTest : public testing::Test
     int nbasis_local = 0;
 
     // mohan add 2025-05-11
-    std::vector<int> ik2iktot = {0,1};
+    std::vector<int> ik2iktot = {0, 1};
     int nkstot = 2;
     bool out_app_flag = true;
 
-    void SetUp() override
-    {
+    void SetUp() override {
         ekb.create(nk, nbands); // in this test the value of ekb and wg is not important and not used.
         wg.create(nk, nbands);
         kvec_c.resize(nk, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
         psi_init_double.resize(nk * nbands * nbasis);
         psi_init_complex.resize(nk * nbands * nbasis);
-        for (int i = 0; i < nk * nbands * nbasis; i++)
-        {
+        for (int i = 0; i < nk * nbands * nbasis; i++) {
             psi_init_double[i] = i * 0.1;
             psi_init_complex[i] = std::complex<double>(i * 0.2, i * 0.3);
         }
 #ifdef __MPI
         pv.init(nbasis, nbands, 1, MPI_COMM_WORLD);
-        for (int i = 0; i < 9; i++)
-        {
+        for (int i = 0; i < 9; i++) {
             pv.desc_wfc[i] = pv.desc[i];
         }
 
@@ -167,8 +180,7 @@ class WriteWfcLcaoTest : public testing::Test
         pv_glb.init(nbasis, nbands, std::max(nbasis, nbands), MPI_COMM_WORLD);
         psi_local_double.resize(nk * pv.get_row_size() * pv.get_col_size());
         psi_local_complex.resize(nk * pv.get_row_size() * pv.get_col_size());
-        for (int ik = 0; ik < nk; ik++)
-        {
+        for (int ik = 0; ik < nk; ik++) {
             Cpxgemr2d(nbasis,
                       nbands,
                       psi_init_double.data() + ik * nbands * nbasis,
@@ -203,8 +215,7 @@ class WriteWfcLcaoTest : public testing::Test
     }
 };
 
-TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
-{
+TEST_F(WriteWfcLcaoTest, WriteWfcLcao) {
     PARAM.sys.global_out_dir = "./";
 
     const std::string directory = "";
@@ -217,17 +228,22 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 
     psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, nbasis_local, true);
 
-	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+    ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, ik2iktot, nkstot, pv, nspin, istep);
 
     // check the output file
-    if (GlobalV::MY_RANK == 0)
-    {
-        for (int ik = 0; ik < nk; ik++)
-		{
-			std::string fname = ModuleIO::filename_output(
-					directory, property, basis, ik, ik2iktot, nspin, 
-					nkstot, out_type, out_app_flag, gamma_only, istep);
+    if (GlobalV::MY_RANK == 0) {
+        for (int ik = 0; ik < nk; ik++) {
+            std::string fname = ModuleIO::filename_output(directory,
+                                                          property,
+                                                          basis,
+                                                          ik,
+                                                          ik2iktot,
+                                                          nspin,
+                                                          nkstot,
+                                                          out_type,
+                                                          out_app_flag,
+                                                          gamma_only,
+                                                          istep);
 
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
@@ -236,8 +252,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 
             EXPECT_EQ(data.size(), nbands * nbasis);
 
-            for (int i = 0; i < nbands * nbasis; i++)
-            {
+            for (int i = 0; i < nbands * nbasis; i++) {
                 EXPECT_DOUBLE_EQ(data[i], psi_init_double[nbands * nbasis * ik + i]);
             }
             // remove the output files
@@ -246,8 +261,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
     }
 }
 
-TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
-{
+TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex) {
     PARAM.sys.global_out_dir = "./";
 
     const std::string directory = "";
@@ -260,17 +274,22 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
 
     psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
 
-	ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, 
-			ik2iktot, nkstot, pv, nspin, istep);
+    ModuleIO::write_wfc_nao(out_type, out_app_flag, my_psi, ekb, wg, kvec_c, ik2iktot, nkstot, pv, nspin, istep);
 
     // check the output file
-    if (GlobalV::MY_RANK == 0)
-    {
-        for (int ik = 0; ik < nk; ik++)
-        {
-			std::string fname = ModuleIO::filename_output(
-					directory, property, basis, ik, ik2iktot, nspin, 
-					nkstot, out_type, out_app_flag, gamma_only, istep);
+    if (GlobalV::MY_RANK == 0) {
+        for (int ik = 0; ik < nk; ik++) {
+            std::string fname = ModuleIO::filename_output(directory,
+                                                          property,
+                                                          basis,
+                                                          ik,
+                                                          ik2iktot,
+                                                          nspin,
+                                                          nkstot,
+                                                          out_type,
+                                                          out_app_flag,
+                                                          gamma_only,
+                                                          istep);
 
             std::ifstream file1(fname);
             EXPECT_TRUE(file1.good());
@@ -278,8 +297,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
             read_bin(fname, data);
 
             EXPECT_EQ(data.size(), nbands * nbasis);
-            for (int i = 0; i < nbands * nbasis; i++)
-            {
+            for (int i = 0; i < nbands * nbasis; i++) {
                 EXPECT_DOUBLE_EQ(data[i].real(), psi_init_complex[nbands * nbasis * ik + i].real());
                 EXPECT_DOUBLE_EQ(data[i].imag(), psi_init_complex[nbands * nbasis * ik + i].imag());
             }
@@ -289,10 +307,8 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     }
 }
 
-TEST(ModuleIOTest, WriteWfcNao)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
+TEST(ModuleIOTest, WriteWfcNao) {
+    if (GlobalV::MY_RANK == 0) {
         // Set up GlobalV
         GlobalV::DRANK = 0;
         PARAM.input.nbands = 2;
@@ -335,10 +351,8 @@ TEST(ModuleIOTest, WriteWfcNao)
     }
 }
 
-TEST(ModuleIOTest, WriteWfcNaoBinary)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
+TEST(ModuleIOTest, WriteWfcNaoBinary) {
+    if (GlobalV::MY_RANK == 0) {
         // Set up GlobalV
         GlobalV::DRANK = 0;
         PARAM.input.nbands = 2;
@@ -368,8 +382,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
         wfc >> nlocal;
         EXPECT_EQ(nbands, 2);
         EXPECT_EQ(nlocal, 2);
-        for (int i = 0; i < nbands; i++)
-        {
+        for (int i = 0; i < nbands; i++) {
             int band_index;
             double ekb, wg;
             wfc >> band_index;
@@ -378,8 +391,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
             EXPECT_EQ(band_index, i + 1);
             EXPECT_DOUBLE_EQ(ekb, 0.5 + i * 0.2);
             EXPECT_DOUBLE_EQ(wg, 0.9 + i * 0.2);
-            for (int j = 0; j < nlocal; j++)
-            {
+            for (int j = 0; j < nlocal; j++) {
                 double ctot;
                 wfc >> ctot;
                 EXPECT_DOUBLE_EQ(ctot, 0.1 + i * 0.2 + j * 0.1);
@@ -392,10 +404,8 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     }
 }
 
-TEST(ModuleIOTest, WriteWfcNaoComplex)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
+TEST(ModuleIOTest, WriteWfcNaoComplex) {
+    if (GlobalV::MY_RANK == 0) {
         // Set up GlobalV
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
@@ -435,10 +445,8 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     }
 }
 
-TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
+TEST(ModuleIOTest, WriteWfcNaoComplexBinary) {
+    if (GlobalV::MY_RANK == 0) {
         // Set up GlobalV
         PARAM.input.nbands = 2;
         PARAM.sys.nlocal = 3;
@@ -478,8 +486,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
         EXPECT_DOUBLE_EQ(kz, 0.0);
         EXPECT_EQ(nbands, 2);
         EXPECT_EQ(nlocal, 3);
-        for (int i = 0; i < nbands; i++)
-        {
+        for (int i = 0; i < nbands; i++) {
             int band_index;
             double ekb, wg;
             wfc >> band_index;
@@ -488,8 +495,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
             EXPECT_EQ(band_index, i + 1);
             EXPECT_DOUBLE_EQ(ekb, 0.9 + i * 0.2);
             EXPECT_DOUBLE_EQ(wg, 0.11 + i * 0.11);
-            for (int j = 0; j < nlocal; j++)
-            {
+            for (int j = 0; j < nlocal; j++) {
                 std::complex<double> ctot;
                 wfc >> ctot;
                 EXPECT_DOUBLE_EQ(ctot.real(), 1.0 + i * 3.0 + j * 1.0);
@@ -502,8 +508,7 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     GlobalV::MY_RANK = 0;
 #ifdef __MPI
     MPI_Init(&argc, &argv);

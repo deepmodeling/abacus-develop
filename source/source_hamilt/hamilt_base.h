@@ -3,8 +3,7 @@
 
 #include <string>
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * @brief Base class for Hamiltonian
@@ -13,8 +12,7 @@ namespace hamilt
  * It provides a common interface for all Hamiltonian types,
  * allowing ESolver to manage Hamiltonian without template parameters.
  */
-class HamiltBase
-{
+class HamiltBase {
   public:
     virtual ~HamiltBase() {}
 

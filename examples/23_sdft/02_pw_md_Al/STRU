@@ -2,21 +2,21 @@
 #about the lattice structure.
 
 ATOMIC_SPECIES
-Al 26.98 Al_ONCV_PBE_sr.upf	#Element, Mass, Pseudopotential
+Al 26.98 Al_ONCV_PBE_sr.upf    #Element, Mass, Pseudopotential
 
 LATTICE_CONSTANT
-12.14569  			#Lattice constant
+12.14569              #Lattice constant
 
 LATTICE_VECTORS
-1.0 0.0 0.0 		#Lattice vector 1
-0.0 1.0 0.0		    #Lattice vector 2
-0.0 0.0 1.0 		#Lattice vector 3
+1.0 0.0 0.0         #Lattice vector 1
+0.0 1.0 0.0            #Lattice vector 2
+0.0 0.0 1.0         #Lattice vector 3
 
 ATOMIC_POSITIONS
-Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
-Al 			#Name of element	
-0.0			#Magnetic for this element.
-16			#Number of atoms
+Cartesian         #Cartesian(Unit is LATTICE_CONSTANT)
+Al             #Name of element    
+0.0            #Magnetic for this element.
+16            #Number of atoms
 0.0598184   0.789049    0.599279    1   1   1
 0.0379145   0.996286    0.225113    1   1   1
 0.970468    0.216979    0.785658    1   1   1

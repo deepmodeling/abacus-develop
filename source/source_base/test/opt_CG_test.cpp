@@ -8,9 +8,8 @@
 
 #define DOUBLETHRESHOLD 1e-8
 
-class CG_test : public testing::Test
-{
-protected:
+class CG_test : public testing::Test {
+  protected:
     ModuleBase::Opt_CG cg;
     ModuleBase::Opt_DCsrch ds;
     // LinearEqu le;
@@ -21,13 +20,12 @@ protected:
     double residual = 10.;
     double tol = 1e-5;
     int final_iter = 0;
-    char *task = nullptr;
-    double *Ap = nullptr;
-    double *p = nullptr;
-    double *x = nullptr;
+    char* task = nullptr;
+    double* Ap = nullptr;
+    double* p = nullptr;
+    double* x = nullptr;
 
-    void SetUp()
-    {
+    void SetUp() {
         cg.set_para(1.);
         cg.allocate(tools.nx);
         cg.init_b(tools.le.b);
@@ -37,30 +35,25 @@ protected:
         x = new double[tools.nx];
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete[] task;
         delete[] Ap;
         delete[] p;
         delete[] x;
     }
 
-    void CG_Solve_LinearEq()
-    {
+    void CG_Solve_LinearEq() {
         final_iter = 0;
         cg.refresh(0, tools.le.b);
         step = 1;
         residual = 10.;
-        for (int i = 0; i < tools.nx; ++i)
-        {
+        for (int i = 0; i < tools.nx; ++i) {
             x[i] = 0;
             p[i] = 0;
             Ap[i] = 0;
         }
-        for (int iter = 0; iter < maxiter; ++iter)
-        {
-            if (residual < tol) 
-            {
+        for (int iter = 0; iter < maxiter; ++iter) {
+            if (residual < tol) {
                 final_iter = iter;
                 break;
             }
@@ -68,28 +61,24 @@ protected:
             tools.le.get_Ap(tools.le.A, p, Ap);
             int ifPD = 0;
             step = cg.step_length(Ap, p, ifPD);
-            for (int i = 0; i < 3; ++i) { x[i] += step * p[i]; 
-}
+            for (int i = 0; i < 3; ++i) {
+                x[i] += step * p[i];
+            }
             residual = cg.get_residual();
         }
     }
 
-    void Solve(int cg_label, int func_label)
-    {
-        if (func_label==0)
-        {
+    void Solve(int cg_label, int func_label) {
+        if (func_label == 0) {
             cg.refresh(0, tools.le.b);
-        }
-        else
-        {
+        } else {
             cg.refresh();
         }
-        ds.set_paras(1e-4, 2e-1, 1e-12, 0.,12.);
+        ds.set_paras(1e-4, 2e-1, 1e-12, 0., 12.);
         step = 1.;
         residual = 10.;
         final_iter = 0;
-        for (int i = 0; i < tools.nx; ++i)
-        {
+        for (int i = 0; i < tools.nx; ++i) {
             x[i] = 0;
             p[i] = 0;
             Ap[i] = 0;
@@ -97,60 +86,57 @@ protected:
 
         double f = 0;
         double g = 0;
-        double *gradient = new double[3];
-        double *temp_x = new double[3];
+        double* gradient = new double[3];
+        double* temp_x = new double[3];
         ModuleBase::GlobalFunc::ZEROS(gradient, 3);
         ModuleBase::GlobalFunc::ZEROS(temp_x, 3);
 
-        for (int iter = 0; iter < maxiter; ++iter)
-        {
+        for (int iter = 0; iter < maxiter; ++iter) {
             tools.dfuncdx(x, gradient, func_label);
             residual = 0;
-            for (int i = 0; i<3 ;++i) { residual += gradient[i] * gradient[i];
-}
-            if (residual < tol) 
-            {
+            for (int i = 0; i < 3; ++i) {
+                residual += gradient[i] * gradient[i];
+            }
+            if (residual < tol) {
                 final_iter = iter;
                 break;
             }
             cg.next_direct(gradient, cg_label, p);
-            for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
-}
-            task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
-            while (true)
-            {
+            for (int i = 0; i < 3; ++i) {
+                temp_x[i] = x[i];
+            }
+            task[0] = 'S';
+            task[1] = 'T';
+            task[2] = 'A';
+            task[3] = 'R';
+            task[4] = 'T';
+            while (true) {
                 f = tools.func(temp_x, func_label);
                 g = tools.dfuncdstp(temp_x, p, func_label);
                 ds.dcSrch(f, g, step, task);
-                if (task[0] == 'F' && task[1] == 'G')
-                {
-                    for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
-}
+                if (task[0] == 'F' && task[1] == 'G') {
+                    for (int j = 0; j < 3; ++j) {
+                        temp_x[j] = x[j] + step * p[j];
+                    }
                     continue;
-                }
-                else if (task[0] == 'C' && task[1] == 'O')
-                {
+                } else if (task[0] == 'C' && task[1] == 'O') {
                     break;
-                }
-                else if (task[0] == 'W' && task[1] == 'A')
-                {
+                } else if (task[0] == 'W' && task[1] == 'A') {
                     break;
-                } 
-                else if (task[0] == 'E' && task[1] == 'R')
-                {
+                } else if (task[0] == 'E' && task[1] == 'R') {
                     break;
                 }
             }
-            for (int i = 0; i < 3; ++i) { x[i] += step * p[i];
-}
+            for (int i = 0; i < 3; ++i) {
+                x[i] += step * p[i];
+            }
         }
         delete[] temp_x;
         delete[] gradient;
     }
 };
 
-TEST_F(CG_test, Stand_Solve_LinearEq)
-{
+TEST_F(CG_test, Stand_Solve_LinearEq) {
 #ifdef __MPI
 #undef __MPI
     CG_Solve_LinearEq();
@@ -163,8 +149,7 @@ TEST_F(CG_test, Stand_Solve_LinearEq)
 #endif
 }
 
-TEST_F(CG_test, PR_Solve_LinearEq)
-{
+TEST_F(CG_test, PR_Solve_LinearEq) {
 #ifdef __MPI
 #undef __MPI
     Solve(1, 0);
@@ -177,8 +162,7 @@ TEST_F(CG_test, PR_Solve_LinearEq)
 #endif
 }
 
-TEST_F(CG_test, HZ_Solve_LinearEq)
-{
+TEST_F(CG_test, HZ_Solve_LinearEq) {
 #ifdef __MPI
 #undef __MPI
     Solve(2, 0);
@@ -191,8 +175,7 @@ TEST_F(CG_test, HZ_Solve_LinearEq)
 #endif
 }
 
-TEST_F(CG_test, PR_Min_Func)
-{
+TEST_F(CG_test, PR_Min_Func) {
 #ifdef __MPI
 #undef __MPI
     Solve(1, 1);
@@ -205,8 +188,7 @@ TEST_F(CG_test, PR_Min_Func)
 #endif
 }
 
-TEST_F(CG_test, HZ_Min_Func)
-{
+TEST_F(CG_test, HZ_Min_Func) {
 #ifdef __MPI
 #undef __MPI
     Solve(2, 1);
@@ -218,4 +200,5 @@ TEST_F(CG_test, HZ_Min_Func)
 #define __MPI
 #endif
 }
-// g++ -std=c++11 ../opt_CG.cpp ../opt_DCsrch.cpp ./CG_test.cpp ./test_tools.cpp  -lgtest -lpthread -lgtest_main -o test.exe
+// g++ -std=c++11 ../opt_CG.cpp ../opt_DCsrch.cpp ./CG_test.cpp ./test_tools.cpp  -lgtest -lpthread -lgtest_main -o
+// test.exe

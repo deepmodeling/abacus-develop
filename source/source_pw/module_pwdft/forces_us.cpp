@@ -20,8 +20,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                                           const ModulePW::PW_Basis* const rho_basis,
                                           const pseudopot_cell_vnl& nlpp,
                                           const elecstate::ElecState& elec,
-                                          const UnitCell& ucell)
-{
+                                          const UnitCell& ucell) {
     ModuleBase::TITLE("Forces", "cal_force_us");
     ModuleBase::timer::start("Forces", "cal_force_us");
 
@@ -36,8 +35,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::matrix veff = elec.pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
+    for (int is = 0; is < PARAM.inp.nspin; is++) {
         rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
 
@@ -45,16 +43,13 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::YlmReal::Ylm_Real(nlpp.lmaxq * nlpp.lmaxq, npw, rho_basis->gcar, ylmk0);
 
     double* qnorm = new double[npw];
-    for (int ig = 0; ig < npw; ig++)
-    {
+    for (int ig = 0; ig < npw; ig++) {
         qnorm[ig] = rho_basis->gcar[ig].norm() * ucell.tpiba;
     }
 
-    for (int it = 0; it < ucell.ntype; it++)
-    {
+    for (int it = 0; it < ucell.ntype; it++) {
         Atom* atom = &ucell.atoms[it];
-        if (atom->ncpp.tvanp)
-        {
+        if (atom->ncpp.tvanp) {
             // nij = max number of (ih,jh) pairs per atom type nt
             // qgm contains the Q functions in G space
             const int nij = atom->ncpp.nh * (atom->ncpp.nh + 1) / 2;
@@ -63,10 +58,8 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
             // Compute and store Q(G) for this atomic species
             // (without structure factor)
             int ijh = 0;
-            for (int ih = 0; ih < atom->ncpp.nh; ih++)
-            {
-                for (int jh = ih; jh < atom->ncpp.nh; jh++)
-                {
+            for (int ih = 0; ih < atom->ncpp.nh; ih++) {
+                for (int jh = ih; jh < atom->ncpp.nh; jh++) {
                     nlpp.radial_fft_q(npw, ih, jh, it, qnorm, ylmk0, &qgm(ijh, 0));
                     ijh++;
                 }
@@ -75,17 +68,13 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
             ModuleBase::ComplexArray aux1(3, atom->na, npw);
             ModuleBase::realArray ddeeq(PARAM.inp.nspin, 3, atom->na, nij);
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                for (int ia = 0; ia < atom->na; ia++)
-                {
+            for (int is = 0; is < PARAM.inp.nspin; is++) {
+                for (int ia = 0; ia < atom->na; ia++) {
                     // aux1 = product of potential, structure factor and iG
-                    for (int ig = 0; ig < npw; ig++)
-                    {
+                    for (int ig = 0; ig < npw; ig++) {
                         double arg = rho_basis->gcar[ig] * atom->tau[ia];
                         std::complex<double> cfac = fac * vg(is, ig) * ModuleBase::libm::exp(ci_tpi * arg);
-                        for (int ipol = 0; ipol < 3; ipol++)
-                        {
+                        for (int ipol = 0; ipol < 3; ipol++) {
                             aux1(ipol, ia, ig) = cfac * rho_basis->gcar[ig][ipol];
                         }
                     }
@@ -98,34 +87,29 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const char transb = 'N';
                 const int dim = 2 * npw;
                 const double zero = 0;
-                for (int ipol = 0; ipol < 3; ipol++)
-                {
+                for (int ipol = 0; ipol < 3; ipol++) {
                     BlasConnector::gemm(transb,
-                           transa,
-                           atom->na,
-                           nij,
-                           dim,
-                           ucell.omega,
-                           &aux1_data[ipol * dim * atom->na],
-                           dim,
-                           qgm_data,
-                           dim,
-                           zero,
-                           &ddeeq(is, ipol, 0, 0),
-                           nij);
+                                        transa,
+                                        atom->na,
+                                        nij,
+                                        dim,
+                                        ucell.omega,
+                                        &aux1_data[ipol * dim * atom->na],
+                                        dim,
+                                        qgm_data,
+                                        dim,
+                                        zero,
+                                        &ddeeq(is, ipol, 0, 0),
+                                        nij);
                 }
             }
 
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                for (int ia = 0; ia < atom->na; ia++)
-                {
+            for (int is = 0; is < PARAM.inp.nspin; is++) {
+                for (int ia = 0; ia < atom->na; ia++) {
                     const int iat = ucell.itia2iat(it, ia);
                     const int index = is * ucell.nat * nh_tot + iat * nh_tot;
-                    for (int ipol = 0; ipol < 3; ipol++)
-                    {
-                        for (int ijh = 0; ijh < nij; ijh++)
-                        {
+                    for (int ipol = 0; ipol < 3; ipol++) {
+                        for (int ijh = 0; ijh < nij; ijh++) {
                             forceq(iat, ipol) += ddeeq(is, ipol, ia, ijh) * becsum[index + ijh];
                         }
                     }

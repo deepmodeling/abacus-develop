@@ -5,8 +5,7 @@
 
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 void write_dipole(const UnitCell& ucell,
                   const double* rho_save,
                   const ModulePW::PW_Basis* rhopw,

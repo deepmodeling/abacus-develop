@@ -28,41 +28,41 @@ LIBXC=${LIBXC_ROOT}
 RAPIDJSON=${RAPIDJSON_ROOT}
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
-USE_CUDA=OFF  # set ON to enable gpu-abacus
+USE_CUDA=OFF # set ON to enable gpu-abacus
 # NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd # v3.0 might have problem
 
-# Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are needed 
+# Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are needed
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_CXX_COMPILER=icpx \
-        -DMPI_CXX_COMPILER=mpiicpx \
-        -DMKLROOT=$MKLROOT \
-        -DENABLE_FLOAT_FFTW=ON \
-        -DELPA_DIR=$ELPA \
-        -DCEREAL_INCLUDE_DIR=$CEREAL \
-        -DLibxc_DIR=$LIBXC \
-        -DENABLE_LCAO=ON \
-        -DENABLE_LIBXC=ON \
-        -DUSE_OPENMP=ON \
-        -DUSE_ELPA=ON \
-        -DENABLE_RAPIDJSON=ON \
-        -DRapidJSON_DIR=$RAPIDJSON \
-	    -DENABLE_LIBRI=ON \
-        -DLIBRI_DIR=$LIBRI \
-	    -DLIBCOMM_DIR=$LIBCOMM \
-        -DUSE_CUDA=$USE_CUDA \
+  -DCMAKE_CXX_COMPILER=icpx \
+  -DMPI_CXX_COMPILER=mpiicpx \
+  -DMKLROOT=$MKLROOT \
+  -DENABLE_FLOAT_FFTW=ON \
+  -DELPA_DIR=$ELPA \
+  -DCEREAL_INCLUDE_DIR=$CEREAL \
+  -DLibxc_DIR=$LIBXC \
+  -DENABLE_LCAO=ON \
+  -DENABLE_LIBXC=ON \
+  -DUSE_OPENMP=ON \
+  -DUSE_ELPA=ON \
+  -DENABLE_RAPIDJSON=ON \
+  -DRapidJSON_DIR=$RAPIDJSON \
+  -DENABLE_LIBRI=ON \
+  -DLIBRI_DIR=$LIBRI \
+  -DLIBCOMM_DIR=$LIBCOMM \
+  -DUSE_CUDA=$USE_CUDA
 #         -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
 #         -DNEP_DIR=$NEP_DIR \
 #         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-# 	      -DDeePMD_DIR=$DEEPMD \
+#           -DDeePMD_DIR=$DEEPMD \
 #         -DENABLE_CUSOLVERMP=ON \
 
-cmake --build $BUILD_DIR -j `nproc` 
-cmake --install $BUILD_DIR 2>/dev/null
+cmake --build $BUILD_DIR -j $(nproc)
+cmake --install $BUILD_DIR 2> /dev/null
 
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"

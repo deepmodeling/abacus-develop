@@ -35,31 +35,24 @@
  */
 
 template <typename T>
-class HamiltTEST : public hamilt::Hamilt<T>
-{
+class HamiltTEST : public hamilt::Hamilt<T> {
   public:
     int desc[9];
     int nrow, ncol;
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in)
-    {
+    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in) {
         hk_in = hamilt::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
         sk_in = hamilt::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
     }
 
-    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho)
-    {
-    }
-    void updateHk(const int ik)
-    {
-    }
+    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho) {}
+    void updateHk(const int ik) {}
 };
 
 template <class T>
-class DiagoPrepare
-{
+class DiagoPrepare {
   public:
     DiagoPrepare(int nlocal,
                  int nbands,
@@ -69,19 +62,17 @@ class DiagoPrepare
                  std::string hfname,
                  std::string sfname)
         : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), ks_solver(ks_solver), hfname(hfname),
-          sfname(sfname)
-    {
+          sfname(sfname) {
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            ;//dh = new hsolver::DiagoScalapack<T>;
+            ; // dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
-            ;//dh = new hsolver::DiagoCusolver<T>;
+            ; // dh = new hsolver::DiagoCusolver<T>;
 #endif
-        else
-        {
+        else {
             if (myrank == 0)
                 std::cout << "ERROR: undefined ks_solver: " << ks_solver << std::endl;
             exit(1);
@@ -104,19 +95,16 @@ class DiagoPrepare
     std::vector<double> abc;
     int icontxt;
 
-    bool read_HS()
-    {
+    bool read_HS() {
         bool readhfile = false;
         bool readsfile = false;
-        if (this->myrank == 0)
-        {
+        if (this->myrank == 0) {
             int hdim, sdim;
             readhfile = LCAO_DIAGO_TEST::read_hs<std::vector<T>>(hfname, this->h);
             readsfile = LCAO_DIAGO_TEST::read_hs<std::vector<T>>(sfname, this->s);
             hdim = sqrt(this->h.size());
             sdim = sqrt(this->s.size());
-            if (hdim != sdim)
-            {
+            if (hdim != sdim) {
                 printf("Error: dimensions of H and S are not equal, %d, %d\n", hdim, sdim);
                 readhfile = readsfile = false;
             }
@@ -131,8 +119,7 @@ class DiagoPrepare
         return false;
     }
 
-    bool produce_HS()
-    {
+    bool produce_HS() {
         bool ok = this->read_HS();
 
         e_solver.resize(nlocal, 0.0);
@@ -141,12 +128,10 @@ class DiagoPrepare
         return ok;
     }
 
-    void print_hs()
-    {
+    void print_hs() {
         if (!PRINT_HS)
             return;
-        if (myrank == 0)
-        {
+        if (myrank == 0) {
             std::ofstream fp("hmatrix.dat");
             LCAO_DIAGO_TEST::print_matrix(fp, this->h.data(), nlocal, nlocal, true);
             fp.close();
@@ -156,8 +141,7 @@ class DiagoPrepare
         }
     }
 
-    void pb2d()
-    {
+    void pb2d() {
         int nprows, npcols, myprow, mypcol;
         LCAO_DIAGO_TEST::process_2d(nprows, npcols, myprow, mypcol, icontxt);
 
@@ -171,15 +155,13 @@ class DiagoPrepare
                                              mypcol); // the number of column of the new_matrix in each process
         int ISRC = 0, info;
         descinit_(hmtest.desc, &nlocal, &nlocal, &nb2d, &nb2d, &ISRC, &ISRC, &icontxt, &(hmtest.nrow), &info);
-        if (info != 0)
-        {
+        if (info != 0) {
             printf("Invalid blacs-distribution. Abort!\n");
             exit(1);
         }
     }
 
-    void distribute_data()
-    {
+    void distribute_data() {
 
         int local_size = hmtest.nrow * hmtest.ncol;
         this->h_local.resize(local_size);
@@ -202,15 +184,13 @@ class DiagoPrepare
         psi.resize(1, hmtest.ncol, hmtest.nrow);
     }
 
-    void set_env()
-    {
+    void set_env() {
         PARAM.sys.nlocal = nlocal;
         PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
     }
 
-    void diago()
-    {
+    void diago() {
         this->pb2d();
         this->distribute_data();
         this->print_hs();
@@ -219,24 +199,21 @@ class DiagoPrepare
         double starttime = 0.0, endtime = 0.0;
         MPI_Barrier(MPI_COMM_WORLD);
         starttime = MPI_Wtime();
-        for (int i = 0; i < REPEATRUN; i++)
-        {
+        for (int i = 0; i < REPEATRUN; i++) {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
-            if (ks_solver == "scalapack_gvx")
-            {
+            if (ks_solver == "scalapack_gvx") {
                 hsolver::DiagoScalapack<T> dh;
                 dh.diag(&hmtest, psi, e_solver.data());
             }
-    #ifdef __CUDA
-            else if (ks_solver == "cusolver")
-                {
-                    hsolver::DiagoCusolver<T> dh;
-                    hamilt::MatrixBlock<T> h_mat, s_mat;
-                    hmtest.matrix(h_mat, s_mat);
-                    dh.diag(h_mat, s_mat, psi, e_solver.data());
-                }
-    #endif
+#ifdef __CUDA
+            else if (ks_solver == "cusolver") {
+                hsolver::DiagoCusolver<T> dh;
+                hamilt::MatrixBlock<T> h_mat, s_mat;
+                hmtest.matrix(h_mat, s_mat);
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
+            }
+#endif
             // dh->diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();
@@ -244,8 +221,7 @@ class DiagoPrepare
         // delete dh;
     }
 
-    void diago_lapack()
-    {
+    void diago_lapack() {
         double starttime = 0.0, endtime = 0.0;
         starttime = MPI_Wtime();
         for (int i = 0; i < REPEATRUN; i++)
@@ -254,17 +230,14 @@ class DiagoPrepare
         lapack_time = (endtime - starttime) / REPEATRUN;
     }
 
-    bool compare_eigen(std::stringstream& out_info)
-    {
+    bool compare_eigen(std::stringstream& out_info) {
         double maxerror = 0.0;
         int iindex = 0;
         bool pass = true;
-        for (int i = 0; i < nbands; i++)
-        {
+        for (int i = 0; i < nbands; i++) {
             // EXPECT_NEAR(e_lapack[i], e_solver[i], PASSTHRESHOLD);
             double error = std::abs(e_lapack[i] - e_solver[i]);
-            if (error > maxerror)
-            {
+            if (error > maxerror) {
                 maxerror = error;
                 iindex = i;
             }
@@ -279,8 +252,7 @@ class DiagoPrepare
         out_info << "Maximum difference between ks_hsolver and LAPACK is " << maxerror << " (" << iindex
                  << "-th eigenvalue), the pass threshold is " << PASSTHRESHOLD << std::endl;
 
-        if (DETAILINFO)
-        {
+        if (DETAILINFO) {
             std::cout << out_info.str();
             out_info.str("");
             out_info.clear();
@@ -289,19 +261,15 @@ class DiagoPrepare
     }
 };
 
-class DiagoGammaOnlyTest : public ::testing::TestWithParam<DiagoPrepare<double>>
-{
-};
+class DiagoGammaOnlyTest : public ::testing::TestWithParam<DiagoPrepare<double>> {};
 
-TEST_P(DiagoGammaOnlyTest, LCAO)
-{
+TEST_P(DiagoGammaOnlyTest, LCAO) {
     std::stringstream out_info;
     DiagoPrepare<double> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
     dp.diago();
 
-    if (dp.myrank == 0)
-    {
+    if (dp.myrank == 0) {
         dp.diago_lapack();
         bool pass = dp.compare_eigen(out_info);
         EXPECT_TRUE(pass) << out_info.str();
@@ -322,18 +290,14 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
         DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
 
-class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
-{
-};
-TEST_P(DiagoKPointsTest, LCAO)
-{
+class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>> {};
+TEST_P(DiagoKPointsTest, LCAO) {
     std::stringstream out_info;
     DiagoPrepare<std::complex<double>> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
     dp.diago();
 
-    if (dp.myrank == 0)
-    {
+    if (dp.myrank == 0) {
         dp.diago_lapack();
         bool pass = dp.compare_eigen(out_info);
         EXPECT_TRUE(pass) << out_info.str();
@@ -352,8 +316,7 @@ INSTANTIATE_TEST_SUITE_P(
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     int mypnum, dsize;
     MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -361,19 +324,15 @@ int main(int argc, char** argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (mypnum != 0)
-    {
+    if (mypnum != 0) {
         delete listeners.Release(listeners.default_result_printer());
     }
     int result = RUN_ALL_TESTS();
 
-    if (mypnum == 0 && result != 0)
-    {
+    if (mypnum == 0 && result != 0) {
         std::cout << "ERROR:some tests are not passed" << std::endl;
         return result;
-    }
-    else
-    {
+    } else {
         MPI_Finalize();
         return 0;
     }

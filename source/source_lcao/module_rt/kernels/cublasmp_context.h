@@ -18,24 +18,20 @@
 #include <iostream>
 #include <nccl.h>
 
-extern "C"
-{
+extern "C" {
 #include "source_hsolver/module_genelpa/Cblacs.h"
 }
 
 #define LOG_DEBUG(msg)                                                                                                 \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        if (g_EnableDebugLog)                                                                                          \
-        {                                                                                                              \
+    do {                                                                                                               \
+        if (g_EnableDebugLog) {                                                                                        \
             std::cerr << "[DEBUG] " << msg << " (at " << __func__ << ")" << std::endl;                                 \
         }                                                                                                              \
     } while (0)
 #endif // __CUBLASMP
 
 // The struct is ALWAYS available.
-struct CublasMpResources
-{
+struct CublasMpResources {
     bool is_initialized = false;
 
 #ifdef __MPI
@@ -60,10 +56,8 @@ struct CublasMpResources
 // API functions are only visible when cuBLASMp is enabled.
 #ifdef __CUBLASMP
 
-inline void init_cublasmp_resources(CublasMpResources& res, MPI_Comm mpi_comm, const int* desc)
-{
-    if (res.is_initialized)
-    {
+inline void init_cublasmp_resources(CublasMpResources& res, MPI_Comm mpi_comm, const int* desc) {
+    if (res.is_initialized) {
         return;
     }
 
@@ -91,8 +85,7 @@ inline void init_cublasmp_resources(CublasMpResources& res, MPI_Comm mpi_comm, c
 
     // 2. Initialize NCCL communicator
     ncclUniqueId id;
-    if (rank == 0)
-    {
+    if (rank == 0) {
         ncclGetUniqueId(&id);
     }
     // Broadcast the unique NCCL ID to all ranks
@@ -116,46 +109,37 @@ inline void init_cublasmp_resources(CublasMpResources& res, MPI_Comm mpi_comm, c
     res.is_initialized = true;
 }
 
-inline void finalize_cublasmp_resources(CublasMpResources& res)
-{
-    if (!res.is_initialized)
-    {
+inline void finalize_cublasmp_resources(CublasMpResources& res) {
+    if (!res.is_initialized) {
         return;
     }
 
-    if (res.stream)
-    {
+    if (res.stream) {
         cudaStreamSynchronize(res.stream);
     }
 
     // Destroy cuBLASMp resources
-    if (res.cublasmp_grid)
-    {
+    if (res.cublasmp_grid) {
         cublasMpGridDestroy(res.cublasmp_grid);
     }
-    if (res.cublasmp_handle)
-    {
+    if (res.cublasmp_handle) {
         cublasMpDestroy(res.cublasmp_handle);
     }
 
     // Destroy cuSOLVERMp resources
-    if (res.cusolvermp_grid)
-    {
+    if (res.cusolvermp_grid) {
         cusolverMpDestroyGrid(res.cusolvermp_grid);
     }
-    if (res.cusolvermp_handle)
-    {
+    if (res.cusolvermp_handle) {
         cusolverMpDestroy(res.cusolvermp_handle);
     }
 
     // Destroy NCCL communicator
-    if (res.nccl_comm)
-    {
+    if (res.nccl_comm) {
         ncclCommDestroy(res.nccl_comm);
     }
 
-    if (res.stream)
-    {
+    if (res.stream) {
         cudaStreamDestroy(res.stream);
     }
 

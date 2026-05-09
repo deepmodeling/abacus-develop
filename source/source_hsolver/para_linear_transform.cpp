@@ -7,11 +7,9 @@
 
 #include <algorithm>
 #include <vector>
-namespace hsolver
-{
+namespace hsolver {
 template <typename T, typename Device>
-PLinearTransform<T, Device>::~PLinearTransform()
-{
+PLinearTransform<T, Device>::~PLinearTransform() {
 #ifdef __MPI
     delmem_dev_op()(U_tmp_);
     delmem_dev_op()(B_tmp_);
@@ -26,8 +24,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 #ifdef __MPI
                                                 MPI_Comm col_world,
 #endif
-                                                const bool localU)
-{
+                                                const bool localU) {
     this->nrowA = nrowA;
     this->ncolA = ncolA;
     this->ncolB = ncolB;
@@ -36,15 +33,13 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
     this->col_world = col_world;
     MPI_Comm_rank(col_world, &rank_col);
     MPI_Comm_size(col_world, &nproc_col);
-    if (nproc_col > 1)
-    {
+    if (nproc_col > 1) {
         this->localU = localU;
         colA_loc.resize(nproc_col);
         MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
         start_colA.resize(nproc_col);
         start_colA[0] = 0;
-        for (int ip = 1; ip < nproc_col; ++ip)
-        {
+        for (int ip = 1; ip < nproc_col; ++ip) {
             start_colA[ip] = start_colA[ip - 1] + colA_loc[ip - 1];
         }
         this->ncolA_glo = start_colA[nproc_col - 1] + colA_loc[nproc_col - 1];
@@ -54,8 +49,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
         MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
         start_colB.resize(nproc_col);
         start_colB[0] = 0;
-        for (int ip = 1; ip < nproc_col; ++ip)
-        {
+        for (int ip = 1; ip < nproc_col; ++ip) {
             start_colB[ip] = start_colB[ip - 1] + colB_loc[ip - 1];
         }
         this->max_colB = *std::max_element(colB_loc.begin(), colB_loc.end());
@@ -63,8 +57,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
         // allocate temperory memory
         resmem_dev_op()(B_tmp_, ncolB * LDA);
         resmem_dev_op()(U_tmp_, max_colA * max_colB);
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
             resmem_dev_op()(A_tmp_device_, max_colA * LDA);
 #ifndef __CUDA_MPI
             isend_tmp_.resize(max_colA * LDA);
@@ -78,19 +71,15 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 #endif
 }
 template <typename T, typename Device>
-void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
-{
+void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B) {
     ModuleBase::timer::start("PLinearTransform", "act");
 #ifdef __MPI
-    if (nproc_col > 1)
-    {
+    if (nproc_col > 1) {
         syncmem_dev_op()(B_tmp_, B, ncolB * LDA);
         std::vector<MPI_Request> requests(nproc_col);
         // Send
-        for (int ip = 0; ip < nproc_col; ++ip)
-        {
-            if (rank_col != ip)
-            {
+        for (int ip = 0; ip < nproc_col; ++ip) {
+            if (rank_col != ip) {
                 int size = LDA * ncolA;
                 Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], isend_tmp_.data());
             }
@@ -104,18 +93,13 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
 
         // Receive
         T* Atmp_device = nullptr;
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
+        if (std::is_same<Device, base_device::DEVICE_GPU>::value) {
             Atmp_device = A_tmp_device_;
-        }
-        else
-        {
+        } else {
             Atmp_device = A_tmp_.data();
         }
-        for (int ip = 0; ip < nproc_col; ++ip)
-        {
-            if (ip != rank_col)
-            {
+        for (int ip = 0; ip < nproc_col; ++ip) {
+            if (ip != rank_col) {
                 T zero = 0.0;
                 const int ncolA_ip = colA_loc[ip];
                 const T* U_part = U + start_colA[ip] + start * ncolA_glo;
@@ -143,31 +127,16 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             }
         }
 
-        for (int ip = 0; ip < nproc_col; ++ip)
-        {
-            if (rank_col != ip)
-            {
+        for (int ip = 0; ip < nproc_col; ++ip) {
+            if (rank_col != ip) {
                 MPI_Status status;
                 MPI_Wait(&requests[ip], &status);
             }
         }
-    }
-    else
+    } else
 #endif
     {
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         nrowA,
-                                         ncolB,
-                                         ncolA,
-                                         &alpha,
-                                         A,
-                                         LDA,
-                                         U,
-                                         ncolA,
-                                         &beta,
-                                         B,
-                                         LDA);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', nrowA, ncolB, ncolA, &alpha, A, LDA, U, ncolA, &beta, B, LDA);
     }
     ModuleBase::timer::end("PLinearTransform", "act");
 };

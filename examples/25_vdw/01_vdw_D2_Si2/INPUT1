@@ -4,13 +4,13 @@
 #in lcao basis
 
 INPUT_PARAMETERS
-#Parameters	(General)
-pseudo_dir		../../../tests/PP_ORB
-orbital_dir		../../../tests/PP_ORB
+#Parameters    (General)
+pseudo_dir        ../../../tests/PP_ORB
+orbital_dir        ../../../tests/PP_ORB
 #Parameters (Accuracy)
-ecutwfc			50
-scf_nmax		100
+ecutwfc            50
+scf_nmax        100
 scf_thr                 1e-6
-basis_type		lcao
-vdw_method 		d2
-vdw_C6_file		c6.txt
+basis_type        lcao
+vdw_method         d2
+vdw_C6_file        c6.txt

@@ -6,13 +6,9 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 // print out to screen about the readin parameters
-void print_parameters(
-	const UnitCell& ucell, 
-	K_Vectors& kv,
-    const Input_para& inp);
+void print_parameters(const UnitCell& ucell, K_Vectors& kv, const Input_para& inp);
 
 void print_time(time_t& time_start, time_t& time_finish);
 
@@ -26,7 +22,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
 
 void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs);
 
-void print_kpar(const int &nks, const int &kpar_lcao);
+void print_kpar(const int& nks, const int& kpar_lcao);
 
 } // namespace ModuleIO
 

@@ -7,53 +7,42 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MPI
-void Charge::init_chgmpi()
-{
-    if (KP_WORLD == MPI_COMM_NULL)
-    {
+void Charge::init_chgmpi() {
+    if (KP_WORLD == MPI_COMM_NULL) {
         delete[] rec;
         rec = new int[GlobalV::NPROC_IN_POOL];
         delete[] dis;
         dis = new int[GlobalV::NPROC_IN_POOL];
 
         const int ncxy = this->rhopw->nx * this->rhopw->ny;
-        for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++)
-        {
+        for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++) {
             rec[ip] = this->rhopw->numz[ip] * ncxy;
             dis[ip] = this->rhopw->startz[ip] * ncxy;
         }
     }
 }
 
-void Charge::reduce_diff_pools(double* array_rho) const
-{
+void Charge::reduce_diff_pools(double* array_rho) const {
     ModuleBase::TITLE("Charge", "reduce_diff_pools");
     ModuleBase::timer::start("Charge", "reduce_diff_pools");
-    if (KP_WORLD != MPI_COMM_NULL)
-    {
+    if (KP_WORLD != MPI_COMM_NULL) {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
-    }
-    else
-    {
+    } else {
         double* array_tmp = new double[this->rhopw->nxyz];
         double* array_tot = new double[this->rhopw->nxyz];
         double* array_tot_aux = new double[this->rhopw->nxyz];
         //==================================
         // Collect the rho in each pool
         //==================================
-        for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
-        {
+        for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
             array_tmp[ir] = array_rho[ir] / GlobalV::NPROC_IN_POOL;
         }
         MPI_Allgatherv(array_tmp, this->rhopw->nrxx, MPI_DOUBLE, array_tot, rec, dis, MPI_DOUBLE, POOL_WORLD);
 
         const int ncxy = this->rhopw->nx * this->rhopw->ny;
-        for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ++ip)
-        {
-            for (int ir = 0; ir < ncxy; ++ir)
-            {
-                for (int iz = 0; iz < this->rhopw->numz[ip]; ++iz)
-                {
+        for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ++ip) {
+            for (int ir = 0; ir < ncxy; ++ir) {
+                for (int iz = 0; iz < this->rhopw->numz[ip]; ++iz) {
                     // -------------------------------------------------
                     // very carefully with the order of charge density.
                     // the data (ir,iz) is now in processor 'ip'.
@@ -84,8 +73,8 @@ void Charge::reduce_diff_pools(double* array_rho) const
                     // have large 'start position', which we label
                     // this->rhopw->startz[ip] * ncxy.
                     // -------------------------------------------------
-                    array_tot_aux[this->rhopw->nz * ir + this->rhopw->startz[ip] + iz]
-                        = array_tot[this->rhopw->numz[ip] * ir + this->rhopw->startz[ip] * ncxy + iz];
+                    array_tot_aux[this->rhopw->nz * ir + this->rhopw->startz[ip] + iz] =
+                        array_tot[this->rhopw->numz[ip] * ir + this->rhopw->startz[ip] * ncxy + iz];
                 }
             }
         }
@@ -98,39 +87,32 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //=====================================
         // Change the order of rho in each cpu
         //=====================================
-        for (int ir = 0; ir < ncxy; ir++)
-        {
-            for (int iz = 0; iz < this->rhopw->numz[GlobalV::RANK_IN_POOL]; iz++)
-            {
-                array_rho[this->rhopw->numz[GlobalV::RANK_IN_POOL] * ir + iz]
-                    = array_tot[this->rhopw->nz * ir + this->rhopw->startz_current + iz];
+        for (int ir = 0; ir < ncxy; ir++) {
+            for (int iz = 0; iz < this->rhopw->numz[GlobalV::RANK_IN_POOL]; iz++) {
+                array_rho[this->rhopw->numz[GlobalV::RANK_IN_POOL] * ir + iz] =
+                    array_tot[this->rhopw->nz * ir + this->rhopw->startz_current + iz];
             }
         }
         delete[] array_tot_aux;
         delete[] array_tot;
         delete[] array_tmp;
     }
-    if(PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
-    {
+    if (PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1) {
         MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
     }
     ModuleBase::timer::end("Charge", "reduce_diff_pools");
 }
 
-void Charge::rho_mpi()
-{
+void Charge::rho_mpi() {
     ModuleBase::TITLE("Charge", "rho_mpi");
-	if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) 
-	{
-		return;
-	}
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) {
+        return;
+    }
     ModuleBase::timer::start("Charge", "rho_mpi");
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         reduce_diff_pools(this->rho[is]);
-        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
-        {
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0) {
             reduce_diff_pools(this->kin_r[is]);
         }
     }
@@ -139,19 +121,15 @@ void Charge::rho_mpi()
     return;
 }
 
-void Charge::kin_r_mpi()
-{
+void Charge::kin_r_mpi() {
     ModuleBase::TITLE("Charge", "kin_r_mpi");
-    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1)
-    {
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) {
         return;
     }
     ModuleBase::timer::start("Charge", "kin_r_mpi");
 
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
-        {
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0) {
+        for (int is = 0; is < PARAM.inp.nspin; ++is) {
             reduce_diff_pools(this->kin_r[is]);
         }
     }

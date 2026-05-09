@@ -15,8 +15,8 @@ LATTICE_VECTORS
 ATOMIC_POSITIONS
 Direct 
 
-Be	// Element type	
-0.0	// magnetism
-2	
+Be    // Element type    
+0.0    // magnetism
+2    
 0.000 0.000 0.00 1 1 1
 0.667 0.333 0.50 1 1 1

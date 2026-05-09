@@ -10,7 +10,6 @@
 #include "setcell.h"
 #define doublethreshold 1e-12
 
-
 /************************************************
  *  unit test of functions in verlet.h
  ***********************************************/
@@ -36,16 +35,14 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class Verlet_test : public testing::Test
-{
+class Verlet_test : public testing::Test {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
 
@@ -56,14 +53,10 @@ class Verlet_test : public testing::Test
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
-    void TearDown()
-    {
-        delete mdrun;
-    }
+    void TearDown() { delete mdrun; }
 };
 
-TEST_F(Verlet_test, setup)
-{
+TEST_F(Verlet_test, setup) {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
@@ -76,8 +69,7 @@ TEST_F(Verlet_test, setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
-TEST_F(Verlet_test, first_half)
-{
+TEST_F(Verlet_test, first_half) {
     mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
@@ -107,8 +99,7 @@ TEST_F(Verlet_test, first_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.83313122596e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, NVE)
-{
+TEST_F(Verlet_test, NVE) {
     mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nve";
     mdrun->second_half();
@@ -141,8 +132,7 @@ TEST_F(Verlet_test, NVE)
     EXPECT_NEAR(mdrun->vel[3].z, -2.83313122596e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, Anderson)
-{
+TEST_F(Verlet_test, Anderson) {
     mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "anderson";
@@ -176,8 +166,7 @@ TEST_F(Verlet_test, Anderson)
     EXPECT_NEAR(mdrun->vel[3].z, -2.83313122596e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, Berendsen)
-{
+TEST_F(Verlet_test, Berendsen) {
     mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "berendsen";
@@ -211,8 +200,7 @@ TEST_F(Verlet_test, Berendsen)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8329987777389342e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, rescaling)
-{
+TEST_F(Verlet_test, rescaling) {
     mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "rescaling";
@@ -246,8 +234,7 @@ TEST_F(Verlet_test, rescaling)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, rescale_v)
-{
+TEST_F(Verlet_test, rescale_v) {
     mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "rescale_v";
@@ -281,8 +268,7 @@ TEST_F(Verlet_test, rescale_v)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
 }
 
-TEST_F(Verlet_test, write_restart)
-{
+TEST_F(Verlet_test, write_restart) {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -294,16 +280,14 @@ TEST_F(Verlet_test, write_restart)
     ifs.close();
 }
 
-TEST_F(Verlet_test, restart)
-{
+TEST_F(Verlet_test, restart) {
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Verlet_test, print_md)
-{
+TEST_F(Verlet_test, print_md) {
     std::ofstream ofs("running_verlet.log");
     mdrun->print_md(ofs, true);
     ofs.close();
@@ -311,11 +295,11 @@ TEST_F(Verlet_test, print_md)
     std::ifstream ifs("running_verlet.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
@@ -338,5 +322,5 @@ TEST_F(Verlet_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-//    remove("running_verlet.log");
+    //    remove("running_verlet.log");
 }

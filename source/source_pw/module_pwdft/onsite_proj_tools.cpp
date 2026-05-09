@@ -12,8 +12,7 @@
 
 #include <numeric>
 
-namespace hamilt
-{
+namespace hamilt {
 template <typename FPTYPE, typename Device>
 Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* nlpp_in,
                                                      const UnitCell* ucell_in,
@@ -23,8 +22,7 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* n
                                                      const Structure_Factor* sf_in,
                                                      const ModuleBase::matrix& wg,
                                                      const ModuleBase::matrix& ekb)
-    : nlpp_(nlpp_in), ucell_(ucell_in), psi_(psi_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in)
-{
+    : nlpp_(nlpp_in), ucell_(ucell_in), psi_(psi_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in) {
     // get the device context
     this->device = base_device::get_device_type(this->ctx);
 
@@ -64,15 +62,14 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(const pseudopot_cell_vnl* n
 
     this->nproj.resize(this->ntype);
     std::vector<int> nch(this->ntype);
-    for (int it = 0; it < this->ntype; it++)
-    {
+    for (int it = 0; it < this->ntype; it++) {
         this->nproj[it] = this->ucell_->atoms[it].ncpp.nbeta;
         nch[it] = this->ucell_->atoms[it].ncpp.nh;
     }
     // allocate memory
     this->allocate_memory(wg, ekb, this->nproj, nch);
-    this->ppcell_vkb
-        = (this->device == base_device::GpuDevice) ? this->nlpp_->template get_vkb_data<FPTYPE>() : this->nlpp_->vkb.c;
+    this->ppcell_vkb =
+        (this->device == base_device::GpuDevice) ? this->nlpp_->template get_vkb_data<FPTYPE>() : this->nlpp_->vkb.c;
 }
 
 template <typename FPTYPE, typename Device>
@@ -88,8 +85,7 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
     const ModulePW::PW_Basis_K* wfc_basis_in,
     const Structure_Factor* sf_in,
     const ModuleBase::matrix& wg,
-    const ModuleBase::matrix& ekb)
-{
+    const ModuleBase::matrix& ekb) {
     // this is a constructor for general case, including vnl, dftu, deltaspin, deepks, etc.
     // what is needed for this kind of constructor?
 
@@ -144,11 +140,9 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
     this->nkb = 0;
     this->h_atom_nh.resize(this->ntype, 0);
     int iproj = 0;
-    for (int it = 0; it < this->ntype; it++)
-    {
+    for (int it = 0; it < this->ntype; it++) {
         int nproj_it = nproj[it];
-        for (int ip = 0; ip < nproj_it; ip++)
-        {
+        for (int ip = 0; ip < nproj_it; ip++) {
             this->h_atom_nh[it] += 2 * lproj[iproj] + 1;
             this->nkb += (2 * lproj[iproj] + 1) * this->ucell_->atoms[it].na;
             iproj++;
@@ -161,8 +155,7 @@ Onsite_Proj_tools<FPTYPE, Device>::Onsite_Proj_tools(
 }
 
 template <typename FPTYPE, typename Device>
-Onsite_Proj_tools<FPTYPE, Device>::~Onsite_Proj_tools()
-{
+Onsite_Proj_tools<FPTYPE, Device>::~Onsite_Proj_tools() {
     // delete memory
     delete_memory();
 }
@@ -171,15 +164,13 @@ template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix& wg,
                                                         const ModuleBase::matrix& ekb,
                                                         const std::vector<int>& nproj,
-                                                        const std::vector<int>& nch)
-{
+                                                        const std::vector<int>& nch) {
     // allocate memory
 
     // prepare the memory of stress and init some variables:
     this->h_atom_nh.resize(this->ntype);
     this->h_atom_na.resize(this->ntype);
-    for (int it = 0; it < this->ntype; it++)
-    {
+    for (int it = 0; it < this->ntype; it++) {
         h_atom_nh[it] = nch[it];
         h_atom_na[it] = this->ucell_->atoms[it].na;
     }
@@ -192,8 +183,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
     }
 
     // allocate the memory for vkb and vkb_deri.
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         resmem_int_op()(this->d_dvkb_indexes, max_nh * 4);
     }
 
@@ -202,8 +192,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
     resmem_var_op()(this->hd_ylm, (lprojmax + 1) * (lprojmax + 1) * max_npw);
     resmem_var_op()(this->hd_ylm_deri, 3 * (lprojmax + 1) * (lprojmax + 1) * max_npw);
 
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         resmem_var_op()(d_wg, wg.nr * wg.nc);
         resmem_var_op()(d_ekb, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(d_wg, wg.c, wg.nr * wg.nc);
@@ -217,9 +206,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
         resmem_var_op()(d_pref, max_nh);
         resmem_var_op()(d_vq_tab, this->tabtpr->getSize());
         resmem_complex_op()(d_pref_in, max_nh);
-    }
-    else
-    {
+    } else {
         this->d_wg = wg.c;
         this->d_ekb = ekb.c;
         this->atom_nh = h_atom_nh.data();
@@ -228,8 +215,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
 }
 
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::delete_memory()
-{
+void Onsite_Proj_tools<FPTYPE, Device>::delete_memory() {
     // delete memory
 
     delmem_var_op()(hd_vq);
@@ -238,8 +224,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::delete_memory()
     delmem_var_op()(hd_ylm_deri);
 
     // delete memory on GPU
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         delmem_var_op()(d_wg);
         delmem_var_op()(d_ekb);
         delmem_int_op()(atom_nh);
@@ -251,17 +236,14 @@ void Onsite_Proj_tools<FPTYPE, Device>::delete_memory()
         delmem_int_op()(d_dvkb_indexes);
     }
 
-    if (becp != nullptr)
-    {
+    if (becp != nullptr) {
         delmem_complex_op()(becp);
         delmem_complex_op()(hd_sk);
     }
-    if (dbecp != nullptr)
-    {
+    if (dbecp != nullptr) {
         delmem_complex_op()(dbecp);
     }
-    if (this->pre_ik_f != -1)
-    {
+    if (this->pre_ik_f != -1) {
         delmem_int_op()(gcar_zero_indexes);
         delmem_complex_op()(vkb_save);
         delmem_var_op()(gcar);
@@ -280,16 +262,14 @@ template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
                                                  int npm,
                                                  std::complex<FPTYPE>* becp_in,
-                                                 const std::complex<FPTYPE>* ppsi_in)
-{
+                                                 const std::complex<FPTYPE>* ppsi_in) {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
     ModuleBase::timer::start("Onsite_Proj_tools", "cal_becp");
 
     const int npol = this->ucell_->get_npol();
     const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
     const int npw = this->wfc_basis_->npwk[ik];
-    if (becp_in == nullptr && this->becp == nullptr)
-    {
+    if (becp_in == nullptr && this->becp == nullptr) {
         resmem_complex_op()(becp, this->nbands * npol * this->nkb);
     }
     std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
@@ -297,8 +277,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
     if (ik != this->current_ik) // different ik, need to recalculate vkb
     {
         const int size_becp = this->nbands * npol * this->nkb;
-        if (this->becp == nullptr)
-        {
+        if (this->becp == nullptr) {
             resmem_complex_op()(becp, size_becp);
         }
 
@@ -347,8 +326,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         // }
         // ModuleBase::WARNING_QUIT("Onsite_Proj_tools", "cal_becp");
 
-        if (this->device == base_device::GpuDevice)
-        {
+        if (this->device == base_device::GpuDevice) {
             syncmem_var_h2d_op()(d_g_plus_k, g_plus_k.data(), g_plus_k.size());
             syncmem_var_h2d_op()(d_vq_tab, this->tabtpr->ptr, this->tabtpr->getSize());
             gk = d_g_plus_k;
@@ -390,16 +368,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             // nhtol->print(std::cout); // as checked, nhtol works as expected
             maths.cal_dvkb_index(nproj[it], this->nhtol->c, this->nhtol->nc, npw, it, 0, 0, this->dvkb_indexes.data());
 
-            if (this->device == base_device::GpuDevice)
-            {
+            if (this->device == base_device::GpuDevice) {
                 syncmem_int_h2d_op()(d_dvkb_indexes, dvkb_indexes.data(), nh * 4);
                 syncmem_complex_h2d_op()(d_pref_in, pref.data(), nh);
             }
 
-            for (int ia = 0; ia < h_atom_na[it]; ia++)
-            {
-                if (this->device == base_device::CpuDevice)
-                {
+            for (int ia = 0; ia < h_atom_na[it]; ia++) {
+                if (this->device == base_device::CpuDevice) {
                     d_pref_in = pref.data();
                     d_dvkb_indexes = dvkb_indexes.data();
                 }
@@ -441,17 +416,14 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
               becp_tmp,
               this->nkb);
 
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         std::complex<FPTYPE>* h_becp = nullptr;
         resmem_complex_h_op()(h_becp, size_becp_act);
         syncmem_complex_d2h_op()(h_becp, becp_tmp, size_becp_act);
         Parallel_Reduce::reduce_pool(h_becp, size_becp_act);
         syncmem_complex_h2d_op()(becp_tmp, h_becp, size_becp_act);
         delmem_complex_h_op()(h_becp);
-    }
-    else
-    {
+    } else {
         Parallel_Reduce::reduce_pool(becp_tmp, size_becp_act);
     }
     // DEBUG: ONCE YOU CHECK becp VALUES, YOU UNCOMMENT THE FOLLOWING LINE
@@ -465,16 +437,14 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
 
 // cal_dbecp
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, int jpol)
-{
+void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, int jpol) {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_dbecp_s");
     ModuleBase::timer::start("Onsite_Proj_tools", "cal_dbecp_s");
     this->current_ik = -1; // reset the current ik, vkb has been reused to save dvkb
     const int npol = this->ucell_->get_npol();
     const int size_becp = this->nbands * npol * this->nkb;
     const int npm_npol = npm * npol;
-    if (this->dbecp == nullptr)
-    {
+    if (this->dbecp == nullptr) {
         resmem_complex_op()(dbecp, size_becp);
     }
 
@@ -485,8 +455,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
     const int npw = this->wfc_basis_->npwk[ik];
     std::complex<FPTYPE>* vkb_deri_ptr = this->ppcell_vkb;
 
-    if (this->pre_ik_s != ik)
-    { // k point has changed, we need to recalculate the g_plus_k
+    if (this->pre_ik_s != ik) { // k point has changed, we need to recalculate the g_plus_k
         // this->g_plus_k = maths.cal_gk(ik, this->wfc_basis_); //has been calculated by cal_becp
 
         const int lmax_ = this->lprojmax;
@@ -497,8 +466,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
     }
     FPTYPE *gk = g_plus_k.data(), *vq_tb = this->tabtpr->ptr;
     std::complex<FPTYPE>* d_sk = this->hd_sk;
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         gk = d_g_plus_k;
         vq_tb = d_vq_tab;
     }
@@ -539,18 +507,15 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
                              ipol,
                              jpol,
                              this->dvkb_indexes.data());
-        if (this->device == base_device::GpuDevice)
-        {
+        if (this->device == base_device::GpuDevice) {
             syncmem_int_h2d_op()(d_dvkb_indexes, dvkb_indexes.data(), nh * 4);
             syncmem_complex_h2d_op()(d_pref_in, pref.data(), nh);
         }
-        for (int ia = 0; ia < h_atom_na[it]; ia++)
-        {
+        for (int ia = 0; ia < h_atom_na[it]; ia++) {
             // 2. calculate dbecp：
             // 2.a. calculate dbecp_noevc, repeat use the memory of ppcell.vkb
 
-            if (this->device == base_device::CpuDevice)
-            {
+            if (this->device == base_device::CpuDevice) {
                 d_dvkb_indexes = dvkb_indexes.data();
                 d_pref_in = pref.data();
                 d_g_plus_k = g_plus_k.data();
@@ -600,8 +565,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
 // . the direction of force is indexed by ipol (for stress, there are two, ipol and jpol).
 // the dbecp_f is simply the becp multiplied with -i(G+k)_i
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
-{
+void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol) {
     ModuleBase::TITLE("Onsite_Proj_tools", "cal_dbecp_f");
     ModuleBase::timer::start("Onsite_Proj_tools", "cal_dbecp_f");
 
@@ -617,9 +581,8 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
         resmem_int_op()(gcar_zero_indexes, 3 * this->wfc_basis_->npwk_max);
     }
     // first refresh the value of gcar_zero_indexes, gcar_zero_counts
-    if (this->pre_ik_f != ik)
-    { // the following lines will cause UNDEFINED BEHAVIOR because memory layout of vector3 instance
-      // is assumed to be always contiguous but it is not guaranteed.
+    if (this->pre_ik_f != ik) { // the following lines will cause UNDEFINED BEHAVIOR because memory layout of vector3
+                                // instance is assumed to be always contiguous but it is not guaranteed.
         this->transfer_gcar(npw,
                             this->wfc_basis_->npwk_max,
                             &(this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max].x));
@@ -675,27 +638,21 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
 
 // save_vkb
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol)
-{
-    if (this->device == base_device::CpuDevice)
-    {
+void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol) {
+    if (this->device == base_device::CpuDevice) {
         const int gcar_zero_count = this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max];
         const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max + 1];
         const std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
         std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
-        for (int ikb = 0; ikb < this->nkb; ++ikb)
-        {
-            for (int icount = 0; icount < gcar_zero_count; ++icount)
-            {
+        for (int ikb = 0; ikb < this->nkb; ++ikb) {
+            for (int icount = 0; icount < gcar_zero_count; ++icount) {
                 *vkb_save_ptr = vkb_ptr[gcar_zero_ptrs[icount]];
                 ++vkb_save_ptr;
             }
             vkb_ptr += npw;
         }
-    }
-    else
-    {
+    } else {
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
         saveVkbValues<FPTYPE>(this->gcar_zero_indexes,
                               this->ppcell_vkb,
@@ -711,28 +668,22 @@ void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol)
 
 // revert_vkb
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol)
-{
+void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol) {
     const std::complex<FPTYPE> coeff = ipol == 0 ? ModuleBase::NEG_IMAG_UNIT : ModuleBase::ONE;
-    if (this->device == base_device::CpuDevice)
-    {
+    if (this->device == base_device::CpuDevice) {
         const int gcar_zero_count = this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max];
         const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max + 1];
         std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
         const std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
-        for (int ikb = 0; ikb < this->nkb; ++ikb)
-        {
-            for (int icount = 0; icount < gcar_zero_count; ++icount)
-            {
+        for (int ikb = 0; ikb < this->nkb; ++ikb) {
+            for (int icount = 0; icount < gcar_zero_count; ++icount) {
                 vkb_ptr[gcar_zero_ptrs[icount]] = *vkb_save_ptr * coeff;
                 ++vkb_save_ptr;
             }
             vkb_ptr += npw;
         }
-    }
-    else
-    {
+    } else {
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
         revertVkbValues<FPTYPE>(this->gcar_zero_indexes,
                                 this->ppcell_vkb,
@@ -748,52 +699,42 @@ void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol)
 }
 
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw, int npw_max, const FPTYPE* gcar_in)
-{
+void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw, int npw_max, const FPTYPE* gcar_in) {
     std::vector<FPTYPE> gcar_tmp(3 * npw_max); // [out], will overwritten this->gcar
     gcar_tmp.assign(gcar_in,
                     gcar_in + 3 * npw_max); // UNDEFINED BEHAVIOR!!! nobody always knows the memory layout of vector3
     std::vector<int> gcar_zero_indexes_tmp(3 * npw_max); // a "checklist"
 
     int* gcar_zero_ptrs[3];
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         gcar_zero_ptrs[i] = &gcar_zero_indexes_tmp[i * npw_max];
         gcar_zero_ptrs[i][0] = -1;
         this->gcar_zero_counts[i] = 0;
     }
-    for (int ig = 0; ig < npw; ig++)
-    {
+    for (int ig = 0; ig < npw; ig++) {
         // calculate gcar.x , gcar.y/gcar.x, gcar.z/gcar.y
         // if individual gcar is less than 1e-15, we will record the index
-        for (int i = 0; i < 3; ++i)
-        {
-            if (std::abs(gcar_tmp[ig * 3 + i]) < 1e-15)
-            {
+        for (int i = 0; i < 3; ++i) {
+            if (std::abs(gcar_tmp[ig * 3 + i]) < 1e-15) {
                 ++gcar_zero_counts[i]; // num of zeros on each direction
                 gcar_zero_ptrs[i][gcar_zero_counts[i]] = ig;
             }
         }
         // four cases for the gcar of y and z
-        if (gcar_zero_ptrs[0][gcar_zero_counts[0]] == ig && gcar_zero_ptrs[1][gcar_zero_counts[1]] == ig)
-        { // x == y == 0, z = z
-        }
-        else if (gcar_zero_ptrs[0][gcar_zero_counts[0]] != ig && gcar_zero_ptrs[1][gcar_zero_counts[1]] == ig)
-        { // x != 0, y == 0, z = z/x
+        if (gcar_zero_ptrs[0][gcar_zero_counts[0]] == ig &&
+            gcar_zero_ptrs[1][gcar_zero_counts[1]] == ig) { // x == y == 0, z = z
+        } else if (gcar_zero_ptrs[0][gcar_zero_counts[0]] != ig &&
+                   gcar_zero_ptrs[1][gcar_zero_counts[1]] == ig) { // x != 0, y == 0, z = z/x
             gcar_tmp[ig * 3 + 2] /= gcar_tmp[ig * 3];
-        }
-        else if (gcar_zero_ptrs[0][gcar_zero_counts[0]] == ig && gcar_zero_ptrs[1][gcar_zero_counts[1]] != ig)
-        { // x == 0, y != 0, y = y, z = z/y
+        } else if (gcar_zero_ptrs[0][gcar_zero_counts[0]] == ig &&
+                   gcar_zero_ptrs[1][gcar_zero_counts[1]] != ig) { // x == 0, y != 0, y = y, z = z/y
             gcar_tmp[ig * 3 + 2] /= gcar_tmp[ig * 3 + 1];
-        }
-        else
-        { // x != 0, y != 0, y = y/x, z = z/y
+        } else { // x != 0, y != 0, y = y/x, z = z/y
             gcar_tmp[ig * 3 + 2] /= gcar_tmp[ig * 3 + 1];
             gcar_tmp[ig * 3 + 1] /= gcar_tmp[ig * 3];
         }
     }
-    for (int i = 0; i < 3; ++i)
-    { // record the counts to the first element
+    for (int i = 0; i < 3; ++i) { // record the counts to the first element
         gcar_zero_ptrs[i][0] = gcar_zero_counts[i];
     }
     // prepare the memory for vkb_save
@@ -811,20 +752,17 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                                        const int* orbital_corr,
                                                        const std::complex<FPTYPE>* vu,
                                                        const int size_vu,
-                                                       const FPTYPE* h_wg)
-{
+                                                       const FPTYPE* h_wg) {
     int* orbital_corr_tmp = nullptr;
     std::complex<FPTYPE>* vu_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         resmem_int_op()(orbital_corr_tmp, this->ucell_->ntype);
         syncmem_int_h2d_op()(orbital_corr_tmp, orbital_corr, this->ucell_->ntype);
         resmem_complex_op()(vu_tmp, size_vu);
         syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
-    }
-    else
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
+    } else
 #endif
     {
         orbital_corr_tmp = const_cast<int*>(orbital_corr);
@@ -850,8 +788,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                       dbecp,
                                       force);
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         delmem_complex_op()(vu_tmp);
         delmem_int_op()(orbital_corr_tmp);
     }
@@ -863,24 +800,20 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
                                                         int npm,
                                                         FPTYPE* force,
                                                         const ModuleBase::Vector3<double>* lambda,
-                                                        const FPTYPE* h_wg)
-{
+                                                        const FPTYPE* h_wg) {
     std::vector<FPTYPE> lambda_array(this->ucell_->nat * 3);
-    for (int iat = 0; iat < this->ucell_->nat; iat++)
-    {
+    for (int iat = 0; iat < this->ucell_->nat; iat++) {
         lambda_array[iat * 3] = lambda[iat].x;
         lambda_array[iat * 3 + 1] = lambda[iat].y;
         lambda_array[iat * 3 + 2] = lambda[iat].z;
     }
     FPTYPE* lambda_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         resmem_var_op()(lambda_tmp, this->ucell_->nat * 3);
         syncmem_var_h2d_op()(lambda_tmp, lambda_array.data(), this->ucell_->nat * 3);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
-    }
-    else
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
+    } else
 #endif
     {
         lambda_tmp = lambda_array.data();
@@ -905,8 +838,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
                                       force);
 
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         delmem_var_op()(lambda_tmp);
     }
 #endif
@@ -918,31 +850,29 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                                                           const int* orb_corr,
                                                           const std::complex<FPTYPE>* vu,
                                                           const int size_vu,
-                                                          const FPTYPE* h_wg)
-{
+                                                          const FPTYPE* h_wg) {
     double stress_out = 0.0;
-    
+
     int* orb_corr_tmp = nullptr;
     std::complex<FPTYPE>* vu_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-	// orb_corr_tmp
+    if (this->device == base_device::GpuDevice) {
+        // orb_corr_tmp
         resmem_int_op()(orb_corr_tmp, this->ucell_->ntype);
         syncmem_int_h2d_op()(orb_corr_tmp, orb_corr, this->ucell_->ntype);
 
-	// vu_tmp
+        // vu_tmp
         resmem_complex_op()(vu_tmp, size_vu);
         syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
 
-	// transfer data from from host to device
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
-        
+        // transfer data from from host to device
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
+
         // Allocate device memory for stress
         FPTYPE* stress_device = nullptr;
         resmem_var_op()(stress_device, 1);
         setmem_var_op()(stress_device, 0, 1);
-        
+
         cal_stress_nl_op()(this->ctx,
                            nkb,
                            npm,
@@ -957,21 +887,20 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                            becp,
                            dbecp,
                            stress_device);
-        
+
         // Transfer stress from device to host
         syncmem_var_d2h_op()(&stress_out, stress_device, 1);
         delmem_var_op()(stress_device);
         delmem_complex_op()(vu_tmp);
         delmem_int_op()(orb_corr_tmp);
-	std::cout << "BUG: DFT+U (GPU) stress_out = " << stress_out << std::endl;
-    }
-    else
+        std::cout << "BUG: DFT+U (GPU) stress_out = " << stress_out << std::endl;
+    } else
 #endif
     {
         orb_corr_tmp = const_cast<int*>(orb_corr);
         vu_tmp = const_cast<std::complex<FPTYPE>*>(vu);
         d_wg = const_cast<FPTYPE*>(h_wg);
-        
+
         cal_stress_nl_op()(this->ctx,
                            nkb,
                            npm,
@@ -986,40 +915,37 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                            becp,
                            dbecp,
                            &stress_out);
-//	std::cout << "DFT+U (CPU) stress_out = " << stress_out << std::endl;
+        //    std::cout << "DFT+U (CPU) stress_out = " << stress_out << std::endl;
     }
-    
+
     return stress_out;
 }
 
 template <typename FPTYPE, typename Device>
 double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dspin(int ik,
                                                            int npm,
-					          	   const ModuleBase::Vector3<double>* lambda,
-                                                           const FPTYPE* h_wg)
-{
+                                                           const ModuleBase::Vector3<double>* lambda,
+                                                           const FPTYPE* h_wg) {
     double stress_out = 0.0;
-    
+
     std::vector<FPTYPE> lambda_array(this->ucell_->nat * 3);
-    for (int iat = 0; iat < this->ucell_->nat; iat++)
-    {
+    for (int iat = 0; iat < this->ucell_->nat; iat++) {
         lambda_array[iat * 3] = lambda[iat].x;
         lambda_array[iat * 3 + 1] = lambda[iat].y;
         lambda_array[iat * 3 + 2] = lambda[iat].z;
     }
     FPTYPE* lambda_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         resmem_var_op()(lambda_tmp, this->ucell_->nat * 3);
         syncmem_var_h2d_op()(lambda_tmp, lambda_array.data(), this->ucell_->nat * 3);
-        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
-        
+        syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik + 1));
+
         // Allocate device memory for stress
         FPTYPE* stress_device = nullptr;
         resmem_var_op()(stress_device, 1);
         setmem_var_op()(stress_device, 0, 1);
-        
+
         const int force_nc = 3;
         cal_stress_nl_op()(this->ctx,
                            nkb,
@@ -1034,18 +960,17 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dspin(int ik,
                            becp,
                            dbecp,
                            stress_device);
-        
+
         // Transfer stress from device to host
         syncmem_var_d2h_op()(&stress_out, stress_device, 1);
         delmem_var_op()(stress_device);
         delmem_var_op()(lambda_tmp);
-    }
-    else
+    } else
 #endif
     {
         lambda_tmp = lambda_array.data();
         d_wg = const_cast<FPTYPE*>(h_wg);
-        
+
         const int force_nc = 3;
         cal_stress_nl_op()(this->ctx,
                            nkb,
@@ -1061,7 +986,7 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dspin(int ik,
                            dbecp,
                            &stress_out);
     }
-    
+
     return stress_out;
 }
 

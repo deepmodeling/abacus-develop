@@ -5,14 +5,11 @@ from pyabacus import hsolver
 import numpy as np
 import scipy
 
+
 def diag_pyabacus(h_sparse, nband, method):
-    dav = {
-        'dav_subspace': hsolver.dav_subspace,
-        'davidson': hsolver.davidson
-    }
-    cg = {
-        'cg': hsolver.cg
-    }
+    dav = {"dav_subspace": hsolver.dav_subspace, "davidson": hsolver.davidson}
+    cg = {"cg": hsolver.cg}
+
     def mm_op(x):
         return h_sparse.dot(x)
 
@@ -37,38 +34,71 @@ def diag_pyabacus(h_sparse, nband, method):
 
     return e
 
+
 def diag_eigsh(h_sparse, nband):
-    e, _ = scipy.sparse.linalg.eigsh(h_sparse, k=nband, which='SA', maxiter=5000, tol=1e-12)
+    e, _ = scipy.sparse.linalg.eigsh(
+        h_sparse, k=nband, which="SA", maxiter=5000, tol=1e-12
+    )
     return e
+
 
 # Check if CG is available
 _cg_available = hsolver.cg_available()
 
-@pytest.mark.parametrize("method", [
-    ('dav_subspace'),
-    ('davidson'),
-    pytest.param('cg', marks=pytest.mark.skipif(not _cg_available, reason="CG requires ATen support"))
-])
+
+@pytest.mark.parametrize(
+    "method",
+    [
+        ("dav_subspace"),
+        ("davidson"),
+        pytest.param(
+            "cg",
+            marks=pytest.mark.skipif(
+                not _cg_available, reason="CG requires ATen support"
+            ),
+        ),
+    ],
+)
 def test_random_matrix_diag(method):
     np.random.seed(12)
     n = 500
-    h_sparse = np.random.rand(n,n)
-    h_sparse = h_sparse + h_sparse.conj().T + np.diag(np.random.random(n))*10
+    h_sparse = np.random.rand(n, n)
+    h_sparse = h_sparse + h_sparse.conj().T + np.diag(np.random.random(n)) * 10
 
     e_pyabacus = diag_pyabacus(h_sparse, 8, method)
     e_scipy = diag_eigsh(h_sparse, 8)
     np.testing.assert_allclose(e_pyabacus, e_scipy, atol=1e-8)
 
-@pytest.mark.parametrize("file_name, nband, atol, method", [
-    ('./test_diag/Si2.mat', 16, 1e-8, 'dav_subspace'),
-    ('./test_diag/Si2.mat', 16, 1e-8, 'davidson'),
-    pytest.param('./test_diag/Si2.mat', 16, 1e-8, 'cg', marks=pytest.mark.skipif(not _cg_available, reason="CG requires ATen support")),
-    ('./test_diag/Na5.mat', 16, 1e-8, 'dav_subspace'),
-    ('./test_diag/Na5.mat', 16, 1e-8, 'davidson'),
-    pytest.param('./test_diag/Na5.mat', 16, 1e-8, 'cg', marks=pytest.mark.skipif(not _cg_available, reason="CG requires ATen support")),
-])
+
+@pytest.mark.parametrize(
+    "file_name, nband, atol, method",
+    [
+        ("./test_diag/Si2.mat", 16, 1e-8, "dav_subspace"),
+        ("./test_diag/Si2.mat", 16, 1e-8, "davidson"),
+        pytest.param(
+            "./test_diag/Si2.mat",
+            16,
+            1e-8,
+            "cg",
+            marks=pytest.mark.skipif(
+                not _cg_available, reason="CG requires ATen support"
+            ),
+        ),
+        ("./test_diag/Na5.mat", 16, 1e-8, "dav_subspace"),
+        ("./test_diag/Na5.mat", 16, 1e-8, "davidson"),
+        pytest.param(
+            "./test_diag/Na5.mat",
+            16,
+            1e-8,
+            "cg",
+            marks=pytest.mark.skipif(
+                not _cg_available, reason="CG requires ATen support"
+            ),
+        ),
+    ],
+)
 def test_diag(file_name, nband, atol, method):
-    h_sparse = scipy.io.loadmat(file_name)['Problem']['A'][0, 0]
+    h_sparse = scipy.io.loadmat(file_name)["Problem"]["A"][0, 0]
     e_pyabacus = diag_pyabacus(h_sparse, nband, method)
     e_scipy = diag_eigsh(h_sparse, nband)
     np.testing.assert_allclose(e_pyabacus, e_scipy, atol=atol)

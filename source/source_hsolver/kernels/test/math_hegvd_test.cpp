@@ -10,8 +10,7 @@
 #include <iostream>
 #include <vector>
 
-class TestModuleHsolverMathDngvd : public ::testing::Test
-{
+class TestModuleHsolverMathDngvd : public ::testing::Test {
   protected:
     using resize_memory_op_Z = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using delete_memory_op_Z = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -20,12 +19,12 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
     // from CPU to GPU
     using synchronize_memory_op_C2G_Z = base_device::memory::
         synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
-    using synchronize_memory_op_C2G_D
-        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op_C2G_D =
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
     using synchronize_memory_op_G2C_Z = base_device::memory::
         synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
-    using synchronize_memory_op_G2C_D
-        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using synchronize_memory_op_G2C_D =
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
     const base_device::DEVICE_CPU* cpu_ctx = {};
     const base_device::DEVICE_GPU* gpu_ctx = {};
@@ -86,48 +85,45 @@ class TestModuleHsolverMathDngvd : public ::testing::Test
     // prepare W & V in CPU in dngv_op
     std::vector<double> W_dngv_op = {0.0, 0.0, 0.0, 0.0};
     std::vector<std::complex<double>> matrix_V_dngv_op = {{0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0},
-                                                     {0.0, 0.0}};
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0},
+                                                          {0.0, 0.0}};
 
     // prepare W & V in CPU in dngvx_op
     std::vector<double> W_DNGVX = {0.0, 0.0};
     std::vector<std::complex<double>> matrix_V_DNGVX = {{0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0},
-                                                   {0.0, 0.0}};
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0},
+                                                        {0.0, 0.0}};
 };
-
-
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
 
-TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
-{
+TEST_F(TestModuleHsolverMathDngvd, transpose_gpu) {
     // prepare transpose in GPU
     std::vector<std::complex<double>> transpose = {
         {-0.351417, -1.73472},
@@ -145,9 +141,9 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
     // run
     ModuleBase::createGpuBlasHandle();
     ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(2,
-                                                                                 3,
-                                                                                 device_transpose,
-                                                                                 device_transpose);
+                                                                                    3,
+                                                                                    device_transpose,
+                                                                                    device_transpose);
     ModuleBase::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU
@@ -185,8 +181,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
     //     std::cout << std::endl;
     // }
 
-    for (int i = 0; i < transpose_result.size(); i++)
-    {
+    for (int i = 0; i < transpose_result.size(); i++) {
         EXPECT_LT(fabs(test_result[i].imag()) - fabs(transpose_result[i].imag()), 1e-8);
         EXPECT_LT(fabs(test_result[i].real()) - fabs(transpose_result[i].real()), 1e-8);
     }

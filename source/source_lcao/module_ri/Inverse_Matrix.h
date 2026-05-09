@@ -11,14 +11,9 @@
 #include <vector>
 
 template <typename Tdata>
-class Inverse_Matrix
-{
+class Inverse_Matrix {
   public:
-    enum class Method
-    {
-        potrf,
-        syev
-    };
+    enum class Method { potrf, syev };
     void cal_inverse(const Method& method, const double& threshold_condition_number = 0.);
 
     void input(const RI::Tensor<Tdata>& m);

@@ -8,8 +8,7 @@
 
 struct Input_para;
 
-namespace pw
-{
+namespace pw {
 
 void update_cell_pw(const UnitCell& ucell,
                     pseudopot_cell_vnl& ppcell,

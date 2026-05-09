@@ -1,10 +1,13 @@
 # Phonopy Interface
 
-This directory contains the interface between ABACUS and Phonopy, an open-source software for phonon calculations. Phonopy is widely used for calculating phonon dispersion relations, phonon density of states, and thermodynamic properties of materials.
+This directory contains the interface between ABACUS and Phonopy, an open-source software for phonon
+calculations. Phonopy is widely used for calculating phonon dispersion relations, phonon density of
+states, and thermodynamic properties of materials.
 
 ## What is Phonopy?
 
-Phonopy is an open-source software package for phonon calculations at harmonic and quasi-harmonic levels. It is designed to:
+Phonopy is an open-source software package for phonon calculations at harmonic and quasi-harmonic
+levels. It is designed to:
 
 - Calculate phonon dispersion relations
 - Compute phonon density of states (DOS)
@@ -13,14 +16,17 @@ Phonopy is an open-source software package for phonon calculations at harmonic a
 - Support various first-principles calculation codes through interfaces
 
 Phonopy works by:
+
 1. Generating supercells with atomic displacements
-2. Running force calculations for these displaced supercells
-3. Fitting a force constant matrix from the calculated forces
-4. Calculating phonon properties based on the force constants
+1. Running force calculations for these displaced supercells
+1. Fitting a force constant matrix from the calculated forces
+1. Calculating phonon properties based on the force constants
 
 ## ABACUS-Phonopy Interface
 
-The ABACUS-Phonopy interface allows ABACUS to be used as the force calculator for Phonopy. This enables users to perform phonon calculations using ABACUS's various basis sets (plane wave and LCAO) and functional choices.
+The ABACUS-Phonopy interface allows ABACUS to be used as the force calculator for Phonopy. This
+enables users to perform phonon calculations using ABACUS's various basis sets (plane wave and LCAO)
+and functional choices.
 
 ### Key Features of the Interface
 
@@ -31,7 +37,8 @@ The ABACUS-Phonopy interface allows ABACUS to be used as the force calculator fo
 
 ## Example
 
-The `example01` directory contains a simple example demonstrating how to use the ABACUS-Phonopy interface to calculate phonons for aluminum (Al).
+The `example01` directory contains a simple example demonstrating how to use the ABACUS-Phonopy
+interface to calculate phonons for aluminum (Al).
 
 ### Example Files
 
@@ -48,20 +55,24 @@ The `example01` directory contains a simple example demonstrating how to use the
 
 ### Prerequisites
 
-1. **Install Phonopy**: Follow the installation instructions on the [Phonopy website](https://phonopy.github.io/phonopy/)
-2. **Set up ABACUS**: Ensure ABACUS is compiled and accessible in your PATH
-3. **Prepare input files**: Create INPUT, KPT, and STRU files for your system
+1. **Install Phonopy**: Follow the installation instructions on the
+   [Phonopy website](https://phonopy.github.io/phonopy/)
+1. **Set up ABACUS**: Ensure ABACUS is compiled and accessible in your PATH
+1. **Prepare input files**: Create INPUT, KPT, and STRU files for your system
 
 ### Usage Notes
 
-- For detailed instructions on using Phonopy with ABACUS, please refer to the [Phonopy documentation](https://phonopy.github.io/phonopy/)
+- For detailed instructions on using Phonopy with ABACUS, please refer to the
+  [Phonopy documentation](https://phonopy.github.io/phonopy/)
 - The interface requires ABACUS to generate FORCE_ABACUS files in the OUT.ABACUS directory
 - Phonopy will use these force files to calculate phonon properties
 
 ## Troubleshooting
 
-- **Force files not found**: Ensure ABACUS is generating FORCE_ABACUS files in the OUT.ABACUS directory
-- **Phonopy cannot read ABACUS output**: Check that ABACUS is compiled with the necessary output options
+- **Force files not found**: Ensure ABACUS is generating FORCE_ABACUS files in the OUT.ABACUS
+  directory
+- **Phonopy cannot read ABACUS output**: Check that ABACUS is compiled with the necessary output
+  options
 - **Memory issues**: For large supercells, increase the memory allocation for ABACUS
 - **Convergence issues**: Ensure the SCF calculation is converged for each displaced supercell
 
@@ -76,4 +87,5 @@ The `example01` directory contains a simple example demonstrating how to use the
 - The ABACUS-Phonopy interface is continuously being improved
 - For large systems, consider using parallel calculations to speed up the force calculations
 - Always check the convergence of your results with respect to supercell size and k-point sampling
-- The example provided is for demonstration purposes; adjust parameters according to your specific system
+- The example provided is for demonstration purposes; adjust parameters according to your specific
+  system

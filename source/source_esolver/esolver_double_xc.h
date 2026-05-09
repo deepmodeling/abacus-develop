@@ -3,12 +3,10 @@
 
 #include "source_esolver/esolver_ks_lcao.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 // used in deepks, run target and base xc functional simultaneously
 template <typename TK, typename TR>
-class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
-{
+class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR> {
   public:
     ESolver_DoubleXC();
     ~ESolver_DoubleXC();
@@ -18,7 +16,6 @@ class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
     void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
   protected:
-
     void before_scf(UnitCell& ucell, const int istep) override;
 
     void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;

@@ -15,30 +15,22 @@
 /***************************************************************
  *  mock functions
  ****************************************************************/
-namespace elecstate
-{
-const double* ElecState::getRho(int spin) const
-{
-    return &(this->eferm.ef);
-} // just for mock
+namespace elecstate {
+const double* ElecState::getRho(int spin) const { return &(this->eferm.ef); } // just for mock
 double Efield::etotefield = 1.1;
 double elecstate::Gatefield::etotgatefield = 2.2;
 
 } // namespace elecstate
-UnitCell::UnitCell(){}
-UnitCell::~UnitCell(){}
-Magnetism::Magnetism(){}
-Magnetism::~Magnetism(){}
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+Charge::Charge() {}
+Charge::~Charge() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
@@ -54,8 +46,7 @@ bool XC_Functional::ked_flag = false;
  *   - ElecState::print_format()
  */
 
-class ElecStatePrintTest : public ::testing::Test
-{
+class ElecStatePrintTest : public ::testing::Test {
   protected:
     elecstate::ElecState elecstate;
     UnitCell ucell;
@@ -63,8 +54,7 @@ class ElecStatePrintTest : public ::testing::Test
     std::ifstream ifs;
     std::ofstream ofs;
     K_Vectors* p_klist;
-    void SetUp()
-    {
+    void SetUp() {
         p_klist = new K_Vectors;
         p_klist->set_nks(2);
         p_klist->set_nkstot(2);
@@ -98,14 +88,10 @@ class ElecStatePrintTest : public ::testing::Test
         PARAM.input.ks_solver = "dav";
         PARAM.sys.log_file = "test.dat";
     }
-    void TearDown()
-    {
-        delete p_klist;
-    }
+    void TearDown() { delete p_klist; }
 };
 
-TEST_F(ElecStatePrintTest, PrintFormat)
-{
+TEST_F(ElecStatePrintTest, PrintFormat) {
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     elecstate::print_format("test", 0.1);
     GlobalV::ofs_running.close();
@@ -116,8 +102,7 @@ TEST_F(ElecStatePrintTest, PrintFormat)
     std::remove("test.dat");
 }
 
-TEST_F(ElecStatePrintTest, PrintEtot)
-{
+TEST_F(ElecStatePrintTest, PrintEtot) {
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     bool converged = false;
     int iter = 1;
@@ -141,46 +126,49 @@ TEST_F(ElecStatePrintTest, PrintEtot)
 
     // iteration of different vdw_method
     std::vector<std::string> vdw_methods = {"d2", "d3_0", "d3_bj"};
-    for (int i = 0; i < vdw_methods.size(); i++)
-    {
+    for (int i = 0; i < vdw_methods.size(); i++) {
         PARAM.input.vdw_method = vdw_methods[i];
-        elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr,
-        scf_thr_kin, duration, pw_diag_thr, avg_iter, false);
+        elecstate::print_etot(ucell.magnet,
+                              elecstate,
+                              converged,
+                              iter,
+                              scf_thr,
+                              scf_thr_kin,
+                              duration,
+                              pw_diag_thr,
+                              avg_iter,
+                              false);
     }
 
     // iteration of different ks_solver
     std::vector<std::string> ks_solvers = {"cg", "lapack", "genelpa", "dav", "scalapack_gvx", "cusolver"};
-    for (int i = 0; i < ks_solvers.size(); i++)
-    {
+    for (int i = 0; i < ks_solvers.size(); i++) {
         PARAM.input.ks_solver = ks_solvers[i];
         testing::internal::CaptureStdout();
 
-        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr,
-        scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+        elecstate::print_etot(ucell.magnet,
+                              elecstate,
+                              converged,
+                              iter,
+                              scf_thr,
+                              scf_thr_kin,
+                              duration,
+                              pw_diag_thr,
+                              avg_iter,
+                              print);
 
         output = testing::internal::GetCapturedStdout();
-        if (PARAM.input.ks_solver == "cg")
-        {
+        if (PARAM.input.ks_solver == "cg") {
             EXPECT_THAT(output, testing::HasSubstr("CG"));
-        }
-        else if (PARAM.input.ks_solver == "lapack")
-        {
+        } else if (PARAM.input.ks_solver == "lapack") {
             EXPECT_THAT(output, testing::HasSubstr("LA"));
-        }
-        else if (PARAM.input.ks_solver == "genelpa")
-        {
+        } else if (PARAM.input.ks_solver == "genelpa") {
             EXPECT_THAT(output, testing::HasSubstr("GE"));
-        }
-        else if (PARAM.input.ks_solver == "dav")
-        {
+        } else if (PARAM.input.ks_solver == "dav") {
             EXPECT_THAT(output, testing::HasSubstr("DA"));
-        }
-        else if (PARAM.input.ks_solver == "scalapack_gvx")
-        {
+        } else if (PARAM.input.ks_solver == "scalapack_gvx") {
             EXPECT_THAT(output, testing::HasSubstr("GV"));
-        }
-        else if (PARAM.input.ks_solver == "cusolver")
-        {
+        } else if (PARAM.input.ks_solver == "cusolver") {
             EXPECT_THAT(output, testing::HasSubstr("CU"));
         }
     }
@@ -201,8 +189,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     std::remove("test.dat");
 }
 
-TEST_F(ElecStatePrintTest, PrintEtotColorS2)
-{
+TEST_F(ElecStatePrintTest, PrintEtotColorS2) {
     bool converged = false;
     int iter = 1;
     double scf_thr = 2.0;
@@ -223,15 +210,21 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.nspin = 2;
     GlobalV::MY_RANK = 0;
 
-    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr,
-    scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+    elecstate::print_etot(ucell.magnet,
+                          elecstate,
+                          converged,
+                          iter,
+                          scf_thr,
+                          scf_thr_kin,
+                          duration,
+                          pw_diag_thr,
+                          avg_iter,
+                          print);
 
     delete elecstate.charge;
 }
 
-
-TEST_F(ElecStatePrintTest, PrintEtotColorS4)
-{
+TEST_F(ElecStatePrintTest, PrintEtotColorS4) {
     bool converged = false;
     int iter = 1;
     double scf_thr = 0.1;
@@ -253,8 +246,16 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;
 
-    elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin,
-    duration, pw_diag_thr, avg_iter, print);
+    elecstate::print_etot(ucell.magnet,
+                          elecstate,
+                          converged,
+                          iter,
+                          scf_thr,
+                          scf_thr_kin,
+                          duration,
+                          pw_diag_thr,
+                          avg_iter,
+                          print);
 
     delete elecstate.charge;
 }

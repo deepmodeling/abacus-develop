@@ -6,7 +6,10 @@
 TEST(TensorMap, Constructor) {
     // Test reference constructor
     std::vector<float> vec{1.0, 2.0, 3.0};
-    container::TensorMap t1(&vec[0], container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, container::TensorShape({1, 3}));
+    container::TensorMap t1(&vec[0],
+                            container::DataType::DT_FLOAT,
+                            container::DeviceType::CpuDevice,
+                            container::TensorShape({1, 3}));
     EXPECT_EQ(t1.data_type(), container::DataType::DT_FLOAT);
     EXPECT_EQ(t1.device_type(), container::DeviceType::CpuDevice);
     EXPECT_EQ(t1.shape().dims(), std::vector<int64_t>({1, 3}));

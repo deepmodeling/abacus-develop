@@ -2,10 +2,8 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-namespace ModuleIO
-{
-void ReadInput::item_postprocess()
-{
+namespace ModuleIO {
+void ReadInput::item_postprocess() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -38,7 +36,8 @@ void ReadInput::item_postprocess()
         item.annotation = "scale dos range by";
         item.category = "Density of states";
         item.type = "Real";
-        item.description = "Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.";
+        item.description = "Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at "
+                           "(emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.";
         item.default_value = "0.01";
         item.unit = "eV";
         item.availability = "";
@@ -87,7 +86,8 @@ void ReadInput::item_postprocess()
         item.annotation = "orders of Chebyshev expansions for dos";
         item.category = "Density of states";
         item.type = "Integer";
-        item.description = "The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.";
+        item.description = "The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) "
+                           "to calculate DOS.";
         item.default_value = "100";
         item.unit = "";
         item.availability = "";
@@ -99,7 +99,8 @@ void ReadInput::item_postprocess()
         item.annotation = "bias voltage used to calculate ldos";
         item.category = "Density of states";
         item.type = "Real Real(optional) Integer(optional)";
-        item.description = R"(The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in out_ldos. When using three parameters:
+        item.description =
+            R"(The bias voltage used to calculate local density of states to simulate scanning tunneling microscope, see details in out_ldos. When using three parameters:
 
 * The first parameter specifies the initial bias voltage value.
 * The second parameter defines the voltage increment (step size between consecutive bias values).
@@ -109,8 +110,7 @@ void ReadInput::item_postprocess()
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count != 1 && count != 3)
-            {
+            if (count != 1 && count != 3) {
                 ModuleBase::WARNING_QUIT("ReadInput", "stm_bias should have 1 or 3 values");
             }
             para.input.stm_bias[0] = std::stod(item.str_values[0]);
@@ -118,12 +118,10 @@ void ReadInput::item_postprocess()
             para.input.stm_bias[2] = (count == 3) ? std::stod(item.str_values[2]) : 1;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.stm_bias[2] <= 0)
-            {
+            if (para.input.stm_bias[2] <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[2] should be greater than 0");
             }
-            if (para.input.stm_bias[1] == 0)
-            {
+            if (para.input.stm_bias[1] == 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "stm_bias[1] should be nonzero");
             }
         };
@@ -135,25 +133,26 @@ void ReadInput::item_postprocess()
         item.annotation = "start and end point of the line (direct coordinates) and number of points";
         item.category = "Density of states";
         item.type = "Real*6 Integer(optional)";
-        item.description = "Specify the path of the three-dimensional space and display LDOS in the form of a two-dimensional color chart, see details in out_ldos. The first three paramenters are the direct coordinates of the start point, the next three paramenters are the direct coordinates of the end point, and the final one is the number of points along the path, whose default is 100.";
+        item.description =
+            "Specify the path of the three-dimensional space and display LDOS in the form of a two-dimensional color "
+            "chart, see details in out_ldos. The first three paramenters are the direct coordinates of the start "
+            "point, the next three paramenters are the direct coordinates of the end point, and the final one is the "
+            "number of points along the path, whose default is 100.";
         item.default_value = "0.0 0.0 0.0 0.0 0.0 1.0 100";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count != 6 && count != 7)
-            {
+            if (count != 6 && count != 7) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ldos_line should have 6 or 7 values");
             }
-            for (int i = 0; i < 6; ++i)
-            {
+            for (int i = 0; i < 6; ++i) {
                 para.input.ldos_line[i] = std::stod(item.str_values[i]);
             }
             para.input.ldos_line[6] = (count == 7) ? std::stoi(item.str_values[6]) : 100;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ldos_line[6] <= 0)
-            {
+            if (para.input.ldos_line[6] <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ldos_line[6] should be greater than 0");
             }
         };
@@ -227,7 +226,8 @@ void ReadInput::item_postprocess()
         item.annotation = "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion";
         item.category = "Electronic conductivities";
         item.type = "Integer";
-        item.description = R"(exp(iH\dt\cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
+        item.description =
+            R"(exp(iH\dt\cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
 * If cond_dtbatch = 0: Autoset this parameter to make expansion orders larger than 100.)";
         item.default_value = "0";
         item.unit = "";
@@ -290,24 +290,19 @@ void ReadInput::item_postprocess()
         item.availability = "";
         read_sync_bool(input.berry_phase);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.berry_phase)
-            {
-                if (para.input.basis_type != "pw" && para.input.basis_type != "lcao")
-                {
+            if (para.input.berry_phase) {
+                if (para.input.basis_type != "pw" && para.input.basis_type != "lcao") {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "calculate berry phase, please "
                                              "set basis_type = pw or lcao");
                 }
-                if (para.input.calculation != "nscf")
-                {
+                if (para.input.calculation != "nscf") {
                     ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set calculation = nscf");
                 }
-                if (!(para.input.gdir == 1 || para.input.gdir == 2 || para.input.gdir == 3))
-                {
+                if (!(para.input.gdir == 1 || para.input.gdir == 2 || para.input.gdir == 3)) {
                     ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set gdir = 1 or 2 or 3");
                 }
-                if (para.input.symmetry != "-1")
-                {
+                if (para.input.symmetry != "-1") {
                     ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set symmetry = -1");
                 }
             }
@@ -343,16 +338,12 @@ void ReadInput::item_postprocess()
         item.availability = "";
         read_sync_bool(input.towannier90);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.towannier90)
-            {
-                if (para.input.calculation != "nscf")
-                {
+            if (para.input.towannier90) {
+                if (para.input.calculation != "nscf") {
                     ModuleBase::WARNING_QUIT("ReadInput", "to use towannier90, please set calculation = nscf");
                 }
-                if (para.input.nspin == 2)
-                {
-                    if (para.input.wannier_spin != "up" && para.input.wannier_spin != "down")
-                    {
+                if (para.input.nspin == 2) {
+                    if (para.input.wannier_spin != "up" && para.input.wannier_spin != "down") {
                         ModuleBase::WARNING_QUIT("ReadInput",
                                                  "to use towannier90, please set wannier_spin = up "
                                                  "or down");
@@ -379,7 +370,8 @@ void ReadInput::item_postprocess()
         item.annotation = "different implementation methods under Lcao basis set";
         item.category = "Berry phase and wannier90 interface";
         item.type = "Integer";
-        item.description = R"(Only available on LCAO basis, using different methods to generate "\.mmn" file and "\.amn" file.
+        item.description =
+            R"(Only available on LCAO basis, using different methods to generate "\.mmn" file and "\.amn" file.
 * 1: Calculated using the lcao_in_pw method, the calculation accuracy can be improved by increasing ecutwfc to maintain consistency with the pw basis set results.
 * 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.)";
         item.default_value = "1";
@@ -400,8 +392,7 @@ void ReadInput::item_postprocess()
                        2023/12/22 use new psi_initializer to expand numerical
                       atomic orbitals, ykhuang
                    */
-            if (para.input.towannier90 && para.input.basis_type == "lcao_in_pw")
-            {
+            if (para.input.towannier90 && para.input.basis_type == "lcao_in_pw") {
                 para.input.wannier_method = 1;
             }
         };

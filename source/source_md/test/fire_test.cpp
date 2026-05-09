@@ -35,16 +35,14 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class FIREtest : public testing::Test
-{
+class FIREtest : public testing::Test {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
 
@@ -55,15 +53,13 @@ class FIREtest : public testing::Test
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete mdrun;
         delete p_esolver;
     }
 };
 
-TEST_F(FIREtest, Setup)
-{
+TEST_F(FIREtest, Setup) {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
@@ -76,8 +72,7 @@ TEST_F(FIREtest, Setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
-TEST_F(FIREtest, FirstHalf)
-{
+TEST_F(FIREtest, FirstHalf) {
     mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00045447059554315662, doublethreshold);
@@ -107,8 +102,7 @@ TEST_F(FIREtest, FirstHalf)
     EXPECT_NEAR(mdrun->vel[3].z, -2.5498181033639999e-05, doublethreshold);
 }
 
-TEST_F(FIREtest, SecondHalf)
-{
+TEST_F(FIREtest, SecondHalf) {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
 
@@ -139,8 +133,7 @@ TEST_F(FIREtest, SecondHalf)
     EXPECT_NEAR(mdrun->vel[3].z, -2.5498181033639999e-05, doublethreshold);
 }
 
-TEST_F(FIREtest, WriteRestart)
-{
+TEST_F(FIREtest, WriteRestart) {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -162,8 +155,7 @@ TEST_F(FIREtest, WriteRestart)
     ifs.close();
 }
 
-TEST_F(FIREtest, Restart)
-{
+TEST_F(FIREtest, Restart) {
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
@@ -175,8 +167,7 @@ TEST_F(FIREtest, Restart)
     EXPECT_EQ(fire->md_dt, 41.3414);
 }
 
-TEST_F(FIREtest, PrintMD)
-{
+TEST_F(FIREtest, PrintMD) {
     std::ofstream ofs("running_fire.log");
     mdrun->print_md(ofs, true);
     ofs.close();
@@ -185,22 +176,25 @@ TEST_F(FIREtest, PrintMD)
     std::string output_str;
 
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
+    EXPECT_THAT(
+        output_str,
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
+    EXPECT_THAT(
+        output_str,
         testing::HasSubstr(
             " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
+    EXPECT_THAT(
+        output_str,
         testing::HasSubstr(
             " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
     getline(ifs, output_str);
@@ -209,9 +203,9 @@ TEST_F(FIREtest, PrintMD)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     getline(ifs, output_str);
-	getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" LARGEST FORCE (eV/A)      : 0.049479926"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr(" LARGEST FORCE (eV/A)      : 0.049479926"));
 
     ifs.close();
-    //remove("running_fire.log");
+    // remove("running_fire.log");
 }

@@ -5,27 +5,22 @@
 
 #include <cmath>
 
-namespace spinconstrain
-{
+namespace spinconstrain {
 
 template <typename TK>
-SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
-{
+SpinConstrain<TK>& SpinConstrain<TK>::getScInstance() {
     static SpinConstrain<TK> instance; // Guaranteed to be created and destroyed only once
     return instance;
 }
 
 template <typename TK>
-double SpinConstrain<TK>::cal_escon()
-{
+double SpinConstrain<TK>::cal_escon() {
     this->escon_ = 0.0;
-    if (!this->is_Mi_converged)
-    {
+    if (!this->is_Mi_converged) {
         return this->escon_;
     }
     int nat = this->get_nat();
-    for (int iat = 0; iat < nat; iat++)
-    {
+    for (int iat = 0; iat < nat; iat++) {
         this->escon_ -= this->lambda_[iat].x * this->Mi_[iat].x;
         this->escon_ -= this->lambda_[iat].y * this->Mi_[iat].y;
         this->escon_ -= this->lambda_[iat].z * this->Mi_[iat].z;
@@ -34,32 +29,27 @@ double SpinConstrain<TK>::cal_escon()
 }
 
 template <typename TK>
-double SpinConstrain<TK>::get_escon() const
-{
+double SpinConstrain<TK>::get_escon() const {
     return this->escon_;
 }
 
 // set atomCounts
 template <typename TK>
-void SpinConstrain<TK>::set_atomCounts(const std::map<int, int>& atomCounts_in)
-{
+void SpinConstrain<TK>::set_atomCounts(const std::map<int, int>& atomCounts_in) {
     this->atomCounts.clear();
     this->atomCounts = atomCounts_in;
 }
 
 // get atomCounts
 template <typename TK>
-const std::map<int, int>& SpinConstrain<TK>::get_atomCounts() const
-{
+const std::map<int, int>& SpinConstrain<TK>::get_atomCounts() const {
     return this->atomCounts;
 }
 
 /// set nspin
 template <typename TK>
-void SpinConstrain<TK>::set_nspin(int nspin_in)
-{
-    if (nspin_in != 4 && nspin_in != 2)
-    {
+void SpinConstrain<TK>::set_nspin(int nspin_in) {
+    if (nspin_in != 4 && nspin_in != 2) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin", "nspin must be 2 or 4");
     }
     this->nspin_ = nspin_in;
@@ -67,49 +57,39 @@ void SpinConstrain<TK>::set_nspin(int nspin_in)
 
 /// get nspin
 template <typename TK>
-int SpinConstrain<TK>::get_nspin() const
-{
+int SpinConstrain<TK>::get_nspin() const {
     return this->nspin_;
 }
 
 template <typename TK>
-int SpinConstrain<TK>::get_nat()
-{
+int SpinConstrain<TK>::get_nat() {
     int nat = 0;
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
-    {
+    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it) {
         nat += it->second;
     }
     return nat;
 }
 
 template <typename TK>
-int SpinConstrain<TK>::get_ntype()
-{
+int SpinConstrain<TK>::get_ntype() {
     return this->atomCounts.size();
 }
 
 template <typename TK>
-void SpinConstrain<TK>::check_atomCounts()
-{
-    if (!this->atomCounts.size())
-    {
+void SpinConstrain<TK>::check_atomCounts() {
+    if (!this->atomCounts.size()) {
         ModuleBase::WARNING_QUIT("SpinConstrain::check_atomCounts", "atomCounts is not set");
     }
-    if (this->get_nat() <= 0)
-    {
+    if (this->get_nat() <= 0) {
         ModuleBase::WARNING_QUIT("SpinConstrain::check_atomCounts", "nat <= 0");
     }
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
-    {
+    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it) {
         int itype = it->first;
-        if (itype < 0 || itype >= this->get_ntype())
-        {
+        if (itype < 0 || itype >= this->get_ntype()) {
             ModuleBase::WARNING_QUIT("SpinConstrain::check_atomCounts", "itype out of range [0, ntype)");
         }
         int inat = it->second;
-        if (inat <= 0)
-        {
+        if (inat <= 0) {
             ModuleBase::WARNING_QUIT("SpinConstrain::check_atomCounts", "number of atoms <= 0 for some element");
         }
     }
@@ -117,21 +97,16 @@ void SpinConstrain<TK>::check_atomCounts()
 
 // get iat
 template <typename TK>
-int SpinConstrain<TK>::get_iat(int itype, int atom_index)
-{
-    if (itype < 0 || itype >= this->get_ntype())
-    {
+int SpinConstrain<TK>::get_iat(int itype, int atom_index) {
+    if (itype < 0 || itype >= this->get_ntype()) {
         ModuleBase::WARNING_QUIT("SpinConstrain::get_iat", "itype out of range [0, ntype)");
     }
-    if (atom_index < 0 || atom_index >= this->atomCounts[itype])
-    {
+    if (atom_index < 0 || atom_index >= this->atomCounts[itype]) {
         ModuleBase::WARNING_QUIT("SpinConstrain::get_iat", "atom index out of range [0, nat)");
     }
     int iat = 0;
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
-    {
-        if (it->first == itype)
-        {
+    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it) {
+        if (it->first == itype) {
             break;
         }
         iat += it->second;
@@ -142,46 +117,39 @@ int SpinConstrain<TK>::get_iat(int itype, int atom_index)
 
 // set orbitalCounts
 template <typename TK>
-void SpinConstrain<TK>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in)
-{
+void SpinConstrain<TK>::set_orbitalCounts(const std::map<int, int>& orbitalCounts_in) {
     this->orbitalCounts.clear();
     this->orbitalCounts = orbitalCounts_in;
 }
 
 // get orbitalCounts
 template <typename TK>
-const std::map<int, int>& SpinConstrain<TK>::get_orbitalCounts() const
-{
+const std::map<int, int>& SpinConstrain<TK>::get_orbitalCounts() const {
     return this->orbitalCounts;
 }
 
 // set lnchiCounts
 template <typename TK>
-void SpinConstrain<TK>::set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in)
-{
+void SpinConstrain<TK>::set_lnchiCounts(const std::map<int, std::map<int, int>>& lnchiCounts_in) {
     this->lnchiCounts.clear();
     this->lnchiCounts = lnchiCounts_in;
 }
 
 // get lnchiCounts
 template <typename TK>
-const std::map<int, std::map<int, int>>& SpinConstrain<TK>::get_lnchiCounts() const
-{
+const std::map<int, std::map<int, int>>& SpinConstrain<TK>::get_lnchiCounts() const {
     return this->lnchiCounts;
 }
 
 // set sc_lambda from ScData
 template <typename TK>
-void SpinConstrain<TK>::set_sc_lambda()
-{
+void SpinConstrain<TK>::set_sc_lambda() {
     this->check_atomCounts();
     int nat = this->get_nat();
     this->lambda_.resize(nat);
-    for (auto& itype_data: this->ScData)
-    {
+    for (auto& itype_data: this->ScData) {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
-        {
+        for (auto& element_data: itype_data.second) {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
             ModuleBase::Vector3<double> lambda;
@@ -195,27 +163,21 @@ void SpinConstrain<TK>::set_sc_lambda()
 
 // set target_mag from ScData
 template <typename TK>
-void SpinConstrain<TK>::set_target_mag()
-{
+void SpinConstrain<TK>::set_target_mag() {
     this->check_atomCounts();
     int nat = this->get_nat();
     this->target_mag_.resize(nat, 0.0);
-    for (auto& itype_data: this->ScData)
-    {
+    for (auto& itype_data: this->ScData) {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
-        {
+        for (auto& element_data: itype_data.second) {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
             ModuleBase::Vector3<double> mag(0.0, 0.0, 0.0);
-            if (element_data.mag_type == 0)
-            {
+            if (element_data.mag_type == 0) {
                 mag.x = element_data.target_mag[0];
                 mag.y = element_data.target_mag[1];
                 mag.z = element_data.target_mag[2];
-            }
-            else if (element_data.mag_type == 1)
-            {
+            } else if (element_data.mag_type == 1) {
                 double radian_angle1 = element_data.target_mag_angle1 * M_PI / 180.0;
                 double radian_angle2 = element_data.target_mag_angle2 * M_PI / 180.0;
                 mag.x = element_data.target_mag_val * std::sin(radian_angle1) * std::cos(radian_angle2);
@@ -235,25 +197,21 @@ void SpinConstrain<TK>::set_target_mag()
 
 // set constrain from ScData
 template <typename TK>
-void SpinConstrain<TK>::set_constrain()
-{
+void SpinConstrain<TK>::set_constrain() {
     this->check_atomCounts();
     int nat = this->get_nat();
     this->constrain_.resize(nat);
     // constrain is 0 by default, which means no constrain
     // and the corresponding mag moments should be determined
     // by the physical nature of the system
-    for (int iat = 0; iat < nat; iat++)
-    {
+    for (int iat = 0; iat < nat; iat++) {
         this->constrain_[iat].x = 0;
         this->constrain_[iat].y = 0;
         this->constrain_[iat].z = 0;
     }
-    for (auto& itype_data: this->ScData)
-    {
+    for (auto& itype_data: this->ScData) {
         int itype = itype_data.first;
-        for (auto& element_data: itype_data.second)
-        {
+        for (auto& element_data: itype_data.second) {
             int index = element_data.index;
             int iat = this->get_iat(itype, index);
             ModuleBase::Vector3<int> constr;
@@ -267,107 +225,86 @@ void SpinConstrain<TK>::set_constrain()
 
 // set sc_lambda from variable
 template <typename TK>
-void SpinConstrain<TK>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in)
-{
+void SpinConstrain<TK>::set_sc_lambda(const ModuleBase::Vector3<double>* lambda_in, int nat_in) {
     this->check_atomCounts();
     int nat = this->get_nat();
-    if (nat_in != nat)
-    {
+    if (nat_in != nat) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_sc_lambda", "lambda_in size mismatch with nat");
     }
     this->lambda_.resize(nat);
-    for (int iat = 0; iat < nat; ++iat)
-    {
+    for (int iat = 0; iat < nat; ++iat) {
         this->lambda_[iat] = lambda_in[iat];
     }
 }
 
 // set target_mag from variable
 template <typename TK>
-void SpinConstrain<TK>::set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in)
-{
+void SpinConstrain<TK>::set_target_mag(const ModuleBase::Vector3<double>* target_mag_in, int nat_in) {
     this->check_atomCounts();
     int nat = this->get_nat();
-    if (nat_in != nat)
-    {
+    if (nat_in != nat) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_target_mag", "target_mag_in size mismatch with nat");
     }
     this->target_mag_.resize(nat);
-    for (int iat = 0; iat < nat; ++iat)
-    {
+    for (int iat = 0; iat < nat; ++iat) {
         this->target_mag_[iat] = target_mag_in[iat];
     }
 }
 
 template <typename TK>
-void SpinConstrain<TK>::set_target_mag(const std::vector<ModuleBase::Vector3<double>>& target_mag_in)
-{
+void SpinConstrain<TK>::set_target_mag(const std::vector<ModuleBase::Vector3<double>>& target_mag_in) {
     int nat = this->get_nat();
     assert(target_mag_in.size() == nat);
-    if (this->nspin_ == 2)
-    {
+    if (this->nspin_ == 2) {
         this->target_mag_.resize(nat, 0.0);
-        for (int iat = 0; iat < nat; iat++)
-        {
-            this->target_mag_[iat].z
-                = target_mag_in[iat].x; /// this is wired because the UnitCell class set in x direction
+        for (int iat = 0; iat < nat; iat++) {
+            this->target_mag_[iat].z =
+                target_mag_in[iat].x; /// this is wired because the UnitCell class set in x direction
         }
-    }
-    else if (this->nspin_ == 4)
-    {
+    } else if (this->nspin_ == 4) {
         this->target_mag_ = target_mag_in;
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_target_mag", "nspin must be 2 or 4");
     }
 }
 
 /// set constrain from variable
 template <typename TK>
-void SpinConstrain<TK>::set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in)
-{
+void SpinConstrain<TK>::set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in) {
     this->check_atomCounts();
     int nat = this->get_nat();
-    if (nat_in != nat)
-    {
+    if (nat_in != nat) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_constrain", "constrain_in size mismatch with nat");
     }
     this->constrain_.resize(nat);
-    for (int iat = 0; iat < nat; ++iat)
-    {
+    for (int iat = 0; iat < nat; ++iat) {
         this->constrain_[iat] = constrain_in[iat];
     }
 }
 
 template <typename TK>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_sc_lambda() const
-{
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_sc_lambda() const {
     return this->lambda_;
 }
 
 template <typename TK>
-const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_target_mag() const
-{
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_target_mag() const {
     return this->target_mag_;
 }
 
 /// get_constrain
 template <typename TK>
-const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<TK>::get_constrain() const
-{
+const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<TK>::get_constrain() const {
     return this->constrain_;
 }
 
 /// zero atomic magnetic moment
 template <typename TK>
-void SpinConstrain<TK>::zero_Mi()
-{
+void SpinConstrain<TK>::zero_Mi() {
     this->check_atomCounts();
     int nat = this->get_nat();
     this->Mi_.resize(nat);
-    for (int iat = 0; iat < nat; ++iat)
-    {
+    for (int iat = 0; iat < nat; ++iat) {
         this->Mi_[iat].x = 0.0;
         this->Mi_[iat].y = 0.0;
         this->Mi_[iat].z = 0.0;
@@ -378,44 +315,37 @@ void SpinConstrain<TK>::zero_Mi()
 /// this function can only be called by the root process because only
 /// root process reads the ScDecayGrad from json file
 template <typename TK>
-double SpinConstrain<TK>::get_decay_grad(int itype)
-{
+double SpinConstrain<TK>::get_decay_grad(int itype) {
     return this->ScDecayGrad[itype];
 }
 
 /// set grad_decy
 template <typename TK>
-void SpinConstrain<TK>::set_decay_grad()
-{
+void SpinConstrain<TK>::set_decay_grad() {
     this->check_atomCounts();
     int ntype = this->get_ntype();
     this->decay_grad_.resize(ntype);
-    for (int itype = 0; itype < ntype; ++itype)
-    {
+    for (int itype = 0; itype < ntype; ++itype) {
         this->decay_grad_[itype] = 0.0;
     }
 }
 
 /// get decay_grad
 template <typename TK>
-const std::vector<double>& SpinConstrain<TK>::get_decay_grad()
-{
+const std::vector<double>& SpinConstrain<TK>::get_decay_grad() {
     return this->decay_grad_;
 }
 
 /// set grad_decy from variable
 template <typename TK>
-void SpinConstrain<TK>::set_decay_grad(const double* decay_grad_in, int ntype_in)
-{
+void SpinConstrain<TK>::set_decay_grad(const double* decay_grad_in, int ntype_in) {
     this->check_atomCounts();
     int ntype = this->get_ntype();
-    if (ntype_in != ntype)
-    {
+    if (ntype_in != ntype) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_decay_grad", "decay_grad_in size mismatch with ntype");
     }
     this->decay_grad_.resize(ntype);
-    for (int itype = 0; itype < ntype; ++itype)
-    {
+    for (int itype = 0; itype < ntype; ++itype) {
         this->decay_grad_[itype] = decay_grad_in[itype];
     }
 }
@@ -423,12 +353,11 @@ void SpinConstrain<TK>::set_decay_grad(const double* decay_grad_in, int ntype_in
 /// @brief  set input parameters
 template <typename TK>
 void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
-                                                 int nsc_in,
-                                                 int nsc_min_in,
-                                                 double alpha_trial_in,
-                                                 double sccut_in,
-                                                 double sc_drop_thr_in)
-{
+                                             int nsc_in,
+                                             int nsc_min_in,
+                                             double alpha_trial_in,
+                                             double sccut_in,
+                                             double sc_drop_thr_in) {
     this->sc_thr_ = sc_thr_in;
     this->nsc_ = nsc_in;
     this->nsc_min_ = nsc_min_in;
@@ -439,59 +368,51 @@ void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
 
 /// get sc_thr
 template <typename TK>
-double SpinConstrain<TK>::get_sc_thr() const
-{
+double SpinConstrain<TK>::get_sc_thr() const {
     return this->sc_thr_;
 }
 
 /// get nsc
 template <typename TK>
-int SpinConstrain<TK>::get_nsc() const
-{
+int SpinConstrain<TK>::get_nsc() const {
     return this->nsc_;
 }
 
 /// get nsc_min
 template <typename TK>
-int SpinConstrain<TK>::get_nsc_min() const
-{
+int SpinConstrain<TK>::get_nsc_min() const {
     return this->nsc_min_;
 }
 
 /// get alpha_trial
 template <typename TK>
-double SpinConstrain<TK>::get_alpha_trial() const
-{
+double SpinConstrain<TK>::get_alpha_trial() const {
     return this->alpha_trial_;
 }
 
 /// get sccut
 template <typename TK>
-double SpinConstrain<TK>::get_sccut() const
-{
+double SpinConstrain<TK>::get_sccut() const {
     return this->restrict_current_;
 }
 
 /// set sc_drop_thr
 template <typename TK>
-void SpinConstrain<TK>::set_sc_drop_thr(double sc_drop_thr_in)
-{
+void SpinConstrain<TK>::set_sc_drop_thr(double sc_drop_thr_in) {
     this->sc_drop_thr_ = sc_drop_thr_in;
 }
 
 /// get sc_drop_thr
 template <typename TK>
-double SpinConstrain<TK>::get_sc_drop_thr() const
-{
+double SpinConstrain<TK>::get_sc_drop_thr() const {
     return this->sc_drop_thr_;
 }
 
 template <typename TK>
 void SpinConstrain<TK>::set_solver_parameters(const K_Vectors& kv_in,
-                                                  void* p_hamilt_in,
-                                                  void* psi_in,
-                                                  elecstate::ElecState* pelec_in)
-{
+                                              void* p_hamilt_in,
+                                              void* psi_in,
+                                              elecstate::ElecState* pelec_in) {
     this->kv_ = kv_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
@@ -500,52 +421,44 @@ void SpinConstrain<TK>::set_solver_parameters(const K_Vectors& kv_in,
 
 /// @brief  set ParaV
 template <typename TK>
-void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
-{
+void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in) {
     this->ParaV = ParaV_in;
     int nloc = this->ParaV->nloc;
-    if (nloc <= 0)
-    {
+    if (nloc <= 0) {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");
     }
 }
 
 /// print Mi
 template <typename TK>
-void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
-{
+void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running) {
     this->check_atomCounts();
     int nat = this->get_nat();
     std::vector<double> mag_x(nat, 0.0);
     std::vector<double> mag_y(nat, 0.0);
     std::vector<double> mag_z(nat, 0.0);
-    if (this->nspin_ == 2)
-    {
+    if (this->nspin_ == 2) {
         const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
                        /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat) {
             mag_z[iat] = Mi_[iat].z;
         }
         table << this->atomLabels_ << mag_z;
         ofs_running << table.str() << std::endl;
-    }
-    else if (this->nspin_ == 4)
-    {
+    } else if (this->nspin_ == 4) {
         const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
                        /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat) {
             mag_x[iat] = Mi_[iat].x;
             mag_y[iat] = Mi_[iat].y;
             mag_z[iat] = Mi_[iat].z;
@@ -557,40 +470,34 @@ void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
 
 /// print magnetic force (defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
 template <typename TK>
-void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
-{
+void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running) {
     this->check_atomCounts();
     int nat = this->get_nat();
     std::vector<double> mag_force_x(nat, 0.0);
     std::vector<double> mag_force_y(nat, 0.0);
     std::vector<double> mag_force_z(nat, 0.0);
-    if (this->nspin_ == 2)
-    {
+    if (this->nspin_ == 2) {
         const std::vector<std::string> title = {"Magnetic force (eV/uB)", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
                        /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat) {
             mag_force_z[iat] = lambda_[iat].z * ModuleBase::Ry_to_eV;
         }
         table << this->atomLabels_ << mag_force_z;
         ofs_running << table.str() << std::endl;
-    }
-    else if (this->nspin_ == 4)
-    {
+    } else if (this->nspin_ == 4) {
         const std::vector<std::string> title = {"Magnetic force (eV/uB)", "", "", ""};
         const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
                        /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
+                       /*align=*/{/*value*/ FmtTable::Align::RIGHT, /*title*/ FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat) {
             mag_force_x[iat] = lambda_[iat].x * ModuleBase::Ry_to_eV;
             mag_force_y[iat] = lambda_[iat].y * ModuleBase::Ry_to_eV;
             mag_force_z[iat] = lambda_[iat].z * ModuleBase::Ry_to_eV;

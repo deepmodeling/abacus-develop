@@ -3,33 +3,28 @@
 #include <complex>
 #include <iostream>
 
-extern "C"
-{
+extern "C" {
 #define complex_double ignore_complex_double
 #include <mt_hthread_blas.h> // include faster mtblas kernels
 #undef complex_double
 #include <mtblas_interface.h> // include normal mtblas kernels that automatically operate memory, but slower.
 }
-namespace mtfunc
-{
-void dspInitHandle(int id)
-{
+namespace mtfunc {
+void dspInitHandle(int id) {
     mt_blas_init(id);
     std::cout << " ** DSP inited on cluster " << id << " **" << std::endl;
 } // Use this at the beginning of the program to start a dsp cluster
 
-void dspDestoryHandle(int id)
-{
+void dspDestoryHandle(int id) {
     hthread_dev_close(id);
     std::cout << " ** DSP closed on cluster " << id << " **" << std::endl;
 } // Close dsp cluster at the end of the program
 
-// MTBlas secretly removed its MTBLAS_TRANSPOSE data type and used the original CBLAS_TRANSPOSE. So this function is modified.
+// MTBlas secretly removed its MTBLAS_TRANSPOSE data type and used the original CBLAS_TRANSPOSE. So this function is
+// modified.
 
-CBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
-{
-    switch (blasTrans[0])
-    {
+CBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans) {
+    switch (blasTrans[0]) {
     case 'N':
     case 'n':
         return CblasNoTrans;
@@ -45,19 +40,12 @@ CBLAS_TRANSPOSE convertBLASTranspose(const char* blasTrans)
     }
 } // Used to convert normal transpost char to cblas transpose flag
 
-void* malloc_ht(size_t bytes, int cluster_id)
-{
+void* malloc_ht(size_t bytes, int cluster_id) {
     void* ptr = hthread_malloc((int)cluster_id, bytes, HT_MEM_RW);
     return ptr;
 } // Malloc on dsp. Used to replace original malloc
 
-
-
-void free_ht(void* ptr)
-{
-    hthread_free(ptr);
-} // Free on dsp. Used to replace original free
-
+void free_ht(void* ptr) { hthread_free(ptr); } // Free on dsp. Used to replace original free
 
 void sgemm_mt_(const char* transa,
                const char* transb,
@@ -72,8 +60,7 @@ void sgemm_mt_(const char* transa,
                const float* beta,
                float* c,
                const int* ldc,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_sgemm(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  convertBLASTranspose(transb),
@@ -104,8 +91,7 @@ void dgemm_mt_(const char* transa,
                const double* beta,
                double* c,
                const int* ldc,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_dgemm(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  convertBLASTranspose(transb),
@@ -136,8 +122,7 @@ void zgemm_mt_(const char* transa,
                const std::complex<double>* beta,
                std::complex<double>* c,
                const int* ldc,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_zgemm(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  convertBLASTranspose(transb),
@@ -168,8 +153,7 @@ void cgemm_mt_(const char* transa,
                const std::complex<float>* beta,
                std::complex<float>* c,
                const int* ldc,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_cgemm(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  convertBLASTranspose(transb),
@@ -198,8 +182,7 @@ void sgemv_mt_(const char* transa,
                const float* beta,
                float* y,
                const int* incy,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_sgemv(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  *m,
@@ -226,8 +209,7 @@ void dgemv_mt_(const char* transa,
                const double* beta,
                double* y,
                const int* incy,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_dgemv(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  *m,
@@ -254,8 +236,7 @@ void zgemv_mt_(const char* transa,
                const std::complex<double>* beta,
                std::complex<double>* y,
                const int* incy,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_zgemv(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  *m,
@@ -282,8 +263,7 @@ void cgemv_mt_(const char* transa,
                const std::complex<float>* beta,
                std::complex<float>* y,
                const int* incy,
-               int cluster_id)
-{
+               int cluster_id) {
     mtblas_cgemv(CBLAS_ORDER::CblasColMajor,
                  convertBLASTranspose(transa),
                  *m,
@@ -314,8 +294,7 @@ void sgemm_mth_(const char* transa,
                 const float* beta,
                 float* c,
                 const int* ldc,
-                int cluster_id)
-{
+                int cluster_id) {
     mt_hthread_sgemm(CBLAS_ORDER::CblasColMajor,
                      convertBLASTranspose(transa),
                      convertBLASTranspose(transb),
@@ -346,8 +325,7 @@ void dgemm_mth_(const char* transa,
                 const double* beta,
                 double* c,
                 const int* ldc,
-                int cluster_id)
-{
+                int cluster_id) {
     mt_hthread_dgemm(CBLAS_ORDER::CblasColMajor,
                      convertBLASTranspose(transa),
                      convertBLASTranspose(transb),
@@ -378,8 +356,7 @@ void zgemm_mth_(const char* transa,
                 const std::complex<double>* beta,
                 std::complex<double>* c,
                 const int* ldc,
-                int cluster_id)
-{
+                int cluster_id) {
     std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *alp = *alpha;
     std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
@@ -416,17 +393,19 @@ void zgemm_pack_mth_(const char* transa,
                      const std::complex<double>* beta,
                      std::complex<double>* c,
                      const int* ldc,
-                     int cluster_id)
-{
+                     int cluster_id) {
     const bool transa_not = (transa[0] == 'N' || transa[0] == 'n');
     const bool transb_not = (transb[0] == 'N' || transb[0] == 'n');
-    // const size_t a_elems = static_cast<size_t>(*lda) * (transa_not ? static_cast<size_t>(*k) : static_cast<size_t>(*m));
-    // const size_t b_elems = static_cast<size_t>(*ldb) * (transb_not ? static_cast<size_t>(*n) : static_cast<size_t>(*k));
+    // const size_t a_elems = static_cast<size_t>(*lda) * (transa_not ? static_cast<size_t>(*k) :
+    // static_cast<size_t>(*m)); const size_t b_elems = static_cast<size_t>(*ldb) * (transb_not ?
+    // static_cast<size_t>(*n) : static_cast<size_t>(*k));
     const size_t c_elems = static_cast<size_t>(*ldc) * static_cast<size_t>(*n);
 
-    // std::complex<double>* A_dsp = static_cast<std::complex<double>*>(malloc_ht(a_elems * sizeof(std::complex<double>), cluster_id));
-    // std::complex<double>* B_dsp = static_cast<std::complex<double>*>(malloc_ht(b_elems * sizeof(std::complex<double>), cluster_id));
-    std::complex<double>* C_dsp = static_cast<std::complex<double>*>(malloc_ht(c_elems * sizeof(std::complex<double>), cluster_id));
+    // std::complex<double>* A_dsp = static_cast<std::complex<double>*>(malloc_ht(a_elems *
+    // sizeof(std::complex<double>), cluster_id)); std::complex<double>* B_dsp =
+    // static_cast<std::complex<double>*>(malloc_ht(b_elems * sizeof(std::complex<double>), cluster_id));
+    std::complex<double>* C_dsp =
+        static_cast<std::complex<double>*>(malloc_ht(c_elems * sizeof(std::complex<double>), cluster_id));
     std::complex<double>* alp = static_cast<std::complex<double>*>(malloc_ht(sizeof(std::complex<double>), cluster_id));
     std::complex<double>* bet = static_cast<std::complex<double>*>(malloc_ht(sizeof(std::complex<double>), cluster_id));
 
@@ -444,13 +423,13 @@ void zgemm_pack_mth_(const char* transa,
                      *k,
                      alp,
                      a,
-                    //  A_dsp,
+                     //  A_dsp,
                      *lda,
                      b,
-                    //  B_dsp,
+                     //  B_dsp,
                      *ldb,
                      bet,
-                    //  c,
+                     //  c,
                      C_dsp,
                      *ldc,
                      cluster_id);
@@ -476,8 +455,7 @@ void cgemm_mth_(const char* transa,
                 const std::complex<float>* beta,
                 std::complex<float>* c,
                 const int* ldc,
-                int cluster_id)
-{
+                int cluster_id) {
     std::complex<float>* alp = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
     *alp = *alpha;
     std::complex<float>* bet = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
@@ -516,17 +494,19 @@ void cgemm_pack_mth_(const char* transa,
                      const std::complex<float>* beta,
                      std::complex<float>* c,
                      const int* ldc,
-                     int cluster_id)
-{
+                     int cluster_id) {
     const bool transa_not = (transa[0] == 'N' || transa[0] == 'n');
     const bool transb_not = (transb[0] == 'N' || transb[0] == 'n');
     const size_t a_elems = static_cast<size_t>(*lda) * (transa_not ? static_cast<size_t>(*k) : static_cast<size_t>(*m));
     const size_t b_elems = static_cast<size_t>(*ldb) * (transb_not ? static_cast<size_t>(*n) : static_cast<size_t>(*k));
     const size_t c_elems = static_cast<size_t>(*ldc) * static_cast<size_t>(*n);
 
-    std::complex<float>* A_dsp = static_cast<std::complex<float>*>(malloc_ht(a_elems * sizeof(std::complex<float>), cluster_id));
-    std::complex<float>* B_dsp = static_cast<std::complex<float>*>(malloc_ht(b_elems * sizeof(std::complex<float>), cluster_id));
-    std::complex<float>* C_dsp = static_cast<std::complex<float>*>(malloc_ht(c_elems * sizeof(std::complex<float>), cluster_id));
+    std::complex<float>* A_dsp =
+        static_cast<std::complex<float>*>(malloc_ht(a_elems * sizeof(std::complex<float>), cluster_id));
+    std::complex<float>* B_dsp =
+        static_cast<std::complex<float>*>(malloc_ht(b_elems * sizeof(std::complex<float>), cluster_id));
+    std::complex<float>* C_dsp =
+        static_cast<std::complex<float>*>(malloc_ht(c_elems * sizeof(std::complex<float>), cluster_id));
     std::complex<float>* alp = static_cast<std::complex<float>*>(malloc_ht(sizeof(std::complex<float>), cluster_id));
     std::complex<float>* bet = static_cast<std::complex<float>*>(malloc_ht(sizeof(std::complex<float>), cluster_id));
 
@@ -572,8 +552,7 @@ void sgemv_mth_(const char* transa,
                 const float* beta,
                 float* y,
                 const int* incy,
-                int cluster_id)
-{
+                int cluster_id) {
     mt_hthread_sgemv(CBLAS_ORDER::CblasColMajor,
                      convertBLASTranspose(transa),
                      *m,
@@ -600,8 +579,7 @@ void dgemv_mth_(const char* transa,
                 const double* beta,
                 double* y,
                 const int* incy,
-                int cluster_id)
-{
+                int cluster_id) {
     mt_hthread_dgemv(CBLAS_ORDER::CblasColMajor,
                      convertBLASTranspose(transa),
                      *m,
@@ -628,8 +606,7 @@ void zgemv_mth_(const char* transa,
                 const std::complex<double>* beta,
                 std::complex<double>* y,
                 const int* incy,
-                int cluster_id)
-{
+                int cluster_id) {
     std::complex<double>* alp = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
     *alp = *alpha;
     std::complex<double>* bet = (std::complex<double>*)malloc_ht(sizeof(std::complex<double>), cluster_id);
@@ -664,8 +641,7 @@ void cgemv_mth_(const char* transa,
                 const std::complex<float>* beta,
                 std::complex<float>* y,
                 const int* incy,
-                int cluster_id)
-{
+                int cluster_id) {
     std::complex<float>* alp = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);
     *alp = *alpha;
     std::complex<float>* bet = (std::complex<float>*)malloc_ht(sizeof(std::complex<float>), cluster_id);

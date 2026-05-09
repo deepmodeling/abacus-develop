@@ -30,8 +30,7 @@ We need not only read and import, but also distribute here
 */
 
 // free function, not needed to be a member of psi_init_nao
-void normalize(const std::vector<double>& r, std::vector<double>& flz)
-{
+void normalize(const std::vector<double>& r, std::vector<double>& flz) {
     std::vector<double> flz2r2(r.size());
     std::transform(r.begin(), r.end(), flz.begin(), flz2r2.begin(), [](double r, double flz) {
         return flz * flz * r * r;
@@ -43,8 +42,7 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
-void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
-{
+void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank) {
     ModuleBase::timer::start("psi_init_nao", "read_external_orbs");
 
     this->orbital_files_.resize(this->p_ucell_->ntype);
@@ -53,47 +51,40 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
     this->chi_.resize(this->p_ucell_->ntype);
 
 #ifdef __MPI
-    if (rank == 0)
-    {
+    if (rank == 0) {
 #endif
         std::copy(orbital_files, orbital_files + this->p_ucell_->ntype, this->orbital_files_.begin());
 #ifdef __MPI
     }
     Parallel_Common::bcast_string(this->orbital_files_.data(), this->p_ucell_->ntype);
 #endif
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
         std::ifstream ifs_it;
         bool is_open = false;
-        if (rank == 0)
-        {
+        if (rank == 0) {
             ifs_it.open(PARAM.inp.orbital_dir + this->orbital_files_[it]);
             is_open = ifs_it.is_open();
         }
 #ifdef __MPI
         Parallel_Common::bcast_bool(is_open);
 #endif
-        if (!is_open)
-        {
+        if (!is_open) {
             GlobalV::ofs_warning << "psi_init_nao<T>::read_orbital_files: cannot open orbital file: "
                                  << this->orbital_files_[it] << std::endl;
             ModuleBase::WARNING_QUIT("psi_init_nao<T>::read_orbital_files", "cannot open orbital file.");
-        }
-        else
-        {
+        } else {
             GlobalV::ofs_running << "psi_init_nao<T>::read_orbital_files: reading orbital file: "
                                  << this->orbital_files_[it] << std::endl;
         }
-        std::string elem; // garbage value, will discard
-        double ecut = 0.0;      // garbage value, will discard
+        std::string elem;  // garbage value, will discard
+        double ecut = 0.0; // garbage value, will discard
         int nr = 0;
         double dr = 0.0;
         std::vector<int> nzeta;
         std::vector<std::vector<double>> radials;
         ModuleIO::read_abacus_orb(ifs_it, elem, ecut, nr, dr, nzeta, radials, rank);
 
-        if (rank == 0)
-        {
+        if (rank == 0) {
             ifs_it.close();
         }
 
@@ -111,8 +102,7 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
         // chi_
         this->chi_[it].resize(nchi);
         std::for_each(this->chi_[it].begin(), this->chi_[it].end(), [nr](std::vector<double>& chi) { chi.resize(nr); });
-        for (int ichi = 0; ichi < nchi; ichi++)
-        {
+        for (int ichi = 0; ichi < nchi; ichi++) {
             std::copy(radials[ichi].begin(), radials[ichi].end(), this->chi_[it][ichi].begin());
         }
     }
@@ -120,25 +110,21 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
 }
 
 template <typename T>
-void psi_init_nao<T>::allocate_ao_table()
-{
+void psi_init_nao<T>::allocate_ao_table() {
     // find correct dimension for ovlp_flzjlq
     int ntype = this->p_ucell_->ntype;
     int lmaxmax = 0;   // lmaxmax
     int nzeta_max = 0; // dim3 should be the maximum number of zeta for each atomtype
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
         int nzeta = 0;
         int lmax = this->p_ucell_->atoms[it].nwl;
         lmaxmax = (lmaxmax > lmax) ? lmaxmax : lmax;
-        for (int l = 0; l < lmax + 1; l++)
-        {
+        for (int l = 0; l < lmax + 1; l++) {
             nzeta += this->p_ucell_->atoms[it].l_nchi[l];
         }
         nzeta_max = (nzeta > nzeta_max) ? nzeta : nzeta_max;
     }
-    if (nzeta_max == 0)
-    {
+    if (nzeta_max == 0) {
         ModuleBase::WARNING_QUIT("psi_init_nao<T>::psi_init_nao",
                                  "there is not ANY numerical atomic orbital read in present system, quit.");
     }
@@ -148,13 +134,12 @@ void psi_init_nao<T>::allocate_ao_table()
 
 template <typename T>
 void psi_init_nao<T>::initialize(const Structure_Factor* sf,
-                                        const ModulePW::PW_Basis_K* pw_wfc,
-                                        const UnitCell* p_ucell,
-                                        const K_Vectors* p_kv_in,
-                                        const int& random_seed,
-                                        const pseudopot_cell_vnl* p_pspot_nl,
-                                        const int& rank)
-{
+                                 const ModulePW::PW_Basis_K* pw_wfc,
+                                 const UnitCell* p_ucell,
+                                 const K_Vectors* p_kv_in,
+                                 const int& random_seed,
+                                 const pseudopot_cell_vnl* p_pspot_nl,
+                                 const int& rank) {
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
     // import
@@ -170,10 +155,8 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 
     int nbands_local = 0;
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
-        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
-        {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
+        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++) {
             /* EVERY ZETA FOR (2l+1) ORBS */
             const int nchi = this->p_ucell_->atoms[it].l_nchi[l];
             const int degen_l = (l == 0) ? 1 : 2 * l + 1;
@@ -195,8 +178,7 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_init_nao<T>::tabulate()
-{
+void psi_init_nao<T>::tabulate() {
     ModuleBase::timer::start("psi_init_nao", "tabulate");
 
     // a uniformed qgrid
@@ -205,18 +187,15 @@ void psi_init_nao<T>::tabulate()
     std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * PARAM.globalv.dq; });
 
     // only when needed, allocate memory for cubspl_
-    if (this->cubspl_.get())
-    {
+    if (this->cubspl_.get()) {
         this->cubspl_.reset();
     }
     this->cubspl_ = std::unique_ptr<ModuleBase::CubicSpline>(new ModuleBase::CubicSpline(qgrid.size(), qgrid.data()));
 
     // calculate the total number of radials and call reserve to allocate memory
     int nchi = 0;
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
-        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
-        {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
+        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++) {
             nchi += this->p_ucell_->atoms[it].l_nchi[l];
         }
     }
@@ -226,13 +205,10 @@ void psi_init_nao<T>::tabulate()
     // tabulate the spherical bessel transform of numerical orbital function
     std::vector<double> Jlfq(PARAM.globalv.nqx, 0.0);
     int i = 0;
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
         int ic = 0;
-        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++)
-        {
-            for (int izeta = 0; izeta < this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
-            {
+        for (int l = 0; l < this->p_ucell_->atoms[it].nwl + 1; l++) {
+            for (int izeta = 0; izeta < this->p_ucell_->atoms[it].l_nchi[l]; izeta++) {
                 sbt_.direct(l,
                             this->nr_[it][ic],
                             this->rgrid_[it][ic].data(),
@@ -250,8 +226,7 @@ void psi_init_nao<T>::tabulate()
 }
 
 template <typename T>
-void psi_init_nao<T>::init_psig(T* psig, const int& ik)
-{
+void psi_init_nao<T>::init_psig(T* psig, const int& ik) {
     ModuleBase::timer::start("psi_init_nao", "init_psig");
     assert(ik >= 0);
     const int npw = this->pw_wfc_->npwk[ik];
@@ -265,8 +240,7 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
     std::vector<ModuleBase::Vector3<double>> q(npw);
 
 #pragma omp parallel for schedule(static)
-    for (int ig = 0; ig < npw; ig++)
-    {
+    for (int ig = 0; ig < npw; ig++) {
         q[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
         qnorm[ig] = q[ig].norm() * this->p_ucell_->tpiba;
     }
@@ -275,19 +249,15 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
     // int index = 0;
     std::vector<double> Jlfq(npw, 0.0);
     int ibasis = 0;
-    for (int it = 0; it < this->p_ucell_->ntype; it++)
-    {
+    for (int it = 0; it < this->p_ucell_->ntype; it++) {
         /* HERE LOOP OVER ALL TYPES */
-        for (int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
-        {
+        for (int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++) {
             /* HERE LOOP OVER ALL ATOMS */
             std::complex<double>* sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
             int ic = 0; // ic is a flatten index of chi, therefore it is defined here.
-            for (int L = 0; L < this->p_ucell_->atoms[it].nwl + 1; L++)
-            {
+            for (int L = 0; L < this->p_ucell_->atoms[it].nwl + 1; L++) {
                 std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); // mohan 2010-04-19
-                for (int N = 0; N < this->p_ucell_->atoms[it].l_nchi[L]; N++)
-                {
+                for (int N = 0; N < this->p_ucell_->atoms[it].l_nchi[L]; N++) {
                     /* HERE LOOP OVER ALL NAOS */
                     /*
                         for already using flattened 1d index of chi, which folds l and n, the spherical bessel
@@ -299,39 +269,31 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                     this->cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, this->projmap_(it, L, N));
 
                     /* FOR EVERY NAO IN EACH ATOM */
-                    if (PARAM.inp.nspin == 4)
-                    {
+                    if (PARAM.inp.nspin == 4) {
                         /* FOR EACH SPIN CHANNEL */
                         for (int is_N = 0; is_N < 2; is_N++) // rotate base
                         // for(int is_N = 0; is_N < 1; is_N++)
                         {
-                            if (L == 0 && is_N == 1)
-                            {
+                            if (L == 0 && is_N == 1) {
                                 continue;
-                            }
-                            else
-                            {
+                            } else {
                                 const double j = fabs(double(L + is_N) - 0.5);
                                 double alpha, gamma;
                                 std::complex<double> fup, fdown;
-                                if (fabs(j - L + 0.5) < 1e-4)
-                                {
+                                if (fabs(j - L + 0.5) < 1e-4) {
                                     continue;
                                 }
                                 alpha = this->p_ucell_->atoms[it].angle1[ia];
                                 gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
-                                for (int m = 0; m < 2 * L + 1; m++)
-                                {
+                                for (int m = 0; m < 2 * L + 1; m++) {
                                     const int lm = L * L + m;
 #pragma omp parallel for
-                                    for (int ig = 0; ig < npw; ig++)
-                                    {
+                                    for (int ig = 0; ig < npw; ig++) {
                                         aux[ig] = sk[ig] * ylm(lm, ig) * Jlfq[ig];
                                     }
 
 #pragma omp parallel for
-                                    for (int ig = 0; ig < npw; ig++)
-                                    {
+                                    for (int ig = 0; ig < npw; ig++) {
                                         fup = cos(0.5 * alpha) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * alpha) * aux[ig];
                                         // build the orthogonal wfc
@@ -345,38 +307,36 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         psig[(ibasis + 2 * L + 1) * 2 * npwk_max + ig] = this->template cast_to_T<T>(
                                             (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup);
-                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig] = this->template cast_to_T<T>(
-                                            (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
+                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig] =
+                                            this->template cast_to_T<T>(
+                                                (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
                                     }
                                     ibasis++;
                                 }
                                 ibasis += 2 * L + 1;
                             }
                         } // end for is_N
-                    }     // end if PARAM.inp.noncolin
-                    else
-                    { // LSDA and nomagnet case
+                    } // end if PARAM.inp.noncolin
+                    else { // LSDA and nomagnet case
                         /* DOES NOT DISTINGUISH m QUANTUM NUMBER FOR CHI */
-                        for (int m = 0; m < 2 * L + 1; m++)
-                        {
+                        for (int m = 0; m < 2 * L + 1; m++) {
                             const int lm = L * L + m;
 #pragma omp parallel for
-                            for (int ig = 0; ig < npw; ig++)
-                            {
-                                psig[ibasis * npwk_max + ig] = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
+                            for (int ig = 0; ig < npw; ig++) {
+                                psig[ibasis * npwk_max + ig] =
+                                    this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
                             }
                             ++ibasis;
                         }
                     }
                     ++ic;
                 } // end for N
-            }     // end for L
+            } // end for L
             delete[] sk;
         } // end for ia
-    }     // end for it
+    } // end for it
     /* complement the rest of bands if there are */
-    if (this->nbands_complem() > 0)
-    {
+    if (this->nbands_complem() > 0) {
         this->random_t(psig, ibasis, this->nbands_start_, ik);
     }
     ModuleBase::timer::end("psi_init_nao", "init_psig");

@@ -5,8 +5,7 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #define THREADS_PER_BLOCK 256
 
@@ -17,12 +16,10 @@ __global__ void onsite_op(const int npm,
                           const int tnp,
                           const thrust::complex<FPTYPE>* lambda_coeff,
                           thrust::complex<FPTYPE>* ps,
-                          const thrust::complex<FPTYPE>* becp)
-{
+                          const thrust::complex<FPTYPE>* becp) {
     const int ip = blockIdx.x;
     const int nbands = npm / npol;
-    for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
-    {
+    for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x) {
         int ib2 = ib * npol;
         int iat = ip_iat[ip];
         const int psind = ip * npm + ib2;
@@ -42,15 +39,12 @@ __global__ void onsite_op(const int npm,
                           const int tnp,
                           const thrust::complex<FPTYPE>* vu,
                           thrust::complex<FPTYPE>* ps,
-                          const thrust::complex<FPTYPE>* becp)
-{
+                          const thrust::complex<FPTYPE>* becp) {
     const int ip = blockIdx.x;
     int m1 = ip_m[ip];
-    if (m1 >= 0)
-    {
+    if (m1 >= 0) {
         const int nbands = npm / npol;
-        for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
-        {
+        for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x) {
             int ib2 = ib * npol;
             int iat = ip_iat[ip];
             const thrust::complex<FPTYPE>* vu_iat = vu + vu_begin_iat[iat];
@@ -60,14 +54,13 @@ __global__ void onsite_op(const int npm,
             int ip2_begin = ip - m1;
             int ip2_end = ip - m1 + tlp1;
             const int psind = ip * npm + ib2;
-            for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
-            {
+            for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++) {
                 const int becpind = ib2 * tnp + ip2;
                 int m2 = ip_m[ip2];
                 const int index_mm = m1 * tlp1 + m2;
                 ps[psind] += vu_iat[index_mm] * becp[becpind] + vu_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
-                ps[psind + 1] += vu_iat[index_mm + tlp1_2 * 1] * becp[becpind]
-                                 + vu_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
+                ps[psind + 1] +=
+                    vu_iat[index_mm + tlp1_2 * 1] * becp[becpind] + vu_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
             }
         }
     }
@@ -81,8 +74,7 @@ void hamilt::onsite_ps_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const int& tnp,
                                                                        const std::complex<FPTYPE>* lambda_coeff,
                                                                        std::complex<FPTYPE>* ps,
-                                                                       const std::complex<FPTYPE>* becp)
-{
+                                                                       const std::complex<FPTYPE>* becp) {
     // denghui implement 20221019
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     onsite_op<FPTYPE>
@@ -108,8 +100,7 @@ void hamilt::onsite_ps_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const int& tnp,
                                                                        const std::complex<FPTYPE>* vu,
                                                                        std::complex<FPTYPE>* ps,
-                                                                       const std::complex<FPTYPE>* becp)
-{
+                                                                       const std::complex<FPTYPE>* becp) {
     // denghui implement 20221109
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     onsite_op<FPTYPE>

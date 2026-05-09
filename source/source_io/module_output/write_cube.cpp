@@ -22,8 +22,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                                    const UnitCell* const ucell,
                                    const int precision,
                                    const int out_fermi,
-                                   const bool reduce_all_pool)
-{
+                                   const bool reduce_all_pool) {
     ModuleBase::TITLE("ModuleIO", "write_vdata_palgrid");
 
     const int my_rank = GlobalV::MY_RANK;
@@ -44,16 +43,12 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     // reduce
     std::vector<double> data_xyz_full(nxyz); // data to be written
 #ifdef __MPI                                 // reduce to rank 0
-    if (GlobalV::MY_BNDGROUP == 0)
-    {
+    if (GlobalV::MY_BNDGROUP == 0) {
         pgrid.reduce(data_xyz_full.data(), data, reduce_all_pool);
     }
-    if (!reduce_all_pool)
-    {
+    if (!reduce_all_pool) {
         MPI_Barrier(MPI_COMM_WORLD);
-    }
-    else
-    {
+    } else {
         MPI_Barrier(POOL_WORLD);
     }
 #else
@@ -61,42 +56,31 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
 #endif
 
     // build the info structure
-    if ((!reduce_all_pool && my_rank == 0) || (reduce_all_pool && rank_in_pool == 0))
-    {
+    if ((!reduce_all_pool && my_rank == 0) || (reduce_all_pool && rank_in_pool == 0)) {
         /// output header for cube file
         ss << std::fixed;
         ss << std::setprecision(6);
 
-        ss << "Ionic_Step " << istep+1 
-		<< "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
+        ss << "Ionic_Step " << istep + 1 << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x"
+           << std::endl;
 
         ss << nspin << " # number of spin directions ";
-        if (out_fermi == 1)
-        {
-            if (PARAM.globalv.two_fermi)
-            {
-                if (is == 0)
-                {
+        if (out_fermi == 1) {
+            if (PARAM.globalv.two_fermi) {
+                if (is == 0) {
                     ss << ef << " # Fermi energy for spin=1, in Ry" << std::endl;
-                }
-                else if (is == 1)
-                {
+                } else if (is == 1) {
                     ss << ef << " # Fermi energy for spin=2, in Ry" << std::endl;
                 }
-            }
-            else
-            {
+            } else {
                 ss << ef << " # Fermi energy, in Ry" << std::endl;
             }
-        }
-        else
-        {
+        } else {
             ss << std::endl;
         }
 
         std::vector<std::string> comment(2);
-        for (int i = 0; i < 2; ++i)
-        {
+        for (int i = 0; i < 2; ++i) {
             std::getline(ss, comment[i]);
         }
 
@@ -117,31 +101,23 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
         std::vector<int> atom_type;
         std::vector<double> atom_charge;
         std::vector<std::vector<double>> atom_pos;
-        for (int it = 0; it < ucell->ntype; it++)
-        {
+        for (int it = 0; it < ucell->ntype; it++) {
             // erase the number in label, such as Fe1.
             element = ucell->atoms[it].label;
             std::string::iterator temp = element.begin();
-            while (temp != element.end())
-            {
-                if ((*temp >= '1') && (*temp <= '9'))
-                {
+            while (temp != element.end()) {
+                if ((*temp >= '1') && (*temp <= '9')) {
                     temp = element.erase(temp);
-                }
-                else
-                {
+                } else {
                     temp++;
                 }
             }
 
-            for (int ia = 0; ia < ucell->atoms[it].na; ia++)
-            {
+            for (int ia = 0; ia < ucell->atoms[it].na; ia++) {
                 // convert from label to atomic number
                 int z = 0;
-                for (int j = 0; j != ModuleBase::element_name.size(); j++)
-                {
-                    if (element == ModuleBase::element_name[j])
-                    {
+                for (int j = 0; j != ModuleBase::element_name.size(); j++) {
+                    if (element == ModuleBase::element_name[j]) {
                         z = j + 1;
                         break;
                     }
@@ -191,11 +167,9 @@ void ModuleIO::write_cube(const std::string& file,
                           const std::vector<std::vector<double>>& atom_pos,
                           const std::vector<double>& data,
                           const int precision,
-                          const int ndata_line)
-{
+                          const int ndata_line) {
     assert(comment.size() >= 2);
-    for (int i = 0; i < 2; ++i)
-    {
+    for (int i = 0; i < 2; ++i) {
         assert(comment[i].find("\n") == std::string::npos);
     }
 
@@ -207,8 +181,7 @@ void ModuleIO::write_cube(const std::string& file,
     assert(atom_charge.size() >= natom);
     assert(atom_pos.size() >= natom);
 
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         assert(atom_pos[i].size() >= 3);
     }
 
@@ -219,8 +192,7 @@ void ModuleIO::write_cube(const std::string& file,
     // mohan add 2025-09-10
     GlobalV::ofs_running << " Write data to file: " << file << std::endl;
 
-    for (int i = 0; i < 2; ++i)
-    {
+    for (int i = 0; i < 2; ++i) {
         ofs << comment[i] << "\n";
     }
 
@@ -234,8 +206,7 @@ void ModuleIO::write_cube(const std::string& file,
     ofs << ny << " " << dy[0] << " " << dy[1] << " " << dy[2] << "\n";
     ofs << nz << " " << dz[0] << " " << dz[1] << " " << dz[2] << "\n";
 
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         ofs << " " << atom_type[i] << " " << atom_charge[i] << " " << atom_pos[i][0] << " " << atom_pos[i][1] << " "
             << atom_pos[i][2] << "\n";
     }
@@ -244,13 +215,10 @@ void ModuleIO::write_cube(const std::string& file,
     ofs << std::setprecision(precision);
     ofs << std::scientific;
     const int nxy = nx * ny;
-    for (int ixy = 0; ixy < nxy; ++ixy)
-    {
-        for (int iz = 0; iz < nz; ++iz)
-        {
+    for (int ixy = 0; ixy < nxy; ++ixy) {
+        for (int iz = 0; iz < nz; ++iz) {
             ofs << " " << data[ixy * nz + iz];
-            if ((iz + 1) % ndata_line == 0 && iz != nz - 1)
-            {
+            if ((iz + 1) % ndata_line == 0 && iz != nz - 1) {
                 ofs << "\n";
             }
         }

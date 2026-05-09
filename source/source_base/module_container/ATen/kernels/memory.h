@@ -67,27 +67,21 @@ struct synchronize_memory {
      * @param arr_in The input array.
      * @param size The size of the array.
      */
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const size_t& size);
+    void operator()(T* arr_out, const T* arr_in, const size_t& size);
 };
 
 template <typename T, typename Device_out, typename Device_in>
 struct synchronize_memory_stride {
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const std::vector<int64_t>& out_size,
-        const std::vector<int64_t>& in_size)
-    {
+    void
+    operator()(T* arr_out, const T* arr_in, const std::vector<int64_t>& out_size, const std::vector<int64_t>& in_size) {
         REQUIRES_OK(in_size.size() == out_size.size() && in_size.size() <= 2);
         if (in_size.size() == 1) {
             synchronize_memory<T, Device_out, Device_in>()(arr_out, arr_in, in_size[0]);
-        }
-        else {
+        } else {
             for (int64_t ii = 0; ii < out_size[0]; ii++) {
-                synchronize_memory<T, Device_out, Device_in>()(arr_out + ii * out_size[1], arr_in + ii * in_size[1], in_size[1]);
+                synchronize_memory<T, Device_out, Device_in>()(arr_out + ii * out_size[1],
+                                                               arr_in + ii * in_size[1],
+                                                               in_size[1]);
             }
         }
     }
@@ -116,12 +110,8 @@ struct cast_memory {
      * @param arr_in The input array.
      * @param size The size of the array.
      */
-    void operator()(
-        T_out* arr_out,
-        const T_in* arr_in,
-        const size_t& size);
+    void operator()(T_out* arr_out, const T_in* arr_in, const size_t& size);
 };
-
 
 /**
  * @brief Deletes memory on a device.

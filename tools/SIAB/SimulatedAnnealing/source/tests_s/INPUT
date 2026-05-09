@@ -2,13 +2,13 @@
 1                       // if or not calculate the spillage. 1/0
 0                       // restart or not. 1/0
 1                       // if or not output the file. 1/0
-1          				// number of structures.
+1                          // number of structures.
 H-6-0.6.15.dat
 </PW_QS>
 
 <PARALLEL>
 1            //number of k points
-1			// number of pools
+1            // number of pools
 </PARALLEL>
 
 <BLOCK_NE>
@@ -25,8 +25,8 @@ H-6-0.6.15.dat
 2                   // Number of temperatures(spillage)
 500                 // Number of steps per temparature
 
-1.0e-2				// start temperature for kinetic energy
-0.8					// Cooling rate
+1.0e-2                // start temperature for kinetic energy
+0.8                    // Cooling rate
 1                   // Number of temperatures(kinetical)
 100                 // Number of steps per temparature
 

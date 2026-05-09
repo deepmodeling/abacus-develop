@@ -5,11 +5,9 @@
 
 #include <vector>
 
-class GintCommonTest : public ::testing::Test
-{
+class GintCommonTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         ucell_.ntype = 1;
         ucell_.nat = 2;
         ucell_.atoms = new Atom[ucell_.ntype];
@@ -26,25 +24,17 @@ class GintCommonTest : public ::testing::Test
         ucell_.set_iat2iwt(1);
 
         // 2 atom-pairs, each with a single R = (0, 0, 0)
-        ijr_info_ = {
-            2,
-            0, 0, 1, 0, 0, 0,
-            0, 1, 1, 0, 0, 0
-        };
+        ijr_info_ = {2, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0};
         gint_info_ = ModuleGint::GintInfo::make_test_instance_ptr(ucell_, ijr_info_);
     }
 
-    void TearDown() override
-    {
-    }
+    void TearDown() override {}
 
-    template<typename T>
-    static void fill_values(hamilt::HContainer<T>& hr)
-    {
+    template <typename T>
+    static void fill_values(hamilt::HContainer<T>& hr) {
         T* values = hr.get_wrapper();
         ASSERT_NE(values, nullptr);
-        for (size_t i = 0; i < hr.get_nnr(); ++i)
-        {
+        for (size_t i = 0; i < hr.get_nnr(); ++i) {
             values[i] = static_cast<T>(i + 1) / static_cast<T>(8);
         }
     }
@@ -54,8 +44,7 @@ class GintCommonTest : public ::testing::Test
     ModuleGint::GintInfo* gint_info_ = nullptr;
 };
 
-TEST_F(GintCommonTest, GetHrFloatBuildsExpectedShape)
-{
+TEST_F(GintCommonTest, GetHrFloatBuildsExpectedShape) {
     auto hr = gint_info_->get_hr<float>();
 
     EXPECT_EQ(hr.size_atom_pairs(), 2);
@@ -65,8 +54,7 @@ TEST_F(GintCommonTest, GetHrFloatBuildsExpectedShape)
     ASSERT_NE(hr.find_pair(0, 1), nullptr);
 }
 
-TEST_F(GintCommonTest, CastHcontainerValuesPreservesLayoutAndValues)
-{
+TEST_F(GintCommonTest, CastHcontainerValuesPreservesLayoutAndValues) {
     auto src = gint_info_->get_hr<double>();
     auto dst = gint_info_->get_hr<float>();
     fill_values(src);
@@ -75,14 +63,12 @@ TEST_F(GintCommonTest, CastHcontainerValuesPreservesLayoutAndValues)
 
     EXPECT_EQ(src.get_ijr_info(), dst.get_ijr_info());
     ASSERT_NE(dst.get_wrapper(), nullptr);
-    for (size_t i = 0; i < src.get_nnr(); ++i)
-    {
+    for (size_t i = 0; i < src.get_nnr(); ++i) {
         EXPECT_FLOAT_EQ(dst.get_wrapper()[i], static_cast<float>(src.get_wrapper()[i]));
     }
 }
 
-TEST_F(GintCommonTest, MakeCastHcontainerBuildsNewTypedCopy)
-{
+TEST_F(GintCommonTest, MakeCastHcontainerBuildsNewTypedCopy) {
     auto src = gint_info_->get_hr<double>();
     fill_values(src);
 
@@ -90,14 +76,12 @@ TEST_F(GintCommonTest, MakeCastHcontainerBuildsNewTypedCopy)
 
     EXPECT_EQ(src.get_ijr_info(), dst.get_ijr_info());
     EXPECT_EQ(src.get_nnr(), dst.get_nnr());
-    for (size_t i = 0; i < src.get_nnr(); ++i)
-    {
+    for (size_t i = 0; i < src.get_nnr(); ++i) {
         EXPECT_FLOAT_EQ(dst.get_wrapper()[i], static_cast<float>(src.get_wrapper()[i]));
     }
 }
 
-TEST_F(GintCommonTest, TransferDm2dToGintSupportsDoubleToFloat)
-{
+TEST_F(GintCommonTest, TransferDm2dToGintSupportsDoubleToFloat) {
     auto dm = gint_info_->get_hr<double>();
     fill_values(dm);
 
@@ -109,8 +93,7 @@ TEST_F(GintCommonTest, TransferDm2dToGintSupportsDoubleToFloat)
 
     ASSERT_EQ(dm_gint.size(), 1);
     EXPECT_EQ(dm.get_ijr_info(), dm_gint[0].get_ijr_info());
-    for (size_t i = 0; i < dm.get_nnr(); ++i)
-    {
+    for (size_t i = 0; i < dm.get_nnr(); ++i) {
         EXPECT_FLOAT_EQ(dm_gint[0].get_wrapper()[i], static_cast<float>(dm.get_wrapper()[i]));
     }
 }

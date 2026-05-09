@@ -68,8 +68,7 @@ struct cal_sk_op {
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_sk_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_sk_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& ik,
                     const int& ntype,
@@ -97,5 +96,5 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_GPU>
                     std::complex<FPTYPE>* sk);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-}  // namespace hamilt
-#endif //SRC_PW_WF_MULTI_DEVICE_H
+} // namespace hamilt
+#endif // SRC_PW_WF_MULTI_DEVICE_H

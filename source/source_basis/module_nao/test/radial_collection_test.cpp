@@ -29,16 +29,15 @@
  *  - all "batch setters"
  *      - Set a property for all RadialSet objects at once
  *                                                                      */
-class RadialCollectionTest : public ::testing::Test
-{
+class RadialCollectionTest : public ::testing::Test {
   protected:
     void SetUp();
     void TearDown();
 
-    RadialCollection orb;                                         //!< object under test
-    int nfile = 0; // number of orbital/pseudopotential files
-    std::string* file = nullptr; //!< orbitals file to read from
-    std::string log_file = "./test_files/radial_collection.log";         //!< file for logging
+    RadialCollection orb;                                        //!< object under test
+    int nfile = 0;                                               // number of orbital/pseudopotential files
+    std::string* file = nullptr;                                 //!< orbitals file to read from
+    std::string log_file = "./test_files/radial_collection.log"; //!< file for logging
 };
 
 void RadialCollectionTest::SetUp() {
@@ -51,9 +50,7 @@ void RadialCollectionTest::SetUp() {
     file[3] = dir + "Fe_gga_9au_100Ry_4s2p2d1f.orb";
 }
 
-void RadialCollectionTest::TearDown() {
-    delete[] file;
-}
+void RadialCollectionTest::TearDown() { delete[] file; }
 
 TEST_F(RadialCollectionTest, BuildAndGet) {
     orb.build(nfile, file, 'o');
@@ -67,21 +64,21 @@ TEST_F(RadialCollectionTest, BuildAndGet) {
     EXPECT_EQ(orb.lmax(), 3);
     EXPECT_DOUBLE_EQ(orb.rcut_max(), 10.0);
 
-    EXPECT_EQ(orb.nzeta(0,0), 2);
-    EXPECT_EQ(orb.nzeta(0,1), 2);
-    EXPECT_EQ(orb.nzeta(0,2), 1);
+    EXPECT_EQ(orb.nzeta(0, 0), 2);
+    EXPECT_EQ(orb.nzeta(0, 1), 2);
+    EXPECT_EQ(orb.nzeta(0, 2), 1);
 
-    EXPECT_EQ(orb.nzeta(1,0), 2);
-    EXPECT_EQ(orb.nzeta(1,1), 1);
+    EXPECT_EQ(orb.nzeta(1, 0), 2);
+    EXPECT_EQ(orb.nzeta(1, 1), 1);
 
-    EXPECT_EQ(orb.nzeta(2,0), 2);
-    EXPECT_EQ(orb.nzeta(2,1), 2);
-    EXPECT_EQ(orb.nzeta(2,2), 1);
+    EXPECT_EQ(orb.nzeta(2, 0), 2);
+    EXPECT_EQ(orb.nzeta(2, 1), 2);
+    EXPECT_EQ(orb.nzeta(2, 2), 1);
 
-    EXPECT_EQ(orb.nzeta(3,0), 4);
-    EXPECT_EQ(orb.nzeta(3,1), 2);
-    EXPECT_EQ(orb.nzeta(3,2), 2);
-    EXPECT_EQ(orb.nzeta(3,3), 1);
+    EXPECT_EQ(orb.nzeta(3, 0), 4);
+    EXPECT_EQ(orb.nzeta(3, 1), 2);
+    EXPECT_EQ(orb.nzeta(3, 2), 2);
+    EXPECT_EQ(orb.nzeta(3, 3), 1);
 
     EXPECT_EQ(orb.nzeta_max(0), 2);
     EXPECT_EQ(orb.nzeta_max(1), 2);
@@ -145,8 +142,7 @@ TEST_F(RadialCollectionTest, BatchSet) {
     delete[] grid;
 }
 
-TEST_F(RadialCollectionTest, Copy)
-{
+TEST_F(RadialCollectionTest, Copy) {
     orb.build(nfile, file, 'o');
 
     // copy constructor
@@ -188,17 +184,13 @@ TEST_F(RadialCollectionTest, Copy)
     EXPECT_EQ(orb2.nchi(3), 9);
     EXPECT_EQ(orb2.nchi(), 22);
 
-    for (int itype = 0; itype <= 3; ++itype)
-    {
+    for (int itype = 0; itype <= 3; ++itype) {
         EXPECT_EQ(orb2(itype).itype(), itype);
     }
 
-    for (int itype = 0; itype <= 3; ++itype)
-    {
-        for (int l = 0; l <= orb2(itype).lmax(); ++l)
-        {
-            for (int izeta = 0; izeta != orb2(itype).nzeta(l); ++izeta)
-            {
+    for (int itype = 0; itype <= 3; ++itype) {
+        for (int l = 0; l <= orb2(itype).lmax(); ++l) {
+            for (int izeta = 0; izeta != orb2(itype).nzeta(l); ++izeta) {
                 EXPECT_EQ(orb2(itype, l, izeta).l(), l);
             }
         }
@@ -244,25 +236,20 @@ TEST_F(RadialCollectionTest, Copy)
     EXPECT_EQ(orb3.nchi(3), 9);
     EXPECT_EQ(orb3.nchi(), 22);
 
-    for (int itype = 0; itype <= 3; ++itype)
-    {
+    for (int itype = 0; itype <= 3; ++itype) {
         EXPECT_EQ(orb3(itype).itype(), itype);
     }
 
-    for (int itype = 0; itype <= 3; ++itype)
-    {
-        for (int l = 0; l <= orb3(itype).lmax(); ++l)
-        {
-            for (int izeta = 0; izeta != orb3(itype).nzeta(l); ++izeta)
-            {
+    for (int itype = 0; itype <= 3; ++itype) {
+        for (int l = 0; l <= orb3(itype).lmax(); ++l) {
+            for (int izeta = 0; izeta != orb3(itype).nzeta(l); ++izeta) {
                 EXPECT_EQ(orb3(itype, l, izeta).l(), l);
             }
         }
     }
 }
 
-TEST_F(RadialCollectionTest, Iteration)
-{
+TEST_F(RadialCollectionTest, Iteration) {
     orb.build(nfile, file, 'o');
     EXPECT_EQ(*orb.cbegin(), &orb(0, 0, 0));
     EXPECT_EQ(*(orb.cbegin() + 2), &orb(1, 0, 0));
@@ -271,10 +258,10 @@ TEST_F(RadialCollectionTest, Iteration)
     EXPECT_EQ(*(orb.cbegin() + 17), &orb(0, 2, 0));
     EXPECT_EQ(*(orb.cbegin() + 21), &orb(3, 3, 0));
     EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
-    //EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
-    //EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 5), &orb(1, 0, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 8), &orb(2, 0, 0));
+    // EXPECT_EQ(*(orb.cbegin() + 13), &orb(3, 0, 0));
+    // EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
 }
 
 TEST_F(RadialCollectionTest, Build2) {
@@ -297,13 +284,11 @@ TEST_F(RadialCollectionTest, Build2) {
     }
 
     EXPECT_EQ(orb.nzeta_max(0), nbes);
-    EXPECT_EQ(orb.nchi(0), nbes*(lmax+1));
-    EXPECT_EQ(orb.nchi(), nbes*(lmax+1));
+    EXPECT_EQ(orb.nchi(0), nbes * (lmax + 1));
+    EXPECT_EQ(orb.nchi(), nbes * (lmax + 1));
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

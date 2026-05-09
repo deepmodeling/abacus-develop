@@ -7,11 +7,9 @@
 
 #include <memory>
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
-class ESolver_GetS : public ESolver_KS
-{
+class ESolver_GetS : public ESolver_KS {
   public:
     ESolver_GetS();
     ~ESolver_GetS();

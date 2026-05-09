@@ -12,21 +12,18 @@
 // (3) bfgs_routine -> new_step() or interpolation
 //============= MAP OF BFGS ===========================
 
-Ions_Move_BFGS::Ions_Move_BFGS()
-{
+Ions_Move_BFGS::Ions_Move_BFGS() {
     // Default values for BFGS
     init_done = false;
 }
 
 Ions_Move_BFGS::~Ions_Move_BFGS(){};
 
-void Ions_Move_BFGS::allocate()
-{
+void Ions_Move_BFGS::allocate() {
     ModuleBase::TITLE("Ions_Move_BFGS", "init");
-	if (init_done) 
-	{
-		return;
-	}
+    if (init_done) {
+        return;
+    }
     this->allocate_basic();
 
     // initialize data members
@@ -36,8 +33,7 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
-void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in)
-{
+void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in) {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
     // istep must be set eariler.
@@ -45,14 +41,11 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // use force to setup gradient.
     // Only the first step needs to generate the pos from ucell.
     // In the following steps, the pos is updated by BFGS methods.
-    if (first_step)
-    {
+    if (first_step) {
         Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
         first_step = false;
-    }
-	else
-	{
-		std::vector<double> pos_tmp(3 * ucell.nat);
+    } else {
+        std::vector<double> pos_tmp(3 * ucell.nat);
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad);
     }
     // use energy_in and istep to setup etot and etot_old.
@@ -61,12 +54,9 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // if the result is converged.
     Ions_Move_Basic::check_converged(ucell, this->grad);
 
-    if (Ions_Move_Basic::converged)
-    {
+    if (Ions_Move_Basic::converged) {
         Ions_Move_Basic::terminate(ucell);
-    }
-    else
-    {
+    } else {
         // [ if new step ]
         // reset trust_radius_old.
         // [ if run from previous saved info ]
@@ -91,45 +81,38 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     return;
 }
 
-void Ions_Move_BFGS::restart_bfgs(const double& lat0)
-{
+void Ions_Move_BFGS::restart_bfgs(const double& lat0) {
     ModuleBase::TITLE("Ions_Move_BFGS", "restart_bfgs");
 
     using namespace Ions_Move_Basic;
 
     const int dim = Ions_Move_Basic::dim;
 
-    if (this->save_flag)
-    {
+    if (this->save_flag) {
         // (1) calculate the old trust radius
         trust_radius_old = 0.0;
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             // be careful! now the pos is *lat0 (Bohr)!!
             // bug(periodic boundary) trust_radius_old += (pos[i] - pos_p[i])*(pos[i] - pos_p[i]);
             trust_radius_old += this->move_p[i] * this->move_p[i];
         }
         trust_radius_old = sqrt(trust_radius_old);
 
-        if (PARAM.inp.test_relax_method)
-        {
+        if (PARAM.inp.test_relax_method) {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "trust_radius_old (bohr)", trust_radius_old);
         }
 
         // (2)
         // normalize previous move, used in the case
         // calculate the previous movement of atoms. why I don't save it ??????????
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             // mohan add 2010-07-26.
             // there must be one of the two has the correct sign and value.
             this->move_p[i] = this->check_move(lat0, pos[i], pos_p[i]) / trust_radius_old;
             // std::cout << " " << std::setw(20) << move_p[i] << std::setw(20) << dpmin << std::endl;
         }
-    }
-    else
-    {
-        //	bfgs initialization
+    } else {
+        //    bfgs initialization
         ModuleBase::GlobalFunc::ZEROS(pos_p, dim);
         ModuleBase::GlobalFunc::ZEROS(grad_p, dim);
         ModuleBase::GlobalFunc::ZEROS(move_p, dim);
@@ -167,14 +150,12 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0)
-{
+void Ions_Move_BFGS::bfgs_routine(const double& lat0) {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;
 
     // the bfgs algorithm starts here
-    if (etot > etot_p)
-    {
+    if (etot > etot_p) {
         // the previous step is rejected, line search goes on
         // we believe that we are in a correct direction, what we should do
         // in this case is to find a better step length until it is accepted
@@ -212,8 +193,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         // just like how we estimate the step length in CG
         // dE0s : b*y = averaged_grad * trust_radius_old
         double dE0s = 0.0;
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             // because dE(s)/dR(move_p) = Force(grad)
             // so dE = dR * grad
             dE0s += this->grad_p[i] * this->move_p[i];
@@ -221,22 +201,18 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
 
         double den = etot - etot_p - dE0s;
 
-        if (den > 1.0e-16)
-        {
+        if (den > 1.0e-16) {
             // get optimized trust radius
             trust_radius = -0.5 * dE0s * trust_radius_old / den;
 
-            if (PARAM.inp.test_relax_method)
-            {
+            if (PARAM.inp.test_relax_method) {
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dE0s", dE0s);
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "den", den);
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "interpolated trust radius", trust_radius);
             }
             // std::cout << " Formula : " << etot << " * s^2 + " << dE0s << " * s + " << etot_p << std::endl;
             // std::cout << " Lowest point : " << trust_radius << std::endl;
-        }
-        else if (den <= 1.0e-16)
-        {
+        } else if (den <= 1.0e-16) {
             // no quadratic interpolation is possible
             // then do is again, but smaller raidus.
             trust_radius = 0.5 * trust_radius_old;
@@ -245,14 +221,12 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         }
         // values from the last succeseful bfgs step are restored
         etot = etot_p;
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             this->pos[i] = pos_p[i];
             this->grad[i] = grad_p[i];
         }
 
-        if (trust_radius < relax_bfgs_rmin)
-        {
+        if (trust_radius < relax_bfgs_rmin) {
             // we are trapped in this case..., so the algorithim must be restart
             // the history is reset
             // xiaohui add 2013-03-17
@@ -262,8 +236,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
             // xiaohui add 2013-03-17
             GlobalV::ofs_running << " trust_radius < relax_bfgs_rmin, reset bfgs history." << std::endl;
 
-            if (tr_min_hit)
-            {
+            if (tr_min_hit) {
                 // the history has already been reset at the previous step
                 // something is going wrong
                 ModuleBase::WARNING_QUIT("move_ions", "trust radius is too small! Break down.");
@@ -271,32 +244,25 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
 
             this->reset_hessian();
 
-            for (int i = 0; i < dim; i++)
-            {
+            for (int i = 0; i < dim; i++) {
                 this->move[i] = -grad[i];
             }
 
             trust_radius = relax_bfgs_rmin;
 
             tr_min_hit = true;
-        }
-        else if (trust_radius >= relax_bfgs_rmin)
-        {
+        } else if (trust_radius >= relax_bfgs_rmin) {
             // old bfgs direction ( normalized ) is recovered
-            for (int i = 0; i < dim; i++)
-            {
+            for (int i = 0; i < dim; i++) {
                 this->move[i] = this->move_p[i] / trust_radius_old;
             }
             tr_min_hit = false;
         }
-    }
-    else if (etot <= etot_p)
-    {
+    } else if (etot <= etot_p) {
         this->new_step(lat0);
     }
 
-    if (PARAM.inp.out_level == "ie")
-    {
+    if (PARAM.inp.out_level == "ie") {
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }
 
@@ -307,16 +273,12 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
     double norm = dot_func(this->move, this->move, dim);
     norm = sqrt(norm);
 
-    if (norm < 1.0e-16)
-    {
+    if (norm < 1.0e-16) {
         ModuleBase::WARNING_QUIT("Ions_Move_BFGS", "BFGS: move-length unreasonably short");
-    }
-    else
-    {
+    } else {
         // new move using trust_radius is
         // move / |move| * trust_radius (Bohr)
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             move[i] *= Ions_Move_Basic::trust_radius / norm;
         }
     }

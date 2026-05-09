@@ -10,8 +10,7 @@
 #include "source_lcao/force_stress_arrays.h"
 #include <vector>
 
-namespace sparse_format
-{
+namespace sparse_format {
 void cal_dH(const UnitCell& ucell,
             const Parallel_Orbitals& pv,
             LCAO_HS_Arrays& HS_Arrays,

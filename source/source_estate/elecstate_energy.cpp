@@ -8,13 +8,10 @@
 #include <cmath>
 #include <limits>
 
-namespace elecstate
-{
+namespace elecstate {
 /// @brief calculate band gap
-void ElecState::cal_bandgap()
-{
-    if (this->ekb.nr == 0 || this->ekb.nc == 0)
-    { // which means no vbm and no cbm
+void ElecState::cal_bandgap() {
+    if (this->ekb.nr == 0 || this->ekb.nc == 0) { // which means no vbm and no cbm
         this->bandgap = 0.0;
         return;
     }
@@ -22,45 +19,37 @@ void ElecState::cal_bandgap()
     int nbands = this->ekb.nc;
     int nks = this->klist->get_nks();
     double vbm = -std::numeric_limits<double>::infinity(); // Valence Band Maximum
-    double cbm = std::numeric_limits<double>::infinity(); // Conduction Band Minimum
-    const double threshold = 1.0e-5; // threshold to avoid E_gap(k) = 0
-    for (int ib = 0; ib < nbands; ib++)
-    {
-        for (int ik = 0; ik < nks; ik++)
-        {
-            if (this->ekb(ik, ib) <= this->eferm.ef + threshold && this->ekb(ik, ib) > vbm)
-            {
+    double cbm = std::numeric_limits<double>::infinity();  // Conduction Band Minimum
+    const double threshold = 1.0e-5;                       // threshold to avoid E_gap(k) = 0
+    for (int ib = 0; ib < nbands; ib++) {
+        for (int ik = 0; ik < nks; ik++) {
+            if (this->ekb(ik, ib) <= this->eferm.ef + threshold && this->ekb(ik, ib) > vbm) {
                 vbm = this->ekb(ik, ib);
             }
-            if (this->ekb(ik, ib) > this->eferm.ef + threshold && this->ekb(ik, ib) < cbm)
-            {
+            if (this->ekb(ik, ib) > this->eferm.ef + threshold && this->ekb(ik, ib) < cbm) {
                 cbm = this->ekb(ik, ib);
             }
         }
     }
     // Assign fermi level to CBM if it's still infinity
-    if(cbm == std::numeric_limits<double>::infinity())
-    { 
-        cbm =this->eferm.ef;
+    if (cbm == std::numeric_limits<double>::infinity()) {
+        cbm = this->eferm.ef;
     }
     // Assign fermi level to VBM if it's still negative infinity
-    if(vbm ==-std::numeric_limits<double>::infinity())
-    { 
-        vbm =this->eferm.ef;
+    if (vbm == -std::numeric_limits<double>::infinity()) {
+        vbm = this->eferm.ef;
     }
-    #ifdef __MPI
+#ifdef __MPI
     Parallel_Reduce::reduce_max(vbm);
     Parallel_Reduce::reduce_min(cbm);
-    #endif
+#endif
     this->bandgap = cbm - vbm;
 }
 
 /// @brief calculate spin up & down band gap
 /// @todo add isk[ik] so as to discriminate different spins
-void ElecState::cal_bandgap_updw()
-{
-    if (this->ekb.nr == 0 || this->ekb.nc == 0)
-    { // which means no vbm and no cbm
+void ElecState::cal_bandgap_updw() {
+    if (this->ekb.nr == 0 || this->ekb.nc == 0) { // which means no vbm and no cbm
         this->bandgap_up = 0.0;
         this->bandgap_dw = 0.0;
         return;
@@ -73,68 +62,55 @@ void ElecState::cal_bandgap_updw()
     double vbm_dw = -std::numeric_limits<double>::infinity();
     double cbm_dw = std::numeric_limits<double>::infinity();
     const double threshold = 1.0e-5;
-    for (int ib = 0; ib < nbands; ib++)
-    {
-        for (int ik = 0; ik < nks; ik++)
-        {
-            if (this->klist->isk[ik] == 0)
-            {
-                if (this->ekb(ik, ib) <= this->eferm.ef_up + threshold && this->ekb(ik, ib) > vbm_up)
-                {
+    for (int ib = 0; ib < nbands; ib++) {
+        for (int ik = 0; ik < nks; ik++) {
+            if (this->klist->isk[ik] == 0) {
+                if (this->ekb(ik, ib) <= this->eferm.ef_up + threshold && this->ekb(ik, ib) > vbm_up) {
                     vbm_up = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) > this->eferm.ef_up + threshold && this->ekb(ik, ib) < cbm_up)
-                {
+                if (this->ekb(ik, ib) > this->eferm.ef_up + threshold && this->ekb(ik, ib) < cbm_up) {
                     cbm_up = this->ekb(ik, ib);
                 }
             }
-            if (this->klist->isk[ik] == 1)
-            {
-                if (this->ekb(ik, ib) <= this->eferm.ef_dw + threshold && this->ekb(ik, ib) > vbm_dw)
-                {
+            if (this->klist->isk[ik] == 1) {
+                if (this->ekb(ik, ib) <= this->eferm.ef_dw + threshold && this->ekb(ik, ib) > vbm_dw) {
                     vbm_dw = this->ekb(ik, ib);
                 }
-                if (this->ekb(ik, ib) > this->eferm.ef_dw + threshold && this->ekb(ik, ib) < cbm_dw)
-                {
+                if (this->ekb(ik, ib) > this->eferm.ef_dw + threshold && this->ekb(ik, ib) < cbm_dw) {
                     cbm_dw = this->ekb(ik, ib);
                 }
             }
         }
     }
-        // Assign fermi level to CBM if it's still infinity
-    if (cbm_up == std::numeric_limits<double>::infinity())
-    { 
-        cbm_up =this->eferm.ef_up;
+    // Assign fermi level to CBM if it's still infinity
+    if (cbm_up == std::numeric_limits<double>::infinity()) {
+        cbm_up = this->eferm.ef_up;
     }
-    if (cbm_dw == std::numeric_limits<double>::infinity())
-    { 
-        cbm_dw =this->eferm.ef_dw;
+    if (cbm_dw == std::numeric_limits<double>::infinity()) {
+        cbm_dw = this->eferm.ef_dw;
     }
     // Assign fermi level to VBM if it's still negative infinity
-    if(vbm_up ==-std::numeric_limits<double>::infinity())
-    { 
-        vbm_up =this->eferm.ef_up;
+    if (vbm_up == -std::numeric_limits<double>::infinity()) {
+        vbm_up = this->eferm.ef_up;
     }
-    if(vbm_dw ==-std::numeric_limits<double>::infinity())
-    { 
-        vbm_dw =this->eferm.ef_dw;
+    if (vbm_dw == -std::numeric_limits<double>::infinity()) {
+        vbm_dw = this->eferm.ef_dw;
     }
-    #ifdef __MPI
+#ifdef __MPI
     Parallel_Reduce::reduce_max(vbm_up);
     Parallel_Reduce::reduce_min(cbm_up);
     Parallel_Reduce::reduce_max(vbm_dw);
     Parallel_Reduce::reduce_min(cbm_dw);
-    #endif
+#endif
     this->bandgap_up = cbm_up - vbm_up;
     this->bandgap_dw = cbm_dw - vbm_dw;
 }
 
 /// @brief calculate deband
-double ElecState::cal_delta_eband(const UnitCell& ucell) const
-{
-	ModuleBase::timer::start("ElecState", "cal_delta_eband");
-	// out potentials from potential mixing
-	// total energy and band energy corrections
+double ElecState::cal_delta_eband(const UnitCell& ucell) const {
+    ModuleBase::timer::start("ElecState", "cal_delta_eband");
+    // out potentials from potential mixing
+    // total energy and band energy corrections
     double deband0 = 0.0;
     double deband_aux = 0.0;
 
@@ -145,52 +121,39 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     const double* v_ofk = nullptr;
     const bool v_ofk_flag = (XC_Functional::get_ked_flag());
 
-    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-    {
+    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
         deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
     }
 
-    if (v_ofk_flag)
-    {
+    if (v_ofk_flag) {
         v_ofk = this->pot->get_eff_vofk(0);
         // cause in the get_eff_vofk, the func will return nullptr
-        if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
-        {
+        if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0) {
             ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
         }
-        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-        {
+        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
             deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
         }
     }
 
-    if (PARAM.inp.nspin == 2)
-    {
+    if (PARAM.inp.nspin == 2) {
         v_eff = this->pot->get_eff_v(1);
-        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-        {
+        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
             deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
         }
-        if (v_ofk_flag)
-        {
+        if (v_ofk_flag) {
             v_ofk = this->pot->get_eff_vofk(1);
-            if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
-            {
+            if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0) {
                 ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
             }
-            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-            {
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
                 deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
             }
         }
-    }
-    else if (PARAM.inp.nspin == 4)
-    {
-        for (int is = 1; is < 4; is++)
-        {
+    } else if (PARAM.inp.nspin == 4) {
+        for (int is = 1; is < 4; is++) {
             v_eff = this->pot->get_eff_v(is);
-            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-            {
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
                 deband_aux -= this->charge->rho[is][ir] * v_eff[ir];
             }
         }
@@ -207,15 +170,14 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     // \int rho(r) v_{exx}(r) dr = 2 E_{exx}[rho]
     deband0 -= 2 * this->f_en.exx; // Peize Lin add 2017-10-16
 
-	ModuleBase::timer::end("ElecState", "cal_delta_eband");
+    ModuleBase::timer::end("ElecState", "cal_delta_eband");
     return deband0;
 }
 
 /// @brief calculate descf
-double ElecState::cal_delta_escf() const
-{
+double ElecState::cal_delta_escf() const {
     ModuleBase::TITLE("ElecState", "cal_delta_escf");
-	ModuleBase::timer::start("ElecState", "cal_delta_escf");
+    ModuleBase::timer::start("ElecState", "cal_delta_escf");
     double descf = 0.0;
 
     // now rho1 is "mixed" charge density
@@ -228,44 +190,34 @@ double ElecState::cal_delta_escf() const
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
 
-    if (XC_Functional::get_ked_flag())
-    {
+    if (XC_Functional::get_ked_flag()) {
         v_ofk = this->pot->get_eff_vofk(0);
     }
-    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-    {
+    for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
         descf -= (this->charge->rho[0][ir] - this->charge->rho_save[0][ir]) * (v_eff[ir] - v_fixed[ir]);
-        if (XC_Functional::get_ked_flag())
-        {
+        if (XC_Functional::get_ked_flag()) {
             // cause in the get_eff_vofk, the func will return nullptr
             assert(v_ofk != nullptr);
             descf -= (this->charge->kin_r[0][ir] - this->charge->kin_r_save[0][ir]) * v_ofk[ir];
         }
     }
 
-    if (PARAM.inp.nspin == 2)
-    {
+    if (PARAM.inp.nspin == 2) {
         v_eff = this->pot->get_eff_v(1);
-        if (XC_Functional::get_ked_flag())
-        {
+        if (XC_Functional::get_ked_flag()) {
             v_ofk = this->pot->get_eff_vofk(1);
         }
-        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-        {
+        for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
             descf -= (this->charge->rho[1][ir] - this->charge->rho_save[1][ir]) * (v_eff[ir] - v_fixed[ir]);
-            if (XC_Functional::get_ked_flag())
-            {
+            if (XC_Functional::get_ked_flag()) {
                 descf -= (this->charge->kin_r[1][ir] - this->charge->kin_r_save[1][ir]) * v_ofk[ir];
             }
         }
     }
-    if (PARAM.inp.nspin == 4)
-    {
-        for (int is = 1; is < 4; is++)
-        {
+    if (PARAM.inp.nspin == 4) {
+        for (int is = 1; is < 4; is++) {
             v_eff = this->pot->get_eff_v(is);
-            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
-            {
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++) {
                 descf -= (this->charge->rho[is][ir] - this->charge->rho_save[is][ir]) * v_eff[ir];
             }
         }
@@ -281,17 +233,15 @@ double ElecState::cal_delta_escf() const
 
 // mohan move the code here, 2025-11-28
 #ifdef __MPI
-        MPI_Bcast(&descf, 1, MPI_DOUBLE, 0, BP_WORLD);
+    MPI_Bcast(&descf, 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
-
-	ModuleBase::timer::end("ElecState", "cal_delta_escf");
+    ModuleBase::timer::end("ElecState", "cal_delta_escf");
     return descf;
 }
 
 /// @brief calculation if converged
-void ElecState::cal_converged()
-{
+void ElecState::cal_converged() {
     // update etxc and vtxc
     // allocate vnew in get_vnew()
     this->pot->get_vnew(this->charge, this->vnew);
@@ -308,8 +258,7 @@ void ElecState::cal_converged()
  * @param type: 1 means Harris-Foulkes functinoal;
  * @param type: 2 means Kohn-Sham functional;
  */
-void ElecState::cal_energies(const int type)
-{
+void ElecState::cal_energies(const int type) {
     //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
 
@@ -320,21 +269,18 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model
-    if (PARAM.inp.imp_sol)
-    {
+    if (PARAM.inp.imp_sol) {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
 
     //! spin constrained energy
-    if (PARAM.inp.sc_mag_switch)
-    {
+    if (PARAM.inp.sc_mag_switch) {
         this->f_en.escon = get_spin_constrain_energy();
     }
 
     // energy from DFT+U
-    if (PARAM.inp.dft_plus_u)
-    {
+    if (PARAM.inp.dft_plus_u) {
         this->f_en.edftu = get_dftu_energy();
     }
 
@@ -347,13 +293,10 @@ void ElecState::cal_energies(const int type)
     if (type == 1) // Harris-Foulkes functional
     {
         this->f_en.calculate_harris();
-    }
-    else if (type == 2) // Kohn-Sham functional
+    } else if (type == 2) // Kohn-Sham functional
     {
         this->f_en.calculate_etot();
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("ElecState::cal_energies", "The form of total energy functional is unknown!");
     }
 }

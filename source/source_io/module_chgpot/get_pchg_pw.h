@@ -4,8 +4,7 @@
 #include "source_io/module_output/cube_io.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 template <typename Device>
 void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nbands,
@@ -30,10 +29,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
     const int nkstot = kv.get_nkstot(); // total k-point count
 
     // Loop over k-parallelism
-    for (int ip = 0; ip < kpar; ++ip)
-    {
-        if (my_pool != ip)
-        {
+    for (int ip = 0; ip < kpar; ++ip) {
+        if (my_pool != ip) {
             continue;
         }
 
@@ -41,18 +38,15 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
         std::vector<int> bands_picked(nbands, 0);
 
         // Check if length of out_pchg is valid
-        if (static_cast<int>(out_pchg.size()) > nbands)
-        {
+        if (static_cast<int>(out_pchg.size()) > nbands) {
             ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
                                      "The number of bands specified by `out_pchg` in the "
                                      "INPUT file exceeds `nbands`!");
         }
 
         // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_pchg)
-        {
-            if (value != 0 && value != 1)
-            {
+        for (int value: out_pchg) {
+            if (value != 0 && value != 1) {
                 ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
                                          "The elements of `out_pchg` must be either 0 or 1. "
                                          "Invalid values found!");
@@ -62,8 +56,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
         // Fill bands_picked with values from out_pchg
         // Remaining bands are already set to 0
         int length = std::min(static_cast<int>(out_pchg.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
+        for (int i = 0; i < length; ++i) {
             // out_pchg rely on function parse_expression
             bands_picked[i] = static_cast<int>(out_pchg[i]);
         }
@@ -74,28 +67,22 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
         // Allocate device memory
         std::complex<double>* wfcr_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value) {
             base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_device, nxyz);
         }
 
-        for (int ib = 0; ib < nbands; ++ib)
-        {
+        for (int ib = 0; ib < nbands; ++ib) {
             // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked[ib])
-            {
+            if (!bands_picked[ib]) {
                 continue;
             }
 
-            for (int is = 0; is < nspin; ++is)
-            {
+            for (int is = 0; is < nspin; ++is) {
                 std::fill(rho_band[is].begin(), rho_band[is].end(), 0.0);
             }
 
-            if (if_separate_k)
-            {
-                for (int ik = 0; ik < nks; ++ik)
-                {
+            if (if_separate_k) {
+                for (int ik = 0; ik < nks; ++ik) {
                     const int ikstot = kv.ik2iktot[ik];                 // global k-point index
                     const int spin_index = kv.isk[ik];                  // spin index
                     const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
@@ -103,12 +90,9 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     kspw_psi->fix_k(ik);
 
                     // FFT on device and copy result back to host
-                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                    {
+                    if (std::is_same<Device, base_device::DEVICE_CPU>::value) {
                         pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
-                    }
-                    else
-                    {
+                    } else {
                         pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
 
                         base_device::memory::synchronize_memory_op<std::complex<double>,
@@ -118,16 +102,11 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
                     // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
                     double wg_sum_k = 0.0;
-                    if (nspin == 1)
-                    {
+                    if (nspin == 1) {
                         wg_sum_k = 2.0;
-                    }
-                    else if (nspin == 2)
-                    {
+                    } else if (nspin == 2) {
                         wg_sum_k = 1.0;
-                    }
-                    else
-                    {
+                    } else {
                         ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
                                                  "Real space partial charge output currently do not support "
                                                  "noncollinear polarized calculation (nspin = 4)!");
@@ -135,8 +114,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
                     double w1 = static_cast<double>(wg_sum_k / ucell->omega);
 
-                    for (int i = 0; i < nxyz; ++i)
-                    {
+                    for (int i = 0; i < nxyz; ++i) {
                         rho_band[spin_index][i] = std::norm(wfcr[i]) * w1;
                     }
 
@@ -155,11 +133,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                                                   1,
                                                   true); // reduce_all_pool is true
                 }
-            }
-            else
-            {
-                for (int ik = 0; ik < nks; ++ik)
-                {
+            } else {
+                for (int ik = 0; ik < nks; ++ik) {
                     const int ikstot = kv.ik2iktot[ik];                 // global k-point index
                     const int spin_index = kv.isk[ik];                  // spin index
                     const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
@@ -167,12 +142,9 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     kspw_psi->fix_k(ik);
 
                     // FFT on device and copy result back to host
-                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                    {
+                    if (std::is_same<Device, base_device::DEVICE_CPU>::value) {
                         pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
-                    }
-                    else
-                    {
+                    } else {
                         pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
 
                         base_device::memory::synchronize_memory_op<std::complex<double>,
@@ -182,18 +154,15 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
                     double w1 = static_cast<double>(kv.wk[ik] / ucell->omega);
 
-                    for (int i = 0; i < nxyz; ++i)
-                    {
+                    for (int i = 0; i < nxyz; ++i) {
                         rho_band[spin_index][i] += std::norm(wfcr[i]) * w1;
                     }
                 }
 
 #ifdef __MPI
                 // Reduce the charge density across all pools if kpar > 1
-                if (kpar > 1 && chr != nullptr)
-                {
-                    for (int is = 0; is < nspin; ++is)
-                    {
+                if (kpar > 1 && chr != nullptr) {
+                    for (int is = 0; is < nspin; ++is) {
                         chr->reduce_diff_pools(rho_band[is].data());
                     }
                 }
@@ -202,12 +171,10 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
                 // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
                 Symmetry_rho srho;
-                for (int is = 0; is < nspin; ++is)
-                {
+                for (int is = 0; is < nspin; ++is) {
                     // Use vector instead of raw pointers
                     std::vector<double*> rho_save_pointers(nspin);
-                    for (int s = 0; s < nspin; ++s)
-                    {
+                    for (int s = 0; s < nspin; ++s) {
                         rho_save_pointers[s] = rho_band[s].data();
                     }
 
@@ -216,8 +183,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 
                     // Convert vector of vectors to vector of pointers
                     std::vector<std::complex<double>*> rhog_pointers(nspin);
-                    for (int s = 0; s < nspin; ++s)
-                    {
+                    for (int s = 0; s < nspin; ++s) {
                         rhog_pointers[s] = rhog[s].data();
                     }
 
@@ -230,8 +196,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                                ucell->symm);
                 }
 
-                for (int is = 0; is < nspin; ++is)
-                {
+                for (int is = 0; is < nspin; ++is) {
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 

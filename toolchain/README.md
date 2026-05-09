@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/version-2026.1-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 [![License](https://img.shields.io/badge/license-GPL--compatible-green.svg)](#license)
-[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)]()
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](<>)
 
 > **Automated dependency management and compilation toolchain for ABACUS**
 
@@ -23,17 +23,20 @@
 
 ## Overview
 
-The ABACUS Toolchain is an automated build system inspired by the cp2k-toolchain that simplifies the compilation and installation of ABACUS and its dependencies. It supports both online and offline installation modes, multiple compiler toolchains, and provides a streamlined path from dependency installation to ABACUS compilation.
+The ABACUS Toolchain is an automated build system inspired by the cp2k-toolchain that simplifies the
+compilation and installation of ABACUS and its dependencies. It supports both online and offline
+installation modes, multiple compiler toolchains, and provides a streamlined path from dependency
+installation to ABACUS compilation.
 
 ### Main Developer
 
-**[QuantumMisaka](https://github.com/QuantumMisaka)** (Zhaoqing Liu)  
+**[QuantumMisaka](https://github.com/QuantumMisaka)** (Zhaoqing Liu)\
 *Peking University, CCME*
 
 ## Features
 
 - ✅ **Multiple Toolchain Support**: GNU, Intel OneAPI, AMD AOCC/AOCL
-- ✅ **Flexible Installation**: Online/offline modes with automatic dependency resolution  
+- ✅ **Flexible Installation**: Online/offline modes with automatic dependency resolution
 - ✅ **GPU Acceleration**: CUDA support for NVIDIA GPUs with ELPA and cuSolverMP
 - ✅ **MPI Implementations**: OpenMPI, MPICH, Intel MPI support
 - ✅ **Math Libraries**: OpenBLAS, Intel MKL, AMD AOCL integration
@@ -102,11 +105,17 @@ Downloads packages automatically from official sources:
 ./toolchain_gnu.sh  # Uses system package managers and official repositories
 ```
 
-Before running the toolchain, please make sure you have loaded the related environments and set the environment variables.
-- You SHOULD source or module load related environments before use toolchain method for installation, especially for *intel*, *gcc-aocl* or *aocc-aocl* toolchain! For example, `module load mkl mpi icc compiler` for loading intel-oneapi envs.
-- You SHOULD keep your environments systematic, for example, you CANNOT load intel-OneAPI environments while use gcc toolchain !!!
+Before running the toolchain, please make sure you have loaded the related environments and set the
+environment variables.
+
+- You SHOULD source or module load related environments before use toolchain method for
+  installation, especially for *intel*, *gcc-aocl* or *aocc-aocl* toolchain! For example,
+  `module load mkl mpi icc compiler` for loading intel-oneapi envs.
+- You SHOULD keep your environments systematic, for example, you CANNOT load intel-OneAPI
+  environments while use gcc toolchain !!!
 
 **Package Sources:**
+
 - **Build Tools:**
   - [GCC](https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/) - GNU Compiler Collection
   - [CMake](https://cmake.org/download/) - Cross-platform build system
@@ -129,7 +138,8 @@ Before running the toolchain, please make sure you have loaded the related envir
   - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
   - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
 - **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
-- All package from GitHub will be downloaded by `wget` from `codeload.github.com`, which bypass the difficulty of CN Internet in some extent. 
+- All package from GitHub will be downloaded by `wget` from `codeload.github.com`, which bypass the
+  difficulty of CN Internet in some extent.
 
 ### Offline Installation
 
@@ -148,6 +158,7 @@ mkdir build
 The downloading process can be facilitated via `./toolchain_gnu.sh --pack-run`.
 
 Also, for users in China, we provide a Gitee mirror repository with pre-downloaded packages:
+
 ```bash
 # Clone the Gitee repository in toolchain directory
 git clone https://gitee.com/jamesmisaka/abacus_toolchain_build.git
@@ -158,23 +169,28 @@ mv abacus_toolchain_build/* build/
 
 ### Hybrid Installation
 
-Mix online and offline packages as needed - the toolchain automatically detects locally available packages and downloads missing ones.
+Mix online and offline packages as needed - the toolchain automatically detects locally available
+packages and downloads missing ones.
 
 ## Supported Toolchains
 
 ### GNU Toolchain
+
 - **Compilers**: System GCC (≥5.0) or installed GCC
 - **MPI**: OpenMPI or MPICH
 - **Math**: OpenBLAS + ScaLAPACK
 - **Features**: Most stable, widely compatible
 
 ### Intel Toolchain
-- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort) with system/installed GCC (≥5.0) 
+
+- **Compilers**: Intel OneAPI (icx/icpx/ifx or classic icc/icpc/ifort) with system/installed GCC
+  (≥5.0)
 - **MPI**: Intel MPI
 - **Math**: Intel MKL
 - **Features**: Optimized performance for Intel Machine
 
 ### AMD Toolchain
+
 - **Compilers**: AMD AOCC or system/installed GCC
 - **Math**: AMD AOCL (Optimized math libraries)
 - **Features**: AMD processor optimization (e.g., Zen3+)
@@ -183,46 +199,53 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 
 ### Supported Packages
 
-| Package | Version (main/alt) | Purpose | License | Default |
-|---------|-------------------|---------|---------|---------|
-| **Build Tools** |||||
-| CMake | 3.31.7 / 3.30.5 | Build system | BSD-3-Clause | Install |
-| GCC | 13.2.0 / 11.4.0 | C/C++ compiler | GPL-3.0-or-later WITH GCC-exception-3.1 | Install |
-| **MPI Libraries** |||||
-| OpenMPI | 5.0.10 / 4.1.8 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
-| MPICH | 5.0.1 / 4.3.2 | Alternative MPI | mpich2 (BSD-like) | Alternative |
-| **Math Libraries** |||||
-| OpenBLAS | 0.3.33 / 0.3.30 | Linear algebra | BSD-3-Clause | Install |
-| ScaLAPACK | 2.2.3 / 2.2.1 | Parallel linear algebra | BSD-3-Clause | Install |
-| **Scientific Libraries** |||||
-| FFTW | 3.3.11 / 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
-| LibXC | 7.0.0 / 6.2.2 | Exchange-correlation | MPL-2.0 | Install |
-| ELPA | 2026.02.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
-| **Advanced Features** |||||
-| Cereal | pinned commit | C++ Serialization | BSD | Install |
-| RapidJSON | pinned commit | JSON parsing | MIT | Install |
-| LibRI | pinned commit | EXX calculations | GPL-3.0 | Install |
-| LibComm | pinned commit | EXX calculations | GPL-3.0 | Install |
-| LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
-| LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
-| NEP | main | Neuroevolution potential | MIT | Optional |
+| Package                  | Version (main/alt)        | Purpose                  | License                                 | Default     |
+| ------------------------ | ------------------------- | ------------------------ | --------------------------------------- | ----------- |
+| **Build Tools**          |                           |                          |                                         |             |
+| CMake                    | 3.31.7 / 3.30.5           | Build system             | BSD-3-Clause                            | Install     |
+| GCC                      | 13.2.0 / 11.4.0           | C/C++ compiler           | GPL-3.0-or-later WITH GCC-exception-3.1 | Install     |
+| **MPI Libraries**        |                           |                          |                                         |             |
+| OpenMPI                  | 5.0.10 / 4.1.8            | MPI implementation       | BSD-3-Clause-Open-MPI                   | Install     |
+| MPICH                    | 5.0.1 / 4.3.2             | Alternative MPI          | mpich2 (BSD-like)                       | Alternative |
+| **Math Libraries**       |                           |                          |                                         |             |
+| OpenBLAS                 | 0.3.33 / 0.3.30           | Linear algebra           | BSD-3-Clause                            | Install     |
+| ScaLAPACK                | 2.2.3 / 2.2.1             | Parallel linear algebra  | BSD-3-Clause                            | Install     |
+| **Scientific Libraries** |                           |                          |                                         |             |
+| FFTW                     | 3.3.11 / 3.3.10           | Fast Fourier Transform   | GPL-2.0-or-later                        | Install     |
+| LibXC                    | 7.0.0 / 6.2.2             | Exchange-correlation     | MPL-2.0                                 | Install     |
+| ELPA                     | 2026.02.001 / 2024.05.001 | Eigenvalue solver        | LGPL-3.0-only                           | Install     |
+| **Advanced Features**    |                           |                          |                                         |             |
+| Cereal                   | pinned commit             | C++ Serialization        | BSD                                     | Install     |
+| RapidJSON                | pinned commit             | JSON parsing             | MIT                                     | Install     |
+| LibRI                    | pinned commit             | EXX calculations         | GPL-3.0                                 | Install     |
+| LibComm                  | pinned commit             | EXX calculations         | GPL-3.0                                 | Install     |
+| LibTorch                 | 2.1.2 / 1.12.1            | MLALGO support           | BSD-3-Clause                            | Optional    |
+| LibNPY                   | 1.0.1 / 1.0.1             | NumPy I/O                | MIT                                     | Optional    |
+| NEP                      | main                      | Neuroevolution potential | MIT                                     | Optional    |
 
-Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html) and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and [AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to system option, but one should install them manually by server administrator.
+Also, [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
+and AMD [AOCC](https://www.amd.com/zh-cn/developer/aocc.html) and
+[AOCL](https://www.amd.com/zh-cn/developer/aocl.html) are supported in toolchain by setting them to
+system option, but one should install them manually by server administrator.
 
 ### Package Version Switching
 
-The toolchain supports a dual-version system for most packages, providing both **main** (latest stable) and **alt** (alternative/legacy) versions. This allows users to choose between cutting-edge features and proven stability based on their specific requirements.
+The toolchain supports a dual-version system for most packages, providing both **main** (latest
+stable) and **alt** (alternative/legacy) versions. This allows users to choose between cutting-edge
+features and proven stability based on their specific requirements.
 
 #### Version Selection Methods
 
 The `--package-version` parameter supports two flexible usage patterns:
 
 **Method 1: Multiple Independent Parameters** (Original support)
+
 ```bash
 ./toolchain_gnu.sh --package-version libtorch:alt --package-version elpa:alt
 ```
 
 **Method 2: Single Parameter with Multiple Key-Value Pairs** (Enhanced functionality)
+
 ```bash
 ./toolchain_gnu.sh --package-version "libtorch:alt elpa:alt"
 ```
@@ -251,10 +274,12 @@ and other `toolchain_*.sh` scripts share the same version selection.
 #### Global Version Strategy
 
 - **Default Behavior**: All packages use their **main** versions unless explicitly overridden
-- **Selective Override**: Use `--package-version` to specify alternative versions for specific packages
-- **Consistency**: Version selections are validated against available options in `scripts/package_versions.sh`
-- **Backward Compatibility**: Both usage methods are fully supported to ensure existing scripts continue to work
-
+- **Selective Override**: Use `--package-version` to specify alternative versions for specific
+  packages
+- **Consistency**: Version selections are validated against available options in
+  `scripts/package_versions.sh`
+- **Backward Compatibility**: Both usage methods are fully supported to ensure existing scripts
+  continue to work
 
 ### System Requirements
 
@@ -289,12 +314,14 @@ cmake -B $BUILD_DIR \
 #### Multi-GPU with ELPA
 
 1. **Configure toolchain with CUDA:**
+
 ```bash
 export CUDA_PATH=/path/to/CUDA
 ./toolchain_gnu.sh --enable-cuda --gpu-ver=70  # For V100 (compute capability 7.0)
 ```
 
 2. **Build with ELPA GPU support:**
+
 ```bash
 cmake -B $BUILD_DIR \
     -DUSE_CUDA=ON \
@@ -308,19 +335,24 @@ cuSolverMP requires NVIDIA HPC SDK. Follow these steps to build with cuSolverMP:
 
 1. Load the NVHPC module:
 
-   - **For NVIDIA HPC SDK version < 25.9**: cuSolverMP relies on HPC-X for communication, so you need to load the `nvhpc-hpcx-cudaxx/xx.x` module. For example, with HPC SDK 25.3:
+   - **For NVIDIA HPC SDK version < 25.9**: cuSolverMP relies on HPC-X for communication, so you
+     need to load the `nvhpc-hpcx-cudaxx/xx.x` module. For example, with HPC SDK 25.3:
+
      ```bash
      module use /opt/nvidia/hpc_sdk/modulefiles
      module load nvhpc-hpcx-cuda12/25.3
      ```
 
-   - **For NVIDIA HPC SDK version >= 25.9**: cuSolverMP uses NCCL for communication instead of HPC-X, so only the base `nvhpc/xx.x` module is needed. For example, with HPC SDK 26.1:
+   - **For NVIDIA HPC SDK version >= 25.9**: cuSolverMP uses NCCL for communication instead of
+     HPC-X, so only the base `nvhpc/xx.x` module is needed. For example, with HPC SDK 26.1:
+
      ```bash
      module use /opt/nvidia/hpc_sdk/modulefiles
      module load nvhpc/26.1
      ```
 
-2. Build with cuSolverMP enabled:
+1. Build with cuSolverMP enabled:
+
 ```bash
 cmake -B $BUILD_DIR \
     -DUSE_CUDA=ON \
@@ -334,7 +366,11 @@ cmake -B $BUILD_DIR \
 
 #### Intel OneAPI Problems
 
-Most of the OneAPI problem arise from the newer version of Intel-OneAPI. For users who encounter OneAPI problem, one can get Intel-OneAPI in [QE-managed website](https://pranabdas.github.io/espresso/setup/hpc/#installing-intel-oneapi-libraries), and use this code to get Intel oneAPI Base Toolkit and HPC Toolkit:
+Most of the OneAPI problem arise from the newer version of Intel-OneAPI. For users who encounter
+OneAPI problem, one can get Intel-OneAPI in
+[QE-managed website](https://pranabdas.github.io/espresso/setup/hpc/#installing-intel-oneapi-libraries),
+and use this code to get Intel oneAPI Base Toolkit and HPC Toolkit:
+
 ```shell
 wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/992857b9-624c-45de-9701-f6445d845359/l_BaseKit_p_2023.2.0.49397_offline.sh
 wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0722521a-34b5-4c41-af3f-d5d14e88248d/l_HPCKit_p_2023.2.0.49440_offline.sh
@@ -343,26 +379,41 @@ wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0722521a-34b5-4
 Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
 **OneAPI 2025.0 Compatibility:**
+
 - LibRI compatibility issues ([#6190](https://github.com/deepmodeling/abacus-develop/issues/6190))
-- Solution: Using the patch from Cereal and the master version of Cereal to fix the compatibility issue (included in toolchain).
+- Solution: Using the patch from Cereal and the master version of Cereal to fix the compatibility
+  issue (included in toolchain).
 
 **ELPA on AMD servers with Intel compilers:**
+
 ```bash
 # Use Intel classic compilers instead
 ./toolchain_intel.sh --with-intel-classic=yes
 ```
 
-Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI are not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
+Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI are not supported for 2024.0
+and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download
+Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in
+Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
 
 #### AMD AOCC-AOCL problem
 
-Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS efficiency. But you need to get rid of `flang` while compiling ELPA. Toolchain itself helps you make this `flang` shade in default of `aocc-aocl` toolchain, and you can manually use `flang` by setting `--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain helps you to bypass the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be relatively lower compared to `gnu` or `gcc-aocl` toolchain. There are some issues related to the numeric instability of ABACUS compiled by AOCC-AOCL toolchain, see [#6420](https://github.com/deepmodeling/abacus-develop/issues/6420)
+Use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS efficiency.
+But you need to get rid of `flang` while compiling ELPA. Toolchain itself helps you make this
+`flang` shade in default of `aocc-aocl` toolchain, and you can manually use `flang` by setting
+`--with-flang=yes` in `toolchain_aocc-aocl.sh` to have a try, while toolchain helps you to bypass
+the possible errors in compiling ELPA with AOCC-AOCL, but the computing efficiency will be
+relatively lower compared to `gnu` or `gcc-aocl` toolchain. There are some issues related to the
+numeric instability of ABACUS compiled by AOCC-AOCL toolchain, see
+[#6420](https://github.com/deepmodeling/abacus-develop/issues/6420)
 
-The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. However, the gcc-dependent aocl will have some package linking problem related to OpenMPI. Take it with caution.
+The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. However, the
+gcc-dependent aocl will have some package linking problem related to OpenMPI. Take it with caution.
 
 #### OpenMPI Issues
 
 **Version 5 compatibility problems:**
+
 ```bash
 # Use OpenMPI v4 instead
 ./toolchain_gnu.sh --package-version openmpi:alt
@@ -371,12 +422,14 @@ The `gcc-aocl` toolchain will have no problem above for aocc-dependent aocl. How
 ```
 
 **LibComm compilation with OpenMPI:**
+
 - Fixed in toolchain 2025.2 which downlo the master branch of LibComm
 - Alternative: Use MPICH or Intel MPI
 
 #### Shell and Permission Issues
 
 **Line ending problems:**
+
 ```bash
 ./pre_set.sh  # Fixes line endings and permissions
 # Or manually:
@@ -387,6 +440,7 @@ chmod +x *.sh
 #### Library Version Issues
 
 **LibTorch GLIBC errors:**
+
 - Requires GLIBCXX_3.4.26
 - Change version from 2.1.2 to 1.12.1
 - Use `--package-version libtorch:alt` when calling toolchain
@@ -395,16 +449,17 @@ chmod +x *.sh
   - Single parameter with multiple key-value pairs: `--package-version libtorch:alt elpa:alt`
 
 **DeepMD GLIBC errors:**
+
 - Requires GCC ≥ 11.3.1 for GLIBCXX_3.4.29
 - Upgrade system GCC or use newer toolchain
 
 ### Getting Help
 
 1. **Check logs**: Look in `build/PKG_NAME/make.log` for compilation errors
-2. **Reduce parallelism**: Use `NPROCS_OVERWRITE=N` environment variable to limit parallel processes
-3. **System libraries**: Use `--with-PKG=system` for system-installed packages
-4. **Clean installation**: Remove `install/` and `build/` directories to restart
-5. **Certificate issues**: Use `DOWNLOAD_CERT_POLICY=skip` for download problems
+1. **Reduce parallelism**: Use `NPROCS_OVERWRITE=N` environment variable to limit parallel processes
+1. **System libraries**: Use `--with-PKG=system` for system-installed packages
+1. **Clean installation**: Remove `install/` and `build/` directories to restart
+1. **Certificate issues**: Use `DOWNLOAD_CERT_POLICY=skip` for download problems
 
 ## Advanced Usage
 
@@ -453,7 +508,9 @@ export DOWNLOAD_CERT_POLICY=skip
 ./toolchain_gnu.sh
 ```
 
-**Smart Mode Behavior**: The default `smart` mode first attempts secure downloads with certificate verification. If this fails (e.g., due to corporate firewalls or outdated certificates), it automatically falls back to skipping certificate verification while providing clear user feedback.
+**Smart Mode Behavior**: The default `smart` mode first attempts secure downloads with certificate
+verification. If this fails (e.g., due to corporate firewalls or outdated certificates), it
+automatically falls back to skipping certificate verification while providing clear user feedback.
 
 #### Parallel Compilation Control
 
@@ -473,6 +530,7 @@ NPROCS_OVERWRITE=4 ./toolchain_gnu.sh --with-gcc --with-openmpi
 ```
 
 **Use Cases**:
+
 - **Resource-limited systems**: Reduce parallelism to avoid memory exhaustion
 - **Shared servers**: Limit resource usage to be considerate of other users
 - **CI/CD environments**: Match container resource limits
@@ -483,7 +541,7 @@ NPROCS_OVERWRITE=4 ./toolchain_gnu.sh --with-gcc --with-openmpi
 The toolchain generates several setup files:
 
 - `install/setup`: Main environment setup
-- `build/setup_PKG`: Individual package environments  
+- `build/setup_PKG`: Individual package environments
 - `abacus_env.sh`: ABACUS-specific environment (generated by build scripts)
 
 ## Developer Guide
@@ -504,39 +562,42 @@ scripts/
 
 ### Key Components
 
-| File | Purpose |
-|------|---------|
-| `install_abacus_toolchain_new.sh` | Main orchestration script (new version) |
-| `toolchain_*.sh` | Frontend scripts for specific toolchains |
-| `scripts/lib/config_manager.sh` | Configuration management |
-| `scripts/lib/package_manager.sh` | Package installation logic |
-| `scripts/lib/user_interface.sh` | User interaction and output |
-| `scripts/common_vars.sh` | Shared variables and defaults |
-| `scripts/tool_kit.sh` | Utility functions and macros |
-| `scripts/parse_if.py` | Parser for IF_XYZ constructs |
+| File                               | Purpose                                                               |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `install_abacus_toolchain_new.sh`  | Main orchestration script (new version)                               |
+| `toolchain_*.sh`                   | Frontend scripts for specific toolchains                              |
+| `scripts/lib/config_manager.sh`    | Configuration management                                              |
+| `scripts/lib/package_manager.sh`   | Package installation logic                                            |
+| `scripts/lib/user_interface.sh`    | User interaction and output                                           |
+| `scripts/common_vars.sh`           | Shared variables and defaults                                         |
+| `scripts/tool_kit.sh`              | Utility functions and macros                                          |
+| `scripts/parse_if.py`              | Parser for IF_XYZ constructs                                          |
 | `install/<pkg>/install_successful` | Per-package install lock/checksum file generated by `write_checksums` |
 
 ### Script Structure Details
 
-**Individual Package Scripts**: Each `scripts/stage*/install_PKG.sh` script is relatively independent and should:
+**Individual Package Scripts**: Each `scripts/stage*/install_PKG.sh` script is relatively
+independent and should:
 
 1. **Generate setup files**: Write to both `build/setup_PKG` and `install/setup`
+
    - `build/setup_PKG`: Variables for toolchain compilation and arch file flags
    - `install/setup`: Environment setup for compiling/running ABACUS
 
-2. **Handle dependencies**: May depend on other libraries being installed with correct environment variables
+1. **Handle dependencies**: May depend on other libraries being installed with correct environment
+   variables
 
-3. **Use toolkit macros**: Leverage functionality from `scripts/tool_kit.sh` for common operations
+1. **Use toolkit macros**: Leverage functionality from `scripts/tool_kit.sh` for common operations
 
 ### Package Installation Scripts
 
 Each `scripts/stage*/install_PKG.sh` script:
 
 1. **Downloads** the package (if not available locally)
-2. **Configures** build with appropriate flags
-3. **Compiles** with error handling and logging
-4. **Installs** to the toolchain directory
-5. **Generates** setup files for environment configuration
+1. **Configures** build with appropriate flags
+1. **Compiles** with error handling and logging
+1. **Installs** to the toolchain directory
+1. **Generates** setup files for environment configuration
 
 ### Configuration System
 
@@ -550,14 +611,16 @@ The `--with-PKG` options control how a package is going to be installed:
 - `--with-PKG=no`: Skip package installation entirely
 
 **System Search Paths**: When using `system` mode, the installation script searches in:
+
 - `LD_LIBRARY_PATH`, `LD_RUN_PATH`, `LIBRARY_PATH`
 - `/usr/local/lib64`, `/usr/local/lib`, `/usr/lib64`, `/usr/lib`
 - For MKL libraries: `MKLROOT` environment variable
 
 **Troubleshooting System Libraries**: If `--with-PKG=system` cannot find the library:
+
 1. Use `module show PKG` to see module-defined paths
-2. Find the root installation directory manually
-3. Use `--with-PKG=/path/to/pkg` to specify exact location
+1. Find the root installation directory manually
+1. Use `--with-PKG=/path/to/pkg` to specify exact location
 
 #### Feature Control Options (`--enable-FEATURE`)
 
@@ -573,15 +636,16 @@ For packages serving the same purpose, mode variables act as selectors:
 - `--mpi-mode=openmpi|mpich|intelmpi`: Choose MPI implementation
 - `--math-mode=openblas|mkl|aocl`: Choose math library
 
-**Note**: While `--with-PKG` controls the installation method, the `PKG_MODE` variable picks which package to actually use, providing maximum flexibility.
+**Note**: While `--with-PKG` controls the installation method, the `PKG_MODE` variable picks which
+package to actually use, providing maximum flexibility.
 
 ### Adding New Packages
 
 1. **Create installation script**: `scripts/stageN/install_newpkg.sh`
-2. **Add to stage script**: Include in `scripts/stageN/install_stageN.sh`
-3. **Update configuration**: Add options to `config_manager.sh`
-4. **Add version info**: Update `scripts/package_versions.sh`
-5. **Test thoroughly**: Verify with different toolchain combinations
+1. **Add to stage script**: Include in `scripts/stageN/install_stageN.sh`
+1. **Update configuration**: Add options to `config_manager.sh`
+1. **Add version info**: Update `scripts/package_versions.sh`
+1. **Test thoroughly**: Verify with different toolchain combinations
 
 ### Advanced Developer Features
 
@@ -594,6 +658,7 @@ IF_XYZ(A | B)
 ```
 
 This construct is parsed by `scripts/parse_if.py`:
+
 - Evaluates to *A* if *XYZ* is passed as command line option
 - Evaluates to *B* if *XYZ* is not passed
 
@@ -604,8 +669,9 @@ IF_XYZ(IF_ABC(flag1|flag2) | flag3)
 ```
 
 This parses to:
+
 - *flag1* if both *XYZ* and *ABC* are present
-- *flag2* if only *XYZ* is present  
+- *flag2* if only *XYZ* is present
 - *flag3* if neither is present
 
 #### Portability Requirements
@@ -649,7 +715,8 @@ check_gfortran_module module_name
 ### Best Practices
 
 - **Reuse toolkit functions**: Use macros from `scripts/tool_kit.sh`
-- **Modular functionality**: Add new functionality as macros in `scripts/tool_kit.sh` rather than inline code
+- **Modular functionality**: Add new functionality as macros in `scripts/tool_kit.sh` rather than
+  inline code
 - **Portable compiler flags**: Filter through `allowed_gcc_flags` and `allowed_gfortran_flags`
 - **Environment variables**: Use `${VAR:-default}` pattern for configurable defaults
 - **Lock files**: Create completion markers for resumable installation
@@ -658,11 +725,15 @@ check_gfortran_module module_name
 
 ## License
 
-The ABACUS Toolchain downloads and installs only [GPL-compatible](https://www.gnu.org/licenses/gpl-faq.html#WhatDoesCompatMean) packages. All included packages maintain their original licenses as listed in the Dependencies section above.
+The ABACUS Toolchain downloads and installs only
+[GPL-compatible](https://www.gnu.org/licenses/gpl-faq.html#WhatDoesCompatMean) packages. All
+included packages maintain their original licenses as listed in the Dependencies section above.
 
-**License Compatibility**: All packages use GPL-compatible licenses including BSD, MIT, LGPL, MPL-2.0, and GPL variants, ensuring seamless integration with GPL-licensed software.
+**License Compatibility**: All packages use GPL-compatible licenses including BSD, MIT, LGPL,
+MPL-2.0, and GPL variants, ensuring seamless integration with GPL-licensed software.
 
-**Note**: Proprietary packages like Intel OneAPI (MKL/Compiler/MPI) and AMD AOCC/AOCL are supported but must be installed separately by the user.
+**Note**: Proprietary packages like Intel OneAPI (MKL/Compiler/MPI) and AMD AOCC/AOCL are supported
+but must be installed separately by the user.
 
 ## Contributing
 
@@ -671,7 +742,7 @@ We welcome contributions to improve the ABACUS Toolchain! Here's how you can hel
 ### Reporting Issues
 
 1. **Search existing issues** before creating new ones
-2. **Provide detailed information**:
+1. **Provide detailed information**:
    - Operating system and version
    - Compiler versions
    - Complete error messages and logs
@@ -680,12 +751,12 @@ We welcome contributions to improve the ABACUS Toolchain! Here's how you can hel
 ### Contributing Code
 
 1. **Fork the repository** and create a feature branch
-2. **Follow coding standards**:
+1. **Follow coding standards**:
    - Use consistent shell scripting style
    - Add comments for complex logic
    - Test with multiple toolchain combinations
-3. **Update documentation** for new features
-4. **Submit pull request** with clear description
+1. **Update documentation** for new features
+1. **Submit pull request** with clear description
 
 ### Development Setup
 
@@ -701,11 +772,12 @@ cd abacus-develop/toolchain
 ### Areas for Contribution
 
 - 🔧 **New package support**: Add support for additional scientific libraries
-- 🐛 **Bug fixes**: Resolve compatibility issues and installation problems  
+- 🐛 **Bug fixes**: Resolve compatibility issues and installation problems
 - 📚 **Documentation**: Improve guides and troubleshooting information
 - 🧪 **Testing**: Expand test coverage for different systems and configurations
 - 🚀 **Performance**: Optimize installation speed and resource usage
 
----
+______________________________________________________________________
 
-**For questions, issues, or contributions, please visit the [ABACUS GitHub repository](https://github.com/deepmodeling/abacus-develop).**
+**For questions, issues, or contributions, please visit the
+[ABACUS GitHub repository](https://github.com/deepmodeling/abacus-develop).**

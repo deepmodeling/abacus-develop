@@ -33,8 +33,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const LCAO_Orbitals& orb,
                                                 const int& nks,
-                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
+                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d) {
     ModuleBase::TITLE("Forces", "allocate");
     ModuleBase::timer::start("Forces", "allocate");
 
@@ -61,8 +60,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     ModuleBase::Memory::record("Force::dS_K", sizeof(double) * nnr * 3);
 
-    if (PARAM.inp.cal_stress)
-    {
+    if (PARAM.inp.cal_stress) {
         fsr.DH_r = new double[3 * nnr];
         fsr.stvnl11 = new double[nnr];
         fsr.stvnl12 = new double[nnr];
@@ -138,8 +136,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
 }
 
 template <>
-void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
-{
+void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr) {
     delete[] fsr.DSloc_Rx;
     delete[] fsr.DSloc_Ry;
     delete[] fsr.DSloc_Rz;
@@ -147,8 +144,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
     delete[] fsr.DHloc_fixedR_y;
     delete[] fsr.DHloc_fixedR_z;
 
-    if (PARAM.inp.cal_stress)
-    {
+    if (PARAM.inp.cal_stress) {
         delete[] fsr.DH_r;
         delete[] fsr.stvnl11;
         delete[] fsr.stvnl12;
@@ -162,31 +158,31 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 
 // be called in Force_LCAO::start_force_calculation
 template <>
-void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
-		const bool isstress,
-		ForceStressArrays& fsr, // mohan add 2024-06-15
-		const UnitCell& ucell,
-		const Grid_Driver& gd,
-		const psi::Psi<std::complex<double>>* psi,
-		const elecstate::ElecState* pelec,
-		const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
-		ModuleBase::matrix& foverlap,
-		ModuleBase::matrix& ftvnl_dphi,
-		ModuleBase::matrix& fvnl_dbeta,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& soverlap,
-		ModuleBase::matrix& stvnl_dphi,
-		ModuleBase::matrix& svnl_dbeta,
-		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& fvnl_dalpha,
-		ModuleBase::matrix& svnl_dalpha,
-		Setup_DeePKS<std::complex<double>>& deepks,
-		const TwoCenterBundle& two_center_bundle,
-		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals& pv,
-		const K_Vectors* kv,
-		Record_adj* ra)
-{
+void Force_LCAO<std::complex<double>>::ftable(
+    const bool isforce,
+    const bool isstress,
+    ForceStressArrays& fsr, // mohan add 2024-06-15
+    const UnitCell& ucell,
+    const Grid_Driver& gd,
+    const psi::Psi<std::complex<double>>* psi,
+    const elecstate::ElecState* pelec,
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+    ModuleBase::matrix& foverlap,
+    ModuleBase::matrix& ftvnl_dphi,
+    ModuleBase::matrix& fvnl_dbeta,
+    ModuleBase::matrix& fvl_dphi,
+    ModuleBase::matrix& soverlap,
+    ModuleBase::matrix& stvnl_dphi,
+    ModuleBase::matrix& svnl_dbeta,
+    ModuleBase::matrix& svl_dphi,
+    ModuleBase::matrix& fvnl_dalpha,
+    ModuleBase::matrix& svnl_dalpha,
+    Setup_DeePKS<std::complex<double>>& deepks,
+    const TwoCenterBundle& two_center_bundle,
+    const LCAO_Orbitals& orb,
+    const Parallel_Orbitals& pv,
+    const K_Vectors* kv,
+    Record_adj* ra) {
     ModuleBase::TITLE("Forces", "ftable");
     ModuleBase::timer::start("Forces", "ftable");
 
@@ -204,9 +200,18 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
     PulayForceStress::cal_pulay_fs(
-        foverlap, soverlap,
+        foverlap,
+        soverlap,
         this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
-        ucell, pv, dSx, fsr.DH_r, isforce, isstress, ra, -1.0, 1.0);
+        ucell,
+        pv,
+        dSx,
+        fsr.DH_r,
+        isforce,
+        isstress,
+        ra,
+        -1.0,
+        1.0);
 
     const double* dHx[3] = {fsr.DHloc_fixedR_x, fsr.DHloc_fixedR_y, fsr.DHloc_fixedR_z};                    // T+Vnl
     const double* dHxy[6] = {fsr.stvnl11, fsr.stvnl12, fsr.stvnl13, fsr.stvnl22, fsr.stvnl23, fsr.stvnl33}; // T
@@ -216,13 +221,17 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 
     // doing on the real space grid.
     // vl_dphi
-    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell,
-                                   pelec->pot, isforce, isstress,
+    PulayForceStress::cal_pulay_fs(fvl_dphi,
+                                   svl_dphi,
+                                   *dm,
+                                   ucell,
+                                   pelec->pot,
+                                   isforce,
+                                   isstress,
                                    false /*reset dm to gint*/);
 
 #ifdef __MLALGO
-    if (PARAM.inp.deepks_scf)
-    {
+    if (PARAM.inp.deepks_scf) {
         // No need to update E_delta since it have been done in LCAO_Deepks_Interface in after_scf
         DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r,
                                                          ucell,
@@ -243,8 +252,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     //----------------------------------------------------------------
     // reduce the force according to 2D distribution of H & S matrix.
     //----------------------------------------------------------------
-    if (isforce)
-    {
+    if (isforce) {
         Parallel_Reduce::reduce_pool(foverlap.c, foverlap.nr * foverlap.nc);
         Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
@@ -253,8 +261,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
 #endif
     }
-    if (isstress)
-    {
+    if (isstress) {
         Parallel_Reduce::reduce_pool(soverlap.c, soverlap.nr * soverlap.nc);
         Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
@@ -265,8 +272,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     }
 
 #ifdef __MLALGO
-    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
-    {
+    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest) {
         std::ofstream ofs_f("F_delta.dat");
         std::ofstream ofs_s("stress_delta.dat");
         ofs_f << std::setprecision(10);

@@ -28,6 +28,7 @@ class ChargeData:
     ngmc : int, optional
         Number of G-vectors for charge density
     """
+
     rho: np.ndarray
     nspin: int
     nrxx: int
@@ -75,6 +76,7 @@ class EnergyData:
     evdw : float
         van der Waals correction energy
     """
+
     etot: float = 0.0
     eband: float = 0.0
     hartree_energy: float = 0.0
@@ -87,17 +89,17 @@ class EnergyData:
     def to_dict(self) -> Dict[str, float]:
         """Convert to dictionary."""
         return {
-            'etot': self.etot,
-            'eband': self.eband,
-            'hartree_energy': self.hartree_energy,
-            'etxc': self.etxc,
-            'ewald_energy': self.ewald_energy,
-            'demet': self.demet,
-            'exx': self.exx,
-            'evdw': self.evdw,
+            "etot": self.etot,
+            "eband": self.eband,
+            "hartree_energy": self.hartree_energy,
+            "etxc": self.etxc,
+            "ewald_energy": self.ewald_energy,
+            "demet": self.demet,
+            "exx": self.exx,
+            "evdw": self.evdw,
         }
 
-    def to_eV(self) -> 'EnergyData':
+    def to_eV(self) -> "EnergyData":
         """
         Convert all energies from Rydberg to eV.
 
@@ -136,6 +138,7 @@ class HamiltonianData:
     nks : int
         Number of k-points
     """
+
     Hk: List[np.ndarray] = field(default_factory=list)
     Sk: List[np.ndarray] = field(default_factory=list)
     HR: Optional[Dict[Tuple[int, int, Tuple[int, int, int]], np.ndarray]] = None
@@ -174,6 +177,7 @@ class DensityMatrixData:
     ncol : int
         Number of columns in density matrix
     """
+
     DMK: List[np.ndarray] = field(default_factory=list)
     DMR: Optional[Dict[Tuple[int, int, Tuple[int, int, int]], np.ndarray]] = None
     nks: int = 0
@@ -213,6 +217,7 @@ class SCFResult:
     density_matrix : DensityMatrixData, optional
         Final density matrix
     """
+
     converged: bool
     niter: int
     drho: float

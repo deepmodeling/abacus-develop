@@ -12,14 +12,13 @@ using ModuleBase::Lebedev_laikov_grid;
 // mock the function to prevent unnecessary dependency
 namespace ModuleBase {
 void WARNING_QUIT(const std::string&, const std::string&) {}
-}
+} // namespace ModuleBase
 
-class LebedevLaikovTest: public ::testing::Test {
-protected:
+class LebedevLaikovTest : public ::testing::Test {
+  protected:
     void randgen(int lmax, std::vector<double>& coef);
     const double tol = 1e-12;
 };
-
 
 void LebedevLaikovTest::randgen(int lmax, std::vector<double>& coef) {
     coef.resize((lmax + 1) * (lmax + 1));
@@ -44,9 +43,8 @@ void LebedevLaikovTest::randgen(int lmax, std::vector<double>& coef) {
     }
 }
 
-
 TEST_F(LebedevLaikovTest, Accuracy) {
-    /* 
+    /*
      * Given
      *
      *      f = c[0]*Y00 + c[1]*Y10 + c[2]*Y11 + ...,
@@ -63,38 +61,10 @@ TEST_F(LebedevLaikovTest, Accuracy) {
 
     // (ngrid, lmax)
     std::set<std::pair<int, int>> supported = {
-        {6, 3},
-        {14, 5},
-        {26, 7},
-        {38, 9},
-        {50, 11},
-        {74, 13},
-        {86, 15},
-        {110, 17},
-        {146, 19},
-        {170, 21},
-        {194, 23},
-        {230, 25},
-        {266, 27},
-        {302, 29},
-        {350, 31},
-        {434, 35},
-        {590, 41},
-        {770, 47},
-        {974, 53},
-        {1202, 59},
-        {1454, 65},
-        {1730, 71},
-        {2030, 77},
-        {2354, 83},
-        {2702, 89},
-        {3074, 95},
-        {3470, 101},
-        {3890, 107},
-        {4334, 113},
-        {4802, 119},
-        {5294, 125},
-        {5810, 131},
+        {6, 3},     {14, 5},    {26, 7},     {38, 9},     {50, 11},    {74, 13},    {86, 15},    {110, 17},
+        {146, 19},  {170, 21},  {194, 23},   {230, 25},   {266, 27},   {302, 29},   {350, 31},   {434, 35},
+        {590, 41},  {770, 47},  {974, 53},   {1202, 59},  {1454, 65},  {1730, 71},  {2030, 77},  {2354, 83},
+        {2702, 89}, {3074, 95}, {3470, 101}, {3890, 107}, {4334, 113}, {4802, 119}, {5294, 125}, {5810, 131},
     };
 
     std::vector<double> coef;
@@ -105,7 +75,7 @@ TEST_F(LebedevLaikovTest, Accuracy) {
 
         Lebedev_laikov_grid lebgrid(ngrid);
         lebgrid.generate_grid_points();
-        
+
         const double* weight = lebgrid.get_weight();
         const ModuleBase::Vector3<double>* grid = lebgrid.get_grid_coor();
 
@@ -115,8 +85,7 @@ TEST_F(LebedevLaikovTest, Accuracy) {
         double val = 0.0;
         std::vector<double> ylm_real;
         for (int i = 0; i < ngrid; i++) {
-            ModuleBase::Ylm::sph_harm(func_lmax,
-                    grid[i].x, grid[i].y, grid[i].z, ylm_real);
+            ModuleBase::Ylm::sph_harm(func_lmax, grid[i].x, grid[i].y, grid[i].z, ylm_real);
             double tmp = 0.0;
             for (size_t j = 0; j < coef.size(); ++j) {
                 tmp += coef[j] * ylm_real[j];
@@ -134,9 +103,7 @@ TEST_F(LebedevLaikovTest, Accuracy) {
     }
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

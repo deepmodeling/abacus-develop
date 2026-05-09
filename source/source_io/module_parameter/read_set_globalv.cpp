@@ -3,41 +3,31 @@
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
-namespace ModuleIO
-{
+namespace ModuleIO {
 /// @note Here para.inp has been synchronized of all ranks.
 ///       All para.inp have the same value.
-void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
-{
+void ReadInput::set_globalv(const Input_para& inp, System_para& sys) {
     /// caculate the gamma_only_pw and gamma_only_local
-    if (inp.gamma_only)
-    {
+    if (inp.gamma_only) {
         sys.gamma_only_local = true;
     }
-    if (sys.gamma_only_local)
-    {
-        if (inp.esolver_type == "tddft")
-        {
+    if (sys.gamma_only_local) {
+        if (inp.esolver_type == "tddft") {
             GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
             sys.gamma_only_local = false;
         }
     }
     /// set deepks_setorb
-    if (inp.deepks_scf || inp.deepks_out_labels == 1)
-    {
+    if (inp.deepks_scf || inp.deepks_out_labels == 1) {
         sys.deepks_setorb = true;
     }
     /// set the noncolin and lspinorb from nspin
-    switch (inp.nspin)
-    {
+    switch (inp.nspin) {
     case 4:
-        if (inp.noncolin)
-        {
+        if (inp.noncolin) {
             sys.domag = true;
             sys.domag_z = false;
-        }
-        else
-        {
+        } else {
             sys.domag = false;
             sys.domag_z = true;
         }
@@ -61,8 +51,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_bool(sys.double_grid);
 #endif
     /// set ks_run
-    if (inp.ks_solver != "bpcg" && inp.bndpar > 1)
-    {
+    if (inp.ks_solver != "bpcg" && inp.bndpar > 1) {
         sys.all_ks_run = false;
     }
     // set the has_double_data and has_float_data
@@ -78,8 +67,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
 /// @note Here para.inp has not been synchronized of all ranks.
 ///       Only para.inp in rank 0 is right.
 ///       So we need to broadcast the results to all ranks.
-void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
-{
+void ReadInput::set_global_dir(const Input_para& inp, System_para& sys) {
     /// caculate the global output directory
     const std::string prefix = "OUT.";
     sys.global_out_dir = prefix + inp.suffix + "/";
@@ -110,21 +98,15 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_readin_dir = to_dir(sys.global_readin_dir);
 
     /// get the stru file for md restart case
-    if (inp.calculation == "md" && inp.mdp.md_restart)
-    {
+    if (inp.calculation == "md" && inp.mdp.md_restart) {
         int istep = current_md_step(sys.global_readin_dir);
 
-        if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
-        {
+        if (inp.read_file_dir == to_dir("OUT." + inp.suffix)) {
             sys.global_in_stru = sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
-        }
-        else
-        {
+        } else {
             sys.global_in_stru = inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
         }
-    }
-    else
-    {
+    } else {
         sys.global_in_stru = inp.stru_file;
     }
 
@@ -139,12 +121,9 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     // so `cal_type` must be synchronized here manually
     Parallel_Common::bcast_string(cal_type);
 #endif
-    if (out_alllog)
-    {
+    if (out_alllog) {
         PARAM.sys.log_file = "running_" + cal_type + "_" + std::to_string(PARAM.sys.myrank + 1) + ".log";
-    }
-    else
-    {
+    } else {
         PARAM.sys.log_file = "running_" + cal_type + ".log";
     }
 #ifdef __MPI

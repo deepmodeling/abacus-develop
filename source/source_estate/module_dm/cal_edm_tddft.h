@@ -6,8 +6,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/setup_dm.h"
 
-namespace elecstate
-{
+namespace elecstate {
 void print_local_matrix(std::ostream& os,
                         const std::complex<double>* matrix_data,
                         int local_rows, // pv.nrow

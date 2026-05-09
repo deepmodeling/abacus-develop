@@ -18,35 +18,27 @@
 #undef private
 #include "source_lcao/hs_matrix_k.hpp"
 #include "source_lcao/module_operator_lcao/deepks_lcao.h"
-namespace Test_Deepks
-{
+namespace Test_Deepks {
 Grid_Driver GridD(PARAM.input.test_deconstructor, PARAM.input.test_grid);
 }
 
 template <typename T>
-test_deepks<T>::test_deepks()
-{
-}
+test_deepks<T>::test_deepks() {}
 
 template <typename T>
-test_deepks<T>::~test_deepks()
-{
-}
+test_deepks<T>::~test_deepks() {}
 
 template <typename T>
-void test_deepks<T>::check_dstable()
-{
+void test_deepks<T>::check_dstable() {
     // OGT.talpha.print_Table_DSR(ORB);
     // this->compare_with_ref("S_I_mu_alpha.dat","S_I_mu_alpha_ref.dat");
 }
 
 template <typename T>
-void test_deepks<T>::check_phialpha()
-{
+void test_deepks<T>::check_phialpha() {
     std::vector<int> na;
     na.resize(ucell.ntype);
-    for (int it = 0; it < ucell.ntype; it++)
-    {
+    for (int it = 0; it < ucell.ntype; it++) {
         na[it] = ucell.atoms[it].na;
     }
     this->ld.init(ORB, ucell.nat, ucell.ntype, kv.nkstot, ParaO, na, GlobalV::ofs_running);
@@ -76,28 +68,21 @@ void test_deepks<T>::check_phialpha()
 }
 
 template <typename T>
-void test_deepks<T>::read_dm(const int nks)
-{
+void test_deepks<T>::read_dm(const int nks) {
     dm.resize(nks);
     std::stringstream ss;
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         ss.str("");
-        if (nks == 1)
-        {
+        if (nks == 1) {
             ss << "dm";
-        }
-        else
-        {
+        } else {
             ss << "dm_" << ik;
         }
         std::ifstream ifs(ss.str().c_str());
         dm[ik].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
 
-        for (int mu = 0; mu < PARAM.sys.nlocal; mu++)
-        {
-            for (int nu = 0; nu < PARAM.sys.nlocal; nu++)
-            {
+        for (int mu = 0; mu < PARAM.sys.nlocal; mu++) {
+            for (int nu = 0; nu < PARAM.sys.nlocal; nu++) {
                 T c;
                 ifs >> c;
                 dm[ik](mu, nu) = c;
@@ -107,44 +92,36 @@ void test_deepks<T>::read_dm(const int nks)
 }
 
 template <typename T>
-void test_deepks<T>::set_dm_new()
-{
+void test_deepks<T>::set_dm_new() {
     dm_new.resize(dm.size());
-    for (int i = 0; i < dm.size(); i++)
-    {
+    for (int i = 0; i < dm.size(); i++) {
         dm_new[i].resize(dm[i].nr * dm[i].nc);
         dm_new[i].assign(dm[i].c, dm[i].c + dm[i].nr * dm[i].nc);
     }
 }
 
 template <typename T>
-void test_deepks<T>::set_p_elec_DM()
-{
+void test_deepks<T>::set_p_elec_DM() {
     int nk = 1;
     const int nspin = PARAM.inp.nspin;
-    if (PARAM.sys.gamma_only_local)
-    {
+    if (PARAM.sys.gamma_only_local) {
         nk = nspin;
         this->p_elec_DM = new elecstate::DensityMatrix<T, double>(&ParaO, nspin);
-    }
-    else
-    {
+    } else {
         nk = kv.nkstot;
-        this->p_elec_DM
-            = new elecstate::DensityMatrix<T, double>(&ParaO, nspin, kv.kvec_d, kv.nkstot / PARAM.inp.nspin);
+        this->p_elec_DM =
+            new elecstate::DensityMatrix<T, double>(&ParaO, nspin, kv.kvec_d, kv.nkstot / PARAM.inp.nspin);
     }
     p_elec_DM->init_DMR(&Test_Deepks::GridD, &ucell);
 
-    for (int ik = 0; ik < nk; ik++)
-    {
+    for (int ik = 0; ik < nk; ik++) {
         p_elec_DM->set_DMK_pointer(ik, dm_new[ik].data());
     }
     p_elec_DM->cal_DMR();
 }
 
 template <typename T>
-void test_deepks<T>::check_pdm()
-{
+void test_deepks<T>::check_pdm() {
     this->read_dm(kv.nkstot);
     this->set_dm_new();
     this->set_p_elec_DM();
@@ -171,16 +148,14 @@ void test_deepks<T>::check_pdm()
 }
 
 template <typename T>
-void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
-{
+void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor) {
     DeePKS_domain::cal_descriptor(ucell.nat, this->ld.deepks_param, this->ld.pdm, descriptor);
     DeePKS_domain::check_descriptor(this->ld.deepks_param, ucell, "./", descriptor, 0);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
 
 template <typename T>
-void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
-{
+void test_deepks<T>::check_gdmx(torch::Tensor& gdmx) {
     DeePKS_domain::cal_gdmx<T>(kv.nkstot,
                                this->ld.deepks_param,
                                kv.kvec_d,
@@ -196,8 +171,7 @@ void test_deepks<T>::check_gdmx(torch::Tensor& gdmx)
 }
 
 template <typename T>
-void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
-{
+void test_deepks<T>::check_gvx(torch::Tensor& gdmx) {
     std::vector<torch::Tensor> gevdm;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvx;
@@ -207,8 +181,7 @@ void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
 }
 
 template <typename T>
-void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl)
-{
+void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl) {
     DeePKS_domain::cal_gdmepsl<T>(kv.nkstot,
                                   this->ld.deepks_param,
                                   kv.kvec_d,
@@ -224,8 +197,7 @@ void test_deepks<T>::check_gdmepsl(torch::Tensor& gdmepsl)
 }
 
 template <typename T>
-void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
-{
+void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl) {
     std::vector<torch::Tensor> gevdm;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
     torch::Tensor gvepsl;
@@ -235,8 +207,7 @@ void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
 }
 
 template <typename T>
-void test_deepks<T>::check_orbpre()
-{
+void test_deepks<T>::check_orbpre() {
     using TH = std::conditional_t<std::is_same<T, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
     std::vector<torch::Tensor> gevdm;
     torch::Tensor orbpre;
@@ -258,8 +229,7 @@ void test_deepks<T>::check_orbpre()
 }
 
 template <typename T>
-void test_deepks<T>::check_vdpre()
-{
+void test_deepks<T>::check_vdpre() {
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdpre;
     DeePKS_domain::cal_gevdm(ucell.nat, this->ld.deepks_param, this->ld.pdm, gevdm);
@@ -280,8 +250,7 @@ void test_deepks<T>::check_vdpre()
 }
 
 template <typename T>
-void test_deepks<T>::check_vdrpre()
-{
+void test_deepks<T>::check_vdrpre() {
     std::vector<torch::Tensor> gevdm;
     torch::Tensor vdrpre;
     torch::Tensor overlap_out;
@@ -303,31 +272,29 @@ void test_deepks<T>::check_vdrpre()
                                    Test_Deepks::GridD,
                                    vdrpre);
     DeePKS_domain::prepare_phialpha_iRmat(PARAM.sys.nlocal,
-                                        R_size,
-                                        this->ld.deepks_param,
-                                        this->ld.phialpha,
-                                        ucell,
-                                        ORB,
-                                        Test_Deepks::GridD,
-                                        overlap_out,
-                                        iRmat);
+                                          R_size,
+                                          this->ld.deepks_param,
+                                          this->ld.phialpha,
+                                          ucell,
+                                          ORB,
+                                          Test_Deepks::GridD,
+                                          overlap_out,
+                                          iRmat);
     // vdrpre is large, we only check the main element in Bravo lattice vector (0, 0, 0) and (1, 0, 0)
     torch::Tensor vdrpre_sliced = vdrpre.slice(0, 0, 2, 1).slice(1, 0, 1, 1).slice(2, 0, 1, 1);
     DeePKS_domain::check_tensor<double>(vdrpre_sliced, "vdr_precalc.dat", 0); // 0 for rank
-    DeePKS_domain::check_tensor<double>(overlap_out, "phialpha_r.dat", 0); // 0 for rank
-    DeePKS_domain::check_tensor<int>(iRmat, "iRmat.dat", 0); // 0 for rank
+    DeePKS_domain::check_tensor<double>(overlap_out, "phialpha_r.dat", 0);    // 0 for rank
+    DeePKS_domain::check_tensor<int>(iRmat, "iRmat.dat", 0);                  // 0 for rank
     this->compare_with_ref("vdr_precalc.dat", "vdrpre_ref.dat");
     this->compare_with_ref("phialpha_r.dat", "phialpha_r_ref.dat");
     this->compare_with_ref("iRmat.dat", "iRmat_ref.dat");
 }
 
 template <typename T>
-void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
-{
+void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor) {
     DeePKS_domain::load_model("model.ptg", ld.model_deepks);
     ld.allocate_V_delta(ucell.nat, kv.nkstot);
-    if (PARAM.inp.deepks_equiv)
-    {
+    if (PARAM.inp.deepks_equiv) {
         DeePKS_domain::cal_edelta_gedm_equiv(ucell.nat,
                                              this->ld.deepks_param,
                                              descriptor,
@@ -335,9 +302,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
                                              this->ld.gedm,
                                              this->ld.E_delta,
                                              0); // 0 for rank
-    }
-    else
-    {
+    } else {
         DeePKS_domain::cal_edelta_gedm(ucell.nat,
                                        this->ld.deepks_param,
                                        descriptor,
@@ -357,8 +322,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
 }
 
 template <typename T>
-void test_deepks<T>::cal_V_delta()
-{
+void test_deepks<T>::cal_V_delta() {
     hamilt::HS_Matrix_K<T>* hsk = new hamilt::HS_Matrix_K<T>(&ParaO);
     hamilt::HContainer<double>* hR = new hamilt::HContainer<double>(ucell, &ParaO);
     hamilt::Operator<T>* op_deepks = new hamilt::DeePKS<hamilt::OperatorLCAO<T, double>>(hsk,
@@ -371,15 +335,13 @@ void test_deepks<T>::cal_V_delta()
                                                                                          kv.nkstot,
                                                                                          p_elec_DM,
                                                                                          &this->ld);
-    for (int ik = 0; ik < kv.nkstot; ++ik)
-    {
+    for (int ik = 0; ik < kv.nkstot; ++ik) {
         op_deepks->init(ik);
     }
 }
 
 template <typename T>
-void test_deepks<T>::check_e_deltabands()
-{
+void test_deepks<T>::check_e_deltabands() {
     this->cal_V_delta();
     this->ld.dpks_cal_e_delta_band(dm_new, kv.nkstot);
 
@@ -390,8 +352,7 @@ void test_deepks<T>::check_e_deltabands()
 }
 
 template <typename T>
-void test_deepks<T>::check_f_delta_and_stress_delta()
-{
+void test_deepks<T>::check_f_delta_and_stress_delta() {
     ModuleBase::matrix fvnl_dalpha;
     fvnl_dalpha.create(ucell.nat, 3);
 
@@ -426,8 +387,7 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
 }
 
 template <typename T>
-void test_deepks<T>::check_o_delta()
-{
+void test_deepks<T>::check_o_delta() {
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.nkstot;
     ModuleBase::matrix o_delta;
@@ -441,8 +401,7 @@ void test_deepks<T>::check_o_delta()
 }
 
 template <typename T>
-void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2)
-{
+void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2) {
     this->total_check += 1;
     std::ifstream file1(f1.c_str());
     std::ifstream file2(f2.c_str());
@@ -450,22 +409,18 @@ void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2
 
     std::string word1;
     std::string word2;
-    while (file1 >> word1)
-    {
+    while (file1 >> word1) {
         file2 >> word2;
-        if ((word1[0] - '0' >= 0 && word1[0] - '0' < 10) || word1[0] == '-')
-        {
+        if ((word1[0] - '0' >= 0 && word1[0] - '0' < 10) || word1[0] == '-') {
             double num1 = std::stod(word1);
             double num2 = std::stod(word2);
-            if (std::abs(num1 - num2) > test_thr)
-            {
+            if (std::abs(num1 - num2) > test_thr) {
                 this->failed_check += 1;
                 std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;
                 return;
             }
-        }
-        else if (word1[0] == '(' && word1[word1.size() - 1] == ')' && word2[0] == '('
-                 && word2[word2.size() - 1] == ')') // complex number
+        } else if (word1[0] == '(' && word1[word1.size() - 1] == ')' && word2[0] == '(' &&
+                   word2[word2.size() - 1] == ')') // complex number
         {
             std::string word1_str = word1.substr(1, word1.size() - 2);
             std::string word2_str = word2.substr(1, word2.size() - 2);
@@ -473,17 +428,13 @@ void test_deepks<T>::compare_with_ref(const std::string f1, const std::string f2
             double word1_imag = std::stod(word1_str.substr(word1_str.find(',') + 1));
             double word2_real = std::stod(word2_str.substr(0, word2_str.find(',')));
             double word2_imag = std::stod(word2_str.substr(word2_str.find(',') + 1));
-            if (std::abs(word1_real - word2_real) > test_thr || std::abs(word1_imag - word2_imag) > test_thr)
-            {
+            if (std::abs(word1_real - word2_real) > test_thr || std::abs(word1_imag - word2_imag) > test_thr) {
                 this->failed_check += 1;
                 std::cout << "\e[1;31m [  FAILED  ] \e[0m" << f1.c_str() << " inconsistent!" << std::endl;
                 return;
             }
-        }
-        else
-        {
-            if (word1 != word2)
-            {
+        } else {
+            if (word1 != word2) {
                 this->failed_check += 1;
                 return;
             }

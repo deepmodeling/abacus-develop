@@ -3,31 +3,23 @@
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-namespace ModulePW
-{
+namespace ModulePW {
 /**
  * @brief distribute plane waves to different cores
  * @param in: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
  * @param out: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
  */
-void PW_Basis::distribute_g()
-{
+void PW_Basis::distribute_g() {
     ModuleBase::timer::start(this->classname, "distributeg");
-    if(this->distribution_type == 1)
-    {
+    if (this->distribution_type == 1) {
         this->distribution_method1();
-    }
-    else if(this->distribution_type == 2)
-    {
+    } else if (this->distribution_type == 2) {
         this->distribution_method2();
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("divide", "No such division type.");
     }
     const char* no_pw_message = "Current core has no plane waves! Please reduce the cores.";
-    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", PARAM.inp.calculation,
-                                   no_pw_message);
+    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", PARAM.inp.calculation, no_pw_message);
     ModuleBase::timer::end(this->classname, "distributeg");
     return;
 }
@@ -35,18 +27,16 @@ void PW_Basis::distribute_g()
 /**
  * @brief (1) We count the total number of planewaves (tot_npw) and sticks (this->nstot) here.
  *
- *  Meanwhile, we record the number of planewaves on (x, y) in st_length2D, and store the smallest z-coordinate of each stick in st_bottom2D,
- *  so that we can scan a much smaller area in step(2).
+ *  Meanwhile, we record the number of planewaves on (x, y) in st_length2D, and store the smallest z-coordinate of each
+ * stick in st_bottom2D, so that we can scan a much smaller area in step(2).
  *
  * @param in: fftnx, fftny, nz, ggecut, GGT
  * @param out: tot_npw, this->nstot, st_length2D, st_bottom2D, this->riy, this->liy
  */
 
-void PW_Basis::count_pw_st(
-        int* st_length2D, // the number of planewaves that belong to the stick located on (x, y).
-        int* st_bottom2D  // the z-coordinate of the bottom of stick on (x, y).
-)
-{
+void PW_Basis::count_pw_st(int* st_length2D, // the number of planewaves that belong to the stick located on (x, y).
+                           int* st_bottom2D  // the z-coordinate of the bottom of stick on (x, y).
+) {
     ModuleBase::GlobalFunc::ZEROS(st_length2D, this->fftnxy);
     ModuleBase::GlobalFunc::ZEROS(st_bottom2D, this->fftnxy);
     ModuleBase::Vector3<double> f;
@@ -61,8 +51,7 @@ void PW_Basis::count_pw_st(
     int iz_end = int(this->nz / 2) + 1;
     int iz_start = -iz_end;
 
-    if (this->full_pw)
-    {
+    if (this->full_pw) {
         ix_end = int(this->nx / 2);
         ix_start = ix_end - this->nx + 1;
 
@@ -73,15 +62,11 @@ void PW_Basis::count_pw_st(
         iz_start = iz_end - this->nz + 1;
     }
 
-    if (this->gamma_only)
-    {
-        if(this->xprime)
-        {
+    if (this->gamma_only) {
+        if (this->xprime) {
             ix_start = 0;
             ix_end = this->fftnx - 1;
-        }
-        else
-        {
+        } else {
             iy_start = 0;
             iy_end = this->fftny - 1;
         }
@@ -91,10 +76,8 @@ void PW_Basis::count_pw_st(
     this->lix = this->rix = 0;
     this->npwtot = 0;
     this->nstot = 0;
-    for (int ix = ix_start; ix <= ix_end; ++ix)
-    {
-        for (int iy = iy_start; iy <= iy_end; ++iy)
-        {
+    for (int ix = ix_start; ix <= ix_end; ++ix) {
+        for (int iy = iy_start; iy <= iy_end; ++iy) {
             // we shift all sticks to the first quadrant in x-y plane here.
             // (ix, iy, iz) is the direct coordinates of planewaves.
             // x and y is the coordinates of shifted sticks in x-y plane.
@@ -102,37 +85,41 @@ void PW_Basis::count_pw_st(
             // so that its index in st_length and st_bottom is 9 * 10 + 2 = 92.
             int x = ix;
             int y = iy;
-            if (x < 0) { x += this->nx;
-}
-            if (y < 0) { y += this->ny;
-}
+            if (x < 0) {
+                x += this->nx;
+            }
+            if (y < 0) {
+                y += this->ny;
+            }
             int index = x * this->fftny + y;
 
             int length = 0; // number of planewave on stick (x, y).
-            for (int iz = iz_start; iz <= iz_end; ++iz)
-            {
+            for (int iz = iz_start; iz <= iz_end; ++iz) {
                 f.x = ix;
                 f.y = iy;
                 f.z = iz;
                 double modulus = f * (this->GGT * f);
-                if (modulus <= this->ggecut || this->full_pw)
-                {
-                    if (length == 0) { st_bottom2D[index] = iz; // length == 0 means this point is the bottom of stick (x, y).
-}
+                if (modulus <= this->ggecut || this->full_pw) {
+                    if (length == 0) {
+                        st_bottom2D[index] = iz; // length == 0 means this point is the bottom of stick (x, y).
+                    }
                     ++this->npwtot;
                     ++length;
-                    if(iy < this->riy) { this->riy = iy;
-}
-                    if(iy > this->liy) { this->liy = iy;
-}
-                    if(ix < this->rix) { this->rix = ix;
-}
-                    if(ix > this->lix) { this->lix = ix;
-}
+                    if (iy < this->riy) {
+                        this->riy = iy;
+                    }
+                    if (iy > this->liy) {
+                        this->liy = iy;
+                    }
+                    if (ix < this->rix) {
+                        this->rix = ix;
+                    }
+                    if (ix > this->lix) {
+                        this->lix = ix;
+                    }
                 }
             }
-            if (length > 0)
-            {
+            if (length > 0) {
                 st_length2D[index] = length;
                 ++this->nstot;
             }
@@ -155,14 +142,14 @@ void PW_Basis::count_pw_st(
  */
 
 void PW_Basis::get_ig2isz_is2fftixy(
-    int* st_bottom2D,     // minimum z of stick, stored in 1d array with this->nstot elements.
-    int* st_length2D     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
-)
-{
-    if (this->npw == 0)
-    {
-        delete[] this->ig2isz; this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
-        delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
+    int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
+    int* st_length2D  // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+) {
+    if (this->npw == 0) {
+        delete[] this->ig2isz;
+        this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
+        delete[] this->is2fftixy;
+        this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu") {
             delmem_int_op()(this->d_is2fftixy);
@@ -172,26 +159,23 @@ void PW_Basis::get_ig2isz_is2fftixy(
         return;
     }
 
-    delete[] this->ig2isz; this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
+    delete[] this->ig2isz;
+    this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
     ModuleBase::GlobalFunc::ZEROS(this->ig2isz, this->npw);
-    delete[] this->is2fftixy; this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
-    for (int is = 0; is < this->nst; ++is)
-    {
+    delete[] this->is2fftixy;
+    this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
+    for (int is = 0; is < this->nst; ++is) {
         this->is2fftixy[is] = -1;
     }
 
-    int st_move = 0; // this is the st_move^th stick on current core.
+    int st_move = 0;   // this is the st_move^th stick on current core.
     int pw_filled = 0; // how many current core's planewaves have been found.
-    for (int ixy = 0; ixy < this->fftnxy; ++ixy)
-    {
-        if (this->fftixy2ip[ixy] == this->poolrank)
-        {
+    for (int ixy = 0; ixy < this->fftnxy; ++ixy) {
+        if (this->fftixy2ip[ixy] == this->poolrank) {
             int zstart = st_bottom2D[ixy];
-            for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz)
-            {
+            for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz) {
                 int z = iz;
-                if (z < 0)
-                {
+                if (z < 0) {
                     z += this->nz;
                 }
                 this->ig2isz[pw_filled] = st_move * this->nz + z;
@@ -199,19 +183,16 @@ void PW_Basis::get_ig2isz_is2fftixy(
             }
             this->is2fftixy[st_move] = ixy;
             st_move++;
-            if (xprime && ixy / fftny == 0)
-            {
+            if (xprime && ixy / fftny == 0) {
                 ng_xeq0 = pw_filled;
             }
         }
-        if (st_move == this->nst && pw_filled == this->npw)
-        {
+        if (st_move == this->nst && pw_filled == this->npw) {
             break;
         }
     }
     std::vector<int> ig2ixyz(this->npw);
-    for (int igl = 0; igl < this->npw; ++igl)
-    {
+    for (int igl = 0; igl < this->npw; ++igl) {
         int isz = this->ig2isz[igl];
         int iz = isz % this->nz;
         int is = isz / this->nz;
@@ -224,7 +205,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
     if (this->device == "gpu") {
         resmem_int_op()(d_is2fftixy, this->nst);
         syncmem_int_h2d_op()(this->d_is2fftixy, this->is2fftixy, this->nst);
-        resmem_int_op()(ig2ixyz_gpu,this->npw);
+        resmem_int_op()(ig2ixyz_gpu, this->npw);
         syncmem_int_h2d_op()(ig2ixyz_gpu, ig2ixyz.data(), this->npw);
     }
 #endif

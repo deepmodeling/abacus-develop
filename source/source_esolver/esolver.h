@@ -6,18 +6,12 @@
 
 struct Input_para;
 
-namespace ModuleESolver
-{
-class ESolver
-{
+namespace ModuleESolver {
+class ESolver {
   public:
-    ESolver()
-    {
-        classname = "ESolver";
-    }
+    ESolver() { classname = "ESolver"; }
 
-    virtual ~ESolver()
-    {
+    virtual ~ESolver() {
         //****************************************************
         // do not add any codes in this deconstructor funcion
         //****************************************************
@@ -54,7 +48,7 @@ class ESolver
  * @brief A subrutine called in init_esolver()
  *        This function returns type of ESolver
  *        Based on PARAM.inp.basis_type and PARAM.inp.esolver_type
- * 
+ *
  * @return [out] std::string The type of ESolver
  */
 std::string determine_type();
@@ -69,8 +63,6 @@ std::string determine_type();
  * @return [out] A pointer to an ESolver object that will be initialized.
  */
 ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
-
-
 
 } // namespace ModuleESolver
 

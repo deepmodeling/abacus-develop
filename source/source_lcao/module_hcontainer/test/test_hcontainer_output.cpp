@@ -19,20 +19,17 @@
  * - write the matrix of a single R vector to the output stream
  */
 
-class OutputHContainerTest : public testing::Test
-{
+class OutputHContainerTest : public testing::Test {
   protected:
     UnitCell ucell;
     std::string output;
-    void SetUp() override
-    {
+    void SetUp() override {
         ucell.ntype = 1;
         ucell.nat = 2;
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
         ucell.iat2ia = new int[ucell.nat];
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2ia[iat] = iat;
             ucell.iat2it[iat] = 0;
         }
@@ -53,19 +50,14 @@ class OutputHContainerTest : public testing::Test
         ucell.iwt2iw[2] = 0;
         ucell.iwt2iw[3] = 1;
     }
-    void TearDown() override
-    {
-        delete[] ucell.atoms;
-    }
+    void TearDown() override { delete[] ucell.atoms; }
 };
 
-TEST_F(OutputHContainerTest, Write)
-{
+TEST_F(OutputHContainerTest, Write) {
     Parallel_Orbitals ParaV;
     ParaV.atom_begin_row.resize(3);
     ParaV.atom_begin_col.resize(3);
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         ParaV.atom_begin_row[i] = i * 2;
         ParaV.atom_begin_col[i] = i * 2;
     }
@@ -92,17 +84,14 @@ TEST_F(OutputHContainerTest, Write)
     hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, &test_data[4]);
     HR.insert_pair(ap1);
     HR.insert_pair(ap2);
-    for (int ir = 0; ir < HR.size_R_loop(); ++ir)
-    {
+    for (int ir = 0; ir < HR.size_R_loop(); ++ir) {
         int rx, ry, rz;
         HR.loop_R(ir, rx, ry, rz);
         HR.fix_R(rx, ry, rz);
         // std::cout << "rx = " << rx << " ry = " << ry << " rz = " << rz << std::endl;
-        for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
-        {
+        for (int iap = 0; iap < HR.size_atom_pairs(); ++iap) {
             hamilt::AtomPair<double>& tmp_ap = HR.get_atom_pair(iap);
-            if (rx == 0 && ry == 1 && rz == 1)
-            {
+            if (rx == 0 && ry == 1 && rz == 1) {
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 0), 0);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 4);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 7);
@@ -111,9 +100,7 @@ TEST_F(OutputHContainerTest, Write)
                 EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[1], 2);
                 EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[2], 2);
                 EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[3], 2);
-            }
-            else if (rx == 0 && ry == 0 && rz == 0)
-            {
+            } else if (rx == 0 && ry == 0 && rz == 0) {
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 0), 5);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 6);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 0);

@@ -10,10 +10,8 @@
 #include "cusolverDn.h"
 #include <cuda.h>
 
-static const char* _cublasGetErrorString(cublasStatus_t error)
-{
-    switch (error)
-    {
+static const char* _cublasGetErrorString(cublasStatus_t error) {
+    switch (error) {
     case CUBLAS_STATUS_SUCCESS:
         return "CUBLAS_STATUS_SUCCESS";
     case CUBLAS_STATUS_NOT_INITIALIZED:
@@ -39,10 +37,8 @@ static const char* _cublasGetErrorString(cublasStatus_t error)
     }
 }
 
-static const char* _cusolverGetErrorString(cusolverStatus_t error)
-{
-    switch (error)
-    {
+static const char* _cusolverGetErrorString(cusolverStatus_t error) {
+    switch (error) {
     case CUSOLVER_STATUS_SUCCESS:
         return "CUSOLVER_STATUS_SUCCESS";
     case CUSOLVER_STATUS_NOT_INITIALIZED:
@@ -98,10 +94,8 @@ static const char* _cusolverGetErrorString(cusolverStatus_t error)
     }
 }
 
-static const char* _cufftGetErrorString(cufftResult_t error)
-{
-    switch (error)
-    {
+static const char* _cufftGetErrorString(cufftResult_t error) {
+    switch (error) {
     case CUFFT_SUCCESS:
         return "CUFFT_SUCCESS";
     case CUFFT_INVALID_PLAN:
@@ -144,79 +138,94 @@ static const char* _cufftGetErrorString(cufftResult_t error)
 }
 
 #define CHECK_CUDA(func)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cudaError_t status = (func);                                                                                   \
-        if (status != cudaSuccess)                                                                                     \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CUDA API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,       \
-                    cudaGetErrorString(status), status);                                                               \
+        if (status != cudaSuccess) {                                                                                   \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CUDA API failed at line %d with error: %s (%d)\n",                                   \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    cudaGetErrorString(status),                                                                        \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUBLAS(func)                                                                                             \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cublasStatus_t status = (func);                                                                                \
-        if (status != CUBLAS_STATUS_SUCCESS)                                                                           \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CUBLAS API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,     \
-                    _cublasGetErrorString(status), status);                                                            \
+        if (status != CUBLAS_STATUS_SUCCESS) {                                                                         \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CUBLAS API failed at line %d with error: %s (%d)\n",                                 \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _cublasGetErrorString(status),                                                                     \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUSOLVER(func)                                                                                           \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cusolverStatus_t status = (func);                                                                              \
-        if (status != CUSOLVER_STATUS_SUCCESS)                                                                         \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CUSOLVER API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,   \
-                    _cusolverGetErrorString(status), status);                                                          \
+        if (status != CUSOLVER_STATUS_SUCCESS) {                                                                       \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CUSOLVER API failed at line %d with error: %s (%d)\n",                               \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _cusolverGetErrorString(status),                                                                   \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUFFT(func)                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cufftResult_t status = (func);                                                                                 \
-        if (status != CUFFT_SUCCESS)                                                                                   \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CUFFT API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,      \
-                    _cufftGetErrorString(status), status);                                                             \
+        if (status != CUFFT_SUCCESS) {                                                                                 \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CUFFT API failed at line %d with error: %s (%d)\n",                                  \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _cufftGetErrorString(status),                                                                      \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_LAST_CUDA_ERROR(msg)                                                                                     \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cudaError_t status = cudaGetLastError();                                                                       \
-        if (status != cudaSuccess)                                                                                     \
-        {                                                                                                              \
-            fprintf(stderr, "%s(%d) : CUDA error : %s : (%d) %s.\n", __FILE__, __LINE__, msg,                          \
-                    static_cast<int>(status), cudaGetErrorString(status));                                             \
+        if (status != cudaSuccess) {                                                                                   \
+            fprintf(stderr,                                                                                            \
+                    "%s(%d) : CUDA error : %s : (%d) %s.\n",                                                           \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    msg,                                                                                               \
+                    static_cast<int>(status),                                                                          \
+                    cudaGetErrorString(status));                                                                       \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #ifdef __DEBUG
 #define CHECK_CUDA_SYNC()                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         cudaError_t status = cudaDeviceSynchronize();                                                                  \
-        if (status != cudaSuccess)                                                                                     \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CUDA sync failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,      \
-                    cudaGetErrorString(status), status);                                                               \
+        if (status != cudaSuccess) {                                                                                   \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CUDA sync failed at line %d with error: %s (%d)\n",                                  \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    cudaGetErrorString(status),                                                                        \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 #else
-#define CHECK_CUDA_SYNC() do {} while (0)
+#define CHECK_CUDA_SYNC()                                                                                              \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
 // NCCL check macro: shared by cuSOLVER MP (non-CAL path) and parallel device
@@ -224,13 +233,15 @@ static const char* _cufftGetErrorString(cufftResult_t error)
 #include <nccl.h>
 
 #define CHECK_NCCL(func)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         ncclResult_t status = (func);                                                                                  \
-        if (status != ncclSuccess)                                                                                     \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : NCCL API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,       \
-                    ncclGetErrorString(status), status);                                                               \
+        if (status != ncclSuccess) {                                                                                   \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : NCCL API failed at line %d with error: %s (%d)\n",                                   \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    ncclGetErrorString(status),                                                                        \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
@@ -243,10 +254,8 @@ static const char* _cufftGetErrorString(cufftResult_t error)
 #ifdef __USE_CAL
 #include <cal.h>
 
-static const char* _calGetErrorString(calError_t error)
-{
-    switch (error)
-    {
+static const char* _calGetErrorString(calError_t error) {
+    switch (error) {
     case CAL_OK:
         return "CAL_OK";
     case CAL_ERROR:
@@ -269,13 +278,15 @@ static const char* _calGetErrorString(calError_t error)
 }
 
 #define CHECK_CAL(func)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         calError_t status = (func);                                                                                    \
-        if (status != CAL_OK)                                                                                          \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : CAL API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,        \
-                    _calGetErrorString(status), status);                                                               \
+        if (status != CAL_OK) {                                                                                        \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : CAL API failed at line %d with error: %s (%d)\n",                                    \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _calGetErrorString(status),                                                                        \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
@@ -291,10 +302,8 @@ static const char* _calGetErrorString(calError_t error)
 #include <hipfft/hipfft.h>
 #include <hipsolver/hipsolver.h>
 
-static const char* _hipblasGetErrorString(hipblasStatus_t error)
-{
-    switch (error)
-    {
+static const char* _hipblasGetErrorString(hipblasStatus_t error) {
+    switch (error) {
     case HIPBLAS_STATUS_SUCCESS:
         return "HIPBLAS_STATUS_SUCCESS";
     case HIPBLAS_STATUS_NOT_INITIALIZED:
@@ -320,10 +329,8 @@ static const char* _hipblasGetErrorString(hipblasStatus_t error)
     }
 }
 
-static const char* _hipfftGetErrorString(hipfftResult_t error)
-{
-    switch (error)
-    {
+static const char* _hipfftGetErrorString(hipfftResult_t error) {
+    switch (error) {
     case HIPFFT_SUCCESS:
         return "HIPFFT_SUCCESS";
     case HIPFFT_INVALID_PLAN:
@@ -361,10 +368,8 @@ static const char* _hipfftGetErrorString(hipfftResult_t error)
     }
 }
 
-static const char* _hipsolverGetErrorString(hipsolverStatus_t error)
-{
-    switch (error)
-    {
+static const char* _hipsolverGetErrorString(hipsolverStatus_t error) {
+    switch (error) {
     case HIPSOLVER_STATUS_SUCCESS:
         return "HIPSOLVER_STATUS_SUCCESS";
     case HIPSOLVER_STATUS_NOT_INITIALIZED:
@@ -395,79 +400,94 @@ static const char* _hipsolverGetErrorString(hipsolverStatus_t error)
 }
 
 #define CHECK_CUDA(func)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipError_t status = (func);                                                                                    \
-        if (status != hipSuccess)                                                                                      \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : HIP API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,        \
-                    hipGetErrorString(status), status);                                                                \
+        if (status != hipSuccess) {                                                                                    \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : HIP API failed at line %d with error: %s (%d)\n",                                    \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    hipGetErrorString(status),                                                                         \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUBLAS(func)                                                                                             \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipblasStatus_t status = (func);                                                                               \
-        if (status != HIPBLAS_STATUS_SUCCESS)                                                                          \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : HIPBLAS API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,    \
-                    _hipblasGetErrorString(status), status);                                                           \
+        if (status != HIPBLAS_STATUS_SUCCESS) {                                                                        \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : HIPBLAS API failed at line %d with error: %s (%d)\n",                                \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _hipblasGetErrorString(status),                                                                    \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUSOLVER(func)                                                                                           \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipsolverStatus_t status = (func);                                                                             \
-        if (status != HIPSOLVER_STATUS_SUCCESS)                                                                        \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : HIPSOLVER API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,  \
-                    _hipsolverGetErrorString(status), status);                                                         \
+        if (status != HIPSOLVER_STATUS_SUCCESS) {                                                                      \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : HIPSOLVER API failed at line %d with error: %s (%d)\n",                              \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _hipsolverGetErrorString(status),                                                                  \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_CUFFT(func)                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipfftResult_t status = (func);                                                                                \
-        if (status != HIPFFT_SUCCESS)                                                                                  \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : HIPFFT API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,     \
-                    _hipfftGetErrorString(status), status);                                                            \
+        if (status != HIPFFT_SUCCESS) {                                                                                \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : HIPFFT API failed at line %d with error: %s (%d)\n",                                 \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    _hipfftGetErrorString(status),                                                                     \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #define CHECK_LAST_CUDA_ERROR(msg)                                                                                     \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipError_t status = hipGetLastError();                                                                         \
-        if (status != hipSuccess)                                                                                      \
-        {                                                                                                              \
-            fprintf(stderr, "%s(%d) : HIP error : %s : (%d) %s.\n", __FILE__, __LINE__, msg,                           \
-                    static_cast<int>(status), hipGetErrorString(status));                                              \
+        if (status != hipSuccess) {                                                                                    \
+            fprintf(stderr,                                                                                            \
+                    "%s(%d) : HIP error : %s : (%d) %s.\n",                                                            \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    msg,                                                                                               \
+                    static_cast<int>(status),                                                                          \
+                    hipGetErrorString(status));                                                                        \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 
 #ifdef __DEBUG
 #define CHECK_CUDA_SYNC()                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
+    do {                                                                                                               \
         hipError_t status = hipDeviceSynchronize();                                                                    \
-        if (status != hipSuccess)                                                                                      \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : HIP sync failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,       \
-                    hipGetErrorString(status), status);                                                                \
+        if (status != hipSuccess) {                                                                                    \
+            fprintf(stderr,                                                                                            \
+                    "In File %s : HIP sync failed at line %d with error: %s (%d)\n",                                   \
+                    __FILE__,                                                                                          \
+                    __LINE__,                                                                                          \
+                    hipGetErrorString(status),                                                                         \
+                    status);                                                                                           \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)
 #else
-#define CHECK_CUDA_SYNC() do {} while (0)
+#define CHECK_CUDA_SYNC()                                                                                              \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
 #endif // __ROCM

@@ -9,29 +9,17 @@
 
 // mock functions
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 // mocke functions
 
 /************************************************
@@ -45,8 +33,7 @@ Magnetism::~Magnetism()
  * matrices of SR to a file SR.out.
  */
 
-class ReadHContainerTest : public testing::Test
-{
+class ReadHContainerTest : public testing::Test {
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
@@ -54,14 +41,10 @@ class ReadHContainerTest : public testing::Test
     // it should container ucell.nat elements
     std::vector<int> nw = {13};
     int nlocal;
-    void SetUp() override
-    {
-        ucell = utp.SetUcellInfo(nw, nlocal);
-    }
+    void SetUp() override { ucell = utp.SetUcellInfo(nw, nlocal); }
 };
 
-TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
-{
+TEST_F(ReadHContainerTest, ReadAndOutputHContainer) {
     // read SR
     std::string filename = "./support/SR.csr";
     ModuleIO::csrFileReader<double> csr(filename);
@@ -83,36 +66,30 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // construct SR
     hamilt::HContainer<double> SR(&paraV);
     int numberofR = csr.getNumberOfR();
-    for (int i = 0; i < numberofR; i++)
-    {
+    for (int i = 0; i < numberofR; i++) {
         std::vector<int> RCoord = csr.getRCoordinate(i);
         ModuleIO::SparseMatrix<double> sparse_matrix = csr.getMatrix(i);
-        for (int iat = 0; iat < ucell->nat; iat++)
-        {
+        for (int iat = 0; iat < ucell->nat; iat++) {
             int begin_row = paraV.atom_begin_row[iat];
             int end_row = paraV.atom_begin_row[iat + 1];
             int numberofRow = end_row - begin_row;
-            for (int jat = 0; jat < ucell->nat; jat++)
-            {
+            for (int jat = 0; jat < ucell->nat; jat++) {
                 int begin_col = paraV.atom_begin_col[jat];
                 int end_col = paraV.atom_begin_col[jat + 1];
                 int numberofCol = end_col - begin_col;
                 hamilt::BaseMatrix<double> tmp_matrix(numberofRow, numberofCol);
                 tmp_matrix.allocate(nullptr, true);
                 int nnz = 0;
-                for (const auto& element: sparse_matrix.getElements())
-                {
+                for (const auto& element: sparse_matrix.getElements()) {
                     int row = element.first.first;
                     int col = element.first.second;
-                    if (row < begin_row || row >= end_row || col < begin_col || col >= end_col)
-                    {
+                    if (row < begin_row || row >= end_row || col < begin_col || col >= end_col) {
                         continue;
                     }
                     tmp_matrix.add_element(row - begin_row, col - begin_col, element.second);
                     nnz++;
                 }
-                if (nnz != 0)
-                {
+                if (nnz != 0) {
                     auto tmp_ap = hamilt::AtomPair<double>(iat, jat, RCoord[0], RCoord[1], RCoord[2], &paraV);
                     tmp_ap.allocate(nullptr, true);
                     tmp_ap.convert_add(tmp_matrix, RCoord[0], RCoord[1], RCoord[2]);
@@ -141,19 +118,15 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     EXPECT_EQ(csr.getNumberOfR(), csr_out.getNumberOfR());
     //
     // compare csr and csr_out
-    for (int i = 0; i < numberofR; i++)
-    {
+    for (int i = 0; i < numberofR; i++) {
         std::vector<int> RCoord = csr.getRCoordinate(i);
         ModuleIO::SparseMatrix<double> sparse_matrix = csr.getMatrix(i);
-        for (int j = 0; j < numberofR; j++)
-        {
+        for (int j = 0; j < numberofR; j++) {
             std::vector<int> RCoord_out = csr_out.getRCoordinate(j);
-            if (RCoord[0] == RCoord_out[0] && RCoord[1] == RCoord_out[1] && RCoord[2] == RCoord_out[2])
-            {
+            if (RCoord[0] == RCoord_out[0] && RCoord[1] == RCoord_out[1] && RCoord[2] == RCoord_out[2]) {
                 ModuleIO::SparseMatrix<double> sparse_matrix_out = csr_out.getMatrix(j);
                 EXPECT_EQ(sparse_matrix.getElements().size(), sparse_matrix_out.getElements().size());
-                for (const auto& element: sparse_matrix.getElements())
-                {
+                for (const auto& element: sparse_matrix.getElements()) {
                     int row = element.first.first;
                     int col = element.first.second;
                     double value = element.second;

@@ -11,8 +11,7 @@
  * The MSST varies the cell volume and temperature to restrain the system to the shock Hugoniot and the Rayleigh line.
  * These restraints correspond to the macroscopic conservation laws dictated by a shock front.
  */
-class MSST : public MD_base
-{
+class MSST : public MD_base {
   public:
     MSST(const Parameter& param_in, UnitCell& unit_in);
     ~MSST();

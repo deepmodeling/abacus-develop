@@ -9,36 +9,27 @@
 #include <fstream>
 
 // mock
-namespace GlobalV
-{
+namespace GlobalV {
 int NPROC = 1;
 int MY_RANK = 0;
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 } // namespace GlobalV
-namespace ModuleBase
-{
-void TITLE(const std::string& class_name, const std::string& function_name, const bool disable)
-{
-}
-namespace GlobalFunc
-{
-bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart, const bool ifwarn)
-{
+namespace ModuleBase {
+void TITLE(const std::string& class_name, const std::string& function_name, const bool disable) {}
+namespace GlobalFunc {
+bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart, const bool ifwarn) {
     return false;
 }
 } // namespace GlobalFunc
-namespace Global_File
-{
+namespace Global_File {
 void make_dir_out(const std::string& suffix,
                   const std::string& calculation,
                   const bool& out_dir,
                   const bool& out_wfc_dir,
                   const int rank,
                   const bool& restart,
-                  const bool out_alllog)
-{
-}
+                  const bool out_alllog) {}
 } // namespace Global_File
 } // namespace ModuleBase
 
@@ -55,11 +46,9 @@ void make_dir_out(const std::string& suffix,
  *     - check_mode = true
  */
 
-class InputTest : public testing::Test
-{
+class InputTest : public testing::Test {
   protected:
-    bool compare_two_files(const std::string& filename1, const std::string& filename2)
-    {
+    bool compare_two_files(const std::string& filename1, const std::string& filename2) {
         std::ifstream file1(filename1.c_str());
         std::ifstream file2(filename2.c_str());
         EXPECT_TRUE(file1.is_open());
@@ -68,8 +57,7 @@ class InputTest : public testing::Test
         std::string line1, line2;
         int lineNumber = 1;
         bool allpass = true;
-        while (std::getline(file1, line1) && std::getline(file2, line2))
-        {
+        while (std::getline(file1, line1) && std::getline(file2, line2)) {
             std::istringstream iss1(line1);
             std::istringstream iss2(line2);
 
@@ -82,8 +70,7 @@ class InputTest : public testing::Test
 
             // compare two columns
             // compare two columns
-            if (col1_file1 != col1_file2 || col2_file1 != col2_file2)
-            {
+            if (col1_file1 != col1_file2 || col2_file1 != col2_file2) {
                 std::cout << "Mismatch found at line " << lineNumber << " in files " << filename1 << " and "
                           << filename2 << std::endl;
                 std::cout << "File1: " << col1_file1 << " " << col2_file1 << std::endl;
@@ -100,8 +87,7 @@ class InputTest : public testing::Test
     }
 };
 
-TEST_F(InputTest, Selfconsistent_Read)
-{
+TEST_F(InputTest, Selfconsistent_Read) {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     { // PW
@@ -143,8 +129,7 @@ TEST_F(InputTest, Selfconsistent_Read)
     }
 }
 
-TEST_F(InputTest, Check)
-{
+TEST_F(InputTest, Check) {
     ModuleIO::ReadInput readinput(0);
     readinput.check_ntype_flag = false;
     {

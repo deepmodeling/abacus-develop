@@ -13,35 +13,27 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 ModuleBase::matrix& o_delta,
                                 const Parallel_Orbitals& pv,
                                 const int nks,
-                                const int nspin)
-{
+                                const int nspin) {
     ModuleBase::TITLE("DeePKS_domain", "cal_o_delta");
     ModuleBase::timer::start("DeePKS_domain", "cal_o_delta");
 
-    for (int ik = 0; ik < nks / nspin; ik++)
-    {
+    for (int ik = 0; ik < nks / nspin; ik++) {
         TK o_delta_tmp = TK(0.0);
-        for (int i = 0; i < PARAM.globalv.nlocal; ++i)
-        {
-            for (int j = 0; j < PARAM.globalv.nlocal; ++j)
-            {
+        for (int i = 0; i < PARAM.globalv.nlocal; ++i) {
+            for (int j = 0; j < PARAM.globalv.nlocal; ++j) {
                 const int mu = pv.global2local_row(j);
                 const int nu = pv.global2local_col(i);
 
-                if (mu >= 0 && nu >= 0)
-                {
+                if (mu >= 0 && nu >= 0) {
                     int iic = 0;
-                    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
-                        || PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
+                    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx" ||
+                        PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
                     {
                         iic = mu + nu * pv.nrow;
-                    }
-                    else
-                    {
+                    } else {
                         iic = mu * pv.ncol + nu;
                     }
-                    for (int is = 0; is < nspin; is++)
-                    {
+                    for (int is = 0; is < nspin; is++) {
                         o_delta_tmp += dm_hl[ik + is * nks / nspin](nu, mu) * h_delta[ik][iic];
                     }
                 }

@@ -13,30 +13,29 @@
 namespace hsolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class DiagoCG final
-{
+class DiagoCG final {
     // private: accessibility within class is private by default
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
     using ct_Device = typename ct::PsiToContainer<Device>::type;
+
   public:
-        using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
-        using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
-        using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
+    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
     DiagoCG(const std::string& basis_type, const std::string& calculation);
-    DiagoCG(
-        const std::string& basis_type,
-        const std::string& calculation,
-        const bool& need_subspace,
-        const SubspaceFunc& subspace_func,
-        const Real& pw_diag_thr,
-        const int& pw_diag_nmax,
-        const int& nproc_in_pool);
+    DiagoCG(const std::string& basis_type,
+            const std::string& calculation,
+            const bool& need_subspace,
+            const SubspaceFunc& subspace_func,
+            const Real& pw_diag_thr,
+            const int& pw_diag_nmax,
+            const int& nproc_in_pool);
 
     ~DiagoCG();
 
@@ -55,7 +54,7 @@ class DiagoCG final
                 const Real* prec = nullptr);
 
   private:
-    Device * ctx_ = {};
+    Device* ctx_ = {};
     /// static variables, used for passing control variables
     /// record for how many bands not have convergence eigenvalues
     int notconv_ = 0;
@@ -87,56 +86,41 @@ class DiagoCG final
     /// A function object that performs the subspace calculation.
     SubspaceFunc subspace_func_ = nullptr;
 
-    void calc_grad(
-        const ct::Tensor& prec,
-        ct::Tensor& grad,
-        ct::Tensor& hphi,
-        ct::Tensor& sphi,
-        ct::Tensor& pphi);
+    void calc_grad(const ct::Tensor& prec, ct::Tensor& grad, ct::Tensor& hphi, ct::Tensor& sphi, ct::Tensor& pphi);
 
-    void orth_grad(
-        const ct::Tensor& psi,
-        const int& m,
-        ct::Tensor& grad,
-        ct::Tensor& scg,
-        ct::Tensor& lagrange);
+    void orth_grad(const ct::Tensor& psi, const int& m, ct::Tensor& grad, ct::Tensor& scg, ct::Tensor& lagrange);
 
-    void calc_gamma_cg(
-        const int& iter,
-        const Real& cg_norm,
-        const Real& theta,
-        const ct::Tensor& prec,
-        const ct::Tensor& scg,
-        const ct::Tensor& grad,
-        const ct::Tensor& phi_m,
-        Real& gg_last,
-        ct::Tensor& g0,
-        ct::Tensor& cg);
+    void calc_gamma_cg(const int& iter,
+                       const Real& cg_norm,
+                       const Real& theta,
+                       const ct::Tensor& prec,
+                       const ct::Tensor& scg,
+                       const ct::Tensor& grad,
+                       const ct::Tensor& phi_m,
+                       Real& gg_last,
+                       ct::Tensor& g0,
+                       ct::Tensor& cg);
 
-    bool update_psi(
-        const ct::Tensor& pphi,
-        const ct::Tensor& cg,
-        const ct::Tensor& scg,
-        const double& ethreshold,
-        Real &cg_norm,
-        Real &theta,
-        Real &eigen,
-        ct::Tensor& phi_m,
-        ct::Tensor& sphi,
-        ct::Tensor& hphi);
+    bool update_psi(const ct::Tensor& pphi,
+                    const ct::Tensor& cg,
+                    const ct::Tensor& scg,
+                    const double& ethreshold,
+                    Real& cg_norm,
+                    Real& theta,
+                    Real& eigen,
+                    ct::Tensor& phi_m,
+                    ct::Tensor& sphi,
+                    ct::Tensor& hphi);
 
     void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_once(const ct::Tensor& prec,
-                   ct::Tensor& psi,
-                   ct::Tensor& eigen,
-                   const std::vector<double>& ethr_band);
+    void diag_once(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen, const std::vector<double>& ethr_band);
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 
     using dot_real_op = ModuleBase::dot_real_op<T, Device>;
-    const T * one_ = nullptr, * zero_ = nullptr, * neg_one_ = nullptr;
+    const T *one_ = nullptr, *zero_ = nullptr, *neg_one_ = nullptr;
 };
 
 } // namespace hsolver

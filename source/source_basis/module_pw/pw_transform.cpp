@@ -8,8 +8,7 @@
 #include <cassert>
 #include <complex>
 
-namespace ModulePW
-{
+namespace ModulePW {
 //     const base_device::DEVICE_CPU* PW_Basis::get_default_device_ctx() {
 //         static const base_device::DEVICE_CPU* default_device_cpu;
 //     return default_device_cpu;
@@ -25,16 +24,14 @@ template <typename FPTYPE>
 void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
                           std::complex<FPTYPE>* out,
                           const bool add,
-                          const FPTYPE factor) const
-{
+                          const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "real2recip");
 
     assert(this->gamma_only == false);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int ir = 0; ir < this->nrxx; ++ir)
-    {
+    for (int ir = 0; ir < this->nrxx; ++ir) {
         this->fft_bundle.get_auxr_data<FPTYPE>()[ir] = in[ir];
     }
     this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
@@ -43,25 +40,20 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
 
     this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
-    if (add)
-    {
+    if (add) {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < this->npw; ++ig)
-        {
+        for (int ig = 0; ig < this->npw; ++ig) {
             out[ig] += tmpfac * this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
-    }
-    else
-    {
+    } else {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < this->npw; ++ig)
-        {
+        for (int ig = 0; ig < this->npw; ++ig) {
             out[ig] = tmpfac * this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
@@ -76,32 +68,25 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
  * @param out: (nz, ns),  std::complex<double> data
  */
 template <typename FPTYPE>
-void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
-{
+void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "real2recip");
-    if (this->gamma_only)
-    {
+    if (this->gamma_only) {
         const int npy = this->ny * this->nplane;
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
-        for (int ix = 0; ix < this->nx; ++ix)
-        {
-            for (int ipy = 0; ipy < npy; ++ipy)
-            {
+        for (int ix = 0; ix < this->nx; ++ix) {
+            for (int ipy = 0; ipy < npy; ++ipy) {
                 this->fft_bundle.get_rspace_data<FPTYPE>()[ix * npy + ipy] = in[ix * npy + ipy];
             }
         }
 
         this->fft_bundle.fftxyr2c(fft_bundle.get_rspace_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
-    }
-    else
-    {
+    } else {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ir = 0; ir < this->nrxx; ++ir)
-        {
+        for (int ir = 0; ir < this->nrxx; ++ir) {
             this->fft_bundle.get_auxr_data<FPTYPE>()[ir] = std::complex<FPTYPE>(in[ir], 0);
         }
         this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
@@ -110,25 +95,20 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
 
     this->fft_bundle.fftzfor(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
-    if (add)
-    {
+    if (add) {
         FPTYPE tmpfac = factor / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < this->npw; ++ig)
-        {
+        for (int ig = 0; ig < this->npw; ++ig) {
             out[ig] += tmpfac * this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
-    }
-    else
-    {
+    } else {
         FPTYPE tmpfac = 1.0 / FPTYPE(this->nxyz);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < this->npw; ++ig)
-        {
+        for (int ig = 0; ig < this->npw; ++ig) {
             out[ig] = tmpfac * this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]];
         }
     }
@@ -146,23 +126,20 @@ template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
                           std::complex<FPTYPE>* out,
                           const bool add,
-                          const FPTYPE factor) const
-{
+                          const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "recip2real");
     assert(this->gamma_only == false);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < this->nst * this->nz; ++i)
-    {
+    for (int i = 0; i < this->nst * this->nz; ++i) {
         fft_bundle.get_auxg_data<FPTYPE>()[i] = std::complex<FPTYPE>(0, 0);
     }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int ig = 0; ig < this->npw; ++ig)
-    {
+    for (int ig = 0; ig < this->npw; ++ig) {
         this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
     this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
@@ -171,23 +148,18 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
 
     this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
-    if (add)
-    {
+    if (add) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ir = 0; ir < this->nrxx; ++ir)
-        {
+        for (int ir = 0; ir < this->nrxx; ++ir) {
             out[ir] += factor * this->fft_bundle.get_auxr_data<FPTYPE>()[ir];
         }
-    }
-    else
-    {
+    } else {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ir = 0; ir < this->nrxx; ++ir)
-        {
+        for (int ir = 0; ir < this->nrxx; ++ir) {
             out[ir] = this->fft_bundle.get_auxr_data<FPTYPE>()[ir];
         }
     }
@@ -202,82 +174,64 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
  * @param out: (nplane, ny, nx), double
  */
 template <typename FPTYPE>
-void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
-{
+void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "recip2real");
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < this->nst * this->nz; ++i)
-    {
+    for (int i = 0; i < this->nst * this->nz; ++i) {
         fft_bundle.get_auxg_data<FPTYPE>()[i] = std::complex<FPTYPE>(0, 0);
     }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int ig = 0; ig < this->npw; ++ig)
-    {
+    for (int ig = 0; ig < this->npw; ++ig) {
         this->fft_bundle.get_auxg_data<FPTYPE>()[this->ig2isz[ig]] = in[ig];
     }
     this->fft_bundle.fftzbac(fft_bundle.get_auxg_data<FPTYPE>(), fft_bundle.get_auxg_data<FPTYPE>());
 
     this->gathers_scatterp(this->fft_bundle.get_auxg_data<FPTYPE>(), this->fft_bundle.get_auxr_data<FPTYPE>());
 
-    if (this->gamma_only)
-    {
+    if (this->gamma_only) {
         this->fft_bundle.fftxyc2r(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_rspace_data<FPTYPE>());
 
         // r2c in place
         const int npy = this->ny * this->nplane;
 
-        if (add)
-        {
+        if (add) {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
-            for (int ix = 0; ix < this->nx; ++ix)
-            {
-                for (int ipy = 0; ipy < npy; ++ipy)
-                {
+            for (int ix = 0; ix < this->nx; ++ix) {
+                for (int ipy = 0; ipy < npy; ++ipy) {
                     out[ix * npy + ipy] += factor * this->fft_bundle.get_rspace_data<FPTYPE>()[ix * npy + ipy];
                 }
             }
-        }
-        else
-        {
+        } else {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static)
 #endif
-            for (int ix = 0; ix < this->nx; ++ix)
-            {
-                for (int ipy = 0; ipy < npy; ++ipy)
-                {
+            for (int ix = 0; ix < this->nx; ++ix) {
+                for (int ipy = 0; ipy < npy; ++ipy) {
                     out[ix * npy + ipy] = this->fft_bundle.get_rspace_data<FPTYPE>()[ix * npy + ipy];
                 }
             }
         }
-    }
-    else
-    {
+    } else {
         this->fft_bundle.fftxybac(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
-        if (add)
-        {
+        if (add) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-            for (int ir = 0; ir < this->nrxx; ++ir)
-            {
+            for (int ir = 0; ir < this->nrxx; ++ir) {
                 out[ir] += factor * this->fft_bundle.get_auxr_data<FPTYPE>()[ir].real();
             }
-        }
-        else
-        {
+        } else {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-            for (int ir = 0; ir < this->nrxx; ++ir)
-            {
+            for (int ir = 0; ir < this->nrxx; ++ir) {
                 out[ir] = this->fft_bundle.get_auxr_data<FPTYPE>()[ir].real();
             }
         }

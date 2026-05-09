@@ -5,8 +5,7 @@
 #include "lattice_change_methods.h"
 #include "source_cell/unitcell.h"
 
-class Relax_old
-{
+class Relax_old {
   public:
     void init_relax(const int& natom);
     bool relax_step(const int& istep,

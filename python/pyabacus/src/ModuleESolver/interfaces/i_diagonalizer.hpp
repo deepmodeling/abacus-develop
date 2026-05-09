@@ -26,39 +26,36 @@ namespace esolver {
 /**
  * @brief Diagonalization method types
  */
-enum class DiagMethod
-{
-    Davidson,      ///< Davidson iterative method
-    DavSubspace,   ///< Davidson with subspace rotation
-    CG,            ///< Conjugate gradient
-    LAPACK,        ///< Direct LAPACK diagonalization
-    ScaLAPACK,     ///< Parallel ScaLAPACK
-    ELPA           ///< ELPA eigensolver
+enum class DiagMethod {
+    Davidson,    ///< Davidson iterative method
+    DavSubspace, ///< Davidson with subspace rotation
+    CG,          ///< Conjugate gradient
+    LAPACK,      ///< Direct LAPACK diagonalization
+    ScaLAPACK,   ///< Parallel ScaLAPACK
+    ELPA         ///< ELPA eigensolver
 };
 
 /**
  * @brief Result of diagonalization
  */
 template <typename TK>
-struct DiagResult
-{
-    py::array_t<TK> psi;           ///< Eigenvectors
+struct DiagResult {
+    py::array_t<TK> psi;             ///< Eigenvectors
     py::array_t<double> eigenvalues; ///< Eigenvalues
-    int iterations = 0;             ///< Number of iterations (for iterative methods)
-    bool converged = false;         ///< Whether converged
-    double residual = 0.0;          ///< Final residual
+    int iterations = 0;              ///< Number of iterations (for iterative methods)
+    bool converged = false;          ///< Whether converged
+    double residual = 0.0;           ///< Final residual
 };
 
 /**
  * @brief Configuration for diagonalization
  */
-struct DiagConfig
-{
+struct DiagConfig {
     DiagMethod method = DiagMethod::Davidson;
-    double tolerance = 1e-6;     ///< Convergence tolerance
-    int max_iterations = 100;    ///< Maximum iterations
-    int dav_ndim = 4;            ///< Davidson subspace dimension multiplier
-    int nproc_in_pool = 1;       ///< Number of processes in pool
+    double tolerance = 1e-6;  ///< Convergence tolerance
+    int max_iterations = 100; ///< Maximum iterations
+    int dav_ndim = 4;         ///< Davidson subspace dimension multiplier
+    int nproc_in_pool = 1;    ///< Number of processes in pool
 };
 
 /**
@@ -70,9 +67,8 @@ struct DiagConfig
  * @tparam TK Type for k-space quantities (double or complex<double>)
  */
 template <typename TK>
-class IDiagonalizer
-{
-public:
+class IDiagonalizer {
+  public:
     virtual ~IDiagonalizer() = default;
 
     // ==================== Direct Diagonalization ====================
@@ -85,10 +81,8 @@ public:
      * @param psi_init Initial guess for eigenvectors (optional)
      * @return Diagonalization result
      */
-    virtual DiagResult<TK> diagonalize(int ik,
-                                       const py::array_t<TK>& Hk,
-                                       const py::array_t<TK>& Sk,
-                                       const py::array_t<TK>& psi_init) = 0;
+    virtual DiagResult<TK>
+    diagonalize(int ik, const py::array_t<TK>& Hk, const py::array_t<TK>& Sk, const py::array_t<TK>& psi_init) = 0;
 
     // ==================== Iterative Diagonalization ====================
 
@@ -104,12 +98,11 @@ public:
      * @param precond Preconditioner (diagonal approximation to H)
      * @return Diagonalization result
      */
-    virtual DiagResult<TK> diagonalize_iterative(
-        int ik,
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> spsi_func,
-        const py::array_t<TK>& psi_init,
-        const py::array_t<double>& precond) = 0;
+    virtual DiagResult<TK> diagonalize_iterative(int ik,
+                                                 std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
+                                                 std::function<py::array_t<TK>(const py::array_t<TK>&)> spsi_func,
+                                                 const py::array_t<TK>& psi_init,
+                                                 const py::array_t<double>& precond) = 0;
 
     // ==================== Configuration ====================
 
@@ -165,31 +158,41 @@ using IDiagonalizerMultiK = IDiagonalizer<std::complex<double>>;
 /**
  * @brief Convert DiagMethod enum to string
  */
-inline std::string diag_method_to_string(DiagMethod method)
-{
-    switch (method)
-    {
-        case DiagMethod::Davidson: return "davidson";
-        case DiagMethod::DavSubspace: return "dav_subspace";
-        case DiagMethod::CG: return "cg";
-        case DiagMethod::LAPACK: return "lapack";
-        case DiagMethod::ScaLAPACK: return "scalapack";
-        case DiagMethod::ELPA: return "elpa";
-        default: return "unknown";
+inline std::string diag_method_to_string(DiagMethod method) {
+    switch (method) {
+    case DiagMethod::Davidson:
+        return "davidson";
+    case DiagMethod::DavSubspace:
+        return "dav_subspace";
+    case DiagMethod::CG:
+        return "cg";
+    case DiagMethod::LAPACK:
+        return "lapack";
+    case DiagMethod::ScaLAPACK:
+        return "scalapack";
+    case DiagMethod::ELPA:
+        return "elpa";
+    default:
+        return "unknown";
     }
 }
 
 /**
  * @brief Convert string to DiagMethod enum
  */
-inline DiagMethod string_to_diag_method(const std::string& str)
-{
-    if (str == "davidson") return DiagMethod::Davidson;
-    if (str == "dav_subspace") return DiagMethod::DavSubspace;
-    if (str == "cg") return DiagMethod::CG;
-    if (str == "lapack") return DiagMethod::LAPACK;
-    if (str == "scalapack") return DiagMethod::ScaLAPACK;
-    if (str == "elpa") return DiagMethod::ELPA;
+inline DiagMethod string_to_diag_method(const std::string& str) {
+    if (str == "davidson")
+        return DiagMethod::Davidson;
+    if (str == "dav_subspace")
+        return DiagMethod::DavSubspace;
+    if (str == "cg")
+        return DiagMethod::CG;
+    if (str == "lapack")
+        return DiagMethod::LAPACK;
+    if (str == "scalapack")
+        return DiagMethod::ScaLAPACK;
+    if (str == "elpa")
+        return DiagMethod::ELPA;
     return DiagMethod::Davidson; // default
 }
 

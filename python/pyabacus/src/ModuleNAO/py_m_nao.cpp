@@ -15,8 +15,7 @@ using namespace pyabacus::utils;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void bind_m_nao(py::module& m)
-{
+void bind_m_nao(py::module& m) {
     // Bind the RadialCollection class
     py::class_<RadialCollection>(m, "RadialCollection")
         .def(py::init<>(), R"pbdoc(
@@ -31,8 +30,7 @@ void bind_m_nao(py::module& m)
             [](RadialCollection& self, int nfile, const py::list& file_list, char ftype) {
                 std::vector<std::string> files;
                 files.reserve(nfile);
-                for (auto file: file_list)
-                {
+                for (auto file: file_list) {
                     files.push_back(file.cast<std::string>());
                 }
                 self.build(nfile, files.data(), ftype);
@@ -152,13 +150,10 @@ void bind_m_nao(py::module& m)
                 double* grad_ptr = cal_grad ? grad_out : nullptr;
                 self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_ptr);
                 py::array_t<double> out_array(1, out);
-                if (cal_grad)
-                {
+                if (cal_grad) {
                     py::array_t<double> grad_out_array(3, grad_out);
                     return py::make_tuple(out_array, grad_out_array);
-                }
-                else
-                {
+                } else {
                     py::array_t<double> grad_out_array(0);
                     return py::make_tuple(out_array, grad_out_array);
                 }
@@ -447,27 +442,22 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("pr", &NumericalRadial::pr)
         .def_property_readonly("pk", &NumericalRadial::pk)
         .def_property_readonly("sbt", &NumericalRadial::sbt)
-        .def_property_readonly("rgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk()));
-                               })
-        .def_property_readonly("rvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk()));
-                               })
+        .def_property_readonly(
+            "rgrid",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr())); })
+        .def_property_readonly(
+            "kgrid",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk())); })
+        .def_property_readonly(
+            "rvalue",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr())); })
+        .def_property_readonly(
+            "kvalue",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk())); })
         .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }
 
-PYBIND11_MODULE(_nao_pack, m)
-{
+PYBIND11_MODULE(_nao_pack, m) {
     m.doc() = "Module for Numerical Atomic Orbitals (NAO) in ABACUS";
 
     bind_m_nao(m);

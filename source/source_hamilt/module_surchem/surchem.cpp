@@ -3,8 +3,7 @@
 double surchem::Acav = 0;
 double surchem::Ael = 0;
 
-surchem::surchem()
-{
+surchem::surchem() {
     TOTN_real = nullptr;
     delta_phi = nullptr;
     epspot = nullptr;
@@ -13,22 +12,18 @@ surchem::surchem()
     qs = 0;
 }
 
-void surchem::allocate(const int &nrxx, const int &nspin)
-{
+void surchem::allocate(const int& nrxx, const int& nspin) {
     assert(nrxx >= 0);
     assert(nspin > 0);
 
     delete[] TOTN_real;
     delete[] delta_phi;
     delete[] epspot;
-    if (nrxx > 0)
-    {
+    if (nrxx > 0) {
         TOTN_real = new double[nrxx];
         delta_phi = new double[nrxx];
         epspot = new double[nrxx];
-    }
-    else
-    {
+    } else {
         TOTN_real = nullptr;
         delta_phi = nullptr;
         epspot = nullptr;
@@ -42,8 +37,7 @@ void surchem::allocate(const int &nrxx, const int &nspin)
     return;
 }
 
-void surchem::clear()
-{
+void surchem::clear() {
     delete[] TOTN_real;
     delete[] delta_phi;
     delete[] epspot;
@@ -51,11 +45,8 @@ void surchem::clear()
     this->delta_phi = nullptr;
     this->epspot = nullptr;
 
-    this->Vcav.create(0, 0); 
+    this->Vcav.create(0, 0);
     this->Vel.create(0, 0);
 }
 
-surchem::~surchem()
-{
-    this->clear();
-}
+surchem::~surchem() { this->clear(); }

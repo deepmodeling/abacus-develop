@@ -3,8 +3,9 @@ from ase.io.jsonio import read_json, write_json
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class STM:
-    def __init__(self, dirname='.'):
+    def __init__(self, dirname="."):
         """Scanning tunneling microscope.
 
         dirname: string
@@ -13,7 +14,6 @@ class STM:
 
         self.dirname = dirname
 
-
     def read_ldos(self, bias):
         """Read local density of states from cube file.
 
@@ -21,20 +21,18 @@ class STM:
             Bias voltage in Volts.
         """
 
-        if(abs(bias) < 1e-5):
+        if abs(bias) < 1e-5:
             bias = 0.0
 
-        filename = f'{self.dirname}/LDOS_{bias:.5g}eV.cube'
-        print('read in ' + filename)
+        filename = f"{self.dirname}/LDOS_{bias:.5g}eV.cube"
+        print("read in " + filename)
         self.ldos, self.atoms = read_cube_data(filename)
         self.cell = self.atoms.cell
         self.bias = bias
 
-
     def write(self, filename):
         """Write local density of states to JSON file."""
         write_json(filename, (self.ldos, self.bias, self.cell))
-
 
     def get_averaged_current(self, bias, z):
         """Calculate avarage current at height z (in Angstrom).
@@ -51,9 +49,9 @@ class STM:
         n = int(n) % nz
 
         # Average and do linear interpolation:
-        return ((1 - dn) * self.ldos[:, :, n].mean() +
-                dn * self.ldos[:, :, (n + 1) % nz].mean())
-
+        return (1 - dn) * self.ldos[:, :, n].mean() + dn * self.ldos[
+            :, :, (n + 1) % nz
+        ].mean()
 
     def scan(self, bias, current, z0=None, repeat=(1, 1)):
         """Constant current 2-d scan.
@@ -88,7 +86,6 @@ class STM:
         x, y = np.dot(ij / s0, self.cell[:2, :2]).T.reshape((2,) + s)
 
         return x, y, heights
-    
 
     def scan2(self, bias, z, repeat=(1, 1)):
         """Constant height 2-d scan.
@@ -123,7 +120,6 @@ class STM:
         # Returing scan with axes in Angstrom.
         return x, y, current
 
-
     def linescan(self, bias, current, p1, p2, npoints=50, z0=None):
         """Constant current line scan.
 
@@ -140,7 +136,7 @@ class STM:
         p1 = np.asarray(p1, float)
         p2 = np.asarray(p2, float)
         d = p2 - p1
-        s = np.dot(d, d)**0.5
+        s = np.dot(d, d) ** 0.5
 
         cell = self.cell[:2, :2]
         shape = np.array(heights.shape, float)
@@ -151,7 +147,6 @@ class STM:
             q = np.dot(p, M) * shape
             line[i] = interpolate(q, heights)
         return np.linspace(0, s, npoints), line
-    
 
     def pointcurrent(self, bias, x, y, z):
         """Current for a single x, y, z position for a given bias."""
@@ -174,13 +169,14 @@ class STM:
         zp = int(zp) % nz
 
         # 3D interpolation of the LDOS at point (x,y,z) at given bias.
-        xyzldos = (((1 - dx) + (1 - dy) + (1 - dz)) * self.ldos[xp, yp, zp] +
-                   dx * self.ldos[(xp + 1) % nx, yp, zp] +
-                   dy * self.ldos[xp, (yp + 1) % ny, zp] +
-                   dz * self.ldos[xp, yp, (zp + 1) % nz])
+        xyzldos = (
+            ((1 - dx) + (1 - dy) + (1 - dz)) * self.ldos[xp, yp, zp]
+            + dx * self.ldos[(xp + 1) % nx, yp, zp]
+            + dy * self.ldos[xp, (yp + 1) % ny, zp]
+            + dz * self.ldos[xp, yp, (zp + 1) % nz]
+        )
 
         return dos2current(bias, xyzldos)
-    
 
     def sts(self, x, y, z, bias0, bias1, biasstep):
         """Returns the dI/dV curve for position x, y at height z (in Angstrom),
@@ -198,7 +194,6 @@ class STM:
 
         return biases, current, dIdV
 
-
     def line_sts(self, bias0, bias1, biasstep, p1, p2, npoints=50):
         """Returns the dI/dV curve for line between p1 and p2,
         for bias from bias0 to bias1 with step biasstep."""
@@ -206,7 +201,7 @@ class STM:
         p1 = np.asarray(p1, float)
         p2 = np.asarray(p2, float)
         d = p2 - p1
-        s = np.dot(d, d)**0.5
+        s = np.dot(d, d) ** 0.5
         biases = np.arange(bias0, bias1 + biasstep, biasstep)
         current = np.zeros((npoints, len(biases)))
 
@@ -224,7 +219,6 @@ class STM:
 
         return biases, np.linspace(0, s, npoints), current, dIdV
 
-
     def line_sts_ave(self, bias0, bias1, biasstep, npoints=50):
 
         biases = np.arange(bias0, bias1 + biasstep, biasstep)
@@ -239,18 +233,18 @@ class STM:
                 z = i / (npoints - 1) * nz
                 dz = z - np.floor(z)
                 z = int(z) % nz
-                current[i, b] = ((1 - dz) * self.ldos[:, :, z].mean() +
-                    dz * self.ldos[:, :, (z + 1) % nz].mean())
-            
+                current[i, b] = (1 - dz) * self.ldos[:, :, z].mean() + dz * self.ldos[
+                    :, :, (z + 1) % nz
+                ].mean()
+
         dIdV = np.zeros((npoints, len(biases)))
         for i in range(npoints):
             dIdV[i, :] = np.gradient(current[i, :], biasstep)
 
         return biases, np.linspace(0, 1, npoints), current, dIdV
 
-
     def find_current(self, ldos, z):
-        """ Finds current for given LDOS at height z."""
+        """Finds current for given LDOS at height z."""
         nz = self.ldos.shape[2]
 
         zp = z / self.cell[2, 2] * nz
@@ -260,14 +254,14 @@ class STM:
         ldosz = (1 - dz) * ldos[zp] + dz * ldos[(zp + 1) % nz]
 
         return dos2current(self.bias, ldosz)
-    
+
 
 def dos2current(bias, dos):
     # Borrowed from gpaw/analyse/simple_stm.py:
     # The connection between density n and current I
     # n [e/Angstrom^3] = 0.0002 sqrt(I [nA])
     # as given in Hofer et al., RevModPhys 75 (2003) 1287
-    return 5000. * dos**2 * (1 if bias > 0 else -1)
+    return 5000.0 * dos**2 * (1 if bias > 0 else -1)
 
 
 def interpolate(q, heights):
@@ -277,10 +271,12 @@ def interpolate(q, heights):
     qi %= heights.shape
     n0, m0 = qi
     n1, m1 = (qi + 1) % heights.shape
-    z = (g[0] * g[1] * heights[n0, m0] +
-         f[0] * g[1] * heights[n1, m0] +
-         g[0] * f[1] * heights[n0, m1] +
-         f[0] * f[1] * heights[n1, m1])
+    z = (
+        g[0] * g[1] * heights[n0, m0]
+        + f[0] * g[1] * heights[n1, m0]
+        + g[0] * f[1] * heights[n0, m1]
+        + f[0] * f[1] * heights[n1, m1]
+    )
     return z
 
 
@@ -296,11 +292,11 @@ def find_height(ldos, current, h, z0=None):
     else:
         return 0.0
 
-    c2, c1 = ldos[n:n + 2]
+    c2, c1 = ldos[n : n + 2]
     return (n + 1 - (current - c1) / (c2 - c1)) * h
 
 
 def delta(biases, bias, width):
     """Return a delta-function centered at 'bias'"""
-    x = -((biases - bias) / width)**2
+    x = -(((biases - bias) / width) ** 2)
     return np.exp(x) / (np.sqrt(np.pi) * width)

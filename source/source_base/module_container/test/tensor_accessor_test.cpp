@@ -5,7 +5,7 @@ namespace container {
 
 // Test fixture to set up common data for tests
 class TensorAccessorTest : public testing::Test {
-protected:
+  protected:
     // Common setup code
     TensorAccessorTest() = default;
 

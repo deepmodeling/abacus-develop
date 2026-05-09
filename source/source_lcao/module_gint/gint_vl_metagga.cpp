@@ -3,11 +3,9 @@
 #include "phi_operator.h"
 #include "gint_helper.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-void Gint_vl_metagga::cal_gint()
-{
+void Gint_vl_metagga::cal_gint() {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
     ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
@@ -21,13 +19,9 @@ void Gint_vl_metagga::cal_gint()
 // Private functions
 //========================
 
-void Gint_vl_metagga::init_hr_gint_()
-{
-    hr_gint_ = gint_info_->get_hr<double>();
-}
+void Gint_vl_metagga::init_hr_gint_() { hr_gint_ = gint_info_->get_hr<double>(); }
 
-void Gint_vl_metagga::cal_hr_gint_()
-{
+void Gint_vl_metagga::cal_hr_gint_() {
 #pragma omp parallel
     {
         PhiOperator phi_op;
@@ -40,11 +34,9 @@ void Gint_vl_metagga::cal_hr_gint_()
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
 #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
-        {
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++) {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
-            {
+            if (biggrid->get_atoms().size() == 0) {
                 continue;
             }
             phi_op.set_bgrid(biggrid);
@@ -70,4 +62,4 @@ void Gint_vl_metagga::cal_hr_gint_()
     }
 }
 
-}
+} // namespace ModuleGint

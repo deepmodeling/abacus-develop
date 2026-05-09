@@ -1,55 +1,43 @@
 #include "esolver_of.h"
 #include "source_io/module_parameter/parameter.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 /**
  * @brief [Interface to opt]
  * Initialize the opts
  */
-void ESolver_OF::init_opt()
-{
-    if (this->opt_dcsrch_ == nullptr)
-    {
+void ESolver_OF::init_opt() {
+    if (this->opt_dcsrch_ == nullptr) {
         this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
     }
 
-    if (this->of_method_ == "tn")
-    {
-        if (this->opt_tn_ == nullptr)
-        {
+    if (this->of_method_ == "tn") {
+        if (this->opt_tn_ == nullptr) {
             this->opt_tn_ = new ModuleBase::Opt_TN();
         }
         this->opt_tn_->allocate(this->pw_rho->nrxx);
         this->opt_tn_->set_para(this->dV_);
-    }
-    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
-    {
-        if (this->opt_cg_ == nullptr)
-        {
+    } else if (this->of_method_ == "cg1" || this->of_method_ == "cg2") {
+        if (this->opt_cg_ == nullptr) {
             this->opt_cg_ = new ModuleBase::Opt_CG();
         }
         this->opt_cg_->allocate(this->pw_rho->nrxx);
         this->opt_cg_->set_para(this->dV_);
         this->opt_dcsrch_->set_paras(1e-4, 1e-2);
-    }
-    else if (this->of_method_ == "bfgs")
-    {
+    } else if (this->of_method_ == "bfgs") {
         ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
         return;
     }
 
     // optimize theta if nspin=2
-    if (PARAM.inp.nspin == 2)
-    {
+    if (PARAM.inp.nspin == 2) {
         this->opt_cg_mag_ = new ModuleBase::Opt_CG;
         this->opt_cg_mag_->allocate(PARAM.inp.nspin);
     }
 }
 
-void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
-{
+void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi) {
     this->bound_cal_potential_(ptemp_phi, rdLdphi);
 }
 
@@ -57,12 +45,9 @@ void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
  * @brief [Interface to opt]
  * Call optimization methods to get the optimization direction
  */
-void ESolver_OF::get_direction(UnitCell& ucell)
-{
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        if (this->of_method_ == "tn")
-        {
+void ESolver_OF::get_direction(UnitCell& ucell) {
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+        if (this->of_method_ == "tn") {
             this->tn_spin_flag_ = is;
             opt_tn_->next_direct(this->pphi_[is],
                                  this->pdLdphi_[is],
@@ -70,21 +55,13 @@ void ESolver_OF::get_direction(UnitCell& ucell)
                                  this->pdirect_[is],
                                  this,
                                  &ESolver_OF::cal_potential_wrapper);
-        }
-        else if (this->of_method_ == "cg1")
-        {
+        } else if (this->of_method_ == "cg1") {
             opt_cg_->next_direct(this->pdLdphi_[is], 1, this->pdirect_[is]);
-        }
-        else if (this->of_method_ == "cg2")
-        {
+        } else if (this->of_method_ == "cg2") {
             opt_cg_->next_direct(this->pdLdphi_[is], 2, this->pdirect_[is]);
-        }
-        else if (this->of_method_ == "bfgs")
-        {
+        } else if (this->of_method_ == "bfgs") {
             return;
-        }
-        else
-        {
+        } else {
             ModuleBase::WARNING_QUIT("ESolver_OF", "of_method must be one of CG, TN, or BFGS.");
         }
     }
@@ -98,18 +75,15 @@ void ESolver_OF::get_direction(UnitCell& ucell)
  * @param ptemp_phi
  * @param ucell
  */
-void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
-{
+void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell) {
     double temp_energy = 0.0;      // energy of temp_phi and temp_rho
     double kinetic_energy = 0.0;   // kinetic energy
     double pseudopot_energy = 0.0; // electron-ion interaction energy
 
-    if (PARAM.inp.nspin == 1)
-    {
+    if (PARAM.inp.nspin == 1) {
         int numDC = 0; // iteration number of line search
         strcpy(this->task_, "START");
-        while (true)
-        {
+        while (true) {
             // update energy
             this->pelec->cal_energies(2);
             temp_energy = this->pelec->f_en.etot;
@@ -129,43 +103,36 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
             if (strncmp(this->task_, "FG", 2) == 0) // continue line search
             {
                 // update tempPhi and tempRho
-                for (int i = 0; i < this->pw_rho->nrxx; ++i)
-                {
-                    ptemp_phi[0][i]
-                        = this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
+                for (int i = 0; i < this->pw_rho->nrxx; ++i) {
+                    ptemp_phi[0][i] =
+                        this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
                     this->ptemp_rho_->rho[0][i] = ptemp_phi[0][i] * ptemp_phi[0][i];
                 }
 
                 // get dEdtheta of new tempPhi and tempRho
                 this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, this->theta_, dEdtheta);
 
-                if (numDC > this->max_dcsrch_)
-                {
-                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING "
-                                         << "excedd the max iter number." << std::endl;
+                if (numDC > this->max_dcsrch_) {
+                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number."
+                                         << std::endl;
                     break;
                 }
-            }
-            else if (strncmp(this->task_, "CO", 2) == 0) // convergence achieved
+            } else if (strncmp(this->task_, "CO", 2) == 0) // convergence achieved
             {
                 break;
-            }
-            else if (strncmp(this->task_, "WA", 2) == 0) // warning of line search
+            } else if (strncmp(this->task_, "WA", 2) == 0) // warning of line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
                 break;
-            }
-            else if (strncmp(this->task_, "ER", 2) == 0) // ERROR in line search
+            } else if (strncmp(this->task_, "ER", 2) == 0) // ERROR in line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
                 break;
             }
         }
-    }
-    else if (PARAM.inp.nspin == 2)
-    {
+    } else if (PARAM.inp.nspin == 2) {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
         // ========================== Under testing ==========================
         //     this->opt_cg_mag_->refresh();
@@ -273,9 +240,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //     delete[] temp_theta;
         //     delete[] pthetaDir;
         // ========================== Under testing ==========================
-    }
-    else if (PARAM.inp.nspin == 4)
-    {
+    } else if (PARAM.inp.nspin == 4) {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN4 case is not supported by OFDFT for now.");
     }
 }

@@ -1,8 +1,8 @@
 # ABACUS Precommit
 
-This is a CP2K-style precommit system adapted for ABACUS.  The local driver is
-`tools/precommit/precommit.py`; the formatting tools are provided by a small
-Flask/gunicorn precommit server.
+This is a CP2K-style precommit system adapted for ABACUS. The local driver is
+`tools/precommit/precommit.py`; the formatting tools are provided by a small Flask/gunicorn
+precommit server.
 
 The design intentionally follows CP2K's usage model:
 
@@ -28,8 +28,8 @@ ln -fs ../../tools/precommit/precommit.py .git/hooks/pre-commit
 ./tools/precommit/precommit.py
 ```
 
-The default mode does not modify source files.  If a formatter would change a
-file, the driver restores the original content and prints a unified diff.
+The default mode does not modify source files. If a formatter would change a file, the driver
+restores the original content and prints a unified diff.
 
 ## Apply modifications
 
@@ -79,8 +79,8 @@ export ABACUS_PRECOMMIT_SERVER="http://127.0.0.1:8080"
 
 ## Tools
 
-The first ABACUS version keeps CP2K's lightweight file-level model and maps it to
-ABACUS' C++-first source tree:
+The first ABACUS version keeps CP2K's lightweight file-level model and maps it to ABACUS' C++-first
+source tree:
 
 - C/C++/CUDA/HIP/OpenCL: `clang-format`
 - Python: `ast.parse` + `black`
@@ -90,16 +90,15 @@ ABACUS' C++-first source tree:
 - Makefile: local `format_makefile.py`
 - all files: local `check_file_properties.py`
 
-`clang-tidy` and `compile_commands.json` are intentionally not part of this
-CP2K-style first version.  They are build-level static-analysis concerns, while
-this precommit driver is a lightweight file-level formatting and convention gate.
+`clang-tidy` and `compile_commands.json` are intentionally not part of this CP2K-style first
+version. They are build-level static-analysis concerns, while this precommit driver is a lightweight
+file-level formatting and convention gate.
 
 ## Notes for ABACUS maintainers
 
-The only non-CP2K structural change is that C++ is first-class.  CP2K rejects
-most C++ files; this ABACUS version formats `.c`, `.cc`, `.cpp`, `.cxx`, `.h`,
-`.hh`, `.hpp`, `.hxx`, `.cu`, `.cuh`, `.hip`, and `.cl` files.
+The only non-CP2K structural change is that C++ is first-class. CP2K rejects most C++ files; this
+ABACUS version formats `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.hxx`, `.cu`, `.cuh`,
+`.hip`, and `.cl` files.
 
-`check_file_properties.py` contains the ABACUS-specific convention checks.  The
-banner/license policy should be tightened once the exact ABACUS source header is
-agreed upon.
+`check_file_properties.py` contains the ABACUS-specific convention checks. The banner/license policy
+should be tightened once the exact ABACUS source header is agreed upon.

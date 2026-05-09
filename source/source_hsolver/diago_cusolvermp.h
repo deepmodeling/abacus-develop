@@ -6,19 +6,15 @@
 #include "source_base/macros.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolvermp.cuh"
-namespace hsolver
-{
+namespace hsolver {
 // DiagoCusolverMP class, for diagonalization using CUSOLVERMP
 template <typename T>
-class DiagoCusolverMP
-{
+class DiagoCusolverMP {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    DiagoCusolverMP()
-    {
-    }
+    DiagoCusolverMP() {}
     // the diag function for CUSOLVERMP diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 };

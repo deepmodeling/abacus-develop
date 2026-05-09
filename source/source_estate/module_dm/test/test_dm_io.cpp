@@ -8,29 +8,17 @@
 
 // mock functions
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -39,20 +27,12 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,
                             const int& I,
-                            AdjacentAtomInfo* adjs) const
-{
-}
-Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
-{
-}
-Grid::~Grid()
-{
-}
-Grid_Driver::Grid_Driver(const int& test_d_in,const int& test_grid_in)
-    : Grid(test_grid_in), test_deconstructor(test_d_in){}
-Grid_Driver::~Grid_Driver()
-{
-}
+                            AdjacentAtomInfo* adjs) const {}
+Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
+Grid::~Grid() {}
+Grid_Driver::Grid_Driver(const int& test_d_in, const int& test_grid_in)
+    : Grid(test_grid_in), test_deconstructor(test_d_in) {}
+Grid_Driver::~Grid_Driver() {}
 // mocke functions
 
 /************************************************
@@ -68,8 +48,7 @@ Grid_Driver::~Grid_Driver()
 int test_size = 2;
 int test_nw = 13;
 
-class DMTest : public testing::Test
-{
+class DMTest : public testing::Test {
   protected:
     Parallel_Orbitals* paraV;
     int dsize;
@@ -83,8 +62,7 @@ class DMTest : public testing::Test
     std::vector<int> nw = {13};
     int nks = 2;
     int nlocal = 0;
-    void SetUp() override
-    {
+    void SetUp() override {
 #ifdef __MPI
         // MPI parallel settings
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -102,16 +80,14 @@ class DMTest : public testing::Test
         init_parav();
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         DMK.clear();
         delete kv;
         delete paraV;
     }
 
 #ifdef __MPI
-    void init_parav()
-    {
+    void init_parav() {
         int nb = 2;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
@@ -121,14 +97,11 @@ class DMTest : public testing::Test
         paraV->set_atomic_trace(ucell->get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {
-    }
+    void init_parav() {}
 #endif
 };
 
-TEST_F(DMTest, DMConstructor1)
-{
+TEST_F(DMTest, DMConstructor1) {
     //
     int nspin = 1;
     // construct DM
@@ -136,29 +109,23 @@ TEST_F(DMTest, DMConstructor1)
     elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks());
     // read DMK
     std::string directory = "./support/";
-    for (int is = 1; is <= nspin; ++is)
-    {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
-        {
+    for (int is = 1; is <= nspin; ++is) {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik) {
             DM.read_DMK(directory, is, ik);
         }
     }
     // write DMK
     directory = "./support/output";
-    for (int is = 1; is <= nspin; ++is)
-    {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
-        {
+    for (int is = 1; is <= nspin; ++is) {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik) {
             DM.write_DMK(directory, is, ik);
         }
     }
     // construct a new DM
     elecstate::DensityMatrix<double, double> DM1(paraV, nspin, kv->kvec_d, kv->get_nks());
     directory = "./support/output";
-    for (int is = 1; is <= nspin; ++is)
-    {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
-        {
+    for (int is = 1; is <= nspin; ++is) {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik) {
             DM1.read_DMK(directory, is, ik);
         }
     }
@@ -167,8 +134,7 @@ TEST_F(DMTest, DMConstructor1)
     EXPECT_NEAR(DM.get_DMK(1, 1, 25, 25), DM1.get_DMK(1, 1, 25, 25), 1e-6);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

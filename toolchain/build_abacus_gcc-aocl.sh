@@ -31,41 +31,41 @@ SCALAPACK=$AOCLhome/lib
 FFTW3=$AOCLhome
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
-USE_CUDA=OFF  # set ON to enable gpu-abacus
+USE_CUDA=OFF # set ON to enable gpu-abacus
 # NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
-# DEEPMD=$HOME/apps/anaconda3/envs/deepmd 
+# DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DMPI_CXX_COMPILER=mpicxx \
-        -DLAPACK_DIR=$LAPACK \
-        -DSCALAPACK_DIR=$SCALAPACK \
-        -DFFTW3_DIR=$FFTW3 \
-        -DELPA_DIR=$ELPA \
-        -DCEREAL_INCLUDE_DIR=$CEREAL \
-        -DLibxc_DIR=$LIBXC \
-        -DENABLE_LCAO=ON \
-        -DENABLE_LIBXC=ON \
-        -DUSE_OPENMP=ON \
-        -DUSE_ELPA=ON \
-        -DENABLE_RAPIDJSON=ON \
-        -DRapidJSON_DIR=$RAPIDJSON \
-        -DENABLE_LIBRI=ON \
-        -DLIBRI_DIR=$LIBRI \
-        -DLIBCOMM_DIR=$LIBCOMM \
-        -DUSE_CUDA=$USE_CUDA \
+  -DCMAKE_CXX_COMPILER=g++ \
+  -DMPI_CXX_COMPILER=mpicxx \
+  -DLAPACK_DIR=$LAPACK \
+  -DSCALAPACK_DIR=$SCALAPACK \
+  -DFFTW3_DIR=$FFTW3 \
+  -DELPA_DIR=$ELPA \
+  -DCEREAL_INCLUDE_DIR=$CEREAL \
+  -DLibxc_DIR=$LIBXC \
+  -DENABLE_LCAO=ON \
+  -DENABLE_LIBXC=ON \
+  -DUSE_OPENMP=ON \
+  -DUSE_ELPA=ON \
+  -DENABLE_RAPIDJSON=ON \
+  -DRapidJSON_DIR=$RAPIDJSON \
+  -DENABLE_LIBRI=ON \
+  -DLIBRI_DIR=$LIBRI \
+  -DLIBCOMM_DIR=$LIBCOMM \
+  -DUSE_CUDA=$USE_CUDA
 #         -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
 #         -DNEP_DIR=$NEP_DIR \
 #         -DENABLE_MLALGO=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-# 	      -DDeePMD_DIR=$DEEPMD \
+#           -DDeePMD_DIR=$DEEPMD \
 #         -DENABLE_CUSOLVERMP=ON \
 
-cmake --build $BUILD_DIR -j `nproc` 
-cmake --install $BUILD_DIR 2>/dev/null
+cmake --build $BUILD_DIR -j $(nproc)
+cmake --install $BUILD_DIR 2> /dev/null
 
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"

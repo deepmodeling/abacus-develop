@@ -9,12 +9,12 @@ namespace ModuleIO {
 
 /**
  * @brief A class for unit cell I/O operations
- * 
+ *
  * This class provides methods to write and read unit cell information
  * to/from files, particularly for DMK files.
  */
 class UcellIO {
-public:
+  public:
     /**
      * @brief Writes the unit cell information to a file.
      *

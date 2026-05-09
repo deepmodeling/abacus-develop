@@ -29,38 +29,38 @@ if(ENABLE_GOOGLEBENCH)
   endif()
 endif()
 
- function(AddTest) # function for UT
-    cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
-    add_executable(${UT_TARGET} ${UT_SOURCES})
+function(AddTest) # function for UT
+  cmake_parse_arguments(UT "DYN" "TARGET"
+                        "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
+  add_executable(${UT_TARGET} ${UT_SOURCES})
 
-    if(ENABLE_COVERAGE)
-      add_coverage(${UT_TARGET})
-    endif()
+  if(ENABLE_COVERAGE)
+    add_coverage(${UT_TARGET})
+  endif()
 
-    # dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
-    if(ENABLE_GOOGLEBENCH)
-      target_link_libraries(
-        ${UT_TARGET} benchmark::benchmark)
-    endif()
+  # dependencies & link library
+  target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
+                        GTest::gtest_main GTest::gmock_main)
+  if(ENABLE_GOOGLEBENCH)
+    target_link_libraries(${UT_TARGET} benchmark::benchmark)
+  endif()
 
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
-    endif()
+  if(USE_OPENMP)
+    target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
+  endif()
 
-    # Link to build info if needed
-    if("${UT_SOURCES}" MATCHES "parse_args.cpp")
-        target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
-    endif()
-        
-    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    add_test(
-      NAME ${UT_TARGET}
-      COMMAND ${UT_TARGET}
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-  endfunction(AddTest)
+  # Link to build info if needed
+  if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+    target_include_directories(${UT_TARGET}
+                               PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
+  endif()
+
+  install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(
+    NAME ${UT_TARGET}
+    COMMAND ${UT_TARGET}
+    WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
+endfunction(AddTest)
 
 if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital

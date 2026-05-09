@@ -27,71 +27,30 @@
 #undef private
 bool berryphase::berry_phase_flag = false;
 
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+Atom::Atom() {}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+ORB_gaunt_table::ORB_gaunt_table() {}
+ORB_gaunt_table::~ORB_gaunt_table() {}
+pseudopot_cell_vl::pseudopot_cell_vl() {}
+pseudopot_cell_vl::~pseudopot_cell_vl() {}
+pseudopot_cell_vnl::pseudopot_cell_vnl() {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
+Soc::~Soc() {}
+Fcoef::~Fcoef() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
-
 
 /************************************************
  *  unit test of class K_Vectors
@@ -112,14 +71,12 @@ Sep_Cell::~Sep_Cell() noexcept {}
  */
 
 // abbriviated from module_symmetry/test/symmetry_test.cpp
-struct atomtype_
-{
+struct atomtype_ {
     std::string atomname;
     std::vector<std::vector<double>> coordinate;
 };
 
-struct stru_
-{
+struct stru_ {
     int ibrav;
     std::string point_group;    // Schoenflies symbol
     std::string point_group_hm; // Hermann-Mauguin notation.
@@ -139,8 +96,7 @@ std::vector<stru_> stru_lib{stru_{1,
                                                                    }}}}};
 // used to construct cell and analyse its symmetry
 
-class KlistParaTest : public testing::Test
-{
+class KlistParaTest : public testing::Test {
   protected:
     std::unique_ptr<K_Vectors> kv{new K_Vectors};
     std::ifstream ifs;
@@ -149,8 +105,7 @@ class KlistParaTest : public testing::Test
     std::string output;
     UnitCell ucell;
     // used to construct cell and analyse its symmetry
-    void construct_ucell(stru_& stru)
-    {
+    void construct_ucell(stru_& stru) {
         std::vector<atomtype_> coord = stru.all_type;
         ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
         ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
@@ -170,14 +125,12 @@ class KlistParaTest : public testing::Test
         ucell.GT = ucell.latvec.Inverse();
         ucell.G = ucell.GT.Transpose();
         ucell.lat0 = 1.8897261254578281;
-        for (int i = 0; i < coord.size(); i++)
-        {
+        for (int i = 0; i < coord.size(); i++) {
             ucell.atoms[i].label = coord[i].atomname;
             ucell.atoms[i].na = coord[i].coordinate.size();
             ucell.atoms[i].tau.resize(ucell.atoms[i].na);
             ucell.atoms[i].taud.resize(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++)
-            {
+            for (int j = 0; j < ucell.atoms[i].na; j++) {
                 std::vector<double> this_atom = coord[i].coordinate[j];
                 ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
                 ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
@@ -200,29 +153,24 @@ class KlistParaTest : public testing::Test
         }
     }
     // clear ucell
-    void ClearUcell()
-    {
-        delete[] ucell.atoms;
-    }
+    void ClearUcell() { delete[] ucell.atoms; }
 };
 
 #ifdef __MPI
-TEST_F(KlistParaTest, Set)
-{
+TEST_F(KlistParaTest, Set) {
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_5");
-}
+    }
     symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
     PARAM.input.nspin = 1;
-    if (GlobalV::NPROC == 4)
-    {
+    if (GlobalV::NPROC == 4) {
         GlobalV::KPAR = 2;
     }
     Parallel_Global::init_pools(GlobalV::NPROC,
@@ -236,30 +184,28 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec,  GlobalV::ofs_running);
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_full(), 512);
     EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
-    if (GlobalV::NPROC == 4)
-    {
+    if (GlobalV::NPROC == 4) {
         if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 18);
-}
+        }
         if (GlobalV::MY_RANK == 1) {
             EXPECT_EQ(kv->get_nks(), 18);
-}
+        }
         if (GlobalV::MY_RANK == 2) {
             EXPECT_EQ(kv->get_nks(), 17);
-}
+        }
         if (GlobalV::MY_RANK == 3) {
             EXPECT_EQ(kv->get_nks(), 17);
-}
+        }
     }
     std::vector<double> local_kvec_c_full(kv->kvec_c_full.size() * 3);
-    for (size_t ik = 0; ik < kv->kvec_c_full.size(); ++ik)
-    {
+    for (size_t ik = 0; ik < kv->kvec_c_full.size(); ++ik) {
         local_kvec_c_full[3 * ik] = kv->kvec_c_full[ik].x;
         local_kvec_c_full[3 * ik + 1] = kv->kvec_c_full[ik].y;
         local_kvec_c_full[3 * ik + 2] = kv->kvec_c_full[ik].z;
@@ -268,8 +214,7 @@ TEST_F(KlistParaTest, Set)
     std::vector<int> counts;
     std::vector<int> displs;
     std::vector<int> pools;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         counts.resize(GlobalV::NPROC);
         pools.resize(GlobalV::NPROC);
     }
@@ -277,11 +222,9 @@ TEST_F(KlistParaTest, Set)
     MPI_Gather(&GlobalV::MY_POOL, 1, MPI_INT, pools.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     std::vector<double> gathered_kvec_c_full;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         displs.resize(GlobalV::NPROC, 0);
-        for (int irank = 1; irank < GlobalV::NPROC; ++irank)
-        {
+        for (int irank = 1; irank < GlobalV::NPROC; ++irank) {
             displs[irank] = displs[irank - 1] + counts[irank - 1];
         }
         gathered_kvec_c_full.resize(displs.back() + counts.back());
@@ -295,19 +238,14 @@ TEST_F(KlistParaTest, Set)
                 MPI_DOUBLE,
                 0,
                 MPI_COMM_WORLD);
-    if (GlobalV::MY_RANK == 0)
-    {
-        for (int irank = 0; irank < GlobalV::NPROC; ++irank)
-        {
-            for (int jrank = irank + 1; jrank < GlobalV::NPROC; ++jrank)
-            {
-                if (pools[irank] != pools[jrank])
-                {
+    if (GlobalV::MY_RANK == 0) {
+        for (int irank = 0; irank < GlobalV::NPROC; ++irank) {
+            for (int jrank = irank + 1; jrank < GlobalV::NPROC; ++jrank) {
+                if (pools[irank] != pools[jrank]) {
                     continue;
                 }
                 ASSERT_EQ(counts[irank], counts[jrank]);
-                for (int i = 0; i < counts[irank]; ++i)
-                {
+                for (int i = 0; i < counts[irank]; ++i) {
                     EXPECT_NEAR(gathered_kvec_c_full[displs[irank] + i],
                                 gathered_kvec_c_full[displs[jrank] + i],
                                 1e-12);
@@ -316,30 +254,27 @@ TEST_F(KlistParaTest, Set)
         }
     }
     ClearUcell();
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.close();
         remove("tmp_klist_5");
         remove("kpoints");
     }
 }
 
-TEST_F(KlistParaTest, SetAfterVC)
-{
+TEST_F(KlistParaTest, SetAfterVC) {
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_6");
-}
+    }
     symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
     PARAM.input.nspin = 1;
-    if (GlobalV::NPROC == 4)
-    {
+    if (GlobalV::NPROC == 4) {
         GlobalV::KPAR = 1;
     }
     Parallel_Global::init_pools(GlobalV::NPROC,
@@ -353,42 +288,39 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
-    if (GlobalV::NPROC == 4)
-    {
+    if (GlobalV::NPROC == 4) {
         if (GlobalV::MY_RANK == 0) {
             EXPECT_EQ(kv->get_nks(), 35);
-}
+        }
         if (GlobalV::MY_RANK == 1) {
             EXPECT_EQ(kv->get_nks(), 35);
-}
+        }
         if (GlobalV::MY_RANK == 2) {
             EXPECT_EQ(kv->get_nks(), 35);
-}
+        }
         if (GlobalV::MY_RANK == 3) {
             EXPECT_EQ(kv->get_nks(), 35);
-}
+        }
     }
     // call set_after_vc here
     kv->kc_done = false;
-//    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
+    //    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
     KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear
     ClearUcell();
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.close();
         remove("tmp_klist_6");
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

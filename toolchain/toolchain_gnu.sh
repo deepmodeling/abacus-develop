@@ -21,7 +21,7 @@ WITH_OPENBLAS="install"
 # MPI Implementation (OpenMPI recommended)
 MPI_MODE="openmpi"
 WITH_OPENMPI="install"
-WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4, deprecated
+WITH_4TH_OPENMPI="no" # Set to "yes" for OpenMPI v4, deprecated
 WITH_MPICH="no"
 
 # Core Dependencies
@@ -53,10 +53,10 @@ WITH_NEP="no"
 # Execution Mode Control
 # ============================================================================
 # Dry-run mode: Show what would be done without actually executing
-DRY_RUN_MODE="no"   # Set to "yes" to enable dry-run mode
+DRY_RUN_MODE="no" # Set to "yes" to enable dry-run mode
 
 # Pack-run mode: Only check and install required packages
-PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
+PACK_RUN_MODE="no" # Set to "yes" to enable pack-run mode
 
 # ============================================================================
 # Package Version Selection (main/alt versions)
@@ -64,15 +64,15 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 # Choose between main (latest stable) and alt (alternative/legacy) versions
 # Refer to scripts/package_versions.sh for specific version numbers
 
-CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
-MPICH_VERSION="main"        # main=5.0.1, alt=4.3.2
-OPENBLAS_VERSION="main"     # main=0.3.33, alt=0.3.30
-ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
-LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
-SCALAPACK_VERSION="main"    # main=2.2.3, alt=2.2.1
+CMAKE_VERSION="main"     # main=3.31.7, alt=3.30.5
+OPENMPI_VERSION="main"   # main=5.0.10, alt=4.1.8
+MPICH_VERSION="main"     # main=5.0.1, alt=4.3.2
+OPENBLAS_VERSION="main"  # main=0.3.33, alt=0.3.30
+ELPA_VERSION="main"      # main=2026.02.001, alt=2024.05.001
+LIBXC_VERSION="main"     # main=7.0.0, alt=6.2.2
+SCALAPACK_VERSION="main" # main=2.2.3, alt=2.2.1
 # Optional Libraries
-LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+LIBTORCH_VERSION="main" # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # Note: main(2.1.2) version of LibTorch need glibc > 2.27
 # Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
@@ -115,5 +115,5 @@ exec ./install_abacus_toolchain_new.sh \
   ${PACK_RUN_MODE:+$([ "$PACK_RUN_MODE" = "yes" ] && echo "--pack-run")} \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
-  "$@" \
-  | tee compile.log
+  "$@" |
+  tee compile.log

@@ -4,23 +4,16 @@
 #include "source_base/inverse_matrix.h"
 #include "source_base/math_ylmreal.h"
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-Clebsch_Gordan::Clebsch_Gordan()
-{
-}
-Clebsch_Gordan::~Clebsch_Gordan()
-{
-}
+Clebsch_Gordan::Clebsch_Gordan() {}
+Clebsch_Gordan::~Clebsch_Gordan() {}
 
 void Clebsch_Gordan::clebsch_gordan(const int& lli,
                                     ModuleBase::realArray& ap,
                                     ModuleBase::IntArray& lpx,
-                                    ModuleBase::IntArray& lpl)
-{
-    if (lli < 0)
-    {
+                                    ModuleBase::IntArray& lpl) {
+    if (lli < 0) {
         std::cout << "Clebsch_Gordan: lmaxkb + 1 < 0" << std::endl;
         exit(1);
     }
@@ -43,16 +36,12 @@ void Clebsch_Gordan::clebsch_gordan(const int& lli,
     lpx.create(lli * lli, lli * lli);
     lpl.create(lli * lli, lli * lli, llx);
     ap.create(llx, lli * lli, lli * lli);
-    for (int li = 0; li < lli * lli; li++)
-    {
-        for (int lj = 0; lj < lli * lli; lj++)
-        {
+    for (int li = 0; li < lli * lli; li++) {
+        for (int lj = 0; lj < lli * lli; lj++) {
             lpx(li, lj) = 0;
-            for (int L = 0; L < llx; L++)
-            {
+            for (int L = 0; L < llx; L++) {
                 ap(L, li, lj) = compute_ap(L, li, lj, llx, ylm, mly);
-                if (std::abs(ap(L, li, lj)) > 1.0e-3)
-                {
+                if (std::abs(ap(L, li, lj)) > 1.0e-3) {
                     lpl(li, lj, lpx(li, lj)) = L;
                     lpx(li, lj)++;
                 }
@@ -63,10 +52,8 @@ void Clebsch_Gordan::clebsch_gordan(const int& lli,
     delete[] r;
 }
 
-void Clebsch_Gordan::gen_rndm_r(const int& llx, ModuleBase::Vector3<double>* r)
-{
-    for (int i = 0; i < llx; i++)
-    {
+void Clebsch_Gordan::gen_rndm_r(const int& llx, ModuleBase::Vector3<double>* r) {
+    for (int i = 0; i < llx; i++) {
         double costheta = 2.0 * static_cast<double>(std::rand()) / RAND_MAX - 1.0;
         double sintheta = std::sqrt(1.0 - costheta * costheta);
         double phi = ModuleBase::TWO_PI * static_cast<double>(std::rand()) / RAND_MAX;
@@ -81,11 +68,9 @@ double Clebsch_Gordan::compute_ap(const int& L,
                                   const int& lj,
                                   const int& llx,
                                   const ModuleBase::matrix& ylm,
-                                  const ModuleBase::matrix& mly)
-{
+                                  const ModuleBase::matrix& mly) {
     double compute_ap = 0.0;
-    for (int ir = 0; ir < llx; ir++)
-    {
+    for (int ir = 0; ir < llx; ir++) {
         compute_ap += mly(ir, L) * ylm(li, ir) * ylm(lj, ir);
     }
     return compute_ap;

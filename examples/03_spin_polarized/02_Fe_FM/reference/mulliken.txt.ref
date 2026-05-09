@@ -1,8 +1,8 @@
 STEP: 0
 CALCULATE THE MULLIkEN ANALYSIS FOR EACH ATOM
- Total charge of spin 1:	17.19
- Total charge of spin 2:	12.75
- Total charge:	29.94
+ Total charge of spin 1:    17.19
+ Total charge of spin 2:    12.75
+ Total charge:    29.94
 Decomposed Mulliken populations
 0                 Zeta of Fe                        Spin 1                        Spin 2                           Sum                          Diff
 s                        0                          0.2426                        0.2642                        0.5068                      -0.02166

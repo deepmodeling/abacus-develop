@@ -5,8 +5,7 @@
 #include <string>
 class Parallel_Grid;
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 /// read volumetric data from .cube file into the parallel distributed grid.
 bool read_vdata_palgrid(const Parallel_Grid& pgrid,
                         const int my_rank,

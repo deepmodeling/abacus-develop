@@ -23,8 +23,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi_initializer.h"
 
-class toWannier90_LCAO_IN_PW : public toWannier90_PW
-{
+class toWannier90_LCAO_IN_PW : public toWannier90_PW {
   public:
     toWannier90_LCAO_IN_PW(const bool& out_wannier_mmn,
                            const bool& out_wannier_amn,
@@ -51,8 +50,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
                    const Structure_Factor& sf,
                    const K_Vectors& kv,
                    const psi::Psi<double>* psi,
-                   const Parallel_Orbitals* pv)
-    {
+                   const Parallel_Orbitals* pv) {
         throw std::logic_error("The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
     }
 

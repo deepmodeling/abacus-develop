@@ -7,37 +7,33 @@
 #include <mpi.h>
 #endif
 
-class HydrogenRadialsTest : public ::testing::Test
-{
-    protected:
-        virtual void SetUp()
-        {
-            // set up the test case
-            itype_ = 1;
-            charge_ = 1.0;
-            nmax_ = 3;
-            rcut_ = 20.0;
-            dr_ = 0.01;
-            rank_ = 0;
-            ptr_log_ = NULL;
-        }
+class HydrogenRadialsTest : public ::testing::Test {
+  protected:
+    virtual void SetUp() {
+        // set up the test case
+        itype_ = 1;
+        charge_ = 1.0;
+        nmax_ = 3;
+        rcut_ = 20.0;
+        dr_ = 0.01;
+        rank_ = 0;
+        ptr_log_ = NULL;
+    }
 
-        virtual void TearDown()
-        {
-            // tear down the test case
-        }
+    virtual void TearDown() {
+        // tear down the test case
+    }
 
-        int itype_;
-        double charge_;
-        int nmax_;
-        double rcut_;
-        double dr_;
-        int rank_;
-        std::ofstream* ptr_log_;
+    int itype_;
+    double charge_;
+    int nmax_;
+    double rcut_;
+    double dr_;
+    int rank_;
+    std::ofstream* ptr_log_;
 };
 
-TEST_F(HydrogenRadialsTest, UnzipStrategy)
-{
+TEST_F(HydrogenRadialsTest, UnzipStrategy) {
     HydrogenRadials hr;
     std::vector<std::pair<int, int>> nl_pairs;
     // minimal, 1s
@@ -78,7 +74,9 @@ TEST_F(HydrogenRadialsTest, UnzipStrategy)
     EXPECT_EQ(nl_pairs[1].second, 0);
     EXPECT_EQ(nl_pairs[2].first, 2); // 2p
     EXPECT_EQ(nl_pairs[2].second, 1);
-    nl_pairs = hr.unzip_strategy(29, "energy-full"); // Cu, 1s1 2s2 2p6 3s2 3p6 3d10 4s1 -> 1s2s2p3s3p4s3d -> [1s][2s][2p3s][3p4s][3d]
+    nl_pairs = hr.unzip_strategy(
+        29,
+        "energy-full"); // Cu, 1s1 2s2 2p6 3s2 3p6 3d10 4s1 -> 1s2s2p3s3p4s3d -> [1s][2s][2p3s][3p4s][3d]
     EXPECT_EQ(nl_pairs.size(), 7);
     EXPECT_EQ(nl_pairs[0].first, 1); // 1s
     EXPECT_EQ(nl_pairs[0].second, 0);
@@ -138,30 +136,26 @@ TEST_F(HydrogenRadialsTest, UnzipStrategy)
     EXPECT_EQ(nl_pairs[9].second, 3);
 }
 
-TEST_F(HydrogenRadialsTest, RadialNorm)
-{
+TEST_F(HydrogenRadialsTest, RadialNorm) {
     HydrogenRadials hr;
     std::vector<double> r;
     std::vector<double> f;
     double dr = 0.01;
     double rmax = 10.0;
-    for (double r_ = 0.0; r_ <= rmax; r_ += dr)
-    {
+    for (double r_ = 0.0; r_ <= rmax; r_ += dr) {
         r.push_back(r_);
         f.push_back(r_);
     }
     // radial norm computes the integral of r^2*f^2
     std::vector<double> r2f2;
-    for (int i = 0; i < r.size(); i++)
-    {
-        r2f2.push_back(r[i]*r[i]*f[i]*f[i]);
+    for (int i = 0; i < r.size(); i++) {
+        r2f2.push_back(r[i] * r[i] * f[i] * f[i]);
     }
     double norm = hr.radial_norm(r, f);
     EXPECT_EQ(norm, sqrt(ModuleBase::Integral::simpson(r.size(), r2f2.data(), dr)));
 }
 
-TEST_F(HydrogenRadialsTest, MappingNLLZeta)
-{
+TEST_F(HydrogenRadialsTest, MappingNLLZeta) {
     HydrogenRadials hr;
     std::map<std::pair<int, int>, std::pair<int, int>> nl_lzeta_map;
     int l;
@@ -199,7 +193,7 @@ TEST_F(HydrogenRadialsTest, MappingNLLZeta)
     lzeta = nl_lzeta_map[std::make_pair(1, 0)].second;
     EXPECT_EQ(l, 0);
     EXPECT_EQ(lzeta, 0);
-    // full, 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4p, 4d, 4f, 
+    // full, 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4p, 4d, 4f,
     // map (1, 0), (2, 0), (3, 0), (4, 0) to (0, 0), (0, 1), (0, 2), (0, 3)
     //     (2, 1), (3, 1), (4, 1) to (1, 0), (1, 1), (1, 2)
     //     (3, 2), (4, 2) to (2, 0), (2, 1)
@@ -248,44 +242,23 @@ TEST_F(HydrogenRadialsTest, MappingNLLZeta)
     EXPECT_EQ(lzeta, 0);
 }
 
-TEST_F(HydrogenRadialsTest, GenerateHydrogenRadialToconv)
-{
+TEST_F(HydrogenRadialsTest, GenerateHydrogenRadialToconv) {
     HydrogenRadials hr;
     std::vector<double> r;
     std::vector<double> Rnl;
 
-    double rmax_chg1_n1l0 = hr.generate_hydrogen_radial_toconv(
-        1.0,
-        false,
-        1,
-        0,
-        1e-7,
-        0,
-        r,
-        Rnl
-    );
+    double rmax_chg1_n1l0 = hr.generate_hydrogen_radial_toconv(1.0, false, 1, 0, 1e-7, 0, r, Rnl);
     std::vector<double> r2Rnl2;
-    for (int i = 0; i < r.size(); i++)
-    {
-        r2Rnl2.push_back(r[i]*r[i]*Rnl[i]*Rnl[i]);
+    for (int i = 0; i < r.size(); i++) {
+        r2Rnl2.push_back(r[i] * r[i] * Rnl[i] * Rnl[i]);
     }
     double norm = ModuleBase::Integral::simpson(r.size(), r2Rnl2.data(), 0.01);
     EXPECT_NEAR(norm, 1.0, 1e-6);
 
-    double rmax_chg4_n2l1 = hr.generate_hydrogen_radial_toconv(
-        4.0,
-        false,
-        2,
-        1,
-        1e-7,
-        0,
-        r,
-        Rnl
-    );
+    double rmax_chg4_n2l1 = hr.generate_hydrogen_radial_toconv(4.0, false, 2, 1, 1e-7, 0, r, Rnl);
     r2Rnl2.clear();
-    for (int i = 0; i < r.size(); i++)
-    {
-        r2Rnl2.push_back(r[i]*r[i]*Rnl[i]*Rnl[i]);
+    for (int i = 0; i < r.size(); i++) {
+        r2Rnl2.push_back(r[i] * r[i] * Rnl[i] * Rnl[i]);
     }
     norm = ModuleBase::Integral::simpson(r.size(), r2Rnl2.data(), 0.01);
     EXPECT_NEAR(norm, 1.0, 1e-6);
@@ -293,42 +266,17 @@ TEST_F(HydrogenRadialsTest, GenerateHydrogenRadialToconv)
     EXPECT_NE(rmax_chg1_n1l0, rmax_chg4_n2l1);
 }
 
-TEST_F(HydrogenRadialsTest, Build)
-{
+TEST_F(HydrogenRadialsTest, Build) {
     HydrogenRadials hr;
     // build 1s 2p 3d
-    hr.build(
-        itype_,
-        charge_,
-        false,
-        nmax_,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "H",
-        "minimal-nodeless",
-        ptr_log_
-    );
+    hr.build(itype_, charge_, false, nmax_, rcut_, dr_, 1e-6, rank_, "H", "minimal-nodeless", ptr_log_);
     // nmax = 1, minimal, yields 1s orbital
     EXPECT_EQ(hr.lmax(), 2);
     EXPECT_EQ(hr.nzeta(0), 1);
     EXPECT_EQ(hr.nzeta_max(), 1);
     EXPECT_EQ(hr.nchi(), 3);
     // Cu, minimal-valence, 4s 4p 4d
-    hr.build(
-        itype_,
-        charge_,
-        false,
-        4,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "Cu",
-        "minimal-valence",
-        ptr_log_
-    );
+    hr.build(itype_, charge_, false, 4, rcut_, dr_, 1e-6, rank_, "Cu", "minimal-valence", ptr_log_);
     // nmax = 4, minimal-valence, yields 4s 4p 4d 4f orbitals
     EXPECT_EQ(hr.lmax(), 3);
     EXPECT_EQ(hr.nzeta(0), 1);
@@ -338,19 +286,7 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nzeta_max(), 1);
     EXPECT_EQ(hr.nchi(), 4);
     // Cu, energy-full, 1s 2s 2p 3s 3p 4s 3d
-    hr.build(
-        itype_,
-        charge_,
-        false,
-        29,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "Cu",
-        "energy-full",
-        ptr_log_
-    );
+    hr.build(itype_, charge_, false, 29, rcut_, dr_, 1e-6, rank_, "Cu", "energy-full", ptr_log_);
     // nmax = 29, energy-full, yields 1s 2s 2p 3s 3p 4s 3d orbitals
     EXPECT_EQ(hr.lmax(), 2);
     EXPECT_EQ(hr.nzeta(0), 4);
@@ -361,19 +297,17 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nchi(), 7);
     // Cu, energy-valence, 3p 4s 3d
     printf("Unittest for generating Cu energy-valence orbitals without Slater screening:\n");
-    hr.build(
-        itype_,
-        29, // use the real nuclear charge for Cu
-        false,
-        29,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "Cu",
-        "energy-valence",
-        ptr_log_
-    );
+    hr.build(itype_,
+             29, // use the real nuclear charge for Cu
+             false,
+             29,
+             rcut_,
+             dr_,
+             1e-6,
+             rank_,
+             "Cu",
+             "energy-valence",
+             ptr_log_);
     // nmax = 29, energy-valence, yields 3p 4s 3d orbitals
     EXPECT_EQ(hr.lmax(), 2);
     EXPECT_EQ(hr.nzeta(0), 1);
@@ -385,19 +319,17 @@ TEST_F(HydrogenRadialsTest, Build)
     // test with Slater screening on Cu
     // Cu, energy-valence, 3p 4s 3d
     printf("Unittest for generating Cu energy-valence orbitals with Slater screening:\n");
-    hr.build(
-        itype_,
-        29, // use the real nuclear charge for Cu
-        true,
-        29,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "Cu",
-        "energy-valence",
-        ptr_log_
-    );
+    hr.build(itype_,
+             29, // use the real nuclear charge for Cu
+             true,
+             29,
+             rcut_,
+             dr_,
+             1e-6,
+             rank_,
+             "Cu",
+             "energy-valence",
+             ptr_log_);
     // nmax = 29, energy-valence, yields 3p 4s 3d orbitals
     EXPECT_EQ(hr.lmax(), 2);
     EXPECT_EQ(hr.nzeta(0), 1);
@@ -407,19 +339,7 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nzeta_max(), 1);
     EXPECT_EQ(hr.nchi(), 3);
     // build 1s 2s 2p 3s 3p 3d 4s 4p 4d 4f
-    hr.build(
-        itype_,
-        charge_,
-        false,
-        4,
-        rcut_,
-        dr_,
-        1e-6,
-        rank_,
-        "H",
-        "full",
-        ptr_log_
-    );
+    hr.build(itype_, charge_, false, 4, rcut_, dr_, 1e-6, rank_, "H", "full", ptr_log_);
     // nmax = 4, full, yields 1s 2s 2p 3s 3p 3d 4s 4p 4d 4f orbitals
     EXPECT_EQ(hr.lmax(), 3);
     EXPECT_EQ(hr.nzeta(0), 4);
@@ -430,8 +350,7 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nchi(), 10);
 }
 
-TEST_F(HydrogenRadialsTest, SlaterScreeningTest)
-{
+TEST_F(HydrogenRadialsTest, SlaterScreeningTest) {
     HydrogenRadials hr;
     double sigma = hr.slater_screening("H", 1, 0);
     EXPECT_NEAR(sigma, 0.0, 1e-6);
@@ -455,8 +374,7 @@ TEST_F(HydrogenRadialsTest, SlaterScreeningTest)
     EXPECT_NEAR(sigma, 0.3, 1e-6);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
     return result;

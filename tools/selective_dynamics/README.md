@@ -10,6 +10,7 @@
 ### Setting
 
 There is a setting file named `config.yaml`:
+
 ```yaml
 origin_structure: 'STRU'     # the original structure
 selected_indices: [18, 19]   # the atom index that you concerned about, start from 0
@@ -91,15 +92,19 @@ job_script: |
 ### Submit jobs
 
 Use the following command
+
 ```bash
 python3 path_to_selective_dynamics.py --submit
 ```
+
 to generate displaced structures and submit jobs.
 
 ### Postprocess
 
 Use the following command
+
 ```bash
 python3 path_to_selective_dynamics.py --post
 ```
+
 to generate `FORCE_SETS` and results of phonon calculations.

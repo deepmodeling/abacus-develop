@@ -8,12 +8,10 @@
 #include <memory>
 #include <source_base/macros.h>
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class ESolver_KS_PW : public ESolver_KS
-{
+class ESolver_KS_PW : public ESolver_KS {
   private:
     using Real = typename GetTypeReal<T>::type;
 
@@ -54,7 +52,6 @@ class ESolver_KS_PW : public ESolver_KS
 
     // DFT-1/2 method
     VSep* vsep_cell = nullptr;
-
 };
 } // namespace ModuleESolver
 #endif

@@ -6,8 +6,7 @@
 #include "sto_wf.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Sto_Forces : public Forces<FPTYPE, Device>
-{
+class Sto_Forces : public Forces<FPTYPE, Device> {
   public:
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves

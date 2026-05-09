@@ -7,8 +7,7 @@
 struct Input_para;
 class Plus_U;
 
-namespace pw
-{
+namespace pw {
 
 void iter_init_dftu_pw(const int iter,
                        const int istep,

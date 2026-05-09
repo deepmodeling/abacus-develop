@@ -10,15 +10,13 @@
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
-                                          const ModuleBase::matrix& wg,
-                                          const ModulePW::PW_Basis_K* wfc_basis,
-										  const UnitCell& ucell_in,
-										  const Plus_U &dftu, // mohan add 2025-11-06
-										  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
-{
+                                              const ModuleBase::matrix& wg,
+                                              const ModulePW::PW_Basis_K* wfc_basis,
+                                              const UnitCell& ucell_in,
+                                              const Plus_U& dftu, // mohan add 2025-11-06
+                                              const psi::Psi<std::complex<FPTYPE>, Device>* psi_in) {
     ModuleBase::TITLE("Forces", "cal_force_onsite");
-    if(psi_in == nullptr || wfc_basis == nullptr)
-    {
+    if (psi_in == nullptr || wfc_basis == nullptr) {
         return;
     }
     ModuleBase::timer::start("Forces", "cal_force_onsite");
@@ -35,37 +33,37 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     {
         // skip zero weights to speed up
         int nbands_occ = wg.nc;
-        while (wg(ik, nbands_occ - 1) == 0.0)
-        {
+        while (wg(ik, nbands_occ - 1) == 0.0) {
             nbands_occ--;
-            if (nbands_occ == 0)
-            {
+            if (nbands_occ == 0) {
                 break;
             }
         }
         const int npm = nbands_occ;
         onsite_p->get_fs_tools()->cal_becp(ik, npm);
         // calculate becp = <psi|beta> for all beta functions
-        for (int ipol = 0; ipol < 3; ipol++)
-        {
+        for (int ipol = 0; ipol < 3; ipol++) {
             // calculate dbecp = <psi|\nabla beta> for all beta functions
             onsite_p->get_fs_tools()->cal_dbecp_f(ik, npm, ipol);
         }
         // calculate the force_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
         // force for DFT+U
-        if(PARAM.inp.dft_plus_u)
-        {
-            onsite_p->get_fs_tools()->cal_force_dftu(ik, npm, force, 
-              dftu.orbital_corr.data(), dftu.get_eff_pot_pw(0), dftu.get_size_eff_pot_pw(), wg.c);
+        if (PARAM.inp.dft_plus_u) {
+            onsite_p->get_fs_tools()->cal_force_dftu(ik,
+                                                     npm,
+                                                     force,
+                                                     dftu.orbital_corr.data(),
+                                                     dftu.get_eff_pot_pw(0),
+                                                     dftu.get_size_eff_pot_pw(),
+                                                     wg.c);
         }
-        if(PARAM.inp.sc_mag_switch)
-        {
-            spinconstrain::SpinConstrain<std::complex<double>>& sc = 
-              spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        if (PARAM.inp.sc_mag_switch) {
+            spinconstrain::SpinConstrain<std::complex<double>>& sc =
+                spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
             const std::vector<ModuleBase::Vector3<double>>& lambda = sc.get_sc_lambda();
             onsite_p->get_fs_tools()->cal_force_dspin(ik, npm, force, lambda.data(), wg.c);
         }
-        
+
     } // end ik
 
     syncmem_var_d2h_op()(force_onsite.c, force, force_onsite.nr * force_onsite.nc);

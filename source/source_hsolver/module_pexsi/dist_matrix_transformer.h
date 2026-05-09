@@ -14,13 +14,11 @@
 // two destination matrices share the same non-zero elements positions
 // if either of two elements in source matrices is non-zeros, the elements in the destination matrices are non-zero,
 // even if one of them is acturely zero All matrices must have same MPI communicator
-namespace pexsi
-{
+namespace pexsi {
 class DistBCDMatrix;
 class DistCCSMatrix;
 
-namespace DistMatrixTransformer
-{
+namespace DistMatrixTransformer {
 int MinimumIndexPosition(const bool isFirst,
                          const int nprocs,
                          int* size_process,

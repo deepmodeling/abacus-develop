@@ -18,14 +18,12 @@
 void DeePKS_domain::cal_descriptor_equiv(const int nat,
                                          const DeePKS_Param& deepks_param,
                                          const std::vector<torch::Tensor>& pdm,
-                                         std::vector<torch::Tensor>& descriptor)
-{
+                                         std::vector<torch::Tensor>& descriptor) {
     ModuleBase::TITLE("DeePKS_domain", "cal_descriptor_equiv");
     ModuleBase::timer::start("DeePKS_domain", "cal_descriptor_equiv");
 
     assert(deepks_param.des_per_atom > 0);
-    for (int iat = 0; iat < nat; iat++)
-    {
+    for (int iat = 0; iat < nat; iat++) {
         auto tmp = torch::zeros(deepks_param.des_per_atom, torch::kFloat64);
         std::memcpy(tmp.data_ptr(), pdm[iat].data_ptr<double>(), sizeof(double) * tmp.numel());
         descriptor.push_back(tmp);
@@ -38,27 +36,23 @@ void DeePKS_domain::cal_descriptor_equiv(const int nat,
 void DeePKS_domain::cal_descriptor(const int nat,
                                    const DeePKS_Param& deepks_param,
                                    const std::vector<torch::Tensor>& pdm,
-                                   std::vector<torch::Tensor>& descriptor)
-{
+                                   std::vector<torch::Tensor>& descriptor) {
     ModuleBase::TITLE("DeePKS_domain", "cal_descriptor");
     ModuleBase::timer::start("DeePKS_domain", "cal_descriptor");
 
-    if (PARAM.inp.deepks_equiv)
-    {
+    if (PARAM.inp.deepks_equiv) {
         DeePKS_domain::cal_descriptor_equiv(nat, deepks_param, pdm, descriptor);
         return;
     }
 
-    for (int inl = 0; inl < deepks_param.inlmax; ++inl)
-    {
+    for (int inl = 0; inl < deepks_param.inlmax; ++inl) {
         const int nm = 2 * deepks_param.inl2l[inl] + 1;
         pdm[inl].requires_grad_(true);
         descriptor.push_back(torch::ones({nm}, torch::requires_grad(true)));
     }
 
     // cal descriptor
-    for (int inl = 0; inl < deepks_param.inlmax; ++inl)
-    {
+    for (int inl = 0; inl < deepks_param.inlmax; ++inl) {
         torch::Tensor vd;
         std::tuple<torch::Tensor, torch::Tensor> d_v(descriptor[inl], vd);
         // d_v = torch::symeig(pdm[inl], /*eigenvalues=*/true,
@@ -74,12 +68,10 @@ void DeePKS_domain::check_descriptor(const DeePKS_Param& deepks_param,
                                      const UnitCell& ucell,
                                      const std::string& out_dir,
                                      const std::vector<torch::Tensor>& descriptor,
-                                     const int rank)
-{
+                                     const int rank) {
     ModuleBase::TITLE("DeePKS_domain", "check_descriptor");
 
-    if (rank != 0)
-    {
+    if (rank != 0) {
         return;
     }
 
@@ -88,26 +80,20 @@ void DeePKS_domain::check_descriptor(const DeePKS_Param& deepks_param,
 
     std::ofstream ofs(file.c_str());
     ofs << std::setprecision(10);
-    if (!PARAM.inp.deepks_equiv)
-    {
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
+    if (!PARAM.inp.deepks_equiv) {
+        for (int it = 0; it < ucell.ntype; it++) {
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++) {
                 int iat = ucell.itia2iat(it, ia);
                 ofs << ucell.atoms[it].label << " atom_index " << ia + 1 << " n_descriptor "
                     << deepks_param.des_per_atom << std::endl;
                 int id = 0;
-                for (int inl = 0; inl < deepks_param.inlmax / ucell.nat; inl++)
-                {
+                for (int inl = 0; inl < deepks_param.inlmax / ucell.nat; inl++) {
                     int nm = 2 * deepks_param.inl2l[inl] + 1;
                     const int ind = iat * deepks_param.inlmax / ucell.nat + inl;
                     auto accessor = descriptor[ind].accessor<double, 1>();
-                    for (int im = 0; im < nm; im++)
-                    {
+                    for (int im = 0; im < nm; im++) {
                         ofs << accessor[im] << " ";
-                        if (id % 8 == 7)
-                        {
+                        if (id % 8 == 7) {
                             ofs << std::endl;
                         }
                         id++;
@@ -116,20 +102,15 @@ void DeePKS_domain::check_descriptor(const DeePKS_Param& deepks_param,
                 ofs << std::endl << std::endl;
             }
         }
-    }
-    else
-    {
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+    } else {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             const int it = ucell.iat2it[iat];
             ofs << ucell.atoms[it].label << " atom_index " << iat + 1 << " n_descriptor " << deepks_param.des_per_atom
                 << std::endl;
             auto accessor = descriptor[iat].accessor<double, 1>();
-            for (int i = 0; i < deepks_param.des_per_atom; i++)
-            {
+            for (int i = 0; i < deepks_param.des_per_atom; i++) {
                 ofs << accessor[i] << " ";
-                if (i % 8 == 7)
-                {
+                if (i % 8 == 7) {
                     ofs << std::endl;
                 }
             }

@@ -5,37 +5,31 @@
 
 #include <cusolverDn.h>
 
-namespace hsolver
-{
+namespace hsolver {
 
 static cusolverDnHandle_t cusolver_H = nullptr;
 
-void createGpuSolverHandle()
-{
-    if (cusolver_H == nullptr)
-    {
+void createGpuSolverHandle() {
+    if (cusolver_H == nullptr) {
         CHECK_CUSOLVER(cusolverDnCreate(&cusolver_H));
     }
 }
 
-void destroyGpuSolverHandle()
-{
-    if (cusolver_H != nullptr)
-    {
+void destroyGpuSolverHandle() {
+    if (cusolver_H != nullptr) {
         CHECK_CUSOLVER(cusolverDnDestroy(cusolver_H));
         cusolver_H = nullptr;
     }
 }
 
 #ifdef __LCAO
-static inline
-void xhegvd_wrapper(
-    const cublasFillMode_t& uplo,
-    const int& n,
-    double* A, const int& lda,
-    double* B, const int& ldb,
-    double* W)
-{
+static inline void xhegvd_wrapper(const cublasFillMode_t& uplo,
+                                  const int& n,
+                                  double* A,
+                                  const int& lda,
+                                  double* B,
+                                  const int& ldb,
+                                  double* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
     int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
@@ -43,14 +37,34 @@ void xhegvd_wrapper(
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnDsygvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-        A, lda, B, ldb, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnDsygvd_bufferSize(cusolver_H,
+                                               CUSOLVER_EIG_TYPE_1,
+                                               CUSOLVER_EIG_MODE_VECTOR,
+                                               uplo,
+                                               n,
+                                               A,
+                                               lda,
+                                               B,
+                                               ldb,
+                                               W,
+                                               &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(double) * lwork));
 
     // compute eigenvalues and eigenvectors.
-    CHECK_CUSOLVER(cusolverDnDsygvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-        A, lda, B, ldb, W, work, lwork, devInfo));
+    CHECK_CUSOLVER(cusolverDnDsygvd(cusolver_H,
+                                    CUSOLVER_EIG_TYPE_1,
+                                    CUSOLVER_EIG_MODE_VECTOR,
+                                    uplo,
+                                    n,
+                                    A,
+                                    lda,
+                                    B,
+                                    ldb,
+                                    W,
+                                    work,
+                                    lwork,
+                                    devInfo));
 
     CHECK_CUDA(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
@@ -60,30 +74,48 @@ void xhegvd_wrapper(
 }
 #endif
 
-static inline
-void xhegvd_wrapper (
-        const cublasFillMode_t& uplo,
-        const int& n,
-        std::complex<float> * A, const int& lda,
-        std::complex<float> * B, const int& ldb,
-        float * W)
-{
+static inline void xhegvd_wrapper(const cublasFillMode_t& uplo,
+                                  const int& n,
+                                  std::complex<float>* A,
+                                  const int& lda,
+                                  std::complex<float>* B,
+                                  const int& ldb,
+                                  float* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
-    int * devInfo = nullptr;
+    int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
-    float2 * work = nullptr;
+    float2* work = nullptr;
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnChegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const float2 *>(A), lda,
-                                                 reinterpret_cast<const float2 *>(B), ldb, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnChegvd_bufferSize(cusolver_H,
+                                               CUSOLVER_EIG_TYPE_1,
+                                               CUSOLVER_EIG_MODE_VECTOR,
+                                               uplo,
+                                               n,
+                                               reinterpret_cast<const float2*>(A),
+                                               lda,
+                                               reinterpret_cast<const float2*>(B),
+                                               ldb,
+                                               W,
+                                               &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(float2) * lwork));
 
     // compute eigenvalues and eigenvectors.
-    CHECK_CUSOLVER(cusolverDnChegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                      reinterpret_cast<float2 *>(A), lda, reinterpret_cast<float2 *>(B), ldb, W, work, lwork, devInfo));
+    CHECK_CUSOLVER(cusolverDnChegvd(cusolver_H,
+                                    CUSOLVER_EIG_TYPE_1,
+                                    CUSOLVER_EIG_MODE_VECTOR,
+                                    uplo,
+                                    n,
+                                    reinterpret_cast<float2*>(A),
+                                    lda,
+                                    reinterpret_cast<float2*>(B),
+                                    ldb,
+                                    W,
+                                    work,
+                                    lwork,
+                                    devInfo));
 
     CHECK_CUDA(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
@@ -92,30 +124,48 @@ void xhegvd_wrapper (
     CHECK_CUDA(cudaFree(devInfo));
 }
 
-static inline
-void xhegvd_wrapper (
-        const cublasFillMode_t& uplo,
-        const int& n,
-        std::complex<double> * A, const int& lda,
-        std::complex<double> * B, const int& ldb,
-        double * W)
-{
+static inline void xhegvd_wrapper(const cublasFillMode_t& uplo,
+                                  const int& n,
+                                  std::complex<double>* A,
+                                  const int& lda,
+                                  std::complex<double>* B,
+                                  const int& ldb,
+                                  double* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
-    int * devInfo = nullptr;
+    int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
-    double2 * work = nullptr;
+    double2* work = nullptr;
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnZhegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const double2 *>(A), lda,
-                                                 reinterpret_cast<const double2 *>(B), ldb, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnZhegvd_bufferSize(cusolver_H,
+                                               CUSOLVER_EIG_TYPE_1,
+                                               CUSOLVER_EIG_MODE_VECTOR,
+                                               uplo,
+                                               n,
+                                               reinterpret_cast<const double2*>(A),
+                                               lda,
+                                               reinterpret_cast<const double2*>(B),
+                                               ldb,
+                                               W,
+                                               &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(double2) * lwork));
 
     // compute eigenvalues and eigenvectors.
-    CHECK_CUSOLVER(cusolverDnZhegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                      reinterpret_cast<double2 *>(A), lda, reinterpret_cast<double2 *>(B), ldb, W, work, lwork, devInfo));
+    CHECK_CUSOLVER(cusolverDnZhegvd(cusolver_H,
+                                    CUSOLVER_EIG_TYPE_1,
+                                    CUSOLVER_EIG_MODE_VECTOR,
+                                    uplo,
+                                    n,
+                                    reinterpret_cast<double2*>(A),
+                                    lda,
+                                    reinterpret_cast<double2*>(B),
+                                    ldb,
+                                    W,
+                                    work,
+                                    lwork,
+                                    devInfo));
 
     CHECK_CUDA(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
@@ -125,13 +175,7 @@ void xhegvd_wrapper (
 }
 
 #ifdef __LCAO
-static inline
-void xheevd_wrapper(
-    const cublasFillMode_t& uplo,
-    const int& n,
-    double* A, const int& lda,
-    double* W)
-{
+static inline void xheevd_wrapper(const cublasFillMode_t& uplo, const int& n, double* A, const int& lda, double* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
     int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
@@ -139,8 +183,7 @@ void xheevd_wrapper(
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnDsyevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-        A, lda, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnDsyevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, A, lda, W, &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(double) * lwork));
     // compute eigenvalues and eigenvectors.
@@ -153,26 +196,36 @@ void xheevd_wrapper(
 }
 #endif
 
-static inline
-void xheevd_wrapper (
-        const cublasFillMode_t& uplo,
-        const int& n,
-        std::complex<float> * A, const int& lda,
-        float * W)
-{
+static inline void
+xheevd_wrapper(const cublasFillMode_t& uplo, const int& n, std::complex<float>* A, const int& lda, float* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
-    int * devInfo = nullptr;
+    int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
-    float2 * work = nullptr;
+    float2* work = nullptr;
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnCheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const float2 *>(A), lda, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnCheevd_bufferSize(cusolver_H,
+                                               CUSOLVER_EIG_MODE_VECTOR,
+                                               uplo,
+                                               n,
+                                               reinterpret_cast<const float2*>(A),
+                                               lda,
+                                               W,
+                                               &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(float2) * lwork));
     // compute eigenvalues and eigenvectors.
-    CHECK_CUSOLVER(cusolverDnCheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, reinterpret_cast<float2 *>(A), lda, W, work, lwork, devInfo));
+    CHECK_CUSOLVER(cusolverDnCheevd(cusolver_H,
+                                    CUSOLVER_EIG_MODE_VECTOR,
+                                    uplo,
+                                    n,
+                                    reinterpret_cast<float2*>(A),
+                                    lda,
+                                    W,
+                                    work,
+                                    lwork,
+                                    devInfo));
 
     CHECK_CUDA(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
@@ -180,27 +233,36 @@ void xheevd_wrapper (
     CHECK_CUDA(cudaFree(devInfo));
 }
 
-static inline
-void xheevd_wrapper (
-        const cublasFillMode_t& uplo,
-        const int& n,
-        std::complex<double> * A, const int& lda,
-        double * W)
-{
+static inline void
+xheevd_wrapper(const cublasFillMode_t& uplo, const int& n, std::complex<double>* A, const int& lda, double* W) {
     // prepare some values for cusolverDnZhegvd_bufferSize
-    int * devInfo = nullptr;
+    int* devInfo = nullptr;
     int lwork = 0, info_gpu = 0;
-    double2 * work = nullptr;
+    double2* work = nullptr;
     CHECK_CUDA(cudaMalloc((void**)&devInfo, sizeof(int)));
 
     // calculate the sizes needed for pre-allocated buffer.
-    CHECK_CUSOLVER(cusolverDnZheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                                 reinterpret_cast<const double2 *>(A), lda, W, &lwork));
+    CHECK_CUSOLVER(cusolverDnZheevd_bufferSize(cusolver_H,
+                                               CUSOLVER_EIG_MODE_VECTOR,
+                                               uplo,
+                                               n,
+                                               reinterpret_cast<const double2*>(A),
+                                               lda,
+                                               W,
+                                               &lwork));
     // allocate memery
     CHECK_CUDA(cudaMalloc((void**)&work, sizeof(double2) * lwork));
     // compute eigenvalues and eigenvectors.
-    CHECK_CUSOLVER(cusolverDnZheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
-                                      reinterpret_cast<double2 *>(A), lda, W, work, lwork, devInfo));
+    CHECK_CUSOLVER(cusolverDnZheevd(cusolver_H,
+                                    CUSOLVER_EIG_MODE_VECTOR,
+                                    uplo,
+                                    n,
+                                    reinterpret_cast<double2*>(A),
+                                    lda,
+                                    W,
+                                    work,
+                                    lwork,
+                                    devInfo));
 
     CHECK_CUDA(cudaMemcpy(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost));
     assert(0 == info_gpu);
@@ -209,28 +271,24 @@ void xheevd_wrapper (
 }
 
 template <typename T>
-struct hegvd_op<T, base_device::DEVICE_GPU>
-{
+struct hegvd_op<T, base_device::DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_GPU* d,
                     const int nstart,
                     const int ldh,
                     const T* A, // hcc
-                    T* B, // scc
+                    T* B,       // scc
                     Real* W,    // eigenvalue
-                    T* V)
-    {
+                    T* V) {
         // assert(nstart == ldh);
         // A to V
         CHECK_CUDA(cudaMemcpy(V, A, sizeof(T) * ldh * nstart, cudaMemcpyDeviceToDevice));
-        xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
-            (T*)B, ldh, W);
+        xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh, (T*)B, ldh, W);
     }
 };
 
 template <typename T>
-struct heevx_op<T, base_device::DEVICE_GPU>
-{
+struct heevx_op<T, base_device::DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_GPU* d,
                     const int nstart,
@@ -238,8 +296,7 @@ struct heevx_op<T, base_device::DEVICE_GPU>
                     const T* A, // hcc
                     const int m,
                     Real* W, // eigenvalue
-                    T* V)
-    {
+                    T* V) {
         assert(nstart <= ldh);
         // A to V
         CHECK_CUDA(cudaMemcpy(V, A, sizeof(T) * nstart * ldh, cudaMemcpyDeviceToDevice));
@@ -248,8 +305,7 @@ struct heevx_op<T, base_device::DEVICE_GPU>
 };
 
 template <typename T>
-struct hegvx_op<T, base_device::DEVICE_GPU>
-{
+struct hegvx_op<T, base_device::DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_GPU* d,
                     const int nbase,
@@ -258,10 +314,7 @@ struct hegvx_op<T, base_device::DEVICE_GPU>
                     T* scc,
                     const int m,
                     Real* eigenvalue,
-                    T* vcc)
-    {
-
-    }
+                    T* vcc) {}
 };
 
 template struct hegvd_op<std::complex<float>, base_device::DEVICE_GPU>;

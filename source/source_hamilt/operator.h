@@ -5,11 +5,9 @@
 
 #include <complex>
 
-namespace hamilt
-{
+namespace hamilt {
 
-enum class calculation_type
-{
+enum class calculation_type {
     no,
     pw_ekinetic,
     pw_nonlocal,
@@ -32,8 +30,7 @@ enum class calculation_type
 // Operator "O" might have several different types, which should be calculated one by one.
 // In basic class , function add() is designed for combine all operators together with a chain.
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Operator
-{
+class Operator {
   public:
     Operator();
     virtual ~Operator();
@@ -52,10 +49,7 @@ class Operator
 
     virtual void add(Operator* next);
 
-    virtual int get_ik() const
-    {
-        return this->ik;
-    }
+    virtual int get_ik() const { return this->ik; }
 
     /// do operation : |hpsi_choosed> = V|psi_choosed>
     /// V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
@@ -71,10 +65,8 @@ class Operator
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi
-	// virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
-	virtual void act(const psi::Psi<T, Device>& psi_in, 
-			psi::Psi<T, Device>& psi_out, 
-			const int nbands) const {};
+    // virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out) const {};
+    virtual void act(const psi::Psi<T, Device>& psi_in, psi::Psi<T, Device>& psi_out, const int nbands) const {};
 
     /// interface type 3: return a Psi-type HPsi
     // virtual psi::Psi<T> act(const psi::Psi<T,Device>& psi_in) const { return psi_in; };
@@ -85,15 +77,9 @@ class Operator
     ///         act(const T* psi_in, T* psi_out)
     /// type 2: use the `Psi`class
     ///         act(const Psi& psi_in, Psi& psi_out)
-    int get_act_type() const
-    {
-        return this->act_type;
-    }
+    int get_act_type() const { return this->act_type; }
 
-    calculation_type get_cal_type() const
-    {
-        return this->cal_type;
-    }
+    calculation_type get_cal_type() const { return this->cal_type; }
 
   protected:
     int ik = 0;

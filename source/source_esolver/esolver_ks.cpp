@@ -5,26 +5,23 @@
 #include "source_io/module_json/init_info.h"
 #include "source_io/module_json/output_info.h"
 
-#include "source_estate/update_pot.h" // mohan add 20251016
+#include "source_estate/update_pot.h"              // mohan add 20251016
 #include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
-#include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
+#include "source_pw/module_pwdft/setup_pwwfc.h"    // mohan add 20251018
 #include "source_hsolver/hsolver.h"
 #include "source_io/module_energy/write_eig_occ.h"
 #include "source_io/module_energy/write_bands.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/output_log.h" // use write_head
-#include "source_estate/elecstate_print.h" // print_etot
+#include "source_estate/elecstate_print.h"      // print_etot
 #include "source_io/module_output/print_info.h" // print_parameters
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_lcao/module_dftu/dftu.h"       // mohan add 2025-11-07
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 ESolver_KS::ESolver_KS() {}
 
-
-ESolver_KS::~ESolver_KS()
-{
+ESolver_KS::~ESolver_KS() {
     //****************************************************
     // do not add any codes in this deconstructor funcion
     //****************************************************
@@ -36,14 +33,12 @@ ESolver_KS::~ESolver_KS()
     pw::teardown_pwwfc(this->pw_wfc);
 }
 
-
-void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp)
-{
+void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp) {
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
     //! 1) setup "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
-    
+
     //! 2) setup some parameters
     classname = "ESolver_KS";
     basisname = "";
@@ -60,9 +55,18 @@ void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     //! 3) setup charge mixing
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-    p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
-      inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
-      inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
+    p_chgmix->set_mixing(inp.mixing_mode,
+                         inp.mixing_beta,
+                         inp.mixing_ndim,
+                         inp.mixing_gg0,
+                         inp.mixing_tau,
+                         inp.mixing_beta_mag,
+                         inp.mixing_gg0_mag,
+                         inp.mixing_gg0_min,
+                         inp.mixing_angle,
+                         inp.mixing_dmr,
+                         ucell.omega,
+                         ucell.tpiba);
     p_chgmix->init_mixing();
 
     //! 4) setup plane wave for electronic wave functions
@@ -72,14 +76,11 @@ void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     //! Inititlize the charge density.
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
     this->chr.check_rho(); // check the rho
-  
 }
 
-void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
-{}
+void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) {}
 
-void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
-{
+void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr) {
     // 1) use Hamiltonian to obtain charge density
     this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
@@ -90,36 +91,37 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     // Maybe in the future, density and wavefunctions should use different
     // parallel algorithms, in which they do not occupy all processors, for
     // example wavefunctions uses 20 processors while density uses 10.
-    if (PARAM.globalv.ks_run)
-    {
+    if (PARAM.globalv.ks_run) {
         drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
         hsolver_error = 0.0;
-        if (iter == 1 && PARAM.inp.calculation != "nscf")
-        {
-            hsolver_error
-                = hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
+        if (iter == 1 && PARAM.inp.calculation != "nscf") {
+            hsolver_error =
+                hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
 
             // The error of HSolver is larger than drho,
             // so a more precise HSolver should be executed.
-            if (hsolver_error > drho)
-            {
-                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, PARAM.inp.basis_type,
-                            PARAM.inp.esolver_type, PARAM.inp.precision, hsolver_error,
-                            drho, diag_ethr, PARAM.inp.nelec);
+            if (hsolver_error > drho) {
+                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
+                                                     PARAM.inp.basis_type,
+                                                     PARAM.inp.esolver_type,
+                                                     PARAM.inp.precision,
+                                                     hsolver_error,
+                                                     drho,
+                                                     diag_ethr,
+                                                     PARAM.inp.nelec);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
                 drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
-                hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
-                                PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
+                hsolver_error =
+                    hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
             }
         }
     }
 }
 
-void ESolver_KS::runner(UnitCell& ucell, const int istep)
-{
+void ESolver_KS::runner(UnitCell& ucell, const int istep) {
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::start(this->classname, "runner");
 
@@ -132,11 +134,9 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep)
     this->niter = this->maxniter;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
-    for (int iter = 1; iter <= this->maxniter; ++iter)
-    {
-        if(iter == this->maxniter)
-        {
-            this->scf_nmax_flag=true;
+    for (int iter = 1; iter <= this->maxniter; ++iter) {
+        if (iter == this->maxniter) {
+            this->scf_nmax_flag = true;
         }
 
         // 3) initialization of SCF iterations
@@ -149,11 +149,9 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep)
         this->iter_finish(ucell, istep, iter, conv_esolver);
 
         // 6) check convergence
-        if (conv_esolver || this->oscillate_esolver)
-        {
+        if (conv_esolver || this->oscillate_esolver) {
             this->niter = iter;
-            if (this->oscillate_esolver)
-            {
+            if (this->oscillate_esolver) {
                 std::cout << " !! Density oscillation is found, STOP HERE !!" << std::endl;
             }
             break;
@@ -167,78 +165,95 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep)
     return;
 };
 
-void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
-{
+void ESolver_KS::before_scf(UnitCell& ucell, const int istep) {
     ModuleBase::TITLE("ESolver_KS", "before_scf");
     ESolver_FP::before_scf(ucell, istep);
 }
 
-void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
-{
-    if(PARAM.inp.esolver_type != "tddft")
-    {
+void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter) {
+    if (PARAM.inp.esolver_type != "tddft") {
         ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
     }
 
     iter_time = ModuleBase::get_time();
 
-    if (PARAM.inp.esolver_type == "ksdft")
-    {
-        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type, PARAM.inp.esolver_type,
-          PARAM.inp.calculation, PARAM.inp.init_chg, PARAM.inp.precision, istep, iter,
-          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec);
-    }
-    else if (PARAM.inp.esolver_type == "sdft")
-    {
-        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type, PARAM.inp.esolver_type,
-          PARAM.inp.calculation, PARAM.inp.init_chg, istep, iter, drho,
-          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne);
+    if (PARAM.inp.esolver_type == "ksdft") {
+        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type,
+                                             PARAM.inp.esolver_type,
+                                             PARAM.inp.calculation,
+                                             PARAM.inp.init_chg,
+                                             PARAM.inp.precision,
+                                             istep,
+                                             iter,
+                                             drho,
+                                             PARAM.inp.pw_diag_thr,
+                                             diag_ethr,
+                                             PARAM.inp.nelec);
+    } else if (PARAM.inp.esolver_type == "sdft") {
+        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type,
+                                               PARAM.inp.esolver_type,
+                                               PARAM.inp.calculation,
+                                               PARAM.inp.init_chg,
+                                               istep,
+                                               iter,
+                                               drho,
+                                               PARAM.inp.pw_diag_thr,
+                                               diag_ethr,
+                                               PARAM.inp.nbands,
+                                               esolver_KS_ne);
     }
 
     // save input charge density (rho)
     this->chr.save_rho_before_sum_band();
 }
 
-void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
-{
+void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) {
 
-    // 1.1) print out band gap 
-    if (!PARAM.globalv.two_fermi)
-    {
+    // 1.1) print out band gap
+    if (!PARAM.globalv.two_fermi) {
         this->pelec->cal_bandgap();
-    }
-    else
-    {
+    } else {
         this->pelec->cal_bandgap_updw();
     }
 
     // 1.2) print out eigenvalues and occupations
-    if (PARAM.inp.out_band[0])
-    {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
-        {
-            ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+    if (PARAM.inp.out_band[0]) {
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver) {
+            ModuleIO::write_eig_iter(this->pelec->ekb, this->pelec->wg, *this->pelec->klist);
         }
     }
 
     // 2.1) compute magnetization, only for spin==2
-    ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
-                                       this->pelec->nelec_spin.data());
+    ucell.magnet.compute_mag(ucell.omega,
+                             this->chr.nrxx,
+                             this->chr.nxyz,
+                             this->chr.rho,
+                             this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing
     // SCF will continue if U is not converged for uramping calculation
     bool converged_u = true;
     // to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-    if (PARAM.inp.dft_plus_u)
-    {
+    if (PARAM.inp.dft_plus_u) {
         converged_u = this->dftu.u_converged();
     }
 #endif
 
-    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
-      this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
-      this->scf_thr, this->scf_ene_thr, converged_u, PARAM.inp);
+    module_charge::chgmixing_ks(iter,
+                                ucell,
+                                this->pelec,
+                                this->chr,
+                                this->p_chgmix,
+                                this->pw_rhod->nrxx,
+                                this->drho,
+                                this->oscillate_esolver,
+                                conv_esolver,
+                                hsolver_error,
+                                this->scf_thr,
+                                this->scf_ene_thr,
+                                converged_u,
+                                PARAM.inp);
 
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
@@ -247,8 +262,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     this->pelec->cal_energies(1); // Harris-Foulkes functional
     this->pelec->cal_energies(2); // Kohn-Sham functional
 
-    if (iter == 1)
-    {
+    if (iter == 1) {
         this->pelec->f_en.etot_old = this->pelec->f_en.etot;
     }
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
@@ -256,47 +270,43 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 4) get meta-GGA related parameters
     double dkin = 0.0; // for meta-GGA
-    if (XC_Functional::get_ked_flag())
-    {
+    if (XC_Functional::get_ked_flag()) {
         dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
     }
 
-    // Iter finish 
+    // Iter finish
     ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
-
 
     // the end, print time
     double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
 
     // print energies
-    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, 
-    dkin, duration, diag_ethr);
-
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, dkin, duration, diag_ethr);
 
 #ifdef __RAPIDJSON
     // add Json of scf mag
-    Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
+    Json::add_output_scf_mag(ucell.magnet.tot_mag,
+                             ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
-                             drho, duration);
+                             drho,
+                             duration);
 #endif //__RAPIDJSON
-
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
-{
+void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
-    
-/*
-    // 1) calculate the kinetic energy density tau
-    if (PARAM.inp.out_elf[0] > 0)
-    {
-        assert(this->psi != nullptr);
-        this->pelec->cal_tau(*(this->psi));
-    }
-*/
-    
+
+    /*
+        // 1) calculate the kinetic energy density tau
+        if (PARAM.inp.out_elf[0] > 0)
+        {
+            assert(this->psi != nullptr);
+            this->pelec->cal_tau(*(this->psi));
+        }
+    */
+
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
@@ -305,11 +315,9 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
     // 4) write band information to band.txt
     ModuleIO::write_bands(PARAM.inp, this->pelec->ekb, this->kv);
-
 }
 
-void ESolver_KS::after_all_runners(UnitCell& ucell)
-{
+void ESolver_KS::after_all_runners(UnitCell& ucell) {
     // 1) write Etot information
     ESolver_FP::after_all_runners(ucell);
 }

@@ -7,12 +7,10 @@
 #include <complex>
 #include <source_base/macros.h>
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename FPTYPE, typename Device>
-struct cal_dbecp_noevc_nl_op
-{
+struct cal_dbecp_noevc_nl_op {
     /// @brief The prestep to calculate the final stresses
     ///
     /// Input Parameters
@@ -53,8 +51,7 @@ struct cal_dbecp_noevc_nl_op
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_stress_nl_op
-{
+struct cal_stress_nl_op {
     /// @brief Calculate the final stresses for multi-device
     ///
     /// Input Parameters
@@ -154,16 +151,14 @@ struct cal_stress_nl_op
 };
 
 template <typename T, typename Device>
-struct cal_stress_mgga_op
-{
+struct cal_stress_mgga_op {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& spin, const int& nrxx, const Real& w1, const T* gradwfc, Real* crosstaus);
 };
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vkb_op
-{
+struct cal_vkb_op {
     void operator()(const Device* ctx,
                     const int nh,
                     const int npw,
@@ -177,8 +172,7 @@ struct cal_vkb_op
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vkb_deri_op
-{
+struct cal_vkb_deri_op {
     void operator()(const Device* ctx,
                     const int nh,
                     const int npw,
@@ -197,8 +191,7 @@ struct cal_vkb_deri_op
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vq_op
-{
+struct cal_vq_op {
     void operator()(const Device* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -213,8 +206,7 @@ struct cal_vq_op
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vq_deri_op
-{
+struct cal_vq_deri_op {
     void operator()(const Device* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -227,44 +219,46 @@ struct cal_vq_deri_op
                     FPTYPE* vq);
 };
 
-
 template <typename FPTYPE, typename Device>
-struct cal_stress_drhoc_aux_op{
-    void operator()(
-        const FPTYPE* r, const FPTYPE* rhoc, 
-        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
-        const int mesh, const int igl0, const int ngg, const double omega,
-        int type
-    );
+struct cal_stress_drhoc_aux_op {
+    void operator()(const FPTYPE* r,
+                    const FPTYPE* rhoc,
+                    const FPTYPE* gx_arr,
+                    const FPTYPE* rab,
+                    FPTYPE* drhocg,
+                    const int mesh,
+                    const int igl0,
+                    const int ngg,
+                    const double omega,
+                    int type);
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_force_npw_op{
-    void operator()(const std::complex<FPTYPE> *psiv,
+struct cal_force_npw_op {
+    void operator()(const std::complex<FPTYPE>* psiv,
                     const FPTYPE* gv,
                     const FPTYPE* rhocgigg_vec,
                     FPTYPE* force,
                     const FPTYPE* tau_x,
                     const int npw,
-                    const FPTYPE omega, const FPTYPE tpiba, const int na
-    ) {}
+                    const FPTYPE omega,
+                    const FPTYPE tpiba,
+                    const int na) {}
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_multi_dot_op{
+struct cal_multi_dot_op {
     FPTYPE operator()(const int& npw,
-                    const FPTYPE& fac,
-                    const FPTYPE* gk1,
-                    const FPTYPE* gk2,
-                    const FPTYPE* d_kfac,
-                    const std::complex<FPTYPE>* psi);
+                      const FPTYPE& fac,
+                      const FPTYPE* gk1,
+                      const FPTYPE* gk2,
+                      const FPTYPE* d_kfac,
+                      const std::complex<FPTYPE>* psi);
 };
-
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& ipol,
                     const int& jpol,
@@ -284,8 +278,7 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 template <typename FPTYPE>
-struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& ipol,
@@ -360,8 +353,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int nh,
                     const int npw,
@@ -374,8 +366,7 @@ struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 template <typename FPTYPE>
-struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int nh,
                     const int npw,
@@ -394,8 +385,7 @@ struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU>
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -410,8 +400,7 @@ struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU>
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -425,18 +414,18 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 template <typename FPTYPE>
-struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU> {
     FPTYPE operator()(const int& npw,
-                    const FPTYPE& fac,
-                    const FPTYPE* gk1,
-                    const FPTYPE* gk2,
-                    const FPTYPE* d_kfac,
-                    const std::complex<FPTYPE>* psi);
+                      const FPTYPE& fac,
+                      const FPTYPE* gk1,
+                      const FPTYPE* gk2,
+                      const FPTYPE* d_kfac,
+                      const std::complex<FPTYPE>* psi);
 };
 
 /**
- * The operator is used to compute the auxiliary amount of stress /force 
- * in parallel on the GPU. They identify type with the type provided and 
+ * The operator is used to compute the auxiliary amount of stress /force
+ * in parallel on the GPU. They identify type with the type provided and
  * select different calculation methods,
  *
  * The function is called by the module as follows
@@ -446,62 +435,62 @@ struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
  *      Type = 3 -> stress_loc
  *
  *  Int the function aux is obtained by traversing the `ngg` and `mesh` firstly,
- *  and then aux is processed by Simpson integral method to obtain auxiliary 
+ *  and then aux is processed by Simpson integral method to obtain auxiliary
  *  quantities drhocg.
  *
- * In the GPU operator, temporary array space of mesh size is required in order 
- * not to apply Simpson interpolation (which causes GPU memory overflow). 
- * The Simpson integral is then reconstructed in the loop body of the mesh, 
- * using the Simpson integral computed in the loop, rather than executed once 
- * after the loop. After that, in order to reduce the if condition judgment brought 
- * by Simpson interpolation in the loop body, lambda expression is used to shift the 
+ * In the GPU operator, temporary array space of mesh size is required in order
+ * not to apply Simpson interpolation (which causes GPU memory overflow).
+ * The Simpson integral is then reconstructed in the loop body of the mesh,
+ * using the Simpson integral computed in the loop, rather than executed once
+ * after the loop. After that, in order to reduce the if condition judgment brought
+ * by Simpson interpolation in the loop body, lambda expression is used to shift the
  * boundary condition out.
  */
 template <typename FPTYPE>
-struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
-    void operator()(
-        const FPTYPE* r, const FPTYPE* rhoc, 
-        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
-        const int mesh, const int igl0, const int ngg, const double omega,
-        int type
-    );
+struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const FPTYPE* r,
+                    const FPTYPE* rhoc,
+                    const FPTYPE* gx_arr,
+                    const FPTYPE* rab,
+                    FPTYPE* drhocg,
+                    const int mesh,
+                    const int igl0,
+                    const int ngg,
+                    const double omega,
+                    int type);
 };
 
-
 /**
- * This operator is used to compute the force force in three directions for each atom in force_cc 
+ * This operator is used to compute the force force in three directions for each atom in force_cc
  * in parallel on GPU [0~3], which is:
- * Force_p =    (2* pi * tpiba * omega * rhocg[ig] * gv_p[ig] 
+ * Force_p =    (2* pi * tpiba * omega * rhocg[ig] * gv_p[ig]
  *              * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z)
  *              * complex(sinp, cosp) * psiv[ig]).real()
  *
  * The operator splits NPW into blocks on the GPU in parallel, and the block size is t_size = 1024.
  */
 template <typename FPTYPE>
-struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
-    void operator()(const std::complex<FPTYPE> *psiv,
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU> {
+    void operator()(const std::complex<FPTYPE>* psiv,
                     const FPTYPE* gv,
                     const FPTYPE* rhocgigg_vec,
                     FPTYPE* force,
                     const FPTYPE* tau,
                     const int npw,
-                    const FPTYPE omega, const FPTYPE tpiba, const int na
-    );
+                    const FPTYPE omega,
+                    const FPTYPE tpiba,
+                    const int na);
 };
-
-
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename Device>
-struct pointer_array_malloc
-{
+struct pointer_array_malloc {
     void operator()(void** ptr, const int n);
 };
 
 template <typename Device>
-struct synchronize_ptrs
-{
+struct synchronize_ptrs {
     void operator()(void** ptr_out, const void** ptr_in, const int size);
 };
 

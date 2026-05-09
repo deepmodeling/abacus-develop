@@ -31,7 +31,7 @@ report_timing_enhanced() {
   local start_time="$2"
   local end_time="${3:-$(date +%s)}"
   local duration=$((end_time - start_time))
-  
+
   if [[ $duration -gt 3600 ]]; then
     printf "Step '%s' completed in %d hours, %d minutes, %d seconds.\n" \
       "$step_name" $((duration / 3600)) $(((duration % 3600) / 60)) $((duration % 60))
@@ -77,32 +77,32 @@ report_error_enhanced() {
   local error_message="$2"
   local context="${3:-}"
   local lineno="${4:-}"
-  
+
   local location=""
   if [[ -n "$lineno" ]]; then
     location=", line $lineno"
   fi
-  
+
   echo "ERROR [$error_code]: (${SCRIPT_NAME}${location}) $error_message" >&2
   if [[ -n "$context" ]]; then
     echo "Context: $context" >&2
   fi
-  
+
   return $error_code
 }
 
 # Enhanced warning reporting with severity levels
 report_warning_enhanced() {
-  local severity="${1:-INFO}"  # INFO, WARNING, CRITICAL
+  local severity="${1:-INFO}" # INFO, WARNING, CRITICAL
   local message="$2"
   local context="${3:-}"
   local lineno="${4:-}"
-  
+
   local location=""
   if [[ -n "$lineno" ]]; then
     location=", line $lineno"
   fi
-  
+
   echo "$severity: (${SCRIPT_NAME}${location}) $message" >&2
   if [[ -n "$context" ]]; then
     echo "Context: $context" >&2
@@ -111,7 +111,7 @@ report_warning_enhanced() {
 
 # recommend users to use offline installation when download failed
 # zhaoqing in 2025.10.15
-recommend_offline_installation(){
+recommend_offline_installation() {
   __filename=$1
   __url=$2
   cat << EOF
@@ -421,40 +421,40 @@ require_env() {
 validate_env_vars() {
   local required_vars=("$@")
   local missing_vars=()
-  
+
   for var in "${required_vars[@]}"; do
     if [[ -z "${!var:-}" ]]; then
       missing_vars+=("$var")
     fi
   done
-  
+
   if [[ ${#missing_vars[@]} -gt 0 ]]; then
     report_error_enhanced 1 "Missing required environment variables" "$(printf '%s ' "${missing_vars[@]}")"
     return 1
   fi
-  
+
   return 0
 }
 
 # Check system requirements
 check_system_requirements() {
-  local min_disk_space_gb="${1:-10}"  # Default 10GB
+  local min_disk_space_gb="${1:-10}" # Default 10GB
   local required_commands=("${@:2}")
-  
+
   # Check disk space
   local available_space=$(df . | awk 'NR==2 {print int($4/1024/1024)}')
   if [[ $available_space -lt $min_disk_space_gb ]]; then
     report_warning_enhanced "WARNING" "Low disk space: ${available_space}GB available, ${min_disk_space_gb}GB recommended"
   fi
-  
+
   # Check required commands
   for cmd in "${required_commands[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
+    if ! command -v "$cmd" > /dev/null 2>&1; then
       report_error_enhanced 1 "Required command not found: $cmd"
       return 1
     fi
   done
-  
+
   return 0
 }
 
@@ -475,26 +475,26 @@ resolve_string_safe() {
   local __to_resolve="$1"
   shift
   local __flags=("$@")
-  
+
   if [[ -z "$__to_resolve" ]]; then
     report_error_enhanced 1 "Empty string provided for resolution"
     return 1
   fi
-  
+
   if [[ ! -f "${SCRIPTDIR}/parse_if.py" ]]; then
     report_error_enhanced 1 "Parser script not found" "${SCRIPTDIR}/parse_if.py"
     return 1
   fi
-  
+
   local result
-  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<< "${__to_resolve}" 2>/dev/null)
+  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<< "${__to_resolve}" 2> /dev/null)
   local exit_code=$?
-  
+
   if [[ $exit_code -ne 0 ]]; then
     report_error_enhanced $exit_code "String resolution failed" "$__to_resolve"
     return $exit_code
   fi
-  
+
   echo "$result"
   return 0
 }
@@ -524,22 +524,22 @@ check_command_version() {
   local command_name="$1"
   local min_version="$2"
   local package_name="${3:-$command_name}"
-  
-  if ! command -v "$command_name" >/dev/null 2>&1; then
+
+  if ! command -v "$command_name" > /dev/null 2>&1; then
     report_error_enhanced 1 "Command not found: $command_name" "Package: $package_name"
     return 1
   fi
-  
+
   local command_path
   command_path=$(command -v "$command_name")
   echo "Found $command_name at: $(realpath "$command_path")"
-  
+
   if [[ -n "$min_version" ]]; then
     # This is a placeholder for version checking logic
     # Different commands have different version output formats
     echo "Version check for $command_name (minimum: $min_version) - implement as needed"
   fi
-  
+
   return 0
 }
 
@@ -547,20 +547,20 @@ check_command_version() {
 check_commands_batch() {
   local commands=("$@")
   local failed_commands=()
-  
+
   for cmd in "${commands[@]}"; do
-    if ! command -v "$cmd" >/dev/null 2>&1; then
+    if ! command -v "$cmd" > /dev/null 2>&1; then
       failed_commands+=("$cmd")
     else
       echo "✓ Found: $cmd at $(command -v "$cmd")"
     fi
   done
-  
+
   if [[ ${#failed_commands[@]} -gt 0 ]]; then
     report_error_enhanced 1 "Missing commands" "$(printf '%s ' "${failed_commands[@]}")"
     return 1
   fi
-  
+
   return 0
 }
 
@@ -828,8 +828,8 @@ read_with() {
 parse_config_option() {
   local option="$1"
   local default_value="${2:-}"
-  local valid_values="${3:-}"  # Space-separated list of valid values
-  
+  local valid_values="${3:-}" # Space-separated list of valid values
+
   local parsed_value
   if [[ "$option" =~ ^--enable ]]; then
     parsed_value=$(read_enable "$option")
@@ -838,7 +838,7 @@ parse_config_option() {
   else
     parsed_value="$option"
   fi
-  
+
   # Validate against allowed values if provided
   if [[ -n "$valid_values" && "$parsed_value" != "__INVALID__" ]]; then
     local is_valid=false
@@ -848,13 +848,13 @@ parse_config_option() {
         break
       fi
     done
-    
+
     if [[ "$is_valid" == false ]]; then
       report_warning_enhanced "WARNING" "Invalid configuration value: $parsed_value" "Valid options: $valid_values"
       parsed_value="__INVALID__"
     fi
   fi
-  
+
   echo "$parsed_value"
 }
 
@@ -878,36 +878,36 @@ checksum() {
 verify_file_integrity() {
   local filename="$1"
   local expected_hash="$2"
-  local hash_type="${3:-sha256}"  # Default to SHA256
-  
+  local hash_type="${3:-sha256}" # Default to SHA256
+
   if [[ ! -f "$filename" ]]; then
     report_error_enhanced 1 "File not found for integrity check" "$filename"
     return 1
   fi
-  
+
   local hash_command
   case "$hash_type" in
     sha256)
       hash_command="sha256sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="shasum -a 256"
       ;;
     sha1)
       hash_command="sha1sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="shasum -a 1"
       ;;
     md5)
       hash_command="md5sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
+      command -v "$hash_command" > /dev/null 2>&1 || hash_command="md5"
       ;;
     *)
       report_error_enhanced 1 "Unsupported hash type" "$hash_type"
       return 1
       ;;
   esac
-  
+
   local computed_hash
   computed_hash=$($hash_command "$filename" | cut -d' ' -f1)
-  
+
   if [[ "$computed_hash" == "$expected_hash" ]]; then
     echo "✓ Integrity check passed for $filename ($hash_type)"
     return 0
@@ -922,7 +922,7 @@ download_pkg_from_url() {
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
   local __filename="$2"
   local __url="$3"
-  
+
   # Smart certificate validation strategy
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
     "strict")
@@ -947,7 +947,7 @@ download_pkg_from_url() {
         fi
       fi
       ;;
-    "smart"|*)
+    "smart" | *)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
       if wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
@@ -967,7 +967,7 @@ download_pkg_from_url() {
       fi
       ;;
   esac
-  
+
   # checksum
   if checksum "$__filename" "$__sha256"; then
     echo "Checksum of $__filename OK"

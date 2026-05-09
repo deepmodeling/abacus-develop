@@ -21,16 +21,14 @@
  *      double G = RealGauntTable::instance()(l1, l2, l3, m1, m2, m3);
  *
  *                                                                                      */
-class RealGauntTable
-{
+class RealGauntTable {
   public:
     RealGauntTable(RealGauntTable const&) = delete;
     RealGauntTable& operator=(RealGauntTable const&) = delete;
 
     ~RealGauntTable() {}
 
-    static RealGauntTable& instance()
-    {
+    static RealGauntTable& instance() {
         static RealGauntTable instance_;
         return instance_;
     }
@@ -73,12 +71,10 @@ class RealGauntTable
     int lmax() const { return lmax_; }
 
     /// Returns the amount of heap memory used by this class (in bytes).
-    size_t memory() const
-    {
-        return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double)) 
-                + real_gaunt_table_.NumElements() * sizeof(double);
+    size_t memory() const {
+        return gaunt_table_.size() * (6 * sizeof(int) + sizeof(double)) +
+               real_gaunt_table_.NumElements() * sizeof(double);
     }
-
 
     /*!
      * @brief Computes the standard Gaunt coefficients.
@@ -99,7 +95,6 @@ class RealGauntTable
      *       some numerical issue for large l and is yet to be studied later.
      *                                                                                  */
     double gaunt(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
-
 
   private:
     RealGauntTable() {}
@@ -157,7 +152,8 @@ class RealGauntTable
      * if necessary so that the returned key {l1,l2,l3,m1,m2,m3} satisfies
      * l1 >= l2 >= l3 and m3 >= 0.
      *                                                                                  */
-    std::array<int, 6> gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    std::array<int, 6>
+    gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// swap (l1,m1) <--> (l2,m2) if l1 < l2; do nothing otherwise
     void arrange(int& l1, int& l2, int& m1, int& m2) const;

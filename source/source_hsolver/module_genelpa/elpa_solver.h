@@ -5,8 +5,7 @@
 #include <fstream>
 #include <vector>
 
-class ELPA_Solver
-{
+class ELPA_Solver {
   public:
     ELPA_Solver(const bool isReal,
                 const MPI_Comm comm,

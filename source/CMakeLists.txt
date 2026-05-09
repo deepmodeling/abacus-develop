@@ -21,14 +21,11 @@ add_subdirectory(source_lcao/module_lr)
 # add by jghan
 add_subdirectory(source_lcao/module_rdmft)
 
-add_library(
-    driver
-    OBJECT
-    source_main/driver.cpp
-    source_main/driver_run.cpp
-)
+add_library(driver OBJECT source_main/driver.cpp source_main/driver_run.cpp)
 
-list(APPEND device_srcs
+list(
+  APPEND
+  device_srcs
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
   source_pw/module_pwdft/kernels/veff_op.cpp
   source_pw/module_pwdft/kernels/ekinetic_op.cpp
@@ -38,17 +35,13 @@ list(APPEND device_srcs
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
   source_estate/kernels/elecstate_op.cpp
-
-  # source_psi/kernels/psi_memory_op.cpp
-  # source_psi/kernels/device.cpp
-
+  # source_psi/kernels/psi_memory_op.cpp source_psi/kernels/device.cpp
   source_base/module_device/device.cpp
   source_base/module_device/device_helpers.cpp
   source_base/module_device/output_device.cpp
   source_base/module_device/memory_op.cpp
   source_base/kernels/math_kernel_op.cpp
   source_base/kernels/math_kernel_op_vec.cpp
-
   source_pw/module_pwdft/kernels/force_op.cpp
   source_pw/module_pwdft/kernels/stress_op.cpp
   source_pw/module_pwdft/kernels/onsite_op.cpp
@@ -59,11 +52,12 @@ list(APPEND device_srcs
   source_pw/module_pwdft/kernels/cal_density_real_op.cpp
   source_pw/module_pwdft/kernels/mul_potential_op.cpp
   source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.cpp
-  source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp
-)
+  source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)
-  list(APPEND device_srcs
+  list(
+    APPEND
+    device_srcs
     source_pw/module_pwdft/kernels/cuda/nonlocal_op.cu
     source_pw/module_pwdft/kernels/cuda/veff_op.cu
     source_pw/module_pwdft/kernels/cuda/ekinetic_op.cu
@@ -74,10 +68,8 @@ if(USE_CUDA)
     source_hsolver/kernels/cuda/hegvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
-
     # source_psi/kernels/cuda/memory_op.cu
     source_base/module_device/cuda/memory_op.cu
-
     source_pw/module_pwdft/kernels/cuda/force_op.cu
     source_pw/module_pwdft/kernels/cuda/stress_op.cu
     source_pw/module_pwdft/kernels/cuda/wf_op.cu
@@ -90,12 +82,13 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/cal_density_real_op.cu
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
-    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu
-  )
+    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
 endif()
 
 if(USE_ROCM)
-  hip_add_library(device_rocm STATIC
+  hip_add_library(
+    device_rocm
+    STATIC
     source_pw/module_pwdft/kernels/rocm/nonlocal_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/veff_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/ekinetic_op.hip.cu
@@ -106,10 +99,8 @@ if(USE_ROCM)
     source_hsolver/kernels/rocm/hegvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
     source_estate/kernels/rocm/elecstate_op.hip.cu
-
     # source_psi/kernels/rocm/memory_op.hip.cu
     source_base/module_device/rocm/memory_op.hip.cu
-
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/stress_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/wf_op.hip.cu
@@ -117,36 +108,26 @@ if(USE_ROCM)
     source_base/kernels/rocm/math_kernel_op.hip.cu
     source_base/kernels/rocm/math_kernel_op_vec.hip.cu
     source_base/kernels/rocm/math_ylm_op.hip.cu
-    source_hamilt/module_xc/kernels/rocm/xc_functional_op.hip.cu
-  )
+    source_hamilt/module_xc/kernels/rocm/xc_functional_op.hip.cu)
 endif()
 
 if(USE_DSP)
-  list(APPEND device_srcs
-  source_base/kernels/dsp/dsp_connector.cpp
-  )
+  list(APPEND device_srcs source_base/kernels/dsp/dsp_connector.cpp)
 endif()
-
 
 add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
-  target_link_libraries(
-    device 
-    cusolver 
-    cublas 
-    cufft
-  )
+  target_link_libraries(device cusolver cublas cufft)
 elseif(USE_ROCM)
   target_link_libraries(
-    device 
-    device_rocm 
+    device
+    device_rocm
     hip::host
     hip::device
     hip::hipfft
     roc::hipblas
-    roc::hipsolver
-  )
+    roc::hipsolver)
 endif()
 
 if(ENABLE_COVERAGE)

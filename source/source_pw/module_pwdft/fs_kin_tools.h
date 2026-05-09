@@ -8,11 +8,9 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 
 #include <complex>
-namespace hamilt
-{
+namespace hamilt {
 template <typename FPTYPE, typename Device>
-class FS_Kin_tools
-{
+class FS_Kin_tools {
   public:
     FS_Kin_tools(const UnitCell& ucell_in,
                  const K_Vectors* kv_in,
@@ -28,7 +26,7 @@ class FS_Kin_tools
     /**
      * @brief calculate stress tensor for kinetic energy
      *        stress = \sum_{G,k,i}  wk(k) * gk_l(G) * gk_m(G) * d_kfac(G) * occ_i*|ppsi_i(G)|^2
-     * 
+     *
      * @param ik k-point index
      * @param npm number of bands
      * @param occ if use the occupation of the bands
@@ -56,7 +54,6 @@ class FS_Kin_tools
     const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
     const UnitCell& ucell_;
     const int nksbands_;
-
 
   private:
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;

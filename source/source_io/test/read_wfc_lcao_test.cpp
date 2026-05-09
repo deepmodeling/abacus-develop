@@ -2,8 +2,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
-{
+TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
 
     // this test should only be executed on rank 0
 #ifdef __MPI
@@ -13,8 +12,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (iproc != 0)
-    {
+    if (iproc != 0) {
         GTEST_SKIP();
     }
 #endif
@@ -119,8 +117,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex)
     EXPECT_NEAR(lowf[62].imag(), 5.21866389e-04, 1e-7);
 }
 
-TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
-{
+TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest) {
 /*
 (0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6) (0,7) (0,8) (0,9) (0,10) (0,11)
 (1,0) (1,1) (1,2) (1,3) (1,4) (1,5) (1,6) (1,7) (1,8) (1,9) (1,10) (1,11)
@@ -135,10 +132,8 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (nprocs != 4)
-    {
-        if (iproc == 0)
-        {
+    if (nprocs != 4) {
+        if (iproc == 0) {
             printf("Please run this unittest with nprocs = 4.\n");
         }
         GTEST_SKIP();
@@ -147,8 +142,7 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     std::vector<std::complex<double>> lowf_glb;
     const int nbands = 10; // nrow_glb
     const int nbasis = 12; // ncol_glb
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         printf("Run unittest ScatterLowfTest::ScatterLowfComplex with MPI env:\n");
         printf("Total number of processes: %d\n\n", nprocs);
         printf("Row-major processor grid is used.\n\n");
@@ -156,8 +150,7 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
         printf("are consecutive. The matrix in form of (i, j), where i runs over [0, 9] and \n");
         printf("j runs over [0, 11]: (0,0), (1,0), (2,0), ..., (9,0), (0,1), ...\n");
         lowf_glb.resize(nbands * nbasis);
-        for (int i = 0; i < nbands * nbasis; i++)
-        {
+        for (int i = 0; i < nbands * nbasis; i++) {
             const int j = i / nbands, k = i % nbands;
             lowf_glb[i] = std::complex<double>(k, j);
         }
@@ -184,29 +177,36 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // the following function can do the scattering-gathering automatically.
     // a double counterpart is pdgemr2d_, int counterpart is pigemr2d_
     // Those in C style are Cpzgemr2d, Cdgemr2d, Cigemr2d...
-    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.desc), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test.desc), para2d_glb.blacs_ctxt);
+    Cpxgemr2d(nbands,
+              nbasis,
+              lowf_glb.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_glb.desc),
+              lowf_loc.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_test.desc),
+              para2d_glb.blacs_ctxt);
     // what will happen if impose a row-major processor grid onto a column-major matrix?
     // you can get correct results, expect each block is column-major.
     // Have a look:
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<int> sizes_loc = {4 * 4 * 3, 4 * 4 + 4 * 2, 4 * 4 * 2, 4 * 4};
     std::vector<std::vector<double>> reals = {{0, 1, 2, 3, 8, 9}, {0, 1, 2, 3, 8, 9}, {4, 5, 6, 7}, {4, 5, 6, 7}};
-    std::vector<std::vector<double>> imags
-        = {{0, 1, 2, 3, 8, 9, 10, 11}, {4, 5, 6, 7}, {0, 1, 2, 3, 8, 9, 10, 11}, {4, 5, 6, 7}};
-    for (int i = 0; i < nprocs; i++)
-    {
-        if (iproc == i)
-        {
+    std::vector<std::vector<double>> imags = {{0, 1, 2, 3, 8, 9, 10, 11},
+                                              {4, 5, 6, 7},
+                                              {0, 1, 2, 3, 8, 9, 10, 11},
+                                              {4, 5, 6, 7}};
+    for (int i = 0; i < nprocs; i++) {
+        if (iproc == i) {
             EXPECT_EQ(lowf_loc.size(), sizes_loc[i]);
             printf(">>> rank %d: \n", iproc);
             printf("First print scattered matrix in the way that ELEMENTS WITH CONSECUTIVE\n");
             printf("MEMORIES ARE SHOWN (only shown) IN THE SAME LINE:\n");
-            for (int j = 0; j < lowf_loc.size(); j++)
-            {
+            for (int j = 0; j < lowf_loc.size(); j++) {
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
-                if ((j + 1) % para2d_test.nrow == 0)
-                {
+                if ((j + 1) % para2d_test.nrow == 0) {
                     printf("\n");
                 }
                 const int k = j % para2d_test.nrow;
@@ -218,12 +218,10 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
             // (i, j) -> (i', j') with i = j' and j = i'
             // x = i*ncol + j, x' = i'*ncol' + j' with ncol' = nrow and nrow' = ncol
             // i = x/ncol, j = x%ncol, x' = j*nrow + i = x%ncol*nrow + x/ncol
-            for (int j = 0; j < lowf_loc.size(); j++)
-            {
+            for (int j = 0; j < lowf_loc.size(); j++) {
                 const int x = j % para2d_test.ncol * para2d_test.nrow + j / para2d_test.ncol;
                 printf("(%2.0f,%2.0f)", lowf_loc[x].real(), lowf_loc[x].imag());
-                if ((j + 1) % para2d_test.ncol == 0)
-                {
+                if ((j + 1) % para2d_test.ncol == 0) {
                     printf("\n");
                 }
             }
@@ -235,13 +233,11 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // test the other way around, the row-major matrix
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         printf("Now test the \"row-major\" matrix, which means for rows their memory\n");
         printf("are consecutive. The matrix in form of (i, j), where i runs over [0, 9] and \n");
         printf("j runs over [0, 11]: (0,0), (0,1), (0,2), ..., (0,11), (1,0), ...\n");
-        for (int i = 0; i < nbands * nbasis; i++)
-        {
+        for (int i = 0; i < nbands * nbasis; i++) {
             const int irow = i / nbasis, icol = i % nbasis;
             lowf_glb[i] = std::complex<double>(irow, icol);
         }
@@ -257,23 +253,28 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     Parallel_2D para2d_glb_prime;
     para2d_glb_prime.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD);
     lowf_loc.resize(para2d_test_prime.nrow * para2d_test_prime.ncol);
-    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test_prime.desc), para2d_glb_prime.blacs_ctxt);
+    Cpxgemr2d(nbasis,
+              nbands,
+              lowf_glb.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_glb_prime.desc),
+              lowf_loc.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_test_prime.desc),
+              para2d_glb_prime.blacs_ctxt);
     MPI_Barrier(MPI_COMM_WORLD);
     sizes_loc = {4 * 4 * 3, 4 * 4 * 2, 4 * 4 + 4 * 2, 4 * 4};
     reals = {{0, 1, 2, 3, 8, 9}, {4, 5, 6, 7}, {0, 1, 2, 3, 8, 9}, {4, 5, 6, 7}};
     imags = {{0, 1, 2, 3, 8, 9, 10, 11}, {0, 1, 2, 3, 8, 9, 10, 11}, {4, 5, 6, 7}, {4, 5, 6, 7}};
-    for (int i = 0; i < nprocs; i++)
-    {
-        if (iproc == i)
-        {
+    for (int i = 0; i < nprocs; i++) {
+        if (iproc == i) {
             EXPECT_EQ(lowf_loc.size(), sizes_loc[i]);
             printf(">>> rank %d: \n", iproc);
-            for (int j = 0; j < lowf_loc.size(); j++)
-            {
+            for (int j = 0; j < lowf_loc.size(); j++) {
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
-                if ((j + 1) % para2d_test_prime.nrow == 0)
-                {
+                if ((j + 1) % para2d_test_prime.nrow == 0) {
                     printf("\n");
                 }
                 const int k = j / para2d_test_prime.nrow;
@@ -287,8 +288,7 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
         MPI_Barrier(MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         printf("BE CAREFUL!\n");
         printf("You note that the PROCESSOR GRID seems to be transposed. It is because\n");
         printf("in C/C++ it is always assumed memory in the same row is consecutive, while\n");
@@ -303,8 +303,7 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
 #endif
 }
 
-TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
-{
+TEST(ReadWfcLcaoTest, ReadAbacusLowfReal) {
     // this test should only be executed on rank 0
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
@@ -313,8 +312,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (iproc != 0)
-    {
+    if (iproc != 0) {
         GTEST_SKIP();
     }
 #endif
@@ -356,8 +354,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
     EXPECT_NEAR(-5.44883791e-09, lowf[30], 1e-7);
 }
 
-TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
-{
+TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest) {
     // you can find more information in unittest Pzgemr2dUseTest, present test
     // works identically to the previous one, but with real numbers.
 #ifdef __MPI
@@ -366,10 +363,8 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (nprocs != 4)
-    {
-        if (iproc == 0)
-        {
+    if (nprocs != 4) {
+        if (iproc == 0) {
             printf("Please run this unittest with nprocs = 4.\n");
         }
         GTEST_SKIP();
@@ -381,11 +376,9 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     // just make the matrix column-memory-consecutive.
     // x = i*ncol + j, x' = j*nrow + i
     // i = x/ncol, j = x%ncol, x' = j*nrow + i = x%ncol*nrow + x/ncol
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         lowf_glb.resize(nbands * nbasis);
-        for (int i = 0; i < nbands * nbasis; i++)
-        {
+        for (int i = 0; i < nbands * nbasis; i++) {
             lowf_glb[i] = i % nbasis * nbands + i / nbasis;
         }
     }
@@ -396,23 +389,28 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     Parallel_2D para2d_glb;
     para2d_glb.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD);
     lowf_loc.resize(para2d_test.nrow * para2d_test.ncol);
-    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.desc), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test.desc), para2d_glb.blacs_ctxt);
+    Cpxgemr2d(nbasis,
+              nbands,
+              lowf_glb.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_glb.desc),
+              lowf_loc.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_test.desc),
+              para2d_glb.blacs_ctxt);
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<int> sizes_loc = {4 * 4 * 3, 4 * 4 * 2, 4 * 4 + 4 * 2, 4 * 4};
-    for (int i = 0; i < nprocs; i++)
-    {
-        if (iproc == i)
-        {
+    for (int i = 0; i < nprocs; i++) {
+        if (iproc == i) {
             EXPECT_EQ(lowf_loc.size(), sizes_loc[i]);
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
     // test the other way around, the row-major matrix
-    if (iproc == 0)
-    {
-        for (int i = 0; i < nbands * nbasis; i++)
-        {
+    if (iproc == 0) {
+        for (int i = 0; i < nbands * nbasis; i++) {
             lowf_glb[i] = i;
         }
     }
@@ -422,14 +420,21 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     Parallel_2D para2d_glb_prime;
     para2d_glb_prime.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD);
     lowf_loc.resize(para2d_test_prime.nrow * para2d_test_prime.ncol);
-    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test_prime.desc), para2d_glb_prime.blacs_ctxt);
+    Cpxgemr2d(nbands,
+              nbasis,
+              lowf_glb.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_glb_prime.desc),
+              lowf_loc.data(),
+              1,
+              1,
+              const_cast<int*>(para2d_test_prime.desc),
+              para2d_glb_prime.blacs_ctxt);
     MPI_Barrier(MPI_COMM_WORLD);
     sizes_loc = {4 * 4 * 3, 4 * 4 + 4 * 2, 4 * 4 * 2, 4 * 4};
-    for (int i = 0; i < nprocs; i++)
-    {
-        if (iproc == i)
-        {
+    for (int i = 0; i < nprocs; i++) {
+        if (iproc == i) {
             EXPECT_EQ(lowf_loc.size(), sizes_loc[i]);
         }
     }
@@ -437,8 +442,7 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
 #endif
 }
 
-TEST(ReadWfcLcaoTest, RestartFromFileParallel)
-{
+TEST(ReadWfcLcaoTest, RestartFromFileParallel) {
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
@@ -446,10 +450,8 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (nprocs != 4)
-    {
-        if (iproc == 0)
-        {
+    if (nprocs != 4) {
+        if (iproc == 0) {
             printf("Please run this unittest with nprocs = 4.\n");
         }
         GTEST_SKIP();
@@ -467,37 +469,29 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     // rank2: floor(63/2)*2 = 62
     // rank3: floor(63/2)*1 = 31
     // total size check
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         EXPECT_EQ(64, para2d_test.nrow * para2d_test.ncol);
     }
-    if (iproc == 1)
-    {
+    if (iproc == 1) {
         EXPECT_EQ(32, para2d_test.nrow * para2d_test.ncol);
     }
-    if (iproc == 2)
-    {
+    if (iproc == 2) {
         EXPECT_EQ(62, para2d_test.nrow * para2d_test.ncol);
     }
-    if (iproc == 3)
-    {
+    if (iproc == 3) {
         EXPECT_EQ(31, para2d_test.nrow * para2d_test.ncol);
     }
     // nrows check
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         EXPECT_EQ(2, para2d_test.ncol);
     }
-    if (iproc == 1)
-    {
+    if (iproc == 1) {
         EXPECT_EQ(1, para2d_test.ncol);
     }
-    if (iproc == 2)
-    {
+    if (iproc == 2) {
         EXPECT_EQ(2, para2d_test.ncol);
     }
-    if (iproc == 3)
-    {
+    if (iproc == 3) {
         EXPECT_EQ(1, para2d_test.ncol);
     }
 
@@ -519,42 +513,54 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     EXPECT_EQ(nks, kvec_c.size());
     EXPECT_EQ(nks, wk.size());
     // value test
-    const std::vector<double> ekb_ref
-        = {-6.03571945e-01, -5.98035141e-01, -5.98035141e-01, -6.03667277e-01, -5.97868276e-01, -5.97662421e-01,
-           -6.04664544e-01, -5.97025474e-01, -5.96870018e-01, -6.05615293e-01, -5.96302906e-01, -5.96302906e-01};
-    const std::vector<double> occ_ref
-        = {5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03,
-           5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03, 5.83090379e-03};
-    const std::vector<ModuleBase::Vector3<double>> kvec_c_ref
-        = {ModuleBase::Vector3<double>(-0.10540388, -0.060854959, -0.043030954),
-           ModuleBase::Vector3<double>(-0.070269254, -0.081139946, -0.057374606),
-           ModuleBase::Vector3<double>(-0.035134627, -0.10142493, -0.07171825),
-           ModuleBase::Vector3<double>(0.00000000, -0.12170991, -0.086061909)};
+    const std::vector<double> ekb_ref = {-6.03571945e-01,
+                                         -5.98035141e-01,
+                                         -5.98035141e-01,
+                                         -6.03667277e-01,
+                                         -5.97868276e-01,
+                                         -5.97662421e-01,
+                                         -6.04664544e-01,
+                                         -5.97025474e-01,
+                                         -5.96870018e-01,
+                                         -6.05615293e-01,
+                                         -5.96302906e-01,
+                                         -5.96302906e-01};
+    const std::vector<double> occ_ref = {5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03,
+                                         5.83090379e-03};
+    const std::vector<ModuleBase::Vector3<double>> kvec_c_ref = {
+        ModuleBase::Vector3<double>(-0.10540388, -0.060854959, -0.043030954),
+        ModuleBase::Vector3<double>(-0.070269254, -0.081139946, -0.057374606),
+        ModuleBase::Vector3<double>(-0.035134627, -0.10142493, -0.07171825),
+        ModuleBase::Vector3<double>(0.00000000, -0.12170991, -0.086061909)};
     const std::vector<double> wk_ref = {1.0, 1.0, 1.0, 1.0};
-    for (int i = 0; i < nprocs; i++)
-    {
-        if (iproc == i)
-        {
+    for (int i = 0; i < nprocs; i++) {
+        if (iproc == i) {
             // ekb
-            for (int j = 0; j < nks * nbands; j++)
-            {
+            for (int j = 0; j < nks * nbands; j++) {
                 EXPECT_NEAR(ekb_ref[j], ekb[j], 1e-7);
             }
             // occ
-            for (int j = 0; j < nks * nbands; j++)
-            {
+            for (int j = 0; j < nks * nbands; j++) {
                 EXPECT_NEAR(occ_ref[j], occ[j], 1e-7);
             }
             // kvec_c
-            for (int j = 0; j < nks; j++)
-            {
+            for (int j = 0; j < nks; j++) {
                 EXPECT_NEAR(kvec_c_ref[j].x, kvec_c[j].x, 1e-7);
                 EXPECT_NEAR(kvec_c_ref[j].y, kvec_c[j].y, 1e-7);
                 EXPECT_NEAR(kvec_c_ref[j].z, kvec_c[j].z, 1e-7);
             }
             // wk
-            for (int j = 0; j < nks; j++)
-            {
+            for (int j = 0; j < nks; j++) {
                 EXPECT_NEAR(wk_ref[j], wk[j], 1e-7);
             }
         }
@@ -562,26 +568,21 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     }
     // lowf will be the result of scattering
     // rank0: 64, rank1: 32, rank2: 62, rank3: 31, each should multiply the number of k-points
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         EXPECT_EQ(nks * 64, lowf.size());
     }
-    if (iproc == 1)
-    {
+    if (iproc == 1) {
         EXPECT_EQ(nks * 32, lowf.size());
     }
-    if (iproc == 2)
-    {
+    if (iproc == 2) {
         EXPECT_EQ(nks * 62, lowf.size());
     }
-    if (iproc == 3)
-    {
+    if (iproc == 3) {
         EXPECT_EQ(nks * 31, lowf.size());
     }
     // value test on lowf
     // rank0
-    if (iproc == 0)
-    {
+    if (iproc == 0) {
         EXPECT_NEAR(lowf[0].real(), -6.71651157e-03, 1e-7);
         EXPECT_NEAR(lowf[0].imag(), 2.25946383e-02, 1e-7);
         EXPECT_NEAR(lowf[1].real(), 1.43180123e-03, 1e-7);
@@ -592,9 +593,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
         EXPECT_NEAR(lowf[3].imag(), 7.50044462e-03, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].real(), -1.39799597e-03, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].imag(), -1.68192980e-03, 1e-7);
-    }
-    else if (iproc == 1)
-    {
+    } else if (iproc == 1) {
         EXPECT_NEAR(lowf[0].real(), 9.86470874e-13, 1e-7);
         EXPECT_NEAR(lowf[0].imag(), -5.95387122e-12, 1e-7);
         EXPECT_NEAR(lowf[1].real(), 4.82573453e-13, 1e-7);
@@ -605,9 +604,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
         EXPECT_NEAR(lowf[3].imag(), 3.75083842e-03, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].real(), -6.18118243e-05, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].imag(), -7.43658388e-05, 1e-7);
-    }
-    else if (iproc == 2)
-    {
+    } else if (iproc == 2) {
         EXPECT_NEAR(lowf[0].real(), 2.31452033e-03, 1e-7);
         EXPECT_NEAR(lowf[0].imag(), -1.18949691e-03, 1e-7);
         EXPECT_NEAR(lowf[1].real(), 3.86105126e-03, 1e-7);
@@ -618,9 +615,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
         EXPECT_NEAR(lowf[3].imag(), 3.72887365e-03, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].real(), 1.19038759e-04, 1e-7);
         EXPECT_NEAR(lowf[lowf.size() - 1].imag(), 1.17824924e-04, 1e-7);
-    }
-    else if (iproc == 3)
-    {
+    } else if (iproc == 3) {
         EXPECT_NEAR(lowf[0].real(), 3.66087151e-13, 1e-7);
         EXPECT_NEAR(lowf[0].imag(), 1.96386245e-13, 1e-7);
         EXPECT_NEAR(lowf[1].real(), 9.49023673e-05, 1e-7);
@@ -639,8 +634,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
 #endif
 }
 
-TEST(ReadWfcLcaoTest, RestartFromFileSerial)
-{
+TEST(ReadWfcLcaoTest, RestartFromFileSerial) {
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
@@ -648,8 +642,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    if (iproc != 0)
-    {
+    if (iproc != 0) {
         GTEST_SKIP();
     }
 #endif
@@ -680,8 +673,15 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     std::vector<double> occ_k0;
     ModuleBase::Vector3<double> kvec_c_k0;
     double wk_k0 = -1.0;
-    ModuleIO::read_wfc_lcao("./support/wfs1k1_nao.txt", ik_k0, kvec_c_k0, nbands_k0, nbasis_k0, lowf_k0, ekb_k0,
-                               occ_k0, wk_k0);
+    ModuleIO::read_wfc_lcao("./support/wfs1k1_nao.txt",
+                            ik_k0,
+                            kvec_c_k0,
+                            nbands_k0,
+                            nbasis_k0,
+                            lowf_k0,
+                            ekb_k0,
+                            occ_k0,
+                            wk_k0);
 
     EXPECT_EQ(1, ik_k0);
     EXPECT_EQ(3, nbands_k0);
@@ -692,18 +692,15 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     EXPECT_NEAR(kvec_c_k0.y, kvec_c[0].y, 1e-7);
     EXPECT_NEAR(kvec_c_k0.z, kvec_c[0].z, 1e-7);
     // ekb
-    for (int i = 0; i < nbands_k0; i++)
-    {
+    for (int i = 0; i < nbands_k0; i++) {
         EXPECT_NEAR(ekb_k0[i], ekb[i], 1e-7);
     }
     // occ
-    for (int i = 0; i < nbands_k0; i++)
-    {
+    for (int i = 0; i < nbands_k0; i++) {
         EXPECT_NEAR(occ_k0[i], occ[i], 1e-7);
     }
     // lowf
-    for (int i = 0; i < nbands_k0 * nbasis_k0; i++)
-    {
+    for (int i = 0; i < nbands_k0 * nbasis_k0; i++) {
         EXPECT_NEAR(lowf_k0[i].real(), lowf[i].real(), 1e-7);
         EXPECT_NEAR(lowf_k0[i].imag(), lowf[i].imag(), 1e-7);
     }
@@ -717,8 +714,15 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     std::vector<double> occ_k1;
     ModuleBase::Vector3<double> kvec_c_k1;
     double wk_k1 = -1.0;
-    ModuleIO::read_wfc_lcao("./support/wfs1k2_nao.txt", ik_k1, kvec_c_k1, nbands_k1, nbasis_k1, lowf_k1, ekb_k1,
-                               occ_k1, wk_k1);
+    ModuleIO::read_wfc_lcao("./support/wfs1k2_nao.txt",
+                            ik_k1,
+                            kvec_c_k1,
+                            nbands_k1,
+                            nbasis_k1,
+                            lowf_k1,
+                            ekb_k1,
+                            occ_k1,
+                            wk_k1);
 
     EXPECT_EQ(2, ik_k1);
     EXPECT_EQ(3, nbands_k1);
@@ -729,34 +733,27 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     EXPECT_NEAR(kvec_c_k1.y, kvec_c[1].y, 1e-7);
     EXPECT_NEAR(kvec_c_k1.z, kvec_c[1].z, 1e-7);
     // ekb
-    for (int i = 0; i < nbands_k1; i++)
-    {
+    for (int i = 0; i < nbands_k1; i++) {
         EXPECT_NEAR(ekb_k1[i], ekb[i + nbands_k0], 1e-7);
     }
     // occ
-    for (int i = 0; i < nbands_k1; i++)
-    {
+    for (int i = 0; i < nbands_k1; i++) {
         EXPECT_NEAR(occ_k1[i], occ[i + nbands_k0], 1e-7);
     }
     // lowf
-    for (int i = 0; i < nbands_k1 * nbasis_k1; i++)
-    {
+    for (int i = 0; i < nbands_k1 * nbasis_k1; i++) {
         EXPECT_NEAR(lowf_k1[i].real(), lowf[i + nbands_k0 * nbasis_k0].real(), 1e-7);
         EXPECT_NEAR(lowf_k1[i].imag(), lowf[i + nbands_k0 * nbasis_k0].imag(), 1e-7);
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     // print cwd
     char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != nullptr)
-    {
+    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
         printf("Current working dir: %s\n", cwd);
-    }
-    else
-    {
+    } else {
         perror("getcwd() error");
         return 1;
     }

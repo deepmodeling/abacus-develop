@@ -3,72 +3,42 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 
+namespace ModuleIO {
 
-namespace ModuleIO
-{
-
-void print_parameters(
-    const UnitCell& ucell, 
-    K_Vectors& kv,
-    const Input_para& inp)
-{
+void print_parameters(const UnitCell& ucell, K_Vectors& kv, const Input_para& inp) {
     ModuleBase::TITLE("ModuleIO", "print_parameters");
 
-    if(inp.calculation=="scf" 
-            || inp.calculation=="relax" 
-            || inp.calculation=="cell-relax" 
-            || inp.calculation=="nscf"
-            || inp.calculation=="get_pchg" 
-            || inp.calculation=="get_wf" 
-            || inp.calculation=="md")
-    {
+    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax" ||
+        inp.calculation == "nscf" || inp.calculation == "get_pchg" || inp.calculation == "get_wf" ||
+        inp.calculation == "md") {
         std::cout << " ----------------------------------------------------------------" << std::endl;
-        if(inp.calculation=="scf")
-        {
+        if (inp.calculation == "scf") {
             std::cout << " Self-consistent calculations for electrons" << std::endl;
-        }
-        else if(inp.calculation=="test")
-        {
+        } else if (inp.calculation == "test") {
             std::cout << " Test run" << std::endl;
         }
-        if(inp.calculation=="relax")
-        {
+        if (inp.calculation == "relax") {
             std::cout << " Ion relaxation calculations" << std::endl;
         }
-        if(inp.calculation=="cell-relax")
-        {
+        if (inp.calculation == "cell-relax") {
             std::cout << " Cell relaxation calculations" << std::endl;
         }
-        if(inp.calculation=="md")
-        {
+        if (inp.calculation == "md") {
             std::cout << " Molecular Dynamics simulations" << std::endl;
 
             std::cout << " ---------------------------------------------------------" << std::endl;
 
-            if (PARAM.mdp.md_type == "fire")
-            {
+            if (PARAM.mdp.md_type == "fire") {
                 std::cout << " ENSEMBLE                 : " << "FIRE" << std::endl;
-            }
-            else if (PARAM.mdp.md_type == "nve")
-            {
+            } else if (PARAM.mdp.md_type == "nve") {
                 std::cout << " ENSEMBLE                 : " << "NVE" << std::endl;
-            }
-            else if (PARAM.mdp.md_type == "nvt")
-            {
-                std::cout << " ENSEMBLE                 : "
-                          << "NVT    mode: " << PARAM.mdp.md_thermostat << std::endl;
-            }
-            else if (PARAM.mdp.md_type == "npt")
-            {
-                std::cout << " ENSEMBLE                 : "
-                          << "NPT    mode: " << PARAM.mdp.md_pmode << std::endl;
-            }
-            else if (PARAM.mdp.md_type == "langevin")
-            {
+            } else if (PARAM.mdp.md_type == "nvt") {
+                std::cout << " ENSEMBLE                 : " << "NVT    mode: " << PARAM.mdp.md_thermostat << std::endl;
+            } else if (PARAM.mdp.md_type == "npt") {
+                std::cout << " ENSEMBLE                 : " << "NPT    mode: " << PARAM.mdp.md_pmode << std::endl;
+            } else if (PARAM.mdp.md_type == "langevin") {
                 std::cout << " ENSEMBLE                 : " << "Langevin" << std::endl;
-            }
-            else if (PARAM.mdp.md_type == "msst")
-            {
+            } else if (PARAM.mdp.md_type == "msst") {
                 std::cout << " ENSEMBLE                 : " << "MSST" << std::endl;
             }
 
@@ -76,46 +46,32 @@ void print_parameters(
         }
         std::cout << " ----------------------------------------------------------------" << std::endl;
 
+        std::cout << " " << std::setw(8) << "SPIN" << std::setw(16) << "KPOINTS" << std::setw(12) << "PROCESSES"
+                  << std::setw(14) << "THREADS/PROC" << std::setw(14) << "THREADS/TOTAL";
 
-        std::cout << " " << std::setw(8) << "SPIN"
-             << std::setw(16) << "KPOINTS"
-             << std::setw(12) << "PROCESSES"
-             << std::setw(14) << "THREADS/PROC"
-             << std::setw(14) << "THREADS/TOTAL";
-
-        const bool orbinfo = (inp.basis_type=="lcao" || inp.basis_type=="lcao_in_pw" 
-              || (inp.basis_type=="pw" && inp.init_wfc.substr(0, 3) == "nao"));
-
+        const bool orbinfo = (inp.basis_type == "lcao" || inp.basis_type == "lcao_in_pw" ||
+                              (inp.basis_type == "pw" && inp.init_wfc.substr(0, 3) == "nao"));
 
         std::cout << std::endl;
         std::cout << " " << std::setw(8) << inp.nspin;
 
-        if(PARAM.globalv.gamma_only_local)
-        {
+        if (PARAM.globalv.gamma_only_local) {
             std::cout << std::setw(16) << "Gamma";
-        }
-        else
-        {
+        } else {
             std::cout << std::setw(16) << kv.get_nkstot();
         }
 
-        std::cout << std::setw(12) << GlobalV::NPROC
-             << std::setw(14) << PARAM.globalv.nthread_per_proc
-             << std::setw(14) << PARAM.globalv.nthread_per_proc*GlobalV::NPROC;
+        std::cout << std::setw(12) << GlobalV::NPROC << std::setw(14) << PARAM.globalv.nthread_per_proc << std::setw(14)
+                  << PARAM.globalv.nthread_per_proc * GlobalV::NPROC;
 
         std::cout << std::endl;
 
         std::cout << " ----------------------------------------------------------------" << std::endl;
-        if(inp.basis_type == "lcao")
-        {
+        if (inp.basis_type == "lcao") {
             std::cout << " Use Systematically Improvable Atomic bases" << std::endl;
-        }
-        else if(inp.basis_type == "lcao_in_pw")
-        {
+        } else if (inp.basis_type == "lcao_in_pw") {
             std::cout << " Expand Atomic bases into plane waves" << std::endl;
-        }
-        else if(inp.basis_type == "pw")
-        {
+        } else if (inp.basis_type == "pw") {
             std::cout << " Use plane wave basis" << std::endl;
         }
         std::cout << " ----------------------------------------------------------------" << std::endl;
@@ -123,15 +79,13 @@ void print_parameters(
         //----------------------------------
         // second part
         //----------------------------------
-        if (orbinfo) 
-        { 
+        if (orbinfo) {
             std::cout << " TOTAL NBASE" << " " << PARAM.globalv.nlocal << std::endl;
         }
 
         std::cout << " " << std::setw(8) << "ELEMENT";
 
-        if (orbinfo)
-        {
+        if (orbinfo) {
             std::cout << std::setw(16) << "ORBITALS";
             std::cout << std::setw(12) << "NBASE";
         }
@@ -139,29 +93,25 @@ void print_parameters(
 
         std::cout << std::endl;
 
-
         const std::string spectrum = "spdfghi";
-        for(int it=0; it<ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             std::cout << " " << std::setw(8) << ucell.atoms[it].label;
 
-            if (orbinfo)
-            {
+            if (orbinfo) {
                 std::stringstream orb;
                 int norb = 0;
 
-                for(int L=0; L<=ucell.atoms[it].nwl; ++L)        // pengfei Li 16-2-29
+                for (int L = 0; L <= ucell.atoms[it].nwl; ++L) // pengfei Li 16-2-29
                 {
-                    norb += (2*L+1)* ucell.atoms[it].l_nchi[L];
+                    norb += (2 * L + 1) * ucell.atoms[it].l_nchi[L];
                     orb << ucell.atoms[it].l_nchi[L];
                     orb << spectrum[L];
                 }
                 orb << "-" << ucell.atoms[it].Rcut << "au";
-                
+
                 std::cout << std::setw(16) << orb.str();
                 std::cout << std::setw(12) << norb;
             }
-
 
             std::cout << std::setw(12) << ucell.atoms[it].na;
             std::cout << std::endl;
@@ -170,14 +120,12 @@ void print_parameters(
         std::cout << " ----------------------------------------------------------------" << std::endl;
         std::cout << " Initial plane wave basis and FFT box" << std::endl;
         std::cout << " ----------------------------------------------------------------" << std::endl;
-
     }
 
     return;
 }
 
-void print_time(time_t& time_start, time_t& time_finish)
-{
+void print_time(time_t& time_start, time_t& time_finish) {
     // print out information before ABACUS ends
     std::cout << "\n START  Time  : " << ctime(&time_start);
     std::cout << " FINISH Time  : " << ctime(&time_finish);
@@ -189,23 +137,19 @@ void print_time(time_t& time_start, time_t& time_finish)
 
     double total_time = difftime(time_finish, time_start);
     int hour = total_time / 3600;
-    int mins = ( total_time - 3600 * hour ) / 60;
-    int secs = total_time - 3600 * hour - 60 * mins ;
-    GlobalV::ofs_running << " Total  Time  : " << unsigned(hour) << " h "
-        << unsigned(mins) << " mins "
-        << unsigned(secs) << " secs "<< std::endl;
+    int mins = (total_time - 3600 * hour) / 60;
+    int secs = total_time - 3600 * hour - 60 * mins;
+    GlobalV::ofs_running << " Total  Time  : " << unsigned(hour) << " h " << unsigned(mins) << " mins "
+                         << unsigned(secs) << " secs " << std::endl;
 }
 
 void print_rhofft(ModulePW::PW_Basis* pw_rhod,
                   ModulePW::PW_Basis* pw_rho,
                   ModulePW::PW_Basis_Big* pw_big,
-                  std::ofstream& ofs)
-{
+                  std::ofstream& ofs) {
     std::cout << " UNIFORM GRID DIM     : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
-    std::cout << " UNIFORM GRID DIM(BIG): " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
-              << std::endl;
-    if (PARAM.globalv.double_grid)
-    {
+    std::cout << " UNIFORM GRID DIM(BIG): " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz << std::endl;
+    if (PARAM.globalv.double_grid) {
         std::cout << " UNIFORM GRID (DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
                   << std::endl;
     }
@@ -223,10 +167,8 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ofs << "\n";
     ofs << " SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
 
-
     double ecut = 4 * PARAM.inp.ecutwfc;
-    if (PARAM.inp.nx * PARAM.inp.ny * PARAM.inp.nz > 0)
-    {
+    if (PARAM.inp.nx * PARAM.inp.ny * PARAM.inp.nz > 0) {
         ecut = pw_rho->gridecut_lat * pw_rho->tpiba2;
         ofs << " FFT DIMENSIONS ARE FROM INPUT" << std::endl;
         ofs << " KINETIC ENEGY CUTOFF IS DETERMINED FROM nx, ny, nz" << std::endl;
@@ -246,8 +188,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ofs << "\n PARALLEL PW FOR CHARGE/POTENTIAL" << std::endl;
     ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
 
-    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-    {
+    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i) {
         ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_rho->nst_per[i] << std::setw(15)
             << pw_rho->npw_per[i] << std::endl;
     }
@@ -260,14 +201,12 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     ModuleBase::GlobalFunc::OUT(ofs, "Max |g|", pw_rho->gg_uniq[pw_rho->ngg - 1]);
     ModuleBase::GlobalFunc::OUT(ofs, "Min |g|", pw_rho->gg_uniq[0]);
 
-    if (PARAM.globalv.double_grid)
-    {
+    if (PARAM.globalv.double_grid) {
         ofs << std::endl;
         ofs << std::endl;
         ofs << std::endl;
         double ecut = PARAM.inp.ecutrho;
-        if (PARAM.inp.ndx * PARAM.inp.ndy * PARAM.inp.ndz > 0)
-        {
+        if (PARAM.inp.ndx * PARAM.inp.ndy * PARAM.inp.ndz > 0) {
             ecut = pw_rhod->gridecut_lat * pw_rhod->tpiba2;
             ofs << "use input fft dimensions for the dense part of charge "
                    "density."
@@ -287,8 +226,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
         ofs << "\n PARALLEL PW FOR dense CHARGE/POTENTIAL" << std::endl;
         ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
 
-        for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-        {
+        for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i) {
             ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_rhod->nst_per[i] << std::setw(15)
                 << pw_rhod->npw_per[i] << std::endl;
         }
@@ -302,8 +240,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
     }
 }
 
-void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs)
-{
+void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs) {
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
@@ -317,8 +254,7 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
     ofs << " SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
     double ecut = inp.ecutwfc;
-    if (std::abs(ecut - pw_wfc.gk_ecut * pw_wfc.tpiba2) > 1e-6)
-    {
+    if (std::abs(ecut - pw_wfc.gk_ecut * pw_wfc.tpiba2) > 1e-6) {
         ecut = pw_wfc.gk_ecut * pw_wfc.tpiba2;
         ofs << "Energy cutoff for wavefunc is incompatible with nx, ny, nz and "
                "it will be reduced!"
@@ -332,8 +268,7 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
     ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
     ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
 
-    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-    {
+    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i) {
         ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_wfc.nst_per[i] << std::setw(15) << pw_wfc.npw_per[i]
             << std::endl;
     }
@@ -344,35 +279,24 @@ void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofst
     ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
 }
 
-void print_screen(const int& stress_step, const int& force_step, const int& istep)
-{
+void print_screen(const int& stress_step, const int& force_step, const int& istep) {
     std::cout << "\n ================================================================" << std::endl;
     GlobalV::ofs_running << " ================================================================" << std::endl;
 
-    if(PARAM.inp.calculation=="scf")
-    {
+    if (PARAM.inp.calculation == "scf") {
         std::cout << " SELF-CONSISTENT: " << std::endl;
         GlobalV::ofs_running << " SELF-CONSISTENT" << std::endl;
-    }
-    else if(PARAM.inp.calculation=="nscf")
-    {
+    } else if (PARAM.inp.calculation == "nscf") {
         std::cout << " NONSELF-CONSISTENT: " << std::endl;
         GlobalV::ofs_running << " NONSELF-CONSISTENT" << std::endl;
-    }
-    else if(PARAM.inp.calculation=="md")
-    {
+    } else if (PARAM.inp.calculation == "md") {
         std::cout << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
         GlobalV::ofs_running << " STEP OF MOLECULAR DYNAMICS: " << unsigned(istep) << std::endl;
-    }
-    else
-    {
-        if(PARAM.inp.calculation=="relax")
-        {
+    } else {
+        if (PARAM.inp.calculation == "relax") {
             std::cout << " RELAX STEP: " << unsigned(istep) << std::endl;
             GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep) << std::endl;
-        }
-        else if(PARAM.inp.calculation=="cell-relax")
-        {
+        } else if (PARAM.inp.calculation == "cell-relax") {
             std::cout << " RELAX STEP: " << unsigned(istep);
             std::cout << " (CELL_CHANGE# " << unsigned(stress_step);
             std::cout << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
@@ -386,24 +310,19 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
     GlobalV::ofs_running << " ================================================================" << std::endl;
 }
 
-
-void print_kpar(const int &nks, const int &kpar_lcao)
-{
-    assert(nks>0);
-    assert(kpar_lcao>0);
+void print_kpar(const int& nks, const int& kpar_lcao) {
+    assert(nks > 0);
+    assert(kpar_lcao > 0);
 
     // 15) if kpar is not divisible by nks, print a warning
-    if (kpar_lcao > 1)
-    {
-        if (nks % kpar_lcao != 0)
-        {
+    if (kpar_lcao > 1) {
+        if (nks % kpar_lcao != 0) {
             ModuleBase::WARNING("ModuleIO::print_kpar", "nks is not divisible by kpar.");
             std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%"
                       << std::endl;
-            std::cout << " Warning: nks (" << nks << ") is not divisible by kpar ("
-                      << kpar_lcao << ")." << std::endl;
+            std::cout << " Warning: nks (" << nks << ") is not divisible by kpar (" << kpar_lcao << ")." << std::endl;
             std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
             std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;
             std::cout << " you want, please ignore this warning." << std::endl;

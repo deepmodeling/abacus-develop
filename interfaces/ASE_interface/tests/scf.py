@@ -1,19 +1,21 @@
 import unittest
 import tempfile
 from pathlib import Path
+
 here = Path(__file__).parent
 from ase.build import bulk
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
 
+
 class TestSCF(unittest.TestCase):
 
     def test(self):
-        pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+        pporb = here.parent.parent.parent / "tests" / "PP_ORB"
 
-        silicon = bulk('Si', 'diamond', a=5.43)
+        silicon = bulk("Si", "diamond", a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 2 abacus',
+            command="mpirun -np 2 abacus",
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,
@@ -26,14 +28,15 @@ class TestSCF(unittest.TestCase):
                 pseudopotentials=load_pseudo(pporb),
                 basissets=load_orbital(pporb, efficiency=True),
                 inp={
-                    'basis_type': 'lcao',
-                    'gamma_only': True,
-                    'scf_thr': 1e-3, # fast for test, wrong for production
-                }
+                    "basis_type": "lcao",
+                    "gamma_only": True,
+                    "scf_thr": 1e-3,  # fast for test, wrong for production
+                },
             )
 
             silicon.calc = abacus
-            print('Silicon :', silicon.get_potential_energy())
+            print("Silicon :", silicon.get_potential_energy())
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

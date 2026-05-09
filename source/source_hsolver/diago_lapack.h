@@ -8,7 +8,7 @@
 #ifndef DIAGOLAPACK_H
 #define DIAGOLAPACK_H
 
-#include "source_base/macros.h"   // GetRealType
+#include "source_base/macros.h" // GetRealType
 #include "source_hamilt/hamilt.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -17,19 +17,21 @@
 #include <utility>
 #include <vector>
 
-namespace hsolver
-{
+namespace hsolver {
 template <typename T>
-class DiagoLapack
-{
+class DiagoLapack {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
-  #ifdef __MPI
+#ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
+    void diag_pool(hamilt::MatrixBlock<T>& h_mat,
+                   hamilt::MatrixBlock<T>& s_mat,
+                   psi::Psi<T>& psi,
+                   Real* eigenvalue_in,
+                   MPI_Comm& comm);
 #endif
 
     void dsygvx_diag(const int ncol,
@@ -46,17 +48,17 @@ class DiagoLapack
                      psi::Psi<std::complex<double>>& wfc_2d);
 
     std::pair<int, std::vector<int>> dsygvx_once(const int ncol,
-            const int nrow,
-            const double* const h_mat,
-            const double* const s_mat,
-            double* const ekb,
-            psi::Psi<double>& wfc_2d) const;
+                                                 const int nrow,
+                                                 const double* const h_mat,
+                                                 const double* const s_mat,
+                                                 double* const ekb,
+                                                 psi::Psi<double>& wfc_2d) const;
     std::pair<int, std::vector<int>> zhegvx_once(const int ncol,
-            const int nrow,
-            const std::complex<double>* const h_mat,
-            const std::complex<double>* const s_mat,
-            double* const ekb,
-            psi::Psi<std::complex<double>>& wfc_2d) const;
+                                                 const int nrow,
+                                                 const std::complex<double>* const h_mat,
+                                                 const std::complex<double>* const s_mat,
+                                                 double* const ekb,
+                                                 psi::Psi<std::complex<double>>& wfc_2d) const;
 
     int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
 

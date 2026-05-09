@@ -19,7 +19,8 @@
     {
         for (int ic = 0; ic < 3; ic++)
         {
-            lambda[ia][ic] = initial_lambda[ia][ic] + delta_lambda[ia][ic] / (spin2[ia][ic] - spin1[ia][ic]) * (target_spin[ia][ic] - spin1[ia][ic]);
+            lambda[ia][ic] = initial_lambda[ia][ic] + delta_lambda[ia][ic] / (spin2[ia][ic] - spin1[ia][ic]) *
+(target_spin[ia][ic] - spin1[ia][ic]);
         }
     }
 }
@@ -94,20 +95,16 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         }
         step++;
     } while (step < this->nsc_);
-    
+
 }*/
 
-
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
-        int outer_step,
-		bool rerun)
-{
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun) {
     // init controlling parameters
     int nat = this->get_nat();
     int ntype = this->get_ntype();
-    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat,0.0);
-    std::vector<ModuleBase::Vector3<double>> delta_lambda(nat,0.0);
+    std::vector<ModuleBase::Vector3<double>> initial_lambda(nat, 0.0);
+    std::vector<ModuleBase::Vector3<double>> delta_lambda(nat, 0.0);
     // set nu, dnu and dnu_last_step
     std::vector<ModuleBase::Vector3<double>> dnu(nat, 0.0), dnu_last_step(nat, 0.0);
     // two controlling temp variables
@@ -125,20 +122,18 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
     const double one = 1.0;
 
 #ifdef __MPI
-	auto iterstart = MPI_Wtime();
+    auto iterstart = MPI_Wtime();
 #else
-	auto iterstart = std::chrono::system_clock::now();
+    auto iterstart = std::chrono::system_clock::now();
 #endif
 
     double inner_loop_duration = 0.0;
 
     this->print_header();
     // lambda loop
-    for (int i_step = -1; i_step < this->nsc_; i_step++)
-    {
+    for (int i_step = -1; i_step < this->nsc_; i_step++) {
         double duration = 0.0;
-        if (i_step == -1)
-        {
+        if (i_step == -1) {
 
             this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
@@ -147,9 +142,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
             print_2d("initial spin (uB): ", spin, this->nspin_);
             print_2d("target spin (uB): ", this->target_mag_, this->nspin_);
             i_step++;
-        }
-        else
-        {
+        } else {
             where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
 
@@ -157,16 +150,16 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
 
             new_spin = this->Mi_;
             bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
-            if (i_step >= this->nsc_min_ && GradLessThanBound)
-            {
+            if (i_step >= this->nsc_min_ && GradLessThanBound) {
                 add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->lambda_);
                 this->update_psi_charge(dnu_last_step.data());
 #ifdef __MPI
-		        duration = (double)(MPI_Wtime() - iterstart);
+                duration = (double)(MPI_Wtime() - iterstart);
 #else
-			    duration =
-                    (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
-                    - iterstart)).count() / static_cast<double>(1e6);
+                duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() -
+                                                                                  iterstart))
+                               .count() /
+                           static_cast<double>(1e6);
 #endif
                 inner_loop_duration += duration;
                 std::cout << "Total TIME(s) = " << inner_loop_duration << std::endl;
@@ -179,64 +172,55 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
         subtract_2d(spin, this->target_mag_, delta_spin);
         where_fill_scalar_2d(this->constrain_, 0, zero, delta_spin);
         search = delta_spin;
-        for (int ia = 0; ia < nat; ia++)
-        {
-            for (int ic = 0; ic < 3; ic++)
-            {
-                temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
+        for (int ia = 0; ia < nat; ia++) {
+            for (int ic = 0; ic < 3; ic++) {
+                temp_1[ia][ic] = std::pow(delta_spin[ia][ic], 2);
             }
         }
         mean_error = sum_2d(temp_1) / nat;
         rms_error = std::sqrt(mean_error);
-        if(i_step == 0)
-        {
+        if (i_step == 0) {
             // set current_sc_thr_ to max(rms_error * sc_drop_thr, this->sc_thr_)
             this->current_sc_thr_ = std::max(rms_error * this->sc_drop_thr_, this->sc_thr_);
         }
 #ifdef __MPI
-			duration = (double)(MPI_Wtime() - iterstart);
+        duration = (double)(MPI_Wtime() - iterstart);
 #else
-			duration =
-               (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
-                - iterstart)).count() / static_cast<double>(1e6);
+        duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart))
+                       .count() /
+                   static_cast<double>(1e6);
 #endif
         inner_loop_duration += duration;
-        if (this->check_rms_stop(outer_step, i_step, rms_error, duration, inner_loop_duration))
-        {
-            //add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
+        if (this->check_rms_stop(outer_step, i_step, rms_error, duration, inner_loop_duration)) {
+            // add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
             this->update_psi_charge(dnu_last_step.data(), rerun);
-            if(PARAM.inp.basis_type == "pw")
-            {
-                //double check Atomic spin moment
+            if (PARAM.inp.basis_type == "pw") {
+                // double check Atomic spin moment
                 this->cal_mi_pw();
                 subtract_2d(this->Mi_, this->target_mag_, delta_spin);
                 where_fill_scalar_2d(this->constrain_, 0, zero, delta_spin);
                 search = delta_spin;
-                for (int ia = 0; ia < nat; ia++)
-                {
-                    for (int ic = 0; ic < 3; ic++)
-                    {
-                        temp_1[ia][ic] = std::pow(delta_spin[ia][ic],2);
+                for (int ia = 0; ia < nat; ia++) {
+                    for (int ic = 0; ic < 3; ic++) {
+                        temp_1[ia][ic] = std::pow(delta_spin[ia][ic], 2);
                     }
                 }
                 mean_error = sum_2d(temp_1) / nat;
                 rms_error = std::sqrt(mean_error);
-                std::cout<<"Current RMS: "<<rms_error<<std::endl;
-                if(rms_error > this->current_sc_thr_ * 10 && rerun == true && this->higher_mag_prec == true)
-                {
-                    std::cout<<"Error: RMS error is too large, rerun the loop"<<std::endl;
+                std::cout << "Current RMS: " << rms_error << std::endl;
+                if (rms_error > this->current_sc_thr_ * 10 && rerun == true && this->higher_mag_prec == true) {
+                    std::cout << "Error: RMS error is too large, rerun the loop" << std::endl;
                     this->run_lambda_loop(outer_step, false);
                 }
             }
             break;
         }
 #ifdef __MPI
-		iterstart = MPI_Wtime();
+        iterstart = MPI_Wtime();
 #else
-		iterstart = std::chrono::system_clock::now();
+        iterstart = std::chrono::system_clock::now();
 #endif
-        if (i_step >= 2)
-        {
+        if (i_step >= 2) {
             beta = mean_error / mean_error_old;
             add_scalar_multiply_2d(search, search_old, beta, search);
         }
@@ -267,12 +251,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
         mean_error_old = mean_error;
 
         g = 1.5 * std::abs(alpha_opt) / alpha_trial;
-        if (g > 2.0)
-        {
+        if (g > 2.0) {
             g = 2;
-        }
-        else if (g < 0.5)
-        {
+        } else if (g < 0.5) {
             g = 0.5;
         }
         alpha_trial = alpha_trial * pow(g, 0.7);

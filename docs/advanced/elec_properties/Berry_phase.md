@@ -1,21 +1,32 @@
 # Berry Phase Calculation
 
-From version 2.0.0, ABACUS is capable of calculating macroscopic polarization of insulators by using the Berry phase method, known as the ["modern theory of polarization"](https://www.sciencedirect.com/science/article/abs/pii/S0022459612003234). To calculate the polarization, you need first to do a self-consistent calculation to get the converged charge density. Then, do a non-self-consistent calculation with berry_phase setting to 1. You need also to specify the direction of the polarization you want to calculate. An example is given in the directory [examples/berryphase/lcao_PbTiO3](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/berryphase/lcao_PbTiO3).
+From version 2.0.0, ABACUS is capable of calculating macroscopic polarization of insulators by using
+the Berry phase method, known as the
+["modern theory of polarization"](https://www.sciencedirect.com/science/article/abs/pii/S0022459612003234).
+To calculate the polarization, you need first to do a self-consistent calculation to get the
+converged charge density. Then, do a non-self-consistent calculation with berry_phase setting to 1.
+You need also to specify the direction of the polarization you want to calculate. An example is
+given in the directory
+[examples/berryphase/lcao_PbTiO3](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/berryphase/lcao_PbTiO3).
 
 To run this example, first do a self-consistent calculation:
+
 ```
 cp INPUT-scf INPUT
 cp KPT-scf KPT
 mpirun -np 4 abacus
 ```
+
 Then run a non-self-consistent berry-phase calculation:
+
 ```
 cp INPUT-nscf-c INPUT
 cp KPT-nscf-c KPT
 mpirun -np 4 abacus
 ```
 
-In this example, we calculate the electric polarization along c axis for PbTiO~3~, and below are the INPUT file (nscf) and KPT file (nscf):
+In this example, we calculate the electric polarization along c axis for PbTiO~3~, and below are the
+INPUT file (nscf) and KPT file (nscf):
 
 ```
 INPUT_PARAMETERS
@@ -31,11 +42,19 @@ berry_phase   1 // calculate Berry phase
 gdir          3 // calculate polarization along c axis
 ```
 
-Note: You need to turn off the symmetry when do Berry phase calculations. Currently, ABACUS support Berry phase calculation with nspin=1 and nspin=2. The Berry phase can be calculated in both pw and lcao bases.
-- [berry_phase](../input_files/input-main.md#berry_phase) : 1, calculate berry phase; 0, no calculate berry phase.
-- [gdir](../input_files/input-main.md#gdir) : 1, 2, 3, the lattice vector direction of the polarization you want to calculate.
+Note: You need to turn off the symmetry when do Berry phase calculations. Currently, ABACUS support
+Berry phase calculation with nspin=1 and nspin=2. The Berry phase can be calculated in both pw and
+lcao bases.
 
-The KPT file need to be modified according to gdir in the INPUT file. Generally, you need denser k points along this direction. For example, in the following KPT file, 4 k-points are taken along the a and b axes, and 8 k-points are taken along the c-axis. You should check the convergence of the k points when calculating the polarization.
+- [berry_phase](../input_files/input-main.md#berry_phase) : 1, calculate berry phase; 0, no
+  calculate berry phase.
+- [gdir](../input_files/input-main.md#gdir) : 1, 2, 3, the lattice vector direction of the
+  polarization you want to calculate.
+
+The KPT file need to be modified according to gdir in the INPUT file. Generally, you need denser k
+points along this direction. For example, in the following KPT file, 4 k-points are taken along the
+a and b axes, and 8 k-points are taken along the c-axis. You should check the convergence of the k
+points when calculating the polarization.
 
 ```
 K_POINTS
@@ -43,9 +62,12 @@ K_POINTS
 Gamma
 4 4 8 0 0 0
 ```
-The results of the berry phase calculation are written in the “running_nscf.log” in the OUT folder. You may search for these results by searching for keywords “POLARIZATION CALCULATION”.
+
+The results of the berry phase calculation are written in the “running_nscf.log” in the OUT folder.
+You may search for these results by searching for keywords “POLARIZATION CALCULATION”.
 
 The results are shown as follows:
+
 ```
  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  |                                                                    |
@@ -70,6 +92,11 @@ The results are shown as follows:
  P =    0.8906925  (mod    2.1748536)  (   0.0000000,   0.0000000,   0.8906925) C/m^2
 ```
 
-The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~. 
+The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~.
 
-Note: The vectors R1, R2, and R3 refer to the three lattice vectors of the unit cell. When gdir=3, the calculated polarization is along the R3 direction. The three values in parentheses represent the re-projection of the polarization along the R3 direction onto the Cartesian coordinate system (i.e., the xyz coordinate system). To obtain the full polarization components in the Cartesian system, you need to calculate the polarization for R1, R2, and R3 separately, and then sum their respective x, y, and z components.
+Note: The vectors R1, R2, and R3 refer to the three lattice vectors of the unit cell. When gdir=3,
+the calculated polarization is along the R3 direction. The three values in parentheses represent the
+re-projection of the polarization along the R3 direction onto the Cartesian coordinate system (i.e.,
+the xyz coordinate system). To obtain the full polarization components in the Cartesian system, you
+need to calculate the polarization for R1, R2, and R3 separately, and then sum their respective x,
+y, and z components.

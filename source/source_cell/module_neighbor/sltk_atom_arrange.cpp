@@ -8,31 +8,23 @@
 // update the followig class in near future
 #include "source_cell/unitcell.h"
 
-atom_arrange::atom_arrange()
-{
-}
+atom_arrange::atom_arrange() {}
 
-atom_arrange::~atom_arrange()
-{
-}
+atom_arrange::~atom_arrange() {}
 
 double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
                                const std::string& output_level,
                                const double& rcutmax_Phi,
                                const double& rcutmax_Beta,
-                               const bool gamma_only_local)
-{
+                               const bool gamma_only_local) {
     ModuleBase::TITLE("atom_arrange", "set_sr_NL");
     // check in use_overlap_matrix,
     double sr = 0.0;
-    if (gamma_only_local)
-    {
+    if (gamma_only_local) {
         sr = 2 * rcutmax_Phi + 0.001;
-    }
-    else
-    {
+    } else {
         sr = 2 * (rcutmax_Phi + rcutmax_Beta) + 0.001; // 0.001 is added to make safe.
-                                                      // sr = 2 * longest_orb_rcut + 0.001;
+                                                       // sr = 2 * longest_orb_rcut + 0.001;
     }
 
     if (output_level != "m") // xiaohui add 'output_level', 2015-09-16
@@ -54,7 +46,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ModuleBase::GlobalFunc::OUT(ofs_in, "Orbital max radius cutoff (Bohr)", rcutmax_Phi);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Nonlocal proj. max radius cutoff (Bohr)", rcutmax_Beta);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Search radius (Bohr)", sr);
-	}
+    }
     return sr;
 }
 
@@ -64,29 +56,28 @@ void atom_arrange::search(const bool pbc_flag,
                           const UnitCell& ucell,
                           const double& search_radius_bohr,
                           const int& test_atom_in,
-                          const bool test_only)
-{
+                          const bool test_only) {
     ModuleBase::TITLE("atom_arrange", "search");
     ModuleBase::timer::start("atom_arrange", "search");
 
-    if (search_radius_bohr < 0.0)
-    {
+    if (search_radius_bohr < 0.0) {
         ModuleBase::WARNING_QUIT("atom_arrange::search", " search_radius_bohr < 0,forbidden");
     }
 
     ofs_in << " SEARCH ADJACENT ATOMS" << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius (Bohr)", search_radius_bohr);
-//    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr)", ucell.lat0);
+    //    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius unit is (Bohr)", ucell.lat0);
 
     assert(ucell.nat > 0);
 
     /*
     2024-12-04 Zhang Haochong
         The neighboring atom search module has been completely rewritten.
-        The new algorithm places atoms into boxes with an edge length of twice the atomic radius. The neighboring 
+        The new algorithm places atoms into boxes with an edge length of twice the atomic radius. The neighboring
     atom list stores the data using the atom's type and its index within that type.
-        By setting pbc_flag = false, periodic boundary conditions can be forcibly disabled. In this case, the search 
-    process will not expand the supercell, and the neighboring atoms will only consider those within the original unit cell.
+        By setting pbc_flag = false, periodic boundary conditions can be forcibly disabled. In this case, the search
+    process will not expand the supercell, and the neighboring atoms will only consider those within the original unit
+    cell.
     */
     const double radius_lat0unit = search_radius_bohr / ucell.lat0;
 
@@ -94,11 +85,11 @@ void atom_arrange::search(const bool pbc_flag,
 
     grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
 
-	// The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
+    // The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here
+    // earlier.
     ModuleBase::timer::end("atom_arrange", "search");
 
-    if (test_only)
-    {
+    if (test_only) {
         std::cout << "radius_lat0unit = " << radius_lat0unit << std::endl;
         std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
 
@@ -106,15 +97,14 @@ void atom_arrange::search(const bool pbc_flag,
         std::cout << std::setw(8) << "Labels" << std::setw(15) << "tau.x" << std::setw(15) << "tau.y" << std::setw(15)
                   << "tau.z" << std::setw(8) << "box.x" << std::setw(8) << "box.y" << std::setw(8) << "box.z"
                   << std::endl;
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
+        for (int it = 0; it < ucell.ntype; it++) {
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++) {
                 grid_d.Find_atom(ucell, ucell.atoms[it].tau[ia], it, ia);
 
                 ofs_in << " " << std::setw(5) << it << std::setw(5) << ia << std::setw(8) << grid_d.getAdjacentNum() + 1
                        << std::endl;
-                std::cout << " adjacent atoms of " << ucell.atoms[it].label + std::to_string(ia + 1) << ":" << std::endl;
+                std::cout << " adjacent atoms of " << ucell.atoms[it].label + std::to_string(ia + 1) << ":"
+                          << std::endl;
                 std::cout << "getAdjacentNum: " << grid_d.getAdjacentNum() + 1 << std::endl;
                 /*
                 for (int ad = 0; ad < grid_d.getAdjacentNum() + 1; ad++)

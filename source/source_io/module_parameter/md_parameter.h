@@ -8,8 +8,7 @@
  * @brief input parameters used in md
  *
  */
-struct MD_para
-{
+struct MD_para {
     int md_nstep = 10;                 ///< md nstep
     bool md_restart = false;           ///< 1: restart MD, 0: no restart MD
     std::string md_type = "nvt";       ///< fire, nve, nvt, npt, langevin, msst
@@ -29,14 +28,15 @@ struct MD_para
     std::vector<double> lj_epsilon = {}; ///< the value of epsilon for LJ potential (eV)
     std::vector<double> lj_sigma = {};   ///< the value of sigma for LJ potential (\AA)
     std::string pot_file = "graph.pb";   ///< the filename of potential files for CMD such as DP
-    double dp_rescaling = 1.0;           ///< rescaling factor for DP model. Energy, force and stress will be multiplied by this factor.
-    std::vector<double> dp_fparam
-        = {}; ///< The frame parameter for dp potential. The array can be of size :
-              ///< dim_fparam. Then all frames are assumed to be provided with the same fparam.
-    std::vector<double> dp_aparam
-        = {}; ///< The atomic parameter for dp potential. The array can be of size :
-              ///< natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
-              ///< dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
+    double dp_rescaling =
+        1.0; ///< rescaling factor for DP model. Energy, force and stress will be multiplied by this factor.
+    std::vector<double> dp_fparam =
+        {}; ///< The frame parameter for dp potential. The array can be of size :
+            ///< dim_fparam. Then all frames are assumed to be provided with the same fparam.
+    std::vector<double> dp_aparam =
+        {}; ///< The atomic parameter for dp potential. The array can be of size :
+            ///< natoms x dim_aparam. Then all frames are assumed to be provided with the same aparam.
+            ///< dim_aparam. Then all frames and atoms are assumed to be provided with the same aparam.
 
     int msst_direction = 2;    ///< shock direction: 0, 1, 2
     double msst_vel = 0.0;     ///< shock msst_vel (\AA/fs)

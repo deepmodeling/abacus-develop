@@ -35,16 +35,14 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class Langevin_test : public testing::Test
-{
+class Langevin_test : public testing::Test {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
 
@@ -55,15 +53,13 @@ class Langevin_test : public testing::Test
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete mdrun;
         delete p_esolver;
     }
 };
 
-TEST_F(Langevin_test, setup)
-{
+TEST_F(Langevin_test, setup) {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
@@ -76,8 +72,7 @@ TEST_F(Langevin_test, setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
-TEST_F(Langevin_test, first_half)
-{
+TEST_F(Langevin_test, first_half) {
     mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00042883345359910814, doublethreshold);
@@ -107,8 +102,7 @@ TEST_F(Langevin_test, first_half)
     EXPECT_NEAR(mdrun->vel[3].z, 7.093757921139429e-05, doublethreshold);
 }
 
-TEST_F(Langevin_test, second_half)
-{
+TEST_F(Langevin_test, second_half) {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
     ;
@@ -140,8 +134,7 @@ TEST_F(Langevin_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].z, 0.00011355087370269158, doublethreshold);
 }
 
-TEST_F(Langevin_test, write_restart)
-{
+TEST_F(Langevin_test, write_restart) {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -153,16 +146,14 @@ TEST_F(Langevin_test, write_restart)
     ifs.close();
 }
 
-TEST_F(Langevin_test, restart)
-{
+TEST_F(Langevin_test, restart) {
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
 }
 
-TEST_F(Langevin_test, print_md)
-{
+TEST_F(Langevin_test, print_md) {
     std::ofstream ofs("running_langevin.log");
     mdrun->print_md(ofs, true);
     ofs.close();
@@ -170,11 +161,11 @@ TEST_F(Langevin_test, print_md)
     std::ifstream ifs("running_langevin.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(

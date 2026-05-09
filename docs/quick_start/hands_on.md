@@ -4,7 +4,11 @@
 
 ### A quick LCAO example
 
-ABACUS is well known for its support of LCAO (Linear Combination of Atomic Orbital) basis set in calculating periodic condensed matter systems. It's a good choice to start from a LCAO example of self-consistent field (SCF) calculation. Here, FCC MgO has been chosen as a quick start example. The default name of a structure file in ABACUS is `STRU`. The `STRU` file for FCC MgO in a LCAO calculation is shown below:
+ABACUS is well known for its support of LCAO (Linear Combination of Atomic Orbital) basis set in
+calculating periodic condensed matter systems. It's a good choice to start from a LCAO example of
+self-consistent field (SCF) calculation. Here, FCC MgO has been chosen as a quick start example. The
+default name of a structure file in ABACUS is `STRU`. The `STRU` file for FCC MgO in a LCAO
+calculation is shown below:
 
 ```
 #This is the atom file containing all the information
@@ -19,7 +23,7 @@ Mg_gga_8au_100Ry_4s2p1d.orb
 O_gga_8au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-1.8897259886 		# 1.8897259886 Bohr =  1.0 Angstrom
+1.8897259886         # 1.8897259886 Bohr =  1.0 Angstrom
 
 LATTICE_VECTORS
 4.25648 0.00000 0.00000  
@@ -44,21 +48,29 @@ O                       #Name of element
 0.0  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
 ```
 
-Next, the `INPUT` file is required, which sets all key parameters to direct ABACUS how to calculte and what to output:
+Next, the `INPUT` file is required, which sets all key parameters to direct ABACUS how to calculte
+and what to output:
+
 ```
 INPUT_PARAMETERS
 suffix                  MgO
 pseudo_dir              ./
-orbital_dir		./
+orbital_dir        ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-6		    # SCF criterion
+scf_thr                 1e-6            # SCF criterion
 basis_type              lcao            
-calculation             scf		# this is the key parameter telling abacus to do a scf calculation
+calculation             scf        # this is the key parameter telling abacus to do a scf calculation
 ```
 
-The pseudopotential files of `Mg_ONCV_PBE-1.0.upf` and `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir` defined in `INPUT` (the default directory is "./"), and the orbital files `Mg_gga_8au_100Ry_4s2p1d.orb` and `O_gga_8au_100Ry_2s2p1d.orb` under the directory of `orbital_dir` also defined in `INPUT` (the default directory is "./"). The pseudopotential and orbital files can be downloaded from the [ABACUS website](http://abacus.ustc.edu.cn/pseudo/list.htm).
+The pseudopotential files of `Mg_ONCV_PBE-1.0.upf` and `O_ONCV_PBE-1.0.upf` should be provided under
+the directory of `pseudo_dir` defined in `INPUT` (the default directory is "./"), and the orbital
+files `Mg_gga_8au_100Ry_4s2p1d.orb` and `O_gga_8au_100Ry_2s2p1d.orb` under the directory of
+`orbital_dir` also defined in `INPUT` (the default directory is "./"). The pseudopotential and
+orbital files can be downloaded from the
+[ABACUS website](http://abacus.ustc.edu.cn/pseudo/list.htm).
 
-The final mandatory input file is called `KPT`, which sets the reciprocal space k-mesh. Below is an example:
+The final mandatory input file is called `KPT`, which sets the reciprocal space k-mesh. Below is an
+example:
 
 ```
 K_POINTS
@@ -67,7 +79,8 @@ Gamma
 4 4 4 0 0 0
 ```
 
-After all the above input files have been set, one should be able to run the first quick example. The simplest way is to use the command line, e.g.:
+After all the above input files have been set, one should be able to run the first quick example.
+The simplest way is to use the command line, e.g.:
 
 ```
 OMP_NUM_THREADS=1 mpirun -np 2 abacus
@@ -131,17 +144,20 @@ If ABAUCS finishes successfully, the total energy will be output in `OUT.MgO/run
 
 ### A quick PW example
 
-In order to run a SCF calculation with PW (Plane Wave) basis set, one has only to change the tag `basis_type` from `lcao` to `pw` in the `INPUT` file, and no longer needs to provide orbital files under `NUMERICAL_ORBITAL` in the `STRU` file.
+In order to run a SCF calculation with PW (Plane Wave) basis set, one has only to change the tag
+`basis_type` from `lcao` to `pw` in the `INPUT` file, and no longer needs to provide orbital files
+under `NUMERICAL_ORBITAL` in the `STRU` file.
 
 The `INPUT` file follows as:
+
 ```
 INPUT_PARAMETERS
 suffix                  MgO
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-6		    # SCF criterion
+scf_thr                 1e-6            # SCF criterion
 basis_type              pw              # changes the type of basis set
-calculation             scf		# this is the key parameter telling abacus to do a scf calculation
+calculation             scf        # this is the key parameter telling abacus to do a scf calculation
 ```
 
 And the `STRU` file will be:
@@ -155,7 +171,7 @@ Mg 24.305  Mg_ONCV_PBE-1.0.upf  # element name, atomic mass, pseudopotential fil
 O  15.999 O_ONCV_PBE-1.0.upf
 
 LATTICE_CONSTANT
-1.8897259886 		# 1.8897259886 Bohr =  1.0 Angstrom
+1.8897259886         # 1.8897259886 Bohr =  1.0 Angstrom
 
 LATTICE_VECTORS
 4.25648 0.00000 0.00000  
@@ -180,7 +196,8 @@ O                       #Name of element
 0.0  0.5  0.0  0 0 0    #x,y,z, move_x, move_y, move_z
 ```
 
-Use the same pseudopotential and `KPT` files as the above LCAO example. The final total energy will be output:
+Use the same pseudopotential and `KPT` files as the above LCAO example. The final total energy will
+be output:
 
 ```
  --------------------------------------------
@@ -190,7 +207,10 @@ Use the same pseudopotential and `KPT` files as the above LCAO example. The fina
 
 ## Running Geometry Optimization
 
-In order to run a full geometry optimization in ABACUS, the tag `calculation` in `INPUT` should be set to `cell-relax`. In addition, the convergence criteria for atomics force and cell stress can be set through the tags `force_thr_ev` and `stress_thr`, respectively. The maximum number of ionc steps is controlled by `relax_nmax`.
+In order to run a full geometry optimization in ABACUS, the tag `calculation` in `INPUT` should be
+set to `cell-relax`. In addition, the convergence criteria for atomics force and cell stress can be
+set through the tags `force_thr_ev` and `stress_thr`, respectively. The maximum number of ionc steps
+is controlled by `relax_nmax`.
 
 ### A quick LCAO example
 
@@ -203,15 +223,17 @@ nelec                   0.0
 pseudo_dir              ./
 orbital_dir             ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-6		# SCF criterion
+scf_thr                 1e-6        # SCF criterion
 basis_type              lcao 
-calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
-force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
-stress_thr		5		# the threshold of the stress convergence, in unit of kBar
-relax_nmax		100		# the maximal number of ionic iteration steps
-out_stru		1
+calculation             cell-relax    # this is the key parameter telling abacus to do a optimization calculation
+force_thr_ev        0.01        # the threshold of the force convergence, in unit of eV/Angstrom
+stress_thr        5        # the threshold of the stress convergence, in unit of kBar
+relax_nmax        100        # the maximal number of ionic iteration steps
+out_stru        1
 ```
-Use the same `KPT`, `STRU`, pseudopotential, and orbital files as in the above SCF-LCAO example. The final optimized structure can be found in `STRU_NOW.cif` and `OUT.MgO/running_cell-relax.log`.
+
+Use the same `KPT`, `STRU`, pseudopotential, and orbital files as in the above SCF-LCAO example. The
+final optimized structure can be found in `STRU_NOW.cif` and `OUT.MgO/running_cell-relax.log`.
 
 ### A quick PW example
 
@@ -223,13 +245,14 @@ suffix                  MgO
 nelec                   0.0
 pseudo_dir              ./
 ecutwfc                 100             # Rydberg
-scf_thr                 1e-6		# SCF criterion
+scf_thr                 1e-6        # SCF criterion
 basis_type              pw
-calculation             cell-relax	# this is the key parameter telling abacus to do a optimization calculation
-force_thr_ev		0.01		# the threshold of the force convergence, in unit of eV/Angstrom
-stress_thr		5		# the threshold of the stress convergence, in unit of kBar
-relax_nmax		100		# the maximal number of ionic iteration steps
-out_stru		1
+calculation             cell-relax    # this is the key parameter telling abacus to do a optimization calculation
+force_thr_ev        0.01        # the threshold of the force convergence, in unit of eV/Angstrom
+stress_thr        5        # the threshold of the stress convergence, in unit of kBar
+relax_nmax        100        # the maximal number of ionic iteration steps
+out_stru        1
 ```
 
-Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `STRU_ION_D` with different format.
+Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final
+optimized structure can be found in `STRU_NOW.cif` and `STRU_ION_D` with different format.

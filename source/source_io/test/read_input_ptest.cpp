@@ -24,14 +24,12 @@
  *    - check_mode = true
  */
 
-class InputParaTest : public testing::Test
-{
-	protected:
+class InputParaTest : public testing::Test {
+  protected:
 };
 
 // #ifdef __MPI
-TEST_F(InputParaTest, ParaRead)
-{
+TEST_F(InputParaTest, ParaRead) {
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT");
@@ -455,7 +453,8 @@ TEST_F(InputParaTest, ParaRead)
 
 // comment out this part of tests, since Parameter is in another directory now, mohan 2025-05-18
 // besides, the following tests will cause strange error in MPI_Finalize()
-// I tried the following modification, it worked well in my own environment, but not in the Github test, Xinyuan 2025-05-25
+// I tried the following modification, it worked well in my own environment, but not in the Github test, Xinyuan
+// 2025-05-25
 /*
 TEST_F(InputParaTest, Check)
 {
@@ -503,8 +502,7 @@ TEST_F(InputParaTest, Check)
 }
 */
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

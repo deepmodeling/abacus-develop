@@ -9,8 +9,7 @@
 // Generate stochastic wave functions
 //----------------------------------------------
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Stochastic_WF
-{
+class Stochastic_WF {
   public:
     Stochastic_WF();
 
@@ -33,7 +32,7 @@ class Stochastic_WF
     int npwx = 0;         ///< max ngk[ik] in all processors
     int nbands_diag = 0;  ///< number of bands obtained from diagonalization
     int nbands_total = 0; ///< number of bands in total, nbands_total=nchi+nbands_diag;
-    std::vector<int> ngk;   ///< ngk in klist
+    std::vector<int> ngk; ///< ngk in klist
   public:
     // Tn(H)|chi>
     psi::Psi<T, Device>* chiallorder = nullptr;

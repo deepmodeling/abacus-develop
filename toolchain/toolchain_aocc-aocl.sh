@@ -22,12 +22,12 @@ WITH_AOCL="system"
 MPI_MODE="openmpi"
 WITH_OPENMPI="install"
 WITH_MPICH="no"
-WITH_4TH_OPENMPI="no"  # Set to "yes" for OpenMPI v4, deprecated
+WITH_4TH_OPENMPI="no" # Set to "yes" for OpenMPI v4, deprecated
 
 # Core Dependencies
 WITH_CMAKE="install"
-WITH_SCALAPACK="system"  # AOCL provides ScaLAPACK
-WITH_FFTW="system"       # AOCL provides FFTW
+WITH_SCALAPACK="system" # AOCL provides ScaLAPACK
+WITH_FFTW="system"      # AOCL provides FFTW
 WITH_LIBXC="install"
 WITH_ELPA="install"
 
@@ -45,7 +45,7 @@ WITH_LIBNPY="no"
 WITH_NEP="no"
 
 # AMD Compiler Options
-WITH_FLANG="no"     # Flang is not recommended in current stage
+WITH_FLANG="no" # Flang is not recommended in current stage
 
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
@@ -56,10 +56,10 @@ WITH_FLANG="no"     # Flang is not recommended in current stage
 # Execution Mode Control
 # ============================================================================
 # Dry-run mode: Show what would be done without actually executing
-DRY_RUN_MODE="no"   # Set to "yes" to enable dry-run mode
+DRY_RUN_MODE="no" # Set to "yes" to enable dry-run mode
 
 # Pack-run mode: Only check and install required packages
-PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
+PACK_RUN_MODE="no" # Set to "yes" to enable pack-run mode
 
 # ============================================================================
 # Package Version Selection (main/alt versions)
@@ -67,12 +67,12 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 # Choose between main (latest stable) and alt (alternative/legacy) versions
 # Refer to scripts/package_versions.sh for specific version numbers
 
-CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
-ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
-LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+CMAKE_VERSION="main"   # main=3.31.7, alt=3.30.5
+OPENMPI_VERSION="main" # main=5.0.10, alt=4.1.8
+ELPA_VERSION="main"    # main=2026.02.001, alt=2024.05.001
+LIBXC_VERSION="main"   # main=7.0.0, alt=6.2.2
 # Optional Libraries
-LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
+LIBTORCH_VERSION="main" # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # Note: main(2.1.2) version of LibTorch need glibc > 2.27
 # Note: alt(1.12.1) version of LibTorch cannot support DeePMD-Torch for DPA
 
@@ -115,5 +115,5 @@ exec ./install_abacus_toolchain_new.sh \
   ${PACK_RUN_MODE:+$([ "$PACK_RUN_MODE" = "yes" ] && echo "--pack-run")} \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
-  "$@" \
-  | tee compile.log
+  "$@" |
+  tee compile.log

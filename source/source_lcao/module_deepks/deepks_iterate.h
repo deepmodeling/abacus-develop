@@ -1,7 +1,6 @@
 #ifndef DEEPKS_ITER_H
 #define DEEPKS_ITER_H
 
-
 #ifdef __MLALGO
 
 #include "source_base/complexmatrix.h"
@@ -16,8 +15,7 @@
 
 #include <functional>
 
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 //------------------------
 // deepks_iterate.cpp
 //------------------------

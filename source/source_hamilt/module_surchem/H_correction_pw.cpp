@@ -5,7 +5,8 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
-// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden allocations.
+// Changing the interface to use an explicit output parameter clarifies lifetime management and avoids hidden
+// allocations.
 void surchem::v_correction(const UnitCell& cell,
                            const Parallel_Grid& pgrid,
                            const ModulePW::PW_Basis* rho_basis,
@@ -13,26 +14,22 @@ void surchem::v_correction(const UnitCell& cell,
                            const double* const* const rho,
                            const double* vlocal,
                            Structure_Factor* sf,
-                           ModuleBase::matrix& v)
-{
+                           ModuleBase::matrix& v) {
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::start("surchem", "v_cor");
 
-    assert(rho_basis->nrxx>0);
-   
+    assert(rho_basis->nrxx > 0);
+
     double* porter = new double[rho_basis->nrxx];
-	for (int i = 0; i < rho_basis->nrxx; i++)
-	{
-		porter[i] = 0.0;
-	}
+    for (int i = 0; i < rho_basis->nrxx; i++) {
+        porter[i] = 0.0;
+    }
     const int nspin0 = (nspin == 2) ? 2 : 1;
-	for (int is = 0; is < nspin0; is++)
-	{
-		for (int ir = 0; ir < rho_basis->nrxx; ir++)
-		{
-			porter[ir] += rho[is][ir];
-		}
-	}
+    for (int is = 0; is < nspin0; is++) {
+        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
+            porter[ir] += rho[is][ir];
+        }
+    }
 
     std::complex<double>* porter_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);
@@ -48,8 +45,7 @@ void surchem::v_correction(const UnitCell& cell,
     cal_pseudo(cell, pgrid, rho_basis, porter_g, ps_totn, sf);
 
     // ModuleBase::matrix v(nspin, rho_basis->nrxx);
-    if (v.nr != nspin || v.nc != rho_basis->nrxx)
-    {
+    if (v.nr != nspin || v.nc != rho_basis->nrxx) {
         v.create(nspin, rho_basis->nrxx);
     }
     ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis->nrxx);

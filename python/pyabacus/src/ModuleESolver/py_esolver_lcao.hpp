@@ -25,33 +25,37 @@ class UnitCell;
 class Charge;
 class Parallel_Orbitals;
 namespace elecstate {
-    struct fenergy;
-    class ElecState;
-    template <typename TK, typename TR> class DensityMatrix;
-}
+struct fenergy;
+class ElecState;
+template <typename TK, typename TR>
+class DensityMatrix;
+} // namespace elecstate
 namespace hamilt {
-    template <typename T> class HContainer;
-    template <typename T> class AtomPair;
-    template <typename T> class BaseMatrix;
-    template <typename TK, typename TR> class HamiltLCAO;
-}
+template <typename T>
+class HContainer;
+template <typename T>
+class AtomPair;
+template <typename T>
+class BaseMatrix;
+template <typename TK, typename TR>
+class HamiltLCAO;
+} // namespace hamilt
 namespace ModuleESolver {
-    template <typename TK, typename TR> class ESolver_KS_LCAO;
+template <typename TK, typename TR>
+class ESolver_KS_LCAO;
 }
 
 namespace py = pybind11;
 
-namespace py_esolver
-{
+namespace py_esolver {
 
 /**
  * @brief Accessor class for charge density data
  *
  * Provides Python access to charge density (rho) in real and reciprocal space
  */
-class PyChargeAccessor
-{
-public:
+class PyChargeAccessor {
+  public:
     PyChargeAccessor() = default;
 
     /// Set internal pointers from Charge object
@@ -81,9 +85,9 @@ public:
     /// Check if data is valid
     bool is_valid() const { return (chr_ptr_ != nullptr || rho_ptr_ != nullptr) && nspin_ > 0; }
 
-private:
+  private:
     const Charge* chr_ptr_ = nullptr;
-    const double* rho_ptr_ = nullptr;  // Direct pointer for compatibility
+    const double* rho_ptr_ = nullptr; // Direct pointer for compatibility
     int nspin_ = 0;
     int nrxx_ = 0;
     int ngmc_ = 0;
@@ -94,18 +98,22 @@ private:
  *
  * Provides Python access to various energy components
  */
-class PyEnergyAccessor
-{
-public:
+class PyEnergyAccessor {
+  public:
     PyEnergyAccessor() = default;
 
     /// Set from fenergy structure
     void set_from_fenergy(const elecstate::fenergy* f_en);
 
     /// Set energies directly (for compatibility)
-    void set_energies(double etot, double eband, double hartree,
-                      double etxc, double ewald, double demet,
-                      double exx, double evdw);
+    void set_energies(double etot,
+                      double eband,
+                      double hartree,
+                      double etxc,
+                      double ewald,
+                      double demet,
+                      double exx,
+                      double evdw);
 
     /// Get total energy (Ry)
     double get_etot() const { return etot_; }
@@ -134,7 +142,7 @@ public:
     /// Get all energies as a dictionary
     py::dict get_all_energies() const;
 
-private:
+  private:
     double etot_ = 0.0;
     double eband_ = 0.0;
     double hartree_energy_ = 0.0;
@@ -151,9 +159,8 @@ private:
  * Provides Python access to H(R), S(R), H(k), S(k) matrices
  */
 template <typename TK, typename TR = double>
-class PyHamiltonianAccessor
-{
-public:
+class PyHamiltonianAccessor {
+  public:
     PyHamiltonianAccessor() = default;
 
     /// Set from HamiltLCAO object
@@ -198,7 +205,7 @@ public:
     /// Check if data is valid
     bool is_valid() const { return (hamilt_ptr_ != nullptr || nbasis_ > 0) && nks_ > 0; }
 
-private:
+  private:
     hamilt::HamiltLCAO<TK, TR>* hamilt_ptr_ = nullptr;
     const Parallel_Orbitals* pv_ = nullptr;
     int nbasis_ = 0;
@@ -219,9 +226,8 @@ private:
  * Provides Python access to DM(k) and DM(R)
  */
 template <typename TK, typename TR = double>
-class PyDensityMatrixAccessor
-{
-public:
+class PyDensityMatrixAccessor {
+  public:
     PyDensityMatrixAccessor() = default;
 
     /// Set from DensityMatrix object
@@ -254,7 +260,7 @@ public:
     /// Check if data is valid
     bool is_valid() const { return (dm_ptr_ != nullptr || nks_ > 0); }
 
-private:
+  private:
     elecstate::DensityMatrix<TK, TR>* dm_ptr_ = nullptr;
     int nks_ = 0;
     int nrow_ = 0;
@@ -275,9 +281,8 @@ private:
  *   TR: Type for real-space quantities (typically double)
  */
 template <typename TK, typename TR = double>
-class PyESolverLCAO
-{
-public:
+class PyESolverLCAO {
+  public:
     PyESolverLCAO();
     ~PyESolverLCAO();
 
@@ -370,16 +375,11 @@ public:
     // ==================== Component Access (New API) ====================
 
     /// Get SCF controller component
-    pyabacus::esolver::ISCFController* get_scf_controller()
-    {
-        return scf_controller_.get();
-    }
+    pyabacus::esolver::ISCFController* get_scf_controller() { return scf_controller_.get(); }
 
     /// Get Hamiltonian builder component
-    pyabacus::esolver::IHamiltonianBuilder<TK, TR>* get_hamiltonian_builder()
-    {
-        if (scf_controller_)
-        {
+    pyabacus::esolver::IHamiltonianBuilder<TK, TR>* get_hamiltonian_builder() {
+        if (scf_controller_) {
             return static_cast<pyabacus::esolver::IHamiltonianBuilder<TK, TR>*>(
                 scf_controller_->get_hamiltonian_builder());
         }
@@ -387,22 +387,17 @@ public:
     }
 
     /// Get charge mixer component
-    pyabacus::esolver::IChargeMixer* get_charge_mixer()
-    {
-        if (scf_controller_)
-        {
+    pyabacus::esolver::IChargeMixer* get_charge_mixer() {
+        if (scf_controller_) {
             return scf_controller_->get_charge_mixer();
         }
         return nullptr;
     }
 
     /// Get diagonalizer component
-    pyabacus::esolver::IDiagonalizer<TK>* get_diagonalizer()
-    {
-        if (scf_controller_)
-        {
-            return static_cast<pyabacus::esolver::IDiagonalizer<TK>*>(
-                scf_controller_->get_diagonalizer());
+    pyabacus::esolver::IDiagonalizer<TK>* get_diagonalizer() {
+        if (scf_controller_) {
+            return static_cast<pyabacus::esolver::IDiagonalizer<TK>*>(scf_controller_->get_diagonalizer());
         }
         return nullptr;
     }
@@ -410,38 +405,32 @@ public:
     // ==================== Configuration (New API) ====================
 
     /// Set SCF convergence criteria
-    void set_convergence_criteria(double drho_threshold, double energy_threshold, int max_iter)
-    {
+    void set_convergence_criteria(double drho_threshold, double energy_threshold, int max_iter) {
         pyabacus::esolver::SCFConvergenceCriteria criteria;
         criteria.drho_threshold = drho_threshold;
         criteria.energy_threshold = energy_threshold;
         criteria.max_iterations = max_iter;
 
-        if (auto* ctrl = dynamic_cast<pyabacus::esolver::SCFControllerLCAO<TK, TR>*>(scf_controller_.get()))
-        {
+        if (auto* ctrl = dynamic_cast<pyabacus::esolver::SCFControllerLCAO<TK, TR>*>(scf_controller_.get())) {
             ctrl->set_convergence_criteria(criteria);
         }
     }
 
     /// Set mixing parameters
-    void set_mixing_beta(double beta)
-    {
-        if (auto* mixer = get_charge_mixer())
-        {
+    void set_mixing_beta(double beta) {
+        if (auto* mixer = get_charge_mixer()) {
             mixer->set_mixing_beta(beta);
         }
     }
 
     /// Set mixing method
-    void set_mixing_method(const std::string& method)
-    {
-        if (auto* mixer = get_charge_mixer())
-        {
+    void set_mixing_method(const std::string& method) {
+        if (auto* mixer = get_charge_mixer()) {
             mixer->set_mixing_method(pyabacus::esolver::string_to_mixing_method(method));
         }
     }
 
-private:
+  private:
     // Internal state
     bool initialized_ = false;
     bool scf_started_ = false;

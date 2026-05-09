@@ -7,8 +7,7 @@
 #include <complex>
 #include <string>
 
-namespace Parallel_Common
-{
+namespace Parallel_Common {
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);

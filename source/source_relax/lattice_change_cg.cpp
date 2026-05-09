@@ -22,24 +22,21 @@ using namespace Lattice_Change_Basic;
 // the secant method and inverse quadratic interpolation
 //=================== NOTES ========================
 
-Lattice_Change_CG::Lattice_Change_CG()
-{
+Lattice_Change_CG::Lattice_Change_CG() {
     this->lat0 = nullptr;
     this->grad0 = nullptr;
     this->cg_grad0 = nullptr;
     this->move0 = nullptr;
 }
 
-Lattice_Change_CG::~Lattice_Change_CG()
-{
+Lattice_Change_CG::~Lattice_Change_CG() {
     delete[] lat0;
     delete[] grad0;
     delete[] cg_grad0;
     delete[] move0;
 }
 
-void Lattice_Change_CG::allocate(void)
-{
+void Lattice_Change_CG::allocate(void) {
     ModuleBase::TITLE("Lattice_Change_CG", "allocate");
     // mohan add 2021-02-07
     assert(dim > 0);
@@ -61,15 +58,13 @@ void Lattice_Change_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
-{
+void Lattice_Change_CG::start(UnitCell& ucell, const ModuleBase::matrix& stress_in, const double& etot_in) {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
     assert(lat0 != 0);
     assert(grad0 != 0);
     assert(cg_grad0 != 0);
     assert(move0 != 0);
-   
 
     // sd , trial are two parameters, when sd=trial=true,
     // a new direction begins, when sd = false trial =true
@@ -78,11 +73,11 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     // a cubic interpolation is used to make the third point,
     // when sa = trial = false, we use Brent to get the
     // minimum point in this direction.
-    static bool trial = false; 
+    static bool trial = false;
 
     // ncggrad is a parameter to control the cg method,
     // every ten cg direction, we change the direction back to
-    // the steepest descent method  
+    // the steepest descent method
     static int ncggrad = 0;
 
     static double fa = 0.0;
@@ -99,11 +94,11 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
     static int nbrent = 0;
 
-    double *lat = new double[dim];
-    double *grad = new double[dim];
-    double *cg_gradn = new double[dim];
-    double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    double* lat = new double[dim];
+    double* grad = new double[dim];
+    double* cg_gradn = new double[dim];
+    double* move = new double[dim];
+    double* cg_grad = new double[dim];
 
     double best_x = 0.0;
     double fmin = 0.0;
@@ -118,8 +113,7 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
 CG_begin:
 
-    if (Lattice_Change_Basic::stress_step == 1)
-    {
+    if (Lattice_Change_Basic::stress_step == 1) {
         steplength = Lattice_Change_Basic::lattice_change_ini; // read in the init trust radius
         // cout<<"Lattice_Change_Basic::lattice_change_ini = "<<Lattice_Change_Basic::lattice_change_ini<<endl;
         sd = true;
@@ -143,19 +137,14 @@ CG_begin:
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
-    if (flag == 0)
-    {
+    if (flag == 0) {
         Lattice_Change_Basic::check_converged(ucell, stress, grad);
     }
 
-    if (Lattice_Change_Basic::converged)
-    {
+    if (Lattice_Change_Basic::converged) {
         Lattice_Change_Basic::terminate();
-    }
-    else
-    {
-        if (sd)
-        {
+    } else {
+        if (sd) {
             e0 = etot_in;
             setup_cg_grad(grad,
                           grad0,
@@ -182,17 +171,13 @@ CG_begin:
             sd = false;
 
             Lattice_Change_Basic::lattice_change_ini = xb;
-        }
-        else
-        {
-            if (trial)
-            {
+        } else {
+            if (trial) {
                 double e1 = etot_in;
                 f_cal(move0, grad, dim, fb);
                 f_cal(move0, move0, dim, xb);
 
-                if ((std::abs(fb) < std::abs((fa) / 10.0)))
-                {
+                if ((std::abs(fb) < std::abs((fa) / 10.0))) {
                     sd = true;
                     trial = true;
                     steplength = xb;
@@ -203,8 +188,7 @@ CG_begin:
                 normalize(cg_gradn, cg_grad0, dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
-                if (best_x > 6 * xb || best_x < (-xb))
-                {
+                if (best_x > 6 * xb || best_x < (-xb)) {
                     best_x = 6 * xb;
                 }
 
@@ -218,9 +202,7 @@ CG_begin:
                 xpt = xc;
 
                 Lattice_Change_Basic::lattice_change_ini = xc;
-            }
-            else
-            {
+            } else {
                 double xtemp, ftemp;
                 f_cal(move0, grad, dim, fc);
 
@@ -229,21 +211,17 @@ CG_begin:
                 // cout<<"nbrent = "<<nbrent<<endl;
                 // cout<<"xa = "<<xa<<" xb = "<<xb<<" xc = "<<xc<<" fa = "<<fa<<" fb = "<<fb<<" fc = "<<fc<<endl;
 
-                if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3))
-                {
+                if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3)) {
                     nbrent = 0;
                     sd = true;
                     trial = true;
                     steplength = xpt;
                     flag = 1;
                     goto CG_begin;
-                }
-                else
-                {
+                } else {
                     Brent(fa, fb, fc, xa, xb, xc, best_x, xpt); // Brent method
                     // cout<<"xc = "<<xc<<endl;
-                    if (xc < 0)
-                    {
+                    if (xc < 0) {
                         sd = true;
                         trial = true;
                         steplength = xb;
@@ -270,34 +248,28 @@ CG_begin:
     return;
 }
 
-void Lattice_Change_CG::setup_cg_grad(double *grad,
-                                      const double *grad0,
-                                      double *cg_grad,
-                                      const double *cg_grad0,
-                                      const int &ncggrad,
-                                      int &flag)
-{
+void Lattice_Change_CG::setup_cg_grad(double* grad,
+                                      const double* grad0,
+                                      double* cg_grad,
+                                      const double* cg_grad0,
+                                      const int& ncggrad,
+                                      int& flag) {
     ModuleBase::TITLE("Lattice_Change_CG", "setup_cg_grad");
     assert(Lattice_Change_Basic::stress_step > 0);
     double gamma = 0.0;
     double cg0_cg, cg0_cg0, cg0_g;
 
-    if (ncggrad % 10000 == 0 || flag == 2)
-    {
-        for (int i = 0; i < dim; i++)
-        {
+    if (ncggrad % 10000 == 0 || flag == 2) {
+        for (int i = 0; i < dim; i++) {
             cg_grad[i] = grad[i];
         }
-    }
-    else
-    {
+    } else {
         double gp_gp = 0.0;  // grad_p.grad_p
         double gg = 0.0;     // grad.grad
         double g_gp = 0.0;   // grad_p.grad
         double cgp_gp = 0.0; // cg_grad_p.grad_p
         double cgp_g = 0.0;  // cg_grad_p.grad
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             gp_gp += grad0[i] * grad0[i];
             gg += grad[i] * grad[i];
             g_gp += grad0[i] * grad[i];
@@ -312,17 +284,13 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
         // const double gamma = gg/cgp_gp;                      //D
         // const double gamma = -gg/(cgp_g - cgp_gp);             //D-Y
 
-        if (gamma1 < 0.5)
-        {
+        if (gamma1 < 0.5) {
             gamma = gamma1;
-        }
-        else
-        {
+        } else {
             gamma = gamma2;
         }
 
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             // we can consider step as modified gradient.
             cg_grad[i] = grad[i] + gamma * cg_grad0[i];
         }
@@ -330,13 +298,12 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
     return;
 }
 
-void Lattice_Change_CG::third_order(const double &e0,
-                                    const double &e1,
-                                    const double &fa,
-                                    const double &fb,
+void Lattice_Change_CG::third_order(const double& e0,
+                                    const double& e1,
+                                    const double& fa,
+                                    const double& fb,
                                     const double x,
-                                    double &best_x)
-{
+                                    double& best_x) {
     double k3, k2, k1;
     double dmoveh, dmove1, dmove2, dmove, ecal1, ecal2;
 
@@ -351,9 +318,7 @@ void Lattice_Change_CG::third_order(const double &e0,
     if ((std::abs(k3 / k1) < 0.01) || ((k1 * k3 / (k2 * k2)) >= 0.25)) // this condition may be wrong
     {
         dmove = dmoveh;
-    }
-    else
-    {
+    } else {
         dmove1 = -k2 * (1 - sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
         dmove2 = -k2 * (1 + sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
         ecal1 = k3 * dmove1 * dmove1 * dmove1 / 3 + k2 * dmove1 * dmove1 / 2 + k1 * dmove1;
@@ -371,23 +336,21 @@ void Lattice_Change_CG::third_order(const double &e0,
     return;
 }
 
-void Lattice_Change_CG::Brent(double &fa,
-                              double &fb,
-                              double &fc,
-                              double &xa,
-                              double &xb,
-                              double &xc,
-                              double &best_x,
-                              double &xpt)
-{
+void Lattice_Change_CG::Brent(double& fa,
+                              double& fb,
+                              double& fc,
+                              double& xa,
+                              double& xb,
+                              double& xc,
+                              double& best_x,
+                              double& xpt) {
     double dmove;
     double tmp;
     double k2, k1, k0;
     double xnew1, xnew2;
     double ecalnew1, ecalnew2;
 
-    if ((fa * fb) > 0)
-    {
+    if ((fa * fb) > 0) {
         dmove = (xc * fa - xa * fc) / (fa - fc);
         if (dmove > 4 * xc)
         // if(dmove > 4 * xc || dmove < 0)
@@ -396,17 +359,14 @@ void Lattice_Change_CG::Brent(double &fa,
         }
         xb = xc;
         fb = fc;
-    }
-    else
-    {
+    } else {
         k2 = -((fb - fc) / (xb - xc) - (fa - fc) / (xa - xc)) / (xa - xb);
         k1 = (fa - fc) / (xa - xc) - k2 * (xa + xc);
         k0 = fa - k1 * xa - k2 * xa * xa;
         xnew1 = (-k1 - sqrt(k1 * k1 - 4 * k2 * k0)) / (2 * k2);
         xnew2 = (-k1 + sqrt(k1 * k1 - 4 * k2 * k0)) / (2 * k2);
 
-        if (xnew1 > xnew2)
-        {
+        if (xnew1 > xnew2) {
             tmp = xnew2;
             xnew2 = xnew1;
             xnew1 = tmp;
@@ -416,21 +376,17 @@ void Lattice_Change_CG::Brent(double &fa,
         ecalnew2 = k2 * xnew2 * xnew2 * xnew2 / 3 + k1 * xnew2 * xnew2 / 2 + k0 * xnew2;
         dmove = xnew1;
 
-        if (ecalnew1 > ecalnew2)
-        {
+        if (ecalnew1 > ecalnew2) {
             dmove = xnew2;
         }
-        if (dmove < 0)
-        {
+        if (dmove < 0) {
             dmove = 2 * xc; // pengfei 14-6-5
         }
-        if (fa * fc > 0)
-        {
+        if (fa * fc > 0) {
             xa = xc;
             fa = fc;
         }
-        if (fb * fc > 0)
-        {
+        if (fb * fc > 0) {
             xb = xc;
             fb = fc;
         }
@@ -443,17 +399,14 @@ void Lattice_Change_CG::Brent(double &fa,
     return;
 }
 
-void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
-{
+void Lattice_Change_CG::f_cal(const double* g0, const double* g1, const int& dim, double& f_value) {
     double hv0, hel;
     hel = 0;
     hv0 = 0;
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         hel += g0[i] * g1[i];
     }
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         hv0 += g0[i] * g0[i];
     }
 
@@ -461,29 +414,23 @@ void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim
     return;
 }
 
-void Lattice_Change_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
-{
+void Lattice_Change_CG::setup_move(double* move, double* cg_gradn, const double& trust_radius) {
     // movement using gradient and trust_radius.
-    for (int i = 0; i < dim; ++i)
-    {
+    for (int i = 0; i < dim; ++i) {
         move[i] = -cg_gradn[i] * trust_radius;
     }
     return;
 }
 
-void Lattice_Change_CG::normalize(double *cg_gradn, const double *cg_grad, int dim)
-{
+void Lattice_Change_CG::normalize(double* cg_gradn, const double* cg_grad, int dim) {
     double norm = 0.0;
-    for (int i = 0; i < dim; ++i)
-    {
+    for (int i = 0; i < dim; ++i) {
         norm += pow(cg_grad[i], 2);
     }
     norm = sqrt(norm);
 
-    if (norm != 0.0)
-    {
-        for (int i = 0; i < dim; ++i)
-        {
+    if (norm != 0.0) {
+        for (int i = 0; i < dim; ++i) {
             cg_gradn[i] = cg_grad[i] / norm;
         }
     }

@@ -21,127 +21,117 @@
 
 #include "module_exx_symmetry/symmetry_rotation.h"
 
-	class Parallel_Orbitals;
+class Parallel_Orbitals;
 
-	template<typename T, typename Tdata>
-	class RPA_LRI;
+template <typename T, typename Tdata>
+class RPA_LRI;
 
-	template<typename T, typename Tdata>
-	class Exx_LRI_Interface;
+template <typename T, typename Tdata>
+class Exx_LRI_Interface;
 
-	namespace LR
-	{
-		template<typename T, typename TR>
-		class ESolver_LR;
+namespace LR {
+template <typename T, typename TR>
+class ESolver_LR;
 
-		template<typename T>
-		class OperatorLREXX;
-	}
+template <typename T>
+class OperatorLREXX;
+} // namespace LR
 
-template<typename Tdata>
-class Exx_Obj
-{
-	// match with Conv_Coulomb_Pot_K::Coulomb_Method
-	public:
-		LRI_CV<Tdata> cv;
-		Ewald_Vq<Tdata> evq;
-		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
+template <typename Tdata>
+class Exx_Obj {
+    // match with Conv_Coulomb_Pot_K::Coulomb_Method
+  public:
+    LRI_CV<Tdata> cv;
+    Ewald_Vq<Tdata> evq;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 };
 
-template<typename Tdata>
-class Exx_LRI
-{
-private:
-	using TA = int;
-	using Tcell = int;
-	static constexpr std::size_t Ndim = 3;
-	using TC = std::array<Tcell,Ndim>;
-	using TAC = std::pair<TA,TC>;
-	using TatomR = std::array<double,Ndim>;		// tmp
+template <typename Tdata>
+class Exx_LRI {
+  private:
+    using TA = int;
+    using Tcell = int;
+    static constexpr std::size_t Ndim = 3;
+    using TC = std::array<Tcell, Ndim>;
+    using TAC = std::pair<TA, TC>;
+    using TatomR = std::array<double, Ndim>; // tmp
 
-public:
-	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in) {}
-	Exx_LRI operator=(const Exx_LRI&) = delete;
-	Exx_LRI operator=(Exx_LRI&&);
+  public:
+    Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) : info(info_in) {}
+    Exx_LRI operator=(const Exx_LRI&) = delete;
+    Exx_LRI operator=(Exx_LRI&&);
 
-	void init(
-		const MPI_Comm &mpi_comm_in,
-		const UnitCell &ucell,
-		const K_Vectors &kv_in,
-		const LCAO_Orbitals& orb);
-	void init(
-		const MPI_Comm &mpi_comm_in,
-		const UnitCell &ucell,
-		const K_Vectors &kv_in,
-		const LCAO_Orbitals& orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
-    void init_spencer(const MPI_Comm& mpi_comm_in,
-                      const UnitCell& ucell,
-                      const K_Vectors& kv_in,
-                      const LCAO_Orbitals& orb);
+    void init(const MPI_Comm& mpi_comm_in, const UnitCell& ucell, const K_Vectors& kv_in, const LCAO_Orbitals& orb);
+    void init(const MPI_Comm& mpi_comm_in,
+              const UnitCell& ucell,
+              const K_Vectors& kv_in,
+              const LCAO_Orbitals& orb,
+              const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
+    void
+    init_spencer(const MPI_Comm& mpi_comm_in, const UnitCell& ucell, const K_Vectors& kv_in, const LCAO_Orbitals& orb);
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
                       const LCAO_Orbitals& orb,
                       const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
-    void cal_cut_coulomb_cs(
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut_IJR,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-		const UnitCell& ucell,
-		const bool write_cv = false);
-	void cal_ewald_coulomb(
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full_IJR,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-		const UnitCell& ucell,
-		const bool write_cv = false);
-	void cal_exx_elec(
-		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-		const UnitCell& ucell,
-		const Parallel_Orbitals& pv,
-		const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
-	void cal_exx_force(const int& nat);
-	void cal_exx_stress(const double& omega, const double& lat0);
+    void cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut_IJR,
+                            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+                            const UnitCell& ucell,
+                            const bool write_cv = false);
+    void cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full_IJR,
+                           std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+                           const UnitCell& ucell,
+                           const bool write_cv = false);
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+                      const UnitCell& ucell,
+                      const Parallel_Orbitals& pv,
+                      const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
+    void cal_exx_force(const int& nat);
+    void cal_exx_stress(const double& omega, const double& lat0);
 
-	void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
-	void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
-	//std::vector<std::vector<int>> get_abfs_nchis() const;
+    void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) {
+        this->exx_lri.set_Cs(Cs_in, this->info.C_threshold);
+    }
+    void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) {
+        this->exx_lri.set_Vs(Vs_in, this->info.V_threshold);
+    }
+    // std::vector<std::vector<int>> get_abfs_nchis() const;
 
-	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
-	double Eexx;
-	ModuleBase::matrix force_exx;
-	ModuleBase::matrix stress_exx;
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
+    double Eexx;
+    ModuleBase::matrix force_exx;
+    ModuleBase::matrix stress_exx;
 
+  private:
+    const Exx_Info::Exx_Info_RI& info;
+    MPI_Comm mpi_comm;
+    const K_Vectors* p_kv = nullptr;
+    std::shared_ptr<ORB_gaunt_table> MGT;
+    std::vector<double> orb_cutoff_;
 
-private:
-	const Exx_Info::Exx_Info_RI &info;
-	MPI_Comm mpi_comm;
-	const K_Vectors *p_kv = nullptr;
-	std::shared_ptr<ORB_gaunt_table> MGT;
-	std::vector<double> orb_cutoff_;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
+    // std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
+    // LRI_CV<Tdata> cv;
+    RI::Exx<TA, Tcell, Ndim, Tdata> exx_lri;
+    std::map<
+        Conv_Coulomb_Pot_K::Coulomb_Method,
+        std::pair<bool, std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>>>
+        coulomb_settings;
 
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
-	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
-	//std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
-	//LRI_CV<Tdata> cv;
-	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-        std::pair<bool, 
-            std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
-                std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
+    void post_process_Hexx(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs_io) const;
+    double post_process_Eexx(const double& Eexx_in) const;
 
-	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
-	double post_process_Eexx(const double& Eexx_in) const;
-
-	friend class RPA_LRI<double, Tdata>;
-	friend class RPA_LRI<std::complex<double>, Tdata>;
-	friend class Exx_LRI_Interface<double, Tdata>;
-	friend class Exx_LRI_Interface<std::complex<double>, Tdata>;
-	friend class LR::ESolver_LR<double, double>;
-	friend class LR::ESolver_LR<std::complex<double>, double>;
-	friend class LR::OperatorLREXX<double>;
-	friend class LR::OperatorLREXX<std::complex<double>>;
+    friend class RPA_LRI<double, Tdata>;
+    friend class RPA_LRI<std::complex<double>, Tdata>;
+    friend class Exx_LRI_Interface<double, Tdata>;
+    friend class Exx_LRI_Interface<std::complex<double>, Tdata>;
+    friend class LR::ESolver_LR<double, double>;
+    friend class LR::ESolver_LR<std::complex<double>, double>;
+    friend class LR::OperatorLREXX<double>;
+    friend class LR::OperatorLREXX<std::complex<double>>;
 };
 
 #include "Exx_LRI.hpp"

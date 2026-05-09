@@ -2,8 +2,7 @@
 #include "source_base/atom_in.h"
 #include "source_base/element_name.h"
 
-int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
-{
+int Pseudopot_upf::read_pseudo_blps(std::ifstream& ifs, Atom_pseudo& pp) {
     // double bohr2a = 0.529177249;
     pp.nlcc = false;
     pp.tvanp = false;
@@ -31,10 +30,8 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     ifs.ignore(300, '\n');
 
     atom_in ai;
-    for (auto each_type:  ModuleBase::element_name)
-    {
-        if (zatom == ai.atom_Z[each_type])
-        {
+    for (auto each_type: ModuleBase::element_name) {
+        if (zatom == ai.atom_Z[each_type]) {
             pp.psd = each_type;
             break;
         }
@@ -43,42 +40,29 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> pp.lmax >> lloc >> pp.mesh >> r2well;
     this->mesh_changed = false;
-    if (pp.mesh%2 == 0)
-	{
-		pp.mesh -= 1;
+    if (pp.mesh % 2 == 0) {
+        pp.mesh -= 1;
         this->mesh_changed = true;
-	}
+    }
 
-    if (pspxc == 2)
-    {
+    if (pspxc == 2) {
         pp.xc_func = "PZ";
-    }
-    else if (pspxc == 11)
-    {
+    } else if (pspxc == 11) {
         pp.xc_func = "PBE";
-    }
-    else
-    {
+    } else {
         std::string msg = "Unknown pspxc: " + std::to_string(pspxc);
         ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
-    if (pspcod == 8)
-    {
-        for (int i = 0; i < 5; ++i)
-        {
+    if (pspcod == 8) {
+        for (int i = 0; i < 5; ++i) {
             ifs.ignore(300, '\n');
         }
-    }
-    else if (pspcod == 6)
-    {
-        for (int i = 0; i < 17; ++i)
-        {
+    } else if (pspcod == 6) {
+        for (int i = 0; i < 17; ++i) {
             ifs.ignore(300, '\n');
         }
-    }
-    else
-    {
+    } else {
         std::string msg = "Unknown pspcod: " + std::to_string(pspcod);
         ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
@@ -89,71 +73,64 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     pp.rab = std::vector<double>(pp.mesh, 0.0);
     pp.vloc_at = std::vector<double>(pp.mesh, 0.0); // Hartree
     int num = 0;
-    if (pspcod == 8)
-    {
-        for(int i = 0;i < pp.mesh; ++i)
-        {
+    if (pspcod == 8) {
+        for (int i = 0; i < pp.mesh; ++i) {
             ifs >> num >> pp.r[i] >> pp.vloc_at[i];
-            pp.vloc_at[i] = pp.vloc_at[i]*2; // Hartree to Ry
+            pp.vloc_at[i] = pp.vloc_at[i] * 2; // Hartree to Ry
         }
-    }
-    else if (pspcod == 6)
-    {
+    } else if (pspcod == 6) {
         double temp = 0.;
-        for(int i = 0;i < pp.mesh; ++i)
-        {
+        for (int i = 0; i < pp.mesh; ++i) {
             ifs >> num >> pp.r[i] >> temp >> pp.vloc_at[i];
-            pp.vloc_at[i] = pp.vloc_at[i]*2; // Hartree to Ry
+            pp.vloc_at[i] = pp.vloc_at[i] * 2; // Hartree to Ry
         }
     }
     pp.rab[0] = pp.r[1] - pp.r[0];
-    for(int i = 1; i < pp.mesh - 1; ++i)
-    {
-        pp.rab[i] = (pp.r[i+1] - pp.r[i-1])/2.0;
+    for (int i = 1; i < pp.mesh - 1; ++i) {
+        pp.rab[i] = (pp.r[i + 1] - pp.r[i - 1]) / 2.0;
     }
     pp.rab[pp.mesh - 1] = pp.r[pp.mesh - 1] - pp.r[pp.mesh - 2];
 
     pp.rho_at = std::vector<double>(pp.mesh, 0.0);
-    double charge = zion/pp.r[pp.mesh - 1];
-    for(int i = 0;i < pp.mesh; ++i)
-    {
+    double charge = zion / pp.r[pp.mesh - 1];
+    for (int i = 0; i < pp.mesh; ++i) {
         pp.rho_at[i] = charge;
     }
     return 0;
 }
 
-//parameters
-//read_pp.h <--> blps_real
-//nv             -
-//psd            head
-//pp_type(NC or US) -
-//tvanp          False
-//nlcc           False
-//dft            pspxc 2->lda, 11->gga
-//zp             zion
-//etotps         -
-//ecutwfc        -
-//ecutrho        -
-//lmax           lmax
-//mesh           mmax
-//nwfc           -
-//nbeta          -
-//els            -
-//lchi           -
-//oc             -
+// parameters
+// read_pp.h <--> blps_real
+// nv             -
+// psd            head
+// pp_type(NC or US) -
+// tvanp          False
+// nlcc           False
+// dft            pspxc 2->lda, 11->gga
+// zp             zion
+// etotps         -
+// ecutwfc        -
+// ecutrho        -
+// lmax           lmax
+// mesh           mmax
+// nwfc           -
+// nbeta          -
+// els            -
+// lchi           -
+// oc             -
 
-//rab            rab[ir]=(r[ir+1]-r[ir-1])/2.0
-//rho_atc(nonlocal) -
-//vloc
-//chi            -
-//rho_at         -
+// rab            rab[ir]=(r[ir+1]-r[ir-1])/2.0
+// rho_atc(nonlocal) -
+// vloc
+// chi            -
+// rho_at         -
 
 // lll            -
 // kbeta         -
 // beta           -
 // dion           -
 
-//nn             -
-//jchi           -
-//jjj            -
-//nd             -
+// nn             -
+// jchi           -
+// jjj            -
+// nd             -

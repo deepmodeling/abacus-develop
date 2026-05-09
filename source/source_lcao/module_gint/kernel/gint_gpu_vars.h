@@ -5,17 +5,13 @@
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_gint/biggrid_info.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-class GintGpuVars
-{
-    public:
-    GintGpuVars(std::shared_ptr<const BigGridInfo> bgrid_info,
-                const UnitCell& ucell,
-                const Numerical_Orbital* Phi);
+class GintGpuVars {
+  public:
+    GintGpuVars(std::shared_ptr<const BigGridInfo> bgrid_info, const UnitCell& ucell, const Numerical_Orbital* Phi);
     ~GintGpuVars();
-    
+
     int nwmax;
     double dr_uniform;
     double nr_max;
@@ -33,7 +29,6 @@ class GintGpuVars
 
     // the index of gpu device
     int dev_id_ = 0;
-
 };
 
-}
+} // namespace ModuleGint

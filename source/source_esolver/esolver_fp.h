@@ -5,15 +5,14 @@
 
 #include "source_base/timer_wrapper.h"
 
-#include "source_basis/module_pw/pw_basis.h" // plane wave basis
-#include "source_estate/elecstate.h" // electronic states
+#include "source_basis/module_pw/pw_basis.h"          // plane wave basis
+#include "source_estate/elecstate.h"                  // electronic states
 #include "source_estate/module_charge/charge_extra.h" // charge extrapolation
-#include "source_hamilt/module_surchem/surchem.h" // solvation model
-#include "source_pw/module_pwdft/vl_pw.h" // local pseudopotential
-#include "source_pw/module_pwdft/structure_factor.h" // structure factor
+#include "source_hamilt/module_surchem/surchem.h"     // solvation model
+#include "source_pw/module_pwdft/vl_pw.h"             // local pseudopotential
+#include "source_pw/module_pwdft/structure_factor.h"  // structure factor
 
 #include <fstream>
-
 
 //! The First-Principles (FP) Energy Solver Class
 /**
@@ -23,10 +22,8 @@
  *
  */
 
-namespace ModuleESolver
-{
-class ESolver_FP: public ESolver
-{
+namespace ModuleESolver {
+class ESolver_FP : public ESolver {
   public:
     ESolver_FP();
 
@@ -42,7 +39,7 @@ class ESolver_FP: public ESolver
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver);
 
     //! These pointers will be deleted in the free_pointers() function every ion step.
     elecstate::ElecState* pelec = nullptr; ///< Electronic states
@@ -77,7 +74,7 @@ class ESolver_FP: public ESolver
     //! solvent model
     surchem solvent;
 
-    bool pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
+    bool pw_rho_flag = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
 
     //! the start time of scf iteration
     ModuleBase::TimePoint iter_time;

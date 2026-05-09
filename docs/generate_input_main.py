@@ -75,7 +75,7 @@ def normalize_type(type_text: str) -> str:
     Normalize legacy type labels for cleaner generated docs.
     """
     if not type_text:
-        return ''
+        return ""
 
     normalized = type_text.strip()
     aliases = {
@@ -90,9 +90,9 @@ def escape_md_text(text: str) -> str:
     Escape markdown-sensitive angle brackets while avoiding double escaping.
     """
     if text is None:
-        return ''
+        return ""
     normalized = html.unescape(str(text))
-    return normalized.replace('<', '&lt;').replace('>', '&gt;')
+    return normalized.replace("<", "&lt;").replace(">", "&gt;")
 
 
 def format_description(desc: str) -> str:
@@ -103,40 +103,40 @@ def format_description(desc: str) -> str:
     - Convert [WARNING] markers to blockquotes
     """
     if not desc:
-        return ''
+        return ""
 
     # Prevent placeholder tokens like <property> from being parsed as raw HTML
     # and breaking list/heading structure in rendered docs.
     desc = escape_md_text(desc)
 
-    lines = desc.split('\n')
+    lines = desc.split("\n")
     result_lines = []
 
     for line in lines:
         # Convert * list items to - list items
-        line = re.sub(r'^(\s*)\*\s+', r'\1- ', line)
+        line = re.sub(r"^(\s*)\*\s+", r"\1- ", line)
 
         # Convert [NOTE] markers to blockquotes
-        if '[NOTE]' in line:
-            line = line.replace('[NOTE]', '> Note:')
+        if "[NOTE]" in line:
+            line = line.replace("[NOTE]", "> Note:")
 
         # Convert [WARNING] markers to blockquotes
-        if '[WARNING]' in line:
-            line = line.replace('[WARNING]', '> Warning:')
+        if "[WARNING]" in line:
+            line = line.replace("[WARNING]", "> Warning:")
 
         # Normalize doubled note/warning prefixes from legacy content
-        line = re.sub(r'>\s*Note:\s*Note\s*:?\s*', '> Note: ', line)
-        line = re.sub(r'>\s*Warning:\s*Warning\s*:?\s*', '> Warning: ', line)
+        line = re.sub(r">\s*Note:\s*Note\s*:?\s*", "> Note: ", line)
+        line = re.sub(r">\s*Warning:\s*Warning\s*:?\s*", "> Warning: ", line)
 
         result_lines.append(line)
 
     # Join and clean up
-    result = '\n'.join(result_lines)
+    result = "\n".join(result_lines)
 
     # Ensure list items have proper indentation (2 spaces for sub-items in markdown)
-    result = re.sub(r'\n- ', '\n  - ', result)
+    result = re.sub(r"\n- ", "\n  - ", result)
     # But not for the first item after a non-list line
-    result = re.sub(r'(\n[^-\s][^\n]*)\n  - ', r'\1\n\n  - ', result)
+    result = re.sub(r"(\n[^-\s][^\n]*)\n  - ", r"\1\n\n  - ", result)
 
     return result.strip()
 
@@ -148,41 +148,41 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
     lines = [f"### {param['name']}", ""]
 
     # Type
-    if param.get('type', '') != '':
-        type_text = escape_md_text(normalize_type(str(param['type'])))
+    if param.get("type", "") != "":
+        type_text = escape_md_text(normalize_type(str(param["type"])))
         lines.append(f"- **Type**: {type_text}")
 
     # Availability (before description, as in original format)
-    if param.get('availability', '') != '':
-        availability_text = escape_md_text(str(param['availability']))
+    if param.get("availability", "") != "":
+        availability_text = escape_md_text(str(param["availability"]))
         lines.append(f"- **Availability**: *{availability_text}*")
 
     # Description
-    if param.get('description', '') != '':
-        desc = format_description(str(param['description']))
+    if param.get("description", "") != "":
+        desc = format_description(str(param["description"]))
         # If description has multiple lines/lists, format properly
-        if '\n' in desc:
+        if "\n" in desc:
             lines.append(f"- **Description**: {desc.split(chr(10))[0]}")
-            for line in desc.split('\n')[1:]:
+            for line in desc.split("\n")[1:]:
                 if line.strip():
-                    lines.append(f"  {line}" if not line.startswith('  ') else line)
+                    lines.append(f"  {line}" if not line.startswith("  ") else line)
                 else:
                     lines.append("")
         else:
             lines.append(f"- **Description**: {desc}")
 
     # Default
-    if param.get('default_value', '') != '':
-        default_text = escape_md_text(str(param['default_value']))
+    if param.get("default_value", "") != "":
+        default_text = escape_md_text(str(param["default_value"]))
         lines.append(f"- **Default**: {default_text}")
 
     # Unit
-    if param.get('unit', '') != '':
-        unit_text = escape_md_text(str(param['unit']))
+    if param.get("unit", "") != "":
+        unit_text = escape_md_text(str(param["unit"]))
         lines.append(f"- **Unit**: {unit_text}")
 
     lines.append("")
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def generate_category_markdown(category: str, params: List[Dict[str, str]]) -> str:
@@ -198,7 +198,7 @@ def generate_category_markdown(category: str, params: List[Dict[str, str]]) -> s
     lines.append("[back to top](#full-list-of-input-keywords)")
     lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def generate_anchor(text: str) -> str:
@@ -207,10 +207,10 @@ def generate_anchor(text: str) -> str:
     Converts to lowercase, replaces spaces with hyphens, removes special chars.
     """
     anchor = text.lower()
-    anchor = re.sub(r'[^a-z0-9\s_-]', '', anchor)
-    anchor = re.sub(r'\s+', '-', anchor)
-    anchor = re.sub(r'-+', '-', anchor)
-    return anchor.strip('-')
+    anchor = re.sub(r"[^a-z0-9\s_-]", "", anchor)
+    anchor = re.sub(r"\s+", "-", anchor)
+    anchor = re.sub(r"-+", "-", anchor)
+    return anchor.strip("-")
 
 
 def generate_toc(sorted_categories: OrderedDict) -> str:
@@ -225,11 +225,11 @@ def generate_toc(sorted_categories: OrderedDict) -> str:
 
         for param in params:
             # Escape underscores in parameter names for TOC display
-            display_name = param['name'].replace('_', r'\_')
-            param_anchor = generate_anchor(param['name'])
+            display_name = param["name"].replace("_", r"\_")
+            param_anchor = generate_anchor(param["name"])
             lines.append(f"    - [{display_name}](#{param_anchor})")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def generate(yaml_path: Path, output: Path, verbose: bool = False):
@@ -242,16 +242,16 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
     if not yaml_path.exists():
         raise FileNotFoundError(f"YAML file not found: {yaml_path}")
 
-    with open(yaml_path, 'r') as f:
+    with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
 
-    all_params = data.get('parameters', [])
+    all_params = data.get("parameters", [])
     print(f"Total: {len(all_params)} documented parameters")
 
     # Group by category
     by_category: Dict[str, List[Dict[str, str]]] = OrderedDict()
     for param in all_params:
-        cat = param.get('category', 'Other')
+        cat = param.get("category", "Other")
         if cat not in by_category:
             by_category[cat] = []
         by_category[cat].append(param)
@@ -276,7 +276,7 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
         "",
         "<!-- Table of Contents -->",
         generate_toc(sorted_categories),
-        ""
+        "",
     ]
 
     for category, params in sorted_categories.items():
@@ -285,7 +285,7 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
         md_parts.append(generate_category_markdown(category, params))
 
     # Write output
-    output_content = '\n'.join(md_parts)
+    output_content = "\n".join(md_parts)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(output_content)
 
@@ -295,28 +295,26 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate input-main.md from YAML parameter dump'
+        description="Generate input-main.md from YAML parameter dump"
     )
     parser.add_argument(
-        'yaml_file',
+        "yaml_file",
         type=Path,
-        help='Path to parameters.yaml (generated by abacus --generate-parameters-yaml)'
+        help="Path to parameters.yaml (generated by abacus --generate-parameters-yaml)",
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=Path,
-        default=Path(f'{DOC_FOLDER}/advanced/input_files/input-main.md'),
-        help='Output markdown file'
+        default=Path(f"{DOC_FOLDER}/advanced/input_files/input-main.md"),
+        help="Output markdown file",
     )
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Print verbose output'
+        "--verbose", "-v", action="store_true", help="Print verbose output"
     )
 
     args = parser.parse_args()
     generate(args.yaml_file, args.output, args.verbose)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

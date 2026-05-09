@@ -6,8 +6,7 @@
 #include "file_reader.h"
 #include "sparse_matrix.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /**
  * @brief Class to read CSR file
@@ -28,7 +27,7 @@ namespace ModuleIO
  *  # followed by the number of non-zero elements.           #
  *  # Next are three blocks of data.                         #
  *  #--------------------------------------------------------#
- * 
+ *
  *  -1 0 0 507
  *  # CSR values
  *  6.73361941e-04 -3.97537783e-05 7.92408228e-04 ...
@@ -44,8 +43,7 @@ namespace ModuleIO
  * and related info including step, matrix dimension, number of R.
  */
 template <typename T>
-class csrFileReader : public FileReader
-{
+class csrFileReader : public FileReader {
   public:
     // Constructor
     csrFileReader(const std::string& filename);

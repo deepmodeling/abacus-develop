@@ -1,14 +1,10 @@
 #include "opt_CG.h"
 #include <vector>
 
-namespace ModuleBase
-{
-Opt_CG::Opt_CG()
-{
-}
+namespace ModuleBase {
+Opt_CG::Opt_CG() {}
 
-Opt_CG::~Opt_CG()
-{
+Opt_CG::~Opt_CG() {
     delete[] this->pb_;
     delete[] this->pdirect_old_;
     delete[] this->pgradient_old_;
@@ -19,8 +15,7 @@ Opt_CG::~Opt_CG()
  *
  * @param pinp_b b in the linear equation Ax = b
  */
-void Opt_CG::init_b(double* pinp_b)
-{
+void Opt_CG::init_b(double* pinp_b) {
     if (this->pb_ != nullptr)
         delete[] this->pb_;
     this->pb_ = new double[this->nx_];
@@ -33,8 +28,7 @@ void Opt_CG::init_b(double* pinp_b)
  *
  * @param nx length of the solution array x
  */
-void Opt_CG::allocate(int nx)
-{
+void Opt_CG::allocate(int nx) {
     this->nx_ = nx;
     delete[] this->pdirect_old_;
     delete[] this->pgradient_old_;
@@ -44,10 +38,7 @@ void Opt_CG::allocate(int nx)
     ModuleBase::GlobalFunc::ZEROS(this->pgradient_old_, this->nx_);
 }
 
-void Opt_CG::set_para(double dV)
-{
-    this->dV_ = dV;
-}
+void Opt_CG::set_para(double dV) { this->dV_ = dV; }
 
 /**
  * @brief Refresh the class.
@@ -56,17 +47,13 @@ void Opt_CG::set_para(double dV)
  * @param nx_new length of new x, default 0 means the length doesn't change
  * @param pinp_b new b in Ax = b, default nullptr means we are dealing with general case
  */
-void Opt_CG::refresh(int nx_new, double* pinp_b)
-{
+void Opt_CG::refresh(int nx_new, double* pinp_b) {
     this->iter_ = 0;
     this->alpha_ = 0.;
     this->beta_ = 0.;
-    if (nx_new != 0)
-    {
+    if (nx_new != 0) {
         this->allocate(nx_new);
-    }
-    else
-    {
+    } else {
         ModuleBase::GlobalFunc::ZEROS(this->pdirect_old_, this->nx_);
         ModuleBase::GlobalFunc::ZEROS(this->pgradient_old_, this->nx_);
     }
@@ -82,35 +69,27 @@ void Opt_CG::refresh(int nx_new, double* pinp_b)
  * @param [in, out] rdirect the next optimization direction
  *
  */
-void Opt_CG::next_direct(double* pgradient, int label, double* rdirect)
-{
+void Opt_CG::next_direct(double* pgradient, int label, double* rdirect) {
     if (label == 0) // standard CG to solve Ap=x
     {
         this->stantard_CGdirect(pgradient, rdirect);
-    }
-    else if (label == 1 or label == 2) // FR formula or HZ form
+    } else if (label == 1 or label == 2) // FR formula or HZ form
     {
         if (this->iter_ == 0) // if iter == 0, d = -g
         {
-            for (int i = 0; i < this->nx_; ++i)
-            {
+            for (int i = 0; i < this->nx_; ++i) {
                 rdirect[i] = -pgradient[i];
                 this->pgradient_old_[i] = pgradient[i];
                 this->pdirect_old_[i] = rdirect[i];
             }
-        }
-        else // d = -g + beta * d
+        } else // d = -g + beta * d
         {
-            if (label == 1)
-            {
+            if (label == 1) {
                 this->PR_beta(pgradient);
-            }
-            else if (label == 2)
-            {
+            } else if (label == 2) {
                 this->HZ_beta(pgradient);
             }
-            for (int i = 0; i < this->nx_; ++i)
-            {
+            for (int i = 0; i < this->nx_; ++i) {
                 rdirect[i] = -pgradient[i] + this->beta_ * this->pdirect_old_[i];
                 this->pgradient_old_[i] = pgradient[i];
                 this->pdirect_old_[i] = rdirect[i];
@@ -128,25 +107,18 @@ void Opt_CG::next_direct(double* pgradient, int label, double* rdirect)
  * @param ifPD 0 if positive definite, -1, -2 when not
  * @return the step length alpha
  */
-double Opt_CG::step_length(double* pAd, double* pdirect, int& ifPD)
-{
+double Opt_CG::step_length(double* pAd, double* pdirect, int& ifPD) {
     double dAd = this->inner_product(pdirect, pAd, this->nx_);
     Parallel_Reduce::reduce_all(dAd);
     ifPD = 0;
     // check for positive-definiteness, very important for convergence
-    if (dAd == 0)
-    {
+    if (dAd == 0) {
         this->alpha_ = 0;
         return 0;
-    }
-    else if (dAd < 0)
-    {
-        if (this->iter_ == 1)
-        {
+    } else if (dAd < 0) {
+        if (this->iter_ == 1) {
             ifPD = -1;
-        }
-        else
-        {
+        } else {
             ifPD = -2;
         }
     }
@@ -160,28 +132,21 @@ double Opt_CG::step_length(double* pAd, double* pdirect, int& ifPD)
  * @param [in] pAd Ad for Ax=b
  * @param [out] rdirect the next direction
  */
-void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect)
-{
-    if (this->iter_ == 0)
-    {
-        for (int i = 0; i < this->nx_; ++i)
-        {
+void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect) {
+    if (this->iter_ == 0) {
+        for (int i = 0; i < this->nx_; ++i) {
             this->pgradient_old_[i] = -this->pb_[i];
             rdirect[i] = this->pb_[i];
             this->pdirect_old_[i] = this->pb_[i];
         }
-    }
-    else
-    {
+    } else {
         std::vector<double> temp_gradient(this->nx_);
-        for (int i = 0; i < this->nx_; ++i)
-        {
+        for (int i = 0; i < this->nx_; ++i) {
             temp_gradient[i] = this->pgradient_old_[i] + this->alpha_ * pAd[i];
         }
         this->beta_ = this->inner_product(temp_gradient.data(), temp_gradient.data(), this->nx_) / this->gg_;
         Parallel_Reduce::reduce_all(this->beta_);
-        for (int i = 0; i < this->nx_; ++i)
-        {
+        for (int i = 0; i < this->nx_; ++i) {
             this->pgradient_old_[i] = temp_gradient[i];
             rdirect[i] = -this->pgradient_old_[i] + this->beta_ * this->pdirect_old_[i];
             this->pdirect_old_[i] = rdirect[i];
@@ -199,8 +164,7 @@ void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect)
  *
  * @param pgradient df(x)/dx
  */
-void Opt_CG::PR_beta(double* pgradient)
-{
+void Opt_CG::PR_beta(double* pgradient) {
     double temp_beta = 0.;
     temp_beta = this->inner_product(pgradient, pgradient, this->nx_);
     temp_beta -= this->inner_product(pgradient, this->pgradient_old_, this->nx_);
@@ -219,8 +183,7 @@ void Opt_CG::PR_beta(double* pgradient)
  *
  * @param pgradient df(x)/dx
  */
-void Opt_CG::HZ_beta(double* pgradient)
-{
+void Opt_CG::HZ_beta(double* pgradient) {
     double* y = new double[this->nx_];
     for (int i = 0; i < this->nx_; ++i)
         y[i] = pgradient[i] - this->pgradient_old_[i];

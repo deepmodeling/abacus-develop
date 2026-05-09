@@ -7,20 +7,14 @@
 #include <vector>
 
 #include "source_io/module_parameter/parameter.h"
-namespace ModuleIO
-{
-class Input_Item
-{
+namespace ModuleIO {
+class Input_Item {
   public:
     Input_Item(){};
 
-    Input_Item(const std::string& label_in)
-    {
-        label = label_in;
-    }
+    Input_Item(const std::string& label_in) { label = label_in; }
 
-    Input_Item(const Input_Item& item)
-    {
+    Input_Item(const Input_Item& item) {
         label = item.label;
         str_values = item.str_values;
         final_value.str(item.final_value.str());

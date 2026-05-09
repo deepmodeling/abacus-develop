@@ -19,15 +19,10 @@
  */
 
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
+Parallel_Orbitals::Parallel_Orbitals() {}
+Parallel_Orbitals::~Parallel_Orbitals() {}
 
-TEST(MiddleHamiltTest, testMiddleHamilt)
-{
+TEST(MiddleHamiltTest, testMiddleHamilt) {
     std::complex<double>* Htmp;
     std::complex<double>* Hlaststep;
     std::complex<double>* Stmp;
@@ -53,19 +48,14 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     Stmp = new std::complex<double>[nlocal * nlocal];
     Slaststep = new std::complex<double>[nlocal * nlocal];
 
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nlocal; ++j) {
+            if (i == j) {
                 Htmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
                 Hlaststep[i * nlocal + j] = std::complex<double>(1.0 + 0.2 * (i * nlocal + j), 0.0);
                 Stmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
                 Slaststep[i * nlocal + j] = std::complex<double>(1.0 + 0.2 * (i * nlocal + j), 0.0);
-            }
-            else
-            {
+            } else {
                 Hlaststep[i * nlocal + j] = std::complex<double>(0.2 * (i * nlocal + j), 0.0);
                 Slaststep[i * nlocal + j] = std::complex<double>(0.2 * (i * nlocal + j), 0.0);
             }

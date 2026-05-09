@@ -3,11 +3,9 @@
 #include "gint_common.h"
 #include "phi_operator.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-void Gint_fvl::cal_gint()
-{
+void Gint_fvl::cal_gint() {
     ModuleBase::TITLE("Gint", "cal_gint_fvl");
     ModuleBase::timer::start("Gint", "cal_gint_fvl");
     init_dm_gint_();
@@ -16,17 +14,14 @@ void Gint_fvl::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_fvl");
 }
 
-void Gint_fvl::init_dm_gint_()
-{
+void Gint_fvl::init_dm_gint_() {
     dm_gint_vec_.resize(nspin_);
-    for (int is = 0; is < nspin_; is++)
-    {
+    for (int is = 0; is < nspin_; is++) {
         dm_gint_vec_[is] = gint_info_->get_hr<double>();
     }
 }
 
-void Gint_fvl::cal_fvl_svl_()
-{
+void Gint_fvl::cal_fvl_svl_() {
 #pragma omp parallel
     {
         PhiOperator phi_op;
@@ -38,22 +33,18 @@ void Gint_fvl::cal_fvl_svl_()
         std::vector<double> dphi_z;
         ModuleBase::matrix* fvl_thread = nullptr;
         ModuleBase::matrix* svl_thread = nullptr;
-        if(isforce_)
-        {
+        if (isforce_) {
             fvl_thread = new ModuleBase::matrix(*fvl_);
             fvl_thread->zero_out();
         }
-        if(isstress_)
-        {
+        if (isstress_) {
             svl_thread = new ModuleBase::matrix(*svl_);
             svl_thread->zero_out();
         }
 #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
-        {
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++) {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
-            {
+            if (biggrid->get_atoms().size() == 0) {
                 continue;
             }
             phi_op.set_bgrid(biggrid);
@@ -65,29 +56,24 @@ void Gint_fvl::cal_fvl_svl_()
             dphi_y.resize(phi_len);
             dphi_z.resize(phi_len);
             phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
-            for (int is = 0; is < nspin_; is++)
-            {
+            for (int is = 0; is < nspin_; is++) {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
                 phi_op.phi_mul_dm(phi_vldr3.data(), dm_gint_vec_[is], false, phi_vldr3_dm.data());
-                if(isforce_)
-                {
+                if (isforce_) {
                     phi_op.phi_dot_dphi(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);
                 }
-                if(isstress_)
-                {
+                if (isstress_) {
                     phi_op.phi_dot_dphi_r(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), svl_thread);
                 }
             }
         }
 #pragma omp critical
         {
-            if(isforce_)
-            {
+            if (isforce_) {
                 fvl_[0] += fvl_thread[0];
                 delete fvl_thread;
             }
-            if(isstress_)
-            {
+            if (isstress_) {
                 svl_[0] += svl_thread[0];
                 delete svl_thread;
             }
@@ -95,5 +81,4 @@ void Gint_fvl::cal_fvl_svl_()
     }
 }
 
-
-}
+} // namespace ModuleGint

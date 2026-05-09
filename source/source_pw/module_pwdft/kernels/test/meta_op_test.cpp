@@ -6,18 +6,46 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-class TestModuleHamiltMeta : public ::testing::Test
-{
-protected:
+class TestModuleHamiltMeta : public ::testing::Test {
+  protected:
     // xx = tf.random.uniform([100], minval=-4, maxval=4, dtype = tf.float64)
     const int ik = 0, pol = 0, npw = 15, npwx = 15;
     const double tpiba = 0.61599855952741045;
 
     const std::vector<double> kvec_c = {0, 0, 0};
-    const std::vector<double> gcar = {1, -1, -1, 0, 0, 0, -1, 1, 1, 1, -1, 1, 0, 0, 2, 0, 0, -2, -1, 1, -1, 1, 1, -1, 0, 2, 0, 2, 0, 0, 1, 1, 1, 0, -2, 0, -1, -1, 1, -1, -1, -1, -2, 0, 0};
+    const std::vector<double> gcar = {1,  -1, -1, 0, 0, 0, -1, 1, 1, 1, -1, 1,  0, 0,  2,  0, 0,  -2, -1, 1,  -1, 1, 1,
+                                      -1, 0,  2,  0, 2, 0, 0,  1, 1, 1, 0,  -2, 0, -1, -1, 1, -1, -1, -1, -2, 0,  0};
 
-    const std::vector<std::complex<double> > in = {{0.073755, 0.215648}, {-0.661877, 0.517527}, {0.0586699, -0.186777}, {0.00957812, -0.0832565}, {-0.0523913, -0.0184799}, {-0.0259417, -0.124468}, {-0.090873, -0.00766968}, {-0.0277014, -0.0220417}, {0.000145658, 0.00325686}, {-0.0254601, 0.018268}, {0.0251554, 0.0204952}, {-0.126029, -0.0193828}, {0.0681057, -0.108652}, {0.0164339, -0.130657}, {0.0972758, -0.0168042}};
-    const std::vector<std::complex<double> > expected_out = {{-0.132839, 0.045433}, {-0, 0}, {-0.115054, -0.0361406}, {0.0512859, 0.00590011}, {0, -0}, {0, -0}, {-0.00472451, 0.0559777}, {0.0135776, -0.0170641}, {0, 0}, {-0.0225061, -0.0313667}, {-0.012625, 0.0154957}, {0, -0}, {-0.0669297, -0.041953}, {-0.0804844, -0.0101233}, {-0.0207027, -0.119844}};
+    const std::vector<std::complex<double>> in = {{0.073755, 0.215648},
+                                                  {-0.661877, 0.517527},
+                                                  {0.0586699, -0.186777},
+                                                  {0.00957812, -0.0832565},
+                                                  {-0.0523913, -0.0184799},
+                                                  {-0.0259417, -0.124468},
+                                                  {-0.090873, -0.00766968},
+                                                  {-0.0277014, -0.0220417},
+                                                  {0.000145658, 0.00325686},
+                                                  {-0.0254601, 0.018268},
+                                                  {0.0251554, 0.0204952},
+                                                  {-0.126029, -0.0193828},
+                                                  {0.0681057, -0.108652},
+                                                  {0.0164339, -0.130657},
+                                                  {0.0972758, -0.0168042}};
+    const std::vector<std::complex<double>> expected_out = {{-0.132839, 0.045433},
+                                                            {-0, 0},
+                                                            {-0.115054, -0.0361406},
+                                                            {0.0512859, 0.00590011},
+                                                            {0, -0},
+                                                            {0, -0},
+                                                            {-0.00472451, 0.0559777},
+                                                            {0.0135776, -0.0170641},
+                                                            {0, 0},
+                                                            {-0.0225061, -0.0313667},
+                                                            {-0.012625, 0.0154957},
+                                                            {0, -0},
+                                                            {-0.0669297, -0.041953},
+                                                            {-0.0804844, -0.0101233},
+                                                            {-0.0207027, -0.119844}};
 
     const base_device::DEVICE_CPU* cpu_ctx = {};
     const base_device::DEVICE_GPU* gpu_ctx = {};
@@ -34,18 +62,15 @@ protected:
 
     using delmem_var_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
     using resmem_var_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
-    using syncmem_var_h2d_op
-        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_var_h2d_op =
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
-    void SetUp() override {
-    }
-    void TearDown() override {
-    }
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-TEST_F(TestModuleHamiltMeta, meta_pw_op_cpu)
-{
-    std::vector<std::complex<double>> res(expected_out.size(), std::complex<double> {0, 0});
+TEST_F(TestModuleHamiltMeta, meta_pw_op_cpu) {
+    std::vector<std::complex<double>> res(expected_out.size(), std::complex<double>{0, 0});
     meta_cpu_op()(cpu_ctx, ik, pol, npw, npwx, tpiba, gcar.data(), kvec_c.data(), in.data(), res.data());
 
     for (int ii = 0; ii < res.size(); ii++) {
@@ -53,13 +78,11 @@ TEST_F(TestModuleHamiltMeta, meta_pw_op_cpu)
     }
 }
 
-
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-TEST_F(TestModuleHamiltMeta, meta_pw_op_gpu)
-{
-    std::vector<std::complex<double>> res(expected_out.size(), std::complex<double> {0, 0});
-    double * d_gcar = nullptr, * d_kvec_c = nullptr;
-    std::complex<double>* d_in = nullptr, * d_res = nullptr;
+TEST_F(TestModuleHamiltMeta, meta_pw_op_gpu) {
+    std::vector<std::complex<double>> res(expected_out.size(), std::complex<double>{0, 0});
+    double *d_gcar = nullptr, *d_kvec_c = nullptr;
+    std::complex<double>*d_in = nullptr, *d_res = nullptr;
     resmem_var_op()(d_gcar, gcar.size());
     resmem_var_op()(d_kvec_c, kvec_c.size());
     resmem_complex_op()(d_in, in.size());

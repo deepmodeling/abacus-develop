@@ -6,8 +6,7 @@
 
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 void save_dH_sparse(const int& istep,
                     const Parallel_Orbitals& pv,

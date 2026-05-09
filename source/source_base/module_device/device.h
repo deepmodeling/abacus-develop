@@ -10,11 +10,9 @@
 #include "mpi.h"
 #endif
 
-namespace base_device
-{
+namespace base_device {
 
-namespace information
-{
+namespace information {
 
 /**
  * @brief Get the device name
@@ -46,8 +44,7 @@ bool probe_gpu_availability();
  * @brief Get the device flag object
  * for source_io PARAM.inp.device
  */
-std::string get_device_flag(const std::string& device,
-                            const std::string& basis_type);
+std::string get_device_flag(const std::string& device, const std::string& basis_type);
 
 #if __MPI
 /**
@@ -59,23 +56,24 @@ int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 #endif
 
 template <typename Device>
-void print_device_info(const Device* dev, std::ofstream& ofs_device)
-{
+void print_device_info(const Device* dev, std::ofstream& ofs_device) {
     return;
 }
 
 template <typename Device>
-void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size)
-{
+void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {
     return;
 }
 
 #if defined(__CUDA) || defined(__ROCM)
 template <>
-void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU *ctx, std::ofstream &ofs_device);
+void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device);
 
 template <>
-void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* dev, std::ofstream& ofs_device, std::string str, size_t size);
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* dev,
+                                                   std::ofstream& ofs_device,
+                                                   std::string str,
+                                                   size_t size);
 #endif
 
 } // end of namespace information
@@ -96,7 +94,7 @@ void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU
  *   int dev_id = DeviceContext::instance().get_device_id();
  */
 class DeviceContext {
-public:
+  public:
     /**
      * @brief Get the singleton instance of DeviceContext
      * @return Reference to the singleton instance
@@ -181,7 +179,7 @@ public:
     DeviceContext(const DeviceContext&) = delete;
     DeviceContext& operator=(const DeviceContext&) = delete;
 
-private:
+  private:
     DeviceContext() = default;
     ~DeviceContext() = default;
 
@@ -200,10 +198,7 @@ private:
  * @param ctx Pointer to DeviceContext
  * @return AbacusDevice_t enum value
  */
-inline AbacusDevice_t get_device_type(const DeviceContext* ctx)
-{
-    return ctx->get_device_type();
-}
+inline AbacusDevice_t get_device_type(const DeviceContext* ctx) { return ctx->get_device_type(); }
 
 } // end of namespace base_device
 

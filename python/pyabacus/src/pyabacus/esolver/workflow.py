@@ -48,10 +48,10 @@ class LCAOWorkflow:
 
     # Event names for callbacks
     EVENTS = [
-        'before_scf',        # Called after before_scf()
-        'after_iter',        # Called after each SCF iteration
-        'before_after_scf',  # Called before after_scf() - main breakpoint
-        'after_scf',         # Called after after_scf()
+        "before_scf",  # Called after before_scf()
+        "after_iter",  # Called after each SCF iteration
+        "before_after_scf",  # Called before after_scf() - main breakpoint
+        "after_scf",  # Called after after_scf()
     ]
 
     def __init__(self, input_dir: str, gamma_only: bool = True):
@@ -86,9 +86,11 @@ class LCAOWorkflow:
         try:
             if self._gamma_only:
                 from ._esolver_pack import ESolverLCAO_gamma
+
                 self._esolver = ESolverLCAO_gamma()
             else:
                 from ._esolver_pack import ESolverLCAO_multi_k
+
                 self._esolver = ESolverLCAO_multi_k()
         except ImportError as e:
             raise ImportError(
@@ -100,7 +102,9 @@ class LCAOWorkflow:
         self._esolver.before_all_runners()
         self._initialized = True
 
-    def register_callback(self, event: str, callback: Callable[['LCAOWorkflow'], None]) -> None:
+    def register_callback(
+        self, event: str, callback: Callable[["LCAOWorkflow"], None]
+    ) -> None:
         """
         Register a callback function for a specific event.
 
@@ -118,9 +122,7 @@ class LCAOWorkflow:
             If event name is not recognized
         """
         if event not in self.EVENTS:
-            raise ValueError(
-                f"Unknown event '{event}'. Valid events: {self.EVENTS}"
-            )
+            raise ValueError(f"Unknown event '{event}'. Valid events: {self.EVENTS}")
         self._callbacks[event].append(callback)
 
     def unregister_callback(self, event: str, callback: Callable) -> bool:
@@ -168,7 +170,7 @@ class LCAOWorkflow:
         self,
         max_iter: int = 100,
         istep: int = 0,
-        callback: Optional[Callable[['LCAOWorkflow', int], None]] = None
+        callback: Optional[Callable[["LCAOWorkflow", int], None]] = None,
     ) -> SCFResult:
         """
         Run SCF calculation with callback support.
@@ -200,14 +202,14 @@ class LCAOWorkflow:
 
         # before_scf
         self._esolver.before_scf(istep)
-        self._fire_callbacks('before_scf')
+        self._fire_callbacks("before_scf")
 
         # SCF loop
         for iter_num in range(1, max_iter + 1):
             self._esolver.run_scf_iteration(iter_num)
 
             # Fire after_iter callbacks
-            self._fire_callbacks('after_iter', iter_num)
+            self._fire_callbacks("after_iter", iter_num)
 
             # Call user-provided callback
             if callback is not None:
@@ -218,14 +220,14 @@ class LCAOWorkflow:
                 break
 
         # Breakpoint before after_scf - this is the main inspection point
-        self._fire_callbacks('before_after_scf')
+        self._fire_callbacks("before_after_scf")
 
         # Collect result before after_scf
         result = self._collect_result()
 
         # after_scf
         self._esolver.after_scf(istep)
-        self._fire_callbacks('after_scf')
+        self._fire_callbacks("after_scf")
 
         self._scf_running = False
 
@@ -263,7 +265,7 @@ class LCAOWorkflow:
             raise RuntimeError("Workflow not initialized. Call initialize() first.")
         self._esolver.before_scf(istep)
         self._scf_running = True
-        self._fire_callbacks('before_scf')
+        self._fire_callbacks("before_scf")
 
     def after_scf(self, istep: int = 0) -> None:
         """
@@ -276,9 +278,9 @@ class LCAOWorkflow:
         istep : int
             Ion step index
         """
-        self._fire_callbacks('before_after_scf')
+        self._fire_callbacks("before_after_scf")
         self._esolver.after_scf(istep)
-        self._fire_callbacks('after_scf')
+        self._fire_callbacks("after_scf")
         self._scf_running = False
 
     def _collect_result(self) -> SCFResult:

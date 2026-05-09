@@ -18,22 +18,19 @@
  ***********************************************/
 
 class BFGSTest : public ::testing::Test {
-protected:
+  protected:
     BFGS bfgs;
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // nothing global to clean here
     }
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(BFGSTest, TestAllocate)
-{
+TEST_F(BFGSTest, TestAllocate) {
     int size = 2;
     bfgs.allocate(size);
 
@@ -48,15 +45,14 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_FALSE(bfgs.steplength.empty());
     EXPECT_FALSE(bfgs.dpos.empty());
     EXPECT_EQ(bfgs.size, size);
-    EXPECT_EQ(bfgs.alpha,70);
-    EXPECT_EQ(bfgs.maxstep,PARAM.inp.relax_bfgs_rmax);
+    EXPECT_EQ(bfgs.alpha, 70);
+    EXPECT_EQ(bfgs.maxstep, PARAM.inp.relax_bfgs_rmax);
     EXPECT_TRUE(bfgs.sign);
-    EXPECT_EQ(bfgs.largest_grad,0.0);
+    EXPECT_EQ(bfgs.largest_grad, 0.0);
 }
 
 // Test that relax_step will auto-initialize if not already initialized
-TEST_F(BFGSTest, RelaxStepAutoInitialize)
-{
+TEST_F(BFGSTest, RelaxStepAutoInitialize) {
     bfgs.is_initialized = false;
 
     UnitCell ucell;
@@ -67,13 +63,21 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
     ucell.lat0 = 1.0;
 
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
-    force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
+    force(0, 0) = 0.1;
+    force(0, 1) = 0.0;
+    force(0, 2) = 0.0;
+    force(1, 0) = -0.1;
+    force(1, 1) = 0.0;
+    force(1, 2) = 0.0;
 
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(bfgs.is_initialized);
@@ -83,23 +87,19 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(BFGSTest, TestAllocateWithZeroDimension)
-{
+TEST_F(BFGSTest, TestAllocateWithZeroDimension) {
     int size = 0;
     ASSERT_DEATH(bfgs.allocate(size), "");
 }
 
 // Test DetermineStep scaling
-TEST_F(BFGSTest, DetermineStepScaling)
-{
+TEST_F(BFGSTest, DetermineStepScaling) {
     int size = 2;
     bfgs.allocate(size);
 
     std::vector<double> steplength = {1.0, 0.1};
-    std::vector<ModuleBase::Vector3<double>> dpos = {
-        ModuleBase::Vector3<double>(1.0, 1.0, 1.0),
-        ModuleBase::Vector3<double>(0.1, 0.1, 0.1)
-    };
+    std::vector<ModuleBase::Vector3<double>> dpos = {ModuleBase::Vector3<double>(1.0, 1.0, 1.0),
+                                                     ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
     double maxstep = 0.5;
     bfgs.DetermineStep(steplength, dpos, maxstep);
 
@@ -115,8 +115,7 @@ TEST_F(BFGSTest, DetermineStepScaling)
 }
 
 // Test GetPos and GetPostaud without creating extra helper class
-TEST_F(BFGSTest, GetPosAndPostaud)
-{
+TEST_F(BFGSTest, GetPosAndPostaud) {
     // prepare UnitCell with 1 type and 2 atoms
     UnitCell ucell;
     ucell.ntype = 1;
@@ -131,10 +130,14 @@ TEST_F(BFGSTest, GetPosAndPostaud)
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
 
     // set coordinates
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
 
-    // allocate mapping arrays 
+    // allocate mapping arrays
     ucell.iat2it = new int[ucell.nat];
     ucell.iat2ia = new int[ucell.nat];
     int k = 0;
@@ -157,8 +160,7 @@ TEST_F(BFGSTest, GetPosAndPostaud)
 }
 
 // Test CalculateLargestGrad (uses ModuleBase::matrix)
-TEST_F(BFGSTest, CalculateLargestGrad)
-{
+TEST_F(BFGSTest, CalculateLargestGrad) {
     // UnitCell with 1 type and 2 atoms
     UnitCell ucell;
     ucell.ntype = 1;
@@ -183,10 +185,10 @@ TEST_F(BFGSTest, CalculateLargestGrad)
 
     // build force matrix: 2 atoms x 3 components
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = -2.0;  // this yields grad component = -(-2.0)*lat0 = 4.0 -> divided by lat0 => 2.0
+    force(0, 0) = -2.0; // this yields grad component = -(-2.0)*lat0 = 4.0 -> divided by lat0 => 2.0
     force(0, 1) = 0.0;
     force(0, 2) = 1.0;
-    force(1, 0) = 3.0;   // this yields abs = 6.0 -> divided by lat0 => 3.0 (this should be largest)
+    force(1, 0) = 3.0; // this yields abs = 6.0 -> divided by lat0 => 3.0 (this should be largest)
     force(1, 1) = -1.0;
     force(1, 2) = 0.0;
 
@@ -198,8 +200,7 @@ TEST_F(BFGSTest, CalculateLargestGrad)
 }
 
 // Test relax_step basic functionality
-TEST_F(BFGSTest, RelaxStepBasic)
-{
+TEST_F(BFGSTest, RelaxStepBasic) {
     // Setup UnitCell with 1 type, 2 atoms
     UnitCell ucell;
     ucell.ntype = 1;
@@ -221,12 +222,20 @@ TEST_F(BFGSTest, RelaxStepBasic)
         }
     }
     // Set initial positions
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
     // Setup force matrix
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
-    force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
+    force(0, 0) = 0.1;
+    force(0, 1) = 0.0;
+    force(0, 2) = 0.0;
+    force(1, 0) = -0.1;
+    force(1, 1) = 0.0;
+    force(1, 2) = 0.0;
     // Allocate and call relax_step
     bfgs.allocate(ucell.nat);
     bfgs.relax_step(force, ucell);

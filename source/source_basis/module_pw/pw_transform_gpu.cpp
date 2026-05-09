@@ -1,19 +1,18 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/kernels/pw_op.h"
 #include "pw_basis.h"
-namespace ModulePW
-{
+namespace ModulePW {
 #if (defined(__CUDA) || defined(__ROCM))
 template <typename FPTYPE>
-void PW_Basis::real2recip_gpu(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
-{
+void PW_Basis::real2recip_gpu(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->poolnproc == 1);
     const size_t size = this->nrxx;
-    base_device::memory::cast_memory_op<std::complex<FPTYPE>, FPTYPE,base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-        this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
-        in,
-        size);
+    base_device::memory::
+        cast_memory_op<std::complex<FPTYPE>, FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
+            this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
+            in,
+            size);
 
     this->fft_bundle.fft3D_forward(this->fft_bundle.get_auxr_3d_data<FPTYPE>(),
                                    this->fft_bundle.get_auxr_3d_data<FPTYPE>());
@@ -31,8 +30,7 @@ template <typename FPTYPE>
 void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
                               std::complex<FPTYPE>* out,
                               const bool add,
-                              const FPTYPE factor) const
-{
+                              const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "real_to_recip gpu");
     assert(this->poolnproc == 1);
     base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
@@ -54,8 +52,7 @@ void PW_Basis::real2recip_gpu(const std::complex<FPTYPE>* in,
 }
 
 template <typename FPTYPE>
-void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
-{
+void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<FPTYPE>(), this->nxyz);
@@ -82,8 +79,7 @@ template <typename FPTYPE>
 void PW_Basis::recip2real_gpu(const std::complex<FPTYPE>* in,
                               std::complex<FPTYPE>* out,
                               const bool add,
-                              const FPTYPE factor) const
-{
+                              const FPTYPE factor) const {
     ModuleBase::timer::start(this->classname, "recip_to_real gpu");
     assert(this->poolnproc == 1);
     // ModuleBase::GlobalFunc::ZEROS(fft_bundle.get_auxr_3d_data<double>(), this->nxyz);
@@ -111,10 +107,8 @@ template void PW_Basis::real2recip_gpu<double>(const double* in,
                                                std::complex<double>* out,
                                                const bool add,
                                                const double factor) const;
-template void PW_Basis::real2recip_gpu<float>(const float* in,
-                                              std::complex<float>* out,
-                                              const bool add,
-                                              const float factor) const;
+template void
+PW_Basis::real2recip_gpu<float>(const float* in, std::complex<float>* out, const bool add, const float factor) const;
 
 template void PW_Basis::real2recip_gpu<double>(const std::complex<double>* in,
                                                std::complex<double>* out,
@@ -129,10 +123,8 @@ template void PW_Basis::recip2real_gpu<double>(const std::complex<double>* in,
                                                double* out,
                                                const bool add,
                                                const double factor) const;
-template void PW_Basis::recip2real_gpu<float>(const std::complex<float>* in,
-                                              float* out,
-                                              const bool add,
-                                              const float factor) const;
+template void
+PW_Basis::recip2real_gpu<float>(const std::complex<float>* in, float* out, const bool add, const float factor) const;
 
 template void PW_Basis::recip2real_gpu<double>(const std::complex<double>* in,
                                                std::complex<double>* out,

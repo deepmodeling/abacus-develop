@@ -3,17 +3,11 @@
 #include "md_func.h"
 #include "source_base/timer.h"
 
-Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
-{
-}
+Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in) {}
 
-Verlet::~Verlet()
-{
-}
+Verlet::~Verlet() {}
 
-
-void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
-{
+void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir) {
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::start("Verlet", "setup");
 
@@ -22,9 +16,7 @@ void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_
     ModuleBase::timer::end("Verlet", "setup");
 }
 
-
-void Verlet::first_half(std::ofstream& ofs)
-{
+void Verlet::first_half(std::ofstream& ofs) {
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::start("Verlet", "first_half");
 
@@ -34,9 +26,7 @@ void Verlet::first_half(std::ofstream& ofs)
     ModuleBase::timer::end("Verlet", "first_half");
 }
 
-
-void Verlet::second_half()
-{
+void Verlet::second_half() {
     ModuleBase::TITLE("Verlet", "second_half");
     ModuleBase::timer::start("Verlet", "second_half");
 
@@ -46,45 +36,29 @@ void Verlet::second_half()
     ModuleBase::timer::end("Verlet", "second_half");
 }
 
-
-void Verlet::apply_thermostat(void)
-{
+void Verlet::apply_thermostat(void) {
     double t_target = 0.0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
-    if (mdp.md_type == "nve")
-    {
-    }
-    else if (mdp.md_thermostat == "rescaling")
-    {
+    if (mdp.md_type == "nve") {
+    } else if (mdp.md_thermostat == "rescaling") {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-        if (std::abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance)
-        {
+        if (std::abs(t_target - t_current) * ModuleBase::Hartree_to_K > mdp.md_tolerance) {
             thermalize(0, t_current, t_target);
         }
-    }
-    else if (mdp.md_thermostat == "rescale_v")
-    {
-        if ((step_ + step_rst_) % mdp.md_nraise == 0)
-        {
+    } else if (mdp.md_thermostat == "rescale_v") {
+        if ((step_ + step_rst_) % mdp.md_nraise == 0) {
             t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
             thermalize(0, t_current, t_target);
         }
-    }
-    else if (mdp.md_thermostat == "anderson")
-    {
-        if (my_rank == 0)
-        {
+    } else if (mdp.md_thermostat == "anderson") {
+        if (my_rank == 0) {
             double deviation = 0.0;
-            for (int i = 0; i < ucell.nat; ++i)
-            {
-                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
-                {
+            for (int i = 0; i < ucell.nat; ++i) {
+                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise) {
                     deviation = sqrt(md_tlast / allmass[i]);
-                    for (int k = 0; k < 3; ++k)
-                    {
-                        if (ionmbl[i][k])
-                        {
+                    for (int k = 0; k < 3; ++k) {
+                        if (ionmbl[i][k]) {
                             vel[i][k] = deviation * MD_func::gaussrand();
                         }
                     }
@@ -94,54 +68,38 @@ void Verlet::apply_thermostat(void)
 #ifdef __MPI
         MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-    }
-    else if (mdp.md_thermostat == "berendsen")
-    {
+    } else if (mdp.md_thermostat == "berendsen") {
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("Verlet", "No such thermostat!");
     }
 }
 
-
-void Verlet::thermalize(const int& nraise, const double& current_temp, const double& target_temp)
-{
+void Verlet::thermalize(const int& nraise, const double& current_temp, const double& target_temp) {
     double fac = 0.0;
-    if (nraise > 0 && current_temp > 0 && target_temp > 0)
-    {
+    if (nraise > 0 && current_temp > 0 && target_temp > 0) {
         fac = sqrt(1 + (target_temp / current_temp - 1) / nraise);
-    }
-    else if (nraise == 0 && current_temp > 0 && target_temp > 0)
-    {
+    } else if (nraise == 0 && current_temp > 0 && target_temp > 0) {
         fac = sqrt(target_temp / current_temp);
     }
 
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+    for (int i = 0; i < ucell.nat; ++i) {
         vel[i] *= fac;
     }
 }
 
-
-void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
-{
+void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress) {
     MD_base::print_md(ofs, cal_stress);
     return;
 }
 
-
-void Verlet::write_restart(const std::string& global_out_dir)
-{
+void Verlet::write_restart(const std::string& global_out_dir) {
     MD_base::write_restart(global_out_dir);
     return;
 }
 
-
-void Verlet::restart(const std::string& global_readin_dir)
-{
+void Verlet::restart(const std::string& global_readin_dir) {
     MD_base::restart(global_readin_dir);
     return;
 }

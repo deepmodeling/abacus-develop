@@ -22,16 +22,14 @@
  *     - add pseudo charge to rho
  **/
 
-class cal_pseudo_test : public testing::Test
-{
+class cal_pseudo_test : public testing::Test {
   protected:
     surchem solvent_model;
     UnitCell ucell;
     Parallel_Grid pgrid;
 };
 
-TEST_F(cal_pseudo_test, gauss_charge)
-{
+TEST_F(cal_pseudo_test, gauss_charge) {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
@@ -86,8 +84,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
     delete[] N;
 }
 
-TEST_F(cal_pseudo_test, cal_pseudo)
-{
+TEST_F(cal_pseudo_test, cal_pseudo) {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
@@ -132,8 +129,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     std::complex<double>* Porter_g = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
-    for (int i = 0; i < npw; i++)
-    {
+    for (int i = 0; i < npw; i++) {
         Porter_g[i] = 0.1;
     }
 
@@ -147,8 +143,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);

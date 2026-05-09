@@ -6,16 +6,13 @@
 #include <cassert>
 
 #include "complexarray.h"
-namespace ModuleBase
-{
-void complexArrayxAlloc()
-{
+namespace ModuleBase {
+void complexArrayxAlloc() {
     std::cerr << "Allocation error for complexArray" << std::endl;
     std::exit(EXIT_FAILURE);
 }
 
-ComplexArray::ComplexArray(const int bnd1, const int bnd2, const int bnd3, const int bnd4)
-{
+ComplexArray::ComplexArray(const int bnd1, const int bnd2, const int bnd3, const int bnd4) {
     bound1 = bnd1;
     bound2 = bnd2;
     bound3 = bnd3;
@@ -23,35 +20,26 @@ ComplexArray::ComplexArray(const int bnd1, const int bnd2, const int bnd3, const
     init(this->getSize());
 }
 
-ComplexArray::~ComplexArray()
-{
-    freemem();
-}
-void ComplexArray::init(const int size)
-{
-    assert(size>=0);
-    if(size>0)
-    {
-        ptr = new std::complex<double> [size];
+ComplexArray::~ComplexArray() { freemem(); }
+void ComplexArray::init(const int size) {
+    assert(size >= 0);
+    if (size > 0) {
+        ptr = new std::complex<double>[size];
         assert(ptr != 0);
-    }
-    else
-    {
+    } else {
         ptr = nullptr;
     }
 }
-void ComplexArray::freemem()
-{
-    delete [] ptr;
+void ComplexArray::freemem() {
+    delete[] ptr;
     ptr = nullptr;
     bound1 = 0;
     bound2 = 0;
     bound3 = 0;
     bound4 = 0;
 }
-void ComplexArray::create(const int bnd1, const int bnd2, const int bnd3, const int bnd4)
-{
-    delete [] ptr;
+void ComplexArray::create(const int bnd1, const int bnd2, const int bnd3, const int bnd4) {
+    delete[] ptr;
     bound1 = bnd1;
     bound2 = bnd2;
     bound3 = bnd3;
@@ -60,13 +48,11 @@ void ComplexArray::create(const int bnd1, const int bnd2, const int bnd3, const 
     this->init(size);
     this->zero_out();
 }
-ComplexArray::ComplexArray(const ComplexArray &cd)
-{
+ComplexArray::ComplexArray(const ComplexArray& cd) {
     this->freemem();
     const int size = cd.getSize();
     this->init(size);
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         ptr[i] = cd.ptr[i];
     }
     this->bound1 = cd.bound1;
@@ -74,9 +60,8 @@ ComplexArray::ComplexArray(const ComplexArray &cd)
     this->bound3 = cd.bound3;
     this->bound4 = cd.bound4;
 }
-ComplexArray::ComplexArray(ComplexArray &&cd)
-{
-    delete [] this->ptr;
+ComplexArray::ComplexArray(ComplexArray&& cd) {
+    delete[] this->ptr;
     this->ptr = cd.ptr;
     cd.ptr = nullptr;
     this->bound1 = cd.bound1;
@@ -88,9 +73,8 @@ ComplexArray::ComplexArray(ComplexArray &&cd)
     this->bound4 = cd.bound4;
     cd.bound4 = 0;
 }
-ComplexArray& ComplexArray::operator=(ComplexArray &&cd)
-{
-    delete [] this->ptr;
+ComplexArray& ComplexArray::operator=(ComplexArray&& cd) {
+    delete[] this->ptr;
     this->ptr = cd.ptr;
     cd.ptr = nullptr;
     this->bound1 = cd.bound1;
@@ -103,131 +87,104 @@ ComplexArray& ComplexArray::operator=(ComplexArray &&cd)
     cd.bound4 = 0;
     return *this;
 }
-ComplexArray &ComplexArray::operator=(const ComplexArray & cd)
-{
+ComplexArray& ComplexArray::operator=(const ComplexArray& cd) {
     const int size = this->getSize();
-    assert(size==cd.getSize());
-    for (int i = 0; i < size; i++)
-    {
+    assert(size == cd.getSize());
+    for (int i = 0; i < size; i++) {
         ptr[i] = cd.ptr[i];
     }
     return *this;
 }
-void ComplexArray::operator=(const std::complex < double> c)
-{
+void ComplexArray::operator=(const std::complex<double> c) {
     const int size = this->getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         ptr[i] = c;
     }
 }
-ComplexArray ComplexArray::operator+(const ComplexArray &cd) const
-{
+ComplexArray ComplexArray::operator+(const ComplexArray& cd) const {
     const int size = this->getSize();
-    assert(size==cd.getSize());
+    assert(size == cd.getSize());
     ComplexArray cd2(*this);
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] += cd.ptr[i];
     }
     return cd2;
 }
-void ComplexArray::operator+=(const ComplexArray & cd)
-{
+void ComplexArray::operator+=(const ComplexArray& cd) {
     const int size = this->getSize();
-    assert(size==cd.getSize());
-    for (int i = 0; i < size; i++)
-    {
+    assert(size == cd.getSize());
+    for (int i = 0; i < size; i++) {
         ptr[i] += cd.ptr[i];
     }
 }
-ComplexArray ComplexArray::operator-(const ComplexArray &cd) const
-{
+ComplexArray ComplexArray::operator-(const ComplexArray& cd) const {
     const int size = this->getSize();
-    assert(size==cd.getSize());
+    assert(size == cd.getSize());
     ComplexArray cd2(*this);
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] -= cd.ptr[i];
     }
     return cd2;
 }
-void ComplexArray::operator-=(const ComplexArray & cd)
-{
+void ComplexArray::operator-=(const ComplexArray& cd) {
     const int size = this->getSize();
-    assert(size==cd.getSize());
-    for (int i = 0; i < size; i++)
-    {
+    assert(size == cd.getSize());
+    for (int i = 0; i < size; i++) {
         ptr[i] -= cd.ptr[i];
     }
 }
-void ComplexArray::operator*=(const ComplexArray & cd)
-{
+void ComplexArray::operator*=(const ComplexArray& cd) {
     const int size = this->getSize();
-    assert(size==cd.getSize());
-    for (int i = 0; i < size; i++)
-    {
+    assert(size == cd.getSize());
+    for (int i = 0; i < size; i++) {
         ptr[i] *= cd.ptr[i];
     }
 }
-ComplexArray operator*(const double r, const ComplexArray &cd)
-{
+ComplexArray operator*(const double r, const ComplexArray& cd) {
     ComplexArray cd2(cd);
     const int size = cd.getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] *= r;
     }
     return cd2;
 }
-ComplexArray ComplexArray::operator*(const double r) const
-{
+ComplexArray ComplexArray::operator*(const double r) const {
     ComplexArray cd2(*this);
     const int size = this->getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] *= r;
     }
     return cd2;
 }
-ComplexArray operator*(const std::complex < double> c, const ComplexArray &cd)
-{
+ComplexArray operator*(const std::complex<double> c, const ComplexArray& cd) {
     const int size = cd.getSize();
     ComplexArray cd2(cd.getSize());
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] = c * cd.ptr[i];
     }
     return cd2;
 }
-ComplexArray ComplexArray::operator*(const std::complex < double> c) const
-{
+ComplexArray ComplexArray::operator*(const std::complex<double> c) const {
     const int size = this->getSize();
     ComplexArray cd(size);
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd.ptr[i] = ptr[i] * c;
     }
     return cd;
 }
-void ComplexArray::operator*=(const std::complex <double> c)
-{
+void ComplexArray::operator*=(const std::complex<double> c) {
     const int size = this->getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         ptr[i] *= c;
     }
 }
-void ComplexArray::operator*=(const double r)
-{
+void ComplexArray::operator*=(const double r) {
     const int size = this->getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         ptr[i] *= r;
     }
 }
-bool ComplexArray::operator==(const ComplexArray &cd2)const
-{
+bool ComplexArray::operator==(const ComplexArray& cd2) const {
     const int size1 = this->getSize();
     const int size2 = cd2.getSize();
     const int b11 = this->getBound1();
@@ -238,37 +195,29 @@ bool ComplexArray::operator==(const ComplexArray &cd2)const
     const int b22 = cd2.getBound2();
     const int b23 = cd2.getBound3();
     const int b24 = cd2.getBound4();
-    if (size1 != size2)
-    {
+    if (size1 != size2) {
         return false;
     }
-    if (b11 != b21)
-    {
+    if (b11 != b21) {
         return false;
     }
-    if (b12 != b22)
-    {
+    if (b12 != b22) {
         return false;
     }
-    if (b13 != b23)
-    {
+    if (b13 != b23) {
         return false;
     }
-    if (b14 != b24)
-    {
+    if (b14 != b24) {
         return false;
     }
-    for ( int i = 0;i <size1;++i)
-    {
-        if (this->ptr[i] != cd2.ptr[i])
-        {
+    for (int i = 0; i < size1; ++i) {
+        if (this->ptr[i] != cd2.ptr[i]) {
             return false;
         }
     }
     return true;
 }
-bool ComplexArray::operator!=(const ComplexArray &cd2)const
-{
+bool ComplexArray::operator!=(const ComplexArray& cd2) const {
     const int size1 = this->getSize();
     const int size2 = cd2.getSize();
     const int b11 = this->getBound1();
@@ -279,67 +228,51 @@ bool ComplexArray::operator!=(const ComplexArray &cd2)const
     const int b22 = cd2.getBound2();
     const int b23 = cd2.getBound3();
     const int b24 = cd2.getBound4();
-    if (size1 != size2)
-    {
+    if (size1 != size2) {
         return true;
     }
-    if (b11 != b21)
-    {
+    if (b11 != b21) {
         return true;
     }
-    if (b12 != b22)
-    {
+    if (b12 != b22) {
         return true;
     }
-    if (b13 != b23)
-    {
+    if (b13 != b23) {
         return true;
     }
-    if (b14 != b24)
-    {
+    if (b14 != b24) {
         return true;
     }
-    for ( int i = 0;i <size1;++i)
-    {
-        if (this->ptr[i] != cd2.ptr[i])
-        {
+    for (int i = 0; i < size1; ++i) {
+        if (this->ptr[i] != cd2.ptr[i]) {
             return true;
         }
     }
     return false;
 }
-void ComplexArray::zero_out(void)
-{
+void ComplexArray::zero_out(void) {
     const int size = this->getSize();
-    for (int i = 0;i < size; i++)
-    {
-        ptr[i] = std::complex < double> (0.0, 0.0);
+    for (int i = 0; i < size; i++) {
+        ptr[i] = std::complex<double>(0.0, 0.0);
     }
 }
-void ComplexArray::negate(void)
-{
+void ComplexArray::negate(void) {
     const int size = this->getSize();
-    for (int i = 0;i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         ptr[i] = -ptr[i];
     }
 }
-void ComplexArray::randomize(void)
-{
+void ComplexArray::randomize(void) {
     const int size = this->getSize();
-    for (int i = 0;i < size; i++)
-    {
-        ptr[i] = std::complex < double> (rand() / (RAND_MAX + 1.) - .5,
-                                         rand() / (RAND_MAX + 1.) - .5);
+    for (int i = 0; i < size; i++) {
+        ptr[i] = std::complex<double>(rand() / (RAND_MAX + 1.) - .5, rand() / (RAND_MAX + 1.) - .5);
     }
 }
-double abs2(const ComplexArray &cd)
-{
-    double cdcd= 0.0;
+double abs2(const ComplexArray& cd) {
+    double cdcd = 0.0;
     const int size = cd.getSize();
-    for (int i = 0; i < size; i++)
-    {
-        const std::complex < double> c = cd.ptr[i];
+    for (int i = 0; i < size; i++) {
+        const std::complex<double> c = cd.ptr[i];
         cdcd += c.real() * c.real() + c.imag() * c.imag();
     }
     return cdcd;
@@ -349,71 +282,58 @@ double abs2(const ComplexArray &cd)
 //     const int size = in.getSize();
 //     for (int i = 0; i < size; i++)
 //         out.ptr[i] += std::complex < double> (c.real() * 22, c.imag() * 22);}
-std::complex<double> dot(const ComplexArray &cd1, const ComplexArray &cd2)
-{
-    assert(cd1.getSize()==cd2.getSize());
+std::complex<double> dot(const ComplexArray& cd1, const ComplexArray& cd2) {
+    assert(cd1.getSize() == cd2.getSize());
     const int size = cd1.getSize();
-    std::complex < double> dot12(0.0,0.0);
-    for (int i = 0; i < size; i++)
-    {
-        dot12 += std::complex < double>
-                 (cd1.ptr[i].real() * cd2.ptr[i].real() +
-                  cd1.ptr[i].imag() * cd2.ptr[i].imag(),
-                  cd1.ptr[i].real() * cd2.ptr[i].imag() -
-                  cd1.ptr[i].imag() * cd2.ptr[i].real());
+    std::complex<double> dot12(0.0, 0.0);
+    for (int i = 0; i < size; i++) {
+        dot12 += std::complex<double>(cd1.ptr[i].real() * cd2.ptr[i].real() + cd1.ptr[i].imag() * cd2.ptr[i].imag(),
+                                      cd1.ptr[i].real() * cd2.ptr[i].imag() - cd1.ptr[i].imag() * cd2.ptr[i].real());
     }
     return dot12;
 }
-void scale_accumulate(double r, const ComplexArray &cd1, ComplexArray &cd2)
-{
-    assert(cd1.getSize()==cd2.getSize());
+void scale_accumulate(double r, const ComplexArray& cd1, ComplexArray& cd2) {
+    assert(cd1.getSize() == cd2.getSize());
     const int size = cd1.getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] += r * cd1.ptr[i];
     }
 }
-void scale_accumulate(const std::complex<double> c, const ComplexArray &cd1, ComplexArray &cd2)
-{
-    assert(cd1.getSize()==cd2.getSize());
+void scale_accumulate(const std::complex<double> c, const ComplexArray& cd1, ComplexArray& cd2) {
+    assert(cd1.getSize() == cd2.getSize());
     const int size = cd1.getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd2.ptr[i] += c * cd1.ptr[i];
     }
 }
-void scaled_sum(double r1, const ComplexArray &cd1,double r2, const ComplexArray &cd2,ComplexArray &cd3)
-{
-    assert(cd1.getSize()==cd2.getSize());
-    assert(cd1.getSize()==cd3.getSize());
+void scaled_sum(double r1, const ComplexArray& cd1, double r2, const ComplexArray& cd2, ComplexArray& cd3) {
+    assert(cd1.getSize() == cd2.getSize());
+    assert(cd1.getSize() == cd3.getSize());
     const int size = cd1.getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd3.ptr[i] = r1 * cd1.ptr[i] + r2 * cd2.ptr[i];
     }
 }
-void scaled_sum(std::complex < double> c1, const ComplexArray &cd1,std::complex < double> c2, const ComplexArray &cd2,ComplexArray &cd3)
-{
-    assert(cd1.getSize()==cd2.getSize());
-    assert(cd1.getSize()==cd3.getSize());
+void scaled_sum(std::complex<double> c1,
+                const ComplexArray& cd1,
+                std::complex<double> c2,
+                const ComplexArray& cd2,
+                ComplexArray& cd3) {
+    assert(cd1.getSize() == cd2.getSize());
+    assert(cd1.getSize() == cd3.getSize());
     const int size = cd1.getSize();
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         cd3.ptr[i] = c1 * cd1.ptr[i] + c2 * cd2.ptr[i];
     }
 }
-void point_mult(ComplexArray &in1, ComplexArray &in2, ComplexArray &out)
-{
-    assert(in1.getSize()==in2.getSize());
-    assert(in1.getSize()==out.getSize());
+void point_mult(ComplexArray& in1, ComplexArray& in2, ComplexArray& out) {
+    assert(in1.getSize() == in2.getSize());
+    assert(in1.getSize() == out.getSize());
     const int size = in1.getSize();
-    for (int i = 0; i < size; i++)
-    {
-        out.ptr[i] = std::complex < double>
-                     (in1.ptr[i].real() * in2.ptr[i].real() -
-                      in1.ptr[i].imag() * in2.ptr[i].imag(),
-                      in1.ptr[i].real() * in2.ptr[i].imag() +
-                      in1.ptr[i].imag() * in2.ptr[i].real());
+    for (int i = 0; i < size; i++) {
+        out.ptr[i] =
+            std::complex<double>(in1.ptr[i].real() * in2.ptr[i].real() - in1.ptr[i].imag() * in2.ptr[i].imag(),
+                                 in1.ptr[i].real() * in2.ptr[i].imag() + in1.ptr[i].imag() * in2.ptr[i].real());
     }
 }
-}
+} // namespace ModuleBase

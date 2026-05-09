@@ -9,11 +9,9 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_base/math_lebedev_laikov.h"
 
-
 template <typename T>
-class FR_overlap
-{
-public:
+class FR_overlap {
+  public:
     using fr_ptr = std::function<T(ModuleBase::Vector3<double>)>;
 
     FR_overlap();
@@ -34,32 +32,28 @@ public:
 
     void calculate_FR();
 
-    hamilt::HContainer<T>* get_FR_pointer() const
-    {
-        return this->FR_container;
-    }
+    hamilt::HContainer<T>* get_FR_pointer() const { return this->FR_container; }
 
-protected:
-  void initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV);
+  protected:
+    void initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV);
 
-  void cal_FR_IJR(const int& iat1,
-                  const int& iat2,
-                  const Parallel_Orbitals* paraV,
-                  const ModuleBase::Vector3<double>& dtau,
-                  T* data_pointer);
+    void cal_FR_IJR(const int& iat1,
+                    const int& iat2,
+                    const Parallel_Orbitals* paraV,
+                    const ModuleBase::Vector3<double>& dtau,
+                    T* data_pointer);
 
-  std::map<std::pair<int, int>, double> psi_inter(const int& T1,
-                                                  const std::set<std::pair<int, int>>& LN_pair1,
-                                                  const double& r_norm);
+    std::map<std::pair<int, int>, double>
+    psi_inter(const int& T1, const std::set<std::pair<int, int>>& LN_pair1, const double& r_norm);
 
-  double Polynomial_Interpolation(const double* psi_r, const int& mesh_r, const double& dr, const double& x);
+    double Polynomial_Interpolation(const double* psi_r, const int& mesh_r, const double& dr, const double& x);
 
-  fr_ptr fr = nullptr;
-  const UnitCell* ucell = nullptr;
-  const LCAO_Orbitals* ptr_orb_ = nullptr;
-  int radial_grid_num = 140;
-  ModuleBase::Lebedev_laikov_grid* Leb_grid = nullptr;
-  hamilt::HContainer<T>* FR_container = nullptr;
+    fr_ptr fr = nullptr;
+    const UnitCell* ucell = nullptr;
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
+    int radial_grid_num = 140;
+    ModuleBase::Lebedev_laikov_grid* Leb_grid = nullptr;
+    hamilt::HContainer<T>* FR_container = nullptr;
 };
 #endif
 #endif

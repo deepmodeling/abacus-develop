@@ -1,4 +1,4 @@
-/// This is the module for wrapper of 
+/// This is the module for wrapper of
 /// DeNse Generalized eigenValue (eXtended)
 /// HErmitian / SYmmetric
 
@@ -32,21 +32,18 @@
 
 #include "source_base/macros.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
-inline double get_real(const std::complex<double> &x) { return x.real(); }
+inline double get_real(const std::complex<double>& x) { return x.real(); }
 
-inline float get_real(const std::complex<float> &x) { return x.real(); }
+inline float get_real(const std::complex<float>& x) { return x.real(); }
 
-inline double get_real(const double &x) { return x; }
+inline double get_real(const double& x) { return x; }
 
-inline float get_real(const float &x) { return x; }
-
+inline float get_real(const float& x) { return x; }
 
 template <typename T, typename Device>
-struct hegvd_op
-{
+struct hegvd_op {
     using Real = typename GetTypeReal<T>::type;
     /// @brief HEGVD computes all the eigenvalues and eigenvectors of a complex generalized
     /// Hermitian-definite eigenproblem. If eigenvectors are desired, it uses a divide and conquer algorithm.
@@ -88,8 +85,7 @@ struct hegvd_op
 // };
 
 template <typename T, typename Device>
-struct hegvx_op
-{
+struct hegvx_op {
     using Real = typename GetTypeReal<T>::type;
     /// @brief HEGVX computes first m eigenvalues and eigenvectors of a complex generalized
     /// Input Parameters
@@ -106,8 +102,7 @@ struct hegvx_op
 };
 
 template <typename T, typename Device>
-struct heevx_op
-{
+struct heevx_op {
     using Real = typename GetTypeReal<T>::type;
     /// @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
     /// a complex generalized Hermitian-definite eigenproblem
@@ -128,7 +123,7 @@ struct heevx_op
     /// Output Parameter
     ///     @param w: calculated eigenvalues
     ///     @param z: calculated eigenvectors
-    void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *w, T *z);
+    void operator()(const Device* d, const int ndim, const int lda, const T* A, const int neig, Real* w, T* z);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -16,16 +16,14 @@
  *  the full LCAO_set.cpp (which has heavy dependencies).
  ***********************************************/
 
-TEST(InitChgHrErrorTest, MissingFileError)
-{
+TEST(InitChgHrErrorTest, MissingFileError) {
     std::string hrfile = "./nonexistent_dir/hrs1_nao.csr";
 
     // This replicates the exact check in init_hr_from_file
     EXPECT_DEATH(
         {
             std::ifstream test_file(hrfile);
-            if (!test_file.good())
-            {
+            if (!test_file.good()) {
                 std::string error_msg = "Cannot open Hamiltonian file: " + hrfile + "\n\n";
                 error_msg += "When using init_chg=hr, you need to provide Hamiltonian matrix files:\n";
                 error_msg += "  - For nspin=1: hrs1_nao.csr\n";
@@ -37,12 +35,10 @@ TEST(InitChgHrErrorTest, MissingFileError)
                 ModuleBase::WARNING_QUIT("LCAO_domain::init_hr_from_file", error_msg);
             }
         },
-        ""
-    );
+        "");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

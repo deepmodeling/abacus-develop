@@ -7,16 +7,14 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 /**
  * @brief Integer array
  *
  */
-class IntArray
-{
+class IntArray {
   public:
-    int * ptr = nullptr;
+    int* ptr = nullptr;
 
     /**
      * @brief Construct a new Int Array object
@@ -54,10 +52,8 @@ class IntArray
      * @param right
      * @return const IntArray&
      */
-    IntArray &operator=(const IntArray &other)
-    {
-        if(this != &other)
-        {
+    IntArray& operator=(const IntArray& other) {
+        if (this != &other) {
             delete[] ptr;
             size = other.size;
             dim = other.dim;
@@ -67,16 +63,12 @@ class IntArray
             bound4 = other.bound4;
             bound5 = other.bound5;
             bound6 = other.bound6;
-            try 
-            {
+            try {
                 ptr = new int[size];
-                for (int i = 0;i < size;i++)
-                {
+                for (int i = 0; i < size; i++) {
                     ptr[i] = other.ptr[i];
                 }
-            }
-            catch (const std::bad_alloc& e)
-            {
+            } catch (const std::bad_alloc& e) {
                 std::cerr << "Allocation error in IntArray copy assignment: " << e.what() << std::endl;
                 ptr = nullptr;
                 size = 0;
@@ -85,10 +77,9 @@ class IntArray
         }
         return *this;
     }
-    
+
     // Move assignment operator
     IntArray& operator=(IntArray&& other) noexcept;
-
 
     /**
      * @brief Equal all elements of an IntArray to an
@@ -97,15 +88,13 @@ class IntArray
      * @param right
      * @return const IntArray&
      */
-    const IntArray &operator=(const int &right)
-    {
+    const IntArray& operator=(const int& right) {
         if (ptr != nullptr && size > 0) {
-            for (int i = 0;i < size;i++) 
-            {
+            for (int i = 0; i < size; i++) {
                 ptr[i] = right;
             }
         }
-        return *this;// enables x = y = z;
+        return *this; // enables x = y = z;
     }
 
     /**
@@ -115,45 +104,40 @@ class IntArray
      * @param d2
      * @return int&
      */
-    int &operator()(const int d1, const int d2)
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        return ptr[ d1 * bound2 + d2 ];
+    int& operator()(const int d1, const int d2) {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        return ptr[d1 * bound2 + d2];
     }
-    int &operator()(const int d1, const int d2, const int d3)
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
+    int& operator()(const int d1, const int d2, const int d3) {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        return ptr[(d1 * bound2 + d2) * bound3 + d3];
     }
-    int &operator()(const int d1, const int d2, const int d3, const int d4)
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
+    int& operator()(const int d1, const int d2, const int d3, const int d4) {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        return ptr[((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4];
     }
-    int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5)
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        assert( d5 >= 0 && d5 < bound5 );
-        return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
+    int& operator()(const int d1, const int d2, const int d3, const int d4, const int d5) {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        assert(d5 >= 0 && d5 < bound5);
+        return ptr[(((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5];
     }
-    int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6)
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        assert( d5 >= 0 && d5 < bound5 );
-        assert( d6 >= 0 && d6 < bound6 );
-        return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
+    int& operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6) {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        assert(d5 >= 0 && d5 < bound5);
+        assert(d6 >= 0 && d6 < bound6);
+        return ptr[((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6];
     }
 
     /**
@@ -164,45 +148,40 @@ class IntArray
      * @param d2
      * @return const int&
      */
-    const int &operator()(const int d1, const int d2) const
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        return ptr[ d1 * bound2 + d2 ];
+    const int& operator()(const int d1, const int d2) const {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        return ptr[d1 * bound2 + d2];
     }
-    const int &operator()(const int d1, const int d2, const int d3) const
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        return ptr[ (d1 * bound2 + d2) * bound3 + d3 ];
+    const int& operator()(const int d1, const int d2, const int d3) const {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        return ptr[(d1 * bound2 + d2) * bound3 + d3];
     }
-    const int &operator()(const int d1, const int d2, const int d3, const int d4) const
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        return ptr[ ((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4 ];
+    const int& operator()(const int d1, const int d2, const int d3, const int d4) const {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        return ptr[((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4];
     }
-    const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5) const
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        assert( d5 >= 0 && d5 < bound5 );
-        return ptr[ (((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5 ];
+    const int& operator()(const int d1, const int d2, const int d3, const int d4, const int d5) const {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        assert(d5 >= 0 && d5 < bound5);
+        return ptr[(((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5];
     }
-    const int &operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6) const
-    {
-        assert( d1 >= 0 && d1 < bound1 );
-        assert( d2 >= 0 && d2 < bound2 );
-        assert( d3 >= 0 && d3 < bound3 );
-        assert( d4 >= 0 && d4 < bound4 );
-        assert( d5 >= 0 && d5 < bound5 );
-        assert( d6 >= 0 && d6 < bound6 );
-        return ptr[ ((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6 ];
+    const int& operator()(const int d1, const int d2, const int d3, const int d4, const int d5, const int d6) const {
+        assert(d1 >= 0 && d1 < bound1);
+        assert(d2 >= 0 && d2 < bound2);
+        assert(d3 >= 0 && d3 < bound3);
+        assert(d4 >= 0 && d4 < bound4);
+        assert(d5 >= 0 && d5 < bound5);
+        assert(d6 >= 0 && d6 < bound6);
+        return ptr[((((d1 * bound2 + d2) * bound3 + d3) * bound4 + d4) * bound5 + d5) * bound6 + d6];
     }
 
     /**
@@ -211,48 +190,24 @@ class IntArray
      */
     void zero_out(void);
 
-    int getSize() const
-    {
-        return size;
-    }
-    int getDim() const
-    {
-        return dim;
-    }
-    int getBound1() const
-    {
-        return bound1;
-    }
-    int getBound2() const
-    {
-        return bound2;
-    }
-    int getBound3() const
-    {
-        return bound3;
-    }
-    int getBound4() const
-    {
-        return bound4;
-    }
-    int getBound5() const
-    {
-        return bound5;
-    }
-    int getBound6() const
-    {
-        return bound6;
-    }
+    int getSize() const { return size; }
+    int getDim() const { return dim; }
+    int getBound1() const { return bound1; }
+    int getBound2() const { return bound2; }
+    int getBound3() const { return bound3; }
+    int getBound4() const { return bound4; }
+    int getBound5() const { return bound5; }
+    int getBound6() const { return bound6; }
 
   private:
-    int size=0;
-    int dim=0;
-    int bound1=0;
-    int bound2=0; 
-    int bound3=0;
-    int bound4=0; 
-    int bound5=0; 
-    int bound6=0;
+    int size = 0;
+    int dim = 0;
+    int bound1 = 0;
+    int bound2 = 0;
+    int bound3 = 0;
+    int bound4 = 0;
+    int bound5 = 0;
+    int bound6 = 0;
     void freemem();
 };
 } // namespace ModuleBase

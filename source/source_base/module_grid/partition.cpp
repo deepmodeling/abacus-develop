@@ -13,21 +13,14 @@ namespace Partition {
 
 const double stratmann_a = 0.64;
 
-double w_becke(
-    int nR0,
-    const double* drR,
-    const double* dRR,
-    int nR,
-    const int* iR,
-    int c
-) {
+double w_becke(int nR0, const double* drR, const double* dRR, int nR, const int* iR, int c) {
     assert(nR > 0 && nR0 >= nR);
     std::vector<double> P(nR, 1.0);
     for (int i = 0; i < nR; ++i) {
         int I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
             int J = iR[j];
-            double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+            double mu = (drR[I] - drR[J]) / dRR[I * nR0 + J];
             double s = s_becke(mu);
             P[I] *= s;
             P[J] *= (1.0 - s); // s(-mu) = 1 - s(mu)
@@ -36,9 +29,8 @@ double w_becke(
     return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
 }
 
-
 double s_becke(double mu) {
-    /* 
+    /*
      * Becke's iterated polynomials (3rd order)
      *
      * s(mu) = 0.5 * (1 - p(p(p(mu))))
@@ -46,22 +38,13 @@ double s_becke(double mu) {
      * p(x) = 0.5 * x * (3 - x^2)
      *
      */
-    double p = 0.5 * mu * (3.0 - mu*mu);
-    p = 0.5 * p * (3.0 - p*p);
-    p = 0.5 * p * (3.0 - p*p);
+    double p = 0.5 * mu * (3.0 - mu * mu);
+    p = 0.5 * p * (3.0 - p * p);
+    p = 0.5 * p * (3.0 - p * p);
     return 0.5 * (1.0 - p);
 }
 
-
-double w_stratmann(
-    int nR0,
-    const double* drR,
-    const double* dRR,
-    const double* drR_thr,
-    int nR,
-    int* iR,
-    int c
-) {
+double w_stratmann(int nR0, const double* drR, const double* dRR, const double* drR_thr, int nR, int* iR, int c) {
     assert(nR > 0 && nR0 >= nR);
     int I = iR[c], J = 0;
 
@@ -84,11 +67,10 @@ double w_stratmann(
     std::vector<double> P(nR);
     for (int j = 1; j < nR; ++j) {
         J = iR[j];
-        double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+        double mu = (drR[I] - drR[J]) / dRR[I * nR0 + J];
         P[j] = s_stratmann(mu);
     }
-    P[0] = std::accumulate(P.begin() + 1, P.end(), 1.0,
-                           std::multiplies<double>());
+    P[0] = std::accumulate(P.begin() + 1, P.end(), 1.0, std::multiplies<double>());
 
     if (P[0] == 0.0 || P[0] == 1.0) {
         std::swap(iR[0], iR[c]); // restore the original order
@@ -103,7 +85,7 @@ double w_stratmann(
         I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
             J = iR[j];
-            double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+            double mu = (drR[I] - drR[J]) / dRR[I * nR0 + J];
             double s = s_stratmann(mu);
             P[i] *= s;
             P[j] *= (1.0 - s); // s(-mu) = 1 - s(mu)
@@ -113,7 +95,6 @@ double w_stratmann(
     std::swap(iR[0], iR[c]); // restore the original order
     return P[0] / std::accumulate(P.begin(), P.end(), 0.0);
 }
-
 
 double s_stratmann(double mu) {
     /*
@@ -136,7 +117,6 @@ double s_stratmann(double mu) {
     double g = !mid * (1 - 2 * std::signbit(x)) + mid * h;
     return 0.5 * (1.0 - g);
 }
-
 
 } // end of namespace Partition
 } // end of namespace Grid

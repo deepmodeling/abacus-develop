@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-N		1	N_ONCV_PBE-1.0.upf
-N_empty	1	N_ONCV_PBE-1.0.upf
+N        1    N_ONCV_PBE-1.0.upf
+N_empty    1    N_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
 orb_N.dat
@@ -20,9 +20,9 @@ Cartesian_angstrom
 N
 0.5
 1
-0 0 0.0	1 1 1
+0 0 0.0    1 1 1
 
 N_empty
 0.5
 1
-0 0 1.098	1 1 1
+0 0 1.098    1 1 1

@@ -33,16 +33,14 @@
  *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
-class NHC_test : public testing::Test
-{
+class NHC_test : public testing::Test {
   protected:
     MD_base* mdrun;
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
 
@@ -57,15 +55,13 @@ class NHC_test : public testing::Test
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete mdrun;
         delete p_esolver;
     }
 };
 
-TEST_F(NHC_test, setup)
-{
+TEST_F(NHC_test, setup) {
     EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
@@ -78,8 +74,7 @@ TEST_F(NHC_test, setup)
     EXPECT_NEAR(mdrun->stress(2, 2), 1.6060561926126463e-06, doublethreshold);
 }
 
-TEST_F(NHC_test, first_half)
-{
+TEST_F(NHC_test, first_half) {
     mdrun->first_half(GlobalV::ofs_running);
 
     EXPECT_NEAR(mdrun->pos[0].x, -0.00035596392702161582, doublethreshold);
@@ -109,8 +104,7 @@ TEST_F(NHC_test, first_half)
     EXPECT_NEAR(mdrun->vel[3].z, -2.9596755163433345e-05, doublethreshold);
 }
 
-TEST_F(NHC_test, second_half)
-{
+TEST_F(NHC_test, second_half) {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
 
@@ -141,11 +135,10 @@ TEST_F(NHC_test, second_half)
     EXPECT_NEAR(mdrun->vel[3].z, -3.2917171190756263e-05, doublethreshold);
 }
 
-TEST_F(NHC_test, write_restart)
-{
+TEST_F(NHC_test, write_restart) {
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
-    
+
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
     mdrun->write_restart(PARAM.sys.global_out_dir);
@@ -174,8 +167,7 @@ TEST_F(NHC_test, write_restart)
     ifs.close();
 }
 
-TEST_F(NHC_test, restart)
-{
+TEST_F(NHC_test, restart) {
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
@@ -207,8 +199,7 @@ TEST_F(NHC_test, restart)
     EXPECT_EQ(nhc->v_peta[3], 226.197);
 }
 
-TEST_F(NHC_test, print_md)
-{
+TEST_F(NHC_test, print_md) {
     std::ofstream ofs("running_nhchain.log");
     mdrun->print_md(ofs, true);
     ofs.close();
@@ -216,11 +207,11 @@ TEST_F(NHC_test, print_md)
     std::ifstream ifs("running_nhchain.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
     getline(ifs, output_str);
     EXPECT_THAT(
@@ -243,5 +234,5 @@ TEST_F(NHC_test, print_md)
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
     ifs.close();
-    //remove("running_nhchain.log");
+    // remove("running_nhchain.log");
 }

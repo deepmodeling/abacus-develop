@@ -40,7 +40,7 @@
         "Ecut": {
             "Si": 100
         },
-    	"lr":  0.01
+        "lr":  0.01
     },
     "C_init_info": {
         "init_from_file": false

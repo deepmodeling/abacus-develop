@@ -5,13 +5,11 @@
 #include "abacusjson.h"
 
 // Add json objects to init
-namespace Json
-{
+namespace Json {
 
 #ifdef __RAPIDJSON
 
-void gen_init(UnitCell* ucell)
-{
+void gen_init(UnitCell* ucell) {
     std::string pgname = ucell->symm.pgname;
     std::string spgname = ucell->symm.spgname;
     AbacusJson::add_json({"init", "point_group"}, pgname, false);
@@ -28,8 +26,7 @@ void gen_init(UnitCell* ucell)
     // Json::AbacusJson::add_Json(PARAM.inp.nbands,false,"init", "nband");
 
     int ntype = ucell->ntype, nelec_total = 0;
-    for (int it = 0; it < ntype; it++)
-    {
+    for (int it = 0; it < ntype; it++) {
         std::string label = ucell->atoms[it].label;
         int atom_number = ucell->atoms[it].na;
         double number = ucell->atoms[it].ncpp.zv;
@@ -46,16 +43,14 @@ void gen_init(UnitCell* ucell)
     // Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
 }
 
-void add_nkstot(int nkstot)
-{
+void add_nkstot(int nkstot) {
     Json::AbacusJson::add_json({"init", "nkstot"}, nkstot, false);
 
     // Json::AbacusJson::add_Json(nkstot,false,"init", "nkstot");
     // Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");
 }
 
-void gen_stru(UnitCell* ucell)
-{
+void gen_stru(UnitCell* ucell) {
     AbacusJson::add_json({"comment"},
                          "Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom",
                          false);
@@ -69,8 +64,7 @@ void gen_stru(UnitCell* ucell)
     std::string* orbital_fn = ucell->orbital_fn.data();
 
     // add atom element,orbital file and pseudopotential file
-    for (int i = 0; i < ntype; i++)
-    {
+    for (int i = 0; i < ntype; i++) {
         std::string atom_label = ucell->atoms[i].label;
 
         std::string atom_element = ucell->atoms[i].ncpp.psd;
@@ -78,16 +72,13 @@ void gen_stru(UnitCell* ucell)
         Json::AbacusJson::add_json({"init", "element", atom_label}, atom_element, false);
 
         std::string orbital_str = PARAM.inp.orbital_dir + orbital_fn[i];
-        if (!orbital_str.compare(""))
-        {
+        if (!orbital_str.compare("")) {
             Json::jsonValue nullValue;
             nullValue.SetNull();
             Json::AbacusJson::add_json({"init", "orb", atom_label}, nullValue, false);
 
             // Json::AbacusJson::add_Json(nullValue,false,"init","orb",atom_label);
-        }
-        else
-        {
+        } else {
             Json::AbacusJson::add_json({"init", "orb", atom_label}, orbital_str, false);
             // Json::AbacusJson::add_Json(orbital_str,false,"init","orb",atom_label);
         }
@@ -100,12 +91,10 @@ void gen_stru(UnitCell* ucell)
     // atom coordinate, mag and label
     double lat0 = ucell->lat0;
     std::string* label = ucell->atom_label.data();
-    for (int i = 0; i < ntype; i++)
-    {
+    for (int i = 0; i < ntype; i++) {
         ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
         int na = ucell->atoms[i].na;
-        for (int j = 0; j < na; j++)
-        {
+        for (int j = 0; j < na; j++) {
             Json::jsonValue coordinateArray(JarrayType);
             coordinateArray.JPushBack(tau[j][0] * lat0);
             coordinateArray.JPushBack(tau[j][1] * lat0);

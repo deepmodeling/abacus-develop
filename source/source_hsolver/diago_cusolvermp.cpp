@@ -7,11 +7,9 @@
 
 using complex = std::complex<double>;
 
-namespace hsolver
-{
+namespace hsolver {
 template <typename T>
-void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
-{
+void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoCusolverMP", "diag");
     hamilt::MatrixBlock<T> h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);

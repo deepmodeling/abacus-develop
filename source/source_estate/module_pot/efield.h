@@ -6,10 +6,8 @@
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_io/module_parameter/parameter.h"
 
-namespace elecstate
-{
-class Efield
-{
+namespace elecstate {
+class Efield {
   public:
     Efield();
     ~Efield();
@@ -33,20 +31,20 @@ class Efield
                                      const surchem& solvent,
                                      const double& bmod);
 
-    static double saw_function(const double &a, const double &b, const double &x);
+    static double saw_function(const double& a, const double& b, const double& x);
 
-    static void compute_force(const UnitCell &cell, ModuleBase::matrix &fdip);
+    static void compute_force(const UnitCell& cell, ModuleBase::matrix& fdip);
 
-    static void prepare(const UnitCell &cell, double &latvec, double &area);
+    static void prepare(const UnitCell& cell, double& latvec, double& area);
 
     static void autoset(std::vector<double>& pos);
 
-    static double etotefield; // dipole energy
-    static double tot_dipole; // total dipole
-    static int efield_dir; // 0, 1, 2 denotes x, y, z direction for dipole correction
+    static double etotefield;     // dipole energy
+    static double tot_dipole;     // total dipole
+    static int efield_dir;        // 0, 1, 2 denotes x, y, z direction for dipole correction
     static double efield_pos_max; // the maximum position of the saw function
     static double efield_pos_dec; // the decrease region length of the saw function
-    static double efield_amp; // field amplitude (in a.u.) (1 a.u. = 51.44 10^10 V/m)
+    static double efield_amp;     // field amplitude (in a.u.) (1 a.u. = 51.44 10^10 V/m)
     static double bvec[3];
     static double bmod;
 };
@@ -54,44 +52,35 @@ class Efield
 } // namespace elecstate
 
 #include "pot_base.h"
-namespace elecstate
-{
+namespace elecstate {
 // new interface for elecstate::Potential
-class PotEfield : public PotBase
-{
+class PotEfield : public PotBase {
   public:
     PotEfield(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, const surchem* solvent_in, bool dipole)
-        : ucell_(ucell_in), solvent_(solvent_in)
-    {
+        : ucell_(ucell_in), solvent_(solvent_in) {
         this->rho_basis_ = rho_basis_in;
-        if (!dipole)
-        {
+        if (!dipole) {
             this->fixed_mode = true;
             this->dynamic_mode = false;
-        }
-        else
-        {
+        } else {
             this->fixed_mode = false;
             this->dynamic_mode = true;
         }
     };
 
-    void cal_fixed_v(double *vl_pseudo) override
-    {
+    void cal_fixed_v(double* vl_pseudo) override {
         ModuleBase::matrix v_efield(PARAM.inp.nspin, rho_basis_->nrxx);
         v_efield = Efield::add_efield(*ucell_,
                                       const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                       PARAM.inp.nspin,
                                       nullptr,
                                       *solvent_);
-        for (int ir = 0; ir < rho_basis_->nrxx; ++ir)
-        {
+        for (int ir = 0; ir < rho_basis_->nrxx; ++ir) {
             vl_pseudo[ir] += v_efield(0, ir);
         }
     }
 
-    void cal_v_eff(const Charge *chg, const UnitCell *ucell, ModuleBase::matrix &v_eff) override
-    {
+    void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff) override {
         v_eff += Efield::add_efield(*ucell,
                                     const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                     v_eff.nr,

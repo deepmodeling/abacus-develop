@@ -4,8 +4,7 @@
 #include <memory>
 #include <fftw3.h>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /**
  * @brief A class that provides spherical Bessel transforms.
@@ -65,14 +64,13 @@ namespace ModuleBase
  *      sbt.direct(l, ngrid_in, grid_in, value_in, ngrid_out, grid_out, value_out, 2);
  *
  */
-class SphericalBesselTransformer
-{
-public:
+class SphericalBesselTransformer {
+  public:
     SphericalBesselTransformer(const bool cache_enabled = false);
     ~SphericalBesselTransformer() = default;
 
     SphericalBesselTransformer(SphericalBesselTransformer const&) = default;
-    SphericalBesselTransformer(SphericalBesselTransformer &&) = default;
+    SphericalBesselTransformer(SphericalBesselTransformer&&) = default;
 
     SphericalBesselTransformer& operator=(const SphericalBesselTransformer&) = default;
     SphericalBesselTransformer& operator=(SphericalBesselTransformer&&) = default;
@@ -113,15 +111,12 @@ public:
      * @note    p is restricted to p <= 2 in order to avoid the situation that one has to
      *          determine x^2*F(x) at x = 0 from x[i]^p*F(x[i]).
      */
-    void radrfft(
-        const int l,
-        const int ngrid,
-        const double cutoff,
-        const double* const in,
-        double* const out,
-        const int p = 0
-    ) const;
-
+    void radrfft(const int l,
+                 const int ngrid,
+                 const double cutoff,
+                 const double* const in,
+                 double* const out,
+                 const int p = 0) const;
 
     /**
      * @brief Spherical Bessel transform via numerical integration with Simpson's rule.
@@ -151,17 +146,14 @@ public:
      *          determine x^2*F(x) at x = 0 from x[i]^p*F(x[i]).
      *
      */
-    void direct(
-        const int l,
-        const int ngrid_in,
-        const double* const grid_in,
-        const double* const in,
-        const int ngrid_out,
-        const double* const grid_out,
-        double* const out,
-        const int p = 0
-    ) const;
-
+    void direct(const int l,
+                const int ngrid_in,
+                const double* const grid_in,
+                const double* const in,
+                const int ngrid_out,
+                const double* const grid_out,
+                double* const out,
+                const int p = 0) const;
 
     /// total heap usage (in bytes) from the FFTW buffer and tabulated jl
     size_t heap_usage() const;
@@ -172,9 +164,7 @@ public:
     /// check if two objects share the same underlying implementation object
     bool operator==(const SphericalBesselTransformer& rhs) const { return impl_ == rhs.impl_; }
 
-
-private:
-
+  private:
     class Impl; // forward declaration
     std::shared_ptr<Impl> impl_;
 };

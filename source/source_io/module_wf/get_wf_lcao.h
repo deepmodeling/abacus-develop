@@ -4,8 +4,7 @@
 #include "source_estate/elecstate.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
-class Get_wf_lcao
-{
+class Get_wf_lcao {
   public:
     Get_wf_lcao(const elecstate::ElecState* pes);
     ~Get_wf_lcao();

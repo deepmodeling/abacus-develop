@@ -16,11 +16,11 @@ Direct //Cartesian or Direct coordinate.
 
 H // element type
 0 // magnetism
-2	// number of atoms
+2    // number of atoms
 0.57155  0.05539  0.000  1 1 1
 0.42845  0.05539  0.000  1 1 1
 
-O	// Element type
-0	// magnetism
+O    // Element type
+0    // magnetism
 1  //number of atoms
 0.500  0.000  0.000  1 1 1

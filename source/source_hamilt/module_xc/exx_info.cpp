@@ -3,7 +3,6 @@
 //----------------------------------------------------------
 // init "GLOBAL CLASS" object
 //----------------------------------------------------------
-namespace GlobalC
-{
-    Exx_Info exx_info;
+namespace GlobalC {
+Exx_Info exx_info;
 }

@@ -14,20 +14,17 @@
 #include "source_base/matrix3.h"
 #include "source_cell/klist.h"
 
-class toWannier90
-{
+class toWannier90 {
   public:
     toWannier90();
 
-    toWannier90(
-      const bool &out_wannier_mmn, 
-      const bool &out_wannier_amn, 
-      const bool &out_wannier_unk, 
-      const bool &out_wannier_eig,
-      const bool &out_wannier_wvfn_formatted, 
-      const std::string &nnkpfile,
-      const std::string &wannier_spin
-    );
+    toWannier90(const bool& out_wannier_mmn,
+                const bool& out_wannier_amn,
+                const bool& out_wannier_unk,
+                const bool& out_wannier_eig,
+                const bool& out_wannier_wvfn_formatted,
+                const std::string& nnkpfile,
+                const std::string& wannier_spin);
     ~toWannier90();
 
     void calculate();
@@ -42,26 +39,26 @@ class toWannier90
     bool try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv);
 
     // Parameters related to k point
-    int num_kpts=0;
-    int cal_num_kpts=0;
+    int num_kpts = 0;
+    int cal_num_kpts = 0;
     std::vector<std::vector<int>> nnlist;
     std::vector<std::vector<ModuleBase::Vector3<double>>> nncell;
     int nntot = 0;
     int start_k_index = 0;
 
     // Parameters related to trial orbitals
-    int num_wannier=0; // Number of Wannier orbits
-    ModuleBase::Vector3<double> *R_centre = nullptr;
-    int *L = nullptr;
-    int *m = nullptr;
-    int *rvalue = nullptr;
-    ModuleBase::Vector3<double> *z_axis = nullptr;
-    ModuleBase::Vector3<double> *x_axis = nullptr;
-    double *alfa = nullptr;
-    int *spin_eig = nullptr; // 'up' state is 1, 'down' state is -1
-    ModuleBase::Vector3<double> *spin_qaxis = nullptr; // spin quantisation axis
-    std::complex<double> *up_con = nullptr;
-    std::complex<double> *dn_con = nullptr;
+    int num_wannier = 0; // Number of Wannier orbits
+    ModuleBase::Vector3<double>* R_centre = nullptr;
+    int* L = nullptr;
+    int* m = nullptr;
+    int* rvalue = nullptr;
+    ModuleBase::Vector3<double>* z_axis = nullptr;
+    ModuleBase::Vector3<double>* x_axis = nullptr;
+    double* alfa = nullptr;
+    int* spin_eig = nullptr;                           // 'up' state is 1, 'down' state is -1
+    ModuleBase::Vector3<double>* spin_qaxis = nullptr; // spin quantisation axis
+    std::complex<double>* up_con = nullptr;
+    std::complex<double>* dn_con = nullptr;
 
     // Wannier control parameters
     bool out_wannier_mmn = true;
@@ -79,10 +76,8 @@ class toWannier90
     std::unordered_set<int> exclude_bands;
     // bool *tag_cal_band = nullptr;
     int num_bands = 0;
-    int *cal_band_index = nullptr;
+    int* cal_band_index = nullptr;
     bool gamma_only_wannier = false;
-    
-
 };
 
 #endif

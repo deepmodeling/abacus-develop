@@ -8,24 +8,20 @@
 #include <vector>
 #include <string>
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
-class ESolver_NEP : public ESolver
-{
+class ESolver_NEP : public ESolver {
   public:
 #ifdef __NEP
-    ESolver_NEP(const std::string& pot_file): nep(pot_file)
-  {
-      classname = "ESolver_NEP";
-      nep_file = pot_file;
-  }
+    ESolver_NEP(const std::string& pot_file) : nep(pot_file) {
+        classname = "ESolver_NEP";
+        nep_file = pot_file;
+    }
 #else
-    ESolver_NEP(const std::string& pot_file)
-  {
-      classname = "ESolver_NEP";
-      nep_file = pot_file;
-  }
+    ESolver_NEP(const std::string& pot_file) {
+        classname = "ESolver_NEP";
+        nep_file = pot_file;
+    }
 #endif
 
     /**
@@ -35,7 +31,7 @@ class ESolver_NEP : public ESolver
      * @param cell unitcell information
      */
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-  
+
     /**
      * @brief Run the NEP solver for a given ion/md step and unit cell
      *
@@ -93,14 +89,14 @@ class ESolver_NEP : public ESolver
     NEP nep; ///< NEP object for NEP calculations
 #endif
 
-    std::string nep_file;                ///< directory of NEP model file
-    std::vector<int> atype = {};         ///< atom type mapping for NEP model
-    double nep_potential;                ///< computed potential energy
-    ModuleBase::matrix nep_force;        ///< computed atomic forces
-    ModuleBase::matrix nep_virial;       ///< computed lattice virials
-    std::vector<double> _e;              ///< temporary storage for energy computation
-    std::vector<double> _f;              ///< temporary storage for force computation
-    std::vector<double> _v;              ///< temporary storage for virial computation
+    std::string nep_file;          ///< directory of NEP model file
+    std::vector<int> atype = {};   ///< atom type mapping for NEP model
+    double nep_potential;          ///< computed potential energy
+    ModuleBase::matrix nep_force;  ///< computed atomic forces
+    ModuleBase::matrix nep_virial; ///< computed lattice virials
+    std::vector<double> _e;        ///< temporary storage for energy computation
+    std::vector<double> _f;        ///< temporary storage for force computation
+    std::vector<double> _v;        ///< temporary storage for virial computation
 };
 
 } // namespace ModuleESolver

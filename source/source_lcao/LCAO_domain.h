@@ -10,8 +10,7 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
-namespace LCAO_domain
-{
+namespace LCAO_domain {
 
 void init_basis_lcao(Parallel_Orbitals& pv,
                      const double& onsite_radius,

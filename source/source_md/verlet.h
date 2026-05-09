@@ -7,8 +7,7 @@
  * @brief the md methods based on the velocity-Verlet equation
  *
  */
-class Verlet : public MD_base
-{
+class Verlet : public MD_base {
   public:
     Verlet(const Parameter& param_in, UnitCell& unit_in);
     ~Verlet();

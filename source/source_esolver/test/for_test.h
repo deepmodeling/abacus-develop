@@ -3,8 +3,7 @@
 
 #include "source_cell/unitcell.h"
 
-UnitCell::UnitCell()
-{
+UnitCell::UnitCell() {
     Coordinate = "Direct";
     latName = "none";
     lat0_angstrom = 10.0;
@@ -29,50 +28,30 @@ UnitCell::UnitCell()
     atoms = new Atom[ntype];
     set_atom_flag = true;
 
-    for (int it = 0; it < ntype; it++)
-    {
+    for (int it = 0; it < ntype; it++) {
         Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            for (int ik = 0; ik < 3; ++ik)
-            {
+        for (int ia = 0; ia < atom->na; ia++) {
+            for (int ik = 0; ik < 3; ++ik) {
                 atom->tau[ia][ik] = 3.0 * ia + ik;
             }
         }
     }
 }
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Atom::Atom()
-{
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+Atom::Atom() {
     na = 1;
     tau.resize(na);
     mbl.resize(na);
 }
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 #endif

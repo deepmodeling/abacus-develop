@@ -26,14 +26,12 @@
  *     - calculate cavitation potential
  */
 
-class cal_vcav_test : public testing::Test
-{
+class cal_vcav_test : public testing::Test {
   protected:
     surchem solvent_model;
     UnitCell ucell;
 };
-TEST_F(cal_vcav_test, lapl_rho)
-{
+TEST_F(cal_vcav_test, lapl_rho) {
     Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
@@ -41,7 +39,7 @@ TEST_F(cal_vcav_test, lapl_rho)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -81,19 +79,15 @@ TEST_F(cal_vcav_test, lapl_rho)
     gdrtmpg[1] = {-7.335e-08, 9.826e-07};
     gdrtmpg[2] = {-5.418e-06, 2.577e-07};
 
-    for (int ig = 3; ig < npw; ig++)
-    {
+    for (int ig = 3; ig < npw; ig++) {
         gdrtmpg[ig] = 0;
     }
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int ig = 0; ig < npw; ig++)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int ig = 0; ig < npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(pwtest.gcar[ig][i], 2);
         }
         pwtest.recip2real(aux, aux);
-        for (int ir = 0; ir < nrxx; ir++)
-        {
+        for (int ir = 0; ir < nrxx; ir++) {
             lapn[ir] -= aux[ir].real() * ucell.tpiba2;
         }
     }
@@ -105,8 +99,7 @@ TEST_F(cal_vcav_test, lapl_rho)
     delete[] aux;
 }
 
-TEST_F(cal_vcav_test, shape_gradn)
-{
+TEST_F(cal_vcav_test, shape_gradn) {
     int nrxx = 27000;
     double TWO_PI = 6.283;
     double sigma_k = 0.6;
@@ -117,8 +110,7 @@ TEST_F(cal_vcav_test, shape_gradn)
     PS_TOTN_real[0] = 2.081e-03;
     PS_TOTN_real[1] = 1.818e-03;
     PS_TOTN_real[2] = 1.193e-03;
-    for (int i = 3; i < nrxx; i++)
-    {
+    for (int i = 3; i < nrxx; i++) {
         PS_TOTN_real[i] = 0.1;
     }
 
@@ -127,8 +119,7 @@ TEST_F(cal_vcav_test, shape_gradn)
     double min = 1e-10;
     double* eprime = new double[nrxx];
 
-    for (int ir = 0; ir < nrxx; ir++)
-    {
+    for (int ir = 0; ir < nrxx; ir++) {
         epr_z = log(std::max(PS_TOTN_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
@@ -139,8 +130,7 @@ TEST_F(cal_vcav_test, shape_gradn)
     delete[] PS_TOTN_real;
 }
 
-TEST_F(cal_vcav_test, createcavity)
-{
+TEST_F(cal_vcav_test, createcavity) {
     Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
@@ -148,7 +138,7 @@ TEST_F(cal_vcav_test, createcavity)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
     double wfcecut;
@@ -186,8 +176,7 @@ TEST_F(cal_vcav_test, createcavity)
     PS_TOTN[1] = {-7.649e-08, 9.806e-07};
     PS_TOTN[2] = {-5.407e-06, 2.549e-07};
 
-    for (int ig = 3; ig < npw; ig++)
-    {
+    for (int ig = 3; ig < npw; ig++) {
         PS_TOTN[ig] = 1e-7;
     }
 
@@ -200,8 +189,7 @@ TEST_F(cal_vcav_test, createcavity)
     delete[] vwork;
 }
 
-TEST_F(cal_vcav_test, cal_vcav)
-{
+TEST_F(cal_vcav_test, cal_vcav) {
     Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
@@ -209,7 +197,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     device_flag = "cpu";
 
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
-    
+
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz;
     double wfcecut;
@@ -245,8 +233,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     PS_TOTN[1] = {-7.649e-08, 9.806e-07};
     PS_TOTN[2] = {-5.407e-06, 2.549e-07};
 
-    for (int ig = 3; ig < npw; ig++)
-    {
+    for (int ig = 3; ig < npw; ig++) {
         PS_TOTN[ig] = 1e-7;
     }
 
@@ -265,8 +252,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     delete[] PS_TOTN;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);

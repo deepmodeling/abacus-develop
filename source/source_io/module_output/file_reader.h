@@ -5,18 +5,16 @@
 #include <sstream>
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /**
  * @brief A base class of file reader
  * @details This class is supposed to be a base class to read a text file.
- *  it will open a file with a given filename. The function readLine() 
+ *  it will open a file with a given filename. The function readLine()
  *  will read a line to a string stream. The function isOpen() check if the file
  *  is open. The destructor will close the file automatically.
  */
-class FileReader
-{
+class FileReader {
   public:
     // Default constructor
     FileReader(std::string filename);

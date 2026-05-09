@@ -5,8 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 /**
  * @brief Initialize DFT+U for LCAO method in iter_init
@@ -25,13 +24,13 @@ namespace ModuleESolver
  */
 template <typename TK>
 void init_dftu_lcao(const int istep,
-                     const int iter,
-                     const Input_para& inp,
-                     void* dftu,
-                     void* dm,
-                     const UnitCell& ucell,
-                     double** rho,
-                     const int nrxx);
+                    const int iter,
+                    const Input_para& inp,
+                    void* dftu,
+                    void* dm,
+                    const UnitCell& ucell,
+                    double** rho,
+                    const int nrxx);
 
 /**
  * @brief Finish DFT+U calculation for LCAO method in iter_finish
@@ -51,14 +50,14 @@ void init_dftu_lcao(const int istep,
  */
 template <typename TK>
 void finish_dftu_lcao(const int iter,
-                       const bool conv_esolver,
-                       const Input_para& inp,
-                       void* dftu,
-                       const UnitCell& ucell,
-                       const std::vector<std::vector<TK>>& dm_vec,
-                       const K_Vectors& kv,
-                       const double mixing_beta,
-                       void* hamilt_lcao);
+                      const bool conv_esolver,
+                      const Input_para& inp,
+                      void* dftu,
+                      const UnitCell& ucell,
+                      const std::vector<std::vector<TK>>& dm_vec,
+                      const K_Vectors& kv,
+                      const double mixing_beta,
+                      void* hamilt_lcao);
 
 } // namespace ModuleESolver
 

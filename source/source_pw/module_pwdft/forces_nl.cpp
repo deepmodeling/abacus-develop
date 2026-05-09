@@ -17,11 +17,9 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const Structure_Factor* p_sf,
                                           const pseudopot_cell_vnl& nlpp,
                                           const UnitCell& ucell_in,
-                                          const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
-{
+                                          const psi::Psi<std::complex<FPTYPE>, Device>* psi_in) {
     ModuleBase::TITLE("Forces", "cal_force_nl");
-    if (nlpp.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
-    {
+    if (nlpp.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr) {
         return;
     }
     ModuleBase::timer::start("Forces", "cal_force_nl");
@@ -39,24 +37,21 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     {
         // skip zero weights to speed up
         int nbands_occ = wg.nc;
-        while (wg(ik, nbands_occ - 1) == 0.0)
-        {
+        while (wg(ik, nbands_occ - 1) == 0.0) {
             nbands_occ--;
-            if (nbands_occ == 0)
-            {
+            if (nbands_occ == 0) {
                 break;
             }
         }
         const int npm = nbands_occ;
         nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, npm, &psi_in[0](ik,0,0));
+        nl_tools.cal_becp(ik, npm, &psi_in[0](ik, 0, 0));
         nl_tools.reduce_pool_becp(max_nbands);
-        for (int ipol = 0; ipol < 3; ipol++)
-        {
+        for (int ipol = 0; ipol < 3; ipol++) {
             nl_tools.cal_vkb_deri_f(ik, max_nbands, ipol);
             // calculate dbecp = <psi|\nabla beta> for all beta functions
-            nl_tools.cal_dbecp_f(ik, max_nbands, npm, ipol, &psi_in[0](ik,0,0));
+            nl_tools.cal_dbecp_f(ik, max_nbands, npm, ipol, &psi_in[0](ik, 0, 0));
             nl_tools.revert_vkb(ik, ipol);
         }
         // calculate the force_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i

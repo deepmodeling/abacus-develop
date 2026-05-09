@@ -16,8 +16,7 @@
  *     - functions: gen_rndm_r and compute_ap
  */
 
-TEST(ClebschGordanTest, ClebschGordanExit)
-{
+TEST(ClebschGordanTest, ClebschGordanExit) {
     int lmaxkb = -2;
     ModuleBase::realArray ap;
     ModuleBase::IntArray lpx;
@@ -30,8 +29,7 @@ TEST(ClebschGordanTest, ClebschGordanExit)
     EXPECT_THAT(output, testing::HasSubstr("Clebsch_Gordan: lmaxkb + 1 < 0"));
 }
 
-TEST(ClebschGordanTest, ClebschGordan)
-{
+TEST(ClebschGordanTest, ClebschGordan) {
     int lmaxkb = 1;
     ModuleBase::realArray ap;
     ModuleBase::IntArray lpx;

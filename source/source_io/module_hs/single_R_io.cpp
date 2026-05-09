@@ -4,23 +4,20 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 
-inline void write_data(std::ofstream& ofs, const double& data)
-{
+inline void write_data(std::ofstream& ofs, const double& data) {
     ofs << " " << std::fixed << std::scientific << std::setprecision(16) << data;
 }
-inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
-{
+inline void write_data(std::ofstream& ofs, const std::complex<double>& data) {
     ofs << " (" << data.real() << "," << data.imag() << ")";
 }
 
-template<typename T>
+template <typename T>
 void ModuleIO::output_single_R(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, T>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
-    const Parallel_Orbitals& pv,
-    const bool& reduce)
-{
+                               const std::map<size_t, std::map<size_t, T>>& XR,
+                               const double& sparse_threshold,
+                               const bool& binary,
+                               const Parallel_Orbitals& pv,
+                               const bool& reduce) {
     T* line = nullptr;
     std::vector<long long> indptr;
     indptr.reserve(PARAM.globalv.nlocal + 1);
@@ -31,62 +28,45 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (!reduce || GlobalV::DRANK == 0)
-    {
-        if (binary)
-        {
+    if (!reduce || GlobalV::DRANK == 0) {
+        if (binary) {
             ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
-        }
-        else
-        {
+        } else {
             ofs_tem1.open(tem1.str().c_str());
         }
     }
 
     line = new T[PARAM.globalv.nlocal];
-    for(int row = 0; row < PARAM.globalv.nlocal; ++row)
-    {
+    for (int row = 0; row < PARAM.globalv.nlocal; ++row) {
         ModuleBase::GlobalFunc::ZEROS(line, PARAM.globalv.nlocal);
 
-        if (!reduce || pv.global2local_row(row) >= 0)
-        {
+        if (!reduce || pv.global2local_row(row) >= 0) {
             auto iter = XR.find(row);
-            if (iter != XR.end())
-            {
-                for (auto &value : iter->second)
-                {
+            if (iter != XR.end()) {
+                for (auto& value: iter->second) {
                     line[value.first] = value.second;
                 }
             }
         }
 
-		if (reduce) 
-		{
-			Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
-		}
+        if (reduce) {
+            Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+        }
 
-        if (!reduce || GlobalV::DRANK == 0)
-        {
+        if (!reduce || GlobalV::DRANK == 0) {
             long long nonzeros_count = 0;
-            for (int col = 0; col < PARAM.globalv.nlocal; ++col)
-            {
-                if (std::abs(line[col]) > sparse_threshold)
-                {
-                    if (binary)
-                    {
+            for (int col = 0; col < PARAM.globalv.nlocal; ++col) {
+                if (std::abs(line[col]) > sparse_threshold) {
+                    if (binary) {
                         ofs.write(reinterpret_cast<char*>(&line[col]), sizeof(T));
-                        ofs_tem1.write(reinterpret_cast<char *>(&col), sizeof(int));
-                    }
-                    else
-                    {
+                        ofs_tem1.write(reinterpret_cast<char*>(&col), sizeof(int));
+                    } else {
                         write_data(ofs, line[col]);
                         ofs_tem1 << " " << col;
                     }
 
                     nonzeros_count++;
-
                 }
-
             }
             nonzeros_count += indptr.back();
             indptr.push_back(nonzeros_count);
@@ -95,29 +75,23 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 
     delete[] line;
 
-    if (!reduce || GlobalV::DRANK == 0)
-    {
-        if (binary)
-        {
+    if (!reduce || GlobalV::DRANK == 0) {
+        if (binary) {
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
-            for (auto &i : indptr)
-            {
-                ofs.write(reinterpret_cast<char *>(&i), sizeof(long long));
+            for (auto& i: indptr) {
+                ofs.write(reinterpret_cast<char*>(&i), sizeof(long long));
             }
-        }
-        else
-        {
+        } else {
             ofs << std::endl;
             ofs_tem1 << std::endl;
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str());
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
-            for (auto &i : indptr)
-            {
+            for (auto& i: indptr) {
                 ofs << " " << i;
             }
             ofs << std::endl;
@@ -128,15 +102,16 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 }
 
 template void ModuleIO::output_single_R<double>(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, double>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
-    const Parallel_Orbitals& pv,
-    const bool& reduce);
+                                                const std::map<size_t, std::map<size_t, double>>& XR,
+                                                const double& sparse_threshold,
+                                                const bool& binary,
+                                                const Parallel_Orbitals& pv,
+                                                const bool& reduce);
 
-template void ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
-    const Parallel_Orbitals& pv,
-    const bool& reduce);
+template void
+ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
+                                                const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
+                                                const double& sparse_threshold,
+                                                const bool& binary,
+                                                const Parallel_Orbitals& pv,
+                                                const bool& reduce);

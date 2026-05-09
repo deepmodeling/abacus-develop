@@ -9,20 +9,18 @@
 #include "source_base/vector3.h"
 #include "source_io/module_hs/cal_r_overlap_R.h"
 
-//design to calculate velocity operator
+// design to calculate velocity operator
 template <typename TR>
-class Velocity_op
-{
+class Velocity_op {
   public:
     Velocity_op(const UnitCell* ucell_in,
-               const Grid_Driver* GridD_in,
-               const Parallel_Orbitals* paraV,
-               const LCAO_Orbitals& orb,
-               const TwoCenterIntegrator* intor);
+                const Grid_Driver* GridD_in,
+                const Parallel_Orbitals* paraV,
+                const LCAO_Orbitals& orb,
+                const TwoCenterIntegrator* intor);
     ~Velocity_op();
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
-    {
+    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const {
         return this->current_term[i];
     }
     void calculate_vcomm_r();
@@ -35,9 +33,10 @@ class Velocity_op
 
     const LCAO_Orbitals& orb_;
 
-    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only
+    /// shared between TD operators.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    
+
     const TwoCenterIntegrator* intor_ = nullptr;
     const TwoCenterIntegrator* intorbeta_ = nullptr;
 
@@ -74,6 +73,5 @@ class Velocity_op
     static cal_r_overlap_R r_calculator;
     static bool init_done;
 };
-
 
 #endif // TD_CURRENT_H

@@ -1,14 +1,11 @@
 #include "band_energy_kernel.cuh"
 
 #ifdef __CUBLASMP
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 // Device function for global index mapping
-__device__ inline int get_global_index_dev(int local_idx, int block_size, int num_procs, int proc_coord)
-{
+__device__ inline int get_global_index_dev(int local_idx, int block_size, int num_procs, int proc_coord) {
     return (local_idx / block_size) * (num_procs * block_size) + proc_coord * block_size + (local_idx % block_size);
 }
 
@@ -22,13 +19,11 @@ __global__ void extract_ekb_kernel(const cuDoubleComplex* d_Eij,
                                    int dim1,
                                    int my_prow,
                                    int my_pcol,
-                                   int nband)
-{
+                                   int nband) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Iterate over the allocated local buffer
-    if (idx >= local_elems)
-    {
+    if (idx >= local_elems) {
         return;
     }
 
@@ -40,14 +35,12 @@ __global__ void extract_ekb_kernel(const cuDoubleComplex* d_Eij,
     int gcol = get_global_index_dev(j, nb, dim1, my_pcol);
 
     // Filter out invalid blocks
-    if (grow >= nband || gcol >= nband)
-    {
+    if (grow >= nband || gcol >= nband) {
         return;
     }
 
     // Extract the diagonal elements
-    if (grow == gcol)
-    {
+    if (grow == gcol) {
         d_eii[grow] = cuCreal(d_Eij[idx]);
     }
 }
@@ -63,10 +56,8 @@ void launch_extract_ekb_kernel(const cuDoubleComplex* d_Eij,
                                int my_prow,
                                int my_pcol,
                                int nband,
-                               cudaStream_t stream)
-{
-    if (local_elems > 0)
-    {
+                               cudaStream_t stream) {
+    if (local_elems > 0) {
         int threads_per_block = 256;
         int blocks_per_grid = (local_elems + threads_per_block - 1) / threads_per_block;
 

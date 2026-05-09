@@ -3,11 +3,9 @@
 #include "gint_common.h"
 #include "phi_operator.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-void Gint_tau::cal_gint()
-{
+void Gint_tau::cal_gint() {
     ModuleBase::TITLE("Gint", "cal_gint_tau");
     ModuleBase::timer::start("Gint", "cal_gint_tau");
     init_dm_gint_();
@@ -16,17 +14,14 @@ void Gint_tau::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_tau");
 }
 
-void Gint_tau::init_dm_gint_()
-{
+void Gint_tau::init_dm_gint_() {
     dm_gint_vec_.resize(nspin_);
-    for (int is = 0; is < nspin_; is++)
-    {
+    for (int is = 0; is < nspin_; is++) {
         dm_gint_vec_[is] = gint_info_->get_hr<double>();
     }
 }
 
-void Gint_tau::cal_tau_()
-{
+void Gint_tau::cal_tau_() {
 #pragma omp parallel
     {
         PhiOperator phi_op;
@@ -37,11 +32,9 @@ void Gint_tau::cal_tau_()
         std::vector<double> dphi_y_dm;
         std::vector<double> dphi_z_dm;
 #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
-        {
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++) {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
-            {
+            if (biggrid->get_atoms().size() == 0) {
                 continue;
             }
             phi_op.set_bgrid(biggrid);
@@ -53,8 +46,7 @@ void Gint_tau::cal_tau_()
             dphi_y_dm.resize(phi_len);
             dphi_z_dm.resize(phi_len);
             phi_op.set_phi_dphi(nullptr, dphi_x.data(), dphi_y.data(), dphi_z.data());
-            for (int is = 0; is < nspin_; is++)
-            {
+            for (int is = 0; is < nspin_; is++) {
                 phi_op.phi_mul_dm(dphi_x.data(), dm_gint_vec_[is], true, dphi_x_dm.data());
                 phi_op.phi_mul_dm(dphi_y.data(), dm_gint_vec_[is], true, dphi_y_dm.data());
                 phi_op.phi_mul_dm(dphi_z.data(), dm_gint_vec_[is], true, dphi_z_dm.data());
@@ -66,4 +58,4 @@ void Gint_tau::cal_tau_()
     }
 }
 
-}
+} // namespace ModuleGint

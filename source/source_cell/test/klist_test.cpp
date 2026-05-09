@@ -23,71 +23,30 @@
 #include "source_cell/parallel_kpoints.h"
 bool berryphase::berry_phase_flag = false;
 
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+pseudo::pseudo() {}
+pseudo::~pseudo() {}
+Atom::Atom() {}
+Atom::~Atom() {}
+Atom_pseudo::Atom_pseudo() {}
+Atom_pseudo::~Atom_pseudo() {}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+ORB_gaunt_table::ORB_gaunt_table() {}
+ORB_gaunt_table::~ORB_gaunt_table() {}
+pseudopot_cell_vl::pseudopot_cell_vl() {}
+pseudopot_cell_vl::~pseudopot_cell_vl() {}
+pseudopot_cell_vnl::pseudopot_cell_vnl() {}
+pseudopot_cell_vnl::~pseudopot_cell_vnl() {}
+Soc::~Soc() {}
+Fcoef::~Fcoef() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
-
 
 /************************************************
  *  unit test of class K_Vectors
@@ -133,14 +92,12 @@ Sep_Cell::~Sep_Cell() noexcept {}
  */
 
 // abbriviated from module_symmetry/test/symmetry_test.cpp
-struct atomtype_
-{
+struct atomtype_ {
     std::string atomname;
     std::vector<std::vector<double>> coordinate;
 };
 
-struct stru_
-{
+struct stru_ {
     int ibrav;
     std::string point_group;    // Schoenflies symbol
     std::string point_group_hm; // Hermann-Mauguin notation.
@@ -160,8 +117,7 @@ std::vector<stru_> stru_lib{stru_{1,
                                                                    }}}}};
 // used to construct cell and analyse its symmetry
 
-class KlistTest : public testing::Test
-{
+class KlistTest : public testing::Test {
   protected:
     std::unique_ptr<K_Vectors> kv{new K_Vectors};
     std::ifstream ifs;
@@ -171,8 +127,7 @@ class KlistTest : public testing::Test
 
     // used to construct cell and analyse its symmetry
     UnitCell ucell;
-    void construct_ucell(stru_& stru)
-    {
+    void construct_ucell(stru_& stru) {
         std::vector<atomtype_> coord = stru.all_type;
         ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
         ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
@@ -192,14 +147,12 @@ class KlistTest : public testing::Test
         ucell.GT = ucell.latvec.Inverse();
         ucell.G = ucell.GT.Transpose();
         ucell.lat0 = 1.8897261254578281;
-        for (int i = 0; i < coord.size(); i++)
-        {
+        for (int i = 0; i < coord.size(); i++) {
             ucell.atoms[i].label = coord[i].atomname;
             ucell.atoms[i].na = coord[i].coordinate.size();
             ucell.atoms[i].tau.resize(ucell.atoms[i].na);
             ucell.atoms[i].taud.resize(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++)
-            {
+            for (int j = 0; j < ucell.atoms[i].na; j++) {
                 std::vector<double> this_atom = coord[i].coordinate[j];
                 ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
                 ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
@@ -222,8 +175,7 @@ class KlistTest : public testing::Test
         }
     }
 
-    void setucell()
-    {
+    void setucell() {
         ucell.latvec.e11 = 10.0;
         ucell.latvec.e12 = 0.0;
         ucell.latvec.e13 = 0.0;
@@ -238,14 +190,10 @@ class KlistTest : public testing::Test
         ucell.lat0 = 1.8897261254578281;
     }
     // clear ucell
-    void ClearUcell()
-    {
-        delete[] ucell.atoms;
-    }
+    void ClearUcell() { delete[] ucell.atoms; }
 };
 
-TEST_F(KlistTest, Construct)
-{
+TEST_F(KlistTest, Construct) {
     EXPECT_EQ(kv->get_nks(), 0);
     EXPECT_EQ(kv->get_nkstot(), 0);
     EXPECT_EQ(kv->nspin, 0);
@@ -255,8 +203,7 @@ TEST_F(KlistTest, Construct)
     // just to set ucell info here, however it is used in the following tests
 }
 
-TEST_F(KlistTest, MP)
-{
+TEST_F(KlistTest, MP) {
     kv->nmp[0] = 2;
     kv->nmp[1] = 2;
     kv->nmp[2] = 2;
@@ -284,8 +231,7 @@ TEST_F(KlistTest, MP)
     k_type = 1;
     kv1->Monkhorst_Pack(kv1->nmp, kv1->koffset, k_type);
     // std::cout << " " <<std::endl;
-    for (int ik = 0; ik < kv1->nkstot; ik++)
-    {
+    for (int ik = 0; ik < kv1->nkstot; ik++) {
         EXPECT_EQ(kv->kvec_d[ik].x, kv1->kvec_d[ik].x);
         EXPECT_EQ(kv->kvec_d[ik].y, kv1->kvec_d[ik].y);
         EXPECT_EQ(kv->kvec_d[ik].z, kv1->kvec_d[ik].z);
@@ -293,12 +239,11 @@ TEST_F(KlistTest, MP)
     }
 }
 
-TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
-{
+TEST_F(KlistTest, ReadKpointsGammaOnlyLocal) {
     PARAM.sys.gamma_only_local = true;
     std::string k_file = "KPT_GO";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     ifs.open("KPT_GO");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
@@ -307,8 +252,7 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     PARAM.sys.gamma_only_local = false; // this is important for the following tests because it is global
 }
 
-TEST_F(KlistTest, ReadKpointsKspacing)
-{
+TEST_F(KlistTest, ReadKpointsKspacing) {
     kv->nspin = 1;
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.052918; // 0.52918/Bohr = 1/A
@@ -319,15 +263,14 @@ TEST_F(KlistTest, ReadKpointsKspacing)
     PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 343);
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
     PARAM.input.kspacing[2] = 0.0;
 }
 
-TEST_F(KlistTest, ReadKpointsKspacing3values)
-{
+TEST_F(KlistTest, ReadKpointsKspacing3values) {
     kv->nspin = 1;
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.06;     // 0.52918/Bohr = 1/A
@@ -338,15 +281,14 @@ TEST_F(KlistTest, ReadKpointsKspacing3values)
     PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 210);
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
     PARAM.input.kspacing[2] = 0.0;
 }
 
-TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
-{
+TEST_F(KlistTest, ReadKpointsInvalidKspacing3values) {
     kv->nspin = 1;
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0;        // 0.52918/Bohr = 1/A
@@ -357,15 +299,14 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.koffset[2] = 0.0;
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->read_kpoints(ucell,k_file), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(kv->read_kpoints(ucell, k_file), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
     PARAM.input.kspacing[2] = 0.0;
 }
 
-TEST_F(KlistTest, ReadKpointsKspacingShiftedGamma)
-{
+TEST_F(KlistTest, ReadKpointsKspacingShiftedGamma) {
     kv->nspin = 1;
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.052918;
@@ -397,8 +338,7 @@ TEST_F(KlistTest, ReadKpointsKspacingShiftedGamma)
     PARAM.input.kmesh_type = "gamma";
 }
 
-TEST_F(KlistTest, ReadKpointsKspacingShiftedMP)
-{
+TEST_F(KlistTest, ReadKpointsKspacingShiftedMP) {
     kv->nspin = 1;
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.052918;
@@ -430,80 +370,73 @@ TEST_F(KlistTest, ReadKpointsKspacingShiftedMP)
     PARAM.input.kmesh_type = "gamma";
 }
 
-TEST_F(KlistTest, ReadKpointsGamma)
-{
+TEST_F(KlistTest, ReadKpointsGamma) {
     std::string k_file = "./support/KPT";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 512);
 }
 
-TEST_F(KlistTest, ReadKpointsMP)
-{
+TEST_F(KlistTest, ReadKpointsMP) {
     std::string k_file = "./support/KPT1";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 512);
 }
 
-TEST_F(KlistTest, ReadKpointsLine)
-{
+TEST_F(KlistTest, ReadKpointsLine) {
     ModuleSymmetry::Symmetry::symm_flag = 0;
     // symm_flag is required in read_kpoints for a k list
     std::string k_file = "./support/KPT2";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 122);
 }
 
-TEST_F(KlistTest, ReadKpointsCartesian)
-{
+TEST_F(KlistTest, ReadKpointsCartesian) {
     std::string k_file = "./support/KPT4";
     // Cartesian: non-spin case nspin=1
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->kvec_c.size(), 5);
     // spin case nspin=2
     kv->nspin = 2;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->kvec_c.size(), 10);
 }
 
-TEST_F(KlistTest, ReadKpointsLineCartesian)
-{
+TEST_F(KlistTest, ReadKpointsLineCartesian) {
     std::string k_file = "./support/KPT5";
     // Line Cartesian: non-spin case nspin=1
     kv->nspin = 1;
     kv->set_kup_and_kdw();
     // Read from k point file under the case of Line_Cartesian.
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 51);
     EXPECT_EQ(kv->kvec_c.size(), 51);
     // Line Cartesian: spin case nspin=2
     kv->nspin = 2;
     // Read from k point file under the case of Line_Cartesian.
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 51);
     EXPECT_EQ(kv->kvec_c.size(), 102);
 }
 
-TEST_F(KlistTest, ReadKpointsDirect)
-{
+TEST_F(KlistTest, ReadKpointsDirect) {
     std::string k_file = "./support/KPT6";
     kv->nspin = 1;
     kv->set_kup_and_kdw();
     // Read from k point file under the case of Direct
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 6);
     EXPECT_TRUE(kv->kd_done);
 }
 
-TEST_F(KlistTest, ReadKpointsWarning1)
-{
+TEST_F(KlistTest, ReadKpointsWarning1) {
     std::string k_file = "arbitrary_1";
     kv->nspin = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_1");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_1");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -512,15 +445,14 @@ TEST_F(KlistTest, ReadKpointsWarning1)
     remove("klist_tmp_warning_1");
 }
 
-TEST_F(KlistTest, ReadKpointsWarning2)
-{
+TEST_F(KlistTest, ReadKpointsWarning2) {
     std::string k_file = "arbitrary_2";
     ofs.open(k_file.c_str());
     ofs << "ARBITRARY";
     ofs.close();
     kv->nspin = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_2");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_2");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -530,8 +462,7 @@ TEST_F(KlistTest, ReadKpointsWarning2)
     remove("arbitrary_2");
 }
 
-TEST_F(KlistTest, ReadKpointsWarning3)
-{
+TEST_F(KlistTest, ReadKpointsWarning3) {
     std::string k_file = "arbitrary_3";
     ofs.open(k_file.c_str());
     ofs << "KPOINTS" << std::endl;
@@ -539,7 +470,7 @@ TEST_F(KlistTest, ReadKpointsWarning3)
     ofs.close();
     kv->nspin = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_3");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_3");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -549,8 +480,7 @@ TEST_F(KlistTest, ReadKpointsWarning3)
     remove("arbitrary_3");
 }
 
-TEST_F(KlistTest, ReadKpointsWarning4)
-{
+TEST_F(KlistTest, ReadKpointsWarning4) {
     std::string k_file = "arbitrary_4";
     ofs.open(k_file.c_str());
     ofs << "KPOINTS" << std::endl;
@@ -559,7 +489,7 @@ TEST_F(KlistTest, ReadKpointsWarning4)
     ofs.close();
     kv->nspin = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_4");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_4");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -569,8 +499,7 @@ TEST_F(KlistTest, ReadKpointsWarning4)
     remove("arbitrary_4");
 }
 
-TEST_F(KlistTest, ReadKpointsWarning5)
-{
+TEST_F(KlistTest, ReadKpointsWarning5) {
     std::string k_file = "arbitrary_5";
     ofs.open(k_file.c_str());
     ofs << "KPOINTS" << std::endl;
@@ -580,7 +509,7 @@ TEST_F(KlistTest, ReadKpointsWarning5)
     // Cartesian: non-spin case nspin=1
     kv->nspin = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_5");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_5");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -590,8 +519,7 @@ TEST_F(KlistTest, ReadKpointsWarning5)
     remove("arbitrary_5");
 }
 
-TEST_F(KlistTest, ReadKpointsWarning6)
-{
+TEST_F(KlistTest, ReadKpointsWarning6) {
     std::string k_file = "arbitrary_6";
     ofs.open(k_file.c_str());
     ofs << "KPOINTS" << std::endl;
@@ -602,7 +530,7 @@ TEST_F(KlistTest, ReadKpointsWarning6)
     kv->nspin = 1;
     ModuleSymmetry::Symmetry::symm_flag = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_6");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_6");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -613,8 +541,7 @@ TEST_F(KlistTest, ReadKpointsWarning6)
     ModuleSymmetry::Symmetry::symm_flag = 0;
 }
 
-TEST_F(KlistTest, ReadKpointsWarning7)
-{
+TEST_F(KlistTest, ReadKpointsWarning7) {
     std::string k_file = "arbitrary_7";
     ofs.open(k_file.c_str());
     ofs << "KPOINTS" << std::endl;
@@ -624,7 +551,7 @@ TEST_F(KlistTest, ReadKpointsWarning7)
     kv->nspin = 1;
     ModuleSymmetry::Symmetry::symm_flag = 1;
     GlobalV::ofs_warning.open("klist_tmp_warning_7");
-    EXPECT_NO_THROW(kv->read_kpoints(ucell,k_file));
+    EXPECT_NO_THROW(kv->read_kpoints(ucell, k_file));
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_7");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -635,39 +562,34 @@ TEST_F(KlistTest, ReadKpointsWarning7)
     ModuleSymmetry::Symmetry::symm_flag = 0;
 }
 
-TEST_F(KlistTest, SetKupKdown)
-{
+TEST_F(KlistTest, SetKupKdown) {
     std::string k_file = "./support/KPT4";
     // Cartesian: non-spin case nspin=1
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     kv->set_kup_and_kdw();
-    for (int ik = 0; ik < 5; ik++)
-    {
+    for (int ik = 0; ik < 5; ik++) {
         EXPECT_EQ(kv->isk[ik], 0);
     }
     kv->nspin = 4;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     kv->set_kup_and_kdw();
-    for (int ik = 0; ik < 5; ik++)
-    {
+    for (int ik = 0; ik < 5; ik++) {
         EXPECT_EQ(kv->isk[ik], 0);
         EXPECT_EQ(kv->isk[ik + 5], 0);
         EXPECT_EQ(kv->isk[ik + 10], 0);
         EXPECT_EQ(kv->isk[ik + 15], 0);
     }
     kv->nspin = 2;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     kv->set_kup_and_kdw();
-    for (int ik = 0; ik < 5; ik++)
-    {
+    for (int ik = 0; ik < 5; ik++) {
         EXPECT_EQ(kv->isk[ik], 0);
         EXPECT_EQ(kv->isk[ik + 5], 1);
     }
 }
 
-TEST_F(KlistTest, SetAfterVC)
-{
+TEST_F(KlistTest, SetAfterVC) {
     kv->nspin = 1;
     kv->set_nkstot(1);
     GlobalV::ofs_running.open("tmp_klist_1");
@@ -675,7 +597,7 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-//    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+    //    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
     KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
 
     EXPECT_TRUE(kv->kd_done);
@@ -687,8 +609,7 @@ TEST_F(KlistTest, SetAfterVC)
     remove("tmp_klist_1");
 }
 
-TEST_F(KlistTest, PrintKlists)
-{
+TEST_F(KlistTest, PrintKlists) {
     kv->nspin = 1;
     kv->set_nkstot(1);
     kv->set_nks(1);
@@ -697,7 +618,7 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-//    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
+    //    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
     KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
     EXPECT_TRUE(kv->kd_done);
     KVectorUtils::print_klists(*kv, GlobalV::ofs_running);
@@ -705,8 +626,7 @@ TEST_F(KlistTest, PrintKlists)
     remove("tmp_klist_2");
 }
 
-TEST_F(KlistTest, PrintKlistsWarnigQuit)
-{
+TEST_F(KlistTest, PrintKlistsWarnigQuit) {
     kv->nspin = 1;
     kv->set_nkstot(1);
     kv->set_nks(2);
@@ -720,8 +640,7 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
     EXPECT_THAT(output, testing::HasSubstr("nkstot < nks"));
 }
 
-TEST_F(KlistTest, SetBothKvecFinalSCF)
-{
+TEST_F(KlistTest, SetBothKvecFinalSCF) {
     kv->nspin = 1;
     kv->set_nkstot(1);
     kv->set_nks(1);
@@ -733,32 +652,32 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-//    PARAM.input.final_scf = true;
+    //    PARAM.input.final_scf = true;
     kv->kd_done = false;
     kv->kc_done = false;
     // case 1
     kv->k_nkstot = 0;
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     // case 2
     kv->k_nkstot = 1;
     kv->k_kword = "D";
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     // case 3
     kv->k_kword = "C";
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // case 4
     GlobalV::ofs_warning.open("klist_tmp_warning_8");
     kv->k_kword = "arbitrary";
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     GlobalV::ofs_warning.close();
     ifs.open("klist_tmp_warning_8");
@@ -768,8 +687,7 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     remove("klist_tmp_warning_8");
 }
 
-TEST_F(KlistTest, SetBothKvec)
-{
+TEST_F(KlistTest, SetBothKvec) {
     kv->nspin = 1;
     kv->set_nkstot(1);
     kv->set_nks(1);
@@ -780,19 +698,18 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kc_done = false;
     kv->kd_done = true;
     std::string skpt;
-//    PARAM.input.final_scf = false;
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    PARAM.input.final_scf = false;
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     kv->kc_done = true;
     kv->kd_done = false;
-//    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
+    //    kv->set_both_kvec(ucell.G, ucell.latvec, skpt);
     KVectorUtils::set_both_kvec(*kv, ucell.G, ucell.latvec, skpt);
     EXPECT_TRUE(kv->kd_done);
 }
 
-TEST_F(KlistTest, NormalizeWk)
-{
+TEST_F(KlistTest, NormalizeWk) {
     kv->nspin = 1;
     kv->set_nkstot(2);
     kv->set_nks(2);
@@ -805,8 +722,7 @@ TEST_F(KlistTest, NormalizeWk)
     EXPECT_DOUBLE_EQ(kv->wk[1], 1.0);
 }
 
-TEST_F(KlistTest, NormalizeWkZeroWeights)
-{
+TEST_F(KlistTest, NormalizeWkZeroWeights) {
     // Test that zero weights are handled correctly
     kv->nspin = 1;
     kv->set_nkstot(3);
@@ -830,9 +746,7 @@ TEST_F(KlistTest, NormalizeWkZeroWeights)
     EXPECT_NEAR(sum, 2.0, 1e-10);
 }
 
-
-TEST_F(KlistTest, UpdateUseIBZ)
-{
+TEST_F(KlistTest, UpdateUseIBZ) {
     kv->nspin = 1;
     kv->set_nkstot(3);
     kv->set_nks(3);
@@ -844,8 +758,7 @@ TEST_F(KlistTest, UpdateUseIBZ)
     EXPECT_FALSE(kv->kc_done);
 }
 
-TEST_F(KlistTest, IbzKpoint)
-{
+TEST_F(KlistTest, IbzKpoint) {
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
@@ -854,7 +767,7 @@ TEST_F(KlistTest, IbzKpoint)
     // read KPT
     std::string k_file = "./support/KPT1";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 512);
     // calculate ibz_kpoint
     std::string skpt;
@@ -868,8 +781,7 @@ TEST_F(KlistTest, IbzKpoint)
     remove("tmp_klist_3");
 }
 
-TEST_F(KlistTest, IbzKpointIsMP)
-{
+TEST_F(KlistTest, IbzKpointIsMP) {
     // construct cell and symmetry
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
@@ -878,7 +790,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     // read KPT
     std::string k_file = "./support/KPT1";
     kv->nspin = 1;
-    kv->read_kpoints(ucell,k_file);
+    kv->read_kpoints(ucell, k_file);
     EXPECT_EQ(kv->get_nkstot(), 512);
     EXPECT_TRUE(kv->is_mp);
     // calculate ibz_kpoint
@@ -893,8 +805,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     remove("tmp_klist_4");
 }
 
-TEST_F(KlistTest, IbzKpointCustomWeights)
-{
+TEST_F(KlistTest, IbzKpointCustomWeights) {
     // This test verifies the fix for issue #6552: k-point weights should not be overwritten
     // during IBZ reduction for non-Monkhorst-Pack k-point lists.
 
@@ -924,8 +835,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         // Verify that weights are preserved (not overwritten with 1/nkstot)
         // After IBZ reduction, weights should still reflect the input weights
         double total_weight = 0.0;
-        for (int i = 0; i < kv_test1.get_nkstot(); ++i)
-        {
+        for (int i = 0; i < kv_test1.get_nkstot(); ++i) {
             total_weight += kv_test1.wk[i];
         }
         // Weights should sum to approximately the number of original k-points (before normalization)
@@ -951,8 +861,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         // Store original weights
         std::vector<double> original_weights = kv_test2.wk;
         double original_sum = 0.0;
-        for (double w : original_weights)
-        {
+        for (double w: original_weights) {
             original_sum += w;
         }
 
@@ -965,8 +874,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         // After IBZ reduction, the weights should be based on the custom input weights,
         // not uniform 1/nkstot weights. The total weight should be preserved.
         double total_weight_after = 0.0;
-        for (int i = 0; i < kv_test2.get_nkstot(); ++i)
-        {
+        for (int i = 0; i < kv_test2.get_nkstot(); ++i) {
             total_weight_after += kv_test2.wk[i];
         }
 
@@ -978,10 +886,8 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         // the bug where custom weights are overwritten with uniform weights)
         bool has_custom_weight = false;
         double uniform_weight = 1.0 / 5.0;
-        for (int i = 0; i < kv_test2.get_nkstot(); ++i)
-        {
-            if (std::abs(kv_test2.wk[i] - uniform_weight) > 1e-10)
-            {
+        for (int i = 0; i < kv_test2.get_nkstot(); ++i) {
+            if (std::abs(kv_test2.wk[i] - uniform_weight) > 1e-10) {
                 has_custom_weight = true;
                 break;
             }
@@ -1009,8 +915,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
 
         // Verify weights sum correctly
         double total_weight = 0.0;
-        for (int i = 0; i < kv_test3.get_nkstot(); ++i)
-        {
+        for (int i = 0; i < kv_test3.get_nkstot(); ++i) {
             total_weight += kv_test3.wk[i];
         }
         EXPECT_GT(total_weight, 0.0);
@@ -1035,8 +940,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
 
         // After normalization, weights should sum to degspin
         double total_weight = 0.0;
-        for (int i = 0; i < kv_test4.get_nkstot(); ++i)
-        {
+        for (int i = 0; i < kv_test4.get_nkstot(); ++i) {
             total_weight += kv_test4.wk[i];
         }
         EXPECT_NEAR(total_weight, degspin, 1e-10);
@@ -1046,4 +950,3 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
     ClearUcell();
     remove("tmp_klist_custom_weights");
 }
-

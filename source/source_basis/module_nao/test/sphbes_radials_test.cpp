@@ -27,8 +27,7 @@ using ModuleBase::Sphbes;
  *      - Get access to private members.
  *
  */
-class SphbesRadialsTest : public ::testing::Test
-{
+class SphbesRadialsTest : public ::testing::Test {
   protected:
     void SetUp() {};
     void TearDown() {};
@@ -40,11 +39,10 @@ class SphbesRadialsTest : public ::testing::Test
     std::string file = "../../../../../source/source_basis/module_nao/test/I_sphbes_coeff.txt";
 
     /// numerical tolerance for grid & values
-    double tol = 1e-12; 
+    double tol = 1e-12;
 };
 
-TEST_F(SphbesRadialsTest, Build)
-{
+TEST_F(SphbesRadialsTest, Build) {
     double dr = 0.01;
     I_radials.build(file, dr, 999, nullptr, GlobalV::MY_RANK);
 
@@ -87,8 +85,7 @@ TEST_F(SphbesRadialsTest, Build)
     EXPECT_NEAR(I_radials.chi(3, 0).rvalue(699), 2.68919830291794e-06, tol);
 }
 
-TEST_F(SphbesRadialsTest, Build2)
-{
+TEST_F(SphbesRadialsTest, Build2) {
     int lmax = 3;
     int nbes = 10;
     double rcut = 7.0;
@@ -109,9 +106,9 @@ TEST_F(SphbesRadialsTest, Build2)
     EXPECT_EQ(I_radials.nzeta(2), nbes);
     EXPECT_EQ(I_radials.nzeta(3), nbes);
     EXPECT_EQ(I_radials.nzeta_max(), nbes);
-    EXPECT_EQ(I_radials.nchi(), nbes*(lmax+1));
+    EXPECT_EQ(I_radials.nchi(), nbes * (lmax + 1));
 
-    double* zeros = new double[nbes*(lmax+1)];
+    double* zeros = new double[nbes * (lmax + 1)];
     Sphbes::sphbes_zeros(lmax, nbes, zeros, true);
 
     for (int l = 0; l <= lmax; ++l) {
@@ -125,19 +122,21 @@ TEST_F(SphbesRadialsTest, Build2)
 
             // Checks whether the radial grid is computed correctly.
             for (int i = 0; i < I_radials.chi(l, zeta).nr(); ++i) {
-                double q = zeros[l*nbes+zeta] / rcut;
+                double q = zeros[l * nbes + zeta] / rcut;
                 EXPECT_NEAR(I_radials.chi(l, zeta).rvalue(i),
-                        Sphbes::sphbesj(l, q * I_radials.chi(l, zeta).rgrid(i)), tol);
+                            Sphbes::sphbesj(l, q * I_radials.chi(l, zeta).rgrid(i)),
+                            tol);
             }
 
             // Checks whether the radial grid & values are computed correctly.
             // NOTE: the radial functions are just truncated spherical Bessel functions.
-            double q = zeros[l*nbes+zeta] / rcut;
+            double q = zeros[l * nbes + zeta] / rcut;
             for (int i = 0; i < I_radials.chi(l, zeta).nr(); ++i) {
                 EXPECT_NEAR(I_radials.chi(l, zeta).rgrid(i), i * dr, tol);
-                        
+
                 EXPECT_NEAR(I_radials.chi(l, zeta).rvalue(i),
-                        Sphbes::sphbesj(l, q * I_radials.chi(l, zeta).rgrid(i)), tol);
+                            Sphbes::sphbesj(l, q * I_radials.chi(l, zeta).rgrid(i)),
+                            tol);
             }
         }
     }
@@ -145,8 +144,7 @@ TEST_F(SphbesRadialsTest, Build2)
     delete[] zeros;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

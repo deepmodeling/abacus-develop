@@ -8,16 +8,12 @@
 Psi (planewave based wavefunction) initializer: random method
 */
 template <typename T>
-class psi_init_random : public psi_initializer<T>
-{
+class psi_init_random : public psi_initializer<T> {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_random()
-    {
-        this->method_ = "random";
-    };
+    psi_init_random() { this->method_ = "random"; };
     ~psi_init_random(){};
     /// @brief calculate and output planewave wavefunction
     /// @param ik kpoint index

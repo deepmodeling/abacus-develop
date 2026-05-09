@@ -3,8 +3,7 @@
 #include "cal_r_overlap_R.h"
 #include "source_io/module_hs/write_HS_R.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 template <typename T>
 void output_mat_sparse(const bool& out_mat_dh,
                        const bool& out_mat_ds,
@@ -19,45 +18,25 @@ void output_mat_sparse(const bool& out_mat_dh,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu)
-{
+                       Plus_U* p_dftu) {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     //! generate a file containing the kinetic energy matrix
-    if (out_mat_t)
-    {
+    if (out_mat_t) {
         output_TR(istep, ucell, pv, HS_Arrays, grid, two_center_bundle, orb);
     }
 
     //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
-    if (out_mat_dh)
-    {
-        output_dHR(istep,
-                   v_eff,
-                   ucell,
-                   pv,
-                   HS_Arrays,
-                   grid,
-                   two_center_bundle,
-                   orb,
-                   kv);
+    if (out_mat_dh) {
+        output_dHR(istep, v_eff, ucell, pv, HS_Arrays, grid, two_center_bundle, orb, kv);
     }
     //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
-    if (out_mat_ds)
-    {
-        output_dSR(istep,
-                   ucell,
-                   pv,
-                   HS_Arrays,
-                   grid,
-                   two_center_bundle,
-                   orb,
-                   kv);
+    if (out_mat_ds) {
+        output_dSR(istep, ucell, pv, HS_Arrays, grid, two_center_bundle, orb, kv);
     }
 
     // add by jingan for out r_R matrix 2019.8.14
-    if (out_mat_r)
-    {
+    if (out_mat_r) {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb);
         r_matrix.out_rR(ucell, grid, istep);
@@ -78,8 +57,8 @@ template void output_mat_sparse<double>(const bool& out_mat_dh,
                                         UnitCell& ucell,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
-										hamilt::Hamilt<double>* p_ham,
-										Plus_U* p_dftu);
+                                        hamilt::Hamilt<double>* p_ham,
+                                        Plus_U* p_dftu);
 
 template void output_mat_sparse<std::complex<double>>(const bool& out_mat_dh,
                                                       const bool& out_mat_ds,
@@ -93,7 +72,7 @@ template void output_mat_sparse<std::complex<double>>(const bool& out_mat_dh,
                                                       UnitCell& ucell,
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
-													  hamilt::Hamilt<std::complex<double>>* p_ham,
-													  Plus_U* p_dftu);
+                                                      hamilt::Hamilt<std::complex<double>>* p_ham,
+                                                      Plus_U* p_dftu);
 
 } // namespace ModuleIO

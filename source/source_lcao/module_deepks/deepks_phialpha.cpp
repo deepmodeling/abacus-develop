@@ -20,8 +20,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       const LCAO_Orbitals& orb,
                                       const Grid_Driver& GridD,
                                       const Parallel_Orbitals* pv,
-                                      std::vector<hamilt::HContainer<double>*>& phialpha)
-{
+                                      std::vector<hamilt::HContainer<double>*>& phialpha) {
     ModuleBase::TITLE("DeePKS_domain", "allocate_phialpha");
     ModuleBase::timer::start("DeePKS_domain", "allocate_phialpha");
 
@@ -32,8 +31,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
 
     // Total number of atomic basis of projected orbitals
     int nw_alpha = 0;
-    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++)
-    {
+    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++) {
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
@@ -48,14 +46,12 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             const ModuleBase::Vector3<double>& tau1,
             const int start,
             const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
+            ModuleBase::Vector3<int> dR) {
             // Create virtual atom_begin_row and atom_begin_col for the construction of atom pair
             // In DeePKS, phialpha is used to save data, so it is safe to do this
             int atom_begin_row[ucell.nat];
             int atom_begin_col[ucell.nat];
-            for (int i = 0; i < ucell.nat; ++i)
-            {
+            for (int i = 0; i < ucell.nat; ++i) {
                 atom_begin_row[i] = -1;
                 atom_begin_col[i] = pv->atom_begin_col[i];
             }
@@ -63,15 +59,12 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             // Notice: in AtomPair, the usage is set_size(ncol, nrow)
             pair.set_size(nw_alpha, nw_tot);
             phialpha[0]->insert_pair(pair);
-        }
-    );
+        });
 
     phialpha[0]->allocate(nullptr, true);
     // whether to calculate the derivative of phialpha
-    if (cal_deri)
-    {
-        for (int i = 1; i < 4; ++i)
-        {
+    if (cal_deri) {
+        for (int i = 1; i < 4; ++i) {
             phialpha[i] = new hamilt::HContainer<double>(*phialpha[0], nullptr); // copy constructor
         }
     }
@@ -85,16 +78,14 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                                    const Grid_Driver& GridD,
                                    const Parallel_Orbitals* pv,
                                    const TwoCenterIntegrator& overlap_orb_alpha,
-                                   std::vector<hamilt::HContainer<double>*>& phialpha)
-{
+                                   std::vector<hamilt::HContainer<double>*>& phialpha) {
     ModuleBase::TITLE("DeePKS_domain", "build_phialpha");
     ModuleBase::timer::start("DeePKS_domain", "build_phialpha");
 
     // Total number of atomic basis of projected orbitals
     // nw_alpha will be used frequently, better to add a function in Numerical Orbital to get it
     int nw_alpha = 0;
-    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++)
-    {
+    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++) {
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
@@ -109,18 +100,15 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
             const ModuleBase::Vector3<double>& tau1,
             const int start,
             const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
+            ModuleBase::Vector3<int> dR) {
             int R[3] = {dR.x, dR.y, dR.z};
             const int T1 = ucell.iat2it[ibt];
             const Atom* atom1 = &ucell.atoms[T1];
 
             double* data_pointer = phialpha[0]->data(iat, ibt, R);
             std::vector<double*> grad_pointer(3);
-            if (cal_deri)
-            {
-                for (int i = 0; i < 3; ++i)
-                {
+            if (cal_deri) {
+                for (int i = 0; i < 3; ++i) {
                     grad_pointer[i] = phialpha[i + 1]->data(iat, ibt, R);
                 }
             }
@@ -136,8 +124,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
             all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end()); // for unique
 
             // inner loop : all atomic basis on the adjacent atom ad
-            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += PARAM.globalv.npol)
-            {
+            for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += PARAM.globalv.npol) {
                 const int iw1 = all_indexes[iw1l] / PARAM.globalv.npol;
 
                 std::vector<std::vector<double>> nlm;
@@ -156,20 +143,16 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                 overlap_orb_alpha.snap(T1, L1, N1, M1, T0_fixed, dtau * ucell.lat0, cal_deri, nlm);
 
                 const int index_begin = all_indexes[iw1l] * nw_alpha * PARAM.globalv.npol;
-                for (int iw0 = 0; iw0 < nw_alpha; iw0++)
-                {
+                for (int iw0 = 0; iw0 < nw_alpha; iw0++) {
                     data_pointer[index_begin + iw0] = nlm[0][iw0];
-                    if (cal_deri)
-                    {
+                    if (cal_deri) {
                         grad_pointer[0][index_begin + iw0] = nlm[1][iw0];
                         grad_pointer[1][index_begin + iw0] = nlm[2][iw0];
                         grad_pointer[2][index_begin + iw0] = nlm[3][iw0];
                     }
-                    if (PARAM.globalv.npol == 2)
-                    {
+                    if (PARAM.globalv.npol == 2) {
                         data_pointer[index_begin + iw0 + nw_alpha] = nlm[0][iw0];
-                        if (cal_deri)
-                        {
+                        if (cal_deri) {
                             grad_pointer[0][index_begin + iw0 + nw_alpha] = nlm[1][iw0];
                             grad_pointer[1][index_begin + iw0 + nw_alpha] = nlm[2][iw0];
                             grad_pointer[2][index_begin + iw0 + nw_alpha] = nlm[3][iw0];
@@ -177,8 +160,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                     }
                 }
             } // end iw
-        }
-    );
+        });
 
     ModuleBase::timer::end("DeePKS_domain", "build_phialpha");
     return;
@@ -190,21 +172,18 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                                    const Grid_Driver& GridD,
                                    const Parallel_Orbitals* pv,
                                    std::vector<hamilt::HContainer<double>*>& phialpha,
-                                   const int rank)
-{
+                                   const int rank) {
     ModuleBase::TITLE("DeePKS_domain", "check_phialpha");
     ModuleBase::timer::start("DeePKS_domain", "check_phialpha");
 
-    if (rank != 0)
-    {
+    if (rank != 0) {
         return;
     }
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     // same for all types of atoms
     int nw_alpha = 0;
-    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++)
-    {
+    for (int l = 0; l <= orb.Alpha[0].getLmax(); l++) {
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
@@ -218,11 +197,9 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
     ofs_y << std::setprecision(10);
     ofs_z << std::setprecision(10);
 
-    for (int T0 = 0; T0 < ucell.ntype; T0++)
-    {
+    for (int T0 = 0; T0 < ucell.ntype; T0++) {
         Atom* atom0 = &ucell.atoms[T0];
-        for (int I0 = 0; I0 < atom0->na; I0++)
-        {
+        for (int I0 = 0; I0 < atom0->na; I0++) {
             const int iat = ucell.itia2iat(T0, I0);
             //=======================================================
             // Step 1 :
@@ -238,8 +215,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
             ofs_y << "iat : " << iat << std::endl;
             ofs_z << "iat : " << iat << std::endl;
 
-            for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad)
-            {
+            for (int ad = 0; ad < GridD.getAdjacentNum() + 1; ++ad) {
                 const int T1 = GridD.getType(ad);
                 const int I1 = GridD.getNatom(ad);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
@@ -251,8 +227,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
 
                 const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
 
-                if (dist1 > Rcut_Alpha + Rcut_AO1)
-                {
+                if (dist1 > Rcut_Alpha + Rcut_AO1) {
                     continue;
                 }
 
@@ -268,29 +243,25 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                 R[1] = GridD.getBox(ad).y;
                 R[2] = GridD.getBox(ad).z;
 
-                if (!PARAM.globalv.gamma_only_local)
-                {
+                if (!PARAM.globalv.gamma_only_local) {
                     ofs << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                     ofs_x << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                     ofs_y << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                     ofs_z << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                 }
 
-                if (phialpha[0]->find_pair(iat, ibt) == nullptr)
-                {
+                if (phialpha[0]->find_pair(iat, ibt) == nullptr) {
                     continue;
                 }
                 const double* data_pointer = phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3, nullptr);
-                if (cal_deri)
-                {
+                if (cal_deri) {
                     grad_pointer[0] = phialpha[1]->data(iat, ibt, R);
                     grad_pointer[1] = phialpha[2]->data(iat, ibt, R);
                     grad_pointer[2] = phialpha[3]->data(iat, ibt, R);
                 }
 
-                for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
-                {
+                for (int iw1 = 0; iw1 < nw1_tot; ++iw1) {
                     const int iw1_all = start1 + iw1;
                     ofs << "iw : " << iw1_all << std::endl;
                     ofs_x << "iw : " << iw1_all << std::endl;
@@ -301,21 +272,17 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                     if (iw1_local < 0 && iw2_local < 0)
                         continue;
 
-                    for (int ind = 0; ind < nw_alpha; ind++)
-                    {
+                    for (int ind = 0; ind < nw_alpha; ind++) {
                         ofs << data_pointer[iw1 * nw_alpha + ind] << " ";
-                        if (cal_deri)
-                        {
+                        if (cal_deri) {
                             ofs_x << grad_pointer[0][iw1 * nw_alpha + ind] << " ";
                             ofs_y << grad_pointer[1][iw1 * nw_alpha + ind] << " ";
                             ofs_z << grad_pointer[2][iw1 * nw_alpha + ind] << " ";
                         }
                         // 6 numbers per line
-                        if (ind % 6 == 5)
-                        {
+                        if (ind % 6 == 5) {
                             ofs << "\n";
-                            if (cal_deri)
-                            {
+                            if (cal_deri) {
                                 ofs_x << "\n";
                                 ofs_y << "\n";
                                 ofs_z << "\n";
@@ -323,16 +290,15 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                         }
                     }
                     ofs << std::endl;
-                    if (cal_deri)
-                    {
+                    if (cal_deri) {
                         ofs_x << std::endl;
                         ofs_y << std::endl;
                         ofs_z << std::endl;
                     }
                 } // end iw
-            }     // end ad
-        }         // end I0
-    }             // end T0
+            } // end ad
+        } // end I0
+    } // end T0
 
     ModuleBase::timer::end("DeePKS_domain", "check_phialpha");
     return;

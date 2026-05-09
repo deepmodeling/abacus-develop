@@ -9,7 +9,7 @@ namespace op {
 
 template <typename T>
 class LinalgOpTest : public testing::Test {
-public:
+  public:
     LinalgOpTest() = default;
     ~LinalgOpTest() override = default;
 };
@@ -17,24 +17,44 @@ public:
 TYPED_TEST_SUITE(LinalgOpTest, base::utils::Types);
 
 TYPED_TEST(LinalgOpTest, Add) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::add_op addCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor C = A;
     C.zero();
 
-    Tensor expected = std::move(Tensor(
-                                {static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(2.0),
+                                        static_cast<Type>(4.0),
+                                        static_cast<Type>(6.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(8.0),
+                                        static_cast<Type>(10.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(12.0)})
+                                    .to_device<Device>());
     addCalculator(A, B, C);
     EXPECT_EQ(C, expected);
 
@@ -53,24 +73,44 @@ TYPED_TEST(LinalgOpTest, Add) {
 }
 
 TYPED_TEST(LinalgOpTest, Sub) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::add_op addCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor C = A;
     C.zero();
 
-    Tensor expected = std::move(Tensor(
-        {static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
-         static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
-         static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(2.0),
+                                        static_cast<Type>(4.0),
+                                        static_cast<Type>(6.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(8.0),
+                                        static_cast<Type>(10.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(12.0)})
+                                    .to_device<Device>());
 
     C = expected - B;
     C -= B;
@@ -79,26 +119,47 @@ TYPED_TEST(LinalgOpTest, Sub) {
 }
 
 TYPED_TEST(LinalgOpTest, AddScalar) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::add_op addCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor C = A;
     C.zero();
 
-    Tensor expected = std::move(Tensor({static_cast<Type>(-1.0), static_cast<Type>(-2.0), static_cast<Type>(-3.0),
-                                        static_cast<Type>(0.0),  static_cast<Type>(-4.0), static_cast<Type>(-5.0),
-                                        static_cast<Type>(0.0),  static_cast<Type>(0.0),  static_cast<Type>(-6.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(-1.0),
+                                        static_cast<Type>(-2.0),
+                                        static_cast<Type>(-3.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(-4.0),
+                                        static_cast<Type>(-5.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(-6.0)})
+                                    .to_device<Device>());
 
     auto alpha = static_cast<Type>(2.0);
-    auto beta  = static_cast<Type>(-3.0);
+    auto beta = static_cast<Type>(-3.0);
 
     addCalculator(alpha, A, beta, B, C);
     EXPECT_EQ(C, expected);
@@ -110,19 +171,39 @@ TYPED_TEST(LinalgOpTest, Mul) {
 
     op::mul_op mulCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
 
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor C = A;
     C.zero();
-    Tensor expected = std::move(Tensor({
-                                 static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(9.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(16.0),static_cast<Type>(25.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(36.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(1.0),
+                                        static_cast<Type>(4.0),
+                                        static_cast<Type>(9.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(16.0),
+                                        static_cast<Type>(25.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(36.0)})
+                                    .to_device<Device>());
 
     mulCalculator(A, B, C);
     EXPECT_EQ(C, expected);
@@ -141,16 +222,29 @@ TYPED_TEST(LinalgOpTest, MulScalar) {
 
     op::mul_op mulCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
 
     Tensor C = A;
     C.zero();
-    Tensor expected = std::move(Tensor({
-                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(8.0),static_cast<Type>(10.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(2.0),
+                                        static_cast<Type>(4.0),
+                                        static_cast<Type>(6.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(8.0),
+                                        static_cast<Type>(10.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(12.0)})
+                                    .to_device<Device>());
 
     auto alpha = static_cast<Type>(2.0);
     mulCalculator(alpha, A, C);
@@ -163,19 +257,39 @@ TYPED_TEST(LinalgOpTest, Div) {
 
     op::div_op divCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(6.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(8.0), static_cast<Type>(10.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(12.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(2.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(6.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(8.0),
+                                 static_cast<Type>(10.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(12.0)})
+                             .to_device<Device>());
 
-    Tensor B = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(1.0), static_cast<Type>(1.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor B = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(1.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(1.0),
+                                 static_cast<Type>(1.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor C = A;
     C.zero();
-    Tensor expected = std::move(Tensor({
-                                 static_cast<Type>(2.0), static_cast<Type>(2.0), static_cast<Type>(2.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(2.0), static_cast<Type>(2.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(2.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(2.0),
+                                        static_cast<Type>(2.0),
+                                        static_cast<Type>(2.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(2.0),
+                                        static_cast<Type>(2.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(2.0)})
+                                    .to_device<Device>());
 
     divCalculator(A, B, C);
     EXPECT_EQ(C, expected);
@@ -189,22 +303,36 @@ TYPED_TEST(LinalgOpTest, Div) {
 }
 
 TYPED_TEST(LinalgOpTest, Transpose) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::transpose_op<false> transposeCalculator;
 
     const int dim = 3;
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     A.reshape({-1, 3});
     Tensor A_transpose = A;
     A_transpose.zero();
 
-    Tensor expected = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(2.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(3.0), static_cast<Type>(5.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor expected = std::move(Tensor({static_cast<Type>(1.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(2.0),
+                                        static_cast<Type>(4.0),
+                                        static_cast<Type>(0.0),
+                                        static_cast<Type>(3.0),
+                                        static_cast<Type>(5.0),
+                                        static_cast<Type>(6.0)})
+                                    .to_device<Device>());
     expected.reshape({-1, 3});
 
     transposeCalculator(A, {1, 0}, A_transpose);
@@ -213,16 +341,24 @@ TYPED_TEST(LinalgOpTest, Transpose) {
 }
 
 TYPED_TEST(LinalgOpTest, Stride) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::stride_op strideCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
 
-    Tensor expected = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor expected =
+        std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
     Tensor A_stride = expected;
     A_stride.zero();
 
@@ -232,18 +368,25 @@ TYPED_TEST(LinalgOpTest, Stride) {
 }
 
 TYPED_TEST(LinalgOpTest, Inflate) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::inflate_op inflateCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(0.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(0.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     Tensor A_inflate = A;
     A_inflate.zero();
-    Tensor expected = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
-
+    Tensor expected =
+        std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(4.0), static_cast<Type>(6.0)}).to_device<Device>());
 
     inflateCalculator(expected, {4}, A_inflate);
 
@@ -251,18 +394,25 @@ TYPED_TEST(LinalgOpTest, Inflate) {
 }
 
 TYPED_TEST(LinalgOpTest, Reduce) {
-    using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
+    using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
 
     op::reduce_op reduceCalculator;
 
-    Tensor A = std::move(Tensor({static_cast<Type>(1.0), static_cast<Type>(2.0), static_cast<Type>(3.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(4.0), static_cast<Type>(5.0),
-                                 static_cast<Type>(0.0), static_cast<Type>(0.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor A = std::move(Tensor({static_cast<Type>(1.0),
+                                 static_cast<Type>(2.0),
+                                 static_cast<Type>(3.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(4.0),
+                                 static_cast<Type>(5.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(0.0),
+                                 static_cast<Type>(6.0)})
+                             .to_device<Device>());
     A.reshape({-1, 3});
 
-    Tensor expected = std::move(
-        Tensor({static_cast<Type>(6.0), static_cast<Type>(9.0), static_cast<Type>(6.0)}).to_device<Device>());
+    Tensor expected =
+        std::move(Tensor({static_cast<Type>(6.0), static_cast<Type>(9.0), static_cast<Type>(6.0)}).to_device<Device>());
     Tensor A_reduce = expected;
     A_reduce.zero();
 

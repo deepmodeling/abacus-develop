@@ -1,14 +1,22 @@
 # Extracting Band Structure
 
-In ABACUS, in order to obtain the eigenvalues of Hamiltonian, or generally called band structure, examples can be found in [examples/band](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/band).
-Similar to the [DOS case](https://abacus-rtd.readthedocs.io/en/latest/advanced/elec_properties/dos.html), one first needs to perform a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
+In ABACUS, in order to obtain the eigenvalues of Hamiltonian, or generally called band structure,
+examples can be found in
+[examples/band](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/band). Similar
+to the [DOS case](https://abacus-rtd.readthedocs.io/en/latest/advanced/elec_properties/dos.html),
+one first needs to perform a ground-state energy calculation ***with one additional keyword
+"[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)"
+in the INPUT file***:
 
 ```
 out_chg 1
 ```
 
-With this input parameter, the converged charge density will be output in the files such as `chgs1.cube`, `chgs2.cube`, etc.
-Then, one can use the same `STRU` file, pseudopotential files and atomic orbital files (and the local density matrix file onsite.dm if DFT+U is used) to do a non-self-consistent (NSCF) calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
+With this input parameter, the converged charge density will be output in the files such as
+`chgs1.cube`, `chgs2.cube`, etc. Then, one can use the same `STRU` file, pseudopotential files and
+atomic orbital files (and the local density matrix file onsite.dm if DFT+U is used) to do a
+non-self-consistent (NSCF) calculation. In this example, the potential is constructed from the
+ground-state charge density from the proceeding calculation. Now the INPUT file is like:
 
 ```
 INPUT_PARAMETERS
@@ -50,18 +58,18 @@ Line # line-mode
 
 This means we are using the following k-points:
 
-- 6 k points, here means 6 k points:
-  (0.5, 0.0, 0.5) (0.0, 0.0, 0.0) (0.5, 0.5, 0.5) (0.5, 0.25, 0.75) (0.375, 0.375, 0.75) (0.0, 0.0,
-  0.0)
-- 20/1 number of k points along the segment line, which is constructed by two adjacent k
-  points.
+- 6 k points, here means 6 k points: (0.5, 0.0, 0.5) (0.0, 0.0, 0.0) (0.5, 0.5, 0.5) (0.5, 0.25,
+  0.75) (0.375, 0.375, 0.75) (0.0, 0.0, 0.0)
+- 20/1 number of k points along the segment line, which is constructed by two adjacent k points.
 
-Next, run ABACUS and you will see a file named `eigs1.txt` in the output directory. 
-Plot it and you will obtain the energy band structure!
+Next, run ABACUS and you will see a file named `eigs1.txt` in the output directory. Plot it and you
+will obtain the energy band structure!
 
-If "out_proj_band" set 1, it will also produce the projected band structure in a file called PBAND_1 in xml format.
+If "out_proj_band" set 1, it will also produce the projected band structure in a file called PBAND_1
+in xml format.
 
-The PBAND_1 file starts with number of atomic orbitals in the system, the text contents of element `<band structure>` is the same as data in the BANDS_1.dat file, such as:
+The PBAND_1 file starts with number of atomic orbitals in the system, the text contents of element
+`<band structure>` is the same as data in the BANDS_1.dat file, such as:
 
 ```
 <pband>

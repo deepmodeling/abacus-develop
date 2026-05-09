@@ -2,13 +2,10 @@
 #include "source_cell/unitcell.h"
 // mock of TD_info
 class TD_info {
-public:
+  public:
     TD_info() {}
     ~TD_info() {}
-    const UnitCell* get_ucell()
-    {
-        return nullptr;
-    }
+    const UnitCell* get_ucell() { return nullptr; }
     static ModuleBase::Vector3<double> cart_At;
     static TD_info* td_vel_op;
 };

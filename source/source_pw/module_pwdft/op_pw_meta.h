@@ -14,54 +14,48 @@ namespace hamilt {
 #ifndef __METATEMPLATE
 #define __METATEMPLATE
 
-template<class T> class Meta : public T {};
+template <class T>
+class Meta : public T {};
 // template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class Meta : public OperatorPW<T, Device> {};
 
 #endif
 
-template<typename T, typename Device>
-class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
-{
+template <typename T, typename Device>
+class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device> {
   private:
     using Real = typename GetTypeReal<T>::type;
-    public:
-      Meta(Real tpiba2_in,
-           const int* isk_in,
-           const Real* vk_in,
-           const int vk_row,
-           const int vk_col,
-           const ModulePW::PW_Basis_K* wfcpw);
 
-      template <typename T_in, typename Device_in = Device>
-      explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
+  public:
+    Meta(Real tpiba2_in,
+         const int* isk_in,
+         const Real* vk_in,
+         const int vk_row,
+         const int vk_col,
+         const ModulePW::PW_Basis_K* wfcpw);
 
-      virtual ~Meta();
+    template <typename T_in, typename Device_in = Device>
+    explicit Meta(const Meta<OperatorPW<T_in, Device_in>>* meta);
 
-      virtual void act(const int nbands,
-          const int nbasis,
-          const int npol,
-          const T* tmpsi_in,
-          T* tmhpsi,
-          const int ngk_ik = 0,
-          const bool is_first_node = false)const override;
+    virtual ~Meta();
 
-      // denghui added for copy constructor at 20221105
-      Real get_tpiba() const
-      {
-          return this->tpiba;
-      }
-    const int * get_isk() const {return this->isk;}
-    const Real* get_vk() const {return this->vk;}
-    int get_vk_row() const {return this->vk_row;}
-    int get_vk_col() const {return this->vk_col;}
-    const ModulePW::PW_Basis_K* get_wfcpw() const
-    {
-          return this->wfcpw;
-    }
+    virtual void act(const int nbands,
+                     const int nbasis,
+                     const int npol,
+                     const T* tmpsi_in,
+                     T* tmhpsi,
+                     const int ngk_ik = 0,
+                     const bool is_first_node = false) const override;
 
-    private:
+    // denghui added for copy constructor at 20221105
+    Real get_tpiba() const { return this->tpiba; }
+    const int* get_isk() const { return this->isk; }
+    const Real* get_vk() const { return this->vk; }
+    int get_vk_row() const { return this->vk_row; }
+    int get_vk_col() const { return this->vk_col; }
+    const ModulePW::PW_Basis_K* get_wfcpw() const { return this->wfcpw; }
 
+  private:
     mutable int max_npw = 0;
 
     mutable int npol = 0;
@@ -73,13 +67,13 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     const int* isk = nullptr;
 
-    const Real * vk = nullptr;
+    const Real* vk = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
-    T *porter = nullptr;
+    T* porter = nullptr;
     using meta_op = meta_pw_op<Real, Device>;
     using vector_mul_vector_op = ModuleBase::vector_mul_vector_op<T, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;

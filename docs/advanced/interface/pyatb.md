@@ -2,7 +2,12 @@
 
 ## Introduction
 
-[PYATB](https://github.com/pyatb/pyatb) (Python ab initio tight binding simulation package) is an open-source software package designed for computing electronic structures and related properties based on the ab initio tight binding Hamiltonian. The Hamiltonian can be directly obtained after conducting self-consistent calculations with ABACUS using numerical atomic orbital (NAO) bases. The package comprises three modules - Bands, Geometric, and Optical, each providing a comprehensive set of tools for analyzing different aspects of a material's electronic structure.
+[PYATB](https://github.com/pyatb/pyatb) (Python ab initio tight binding simulation package) is an
+open-source software package designed for computing electronic structures and related properties
+based on the ab initio tight binding Hamiltonian. The Hamiltonian can be directly obtained after
+conducting self-consistent calculations with ABACUS using numerical atomic orbital (NAO) bases. The
+package comprises three modules - Bands, Geometric, and Optical, each providing a comprehensive set
+of tools for analyzing different aspects of a material's electronic structure.
 
 ## Installation
 
@@ -12,13 +17,18 @@ cd pyatb
 python setup.py install --record log
 ```
 
-To customize the `setup.py` file, you must make changes to the **CXX** and **LAPACK_DIR** variables in line with your environment. **CXX** denotes the C++ compiler you intend to use, for instance, icpc (note that it should not be the mpi version). Furthermore, **LAPACK_DIR** is used to specify the Intel MKL path.
+To customize the `setup.py` file, you must make changes to the **CXX** and **LAPACK_DIR** variables
+in line with your environment. **CXX** denotes the C++ compiler you intend to use, for instance,
+icpc (note that it should not be the mpi version). Furthermore, **LAPACK_DIR** is used to specify
+the Intel MKL path.
 
-After completing the installation process, you can access the `pyatb` executable and corresponding module, which can be imported using the `import pyatb` command.
+After completing the installation process, you can access the `pyatb` executable and corresponding
+module, which can be imported using the `import pyatb` command.
 
 ## How to use
 
-We take Bi$_2$Se$_3$ as an example to illustrate how to use ABACUS to generate the tight binding Hamiltonian required for PYATB, and then perform calculations related to PYATB functions.
+We take Bi$_2$Se$_3$ as an example to illustrate how to use ABACUS to generate the tight binding
+Hamiltonian required for PYATB, and then perform calculations related to PYATB functions.
 
 1. Perform ABACUS self consistent calculation:
 
@@ -55,9 +65,15 @@ out_mat_hs2           1
 out_mat_r             1
 ```
 
-After the key parameters `out_mat_hs2` and `out_mat_r` are turned on, ABACUS will generate files containing the Hamiltonian matrix $H(R)$, overlap matrix $S(R)$, and dipole matrix $r(R)$ after completing the self-consistent calculation. These parameters can be found in the ABACUS `INPUT` file.
+After the key parameters `out_mat_hs2` and `out_mat_r` are turned on, ABACUS will generate files
+containing the Hamiltonian matrix $H(R)$, overlap matrix $S(R)$, and dipole matrix $r(R)$ after
+completing the self-consistent calculation. These parameters can be found in the ABACUS `INPUT`
+file.
 
-2. Copy the HR, SR, and rR files output by ABACUS's self-consistent calculation, which are located in the `OUT*` directory and named `data-HR-sparse_SPIN0.csr`, `data-SR-sparse_SPIN0.csr`, and `data-rR-sparse.csr`, respectively. Copy these files to the working directory and write the `Input` file for PYATB:
+2. Copy the HR, SR, and rR files output by ABACUS's self-consistent calculation, which are located
+   in the `OUT*` directory and named `data-HR-sparse_SPIN0.csr`, `data-SR-sparse_SPIN0.csr`, and
+   `data-rR-sparse.csr`, respectively. Copy these files to the working directory and write the
+   `Input` file for PYATB:
 
 ```
 INPUT_PARAMETERS
@@ -107,4 +123,5 @@ export OMP_NUM_THREADS=2
 mpirun -np 6 pyatb
 ```
 
-After the calculation is completed, the band structure data and figures of Bi$_2$Se$_3$ can be found in the `Out/Band_Structure` folder.
+After the calculation is completed, the band structure data and figures of Bi$_2$Se$_3$ can be found
+in the `Out/Band_Structure` folder.

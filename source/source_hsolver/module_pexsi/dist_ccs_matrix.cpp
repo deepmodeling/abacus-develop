@@ -3,10 +3,8 @@
 
 #include <mpi.h>
 
-namespace pexsi
-{
-DistCCSMatrix::DistCCSMatrix(void)
-{
+namespace pexsi {
+DistCCSMatrix::DistCCSMatrix(void) {
     this->comm = MPI_COMM_WORLD;
     this->size = 0;
     this->nnz = 0;
@@ -16,8 +14,7 @@ DistCCSMatrix::DistCCSMatrix(void)
     this->rowindLocal = nullptr;
 }
 
-DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in)
-{
+DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in) {
     this->comm = comm_in;
     this->size = 0;
     this->nnz = 0;
@@ -27,8 +24,7 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in)
     this->rowindLocal = nullptr;
 }
 
-DistCCSMatrix::DistCCSMatrix(int size_in, int nnzLocal_in)
-{
+DistCCSMatrix::DistCCSMatrix(int size_in, int nnzLocal_in) {
     this->comm = MPI_COMM_WORLD;
     this->size = size_in;
     this->nnzLocal = nnzLocal_in;
@@ -42,8 +38,7 @@ DistCCSMatrix::DistCCSMatrix(int size_in, int nnzLocal_in)
     MPI_Wait(&req, &req_status);
 }
 
-DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in)
-{
+DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in) {
     this->comm = comm_in;
     this->nproc_data = nproc_data_in;
     int nproc_data_range[3] = {0, this->nproc_data - 1, 1};
@@ -56,26 +51,20 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in)
     this->nnz = 0;
     this->nnzLocal = 0;
     int myproc = 0;
-    if (comm != MPI_COMM_NULL)
-    {
+    if (comm != MPI_COMM_NULL) {
         MPI_Comm_size(comm, &nprocs);
         MPI_Comm_rank(comm, &myproc);
-        if (myproc < nproc_data - 1)
-        {
+        if (myproc < nproc_data - 1) {
             this->numColLocal = size / nproc_data;
             this->firstCol = size / nproc_data * myproc;
             this->colptrLocal = new int[this->numColLocal + 1];
             this->rowindLocal = nullptr;
-        }
-        else if (myproc == nproc_data - 1)
-        {
+        } else if (myproc == nproc_data - 1) {
             this->numColLocal = size - myproc * (size / nproc_data);
             this->firstCol = size / nproc_data * myproc;
             this->colptrLocal = new int[this->numColLocal + 1];
             this->rowindLocal = nullptr;
-        }
-        else
-        {
+        } else {
             this->numColLocal = 0;
             this->firstCol = size - 1;
             this->colptrLocal = new int[this->numColLocal + 1];
@@ -84,14 +73,10 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in)
     }
 }
 
-int DistCCSMatrix::globalCol(int localCol)
-{
-    return this->firstCol + localCol;
-}
+int DistCCSMatrix::globalCol(int localCol) { return this->firstCol + localCol; }
 
 // NOTE: the process id is 0-based
-int DistCCSMatrix::localCol(int globalCol, int& mypcol)
-{
+int DistCCSMatrix::localCol(int globalCol, int& mypcol) {
     mypcol = int(globalCol / int(this->size / this->nproc_data));
     if (mypcol >= this->nproc_data)
         mypcol = this->nproc_data - 1;
@@ -99,10 +84,8 @@ int DistCCSMatrix::localCol(int globalCol, int& mypcol)
     return mypcol > 0 ? globalCol - (this->size / this->nproc_data) * mypcol : globalCol;
 }
 
-void DistCCSMatrix::setnnz(int nnzLocal_in)
-{
-    if (this->comm_data != MPI_COMM_NULL)
-    {
+void DistCCSMatrix::setnnz(int nnzLocal_in) {
+    if (this->comm_data != MPI_COMM_NULL) {
         MPI_Allreduce(&nnzLocal_in, &this->nnz, 1, MPI_INT, MPI_SUM, this->comm_data);
         this->nnzLocal = nnzLocal_in;
         this->rowindLocal = new int[nnzLocal];
@@ -110,8 +93,7 @@ void DistCCSMatrix::setnnz(int nnzLocal_in)
     }
 }
 
-DistCCSMatrix::~DistCCSMatrix()
-{
+DistCCSMatrix::~DistCCSMatrix() {
     delete[] colptrLocal;
     delete[] rowindLocal;
 }

@@ -11,8 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace GlobalV
-{
+namespace GlobalV {
 //========================================================================
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -22,7 +21,7 @@ namespace GlobalV
 // NAME : MY_POOL( global index of pool (count in pool))
 // NAME : NPROC_IN_POOL( local number of process in a pool.)
 // NAME : RANK_IN_POOL( global index of pool (count in process),
-//  	  MY_RANK in each pool)
+//        MY_RANK in each pool)
 // NAME : DRANK( index of diag world)
 // NAME : DSIZE( number of processors in diag world, only 1 DWORLD exist)
 // NAME : DCOLOR( color of each group)

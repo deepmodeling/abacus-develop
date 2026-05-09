@@ -63,7 +63,10 @@ def main():
     # ----------------------------------------------------------
     # 3. Dependency files (PW only needs pseudopotentials)
     # ----------------------------------------------------------
-    job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/Bi_pbe_fr.upf", "Se": "../../../tests/PP_ORB/Se_pbe_fr.upf"}
+    job.pp_orbitals = {
+        "Bi": "../../../tests/PP_ORB/Bi_pbe_fr.upf",
+        "Se": "../../../tests/PP_ORB/Se_pbe_fr.upf",
+    }
     # ← PW基组不需要轨道文件，不设置 orbital_files
 
     # ----------------------------------------------------------
@@ -152,4 +155,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

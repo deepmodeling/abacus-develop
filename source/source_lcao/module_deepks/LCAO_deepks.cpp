@@ -7,8 +7,7 @@
 
 // Constructor of the class
 template <typename T>
-LCAO_Deepks<T>::LCAO_Deepks()
-{
+LCAO_Deepks<T>::LCAO_Deepks() {
     deepks_param.inl_index = new ModuleBase::IntArray[1];
     gedm = nullptr;
     this->phialpha.resize(1);
@@ -16,19 +15,16 @@ LCAO_Deepks<T>::LCAO_Deepks()
 
 // Desctructor of the class
 template <typename T>
-LCAO_Deepks<T>::~LCAO_Deepks()
-{
+LCAO_Deepks<T>::~LCAO_Deepks() {
     delete[] deepks_param.inl_index;
 
     //=======1. to use deepks, pdm is required==========
     pdm.clear();
     //=======2. "deepks_scf" part==========
     // if (PARAM.inp.deepks_scf)
-    if (gedm)
-    {
+    if (gedm) {
         // delete gedm**
-        for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
-        {
+        for (int inl = 0; inl < this->deepks_param.inlmax; inl++) {
             delete[] gedm[inl];
         }
         delete[] gedm;
@@ -42,8 +38,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
                           const int nks,
                           const Parallel_Orbitals& pv_in,
                           std::vector<int> na,
-                          std::ofstream& ofs)
-{
+                          std::ofstream& ofs) {
     ModuleBase::TITLE("LCAO_Deepks", "init");
     ModuleBase::timer::start("LCAO_Deepks", "init");
 
@@ -64,16 +59,14 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
 
     int tot_inl = tot_inl_per_atom * nat;
 
-    if (PARAM.inp.deepks_equiv)
-    {
+    if (PARAM.inp.deepks_equiv) {
         tot_inl = nat;
     }
 
     this->deepks_param.lmaxd = lm;
     this->deepks_param.nmaxd = nm;
     this->deepks_param.nchi_d_l.assign(lm + 1, 0);
-    for (int l = 0; l <= lm; ++l)
-    {
+    for (int l = 0; l <= lm; ++l) {
         this->deepks_param.nchi_d_l[l] = orb.Alpha[0].getNchi(l);
     }
 
@@ -85,11 +78,9 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
     this->pdm.resize(this->deepks_param.inlmax);
 
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
-    if (!PARAM.inp.deepks_equiv)
-    {
+    if (!PARAM.inp.deepks_equiv) {
         this->deepks_param.des_per_atom = 0; // mohan add 2021-04-21
-        for (int l = 0; l <= deepks_param.lmaxd; l++)
-        {
+        for (int l = 0; l <= deepks_param.lmaxd; l++) {
             this->deepks_param.des_per_atom += orb.Alpha[0].getNchi(l) * (2 * l + 1);
         }
         this->deepks_param.n_descriptor = nat * this->deepks_param.des_per_atom;
@@ -97,29 +88,23 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         this->init_index(ntype, nat, na, tot_inl, orb, ofs);
     }
 
-    if (!PARAM.inp.deepks_equiv)
-    {
+    if (!PARAM.inp.deepks_equiv) {
         // ofs << " total basis (all atoms) for descriptor = " << std::endl;
 
         // init pdm
-        for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
-        {
+        for (int inl = 0; inl < this->deepks_param.inlmax; inl++) {
             int nm = 2 * deepks_param.inl2l[inl] + 1;
             pdm_size += nm * nm;
             this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
         }
-    }
-    else
-    {
-        for (int il = 0; il < this->deepks_param.lmaxd + 1; il++)
-        {
+    } else {
+        for (int il = 0; il < this->deepks_param.lmaxd + 1; il++) {
             pdm_size += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = pdm_size * pdm_size;
         this->deepks_param.des_per_atom = pdm_size;
         ofs << " Equivariant version, pdm matrices size " << pdm_size << std::endl;
-        for (int iat = 0; iat < nat; iat++)
-        {
+        for (int iat = 0; iat < nat; iat++) {
             this->pdm[iat] = torch::zeros({pdm_size}, torch::kFloat64);
         }
     }
@@ -136,34 +121,29 @@ void LCAO_Deepks<T>::init_index(const int ntype,
                                 std::vector<int> na,
                                 const int Total_nchi,
                                 const LCAO_Orbitals& orb,
-                                std::ofstream& ofs)
-{
+                                std::ofstream& ofs) {
     delete[] this->deepks_param.inl_index;
     this->deepks_param.inl_index = new ModuleBase::IntArray[ntype];
     this->deepks_param.inl2l.resize(this->deepks_param.inlmax, 0);
 
     int inl = 0;
     int alpha = 0;
-    for (int it = 0; it < ntype; it++)
-    {
+    for (int it = 0; it < ntype; it++) {
         this->deepks_param.inl_index[it].create(na[it], this->deepks_param.lmaxd + 1, this->deepks_param.nmaxd);
 
-        //ofs << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
+        // ofs << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
 
-        for (int ia = 0; ia < na[it]; ia++)
-        {
+        for (int ia = 0; ia < na[it]; ia++) {
             // alpha
-            for (int l = 0; l < this->deepks_param.lmaxd + 1; l++)
-            {
-                for (int n = 0; n < orb.Alpha[0].getNchi(l); n++)
-                {
+            for (int l = 0; l < this->deepks_param.lmaxd + 1; l++) {
+                for (int n = 0; n < orb.Alpha[0].getNchi(l); n++) {
                     this->deepks_param.inl_index[it](ia, l, n) = inl;
                     this->deepks_param.inl2l[inl] = l;
                     inl++;
                 }
             }
         } // end ia
-    }     // end it
+    } // end it
     assert(Total_nchi == inl);
     ofs << " Descriptors per atom " << this->deepks_param.des_per_atom << std::endl;
     ofs << " Total Descriptors " << this->deepks_param.n_descriptor << std::endl;
@@ -171,33 +151,27 @@ void LCAO_Deepks<T>::init_index(const int ntype,
 }
 
 template <typename T>
-void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
-{
+void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks) {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
     ModuleBase::timer::start("LCAO_Deepks", "allocate_V_delta");
 
     // initialize the H matrix V_delta
     V_delta.resize(nks);
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         this->V_delta[ik].resize(pv->nloc);
         ModuleBase::GlobalFunc::ZEROS(this->V_delta[ik].data(), pv->nloc);
     }
 
     // init gedm**
     int pdm_size = 0;
-    if (!PARAM.inp.deepks_equiv)
-    {
+    if (!PARAM.inp.deepks_equiv) {
         pdm_size = (this->deepks_param.lmaxd * 2 + 1) * (this->deepks_param.lmaxd * 2 + 1);
-    }
-    else
-    {
+    } else {
         pdm_size = this->deepks_param.des_per_atom;
     }
 
     this->gedm = new double*[this->deepks_param.inlmax];
-    for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
-    {
+    for (int inl = 0; inl < this->deepks_param.inlmax; inl++) {
         this->gedm[inl] = new double[pdm_size];
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
@@ -210,8 +184,7 @@ template <typename T>
 void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
                               const LCAO_Orbitals& orb,
                               const Parallel_Orbitals& pv,
-                              const Grid_Driver& GridD)
-{
+                              const Grid_Driver& GridD) {
     this->dm_r = new hamilt::HContainer<double>(&pv);
     DeePKS_domain::iterate_ad2(ucell,
                                GridD,
@@ -231,16 +204,14 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
                                    ModuleBase::Vector3<int> dR2) {
                                    auto row_indexes = pv.get_indexes_row(ibt1);
                                    auto col_indexes = pv.get_indexes_col(ibt2);
-                                   if (row_indexes.size() * col_indexes.size() == 0)
-                                   {
+                                   if (row_indexes.size() * col_indexes.size() == 0) {
                                        return; // to next loop
                                    }
 
                                    int dRx = 0;
                                    int dRy = 0;
                                    int dRz = 0;
-                                   if (std::is_same<T, std::complex<double>>::value)
-                                   {
+                                   if (std::is_same<T, std::complex<double>>::value) {
                                        dRx = (dR1 - dR2).x;
                                        dRy = (dR1 - dR2).y;
                                        dRz = (dR1 - dR2).z;
@@ -252,8 +223,7 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
 }
 
 template <typename T>
-void LCAO_Deepks<T>::dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks)
-{
+void LCAO_Deepks<T>::dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks) {
     DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, PARAM.inp.nspin, this->pv, this->e_delta_band);
 }
 

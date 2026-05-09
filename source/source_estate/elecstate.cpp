@@ -7,21 +7,13 @@
 #include "source_base/tool_title.h"
 #include "occupy.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
-const double* ElecState::getRho(int spin) const
-{
-    return &(this->charge->rho[spin][0]);
-}
+const double* ElecState::getRho(int spin) const { return &(this->charge->rho[spin][0]); }
 
-
-
-void ElecState::init_nelec_spin()
-{
+void ElecState::init_nelec_spin() {
     this->nelec_spin.resize(PARAM.inp.nspin);
-    if (PARAM.inp.nspin == 2)
-    {
+    if (PARAM.inp.nspin == 2) {
         this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
         this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
@@ -29,13 +21,12 @@ void ElecState::init_nelec_spin()
 
 void ElecState::init_scf(const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac, 
+                         const ModuleBase::ComplexMatrix& strucfac,
                          const bool* numeric,
-                         ModuleSymmetry::Symmetry& symm, 
-                         const void* wfcpw)
-{
+                         ModuleSymmetry::Symmetry& symm,
+                         const void* wfcpw) {
     //! core correction potential.
-    this->charge->set_rho_core(ucell,strucfac, numeric);
+    this->charge->set_rho_core(ucell, strucfac, numeric);
 
     //! renormalize the charge density
     this->charge->renormalize_rho();
@@ -44,12 +35,10 @@ void ElecState::init_scf(const UnitCell& ucell,
     this->pot->init_pot(this->charge);
 }
 
-
 void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,
-                        const ModulePW::PW_Basis_Big* bigpw_in)
-{
+                        const ModulePW::PW_Basis_Big* bigpw_in) {
     this->charge = chr_in;
     this->klist = klist_in;
     this->bigpw = bigpw_in;

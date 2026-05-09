@@ -18,103 +18,101 @@
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
 #endif
 
-namespace spinconstrain
-{
+namespace spinconstrain {
 
 struct ScAtomData;
 
 template <typename TK>
-class SpinConstrain
-{
-public:
+class SpinConstrain {
+  public:
     /**
      * pubic interface for spin-constrained DFT
-    */
+     */
     /// initialize spin-constrained DFT
-  void init_sc(double sc_thr_in,
-               int nsc_in,
-               int nsc_min_in,
-               double alpha_trial_in,
-               double sccut_in,
-               double sc_drop_thr_in,
-               const UnitCell& ucell,
-               Parallel_Orbitals* ParaV_in,
-               int nspin_in,
-               const K_Vectors& kv_in,
-               void* p_hamilt_in,
-               void* psi_in,
+    void init_sc(double sc_thr_in,
+                 int nsc_in,
+                 int nsc_min_in,
+                 double alpha_trial_in,
+                 double sccut_in,
+                 double sc_drop_thr_in,
+                 const UnitCell& ucell,
+                 Parallel_Orbitals* ParaV_in,
+                 int nspin_in,
+                 const K_Vectors& kv_in,
+                 void* p_hamilt_in,
+                 void* psi_in,
 #ifdef __LCAO
-			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
+                 elecstate::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-02
 #endif
-			   elecstate::ElecState* pelec_in,
-               ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
+                 elecstate::ElecState* pelec_in,
+                 ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
-  /// @brief calculate the magnetization of each atom with real space projection method for LCAO base
-  /// @param step : the step number of the SCF calculation
-  /// @param print : print the magnetization of each atom if true
-  void cal_mi_lcao(const int& step, bool print = false);
+    /// @brief calculate the magnetization of each atom with real space projection method for LCAO base
+    /// @param step : the step number of the SCF calculation
+    /// @param print : print the magnetization of each atom if true
+    void cal_mi_lcao(const int& step, bool print = false);
 
-  void cal_mi_pw();
+    void cal_mi_pw();
 
-  void cal_mw_from_lambda(int i_step, 
-		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+    void cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
-  /**
-   * @brief calculate the energy of \sum_i \lambda_i * Mi
-   * if this->is_mag_converged is true, then this function will calculate the energy and return the real value
-   * if this->is_mag_converged is false, then this function will return 0.0
-   */
-  double cal_escon();
+    /**
+     * @brief calculate the energy of \sum_i \lambda_i * Mi
+     * if this->is_mag_converged is true, then this function will calculate the energy and return the real value
+     * if this->is_mag_converged is false, then this function will return 0.0
+     */
+    double cal_escon();
 
-  double get_escon() const;
+    double get_escon() const;
 
-  void run_lambda_loop(int outer_step, 
-		  bool rerun = true);
+    void run_lambda_loop(int outer_step, bool rerun = true);
 
-  /// @brief update the charge density for LCAO base with new lambda
-  /// update the charge density and psi for PW base with new lambda
-  void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
+    /// @brief update the charge density for LCAO base with new lambda
+    /// update the charge density and psi for PW base with new lambda
+    void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
 
-  void calculate_delta_hcc(std::complex<double>* h_tmp, 
-		  const std::complex<double>* becp_k, 
-		  const ModuleBase::Vector3<double>* delta_lambda, 
-		  const int nbands, const int nkb, const int* nh_iat);
+    void calculate_delta_hcc(std::complex<double>* h_tmp,
+                             const std::complex<double>* becp_k,
+                             const ModuleBase::Vector3<double>* delta_lambda,
+                             const int nbands,
+                             const int nkb,
+                             const int* nh_iat);
 
-  /// lambda loop helper functions
-  bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
+    /// lambda loop helper functions
+    bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
 
-  /// apply restriction
-  void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
+    /// apply restriction
+    void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
 
-  /// check gradient decay
-  bool check_gradient_decay(std::vector<ModuleBase::Vector3<double>> new_spin,
-                            std::vector<ModuleBase::Vector3<double>> old_spin,
-                            std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-                            std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
-                            bool print = false);
-  /// @brief  calculate alpha_opt
-  double cal_alpha_opt(std::vector<ModuleBase::Vector3<double>> spin,
-                       std::vector<ModuleBase::Vector3<double>> spin_plus,
-                       const double alpha_trial);
-  /// print header info
-  void print_header();
-  /// print termination message
-  void print_termination();
+    /// check gradient decay
+    bool check_gradient_decay(std::vector<ModuleBase::Vector3<double>> new_spin,
+                              std::vector<ModuleBase::Vector3<double>> old_spin,
+                              std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
+                              std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
+                              bool print = false);
+    /// @brief  calculate alpha_opt
+    double cal_alpha_opt(std::vector<ModuleBase::Vector3<double>> spin,
+                         std::vector<ModuleBase::Vector3<double>> spin_plus,
+                         const double alpha_trial);
+    /// print header info
+    void print_header();
+    /// print termination message
+    void print_termination();
 
-  /// print mi
-  void print_Mi(std::ofstream& ofs_running);
+    /// print mi
+    void print_Mi(std::ofstream& ofs_running);
 
-  /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
-  void print_Mag_Force(std::ofstream& ofs_running);
+    /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+    void print_Mag_Force(std::ofstream& ofs_running);
 
-  /// @brief use rerun to get higher precision in lambda_loop for PW base
-  bool higher_mag_prec = false;
+    /// @brief use rerun to get higher precision in lambda_loop for PW base
+    bool higher_mag_prec = false;
 
-public:
+  public:
     /**
      * important outter class pointers used in spin-constrained DFT
-    */
-    Parallel_Orbitals *ParaV = nullptr;
+     */
+    Parallel_Orbitals* ParaV = nullptr;
     //--------------------------------------------------------------------------------
     // pointers for solve Hamiltonian to get new Magnetization from Lambda
     void* p_hamilt = nullptr;
@@ -132,7 +130,7 @@ public:
   public:
     /**
      * pubic methods for setting and getting spin-constrained DFT parameters
-    */
+     */
     /// Public method to access the Singleton instance
     static SpinConstrain& getScInstance();
     /// Delete copy and move constructors and assign operators
@@ -216,16 +214,13 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(const K_Vectors& kv_in,
-                               void* p_hamilt_in,
-                               void* psi_in,
-                               elecstate::ElecState* pelec_in);
+    void set_solver_parameters(const K_Vectors& kv_in, void* p_hamilt_in, void* psi_in, elecstate::ElecState* pelec_in);
 
   private:
-    SpinConstrain(){};                               // Private constructor
-    ~SpinConstrain(){};                              // Destructor
-    SpinConstrain& operator=(SpinConstrain const&) = delete;  // Copy assign
-    SpinConstrain& operator=(SpinConstrain &&) = delete;      // Move assign
+    SpinConstrain(){};                                       // Private constructor
+    ~SpinConstrain(){};                                      // Destructor
+    SpinConstrain& operator=(SpinConstrain const&) = delete; // Copy assign
+    SpinConstrain& operator=(SpinConstrain&&) = delete;      // Move assign
     std::map<int, std::vector<ScAtomData>> ScData;
     std::map<int, double> ScDecayGrad; // in unit of uB^2/eV
     std::vector<double> decay_grad_;   // in unit of uB^2/Ry
@@ -234,7 +229,7 @@ public:
     std::map<int, std::map<int, int>> lnchiCounts;
     std::vector<ModuleBase::Vector3<double>> lambda_; // in unit of Ry/uB in code, but in unit of meV/uB in input file
     std::vector<ModuleBase::Vector3<double>> target_mag_; // in unit of uB
-    std::vector<ModuleBase::Vector3<double>> Mi_; // in unit of uB
+    std::vector<ModuleBase::Vector3<double>> Mi_;         // in unit of uB
     std::vector<std::string> atomLabels_;
     double escon_ = 0.0;
     int nspin_ = 0;
@@ -249,7 +244,7 @@ public:
     double current_sc_thr_;
     std::vector<ModuleBase::Vector3<int>> constrain_;
     bool debug = false;
-    double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
+    double alpha_trial_;      // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_; // in unit of Ry/uB = 3 eV/uB
 
   public:
@@ -257,9 +252,10 @@ public:
     /// @param op_in the base pointer of operator, actual type should be DeltaSpin<OperatorLCAO<TK, TR>>*
     void set_operator(hamilt::Operator<TK>* op_in);
     /// @brief set is_Mi_converged
-    void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
+    void set_mag_converged(bool is_Mi_converged_in) { this->is_Mi_converged = is_Mi_converged_in; }
     /// @brief get is_Mi_converged
-    bool mag_converged() const {return this->is_Mi_converged;}
+    bool mag_converged() const { return this->is_Mi_converged; }
+
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
     hamilt::Operator<TK>* p_operator = nullptr;
@@ -270,7 +266,6 @@ public:
     TK* sub_s_save = nullptr;
     TK* becp_save = nullptr;
 };
-
 
 /**
  * @brief struct for storing parameters of non-collinear spin-constrained DFT

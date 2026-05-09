@@ -13,14 +13,12 @@
 #include "source_cell/sep.h"
 #undef private
 
-class ReadSepTest : public testing::Test
-{
+class ReadSepTest : public testing::Test {
   protected:
     std::string output;
     std::unique_ptr<SepPot> read_sep{new SepPot};
 
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialization default check
         EXPECT_FALSE(read_sep->is_enable);
         EXPECT_DOUBLE_EQ(read_sep->r_in, 0.0);
@@ -33,17 +31,14 @@ class ReadSepTest : public testing::Test
         EXPECT_EQ(read_sep->rv, nullptr);
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Cleaning is done automatically in the destructor
     }
 };
 
-TEST_F(ReadSepTest, ReadSep)
-{
+TEST_F(ReadSepTest, ReadSep) {
 #ifdef __MPI
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
 #endif // !__MPI
         std::ifstream ifs;
         ifs.open("./support/F_pbe_50.sep");
@@ -63,11 +58,9 @@ TEST_F(ReadSepTest, ReadSep)
 #endif // __MPI
 }
 
-TEST_F(ReadSepTest, PrintSep)
-{
+TEST_F(ReadSepTest, PrintSep) {
 #ifdef __MPI
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
 #endif
         // 设置测试数据
         read_sep->label = "F";
@@ -88,8 +81,7 @@ TEST_F(ReadSepTest, PrintSep)
         std::ifstream ifs("test_sep.out");
         std::string line;
         std::vector<std::string> lines;
-        while (std::getline(ifs, line))
-        {
+        while (std::getline(ifs, line)) {
             lines.push_back(line);
         }
         ifs.close();
@@ -107,10 +99,8 @@ TEST_F(ReadSepTest, PrintSep)
 }
 
 #ifdef __MPI
-TEST_F(ReadSepTest, BcastSep)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
+TEST_F(ReadSepTest, BcastSep) {
+    if (GlobalV::MY_RANK == 0) {
         std::ifstream ifs;
         ifs.open("./support/F_pbe_50.sep");
         ASSERT_TRUE(ifs.is_open());
@@ -118,8 +108,7 @@ TEST_F(ReadSepTest, BcastSep)
         ifs.close();
     }
     read_sep->bcast_sep();
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         EXPECT_EQ(read_sep->label, "F");
         EXPECT_EQ(read_sep->mesh, 1038);
         EXPECT_EQ(read_sep->xc_type, "pbe");
@@ -130,8 +119,7 @@ TEST_F(ReadSepTest, BcastSep)
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

@@ -11,26 +11,21 @@
 #include "source_lcao/module_rt/gather_mat.h"     // gatherMatrix and distributeMatrix
 #include "source_lcao/module_rt/propagator.h"     // Include header for create_identity_matrix
 
-namespace elecstate
-{
+namespace elecstate {
 void print_local_matrix(std::ostream& os,
                         const std::complex<double>* matrix_data,
                         int local_rows,
                         int local_cols,
                         const std::string& matrix_name,
-                        int rank)
-{
-    if (!matrix_name.empty() || rank >= 0)
-    {
+                        int rank) {
+    if (!matrix_name.empty() || rank >= 0) {
         os << "=== ";
-        if (!matrix_name.empty())
-        {
+        if (!matrix_name.empty()) {
             os << "Matrix: " << matrix_name;
             if (rank >= 0)
                 os << " ";
         }
-        if (rank >= 0)
-        {
+        if (rank >= 0) {
             os << "(Process: " << rank + 1 << ")";
         }
         os << " (Local dims: " << local_rows << " x " << local_cols << ") ===" << std::endl;
@@ -57,8 +52,7 @@ void print_local_matrix(std::ostream& os,
 void cal_edm_tddft(Parallel_Orbitals& pv,
                    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
                    K_Vectors& kv,
-                   hamilt::Hamilt<std::complex<double>>* p_hamilt)
-{
+                   hamilt::Hamilt<std::complex<double>>* p_hamilt) {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft");
     ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
@@ -67,8 +61,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 
     dmat.dm->EDMK.resize(kv.get_nks());
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         p_hamilt->updateHk(ik);
         std::complex<double>* tmp_dmk = dmat.dm->get_DMK_pointer(ik);
         ModuleBase::ComplexMatrix& tmp_edmk = dmat.dm->EDMK[ik];
@@ -270,10 +263,8 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 
         p_hamilt->matrix(h_mat, s_mat);
 
-        for (int i = 0; i < nlocal; i++)
-        {
-            for (int j = 0; j < nlocal; j++)
-            {
+        for (int i = 0; i < nlocal; i++) {
+            for (int j = 0; j < nlocal; j++) {
                 Htmp(i, j) = h_mat.p[i * nlocal + j];
                 Sinv(i, j) = s_mat.p[i * nlocal + j];
             }
@@ -291,10 +282,8 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         // I just use ModuleBase::ComplexMatrix temporarily, and will change it
         // to std::complex<double>*
         ModuleBase::ComplexMatrix tmp_dmk_base(nlocal, nlocal);
-        for (int i = 0; i < nlocal; i++)
-        {
-            for (int j = 0; j < nlocal; j++)
-            {
+        for (int i = 0; i < nlocal; i++) {
+            for (int j = 0; j < nlocal; j++) {
                 tmp_dmk_base(i, j) = tmp_dmk[i * nlocal + j];
             }
         }
@@ -310,8 +299,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
 void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
                           LCAO_domain::Setup_DM<std::complex<double>>& dmat,
                           K_Vectors& kv,
-                          hamilt::Hamilt<std::complex<double>>* p_hamilt)
-{
+                          hamilt::Hamilt<std::complex<double>>* p_hamilt) {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor");
     ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
@@ -319,8 +307,7 @@ void cal_edm_tddft_tensor(Parallel_Orbitals& pv,
     assert(nlocal >= 0);
     dmat.dm->EDMK.resize(kv.get_nks());
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         p_hamilt->updateHk(ik);
         std::complex<double>* tmp_dmk = dmat.dm->get_DMK_pointer(ik);
         ModuleBase::ComplexMatrix& tmp_edmk = dmat.dm->EDMK[ik];
@@ -541,8 +528,7 @@ template <typename Device>
 void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
                                  LCAO_domain::Setup_DM<std::complex<double>>& dmat,
                                  K_Vectors& kv,
-                                 hamilt::Hamilt<std::complex<double>>* p_hamilt)
-{
+                                 hamilt::Hamilt<std::complex<double>>* p_hamilt) {
     ModuleBase::TITLE("elecstate", "cal_edm_tddft_tensor_lapack");
     ModuleBase::timer::start("TD_Efficiency", "cal_edm_tddft");
 
@@ -556,22 +542,20 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
     // Memory operations
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
+    if (ct_device_type == ct::DeviceType::GpuDevice) {
         // Initialize cuBLAS & cuSOLVER handle
         ct::kernels::createGpuSolverHandle();
         ct::kernels::createGpuBlasHandle();
     }
 #endif // __CUDA
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
+    for (int ik = 0; ik < kv.get_nks(); ++ik) {
         p_hamilt->updateHk(ik);
         std::complex<double>* tmp_dmk_local = dmat.dm->get_DMK_pointer(ik);
         ModuleBase::ComplexMatrix& tmp_edmk = dmat.dm->EDMK[ik];
@@ -597,15 +581,12 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
         hamilt::MatrixBlock<std::complex<double>> h_mat_local, s_mat_local;
         p_hamilt->matrix(h_mat_local, s_mat_local);
 
-        if (num_procs == 1)
-        {
+        if (num_procs == 1) {
             // Optimization: Direct access for single process
             h_src = h_mat_local.p;
             s_src = s_mat_local.p;
             dmk_src = tmp_dmk_local;
-        }
-        else
-        {
+        } else {
             // Standard Gather Logic for multi-process
             module_rt::gatherMatrix(myid, root_proc, h_mat_local, h_mat_global);
             module_rt::gatherMatrix(myid, root_proc, s_mat_local, s_mat_global);
@@ -615,8 +596,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
             dmk_local_block.desc = pv.desc;
             module_rt::gatherMatrix(myid, root_proc, dmk_local_block, dmk_global);
 
-            if (myid == root_proc)
-            {
+            if (myid == root_proc) {
                 h_src = h_mat_global.p.get();
                 s_src = s_mat_global.p.get();
                 dmk_src = dmk_global.p.get();
@@ -624,8 +604,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
         }
 
         // 2. GPU Calculation (on Rank 0)
-        if (myid == root_proc)
-        {
+        if (myid == root_proc) {
             ct::Tensor H_dev, S_dev, DMK_dev, ipiv_dev;
 
             // Allocate and Copy (H2D)
@@ -747,33 +726,26 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
             // 3. Retrieve Result (D2H)
             std::complex<double>* edm_dest = nullptr;
 
-            if (num_procs == 1)
-            {
+            if (num_procs == 1) {
                 // Directly copy to target local matrix
                 tmp_edmk.create(pv.ncol, pv.nrow);
                 edm_dest = tmp_edmk.c;
-            }
-            else
-            {
+            } else {
                 // Wait to set up edm_dest after allocating global buffer
-                if (myid == root_proc && edm_global.p == nullptr)
-                {
+                if (myid == root_proc && edm_global.p == nullptr) {
                     edm_global.p.reset(new std::complex<double>[nlocal * nlocal]);
                 }
                 edm_dest = edm_global.p.get();
             }
 
-            if (num_procs == 1 || myid == root_proc)
-            {
+            if (num_procs == 1 || myid == root_proc) {
                 syncmem_complex_d2h_op()(edm_dest, tmp4_dev.template data<std::complex<double>>(), nlocal * nlocal);
             }
         }
 
         // 4. Distribute (Only needed if num_procs > 1)
-        if (num_procs > 1)
-        {
-            if (edm_global.p == nullptr)
-            {
+        if (num_procs > 1) {
+            if (edm_global.p == nullptr) {
                 edm_global.p.reset(new std::complex<double>[nlocal * nlocal]);
             }
 
@@ -793,8 +765,7 @@ void cal_edm_tddft_tensor_lapack(Parallel_Orbitals& pv,
     } // end ik
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
+    if (ct_device_type == ct::DeviceType::GpuDevice) {
         // Destroy cuBLAS & cuSOLVER handle
         ct::kernels::destroyGpuSolverHandle();
         ct::kernels::destroyGpuBlasHandle();

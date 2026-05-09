@@ -23,24 +23,21 @@ double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
 // the secant method and inverse quadratic interpolation
 //=================== NOTES ========================
 
-Ions_Move_CG::Ions_Move_CG()
-{
+Ions_Move_CG::Ions_Move_CG() {
     this->pos0 = nullptr;
     this->grad0 = nullptr;
     this->cg_grad0 = nullptr;
     this->move0 = nullptr;
 }
 
-Ions_Move_CG::~Ions_Move_CG()
-{
+Ions_Move_CG::~Ions_Move_CG() {
     delete[] pos0;
     delete[] grad0;
     delete[] cg_grad0;
     delete[] move0;
 }
 
-void Ions_Move_CG::allocate(void)
-{
+void Ions_Move_CG::allocate(void) {
     ModuleBase::TITLE("Ions_Move_CG", "allocate");
     assert(dim > 0);
     delete[] pos0;
@@ -58,8 +55,7 @@ void Ions_Move_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in)
-{
+void Ions_Move_CG::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in) {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(dim > 0);
     assert(pos0 != 0);
@@ -75,7 +71,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     static bool trial = false;
 
     // ncggrad is a parameter to control the cg method , every ten cg directions,
-    // we change the direction back to the steepest descent method                       
+    // we change the direction back to the steepest descent method
     static int ncggrad = 0;
     static double fa = 0.0;
     static double fb = 0.0;
@@ -87,13 +83,13 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     static double steplength = 0.0;
     static double fmax = 0.0;
     static int nbrent = 0;
-    
+
     // some arrays
-    double *pos = new double[dim];
-    double *grad = new double[dim];
-    double *cg_gradn = new double[dim];
-    double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    double* pos = new double[dim];
+    double* grad = new double[dim];
+    double* cg_gradn = new double[dim];
+    double* move = new double[dim];
+    double* cg_grad = new double[dim];
     double best_x = 0.0;
     double fmin = 0.0;
     int flag = 0;
@@ -105,8 +101,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
 CG_begin:
 
-    if (Ions_Move_Basic::istep == 1)
-    {
+    if (Ions_Move_Basic::istep == 1) {
         steplength = Ions_Move_Basic::relax_bfgs_init; // read in the init trust radius
         sd = true;
         trial = true;
@@ -128,18 +123,13 @@ CG_begin:
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
-    if (flag == 0)
-    {
+    if (flag == 0) {
         Ions_Move_Basic::check_converged(ucell, grad);
     }
-    if (Ions_Move_Basic::converged)
-    {
+    if (Ions_Move_Basic::converged) {
         Ions_Move_Basic::terminate(ucell);
-    }
-    else
-    {
-        if (sd)
-        {
+    } else {
+        if (sd) {
             e0 = etot_in;
             setup_cg_grad(grad,
                           grad0,
@@ -164,10 +154,9 @@ CG_begin:
             fmax = fa;
             sd = false;
 
-            if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
-            {
-                if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
-                    < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
+            if (Ions_Move_Basic::relax_method[0] == "cg_bfgs") {
+                if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A <
+                    RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
                     Ions_Move_Basic::relax_method[0] = "bfgs";
                     Ions_Move_Basic::relax_method[1] = "1";
@@ -176,16 +165,12 @@ CG_begin:
             }
 
             Ions_Move_Basic::relax_bfgs_init = xb;
-        }
-        else
-        {
-            if (trial)
-            {
+        } else {
+            if (trial) {
                 double e1 = etot_in;
                 f_cal(move0, grad, dim, fb);
                 f_cal(move0, move0, dim, xb);
-                if ((std::abs(fb) < std::abs((fa) / 10.0)))
-                {
+                if ((std::abs(fb) < std::abs((fa) / 10.0))) {
                     sd = true;
                     trial = true;
                     steplength = xb;
@@ -196,8 +181,7 @@ CG_begin:
                 normalize(cg_gradn, cg_grad0, dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
-                if (best_x > 6 * xb || best_x < (-xb))
-                {
+                if (best_x > 6 * xb || best_x < (-xb)) {
                     best_x = 6 * xb;
                 }
 
@@ -209,28 +193,22 @@ CG_begin:
                 xc = xb + xc;
                 xpt = xc;
                 Ions_Move_Basic::relax_bfgs_init = xc;
-            }
-            else
-            {
+            } else {
                 double xtemp, ftemp;
                 f_cal(move0, grad, dim, fc);
                 fmin = std::abs(fc);
                 nbrent++;
 
-                if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3))
-                {
+                if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3)) {
                     nbrent = 0;
                     sd = true;
                     trial = true;
                     steplength = xpt;
                     flag = 1;
                     goto CG_begin;
-                }
-                else
-                {
+                } else {
                     Brent(fa, fb, fc, xa, xb, xc, best_x, xpt); // Brent method
-                    if (xc < 0)
-                    {
+                    if (xc < 0) {
                         sd = true;
                         trial = true;
                         steplength = xb;
@@ -256,34 +234,28 @@ CG_begin:
     return;
 }
 
-void Ions_Move_CG::setup_cg_grad(double *grad,
-                                 const double *grad0,
-                                 double *cg_grad,
-                                 const double *cg_grad0,
-                                 const int &ncggrad,
-                                 int &flag)
-{
+void Ions_Move_CG::setup_cg_grad(double* grad,
+                                 const double* grad0,
+                                 double* cg_grad,
+                                 const double* cg_grad0,
+                                 const int& ncggrad,
+                                 int& flag) {
     ModuleBase::TITLE("Ions_Move_CG", "setup_cg_grad");
     assert(Ions_Move_Basic::istep > 0);
     double gamma;
     double cg0_cg, cg0_cg0, cg0_g;
 
-    if (ncggrad % 10000 == 0 || flag == 2)
-    {
-        for (int i = 0; i < dim; i++)
-        {
+    if (ncggrad % 10000 == 0 || flag == 2) {
+        for (int i = 0; i < dim; i++) {
             cg_grad[i] = grad[i];
         }
-    }
-    else
-    {
+    } else {
         double gp_gp = 0.0;  // grad_p.grad_p
         double gg = 0.0;     // grad.grad
         double g_gp = 0.0;   // grad_p.grad
         double cgp_gp = 0.0; // cg_grad_p.grad_p
         double cgp_g = 0.0;  // cg_grad_p.grad
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             gp_gp += grad0[i] * grad0[i];
             gg += grad[i] * grad[i];
             g_gp += grad0[i] * grad[i];
@@ -297,17 +269,13 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
         // const double gamma = gg/cgp_gp;                      //D
         // const double gamma = -gg/(cgp_g - cgp_gp);             //D-Y
 
-        if (gamma1 < 0.5)
-        {
+        if (gamma1 < 0.5) {
             gamma = gamma1;
-        }
-        else
-        {
+        } else {
             gamma = gamma2;
         }
 
-        for (int i = 0; i < dim; i++)
-        {
+        for (int i = 0; i < dim; i++) {
             // we can consider step as modified gradient.
             cg_grad[i] = grad[i] + gamma * cg_grad0[i];
         }
@@ -315,13 +283,12 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
     return;
 }
 
-void Ions_Move_CG::third_order(const double &e0,
-                               const double &e1,
-                               const double &fa,
-                               const double &fb,
+void Ions_Move_CG::third_order(const double& e0,
+                               const double& e1,
+                               const double& fa,
+                               const double& fb,
                                const double x,
-                               double &best_x)
-{
+                               double& best_x) {
     double k3, k2, k1;
     double dmoveh, dmove1, dmove2, dmove, ecal1, ecal2;
 
@@ -336,9 +303,7 @@ void Ions_Move_CG::third_order(const double &e0,
     if ((std::abs(k3 / k1) < 0.01) || ((k1 * k3 / (k2 * k2)) >= 0.25)) // this condition may be wrong
     {
         dmove = dmoveh;
-    }
-    else
-    {
+    } else {
         dmove1 = -k2 * (1 - sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
         dmove2 = -k2 * (1 + sqrt(1 - 4 * k1 * k3 / (k2 * k2))) / (2 * k3);
         ecal1 = k3 * dmove1 * dmove1 * dmove1 / 3 + k2 * dmove1 * dmove1 / 2 + k1 * dmove1;
@@ -356,23 +321,21 @@ void Ions_Move_CG::third_order(const double &e0,
     return;
 }
 
-void Ions_Move_CG::Brent(double &fa,
-                         double &fb,
-                         double &fc,
-                         double &xa,
-                         double &xb,
-                         double &xc,
-                         double &best_x,
-                         double &xpt)
-{
+void Ions_Move_CG::Brent(double& fa,
+                         double& fb,
+                         double& fc,
+                         double& xa,
+                         double& xb,
+                         double& xc,
+                         double& best_x,
+                         double& xpt) {
     double dmove;
     double tmp;
     double k2, k1, k0;
     double xnew1, xnew2;
     double ecalnew1, ecalnew2;
 
-    if ((fa * fb) > 0)
-    {
+    if ((fa * fb) > 0) {
         dmove = (xc * fa - xa * fc) / (fa - fc);
         if (dmove > 4 * xc)
         // if(dmove > 4 * xc || dmove < 0)
@@ -381,17 +344,14 @@ void Ions_Move_CG::Brent(double &fa,
         }
         xb = xc;
         fb = fc;
-    }
-    else
-    {
+    } else {
         k2 = -((fb - fc) / (xb - xc) - (fa - fc) / (xa - xc)) / (xa - xb);
         k1 = (fa - fc) / (xa - xc) - k2 * (xa + xc);
         k0 = fa - k1 * xa - k2 * xa * xa;
         xnew1 = (-k1 - sqrt(k1 * k1 - 4 * k2 * k0)) / (2 * k2);
         xnew2 = (-k1 + sqrt(k1 * k1 - 4 * k2 * k0)) / (2 * k2);
 
-        if (xnew1 > xnew2)
-        {
+        if (xnew1 > xnew2) {
             tmp = xnew2;
             xnew2 = xnew1;
             xnew1 = tmp;
@@ -401,21 +361,17 @@ void Ions_Move_CG::Brent(double &fa,
         ecalnew2 = k2 * xnew2 * xnew2 * xnew2 / 3 + k1 * xnew2 * xnew2 / 2 + k0 * xnew2;
         dmove = xnew1;
 
-        if (ecalnew1 > ecalnew2)
-        {
+        if (ecalnew1 > ecalnew2) {
             dmove = xnew2;
         }
-        if (dmove < 0)
-        {
+        if (dmove < 0) {
             dmove = 2 * xc; // pengfei 14-6-5
         }
-        if (fa * fc > 0)
-        {
+        if (fa * fc > 0) {
             xa = xc;
             fa = fc;
         }
-        if (fb * fc > 0)
-        {
+        if (fb * fc > 0) {
             xb = xc;
             fb = fc;
         }
@@ -428,17 +384,14 @@ void Ions_Move_CG::Brent(double &fa,
     return;
 }
 
-void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
-{
+void Ions_Move_CG::f_cal(const double* g0, const double* g1, const int& dim, double& f_value) {
     double hv0, hel;
     hel = 0;
     hv0 = 0;
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         hel += g0[i] * g1[i];
     }
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         hv0 += g0[i] * g0[i];
     }
 
@@ -446,29 +399,23 @@ void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, dou
     return;
 }
 
-void Ions_Move_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
-{
+void Ions_Move_CG::setup_move(double* move, double* cg_gradn, const double& trust_radius) {
     // movement using gradient and trust_radius.
-    for (int i = 0; i < dim; ++i)
-    {
+    for (int i = 0; i < dim; ++i) {
         move[i] = -cg_gradn[i] * trust_radius;
     }
     return;
 }
 
-void Ions_Move_CG::normalize(double *cg_gradn, const double *cg_grad, int dim)
-{
+void Ions_Move_CG::normalize(double* cg_gradn, const double* cg_grad, int dim) {
     double norm = 0.0;
-    for (int i = 0; i < dim; ++i)
-    {
+    for (int i = 0; i < dim; ++i) {
         norm += pow(cg_grad[i], 2);
     }
     norm = sqrt(norm);
 
-    if (norm != 0.0)
-    {
-        for (int i = 0; i < dim; ++i)
-        {
+    if (norm != 0.0) {
+        for (int i = 0; i < dim; ++i) {
             cg_gradn[i] = cg_grad[i] / norm;
         }
     }

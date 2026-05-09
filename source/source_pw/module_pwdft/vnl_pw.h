@@ -17,8 +17,7 @@
 // Calculate the non-local pseudopotential in reciprocal
 // space using plane wave as basis set.
 //==========================================================
-class pseudopot_cell_vnl
-{
+class pseudopot_cell_vnl {
 
   public:
     pseudopot_cell_vnl();

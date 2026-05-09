@@ -15,9 +15,9 @@
  * @param nbands_sto number of stochastic bands
  */
 template <typename FPTYPE, typename Device>
-struct check_che_op
-{
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+struct check_che_op {
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
     void operator()(const int& nche_in,
                     const double& try_emin,
                     const double& try_emax,
@@ -34,20 +34,15 @@ struct check_che_op
  * @param num_per number of elements for this processor
  *
  */
-struct parallel_distribution
-{
-    parallel_distribution(const int& num_all, const int& np, const int myrank)
-    {
+struct parallel_distribution {
+    parallel_distribution(const int& num_all, const int& np, const int myrank) {
         int num_per = num_all / np;
         int st_per = num_per * myrank;
         int re = num_all % np;
-        if (myrank < re)
-        {
+        if (myrank < re) {
             ++num_per;
             st_per += myrank;
-        }
-        else
-        {
+        } else {
             st_per += re;
         }
         this->start = st_per;
@@ -62,26 +57,21 @@ struct parallel_distribution
  * @brief gather information from all processors
  *
  */
-struct info_gatherv
-{
-    info_gatherv(const int& ngroup_per, const int& np, const int& num_in_group, MPI_Comm comm_world)
-    {
+struct info_gatherv {
+    info_gatherv(const int& ngroup_per, const int& np, const int& num_in_group, MPI_Comm comm_world) {
         nrecv = new int[np];
         displs = new int[np];
         MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv, 1, MPI_INT, comm_world);
         displs[0] = 0;
-        for (int i = 1; i < np; ++i)
-        {
+        for (int i = 1; i < np; ++i) {
             displs[i] = displs[i - 1] + nrecv[i - 1];
         }
-        for (int i = 0; i < np; ++i)
-        {
+        for (int i = 0; i < np; ++i) {
             nrecv[i] *= num_in_group;
             displs[i] *= num_in_group;
         }
     }
-    ~info_gatherv()
-    {
+    ~info_gatherv() {
         delete[] nrecv;
         delete[] displs;
     }
@@ -97,13 +87,11 @@ struct info_gatherv
  * @param psi_out output psi of float
  */
 template <typename FPTYPE_IN, typename FPTYPE_OUT, typename Device>
-struct convert_psi_op
-{
-    using castmem_complex_op
-        = base_device::memory::cast_memory_op<std::complex<FPTYPE_OUT>, std::complex<FPTYPE_IN>, Device, Device>;
+struct convert_psi_op {
+    using castmem_complex_op =
+        base_device::memory::cast_memory_op<std::complex<FPTYPE_OUT>, std::complex<FPTYPE_IN>, Device, Device>;
     void operator()(const psi::Psi<std::complex<FPTYPE_IN>, Device>& psi_in,
-                    psi::Psi<std::complex<FPTYPE_OUT>, Device>& psi_out)
-    {
+                    psi::Psi<std::complex<FPTYPE_OUT>, Device>& psi_out) {
         psi_in.fix_k(0);
         psi_out.fix_k(0);
         castmem_complex_op()(psi_out.get_pointer(), psi_in.get_pointer(), psi_in.size());
@@ -123,8 +111,7 @@ struct convert_psi_op
  *
  */
 template <typename FPTYPE, typename Device>
-struct gatherchi_op
-{
+struct gatherchi_op {
     psi::Psi<std::complex<FPTYPE>, Device>* operator()(psi::Psi<std::complex<FPTYPE>, Device>& chi,
                                                        psi::Psi<std::complex<FPTYPE>, Device>& chi_all,
                                                        const int& npwx,

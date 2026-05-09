@@ -22,37 +22,30 @@
  *   - Ions_Move_CG::third_order()
  */
 
-class IonsMoveCGTest : public ::testing::Test
-{
+class IonsMoveCGTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
         Ions_Move_Basic::update_iter = 5;
         im_cg.allocate();
         PARAM.input.force_thr = 0.001;
 
-        // ban the 'cout' 
+        // ban the 'cout'
         // mohan add 2025-05-02
         std::cout.rdbuf(NULL);
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Clean up after each test
     }
-    void setupucell(UnitCell& ucell)
-    {
-        for (int it = 0; it < ucell.ntype; it++)
-        {
+    void setupucell(UnitCell& ucell) {
+        for (int it = 0; it < ucell.ntype; it++) {
             Atom* atom = &ucell.atoms[it];
-            atom->label="test";
-            for (int ia = 0; ia < atom->na; ia++)
-            {
-                atom->mag[ia]= 1;
-                for (int ik = 0; ik < 3; ++ik)
-                {
+            atom->label = "test";
+            for (int ia = 0; ia < atom->na; ia++) {
+                atom->mag[ia] = 1;
+                for (int ik = 0; ik < 3; ++ik) {
                     atom->tau[ia][ik] = 1;
                     atom->mbl[ia][ik] = 1;
                     atom->vel[ia][ik] = 1;
@@ -65,8 +58,7 @@ class IonsMoveCGTest : public ::testing::Test
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(IonsMoveCGTest, TestAllocate)
-{
+TEST_F(IonsMoveCGTest, TestAllocate) {
     Ions_Move_Basic::dim = 4;
     im_cg.allocate();
 
@@ -78,15 +70,13 @@ TEST_F(IonsMoveCGTest, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(IonsMoveCGTest, TestAllocateWithZeroDimension)
-{
+TEST_F(IonsMoveCGTest, TestAllocateWithZeroDimension) {
     Ions_Move_Basic::dim = 0;
     ASSERT_DEATH(im_cg.allocate(), "");
 }
 
 // Check that the arrays are correctly initialized to 0
-TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
-{
+TEST_F(IonsMoveCGTest, TestAllocateAndInitialize) {
     Ions_Move_Basic::dim = 3;
     im_cg.allocate();
 
@@ -98,8 +88,7 @@ TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
 }
 
 // Test function start() when converged
-TEST_F(IonsMoveCGTest, TestStartConverged)
-{
+TEST_F(IonsMoveCGTest, TestStartConverged) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = true;
@@ -123,7 +112,6 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     ifs.close();
     std::remove("TestStartConverged.log");
 
-
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
@@ -133,8 +121,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 }
 
 // Test function start() sd branch
-TEST_F(IonsMoveCGTest, TestStartSd)
-{
+TEST_F(IonsMoveCGTest, TestStartSd) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -169,8 +156,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 }
 
 // Test function start() trial branch with goto
-TEST_F(IonsMoveCGTest, TestStartTrialGoto)
-{
+TEST_F(IonsMoveCGTest, TestStartTrialGoto) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -208,8 +194,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 }
 
 // Test function start() trial branch without goto
-TEST_F(IonsMoveCGTest, TestStartTrial)
-{
+TEST_F(IonsMoveCGTest, TestStartTrial) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -246,8 +231,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 }
 
 // Test function start() no trial branch with goto case 1
-TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
-{
+TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -286,8 +270,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 }
 
 // Test function start() no trial branch with goto case 2
-TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
-{
+TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -325,8 +308,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 }
 
 // Test function start() no trial branch without goto
-TEST_F(IonsMoveCGTest, TestStartNoTrial)
-{
+TEST_F(IonsMoveCGTest, TestStartNoTrial) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
@@ -365,8 +347,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
 }
 
 // Test function setup_cg_grad() when ncggrad is multiple of 10000
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000)
-{
+TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000) {
     double grad[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     double grad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     double cggrad[6] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0};
@@ -385,8 +366,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 < 0.5
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
-{
+TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1) {
     double grad[6] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double grad0[6] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double cggrad[6] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -405,8 +385,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 >= 0.5
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
-{
+TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2) {
     double grad[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     double grad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
     double cggrad[6] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0};
@@ -425,8 +404,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
 }
 
 // Test function third_order() case 1
-TEST_F(IonsMoveCGTest, ThirdOrderCase1)
-{
+TEST_F(IonsMoveCGTest, ThirdOrderCase1) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = 10.0;
@@ -440,8 +418,7 @@ TEST_F(IonsMoveCGTest, ThirdOrderCase1)
 }
 
 // Test function third_order() case 2
-TEST_F(IonsMoveCGTest, ThirdOrderCase2)
-{
+TEST_F(IonsMoveCGTest, ThirdOrderCase2) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = -10.0;
@@ -455,8 +432,7 @@ TEST_F(IonsMoveCGTest, ThirdOrderCase2)
 }
 
 // Test function third_order() case 3
-TEST_F(IonsMoveCGTest, ThirdOrderCase3)
-{
+TEST_F(IonsMoveCGTest, ThirdOrderCase3) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = 10.0;
@@ -470,8 +446,7 @@ TEST_F(IonsMoveCGTest, ThirdOrderCase3)
 }
 
 // Test function Brent() case 1
-TEST_F(IonsMoveCGTest, BrentCase1)
-{
+TEST_F(IonsMoveCGTest, BrentCase1) {
     double fa = 2.0;
     double fb = 1.0;
     double fc = 1.0;
@@ -494,8 +469,7 @@ TEST_F(IonsMoveCGTest, BrentCase1)
 }
 
 // Test function Brent() case 2
-TEST_F(IonsMoveCGTest, BrentCase2)
-{
+TEST_F(IonsMoveCGTest, BrentCase2) {
     double fa = -2.0;
     double fb = 3.0;
     double fc = -4.0;
@@ -518,8 +492,7 @@ TEST_F(IonsMoveCGTest, BrentCase2)
 }
 
 // Test function Brent() case 3
-TEST_F(IonsMoveCGTest, BrentCase3)
-{
+TEST_F(IonsMoveCGTest, BrentCase3) {
     double fa = 1.0;
     double fb = -3.0;
     double fc = -4.0;
@@ -542,8 +515,7 @@ TEST_F(IonsMoveCGTest, BrentCase3)
 }
 
 // Test function Brent() case 4
-TEST_F(IonsMoveCGTest, BrentCase4)
-{
+TEST_F(IonsMoveCGTest, BrentCase4) {
     double fa = 2.0;
     double fb = -3.0;
     double fc = 4.0;
@@ -566,8 +538,7 @@ TEST_F(IonsMoveCGTest, BrentCase4)
 }
 
 // Test function f_cal()
-TEST_F(IonsMoveCGTest, Fcal)
-{
+TEST_F(IonsMoveCGTest, Fcal) {
     Ions_Move_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double g1[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -579,8 +550,7 @@ TEST_F(IonsMoveCGTest, Fcal)
 }
 
 // Test function setup_move()
-TEST_F(IonsMoveCGTest, SetupMove)
-{
+TEST_F(IonsMoveCGTest, SetupMove) {
     Ions_Move_Basic::dim = 9;
     double trust_radius = 1.0;
     double cg_gradn[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};

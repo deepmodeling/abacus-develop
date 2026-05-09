@@ -26,15 +26,11 @@ namespace esolver {
  * @tparam TK Type for k-space quantities
  */
 template <typename TK>
-class DiagonalizerWrapper : public IDiagonalizer<TK>
-{
-public:
+class DiagonalizerWrapper : public IDiagonalizer<TK> {
+  public:
     DiagonalizerWrapper() = default;
 
-    DiagonalizerWrapper(int nbasis, int nbands)
-        : nbasis_(nbasis), nbands_(nbands)
-    {
-    }
+    DiagonalizerWrapper(int nbasis, int nbands) : nbasis_(nbasis), nbands_(nbands) {}
 
     ~DiagonalizerWrapper() override = default;
 
@@ -43,8 +39,7 @@ public:
     DiagResult<TK> diagonalize(int ik,
                                const py::array_t<TK>& Hk,
                                const py::array_t<TK>& Sk,
-                               const py::array_t<TK>& psi_init) override
-    {
+                               const py::array_t<TK>& psi_init) override {
         DiagResult<TK> result;
 
         // For direct diagonalization, we would use LAPACK/ScaLAPACK
@@ -67,28 +62,25 @@ public:
 
     // ==================== Iterative Diagonalization ====================
 
-    DiagResult<TK> diagonalize_iterative(
-        int ik,
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> spsi_func,
-        const py::array_t<TK>& psi_init,
-        const py::array_t<double>& precond) override
-    {
+    DiagResult<TK> diagonalize_iterative(int ik,
+                                         std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
+                                         std::function<py::array_t<TK>(const py::array_t<TK>&)> spsi_func,
+                                         const py::array_t<TK>& psi_init,
+                                         const py::array_t<double>& precond) override {
         DiagResult<TK> result;
 
-        switch (config_.method)
-        {
-            case DiagMethod::Davidson:
-                result = diagonalize_davidson(hpsi_func, psi_init, precond);
-                break;
-            case DiagMethod::DavSubspace:
-                result = diagonalize_dav_subspace(hpsi_func, psi_init, precond);
-                break;
-            case DiagMethod::CG:
-                result = diagonalize_cg(hpsi_func, psi_init, precond);
-                break;
-            default:
-                result = diagonalize_davidson(hpsi_func, psi_init, precond);
+        switch (config_.method) {
+        case DiagMethod::Davidson:
+            result = diagonalize_davidson(hpsi_func, psi_init, precond);
+            break;
+        case DiagMethod::DavSubspace:
+            result = diagonalize_dav_subspace(hpsi_func, psi_init, precond);
+            break;
+        case DiagMethod::CG:
+            result = diagonalize_cg(hpsi_func, psi_init, precond);
+            break;
+        default:
+            result = diagonalize_davidson(hpsi_func, psi_init, precond);
         }
 
         return result;
@@ -96,22 +88,13 @@ public:
 
     // ==================== Configuration ====================
 
-    void set_config(const DiagConfig& config) override
-    {
-        config_ = config;
-    }
+    void set_config(const DiagConfig& config) override { config_ = config; }
 
     DiagConfig get_config() const override { return config_; }
 
-    void set_tolerance(double tol) override
-    {
-        config_.tolerance = tol;
-    }
+    void set_tolerance(double tol) override { config_.tolerance = tol; }
 
-    void set_max_iterations(int max_iter) override
-    {
-        config_.max_iterations = max_iter;
-    }
+    void set_max_iterations(int max_iter) override { config_.max_iterations = max_iter; }
 
     // ==================== Dimension Queries ====================
 
@@ -123,13 +106,11 @@ public:
 
     void set_nbasis(int nbasis) { nbasis_ = nbasis; }
 
-private:
+  private:
     // Davidson diagonalization
-    DiagResult<TK> diagonalize_davidson(
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
-        const py::array_t<TK>& psi_init,
-        const py::array_t<double>& precond)
-    {
+    DiagResult<TK> diagonalize_davidson(std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
+                                        const py::array_t<TK>& psi_init,
+                                        const py::array_t<double>& precond) {
         DiagResult<TK> result;
 
         // Create Davidson adapter
@@ -149,15 +130,13 @@ private:
         ::hsolver::diag_comm_info comm_info(0, 1);
 
         // Run diagonalization
-        int niter = david.diag(
-            hpsi_func,
-            precond_vec,
-            config_.dav_ndim,
-            config_.tolerance,
-            diag_ethr,
-            config_.max_iterations,
-            comm_info
-        );
+        int niter = david.diag(hpsi_func,
+                               precond_vec,
+                               config_.dav_ndim,
+                               config_.tolerance,
+                               diag_ethr,
+                               config_.max_iterations,
+                               comm_info);
 
         // Get results
         result.psi = david.get_psi();
@@ -169,11 +148,9 @@ private:
     }
 
     // Davidson-Subspace diagonalization
-    DiagResult<TK> diagonalize_dav_subspace(
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
-        const py::array_t<TK>& psi_init,
-        const py::array_t<double>& precond)
-    {
+    DiagResult<TK> diagonalize_dav_subspace(std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
+                                            const py::array_t<TK>& psi_init,
+                                            const py::array_t<double>& precond) {
         DiagResult<TK> result;
 
         // Create DavSubspace adapter
@@ -193,18 +170,17 @@ private:
         ::hsolver::diag_comm_info comm_info(0, 1);
 
         // Run diagonalization
-        int niter = dav_sub.diag(
-            hpsi_func,
-            precond_vec,
-            config_.dav_ndim,
-            config_.tolerance,
-            config_.max_iterations,
-            false,  // need_subspace
-            diag_ethr,
-            true,   // scf_type
-            comm_info,
-            0,      // diag_subspace (LAPACK)
-            1       // nb2d
+        int niter = dav_sub.diag(hpsi_func,
+                                 precond_vec,
+                                 config_.dav_ndim,
+                                 config_.tolerance,
+                                 config_.max_iterations,
+                                 false, // need_subspace
+                                 diag_ethr,
+                                 true, // scf_type
+                                 comm_info,
+                                 0, // diag_subspace (LAPACK)
+                                 1  // nb2d
         );
 
         // Get results
@@ -217,11 +193,9 @@ private:
     }
 
     // CG diagonalization
-    DiagResult<TK> diagonalize_cg(
-        std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
-        const py::array_t<TK>& psi_init,
-        const py::array_t<double>& precond)
-    {
+    DiagResult<TK> diagonalize_cg(std::function<py::array_t<TK>(const py::array_t<TK>&)> hpsi_func,
+                                  const py::array_t<TK>& psi_init,
+                                  const py::array_t<double>& precond) {
         DiagResult<TK> result;
 
 #ifdef __ENABLE_ATEN
@@ -237,15 +211,13 @@ private:
         std::vector<double> diag_ethr(nbands_, config_.tolerance);
 
         // Run diagonalization
-        cg.diag(
-            hpsi_func,
-            config_.dav_ndim,
-            config_.tolerance,
-            diag_ethr,
-            false,  // need_subspace
-            true,   // scf_type
-            config_.nproc_in_pool
-        );
+        cg.diag(hpsi_func,
+                config_.dav_ndim,
+                config_.tolerance,
+                diag_ethr,
+                false, // need_subspace
+                true,  // scf_type
+                config_.nproc_in_pool);
 
         // Get results
         result.psi = cg.get_psi();
@@ -260,16 +232,13 @@ private:
     }
 
     // Helper: Matrix-vector multiplication
-    py::array_t<TK> matrix_vector_multiply(const py::array_t<TK>& matrix,
-                                           const py::array_t<TK>& vec)
-    {
+    py::array_t<TK> matrix_vector_multiply(const py::array_t<TK>& matrix, const py::array_t<TK>& vec) {
         using namespace pyabacus::utils;
 
         auto mat_buf = matrix.request();
         auto vec_buf = vec.request();
 
-        if (mat_buf.ndim != 2)
-        {
+        if (mat_buf.ndim != 2) {
             throw std::runtime_error("Matrix must be 2D");
         }
 
@@ -285,13 +254,10 @@ private:
         TK* res_ptr = static_cast<TK*>(res_buf.ptr);
 
         // Simple matrix-vector multiplication
-        for (ssize_t i = 0; i < nrow; ++i)
-        {
-            for (ssize_t v = 0; v < nvec; ++v)
-            {
+        for (ssize_t i = 0; i < nrow; ++i) {
+            for (ssize_t v = 0; v < nvec; ++v) {
                 TK sum = TK(0);
-                for (ssize_t j = 0; j < ncol; ++j)
-                {
+                for (ssize_t j = 0; j < ncol; ++j) {
                     sum += mat_ptr[i * ncol + j] * vec_ptr[j * nvec + v];
                 }
                 res_ptr[i * nvec + v] = sum;
@@ -302,8 +268,7 @@ private:
     }
 
     // Helper: Compute diagonal preconditioner from Hamiltonian
-    py::array_t<double> compute_preconditioner(const py::array_t<TK>& Hk)
-    {
+    py::array_t<double> compute_preconditioner(const py::array_t<TK>& Hk) {
         auto buf = Hk.request();
         const ssize_t n = buf.shape[0];
         const TK* ptr = static_cast<const TK*>(buf.ptr);
@@ -311,8 +276,7 @@ private:
         py::array_t<double> precond(n);
         double* prec_ptr = precond.mutable_data();
 
-        for (ssize_t i = 0; i < n; ++i)
-        {
+        for (ssize_t i = 0; i < n; ++i) {
             // Use diagonal elements as preconditioner
             TK diag = ptr[i * n + i];
             prec_ptr[i] = std::max(std::abs(diag), 1.0);

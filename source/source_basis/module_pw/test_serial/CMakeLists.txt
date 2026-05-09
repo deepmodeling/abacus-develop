@@ -7,30 +7,40 @@ remove_definitions(-D__UT_USE_ROCM)
 remove_definitions(-D__MLALGO)
 
 add_library(
-    planewave_serial
-    OBJECT
-    ../../../source_base/module_fft/fft_bundle.cpp
-    ../../../source_base/module_fft/fft_cpu.cpp
-    ../pw_basis.cpp
-    ../pw_basis_k.cpp
-    ../pw_basis_sup.cpp
-    ../pw_distributeg.cpp
-    ../pw_distributeg_method1.cpp
-    ../pw_distributeg_method2.cpp
-    ../pw_distributer.cpp
-    ../pw_init.cpp
-    ../pw_transform.cpp
-    ../pw_transform_k.cpp
-)
+  planewave_serial OBJECT
+  ../../../source_base/module_fft/fft_bundle.cpp
+  ../../../source_base/module_fft/fft_cpu.cpp
+  ../pw_basis.cpp
+  ../pw_basis_k.cpp
+  ../pw_basis_sup.cpp
+  ../pw_distributeg.cpp
+  ../pw_distributeg_method1.cpp
+  ../pw_distributeg_method2.cpp
+  ../pw_distributer.cpp
+  ../pw_init.cpp
+  ../pw_transform.cpp
+  ../pw_transform_k.cpp)
 
-AddTest(
-  TARGET MODULE_PW_basis_pw_serial
-  LIBS parameter ${math_libs} planewave_serial device base 
-  SOURCES pw_basis_test.cpp
-)
+addtest(
+  TARGET
+  MODULE_PW_basis_pw_serial
+  LIBS
+  parameter
+  ${math_libs}
+  planewave_serial
+  device
+  base
+  SOURCES
+  pw_basis_test.cpp)
 
-AddTest(
-  TARGET MODULE_PW_basis_pw_k_serial
-  LIBS parameter ${math_libs} planewave_serial device base 
-  SOURCES pw_basis_k_test.cpp
-)
+addtest(
+  TARGET
+  MODULE_PW_basis_pw_k_serial
+  LIBS
+  parameter
+  ${math_libs}
+  planewave_serial
+  device
+  base
+  SOURCES
+  pw_basis_k_test.cpp)

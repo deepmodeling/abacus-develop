@@ -6,12 +6,10 @@
 
 namespace lapackConnector = container::lapackConnector; // see "source_base/module_container/base/third_party/lapack.h"
 
-namespace hsolver
-{
+namespace hsolver {
 // hegvd and sygvd; dn for dense?
 template <typename T>
-struct hegvd_op<T, base_device::DEVICE_CPU>
-{
+struct hegvd_op<T, base_device::DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* d,
                     const int nstart,
@@ -19,10 +17,8 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
                     const T* hcc,
                     T* scc,
                     Real* eigenvalue,
-                    T* vcc)
-    {
-        for (int i = 0; i < nstart * ldh; i++)
-        {
+                    T* vcc) {
+        for (int i = 0; i < nstart * ldh; i++) {
             vcc[i] = hcc[i];
         }
         int info = 0;
@@ -41,35 +37,18 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
         //===========================
         // calculate all eigenvalues
         //===========================
-        lapackConnector::hegvd(1,
-                                'V',
-                                'U',
-                                nstart,
-                                vcc,
-                                ldh,
-                                scc,
-                                ldh,
-                                eigenvalue,
-                                work,
-                                lwork,
-                                rwork,
-                                lrwork,
-                                iwork,
-                                liwork,
-                                info);
+        lapackConnector::
+            hegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
 
-        if (info != 0)
-        {
+        if (info != 0) {
             std::cout << "Error: hegvd failed, linear dependent basis functions\n"
                       << ", wrong initialization of wavefunction, or wavefunction information loss\n"
                       << ", output overlap matrix scc.txt to check\n"
                       << std::endl;
             // print scc to file scc.txt
             std::ofstream ofs("scc.txt");
-            for (int i = 0; i < nstart; i++)
-            {
-                for (int j = 0; j < nstart; j++)
-                {
+            for (int i = 0; i < nstart; i++) {
+                for (int j = 0; j < nstart; j++) {
                     ofs << scc[i * ldh + j] << " ";
                 }
                 ofs << std::endl;
@@ -150,8 +129,7 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
  * wrapped in LapackWrapper::xheevx
  */
 template <typename T>
-struct heevx_op<T, base_device::DEVICE_CPU>
-{
+struct heevx_op<T, base_device::DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const int nstart,
@@ -162,8 +140,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
                     T* vcc)           // vcc
     {
         T* aux = new T[nstart * ldh];
-        for (int ii = 0; ii < nstart * ldh; ii++)
-        {
+        for (int ii = 0; ii < nstart * ldh; ii++) {
             aux[ii] = hcc[ii];
         }
 
@@ -243,8 +220,7 @@ struct heevx_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct hegvx_op<T, base_device::DEVICE_CPU>
-{
+struct hegvx_op<T, base_device::DEVICE_CPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const base_device::DEVICE_CPU* d,
                     const int nbase,
@@ -253,8 +229,7 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
                     T* scc,
                     const int m,
                     Real* eigenvalue,
-                    T* vcc)
-    {
+                    T* vcc) {
 
         int info = 0;
 
@@ -298,29 +273,29 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
         work = new T[lwork];
 
         lapackConnector::hegvx(1,
-                                'V',
-                                'I',
-                                'U',
-                                nbase,
-                                hcc,
-                                ldh,
-                                scc,
-                                ldh,
-                                0.0,
-                                0.0,
-                                1,
-                                m,
-                                0.0,
-                                mm,
-                                eigenvalue,
-                                vcc,
-                                ldh,
-                                work,
-                                lwork,
-                                rwork,
-                                iwork,
-                                ifail,
-                                info);
+                               'V',
+                               'I',
+                               'U',
+                               nbase,
+                               hcc,
+                               ldh,
+                               scc,
+                               ldh,
+                               0.0,
+                               0.0,
+                               1,
+                               m,
+                               0.0,
+                               mm,
+                               eigenvalue,
+                               vcc,
+                               ldh,
+                               work,
+                               lwork,
+                               rwork,
+                               iwork,
+                               ifail,
+                               info);
 
         delete[] work;
         delete[] rwork;

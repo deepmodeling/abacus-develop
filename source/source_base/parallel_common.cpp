@@ -11,12 +11,11 @@ void Parallel_Common::bcast_string(std::string& object) // Peize Lin fix bug 201
 {
     int size = object.size();
     MPI_Bcast(&size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    
-    if (0 != my_rank)
-    {
+
+    if (0 != my_rank) {
         object.resize(size);
     }
 
@@ -31,38 +30,23 @@ void Parallel_Common::bcast_string(std::string* object, const int n) // Peize Li
     return;
 }
 
-void Parallel_Common::bcast_complex_double(std::complex<double>& object)
-{
+void Parallel_Common::bcast_complex_double(std::complex<double>& object) {
     MPI_Bcast(&object, 1, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
 }
 
-void Parallel_Common::bcast_complex_double(std::complex<double>* object, const int n)
-{
+void Parallel_Common::bcast_complex_double(std::complex<double>* object, const int n) {
     MPI_Bcast(object, n, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
 }
 
-void Parallel_Common::bcast_double(double& object)
-{
-    MPI_Bcast(&object, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-}
+void Parallel_Common::bcast_double(double& object) { MPI_Bcast(&object, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD); }
 
-void Parallel_Common::bcast_double(double* object, const int n)
-{
-    MPI_Bcast(object, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-}
+void Parallel_Common::bcast_double(double* object, const int n) { MPI_Bcast(object, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); }
 
-void Parallel_Common::bcast_int(int& object)
-{
-    MPI_Bcast(&object, 1, MPI_INT, 0, MPI_COMM_WORLD);
-}
+void Parallel_Common::bcast_int(int& object) { MPI_Bcast(&object, 1, MPI_INT, 0, MPI_COMM_WORLD); }
 
-void Parallel_Common::bcast_int(int* object, const int n)
-{
-    MPI_Bcast(object, n, MPI_INT, 0, MPI_COMM_WORLD);
-}
+void Parallel_Common::bcast_int(int* object, const int n) { MPI_Bcast(object, n, MPI_INT, 0, MPI_COMM_WORLD); }
 
-void Parallel_Common::bcast_bool(bool& object)
-{
+void Parallel_Common::bcast_bool(bool& object) {
     int swap = object;
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -73,9 +57,6 @@ void Parallel_Common::bcast_bool(bool& object)
         object = static_cast<bool>(swap);
 }
 
-void Parallel_Common::bcast_char(char* object, const int n)
-{
-    MPI_Bcast(object, n, MPI_CHAR, 0, MPI_COMM_WORLD);
-}
+void Parallel_Common::bcast_char(char* object, const int n) { MPI_Bcast(object, n, MPI_CHAR, 0, MPI_COMM_WORLD); }
 
 #endif

@@ -22,11 +22,9 @@
  *   - ESolver_DP::type_map()
  */
 
-class ESolverDPTest : public ::testing::Test
-{
+class ESolverDPTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
         ucell.iat2it = new int[2];
@@ -49,8 +47,7 @@ class ESolverDPTest : public ::testing::Test
         esolver->before_all_runners(ucell, inp);
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Clean up after each test
         delete esolver;
         delete[] ucell.atoms;
@@ -62,21 +59,16 @@ class ESolverDPTest : public ::testing::Test
 };
 
 // Test the Init() funciton case 1
-TEST_F(ESolverDPTest, InitCase1)
-{
+TEST_F(ESolverDPTest, InitCase1) {
     // Check the initialized variables
     EXPECT_DOUBLE_EQ(esolver->dp_potential, 0.0);
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_DOUBLE_EQ(esolver->dp_virial(i, j), 0.0);
         }
     }
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < ucell.nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_DOUBLE_EQ(esolver->dp_force(i, j), 0.0);
         }
     }
@@ -85,8 +77,7 @@ TEST_F(ESolverDPTest, InitCase1)
 }
 
 // Test the Run() funciton WARNING_QUIT
-TEST_F(ESolverDPTest, RunWarningQuit)
-{
+TEST_F(ESolverDPTest, RunWarningQuit) {
     int istep = 0;
 
     testing::internal::CaptureStdout();
@@ -98,8 +89,7 @@ TEST_F(ESolverDPTest, RunWarningQuit)
 }
 
 // Test the cal_energy() funciton
-TEST_F(ESolverDPTest, CalEnergy)
-{
+TEST_F(ESolverDPTest, CalEnergy) {
     double etot = 0.0;
     esolver->dp_potential = 9.8;
     etot = esolver->cal_energy();
@@ -109,13 +99,10 @@ TEST_F(ESolverDPTest, CalEnergy)
 }
 
 // Test the cal_Force() funciton
-TEST_F(ESolverDPTest, CalForce)
-{
+TEST_F(ESolverDPTest, CalForce) {
     ModuleBase::matrix force(ucell.nat, 3);
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < ucell.nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             esolver->dp_force(i, j) = 3.0 * i + j;
         }
     }
@@ -123,23 +110,18 @@ TEST_F(ESolverDPTest, CalForce)
     esolver->cal_force(ucell, force);
 
     // Check the results
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < ucell.nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_DOUBLE_EQ(force(i, j), 3.0 * i + j);
         }
     }
 }
 
 // Test the cal_Stress() funciton
-TEST_F(ESolverDPTest, CalStress)
-{
+TEST_F(ESolverDPTest, CalStress) {
     ModuleBase::matrix stress(3, 3);
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             esolver->dp_virial(i, j) = 3.0 * i + j;
         }
     }
@@ -147,18 +129,15 @@ TEST_F(ESolverDPTest, CalStress)
     esolver->cal_stress(ucell, stress);
 
     // Check the results
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_DOUBLE_EQ(stress(i, j), 3.0 * i + j);
         }
     }
 }
 
 // Test the postprocess() funciton
-TEST_F(ESolverDPTest, Postprocess)
-{
+TEST_F(ESolverDPTest, Postprocess) {
     esolver->dp_potential = 9.8;
 
     // Check the results
@@ -166,9 +145,9 @@ TEST_F(ESolverDPTest, Postprocess)
     esolver->after_all_runners(ucell);
     GlobalV::ofs_running.close();
 
-    std::string expected_output
-        = "\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
-          "--------------------------------------------\n\n\n";
+    std::string expected_output =
+        "\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
+        "--------------------------------------------\n\n\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();

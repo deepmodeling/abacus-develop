@@ -2,7 +2,6 @@
 
 #include <ATen/core/tensor_utils.h>
 
-
 TEST(TensorUtils, _get_digit_places) {
     const int size = 6;
     float arr[size] = {-1.0, 2.5, 3.0, -0.5, 0.0, 1.234567};
@@ -21,7 +20,7 @@ TEST(TensorUtils, _internal_output) {
     for (int ii = 0; ii < 8; ii++) {
         data[ii] = ii;
     }
-    container::TensorShape shape1 {8}, shape2{2, 4}, shape3{2, 2, 2}, shape4{1, 2, 2, 2};
+    container::TensorShape shape1{8}, shape2{2, 4}, shape3{2, 2, 2}, shape4{1, 2, 2, 2};
     // Test if the output operator produces the expected output
     std::ostringstream oss;
     container::_internal_output(oss, data, shape1, num_elements);
@@ -32,6 +31,4 @@ TEST(TensorUtils, _internal_output) {
     EXPECT_TRUE(oss.str().find(expected_output) == 0);
 }
 
-TEST(TensorUtils, removeTrailingZeros) {
-    EXPECT_EQ(container::removeTrailingZeros(""), "0");
-}
+TEST(TensorUtils, removeTrailingZeros) { EXPECT_EQ(container::removeTrailingZeros(""), "0"); }

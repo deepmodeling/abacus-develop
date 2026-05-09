@@ -27,19 +27,16 @@
  *     - calculate the relative permittivity
  */
 
-namespace GlobalC
-{
+namespace GlobalC {
 ModulePW::PW_Basis* rhopw;
 }
 
-class cal_epsilon_test : public testing::Test
-{
+class cal_epsilon_test : public testing::Test {
   protected:
     surchem solvent_model;
 };
 
-TEST_F(cal_epsilon_test, cal_epsilon)
-{
+TEST_F(cal_epsilon_test, cal_epsilon) {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
@@ -82,15 +79,13 @@ TEST_F(cal_epsilon_test, cal_epsilon)
 
     std::ifstream fin;
     fin.open("./support/PS_TOTN_real.in");
-    if (!fin)
-    {
+    if (!fin) {
         std::cerr << "input file does not exist" << std::endl;
         return;
     }
 
     double* PS_TOTN_real = new double[nrxx];
-    for (int i = 0; i < nrxx; i++)
-    {
+    for (int i = 0; i < nrxx; i++) {
         fin >> PS_TOTN_real[i];
     }
 
@@ -109,8 +104,7 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     delete[] epsilon0;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);

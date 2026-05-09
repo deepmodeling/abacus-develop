@@ -3,31 +3,28 @@
 
 #include "global_function.h"
 #include "complexmatrix.h"
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-class Inverse_Matrix_Complex
-{
-	public:
+class Inverse_Matrix_Complex {
+  public:
+    Inverse_Matrix_Complex();
+    ~Inverse_Matrix_Complex();
 
-	Inverse_Matrix_Complex();
-	~Inverse_Matrix_Complex();
-	
-	ModuleBase::ComplexMatrix A;
+    ModuleBase::ComplexMatrix A;
 
-	void using_zheev(const ModuleBase::ComplexMatrix &in, ModuleBase::ComplexMatrix &out);
-	void init( const int &dim_in);
+    void using_zheev(const ModuleBase::ComplexMatrix& in, ModuleBase::ComplexMatrix& out);
+    void init(const int& dim_in);
 
-	private:
-	int dim=0;
-	double *e=nullptr;
-	int lwork=0;
-	std::complex<double> *work2=nullptr;
-	double* rwork=nullptr;
-	int info=0;
-	bool allocate=false; //mohan add 2012-04-02
+  private:
+    int dim = 0;
+    double* e = nullptr;
+    int lwork = 0;
+    std::complex<double>* work2 = nullptr;
+    double* rwork = nullptr;
+    int info = 0;
+    bool allocate = false; // mohan add 2012-04-02
 
-	ModuleBase::ComplexMatrix EA;
+    ModuleBase::ComplexMatrix EA;
 };
 
 /**
@@ -39,5 +36,5 @@ class Inverse_Matrix_Complex
  * @param out [out] output matrix
  */
 void Inverse_Matrix_Real(const int dim, const double* in, double* out);
-}
+} // namespace ModuleBase
 #endif

@@ -11,8 +11,7 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 // This file contains 3 subroutines:
 // 1. allocate_phialpha, which allocates memory for phialpha
 // 2. build_phialpha, which calculates the overlap

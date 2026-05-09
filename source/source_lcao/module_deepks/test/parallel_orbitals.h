@@ -5,10 +5,8 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory.h"
 
-namespace Test_Deepks
-{
-class Parallel_Orbitals
-{
+namespace Test_Deepks {
+class Parallel_Orbitals {
   public:
     Parallel_Orbitals();
     ~Parallel_Orbitals();

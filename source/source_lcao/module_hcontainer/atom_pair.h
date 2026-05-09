@@ -11,8 +11,7 @@
 #include <tuple>
 #include <cassert>
 
-namespace hamilt
-{
+namespace hamilt {
 /**
 Class: AtomPair
 
@@ -38,42 +37,41 @@ Class: AtomPair
 */
 
 template <typename T>
-class AtomPair
-{
+class AtomPair {
   public:
     // Constructor of class AtomPair
     // Only for 2d-block MPI parallel case
     // This constructor used for initialize a atom-pair local Hamiltonian with only center cell
     // which is used for constructing HK (k space Hamiltonian) objects, (gamma_only case)
-    AtomPair(const int& atom_i_,              // atomic index of atom i, used to identify atom
-             const int& atom_j_,              // atomic index of atom j, used to identify atom
-             const Parallel_Orbitals* paraV_, // information for 2d-block parallel
-             T* existed_matrix
-             = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
+    AtomPair(
+        const int& atom_i_,              // atomic index of atom i, used to identify atom
+        const int& atom_j_,              // atomic index of atom j, used to identify atom
+        const Parallel_Orbitals* paraV_, // information for 2d-block parallel
+        T* existed_matrix = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
     // Constructor of class AtomPair
     // Only for 2d-block MPI parallel case
     // This constructor used for initialize a atom-pair local Hamiltonian with non-zero cell indexes,
     // which is used for constructing HR (real space Hamiltonian) objects.
-    AtomPair(const int& atom_i_,              // atomic index of atom i, used to identify atom
-             const int& atom_j_,              // atomic index of atom j, used to identify atom
-             const int& rx,                   // x coordinate of cell
-             const int& ry,                   // y coordinate of cell
-             const int& rz,                   // z coordinate of cell
-             const Parallel_Orbitals* paraV_, // information for 2d-block parallel
-             T* existed_array
-             = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
+    AtomPair(
+        const int& atom_i_,              // atomic index of atom i, used to identify atom
+        const int& atom_j_,              // atomic index of atom j, used to identify atom
+        const int& rx,                   // x coordinate of cell
+        const int& ry,                   // y coordinate of cell
+        const int& rz,                   // z coordinate of cell
+        const Parallel_Orbitals* paraV_, // information for 2d-block parallel
+        T* existed_array = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
     // Constructor of class AtomPair
     // Only for 2d-block MPI parallel case
     // This constructor used for initialize a atom-pair local Hamiltonian with non-zero cell indexes,
     // which is used for constructing HR (real space Hamiltonian) objects.
-    AtomPair(const int& atom_i_,              // atomic index of atom i, used to identify atom
-             const int& atom_j_,              // atomic index of atom j, used to identify atom
-             const ModuleBase::Vector3<int>& R_index,  // xyz coordinates of cell
-             const Parallel_Orbitals* paraV_, // information for 2d-block parallel
-             T* existed_array
-             = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
+    AtomPair(
+        const int& atom_i_,                      // atomic index of atom i, used to identify atom
+        const int& atom_j_,                      // atomic index of atom j, used to identify atom
+        const ModuleBase::Vector3<int>& R_index, // xyz coordinates of cell
+        const Parallel_Orbitals* paraV_,         // information for 2d-block parallel
+        T* existed_array = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
     // This constructor used for initialize a atom-pair local Hamiltonian with only center cell
     // which is used for constructing HK (k space Hamiltonian) objects, (gamma_only case)
@@ -110,53 +108,53 @@ class AtomPair
 
     /**
      * @brief allocate memory for all the BaseMatrix
-    */
+     */
     void allocate(T* data_array = nullptr, bool if_zero = false);
 
     /**
      * @brief set values in every BaseMatrix to zero
-    */
+     */
     void set_zero();
 
     /**
      * @brief get begin index of this AtomPair
-    */
+     */
     int get_begin_row() const { return this->row_ap; }
     int get_begin_col() const { return this->col_ap; }
 
     /**
      * @brief get col_size for this AtomPair
-    */
+     */
     int get_col_size() const;
     /**
      * @brief get row_size for this AtomPair
-    */
+     */
     int get_row_size() const;
     /**
      * @brief get atom_i and atom_j for this AtomPair
-    */
+     */
     int get_atom_i() const;
     int get_atom_j() const;
     /**
      * @brief set col_size and row_size
-    */
+     */
     void set_size(const int& col_size_in, const int& row_size_in);
     /**
      * @brief get size = col_size * row_size
      * @return int
-    */
-    int get_size() const {return this->col_size * this->row_size;}
+     */
+    int get_size() const { return this->col_size * this->row_size; }
 
     /**
      * @brief get Parallel_Orbitals pointer of this AtomPair for checking 2d-block parallel
      * @return const Parallel_Orbitals*
-    */
+     */
     const Parallel_Orbitals* get_paraV() const;
 
     /**
- * @brief set Parallel_Orbitals pointer of this AtomPair for checking 2d-block parallel
-*/
-    void  set_paraV(const Parallel_Orbitals* paraV_in) { this->paraV = paraV_in; };
+     * @brief set Parallel_Orbitals pointer of this AtomPair for checking 2d-block parallel
+     */
+    void set_paraV(const Parallel_Orbitals* paraV_in) { this->paraV = paraV_in; };
 
     /// use atom_i and atom_j to identify the atom-pair
     bool identify(const AtomPair<T>& other) const;
@@ -168,7 +166,7 @@ class AtomPair
      * and if not found, it will throw a error message
      * for non-const AtomPair, it will return a BaseMatrix<T> object,
      * and if not found, it will insert a new one and return it
-     * 
+     *
      * @param rx_in x coordinate of cell
      * @param ry_in y coordinate of cell
      * @param rz_in z coordinate of cell
@@ -176,18 +174,19 @@ class AtomPair
      */
     BaseMatrix<T>& get_HR_values(int rx_in, int ry_in, int rz_in);
     const BaseMatrix<T>& get_HR_values(int rx_in, int ry_in, int rz_in) const;
-    
+
     /**
      * @brief get target BaseMatrix of index of this->values
      * it will return a BaseMatrix<T> object,
      * and if not found, it will throw a error message
-     * 
+     *
      * @param index index of this->values
      * @return BaseMatrix<T>&
      */
     BaseMatrix<T>& get_HR_values(const int& index) const;
 
-    // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be ModuleBase::Vector3<int>
+    // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be
+    // ModuleBase::Vector3<int>
     ModuleBase::Vector3<int> get_R_index(const int& index) const;
     // interface for get (rx, ry, rz) of current_R, the return should be ModuleBase::Vector3<int>
     ModuleBase::Vector3<int> get_R_index() const;
@@ -212,13 +211,13 @@ class AtomPair
      * @return std::tuple<std::vector<int>, T*>
      * std::vector<int>(4) contains (row_begin_index, row_size, col_begin_index, col_size)
      * T* is pointer of values[ir].value_begin, legal index is [0, row_size*col_size)
-    */
+     */
     std::tuple<std::vector<int>, T*> get_matrix_values(int ir = -1) const;
 
     /**
      * @brief get pointer of value from a submatrix
-    */
-    T* get_pointer(int ir=-1) const;
+     */
+    T* get_pointer(int ir = -1) const;
 
     // add another BaseMatrix<T> to this->values with specific R index.
     void convert_add(const BaseMatrix<T>& target, int rx_in, int ry_in, int rz_in);
@@ -247,10 +246,8 @@ class AtomPair
      * @param kphase Complex scalar to be multiplied with the block matrix.
      * @param hk_type The type of matrix layout (default: 0).
      */
-    void add_to_matrix(std::complex<T>* hk,
-                       const int ld_hk,
-                       const std::complex<T>& kphase,
-                       const int hk_type = 0) const;
+    void
+    add_to_matrix(std::complex<T>* hk, const int ld_hk, const std::complex<T>& kphase, const int hk_type = 0) const;
 
     /**
      * @brief Add this->value[current_R] * kphase as a block matrix of hk.
@@ -258,11 +255,9 @@ class AtomPair
      */
     void add_to_matrix(T* hk, const int ld_hk, const T& kphase, const int hk_type = 0) const;
 
-    void add_from_matrix(const std::complex<T>* hk,
-                       const int ld_hk,
-                       const std::complex<T>& kphase,
-                       const int hk_type = 0);
-    
+    void
+    add_from_matrix(const std::complex<T>* hk, const int ld_hk, const std::complex<T>& kphase, const int hk_type = 0);
+
     void add_from_matrix(const T* hk, const int ld_hk, const T& kphase, const int hk_type = 0);
 
     /**
@@ -285,8 +280,7 @@ class AtomPair
     AtomPair& operator=(AtomPair&& other) noexcept;
 
     // interface for getting the size of this->R_index
-    size_t get_R_size() const
-    {
+    size_t get_R_size() const {
 #ifdef __DEBUG
         assert(this->R_index.size() == this->values.size());
         // assert(this->R_index.size() % 3 == 0);
@@ -296,7 +290,7 @@ class AtomPair
 
     /**
      * @brief get total memory size of AtomPair
-    */
+     */
     size_t get_memory_size() const;
 
   private:

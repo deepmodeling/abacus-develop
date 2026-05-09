@@ -3,20 +3,18 @@
 
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * @brief A class to output the HContainer
  */
 template <typename T>
-class Output_HContainer
-{
+class Output_HContainer {
   public:
-    Output_HContainer(hamilt::HContainer<T>* hcontainer, 
-		      std::ostream& ofs, 
-		      double sparse_threshold = -1, 
-		      int precision = -1);
+    Output_HContainer(hamilt::HContainer<T>* hcontainer,
+                      std::ostream& ofs,
+                      double sparse_threshold = -1,
+                      int precision = -1);
 
     // write the matrices of all R vectors to the output stream
     void write(bool write_empty = false);

@@ -10,8 +10,7 @@
 #include "source_base/parallel_common.h"
 #endif
 
-PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs)
-{
+PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs) {
     RadialSet::operator=(rhs);
     return *this;
 }
@@ -21,16 +20,14 @@ void PswfcRadials::build(const std::string& file,
                          const double screening_coeff,
                          const double conv_thr,
                          std::ofstream* ptr_log,
-                         const int rank)
-{
+                         const int rank) {
     // deallocates all arrays and reset variables (excluding sbt_)
     cleanup();
 
     std::ifstream ifs;
     bool is_open = false;
 
-    if (rank == 0)
-    {
+    if (rank == 0) {
         ifs.open(file);
         is_open = ifs.is_open();
     }
@@ -39,8 +36,7 @@ void PswfcRadials::build(const std::string& file,
     Parallel_Common::bcast_bool(is_open);
 #endif
 
-    if (!is_open)
-    {
+    if (!is_open) {
         ModuleBase::WARNING_QUIT("AtomicRadials::read", "Couldn't open pseudopotential file: " + file);
     }
 
@@ -48,37 +44,29 @@ void PswfcRadials::build(const std::string& file,
     read_upf_pswfc(ifs, screening_coeff, conv_thr, ptr_log, rank);
     set_rcut_max();
 
-    if (rank == 0)
-    {
+    if (rank == 0) {
         ifs.close();
     }
 }
 
-bool PswfcRadials::startswith(std::string word, std::string pattern)
-{
+bool PswfcRadials::startswith(std::string word, std::string pattern) {
     if (word.size() < pattern.size())
         return false;
     int score = 1;
-    for (int ic = 0; ic < pattern.size(); ic++)
-    {
-        if (word[ic] != pattern[ic])
-        {
+    for (int ic = 0; ic < pattern.size(); ic++) {
+        if (word[ic] != pattern[ic]) {
             score *= 0;
-        }
-        else
-        {
+        } else {
             score *= 1;
         }
     }
     return bool(score);
 }
 
-std::string PswfcRadials::steal_from_quotes(std::string word)
-{
+std::string PswfcRadials::steal_from_quotes(std::string word) {
     // first make sure there are even number of quotes in this word
     int num_quote = 0;
-    for (auto letter: word)
-    {
+    for (auto letter: word) {
         if (letter == '\"')
             num_quote += 1;
     }
@@ -89,24 +77,20 @@ std::string PswfcRadials::steal_from_quotes(std::string word)
     size_t _right = word.find_last_of("\"");
     result = word.substr(_left + 1, _right - _left - 1);
     // then remove all spaces ahead
-    while (result[0] == ' ')
-    {
+    while (result[0] == ' ') {
         result.erase(0, 1);
     }
     return result;
 }
 
-std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word)
-{
+std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word) {
     // concatenate all words until the second quote, no matter how many lines and spaces between
     std::string concatenated = word.substr(word.find_first_of("\"") + 1, word.size() - word.find_first_of("\"") - 1);
     int num_quote = 1;
-    while (num_quote < 2)
-    {
+    while (num_quote < 2) {
         std::string line;
         ifs >> line;
-        for (auto letter: line)
-        {
+        for (auto letter: line) {
             if (letter == '\"')
                 num_quote += 1;
             if (num_quote == 2)
@@ -115,19 +99,16 @@ std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word
         }
     }
     // then remove all spaces ahead
-    while (concatenated[0] == ' ')
-    {
+    while (concatenated[0] == ' ') {
         concatenated.erase(0, 1);
     }
     return concatenated;
 }
 
-std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string word)
-{
+std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string word) {
     // count the number of quotes, only 1 or 2 cases are considered for pseudopotential reading
     int num_quote = 0;
-    for (auto letter: word)
-    {
+    for (auto letter: word) {
         if (letter == '\"')
             num_quote += 1;
     }
@@ -138,11 +119,9 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
         return steal_from_quotes(word);
 }
 
-double PswfcRadials::radial_norm(const std::vector<double> rgrid, const std::vector<double> rvalue)
-{
+double PswfcRadials::radial_norm(const std::vector<double> rgrid, const std::vector<double> rvalue) {
     std::vector<double> integrand(rvalue.size());
-    for (int ir = 0; ir != rvalue.size(); ++ir)
-    {
+    for (int ir = 0; ir != rvalue.size(); ++ir) {
         integrand[ir] = rvalue[ir] * rvalue[ir] * rgrid[ir] * rgrid[ir];
     }
     double dr = rgrid[1] - rgrid[0];
@@ -153,8 +132,7 @@ double PswfcRadials::radial_norm(const std::vector<double> rgrid, const std::vec
 
 double PswfcRadials::cut_to_convergence(const std::vector<double>& rgrid,
                                         std::vector<double>& rvalue,
-                                        const double& conv_thr)
-{
+                                        const double& conv_thr) {
     double norm = 0.0;
     int ir_ = 0;
     int ir_min_ = 0;
@@ -168,8 +146,7 @@ double PswfcRadials::cut_to_convergence(const std::vector<double>& rgrid,
     double delta_norm = 1.0;
     printf("Searching for the cutoff radius for pseudowavefunction, conv_thr = %6.4e\n", conv_thr);
     printf("%10s%12s%14s%18s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
-    while ((std::fabs(delta_norm) > conv_thr) && (ir_ <= ir_max_))
-    {
+    while ((std::fabs(delta_norm) > conv_thr) && (ir_ <= ir_max_)) {
         ir_ = std::min(ir_ + delta_ir, ir_max_); // update ir_, but be careful not to exceed ir_max_
         delta_norm = norm;
         std::vector<double> rgrid_slice = std::vector<double>(rgrid.begin() + ir_min_, rgrid.begin() + ir_ + 1);
@@ -187,12 +164,10 @@ double PswfcRadials::cut_to_convergence(const std::vector<double>& rgrid,
     return rgrid[ir_max_];
 }
 
-void PswfcRadials::smooth(std::vector<double>& rgrid, std::vector<double>& rvalue, const double sigma)
-{
+void PswfcRadials::smooth(std::vector<double>& rgrid, std::vector<double>& rvalue, const double sigma) {
     double prefactor = 1.0 / sqrt(2.0 * M_PI) / sigma;
     double rmax = rgrid.back();
-    for (int ir = 0; ir != rgrid.size(); ++ir)
-    {
+    for (int ir = 0; ir != rgrid.size(); ++ir) {
         double delta_r = rgrid[ir] - rmax;
         double smooth = prefactor * exp(-delta_r * delta_r / 2.0 / sigma / sigma);
         rvalue[ir] *= (1 - smooth);
@@ -200,17 +175,14 @@ void PswfcRadials::smooth(std::vector<double>& rgrid, std::vector<double>& rvalu
 }
 
 std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& lzeta_rvalues,
-                                                   const double conv_thr)
-{
+                                                   const double conv_thr) {
     double nmax = 0.0;
-    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
-    {
+    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++) {
         int l = it->first.first;
         int iz = it->first.second;
         std::vector<double> rvalue = it->second;
         std::vector<double> rgrid = std::vector<double>(rvalue.size(), 0.0);
-        for (int ir = 0; ir < rvalue.size(); ir++)
-        {
+        for (int ir = 0; ir < rvalue.size(); ir++) {
             rgrid[ir] = ir * 0.01;
         }
         double rcut_i = cut_to_convergence(rgrid, rvalue, conv_thr);
@@ -220,19 +192,16 @@ std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>,
     }
     // generate rgrid
     std::vector<double> rgrid = std::vector<double>(nmax, 0.0);
-    for (int ir = 0; ir < nmax; ir++)
-    {
+    for (int ir = 0; ir < nmax; ir++) {
         rgrid[ir] = ir * 0.01;
     }
     // zero padding on rvalue
-    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
-    {
+    for (auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++) {
         int l = it->first.first;
         int iz = it->first.second;
         std::vector<double> rvalue = it->second;
         std::vector<double> rvalue_padded = std::vector<double>(nmax, 0.0);
-        for (int ir = 0; ir < rvalue.size(); ir++)
-        {
+        for (int ir = 0; ir < rvalue.size(); ir++) {
             rvalue_padded[ir] = rvalue[ir];
         }
         smooth(rgrid,
@@ -248,8 +217,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
                                   const double screening_coeff,
                                   const double conv_thr,
                                   std::ofstream* ptr_log,
-                                  const int rank)
-{
+                                  const int rank) {
     int ngrid = 0;
     int nzeta = 0;
     double dr = 0.01; // in most cases, this is correct
@@ -262,8 +230,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     std::vector<int> izetas;
     std::vector<double> rgrid;
     std::vector<std::vector<double>> rvalues;
-    if (rank == 0)
-    {
+    if (rank == 0) {
         // result is a map from (l, izeta) to rvalue, i.e., from (l,zeta) to exact value of radial function
         // it is a temporary container to store the result of pseudowavefunction, next will be transfer to
         // ls, izetas, rgrid and rvalues std::vectors and broadcast
@@ -308,8 +275,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
                 ifs >> line;
             // before read data, first create container to store
             std::vector<double> rvalue = std::vector<double>(ngrid, 0.0);
-            for (int ir = 0; ir < ngrid; ir++)
-            {
+            for (int ir = 0; ir < ngrid; ir++) {
                 ifs >> line;
                 double screening = std::exp(-screening_coeff * ir * dr);
                 rvalue[ir] = std::stod(line) * screening;
@@ -319,8 +285,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
             assert(startswith(line, "</PP_CHI."));
         }
 
-        if (result.size() == 0)
-        {
+        if (result.size() == 0) {
             ModuleBase::WARNING_QUIT("PswfcRadials::read",
                                      "pseudowavefunction information is absent in pseudopotential.");
         }
@@ -335,8 +300,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
         // next seperate the result into keys and values by the following way:
         // 1. because key is std::pair, therefore seperate into two std::vectors
         // 2. for each key, value is a std::vector, therefore loop over to get the value
-        for (auto it = result.begin(); it != result.end(); it++)
-        {
+        for (auto it = result.begin(); it != result.end(); it++) {
             int l = it->first.first;
             int iz = it->first.second;
             ls.push_back(l);
@@ -360,8 +324,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
 #endif
     // then adjust and allocate memory for ranks other than 0, according to information broadcasted
     // from rank0
-    if (rank != 0)
-    {
+    if (rank != 0) {
         nzeta_ = new int[lmax_ + 1];
         index_map_ = new int[(lmax_ + 1) * nzeta_max_];
 
@@ -390,8 +353,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
 #endif
     // do the following for all ranks, as if rank 0
     chi_ = new NumericalRadial[nchi_];
-    for (int i = 0; i < nchi_; i++)
-    {
+    for (int i = 0; i < nchi_; i++) {
         chi_[index(ls[i], izetas[i])]
             .build(ls[i], true, ngrid, rgrid.data(), rvalues[i].data(), 0, izetas[i], symbol_, itype_, false);
         if (std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008

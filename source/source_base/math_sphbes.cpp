@@ -5,14 +5,12 @@
 
 #include <cassert>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-Sphbes::Sphbes(){}
-Sphbes::~Sphbes(){}
+Sphbes::Sphbes() {}
+Sphbes::~Sphbes() {}
 
-void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, double *ryp)
-{
+void Sphbes::BESSJY(double x, double xnu, double* rj, double* ry, double* rjp, double* ryp) {
     const int XMIN = 2.0;
     const double FPMIN = 1.0e-30;
     const double EPS = 1.0e-10;
@@ -39,13 +37,11 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     double temp = 0.0, w = 0.0;
     double x2 = 0.0, xi = 0.0, xi2 = 0.0;
 
-    if (x <= 0.0 || xnu < 0.0)
-    {
-		std::cout << "Sphbes::BESSJY, bad arguments" << std::endl;
-        //ModuleBase::WARNING_QUIT("Sphbes::BESSJY","bad arguments");
-		exit(0); // mohan add 2021-05-06
+    if (x <= 0.0 || xnu < 0.0) {
+        std::cout << "Sphbes::BESSJY, bad arguments" << std::endl;
+        // ModuleBase::WARNING_QUIT("Sphbes::BESSJY","bad arguments");
+        exit(0); // mohan add 2021-05-06
     }
-
 
     nl = (x < XMIN ? (int)(xnu + 0.5) : IMAX(0, (int)(xnu - x + 1.5)));
     const double xmu = xnu - nl;
@@ -56,10 +52,9 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     isign = 1;
     h = xnu * xi;
 
-    if (h < FPMIN)
-	{
-		h = FPMIN;
-	}
+    if (h < FPMIN) {
+        h = FPMIN;
+    }
 
     b = xi2 * xnu;
 
@@ -67,16 +62,17 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
     c = h;
 
-    for (i = 1;i <= MAXIT;i++)
-    {
+    for (i = 1; i <= MAXIT; i++) {
         b += xi2;
         d = b - d;
 
-        if (std::fabs(d) < FPMIN) d = FPMIN;
+        if (std::fabs(d) < FPMIN)
+            d = FPMIN;
 
         c = b - 1.0 / c;
 
-        if (std::fabs(c) < FPMIN) c = FPMIN;
+        if (std::fabs(c) < FPMIN)
+            c = FPMIN;
 
         d = 1.0 / d;
 
@@ -84,15 +80,16 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
         h = del * h;
 
-        if (d < 0.0) isign = -isign;
+        if (d < 0.0)
+            isign = -isign;
 
-        if (std::fabs(del - 1.0) < EPS) break;
+        if (std::fabs(del - 1.0) < EPS)
+            break;
     }
 
-    if (i > MAXIT)
-	{
-		std::cout << "x too large in bessjy; try asymptotic expansion" << std::endl;
-	}
+    if (i > MAXIT) {
+        std::cout << "x too large in bessjy; try asymptotic expansion" << std::endl;
+    }
 
     rjl = isign * FPMIN;
 
@@ -104,23 +101,20 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
     fact = xnu * xi;
 
-    for (l = nl;l >= 1;l--)
-    {
+    for (l = nl; l >= 1; l--) {
         rjtemp = fact * rjl + rjpl;
         fact -= xi;
         rjpl = fact * rjtemp - rjl;
         rjl = rjtemp;
     }
 
-    if (rjl == 0.0)
-	{
-		rjl = EPS;
-	}
+    if (rjl == 0.0) {
+        rjl = EPS;
+    }
 
     f = rjpl / rjl;
 
-    if (x < XMIN)
-    {
+    if (x < XMIN) {
         x2 = 0.5 * x;
         pimu = ModuleBase::PI * xmu;
         fact = (std::fabs(pimu) < EPS ? 1.0 : pimu / std::sin(pimu));
@@ -141,8 +135,7 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
         sum = ff + r * q;
         sum1 = p;
 
-        for (i = 1;i <= MAXIT;i++)
-        {
+        for (i = 1; i <= MAXIT; i++) {
             ff = (i * ff + p + q) / (i * i - xmu2);
             c *= (d / i);
             p /= (i - xmu);
@@ -152,10 +145,12 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
             del1 = c * p - i * del;
             sum1 += del1;
 
-            if (std::fabs(del) < (1.0 + std::fabs(sum))*EPS) break;
+            if (std::fabs(del) < (1.0 + std::fabs(sum)) * EPS)
+                break;
         }
 
-        if (i > MAXIT) std::cout << "bessy series failed to converge";
+        if (i > MAXIT)
+            std::cout << "bessy series failed to converge";
 
         rymu = -sum;
 
@@ -166,8 +161,7 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
         rjmu = w / (rymup - f * rymu);
     }
 
-    else
-    {
+    else {
         a = 0.25 - xmu2;
         p = -0.5 * xi;
         q = 1.0;
@@ -185,14 +179,14 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
         q = p * dli + q * dlr;
         p = temp;
 
-        for (i = 2;i <= MAXIT;i++)
-        {
+        for (i = 2; i <= MAXIT; i++) {
             a += 2 * (i - 1);
             bi += 2.0;
             dr = a * dr + br;
             di = a * di + bi;
 
-            if (std::fabs(dr) + std::fabs(di) < FPMIN) dr = FPMIN;
+            if (std::fabs(dr) + std::fabs(di) < FPMIN)
+                dr = FPMIN;
 
             fact = a / (cr * cr + ci * ci);
 
@@ -200,7 +194,8 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
             ci = bi - ci * fact;
 
-            if (std::fabs(cr) + std::fabs(ci) < FPMIN) cr = FPMIN;
+            if (std::fabs(cr) + std::fabs(ci) < FPMIN)
+                cr = FPMIN;
 
             den = dr * dr + di * di;
 
@@ -218,17 +213,21 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
             p = temp;
 
-            if (std::fabs(dlr - 1.0) + std::fabs(dli) < EPS) break;
+            if (std::fabs(dlr - 1.0) + std::fabs(dli) < EPS)
+                break;
         }
 
-        if (i > MAXIT) std::cout << "cf2 failed in bessjy";
+        if (i > MAXIT)
+            std::cout << "cf2 failed in bessjy";
 
         gam = (p - f) / q;
 
         rjmu = std::sqrt(w / ((p - f) * gam + q));
 
-        if (rjl >=0 ) rjmu = std::fabs(rjmu);
-        else rjmu = -std::fabs(rjmu);
+        if (rjl >= 0)
+            rjmu = std::fabs(rjmu);
+        else
+            rjmu = -std::fabs(rjmu);
 
         rymu = rjmu * gam;
 
@@ -242,8 +241,7 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     *rj = rjl1 * fact;
     *rjp = rjp1 * fact;
 
-    for (i = 1;i <= nl;i++)
-    {
+    for (i = 1; i <= nl; i++) {
         rytemp = (xmu + i) * xi2 * ry1 - rymu;
         rymu = ry1;
         ry1 = rytemp;
@@ -254,75 +252,76 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     *ryp = xnu * xi * rymu - ry1;
 }
 
-
-int Sphbes::IMAX(int a, int b)
-{
-    if (a > b) return a;
-    else return b;
+int Sphbes::IMAX(int a, int b) {
+    if (a > b)
+        return a;
+    else
+        return b;
 }
 
-
-void Sphbes::BESCHB(double x, double *gam1, double *gam2, double *gampl, double *gammi)
-{
+void Sphbes::BESCHB(double x, double* gam1, double* gam2, double* gampl, double* gammi) {
     const int NUSE1 = 7;
     const int NUSE2 = 8;
     double xx = 0;
-    static double c1[] = {   -1.142022680371168e0, 6.5165112670737e-3,
-                             3.087090173086e-4, -3.4706269649e-6,
-                             6.9437664e-9, 3.67795e-11, -1.356e-13
-                         };
-    static double c2[] = {   1.843740587300905e0, -7.68528408447867e-2,
-                             1.2719271366546e-3, -4.9717367042e-6, -3.31261198e-8,
-                             2.423096e-10, -1.702e-13, -1.49e-15
-                         };
-    xx = 8.0 * x * x - 1.0; //Multiply x by 2 to make range be .1 to 1,and then apply transformation for evaluating even     Chebyshev series.
+    static double c1[] = {-1.142022680371168e0,
+                          6.5165112670737e-3,
+                          3.087090173086e-4,
+                          -3.4706269649e-6,
+                          6.9437664e-9,
+                          3.67795e-11,
+                          -1.356e-13};
+    static double c2[] = {1.843740587300905e0,
+                          -7.68528408447867e-2,
+                          1.2719271366546e-3,
+                          -4.9717367042e-6,
+                          -3.31261198e-8,
+                          2.423096e-10,
+                          -1.702e-13,
+                          -1.49e-15};
+    xx = 8.0 * x * x - 1.0; // Multiply x by 2 to make range be .1 to 1,and then apply transformation for evaluating
+                            // even     Chebyshev series.
     *gam1 = CHEBEV(-1.0, 1.0, c1, NUSE1, xx);
     *gam2 = CHEBEV(-1.0, 1.0, c2, NUSE2, xx);
     *gampl = *gam2 - x * (*gam1);
     *gammi = *gam2 + x * (*gam1);
 }
 
-double Sphbes::CHEBEV(double a, double b, double c[], int m, double x)
-{
+double Sphbes::CHEBEV(double a, double b, double c[], int m, double x) {
     double d = 0.0;
-	double dd = 0.0;
-	double sv = 0.0;
-	double y = 0.0;
-	double y2 = 0.0;
-    int j=0;
+    double dd = 0.0;
+    double sv = 0.0;
+    double y = 0.0;
+    double y2 = 0.0;
+    int j = 0;
 
-    if ((x - a)*(x - b) > 0.0)
-	{
-		std::cout << "x not in range in routine chebev" << std::endl;
-	}
+    if ((x - a) * (x - b) > 0.0) {
+        std::cout << "x not in range in routine chebev" << std::endl;
+    }
 
     y2 = 2.0 * (y = (2.0 * x - a - b) / (b - a));
 
-    for (j = m - 1;j >= 1;j--)
-    {
+    for (j = m - 1; j >= 1; j--) {
         sv = d;
         d = y2 * d - dd + c[j];
         dd = sv;
     }
 
-    return y*d - dd + 0.5*c[0];
+    return y * d - dd + 0.5 * c[0];
 }
 
-
-double Sphbes::Spherical_Bessel_7(const int n, const double &x)
-{
-    if (x==0)
-    {
-        if (n!=0) return 0;
-        if (n==0) return 1;
+double Sphbes::Spherical_Bessel_7(const int n, const double& x) {
+    if (x == 0) {
+        if (n != 0)
+            return 0;
+        if (n == 0)
+            return 1;
     }
     double order = 0.0, rj = 0.0, rjp = 0.0, ry = 0.0, ryp = 0.0;
 
-    if (n < 0 || x <= 0.0)
-    {
-		std::cout << "Spherical_Bessel_7, bad arguments in sphbes" << std::endl;
-        //ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_7","bad arguments in sphbes");
-		exit(0);
+    if (n < 0 || x <= 0.0) {
+        std::cout << "Spherical_Bessel_7, bad arguments in sphbes" << std::endl;
+        // ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_7","bad arguments in sphbes");
+        exit(0);
     }
 
     order = n + 0.5;
@@ -330,99 +329,89 @@ double Sphbes::Spherical_Bessel_7(const int n, const double &x)
     // call BESSSJY
     BESSJY(x, order, &rj, &ry, &rjp, &ryp);
 
-    const double RTPIO2=1.2533141;
+    const double RTPIO2 = 1.2533141;
 
     const double factor = RTPIO2 / std::sqrt(x);
 
-    return factor*rj;
+    return factor * rj;
 }
 
-
-void Sphbes::Spherical_Bessel_Roots
-(
-    const int &num,
-    const int &l,
-    const double &epsilon,
-    double* eigenvalue,
-    const double &rcut
-)
-{
-    //ModuleBase::TITLE("Sphbes","Spherical_Bessel_Roots");
-    if (num<=0)
-	{
-		std::cout << "Spherical_Bessel_Roots, num<=0" << std::endl;
-		//ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","num<=0");
-		exit(0);
-	}
-    if (rcut<=0.0)
-	{
-		std::cout << "Spherical_Bessel_Roots, rcut<=0" << std::endl;
-		//ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","rcut<=0.0");
-		exit(0);
-	}
+void Sphbes::Spherical_Bessel_Roots(const int& num,
+                                    const int& l,
+                                    const double& epsilon,
+                                    double* eigenvalue,
+                                    const double& rcut) {
+    // ModuleBase::TITLE("Sphbes","Spherical_Bessel_Roots");
+    if (num <= 0) {
+        std::cout << "Spherical_Bessel_Roots, num<=0" << std::endl;
+        // ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","num<=0");
+        exit(0);
+    }
+    if (rcut <= 0.0) {
+        std::cout << "Spherical_Bessel_Roots, rcut<=0" << std::endl;
+        // ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","rcut<=0.0");
+        exit(0);
+    }
 
     double min = 0.0;
-    double max = 2*ModuleBase::PI + (num + (l+0.5)/2 + 0.75)*ModuleBase::PI/2 +
-                 std::sqrt((num + (l+0.5)/2+0.75)*(num + (l+0.5)/2+0.75)*ModuleBase::PI*ModuleBase::PI/4-(l+0.5)*(l+0.5)/2);
+    double max =
+        2 * ModuleBase::PI + (num + (l + 0.5) / 2 + 0.75) * ModuleBase::PI / 2 +
+        std::sqrt((num + (l + 0.5) / 2 + 0.75) * (num + (l + 0.5) / 2 + 0.75) * ModuleBase::PI * ModuleBase::PI / 4 -
+                  (l + 0.5) * (l + 0.5) / 2);
 
     // magic number !!
     // guess : only need to > 1
     const int msh = 10 * num;
-//	std::cout<<"\n msh = "<<msh;
+    //    std::cout<<"\n msh = "<<msh;
 
     // delta don't need to be small,
     // it only needs to make sure can find the eigenstates
     const double delta = (max - min) / static_cast<double>(msh);
-//	std::cout<<"\n delta = "<<delta;
+    //    std::cout<<"\n delta = "<<delta;
 
-    double *r = new double[msh];
-    for (int i=0; i<msh; i++)
-    {
-        r[i] = i*delta;
+    double* r = new double[msh];
+    for (int i = 0; i < msh; i++) {
+        r[i] = i * delta;
     }
-    double *jl = new double[msh];
+    double* jl = new double[msh];
 
     Sphbes::Spherical_Bessel(msh, r, 1, l, jl);
 
-    int n=0;
-    for (int i=0; i<msh-1 && n<num; i++)
-    {
-        if (jl[i]*jl[i+1] < 0.0)
-        {
+    int n = 0;
+    for (int i = 0; i < msh - 1 && n < num; i++) {
+        if (jl[i] * jl[i + 1] < 0.0) {
             double y_1 = jl[i];
-            double y_2 = jl[i+1];
+            double y_2 = jl[i + 1];
             double x_1 = r[i];
-            double x_2 = r[i+1];
+            double x_2 = r[i + 1];
             double acc = std::fabs(y_2 - y_1);
 
-            const int grid=100;
-            double *rad = new double[grid];
-            double *jl_new = new double[grid];
-            while (acc > epsilon)
-            {
+            const int grid = 100;
+            double* rad = new double[grid];
+            double* jl_new = new double[grid];
+            while (acc > epsilon) {
                 // if not enough accurate, divide again.
-                const double delta2 = (x_2 - x_1)/(grid-1);
-                for (int j=0;j<grid;j++)
-                {
-                    rad[j] = x_1 + j*delta2;
+                const double delta2 = (x_2 - x_1) / (grid - 1);
+                for (int j = 0; j < grid; j++) {
+                    rad[j] = x_1 + j * delta2;
                 }
-                Sphbes::Spherical_Bessel(grid,rad,1,l,jl_new);
+                Sphbes::Spherical_Bessel(grid, rad, 1, l, jl_new);
 
-                int j=0;
-                for (;j<grid-1;j++)
-                {
-                    if (jl_new[j]*jl_new[j+1]<0)break;
+                int j = 0;
+                for (; j < grid - 1; j++) {
+                    if (jl_new[j] * jl_new[j + 1] < 0)
+                        break;
                 }
 
                 x_1 = rad[j];
-                x_2 = rad[j+1];
+                x_2 = rad[j + 1];
                 y_1 = jl_new[j];
-                y_2 = jl_new[j+1];
-                acc = std::fabs( y_2 - y_1 );
+                y_2 = jl_new[j + 1];
+                acc = std::fabs(y_2 - y_1);
             }
             delete[] rad;
             delete[] jl_new;
-            eigenvalue[n]=(x_2 + x_1)*0.5/rcut;
+            eigenvalue[n] = (x_2 + x_1) * 0.5 / rcut;
             n++;
         }
     }
@@ -430,265 +419,181 @@ void Sphbes::Spherical_Bessel_Roots
     delete[] jl;
 }
 
+void Sphbes::Spherical_Bessel(const int& msh,  // number of grid points
+                              const double* r, // radial grid
+                              const double& q, // wave std::vector
+                              const int& l,    // angular momentum
+                              double* jl       // jl(1:msh) = j_l(q*r(i)),spherical bessel function
+) {
+    double x1 = 0.0;
 
-void Sphbes::Spherical_Bessel
-(
-    const int &msh,	 // number of grid points
-    const double *r, // radial grid
-    const double &q, // wave std::vector
-    const int &l,	 // angular momentum
-    double *jl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
-)
-{
-    double x1=0.0;
+    int i = 0;
+    int ir = 0;
+    int ir0 = 0;
 
-    int i=0;
-	int ir=0;
-	int ir0=0;
-
-    if (l>=7)
-    {
-        for (int ir=0; ir<msh; ir++)
-        {
+    if (l >= 7) {
+        for (int ir = 0; ir < msh; ir++) {
             x1 = q * r[ir];
             jl[ir] = Spherical_Bessel_7(l, x1);
         }
         return;
     }
 
-    if (std::fabs(q) < 1.0e-8)
-    {
-        if (l == -1)
-        {
+    if (std::fabs(q) < 1.0e-8) {
+        if (l == -1) {
             std::cout << "\n sph_bes, j_{-1}(0) ????";
-        }
-        else if (l == 0)
-        {
-            for (i = 0;i < msh;i++)
-            {
+        } else if (l == 0) {
+            for (i = 0; i < msh; i++) {
                 jl[i] = 1.0;
             }
-        }
-        else
-        {
-            for (i = 0;i < msh;i++)
-            {
+        } else {
+            for (i = 0; i < msh; i++) {
                 jl[i] = 0.0;
             }
         }
-    }
-    else
-    {
-        if (std::fabs(q * r [0]) > 1.0e-8)
-        {
-            ir0 = 0;//mohan modify 2007-10-13
-        }
-        else
-        {
-            if (l == -1)
-            {
+    } else {
+        if (std::fabs(q * r[0]) > 1.0e-8) {
+            ir0 = 0; // mohan modify 2007-10-13
+        } else {
+            if (l == -1) {
                 std::cout << "\n sph_bes, j_{-1}(0) ?//?";
+            } else if (l == 0) {
+                jl[0] = 1.0; // mohan modify 2007-10-13
+            } else {
+                jl[0] = 0.0; // mohan modify 2007-10-13
             }
-            else if (l == 0)
-            {
-                jl [0] = 1.0;//mohan modify 2007-10-13
-            }
-            else
-            {
-                jl [0] = 0.0;//mohan modify 2007-10-13
-            }
-            ir0 = 1;//mohan modify 2007-10-13
+            ir0 = 1; // mohan modify 2007-10-13
         }
-        if (l == - 1)
-        {
-            for (ir = ir0;ir < msh; ir++)
-            {
+        if (l == -1) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
-                jl [ir] = std::cos(x1) / x1;
+                jl[ir] = std::cos(x1) / x1;
             }
-        }
-        else if (l == 0)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 0) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
-                jl [ir] = std::sin(x1) / x1;
+                jl[ir] = std::sin(x1) / x1;
             }
-        }
-        else if (l == 1)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 1) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
                 const double sinx = std::sin(x1);
                 const double cosx = std::cos(x1);
-                jl [ir] = (sinx / x1 - cosx) / x1;
+                jl[ir] = (sinx / x1 - cosx) / x1;
             }
-        }
-        else if (l == 2)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 2) {
+            for (ir = ir0; ir < msh; ir++) {
                 const double x1 = q * r[ir];
                 const double sinx = std::sin(x1);
                 const double cosx = std::cos(x1);
-                jl [ir] = ((3.0 / x1  - x1) * sinx
-                           - 3.0 * cosx) / (x1 * x1);
+                jl[ir] = ((3.0 / x1 - x1) * sinx - 3.0 * cosx) / (x1 * x1);
             }
-        }
-        else if (l == 3)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 3) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
-                jl [ir] = (std::sin(x1) * (15.0 / x1 - 6.0 * x1) +
-                           std::cos(x1) * (x1 * x1 - 15.0)) / std::pow(x1, 3);//mohan modify 2007-10-13
+                jl[ir] = (std::sin(x1) * (15.0 / x1 - 6.0 * x1) + std::cos(x1) * (x1 * x1 - 15.0)) /
+                         std::pow(x1, 3); // mohan modify 2007-10-13
             }
-        }
-        else if (l == 4)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 4) {
+            for (ir = ir0; ir < msh; ir++) {
                 const double x1 = q * r[ir];
                 const double x2 = x1 * x1;
                 const double x3 = x1 * x2;
                 const double x4 = x1 * x3;
                 const double x5 = x1 * x4;
-                jl [ir] = (std::sin(x1) * (105.0 - 45.0 * x2 + x4) +
-                           std::cos(x1)  * (10.0 * x3 - 105.0 * x1)) / x5;   // mohan modify 2007-10-13
+                jl[ir] = (std::sin(x1) * (105.0 - 45.0 * x2 + x4) + std::cos(x1) * (10.0 * x3 - 105.0 * x1)) /
+                         x5; // mohan modify 2007-10-13
             }
-        }
-        else if (l == 5)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 5) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
 
-                if (x1 < 0.14)
-                {
-                    jl[ir] = 0;//mohan add 2007-10-15
-                }
-                else
-                {
+                if (x1 < 0.14) {
+                    jl[ir] = 0; // mohan add 2007-10-15
+                } else {
                     double cx1 = std::cos(x1);
                     double sx1 = std::sin(x1);
-                    jl [ir] = (-cx1 -
-                               (945.0 * cx1) / std::pow(x1, 4) +
-                               (105.0 * cx1) / (x1 * x1)  +
-                               (945.0 * sx1) / std::pow(x1, 5) -
-                               (420.0 * sx1) / std::pow(x1, 3) +
-                               (15.0 * sx1) / x1) / x1;
-
+                    jl[ir] = (-cx1 - (945.0 * cx1) / std::pow(x1, 4) + (105.0 * cx1) / (x1 * x1) +
+                              (945.0 * sx1) / std::pow(x1, 5) - (420.0 * sx1) / std::pow(x1, 3) + (15.0 * sx1) / x1) /
+                             x1;
                 }
             }
-        }
-        else if (l == 6)
-        {
-            for (ir = ir0;ir < msh;ir++)
-            {
+        } else if (l == 6) {
+            for (ir = ir0; ir < msh; ir++) {
                 x1 = q * r[ir];
 
-                if (x1 < 0.29)
-                {
-                    jl[ir] = 0;//mohan add 2007-10-15
-                }
-                else
-                {
+                if (x1 < 0.29) {
+                    jl[ir] = 0; // mohan add 2007-10-15
+                } else {
                     double cx1 = std::cos(x1);
                     double sx1 = std::sin(x1);
-                    jl [ir] = ((-10395.0 * cx1) / std::pow(x1, 5) +
-                               (1260.0 * cx1) / std::pow(x1, 3) -
-                               (21.0 * cx1) / x1 - sx1 +
-                               (10395.0 * sx1) / std::pow(x1, 6) -
-                               (4725.0 * sx1) / std::pow(x1, 4) +
-                               (210.0 * sx1) / (x1 * x1)) / x1;
+                    jl[ir] = ((-10395.0 * cx1) / std::pow(x1, 5) + (1260.0 * cx1) / std::pow(x1, 3) -
+                              (21.0 * cx1) / x1 - sx1 + (10395.0 * sx1) / std::pow(x1, 6) -
+                              (4725.0 * sx1) / std::pow(x1, 4) + (210.0 * sx1) / (x1 * x1)) /
+                             x1;
                 }
             }
-        }//mohan modify 2007-11-20 reduce cos , sin , q*r[ir] times;
-        else
-        {
-            std::cout << "\n error in sph_bes, l out of {-1 ... 6},l = " << l ;
-			exit(0);
+        } // mohan modify 2007-11-20 reduce cos , sin , q*r[ir] times;
+        else {
+            std::cout << "\n error in sph_bes, l out of {-1 ... 6},l = " << l;
+            exit(0);
         }
     }
 
     return;
 }
 
+void Sphbes::Spherical_Bessel(const int& msh,  // number of grid points
+                              const double* r, // radial grid
+                              const double& q, //
+                              const int& l,    // angular momentum
+                              double* sj,      // jl(1:msh) = j_l(q*r(i)),spherical bessel function
+                              double* sjp) {
 
-void Sphbes::Spherical_Bessel
-(
-	const int &msh, //number of grid points
-	const double *r,//radial grid
-	const double &q,    //
-	const int &l,   //angular momentum
-	double *sj,     //jl(1:msh) = j_l(q*r(i)),spherical bessel function
-	double *sjp
-)
-{
+    // calculate jlx first
+    Spherical_Bessel(msh, r, q, l, sj);
 
-	//calculate jlx first
-	Spherical_Bessel (msh, r, q, l, sj);
-
-	for (int ir = 0; ir < msh; ir++)
-	{
-		sjp[ir] = 1.0;
-	}
-	return;
+    for (int ir = 0; ir < msh; ir++) {
+        sjp[ir] = 1.0;
+    }
+    return;
 }
 
-void Sphbes::dSpherical_Bessel_dx
-(
-    const int &msh,	 // number of grid points
-    const double *r, // radial grid
-    const double &q, // wave std::vector
-    const int &l,	 // angular momentum
-    double *djl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
-)
-{
-    if (l < 0 )
-    {
-		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
-		exit(0);
+void Sphbes::dSpherical_Bessel_dx(const int& msh,  // number of grid points
+                                  const double* r, // radial grid
+                                  const double& q, // wave std::vector
+                                  const int& l,    // angular momentum
+                                  double* djl      // jl(1:msh) = j_l(q*r(i)),spherical bessel function
+) {
+    if (l < 0) {
+        std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
+        exit(0);
     }
 
     double djl0 = 0;
-    if(l == 1)
-    {
-        djl0 = 1.0/3.0;
+    if (l == 1) {
+        djl0 = 1.0 / 3.0;
     }
 
-    if(l == 0 )
-    {
-        for (int ir = 0;ir < msh; ir++)
-        {
+    if (l == 0) {
+        for (int ir = 0; ir < msh; ir++) {
             double x1 = q * r[ir];
-            if(x1 < 1e-8)
-            {
+            if (x1 < 1e-8) {
                 djl[ir] = djl0;
+            } else {
+                djl[ir] = (x1 * std::cos(x1) - std::sin(x1)) / (x1 * x1);
             }
-            else
-            {
-                djl[ir] = (x1 * std::cos(x1) - std::sin(x1)) / (x1*x1);
-            }
-
         }
-    }
-    else
-    {
-        double *jl = new double [msh];
-        Spherical_Bessel (msh, r, q, l-1, jl);
-        Spherical_Bessel (msh, r, q, l, djl);
-        for (int ir = 0;ir < msh; ir++)
-        {
+    } else {
+        double* jl = new double[msh];
+        Spherical_Bessel(msh, r, q, l - 1, jl);
+        Spherical_Bessel(msh, r, q, l, djl);
+        for (int ir = 0; ir < msh; ir++) {
             double x1 = q * r[ir];
-            if(x1 < 1e-8)
-            {
+            if (x1 < 1e-8) {
                 djl[ir] = djl0;
-            }
-            else
-            {
-                djl[ir] = jl[ir] - double(l+1)/x1 * djl[ir];
+            } else {
+                djl[ir] = jl[ir] - double(l + 1) / x1 * djl[ir];
             }
         }
         delete[] jl;
@@ -702,11 +607,11 @@ double Sphbes::_sphbesj_ascending_recurrence(int l, double x) {
 
     double invx = 1.0 / x;
     double j0 = std::sin(x) * invx;
-    double j1 = ( j0 - std::cos(x) ) * invx;
+    double j1 = (j0 - std::cos(x)) * invx;
 
     double jl = 0.0;
     for (int i = 2; i <= l; ++i) {
-        jl = (2*i-1) * invx * j1 - j0;
+        jl = (2 * i - 1) * invx * j1 - j0;
         j0 = j1;
         j1 = jl;
     }
@@ -736,92 +641,72 @@ double Sphbes::_sphbesj_series(int l, double x) {
     do {
         jl += kth_term;
         k += 1;
-        kth_term *= -x_sqr_half / ( k * (2*(l+k)+1) );
-    } while ( std::abs(kth_term) > std::abs(eps * jl) );
+        kth_term *= -x_sqr_half / (k * (2 * (l + k) + 1));
+    } while (std::abs(kth_term) > std::abs(eps * jl));
 
     return jl;
 }
 
-double Sphbes::sphbesj(const int l, const double x)
-{
-    assert( l >= 0 );
-    assert( x >= 0 );
+double Sphbes::sphbesj(const int l, const double x) {
+    assert(l >= 0);
+    assert(x >= 0);
 
     // j_l(0)
-    if ( x == 0 )
-    {
+    if (x == 0) {
         return l ? 0.0 : 1.0;
     }
 
-    if ( x < l )
-    {
+    if (x < l) {
         return _sphbesj_series(l, x);
-    }
-    else
-    {
+    } else {
         double invx = 1.0 / x;
-        switch (l)
-        {
-          case 0:
+        switch (l) {
+        case 0:
             return std::sin(x) * invx;
-          case 1:
-            return ( std::sin(x) * invx - std::cos(x) ) * invx;
+        case 1:
+            return (std::sin(x) * invx - std::cos(x)) * invx;
             // NOTE: the following explicit expressions are not necessarily faster than ascending recurrence,
             // but we keep them just in case we need them in the future.
-          //case 2:
-          //  return ( (3.0 * invx  - x) * std::sin(x) - 3.0 * std::cos(x) ) * (invx * invx);
-          //case 3:
-          //  return ( std::sin(x) * (15.0 * invx - 6.0 * x) + std::cos(x) * (x * x - 15.0) ) * std::pow(invx, 3);
-          //case 4:
-          //  return ( std::sin(x) * (std::pow(x,3) - 45.0 * x + 105.0 * invx)
-          //          + std::cos(x) * (10.0 * x * x - 105.0) ) * std::pow(invx, 4);
-          //case 5:
-          //  return ( std::sin(x) * (15.0 * std::pow(x,3) - 420.0 * x + 945.0 * invx)
-          //          + std::cos(x) * (-std::pow(x, 4) + 105.0 * x * x - 945.0) ) * std::pow(invx, 5);
-          //case 6:
-          //  return ( std::sin(x) * (-std::pow(x, 5) + 210.0 * std::pow(x, 3) - 4725.0 * x + 10395.0 * invx)
-          //          + std::cos(x) * (-21.0 * std::pow(x, 4) + 1260.0 * x * x - 10395.0) ) * std::pow(invx, 6);
-          default:
+        // case 2:
+        //   return ( (3.0 * invx  - x) * std::sin(x) - 3.0 * std::cos(x) ) * (invx * invx);
+        // case 3:
+        //   return ( std::sin(x) * (15.0 * invx - 6.0 * x) + std::cos(x) * (x * x - 15.0) ) * std::pow(invx, 3);
+        // case 4:
+        //   return ( std::sin(x) * (std::pow(x,3) - 45.0 * x + 105.0 * invx)
+        //           + std::cos(x) * (10.0 * x * x - 105.0) ) * std::pow(invx, 4);
+        // case 5:
+        //   return ( std::sin(x) * (15.0 * std::pow(x,3) - 420.0 * x + 945.0 * invx)
+        //           + std::cos(x) * (-std::pow(x, 4) + 105.0 * x * x - 945.0) ) * std::pow(invx, 5);
+        // case 6:
+        //   return ( std::sin(x) * (-std::pow(x, 5) + 210.0 * std::pow(x, 3) - 4725.0 * x + 10395.0 * invx)
+        //           + std::cos(x) * (-21.0 * std::pow(x, 4) + 1260.0 * x * x - 10395.0) ) * std::pow(invx, 6);
+        default:
             return _sphbesj_ascending_recurrence(l, x);
         }
     }
 }
 
-double Sphbes::dsphbesj(const int l, const double x)
-{
-    assert( l >= 0 );
-    assert( x >= 0 );
-    return l == 0 ? -sphbesj(1, x) : ( l * sphbesj(l - 1, x) - (l + 1) * sphbesj(l + 1, x) ) / (2 * l + 1);
+double Sphbes::dsphbesj(const int l, const double x) {
+    assert(l >= 0);
+    assert(x >= 0);
+    return l == 0 ? -sphbesj(1, x) : (l * sphbesj(l - 1, x) - (l + 1) * sphbesj(l + 1, x)) / (2 * l + 1);
 }
 
-void Sphbes::sphbesj(const int n,
-                     const double* const r,
-                     const double q,
-                     const int l,
-                     double* const jl)
-{
-    for (int i = 0; i != n; ++i)
-    {
+void Sphbes::sphbesj(const int n, const double* const r, const double q, const int l, double* const jl) {
+    for (int i = 0; i != n; ++i) {
         jl[i] = Sphbes::sphbesj(l, q * r[i]);
     }
 }
 
-void Sphbes::dsphbesj(const int n,
-             const double* const r,
-             const double q,
-             const int l,
-             double* const djl)
-{
-    for (int i = 0; i != n; ++i)
-    {
+void Sphbes::dsphbesj(const int n, const double* const r, const double q, const int l, double* const djl) {
+    for (int i = 0; i != n; ++i) {
         djl[i] = Sphbes::dsphbesj(l, q * r[i]);
     }
 }
 
-void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const bool return_all)
-{
-    assert( n > 0 );
-    assert( l >= 0 );
+void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const bool return_all) {
+    assert(n > 0);
+    assert(l >= 0);
 
     // The zeros of j_l and j_{l-1} are interlaced;
     // So do the zeros of j_l and j_{l-2}.
@@ -843,40 +728,37 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const b
     // If return_all is true, one needs to start with n+l zeros of j_0
     // to ensure n zeros of j_l; otherwise with a stride of 2 one only
     // needs to start with n+(l+1)/2 zeros of j_0
-    int nz = n + ( return_all ? l : (l+1)/2 );
+    int nz = n + (return_all ? l : (l + 1) / 2);
     double* buffer = new double[nz];
 
     // zeros of j_0 = sin(x)/x is just n*pi
     double PI = std::acos(-1.0);
-    for (int i = 0; i < nz; i++)
-    {
-        buffer[i] = (i+1) * PI;
+    for (int i = 0; i < nz; i++) {
+        buffer[i] = (i + 1) * PI;
     }
 
     int ll = 0; // active l
-    auto jl = [&ll] (double x) { return sphbesj(ll, x); };
+    auto jl = [&ll](double x) { return sphbesj(ll, x); };
     int stride = 0;
     std::function<void()> copy_if_needed;
     int offset = 0; // keeps track of the position in zeros for next copy (used when return_all == true)
-    if (return_all)
-    {
-        copy_if_needed = [&](){ std::copy(buffer, buffer + n, zeros + offset); offset += n; };
+    if (return_all) {
+        copy_if_needed = [&]() {
+            std::copy(buffer, buffer + n, zeros + offset);
+            offset += n;
+        };
         stride = 1;
         ll = 1;
-    }
-    else
-    {
-        copy_if_needed = [](){};
+    } else {
+        copy_if_needed = []() {};
         stride = 2;
         ll = 2 - l % 2;
     }
 
-    for (; ll <= l; ll += stride, --nz)
-    {
+    for (; ll <= l; ll += stride, --nz) {
         copy_if_needed();
-        for (int i = 0; i < nz-1; i++)
-        {
-            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
+        for (int i = 0; i < nz - 1; i++) {
+            buffer[i] = illinois(jl, buffer[i], buffer[i + 1], 1e-15, 50);
         }
     }
 
@@ -884,8 +766,8 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const b
     delete[] buffer;
 }
 
-double Sphbes::illinois(std::function<double(double)> func, double x0, double x1, const double tol, const int max_iter)
-{
+double
+Sphbes::illinois(std::function<double(double)> func, double x0, double x1, const double tol, const int max_iter) {
     assert(tol > 0.0 && max_iter > 0);
 
     double f0 = func(x0);
@@ -899,32 +781,27 @@ double Sphbes::illinois(std::function<double(double)> func, double x0, double x1
 
     int iter = 0;
     double x = 0.0, f = 0.0;
-    while (++iter <= max_iter && std::abs(f1) > tol)
-    {
+    while (++iter <= max_iter && std::abs(f1) > tol) {
         // regula falsi
         x = (x0 * f1 - x1 * f0) / (f1 - f0);
         f = func(x);
 
         // Illinois anti-stalling variant
-        if (f * f1 < 0)
-        {
+        if (f * f1 < 0) {
             x0 = x1;
             f0 = f1;
-        }
-        else
-        {
+        } else {
             f0 *= 0.5;
         }
         x1 = x;
         f1 = f;
     }
 
-    if (iter > max_iter)
-    {
+    if (iter > max_iter) {
         std::cout << "Maximum number of iterations reached in illinois." << std::endl;
     }
 
     return x1;
 }
 
-}
+} // namespace ModuleBase

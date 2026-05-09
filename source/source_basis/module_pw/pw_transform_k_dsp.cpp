@@ -5,34 +5,26 @@
 
 #include <cassert>
 #include <complex>
-#if defined (__DSP)
-namespace ModulePW
-{
-    template <>
+#if defined(__DSP)
+namespace ModulePW {
+template <>
 void PW_Basis_K::real2recip_dsp(const std::complex<float>* in,
                                 std::complex<float>* out,
                                 const int ik,
                                 const bool add,
-                                const float factor) const
-                                {
-
-                                }
-    template <>
+                                const float factor) const {}
+template <>
 void PW_Basis_K::recip2real_dsp(const std::complex<float>* in,
                                 std::complex<float>* out,
                                 const int ik,
                                 const bool add,
-                                const float factor) const
-                                {
-
-                                }
+                                const float factor) const {}
 template <>
 void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
                                 std::complex<double>* out,
                                 const int ik,
                                 const bool add,
-                                const double factor) const
-{
+                                const double factor) const {
     const base_device::DEVICE_CPU* ctx = nullptr;
     const base_device::DEVICE_GPU* gpux = nullptr;
     assert(this->gamma_only == false);
@@ -45,8 +37,7 @@ void PW_Basis_K::real2recip_dsp(const std::complex<double>* in,
 
     // 3d fft
     this->fft_bundle.resource_handler(1);
-    this->fft_bundle.fft3D_forward(auxr, 
-                                   auxr);
+    this->fft_bundle.fft3D_forward(auxr, auxr);
     this->fft_bundle.resource_handler(0);
     // copy the result from the auxr to the out ,while consider the add
     set_real_to_recip_output_op<double, base_device::DEVICE_CPU>()(npw_k,
@@ -62,8 +53,7 @@ void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
                                 std::complex<double>* out,
                                 const int ik,
                                 const bool add,
-                                const double factor) const
-{
+                                const double factor) const {
     assert(this->gamma_only == false);
     const base_device::DEVICE_CPU* ctx = nullptr;
     const base_device::DEVICE_GPU* gpux = nullptr;
@@ -79,14 +69,11 @@ void PW_Basis_K::recip2real_dsp(const std::complex<double>* in,
     this->fft_bundle.resource_handler(1);
     this->fft_bundle.fft3D_backward(auxr, auxr);
     this->fft_bundle.resource_handler(0);
-    if (add)
-    {
+    if (add) {
         const int one = 1;
         const std::complex<double> factor1 = std::complex<double>(factor, 0);
         BlasConnector::axpy(nrxx, factor1, auxr, one, out, one);
-    }
-    else
-    {
+    } else {
         memcpy(out, auxr, nrxx * 2 * 8);
     }
 }
@@ -98,9 +85,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
                              const float* input1,
                              std::complex<float>* output,
                              const bool add,
-                             const float factor) const
-{
-}
+                             const float factor) const {}
 
 template <>
 void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
@@ -110,8 +95,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
                              const double* input1,
                              std::complex<double>* output,
                              const bool add,
-                             const double factor) const
-{
+                             const double factor) const {
     ModuleBase::timer::start(this->classname, "convolution");
 
     assert(this->gamma_only == false);
@@ -128,8 +112,7 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
     // use 3d fft backward
     this->fft_bundle.fft3D_backward(auxr, auxr);
 
-    for (int ir = 0; ir < size; ir++)
-    {
+    for (int ir = 0; ir < size; ir++) {
         auxr[ir] *= input1[ir];
     }
 
@@ -147,15 +130,15 @@ void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
 }
 
 template void PW_Basis_K::real2recip_dsp<float>(const std::complex<float>* in,
-                                            std::complex<float>* out,
-                                            const int ik,
-                                            const bool add,
-                                            const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+                                                std::complex<float>* out,
+                                                const int ik,
+                                                const bool add,
+                                                const float factor) const; // in:(nplane,nx*ny)  ; out(nz, ns)
 template void PW_Basis_K::recip2real_dsp<float>(const std::complex<float>* in,
-                                            std::complex<float>* out,
-                                            const int ik,
-                                            const bool add,
-                                            const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+                                                std::complex<float>* out,
+                                                const int ik,
+                                                const bool add,
+                                                const float factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
 template void PW_Basis_K::real2recip_dsp<double>(const std::complex<double>* in,
                                                  std::complex<double>* out,

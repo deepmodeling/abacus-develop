@@ -10,14 +10,13 @@
 #include <sstream>
 #include <string>
 #include <vector>
-namespace GlobalV
-{
+namespace GlobalV {
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 //----------------------------------------------------------
 
-int NPROC = 1; ///< global number of process
-int KPAR = 1;  ///< global number of pools
+int NPROC = 1;   ///< global number of process
+int KPAR = 1;    ///< global number of pools
 int MY_RANK = 0; ///< global index of process
 int MY_POOL = 0; ///< global index of pool (count in pool)
 int MY_BNDGROUP = 0;

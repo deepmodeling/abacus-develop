@@ -1,11 +1,9 @@
 #include "hpsi_norm_op.h"
 
 #include "source_base/module_device/device.h"
-namespace hamilt
-{
+namespace hamilt {
 template <typename FPTYPE>
-struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
-{
+struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU> {
     void operator()(const base_device::DEVICE_CPU* dev,
                     const int& nbands,
                     const int& npwk_max,
@@ -13,16 +11,13 @@ struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
                     const FPTYPE& Ebar,
                     const FPTYPE& DeltaE,
                     std::complex<FPTYPE>* hpsi_norm,
-                    const std::complex<FPTYPE>* psi_in)
-    {
+                    const std::complex<FPTYPE>* psi_in) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int ib = 0; ib < nbands; ++ib)
-        {
+        for (int ib = 0; ib < nbands; ++ib) {
             const int ig0 = ib * npwk_max;
-            for (int ig = 0; ig < npwk; ++ig)
-            {
+            for (int ig = 0; ig < npwk; ++ig) {
                 hpsi_norm[ig + ig0] = (hpsi_norm[ig + ig0] - Ebar * psi_in[ig + ig0]) / DeltaE;
             }
         }

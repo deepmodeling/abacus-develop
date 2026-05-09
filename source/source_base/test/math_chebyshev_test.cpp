@@ -15,28 +15,16 @@
  *   - calfinalvec_complex
  *   - tracepolyA
  */
-class toolfunc
-{
+class toolfunc {
   public:
-    double x7(double x)
-    {
-        return pow(x, 7);
-    }
-    double x6(double x)
-    {
-        return pow(x, 6);
-    }
-    double expr(double x)
-    {
-        return exp(x);
-    }
-    std::complex<double> expi(std::complex<double> x)
-    {
+    double x7(double x) { return pow(x, 7); }
+    double x6(double x) { return pow(x, 6); }
+    double expr(double x) { return exp(x); }
+    std::complex<double> expi(std::complex<double> x) {
         const std::complex<double> j(0.0, 1.0);
         return exp(j * x);
     }
-    std::complex<double> expi2(std::complex<double> x)
-    {
+    std::complex<double> expi2(std::complex<double> x) {
         const std::complex<double> j(0.0, 1.0);
         const double PI = 3.14159265358979323846;
         return exp(j * PI / 2.0 * x);
@@ -44,66 +32,49 @@ class toolfunc
     // Pauli matrix: [0,-i;i,0]
     int LDA = 2;
     double factor = 1;
-    void sigma_y(std::complex<double>* spin_in, std::complex<double>* spin_out, const int m = 1)
-    {
+    void sigma_y(std::complex<double>* spin_in, std::complex<double>* spin_out, const int m = 1) {
         const std::complex<double> j(0.0, 1.0);
         if (this->LDA < 2) {
             this->LDA = 2;
-}
-        for (int i = 0; i < m; ++i)
-        {
+        }
+        for (int i = 0; i < m; ++i) {
             spin_out[LDA * i] = -factor * j * spin_in[LDA * i + 1];
             spin_out[LDA * i + 1] = factor * j * spin_in[LDA * i];
         }
     }
 #ifdef __ENABLE_FLOAT_FFTW
-    float x7(float x)
-    {
-        return pow(x, 7);
-    }
-    float x6(float x)
-    {
-        return pow(x, 6);
-    }
-    float expr(float x)
-    {
-        return exp(x);
-    }
-    std::complex<float> expi(std::complex<float> x)
-    {
+    float x7(float x) { return pow(x, 7); }
+    float x6(float x) { return pow(x, 6); }
+    float expr(float x) { return exp(x); }
+    std::complex<float> expi(std::complex<float> x) {
         const std::complex<float> j(0.0, 1.0);
         return exp(j * x);
     }
-    std::complex<float> expi2(std::complex<float> x)
-    {
+    std::complex<float> expi2(std::complex<float> x) {
         const std::complex<float> j(0.0, 1.0);
         const float PI = 3.14159265358979323846;
         return exp(j * PI / 2.0f * x);
     }
     // Pauli matrix: [0,-i;i,0]
-    void sigma_y(std::complex<float>* spin_in, std::complex<float>* spin_out, const int m = 1)
-    {
+    void sigma_y(std::complex<float>* spin_in, std::complex<float>* spin_out, const int m = 1) {
         const std::complex<float> j(0.0, 1.0);
         if (this->LDA < 2)
             this->LDA = 2;
-        for (int i = 0; i < m; ++i)
-        {
+        for (int i = 0; i < m; ++i) {
             spin_out[LDA * i] = -j * spin_in[LDA * i + 1];
             spin_out[LDA * i + 1] = j * spin_in[LDA * i];
         }
     }
 #endif
 };
-class MathChebyshevTest : public testing::Test
-{
+class MathChebyshevTest : public testing::Test {
   protected:
     ModuleBase::Chebyshev<double>* p_chetest;
     ModuleBase::Chebyshev<float>* p_fchetest;
     toolfunc fun;
 };
 
-TEST_F(MathChebyshevTest, calcoef_real)
-{
+TEST_F(MathChebyshevTest, calcoef_real) {
     auto fun_x6 = [&](double x) { return fun.x6(x); };
     auto fun_x7 = [&](double x) { return fun.x7(x); };
     p_chetest = new ModuleBase::Chebyshev<double>(10);
@@ -113,20 +84,17 @@ TEST_F(MathChebyshevTest, calcoef_real)
     const double x7ref[10] = {0, 35, 0, 21, 0, 7, 0, 1, 0, 0};
 
     p_chetest->calcoef_real(fun_x6);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_chetest->coef_real[i] * 32.0, x6ref[i], 1.e-8);
     }
     p_chetest->calcoef_real(fun_x7);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_chetest->coef_real[i] * 64.0, x7ref[i], 1.e-8);
     }
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, calcoef_pair)
-{
+TEST_F(MathChebyshevTest, calcoef_pair) {
     auto fun_x6 = [&](double x) { return fun.x6(x); };
     auto fun_x7 = [&](double x) { return fun.x7(x); };
     p_chetest = new ModuleBase::Chebyshev<double>(10);
@@ -135,16 +103,14 @@ TEST_F(MathChebyshevTest, calcoef_pair)
     const double x6ref[10] = {10, 0, 15, 0, 6, 0, 1, 0, 0, 0};
     const double x7ref[10] = {0, 35, 0, 21, 0, 7, 0, 1, 0, 0};
     p_chetest->calcoef_pair(fun_x6, fun_x7);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_chetest->coef_complex[i].real() * 32.0, x6ref[i], 1.e-8);
         EXPECT_NEAR(p_chetest->coef_complex[i].imag() * 64.0, x7ref[i], 1.e-8);
     }
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, calcoef_complex)
-{
+TEST_F(MathChebyshevTest, calcoef_complex) {
     auto fun_expi = [&](std::complex<double> x) { return fun.expi(x); };
     const int norder = 100;
     const double PI = 3.14159265358979323846;
@@ -154,8 +120,7 @@ TEST_F(MathChebyshevTest, calcoef_complex)
     p_chetest->calcoef_complex(fun_expi);
     p_chetest->getpolyval(PI / 4, T, norder);
     std::complex<double> sum(0, 0);
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         sum += p_chetest->coef_complex[i] * T[i];
     }
     EXPECT_NEAR(sum.real(), sqrt(2) / 2, 1.e-8);
@@ -164,8 +129,7 @@ TEST_F(MathChebyshevTest, calcoef_complex)
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, calfinalvec_real)
-{
+TEST_F(MathChebyshevTest, calfinalvec_real) {
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -180,8 +144,9 @@ TEST_F(MathChebyshevTest, calfinalvec_real)
     v[3] = 1.0; //[1 0; 0 1]
 
     auto fun_expr = [&](double x) { return fun.expr(x); };
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_y = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     p_chetest->calcoef_real(fun_expr);
     p_chetest->calfinalvec_real(fun_sigma_y, v, vout, 2, 2, 2);
     EXPECT_NEAR(vout[0].real(), 0.5 * (E + 1 / E), 1.e-8);
@@ -198,8 +163,7 @@ TEST_F(MathChebyshevTest, calfinalvec_real)
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, calfinalvec_complex)
-{
+TEST_F(MathChebyshevTest, calfinalvec_complex) {
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -213,8 +177,9 @@ TEST_F(MathChebyshevTest, calfinalvec_complex)
     v[2] = 0.0;
     v[3] = 1.0; //[1 0; 0 1]
 
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_y = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     auto fun_expi2 = [&](std::complex<double> x) { return fun.expi2(x); };
     p_chetest->calcoef_complex(fun_expi2);
     p_chetest->calfinalvec_complex(fun_sigma_y, v, vout, 2, 2, 2);
@@ -232,8 +197,7 @@ TEST_F(MathChebyshevTest, calfinalvec_complex)
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, calpolyvec_complex)
-{
+TEST_F(MathChebyshevTest, calpolyvec_complex) {
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -252,15 +216,14 @@ TEST_F(MathChebyshevTest, calpolyvec_complex)
     vout[2] = 0;
     vout[3] = 0;
 
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_y = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     auto fun_expi2 = [&](std::complex<double> x) { return fun.expi2(x); };
     p_chetest->calcoef_complex(fun_expi2);
     p_chetest->calpolyvec_complex(fun_sigma_y, v, polyv, 2, 2, 2);
-    for (int i = 0; i < norder; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
+    for (int i = 0; i < norder; ++i) {
+        for (int j = 0; j < 4; ++j) {
             vout[j] += polyv[i * 4 + j] * p_chetest->coef_complex[i];
         }
     }
@@ -279,8 +242,7 @@ TEST_F(MathChebyshevTest, calpolyvec_complex)
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, tracepolyA)
-{
+TEST_F(MathChebyshevTest, tracepolyA) {
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
 
@@ -291,17 +253,17 @@ TEST_F(MathChebyshevTest, tracepolyA)
     v[2] = 0.0;
     v[3] = 1.0; //[1 0; 0 1]
 
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_y = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     p_chetest->tracepolyA(fun_sigma_y, v, 2, 2, 2);
     // Trace:  even function: 2 ; odd function 0.
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         if (i % 2 == 0) {
             EXPECT_NEAR(p_chetest->polytrace[i], 2, 1.e-8);
         } else {
             EXPECT_NEAR(p_chetest->polytrace[i], 0, 1.e-8);
-}
+        }
     }
     delete[] v;
 
@@ -318,27 +280,26 @@ TEST_F(MathChebyshevTest, tracepolyA)
 
     p_chetest->tracepolyA(fun_sigma_y, v, 2, LDA, 2);
     // Trace:  even function: 2 ; odd function 0.
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         if (i % 2 == 0) {
             EXPECT_NEAR(p_chetest->polytrace[i], 2, 1.e-8);
         } else {
             EXPECT_NEAR(p_chetest->polytrace[i], 0, 1.e-8);
-}
+        }
     }
     fun.LDA = 2;
     delete[] v;
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, checkconverge)
-{
+TEST_F(MathChebyshevTest, checkconverge) {
 #ifdef __MPI
 #undef __MPI
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_y = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
 
     std::complex<double>* v = new std::complex<double>[4];
     v[0] = 1.0;
@@ -380,8 +341,7 @@ TEST_F(MathChebyshevTest, checkconverge)
 #endif
 }
 
-TEST_F(MathChebyshevTest, recurs)
-{
+TEST_F(MathChebyshevTest, recurs) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleBase::Chebyshev<double> noneche(0), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
@@ -395,8 +355,7 @@ TEST_F(MathChebyshevTest, recurs)
 }
 
 #ifdef __ENABLE_FLOAT_FFTW
-TEST_F(MathChebyshevTest, calcoef_real_float)
-{
+TEST_F(MathChebyshevTest, calcoef_real_float) {
     auto fun_x6f = [&](float x) { return fun.x6(x); };
     auto fun_x7f = [&](float x) { return fun.x7(x); };
     p_fchetest = new ModuleBase::Chebyshev<float>(10);
@@ -405,20 +364,17 @@ TEST_F(MathChebyshevTest, calcoef_real_float)
     const float x6ref[10] = {10, 0, 15, 0, 6, 0, 1, 0, 0, 0};
     const float x7ref[10] = {0, 35, 0, 21, 0, 7, 0, 1, 0, 0};
     p_fchetest->calcoef_real(fun_x6f);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_fchetest->coef_real[i] * 32.0, x6ref[i], 1.e-5);
     }
     p_fchetest->calcoef_real(fun_x7f);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_fchetest->coef_real[i] * 64.0, x7ref[i], 1.e-5);
     }
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, calcoef_pair_float)
-{
+TEST_F(MathChebyshevTest, calcoef_pair_float) {
     auto fun_x6f = [&](float x) { return fun.x6(x); };
     auto fun_x7f = [&](float x) { return fun.x7(x); };
     p_fchetest = new ModuleBase::Chebyshev<float>(10);
@@ -427,16 +383,14 @@ TEST_F(MathChebyshevTest, calcoef_pair_float)
     const float x6ref[10] = {10, 0, 15, 0, 6, 0, 1, 0, 0, 0};
     const float x7ref[10] = {0, 35, 0, 21, 0, 7, 0, 1, 0, 0};
     p_fchetest->calcoef_pair(fun_x6f, fun_x7f);
-    for (int i = 0; i < 10; ++i)
-    {
+    for (int i = 0; i < 10; ++i) {
         EXPECT_NEAR(p_fchetest->coef_complex[i].real() * 32.0, x6ref[i], 1.e-5);
         EXPECT_NEAR(p_fchetest->coef_complex[i].imag() * 64.0, x7ref[i], 1.e-5);
     }
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, calcoef_complex_float)
-{
+TEST_F(MathChebyshevTest, calcoef_complex_float) {
     auto fun_expif = [&](std::complex<float> x) { return fun.expi(x); };
     const int norder = 100;
     const float PI = 3.14159265358979323846;
@@ -446,8 +400,7 @@ TEST_F(MathChebyshevTest, calcoef_complex_float)
     p_fchetest->calcoef_complex(fun_expif);
     p_fchetest->getpolyval(PI / 4, T, norder);
     std::complex<float> sum(0, 0);
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         sum += p_fchetest->coef_complex[i] * T[i];
     }
     EXPECT_NEAR(sum.real(), sqrt(2) / 2, 1.e-6);
@@ -456,8 +409,7 @@ TEST_F(MathChebyshevTest, calcoef_complex_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, calfinalvec_real_float)
-{
+TEST_F(MathChebyshevTest, calfinalvec_real_float) {
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -472,8 +424,9 @@ TEST_F(MathChebyshevTest, calfinalvec_real_float)
     v[3] = 1.0; //[1 0; 0 1]
 
     auto fun_exprf = [&](float x) { return fun.expr(x); };
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_yf = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     p_fchetest->calcoef_real(fun_exprf);
     p_fchetest->calfinalvec_real(fun_sigma_yf, v, vout, 2, 2, 2);
     EXPECT_NEAR(vout[0].real(), 0.5 * (E + 1 / E), 1.e-6);
@@ -490,8 +443,7 @@ TEST_F(MathChebyshevTest, calfinalvec_real_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, calfinalvec_complex_float)
-{
+TEST_F(MathChebyshevTest, calfinalvec_complex_float) {
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -505,8 +457,9 @@ TEST_F(MathChebyshevTest, calfinalvec_complex_float)
     v[2] = 0.0;
     v[3] = 1.0; //[1 0; 0 1]
 
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_yf = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     auto fun_expi2f = [&](std::complex<float> x) { return fun.expi2(x); };
     p_fchetest->calcoef_complex(fun_expi2f);
     p_fchetest->calfinalvec_complex(fun_sigma_yf, v, vout, 2, 2, 2);
@@ -524,8 +477,7 @@ TEST_F(MathChebyshevTest, calfinalvec_complex_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, calpolyvec_float)
-{
+TEST_F(MathChebyshevTest, calpolyvec_float) {
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -544,15 +496,14 @@ TEST_F(MathChebyshevTest, calpolyvec_float)
     vout[2] = 0;
     vout[3] = 0;
 
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_yf = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     auto fun_expi2f = [&](std::complex<float> x) { return fun.expi2(x); };
     p_fchetest->calcoef_complex(fun_expi2f);
     p_fchetest->calpolyvec_complex(fun_sigma_yf, v, polyv, 2, 2, 2);
-    for (int i = 0; i < norder; ++i)
-    {
-        for (int j = 0; j < 4; ++j)
-        {
+    for (int i = 0; i < norder; ++i) {
+        for (int j = 0; j < 4; ++j) {
             vout[j] += polyv[i * 4 + j] * p_fchetest->coef_complex[i];
         }
     }
@@ -571,8 +522,7 @@ TEST_F(MathChebyshevTest, calpolyvec_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, tracepolyA_float)
-{
+TEST_F(MathChebyshevTest, tracepolyA_float) {
     const int norder = 100;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
 
@@ -582,12 +532,12 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
     v[2] = 0.0;
     v[3] = 1.0; //[1 0; 0 1]
 
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_yf = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     p_fchetest->tracepolyA(fun_sigma_yf, v, 2, 2, 2);
     // Trace:  even function: 2 ; odd function 0.
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         if (i % 2 == 0)
             EXPECT_NEAR(p_fchetest->polytrace[i], 2, 1.e-6);
         else
@@ -608,8 +558,7 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
 
     p_fchetest->tracepolyA(fun_sigma_yf, v, 2, LDA, 2);
     // Trace:  even function: 2 ; odd function 0.
-    for (int i = 0; i < norder; ++i)
-    {
+    for (int i = 0; i < norder; ++i) {
         if (i % 2 == 0)
             EXPECT_NEAR(p_fchetest->polytrace[i], 2, 1.e-6);
         else
@@ -620,10 +569,9 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, checkconverge_float)
-{
-    #ifdef __MPI
-    #undef __MPI
+TEST_F(MathChebyshevTest, checkconverge_float) {
+#ifdef __MPI
+#undef __MPI
     const int norder = 100;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
 
@@ -636,8 +584,9 @@ TEST_F(MathChebyshevTest, checkconverge_float)
     float tmax = 1.1;
     bool converge;
 
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
+    auto fun_sigma_yf = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) {
+        fun.sigma_y(in, out, m);
+    };
     converge = p_fchetest->checkconverge(fun_sigma_yf, v, 2, 2, tmax, tmin, 0.2);
     EXPECT_TRUE(converge);
     converge = p_fchetest->checkconverge(fun_sigma_yf, v + 2, 2, 2, tmax, tmin, 0.2);
@@ -647,6 +596,6 @@ TEST_F(MathChebyshevTest, checkconverge_float)
 
     delete[] v;
     delete p_fchetest;
-    #endif
+#endif
 }
 #endif

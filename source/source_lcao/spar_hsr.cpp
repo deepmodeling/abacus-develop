@@ -9,8 +9,7 @@
 #include "spar_u.h"
 
 #ifdef __MPI
-void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm)
-{
+void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm) {
     int my_rank = 0, nproc = 0;
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &nproc);
@@ -25,8 +24,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
     std::vector<int> displacements(nproc, 0);
     int total_size_elements = 0;
 
-    for (int i = 0; i < nproc; ++i)
-    {
+    for (int i = 0; i < nproc; ++i) {
         recv_counts_elements[i] = recv_counts[i] * 3; // Number of integers sent by each process
         displacements[i] = total_size_elements;
         total_size_elements += recv_counts_elements[i];
@@ -35,8 +33,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
     // Step 3: Gather the raw data of all R coordinates (each R coordinate is stored as 3 integers)
     std::vector<int> local_R_data;
     local_R_data.reserve(local_size * 3);
-    for (const auto& R: all_R_coor)
-    {
+    for (const auto& R: all_R_coor) {
         local_R_data.push_back(R.x);
         local_R_data.push_back(R.y);
         local_R_data.push_back(R.z);
@@ -55,8 +52,7 @@ void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_co
 
     // Step 5: Merge to create a global set of R coordinates
     std::set<Abfs::Vector3_Order<int>> global_R_coor;
-    for (int i = 0; i < total_size_elements; i += 3)
-    {
+    for (int i = 0; i < total_size_elements; i += 3) {
         int x = global_R_data[i];
         int y = global_R_data[i + 1];
         int z = global_R_data[i + 2];
@@ -72,35 +68,29 @@ template <typename TI, typename TO>
 void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
                                    const double& sparse_thr,
                                    const hamilt::HContainer<TI>& hR,
-                                   std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target)
-{
+                                   std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target) {
     ModuleBase::TITLE("sparse_format", "cal_HContainer");
 
     auto row_indexes = pv.get_indexes_row();
     auto col_indexes = pv.get_indexes_col();
-    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap) {
         int atom_i = hR.get_atom_pair(iap).get_atom_i();
         int atom_j = hR.get_atom_pair(iap).get_atom_j();
         int start_i = pv.atom_begin_row[atom_i];
         int start_j = pv.atom_begin_col[atom_j];
         int row_size = pv.get_row_size(atom_i);
         int col_size = pv.get_col_size(atom_j);
-        for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR) {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
             const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
-            for (int i = 0; i < row_size; ++i)
-            {
+            for (int i = 0; i < row_size; ++i) {
                 int mu = row_indexes[start_i + i];
-                for (int j = 0; j < col_size; ++j)
-                {
+                for (int j = 0; j < col_size; ++j) {
                     int nu = col_indexes[start_j + j];
                     // const auto& value_tmp = std::complex<double>(matrix.get_value(i, j), 0.0);
                     const TO value_tmp = static_cast<TO>(matrix.get_value(i, j));
-                    if (std::abs(value_tmp) > sparse_thr)
-                    {
+                    if (std::abs(value_tmp) > sparse_thr) {
                         target[dR][mu][nu] += value_tmp;
                     }
                 }
@@ -112,47 +102,32 @@ void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
 }
 
 // in case there are elements smaller than the threshold
-void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr)
-{
+void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");
 
-    if (PARAM.inp.nspin != 4)
-    {
-        for (auto& R_loop: HS_Arrays.HR_sparse[current_spin])
-        {
-            for (auto& row_loop: R_loop.second)
-            {
+    if (PARAM.inp.nspin != 4) {
+        for (auto& R_loop: HS_Arrays.HR_sparse[current_spin]) {
+            for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
                 auto iter = col_map.begin();
-                while (iter != col_map.end())
-                {
-                    if (std::abs(iter->second) <= sparse_thr)
-                    {
+                while (iter != col_map.end()) {
+                    if (std::abs(iter->second) <= sparse_thr) {
                         col_map.erase(iter++);
-                    }
-                    else
-                    {
+                    } else {
                         iter++;
                     }
                 }
             }
         }
-        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
-        {
-            for (auto& R_loop: TD_info::td_vel_op->HR_sparse_td_vel[current_spin])
-            {
-                for (auto& row_loop: R_loop.second)
-                {
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1) {
+            for (auto& R_loop: TD_info::td_vel_op->HR_sparse_td_vel[current_spin]) {
+                for (auto& row_loop: R_loop.second) {
                     auto& col_map = row_loop.second;
                     auto iter = col_map.begin();
-                    while (iter != col_map.end())
-                    {
-                        if (std::abs(iter->second) <= sparse_thr)
-                        {
+                    while (iter != col_map.end()) {
+                        if (std::abs(iter->second) <= sparse_thr) {
                             col_map.erase(iter++);
-                        }
-                        else
-                        {
+                        } else {
                             iter++;
                         }
                     }
@@ -160,87 +135,63 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
             }
         }
 
-        for (auto& R_loop: HS_Arrays.SR_sparse)
-        {
-            for (auto& row_loop: R_loop.second)
-            {
+        for (auto& R_loop: HS_Arrays.SR_sparse) {
+            for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
                 auto iter = col_map.begin();
-                while (iter != col_map.end())
-                {
-                    if (std::abs(iter->second) <= sparse_thr)
-                    {
+                while (iter != col_map.end()) {
+                    if (std::abs(iter->second) <= sparse_thr) {
                         col_map.erase(iter++);
-                    }
-                    else
-                    {
+                    } else {
                         iter++;
                     }
                 }
             }
         }
-    }
-    else
-    {
-        for (auto& R_loop: HS_Arrays.HR_soc_sparse)
-        {
-            for (auto& row_loop: R_loop.second)
-            {
+    } else {
+        for (auto& R_loop: HS_Arrays.HR_soc_sparse) {
+            for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
                 auto iter = col_map.begin();
-                while (iter != col_map.end())
-                {
-                    if (std::abs(iter->second) <= sparse_thr)
-                    {
+                while (iter != col_map.end()) {
+                    if (std::abs(iter->second) <= sparse_thr) {
                         col_map.erase(iter++);
-                    }
-                    else
-                    {
+                    } else {
                         iter++;
                     }
                 } // end while iter
-            }     // end row loop
-        }         // end R loop
+            } // end row loop
+        } // end R loop
 
-        for (auto& R_loop: HS_Arrays.SR_soc_sparse)
-        {
-            for (auto& row_loop: R_loop.second)
-            {
+        for (auto& R_loop: HS_Arrays.SR_soc_sparse) {
+            for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
                 auto iter = col_map.begin();
-                while (iter != col_map.end())
-                {
-                    if (std::abs(iter->second) <= sparse_thr)
-                    {
+                while (iter != col_map.end()) {
+                    if (std::abs(iter->second) <= sparse_thr) {
                         col_map.erase(iter++);
-                    }
-                    else
-                    {
+                    } else {
                         iter++;
                     }
                 } // end while iter
-            }     // end row_loop
-        }         // end R_loop
+            } // end row_loop
+        } // end R_loop
     }
 
     return;
 }
 
-void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays)
-{
+void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("sparse_format", "destroy_HS_R_sparse");
 
-    if (PARAM.inp.nspin != 4)
-    {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_HR_sparse_down;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_SR_sparse;
         HS_Arrays.HR_sparse[0].swap(empty_HR_sparse_up);
         HS_Arrays.HR_sparse[1].swap(empty_HR_sparse_down);
         HS_Arrays.SR_sparse.swap(empty_SR_sparse);
-    }
-    else
-    {
+    } else {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
             empty_HR_soc_sparse;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>

@@ -9,86 +9,73 @@ from numpy.typing import NDArray
 from pyabacus.ModuleBase import SphericalBesselTransformer
 from typing import overload, List, Tuple
 
-from ._nao_pack import RadialCollection as _RadialCollection, TwoCenterIntegrator as _TwoCenterIntegrator, NumericalRadial as _NumericalRadial
+from ._nao_pack import (
+    RadialCollection as _RadialCollection,
+    TwoCenterIntegrator as _TwoCenterIntegrator,
+    NumericalRadial as _NumericalRadial,
+)
+
 
 class RadialCollection(_RadialCollection):
-    def __init__(self) -> None: 
+    def __init__(self) -> None:
         """
-        A class that holds all numerical radial functions of the same kind. 
-        
-        An instance of this class could be the collection of all radial functions 
-        of numerical atomic orbitals, or all Kleinman-Bylander beta functions from 
+        A class that holds all numerical radial functions of the same kind.
+
+        An instance of this class could be the collection of all radial functions
+        of numerical atomic orbitals, or all Kleinman-Bylander beta functions from
         all elements involved in a calculation.
         """
         super().__init__()
-    
-    def build(
-        self, 
-        nfile: int, 
-        file_list: List[str], 
-        ftype: str = '\0'
-    ) -> None:
+
+    def build(self, nfile: int, file_list: List[str], ftype: str = "\0") -> None:
         """
         Builds the collection from (orbital) files.
         """
         super().build(nfile, file_list, ftype)
-    
-    def set_transformer(
-        self, 
-        sbt: SphericalBesselTransformer, 
-        update: int = 0
-    ) -> None:
+
+    def set_transformer(self, sbt: SphericalBesselTransformer, update: int = 0) -> None:
         """
         Sets a spherical Bessel transformers for all RadialSet objects.
         """
         super().set_transformer(sbt, update)
-    
+
     def set_uniform_grid(
-        self, 
-        for_r_space: bool, 
-        ngrid: int, 
-        cutoff: float, 
-        mode: str = 'i', 
-        enable_fft: bool = False
+        self,
+        for_r_space: bool,
+        ngrid: int,
+        cutoff: float,
+        mode: str = "i",
+        enable_fft: bool = False,
     ) -> None:
         """
         Sets a common uniform grid for all RadialSet objects.
         """
         super().set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft)
-    
+
     def set_grid(
-        self, 
-        for_r_space: bool, 
-        ngrid: int, 
-        grid: NDArray[np.float64], 
-        mode: str = 'i'
+        self, for_r_space: bool, ngrid: int, grid: NDArray[np.float64], mode: str = "i"
     ) -> None:
         """
         Sets a common grid for all RadialSet objects
         """
         super().set_grid(for_r_space, ngrid, grid, mode)
-    
-    def __call__(
-        self, 
-        itype: int, 
-        l: int, 
-        izeta: int
-    ) -> 'NumericalRadial': 
+
+    def __call__(self, itype: int, l: int, izeta: int) -> "NumericalRadial":
         return super().__call__(itype, l, izeta)
-        
-    def symbol(self, itype: int) -> str: 
+
+    def symbol(self, itype: int) -> str:
         return super().symbol(itype)
-    
+
     @property
-    def ntype(self) -> int: 
+    def ntype(self) -> int:
         return super().ntype
-    
+
     @overload
     def lmax(self) -> int: ...
     @overload
     def lmax(self, itype: int) -> int: ...
 
-    def lmax(self, *args, **kwargs): 
+    def lmax(self, *args, **kwargs):
         return super().lmax(*args, **kwargs)
 
     @overload
@@ -96,40 +83,41 @@ class RadialCollection(_RadialCollection):
     @overload
     def rcut_max(self, itype: int) -> float: ...
 
-    def rcut_max(self, *args, **kwargs): 
+    def rcut_max(self, *args, **kwargs):
         return super().rcut_max(*args, **kwargs)
-    
-    def nzeta(self, itype: int, l: int) -> int: 
+
+    def nzeta(self, itype: int, l: int) -> int:
         return super().nzeta(itype, l)
-    
+
     @overload
     def nzeta_max(self, itype: int) -> int: ...
     @overload
     def nzeta_max(self) -> int: ...
-    
-    def nzeta_max(self, *args, **kwargs): 
+
+    def nzeta_max(self, *args, **kwargs):
         return super().nzeta_max(*args, **kwargs)
-    
+
     @overload
     def nchi(self, itype: int) -> int: ...
     @overload
     def nchi(self) -> int: ...
-    
+
     def nchi(self, *args, **kwargs):
         return super().nchi(*args, **kwargs)
-    
+
+
 class TwoCenterIntegrator(_TwoCenterIntegrator):
-    def __init__(self) -> None: 
+    def __init__(self) -> None:
         """
         A class to compute two-center integrals.
 
         This class computes two-center integrals of the form:
 
-                            /    
+                            /
                     I(R) = | dr phi1(r) (op) phi2(r - R)
-                            /               
+                            /
 
-        as well as their gradients, where op is 1 (overlap) or minus Laplacian (kinetic), and phi1, 
+        as well as their gradients, where op is 1 (overlap) or minus Laplacian (kinetic), and phi1,
         phi2 are "atomic-orbital-like" functions of the form:
 
                     phi(r) = chi(|r|) * Ylm(r/|r|)
@@ -143,14 +131,14 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
         This is done by tabulating the radial part of the integrals on an r-space grid and the real Gaunt coefficients in advance.
         """
         super().__init__()
-    
+
     def tabulate(
-        self, 
-        bra: 'RadialCollection', 
-        ket: 'RadialCollection', 
-        op: str, 
-        nr: int, 
-        cutoff: float
+        self,
+        bra: "RadialCollection",
+        ket: "RadialCollection",
+        op: str,
+        nr: int,
+        cutoff: float,
     ) -> None:
         """
         Tabulates the radial part of a two-center integral.
@@ -163,28 +151,28 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
         cutoff (float): r-space cutoff radius.
         """
         super().tabulate(bra, ket, op, nr, cutoff)
-    
+
     def calculate(
-        self, 
-        itype1: int, 
-        l1: int, 
-        izeta1: int, 
-        m1: int, 
-        itype2: int, 
-        l2: int, 
-        izeta2: int, 
-        m2: int, 
-        pvR: NDArray[np.float64], 
-        cal_grad: bool = False
+        self,
+        itype1: int,
+        l1: int,
+        izeta1: int,
+        m1: int,
+        itype2: int,
+        l2: int,
+        izeta2: int,
+        m2: int,
+        pvR: NDArray[np.float64],
+        cal_grad: bool = False,
     ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
         """
         Compute the two-center integrals.
 
         This function calculates the two-center integral
 
-                            /    
+                            /
                     I(R) = | dr phi1(r) (op_) phi2(r - R)
-                            /               
+                            /
 
         or its gradient by using the tabulated radial part and real Gaunt coefficients.
 
@@ -210,7 +198,7 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
             R2 - R1, the displacement vector between the two centers.
         cal_grad : bool, optional
             The gradient will not be computed if cal_grad is false.
-        
+
         Returns
         -------
         out_array : array_like
@@ -218,17 +206,19 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
         grad_out_array : array_like
             Gradient of the two-center integral.
         """
-        return super().calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, pvR, cal_grad)
-    
+        return super().calculate(
+            itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, pvR, cal_grad
+        )
+
     def snap(
-        self, 
-        itype1: int, 
-        l1: int, 
-        izeta1: int, 
-        m1: int, 
-        itype2: int, 
-        pvR: NDArray[np.float64], 
-        deriv: bool
+        self,
+        itype1: int,
+        l1: int,
+        izeta1: int,
+        m1: int,
+        itype2: int,
+        pvR: NDArray[np.float64],
+        deriv: bool,
     ) -> List[List[float]]:
         """
         Compute a batch of two-center integrals.
@@ -238,8 +228,9 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
         """
         return super().snap(itype1, l1, izeta1, m1, itype2, pvR, deriv)
 
+
 class NumericalRadial(_NumericalRadial):
-    def __init__(self) -> None: 
+    def __init__(self) -> None:
         """
         A class that represents a numerical radial function.
 
@@ -249,19 +240,19 @@ class NumericalRadial(_NumericalRadial):
         grid in the other space via set_grid or set_uniform_grid. Values in the other space are automatically computed by a spherical Bessel transform.
         """
         super().__init__()
-    
+
     def build(
-        self, 
-        l: int, 
-        for_r_space: bool, 
-        ngrid: int, 
-        grid: NDArray[np.float64], 
-        value: NDArray[np.float64], 
-        p: int = 0, 
-        izeta: int = 0, 
-        symbol: str = "", 
-        itype: int = 0, 
-        init_sbt: bool = True
+        self,
+        l: int,
+        for_r_space: bool,
+        ngrid: int,
+        grid: NDArray[np.float64],
+        value: NDArray[np.float64],
+        p: int = 0,
+        izeta: int = 0,
+        symbol: str = "",
+        itype: int = 0,
+        init_sbt: bool = True,
     ) -> None:
         """
         Initializes the object by providing the grid & values in one space.
@@ -293,13 +284,11 @@ class NumericalRadial(_NumericalRadial):
         -----
         init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is null-initialized; The function will NOT reset sbt_ if it is already usable.
         """
-        super().build(l, for_r_space, ngrid, grid, value, p, izeta, symbol, itype, init_sbt)
-    
-    def set_transformer(
-        self, 
-        sbt: SphericalBesselTransformer, 
-        update: int = 0
-    ) -> None:
+        super().build(
+            l, for_r_space, ngrid, grid, value, p, izeta, symbol, itype, init_sbt
+        )
+
+    def set_transformer(self, sbt: SphericalBesselTransformer, update: int = 0) -> None:
         """
         Sets a SphericalBesselTransformer.
 
@@ -317,13 +306,9 @@ class NumericalRadial(_NumericalRadial):
             * -1: calls a backward transform.
         """
         super().set_transformer(sbt, update)
-    
+
     def set_grid(
-        self, 
-        for_r_space: bool, 
-        ngrid: int, 
-        grid: NDArray[np.float64], 
-        mode: str = 'i'
+        self, for_r_space: bool, ngrid: int, grid: NDArray[np.float64], mode: str = "i"
     ) -> None:
         """
         Sets up a grid.
@@ -348,14 +333,14 @@ class NumericalRadial(_NumericalRadial):
                 have a grid.
         """
         super().set_grid(for_r_space, ngrid, grid, mode)
-    
+
     def set_uniform_grid(
-        self, 
-        for_r_space: bool, 
-        ngrid: int, 
-        cutoff: float, 
-        mode: str = 'i', 
-        enable_fft: bool = False
+        self,
+        for_r_space: bool,
+        ngrid: int,
+        cutoff: float,
+        mode: str = "i",
+        enable_fft: bool = False,
     ) -> None:
         """
         Sets up a uniform grid.
@@ -378,13 +363,8 @@ class NumericalRadial(_NumericalRadial):
             Specifies how values are updated, could be 'i' or 't'.
         """
         super().set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft)
-    
-    def set_value(
-        self, 
-        for_r_space: bool, 
-        value: NDArray[np.float64], 
-        p: int
-    ) -> None:
+
+    def set_value(self, for_r_space: bool, value: NDArray[np.float64], p: int) -> None:
         """
         Updates values on an existing grid.
 
@@ -395,15 +375,11 @@ class NumericalRadial(_NumericalRadial):
         This function does not check the index bound; use with care!
         """
         super().set_value(for_r_space, value, p)
-    
-    def wipe(
-        self, 
-        r_space: bool = True, 
-        k_space: bool = True
-    ) -> None: 
+
+    def wipe(self, r_space: bool = True, k_space: bool = True) -> None:
         super().wipe(r_space, k_space)
-        
-    def normalize(self, for_r_space: bool = True) -> None: 
+
+    def normalize(self, for_r_space: bool = True) -> None:
         """
         Normalizes the radial function.
 
@@ -414,66 +390,75 @@ class NumericalRadial(_NumericalRadial):
         where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space are updated automatically via a spherical Bessel transform.
         """
         super().normalize(for_r_space)
-    
+
     @property
-    def symbol(self) -> str: 
+    def symbol(self) -> str:
         return super().symbol
+
     @property
-    def itype(self) -> int: 
+    def itype(self) -> int:
         return super().itype
+
     @property
-    def izeta(self) -> int: 
+    def izeta(self) -> int:
         return super().izeta
+
     @property
-    def l(self) -> int: 
+    def l(self) -> int:
         return super().l
+
     @property
-    def nr(self) -> int: 
+    def nr(self) -> int:
         return super().nr
+
     @property
-    def nk(self) -> int: 
+    def nk(self) -> int:
         return super().nk
+
     @property
-    def rcut(self) -> float: 
+    def rcut(self) -> float:
         return super().rcut
+
     @property
-    def kcut(self) -> float: 
+    def kcut(self) -> float:
         return super().kcut
+
     @property
-    def rmax(self) -> float: 
+    def rmax(self) -> float:
         return super().rmax
+
     @property
-    def kmax(self) -> float: 
+    def kmax(self) -> float:
         return super().kmax
+
     @property
-    def pr(self) -> float: 
+    def pr(self) -> float:
         return super().pr
+
     @property
-    def pk(self) -> float: 
+    def pk(self) -> float:
         return super().pk
+
     @property
-    def sbt(self) -> SphericalBesselTransformer: 
+    def sbt(self) -> SphericalBesselTransformer:
         return super().sbt
+
     @property
-    def rgrid(self) -> NDArray[np.float64]: 
+    def rgrid(self) -> NDArray[np.float64]:
         return super().rgrid
+
     @property
-    def kgrid(self) -> NDArray[np.float64]: 
+    def kgrid(self) -> NDArray[np.float64]:
         return super().kgrid
+
     @property
-    def rvalue(self) -> NDArray[np.float64]: 
+    def rvalue(self) -> NDArray[np.float64]:
         return super().rvalue
+
     @property
-    def kvalue(self) -> NDArray[np.float64]: 
+    def kvalue(self) -> NDArray[np.float64]:
         return super().kvalue
+
     @property
-    def is_fft_compliant(self) -> bool: 
+    def is_fft_compliant(self) -> bool:
         return super().is_fft_compliant
-
-
-    
-    
-        
-    
-        
-    

@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document provides guidelines for designing and implementing basic tool classes in the ABACUS codebase, focusing on best practices for memory management, code style, and testing. These guidelines apply to all basic mathematical and utility classes, including but not limited to:
+This document provides guidelines for designing and implementing basic tool classes in the ABACUS
+codebase, focusing on best practices for memory management, code style, and testing. These
+guidelines apply to all basic mathematical and utility classes, including but not limited to:
 
 - vector3.h
 - matrix.h
@@ -16,7 +18,8 @@ This document provides guidelines for designing and implementing basic tool clas
 - formatter.h
 - math_chebyshev.h
 
-While this guide uses `IntArray` as an example for illustration purposes, the principles and practices described here are applicable to all basic tool classes in ABACUS.
+While this guide uses `IntArray` as an example for illustration purposes, the principles and
+practices described here are applicable to all basic tool classes in ABACUS.
 
 ## Memory Management
 
@@ -26,11 +29,13 @@ Always use try-catch blocks when allocating memory to handle `std::bad_alloc` ex
 
 ### 2. Two-Stage Memory Allocation
 
-When reallocating memory (e.g., in `create` methods), use a two-stage approach to ensure that the original object remains valid if memory allocation fails.
+When reallocating memory (e.g., in `create` methods), use a two-stage approach to ensure that the
+original object remains valid if memory allocation fails.
 
 ### 3. Null Pointer Checks
 
-Always check for null pointers before accessing memory, especially in methods that might be called on objects with failed memory allocation.
+Always check for null pointers before accessing memory, especially in methods that might be called
+on objects with failed memory allocation.
 
 ## Class Design
 
@@ -50,7 +55,8 @@ Add boundary checks to prevent out-of-bounds access.
 
 ### 1. Brace Style
 
-Use separate lines for braces, and always use braces for "if" and "for" statements, even if they contain one line of code
+Use separate lines for braces, and always use braces for "if" and "for" statements, even if they
+contain one line of code
 
 ### 2. Indentation
 
@@ -58,7 +64,8 @@ Use spaces instead of tabs for indentation (4 spaces per indent level).
 
 ### 3. Comments
 
-Use English for comments and document important functionality. Follow Doxygen-style documentation for classes and methods.
+Use English for comments and document important functionality. Follow Doxygen-style documentation
+for classes and methods.
 
 ## Code Quality
 
@@ -79,6 +86,7 @@ Ensure all necessary header files are included, especially for functions like `a
 ### 1. Unit Tests
 
 Write comprehensive unit tests for all classes, including:
+
 - Constructor tests
 - Method tests
 - Exception handling tests
@@ -107,34 +115,42 @@ protected:
 
 ## Best Practices
 
-1. **Single Responsibility Principle**: Each class should have a single, well-defined responsibility.
-2. **Encapsulation**: Hide implementation details and expose only necessary interfaces.
-3. **Error Handling**: Handle errors gracefully, especially memory allocation failures.
-4. **Performance**: Use move semantics and other performance optimizations where appropriate.
-5. **Testing**: Write comprehensive tests for all functionality.
-6. **Code Style**: Follow consistent code style guidelines, including:
+1. **Single Responsibility Principle**: Each class should have a single, well-defined
+   responsibility.
+1. **Encapsulation**: Hide implementation details and expose only necessary interfaces.
+1. **Error Handling**: Handle errors gracefully, especially memory allocation failures.
+1. **Performance**: Use move semantics and other performance optimizations where appropriate.
+1. **Testing**: Write comprehensive tests for all functionality.
+1. **Code Style**: Follow consistent code style guidelines, including:
    - Always use braces for if and for statements
    - Use separate lines for braces
    - Use spaces instead of tabs for indentation
    - Use English for comments
-7. **Code Quality**: Maintain high code quality by:
+1. **Code Quality**: Maintain high code quality by:
    - Using named constants instead of magic numbers
    - Ensuring all necessary header files are included
    - Adding boundary checks to prevent out-of-bounds access
-8. **Documentation**: Document classes and methods to improve maintainability.
-9. **Compatibility**: Ensure code is compatible with C++11 standard.
-10. **Portability**: Write code that works across different platforms.
-11. **Reusability**: Design classes to be reusable in different contexts.
+1. **Documentation**: Document classes and methods to improve maintainability.
+1. **Compatibility**: Ensure code is compatible with C++11 standard.
+1. **Portability**: Write code that works across different platforms.
+1. **Reusability**: Design classes to be reusable in different contexts.
 
 ## Application to Other Basic Tool Classes
 
-While this guide uses `IntArray` as an example, these principles apply to all basic tool classes in ABACUS. For example:
+While this guide uses `IntArray` as an example, these principles apply to all basic tool classes in
+ABACUS. For example:
 
-- **vector3.h**: Apply the same memory management and error handling principles, with additional focus on vector operations and operator overloading.
-- **matrix.h**: Extend the memory management practices to 2D arrays, with additional considerations for matrix operations.
+- **vector3.h**: Apply the same memory management and error handling principles, with additional
+  focus on vector operations and operator overloading.
+- **matrix.h**: Extend the memory management practices to 2D arrays, with additional considerations
+  for matrix operations.
 - **timer.h**: Focus on static member management and time measurement accuracy.
-- **ndarray.h**: Apply the same principles to multi-dimensional arrays, with additional considerations for shape manipulation.
-- **formatter.h**: Focus on string manipulation and formatting, with attention to performance and usability.
-- **math_chebyshev.h**: Apply the principles to template classes, with additional focus on mathematical algorithm implementation.
+- **ndarray.h**: Apply the same principles to multi-dimensional arrays, with additional
+  considerations for shape manipulation.
+- **formatter.h**: Focus on string manipulation and formatting, with attention to performance and
+  usability.
+- **math_chebyshev.h**: Apply the principles to template classes, with additional focus on
+  mathematical algorithm implementation.
 
-By following these guidelines, you can ensure that all basic tool classes in ABACUS are well-designed, robust, and maintainable.
+By following these guidelines, you can ensure that all basic tool classes in ABACUS are
+well-designed, robust, and maintainable.

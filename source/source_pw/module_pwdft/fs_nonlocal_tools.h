@@ -12,8 +12,7 @@
 
 #include <complex>
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * @brief Nonlocal pseudopotential tools in plane wave basis set.
@@ -27,8 +26,7 @@ namespace hamilt
  * 4. cal_force: calculate the force^I_i = - \sum_{n,k}f_{nk} \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
  */
 template <typename FPTYPE, typename Device>
-class FS_Nonlocal_tools
-{
+class FS_Nonlocal_tools {
   public:
     FS_Nonlocal_tools(const pseudopot_cell_vnl* nlpp_in,
                       const UnitCell* ucell_in,
@@ -41,26 +39,26 @@ class FS_Nonlocal_tools
 
     /**
      * @brief calculate the projectors |beta>
-     * 
+     *
      */
     void cal_vkb(const int& ik, const int& nbdall);
 
     /**
      * @brief calculate the becp = <psi|beta> for all beta functions
-     * 
+     *
      * @param ik the index of k point
      * @param npm the number of bands
      * @param ppsi the wave functions
      * @param nbd0 the start index of the bands
      */
     void cal_becp(const int& ik, const int& npm, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
-    
+
     /// @brief mpi_allreduce the becp in the pool
     void reduce_pool_becp(const int& npm);
 
     /**
      * @brief calculate vkb_deri
-     * 
+     *
      * @param ik the index of k point
      * @param nbdall the number of all bands, it decides the size of vkb_deri
      * @param ipol the i index of the direction
@@ -71,7 +69,7 @@ class FS_Nonlocal_tools
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
-     * 
+     *
      * @param ik the index of k point
      * @param npm the number of bands
      * @param ppsi the wave functions
@@ -81,7 +79,7 @@ class FS_Nonlocal_tools
 
     /**
      * @brief calculate stress
-     * 
+     *
      * @param ik the index of k point
      * @param npm the number of bands
      * @param occ if use the occupation of the bands
@@ -98,17 +96,17 @@ class FS_Nonlocal_tools
                     FPTYPE* stress,
                     const int& nbd0 = 0);
 
-        /**
-         * @brief calculate vkb_deri
-         *
-         * @param ik the index of k point
-         * @param nbdall the number of all bands, it decides the size of vkb_deri
-         * @param ipol the index of the polar
-         */
-        void cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol);
+    /**
+     * @brief calculate vkb_deri
+     *
+     * @param ik the index of k point
+     * @param nbdall the number of all bands, it decides the size of vkb_deri
+     * @param ipol the index of the polar
+     */
+    void cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol);
     /**
      * @brief calculate the dbecp_i = <psi|\partial beta/\partial \tau^I_i> for all beta functions
-     * 
+     *
      * @param ik the index of k point
      * @param nbdall the number of all bands, which is the dimension of dbecp and becp
      * @param npm the number of bands
@@ -116,10 +114,15 @@ class FS_Nonlocal_tools
      * @param ppsi the wave functions
      * @param nbd0 the start index of the bands
      */
-    void cal_dbecp_f(const int& ik, const int& nbdall, const int& npm, const int& ipol, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
+    void cal_dbecp_f(const int& ik,
+                     const int& nbdall,
+                     const int& npm,
+                     const int& ipol,
+                     const std::complex<FPTYPE>* ppsi,
+                     const int& nbd0 = 0);
     /**
      * @brief calculate the force^I_i = - \sum_{n,k}f_{nk} \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
-     * 
+     *
      * @param ik the index of k point
      * @param npm the number of bands
      * @param nbdall the number of all bands, which is the dimension of dbecp and becp
@@ -127,7 +130,8 @@ class FS_Nonlocal_tools
      * @param occ if use the occupation of the bands
      * @param force [out] the force
      */
-    void cal_force(const int& ik, const int& nbdall, const int& npm, const bool& occ, FPTYPE* force, const int& nbd0 = 0);
+    void
+    cal_force(const int& ik, const int& nbdall, const int& npm, const bool& occ, FPTYPE* force, const int& nbd0 = 0);
 
     /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation
     void revert_vkb(const int& ik, const int& ipol);
@@ -224,10 +228,10 @@ class FS_Nonlocal_tools
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;

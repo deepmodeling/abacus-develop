@@ -32,11 +32,9 @@ template <typename T, int Accuracy>
 static inline bool element_compare(T& a, T& b) {
     if (Accuracy <= 4) {
         return (a == b) || (std::norm(a - b) < 1e-7);
-    } 
-    else if (Accuracy <= 8) {
+    } else if (Accuracy <= 8) {
         return (a == b) || (std::norm(a - b) < 1e-15);
-    } 
-    else {
+    } else {
         return (a == b);
     }
 }
@@ -48,20 +46,20 @@ is identified by a unique value. The DT_INVALID value is reserved for invalid
 data types.
 */
 enum class DataType {
-    DT_INVALID = 0, ///< Invalid data type */
-    DT_FLOAT = 1, ///< Single-precision floating point */
-    DT_DOUBLE = 2, ///< Double-precision floating point */
-    DT_INT = 3, ///< 32-bit integer */
-    DT_INT64 = 4, ///< 64-bit integer */
-    DT_COMPLEX = 5, ///< 32-bit complex */
+    DT_INVALID = 0,        ///< Invalid data type */
+    DT_FLOAT = 1,          ///< Single-precision floating point */
+    DT_DOUBLE = 2,         ///< Double-precision floating point */
+    DT_INT = 3,            ///< 32-bit integer */
+    DT_INT64 = 4,          ///< 64-bit integer */
+    DT_COMPLEX = 5,        ///< 32-bit complex */
     DT_COMPLEX_DOUBLE = 6, /**< 64-bit complex */
-// ... other data types
+    // ... other data types
 };
 
 /**
  *@struct DEVICE_CPU, DEVICE_GPU
  *@brief A tag type for identifying CPU and GPU devices.
-*/
+ */
 struct DEVICE_CPU;
 struct DEVICE_GPU;
 
@@ -71,9 +69,9 @@ struct DEVICE_GPU {};
  * @brief The type of memory used by an allocator.
  */
 enum class DeviceType {
-    UnKnown = 0,  ///< Memory type is unknown.
-    CpuDevice = 1,     ///< Memory type is CPU.
-    GpuDevice = 2,     ///< Memory type is GPU(CUDA or ROCm).
+    UnKnown = 0,   ///< Memory type is unknown.
+    CpuDevice = 1, ///< Memory type is CPU.
+    GpuDevice = 2, ///< Memory type is GPU(CUDA or ROCm).
 };
 
 /**
@@ -109,24 +107,22 @@ struct GetTypeReal<std::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
 
-template <typename T> 
+template <typename T>
 struct PsiToContainer {
     using type = T; /**< The return type based on the input type. */
 };
 
 template <>
-struct PsiToContainer<base_device::DEVICE_CPU>
-{
+struct PsiToContainer<base_device::DEVICE_CPU> {
     using type = container::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
 };
 
 template <>
-struct PsiToContainer<base_device::DEVICE_GPU>
-{
+struct PsiToContainer<base_device::DEVICE_GPU> {
     using type = container::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
 
-template <typename T> 
+template <typename T>
 struct ContainerToPsi {
     using type = T; /**< The return type based on the input type. */
 };
@@ -140,7 +136,6 @@ template <>
 struct ContainerToPsi<container::DEVICE_GPU> {
     using type = base_device::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
-
 
 /**
  * @brief Template struct for mapping a Device Type to its corresponding enum value.
@@ -168,13 +163,11 @@ struct DeviceTypeToEnum<DEVICE_GPU> {
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 template <>
-struct DeviceTypeToEnum<base_device::DEVICE_CPU>
-{
+struct DeviceTypeToEnum<base_device::DEVICE_CPU> {
     static constexpr DeviceType value = DeviceType::CpuDevice;
 };
 template <>
-struct DeviceTypeToEnum<base_device::DEVICE_GPU>
-{
+struct DeviceTypeToEnum<base_device::DEVICE_GPU> {
     static constexpr DeviceType value = DeviceType::GpuDevice;
 };
 

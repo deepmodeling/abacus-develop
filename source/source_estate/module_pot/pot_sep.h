@@ -5,11 +5,9 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
-class PotSep : public PotBase
-{
+class PotSep : public PotBase {
   public:
     // PotSep(const ModuleBase::matrix* vsep_in,
     //        const ModuleBase::ComplexMatrix* sf_in,
@@ -24,8 +22,7 @@ class PotSep : public PotBase
     //     this->dynamic_mode = false;
     // }
     PotSep(const ModuleBase::ComplexMatrix* sf_in, const ModulePW::PW_Basis* rho_basis_in, const VSep* vsep_cell_in)
-        : sf_(sf_in), vsep_cell(vsep_cell_in)
-    {
+        : sf_(sf_in), vsep_cell(vsep_cell_in) {
         assert(vsep_cell->vsep_form.nr == this->sf_->nr);
         // assert(this->vsep_->vsep_form.nr == this->sf_->nr);
         this->rho_basis_ = rho_basis_in;

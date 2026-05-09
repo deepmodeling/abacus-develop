@@ -7,8 +7,7 @@ class Charge;
 class UnitCell;
 struct Input_para;
 
-class Exx_HelperBase
-{
+class Exx_HelperBase {
   public:
     Exx_HelperBase() = default;
     virtual ~Exx_HelperBase() = default;
@@ -17,9 +16,13 @@ class Exx_HelperBase
 
     virtual void before_scf(void* p_hamilt, void* psi, const Input_para& inp) = 0;
 
-    virtual bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
-                             UnitCell& ucell, const Input_para& inp,
-                             bool& conv_esolver, int& iter) = 0;
+    virtual bool iter_finish(void* p_elec,
+                             Charge* p_charge,
+                             void* psi,
+                             UnitCell& ucell,
+                             const Input_para& inp,
+                             bool& conv_esolver,
+                             int& iter) = 0;
 
     virtual void set_firstiter(bool flag = true) = 0;
     virtual void set_wg(const ModuleBase::matrix* wg) = 0;

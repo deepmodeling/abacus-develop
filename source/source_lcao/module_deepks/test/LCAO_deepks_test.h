@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/density_matrix.h"
-//#include "parallel_orbitals.h"
+// #include "parallel_orbitals.h"
 
 #include "../LCAO_deepks.h"
 
@@ -17,14 +17,12 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-namespace Test_Deepks
-{
+namespace Test_Deepks {
 extern Grid_Driver GridD;
 }
 
 template <typename T>
-class test_deepks
-{
+class test_deepks {
 
   public:
     test_deepks();

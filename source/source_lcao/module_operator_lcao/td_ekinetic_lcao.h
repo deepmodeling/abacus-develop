@@ -8,9 +8,7 @@
 #include "operator_lcao.h"
 #include <vector>
 
-
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __TDEKINETICTEMPLATE
 #define __TDEKINETICTEMPLATE
@@ -18,9 +16,7 @@ namespace hamilt
 /// The TDEkinetic class template inherits from class T
 /// It is used to calculate correction term of kinetic energy in time-dependent DFT
 template <class T>
-class TDEkinetic : public T
-{
-};
+class TDEkinetic : public T {};
 
 #endif
 
@@ -31,8 +27,7 @@ class TDEkinetic : public T
 /// - TR: data type of real space Hamiltonian
 
 template <typename TK, typename TR>
-class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
-{
+class TDEkinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     TDEkinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                      hamilt::HContainer<TR>* hR_in,
@@ -60,7 +55,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief initialize HR_tmp
      * Allocate the memory for HR_tmp with the same size as HR
-    */
+     */
     void initialize_HR_tmp();
 
     /**
@@ -82,13 +77,11 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     virtual void set_HR_fixed(void*) override;
 
-
   private:
-
     const UnitCell* ucell = nullptr;
 
     std::vector<double> orb_cutoff_;
-    
+
     HContainer<TR>* SR = nullptr;
 
     /// @brief Store real space hamiltonian. TD term should include imaginary part,
@@ -122,4 +115,3 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
 } // namespace hamilt
 #endif
-

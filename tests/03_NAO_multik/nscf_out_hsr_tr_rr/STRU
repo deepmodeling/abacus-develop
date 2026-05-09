@@ -17,13 +17,13 @@ LATTICE_VECTORS
 ATOMIC_POSITIONS
 Direct
 
-H	// Element type
-0.0	// magnetism
+H    // Element type
+0.0    // magnetism
 2
 0.24 0.76 0.50 1 1 1
 0.76 0.24 0.50 1 1 1
 
-O	// Element type
-0.0	// magnetism
+O    // Element type
+0.0    // magnetism
 1
 0.50 0.50 0.50 1 1 1

@@ -11,8 +11,7 @@
 #include "readin_info.h"
 #endif // __RAPIDJSON
 
-namespace Json
-{
+namespace Json {
 
 // void create_Json(ModuleSymmetry::Symmetry *symm,Atom *atoms,Input *input){
 // #ifdef __RAPIDJSON
@@ -21,8 +20,7 @@ namespace Json
 // #endif
 // }
 
-void json_output()
-{
+void json_output() {
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -33,8 +31,7 @@ void json_output()
 #endif // __RAPIDJSON
 }
 
-void create_Json(UnitCell* ucell, const Parameter& param)
-{
+void create_Json(UnitCell* ucell, const Parameter& param) {
 #ifdef __RAPIDJSON
     gen_general_info(param);
     gen_init(ucell);
@@ -43,8 +40,7 @@ void create_Json(UnitCell* ucell, const Parameter& param)
     json_output();
 }
 
-void gen_stru_wrapper(UnitCell* ucell)
-{
+void gen_stru_wrapper(UnitCell* ucell) {
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
@@ -55,8 +51,7 @@ void gen_stru_wrapper(UnitCell* ucell)
 #endif
 }
 
-void convert_time(std::time_t time_now, std::string& time_str)
-{
+void convert_time(std::time_t time_now, std::string& time_str) {
     std::tm* tm = std::localtime(&time_now);
     std::ostringstream oss;
     oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");

@@ -17,8 +17,7 @@
 
 #include <complex>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 // in principle, we need to add const for all of the variables, mohan note 2025-06-05
 template <typename TK, typename TR>
 void ctrl_scf_lcao(UnitCell& ucell,

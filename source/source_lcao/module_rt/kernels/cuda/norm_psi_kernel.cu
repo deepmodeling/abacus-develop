@@ -3,14 +3,11 @@
 #include <math_constants.h>
 
 #ifdef __CUBLASMP
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 // Device function for global index mapping
-__device__ inline int get_global_index_dev(int local_idx, int block_size, int num_procs, int proc_coord)
-{
+__device__ inline int get_global_index_dev(int local_idx, int block_size, int num_procs, int proc_coord) {
     return (local_idx / block_size) * (num_procs * block_size) + proc_coord * block_size + (local_idx % block_size);
 }
 
@@ -23,13 +20,11 @@ __global__ void normalize_cij_kernel(cuDoubleComplex* d_Cij,
                                      int dim1,
                                      int my_prow,
                                      int my_pcol,
-                                     int nband)
-{
+                                     int nband) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     // We iterate over the entire allocated buffer (local_elems)
-    if (idx >= local_elems)
-    {
+    if (idx >= local_elems) {
         return;
     }
 
@@ -41,20 +36,16 @@ __global__ void normalize_cij_kernel(cuDoubleComplex* d_Cij,
     int gcol = get_global_index_dev(j, nb, dim1, my_pcol);
 
     // Filter out the "empty" spaces that are outside the nband x nband logic
-    if (grow >= nband || gcol >= nband)
-    {
+    if (grow >= nband || gcol >= nband) {
         return;
     }
 
-    if (grow == gcol)
-    {
+    if (grow == gcol) {
         double val = cuCreal(d_Cij[idx]);
         if (val < 1e-12)
             val = 1e-12;
         d_Cij[idx] = make_cuDoubleComplex(1.0 / sqrt(val), 0.0);
-    }
-    else
-    {
+    } else {
         d_Cij[idx] = make_cuDoubleComplex(0.0, 0.0);
     }
 }
@@ -69,11 +60,9 @@ void launch_normalize_cij_kernel(cuDoubleComplex* d_Cij,
                                  int my_prow,
                                  int my_pcol,
                                  int nband,
-                                 cudaStream_t stream)
-{
+                                 cudaStream_t stream) {
     int total_elems = nrow * ncol;
-    if (total_elems > 0)
-    {
+    if (total_elems > 0) {
         int threads_per_block = 256;
         int blocks_per_grid = (total_elems + threads_per_block - 1) / threads_per_block;
 

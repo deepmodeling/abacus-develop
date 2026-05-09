@@ -12,42 +12,42 @@ namespace hamilt {
 #ifndef ONSITETEMPLATE_H
 #define ONSITETEMPLATE_H
 
-template<class T> class OnsiteProj : public T {};
+template <class T>
+class OnsiteProj : public T {};
 // template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class OnsiteProj : public OperatorPW<T, Device> {};
 
 #endif
 
-template<typename T, typename Device>
-class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
-{
+template <typename T, typename Device>
+class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device> {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
     OnsiteProj(const int* isk_in,
-             const UnitCell* ucell_in,
-             Plus_U *p_dftu, // mohan add 2025-11-06 
-             const bool cal_delta_spin,
-             const bool cal_dftu);
+               const UnitCell* ucell_in,
+               Plus_U* p_dftu, // mohan add 2025-11-06
+               const bool cal_delta_spin,
+               const bool cal_dftu);
 
-    template<typename T_in, typename Device_in = Device>
+    template <typename T_in, typename Device_in = Device>
     explicit OnsiteProj(const OnsiteProj<OperatorPW<T_in, Device_in>>* onsite_proj);
 
     virtual ~OnsiteProj();
 
-    virtual void init(const int ik_in)override;
+    virtual void init(const int ik_in) override;
 
     virtual void act(const int nbands,
-        const int nbasis,
-        const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
-		const int ngk = 0,
-		const bool is_first_node = false)const override;
+                     const int nbasis,
+                     const int npol,
+                     const T* tmpsi_in,
+                     T* tmhpsi,
+                     const int ngk = 0,
+                     const bool is_first_node = false) const override;
 
-    const int *get_isk() const {return this->isk;}
-    const UnitCell *get_ucell() const {return this->ucell;}
+    const int* get_isk() const { return this->isk; }
+    const UnitCell* get_ucell() const { return this->ucell; }
 
   private:
     void cal_ps_delta_spin(const int npol, const int m) const;
@@ -56,13 +56,13 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     void update_becp(const T* psi_in, const int npol, const int m) const;
 
-    void add_onsite_proj(T *hpsi_in, const int npol, const int m) const;
+    void add_onsite_proj(T* hpsi_in, const int npol, const int m) const;
 
     const int* isk = nullptr;
 
     const UnitCell* ucell = nullptr;
 
-    Plus_U *dftu = nullptr; // mohan add 2025-11-06
+    Plus_U* dftu = nullptr; // mohan add 2025-11-06
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;
@@ -79,7 +79,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable bool init_dftu = false;
     mutable bool init_delta_spin = false;
 
-    mutable T *ps = nullptr;
+    mutable T* ps = nullptr;
     int tnp = 0;
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};

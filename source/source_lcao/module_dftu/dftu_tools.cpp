@@ -3,52 +3,38 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
-void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
-{
+void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU) {
     ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_complex");
     ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
-    for (int it = 0; it < this->ucell->ntype; ++it)
-    {
-        if (PARAM.inp.orbital_corr[it] == -1) 
-        {
+    for (int it = 0; it < this->ucell->ntype; ++it) {
+        if (PARAM.inp.orbital_corr[it] == -1) {
             continue;
         }
-        for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
-        {
+        for (int ia = 0; ia < this->ucell->atoms[it].na; ia++) {
             const int iat = this->ucell->itia2iat(it, ia);
-            for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
-            {
-                if (L != PARAM.inp.orbital_corr[it]) 
-                {
+            for (int L = 0; L <= this->ucell->atoms[it].nwl; L++) {
+                if (L != PARAM.inp.orbital_corr[it]) {
                     continue;
                 }
 
-                for (int n = 0; n < this->ucell->atoms[it].l_nchi[L]; n++)
-                {
-                    if (n != 0) 
-                    {
+                for (int n = 0; n < this->ucell->atoms[it].l_nchi[L]; n++) {
+                    if (n != 0) {
                         continue;
                     }
 
-                    for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                    {
-                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                        {
+                    for (int m1 = 0; m1 < 2 * L + 1; m1++) {
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++) {
                             const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
-                            if (mu < 0) 
-                            {
+                            if (mu < 0) {
                                 continue;
                             }
 
-                            for (int m2 = 0; m2 < 2 * L + 1; m2++)
-                            {
-                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
-                                {
-                                    const int nu
-                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
-                                    if (nu < 0) 
-                                    {
+                            for (int m2 = 0; m2 < 2 * L + 1; m2++) {
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++) {
+                                    const int nu =
+                                        this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                    if (nu < 0) {
                                         continue;
                                     }
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
@@ -67,58 +53,44 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::c
     return;
 }
 
-void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
-{
+void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU) {
     ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_real");
     ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
-    for (int it = 0; it < this->ucell->ntype; ++it)
-    {
-        if (PARAM.inp.orbital_corr[it] == -1) 
-        {
+    for (int it = 0; it < this->ucell->ntype; ++it) {
+        if (PARAM.inp.orbital_corr[it] == -1) {
             continue;
         }
-        for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
-        {
+        for (int ia = 0; ia < this->ucell->atoms[it].na; ia++) {
             const int iat = this->ucell->itia2iat(it, ia);
-            for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
-            {
-                if (L != PARAM.inp.orbital_corr[it]) 
-                {
+            for (int L = 0; L <= this->ucell->atoms[it].nwl; L++) {
+                if (L != PARAM.inp.orbital_corr[it]) {
                     continue;
                 }
 
-                for (int n = 0; n < this->ucell->atoms[it].l_nchi[L]; n++)
-                {
-                    if (n != 0) 
-                    {
+                for (int n = 0; n < this->ucell->atoms[it].l_nchi[L]; n++) {
+                    if (n != 0) {
                         continue;
                     }
-                    for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                    {
-                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                        {
+                    for (int m1 = 0; m1 < 2 * L + 1; m1++) {
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++) {
                             const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
-                            if (mu < 0) 
-                            {
+                            if (mu < 0) {
                                 continue;
                             }
-                            for (int m2 = 0; m2 < 2 * L + 1; m2++)
-                            {
-                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
-                                {
-                                    const int nu
-                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
-                                    if (nu < 0) 
-                                    {
+                            for (int m2 = 0; m2 < 2 * L + 1; m2++) {
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++) {
+                                    const int nu =
+                                        this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                    if (nu < 0) {
                                         continue;
                                     }
 
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
-                                    VU[nu * this->paraV->nrow + mu]
-                                        = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
+                                    VU[nu * this->paraV->nrow + mu] =
+                                        this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
 
                                 } // ipol2
                             } // m2
@@ -133,20 +105,18 @@ void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* V
 }
 
 double Plus_U::get_onebody_eff_pot(const int T,
-                                 const int iat,
-                                 const int L,
-                                 const int N,
-                                 const int spin,
-                                 const int m0,
-                                 const int m1,
-                                 const bool newlocale)
-{
+                                   const int iat,
+                                   const int L,
+                                   const int N,
+                                   const int spin,
+                                   const int m0,
+                                   const int m1,
+                                   const bool newlocale) {
     ModuleBase::TITLE("Plus_U", "get_onebody_eff_pot");
 
     double VU = 0.0;
 
-    switch (cal_type)
-    {
+    switch (cal_type) {
     case 1: // rotationally invarient formalism and FLL double counting
 
         break;
@@ -156,41 +126,31 @@ double Plus_U::get_onebody_eff_pot(const int T,
         break;
 
     case 3: // simplified formalism and FLL double counting
-        if (newlocale)
-        {
-            if (Yukawa)
-            {
-                if (m0 == m1) 
-                {
-                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * (0.5 - this->locale[iat][L][N][spin](m0, m1));
+        if (newlocale) {
+            if (Yukawa) {
+                if (m0 == m1) {
+                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) *
+                         (0.5 - this->locale[iat][L][N][spin](m0, m1));
                 } else {
                     VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) * this->locale[iat][L][N][spin](m0, m1);
                 }
-            }
-            else
-            {
+            } else {
                 if (m0 == m1) {
                     VU = (this->U[T]) * (0.5 - this->locale[iat][L][N][spin](m0, m1));
                 } else {
                     VU = -(this->U[T]) * this->locale[iat][L][N][spin](m0, m1);
                 }
             }
-        }
-        else
-        {
-            if (Yukawa)
-            {
+        } else {
+            if (Yukawa) {
                 if (m0 == m1) {
-                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
+                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) *
+                         (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * this->locale_save[iat][L][N][spin](m0, m1);
+                    VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) *
+                         this->locale_save[iat][L][N][spin](m0, m1);
                 }
-            }
-            else
-            {
+            } else {
                 if (m0 == m1) {
                     VU = (this->U[T]) * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
                 } else {

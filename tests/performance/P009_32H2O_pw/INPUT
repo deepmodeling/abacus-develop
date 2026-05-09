@@ -18,7 +18,7 @@ basis_type        pw #PW; LCAO in pw; LCAO
 
 #Parameters (5.Smearing)
 smearing_method   fixed #type of smearing_method: gauss; fd; fixed; mp; mp2; mv
-#smearing_sigma                          0.002	#energy range for smearing_method
+#smearing_sigma                          0.002    #energy range for smearing_method
 
 #Parameters (6.Charge Mixing)
 mixing_type       broyden #plain; kerker; pulay; pulay-kerker; broyden

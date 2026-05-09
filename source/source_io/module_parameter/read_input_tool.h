@@ -99,8 +99,7 @@
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
-            for (int i = 0; i < N; i++)                                                                                \
-            {                                                                                                          \
+            for (int i = 0; i < N; i++) {                                                                              \
                 item.final_value << para.PARAMETER[i] << " ";                                                          \
             }                                                                                                          \
         };                                                                                                             \
@@ -109,8 +108,7 @@
 #define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
-            for (int i = 0; i < N; i++)                                                                                \
-            {                                                                                                          \
+            for (int i = 0; i < N; i++) {                                                                              \
                 item.final_value << para.PARAMETER[i] << " ";                                                          \
             }                                                                                                          \
         };                                                                                                             \
@@ -119,8 +117,7 @@
 #define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
-            for (int i = 0; i < N; i++)                                                                                \
-            {                                                                                                          \
+            for (int i = 0; i < N; i++) {                                                                              \
                 item.final_value << para.PARAMETER[i] << " ";                                                          \
             }                                                                                                          \
         };                                                                                                             \
@@ -158,58 +155,47 @@
  *            [1, 1, 1, 0, 0.5, 0.5, 1.5]
  */
 template <typename T>
-void parse_expression(const std::vector<std::string>& expressions, std::vector<T>& result)
-{
+void parse_expression(const std::vector<std::string>& expressions, std::vector<T>& result) {
     result.clear(); // Clear the output vector to prepare for new entries
-    if (expressions.empty())
-    {
+    if (expressions.empty()) {
         return;
-    }
-    else if (expressions[0].empty())
-    {
+    } else if (expressions[0].empty()) {
         return;
     }
 
-    for (const auto& expr: expressions)
-    {
+    for (const auto& expr: expressions) {
         size_t first_star_pos = expr.find('*');
         size_t second_star_pos = expr.rfind('*'); // rfind finds the rightmost '*'
 
         // e.g. "3", "3.5"
         // If no '*' found, convert the whole expression to double/int and add to result
-        if (first_star_pos == std::string::npos)
-        {
+        if (first_star_pos == std::string::npos) {
             T T_value = static_cast<T>(std::stof(expr));
             result.push_back(T_value);
         }
         // e.g. "2*3", "2*3.5"
         // If only one '*' found, split the expression into two parts and convert them to double/int
-        else if (first_star_pos == second_star_pos)
-        {
+        else if (first_star_pos == second_star_pos) {
             std::string int_part = expr.substr(0, first_star_pos);
             std::string T_part = expr.substr(first_star_pos + 1);
 
             int num = std::stoi(int_part);
             T T_value = static_cast<T>(std::stof(T_part));
-            for(int i = 0 ; i < num; ++i)
-            {
+            for (int i = 0; i < num; ++i) {
                 result.push_back(T_value);
             }
         }
-        // e.g. "2*3*3" 
+        // e.g. "2*3*3"
         // If more than one '*' found, output an error message
-        else
-        {
+        else {
             throw std::runtime_error("Invalid expression: " + expr + " - More than one '*' found.");
         }
     }
 }
 
 template <typename T>
-void reset_vector(std::vector<T>& vec, int size, T default_value)
-{
-    if (vec.size() != size)
-    {
+void reset_vector(std::vector<T>& vec, int size, T default_value) {
+    if (vec.size() != size) {
         vec.resize(size, default_value);
     }
 }

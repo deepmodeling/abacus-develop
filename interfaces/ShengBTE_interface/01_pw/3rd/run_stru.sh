@@ -1,13 +1,12 @@
 #!/bin/bash
-for i in STRU_*
-do
-stru=$(echo $i|cut -d"_" -f2)
-echo $stru
-echo "stru=$stru"
-mkdir SCF-$stru
-cd SCF-$stru
-pwd
-cat > INPUT <<EOF
+for i in STRU_*; do
+  stru=$(echo $i | cut -d"_" -f2)
+  echo $stru
+  echo "stru=$stru"
+  mkdir SCF-$stru
+  cd SCF-$stru
+  pwd
+  cat > INPUT << EOF
 INPUT_PARAMETERS
 #Parameters (General)
 suffix          DIA-50-$stru
@@ -33,14 +32,14 @@ mixing_beta     0.7
 
 stru_file       STRU_$stru
 EOF
-cat > KPT <<EOF
+  cat > KPT << EOF
 K_POINTS
 0
 Gamma
 2 2 2 0 0 0
 EOF
-cp ../STRU_$stru .
-mpirun -n 96 ABACUS.mpi
-# sbatch ../sub.sh
-cd ../
+  cp ../STRU_$stru .
+  mpirun -n 96 ABACUS.mpi
+  # sbatch ../sub.sh
+  cd ../
 done

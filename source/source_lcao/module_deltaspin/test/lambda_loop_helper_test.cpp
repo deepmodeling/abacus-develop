@@ -15,18 +15,14 @@
  * - print termination message
  */
 
-class spinconstrain::SpinConstrainTest : public testing::Test
-{
+class spinconstrain::SpinConstrainTest : public testing::Test {
   protected:
-    spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc =
+        spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
-TEST_F(spinconstrain::SpinConstrainTest, PrintTermination)
-{
-    std::map<int, int> atomCounts = {
-        {0, 1}
-    };
+TEST_F(spinconstrain::SpinConstrainTest, PrintTermination) {
+    std::map<int, int> atomCounts = {{0, 1}};
     sc.set_nspin(4);
     sc.set_atomCounts(atomCounts);
     sc.zero_Mi();
@@ -34,19 +30,18 @@ TEST_F(spinconstrain::SpinConstrainTest, PrintTermination)
     sc.set_sc_lambda(sc_lambda.data(), 1);
     testing::internal::CaptureStdout();
     sc.print_termination();
-    //sc.print_Mag_Force();
-    //std::string output = testing::internal::GetCapturedStdout();
-    //EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
-    //EXPECT_THAT(output, testing::HasSubstr("ATOM      1         0.0000000000         0.0000000000         0.0000000000"));
-    //EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
-    //EXPECT_THAT(output, testing::HasSubstr("Final optimal lambda (Ry/uB):"));
-    //EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
-    //EXPECT_THAT(output, testing::HasSubstr("Magnetic force (Ry/uB):"));
-    //EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000        -2.0000000000        -3.0000000000"));
+    // sc.print_Mag_Force();
+    // std::string output = testing::internal::GetCapturedStdout();
+    // EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
+    // EXPECT_THAT(output, testing::HasSubstr("ATOM      1         0.0000000000         0.0000000000 0.0000000000"));
+    // EXPECT_THAT(output, testing::HasSubstr("ATOM 1         1.0000000000         2.0000000000         3.0000000000"));
+    // EXPECT_THAT(output, testing::HasSubstr("Final optimal lambda (Ry/uB):"));
+    // EXPECT_THAT(output, testing::HasSubstr("ATOM 1         1.0000000000         2.0000000000         3.0000000000"));
+    // EXPECT_THAT(output, testing::HasSubstr("Magnetic force (Ry/uB):"));
+    // EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000        -2.0000000000 -3.0000000000"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckRmsStop)
-{
+TEST_F(spinconstrain::SpinConstrainTest, CheckRmsStop) {
     double sc_thr = 1e-6;
     int nsc = 100;
     int nsc_min = 2;
@@ -69,8 +64,7 @@ TEST_F(spinconstrain::SpinConstrainTest, CheckRmsStop)
     EXPECT_THAT(output, testing::HasSubstr("Reach maximum number of steps ( 100 ), exit."));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, PrintHeader)
-{
+TEST_F(spinconstrain::SpinConstrainTest, PrintHeader) {
     testing::internal::CaptureStdout();
     sc.print_header();
     std::string output = testing::internal::GetCapturedStdout();
@@ -78,11 +72,8 @@ TEST_F(spinconstrain::SpinConstrainTest, PrintHeader)
     EXPECT_THAT(output, testing::HasSubstr("Covergence criterion for the iteration: 1e-06"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction)
-{
-    std::vector<ModuleBase::Vector3<double>> search = {
-        {0.0, 0.0, 40}
-    };
+TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction) {
+    std::vector<ModuleBase::Vector3<double>> search = {{0.0, 0.0, 40}};
     double alpha_trial = 0.1 / ModuleBase::Ry_to_eV;
     testing::internal::CaptureStdout();
     sc.check_restriction(search, alpha_trial);
@@ -91,22 +82,13 @@ TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction)
     EXPECT_THAT(output, testing::HasSubstr("boundary after = 3"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CalAlphaOpt)
-{
-    std::vector<ModuleBase::Vector3<int>> constrain = {
-        {1, 1, 1}
-    };
-    std::vector<ModuleBase::Vector3<double>> target_mag = {
-        {0.0, 0.0, 2.0}
-    };
+TEST_F(spinconstrain::SpinConstrainTest, CalAlphaOpt) {
+    std::vector<ModuleBase::Vector3<int>> constrain = {{1, 1, 1}};
+    std::vector<ModuleBase::Vector3<double>> target_mag = {{0.0, 0.0, 2.0}};
     // Set up test input data
-    std::vector<ModuleBase::Vector3<double>> spin = {
-        {0.0, 0.0, 0.1}
-    };
+    std::vector<ModuleBase::Vector3<double>> spin = {{0.0, 0.0, 0.1}};
 
-    std::vector<ModuleBase::Vector3<double>> spin_plus = {
-        {0.0, 0.0, 0.2}
-    };
+    std::vector<ModuleBase::Vector3<double>> spin_plus = {{0.0, 0.0, 0.2}};
 
     sc.set_constrain(constrain.data(), 1);
     sc.set_target_mag(target_mag.data(), 1);
@@ -123,32 +105,21 @@ TEST_F(spinconstrain::SpinConstrainTest, CalAlphaOpt)
     EXPECT_NEAR(expected_alpha_opt, actual_alpha_opt, 1e-14);
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckGradientDecay)
-{
+TEST_F(spinconstrain::SpinConstrainTest, CheckGradientDecay) {
     // Set up some data for testing
-    std::vector<ModuleBase::Vector3<double>> new_spin = {
-        {0.0, 0.0, 0.1}
-    };
+    std::vector<ModuleBase::Vector3<double>> new_spin = {{0.0, 0.0, 0.1}};
 
-    std::vector<ModuleBase::Vector3<double>> new_spin1 = {
-        {0.0, 0.0, 10.0}
-    };
+    std::vector<ModuleBase::Vector3<double>> new_spin1 = {{0.0, 0.0, 10.0}};
 
-    std::vector<ModuleBase::Vector3<double>> spin = {
-        {0.0, 0.0, 0.2}
-    };
+    std::vector<ModuleBase::Vector3<double>> spin = {{0.0, 0.0, 0.2}};
 
-    std::vector<ModuleBase::Vector3<double>> delta_lambda = {
-        {0.0, 0.0, 1.0}
-    };
+    std::vector<ModuleBase::Vector3<double>> delta_lambda = {{0.0, 0.0, 1.0}};
 
     std::vector<ModuleBase::Vector3<double>> dnu_last_step = {
         {0.0, 0.0, 2.0},
     };
 
-    std::vector<ModuleBase::Vector3<int>> constrain = {
-        {0, 0, 1}
-    };
+    std::vector<ModuleBase::Vector3<int>> constrain = {{0, 0, 1}};
 
     std::vector<double> decay_grad = {0.9};
     sc.set_constrain(constrain.data(), 1);

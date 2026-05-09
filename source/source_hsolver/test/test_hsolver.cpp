@@ -19,12 +19,12 @@
 /**
  * Tested function:
  *  - hsolver::HSolver::solve (for cases below)
- * 		- float/double;
- * 		- Psi<double/float/complex<double>/complex<float>>;
- * 		- skip charge or not;
- * 		- stodft case;
+ *         - float/double;
+ *         - Psi<double/float/complex<double>/complex<float>>;
+ *         - skip charge or not;
+ *         - stodft case;
  *  - hsolver::HSolver::diagethr (for cases below)
- * 		- set_diagethr, for setting diagethr;
+ *         - set_diagethr, for setting diagethr;
  *  - hsolver::DiagH (for cases below)
  *      - diag() for Psi(FPTYPE) case
  *      - destructor of DiagH and HSolver
@@ -32,8 +32,7 @@
  * the definition of supplementary functions is added in hsolver_supplementary_mock.h
  */
 
-class TestHSolver : public ::testing::Test
-{
+class TestHSolver : public ::testing::Test {
   public:
     // hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU> hs_cf;
     // hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU> hs_cd;
@@ -64,24 +63,24 @@ class TestHSolver : public ::testing::Test
 // TEST_F(TestHSolver, solve)
 // {
 //     hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, false);
-// 	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, false);
+//     hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, false);
 //     hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, false);
-// 	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, false);
+//     hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, false);
 //     hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, method_test, true);
-// 	hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, true);
+//     hs_f.solve(&hamilt_test_f, psi_test_f, &elecstate_test, method_test, true);
 //     hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, method_test, true);
-// 	hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, true);
+//     hs_d.solve(&hamilt_test_d, psi_test_d, &elecstate_test, method_test, true);
 //     // hs_cf.solve(&hamilt_test_cf, psi_test_cf, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
 //     // hs_cd.solve(&hamilt_test_cd, psi_test_cd, &elecstate_test, wfcpw, stowf_test, 0, 0, method_test, true);
-// 	EXPECT_EQ(hs_f.method, "none");
-// 	EXPECT_EQ(hs_d.method, "none");
+//     EXPECT_EQ(hs_f.method, "none");
+//     EXPECT_EQ(hs_d.method, "none");
 // }
 
 // TEST_F(TestHSolver, diagethr)
 // {
 //     float test_diagethr = hs_f.set_diagethr(0.0, 0, 0, 0.0);
-// 	EXPECT_EQ(test_diagethr, 0.0);
+//     EXPECT_EQ(test_diagethr, 0.0);
 
-// 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
-// 	EXPECT_EQ(test_diagethr_d, 0.0);
+//     double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
+//     EXPECT_EQ(test_diagethr_d, 0.0);
 // }

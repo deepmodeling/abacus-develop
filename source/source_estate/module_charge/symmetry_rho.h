@@ -5,32 +5,27 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
-class Symmetry_rho
-{
+class Symmetry_rho {
   public:
     Symmetry_rho();
     ~Symmetry_rho();
 
     /**
      * @brief Symmetrize charge density for all spin channels
-     * 
+     *
      * This is a static helper function that symmetrizes the charge density
      * for all spin channels by calling begin() for each spin.
-     * 
+     *
      * @param nspin Number of spin channels
      * @param chr Charge object containing the density
      * @param pw Plane wave basis
      * @param symm Symmetry object
      */
-    static void symmetrize_rho(const int nspin,
-                               const Charge& chr,
-                               const ModulePW::PW_Basis* pw,
-                               ModuleSymmetry::Symmetry& symm);
+    static void
+    symmetrize_rho(const int nspin, const Charge& chr, const ModulePW::PW_Basis* pw, ModuleSymmetry::Symmetry& symm);
 
-    void begin(const int& spin_now,
-               const Charge& CHR,
-               const ModulePW::PW_Basis* pw,
-               ModuleSymmetry::Symmetry& symm) const;
+    void
+    begin(const int& spin_now, const Charge& CHR, const ModulePW::PW_Basis* pw, ModuleSymmetry::Symmetry& symm) const;
 
     void begin(const int& spin_now,
                double** rho,
@@ -42,14 +37,11 @@ class Symmetry_rho
 
   private:
     // in real space:
-    void psymm(double* rho_part,
-               const ModulePW::PW_Basis* pw,
-               Parallel_Grid& Pgrid,
-               ModuleSymmetry::Symmetry& symm) const;
+    void
+    psymm(double* rho_part, const ModulePW::PW_Basis* pw, Parallel_Grid& Pgrid, ModuleSymmetry::Symmetry& symm) const;
     // in reciprocal space:
-    void psymmg(std::complex<double>* rhog_part,
-                const ModulePW::PW_Basis* rho_basis,
-                ModuleSymmetry::Symmetry& symm) const;
+    void
+    psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis* rho_basis, ModuleSymmetry::Symmetry& symm) const;
 #ifdef __MPI
     void reduce_to_fullrhog(const ModulePW::PW_Basis* rho_basis,
                             std::complex<double>* rhogtot,

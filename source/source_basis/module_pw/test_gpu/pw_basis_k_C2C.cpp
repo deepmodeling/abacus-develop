@@ -11,15 +11,13 @@
 
 using namespace std;
 template <typename DataType, typename DeviceType>
-struct TypePair
-{
+struct TypePair {
     using T = DataType;
     using Device = DeviceType;
 };
 
 template <typename TypePair>
-class PW_BASIS_K_GPU_TEST : public ::testing::Test
-{
+class PW_BASIS_K_GPU_TEST : public ::testing::Test {
   public:
     using T = typename TypePair::T;
     using Device = typename TypePair::Device;
@@ -32,8 +30,7 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     complex<T>* h_rhog = nullptr;
     complex<T>* h_rhogout = nullptr;
     complex<T>* h_rhor = nullptr;
-    void init(ModulePW::PW_Basis_K& pwtest)
-    {
+    void init(ModulePW::PW_Basis_K& pwtest) {
         ModuleBase::Matrix3 latvec(1, 1, 0, 0, 1, 1, 0, 0, 2);
         T wfcecut;
         T lat0 = 2.2;
@@ -74,44 +71,34 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
         G = GT.Transpose();
         GGT = G * GT;
         tmp = new complex<T>[nx * ny * nz];
-        for (int ik = 0; ik < nks; ik++)
-        {
+        for (int ik = 0; ik < nks; ik++) {
             int npwk = pwtest.npwk[ik];
             ModuleBase::Vector3<double> kk = kvec_d[ik];
-            if (rank_in_pool == 0)
-            {
-                for (int ix = 0; ix < nx; ++ix)
-                {
+            if (rank_in_pool == 0) {
+                for (int ix = 0; ix < nx; ++ix) {
                     const T vx = ix - int(nx / 2);
-                    for (int iy = 0; iy < ny; ++iy)
-                    {
+                    for (int iy = 0; iy < ny; ++iy) {
                         const int offset = (ix * ny + iy) * nz;
                         const T vy = iy - int(ny / 2);
-                        for (int iz = 0; iz < nz; ++iz)
-                        {
+                        for (int iz = 0; iz < nz; ++iz) {
                             tmp[offset + iz] = 0.0;
                             T vz = iz - int(nz / 2);
                             ModuleBase::Vector3<double> v(vx, vy, vz);
                             T modulus = (v + kk) * (GGT * v);
-                            if (modulus <= ggecut)
-                            {
+                            if (modulus <= ggecut) {
                                 tmp[offset + iz] = 1.0 / (modulus + 1);
-                                if (vy > 0)
-                                {
-                                    tmp[offset + iz]
-                                        += std::complex<T>(0, 1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
-                                }
-                                else if (vy < 0)
-                                {
-                                    tmp[offset + iz]
-                                        -= std::complex<T>(0, 1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
+                                if (vy > 0) {
+                                    tmp[offset + iz] +=
+                                        std::complex<T>(0, 1.0) / (std::abs(static_cast<T>(v.x) + 1) + 1);
+                                } else if (vy < 0) {
+                                    tmp[offset + iz] -=
+                                        std::complex<T>(0, 1.0) / (std::abs(-static_cast<T>(v.x) + 1) + 1);
                                 }
                             }
                         }
                     }
                 }
-                if (typeid(T) == typeid(double))
-                {
+                if (typeid(T) == typeid(double)) {
                     fftw_plan pp = fftw_plan_dft_3d(nx,
                                                     ny,
                                                     nz,
@@ -121,9 +108,7 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
                                                     FFTW_ESTIMATE);
                     fftw_execute(pp);
                     fftw_destroy_plan(pp);
-                }
-                else if (typeid(T) == typeid(float))
-                {
+                } else if (typeid(T) == typeid(float)) {
                     fftwf_plan pp = fftwf_plan_dft_3d(nx,
                                                       ny,
                                                       nz,
@@ -135,12 +120,10 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
                     fftwf_destroy_plan(pp);
                 }
                 ModuleBase::Vector3<T> delta_g(T(int(nx / 2)) / nx, T(int(ny / 2)) / ny, T(int(nz / 2)) / nz);
-                for (int ixy = 0; ixy < nx * ny; ++ixy)
-                {
+                for (int ixy = 0; ixy < nx * ny; ++ixy) {
                     const int ix = ixy / ny;
                     const int iy = ixy % ny;
-                    for (int iz = 0; iz < nz; ++iz)
-                    {
+                    for (int iz = 0; iz < nz; ++iz) {
                         ModuleBase::Vector3<T> real_r(ix, iy, iz);
                         T phase_im = -delta_g * real_r;
                         complex<T> phase(0, ModuleBase::TWO_PI * phase_im);
@@ -151,16 +134,12 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
 
                 h_rhog = new complex<T>[npwk];
                 h_rhogout = new complex<T>[npwk];
-                for (int ig = 0; ig < npwk; ++ig)
-                {
+                for (int ig = 0; ig < npwk; ++ig) {
                     h_rhog[ig] = 1.0 / (pwtest.getgk2(ik, ig) + 1);
                     ModuleBase::Vector3<double> f = pwtest.getgdirect(ik, ig);
-                    if (f.y > 0)
-                    {
+                    if (f.y > 0) {
                         h_rhog[ig] += std::complex<float>(0, 1.0) / (std::abs(float(f.x) + 1) + 1);
-                    }
-                    else if (f.y < 0)
-                    {
+                    } else if (f.y < 0) {
                         h_rhog[ig] -= std::complex<float>(0, 1.0) / (std::abs(float(-f.x) + 1) + 1);
                     }
                 }
@@ -179,12 +158,8 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
             }
         }
     }
-    ModulePW::PW_Basis_K* access_pw()
-    {
-        return &pwtest;
-    }
-    void TearDown() override
-    {
+    ModulePW::PW_Basis_K* access_pw() { return &pwtest; }
+    void TearDown() override {
         delete[] h_rhog;
         delete[] h_rhogout;
         delete[] h_rhor;
@@ -196,13 +171,12 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
     }
 };
 
-using MixedTypes = ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, 
-                                    TypePair<double, base_device::DEVICE_GPU> >;
+using MixedTypes =
+    ::testing::Types<TypePair<float, base_device::DEVICE_GPU>, TypePair<double, base_device::DEVICE_GPU>>;
 
 TYPED_TEST_CASE(PW_BASIS_K_GPU_TEST, MixedTypes);
 
-TYPED_TEST(PW_BASIS_K_GPU_TEST, Mixing)
-{
+TYPED_TEST(PW_BASIS_K_GPU_TEST, Mixing) {
     using T = typename TestFixture::T;
     using Device = typename TestFixture::Device;
     ModulePW::PW_Basis_K pwtest;
@@ -216,39 +190,30 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, Mixing)
     const int nz = pwtest.nz;
     const int nplane = pwtest.nplane;
     const int npwk = pwtest.npwk[0];
-    for (int ixy = 0; ixy < nx * ny; ++ixy)
-    {
+    for (int ixy = 0; ixy < nx * ny; ++ixy) {
         const int offset = ixy * nz + startiz;
         const int startz = ixy * nplane;
-        for (int iz = 0; iz < nplane; ++iz)
-        {
+        for (int iz = 0; iz < nplane; ++iz) {
             EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz].real(), 1e-4);
         }
     }
-    for (int ig = 0; ig < npwk; ++ig)
-    {
+    for (int ig = 0; ig < npwk; ++ig) {
         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
     }
 }
 
-TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble)
-{
+TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble) {
     using T = typename TestFixture::T;
     using Device = typename TestFixture::Device;
     ModulePW::PW_Basis_K pwtest;
     pwtest.set_device("gpu");
     pwtest.set_precision("mixing");
-    if (typeid(T) == typeid(float))
-    {
+    if (typeid(T) == typeid(float)) {
         pwtest.fft_bundle.setfft("gpu", "single");
-    }
-    else if (typeid(T) == typeid(double))
-    {
+    } else if (typeid(T) == typeid(double)) {
         pwtest.fft_bundle.setfft("gpu", "double");
-    }
-    else
-    {
+    } else {
         cout << "Error: Unsupported type" << endl;
         return;
     }
@@ -258,19 +223,17 @@ TYPED_TEST(PW_BASIS_K_GPU_TEST, FloatDouble)
     const int ny = pwtest.ny;
     const int nz = pwtest.nz;
     const int nplane = pwtest.nplane;
-    const int npwk = pwtest.npwk[0];;
-    for (int ixy = 0; ixy < nx * ny; ++ixy)
-    {
+    const int npwk = pwtest.npwk[0];
+    ;
+    for (int ixy = 0; ixy < nx * ny; ++ixy) {
         const int offset = ixy * nz + startiz;
         const int startz = ixy * nplane;
-        for (int iz = 0; iz < nplane; ++iz)
-        {
+        for (int iz = 0; iz < nplane; ++iz) {
             EXPECT_NEAR(this->tmp[offset + iz].real(), this->h_rhor[startz + iz].real(), 1e-4);
         }
     }
 
-    for (int ig = 0; ig < npwk; ++ig)
-    {
+    for (int ig = 0; ig < npwk; ++ig) {
         EXPECT_NEAR(this->h_rhog[ig].real(), this->h_rhogout[ig].real(), 1e-4);
         EXPECT_NEAR(this->h_rhog[ig].imag(), this->h_rhogout[ig].imag(), 1e-4);
     }

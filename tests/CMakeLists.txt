@@ -11,5 +11,5 @@ add_subdirectory(10_others)
 add_subdirectory(11_PW_GPU)
 
 if(ENABLE_MLALGO)
-	add_subdirectory(09_DeePKS)
+  add_subdirectory(09_DeePKS)
 endif()

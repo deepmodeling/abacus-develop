@@ -6,27 +6,17 @@
 
 #include <vector>
 
-namespace elecstate
-{
+namespace elecstate {
 template <typename TK>
-class ElecStateLCAO : public ElecState
-{
+class ElecStateLCAO : public ElecState {
   public:
-    ElecStateLCAO()
-    {
-    } // will be called by ElecStateLCAO_TDDFT
-    ElecStateLCAO(Charge* chr_in,
-                  const K_Vectors* klist_in,
-                  int nks_in,
-                  ModulePW::PW_Basis_Big* bigpw_in)
-    {
+    ElecStateLCAO() {} // will be called by ElecStateLCAO_TDDFT
+    ElecStateLCAO(Charge* chr_in, const K_Vectors* klist_in, int nks_in, ModulePW::PW_Basis_Big* bigpw_in) {
         init_ks(chr_in, klist_in, nks_in, bigpw_in);
         this->classname = "ElecStateLCAO";
     }
 
-    virtual ~ElecStateLCAO()
-    {
-    }
+    virtual ~ElecStateLCAO() {}
 
     // update charge density for next scf step
     // void getNewRho() override;
@@ -44,10 +34,7 @@ class ElecStateLCAO : public ElecState
      * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be
      * stored in DensityMatrix::pexsi_EDM
      */
-	void dm2rho(std::vector<TK*> pexsi_DM, 
-			std::vector<TK*> pexsi_EDM, 
-			DensityMatrix<TK, double>* dm);
-
+    void dm2rho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM, DensityMatrix<TK, double>* dm);
 };
 
 template <typename TK>

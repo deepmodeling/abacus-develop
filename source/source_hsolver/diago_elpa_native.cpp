@@ -10,30 +10,21 @@
 #include "source_hsolver/module_genelpa/elpa_new.h"
 #include "omp.h"
 
-namespace hsolver
-{
+namespace hsolver {
 #ifdef __MPI
 template <typename T>
-MPI_Comm DiagoElpaNative<T>::setmpicomm()
-{
-    if (this->elpa_num_thread == -1)
-    {
+MPI_Comm DiagoElpaNative<T>::setmpicomm() {
+    if (this->elpa_num_thread == -1) {
         return MPI_COMM_WORLD;
-    }
-    else
-    {
+    } else {
         int _num = 0;
         MPI_Comm_size(MPI_COMM_WORLD, &_num);
-        if (elpa_num_thread > _num || elpa_num_thread <= 0)
-        {
+        if (elpa_num_thread > _num || elpa_num_thread <= 0) {
             return MPI_COMM_WORLD;
-        }
-        else
-        {
+        } else {
             lastmpinum++;
             int* _ranks = new int[elpa_num_thread];
-            for (int i = 0; i < elpa_num_thread; i++)
-            {
+            for (int i = 0; i < elpa_num_thread; i++) {
                 _ranks[i] = (lastmpinum + i) % _num;
             }
             MPI_Group _tempgroup, _oldgroup;
@@ -54,8 +45,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
                                    hamilt::MatrixBlock<T>& s_mat,
                                    psi::Psi<T>& psi,
                                    Real* eigenvalue_in,
-                                   MPI_Comm& comm)
-{
+                                   MPI_Comm& comm) {
 
     ModuleBase::timer::start("DiagoElpaNative", "elpa_solve");
 
@@ -73,8 +63,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
     std::vector<T> eigenvectors(narows * nacols);
 
-    if (elpa_init(20210430) != ELPA_OK)
-    {
+    if (elpa_init(20210430) != ELPA_OK) {
         fprintf(stderr, "Error: ELPA API version not supported");
     }
 
@@ -107,8 +96,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     #define ELPA_WITH_SYCL_GPU_VERSION 0
  */
 #if ELPA_WITH_NVIDIA_GPU_VERSION
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         elpa_set(handle, "nvidia-gpu", 1, &success);
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);
         elpa_setup_gpu(handle);
@@ -126,13 +114,10 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     elpa_uninit(&success);
 
     ModuleBase::timer::end("DiagoElpaNative", "elpa_solve");
-    if (std::is_same<T, double>::value)
-    {
+    if (std::is_same<T, double>::value) {
         // for gamma only, the decomposed s_mat will be reused
         this->DecomposedState = 1;
-    }
-    else
-    {
+    } else {
         // for k pointer, the decomposed s_mat can not be reused
         this->DecomposedState = 0;
     }
@@ -145,8 +130,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 #endif
 
 template <typename T>
-void DiagoElpaNative<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
-{
+void DiagoElpaNative<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpaNative", "diag");
 #ifdef __MPI
     hamilt::MatrixBlock<T> h_mat, s_mat;

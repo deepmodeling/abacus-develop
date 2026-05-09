@@ -9,21 +9,17 @@
 #include "source_estate/read_pseudo.h"
 
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-LCAO_Orbitals::LCAO_Orbitals(){}
-LCAO_Orbitals::~LCAO_Orbitals(){}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
-	this->tot_mag = 0.0;
-	this->abs_mag = 0.0;
-	this->start_mag = nullptr;
+Magnetism::Magnetism() {
+    this->tot_mag = 0.0;
+    this->abs_mag = 0.0;
+    this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-	delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 
 /************************************************
  *  unit test of write_orb_info
@@ -34,9 +30,7 @@ Magnetism::~Magnetism()
  *   - write_orb_info()
  */
 
-
-TEST(OrbInfo,WriteOrbInfo)
-{
+TEST(OrbInfo, WriteOrbInfo) {
     UnitCell* ucell = new UnitCell;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
@@ -45,18 +39,18 @@ TEST(OrbInfo,WriteOrbInfo)
     std::ofstream ofs;
     ofs.open("running.log");
     PARAM.sys.global_out_dir = "./";
-	PARAM.input.pseudo_rcut = 15.0;
+    PARAM.input.pseudo_rcut = 15.0;
     PARAM.input.lspinorb = false;
-	PARAM.input.nspin = 1;
+    PARAM.input.nspin = 1;
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
     PARAM.sys.nlocal = 18;
-    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
-    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
+    elecstate::cal_nwfc(ofs, *ucell, ucell->atoms);
     ModuleIO::write_orb_info(ucell);
     ofs.close();
     std::ifstream ifs("Orbital");
-    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("#io    spec    l    m    z  sym"));
     EXPECT_THAT(str, testing::HasSubstr("0      Si    0    0    1              s"));
     EXPECT_THAT(str, testing::HasSubstr("0      Si    2    4    1            dxy"));
@@ -69,13 +63,11 @@ TEST(OrbInfo,WriteOrbInfo)
 
 #ifdef __MPI
 #include "mpi.h"
-int main(int argc, char **argv)
-{
-
+int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
@@ -85,5 +77,3 @@ int main(int argc, char **argv)
     return result;
 }
 #endif
-
-

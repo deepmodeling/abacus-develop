@@ -3,15 +3,12 @@
 namespace hamilt {
 
 template <typename FPTYPE>
-struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
-{
-    void operator()(const base_device::DEVICE_CPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in)
-    {
+struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU> {
+    void operator()(const base_device::DEVICE_CPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ir = 0; ir < size; ++ir)
-        {
+        for (int ir = 0; ir < size; ++ir) {
             out[ir] *= in[ir];
         }
     }
@@ -20,20 +17,15 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& size,
                     std::complex<FPTYPE>* out,
                     std::complex<FPTYPE>* out1,
-                    const FPTYPE** in)
-    {
+                    const FPTYPE** in) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
         for (int ir = 0; ir < size; ir++) {
-            auto sup = out[ir] * (in[0][ir] + in[3][ir])
-                + out1[ir]
-                        * (in[1][ir]
-                        - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-            auto sdown = out1[ir] * (in[0][ir] - in[3][ir])
-                    + out[ir]
-                        * (in[1][ir]
-                            + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
+            auto sup =
+                out[ir] * (in[0][ir] + in[3][ir]) + out1[ir] * (in[1][ir] - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
+            auto sdown =
+                out1[ir] * (in[0][ir] - in[3][ir]) + out[ir] * (in[1][ir] + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
             out[ir] = sup;
             out1[ir] = sdown;
         }
@@ -43,5 +35,4 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
 template struct veff_pw_op<float, base_device::DEVICE_CPU>;
 template struct veff_pw_op<double, base_device::DEVICE_CPU>;
 
-}  // namespace hamilt
-
+} // namespace hamilt

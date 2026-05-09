@@ -15,16 +15,16 @@ source "${SCRIPT_DIR}"/package_versions.sh
 # Check for version configuration from environment or individual package setting
 version_suffix=""
 if [[ -n "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" ]]; then
-    # Check for individual package version override
-    if echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "fftw:alt"; then
-        version_suffix="alt"
-    elif echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "fftw:main"; then
-        version_suffix="main"
-    fi
+  # Check for individual package version override
+  if echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "fftw:alt"; then
+    version_suffix="alt"
+  elif echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "fftw:main"; then
+    version_suffix="main"
+  fi
 fi
 # Fall back to global version suffix if no individual setting
 if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
-    version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
+  version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
 fi
 # Load package variables with appropriate version
 load_package_vars "fftw" "$version_suffix"
@@ -41,89 +41,89 @@ FFTW_LIBS=""
 cd "${BUILDDIR}"
 
 case "$with_fftw" in
-    __INSTALL__)
-        require_env MPI_LIBS
-        echo "==================== Installing FFTW ===================="
-        pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
-        install_lock_file="${pkg_install_dir}/install_successful"
-        if verify_checksums "${install_lock_file}"; then
-            echo "fftw-${fftw_ver} is already installed, skipping it."
-        else
-            url="http://www.fftw.org/${fftw_pkg}"
-            retrieve_package "${fftw_sha256}" "${fftw_pkg}" "${url}"
-            if [ "${PACK_RUN}" = "__TRUE__" ]; then
-                echo "--pack-run mode specified, skip installation"
-                exit 0
-            fi
-            echo "Installing from scratch into ${pkg_install_dir}"
-            [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
-            tar -xzf ${fftw_pkg}
-            cd fftw-${fftw_ver}
-            FFTW_FLAGS="--enable-openmp --enable-shared"
-            # fftw has mpi support but not compiled by default. so compile it if we build with mpi.
-            # it will create a second library to link with if needed
-            [ "${MPI_MODE}" != "no" ] && FFTW_FLAGS="--enable-mpi ${FFTW_FLAGS}"
-            if [ "${TARGET_CPU}" = "native" ]; then
-                if [ -f /proc/cpuinfo ]; then
-                    grep '\bavx\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx"
-                    grep '\bavx2\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx2"
-                    grep '\bavx512f\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx512"
-                fi
-            fi
-            # ABACUS need float version and double version fftw at the same time
-            # install float version fftw
-            echo "install float version fftw"
-            ./configure --prefix="${pkg_install_dir}" \
-                --libdir="${pkg_install_dir}/lib" \
-                --enable-float \
-                ${FFTW_FLAGS} \
-                > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-            make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-            make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
-             # install double version fftw
-            echo "clean"
-            make distclean > /dev/null 2>&1 || true
-            echo "install double version fftw"
-            ./configure --prefix="${pkg_install_dir}" \
-                --libdir="${pkg_install_dir}/lib" \
-                ${FFTW_FLAGS} \
-                > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-            make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-            make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
-            cd ..
-            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+  __INSTALL__)
+    require_env MPI_LIBS
+    echo "==================== Installing FFTW ===================="
+    pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    if verify_checksums "${install_lock_file}"; then
+      echo "fftw-${fftw_ver} is already installed, skipping it."
+    else
+      url="http://www.fftw.org/${fftw_pkg}"
+      retrieve_package "${fftw_sha256}" "${fftw_pkg}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
+      tar -xzf ${fftw_pkg}
+      cd fftw-${fftw_ver}
+      FFTW_FLAGS="--enable-openmp --enable-shared"
+      # fftw has mpi support but not compiled by default. so compile it if we build with mpi.
+      # it will create a second library to link with if needed
+      [ "${MPI_MODE}" != "no" ] && FFTW_FLAGS="--enable-mpi ${FFTW_FLAGS}"
+      if [ "${TARGET_CPU}" = "native" ]; then
+        if [ -f /proc/cpuinfo ]; then
+          grep '\bavx\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx"
+          grep '\bavx2\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx2"
+          grep '\bavx512f\b' /proc/cpuinfo 1> /dev/null && FFTW_FLAGS="${FFTW_FLAGS} --enable-avx512"
         fi
-        FFTW_CFLAGS="-I'${pkg_install_dir}/include'"
-        FFTW_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-        ;;
-    __SYSTEM__)
-        echo "==================== Finding FFTW from system paths ===================="
-        if [ "${PACK_RUN}" = "__TRUE__" ]; then
-            echo "--pack-run mode specified, skip system check"
-            exit 0
-        fi
-        check_lib -lfftw3 "FFTW"
-        check_lib -lfftw3_omp "FFTW"
-        [ "${MPI_MODE}" != "no" ] && check_lib -lfftw3_mpi "FFTW"
-        add_include_from_paths FFTW_CFLAGS "fftw3.h" FFTW_INC ${INCLUDE_PATHS}
-        add_lib_from_paths FFTW_LDFLAGS "libfftw3.*" ${LIB_PATHS}
-        ;;
-    __DONTUSE__)
-        ;;
-    *)
-        echo "==================== Linking FFTW to user paths ===================="
-        pkg_install_dir="$with_fftw"
-        check_dir "${pkg_install_dir}/lib"
-        check_dir "${pkg_install_dir}/include"
-        FFTW_CFLAGS="-I'${pkg_install_dir}/include'"
-        FFTW_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-        ;;
+      fi
+      # ABACUS need float version and double version fftw at the same time
+      # install float version fftw
+      echo "install float version fftw"
+      ./configure --prefix="${pkg_install_dir}" \
+        --libdir="${pkg_install_dir}/lib" \
+        --enable-float \
+        ${FFTW_FLAGS} \
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      # install double version fftw
+      echo "clean"
+      make distclean > /dev/null 2>&1 || true
+      echo "install double version fftw"
+      ./configure --prefix="${pkg_install_dir}" \
+        --libdir="${pkg_install_dir}/lib" \
+        ${FFTW_FLAGS} \
+        > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      cd ..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
+    FFTW_CFLAGS="-I'${pkg_install_dir}/include'"
+    FFTW_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding FFTW from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
+    fi
+    check_lib -lfftw3 "FFTW"
+    check_lib -lfftw3_omp "FFTW"
+    [ "${MPI_MODE}" != "no" ] && check_lib -lfftw3_mpi "FFTW"
+    add_include_from_paths FFTW_CFLAGS "fftw3.h" FFTW_INC ${INCLUDE_PATHS}
+    add_lib_from_paths FFTW_LDFLAGS "libfftw3.*" ${LIB_PATHS}
+    ;;
+  __DONTUSE__) ;;
+
+  *)
+    echo "==================== Linking FFTW to user paths ===================="
+    pkg_install_dir="$with_fftw"
+    check_dir "${pkg_install_dir}/lib"
+    check_dir "${pkg_install_dir}/include"
+    FFTW_CFLAGS="-I'${pkg_install_dir}/include'"
+    FFTW_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
 esac
 if [ "$with_fftw" != "__DONTUSE__" ]; then
-    [ "$MPI_MODE" != "no" ] && FFTW_LIBS="IF_MPI(-lfftw3_mpi|)"
-    FFTW_LIBS+="-lfftw3 -lfftw3_omp"
-    if [ "$with_fftw" != "__SYSTEM__" ]; then
-       cat << EOF > "${BUILDDIR}/setup_fftw"
+  [ "$MPI_MODE" != "no" ] && FFTW_LIBS="IF_MPI(-lfftw3_mpi|)"
+  FFTW_LIBS+="-lfftw3 -lfftw3_omp"
+  if [ "$with_fftw" != "__SYSTEM__" ]; then
+    cat << EOF > "${BUILDDIR}/setup_fftw"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
@@ -131,9 +131,9 @@ prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-    fi
-    # we may also want to cover FFT_SG
-    cat << EOF >> "${BUILDDIR}/setup_fftw"
+  fi
+  # we may also want to cover FFT_SG
+  cat << EOF >> "${BUILDDIR}/setup_fftw"
 export FFTW3_INCLUDES="${FFTW_CFLAGS}"
 export FFTW3_LIBS="${FFTW_LIBS}"
 export FFTW_CFLAGS="${FFTW_CFLAGS}"
@@ -146,7 +146,7 @@ export CP_LIBS="${FFTW_LIBS} \${CP_LIBS}"
 export FFTW_ROOT=${FFTW_ROOT:-${pkg_install_dir}}
 export FFTW3_ROOT=${pkg_install_dir}
 EOF
-    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
+  cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

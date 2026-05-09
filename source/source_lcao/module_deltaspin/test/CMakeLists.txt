@@ -1,25 +1,40 @@
 if(ENABLE_LCAO)
 
-AddTest(
-  TARGET MODULE_LCAO_deltaspin_basic_func_test
-  LIBS ${math_libs} base device parameter
-  SOURCES basic_test.cpp
-    ../basic_funcs.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_deltaspin_basic_func_test
+    LIBS
+    ${math_libs}
+    base
+    device
+    parameter
+    SOURCES
+    basic_test.cpp
+    ../basic_funcs.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_deltaspin_spin_constrain_test
-  LIBS ${math_libs} base device parameter
-  SOURCES spin_constrain_test.cpp
+  addtest(
+    TARGET
+    MODULE_LCAO_deltaspin_spin_constrain_test
+    LIBS
+    ${math_libs}
+    base
+    device
+    parameter
+    SOURCES
+    spin_constrain_test.cpp
     ../spin_constrain.cpp
-    ../../../source_basis/module_ao/parallel_orbitals.cpp
-)
+    ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_deltaspin_template_helpers
-  LIBS ${math_libs} base device parameter
-  SOURCES template_helpers_test.cpp
+  addtest(
+    TARGET
+    MODULE_LCAO_deltaspin_template_helpers
+    LIBS
+    ${math_libs}
+    base
+    device
+    parameter
+    SOURCES
+    template_helpers_test.cpp
     ../spin_constrain.cpp
-    ../template_helpers.cpp
-)
-endif() 
+    ../template_helpers.cpp)
+endif()

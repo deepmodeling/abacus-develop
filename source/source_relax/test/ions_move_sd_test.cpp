@@ -18,11 +18,9 @@
  *   - Ions_Move_SD::cal_tradius_sd()
  */
 
-class IonsMoveSDTest : public ::testing::Test
-{
+class IonsMoveSDTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
         Ions_Move_Basic::update_iter = 5;
@@ -30,8 +28,7 @@ class IonsMoveSDTest : public ::testing::Test
         PARAM.input.force_thr = 0.001;
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Clean up after each test
     }
 
@@ -39,8 +36,7 @@ class IonsMoveSDTest : public ::testing::Test
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(IonsMoveSDTest, TestAllocate)
-{
+TEST_F(IonsMoveSDTest, TestAllocate) {
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
 
@@ -50,15 +46,13 @@ TEST_F(IonsMoveSDTest, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(IonsMoveSDTest, TestAllocateWithZeroDimension)
-{
+TEST_F(IonsMoveSDTest, TestAllocateWithZeroDimension) {
     Ions_Move_Basic::dim = 0;
     ASSERT_DEATH(im_sd.allocate(), "");
 }
 
 // Check that the arrays are correctly initialized to 0
-TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
-{
+TEST_F(IonsMoveSDTest, TestAllocateAndInitialize) {
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
 
@@ -70,8 +64,7 @@ TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
 }
 
 // Test function start() when converged
-TEST_F(IonsMoveSDTest, TestStartConverged)
-{
+TEST_F(IonsMoveSDTest, TestStartConverged) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = true;
@@ -110,8 +103,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 }
 
 // Test function start() when nor converged
-TEST_F(IonsMoveSDTest, TestStartNotConverged)
-{
+TEST_F(IonsMoveSDTest, TestStartNotConverged) {
     // setup data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = true;
@@ -119,14 +111,11 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
     double etot = 0.0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
+    for (int it = 0; it < ucell.ntype; it++) {
         Atom* atom = &ucell.atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            for (int ik = 0; ik < 3; ++ik)
-            {
-                atom->tau[ia][ik] = (ik + 1)/3;
+        for (int ia = 0; ia < atom->na; ia++) {
+            for (int ik = 0; ik < 3; ++ik) {
+                atom->tau[ia][ik] = (ik + 1) / 3;
                 atom->mbl[ia][ik] = 1;
             }
         }
@@ -165,8 +154,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 }
 
 // Test function cal_tradius_sd() case 1
-TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
-{
+TEST_F(IonsMoveSDTest, CalTradiusSdCase1) {
     // setup data
     Ions_Move_Basic::istep = 1;
     PARAM.input.out_level = "ie";
@@ -183,8 +171,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 }
 
 // Test function cal_tradius_sd() case 2
-TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
-{
+TEST_F(IonsMoveSDTest, CalTradiusSdCase2) {
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = -1.0;
@@ -198,8 +185,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 }
 
 // Test function cal_tradius_sd() case 3
-TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
-{
+TEST_F(IonsMoveSDTest, CalTradiusSdCase3) {
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = 1.0;
@@ -213,8 +199,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 }
 
 // Test function cal_tradius_sd() warning quit
-TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
-{
+TEST_F(IonsMoveSDTest, CalTradiusWraningQuit) {
     // setup data
     Ions_Move_Basic::istep = 0;
 

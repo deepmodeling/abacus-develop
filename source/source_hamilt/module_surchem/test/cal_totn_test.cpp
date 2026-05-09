@@ -21,15 +21,13 @@
  *     - calculate charges induced by the implicit solvent
  */
 
-class cal_totn_test : public testing::Test
-{
+class cal_totn_test : public testing::Test {
   protected:
     surchem solvent_model;
     UnitCell ucell;
 };
 
-TEST_F(cal_totn_test, cal_totn)
-{
+TEST_F(cal_totn_test, cal_totn) {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
@@ -75,15 +73,13 @@ TEST_F(cal_totn_test, cal_totn)
     double* vloc = new double[nrxx];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
 
-    for (int i = 0; i < npw; i++)
-    {
+    for (int i = 0; i < npw; i++) {
         Porter_g[i] = 0.1;
     }
     vloc[0] = -0.5593041647;
     vloc[1] = -0.3305673229;
     vloc[2] = -0.1228953775;
-    for (int i = 3; i < nrxx; i++)
-    {
+    for (int i = 3; i < nrxx; i++) {
         vloc[i] = 0.1;
     }
 
@@ -98,13 +94,12 @@ TEST_F(cal_totn_test, cal_totn)
     delete[] vloc;
 }
 
-TEST_F(cal_totn_test, induced_charge)
-{
+TEST_F(cal_totn_test, induced_charge) {
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
     Setcell::setupcell(ucell);
-    
+
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     ModuleBase::Matrix3 latvec;
     int nx, ny, nz; // f*G
@@ -145,8 +140,7 @@ TEST_F(cal_totn_test, induced_charge)
     EXPECT_NEAR(induced_charge.imag(), -1.4135417993e-06, 1e-9);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);

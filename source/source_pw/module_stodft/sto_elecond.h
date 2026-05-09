@@ -7,8 +7,7 @@
 #include "source_pw/module_stodft/sto_wf.h"
 
 template <typename FPTYPE, typename Device>
-class Sto_EleCond : protected EleCond<FPTYPE, Device>
-{
+class Sto_EleCond : protected EleCond<FPTYPE, Device> {
   public:
 #ifdef __ENABLE_FLOAT_FFTW
     using lowTYPE = float; // Here we use float to accelerate the calculation, which is enough for the accuracy
@@ -24,8 +23,10 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     using delmem_lcomplex_op = base_device::memory::delete_memory_op<std::complex<lowTYPE>, Device>;
 #endif
     using cpymem_lcomplex_op = base_device::memory::synchronize_memory_op<std::complex<lowTYPE>, Device, Device>;
-    using castmem_lcomplex_op = base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
+    using castmem_lcomplex_op =
+        base_device::memory::cast_memory_op<std::complex<lowTYPE>, std::complex<FPTYPE>, Device, Device>;
     using cpymem_complex_op = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, Device>;
+
   public:
     Sto_EleCond(UnitCell* p_ucell_in,
                 K_Vectors* p_kv_in,
@@ -36,9 +37,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
                 hamilt::Hamilt<std::complex<FPTYPE>, Device>* p_hamilt_in,
                 StoChe<FPTYPE, Device>& stoche,
                 Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf_in);
-    ~Sto_EleCond(){
-        delete hamilt_sto_;
-    };
+    ~Sto_EleCond() { delete hamilt_sto_; };
     /**
      * @brief Set the N order of Chebyshev expansion for conductivities
      *        It will change class member : fd_nche, cond_nche

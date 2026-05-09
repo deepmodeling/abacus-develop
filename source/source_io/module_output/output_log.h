@@ -7,14 +7,15 @@
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /// @brief output if is convergence and energy after scf
 /// @param convergence if is convergence
 /// @param energy the total energy in Ry
 /// @param ofs_running the output stream
-void output_convergence_after_scf(const bool&convergence, double& energy, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_convergence_after_scf(const bool& convergence,
+                                  double& energy,
+                                  std::ofstream& ofs_running = GlobalV::ofs_running);
 
 /// @brief output after relaxation
 /// @param conv_ion if is convergence for ions
@@ -26,7 +27,7 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
 /// @param convergence if is convergence
 /// @param efermi
 /// @param ofs_running the output stream
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_efermi(const bool& convergence, double& efermi, std::ofstream& ofs_running = GlobalV::ofs_running);
 
 /// @brief calculate and output the vacuum level
 /// We first determine the vacuum direction, then get the vacuum position based on the minimum of charge density,
@@ -64,11 +65,11 @@ void print_force(std::ofstream& ofs,
 /// @param name stress term name
 /// @param f stress components
 /// @param ry true if the unit of force is a.u.
-void print_stress(const std::string& name, 
-		const ModuleBase::matrix& scs, 
-		const bool screen, 
-		const bool ry,
-		std::ofstream &ofs);
+void print_stress(const std::string& name,
+                  const ModuleBase::matrix& scs,
+                  const bool screen,
+                  const bool ry,
+                  std::ofstream& ofs);
 
 /// @brief write head for scf iteration
 /// @param ofs_running output stream
@@ -83,7 +84,11 @@ void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, c
 /// @param estep the electron step
 /// @param iter the scf iteration step
 /// @param basisname basis set name
-void write_head_td(std::ofstream& ofs_running, const int& istep, const int& estep, const int& iter, const std::string& basisname);
+void write_head_td(std::ofstream& ofs_running,
+                   const int& istep,
+                   const int& estep,
+                   const int& iter,
+                   const std::string& basisname);
 } // namespace ModuleIO
 
 #endif

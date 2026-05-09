@@ -12,8 +12,7 @@
 
 #include <complex>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 /**
  *  @brief compute H(t+dt/2)

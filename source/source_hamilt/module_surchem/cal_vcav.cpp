@@ -5,30 +5,28 @@
 #include "surchem.h"
 
 void lapl_rho(const double& tpiba2,
-              const std::complex<double>* rhog, 
-              double* lapn, 
-              const ModulePW::PW_Basis* rho_basis)
-{
-    std::complex<double> *gdrtmpg = new std::complex<double>[rho_basis->npw];
+              const std::complex<double>* rhog,
+              double* lapn,
+              const ModulePW::PW_Basis* rho_basis) {
+    std::complex<double>* gdrtmpg = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(lapn, rho_basis->nrxx);
 
-    std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
+    std::complex<double>* aux = new std::complex<double>[rho_basis->nmaxgr];
 
     // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
     for (int ig = 0; ig < rho_basis->npw; ig++) {
         gdrtmpg[ig] = rhog[ig];
     }
-    
-    for(int i = 0 ; i < 3 ; ++i)
-    {
-        // calculate the charge density gradient in reciprocal space.        
+
+    for (int i = 0; i < 3; ++i) {
+        // calculate the charge density gradient in reciprocal space.
         for (int ig = 0; ig < rho_basis->npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
         }
-        
+
         // bring the gdr from G --> R
         rho_basis->recip2real(aux, aux);
-        
+
         // remember to multily 2pi/a0, which belongs to G vectors.
         for (int ir = 0; ir < rho_basis->nrxx; ir++) {
             lapn[ir] -= aux[ir].real() * tpiba2;
@@ -41,10 +39,9 @@ void lapl_rho(const double& tpiba2,
 
 // calculates first derivative of the shape function in realspace
 // exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )/n
-void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime)
-{
+void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime) {
 
-    double *ps_totn_real = new double[rho_basis->nrxx];
+    double* ps_totn_real = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(ps_totn_real, rho_basis->nrxx);
     rho_basis->recip2real(ps_totn, ps_totn_real);
 
@@ -52,8 +49,7 @@ void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* 
     double epr_z = 0;
     double min = 1e-10;
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         epr_z = log(std::max(ps_totn_real[ir], min) / PARAM.inp.nc_k) / sqrt(2) / PARAM.inp.sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(ps_totn_real[ir], min);
     }
@@ -64,14 +60,13 @@ void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* 
 void surchem::createcavity(const UnitCell& ucell,
                            const ModulePW::PW_Basis* rho_basis,
                            const std::complex<double>* ps_totn,
-                           double* vwork)
-{
-    ModuleBase::Vector3<double> *nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+                           double* vwork) {
+    ModuleBase::Vector3<double>* nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(nablan, rho_basis->nrxx);
-    
-    double *nablan_2 = new double[rho_basis->nrxx];
-    double *sqrt_nablan_2 = new double[rho_basis->nrxx];
-    double *lapn = new double[rho_basis->nrxx];
+
+    double* nablan_2 = new double[rho_basis->nrxx];
+    double* sqrt_nablan_2 = new double[rho_basis->nrxx];
+    double* lapn = new double[rho_basis->nrxx];
 
     ModuleBase::GlobalFunc::ZEROS(nablan_2, rho_basis->nrxx);
     ModuleBase::GlobalFunc::ZEROS(sqrt_nablan_2, rho_basis->nrxx);
@@ -81,8 +76,7 @@ void surchem::createcavity(const UnitCell& ucell,
     XC_Functional::grad_rho(ps_totn, nablan, rho_basis, ucell.tpiba);
 
     // |\nabla n |^2 = nablan_2
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         nablan_2[ir] = pow(nablan[ir].x, 2) + pow(nablan[ir].y, 2) + pow(nablan[ir].z, 2);
     }
 
@@ -96,8 +90,7 @@ void surchem::createcavity(const UnitCell& ucell,
 
     double tmp = 0;
     double min = 1e-10;
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         tmp = sqrt(std::max(nablan_2[ir], min));
         vwork[ir] = vwork[ir] - (lapn[ir]) / tmp;
         sqrt_nablan_2[ir] = tmp;
@@ -107,7 +100,7 @@ void surchem::createcavity(const UnitCell& ucell,
     // term1 = gamma*A / n, where
     // gamma * A = exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )
     //-------------------------------------------------------------
-    double *term1 = new double[rho_basis->nrxx];
+    double* term1 = new double[rho_basis->nrxx];
     shape_gradn(ps_totn, rho_basis, term1);
 
     //-------------------------------------------------------------
@@ -116,8 +109,7 @@ void surchem::createcavity(const UnitCell& ucell,
     //-------------------------------------------------------------
     qs = 0;
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         qs = qs + (term1[ir]) * (sqrt_nablan_2[ir]);
 
         //   1 / |nabla n|
@@ -134,25 +126,23 @@ void surchem::createcavity(const UnitCell& ucell,
 
     //  packs the real array into a complex one
     //  to G space
-    std::complex<double> *inv_gn = new std::complex<double>[rho_basis->npw];
+    std::complex<double>* inv_gn = new std::complex<double>[rho_basis->npw];
     rho_basis->real2recip(sqrt_nablan_2, inv_gn);
-    
+
     // \nabla(1 / |\nabla n|), ggn in real space
-    ModuleBase::Vector3<double> *ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
+    ModuleBase::Vector3<double>* ggn = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     XC_Functional::grad_rho(inv_gn, ggn, rho_basis, ucell.tpiba);
 
     //-------------------------------------------------------------
     // add -(\nabla n . \nabla(1/ |\nabla n|)) to Vcav in real space
     // and multiply by term1 = gamma*A/n in real space
     //-------------------------------------------------------------
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         tmp = nablan[ir].x * ggn[ir].x + nablan[ir].y * ggn[ir].y + nablan[ir].z * ggn[ir].z;
         vwork[ir] = vwork[ir] - tmp;
     }
 
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         vwork[ir] = vwork[ir] * term1[ir] * PARAM.inp.tau;
     }
 
@@ -165,36 +155,29 @@ void surchem::createcavity(const UnitCell& ucell,
     delete[] ggn;
 }
 
-//The interface is changed to use an explicit output parameter to
-//clarify lifetime management and avoid hidden allocations.
+// The interface is changed to use an explicit output parameter to
+// clarify lifetime management and avoid hidden allocations.
 void surchem::cal_vcav(const UnitCell& ucell,
                        const ModulePW::PW_Basis* rho_basis,
                        std::complex<double>* ps_totn,
                        int nspin,
-                       ModuleBase::matrix& v)
-{
+                       ModuleBase::matrix& v) {
     ModuleBase::TITLE("surchem", "cal_vcav");
     ModuleBase::timer::start("surchem", "cal_vcav");
 
-    double *tmp_Vcav = new double[rho_basis->nrxx];
+    double* tmp_Vcav = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(tmp_Vcav, rho_basis->nrxx);
 
     createcavity(ucell, rho_basis, ps_totn, tmp_Vcav);
 
-    if (nspin == 4)
-    {
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
-        {
+    if (nspin == 4) {
+        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
             Vcav(0, ir) = tmp_Vcav[ir];
             v(0, ir) += Vcav(0, ir);
         }
-    }
-    else
-    {
-        for (int is = 0; is < nspin; is++)
-        {
-            for (int ir = 0; ir < rho_basis->nrxx; ir++)
-            {
+    } else {
+        for (int is = 0; is < nspin; is++) {
+            for (int ir = 0; ir < rho_basis->nrxx; ir++) {
                 Vcav(is, ir) = tmp_Vcav[ir];
                 v(is, ir) += Vcav(is, ir);
             }

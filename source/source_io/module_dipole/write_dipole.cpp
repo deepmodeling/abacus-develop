@@ -10,27 +10,23 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
                             const int& is,
                             const int& istep,
                             const std::string& fn,
-                            const int& precision)
-{
+                            const int& precision) {
     ModuleBase::TITLE("ModuleIO", "write_dipole");
 
     time_t start, end;
     std::ofstream ofs;
 
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         start = time(NULL);
 
         ofs.open(fn.c_str(), std::ofstream::app);
-        if (!ofs)
-        {
+        if (!ofs) {
             ModuleBase::WARNING("ModuleIO", "Can't create Charge File!");
         }
     }
 
     double bmod[3];
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         bmod[i] = prepare(ucell, i);
     }
 
@@ -40,12 +36,9 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     double lat_factor_y = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->ny;
     double lat_factor_z = ucell.lat0 * ModuleBase::BOHR_TO_A / rhopw->nz;
 
-    for (int k = 0; k < rhopw->nz; k++)
-    {
-        for (int j = 0; j < rhopw->ny; j++)
-        {
-            for (int i = 0; i < rhopw->nx; i++)
-            {
+    for (int k = 0; k < rhopw->nz; k++) {
+        for (int j = 0; j < rhopw->ny; j++) {
+            for (int i = 0; i < rhopw->nx; i++) {
                 int index = i * rhopw->ny * rhopw->nz + j * rhopw->nz + k;
                 double rho_val = rho_save[index];
 
@@ -63,13 +56,12 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     Parallel_Reduce::reduce_pool(dipole_elec_y);
     Parallel_Reduce::reduce_pool(dipole_elec_z);
 
-    ofs << istep+1 << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
+    ofs << istep + 1 << " " << dipole_elec_x << " " << dipole_elec_y << dipole_elec_z;
 #else
 
     double dipole_elec[3] = {0.0, 0.0, 0.0};
 
-    for (int ir = 0; ir < rhopw->nrxx; ++ir)
-    {
+    for (int ir = 0; ir < rhopw->nrxx; ++ir) {
         int i = ir / (rhopw->ny * rhopw->nplane);
         int j = ir / rhopw->nplane - i * rhopw->ny;
         int k = ir % rhopw->nplane + rhopw->startz_current;
@@ -85,8 +77,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     Parallel_Reduce::reduce_pool(dipole_elec[0]);
     Parallel_Reduce::reduce_pool(dipole_elec[1]);
     Parallel_Reduce::reduce_pool(dipole_elec[2]);
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         dipole_elec[i] *= ucell.lat0 / bmod[i] * ucell.omega / rhopw->nxyz;
     }
 
@@ -94,19 +85,16 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_y(t)", dipole_elec[1]);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electronic dipole moment P_elec_z(t)", dipole_elec[2]);
 
-    ofs << std::setprecision(precision) << istep+1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
+    ofs << std::setprecision(precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
         << dipole_elec[2] << std::endl;
 
     double dipole_ion[3] = {0.0};
     double dipole_sum = 0.0;
 
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int it = 0; it < ucell.ntype; ++it) {
             double sum = 0;
-            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-            {
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
                 sum += ucell.atoms[it].taud[ia][i];
             }
             dipole_ion[i] += sum * ucell.atoms[it].ncpp.zv;
@@ -119,8 +107,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ionic dipole moment P_ion_z(t)", dipole_ion[2]);
 
     double dipole[3] = {0.0};
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         dipole[i] = dipole_ion[i] + dipole_elec[i];
     }
 
@@ -134,8 +121,7 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
 
 #endif
 
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         end = time(NULL);
         ModuleBase::GlobalFunc::OUT_TIME("write_dipole", start, end);
         ofs.close();
@@ -144,30 +130,22 @@ void ModuleIO::write_dipole(const UnitCell& ucell,
     return;
 }
 
-double ModuleIO::prepare(const UnitCell& cell, int& dir)
-{
+double ModuleIO::prepare(const UnitCell& cell, int& dir) {
     double bvec[3] = {0.0};
     double bmod = 0.0;
-    if (dir == 0)
-    {
+    if (dir == 0) {
         bvec[0] = cell.G.e11;
         bvec[1] = cell.G.e12;
         bvec[2] = cell.G.e13;
-    }
-    else if (dir == 1)
-    {
+    } else if (dir == 1) {
         bvec[0] = cell.G.e21;
         bvec[1] = cell.G.e22;
         bvec[2] = cell.G.e23;
-    }
-    else if (dir == 2)
-    {
+    } else if (dir == 2) {
         bvec[0] = cell.G.e31;
         bvec[1] = cell.G.e32;
         bvec[2] = cell.G.e33;
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("ModuleIO::prepare", "direction is wrong!");
     }
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));

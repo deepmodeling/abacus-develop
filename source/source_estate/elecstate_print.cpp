@@ -9,8 +9,7 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_io/module_parameter/parameter.h"
 #include "occupy.h"
-namespace elecstate
-{
+namespace elecstate {
 /**
  * Notes on refactor of ESolver's functions
  *
@@ -23,8 +22,8 @@ namespace elecstate
  * iteration info. table header or not, rather than dividing into two functions and hard code the format.
  *
  * For nspin 1, print: ITER, ETOT, EDIFF, DRHO, TIME
- * 	   nspin 2, print: ITER, TMAG, AMAG, ETOT, EDIFF, DRHO, TIME
- * 	   nspin 4 with nlcc, print: ITER, TMAGX, TMAGY, TMAGZ, AMAG, ETOT, EDIFF, DRHO, TIME
+ *        nspin 2, print: ITER, TMAG, AMAG, ETOT, EDIFF, DRHO, TIME
+ *        nspin 4 with nlcc, print: ITER, TMAGX, TMAGY, TMAGZ, AMAG, ETOT, EDIFF, DRHO, TIME
  * xc type_id 3/5: DKIN
  *
  * Based on summary above, there are several groups of info:
@@ -45,50 +44,43 @@ void print_scf_iterinfo(const std::string& ks_solver,
                         const std::vector<double>& drho,
                         const int& wrho,
                         const double& time,
-                        const int& wtime)
-{
-    std::map<std::string, std::string> iter_header_dict
-        = {{"cg", "CG"},
-           {"cg_in_lcao", "CG"},
-           {"lapack", "LA"},
-           {"genelpa", "GE"},
-           {"elpa", "EL"},
-           {"dav", "DA"},
-           {"dav_subspace", "DS"},
-           {"scalapack_gvx", "GV"},
-           {"cusolver", "CU"},
-           {"bpcg", "BP"},
-           {"pexsi", "PE"},
-           {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+                        const int& wtime) {
+    std::map<std::string, std::string> iter_header_dict = {
+        {"cg", "CG"},
+        {"cg_in_lcao", "CG"},
+        {"lapack", "LA"},
+        {"genelpa", "GE"},
+        {"elpa", "EL"},
+        {"dav", "DA"},
+        {"dav_subspace", "DS"},
+        {"scalapack_gvx", "GV"},
+        {"cusolver", "CU"},
+        {"bpcg", "BP"},
+        {"pexsi", "PE"},
+        {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
-    std::vector<std::string> td_fmt
-        = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
+    std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) +
+                                       ".0f"}; // table data: td: GE10086
     // magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
-    for (int i = 0; i < mag.size(); i++)
-    {
+    for (int i = 0; i < mag.size(); i++) {
         th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");
     }
-    for (int i = 0; i < mag.size(); i++)
-    {
+    for (int i = 0; i < mag.size(); i++) {
         td_fmt.emplace_back(" %" + std::to_string(wmag) + ".2e");
     } // hard-code precision here
     // energies
-    for (int i = 0; i < 2; i++)
-    {
+    for (int i = 0; i < 2; i++) {
         th_fmt.emplace_back(" %" + std::to_string(wener) + "s");
     }
-    for (int i = 0; i < 2; i++)
-    {
+    for (int i = 0; i < 2; i++) {
         td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");
     }
     // densities column, size can be 1 or 2, DRHO or DRHO, DKIN
-    for (int i = 0; i < drho.size(); i++)
-    {
+    for (int i = 0; i < drho.size(); i++) {
         th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");
     }
-    for (int i = 0; i < drho.size(); i++)
-    {
+    for (int i = 0; i < drho.size(); i++) {
         td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
     }
     // time column, trivial
@@ -97,8 +89,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
     // contents
     std::vector<std::string> titles;
     std::vector<double> values;
-    switch (mag.size())
-    {
+    switch (mag.size()) {
     case 2:
         titles = {"ITER",
                   FmtCore::center("TMAG", wmag),
@@ -127,28 +118,23 @@ void print_scf_iterinfo(const std::string& ks_solver,
         values = {double(istep), etot, ediff, drho[0]};
         break;
     }
-    if (drho.size() > 1)
-    {
+    if (drho.size() > 1) {
         titles.push_back(FmtCore::center("DKIN", wrho));
         values.push_back(drho[1]);
     }
     titles.push_back(FmtCore::center("TIME/s", wtime));
     values.push_back(time);
     std::string buf;
-    if (istep == 1)
-    {
-        for (int i = 0; i < titles.size(); i++)
-        {
+    if (istep == 1) {
+        for (int i = 0; i < titles.size(); i++) {
             buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);
         }
     }
-    for (int i = 0; i < values.size(); i++)
-    {
+    for (int i = 0; i < values.size(); i++) {
         buf += FmtCore::format(td_fmt[i].c_str(), values[i]);
     }
     std::cout << buf << std::flush;
 }
-
 
 /// @brief print total free energy and other energies
 /// @param ucell: unit cell
@@ -168,8 +154,7 @@ void print_etot(const Magnetism& magnet,
                 const double& duration,
                 const double& pw_diag_thr,
                 const double& avg_iter,
-                const bool print)
-{
+                const bool print) {
     ModuleBase::TITLE("energy", "print_etot");
     const int iter = iter_in;
     const int nrxx = elec.charge->nrxx;
@@ -180,8 +165,7 @@ void print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << " Electron density deviation " << scf_thr << std::endl;
 
-    if (PARAM.inp.basis_type == "pw")
-    {
+    if (PARAM.inp.basis_type == "pw") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Diago Threshold", pw_diag_thr);
     }
 
@@ -189,10 +173,9 @@ void print_etot(const Magnetism& magnet,
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
 
-	if( (iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax )
-	{
+    if ((iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax) {
         int n_order = std::max(0, Occupy::gaussian_type);
-      
+
         //! Kohn-Sham functional energy
         titles.push_back("E_KohnSham");
         energies_Ry.push_back(elec.f_en.etot);
@@ -243,27 +226,24 @@ void print_etot(const Magnetism& magnet,
         {
             titles.push_back("E_vdwD2");
             energies_Ry.push_back(elec.f_en.evdw);
-        }
-        else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
+        } else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
         {
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(elec.f_en.evdw);
         }
 
         // mohan add 20251108
-		if (PARAM.inp.dft_plus_u)
-		{
+        if (PARAM.inp.dft_plus_u) {
             titles.push_back("E_plusU");
             energies_Ry.push_back(elec.f_en.edftu);
-		}
+        }
 
         //! hybrid functional energy
         titles.push_back("E_exx");
         energies_Ry.push_back(elec.f_en.exx);
 
         //! solvation energy
-        if (PARAM.inp.imp_sol)
-        {
+        if (PARAM.inp.imp_sol) {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(elec.f_en.esol_el);
             titles.push_back("E_sol_cav");
@@ -271,35 +251,29 @@ void print_etot(const Magnetism& magnet,
         }
 
         //! electric field energy
-        if (PARAM.inp.efield_flag)
-        {
+        if (PARAM.inp.efield_flag) {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
- 
+
         //! gate energy
-        if (PARAM.inp.gate_flag)
-        {
+        if (PARAM.inp.gate_flag) {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
         //! deepks energy
 #ifdef __MLALGO
-        if (PARAM.inp.deepks_scf)
-        {
+        if (PARAM.inp.deepks_scf) {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
         }
-        if (PARAM.inp.ml_exx)
-        {
+        if (PARAM.inp.ml_exx) {
             titles.push_back("E_ML-EXX");
             energies_Ry.push_back(elec.f_en.ml_exx);
         }
 #endif
-    }
-    else
-    {
+    } else {
         titles.push_back("E_KohnSham");
         energies_Ry.push_back(elec.f_en.etot);
         titles.push_back("E_Harris");
@@ -307,27 +281,21 @@ void print_etot(const Magnetism& magnet,
     }
 
     // print out the Fermi energy if needed
-    if (PARAM.globalv.two_fermi)
-    {
+    if (PARAM.globalv.two_fermi) {
         titles.push_back("E_Fermi_up");
         energies_Ry.push_back(elec.eferm.ef_up);
         titles.push_back("E_Fermi_dw");
         energies_Ry.push_back(elec.eferm.ef_dw);
-    }
-    else
-    {
+    } else {
         titles.push_back("E_Fermi");
         energies_Ry.push_back(elec.eferm.ef);
     }
 
     // print out the band gap if needed
-    if (!PARAM.globalv.two_fermi)
-    {
+    if (!PARAM.globalv.two_fermi) {
         titles.push_back("E_gap(k)"); // gap of given k-points
         energies_Ry.push_back(elec.bandgap);
-    }
-    else
-    {
+    } else {
         titles.push_back("E_gap_up(k)");
         energies_Ry.push_back(elec.bandgap_up);
         titles.push_back("E_gap_dw(k)");
@@ -341,37 +309,29 @@ void print_etot(const Magnetism& magnet,
     // for each SCF step, we print out energy
     FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
                    /*nrows=*/titles.size(),
-                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"},
                    /*indents=*/1,
-                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
+                   /*align=*/{/*value*/ FmtTable::Align::LEFT, /*title*/ FmtTable::Align::CENTER});
     // print out the titles
     table << titles << energies_Ry << energies_eV;
 
     GlobalV::ofs_running << table.str() << std::endl;
 
-
-    
-    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
-    {
+    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") {
         std::vector<double> mag;
-        switch (PARAM.inp.nspin)
-        {
+        switch (PARAM.inp.nspin) {
         case 2:
             mag = {magnet.tot_mag, magnet.abs_mag};
             break;
         case 4:
-            mag = {magnet.tot_mag_nc[0],
-                   magnet.tot_mag_nc[1],
-                   magnet.tot_mag_nc[2],
-                   magnet.abs_mag};
+            mag = {magnet.tot_mag_nc[0], magnet.tot_mag_nc[1], magnet.tot_mag_nc[2], magnet.abs_mag};
             break;
         default:
             mag = {};
             break;
         }
         std::vector<double> drho = {scf_thr};
-        if (XC_Functional::get_ked_flag())
-        {
+        if (XC_Functional::get_ked_flag()) {
             drho.push_back(scf_thr_kin);
         }
         elecstate::print_scf_iterinfo(PARAM.inp.ks_solver,
@@ -393,8 +353,7 @@ void print_etot(const Magnetism& magnet,
 /// @brief function to print name, value and value*Ry_to_eV
 /// @param name: name
 /// @param value: value
-void print_format(const std::string& name, const double& value)
-{
+void print_format(const std::string& name, const double& value) {
     GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
     GlobalV::ofs_running << " " << std::setw(16) << name << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;

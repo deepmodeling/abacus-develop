@@ -22,17 +22,18 @@
 // CLASS :
 // NAME :  Numerical_Basis
 //==========================================================
-class Numerical_Basis
-{
+class Numerical_Basis {
   public:
-    // this is not a good idea to construct the instance. Instead, there are many variables that CAN DEFINE the identity of this instance,
-    // these parameters should be provided in the constructor. For future refactor, I list them here:
+    // this is not a good idea to construct the instance. Instead, there are many variables that CAN DEFINE the identity
+    // of this instance, these parameters should be provided in the constructor. For future refactor, I list them here:
     // bessel_nao_*: including ecut, rcut, smearing, sigma, etc.
-    // a file name: for the function start_from_file_k, if starts from file, can construct a different instance, instead of using the same instance.
+    // a file name: for the function start_from_file_k, if starts from file, can construct a different instance, instead
+    // of using the same instance.
     Numerical_Basis();
     ~Numerical_Basis();
 
-    // void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
+    // void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const
+    // ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
     void output_overlap(const psi::Psi<std::complex<double>>& psi,
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
@@ -77,31 +78,29 @@ class Numerical_Basis
                                             const double tpiba);
 
     // gk should be in the atomic unit (Bohr)
-    ModuleBase::realArray cal_flq(const std::vector<ModuleBase::Vector3<double>> &gk,
-                                  const int ucell_lmax) const;
+    ModuleBase::realArray cal_flq(const std::vector<ModuleBase::Vector3<double>>& gk, const int ucell_lmax) const;
 
     // Ylm does not depend on the magnitude so unit is not important
-    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk,
-                                      const int ucell_lmax);
+    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>>& gk, const int ucell_lmax);
 
     // gk and the returned gpow are both in the atomic unit (Bohr)
-    static std::vector<double> cal_gpow(const std::vector<ModuleBase::Vector3<double>> &gk,
+    static std::vector<double> cal_gpow(const std::vector<ModuleBase::Vector3<double>>& gk,
                                         const double derivative_order);
 
-    static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv, const UnitCell& ucell);
+    static void
+    output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv, const UnitCell& ucell);
 
     static void output_k(std::ofstream& ofs, const K_Vectors& kv);
 
-    static void output_overlap_Q(std::ofstream& ofs,
-                                 const std::vector<ModuleBase::ComplexArray>& overlap_Q,
-                                 const K_Vectors& kv);
+    static void
+    output_overlap_Q(std::ofstream& ofs, const std::vector<ModuleBase::ComplexArray>& overlap_Q, const K_Vectors& kv);
 
     static void output_overlap_Sq(const std::string& name,
                                   std::ofstream& ofs,
                                   const std::vector<ModuleBase::ComplexArray>& overlap_Sq,
                                   const K_Vectors& kv);
 
-    static void output_overlap_V(std::ofstream &ofs, const ModuleBase::matrix &overlap_V);
+    static void output_overlap_V(std::ofstream& ofs, const ModuleBase::matrix& overlap_V);
 };
 
 #endif

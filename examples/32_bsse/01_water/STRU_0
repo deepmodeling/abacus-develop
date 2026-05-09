@@ -1,6 +1,6 @@
 ATOMIC_SPECIES
-H	1.008	H_ONCV_PBE-1.0.upf
-O	15.9994	O_ONCV_PBE-1.0.upf
+H    1.008    H_ONCV_PBE-1.0.upf
+O    15.9994    O_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
 H_gga_8au_60Ry_2s1p.orb
@@ -20,8 +20,8 @@ Cartesian    # Cartesian(Unit is LATTICE_CONSTANT)
 H
 0.5
 2
-0.9584	0.0000	0.0000	0 0 0
--0.2392	0.9281	0.0000	0 0 0
+0.9584    0.0000    0.0000    0 0 0
+-0.2392    0.9281    0.0000    0 0 0
 
 O
 0.5

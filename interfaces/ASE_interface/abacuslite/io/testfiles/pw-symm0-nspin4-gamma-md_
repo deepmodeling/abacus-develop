@@ -56,7 +56,7 @@ K-POINTS DIRECT COORDINATES
 
 
  PW ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
-total magnetism (Bohr mag/cell)	0	0	1.43092
+total magnetism (Bohr mag/cell)    0    0    1.43092
        absolute magnetism (Bohr mag/cell) = 1.46002
 
  Density error is 0.425536171685
@@ -71,7 +71,7 @@ total magnetism (Bohr mag/cell)	0	0	1.43092
 
 
  PW ALGORITHM --------------- ION=   1  ELEC=   2--------------------------------
-total magnetism (Bohr mag/cell)	0	0	1.29536921409
+total magnetism (Bohr mag/cell)    0    0    1.29536921409
        absolute magnetism (Bohr mag/cell) = 1.47327692817
 
  Density error is 0.147809332734
@@ -86,7 +86,7 @@ total magnetism (Bohr mag/cell)	0	0	1.29536921409
 
 
  PW ALGORITHM --------------- ION=   1  ELEC=   3--------------------------------
-total magnetism (Bohr mag/cell)	0	0	1.90445147148
+total magnetism (Bohr mag/cell)    0    0    1.90445147148
        absolute magnetism (Bohr mag/cell) = 1.92389538407
 
  Density error is 0.044016528552
@@ -192,7 +192,7 @@ total magnetism (Bohr mag/cell)	0	0	1.90445147148
  hsover_error=0.180000 > DRHO=0.0154165
  Origin diag ethr = 0.0100000
  New diag ethr = 8.56474e-05
-total magnetism (Bohr mag/cell)	0.00000	0.00000	1.92056
+total magnetism (Bohr mag/cell)    0.00000    0.00000    1.92056
  absolute magnetism (Bohr mag/cell)       = 1.92336
 
  Density error is 0.0450726236251
@@ -282,7 +282,7 @@ total magnetism (Bohr mag/cell)	0.00000	0.00000	1.92056
 
 
  PW ALGORITHM --------------- ION=3     ELEC=1   --------------------------------
-total magnetism (Bohr mag/cell)	0.00000	0.00000	1.95640
+total magnetism (Bohr mag/cell)    0.00000    0.00000    1.95640
  absolute magnetism (Bohr mag/cell)       = 1.95962
 
  Density error is 0.477550291489
@@ -297,7 +297,7 @@ total magnetism (Bohr mag/cell)	0.00000	0.00000	1.95640
 
 
  PW ALGORITHM --------------- ION=   3  ELEC=   2--------------------------------
-total magnetism (Bohr mag/cell)	0.00000000000	0.00000000000	1.98933318075
+total magnetism (Bohr mag/cell)    0.00000000000    0.00000000000    1.98933318075
        absolute magnetism (Bohr mag/cell) = 2.03111991516
 
  Density error is 0.175985640789
@@ -312,7 +312,7 @@ total magnetism (Bohr mag/cell)	0.00000000000	0.00000000000	1.98933318075
 
 
  PW ALGORITHM --------------- ION=   3  ELEC=   3--------------------------------
-total magnetism (Bohr mag/cell)	0.00000000000	0.00000000000	1.97493083463
+total magnetism (Bohr mag/cell)    0.00000000000    0.00000000000    1.97493083463
        absolute magnetism (Bohr mag/cell) = 2.02445029910
 
  Density error is 0.0131512819145

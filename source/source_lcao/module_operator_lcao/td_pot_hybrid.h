@@ -10,8 +10,7 @@
 #include <vector>
 #include "source_io/module_hs/cal_r_overlap_R.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __TD_POT_HYBRIDTEMPLATE
 #define __TD_POT_HYBRIDTEMPLATE
@@ -22,9 +21,7 @@ namespace hamilt
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
-class TD_pot_hybrid : public T
-{
-};
+class TD_pot_hybrid : public T {};
 
 #endif
 
@@ -34,21 +31,20 @@ class TD_pot_hybrid : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     /**
      * @brief Construct a new TD_pot_hybrid object
      */
     TD_pot_hybrid<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                      const K_Vectors* kv_in,
-                                      HContainer<TR>* hR_in,
-                                      HContainer<TR>* SR_in,
-                                      const LCAO_Orbitals& orb,
-                                      const UnitCell* ucell_in,
-                                      const std::vector<double>& orb_cutoff,
-                                      const Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor);
+                                        const K_Vectors* kv_in,
+                                        HContainer<TR>* hR_in,
+                                        HContainer<TR>* SR_in,
+                                        const LCAO_Orbitals& orb,
+                                        const UnitCell* ucell_in,
+                                        const std::vector<double>& orb_cutoff,
+                                        const Grid_Driver* GridD_in,
+                                        const TwoCenterIntegrator* intor);
 
     /**
      * @brief Destroy the TD_pot_hybrid object
@@ -60,12 +56,11 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * <phi_{\mu, 0}|-\Nabla^2|phi_{\nu, R}>
      */
     virtual void contributeHR() override;
-    //ETD
+    // ETD
     virtual void contributeHk(int ik) override;
-    //ETD
+    // ETD
 
     virtual void set_HR_fixed(void*) override;
-
 
   private:
     const UnitCell* ucell = nullptr;
@@ -81,15 +76,14 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     bool allocated = false;
 
     bool HR_fixed_done = false;
-    //tddft part
+    // tddft part
     cal_r_overlap_R* r_calculator;
-    //ETD
-    //std::vector<std::complex<double>> hk_hybrid;
-    //ETD
+    // ETD
+    // std::vector<std::complex<double>> hk_hybrid;
+    // ETD
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;
     ModuleBase::Vector3<double> Et;
-
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms

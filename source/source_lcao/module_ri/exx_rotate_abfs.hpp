@@ -9,20 +9,16 @@
 #include <vector>
 
 template <typename Tdata>
-void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
-{
+void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in) {
     ModuleBase::TITLE("Rotate_abfs", "cal_multipole");
     ModuleBase::timer::start("Rotate_abfs", "cal_multipole");
 
     this->multipole.resize(orb_in.size());
-    for (size_t T = 0; T != orb_in.size(); ++T)
-    {
+    for (size_t T = 0; T != orb_in.size(); ++T) {
         this->multipole[T].resize(orb_in[T].size());
-        for (size_t L = 0; L != orb_in[T].size(); ++L)
-        {
+        for (size_t L = 0; L != orb_in[T].size(); ++L) {
             this->multipole[T][L].resize(orb_in[T][L].size());
-            for (size_t N = 0; N != orb_in[T][L].size(); ++N)
-            {
+            for (size_t N = 0; N != orb_in[T][L].size(); ++N) {
                 const Numerical_Orbital_Lm& orb_lm = orb_in[T][L][N];
                 const int nr = orb_lm.getNr();
                 double* integrated_func = new double[nr];
@@ -38,58 +34,43 @@ void Moment_abfs<Tdata>::cal_multipole(const std::vector<std::vector<std::vector
 }
 
 template <typename Tdata>
-void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in)
-{
+void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in) {
     ModuleBase::TITLE("Rotate_abfs", "rotate_abfs");
     ModuleBase::timer::start("Rotate_abfs", "rotate_abfs");
 
     // construct tranformation matrix A
-    for (int T = 0; T != orb_in.size(); ++T)
-    {
-        for (int L = 0; L != orb_in[T].size(); ++L)
-        {
-            for (int N = 0; N != orb_in[T][L].size(); ++N)
-            {
+    for (int T = 0; T != orb_in.size(); ++T) {
+        for (int L = 0; L != orb_in[T].size(); ++L) {
+            for (int N = 0; N != orb_in[T][L].size(); ++N) {
                 Numerical_Orbital_Lm& orb_lm_old = orb_in[T][L][N];
                 Numerical_Orbital_Lm orb_lm_mod = orb_lm_old * 0.0;
                 double square = 0.0;
-                for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
-                {
+                for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2) {
                     square += this->multipole[T][L][N2] * this->multipole[T][L][N2];
                 }
                 double norm = std::sqrt(square);
                 // change abfs
-                if (N == 0)
-                {
+                if (N == 0) {
                     for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
                         orb_lm_mod += orb_in[T][L][N2] * this->multipole[T][L][N2] / norm;
-                }
-                else
-                {
-                    for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2)
-                    {
-                        if (N2 == N)
-                        {
-                            orb_lm_mod += (1.0 - this->multipole[T][L][N] * this->multipole[T][L][N2] / square)
-                                          * orb_in[T][L][N2];
-                        }
-                        else
-                        {
-                            orb_lm_mod
-                                += (-this->multipole[T][L][N] * this->multipole[T][L][N2] / square) * orb_in[T][L][N2];
+                } else {
+                    for (int N2 = 0; N2 != orb_in[T][L].size(); ++N2) {
+                        if (N2 == N) {
+                            orb_lm_mod += (1.0 - this->multipole[T][L][N] * this->multipole[T][L][N2] / square) *
+                                          orb_in[T][L][N2];
+                        } else {
+                            orb_lm_mod +=
+                                (-this->multipole[T][L][N] * this->multipole[T][L][N2] / square) * orb_in[T][L][N2];
                         }
                     }
                 }
                 orb_lm_old = orb_lm_mod;
                 // change moment
-                if (N == 0)
-                {
+                if (N == 0) {
                     this->multipole[T][L][N] = norm;
                     std::cout << "Atom type " << T << ", L " << L << ", N " << N
                               << ", multipole after rotation: " << this->multipole[T][L][N] << std::endl;
-                }
-                else
-                {
+                } else {
                     this->multipole[T][L][N] = 0.0;
                 }
             }
@@ -100,37 +81,28 @@ void Moment_abfs<Tdata>::rotate_abfs(std::vector<std::vector<std::vector<Numeric
 }
 
 template <typename Tdata>
-double Moment_abfs<Tdata>::dfact(const int& l) const
-{
+double Moment_abfs<Tdata>::dfact(const int& l) const {
     double result = 1;
-    for (int i = l; i > 1; i -= 2)
-    {
+    for (int i = l; i > 1; i -= 2) {
         result *= i;
     }
     return result;
 }
 
 template <typename Tdata>
-int Moment_abfs<Tdata>::factorial(const int& n) const
-{
-    if (n == 0)
-    {
+int Moment_abfs<Tdata>::factorial(const int& n) const {
+    if (n == 0) {
         return 1;
-    }
-    else if (n > 0)
-    {
+    } else if (n > 0) {
         return n * this->factorial(n - 1);
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("Moment_abfs::factorial", "n is out of range");
         return 0;
     }
 }
 
 template <typename Tdata>
-double Moment_abfs<Tdata>::ln_factorial(int n) const
-{
+double Moment_abfs<Tdata>::ln_factorial(int n) const {
     double res = 0.0;
     for (int i = 2; i <= n; ++i)
         res += std::log(i);
@@ -138,12 +110,11 @@ double Moment_abfs<Tdata>::ln_factorial(int n) const
 }
 
 template <typename Tdata>
-double Moment_abfs<Tdata>::cal_cl1l2(int l1, int l2) const
-{
+double Moment_abfs<Tdata>::cal_cl1l2(int l1, int l2) const {
     double result = 0.0;
     // int overflow
-    result = ModuleBase::FOUR_PI * std::sqrt(1.0 / ModuleBase::PI_HALF) * dfact(2 * l1 + 2 * l2 - 1) / dfact(2 * l1 - 1)
-             / dfact(2 * l2 - 1);
+    result = ModuleBase::FOUR_PI * std::sqrt(1.0 / ModuleBase::PI_HALF) * dfact(2 * l1 + 2 * l2 - 1) /
+             dfact(2 * l1 - 1) / dfact(2 * l2 - 1);
 
     return result;
 }
@@ -155,8 +126,7 @@ double Moment_abfs<Tdata>::sum_triple_Y_YLM_real(int l1,
                                                  int m2,                         // real m2, not index
                                                  const std::vector<double>& rly, // real Y_LM(R)
                                                  const ORB_gaunt_table& MGT,
-                                                 const double distance)
-{
+                                                 const double distance) {
     double sum = 0.0;
     const double tiny2 = 1e-10;
     const int L = l1 + l2;
@@ -164,15 +134,13 @@ double Moment_abfs<Tdata>::sum_triple_Y_YLM_real(int l1,
     const int idx2 = MGT.get_lm_index(l2, m2 + l2);
 
     // cyl(m1,m2) = sum_M C(l1,l2,L,m1,m2,M) Y_LM(R)
-    for (int M = -L; M <= L; ++M)
-    {
+    for (int M = -L; M <= L; ++M) {
         const int idxL = MGT.get_lm_index(L, M + L);
         const double C = MGT.Gaunt_Coefficients(idx1, idx2, idxL);
         const double ylm_solid = rly.at(idxL);
         const double ylm_real = (distance > tiny2) ? ylm_solid / pow(distance, l1 + l2) : ylm_solid;
 
-        if (std::abs(C) > 1e-14)
-        {
+        if (std::abs(C) > 1e-14) {
             sum += C * ylm_real;
         }
     }
@@ -188,8 +156,7 @@ void Moment_abfs<Tdata>::cal_VR(
     const std::vector<double>& orb_cutoff,
     const double Rc,
     LRI_CV<Tdata>& cv,
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
-{
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut) {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
     // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2_orb-orb11.cpp
@@ -200,8 +167,7 @@ void Moment_abfs<Tdata>::cal_VR(
 
     ORB_gaunt_table MGT0;
     int Lmax = 0;
-    for (size_t T = 0; T != orb_in.size(); ++T)
-    {
+    for (size_t T = 0; T != orb_in.size(); ++T) {
         Lmax = std::max(Lmax, static_cast<int>(orb_in[T].size()) - 1);
     }
 
@@ -214,15 +180,13 @@ void Moment_abfs<Tdata>::cal_VR(
     const auto list_A1 = list_r.second[0];
 
     auto& Vws = cv.Vws;
-    for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
-    {
+    for (size_t i0 = 0; i0 < list_A0.size(); ++i0) {
         const TA iat0 = list_A0[i0];
         const int T1 = ucell.iat2it[iat0];
         const size_t I1 = ucell.iat2ia[iat0];
         const auto& tauA = ucell.atoms[T1].tau[I1];
         const size_t sizeA = index[T1].count_size;
-        for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
-        {
+        for (size_t i1 = 0; i1 < list_A1.size(); ++i1) {
             const TA iat1 = list_A1[i1].first;
             const int T2 = ucell.iat2it[iat1];
             const size_t I2 = ucell.iat2ia[iat1];
@@ -243,10 +207,8 @@ void Moment_abfs<Tdata>::cal_VR(
                 continue;
             const auto JR = std::make_pair(iat1, R);
             auto tmp_tensor = RI::Tensor<Tdata>({sizeA, sizeB});
-            for (int L1 = 0; L1 != orb_in[T1].size(); ++L1)
-            {
-                for (int L2 = 0; L2 != orb_in[T2].size(); ++L2)
-                {
+            for (int L1 = 0; L1 != orb_in[T1].size(); ++L1) {
+                for (int L2 = 0; L2 != orb_in[T2].size(); ++L2) {
                     std::vector<double> rly;
                     // keep bohr
                     ModuleBase::Ylm::rl_sph_harm(L1 + L2,
@@ -255,11 +217,9 @@ void Moment_abfs<Tdata>::cal_VR(
                                                  (delta_R * ucell.lat0).z,
                                                  rly);
                     const double prefactor1 = std::pow(distance, L1 + L2 + 1);
-                    for (int M1 = -L1; M1 <= L1; ++M1)
-                    {
+                    for (int M1 = -L1; M1 <= L1; ++M1) {
                         const int index_M1 = M1 + L1;
-                        for (int M2 = -L2; M2 <= L2; ++M2)
-                        {
+                        for (int M2 = -L2; M2 <= L2; ++M2) {
                             const int index_M2 = M2 + L2;
                             const double prefactor = std::pow(-1, L2) * std::pow(ModuleBase::TWO_PI, 1.5) / prefactor1;
                             const double clmlm = this->cal_cl1l2(L1, L2);
@@ -272,10 +232,8 @@ void Moment_abfs<Tdata>::cal_VR(
                             const int N1_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T1][L1].size();
                             const int N2_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T2][L2].size();
 
-                            for (int N1 = 0; N1 != N1_max; ++N1)
-                            {
-                                for (int N2 = 0; N2 != N2_max; ++N2)
-                                {
+                            for (int N1 = 0; N1 != N1_max; ++N1) {
+                                for (int N2 = 0; N2 != N2_max; ++N2) {
                                     double mom1 = this->multipole[T1][L1][N1];
                                     const double mom2 = this->multipole[T2][L2][N2];
                                     // every L has only one moment!=0 after rotation (N=0)
@@ -321,33 +279,27 @@ void Moment_abfs<Tdata>::cal_VR(
                                     // tmp_tensor(iA, iB) = value * cutoff_factor;
                                     // continue;  // Skip the erfc truncation below
 
-                                    if (distance > 0.0 && width > 1.0)
-                                    {
+                                    if (distance > 0.0 && width > 1.0) {
                                         // Log-space erfc truncation (FHI-aims implementation)
                                         cutoff_factor = 0.5 * std::erfc(std::log(distance / Rc) / std::log(width));
 
                                         // Debug output for high states (check if truncation is working)
                                         static int debug_count = 0;
-                                        if (debug_count < 10 && distance > Rc * 0.9 && distance < Rc * 1.2)
-                                        {
+                                        if (debug_count < 10 && distance > Rc * 0.9 && distance < Rc * 1.2) {
                                             std::cout << "DEBUG: distance=" << distance << " Rc=" << Rc
                                                       << " cutoff_factor=" << cutoff_factor << " value=" << value
                                                       << std::endl;
                                             debug_count++;
                                         }
-                                    }
-                                    else if (distance <= 0.0)
-                                    {
+                                    } else if (distance <= 0.0) {
                                         // At r = 0, no truncation
                                         cutoff_factor = 1.0;
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         // width <= 1.0: no smooth truncation, use hard cutoff
                                         cutoff_factor = (distance < Rc) ? 1.0 : 0.0;
                                         // const double gamma = 5.0 / Rc;
-                                        // double x = gamma * distance;                           
-                                        // cutoff_factor = std::erfc(x);                                       
+                                        // double x = gamma * distance;
+                                        // cutoff_factor = std::erfc(x);
                                         // cutoff_factor = (cutoff_factor > 0) ? cutoff_factor : 0.0;
                                     }
 
@@ -380,13 +332,11 @@ void Moment_abfs<Tdata>::cal_VR(
             Vws[T1][T2][delta_R] = tmp_tensor;
             // I must contain all atoms in unit cell
             auto& target_inner = Vs_cut.at(iat0);
-            if (target_inner.find(JR) == target_inner.end())
-            {
+            if (target_inner.find(JR) == target_inner.end()) {
                 target_inner.emplace(JR, tmp_tensor);
             }
             // otherwise, warning
-            else
-            {
+            else {
                 target_inner[JR] = tmp_tensor;
                 const auto J = JR.first;
                 const auto R = JR.second;
@@ -406,8 +356,7 @@ void Moment_abfs<Tdata>::discard0_VR(
     const std::vector<double>& orb_cutoff,
     const double Rc,
     LRI_CV<Tdata>& cv,
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut)
-{
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut) {
     ModuleBase::TITLE("Rotate_abfs", "discard0_VR");
     ModuleBase::timer::start("Rotate_abfs", "discard0_VR");
 
@@ -420,15 +369,13 @@ void Moment_abfs<Tdata>::discard0_VR(
     auto& Vws = cv.Vws;
 
     // Process cv.Vws - only modify tensors in the moment method range
-    for (size_t i0 = 0; i0 < list_A0.size(); ++i0)
-    {
+    for (size_t i0 = 0; i0 < list_A0.size(); ++i0) {
         const TA iat0 = list_A0[i0];
         const int T1 = ucell.iat2it[iat0];
         const size_t I1 = ucell.iat2ia[iat0];
         const auto& tauA = ucell.atoms[T1].tau[I1];
 
-        for (size_t i1 = 0; i1 < list_A1.size(); ++i1)
-        {
+        for (size_t i1 = 0; i1 < list_A1.size(); ++i1) {
             const TA iat1 = list_A1[i1].first;
             const int T2 = ucell.iat2it[iat1];
             const size_t I2 = ucell.iat2ia[iat1];
@@ -449,40 +396,30 @@ void Moment_abfs<Tdata>::discard0_VR(
                 continue;
 
             // Check if this tensor exists in Vws
-            if (Vws.find(T1) != Vws.end() && Vws[T1].find(T2) != Vws[T1].end())
-            {
+            if (Vws.find(T1) != Vws.end() && Vws[T1].find(T2) != Vws[T1].end()) {
                 auto& delta_R_map = Vws[T1][T2];
-                if (delta_R_map.find(delta_R) != delta_R_map.end())
-                {
+                if (delta_R_map.find(delta_R) != delta_R_map.end()) {
                     RI::Tensor<Tdata>& tensor = delta_R_map[delta_R];
 
                     // Zero out elements where N1 != 0 or N2 != 0
-                    for (int L1 = 0; L1 != orb_in[T1].size(); ++L1)
-                    {
-                        for (int L2 = 0; L2 != orb_in[T2].size(); ++L2)
-                        {
-                            for (int M1 = -L1; M1 <= L1; ++M1)
-                            {
+                    for (int L1 = 0; L1 != orb_in[T1].size(); ++L1) {
+                        for (int L2 = 0; L2 != orb_in[T2].size(); ++L2) {
+                            for (int M1 = -L1; M1 <= L1; ++M1) {
                                 const int index_M1 = M1 + L1;
-                                for (int M2 = -L2; M2 <= L2; ++M2)
-                                {
+                                for (int M2 = -L2; M2 <= L2; ++M2) {
                                     const int index_M2 = M2 + L2;
 
                                     // Set all N1 != 0 or N2 != 0 elements to zero
-                                    for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1)
-                                    {
+                                    for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1) {
                                         const size_t iA = index[T1][L1][N1][index_M1];
-                                        for (int N2 = 0; N2 != orb_in[T2][L2].size(); ++N2)
-                                        {
+                                        for (int N2 = 0; N2 != orb_in[T2][L2].size(); ++N2) {
                                             const size_t iB = index[T2][L2][N2][index_M2];
                                             tensor(iA, iB) = static_cast<Tdata>(0);
                                         }
                                     }
-                                    for (int N2 = 1; N2 != orb_in[T2][L2].size(); ++N2)
-                                    {
+                                    for (int N2 = 1; N2 != orb_in[T2][L2].size(); ++N2) {
                                         const size_t iB = index[T2][L2][N2][index_M2];
-                                        for (int N1 = 0; N1 != orb_in[T1][L1].size(); ++N1)
-                                        {
+                                        for (int N1 = 0; N1 != orb_in[T1][L1].size(); ++N1) {
                                             const size_t iA = index[T1][L1][N1][index_M1];
                                             tensor(iA, iB) = static_cast<Tdata>(0);
                                         }
@@ -497,15 +434,13 @@ void Moment_abfs<Tdata>::discard0_VR(
     }
 
     // Process Vs_cut - only modify tensors in the moment method range
-    for (auto& iat_inner_map : Vs_cut)
-    {
+    for (auto& iat_inner_map: Vs_cut) {
         const TA iat0 = iat_inner_map.first;
         const int T1 = ucell.iat2it[iat0];
         const size_t I1 = ucell.iat2ia[iat0];
         const auto& tauA = ucell.atoms[T1].tau[I1];
 
-        for (auto& JR_tensor : iat_inner_map.second)
-        {
+        for (auto& JR_tensor: iat_inner_map.second) {
             const TA iat1 = JR_tensor.first.first;
             const int T2 = ucell.iat2it[iat1];
             const size_t I2 = ucell.iat2ia[iat1];
@@ -528,32 +463,24 @@ void Moment_abfs<Tdata>::discard0_VR(
             RI::Tensor<Tdata>& tensor = JR_tensor.second;
 
             // Zero out elements where N1 != 0 or N2 != 0
-            for (int L1 = 0; L1 != orb_in[T1].size(); ++L1)
-            {
-                for (int L2 = 0; L2 != orb_in[T2].size(); ++L2)
-                {
-                    for (int M1 = -L1; M1 <= L1; ++M1)
-                    {
+            for (int L1 = 0; L1 != orb_in[T1].size(); ++L1) {
+                for (int L2 = 0; L2 != orb_in[T2].size(); ++L2) {
+                    for (int M1 = -L1; M1 <= L1; ++M1) {
                         const int index_M1 = M1 + L1;
-                        for (int M2 = -L2; M2 <= L2; ++M2)
-                        {
+                        for (int M2 = -L2; M2 <= L2; ++M2) {
                             const int index_M2 = M2 + L2;
 
                             // Set all N1 != 0 or N2 != 0 elements to zero
-                            for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1)
-                            {
+                            for (int N1 = 1; N1 != orb_in[T1][L1].size(); ++N1) {
                                 const size_t iA = index[T1][L1][N1][index_M1];
-                                for (int N2 = 0; N2 != orb_in[T2][L2].size(); ++N2)
-                                {
+                                for (int N2 = 0; N2 != orb_in[T2][L2].size(); ++N2) {
                                     const size_t iB = index[T2][L2][N2][index_M2];
                                     tensor(iA, iB) = static_cast<Tdata>(0);
                                 }
                             }
-                            for (int N2 = 1; N2 != orb_in[T2][L2].size(); ++N2)
-                            {
+                            for (int N2 = 1; N2 != orb_in[T2][L2].size(); ++N2) {
                                 const size_t iB = index[T2][L2][N2][index_M2];
-                                for (int N1 = 0; N1 != orb_in[T1][L1].size(); ++N1)
-                                {
+                                for (int N1 = 0; N1 != orb_in[T1][L1].size(); ++N1) {
                                     const size_t iA = index[T1][L1][N1][index_M1];
                                     tensor(iA, iB) = static_cast<Tdata>(0);
                                 }
@@ -569,8 +496,7 @@ void Moment_abfs<Tdata>::discard0_VR(
 }
 
 template <typename Tdata>
-void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn, RI::Tensor<double>& olp, const double threshold)
-{
+void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn, RI::Tensor<double>& olp, const double threshold) {
     std::ofstream fs;
     auto format = std::scientific;
     int prec = 15;
@@ -583,10 +509,8 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn, RI::Tensor<dou
 
     fs << nr << " " << nc << " " << nnz << std::endl;
 
-    for (int i = 0; i < nr; i++)
-    {
-        for (int j = 0; j < nc; j++)
-        {
+    for (int i = 0; i < nr; i++) {
+        for (int j = 0; j < nc; j++) {
             auto v = olp(i, j);
             if (fabs(v) > threshold)
                 fs << i + 1 << " " << j + 1 << " " << std::showpoint << format << std::setprecision(prec) << v << "\n";
@@ -599,8 +523,7 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn, RI::Tensor<dou
 template <typename Tdata>
 void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn,
                                             RI::Tensor<std::complex<double>>& olp,
-                                            const double threshold)
-{
+                                            const double threshold) {
     std::ofstream fs;
     auto format = std::scientific;
     int prec = 15;
@@ -613,10 +536,8 @@ void Moment_abfs<Tdata>::out_pure_ri_tensor(const std::string fn,
 
     fs << nr << " " << nc << " " << nnz << std::endl;
 
-    for (int j = 0; j < nc; j++)
-    {
-        for (int i = 0; i < nr; i++)
-        {
+    for (int j = 0; j < nc; j++) {
+        for (int i = 0; i < nr; i++) {
             auto v = olp(i, j);
             if (fabs(v.real()) > threshold || fabs(v.imag()) > threshold)
                 fs << i + 1 << " " << j + 1 << " " << std::showpoint << format << std::setprecision(prec) << v.real()

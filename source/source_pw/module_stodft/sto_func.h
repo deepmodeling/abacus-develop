@@ -2,8 +2,7 @@
 #define STO_FUNC_H
 
 template <typename REAL>
-class Sto_Func
-{
+class Sto_Func {
   public:
     Sto_Func();
     ~Sto_Func(){};

@@ -27,14 +27,12 @@
  *   - Get matrix dimension
  */
 
-class csrFileReaderTest : public testing::Test
-{
+class csrFileReaderTest : public testing::Test {
   protected:
     std::string filename = "./support/SR.csr";
 };
 
-TEST_F(csrFileReaderTest, CsrReader)
-{
+TEST_F(csrFileReaderTest, CsrReader) {
     ModuleIO::csrFileReader<double> csr(filename);
     // Check if file is open
     EXPECT_TRUE(csr.isOpen());
@@ -71,13 +69,13 @@ TEST_F(csrFileReaderTest, CsrReader)
     // 0 0 0 10
     sparse_matrix = csr.getMatrix(0);
     sparse_matrix1 = csr.getMatrix(0, 1, 1);
-    for (const auto& element : sparse_matrix.getElements())
-    {
+    for (const auto& element: sparse_matrix.getElements()) {
         auto it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);
-        //std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second << std::endl;
+        // std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second
+        // << std::endl;
     }
     EXPECT_DOUBLE_EQ(sparse_matrix(0, 3), 4.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(1, 2), 7.0);
@@ -85,13 +83,13 @@ TEST_F(csrFileReaderTest, CsrReader)
     // the second R
     sparse_matrix = csr.getMatrix(1);
     sparse_matrix1 = csr.getMatrix(0, 0, 0);
-    for (const auto& element : sparse_matrix.getElements())
-    {
+    for (const auto& element: sparse_matrix.getElements()) {
         auto it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);
-        //std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second << std::endl;
+        // std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second
+        // << std::endl;
     }
     EXPECT_DOUBLE_EQ(sparse_matrix(2, 2), 5.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(2, 3), 6.0);

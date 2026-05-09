@@ -21,26 +21,22 @@
  */
 
 // Define a fixture for the tests
-class IonsMoveBFGSTest : public ::testing::Test
-{
+class IonsMoveBFGSTest : public ::testing::Test {
   protected:
     Ions_Move_BFGS bfgs;
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
     }
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         // Clean up after each test
     }
 };
 
 // Test the allocate() function case 1
-TEST_F(IonsMoveBFGSTest, AllocateCase1)
-{
+TEST_F(IonsMoveBFGSTest, AllocateCase1) {
     // Initilize data
     bfgs.init_done = true;
     bfgs.save_flag = true;
@@ -54,8 +50,7 @@ TEST_F(IonsMoveBFGSTest, AllocateCase1)
 }
 
 // Test the allocate() function case 2
-TEST_F(IonsMoveBFGSTest, AllocateCase2)
-{
+TEST_F(IonsMoveBFGSTest, AllocateCase2) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.save_flag = true;
@@ -69,8 +64,7 @@ TEST_F(IonsMoveBFGSTest, AllocateCase2)
 }
 
 // Test the start() function case 1
-TEST_F(IonsMoveBFGSTest, StartCase1)
-{
+TEST_F(IonsMoveBFGSTest, StartCase1) {
     // Initilize data
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
@@ -94,8 +88,7 @@ TEST_F(IonsMoveBFGSTest, StartCase1)
 }
 
 // Test the start() function case 2
-TEST_F(IonsMoveBFGSTest, StartCase2)
-{
+TEST_F(IonsMoveBFGSTest, StartCase2) {
     // Initilize data
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
@@ -107,7 +100,7 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     // Call the function being tested
     bfgs.allocate();
     GlobalV::ofs_running.open("log");
-    EXPECT_EXIT(bfgs.start(ucell, force, energy_in) , ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.start(ucell, force, energy_in), ::testing::ExitedWithCode(1), "");
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -120,16 +113,14 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
 }
 
 // Test the restart_bfgs() function case 1
-TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
-{
+TEST_F(IonsMoveBFGSTest, RestartBfgsCase1) {
     // Initilize data
     bfgs.init_done = false;
     PARAM.input.test_relax_method = 1;
     double lat0 = 1.0;
     bfgs.allocate();
     bfgs.save_flag = true;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         bfgs.move_p[i] = 1.0;
         bfgs.pos[i] = 1.0;
         bfgs.pos_p[i] = i;
@@ -159,15 +150,13 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 }
 
 // Test the restart_bfgs() function case 2
-TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
-{
+TEST_F(IonsMoveBFGSTest, RestartBfgsCase2) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
     PARAM.input.test_relax_method = 1;
     double lat0 = 1.0;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         bfgs.move_p[i] = 1.0;
         bfgs.pos[i] = i;
         bfgs.pos_p[i] = i;
@@ -179,28 +168,22 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::update_iter, 0.0);
     EXPECT_DOUBLE_EQ(bfgs.tr_min_hit, false);
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         EXPECT_DOUBLE_EQ(bfgs.pos_p[i], 0.0);
         EXPECT_DOUBLE_EQ(bfgs.grad_p[i], 0.0);
         EXPECT_DOUBLE_EQ(bfgs.move_p[i], 0.0);
-        for (int j = 0; j < Ions_Move_Basic::dim; ++j)
-        {
-            if (i == j)
-			{
-				EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 1.0);
-			}
-			else
-			{
-				EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 0.0);
-			}
+        for (int j = 0; j < Ions_Move_Basic::dim; ++j) {
+            if (i == j) {
+                EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 1.0);
+            } else {
+                EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 0.0);
+            }
         }
     }
 }
 
 // Test the bfgs_routine() function case 1
-TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
-{
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
@@ -211,8 +194,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         bfgs.move_p[i] = 0.0;
         bfgs.grad_p[i] = i;
         bfgs.pos_p[i] = i;
@@ -231,11 +213,11 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     ifs.close();
     std::remove("log");
 
-    std::string expected_ofs
-        = "                                     dE0s = 0\n                                      den = 0.1\n            "
-          "    interpolated trust radius = 0\ntrust_radius = 0\nrelax_bfgs_rmin = 1\nrelax_bfgs_rmax = -1\n "
-          "trust_radius < relax_bfgs_rmin, reset bfgs history.\n                                    istep = 0\n        "
-          "                 update iteration = 0\n";
+    std::string expected_ofs =
+        "                                     dE0s = 0\n                                      den = 0.1\n            "
+        "    interpolated trust radius = 0\ntrust_radius = 0\nrelax_bfgs_rmin = 1\nrelax_bfgs_rmax = -1\n "
+        "trust_radius < relax_bfgs_rmin, reset bfgs history.\n                                    istep = 0\n        "
+        "                 update iteration = 0\n";
     std::string expected_std = " BFGS TRUST (Bohr)    : 1\n";
 
     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
@@ -250,12 +232,10 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     EXPECT_NEAR(bfgs.move[3], -0.40451991747794525, 1e-12);
     EXPECT_NEAR(bfgs.move[4], -0.5393598899705937, 1e-12);
     EXPECT_NEAR(bfgs.move[5], -0.67419986246324215, 1e-12);
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         EXPECT_DOUBLE_EQ(bfgs.pos[i], i);
         EXPECT_DOUBLE_EQ(bfgs.grad[i], i);
-        for (int j = 0; j < Ions_Move_Basic::dim; ++j)
-        {
+        for (int j = 0; j < Ions_Move_Basic::dim; ++j) {
             if (i == j)
                 EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 1.0);
             else
@@ -265,8 +245,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
 }
 
 // Test the bfgs_routine() function case 2
-TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
-{
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
@@ -277,8 +256,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = -1.0;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         bfgs.move_p[i] = i;
         bfgs.grad_p[i] = i;
         bfgs.pos_p[i] = i;
@@ -301,7 +279,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
                                "0\n                         update iteration = 0\n";
     std::string expected_std = "";
 
-     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
 
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -313,20 +291,17 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     EXPECT_NEAR(bfgs.move[3], 0.20225995873897262, 1e-12);
     EXPECT_NEAR(bfgs.move[4], 0.26967994498529685, 1e-12);
     EXPECT_NEAR(bfgs.move[5], 0.33709993123162107, 1e-12);
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         EXPECT_DOUBLE_EQ(bfgs.pos[i], i);
         EXPECT_DOUBLE_EQ(bfgs.grad[i], i);
-        for (int j = 0; j < Ions_Move_Basic::dim; ++j)
-        {
+        for (int j = 0; j < Ions_Move_Basic::dim; ++j) {
             EXPECT_DOUBLE_EQ(bfgs.inv_hess(i, j), 0.0);
         }
     }
 }
 
 // Test the bfgs_routine() function case 3
-TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
-{
+TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3) {
     // Initilize data
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 0.9;
@@ -359,7 +334,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
     std::string expected_ofs = " check the norm of new move 410 (Bohr)\n Uphill move : resetting bfgs history\n        "
                                "                            istep = 0\n                         update iteration = 1\n";
 
-     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.2);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot, 0.9);
     EXPECT_DOUBLE_EQ(bfgs.tr_min_hit, false);
@@ -384,8 +359,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 }
 
 // Test the bfgs_routine() function warning quit 1
-TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
-{
+TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
@@ -396,8 +370,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         bfgs.move_p[i] = 0.0;
         bfgs.grad_p[i] = i;
         bfgs.pos_p[i] = i;
@@ -411,8 +384,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
 }
 
 // Test the bfgs_routine() function warning quit 2
-TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
-{
+TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2) {
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();

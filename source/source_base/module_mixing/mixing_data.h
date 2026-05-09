@@ -3,15 +3,13 @@
 #include <vector>
 
 #include "source_base/module_container/ATen/tensor.h"
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 
 /**
  * @brief data for Mixing class
  *
  */
-class Mixing_Data
-{
+class Mixing_Data {
   public:
     Mixing_Data() = default;
     /**
@@ -45,8 +43,7 @@ class Mixing_Data
      *
      */
     template <typename FPTYPE>
-    void push(const FPTYPE* data_in)
-    {
+    void push(const FPTYPE* data_in) {
         this->start = (this->start + 1) % this->ndim_tot;
         this->ndim_use = std::min(this->ndim_use + 1, this->ndim_tot);
         ++this->ndim_history;
@@ -54,8 +51,7 @@ class Mixing_Data
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (std::size_t i = 0; i < length; ++i)
-        {
+        for (std::size_t i = 0; i < length; ++i) {
             FP_startdata[i] = data_in[i];
         }
     }
@@ -64,8 +60,7 @@ class Mixing_Data
      * @brief reset mixing
      *
      */
-    void reset()
-    {
+    void reset() {
         this->ndim_use = 0;
         this->ndim_history = 0;
         this->start = -1;
@@ -75,10 +70,7 @@ class Mixing_Data
      * @brief get the index of i-th vector
      *
      */
-    int index_move(const int& n) const
-    {
-        return (n + this->start + ndim_tot) % ndim_tot;
-    }
+    int index_move(const int& n) const { return (n + this->start + ndim_tot) % ndim_tot; }
 
   public:
     // Tensor pointer to store the data

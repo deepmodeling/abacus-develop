@@ -10,8 +10,7 @@
 // qianrui create 2021-6-4
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
-{
+class Sto_Stress_PW : public Stress_Func<FPTYPE, Device> {
   public:
     Sto_Stress_PW(){};
     ~Sto_Stress_PW(){};

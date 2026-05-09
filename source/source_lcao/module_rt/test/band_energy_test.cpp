@@ -20,8 +20,7 @@
 
 #define doublethreshold 1e-8
 
-TEST(BandEnergyTest, testBandEnergy)
-{
+TEST(BandEnergyTest, testBandEnergy) {
     std::complex<double>* psi_k;
     std::complex<double>* Htmp;
     double* ekb;
@@ -59,12 +58,9 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k = new std::complex<double>[nlocal * nband];
     ekb = new double[nband];
 
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nlocal; ++j) {
+            if (i == j) {
                 Htmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
             }
         }

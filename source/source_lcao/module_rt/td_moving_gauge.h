@@ -10,11 +10,9 @@
 #include <complex>
 #include <vector>
 
-namespace module_rt
-{
+namespace module_rt {
 
-class TD_MovingGauge
-{
+class TD_MovingGauge {
   public:
     TD_MovingGauge() = default;
     ~TD_MovingGauge();

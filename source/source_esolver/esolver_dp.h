@@ -10,21 +10,17 @@
 #endif
 #endif
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
-class ESolver_DP : public ESolver
-{
+class ESolver_DP : public ESolver {
   public:
 #ifdef __DPMD
-    ESolver_DP(const std::string& pot_file) : dp(pot_file)
-    {
+    ESolver_DP(const std::string& pot_file) : dp(pot_file) {
         classname = "ESolver_DP";
         dp_file = pot_file;
     }
 #else
-    ESolver_DP(const std::string& pot_file)
-    {
+    ESolver_DP(const std::string& pot_file) {
         classname = "ESolver_DP";
         dp_file = pot_file;
     }

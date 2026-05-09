@@ -17,8 +17,7 @@
  *    It depends on nspin because the functions get_nw() and get_iwt() are related to nspin, and can
  *    be used in the LCAO Hamiltonian construction.
  */
-class CellIndex
-{
+class CellIndex {
   public:
     CellIndex() = default;
     CellIndex(const std::vector<std::string>& atomLabels_in,

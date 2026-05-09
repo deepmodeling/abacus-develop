@@ -3,13 +3,12 @@
 #include <complex>
 #include "source_base/macros.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
 #ifdef __MPI
 /**
  * @brief Wrapper function for Scalapack's generalized eigensolver routines: pdsygvx_, pzhegvx_, pssygvx_, pchegvx_.
- * 
+ *
  * @param desc the descriptor of scalapack descriptor
  * @param ncol the number of columns of the H/S matrix in current processor
  * @param nrow the number of rows of the H/S matrix in current processor
@@ -18,7 +17,7 @@ namespace hsolver
  * @param s_mat the overlap matrix
  * @param ekb the eigenvalues
  * @param wfc_2d the eigenvectors in 2D block cyclic distribution
- * 
+ *
  */
 
 template <typename T>
@@ -30,7 +29,7 @@ void pxxxgvx_diag(const int* const desc,
                   const T* const s_mat,
                   typename GetTypeReal<T>::type* const ekb,
                   T* const wfc_2d);
-#endif 
+#endif
 
 } // namespace hsolver
 

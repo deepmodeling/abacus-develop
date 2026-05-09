@@ -5,8 +5,7 @@
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
 
-namespace mtfunc
-{
+namespace mtfunc {
 // Base dsp functions
 void dspInitHandle(int id);
 void dspDestoryHandle(int id);
@@ -61,21 +60,19 @@ void zgemm_mt_(const char* transa,
                int cluster_id);
 
 void cgemm_mt_(const char* transa,
-                const char* transb,
-                const int* m,
-                const int* n,
-                const int* k,
-                const std::complex<float>* alpha,
-                const std::complex<float>* a,
-                const int* lda,
-                const std::complex<float>* b,
-                const int* ldb,
-                const std::complex<float>* beta,
-                std::complex<float>* c,
-                const int* ldc,
-                int cluster_id);
-
-
+               const char* transb,
+               const int* m,
+               const int* n,
+               const int* k,
+               const std::complex<float>* alpha,
+               const std::complex<float>* a,
+               const int* lda,
+               const std::complex<float>* b,
+               const int* ldb,
+               const std::complex<float>* beta,
+               std::complex<float>* c,
+               const int* ldc,
+               int cluster_id);
 
 void sgemv_mt_(const char* transa,
                const int* m,
@@ -205,19 +202,19 @@ void cgemm_mth_(const char* transa,
                 int cluster_id);
 
 void cgemm_pack_mth_(const char* transa,
-                    const char* transb,
-                    const int* m,
-                    const int* n,
-                    const int* k,
-                    const std::complex<float>* alpha,
-                    const std::complex<float>* a,
-                    const int* lda,
-                    const std::complex<float>* b,
-                    const int* ldb,
-                    const std::complex<float>* beta,
-                    std::complex<float>* c,
-                    const int* ldc,
-                    int cluster_id);
+                     const char* transb,
+                     const int* m,
+                     const int* n,
+                     const int* k,
+                     const std::complex<float>* alpha,
+                     const std::complex<float>* a,
+                     const int* lda,
+                     const std::complex<float>* b,
+                     const int* ldb,
+                     const std::complex<float>* beta,
+                     std::complex<float>* c,
+                     const int* ldc,
+                     int cluster_id);
 
 void sgemv_mth_(const char* transa,
                 const int* m,
@@ -276,33 +273,26 @@ void cgemv_mth_(const char* transa,
 // The next is dsp utils. It may be moved to other files if this file get too huge
 
 template <typename T>
-void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv, MPI_Comm diag_comm)
-{
+void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv, MPI_Comm diag_comm) {
 
-    using syncmem_complex_op
-        = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using syncmem_complex_op =
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 
     auto* swap = new T[notconv * nbase_x];
     auto* target = new T[notconv * nbase_x];
     syncmem_complex_op()(swap, hcc + nbase * nbase_x, notconv * nbase_x);
-    if (base_device::get_current_precision(swap) == "single")
-    {
+    if (base_device::get_current_precision(swap) == "single") {
         MPI_Reduce(swap, target, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm);
-    }
-    else
-    {
+    } else {
         MPI_Reduce(swap, target, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm);
     }
 
     syncmem_complex_op()(hcc + nbase * nbase_x, target, notconv * nbase_x);
     syncmem_complex_op()(swap, scc + nbase * nbase_x, notconv * nbase_x);
 
-    if (base_device::get_current_precision(swap) == "single")
-    {
+    if (base_device::get_current_precision(swap) == "single") {
         MPI_Reduce(swap, target, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm);
-    }
-    else
-    {
+    } else {
         MPI_Reduce(swap, target, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm);
     }
 

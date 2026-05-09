@@ -19,13 +19,11 @@
  * - Read a line to string stream
  */
 
-class FileReaderTest : public testing::Test
-{
+class FileReaderTest : public testing::Test {
   protected:
     std::ofstream ofs;
     std::string filename = "test.txt";
-    void SetUp() override
-    {
+    void SetUp() override {
         ofs.open(filename.c_str());
         // write some info to the file
         ofs << "step 0" << std::endl;
@@ -35,22 +33,17 @@ class FileReaderTest : public testing::Test
         ofs << "1 2" << std::endl;
         ofs.close();
     }
-    void TearDown() override
-    {
-        remove("test.txt");
-    }
+    void TearDown() override { remove("test.txt"); }
     std::string output;
 };
 
-TEST_F(FileReaderTest, Constructor)
-{
+TEST_F(FileReaderTest, Constructor) {
     ModuleIO::FileReader fr(filename);
     // Check if file is open
     EXPECT_TRUE(fr.isOpen());
 }
 
-TEST_F(FileReaderTest, ReadLine)
-{
+TEST_F(FileReaderTest, ReadLine) {
     ModuleIO::FileReader fr(filename);
     // Check if file is open
     EXPECT_TRUE(fr.isOpen());

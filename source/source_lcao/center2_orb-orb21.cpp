@@ -16,24 +16,19 @@ Center2_Orb::Orb21::Orb21(const Numerical_Orbital_Lm& nA1_in,
                           const Numerical_Orbital_Lm& nB_in,
                           const ModuleBase::Sph_Bessel_Recursive::D2* psb,
                           const ORB_gaunt_table& MGT_in)
-    : nA1(nA1_in), nA2(nA2_in), nB(nB_in), psb_(psb), MGT(MGT_in)
-{
-}
+    : nA1(nA1_in), nA2(nA2_in), nB(nB_in), psb_(psb), MGT(MGT_in) {}
 
-void Center2_Orb::Orb21::init_radial_table()
-{
+void Center2_Orb::Orb21::init_radial_table() {
     const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
 
     std::vector<double> nA_tmp(nA_short.getNr());
-    for (size_t ir = 0; ir != nA_tmp.size(); ++ir)
-    {
+    for (size_t ir = 0; ir != nA_tmp.size(); ++ir) {
         nA_tmp[ir] = this->nA1.getPsi(ir) * this->nA2.getPsi(ir);
     }
 
     const int LA1 = this->nA1.getL();
     const int LA2 = this->nA2.getL();
-    for (int LA = std::abs(LA1 - LA2); LA <= LA1 + LA2; ++LA)
-    {
+    for (int LA = std::abs(LA1 - LA2); LA <= LA1 + LA2; ++LA) {
         if ((LA - std::abs(LA1 - LA2)) % 2 == 1) // if LA+LB-LAB == odd, then Gaunt_Coefficients = 0
         {
             continue;
@@ -61,20 +56,17 @@ void Center2_Orb::Orb21::init_radial_table()
     }
 }
 
-void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
-{
+void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials) {
     const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
 
     std::vector<double> nA_tmp(nA_short.getNr());
-    for (size_t ir = 0; ir != nA_tmp.size(); ++ir)
-    {
+    for (size_t ir = 0; ir != nA_tmp.size(); ++ir) {
         nA_tmp[ir] = this->nA1.getPsi(ir) * this->nA2.getPsi(ir);
     }
 
     const int LA1 = this->nA1.getL();
     const int LA2 = this->nA2.getL();
-    for (int LA = std::abs(LA1 - LA2); LA <= LA1 + LA2; ++LA)
-    {
+    for (int LA = std::abs(LA1 - LA2); LA <= LA1 + LA2; ++LA) {
         if ((LA - std::abs(LA1 - LA2)) % 2 == 1) // if LA+LB-LAB == odd, then Gaunt_Coefficients = 0
         {
             continue;
@@ -106,8 +98,7 @@ double Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,
                                        const ModuleBase::Vector3<double>& RB,
                                        const int& mA1,
                                        const int& mA2,
-                                       const int& mB) const
-{
+                                       const int& mB) const {
     const int LA1 = this->nA1.getL();
     const int LA2 = this->nA2.getL();
     const int idx1 = this->MGT.get_lm_index(LA1, mA1);
@@ -116,16 +107,14 @@ double Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,
 
     double overlap = 0.0;
 
-    for (const auto& orb11: this->orb11s)
-    {
+    for (const auto& orb11: this->orb11s) {
         const int LA = orb11.first;
 
         for (int mA = 0; mA != 2 * LA + 1; ++mA)
         // const int mA=mA1+mA2;
         {
             const double Gaunt_real_A1_A2_A12 = *(Gaunt_Coefficients_ptr + this->MGT.get_lm_index(LA, mA));
-            if (0 == Gaunt_real_A1_A2_A12)
-            {
+            if (0 == Gaunt_real_A1_A2_A12) {
                 continue;
             }
 
@@ -140,8 +129,7 @@ ModuleBase::Vector3<double> Center2_Orb::Orb21::cal_grad_overlap(const ModuleBas
                                                                  const ModuleBase::Vector3<double>& RB,
                                                                  const int& mA1,
                                                                  const int& mA2,
-                                                                 const int& mB) const
-{
+                                                                 const int& mB) const {
     const int LA1 = this->nA1.getL();
     const int LA2 = this->nA2.getL();
     const int idx1 = this->MGT.get_lm_index(LA1, mA1);
@@ -150,16 +138,14 @@ ModuleBase::Vector3<double> Center2_Orb::Orb21::cal_grad_overlap(const ModuleBas
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
 
-    for (const auto& orb11: this->orb11s)
-    {
+    for (const auto& orb11: this->orb11s) {
         const int LA = orb11.first;
 
         for (int mA = 0; mA != 2 * LA + 1; ++mA)
         // const int mA=mA1+mA2;
         {
             const double Gaunt_real_A1_A2_A12 = *(Gaunt_Coefficients_ptr + this->MGT.get_lm_index(LA, mA));
-            if (0 == Gaunt_real_A1_A2_A12)
-            {
+            if (0 == Gaunt_real_A1_A2_A12) {
                 continue;
             }
 

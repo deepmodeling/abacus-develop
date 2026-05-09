@@ -22,15 +22,13 @@
  */
 
 // Define a fixture for the tests
-class LatticeChangeBasicTest : public ::testing::Test
-{
+class LatticeChangeBasicTest : public ::testing::Test {
   protected:
     ModuleBase::matrix stress;
     UnitCell ucell;
     double lat[9], grad[9], move[9];
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         // Initialize variables before each test
         stress.create(3, 3);
         // Reset mock state before each test
@@ -39,8 +37,7 @@ class LatticeChangeBasicTest : public ::testing::Test
         PARAM.input.fixed_ibrav = false;
     }
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         // Clean up after each test
         unitcell::reset_remake_cell_mock();
         PARAM.input.fixed_ibrav = false;
@@ -48,8 +45,7 @@ class LatticeChangeBasicTest : public ::testing::Test
 };
 
 // Test the setup_gradient function with fixed_axes is volume
-TEST_F(LatticeChangeBasicTest, SetupGradientVolume)
-{
+TEST_F(LatticeChangeBasicTest, SetupGradientVolume) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -98,8 +94,7 @@ TEST_F(LatticeChangeBasicTest, SetupGradientVolume)
 }
 
 // Test the setup_gradient function with fixed_axes is not volume
-TEST_F(LatticeChangeBasicTest, SetupGradientNone)
-{
+TEST_F(LatticeChangeBasicTest, SetupGradientNone) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -131,8 +126,7 @@ TEST_F(LatticeChangeBasicTest, SetupGradientNone)
     EXPECT_DOUBLE_EQ(grad[8], -90.0);
 }
 
-TEST_F(LatticeChangeBasicTest, ChangeLattice)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLattice) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -225,8 +219,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLattice)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, but not converged
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase1) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -262,8 +255,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1 && largest_grad == 0
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase2) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -299,8 +291,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, and converged
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase3) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -324,7 +315,8 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
+    std::string expected_output =
+        "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
@@ -336,8 +328,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 }
 
 // Test for check_converged when ucell.lc != 1, but not converged
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase4) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -373,8 +364,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 }
 
 // Test for check_converged when ucell.lc != 1, and largest_grad == 0
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase5) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -410,8 +400,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
 }
 
 // Test for check_converged when ucell.lc != 1, and converged
-TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
-{
+TEST_F(LatticeChangeBasicTest, CheckConvergedCase6) {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
@@ -435,7 +424,8 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
+    std::string expected_output =
+        "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
@@ -446,8 +436,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     std::remove("log");
 }
 
-TEST_F(LatticeChangeBasicTest, TerminateConverged)
-{
+TEST_F(LatticeChangeBasicTest, TerminateConverged) {
     Lattice_Change_Basic::converged = true;
     Lattice_Change_Basic::stress_step = 5;
     Lattice_Change_Basic::update_iter = 10;
@@ -467,8 +456,7 @@ TEST_F(LatticeChangeBasicTest, TerminateConverged)
     std::remove("log");
 }
 
-TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
-{
+TEST_F(LatticeChangeBasicTest, TerminateNotConverged) {
     Lattice_Change_Basic::converged = false;
 
     std::string expected_output = " the maximum number of steps has been reached.\n end of lattice optimization.\n";
@@ -485,8 +473,7 @@ TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
     std::remove("log");
 }
 
-TEST_F(LatticeChangeBasicTest, SetupEtotStressStep1)
-{
+TEST_F(LatticeChangeBasicTest, SetupEtotStressStep1) {
     Lattice_Change_Basic::stress_step = 1;
     double energy_in = 100.0;
 
@@ -497,8 +484,7 @@ TEST_F(LatticeChangeBasicTest, SetupEtotStressStep1)
     EXPECT_DOUBLE_EQ(0.0, Lattice_Change_Basic::ediff);
 }
 
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueHigherEnergy)
-{
+TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueHigherEnergy) {
     Lattice_Change_Basic::stress_step = 2;
     double energy_in = 90.0;
     Lattice_Change_Basic::etot_p = 100.0;
@@ -509,8 +495,7 @@ TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueHigherEnergy)
     EXPECT_DOUBLE_EQ(-10.0, Lattice_Change_Basic::ediff);
 }
 
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueLowerEnergy)
-{
+TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueLowerEnergy) {
     Lattice_Change_Basic::stress_step = 2;
     double energy_in = 100.0;
     Lattice_Change_Basic::etot_p = 90.0;
@@ -521,8 +506,7 @@ TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueLowerEnergy)
     EXPECT_DOUBLE_EQ(0.0, Lattice_Change_Basic::ediff);
 }
 
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementFalse)
-{
+TEST_F(LatticeChangeBasicTest, SetupEtotJudgementFalse) {
     Lattice_Change_Basic::stress_step = 2;
     double energy_in = 80.0;
     Lattice_Change_Basic::etot_p = 90.0;
@@ -540,8 +524,7 @@ TEST_F(LatticeChangeBasicTest, SetupEtotJudgementFalse)
 // ============================================================================
 
 // Test the setup_gradient function with fixed_axes = "shape"
-TEST_F(LatticeChangeBasicTest, SetupGradientShape)
-{
+TEST_F(LatticeChangeBasicTest, SetupGradientShape) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -579,8 +562,7 @@ TEST_F(LatticeChangeBasicTest, SetupGradientShape)
 }
 
 // Test volume constraint rescaling in change_lattice
-TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -630,15 +612,14 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
     EXPECT_NEAR(ucell.omega, 1000.0, 1e-8);
 
     // Check that lattice vectors were rescaled uniformly
-    double expected_scale = std::pow(1000.0 / 1331.0, 1.0/3.0); // (old_vol / new_vol)^(1/3)
+    double expected_scale = std::pow(1000.0 / 1331.0, 1.0 / 3.0); // (old_vol / new_vol)^(1/3)
     EXPECT_NEAR(ucell.latvec.e11, 1.1 * expected_scale, 1e-10);
     EXPECT_NEAR(ucell.latvec.e22, 1.1 * expected_scale, 1e-10);
     EXPECT_NEAR(ucell.latvec.e33, 1.1 * expected_scale, 1e-10);
 }
 
 // Test volume constraint with non-cubic cell
-TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -689,8 +670,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
 }
 
 // Test change_lattice without volume constraint (should change volume)
-TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -746,8 +726,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
 }
 
 // Test fixed_ibrav with simple cubic lattice
-TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -815,8 +794,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
 }
 
 // Test fixed_ibrav with FCC lattice
-TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -847,7 +825,8 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     lat[8] = 0.0;
 
     // Apply a small move
-    for (int i = 0; i < 9; i++) move[i] = 0.01 * ucell.lat0;
+    for (int i = 0; i < 9; i++)
+        move[i] = 0.01 * ucell.lat0;
 
     PARAM.input.fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
@@ -864,15 +843,12 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     // Check that lattice maintains FCC structure
     // For FCC: a1 = (-a, 0, a), a2 = (0, a, a), a3 = (-a, a, 0)
     // All should have same magnitude
-    double mag1 = std::sqrt(ucell.latvec.e11*ucell.latvec.e11 +
-                           ucell.latvec.e12*ucell.latvec.e12 +
-                           ucell.latvec.e13*ucell.latvec.e13);
-    double mag2 = std::sqrt(ucell.latvec.e21*ucell.latvec.e21 +
-                           ucell.latvec.e22*ucell.latvec.e22 +
-                           ucell.latvec.e23*ucell.latvec.e23);
-    double mag3 = std::sqrt(ucell.latvec.e31*ucell.latvec.e31 +
-                           ucell.latvec.e32*ucell.latvec.e32 +
-                           ucell.latvec.e33*ucell.latvec.e33);
+    double mag1 = std::sqrt(ucell.latvec.e11 * ucell.latvec.e11 + ucell.latvec.e12 * ucell.latvec.e12 +
+                            ucell.latvec.e13 * ucell.latvec.e13);
+    double mag2 = std::sqrt(ucell.latvec.e21 * ucell.latvec.e21 + ucell.latvec.e22 * ucell.latvec.e22 +
+                            ucell.latvec.e23 * ucell.latvec.e23);
+    double mag3 = std::sqrt(ucell.latvec.e31 * ucell.latvec.e31 + ucell.latvec.e32 * ucell.latvec.e32 +
+                            ucell.latvec.e33 * ucell.latvec.e33);
 
     EXPECT_NEAR(mag1, mag2, 1e-10);
     EXPECT_NEAR(mag2, mag3, 1e-10);
@@ -887,8 +863,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
 }
 
 // Test combination of fixed_axes = "volume" and fixed_ibrav
-TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
@@ -960,8 +935,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
 }
 
 // Test axis constraint with fixed_axes = "a"
-TEST_F(LatticeChangeBasicTest, SetupGradientAxisA)
-{
+TEST_F(LatticeChangeBasicTest, SetupGradientAxisA) {
     // Initialize variables
     ucell.lc[0] = 0; // First axis fixed
     ucell.lc[1] = 1;
@@ -997,8 +971,7 @@ TEST_F(LatticeChangeBasicTest, SetupGradientAxisA)
 }
 
 // Test that fixed axis doesn't move in change_lattice
-TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA) {
     // Initialize variables
     ucell.lc[0] = 0; // First axis fixed
     ucell.lc[1] = 1;
@@ -1059,8 +1032,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
 }
 
 // Test that remake_cell is NOT called when fixed_ibrav = false
-TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav)
-{
+TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav) {
     // Initialize variables
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;

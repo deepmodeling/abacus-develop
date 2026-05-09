@@ -2,23 +2,16 @@
 #include "global_function.h"
 #include "source_base/parallel_reduce.h"
 
-namespace ModuleBase
-{
-namespace GlobalFunc
-{
+namespace ModuleBase {
+namespace GlobalFunc {
 
-template double ddot_real(const int& dim,
-                          const std::complex<double>* psi_L,
-                          const std::complex<double>* psi_R,
-                          const bool reduce);
-template float ddot_real(const int& dim,
-                         const std::complex<float>* psi_L,
-                         const std::complex<float>* psi_R,
-                         const bool reduce);
+template double
+ddot_real(const int& dim, const std::complex<double>* psi_L, const std::complex<double>* psi_R, const bool reduce);
+template float
+ddot_real(const int& dim, const std::complex<float>* psi_L, const std::complex<float>* psi_R, const bool reduce);
 
 template <typename T>
-T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>* psi_R, const bool reduce)
-{
+T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>* psi_R, const bool reduce) {
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui modify 2021-3-14
     // Note that  ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) )

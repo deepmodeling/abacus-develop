@@ -6,23 +6,17 @@
 #include "gint.h"
 #include "gint_info.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-class Gint_rho_gpu: public Gint
-{
-    public:
-    Gint_rho_gpu(
-        const std::vector<HContainer<double>*>& dm_vec,
-        const int nspin,
-        double **rho,
-        bool is_dm_symm = true)
+class Gint_rho_gpu : public Gint {
+  public:
+    Gint_rho_gpu(const std::vector<HContainer<double>*>& dm_vec, const int nspin, double** rho, bool is_dm_symm = true)
         : dm_vec_(dm_vec), nspin_(nspin), rho_(rho), is_dm_symm_(is_dm_symm) {}
-    
+
     void cal_gint();
 
-    private:
-    template<typename Real>
+  private:
+    template <typename Real>
     void cal_gint_impl_();
 
     // input
@@ -34,7 +28,7 @@ class Gint_rho_gpu: public Gint
     const bool is_dm_symm_;
 
     // output
-    double ** rho_ = nullptr;
+    double** rho_ = nullptr;
 };
 
-}
+} // namespace ModuleGint

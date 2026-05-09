@@ -24,8 +24,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
                                 const LCAO_Orbitals& orb,
                                 const Parallel_Orbitals& pv,
                                 const Grid_Driver& GridD,
-                                torch::Tensor& gdmepsl)
-{
+                                torch::Tensor& gdmepsl) {
     ModuleBase::TITLE("DeePKS_domain", "cal_gdmepsl");
     ModuleBase::timer::start("DeePKS_domain", "cal_gdmepsl");
     // get DS_alpha_mu and S_nu_beta
@@ -53,8 +52,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
             const ModuleBase::Vector3<double>& tau2,
             const int start2,
             const int nw2_tot,
-            ModuleBase::Vector3<int> dR2)
-        {
+            ModuleBase::Vector3<int> dR2) {
             double r1[3] = {0, 0, 0};
             double r2[3] = {0, 0, 0};
             r1[0] = (tau1.x - tau0.x);
@@ -65,16 +63,14 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
             r2[2] = (tau2.z - tau0.z);
             auto row_indexes = pv.get_indexes_row(ibt1);
             auto col_indexes = pv.get_indexes_col(ibt2);
-            if (row_indexes.size() * col_indexes.size() == 0)
-            {
+            if (row_indexes.size() * col_indexes.size() == 0) {
                 return; // to next loop
             }
 
             int dRx = 0;
             int dRy = 0;
             int dRz = 0;
-            if (std::is_same<TK, std::complex<double>>::value)
-            {
+            if (std::is_same<TK, std::complex<double>>::value) {
                 dRx = (dR1 - dR2).x;
                 dRy = (dR1 - dR2).y;
                 dRz = (dR1 - dR2).z;
@@ -85,8 +81,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
 
             hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
             hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
-            if (overlap_1 == nullptr || overlap_2 == nullptr)
-            {
+            if (overlap_1 == nullptr || overlap_2 == nullptr) {
                 return; // to next loop
             }
             std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
@@ -94,41 +89,31 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
 
             assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
-            for (int i = 0; i < 3; ++i)
-            {
+            for (int i = 0; i < 3; ++i) {
                 grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
                 grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
             }
 
-            for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1)
-            {
-                for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2)
-                {
+            for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1) {
+                for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2) {
                     int ib = 0;
-                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                    {
-                        for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                        {
+                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0) {
+                        for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0) {
                             const int inl = deepks_param.inl_index[ucell.iat2it[iat]](ucell.iat2ia[iat], L0, N0);
                             const int nm = 2 * L0 + 1;
-                            for (int m1 = 0; m1 < nm; ++m1)
-                            {
-                                for (int m2 = 0; m2 < nm; ++m2)
-                                {
+                            for (int m1 = 0; m1 < nm; ++m1) {
+                                for (int m2 = 0; m2 < nm; ++m2) {
                                     int mm = 0;
-                                    for (int ipol = 0; ipol < 3; ipol++)
-                                    {
-                                        for (int jpol = ipol; jpol < 3; jpol++)
-                                        {
-                                            accessor[mm][inl][m2][m1]
-                                                += ucell.lat0 * *dm_current
-                                                   * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
-                                                      * overlap_1->get_value(row_indexes[iw1], ib + m1) * r2[ipol]);
-                                            accessor[mm][inl][m2][m1]
-                                                += ucell.lat0 * *dm_current
-                                                   * (overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                      * grad_overlap_1[jpol]->get_value(row_indexes[iw1], ib + m2)
-                                                      * r1[ipol]);
+                                    for (int ipol = 0; ipol < 3; ipol++) {
+                                        for (int jpol = ipol; jpol < 3; jpol++) {
+                                            accessor[mm][inl][m2][m1] +=
+                                                ucell.lat0 * *dm_current *
+                                                (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2) *
+                                                 overlap_1->get_value(row_indexes[iw1], ib + m1) * r2[ipol]);
+                                            accessor[mm][inl][m2][m1] +=
+                                                ucell.lat0 * *dm_current *
+                                                (overlap_2->get_value(col_indexes[iw2], ib + m1) *
+                                                 grad_overlap_1[jpol]->get_value(row_indexes[iw1], ib + m2) * r1[ipol]);
                                             mm++;
                                         }
                                     }
@@ -140,9 +125,8 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
                     assert(ib == overlap_1->get_col_size());
                     dm_current++;
                 } // iw2
-            }     // iw1
-        }
-    );
+            } // iw1
+        });
 
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * deepks_param.inlmax * nm * nm);
@@ -158,22 +142,19 @@ void DeePKS_domain::cal_gvepsl(const int nat,
                                const std::vector<torch::Tensor>& gevdm,
                                const torch::Tensor& gdmepsl,
                                torch::Tensor& gvepsl,
-                               const int rank)
-{
+                               const int rank) {
     ModuleBase::TITLE("DeePKS_domain", "cal_gvepsl");
     ModuleBase::timer::start("DeePKS_domain", "cal_gvepsl");
     // dD/d\epsilon_{\alpha\beta}, tensor vector form of gdmepsl
     std::vector<torch::Tensor> gdmepsl_vector;
     auto accessor = gdmepsl.accessor<double, 4>();
-    if (rank == 0)
-    {
+    if (rank == 0) {
         // make gdmepsl as tensor
         int nlmax = deepks_param.inlmax / nat;
-        for (int nl = 0; nl < nlmax; ++nl)
-        {
+        for (int nl = 0; nl < nlmax; ++nl) {
             int nm = 2 * deepks_param.inl2l[nl] + 1;
-            torch::Tensor gdmepsl_sliced
-                = gdmepsl.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
+            torch::Tensor gdmepsl_sliced =
+                gdmepsl.slice(1, nl, deepks_param.inlmax, nlmax).slice(2, 0, nm, 1).slice(3, 0, nm, 1);
             gdmepsl_vector.push_back(gdmepsl_sliced);
         }
         assert(gdmepsl_vector.size() == nlmax);
@@ -184,8 +165,7 @@ void DeePKS_domain::cal_gvepsl(const int nat,
         // (pdm, dim2) gvepsl_vector : b:npol * a:inl(projector) *
         // m:nm(descriptor)
         std::vector<torch::Tensor> gvepsl_vector;
-        for (int nl = 0; nl < nlmax; ++nl)
-        {
+        for (int nl = 0; nl < nlmax; ++nl) {
             gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {gdmepsl_vector[nl], gevdm[nl]}));
         }
 

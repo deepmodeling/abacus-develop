@@ -2,33 +2,22 @@
 #define PLAIN_MIXING_H_
 #include "mixing.h"
 
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 /**
  * @brief Plain mixing : rho_new = rho_in + mixing_beta * (rho_out - rho_in)
  *
  */
-class Plain_Mixing : public Mixing
-{
+class Plain_Mixing : public Mixing {
   public:
-    Plain_Mixing()
-    {
-        this->coef = std::vector<double>(1, 1.0);
-    }
-    Plain_Mixing(const double& mixing_beta) : Plain_Mixing()
-    {
-        this->mixing_beta = mixing_beta;
-    }
+    Plain_Mixing() { this->coef = std::vector<double>(1, 1.0); }
+    Plain_Mixing(const double& mixing_beta) : Plain_Mixing() { this->mixing_beta = mixing_beta; }
     virtual ~Plain_Mixing() override{};
 
     /**
      * @brief reset mixing
      *
      */
-    virtual void reset() override
-    {
-        return;
-    }
+    virtual void reset() override { return; }
 
     // explicitly introduce push_data version of the base class
     // that is not overridden in this class
@@ -50,18 +39,16 @@ class Plain_Mixing : public Mixing
                            const double* data_out,
                            std::function<void(double*)> screen,
                            std::function<void(double*, const double*, const double*)> mix,
-                           const bool& need_calcoef) override
-    {
+                           const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
-    virtual void push_data(
-        Mixing_Data& mdata,
-        const std::complex<double>* data_in,
-        const std::complex<double>* data_out,
-        std::function<void(std::complex<double>*)> screen,
-        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
-        const bool& need_calcoef) override
-    {
+    virtual void
+    push_data(Mixing_Data& mdata,
+              const std::complex<double>* data_in,
+              const std::complex<double>* data_out,
+              std::function<void(std::complex<double>*)> screen,
+              std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+              const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
 
@@ -71,13 +58,11 @@ class Plain_Mixing : public Mixing
      * @param mdata Mixing_Data
      * @param inner_product pointer to the inner dot function
      */
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
-    {
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override {
         return;
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
-    {
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override {
         return;
     }
 
@@ -88,19 +73,17 @@ class Plain_Mixing : public Mixing
      * @param data_new can be the same as data_in or data_out
      */
     void plain_mix(double* data_new,
-                  const double* data_in,
-                  const double* data_out,
-                  const int& length,
-                  std::function<void(double*)> screen)
-    {
+                   const double* data_in,
+                   const double* data_out,
+                   const int& length,
+                   std::function<void(double*)> screen) {
         this->simple_mix(data_new, data_in, data_out, length, screen);
     }
     void plain_mix(std::complex<double>* data_new,
-                  const std::complex<double>* data_in,
-                  const std::complex<double>* data_out,
-                  const int& length,
-                  std::function<void(std::complex<double>*)> screen)
-    {
+                   const std::complex<double>* data_in,
+                   const std::complex<double>* data_out,
+                   const int& length,
+                   std::function<void(std::complex<double>*)> screen) {
         this->simple_mix(data_new, data_in, data_out, length, screen);
     }
 

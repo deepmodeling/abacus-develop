@@ -20,23 +20,15 @@
 #include "../update_cell.h"
 #include "../bcast_cell.h"
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
@@ -62,22 +54,17 @@ Magnetism::~Magnetism()
 
 // mock function
 #ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)
-{
-    return;
-}
+void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank) { return; }
 #endif
 
-class UcellTest : public ::testing::Test
-{
+class UcellTest : public ::testing::Test {
   protected:
     UcellTestPrepare utp = UcellTestLib["C1H2-Read"];
     std::unique_ptr<UnitCell> ucell;
     std::ofstream ofs;
     std::string pp_dir;
     std::string output;
-    void SetUp()
-    {
+    void SetUp() {
         ofs.open("running.log");
         PARAM.input.relax_new = utp.relax_new;
         PARAM.sys.global_out_dir = "./";
@@ -90,20 +77,15 @@ class UcellTest : public ::testing::Test
         PARAM.input.nspin = 1;
         PARAM.input.basis_type = "pw";
     }
-    void TearDown()
-    {
-        ofs.close();
-    }
+    void TearDown() { ofs.close(); }
 };
 
 #ifdef __MPI
 
-TEST_F(UcellTest, BcastUnitcell)
-{
+TEST_F(UcellTest, BcastUnitcell) {
     PARAM.input.nspin = 4;
     unitcell::bcast_unitcell(*ucell);
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         EXPECT_EQ(ucell->Coordinate, "Direct");
         EXPECT_DOUBLE_EQ(ucell->a1.x, 10.0);
         EXPECT_EQ(ucell->atoms[0].na, 1);
@@ -116,11 +98,9 @@ TEST_F(UcellTest, BcastUnitcell)
         EXPECT_EQ(atom_labels[1], atom_type2_expected);
     }
 }
-TEST_F(UcellTest, BcastLattice)
-{
+TEST_F(UcellTest, BcastLattice) {
     unitcell::bcast_Lattice(ucell->lat);
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         EXPECT_EQ(ucell->Coordinate, "Direct");
         EXPECT_DOUBLE_EQ(ucell->a1.x, 10.0);
         EXPECT_EQ(ucell->atoms[0].na, 1);
@@ -134,56 +114,45 @@ TEST_F(UcellTest, BcastLattice)
     }
 }
 
-TEST_F(UcellTest, BcastMagnitism)
-{
+TEST_F(UcellTest, BcastMagnitism) {
     unitcell::bcast_magnetism(ucell->magnet, ucell->ntype);
     PARAM.input.nspin = 4;
-    if (GlobalV::MY_RANK != 0)
-    {
+    if (GlobalV::MY_RANK != 0) {
         EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[0], 0.0);
         EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[1], 0.0);
-        for (int i = 0; i < 3; ++i)
-        {
+        for (int i = 0; i < 3; ++i) {
             EXPECT_DOUBLE_EQ(ucell->magnet.ux_[i], 0.0);
         }
     }
 }
 
-TEST_F(UcellTest, UpdatePosTau)
-{
+TEST_F(UcellTest, UpdatePosTau) {
     double* pos_in = new double[ucell->nat * 3];
     ucell->set_iat2itia();
     std::fill(pos_in, pos_in + ucell->nat * 3, 0);
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
+    for (int iat = 0; iat < ucell->nat; ++iat) {
         int it, ia;
         ucell->iat2iait(iat, &ia, &it);
-        for (int ik = 0; ik < 3; ++ik)
-        {
+        for (int ik = 0; ik < 3; ++ik) {
             ucell->atoms[it].mbl[ia][ik] = true;
             pos_in[iat * 3 + ik] = (iat * 3 + ik) / (ucell->nat * 3.0) * (ucell->lat.lat0);
         }
     }
-    unitcell::update_pos_tau(ucell->lat,pos_in,ucell->ntype,ucell->nat,ucell->atoms);
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
+    unitcell::update_pos_tau(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
+    for (int iat = 0; iat < ucell->nat; ++iat) {
         int it, ia;
         ucell->iat2iait(iat, &ia, &it);
-        for (int ik = 0; ik < 3; ++ik)
-        {
-            EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia][ik],
-                            (iat*3+ik)/(ucell->nat*3.0));
+        for (int ik = 0; ik < 3; ++ik) {
+            EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia][ik], (iat * 3 + ik) / (ucell->nat * 3.0));
         }
     }
     delete[] pos_in;
 }
-TEST_F(UcellTest, UpdatePosTaud_pointer)
-{
+TEST_F(UcellTest, UpdatePosTaud_pointer) {
     double* pos_in = new double[ucell->nat * 3];
     ModuleBase::Vector3<double>* tmp = new ModuleBase::Vector3<double>[ucell->nat];
     ucell->set_iat2itia();
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
+    for (int iat = 0; iat < ucell->nat; ++iat) {
         pos_in[iat * 3] = 0.01;
         pos_in[iat * 3 + 1] = 0.01;
         pos_in[iat * 3 + 2] = 0.01;
@@ -191,10 +160,8 @@ TEST_F(UcellTest, UpdatePosTaud_pointer)
         ucell->iat2iait(iat, &ia, &it);
         tmp[iat] = ucell->atoms[it].taud[ia];
     }
-    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
-                              ucell->nat,ucell->atoms);
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
+    unitcell::update_pos_taud(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
+    for (int iat = 0; iat < ucell->nat; ++iat) {
         int it, ia;
         ucell->iat2iait(iat, &ia, &it);
         EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].x, tmp[iat].x + 0.01);
@@ -205,46 +172,38 @@ TEST_F(UcellTest, UpdatePosTaud_pointer)
     delete[] pos_in;
 }
 
-//test update_pos_taud with ModuleBase::Vector3<double> version
-TEST_F(UcellTest, UpdatePosTaud_Vector3)
-{
+// test update_pos_taud with ModuleBase::Vector3<double> version
+TEST_F(UcellTest, UpdatePosTaud_Vector3) {
     ModuleBase::Vector3<double>* pos_in = new ModuleBase::Vector3<double>[ucell->nat];
     ModuleBase::Vector3<double>* tmp = new ModuleBase::Vector3<double>[ucell->nat];
     ucell->set_iat2itia();
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
-        for (int ik = 0; ik < 3; ++ik)
-        {
+    for (int iat = 0; iat < ucell->nat; ++iat) {
+        for (int ik = 0; ik < 3; ++ik) {
             pos_in[iat][ik] = 0.01;
         }
-        int it=0;
-        int ia=0;
+        int it = 0;
+        int ia = 0;
         ucell->iat2iait(iat, &ia, &it);
         tmp[iat] = ucell->atoms[it].taud[ia];
     }
-    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
-                              ucell->nat,ucell->atoms);
-    for (int iat = 0; iat < ucell->nat; ++iat)
-    {
+    unitcell::update_pos_taud(ucell->lat, pos_in, ucell->ntype, ucell->nat, ucell->atoms);
+    for (int iat = 0; iat < ucell->nat; ++iat) {
         int it, ia;
         ucell->iat2iait(iat, &ia, &it);
-        for (int ik = 0; ik < 3; ++ik)
-        {
+        for (int ik = 0; ik < 3; ++ik) {
             EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia][ik], tmp[iat][ik] + 0.01);
         }
     }
     delete[] tmp;
     delete[] pos_in;
 }
-TEST_F(UcellTest, ReadPseudo)
-{
+TEST_F(UcellTest, ReadPseudo) {
     PARAM.input.pseudo_dir = pp_dir;
     PARAM.input.out_element_info = true;
     elecstate::read_pseudo(ofs, *ucell);
     // check_structure will print some warning info
     // output nonlocal file
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::ifstream ifs;
         ifs.open("./C/C.NONLOCAL");
         EXPECT_TRUE(ifs.good());
@@ -252,13 +211,13 @@ TEST_F(UcellTest, ReadPseudo)
         ifs.open("./H/H.NONLOCAL");
         EXPECT_TRUE(ifs.good());
         ifs.close();
-        
+
         struct stat st;
         int ret1 = stat("C", &st);
         EXPECT_EQ(ret1, 0);
         EXPECT_TRUE(S_ISDIR(st.st_mode));
         rmdir("C");
-        
+
         int ret2 = stat("H", &st);
         EXPECT_EQ(ret2, 0);
         EXPECT_TRUE(S_ISDIR(st.st_mode));
@@ -281,8 +240,7 @@ TEST_F(UcellTest, ReadPseudo)
 }
 
 #include "mpi.h"
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

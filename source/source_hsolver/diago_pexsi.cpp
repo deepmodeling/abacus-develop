@@ -13,22 +13,18 @@
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
-namespace hsolver
-{
+namespace hsolver {
 template <typename T>
 std::vector<double> DiagoPexsi<T>::mu_buffer;
 
 template <typename T>
-DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
-{
+DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in) {
     int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.nspin == 4)
-    {
+    if (PARAM.inp.nspin == 4) {
         nspin = 1;
     }
     mu_buffer.resize(nspin);
-    for (int i = 0; i < nspin; i++)
-    {
+    for (int i = 0; i < nspin; i++) {
         mu_buffer[i] = this->ps->pexsi_mu;
     }
 
@@ -37,33 +33,26 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
 
     this->DM.resize(nspin);
     this->EDM.resize(nspin);
-    for (int i = 0; i < nspin; i++)
-    {
+    for (int i = 0; i < nspin; i++) {
         this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
         this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
     }
-
 }
 
 template <typename T>
-DiagoPexsi<T>::~DiagoPexsi()
-{
+DiagoPexsi<T>::~DiagoPexsi() {
     int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.nspin == 4)
-    {
+    if (PARAM.inp.nspin == 4) {
         nspin = 1;
     }
-    for (int i = 0; i < nspin; i++)
-    {
+    for (int i = 0; i < nspin; i++) {
         delete[] this->DM[i];
         delete[] this->EDM[i];
     }
-
 }
 
 template <>
-void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in)
-{
+void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in) {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
@@ -87,14 +76,13 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
 template <>
 void DiagoPexsi<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
                                             psi::Psi<std::complex<double>>& psi,
-                                            double* eigenvalue_in)
-{
+                                            double* eigenvalue_in) {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     ModuleBase::WARNING_QUIT("DiagoPEXSI", "PEXSI is not completed for multi-k case");
 }
 
 template class DiagoPexsi<double>;
-template class DiagoPexsi<std::complex<double> >;
+template class DiagoPexsi<std::complex<double>>;
 
 } // namespace hsolver
 #endif

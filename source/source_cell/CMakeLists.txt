@@ -2,34 +2,32 @@ add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
 
 add_library(
-    cell
-    OBJECT
-    atom_pseudo.cpp
-    atom_spec.cpp
-    pseudo.cpp
-    read_pp.cpp
-    read_pp_complete.cpp
-    read_pp_upf100.cpp
-    read_pp_upf201.cpp
-    read_pp_blps.cpp
-    read_pp_vwr.cpp
-    unitcell.cpp
-    read_atoms.cpp
-    read_atoms_helper.cpp
-    setup_nonlocal.cpp
-    klist.cpp
-    parallel_kpoints.cpp
-    cell_index.cpp
-    check_atomic_stru.cpp
-    update_cell.cpp
-    bcast_cell.cpp
-    read_stru.cpp
-    print_cell.cpp
-    read_atom_species.cpp
-    k_vector_utils.cpp
-    sep.cpp
-    sep_cell.cpp
-)
+  cell OBJECT
+  atom_pseudo.cpp
+  atom_spec.cpp
+  pseudo.cpp
+  read_pp.cpp
+  read_pp_complete.cpp
+  read_pp_upf100.cpp
+  read_pp_upf201.cpp
+  read_pp_blps.cpp
+  read_pp_vwr.cpp
+  unitcell.cpp
+  read_atoms.cpp
+  read_atoms_helper.cpp
+  setup_nonlocal.cpp
+  klist.cpp
+  parallel_kpoints.cpp
+  cell_index.cpp
+  check_atomic_stru.cpp
+  update_cell.cpp
+  bcast_cell.cpp
+  read_stru.cpp
+  print_cell.cpp
+  read_atom_species.cpp
+  k_vector_utils.cpp
+  sep.cpp
+  sep_cell.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(cell)

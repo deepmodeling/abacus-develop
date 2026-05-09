@@ -19,8 +19,6 @@
 #include <omp.h>
 #endif
 
-
-
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                                            const ModulePW::PW_Basis* const rho_basis,
@@ -69,87 +67,74 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     }
 
     // work space
-	std::vector<double> rhocgnt(rho_basis->ngg);
+    std::vector<double> rhocgnt(rho_basis->ngg);
     ModuleBase::GlobalFunc::ZEROS(rhocgnt.data(), rho_basis->ngg);
 
     rho_basis->real2recip(psic.data(), psic.data());
 
     int igg0 = 0;
     const int ig0 = rho_basis->ig_gge0;
-	if (rho_basis->gg_uniq[0] < 1.0e-8) 
-	{
-		igg0 = 1;
-	}
+    if (rho_basis->gg_uniq[0] < 1.0e-8) {
+        igg0 = 1;
+    }
 
     double fact = 2.0;
-	for (int nt = 0; nt < ucell_in.ntype; nt++) 
-	{
-		//		Here we compute the G.ne.0 term
-		const int mesh = ucell_in.atoms[nt].ncpp.msh;
-		this->deriv_drhoc_scc(numeric,
-				mesh,
-				ucell_in.atoms[nt].ncpp.r.data(),
-				ucell_in.atoms[nt].ncpp.rab.data(),
-				ucell_in.atoms[nt].ncpp.rho_at.data(),
-				rhocgnt.data(),
-				rho_basis,
-				ucell_in);        
-		int iat = 0;
-		for (int it = 0; it < ucell_in.ntype; it++) {
-			for (int ia = 0; ia < ucell_in.atoms[it].na; ia++) {
-				if (nt == it) {
-					const ModuleBase::Vector3<double> pos
-						= ucell_in.atoms[it].tau[ia];
-					double &force0 = forcescc(iat, 0),
-						   &force1 = forcescc(iat, 1),
-						   &force2 = forcescc(iat, 2);
+    for (int nt = 0; nt < ucell_in.ntype; nt++) {
+        //        Here we compute the G.ne.0 term
+        const int mesh = ucell_in.atoms[nt].ncpp.msh;
+        this->deriv_drhoc_scc(numeric,
+                              mesh,
+                              ucell_in.atoms[nt].ncpp.r.data(),
+                              ucell_in.atoms[nt].ncpp.rab.data(),
+                              ucell_in.atoms[nt].ncpp.rho_at.data(),
+                              rhocgnt.data(),
+                              rho_basis,
+                              ucell_in);
+        int iat = 0;
+        for (int it = 0; it < ucell_in.ntype; it++) {
+            for (int ia = 0; ia < ucell_in.atoms[it].na; ia++) {
+                if (nt == it) {
+                    const ModuleBase::Vector3<double> pos = ucell_in.atoms[it].tau[ia];
+                    double &force0 = forcescc(iat, 0), &force1 = forcescc(iat, 1), &force2 = forcescc(iat, 2);
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : force0) reduction(+ : force1) reduction(+ : force2)
 #endif
-					for (int ig = 0; ig < rho_basis->npw; ++ig) {
-						if (ig == ig0) {
-							continue;
-						}
-						const ModuleBase::Vector3<double> gv
-							= rho_basis->gcar[ig];
-						const double rhocgntigg
-							= rhocgnt[rho_basis->ig2igg[ig]];
-						const double arg = ModuleBase::TWO_PI * (gv * pos);
-						double sinp = 0.0, cosp = 0.0;
-						ModuleBase::libm::sincos(arg, &sinp, &cosp);
-						const std::complex<double> cpm
-							= std::complex<double>(sinp, cosp) * conj(psic[ig]);
+                    for (int ig = 0; ig < rho_basis->npw; ++ig) {
+                        if (ig == ig0) {
+                            continue;
+                        }
+                        const ModuleBase::Vector3<double> gv = rho_basis->gcar[ig];
+                        const double rhocgntigg = rhocgnt[rho_basis->ig2igg[ig]];
+                        const double arg = ModuleBase::TWO_PI * (gv * pos);
+                        double sinp = 0.0, cosp = 0.0;
+                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                        const std::complex<double> cpm = std::complex<double>(sinp, cosp) * conj(psic[ig]);
 
-						force0 += fact * rhocgntigg * ucell_in.tpiba
-							* gv.x * cpm.real();
-						force1 += fact * rhocgntigg * ucell_in.tpiba
-							* gv.y * cpm.real();
-						force2 += fact * rhocgntigg * ucell_in.tpiba
-							* gv.z * cpm.real();
-					}
-				}
-				iat++;
-			}
-		}
-	}
+                        force0 += fact * rhocgntigg * ucell_in.tpiba * gv.x * cpm.real();
+                        force1 += fact * rhocgntigg * ucell_in.tpiba * gv.y * cpm.real();
+                        force2 += fact * rhocgntigg * ucell_in.tpiba * gv.z * cpm.real();
+                    }
+                }
+                iat++;
+            }
+        }
+    }
 
-
-	Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
+    Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
 
     ModuleBase::timer::end("Forces", "cal_force_scc");
     return;
 }
 
-
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
-                                              const int mesh,
-                                              const FPTYPE* r,
-                                              const FPTYPE* rab,
-                                              const FPTYPE* rhoc,
-                                              FPTYPE* drhocg,
-                                              const ModulePW::PW_Basis* const rho_basis,
-                                              const UnitCell& ucell_in) {
+                                             const int mesh,
+                                             const FPTYPE* r,
+                                             const FPTYPE* rab,
+                                             const FPTYPE* rhoc,
+                                             FPTYPE* drhocg,
+                                             const ModulePW::PW_Basis* const rho_basis,
+                                             const UnitCell& ucell_in) {
     int igl0 = 0;
     double gx = 0;
     double rhocg1 = 0;
@@ -157,7 +142,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     /// the modulus of g for a given shell
     /// the fourier transform
     /// auxiliary memory for integration
-	std::vector<double> gx_arr(rho_basis->ngg);
+    std::vector<double> gx_arr(rho_basis->ngg);
     double* gx_arr_d = nullptr;
     /// counter on radial mesh points
     /// counter on g shells
@@ -166,15 +151,12 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     ///
     /// G=0 term
     ///
-	if (rho_basis->gg_uniq[0] < 1.0e-8) 
-	{
-		drhocg[0] = 0.0;
+    if (rho_basis->gg_uniq[0] < 1.0e-8) {
+        drhocg[0] = 0.0;
         igl0 = 1;
-	} else 
-	{
+    } else {
         igl0 = 0;
     }
-    
 
     ///
     /// G <> 0 term
@@ -183,19 +165,17 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int igl = igl0; igl < rho_basis->ngg; igl++) 
-	{
-		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * ucell_in.tpiba;
-	}
+    for (int igl = igl0; igl < rho_basis->ngg; igl++) {
+        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * ucell_in.tpiba;
+    }
 
-	double *r_d = nullptr;
-    double *rhoc_d = nullptr;
-    double *rab_d = nullptr;
-    double *aux_d = nullptr;
-    double *drhocg_d = nullptr;
-	if (this->device == base_device::GpuDevice) 
-	{
-		resmem_var_op()(r_d, mesh);
+    double* r_d = nullptr;
+    double* rhoc_d = nullptr;
+    double* rab_d = nullptr;
+    double* aux_d = nullptr;
+    double* drhocg_d = nullptr;
+    if (this->device == base_device::GpuDevice) {
+        resmem_var_op()(r_d, mesh);
         resmem_var_op()(rhoc_d, mesh);
         resmem_var_op()(rab_d, mesh);
 
@@ -203,51 +183,43 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
         resmem_var_op()(gx_arr_d, rho_basis->ngg);
         resmem_var_op()(drhocg_d, rho_basis->ngg);
 
-        syncmem_var_h2d_op()(gx_arr_d,
-                             gx_arr.data(),
-                             rho_basis->ngg);
+        syncmem_var_h2d_op()(gx_arr_d, gx_arr.data(), rho_basis->ngg);
         syncmem_var_h2d_op()(r_d, r, mesh);
         syncmem_var_h2d_op()(rab_d, rab, mesh);
         syncmem_var_h2d_op()(rhoc_d, rhoc, mesh);
     }
 
-	if(this->device == base_device::GpuDevice) 
-	{
-		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-				r_d,
-				rhoc_d,
-				gx_arr_d+igl0,
-				rab_d,
-				drhocg_d+igl0,
-				mesh,
-				igl0,
-				rho_basis->ngg-igl0,
-				ucell_in.omega,
-				2);
+    if (this->device == base_device::GpuDevice) {
+        hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(r_d,
+                                                          rhoc_d,
+                                                          gx_arr_d + igl0,
+                                                          rab_d,
+                                                          drhocg_d + igl0,
+                                                          mesh,
+                                                          igl0,
+                                                          rho_basis->ngg - igl0,
+                                                          ucell_in.omega,
+                                                          2);
 
-		syncmem_var_d2h_op()(drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+        syncmem_var_d2h_op()(drhocg + igl0, drhocg_d + igl0, rho_basis->ngg - igl0);
 
-	} 
-	else 
-	{
-		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-				r,
-				rhoc,
-				gx_arr.data()+igl0,
-				rab,
-				drhocg+igl0,
-				mesh,
-				igl0,
-				rho_basis->ngg-igl0,
-				ucell_in.omega,
-				2);
-
-	}
+    } else {
+        hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(r,
+                                                          rhoc,
+                                                          gx_arr.data() + igl0,
+                                                          rab,
+                                                          drhocg + igl0,
+                                                          mesh,
+                                                          igl0,
+                                                          rho_basis->ngg - igl0,
+                                                          ucell_in.omega,
+                                                          2);
+    }
 
     delmem_var_op()(r_d);
     delmem_var_op()(rhoc_d);
     delmem_var_op()(rab_d);
-	delmem_var_op()(aux_d);
+    delmem_var_op()(aux_d);
     delmem_var_op()(gx_arr_d);
     delmem_var_op()(drhocg_d);
     return;

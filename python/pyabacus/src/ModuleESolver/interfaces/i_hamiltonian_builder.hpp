@@ -30,9 +30,8 @@ namespace esolver {
  * @tparam TR Type for real-space quantities (typically double)
  */
 template <typename TK, typename TR = double>
-class IHamiltonianBuilder
-{
-public:
+class IHamiltonianBuilder {
+  public:
     virtual ~IHamiltonianBuilder() = default;
 
     // ==================== Build/Update ====================

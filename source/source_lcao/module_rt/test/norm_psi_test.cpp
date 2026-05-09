@@ -19,15 +19,10 @@
  */
 
 #define doublethreshold 1e-8
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
+Parallel_Orbitals::Parallel_Orbitals() {}
+Parallel_Orbitals::~Parallel_Orbitals() {}
 
-TEST(NormPsiTest, testNormPsi)
-{
+TEST(NormPsiTest, testNormPsi) {
     std::complex<double>* psi_k;
     std::complex<double>* Stmp;
     int nband = 3;
@@ -63,12 +58,9 @@ TEST(NormPsiTest, testNormPsi)
     Stmp = new std::complex<double>[nlocal * nlocal];
     psi_k = new std::complex<double>[nlocal * nband];
 
-    for (int i = 0; i < nlocal; ++i)
-    {
-        for (int j = 0; j < nlocal; ++j)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < nlocal; ++i) {
+        for (int j = 0; j < nlocal; ++j) {
+            if (i == j) {
                 Stmp[i * nlocal + j] = std::complex<double>(1.0, 0.0);
             }
         }

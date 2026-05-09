@@ -25,8 +25,7 @@
  * - Test the correctness of the json output of the Init info module.
  */
 
-TEST(AbacusJsonTest, AddJson)
-{
+TEST(AbacusJsonTest, AddJson) {
     Json::AbacusJson::doc.SetObject();
 
     // add a string
@@ -70,8 +69,7 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"key6", "key7"}, false, true);
 
     // add key-val to a object array
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         Json::jsonValue object(JobjectType);
         object.JaddNormal("int", i);
 
@@ -168,8 +166,7 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][2].GetString(), "string3");
 }
 
-TEST(AbacusJsonTest, OutputJson)
-{
+TEST(AbacusJsonTest, OutputJson) {
     Json::AbacusJson::doc.SetObject();
 
     Json::AbacusJson::add_json({"key1"}, "value1", false);
@@ -205,8 +202,7 @@ TEST(AbacusJsonTest, OutputJson)
     file.close();
 }
 
-TEST(AbacusJsonTest, GeneralInfo)
-{
+TEST(AbacusJsonTest, GeneralInfo) {
     std::time_t time_now = std::time(nullptr);
     std::string start_time_str;
     Json::convert_time(time_now, start_time_str);
@@ -241,31 +237,18 @@ TEST(AbacusJsonTest, GeneralInfo)
 
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
-TEST(AbacusJsonTest, InitInfo)
-{
+Magnetism::~Magnetism() { delete[] this->start_mag; }
+TEST(AbacusJsonTest, InitInfo) {
     UnitCell ucell;
     Atom atomlist[3];
 
@@ -285,8 +268,7 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.atoms[2].ncpp.zv = 5;
     ucell.atoms[2].na = 3;
     ucell.nat = 0;
-    for (int i = 0; i < ucell.ntype; i++)
-    {
+    for (int i = 0; i < ucell.ntype; i++) {
         ucell.nat += ucell.atoms[i].na;
     }
     // init the doc allocator
@@ -314,8 +296,7 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["O"].GetInt(), 3);
 }
 
-TEST(AbacusJsonTest, Init_stru_test)
-{
+TEST(AbacusJsonTest, Init_stru_test) {
     // init ucell
     UnitCell ucell;
 
@@ -350,16 +331,14 @@ TEST(AbacusJsonTest, Init_stru_test)
 
     double mag[2];
     // fill ucell
-    for (int i = 0; i < 1; i++)
-    {
+    for (int i = 0; i < 1; i++) {
         ucell.atom_label[i] = "Si";
         atomlist[i].na = 2;
         atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
         ucell.atoms[i].tau.resize(2);
         atomlist[i].mag.resize(2);
-        for (int j = 0; j < atomlist[i].na; j++)
-        {
+        for (int j = 0; j < atomlist[i].na; j++) {
             atomlist[i].mag[j] = j * 131;
             ucell.atoms[i].tau[j] = 0.1 * j;
         }

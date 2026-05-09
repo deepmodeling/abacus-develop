@@ -22,8 +22,7 @@
 
 namespace py = pybind11;
 
-namespace py_driver
-{
+namespace py_driver {
 
 /**
  * @brief Result container for calculation results
@@ -31,8 +30,7 @@ namespace py_driver
  * Stores all results from a DFT calculation including energies,
  * forces, stress, and convergence information.
  */
-struct CalculationResult
-{
+struct CalculationResult {
     // Convergence info
     bool converged = false;
     int niter = 0;
@@ -57,17 +55,17 @@ struct CalculationResult
     bool has_stress = false;
 
     // Electronic structure info
-    double fermi_energy = 0.0;  // in eV
-    double bandgap = 0.0;       // in eV
+    double fermi_energy = 0.0; // in eV
+    double bandgap = 0.0;      // in eV
     int nat = 0;
     int ntype = 0;
     int nbands = 0;
     int nks = 0;
 
     // Output file tracking
-    std::string output_dir = "";   // Path to OUT.$suffix folder
-    std::string log_file = "";     // Path to the main log file
-    std::map<std::string, std::string> output_files;  // filename -> full path
+    std::string output_dir = "";                     // Path to OUT.$suffix folder
+    std::string log_file = "";                       // Path to the main log file
+    std::map<std::string, std::string> output_files; // filename -> full path
 
     // Unit conversion constants
     static constexpr double Ry_to_eV = 13.605693122994;
@@ -76,8 +74,7 @@ struct CalculationResult
     // Convenience methods
     double etot_eV() const { return etot * Ry_to_eV; }
 
-    py::dict get_energies() const
-    {
+    py::dict get_energies() const {
         py::dict result;
         result["etot"] = etot;
         result["etot_eV"] = etot * Ry_to_eV;
@@ -91,10 +88,8 @@ struct CalculationResult
         return result;
     }
 
-    py::array_t<double> get_forces_eV_Ang() const
-    {
-        if (!has_forces)
-        {
+    py::array_t<double> get_forces_eV_Ang() const {
+        if (!has_forces) {
             throw std::runtime_error("Forces not available. Set calculate_force=True.");
         }
         // Convert from Ry/Bohr to eV/Ang
@@ -104,15 +99,13 @@ struct CalculationResult
         double* src = static_cast<double*>(buf.ptr);
         double* dst = static_cast<double*>(result_buf.ptr);
         double factor = Ry_to_eV / Bohr_to_Ang;
-        for (ssize_t i = 0; i < buf.size; ++i)
-        {
+        for (ssize_t i = 0; i < buf.size; ++i) {
             dst[i] = src[i] * factor;
         }
         return result;
     }
 
-    std::string summary() const
-    {
+    std::string summary() const {
         std::ostringstream ss;
         ss << "=== ABACUS Calculation Result ===\n";
         ss << "Converged: " << (converged ? "Yes" : "No") << "\n";
@@ -125,39 +118,32 @@ struct CalculationResult
         ss << "  Hartree:      " << hartree_energy << " Ry\n";
         ss << "  XC energy:    " << etxc << " Ry\n";
         ss << "  Ewald:        " << ewald_energy << " Ry\n";
-        if (has_forces)
-        {
+        if (has_forces) {
             ss << "\nForces: calculated (" << nat << " atoms)\n";
         }
-        if (has_stress)
-        {
+        if (has_stress) {
             ss << "Stress: calculated\n";
         }
         ss << "\nSystem info:\n";
         ss << "  Atoms: " << nat << ", Types: " << ntype << "\n";
         ss << "  Bands: " << nbands << ", K-points: " << nks << "\n";
-        if (fermi_energy != 0.0)
-        {
+        if (fermi_energy != 0.0) {
             ss << "  Fermi energy: " << fermi_energy << " eV\n";
         }
-        if (bandgap > 0.0)
-        {
+        if (bandgap > 0.0) {
             ss << "  Band gap: " << bandgap << " eV\n";
         }
         // Output file tracking
-        if (!output_dir.empty())
-        {
+        if (!output_dir.empty()) {
             ss << "\nOutput:\n";
             ss << "  Directory: " << output_dir << "\n";
-            if (!log_file.empty())
-            {
+            if (!log_file.empty()) {
                 // Extract just the filename from the path
                 size_t pos = log_file.find_last_of("/\\");
                 std::string log_filename = (pos != std::string::npos) ? log_file.substr(pos + 1) : log_file;
                 ss << "  Log file: " << log_filename << "\n";
             }
-            if (!output_files.empty())
-            {
+            if (!output_files.empty()) {
                 ss << "  Files: " << output_files.size() << " output files\n";
             }
         }
@@ -175,9 +161,8 @@ struct CalculationResult
  * - Result collection (energy, forces, stress)
  * - Global state management
  */
-class PyDriver
-{
-public:
+class PyDriver {
+  public:
     PyDriver();
     ~PyDriver();
 
@@ -200,18 +185,16 @@ public:
      * @param verbosity Output verbosity level (0=silent, 1=normal, 2=verbose)
      * @return CalculationResult containing all results
      */
-    CalculationResult run(
-        const std::string& input_dir = ".",
-        const std::string& input_file = "",
-        const std::string& stru_file = "",
-        const std::string& kpt_file = "",
-        const std::string& pseudo_dir = "",
-        const std::string& orbital_dir = "",
-        const std::string& output_dir = "",
-        bool calculate_force = true,
-        bool calculate_stress = false,
-        int verbosity = 1
-    );
+    CalculationResult run(const std::string& input_dir = ".",
+                          const std::string& input_file = "",
+                          const std::string& stru_file = "",
+                          const std::string& kpt_file = "",
+                          const std::string& pseudo_dir = "",
+                          const std::string& orbital_dir = "",
+                          const std::string& output_dir = "",
+                          bool calculate_force = true,
+                          bool calculate_stress = false,
+                          int verbosity = 1);
 
     /**
      * @brief Check if the driver is ready for calculation
@@ -223,7 +206,7 @@ public:
      */
     const CalculationResult& get_last_result() const { return last_result_; }
 
-private:
+  private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 

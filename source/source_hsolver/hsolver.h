@@ -4,8 +4,7 @@
 #include <fstream>
 #include <string>
 
-namespace hsolver
-{
+namespace hsolver {
 
 double set_diagethr_ks(const std::string basis_type,
                        const std::string esolver_type,
@@ -30,7 +29,6 @@ double set_diagethr_sdft(const std::string basis_type,
                          const double diag_ethr_in,
                          const int nband_in,
                          const double stoiter_ks_ne_in);
-
 
 // reset diagethr according to drho and hsolver_error
 double reset_diag_ethr(std::ofstream& ofs_running,

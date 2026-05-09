@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/fs_kin_tools.h"
 
-//calculate the kinetic stress in PW base
+// calculate the kinetic stress in PW base
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const ModuleBase::matrix& wg,
@@ -11,22 +11,18 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              K_Vectors* p_kv,
                                              ModulePW::PW_Basis_K* wfc_basis,
                                              const UnitCell& ucell_in,
-                                             const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
-{
-    ModuleBase::TITLE("Stress","stress_kin");
-	ModuleBase::timer::start("Stress","stress_kin");
+                                             const psi::Psi<std::complex<FPTYPE>, Device>* psi_in) {
+    ModuleBase::TITLE("Stress", "stress_kin");
+    ModuleBase::timer::start("Stress", "stress_kin");
 
-	this->ucell = &ucell_in;
+    this->ucell = &ucell_in;
 
-	hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
-    for (int ik = 0; ik < wfc_basis->nks; ++ik)
-    {
+    hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
+    for (int ik = 0; ik < wfc_basis->nks; ++ik) {
         int nbands_occ = wg.nc;
-        while (wg(ik, nbands_occ - 1) == 0.0)
-        {
+        while (wg(ik, nbands_occ - 1) == 0.0) {
             nbands_occ--;
-            if (nbands_occ == 0)
-            {
+            if (nbands_occ == 0) {
                 break;
             }
         }
@@ -35,9 +31,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
         kin_tool.cal_stress_kin(ik, npm, true, &psi_in[0](ik, 0, 0));
     }
     kin_tool.symmetrize_stress(p_symm, sigma);
-		
-	ModuleBase::timer::end("Stress","stress_kin");
-	return;
+
+    ModuleBase::timer::end("Stress", "stress_kin");
+    return;
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

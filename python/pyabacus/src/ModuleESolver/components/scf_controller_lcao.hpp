@@ -32,21 +32,14 @@ namespace esolver {
  * @tparam TR Type for real-space quantities
  */
 template <typename TK, typename TR = double>
-class SCFControllerLCAO : public ISCFController
-{
-public:
+class SCFControllerLCAO : public ISCFController {
+  public:
     SCFControllerLCAO() = default;
 
     SCFControllerLCAO(int nbasis, int nks, int nbands, int nspin, int nrxx)
-        : nbasis_(nbasis)
-        , nks_(nks)
-        , nbands_(nbands)
-        , nspin_(nspin)
-        , nrxx_(nrxx)
-    {
+        : nbasis_(nbasis), nks_(nks), nbands_(nbands), nspin_(nspin), nrxx_(nrxx) {
         // Initialize components
-        hamilt_builder_ = std::make_unique<HamiltonianBuilderLCAO<TK, TR>>(
-            nbasis, nks, nbasis, nbasis);
+        hamilt_builder_ = std::make_unique<HamiltonianBuilderLCAO<TK, TR>>(nbasis, nks, nbasis, nbasis);
         charge_mixer_ = std::make_unique<ChargeMixerWrapper>(nspin, nrxx);
         diagonalizer_ = std::make_unique<DiagonalizerWrapper<TK>>(nbasis, nbands);
     }
@@ -55,8 +48,7 @@ public:
 
     // ==================== Lifecycle ====================
 
-    void initialize(int istep) override
-    {
+    void initialize(int istep) override {
         istep_ = istep;
         iteration_ = 0;
         drho_ = 0.0;
@@ -64,26 +56,22 @@ public:
         status_ = SCFStatus::NotStarted;
 
         // Reset charge mixer
-        if (charge_mixer_)
-        {
+        if (charge_mixer_) {
             charge_mixer_->reset();
         }
 
         initialized_ = true;
     }
 
-    void finalize(int istep) override
-    {
+    void finalize(int istep) override {
         // Cleanup after SCF
         initialized_ = false;
     }
 
     // ==================== Iteration Control ====================
 
-    SCFStatus run_iteration(int iter) override
-    {
-        if (!initialized_)
-        {
+    SCFStatus run_iteration(int iter) override {
+        if (!initialized_) {
             throw std::runtime_error("SCF not initialized. Call initialize() first.");
         }
 
@@ -109,36 +97,29 @@ public:
         return status_;
     }
 
-    SCFStatus run_scf(const SCFConvergenceCriteria& criteria,
-                      SCFIterationCallback callback) override
-    {
+    SCFStatus run_scf(const SCFConvergenceCriteria& criteria, SCFIterationCallback callback) override {
         initialize(istep_);
         status_ = SCFStatus::Running;
 
-        for (int iter = 1; iter <= criteria.max_iterations; ++iter)
-        {
+        for (int iter = 1; iter <= criteria.max_iterations; ++iter) {
             run_iteration(iter);
 
             // Check convergence
             bool converged = true;
-            if (criteria.check_drho && drho_ > criteria.drho_threshold)
-            {
+            if (criteria.check_drho && drho_ > criteria.drho_threshold) {
                 converged = false;
             }
 
             // Call callback if provided
-            if (callback)
-            {
+            if (callback) {
                 bool continue_scf = callback(iter, drho_, energy_);
-                if (!continue_scf)
-                {
+                if (!continue_scf) {
                     status_ = SCFStatus::Failed;
                     return status_;
                 }
             }
 
-            if (converged)
-            {
+            if (converged) {
                 status_ = SCFStatus::Converged;
                 return status_;
             }
@@ -148,10 +129,7 @@ public:
         return status_;
     }
 
-    bool is_converged() const override
-    {
-        return status_ == SCFStatus::Converged;
-    }
+    bool is_converged() const override { return status_ == SCFStatus::Converged; }
 
     SCFStatus get_status() const override { return status_; }
 
@@ -165,62 +143,37 @@ public:
 
     // ==================== Component Access ====================
 
-    void* get_hamiltonian_builder() override
-    {
-        return hamilt_builder_.get();
-    }
+    void* get_hamiltonian_builder() override { return hamilt_builder_.get(); }
 
-    IChargeMixer* get_charge_mixer() override
-    {
-        return charge_mixer_.get();
-    }
+    IChargeMixer* get_charge_mixer() override { return charge_mixer_.get(); }
 
-    void* get_diagonalizer() override
-    {
-        return diagonalizer_.get();
-    }
+    void* get_diagonalizer() override { return diagonalizer_.get(); }
 
     // ==================== Typed Component Access ====================
 
-    HamiltonianBuilderLCAO<TK, TR>* get_hamiltonian_builder_typed()
-    {
-        return hamilt_builder_.get();
-    }
+    HamiltonianBuilderLCAO<TK, TR>* get_hamiltonian_builder_typed() { return hamilt_builder_.get(); }
 
-    DiagonalizerWrapper<TK>* get_diagonalizer_typed()
-    {
-        return diagonalizer_.get();
-    }
+    DiagonalizerWrapper<TK>* get_diagonalizer_typed() { return diagonalizer_.get(); }
 
     // ==================== Configuration ====================
 
-    void set_convergence_criteria(const SCFConvergenceCriteria& criteria)
-    {
-        criteria_ = criteria;
-    }
+    void set_convergence_criteria(const SCFConvergenceCriteria& criteria) { criteria_ = criteria; }
 
-    SCFConvergenceCriteria get_convergence_criteria() const
-    {
-        return criteria_;
-    }
+    SCFConvergenceCriteria get_convergence_criteria() const { return criteria_; }
 
-    void set_mixing_config(const MixingConfig& config)
-    {
-        if (charge_mixer_)
-        {
+    void set_mixing_config(const MixingConfig& config) {
+        if (charge_mixer_) {
             charge_mixer_->set_config(config);
         }
     }
 
-    void set_diag_config(const DiagConfig& config)
-    {
-        if (diagonalizer_)
-        {
+    void set_diag_config(const DiagConfig& config) {
+        if (diagonalizer_) {
             diagonalizer_->set_config(config);
         }
     }
 
-private:
+  private:
     // Dimensions
     int nbasis_ = 0;
     int nks_ = 0;

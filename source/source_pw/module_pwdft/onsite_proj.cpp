@@ -19,48 +19,48 @@
 
 /**
  * ===============================================================================================
- * 
+ *
  *                                          README
- * 
+ *
  * ===============================================================================================
- * 
+ *
  * This is a code demo for illustrating how to use unified radial projection in implementation of
  * Operators involving local radial projectors on PW-expanded wavefunctions.
- * 
+ *
  * Example usage:
  * ```c++
  * // select the range of atoms that impose the operator in std::vector<std::vector<int>> it2ia like
  * // it2ia[it] = {ia1, ia2, ...} for each type
- * // if all atoms in present kind is "selected", just set it2ia[it].resize(na) and call 
+ * // if all atoms in present kind is "selected", just set it2ia[it].resize(na) and call
  * // std::iota(it2ia[it].begin(), it2ia[it].end(), 0)
- * 
+ *
  * std::vector<std::vector<int>> it2ia; // as if we have given its value...
- * 
+ *
  * // you should have the `orbital_dir` as the directory containing the orbital files, then those
  * // will be read by a static function `AtomicRadials::read_abacus_orb` to get the radial orbitals
- * 
+ *
  * // call `init_proj` to initialize the radial projector, this function only needs to be called
  * // once during the runtime.
- * // its input... 
+ * // its input...
  * // the `nproj`, is for specifying number of projectors of each atom type, can be zero,
  * // but cannot be the value larger than the number of zeta functions for the given angular momentum.
  * // the `lproj` is the angular momentum of the projectors, and `iproj` is the index of zeta function
  * // that each projector generated from.
  * // the `lproj` along with `iproj` can enable radial projectors in any number developer wants.
- * 
+ *
  * // the `onsite_r` is the onsite-radius for all valid projectors, it is used to generate the new
  * // radial function that more localized than the original one, which is expected to have enhanced
  * // projection efficiency.
- * 
+ *
  * std::vector<double> rgrid;
  * std::vector<std::vector<double>> projs;
  * std::vector<std::vector<int>> it2iproj;
  * init_proj(orbital_dir, ucell, nproj, lproj, iproj, onsite_r, rgrid, projs, it2iproj);
- * 
+ *
  * // then call the function `cal_becp` to calculate the becp. HOWEVER, there are quantities that
  * // can be calculated in advance and reused in the following calculations. Please see the function
  * // implementation, especially the comments about CACHE 0, CACHE 1, CACHE 2..., etc.
- * 
+ *
  * // the input param of `cal_becp`...
  * // the `it2ia` has been explained above
  * // the `it2iproj` is the output of function `init_proj`, so you do not need to worry about it
@@ -77,7 +77,7 @@
  * // the `psi` is the wavefunction
  * // the `becp` is the output of the function, it is the becp
  * cal_becp(it2ia, it2iproj, rgrid, projs, lproj, nq, dq, ik, pw_basis, omega, tpiba, sf, psi, becp);
- * 
+ *
  * // About parallelization, presently, the function `AtomicRadials::read_abacus_orb` is actually parallelized
  * // by MPI, so after the reading of orbital, actually all processors have the same data. Therefore it is not
  * // needed to call functions like `Parallel_Reduce` or `Parallel_Bcast` to synchronize the data.
@@ -85,30 +85,28 @@
  * // be needed if the memory is not enough.
  */
 
-template<typename T, typename Device>
-projectors::OnsiteProjector<T, Device>* projectors::OnsiteProjector<T, Device>::get_instance()
-{
+template <typename T, typename Device>
+projectors::OnsiteProjector<T, Device>* projectors::OnsiteProjector<T, Device>::get_instance() {
     static projectors::OnsiteProjector<T, Device> instance;
     return &instance;
 }
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir,
-		const UnitCell* ucell_in,
-		const psi::Psi<std::complex<T>, Device>& psi,
-		const K_Vectors& kv,
-		const ModulePW::PW_Basis_K& pw_basis, // level1: the plane wave basis, need ik
-		Structure_Factor& sf,                 // level2: the structure factor calculator
-		const double onsite_radius,
-		const int nq,
-		const double dq,
-		const ModuleBase::matrix& wg,
-		const ModuleBase::matrix& ekb)
-{
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::init(
+    const std::string& orbital_dir,
+    const UnitCell* ucell_in,
+    const psi::Psi<std::complex<T>, Device>& psi,
+    const K_Vectors& kv,
+    const ModulePW::PW_Basis_K& pw_basis, // level1: the plane wave basis, need ik
+    Structure_Factor& sf,                 // level2: the structure factor calculator
+    const double onsite_radius,
+    const int nq,
+    const double dq,
+    const ModuleBase::matrix& wg,
+    const ModuleBase::matrix& ekb) {
     this->device = base_device::get_device_type(this->ctx);
 
-    if(!this->initialed)
-    {
+    if (!this->initialed) {
         this->ucell = ucell_in;
         this->ntype = ucell_in->ntype;
 
@@ -118,18 +116,15 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         std::vector<std::string> orb_files(ntype);
         std::vector<int> nproj(ntype);
         int sum_nproj = 0;
-        for(int it=0;it<ntype;++it)
-        {
+        for (int it = 0; it < ntype; ++it) {
             orb_files[it] = ucell->orbital_fn[it];
             nproj[it] = ucell->atoms[it].nwl;
             sum_nproj += nproj[it];
         }
         this->lproj.resize(sum_nproj);
         int index = 0;
-        for(int it=0;it<ntype;++it)
-        {
-            for(int il=0;il<nproj[it];++il)
-            {
+        for (int it = 0; it < ntype; ++it) {
+            for (int il = 0; il < nproj[it]; ++il) {
                 this->lproj[index++] = il;
             }
         }
@@ -139,36 +134,28 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         this->it2ia.resize(this->ntype);
         this->iat_nh.resize(this->ucell->nat);
         int iat = 0;
-        for(int it = 0; it < it2ia.size(); it++)
-        {
+        for (int it = 0; it < it2ia.size(); it++) {
             it2ia[it].resize(this->ucell->atoms[it].na);
             std::iota(it2ia[it].begin(), it2ia[it].end(), 0);
-            for(int ia = 0; ia < it2ia[it].size(); ia++)
-            {
+            for (int ia = 0; ia < it2ia[it].size(); ia++) {
                 iat_nh[iat++] = nproj[it] * nproj[it];
             }
         }
 
-        this->init_proj(PARAM.inp.orbital_dir, 
-                        orb_files, 
-                        nproj, 
-                        lproj, 
-                        iproj, 
-                        onsite_r);
+        this->init_proj(PARAM.inp.orbital_dir, orb_files, nproj, lproj, iproj, onsite_r);
 
         ModuleBase::timer::start("OnsiteProj", "cubspl_tabulate");
         // STAGE 0 - making the interpolation table
-        // CACHE 0 - if cache the irow2it, irow2iproj, irow2m, itiaiprojm2irow, <G+k|p> can be reused for 
+        // CACHE 0 - if cache the irow2it, irow2iproj, irow2m, itiaiprojm2irow, <G+k|p> can be reused for
         //           SCF, RELAX and CELL-RELAX calculation
         // [in] rgrid, projs, lproj, it2ia, it2iproj, nq, dq
         RadialProjection::RadialProjector::_build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
         RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
-        //rp_._build_sbt_tab(rgrid, projs, lproj, nq, dq);
+        // rp_._build_sbt_tab(rgrid, projs, lproj, nq, dq);
         rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
-        // For being compatible with present cal_force and cal_stress framework  
+        // For being compatible with present cal_force and cal_stress framework
         // uncomment the following code block if you want to use the Onsite_Proj_tools
-        if(this->tab_atomic_ == nullptr)
-        {
+        if (this->tab_atomic_ == nullptr) {
             this->tot_nproj = itiaiprojm2irow_.size();
             this->npwx_ = this->pw_basis_->npwk_max;
             this->size_vproj = this->tot_nproj * this->npwx_;
@@ -176,38 +163,44 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         }
 
         delete this->fs_tools; // it is okay to delete nullptr
-        this->fs_tools = new hamilt::Onsite_Proj_tools<T, Device>(
-            nproj, lproj, tab, nhtol, this->tab_atomic_, ucell_in, &psi, &kv, &pw_basis, &sf, wg, ekb);      
-        
+        this->fs_tools = new hamilt::Onsite_Proj_tools<T, Device>(nproj,
+                                                                  lproj,
+                                                                  tab,
+                                                                  nhtol,
+                                                                  this->tab_atomic_,
+                                                                  ucell_in,
+                                                                  &psi,
+                                                                  &kv,
+                                                                  &pw_basis,
+                                                                  &sf,
+                                                                  wg,
+                                                                  ekb);
+
         ModuleBase::timer::end("OnsiteProj", "cubspl_tabulate");
 
         this->initialed = true;
     }
 }
 
-template<typename T, typename Device>
-projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
-{
-    //delete[] becp;
+template <typename T, typename Device>
+projectors::OnsiteProjector<T, Device>::~OnsiteProjector() {
+    // delete[] becp;
     delete fs_tools;
     delmem_complex_op()(this->tab_atomic_);
-    if(this->device == base_device::GpuDevice)
-    {
+    if (this->device == base_device::GpuDevice) {
         delmem_complex_h_op()(this->h_becp);
     }
     delmem_complex_op()(this->becp);
-
 }
 
-
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbital_dir,
-		const std::vector<std::string>& orb_files,
-		const std::vector<int>& nproj,  // for each type, the number of projectors
-		const std::vector<int>& lproj,  // angular momentum of projectors within the type (l of zeta function)
-		const std::vector<int>& iproj,  // index of projectors within the type (izeta)
-		const std::vector<double>& onsite_r) 
-{
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::init_proj(
+    const std::string& orbital_dir,
+    const std::vector<std::string>& orb_files,
+    const std::vector<int>& nproj, // for each type, the number of projectors
+    const std::vector<int>& lproj, // angular momentum of projectors within the type (l of zeta function)
+    const std::vector<int>& iproj, // index of projectors within the type (izeta)
+    const std::vector<double>& onsite_r) {
     // extract the information from ucell
     const int ntype = nproj.size();
     assert(ntype == orb_files.size());
@@ -223,13 +216,11 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
     int idx = 0;
     int nr = -1;
     double dr = -1.0;
-    for(int it = 0; it < ntype; ++it)
-    {
+    for (int it = 0; it < ntype; ++it) {
         const int nproj_it = nproj[it];
         this->it2iproj[it].resize(nproj_it);
         print::print_proj_status(it, nproj_it);
-        if(nproj_it == 0)
-        {
+        if (nproj_it == 0) {
             continue;
         }
         std::ifstream ifs(orbital_dir + orb_files[it]);
@@ -237,7 +228,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         double ecut = -1.0;
         int nr_ = -1;
         double dr_ = -1.0;
-        std::vector<int> nzeta; // number of radials for each l
+        std::vector<int> nzeta;                   // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
         this->read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
 #ifdef __DEBUG
@@ -246,11 +237,10 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         assert(nr_ != -1);
         assert(dr_ != -1.0);
 #endif
-        nr = std::max(nr, nr_); // the maximal nr
+        nr = std::max(nr, nr_);          // the maximal nr
         assert(dr == -1.0 || dr == dr_); // the dr should be the same for all types
         dr = (dr == -1.0) ? dr_ : dr;
-        for(int ip = 0; ip < nproj_it; ++ip)
-        {
+        for (int ip = 0; ip < nproj_it; ++ip) {
             int l = lproj[idx];
             int izeta = iproj[idx];
             int irad = 0;
@@ -266,8 +256,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         }
     }
     // do zero padding
-    if(nr != -1)
-    {
+    if (nr != -1) {
         std::for_each(projs.begin(), projs.end(), [nr](std::vector<double>& proj) { proj.resize(nr, 0.0); });
     }
     // generate the rgrid
@@ -276,9 +265,8 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
     std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
 }
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const char grad)
-{
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const char grad) {
     ModuleBase::timer::start("OnsiteProj", "tabulate_atomic");
     // assert(grad == 'n' || grad == 'x' || grad == 'y' || grad == 'z');
     // grad = 'n' means no gradient, grad = 'x' means gradient along x, etc.
@@ -320,10 +308,11 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     //         const int irow_out = itiaiprojm2irow_.at(std::make_tuple(it, ia, iproj, m));
     //         for(int ig = 0; ig < this->npw_; ++ig)
     //         {
-    //             std::complex<double> deriv = (grad == 'n')? 1.0: ModuleBase::NEG_IMAG_UNIT; // because sk is exp(-iqtau)
-    //             deriv = (grad == 'n')? 1.0: (grad == 'x')? deriv * q[ig].x: (grad == 'y')? deriv * q[ig].y: deriv * q[ig].z;
+    //             std::complex<double> deriv = (grad == 'n')? 1.0: ModuleBase::NEG_IMAG_UNIT; // because sk is
+    //             exp(-iqtau) deriv = (grad == 'n')? 1.0: (grad == 'x')? deriv * q[ig].x: (grad == 'y')? deriv *
+    //             q[ig].y: deriv * q[ig].z;
     //             // there must be something twisted in ABACUS
-    //             // because the tab_ is <p|G+k>, but the sk is exp(-iqtau). How can it get the 
+    //             // because the tab_ is <p|G+k>, but the sk is exp(-iqtau). How can it get the
     //             // correct result?
     //             this->tab_atomic_[irow_out*this->npw_ + ig] = sk[ig] * tab_[irow*this->npw_ + ig] * deriv;
     //         }
@@ -337,46 +326,43 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     ModuleBase::timer::end("OnsiteProj", "tabulate_atomic");
 }
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::overlap_proj_psi( 
-                    const int npm,
-                    const std::complex<double>* ppsi)
-{
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(const int npm, const std::complex<double>* ppsi) {
     ModuleBase::timer::start("OnsiteProj", "overlap");
     // STAGE 3 - cal_becp
     // CACHE 3 - it is no use to cache becp, it will change in each SCF iteration
     // [in] psi, tab_atomic_, npw, becp, ik
-//     const char transa = 'C';
-//     const char transb = 'N';
-//     const int ldb = this->npwx_;
-//     const int ldc = this->tot_nproj;
-//     const std::complex<double> alpha = 1.0;
-//     const std::complex<double> beta = 0.0;
-//     if(this->becp == nullptr || this->size_becp < npm*ldc)
-//     {
-//         delete[] this->becp;
-//         this->becp = new std::complex<double>[npm*ldc];
-//         this->size_becp = npm*ldc;
-//     }
-//     setmem_complex_op()(ctx, this->becp, 0.0, this->size_becp);
-//     gemm_op()(
-//         this->ctx,
-//         transa,                 // const char transa
-//         transb,                 // const char transb
-//         ldc,                    // const int m
-//         npm,                    // const int n
-//         this->npw_,             // const int k
-//         &alpha,                 // const std::complex<double> alpha
-//         this->tab_atomic_,      // const std::complex<double>* a
-//         this->npw_,             // const int lda
-//         ppsi,                   // const std::complex<double>* b
-//         ldb,                    // const int ldb
-//         &beta,                  // const std::complex<double> beta
-//         becp,                   // std::complex<double>* c
-//         ldc);                   // const int ldc
-// #ifdef __MPI
-//     Parallel_Reduce::reduce_pool(becp, size_becp);
-// #endif
+    //     const char transa = 'C';
+    //     const char transb = 'N';
+    //     const int ldb = this->npwx_;
+    //     const int ldc = this->tot_nproj;
+    //     const std::complex<double> alpha = 1.0;
+    //     const std::complex<double> beta = 0.0;
+    //     if(this->becp == nullptr || this->size_becp < npm*ldc)
+    //     {
+    //         delete[] this->becp;
+    //         this->becp = new std::complex<double>[npm*ldc];
+    //         this->size_becp = npm*ldc;
+    //     }
+    //     setmem_complex_op()(ctx, this->becp, 0.0, this->size_becp);
+    //     gemm_op()(
+    //         this->ctx,
+    //         transa,                 // const char transa
+    //         transb,                 // const char transb
+    //         ldc,                    // const int m
+    //         npm,                    // const int n
+    //         this->npw_,             // const int k
+    //         &alpha,                 // const std::complex<double> alpha
+    //         this->tab_atomic_,      // const std::complex<double>* a
+    //         this->npw_,             // const int lda
+    //         ppsi,                   // const std::complex<double>* b
+    //         ldb,                    // const int ldb
+    //         &beta,                  // const std::complex<double> beta
+    //         becp,                   // std::complex<double>* c
+    //         ldc);                   // const int ldc
+    // #ifdef __MPI
+    //     Parallel_Reduce::reduce_pool(becp, size_becp);
+    // #endif
 
     // notes on refactor for DCU calculation
     // the npm here is nbands(occ) * npol, for calling cal_becp, the npol should be divided.
@@ -385,89 +371,70 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     // std::cout << "at " << __FILE__ << ": " << __LINE__ << " output npm: " << npm << std::endl;
     // std::cout << "at " << __FILE__ << ": " << __LINE__ << " ik_: " << ik_ << std::endl;
     int npol = this->ucell->get_npol();
-    if(this->becp == nullptr || this->size_becp < npm*this->tot_nproj)
-    {
-        this->size_becp = npm*this->tot_nproj;
+    if (this->becp == nullptr || this->size_becp < npm * this->tot_nproj) {
+        this->size_becp = npm * this->tot_nproj;
         resmem_complex_op()(this->becp, this->size_becp);
-        if(this->device == base_device::GpuDevice )
-        {
+        if (this->device == base_device::GpuDevice) {
             resmem_complex_h_op()(this->h_becp, this->size_becp);
-        }
-        else
-        {
+        } else {
             this->h_becp = this->becp;
         }
     }
-    this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi); // in cal_becp, npm should be the one not multiplied by npol
-    if(this->device == base_device::GpuDevice)
-    {
+    this->fs_tools->cal_becp(ik_,
+                             npm / npol,
+                             this->becp,
+                             ppsi); // in cal_becp, npm should be the one not multiplied by npol
+    if (this->device == base_device::GpuDevice) {
         syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
     ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
-template<typename T, typename Device>
+template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
-                           std::string& elem,
-                           double& ecut,
-                           int& nr,
-                           double& dr,
-                           std::vector<int>& nzeta,
-                           std::vector<std::vector<double>>& radials,
-                           const int rank)
-{
-    nr = 0; // number of grid points
-    dr = 0; // grid spacing
-    int lmax = 0, nchi = 0; // number of radial functions
+                                                             std::string& elem,
+                                                             double& ecut,
+                                                             int& nr,
+                                                             double& dr,
+                                                             std::vector<int>& nzeta,
+                                                             std::vector<std::vector<double>>& radials,
+                                                             const int rank) {
+    nr = 0;                                    // number of grid points
+    dr = 0;                                    // grid spacing
+    int lmax = 0, nchi = 0;                    // number of radial functions
     std::vector<std::vector<int>> radial_map_; // build a map from [l][izeta] to 1-d array index
     std::string tmp;
     // first read the header
-    if (rank == 0)
-    {
-        if (!ifs.is_open())
-        {
+    if (rank == 0) {
+        if (!ifs.is_open()) {
             ModuleBase::WARNING_QUIT("AtomicRadials::read_abacus_orb", "Couldn't open orbital file.");
         }
-        while (ifs >> tmp)
-        {
-            if (tmp == "Element")
-            {
+        while (ifs >> tmp) {
+            if (tmp == "Element") {
                 ifs >> elem;
-            }
-            else if (tmp == "Cutoff(Ry)")
-            {
+            } else if (tmp == "Cutoff(Ry)") {
                 ifs >> ecut;
-            }
-            else if (tmp == "Lmax")
-            {
+            } else if (tmp == "Lmax") {
                 ifs >> lmax;
                 nzeta.resize(lmax + 1);
-                for (int l = 0; l <= lmax; ++l)
-                {
+                for (int l = 0; l <= lmax; ++l) {
                     ifs >> tmp >> tmp >> tmp >> nzeta[l];
                 }
-            }
-            else if (tmp == "Mesh")
-            {
+            } else if (tmp == "Mesh") {
                 ifs >> nr;
                 continue;
-            }
-            else if (tmp == "dr")
-            {
+            } else if (tmp == "dr") {
                 ifs >> dr;
                 break;
             }
         }
         radial_map_.resize(lmax + 1);
-        for (int l = 0; l <= lmax; ++l)
-        {
+        for (int l = 0; l <= lmax; ++l) {
             radial_map_[l].resize(nzeta[l]);
         }
         int ichi = 0;
-        for (int l = 0; l <= lmax; ++l)
-        {
-            for (int iz = 0; iz < nzeta[l]; ++iz)
-            {
+        for (int l = 0; l <= lmax; ++l) {
+            for (int iz = 0; iz < nzeta[l]; ++iz) {
                 radial_map_[l][iz] = ichi++; // return the value of ichi, then increment
             }
         }
@@ -487,8 +454,7 @@ void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
 #endif
 
     // then adjust the size of the vectors
-    if (rank != 0)
-    {
+    if (rank != 0) {
         nzeta.resize(lmax + 1);
         radials.resize(nchi);
         std::for_each(radials.begin(), radials.end(), [nr](std::vector<double>& v) { v.resize(nr); });
@@ -500,20 +466,17 @@ void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
 
     // read the radial functions by rank0
     int ichi = 0;
-    for (int i = 0; i != nchi; ++i)
-    {
-        if (rank == 0)
-        {
+    for (int i = 0; i != nchi; ++i) {
+        if (rank == 0) {
             int l = 0, izeta = 0;
             ifs >> tmp >> tmp >> tmp;
             ifs >> tmp >> l >> izeta;
             ichi = radial_map_[l][izeta];
-            for (int ir = 0; ir != nr; ++ir)
-            {
+            for (int ir = 0; ir != nr; ++ir) {
                 ifs >> radials[ichi][ir];
             }
         }
-    // broadcast the radial functions
+        // broadcast the radial functions
 #ifdef __MPI
         Parallel_Common::bcast_int(ichi); // let other ranks know where to store the radial function
         Parallel_Common::bcast_double(radials[ichi].data(), nr);
@@ -521,46 +484,37 @@ void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
     }
 } // end of read_abacus_orb
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::cal_occupations(
-		const psi::Psi<std::complex<T>, Device>* psi_in, 
-		const ModuleBase::matrix& wg_in)
-{
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std::complex<T>, Device>* psi_in,
+                                                             const ModuleBase::matrix& wg_in) {
     ModuleBase::timer::start("OnsiteProj", "cal_occupation");
     this->tabulate_atomic(0);
     std::vector<std::complex<double>> occs(this->tot_nproj * 4, 0.0);
 
     // loop over k-points to calculate Mi of \sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
     const int nbands = psi_in->get_nbands();
-    for(int ik = 0; ik < psi_in->get_nk(); ik++)
-    {
+    for (int ik = 0; ik < psi_in->get_nk(); ik++) {
         psi_in->fix_k(ik);
-        if(ik != 0)
-        {
+        if (ik != 0) {
             this->tabulate_atomic(ik);
         }
         // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
-        this->overlap_proj_psi(
-                        nbands * psi_in->get_npol(),
-                        psi_in->get_pointer());
+        this->overlap_proj_psi(nbands * psi_in->get_npol(), psi_in->get_pointer());
         const std::complex<double>* becp_p = this->get_h_becp();
         // becp(nbands*npol , nkb)
         // mag = wg * \sum_{nh}becp * becp
         int nkb = this->tot_nproj;
-        //nkb = 18;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nbands: " << nbands << std::endl;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nkb: " << nkb << std::endl;
-        for(int ib = 0;ib<nbands;ib++)
-        {
+        // nkb = 18;
+        // std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nbands: " << nbands << std::endl;
+        // std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nkb: " << nkb << std::endl;
+        for (int ib = 0; ib < nbands; ib++) {
             const double weight = wg_in(ik, ib);
             int begin_ih = 0;
-            for(int iat = 0; iat < this->iat_nh.size(); iat++)
-            {
+            for (int iat = 0; iat < this->iat_nh.size(); iat++) {
                 const int nh = this->get_nh(iat);
-                for(int ih = 0; ih < nh; ih++)
-                {
+                for (int ih = 0; ih < nh; ih++) {
                     const int occ_index = (begin_ih + ih) * 4;
-                    const int index = ib*2*nkb + begin_ih + ih;
+                    const int index = ib * 2 * nkb + begin_ih + ih;
                     occs[occ_index] += weight * conj(becp_p[index]) * becp_p[index];
                     occs[occ_index + 1] += weight * conj(becp_p[index]) * becp_p[index + nkb];
                     occs[occ_index + 2] += weight * conj(becp_p[index + nkb]) * becp_p[index];
@@ -572,12 +526,12 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     }
     // reduce mag from all k-pools
     const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size() * 2);
     // occ has been reduced and calculate mag
     // Print orbital charge analysis
     auto atom_labels = this->ucell->get_atomLabels();
     print::print_orb_chg(this->ucell, occs, this->iat_nh, atom_labels);
-    
+
     // print charge
     ModuleBase::timer::end("OnsiteProj", "cal_occupation");
 }

@@ -5,9 +5,8 @@
 
 #define DOUBLETHRESHOLD 1e-5
 
-class TN_test : public testing::Test
-{
-protected:
+class TN_test : public testing::Test {
+  protected:
     ModuleBase::Opt_TN tn;
     ModuleBase::Opt_DCsrch ds;
     TestTools tools;
@@ -17,12 +16,11 @@ protected:
     double tol = 1e-5;
     int final_iter = 0;
     int flag = 0;
-    char *task = nullptr;
-    double *p = nullptr;
-    double *x = nullptr;
+    char* task = nullptr;
+    double* p = nullptr;
+    double* x = nullptr;
 
-    void SetUp()
-    {
+    void SetUp() {
         tn.set_para(1.);
         tn.allocate(tools.nx);
         task = new char[60];
@@ -30,90 +28,80 @@ protected:
         x = new double[tools.nx];
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete[] task;
         delete[] p;
         delete[] x;
     }
 
-    void Solve(int func_label)
-    {
+    void Solve(int func_label) {
         tn.refresh();
-        ds.set_paras(1e-4, 2e-1, 1e-12, 0.,12.);
+        ds.set_paras(1e-4, 2e-1, 1e-12, 0., 12.);
         step = 1.;
         residual = 10.;
         final_iter = 0;
-        for (int i = 0; i < tools.nx; ++i)
-        {
+        for (int i = 0; i < tools.nx; ++i) {
             x[i] = 0;
             p[i] = 0;
         }
 
         double f = 0;
         double g = 0;
-        double *gradient = new double[3];
-        double *temp_x = new double[3];
+        double* gradient = new double[3];
+        double* temp_x = new double[3];
         ModuleBase::GlobalFunc::ZEROS(gradient, 3);
         ModuleBase::GlobalFunc::ZEROS(temp_x, 3);
 
-        for (int iter = 0; iter < maxiter; ++iter)
-        {
+        for (int iter = 0; iter < maxiter; ++iter) {
             tools.dfuncdx(x, gradient, func_label);
             residual = 0;
-            for (int i = 0; i<3 ;++i) { residual += gradient[i] * gradient[i];
-}
-            if (residual < tol) 
-            {
+            for (int i = 0; i < 3; ++i) {
+                residual += gradient[i] * gradient[i];
+            }
+            if (residual < tol) {
                 final_iter = iter;
                 break;
             }
-            if (func_label == 0)
-            {
+            if (func_label == 0) {
                 tn.next_direct(x, gradient, flag, p, &(tools.le), &LinearEqu::dfuncdx);
-            }
-            else if (func_label == 1)
-            {
+            } else if (func_label == 1) {
                 tn.next_direct(x, gradient, flag, p, &(tools.mf), &ModuleESolver::ESolver_OF::dfuncdx);
             }
-            for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
-}
-            task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
-            while (true)
-            {
+            for (int i = 0; i < 3; ++i) {
+                temp_x[i] = x[i];
+            }
+            task[0] = 'S';
+            task[1] = 'T';
+            task[2] = 'A';
+            task[3] = 'R';
+            task[4] = 'T';
+            while (true) {
                 f = tools.func(temp_x, func_label);
                 g = tools.dfuncdstp(temp_x, p, func_label);
                 ds.dcSrch(f, g, step, task);
-                if (task[0] == 'F' && task[1] == 'G')
-                {
-                    for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
-}
+                if (task[0] == 'F' && task[1] == 'G') {
+                    for (int j = 0; j < 3; ++j) {
+                        temp_x[j] = x[j] + step * p[j];
+                    }
                     continue;
-                }
-                else if (task[0] == 'C' && task[1] == 'O')
-                {
+                } else if (task[0] == 'C' && task[1] == 'O') {
                     break;
-                }
-                else if (task[0] == 'W' && task[1] == 'A')
-                {
+                } else if (task[0] == 'W' && task[1] == 'A') {
                     break;
-                } 
-                else if (task[0] == 'E' && task[1] == 'R')
-                {
+                } else if (task[0] == 'E' && task[1] == 'R') {
                     break;
                 }
             }
-            for (int i = 0; i < 3; ++i) { x[i] += step * p[i];
-}
+            for (int i = 0; i < 3; ++i) {
+                x[i] += step * p[i];
+            }
         }
         delete[] temp_x;
         delete[] gradient;
     }
 };
 
-
-TEST_F(TN_test, TN_Solve_LinearEq)
-{
+TEST_F(TN_test, TN_Solve_LinearEq) {
 #ifdef __MPI
 #undef __MPI
     Solve(0);
@@ -126,8 +114,7 @@ TEST_F(TN_test, TN_Solve_LinearEq)
 #endif
 }
 
-TEST_F(TN_test, TN_Min_Func)
-{
+TEST_F(TN_test, TN_Min_Func) {
 #ifdef __MPI
 #undef __MPI
     Solve(1);

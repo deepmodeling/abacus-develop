@@ -8,8 +8,7 @@
 //---------------------------------------------------
 // FUNCTION: record the adjacent atoms for each atom
 //---------------------------------------------------
-class Record_adj
-{
+class Record_adj {
   private:
     bool info_modified = false;
 
@@ -27,11 +26,10 @@ class Record_adj
                 bool gamma_only,
                 const std::vector<double>& orb_cutoff);
 
-
     void delete_grid();
 
-    int na_proc=0;
-    int* na_each=nullptr;
+    int na_proc = 0;
+    int* na_each = nullptr;
 
     //--------------------------------------------
     // record sparse atom index in for_grid();
@@ -46,12 +44,12 @@ class Record_adj
     // 1. iat2ca[iat] > 0 ? na_each[iat2ca[iat]] : 0
     // 2. iat2ca[iat] > 0 ? info[iat2ca[iat]] : nullptr
     //--------------------------------------------
-    int* iat2ca=nullptr;
+    int* iat2ca = nullptr;
 
     //------------------------------------------------
     // info will identify each atom in each unitcell.
     //------------------------------------------------
-    int*** info=nullptr;
+    int*** info = nullptr;
 
   private:
 };

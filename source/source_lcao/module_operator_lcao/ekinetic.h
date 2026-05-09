@@ -8,8 +8,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include <vector>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __EKINETICTEMPLATE
 #define __EKINETICTEMPLATE
@@ -20,9 +19,7 @@ namespace hamilt
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
-class EKinetic : public T
-{
-};
+class EKinetic : public T {};
 
 #endif
 
@@ -34,19 +31,18 @@ class EKinetic : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     /**
      * @brief Construct a new EKinetic object
      */
     EKinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      HContainer<TR>* hR_in,
-                                      const UnitCell* ucell_in,
-                                      const std::vector<double>& orb_cutoff,
-                                      const Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor);
+                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                   HContainer<TR>* hR_in,
+                                   const UnitCell* ucell_in,
+                                   const std::vector<double>& orb_cutoff,
+                                   const Grid_Driver* GridD_in,
+                                   const TwoCenterIntegrator* intor);
 
     /**
      * @brief Destroy the EKinetic object

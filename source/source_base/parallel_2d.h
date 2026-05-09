@@ -8,8 +8,7 @@
 
 /// @brief  This class packs the basic information of
 /// 2D-block-cyclic parallel distribution of an arbitrary matrix.
-class Parallel_2D
-{
+class Parallel_2D {
   public:
     Parallel_2D() = default;
     ~Parallel_2D() = default;
@@ -18,16 +17,10 @@ class Parallel_2D
     Parallel_2D(Parallel_2D&& rhs) = default;
 
     /// number of local rows
-    int get_row_size() const
-    {
-        return nrow;
-    };
+    int get_row_size() const { return nrow; };
 
     /// number of local columns
-    int get_col_size() const
-    {
-        return ncol;
-    };
+    int get_col_size() const { return ncol; };
 
     /// number of global rows
     int get_global_row_size() const;
@@ -36,43 +29,25 @@ class Parallel_2D
     int get_global_col_size() const;
 
     /// number of local matrix elements
-    int64_t get_local_size() const
-    {
-        return nloc;
-    };
+    int64_t get_local_size() const { return nloc; };
 
     /// get the local index of a global index (row)
-    int global2local_row(const int igr) const
-    {
-        return global2local_row_[igr];
-    }
+    int global2local_row(const int igr) const { return global2local_row_[igr]; }
 
     /// get the local index of a global index (col)
-    int global2local_col(const int igc) const
-    {
-        return global2local_col_[igc];
-    }
+    int global2local_col(const int igc) const { return global2local_col_[igc]; }
 
     /// get the global index of a local index (row)
-    int local2global_row(const int ilr) const
-    {
-        return local2global_row_[ilr];
-    }
+    int local2global_row(const int ilr) const { return local2global_row_[ilr]; }
 
     /// get the global index of a local index (col)
-    int local2global_col(const int ilc) const
-    {
-        return local2global_col_[ilc];
-    }
+    int local2global_col(const int ilc) const { return local2global_col_[ilc]; }
 
     /// check whether a global index is in this process
     bool in_this_processor(const int iw1_all, const int iw2_all) const;
 
     /// side length of 2d square block
-    int get_block_size() const
-    {
-        return nb;
-    };
+    int get_block_size() const { return nb; };
 
 #ifdef __MPI
     /**

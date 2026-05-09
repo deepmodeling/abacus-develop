@@ -10,11 +10,9 @@
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #endif
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 template <typename TR>
-std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
-{
+std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR) {
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
 
     return all_R_coor;
@@ -22,8 +20,7 @@ std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
 
 template <typename T>
 std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> cal_HR_sparse(const hamilt::HContainer<T>& hR,
-                                                                                        const double sparse_thr)
-{
+                                                                                        const double sparse_thr) {
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> target;
     sparse_format::cal_HContainer<T>(*hR.get_paraV(), sparse_thr, hR, target);
     return target;
@@ -48,8 +45,7 @@ void write_Vxc_R(const int nspin,
                  const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* const Hexxd,
                  const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc,
 #endif
-                 const double sparse_thr = 1e-10)
-{
+                 const double sparse_thr = 1e-10) {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
     // 1. real-space xc potential
     // ModuleBase::matrix vr_xc(nspin, chg.nrxx);
@@ -57,8 +53,8 @@ void write_Vxc_R(const int nspin,
     double vtxc = 0.0;
     // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
     // potxc.cal_v_eff(&chg, &ucell, vr_xc);
-    elecstate::Potential* potxc
-        = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
+    elecstate::Potential* potxc =
+        new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
     std::vector<std::string> compnents_list = {"xc"};
     potxc->pot_register(compnents_list);
     potxc->update_from_charge(&chg, &ucell);
@@ -71,15 +67,12 @@ void write_Vxc_R(const int nspin,
     std::array<int, 3> Rs_period = {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
     const auto cell_nearest = hamilt::init_cell_nearest(ucell, Rs_period);
 #endif
-    for (int is = 0; is < nspin0; ++is)
-    {
-        if (std::is_same<TK, double>::value)
-        {
+    for (int is = 0; is < nspin0; ++is) {
+        if (std::is_same<TK, double>::value) {
             vxcs_R_ao[is].fix_gamma();
         }
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
+        if (GlobalC::exx_info.info_global.cal_exx) {
             GlobalC::exx_info.info_ri.real_number
                 ? hamilt::reallocate_hcontainer(*Hexxd, &vxcs_R_ao[is], &cell_nearest)
                 : hamilt::reallocate_hcontainer(*Hexxc, &vxcs_R_ao[is], &cell_nearest);
@@ -90,8 +83,7 @@ void write_Vxc_R(const int nspin,
     // 3. calculate the Vxc(R)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
     std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> vxcs_op_ao(nspin0);
-    for (int is = 0; is < nspin0; ++is)
-    {
+    for (int is = 0; is < nspin0; ++is) {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(&vxc_k_ao,
                                                                         kv.kvec_d,
                                                                         potxc,
@@ -103,8 +95,7 @@ void write_Vxc_R(const int nspin,
         vxcs_op_ao[is]->set_current_spin(is);
         vxcs_op_ao[is]->contributeHR();
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
-        {
+        if (GlobalC::exx_info.info_global.cal_exx) {
             GlobalC::exx_info.info_ri.real_number ? RI_2D_Comm::add_HexxR(is,
                                                                           GlobalC::exx_info.info_global.hybrid_alpha,
                                                                           *Hexxd,
@@ -143,8 +134,7 @@ void write_Vxc_R(const int nspin,
     // }
 
     // 4. write Vxc(R) in csr format
-    for (int is = 0; is < nspin0; ++is)
-    {
+    for (int is = 0; is < nspin0; ++is) {
         std::set<Abfs::Vector3_Order<int>> all_R_coor = sparse_format::get_R_range(vxcs_R_ao[is]);
         const std::string filename = "Vxc_R_spin" + std::to_string(is);
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),

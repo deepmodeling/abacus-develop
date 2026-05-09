@@ -3,11 +3,9 @@
 #include "hsolver_pw.h"
 #include "source_pw/module_stodft/hamilt_sdft_pw.h"
 #include "source_pw/module_stodft/sto_iter.h"
-namespace hsolver
-{
+namespace hsolver {
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class HSolverPW_SDFT : public HSolverPW<T, Device>
-{
+class HSolverPW_SDFT : public HSolverPW<T, Device> {
   protected:
     using Real = typename GetTypeReal<T>::type;
 
@@ -35,8 +33,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                                scf_iter_in,
                                diag_iter_max_in,
                                diag_thr_in,
-                               need_subspace_in)
-    {
+                               need_subspace_in) {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
 

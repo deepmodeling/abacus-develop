@@ -18,10 +18,8 @@
 #include <cstdio>
 #include <vector>
 
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 //=============================================================================
 // Constant Memory - Integration Grids
@@ -50,10 +48,8 @@ __constant__ double d_gl_w[RADIAL_GRID_NUM]; ///< Quadrature weights
  * @param val Input value from each thread
  * @return Sum across all threads in the warp (valid only in lane 0)
  */
-__device__ __forceinline__ double warp_reduce_sum(double val)
-{
-    for (int offset = 16; offset > 0; offset /= 2)
-    {
+__device__ __forceinline__ double warp_reduce_sum(double val) {
+    for (int offset = 16; offset > 0; offset /= 2) {
         val += __shfl_down_sync(0xffffffff, val, offset);
     }
     return val;
@@ -85,16 +81,14 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                                                int nproj,
                                                int natomwfc,
                                                int nlm_dim,
-                                               cuDoubleComplex* __restrict__ nlm_out)
-{
+                                               cuDoubleComplex* __restrict__ nlm_out) {
     // Thread/block indices
     const int norb_idx = blockIdx.x; // Which (neighbor, orbital) pair
     const int proj_idx = blockIdx.y; // Which projector
     const int tid = threadIdx.x;
 
     // Early exit for out-of-bounds blocks
-    if (norb_idx >= total_neighbor_orbitals || proj_idx >= nproj)
-    {
+    if (norb_idx >= total_neighbor_orbitals || proj_idx >= nproj) {
         return;
     }
 
@@ -112,8 +106,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     const int m0_offset = proj_m0_offset[proj_idx];
 
     // Skip if angular momentum exceeds supported limit
-    if (L1 > MAX_L || L0 > MAX_L)
-    {
+    if (L1 > MAX_L || L0 > MAX_L) {
         return;
     }
 
@@ -155,12 +148,10 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     double result_r_re[3][MAX_M0_SIZE]; // For current operator: x, y, z components
     double result_r_im[3][MAX_M0_SIZE];
 
-    for (int m0 = 0; m0 < num_m0; m0++)
-    {
+    for (int m0 = 0; m0 < num_m0; m0++) {
         result_re[m0] = 0.0;
         result_im[m0] = 0.0;
-        for (int d = 0; d < 3; d++)
-        {
+        for (int d = 0; d < 3; d++) {
             result_r_re[d][m0] = 0.0;
             result_r_im[d][m0] = 0.0;
         }
@@ -172,8 +163,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     // Inner: radial points (accumulated per thread)
     //-------------------------------------------------------------------------
 
-    for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE)
-    {
+    for (int ian = tid; ian < ANGULAR_GRID_NUM; ian += BLOCK_SIZE) {
         // Load angular grid point
         const double leb_x = d_lebedev_x[ian];
         const double leb_y = d_lebedev_y[ian];
@@ -195,8 +185,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 
         // Radial integration
 #pragma unroll 4
-        for (int ir = 0; ir < RADIAL_GRID_NUM; ir++)
-        {
+        for (int ir = 0; ir < RADIAL_GRID_NUM; ir++) {
             // Transform Gauss-Legendre point from [-1,1] to [r_min, r_max]
             const double r_val = xmean + xl * d_gl_x[ir];
             const double w_rad = xl * d_gl_w[ir];
@@ -213,27 +202,23 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
             const double tnorm = sqrt(tx * tx + ty * ty + tz * tz);
 
             // Check if within orbital cutoff
-            if (tnorm <= r1_max)
-            {
+            if (tnorm <= r1_max) {
                 // Compute Y_lm for orbital (depends on direction from R1)
                 double ylm1[MAX_YLM_SIZE];
-                if (tnorm > 1e-10)
-                {
+                if (tnorm > 1e-10) {
                     const double inv_tnorm = 1.0 / tnorm;
                     ModuleBase::sph_harm(L1, tx * inv_tnorm, ty * inv_tnorm, tz * inv_tnorm, ylm1);
-                }
-                else
-                {
+                } else {
                     ModuleBase::sph_harm(L1, 0.0, 0.0, 1.0, ylm1);
                 }
 
                 // Interpolate orbital radial function
-                const double psi_val
-                    = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
+                const double psi_val =
+                    interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
 
                 // Interpolate projector radial function
-                const double beta_val
-                    = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
+                const double beta_val =
+                    interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
 
                 // Phase factor exp(i * A · r)
                 const double phase = r_val * A_dot_leb;
@@ -248,16 +233,14 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
 
                 // Accumulate for all m0 components of projector
 #pragma unroll
-                for (int m0 = 0; m0 < num_m0; m0++)
-                {
+                for (int m0 = 0; m0 < num_m0; m0++) {
                     const double ylm0_val = ylm0[offset_L0 + m0];
 
                     result_re[m0] += common_factor.x * ylm0_val;
                     result_im[m0] += common_factor.y * ylm0_val;
 
                     // Current operator contribution (if requested)
-                    if (nlm_dim == 4)
-                    {
+                    if (nlm_dim == 4) {
                         const double r_op_x = rx + R0.x;
                         const double r_op_y = ry + R0.y;
                         const double r_op_z = rz + R0.z;
@@ -272,7 +255,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 }
             }
         } // End radial loop
-    }     // End angular loop
+    } // End angular loop
 
     //-------------------------------------------------------------------------
     // Parallel reduction and output
@@ -283,30 +266,26 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
 
-    for (int m0 = 0; m0 < num_m0; m0++)
-    {
+    for (int m0 = 0; m0 < num_m0; m0++) {
         // Step 1: Warp-level reduction using shuffle
         double sum_re = warp_reduce_sum(result_re[m0]);
         double sum_im = warp_reduce_sum(result_im[m0]);
 
         // Step 2: First lane of each warp writes to shared memory
-        if (lane_id == 0)
-        {
+        if (lane_id == 0) {
             s_temp_re[warp_id] = sum_re;
             s_temp_im[warp_id] = sum_im;
         }
         __syncthreads();
 
         // Step 3: First warp reduces across all warps and writes output
-        if (warp_id == 0)
-        {
+        if (warp_id == 0) {
             sum_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
             sum_im = (lane_id < NUM_WARPS) ? s_temp_im[lane_id] : 0.0;
             sum_re = warp_reduce_sum(sum_re);
             sum_im = warp_reduce_sum(sum_im);
 
-            if (lane_id == 0)
-            {
+            if (lane_id == 0) {
                 cuDoubleComplex result = make_cuDoubleComplex(sum_re, sum_im);
                 result = cu_mul(result, exp_iAR0);
                 result = cu_conj(result);
@@ -316,29 +295,24 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
         __syncthreads();
 
         // Process current operator components (if nlm_dim == 4)
-        if (nlm_dim == 4)
-        {
-            for (int d = 0; d < 3; d++)
-            {
+        if (nlm_dim == 4) {
+            for (int d = 0; d < 3; d++) {
                 double sum_r_re = warp_reduce_sum(result_r_re[d][m0]);
                 double sum_r_im = warp_reduce_sum(result_r_im[d][m0]);
 
-                if (lane_id == 0)
-                {
+                if (lane_id == 0) {
                     s_temp_re[warp_id] = sum_r_re;
                     s_temp_im[warp_id] = sum_r_im;
                 }
                 __syncthreads();
 
-                if (warp_id == 0)
-                {
+                if (warp_id == 0) {
                     sum_r_re = (lane_id < NUM_WARPS) ? s_temp_re[lane_id] : 0.0;
                     sum_r_im = (lane_id < NUM_WARPS) ? s_temp_im[lane_id] : 0.0;
                     sum_r_re = warp_reduce_sum(sum_r_re);
                     sum_r_im = warp_reduce_sum(sum_r_im);
 
-                    if (lane_id == 0)
-                    {
+                    if (lane_id == 0) {
                         cuDoubleComplex result_r = make_cuDoubleComplex(sum_r_re, sum_r_im);
                         result_r = cu_mul(result_r, exp_iAR0);
                         result_r = cu_conj(result_r);
@@ -361,8 +335,7 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
  * Initializes the constant memory arrays with Lebedev-Laikov angular grid
  * and Gauss-Legendre radial grid for use in kernel integration.
  */
-void copy_grids_to_device()
-{
+void copy_grids_to_device() {
     // Copy Lebedev-Laikov 110-point angular quadrature grid
     CHECK_CUDA(cudaMemcpyToSymbol(d_lebedev_x,
                                   ModuleBase::Integral::Lebedev_Laikov_grid110_x,

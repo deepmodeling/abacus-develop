@@ -8,11 +8,10 @@
 #include "k_vector_utils.h"
 #include <vector>
 
-class K_Vectors
-{
-public:
-    std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
+class K_Vectors {
+  public:
+    std::vector<ModuleBase::Vector3<double>> kvec_c;      /// Cartesian coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_d;      /// Direct coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_c_full; // Cartesian coordinates of full k mesh match with nkstot_full
 
     std::vector<double> wk; /// wk, weight of k points
@@ -20,10 +19,10 @@ public:
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nmp[3]={0};                 /// Number of Monhorst-Pack
+    int nmp[3] = {0};           /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
-    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
+    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations.
     /// dim: [iks_ibz][(isym, kvec_d)]
     std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
@@ -36,7 +35,6 @@ public:
     K_Vectors& operator=(K_Vectors&& rhs) = default;
 
     Parallel_Kpoints para_k; ///< parallel for kpoints
-
 
     /**
      * @brief Set up the k-points for the system.
@@ -58,74 +56,38 @@ public:
      * @note Only available for nspin = 1 or 2 or 4.
      */
     void set(const UnitCell& ucell,
-        const ModuleSymmetry::Symmetry& symm,
-        const std::string& k_file_name,
-        const int& nspin,
-        const ModuleBase::Matrix3& reciprocal_vec,
-        const ModuleBase::Matrix3& latvec,
-        std::ofstream& ofs);
+             const ModuleSymmetry::Symmetry& symm,
+             const std::string& k_file_name,
+             const int& nspin,
+             const ModuleBase::Matrix3& reciprocal_vec,
+             const ModuleBase::Matrix3& latvec,
+             std::ofstream& ofs);
 
-    int get_nks() const
-    {
-        return this->nks;
-    }
+    int get_nks() const { return this->nks; }
 
-    int get_nkstot() const
-    {
-        return this->nkstot;
-    }
+    int get_nkstot() const { return this->nkstot; }
 
-    int get_nkstot_full() const
-    {
-        return this->nkstot_full;
-    }
+    int get_nkstot_full() const { return this->nkstot_full; }
 
-    double get_koffset(const int i) const
-    {
-        return this->koffset[i];
-    }
+    double get_koffset(const int i) const { return this->koffset[i]; }
 
-    int get_k_nkstot() const
-    {
-        return this->k_nkstot;
-    }
+    int get_k_nkstot() const { return this->k_nkstot; }
 
-    int get_nspin() const
-    {
-        return this->nspin;
-    }
+    int get_nspin() const { return this->nspin; }
 
-    std::string get_k_kword() const
-    {
-        return this->k_kword;
-    }
+    std::string get_k_kword() const { return this->k_kword; }
 
-    void set_nks(int value)
-    {
-        this->nks = value;
-    }
+    void set_nks(int value) { this->nks = value; }
 
-    void set_nkstot(int value)
-    {
-        this->nkstot = value;
-    }
+    void set_nkstot(int value) { this->nkstot = value; }
 
-    void set_nkstot_full(int value)
-    {
-        this->nkstot_full = value;
-    }
+    void set_nkstot_full(int value) { this->nkstot_full = value; }
 
-    void set_nspin(int value)
-    {
-        this->nspin = value;
-    }
+    void set_nspin(int value) { this->nspin = value; }
 
-    bool get_is_mp() const
-    {
-        return is_mp;
-    }
+    bool get_is_mp() const { return is_mp; }
 
-    std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
+    std::vector<int> ik2iktot;  ///<[nks] map ik to the global index of k points
     std::vector<int> ibz_index; ///< map k points (before symmetry reduction) to irreducible k-points
 
     /**
@@ -279,8 +241,6 @@ public:
      * spin.
      */
     void normalize_wk(const int& degspin);
-
-
 
     // step 4 : *2 kpoints.
 

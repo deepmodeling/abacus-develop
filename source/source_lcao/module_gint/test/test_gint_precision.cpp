@@ -2,8 +2,7 @@
 
 #include "../gint_info.h"
 
-TEST(GintPrecisionTest, GintInfoStoresExecPrecision)
-{
+TEST(GintPrecisionTest, GintInfoStoresExecPrecision) {
     UnitCell ucell;
     ModuleGint::GintInfo* info = ModuleGint::GintInfo::make_test_instance_ptr(ucell, {});
 

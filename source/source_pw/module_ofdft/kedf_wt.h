@@ -13,17 +13,10 @@
  * See Wang L W, Teter M P. Physical Review B, 1992, 45(23): 13196.
  * @author sunliang on 2022-06
  */
-class KEDF_WT
-{
+class KEDF_WT {
   public:
-    KEDF_WT()
-    {
-        this->stress.create(3, 3);
-    }
-    ~KEDF_WT()
-    {
-        delete[] this->kernel_;
-    }
+    KEDF_WT() { this->stress.create(3, 3); }
+    ~KEDF_WT() { delete[] this->kernel_; }
 
     void set_para(double dV,
                   double alpha,
@@ -60,9 +53,9 @@ class KEDF_WT
     double alpha_ = 5. / 6.;
     double beta_ = 5. / 6.;
     // double weightWT = 1.;
-    const double c_tf_
-        = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
-          * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double c_tf_ =
+        3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0) *
+        2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double wt_coef_ = 0.; // coefficient of WT kernel
     double* kernel_ = nullptr;
 };

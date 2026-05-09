@@ -9,8 +9,7 @@
 #include <RI/global/Tensor.h>
 #endif
 
-namespace sparse_format
-{
+namespace sparse_format {
 #ifdef __MPI
 // Synchronize all processes' R coordinates,
 // otherwise HS_Arrays.all_R_coor would have different sizes on different processes,
@@ -19,14 +18,11 @@ void sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm co
 #endif
 
 template <typename T>
-std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
-{
+std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR) {
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
-    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < hR.size_atom_pairs(); ++iap) {
         const hamilt::AtomPair<T>& atom_pair = hR.get_atom_pair(iap);
-        for (int iR = 0; iR < atom_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < atom_pair.get_R_size(); ++iR) {
             const auto& r_index = atom_pair.get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
             all_R_coor.insert(dR);

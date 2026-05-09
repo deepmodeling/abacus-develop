@@ -13,16 +13,14 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 void Propagator::compute_propagator_cn2(const int nlocal,
                                         const std::complex<double>* Stmp,
                                         const std::complex<double>* Htmp,
                                         std::complex<double>* U_operator,
                                         std::ofstream& ofs_running,
-                                        const int print_matrix) const
-{
+                                        const int print_matrix) const {
     assert(this->ParaV->nloc > 0);
 
     // (1) copy Htmp to Numerator & Denominator
@@ -34,15 +32,12 @@ void Propagator::compute_propagator_cn2(const int nlocal,
     ModuleBase::GlobalFunc::ZEROS(Denominator, this->ParaV->nloc);
     BlasConnector::copy(this->ParaV->nloc, Htmp, 1, Denominator, 1);
 
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << std::endl;
         ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 ofs_running << Stmp[in + j].real() << "+" << Stmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -50,11 +45,9 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -97,15 +90,12 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                               1,
                               this->ParaV->desc);
 
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << " beta=" << beta1 << std::endl;
         ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
@@ -124,8 +114,7 @@ void Propagator::compute_propagator_cn2(const int nlocal,
     ScalapackConnector::getrf(nlocal, nlocal, Denominator, 1, 1, this->ParaV->desc, ipiv, &info);
 
     // Print ipiv
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
         ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
         ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
@@ -133,8 +122,7 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->get_block_size() << std::endl;
         ofs_running << " nlocal = " << nlocal << std::endl;
         ofs_running << " ipiv:" << std::endl;
-        for (int i = 0; i < this->ParaV->nloc; i++)
-        {
+        for (int i = 0; i < this->ParaV->nloc; i++) {
             ofs_running << ipiv[i] << " ";
         }
         ofs_running << std::endl;
@@ -197,44 +185,35 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                              1,
                              this->ParaV->desc);
 
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
         ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
         ofs_running << std::endl;
         ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
-        {
+        for (int i = 0; i < this->ParaV->nrow; i++) {
             const int in = i * this->ParaV->ncol;
-            for (int j = 0; j < this->ParaV->ncol; j++)
-            {
+            for (int j = 0; j < this->ParaV->ncol; j++) {
                 double aa = U_operator[in + j].real();
                 double bb = U_operator[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
                 }
-                if (std::abs(bb) < 1e-8)
-                {
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
                 }
                 ofs_running << aa << "+" << bb << "i ";
@@ -254,12 +233,10 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
                                                ct::Tensor& U_operator,
                                                std::ofstream& ofs_running,
                                                const int print_matrix,
-                                               CublasMpResources& cublas_res) const
-{
+                                               CublasMpResources& cublas_res) const {
 #ifdef __CUBLASMP
     // 1. Resource Validation
-    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr || cublas_res.cusolvermp_grid == nullptr)
-    {
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr || cublas_res.cusolvermp_grid == nullptr) {
         return;
     }
 
@@ -433,8 +410,7 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     int h_info = 0;
     cudaMemcpyAsync(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost, cublas_res.stream);
     cudaStreamSynchronize(cublas_res.stream);
-    if (h_info != 0)
-    {
+    if (h_info != 0) {
         std::cerr << "CRITICAL: cusolverMpGeqrf failed with Info: " << h_info << std::endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
@@ -559,8 +535,7 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
                                                       const ct::Tensor& Htmp,
                                                       ct::Tensor& U_operator,
                                                       std::ofstream& ofs_running,
-                                                      const int print_matrix) const
-{
+                                                      const int print_matrix) const {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU

@@ -3,9 +3,8 @@
 
 #include "unitcell.h"
 
-namespace unitcell
-{
-    void check_atomic_stru(UnitCell& ucell, const double& factor);
+namespace unitcell {
+void check_atomic_stru(UnitCell& ucell, const double& factor);
 };
 
 #endif

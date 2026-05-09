@@ -12,8 +12,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_psi/psi.h"
 
-class unkOverlap_pw
-{
+class unkOverlap_pw {
   public:
     unkOverlap_pw();
     ~unkOverlap_pw();

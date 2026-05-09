@@ -8,8 +8,7 @@
 #include <set>
 #include <vector>
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * class HContainer
@@ -140,8 +139,7 @@ namespace hamilt
  *
  */
 template <typename T>
-class HContainer
-{
+class HContainer {
   public:
     // Destructor of class HContainer
     ~HContainer();
@@ -154,10 +152,10 @@ class HContainer
      * data of HR_in will not be copied, please call add() after this constructor to copy data.
      */
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
-    
+
     // copy assignment, not allowed
     HContainer& operator=(const HContainer<T>& HR_in) = delete;
-    
+
     // move constructor
     HContainer(HContainer<T>&& HR_in) noexcept;
     // move assignment
@@ -178,17 +176,17 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
-    * @brief set parallel orbital pointer to check parallel information
-    */
-    void set_paraV(const Parallel_Orbitals* paraV_in)
-    {
+     * @brief set parallel orbital pointer to check parallel information
+     */
+    void set_paraV(const Parallel_Orbitals* paraV_in) {
         this->paraV = paraV_in;
-        for (auto& ap : atom_pairs) ap.set_paraV(paraV_in);
+        for (auto& ap: atom_pairs)
+            ap.set_paraV(paraV_in);
     };
     /**
- * @brief get parallel orbital pointer to check parallel information
- * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
- */
+     * @brief get parallel orbital pointer to check parallel information
+     * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
+     */
     const Parallel_Orbitals* get_paraV() const { return this->paraV; };
 
     /**
@@ -339,7 +337,6 @@ class HContainer
      */
     size_t size_R_loop() const;
 
-    
     /**
      * @brief find index of R in tmp_R_index, used when current_R is fixed
      *
@@ -395,11 +392,9 @@ class HContainer
      * named nnr inherited from history
      * all AtomPairs and BaseMatrixs are counted
      */
-    size_t get_nnr() const
-    {
+    size_t get_nnr() const {
         size_t sum = 0;
-        for (int iap = 0; iap < this->atom_pairs.size(); ++iap)
-        {
+        for (int iap = 0; iap < this->atom_pairs.size(); ++iap) {
             sum += this->atom_pairs[iap].get_R_size() * this->atom_pairs[iap].get_size();
         }
         return sum;
@@ -425,15 +420,12 @@ class HContainer
      * HContainer has not been allocated after this function,
      * user should call allocate(...) to allocate memory.
      */
-    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol=1);
-    
+    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol = 1);
+
     /**
      * @brief return the wrapper_pointer
      */
-    T* get_wrapper() const
-    {
-        return this->wrapper_pointer;
-    }
+    T* get_wrapper() const { return this->wrapper_pointer; }
 
     /**
      * @brief synchronization of atom-pairs for read-in HContainer
@@ -445,28 +437,19 @@ class HContainer
      * @brief get sparse_ap
      * @return std::vector<std::vector<int>>&
      */
-    const std::vector<std::vector<int>>& get_sparse_ap() const
-    {
-        return sparse_ap;
-    }
+    const std::vector<std::vector<int>>& get_sparse_ap() const { return sparse_ap; }
 
     /**
      * @brief get sparse_ap_index
      * @return std::vector<std::vector<int>>&
      */
-    const std::vector<std::vector<int>>& get_sparse_ap_index() const
-    {
-        return sparse_ap_index;
-    }
+    const std::vector<std::vector<int>>& get_sparse_ap_index() const { return sparse_ap_index; }
 
     /**
      * @brief get number of basis in each H matrix
      * @return int
      */
-    int get_nbasis() const
-    {
-        return paraV->get_global_row_size();
-    }
+    int get_nbasis() const { return paraV->get_global_row_size(); }
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
@@ -475,7 +458,7 @@ class HContainer
     // sparse table for (atom_i, atom_j)->index of atom_pairs
     std::vector<std::vector<int>> sparse_ap;
     std::vector<std::vector<int>> sparse_ap_index;
-    
+
     // record allocated memory size
     size_t allocated_size = 0;
 

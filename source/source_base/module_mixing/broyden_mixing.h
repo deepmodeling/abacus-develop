@@ -3,8 +3,7 @@
 #include "mixing.h"
 #include "source_base/matrix.h"
 
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 /**
  * @brief Simplified modified broyden_mixing method.
  *        Ref: D.D. Johnson PRB 38, 12807 (1988)
@@ -22,22 +21,18 @@ namespace Base_Mixing
  *        mixing_data{i} = n_in{i} + mixing_beta*F{i}
  *        n{m+1} = \sum_i coef{i} * mixing_data{i}
  */
-class Broyden_Mixing : public Mixing
-{
+class Broyden_Mixing : public Mixing {
   public:
-    Broyden_Mixing(const int& mixing_ndim)
-    {
+    Broyden_Mixing(const int& mixing_ndim) {
         this->mixing_ndim = mixing_ndim;
         this->data_ndim = mixing_ndim + 1;
         this->coef = std::vector<double>(mixing_ndim + 1);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
     }
-    Broyden_Mixing(const int& mixing_ndim, const double& mixing_beta) : Broyden_Mixing(mixing_ndim)
-    {
+    Broyden_Mixing(const int& mixing_ndim, const double& mixing_beta) : Broyden_Mixing(mixing_ndim) {
         this->mixing_beta = mixing_beta;
     }
-    virtual ~Broyden_Mixing() override
-    {
+    virtual ~Broyden_Mixing() override {
         if (F != nullptr)
             free(F);
         if (dF != nullptr)
@@ -47,8 +42,7 @@ class Broyden_Mixing : public Mixing
      * @brief reset mixing
      *
      */
-    virtual void reset() override
-    {
+    virtual void reset() override {
         this->ndim_cal_dF = 0;
         this->start_dF = -1;
         this->address = nullptr;
@@ -74,18 +68,16 @@ class Broyden_Mixing : public Mixing
                            const double* data_out,
                            std::function<void(double*)> screen,
                            std::function<void(double*, const double*, const double*)> mix,
-                           const bool& need_calcoef) override
-    {
+                           const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
-    virtual void push_data(
-        Mixing_Data& mdata,
-        const std::complex<double>* data_in,
-        const std::complex<double>* data_out,
-        std::function<void(std::complex<double>*)> screen,
-        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
-        const bool& need_calcoef) override
-    {
+    virtual void
+    push_data(Mixing_Data& mdata,
+              const std::complex<double>* data_in,
+              const std::complex<double>* data_out,
+              std::function<void(std::complex<double>*)> screen,
+              std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+              const bool& need_calcoef) override {
         this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
 
@@ -95,13 +87,11 @@ class Broyden_Mixing : public Mixing
      * @param mdata Mixing_Data
      * @param inner_product pointer to the inner dot function
      */
-    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override
-    {
+    virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) override {
         tem_cal_coef(mdata, inner_product);
     }
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override
-    {
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) override {
         tem_cal_coef(mdata, inner_product);
     }
 
@@ -149,10 +139,7 @@ class Broyden_Mixing : public Mixing
     // start index for dF
     int start_dF = -1;
     // get the index of i-th dF vector
-    int dFindex_move(const int& index)
-    {
-        return (start_dF + index + mixing_ndim) % mixing_ndim;
-    }
+    int dFindex_move(const int& index) { return (start_dF + index + mixing_ndim) % mixing_ndim; }
     // the number of calculated dF
     int ndim_cal_dF = 0;
 };

@@ -8,29 +8,17 @@
 #undef private
 #include "source_cell/read_stru.h"
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 
 /************************************************
  *  unit test of sltk_grid
@@ -45,13 +33,9 @@ Magnetism::~Magnetism()
  *       member Cell as a 3D array of CellSet
  */
 
-void SetGlobalV()
-{
-    PARAM.input.test_grid = 0;
-}
+void SetGlobalV() { PARAM.input.test_grid = 0; }
 
-class SltkGridTest : public testing::Test
-{
+class SltkGridTest : public testing::Test {
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
@@ -61,23 +45,18 @@ class SltkGridTest : public testing::Test
     double radius = ((8 + 5.01) * 2.0 + 0.01) / 10.2;
     int test_atom_in = 0;
     std::string output;
-    void SetUp()
-    {
+    void SetUp() {
         SetGlobalV();
         ucell = utp.SetUcellInfo();
     }
-    void TearDown()
-    {
-        delete ucell;
-    }
+    void TearDown() { delete ucell; }
 };
 
 using SltkGridDeathTest = SltkGridTest;
 
-TEST_F(SltkGridTest, Init)
-{
+TEST_F(SltkGridTest, Init) {
     ofs.open("test.out");
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     Grid LatGrid(PARAM.input.test_grid);
@@ -92,16 +71,15 @@ TEST_F(SltkGridTest, Init)
     remove("test.out");
 }
 
-TEST_F(SltkGridTest, InitSmall)
-{
+TEST_F(SltkGridTest, InitSmall) {
     ofs.open("test.out");
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     radius = 0.5;
     Grid LatGrid(PARAM.input.test_grid);
     LatGrid.init(ofs, *ucell, radius, pbc);
-    LatGrid.setMemberVariables(ofs,  *ucell);
+    LatGrid.setMemberVariables(ofs, *ucell);
     EXPECT_EQ(LatGrid.pbc, true);
     EXPECT_TRUE(LatGrid.pbc);
     EXPECT_DOUBLE_EQ(LatGrid.sradius2, radius * radius);

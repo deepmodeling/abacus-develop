@@ -20,11 +20,9 @@
  *   - Lattice_Change_CG::third_order()
  */
 
-class LatticeChangeCGTest : public ::testing::Test
-{
+class LatticeChangeCGTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
         // Initialize variables before each test
         Lattice_Change_Basic::dim = 9;
         Lattice_Change_Basic::stress_step = 1;
@@ -33,8 +31,7 @@ class LatticeChangeCGTest : public ::testing::Test
         lc_cg.allocate();
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Clean up after each test
     }
 
@@ -42,8 +39,7 @@ class LatticeChangeCGTest : public ::testing::Test
 };
 
 // Test whether the allocate() function can correctly allocate memory space
-TEST_F(LatticeChangeCGTest, TestAllocate)
-{
+TEST_F(LatticeChangeCGTest, TestAllocate) {
     Lattice_Change_Basic::dim = 4;
     lc_cg.allocate();
 
@@ -55,15 +51,13 @@ TEST_F(LatticeChangeCGTest, TestAllocate)
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
-TEST_F(LatticeChangeCGTest, TestAllocateWithZeroDimension)
-{
+TEST_F(LatticeChangeCGTest, TestAllocateWithZeroDimension) {
     Lattice_Change_Basic::dim = 0;
     ASSERT_DEATH(lc_cg.allocate(), "");
 }
 
 // Check that the arrays are correctly initialized to 0
-TEST_F(LatticeChangeCGTest, TestAllocateAndInitialize)
-{
+TEST_F(LatticeChangeCGTest, TestAllocateAndInitialize) {
     Lattice_Change_Basic::dim = 3;
     lc_cg.allocate();
 
@@ -75,8 +69,7 @@ TEST_F(LatticeChangeCGTest, TestAllocateAndInitialize)
 }
 
 // Test function start() when converged
-TEST_F(LatticeChangeCGTest, TestStartConverged)
-{
+TEST_F(LatticeChangeCGTest, TestStartConverged) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -91,9 +84,9 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output
-        = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n                              stress_step = 1\n       "
-          "                  update iteration = 5\n";
+    std::string expected_output = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n       "
+                                  "                       stress_step = 1\n       "
+                                  "                  update iteration = 5\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -103,8 +96,7 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
 }
 
 // Test function start() sd branch
-TEST_F(LatticeChangeCGTest, TestStartSd)
-{
+TEST_F(LatticeChangeCGTest, TestStartSd) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -131,8 +123,7 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
 }
 
 // Test function start() trial branch with goto
-TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
-{
+TEST_F(LatticeChangeCGTest, TestStartTrialGoto) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -163,8 +154,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
 }
 
 // Test function start() trial branch without goto
-TEST_F(LatticeChangeCGTest, TestStartTrial)
-{
+TEST_F(LatticeChangeCGTest, TestStartTrial) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -193,8 +183,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
 }
 
 // Test function start() no trial branch with goto case 1
-TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
-{
+TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -224,8 +213,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
 }
 
 // Test function start() no trial branch with goto case 2
-TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
-{
+TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -258,8 +246,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
 }
 
 // Test function start() no trial branch without goto
-TEST_F(LatticeChangeCGTest, TestStartNoTrial)
-{
+TEST_F(LatticeChangeCGTest, TestStartNoTrial) {
     // setup data
     UnitCell ucell;
     ucell.lc[0] = 1;
@@ -291,8 +278,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
 }
 
 // Test function setup_cg_grad() when ncggrad is multiple of 10000
-TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsMultipleOf10000)
-{
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsMultipleOf10000) {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double cggrad[9] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
@@ -314,8 +300,7 @@ TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsMultipleOf10000)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 < 0.5
-TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
-{
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1) {
     double grad[9] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double grad0[9] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double cggrad[9] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -337,8 +322,7 @@ TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
 }
 
 // Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 >= 0.5
-TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
-{
+TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2) {
     double grad[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double grad0[9] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
     double cggrad[9] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
@@ -360,8 +344,7 @@ TEST_F(LatticeChangeCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
 }
 
 // Test function third_order() case 1
-TEST_F(LatticeChangeCGTest, ThirdOrderCase1)
-{
+TEST_F(LatticeChangeCGTest, ThirdOrderCase1) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = 10.0;
@@ -375,8 +358,7 @@ TEST_F(LatticeChangeCGTest, ThirdOrderCase1)
 }
 
 // Test function third_order() case 2
-TEST_F(LatticeChangeCGTest, ThirdOrderCase2)
-{
+TEST_F(LatticeChangeCGTest, ThirdOrderCase2) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = -10.0;
@@ -390,8 +372,7 @@ TEST_F(LatticeChangeCGTest, ThirdOrderCase2)
 }
 
 // Test function third_order() case 3
-TEST_F(LatticeChangeCGTest, ThirdOrderCase3)
-{
+TEST_F(LatticeChangeCGTest, ThirdOrderCase3) {
     double e0 = 1.0;
     double e1 = 1.0;
     double fa = 10.0;
@@ -405,8 +386,7 @@ TEST_F(LatticeChangeCGTest, ThirdOrderCase3)
 }
 
 // Test function Brent() case 1
-TEST_F(LatticeChangeCGTest, BrentCase1)
-{
+TEST_F(LatticeChangeCGTest, BrentCase1) {
     double fa = 2.0;
     double fb = 1.0;
     double fc = 1.0;
@@ -429,8 +409,7 @@ TEST_F(LatticeChangeCGTest, BrentCase1)
 }
 
 // Test function Brent() case 2
-TEST_F(LatticeChangeCGTest, BrentCase2)
-{
+TEST_F(LatticeChangeCGTest, BrentCase2) {
     double fa = -2.0;
     double fb = 3.0;
     double fc = -4.0;
@@ -453,8 +432,7 @@ TEST_F(LatticeChangeCGTest, BrentCase2)
 }
 
 // Test function Brent() case 3
-TEST_F(LatticeChangeCGTest, BrentCase3)
-{
+TEST_F(LatticeChangeCGTest, BrentCase3) {
     double fa = 1.0;
     double fb = -3.0;
     double fc = -4.0;
@@ -477,8 +455,7 @@ TEST_F(LatticeChangeCGTest, BrentCase3)
 }
 
 // Test function Brent() case 4
-TEST_F(LatticeChangeCGTest, BrentCase4)
-{
+TEST_F(LatticeChangeCGTest, BrentCase4) {
     double fa = 2.0;
     double fb = -3.0;
     double fc = 4.0;
@@ -501,8 +478,7 @@ TEST_F(LatticeChangeCGTest, BrentCase4)
 }
 
 // Test function f_cal()
-TEST_F(LatticeChangeCGTest, Fcal)
-{
+TEST_F(LatticeChangeCGTest, Fcal) {
     Lattice_Change_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double g1[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
@@ -514,8 +490,7 @@ TEST_F(LatticeChangeCGTest, Fcal)
 }
 
 // Test function setup_move()
-TEST_F(LatticeChangeCGTest, SetupMove)
-{
+TEST_F(LatticeChangeCGTest, SetupMove) {
     Lattice_Change_Basic::dim = 9;
     double trust_radius = 1.0;
     double cg_gradn[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};

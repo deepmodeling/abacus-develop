@@ -3,8 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 Numerical_Orbital_AtomRelation Numerical_Orbital::NOAR;
 
-Numerical_Orbital::Numerical_Orbital()
-{
+Numerical_Orbital::Numerical_Orbital() {
     // make std::pair of new and delete
     // question remains
     this->rcut = 0.0;
@@ -12,16 +11,13 @@ Numerical_Orbital::Numerical_Orbital()
     this->type = 0;
 }
 
-Numerical_Orbital::~Numerical_Orbital()
-{
-}
+Numerical_Orbital::~Numerical_Orbital() {}
 
 void Numerical_Orbital::set_orbital_info(const int& type_in,
                                          const std::string& label_in,
                                          const int& lmax_in,
                                          const int* nchi_in,
-                                         const int& total_nchi_in)
-{
+                                         const int& total_nchi_in) {
     ModuleBase::TITLE("Numerical_Orbital", "set_type_info");
 
     // (1) set type,label,lmax
@@ -31,28 +27,22 @@ void Numerical_Orbital::set_orbital_info(const int& type_in,
 
     // (2) set nchi and total nchi.
     this->nchi.resize(this->lmax + 1);
-    for (int i = 0; i < this->lmax + 1; i++)
-    {
+    for (int i = 0; i < this->lmax + 1; i++) {
         this->nchi[i] = nchi_in[i];
     }
 
     // we need this to generate numerical_orbital_lm.
-    if (total_nchi_in < 0 || total_nchi_in > 500)
-    {
+    if (total_nchi_in < 0 || total_nchi_in > 500) {
         ModuleBase::WARNING_QUIT("Numerical_Orbital::init", "total_nchi < 0 or > 500");
-    }
-    else
-    {
+    } else {
         this->total_nchi = total_nchi_in;
     }
 
     // (3) set the rcut and check the rcut
     this->rcut = 0.0;
-    for (int i = 0; i < total_nchi_in; i++)
-    {
+    for (int i = 0; i < total_nchi_in; i++) {
         this->rcut = this->phiLN[i].rcut;
-        for (int j = 0; j < total_nchi_in; j++)
-        {
+        for (int j = 0; j < total_nchi_in; j++) {
             assert(rcut == this->phiLN[j].rcut);
         }
     }
@@ -60,8 +50,7 @@ void Numerical_Orbital::set_orbital_info(const int& type_in,
 
     // (4) set max_nchi
     this->max_nchi = 0;
-    for (int L = 0; L < lmax + 1; L++)
-    {
+    for (int L = 0; L < lmax + 1; L++) {
         max_nchi = std::max(max_nchi, nchi[L]);
     }
 
@@ -69,10 +58,8 @@ void Numerical_Orbital::set_orbital_info(const int& type_in,
     assert(lmax + 1 > 0);
     this->find_chi.create(lmax + 1, max_nchi);
     int ichi = 0;
-    for (int L = 0; L <= lmax; ++L)
-    {
-        for (int N = 0; N < nchi[L]; ++N)
-        {
+    for (int L = 0; L <= lmax; ++L) {
+        for (int N = 0; N < nchi[L]; ++N) {
             find_chi(L, N) = ichi;
             ++ichi;
         }

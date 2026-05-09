@@ -7,8 +7,7 @@
 
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /// @brief write electric static potential to file
 /// @param bz

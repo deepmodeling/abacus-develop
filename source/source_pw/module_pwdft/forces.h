@@ -17,8 +17,7 @@
 class pseudopot_cell_vnl;
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Forces
-{
+class Forces {
   public:
     template <typename T>
     friend class Force_Stress_LCAO;
@@ -41,9 +40,9 @@ class Forces
                    const ModulePW::PW_Basis* const rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
-				   surchem& solvent,
-				   const Plus_U *p_dftu, //mohan add 2025-11-06
-				   const pseudopot_cell_vl* locpp,
+                   surchem& solvent,
+                   const Plus_U* p_dftu, // mohan add 2025-11-06
+                   const pseudopot_cell_vl* locpp,
                    const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
                    ModulePW::PW_Basis_K* psi_basis = nullptr,
@@ -59,8 +58,8 @@ class Forces
                        const ModuleBase::matrix& vloc,
                        const Charge* const chr);
     void cal_force_ew(const UnitCell& ucell,
-                      ModuleBase::matrix& forceion, 
-                      const ModulePW::PW_Basis* const rho_basis, 
+                      ModuleBase::matrix& forceion,
+                      const ModulePW::PW_Basis* const rho_basis,
                       const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc,
                       const ModulePW::PW_Basis* const rho_basis,
@@ -93,11 +92,11 @@ class Forces
     /// @param ucell_in , the unit cell
     /// @param psi_in , the wave function
     void cal_force_onsite(ModuleBase::matrix& force_onsite,
-                      const ModuleBase::matrix& wg,
-                      const ModulePW::PW_Basis_K* wfc_basis,
-                      const UnitCell& ucell_in,
-					  const Plus_U &dftu, // mohan add 2025-11-06
-					  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr);
+                          const ModuleBase::matrix& wg,
+                          const ModulePW::PW_Basis_K* wfc_basis,
+                          const UnitCell& ucell_in,
+                          const Plus_U& dftu, // mohan add 2025-11-06
+                          const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
 
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        const ModulePW::PW_Basis* const rho_basis,
@@ -121,17 +120,18 @@ class Forces
                      int type,
                      const UnitCell& ucell_in); // used in nonlinear core correction stress
     void deriv_drhoc_scc(const bool& numeric,
-                     const int mesh,
-                     const FPTYPE* r,
-                     const FPTYPE* rab,
-                     const FPTYPE* rhoc,
-                     FPTYPE* drhocg,
-                     const ModulePW::PW_Basis* const rho_basis,
-                     const UnitCell& ucell_in); // used in nonlinear core correction stress
+                         const int mesh,
+                         const FPTYPE* r,
+                         const FPTYPE* rab,
+                         const FPTYPE* rhoc,
+                         FPTYPE* drhocg,
+                         const ModulePW::PW_Basis* const rho_basis,
+                         const UnitCell& ucell_in); // used in nonlinear core correction stress
   protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+
   private:
     using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
 
@@ -139,10 +139,10 @@ class Forces
     using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;

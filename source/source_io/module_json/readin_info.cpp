@@ -2,9 +2,8 @@
 #include "para_json.h"
 #include "abacusjson.h"
 
-//Add json objects to init
-namespace Json
-{
+// Add json objects to init
+namespace Json {
 
 #ifdef __RAPIDJSON
 #endif

@@ -4,8 +4,7 @@
 #include <fstream>
 #include <string>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /**
  * @brief Record memory consumption during computation.
@@ -14,8 +13,7 @@ namespace ModuleBase
  * 1024 KB   = 1 MB; 1024 MB   = 1 GB
  *
  */
-class Memory
-{
+class Memory {
   public:
     Memory();
     ~Memory();
@@ -30,10 +28,10 @@ class Memory
      * @param accumulate Useless, always set false
      * @return double
      */
-    static double record(const std::string &class_name,
-                         const std::string &name,
-                         const long &n,
-                         const std::string &type,
+    static double record(const std::string& class_name,
+                         const std::string& name,
+                         const long& n,
+                         const std::string& type,
                          const bool accumulate = false);
 
     /**
@@ -43,11 +41,7 @@ class Memory
      * @param n The number of the quantity
      * @param accumulate Useless, always set false
      */
-    static void record(
-      const std::string &name_in,
-      const long &n_in,
-      const bool accumulate = false
-    );
+    static void record(const std::string& name_in, const long& n_in, const bool accumulate = false);
 
 #if defined(__CUDA) || defined(__ROCM)
 
@@ -61,11 +55,11 @@ class Memory
      * @param accumulate Useless, always set false
      * @return double
      */
-    static double record_gpu(const std::string &class_name,
-                         const std::string &name,
-                         const long &n,
-                         const std::string &type,
-                         const bool accumulate = false);
+    static double record_gpu(const std::string& class_name,
+                             const std::string& name,
+                             const long& n,
+                             const std::string& type,
+                             const bool accumulate = false);
 
     /**
      * @brief Record memory consumed on gpu during computation
@@ -74,27 +68,20 @@ class Memory
      * @param n The number of the quantity
      * @param accumulate Useless, always set false
      */
-    static void record_gpu(
-      const std::string &name_in,
-      const size_t &n_in,
-      const bool accumulate = false
-    );
+    static void record_gpu(const std::string& name_in, const size_t& n_in, const bool accumulate = false);
 
 #endif
 
-    static double &get_total(void)
-    {
-        return total;
-    }
+    static double& get_total(void) { return total; }
 
-    static void finish(std::ofstream &ofs);
+    static void finish(std::ofstream& ofs);
 
     /**
      * @brief Print memory consumed (> 1 MB) in a file
      *
      * @param ofs The output file stream for print out memory records
      */
-    static void print_all(std::ofstream &ofs);
+    static void print_all(std::ofstream& ofs);
 
     static void print(const int find_in);
 
@@ -106,29 +93,29 @@ class Memory
      * @param type The type of data
      * @return double
      */
-    static double calculate_mem(const long &n, const std::string &type);
+    static double calculate_mem(const long& n, const std::string& type);
 
   private:
     static double total;
-    static std::string *name;
-    static std::string *class_name;
-    static double *consume;
+    static std::string* name;
+    static std::string* class_name;
+    static double* consume;
     static int n_memory;
     static int n_now;
     static bool init_flag;
 
 #if defined(__CUDA) || defined(__ROCM)
     static double total_gpu;
-    static std::string *name_gpu;
-    static std::string *class_name_gpu;
-    static double *consume_gpu;
+    static std::string* name_gpu;
+    static std::string* class_name_gpu;
+    static double* consume_gpu;
     static int n_now_gpu;
     static bool init_flag_gpu;
 #endif
 
     static int complex_matrix_memory; //(16 Byte)
-    static int double_memory; //(8 Byte)
-    static int int_memory; //(4 Byte)
+    static int double_memory;         //(8 Byte)
+    static int int_memory;            //(4 Byte)
     static int bool_memory;
     static int short_memory; //(2 Byte)
     static int float_memory; //(4 Byte)

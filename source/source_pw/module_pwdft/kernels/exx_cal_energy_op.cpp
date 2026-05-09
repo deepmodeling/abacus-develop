@@ -1,8 +1,7 @@
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_psi/psi.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 // #ifdef _OPENMP
 // #pragma omp parallel for reduction(+:Eexx_ik_real)
@@ -19,17 +18,14 @@ namespace hamilt
 // }
 
 template <typename FPTYPE>
-struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
-{
+struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_CPU> {
     using T = std::complex<FPTYPE>;
-    FPTYPE operator()(const T *den, const FPTYPE *pot, FPTYPE scalar, int npw)
-    {
+    FPTYPE operator()(const T* den, const FPTYPE* pot, FPTYPE scalar, int npw) {
         FPTYPE energy = 0.0;
-        #ifdef _OPENMP
-        #pragma omp parallel for reduction(+:energy)
-        #endif
-        for (int ig = 0; ig < npw; ++ig)
-        {
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : energy)
+#endif
+        for (int ig = 0; ig < npw; ++ig) {
             // Calculate the energy contribution from each reciprocal lattice vector
             energy += (den[ig] * std::conj(den[ig])).real() * pot[ig];
         }

@@ -9,8 +9,7 @@ void Parallel_Kpoints::kinfo(int& nkstot_in,
                              const int& my_pool_in,
                              const int& rank_in_pool_in,
                              const int& nproc_in,
-                             const int& nspin_in)
-{
+                             const int& nspin_in) {
 #ifdef __MPI
 
     this->kpar = kpar_in; // number of pools
@@ -44,14 +43,11 @@ void Parallel_Kpoints::kinfo(int& nkstot_in,
 }
 
 #ifdef __MPI
-void Parallel_Kpoints::get_whichpool(const int& nkstot)
-{
+void Parallel_Kpoints::get_whichpool(const int& nkstot) {
     this->whichpool.resize(nkstot, 0);
 
-    for (int i = 0; i < this->kpar; i++)
-    {
-        for (int ik = 0; ik < this->nks_pool[i]; ik++)
-        {
+    for (int i = 0; i < this->kpar; i++) {
+        for (int ik = 0; ik < this->nks_pool[i]; ik++) {
             const int k_now = ik + startk_pool[i];
             this->whichpool[k_now] = i;
         }
@@ -60,66 +56,54 @@ void Parallel_Kpoints::get_whichpool(const int& nkstot)
     return;
 }
 
-void Parallel_Kpoints::get_nks_pool(const int& nkstot)
-{
+void Parallel_Kpoints::get_nks_pool(const int& nkstot) {
     nks_pool.resize(this->kpar, 0);
 
     const int nks_ave = nkstot / this->kpar;
     const int remain = nkstot % this->kpar;
 
-    for (int i = 0; i < this->kpar; i++)
-    {
+    for (int i = 0; i < this->kpar; i++) {
         this->nks_pool[i] = nks_ave;
-        if (i < remain)
-        {
+        if (i < remain) {
             nks_pool[i]++;
         }
     }
     return;
 }
 
-void Parallel_Kpoints::get_startk_pool(const int& nkstot)
-{
+void Parallel_Kpoints::get_startk_pool(const int& nkstot) {
     startk_pool.resize(this->kpar, 0);
 
     startk_pool[0] = 0;
-    for (int i = 1; i < this->kpar; i++)
-    {
+    for (int i = 1; i < this->kpar; i++) {
         startk_pool[i] = startk_pool[i - 1] + nks_pool[i - 1];
     }
     return;
 }
 
-void Parallel_Kpoints::set_startpro_pool()
-{
+void Parallel_Kpoints::set_startpro_pool() {
     startpro_pool.resize(this->kpar, 0);
 
     const int nproc_ave = this->nproc / this->kpar;
     const int remain = this->nproc % this->kpar;
 
     startpro_pool[0] = 0;
-    for (int i = 1; i < this->kpar; i++)
-    {
+    for (int i = 1; i < this->kpar; i++) {
         startpro_pool[i] = startpro_pool[i - 1] + nproc_ave;
-        if (i - 1 < remain)
-        {
+        if (i - 1 < remain) {
             startpro_pool[i]++;
         }
     }
     return;
 }
 
-
 // gather kpoints from all processor pools, only need to be called by the first processor of each pool.
 void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
-                                  std::vector<ModuleBase::Vector3<double>>& vec_global) const
-{
+                                  std::vector<ModuleBase::Vector3<double>>& vec_global) const {
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    for (int i = 0; i < this->nks_np; ++i)
-    {
+    for (int i = 0; i < this->nks_np; ++i) {
 
-        if (this->rank_in_pool == 0)
-        {
+        if (this->rank_in_pool == 0) {
             vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }
     }
@@ -129,40 +113,29 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
 }
 #endif
 
-void Parallel_Kpoints::pool_collection(double& value, const double* wk, const int& ik)
-{
+void Parallel_Kpoints::pool_collection(double& value, const double* wk, const int& ik) {
 #ifdef __MPI
 
     const int ik_now = ik - this->startk_pool[this->my_pool];
 
     const int pool = this->whichpool[ik];
 
-    if (this->rank_in_pool == 0)
-    {
-        if (this->my_pool == 0)
-        {
+    if (this->rank_in_pool == 0) {
+        if (this->my_pool == 0) {
             if (pool == 0)
 
             {
                 value = wk[ik_now];
-            }
-            else
-            {
+            } else {
                 MPI_Status ierror;
                 MPI_Recv(&value, 1, MPI_DOUBLE, this->startpro_pool[pool], ik, MPI_COMM_WORLD, &ierror);
-
             }
-        }
-        else
-        {
-            if (this->my_pool == pool)
-            {
+        } else {
+            if (this->my_pool == pool) {
                 MPI_Send(&wk[ik_now], 1, MPI_DOUBLE, 0, ik, MPI_COMM_WORLD);
             }
         }
-    }
-    else
-    {
+    } else {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -176,8 +149,7 @@ void Parallel_Kpoints::pool_collection(double* value_re,
                                        double* value_im,
                                        const ModuleBase::realArray& re,
                                        const ModuleBase::realArray& im,
-                                       const int& ik)
-{
+                                       const int& ik) {
     const int dim2 = re.getBound2();
     const int dim3 = re.getBound3();
     const int dim4 = re.getBound4();
@@ -192,8 +164,9 @@ void Parallel_Kpoints::pool_collection(double* value_re,
     return;
 }
 
-void Parallel_Kpoints::pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik) const
-{
+void Parallel_Kpoints::pool_collection(std::complex<double>* value,
+                                       const ModuleBase::ComplexArray& w,
+                                       const int& ik) const {
     const int dim2 = w.getBound2();
     const int dim3 = w.getBound3();
     const int dim4 = w.getBound4();
@@ -202,8 +175,7 @@ void Parallel_Kpoints::pool_collection(std::complex<double>* value, const Module
 }
 
 template <class T, class V>
-void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim, const int& ik) const
-{
+void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim, const int& ik) const {
 #ifdef __MPI
     const int ik_now = ik - this->startk_pool[this->my_pool];
 
@@ -211,40 +183,29 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-	if (this->nspin != 2) 
-	{
-		pool = this->whichpool[ik];
-	}
+    if (this->nspin != 2) {
+        pool = this->whichpool[ik];
+    }
 
-    if (this->rank_in_pool == 0)
-    {
+    if (this->rank_in_pool == 0) {
         if (this->my_pool == 0)
 
         {
-            if (pool == 0)
-            {
-                for (int i = 0; i < dim; i++)
-                {
+            if (pool == 0) {
+                for (int i = 0; i < dim; i++) {
                     value[i] = *p;
                     ++p;
                 }
-            }
-            else
-            {
+            } else {
                 MPI_Status ierror;
                 MPI_Recv(value, dim, MPI_DOUBLE, this->startpro_pool[pool], ik * 2 + 0, MPI_COMM_WORLD, &ierror);
             }
-        }
-        else
-        {
-            if (this->my_pool == pool)
-            {
+        } else {
+            if (this->my_pool == pool) {
                 MPI_Send(p, dim, MPI_DOUBLE, 0, ik * 2 + 0, MPI_COMM_WORLD);
             }
         }
-    }
-    else
-    {
+    } else {
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -252,8 +213,7 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     // data transfer ends.
     const int begin = ik * dim;
     T* p = &w.ptr[begin];
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         value[i] = *p;
         ++p;
     }

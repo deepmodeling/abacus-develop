@@ -9,21 +9,18 @@
 #include "bessel_basis.h"
 //==========================================================
 // CLASS :
-// NAME :  Numerical_Basis 
+// NAME :  Numerical_Basis
 //==========================================================
-class Numerical_Basis
-{
-	public:
-	Numerical_Basis();
-	~Numerical_Basis();
+class Numerical_Basis {
+  public:
+    Numerical_Basis();
+    ~Numerical_Basis();
 
-	void init_table(void);
+    void init_table(void);
 
-	static Bessel_Basis bessel_basis;
+    static Bessel_Basis bessel_basis;
 
-	private:
-
-
+  private:
 };
 
 #endif

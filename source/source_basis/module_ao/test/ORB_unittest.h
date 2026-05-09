@@ -6,7 +6,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 
 #include "gtest/gtest.h"
-//#include "mock_center2.h"
+// #include "mock_center2.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -14,8 +14,7 @@
 #include <set>
 #include <vector>
 
-class test_orb : public testing::Test
-{
+class test_orb : public testing::Test {
   protected:
     void SetUp() override;
     void TearDown() override;

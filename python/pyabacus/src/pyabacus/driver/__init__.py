@@ -18,6 +18,7 @@ from .runner import abacus, CalculationResult
 # Try to import C++ bindings
 try:
     from ._driver_pack import PyDriver, CalculationResult as _CppResult
+
     _HAS_CPP_DRIVER = True
 except ImportError:
     _HAS_CPP_DRIVER = False
@@ -25,7 +26,7 @@ except ImportError:
     _CppResult = None
 
 __all__ = [
-    'abacus',
-    'CalculationResult',
-    'PyDriver',
+    "abacus",
+    "CalculationResult",
+    "PyDriver",
 ]

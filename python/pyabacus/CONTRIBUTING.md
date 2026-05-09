@@ -2,9 +2,12 @@
 
 ## Introduction
 
-Welcome to the `pyabacus` project! This document provides guidelines and instructions for developers who want to contribute to this project.
+Welcome to the `pyabacus` project! This document provides guidelines and instructions for developers
+who want to contribute to this project.
 
-`pyabacus` is a Python interface for the ABACUS package. It provides a high-level Python API for interacting with the ABACUS library, allowing users to perform electronic structure calculations and analyze the results using Python.
+`pyabacus` is a Python interface for the ABACUS package. It provides a high-level Python API for
+interacting with the ABACUS library, allowing users to perform electronic structure calculations and
+analyze the results using Python.
 
 <!-- toc -->
 
@@ -18,13 +21,17 @@ Welcome to the `pyabacus` project! This document provides guidelines and instruc
 
 <!-- tocstop -->
 
-**If you are new to the project**, please refer to the [README.md](./README.md) file for an overview of the project and its goals.
+**If you are new to the project**, please refer to the [README.md](./README.md) file for an overview
+of the project and its goals.
 
-**If you are already familiar with the project and want to contribute**, this guide will help you understand the project structure, development process, and best practices for contributing code.
+**If you are already familiar with the project and want to contribute**, this guide will help you
+understand the project structure, development process, and best practices for contributing code.
 
-**If you have any questions or need help**, feel free to reach out to the maintainers or create an issue in the repository.
+**If you have any questions or need help**, feel free to reach out to the maintainers or create an
+issue in the repository.
 
-**Please feel free to contribute to this guide** by submitting a pull request with any improvements or additional information.
+**Please feel free to contribute to this guide** by submitting a pull request with any improvements
+or additional information.
 
 Let's get started!
 
@@ -45,11 +52,16 @@ pyabacus/
         └── CMakeLists.txt
 ```
 
-Our project is built using [pybind11](http://github.com/pybind/pybind11) and [scikit-build-core](https://scikit-build-core.readthedocs.io/) for facilitating the `CMake` build toolchain. So the `CMakeLists.txt` configuration is the key to thoroughly understanding the project structure.
+Our project is built using [pybind11](http://github.com/pybind/pybind11) and
+[scikit-build-core](https://scikit-build-core.readthedocs.io/) for facilitating the `CMake` build
+toolchain. So the `CMakeLists.txt` configuration is the key to thoroughly understanding the project
+structure.
 
 ### Root CMake Configuration
 
-The `CMakeLists.txt` in root directory is the main configuration file for the pyabacus project. It sets up the project, finds necessary dependencies, configures build options, and includes subdirectories for different modules. Below is a detailed explanation of each section of the file:
+The `CMakeLists.txt` in root directory is the main configuration file for the pyabacus project. It
+sets up the project, finds necessary dependencies, configures build options, and includes
+subdirectories for different modules. Below is a detailed explanation of each section of the file:
 
 ```cmake
 cmake_minimum_required(VERSION 3.15...3.26)
@@ -60,14 +72,18 @@ project(
   VERSION ${SKBUILD_PROJECT_VERSION}
   LANGUAGES CXX)
 ```
-- This section sets the project name, version, and the programming languages used (C++ in this case). The project name and version are obtained from the `SKBUILD_PROJECT_NAME` and `SKBUILD_PROJECT_VERSION` variables, respectively.
+
+- This section sets the project name, version, and the programming languages used (C++ in this
+  case). The project name and version are obtained from the `SKBUILD_PROJECT_NAME` and
+  `SKBUILD_PROJECT_VERSION` variables, respectively.
 
 ```cmake
 # Find Python and pybind11
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 ```
-- This section finds the required Python and pybind11 packages. 
+
+- This section finds the required Python and pybind11 packages.
 
 ```cmake
 # Set source path
@@ -79,7 +95,9 @@ set(PSI_PATH "${ABACUS_SOURCE_DIR}/source_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
 ```
-- This section sets various source paths and configuration options. It defines the paths to different modules and appends the custom CMake module path.
+
+- This section sets various source paths and configuration options. It defines the paths to
+  different modules and appends the custom CMake module path.
 
 ```cmake
 # Add math_libs 
@@ -124,7 +142,10 @@ else()
   endif()
 endif()
 ```
-- This section configures the math libraries. It checks for the presence of the Intel Math Kernel Library (MKL) and configures it if available. If MKL is not available, it falls back to using FFTW3 and LAPACK. It also configures MPI and OpenMP if enabled.
+
+- This section configures the math libraries. It checks for the presence of the Intel Math Kernel
+  Library (MKL) and configures it if available. If MKL is not available, it falls back to using
+  FFTW3 and LAPACK. It also configures MPI and OpenMP if enabled.
 
 ```cmake
 # Add include directories
@@ -134,6 +155,7 @@ include_directories(
     ${ABACUS_SOURCE_DIR}/source_base/module_container
     )
 ```
+
 - This section adds the necessary include directories for the project.
 
 ```cmake
@@ -149,7 +171,9 @@ add_subdirectory(${ABACUS_SOURCE_DIR}/source_io/module_parameter ${PARAMETER_BIN
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/source_basis/module_ao ${ORB_BINARY_DIR})
 ```
-- This section sets the position-independent code flag and adds subdirectories for the base, parameter, and orb modules. It specifies the build directories for these modules.
+
+- This section sets the position-independent code flag and adds subdirectories for the base,
+  parameter, and orb modules. It specifies the build directories for these modules.
 
 ```cmake
 # Set RPATH
@@ -159,14 +183,19 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 ```
-- This section sets the runtime search path (RPATH) for the Python site-packages directory. It uses a Python command to get the site-packages path and stores it in the `PYTHON_SITE_PACKAGES` variable.
+
+- This section sets the runtime search path (RPATH) for the Python site-packages directory. It uses
+  a Python command to get the site-packages path and stores it in the `PYTHON_SITE_PACKAGES`
+  variable.
 
 ```cmake
 # Set package name to pyabacus
 set(TARGET_PACK pyabacus)
 set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
 ```
-- This section sets the package name to `pyabacus` and configures the install RPATH to include the Python site-packages directory.
+
+- This section sets the package name to `pyabacus` and configures the install RPATH to include the
+  Python site-packages directory.
 
 ```cmake
 # Add subdirectories for submodules
@@ -174,9 +203,13 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleBase)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleNAO)
 ```
-- This section adds subdirectories for modules. Each subdirectory contains its own `CMakeLists.txt` for further configuration.
 
-By following this structure, the `CMakeLists.txt` file ensures that all necessary dependencies are found, configured, and included in the build process. It also sets up the project environment and includes submodules for different components of the `pyabacus` project.
+- This section adds subdirectories for modules. Each subdirectory contains its own `CMakeLists.txt`
+  for further configuration.
+
+By following this structure, the `CMakeLists.txt` file ensures that all necessary dependencies are
+found, configured, and included in the build process. It also sets up the project environment and
+includes submodules for different components of the `pyabacus` project.
 
 ### Module CMake Configuration
 
@@ -226,26 +259,35 @@ set_target_properties(_hsolver_pack PROPERTIES INSTALL_RPATH "$ORIGIN")
 install(TARGETS _hsolver_pack diagopack DESTINATION ${TARGET_PACK}/hsolver)
 ```
 
-You can refer to the `CMakeLists.txt` files in other modules for guidance on how to configure your module.
+You can refer to the `CMakeLists.txt` files in other modules for guidance on how to configure your
+module.
 
 ## Development Process
 
 To contribute to the `pyabacus` project, follow these steps:
 
-1.  **Check the issues**:
-    - Look for issues to ensure that you are not working on something that is already in progress.
-    - If you want to work on a new feature or bug fix, create an issue first to discuss it with the maintainers.
+1. **Check the issues**:
 
-2. **Create a new folder for your module**:
-   - If you want to add a new module with pure Python code, create a new folder in the `src/pyabacus` directory.
-    - If you want to add a new module with C++ code, create a new folder in the `src` directory and a corresponding directory in the `src/pyabacus` directory.
+   - Look for issues to ensure that you are not working on something that is already in progress.
+   - If you want to work on a new feature or bug fix, create an issue first to discuss it with the
+     maintainers.
 
-3. **Write source code using pybind11**:
+1. **Create a new folder for your module**:
+
+   - If you want to add a new module with pure Python code, create a new folder in the
+     `src/pyabacus` directory.
+   - If you want to add a new module with C++ code, create a new folder in the `src` directory and a
+     corresponding directory in the `src/pyabacus` directory.
+
+1. **Write source code using pybind11**:
+
    - Follow the structure of other modules.
    - Manage dependencies and installation paths in the `CMakeLists.txt` file.
 
-3. **Modify `src/pyabacus/__init__.py`**:
-   - Add the name of your module to the `__submodules__` list and import the module in the `__getattr__` function.
+1. **Modify `src/pyabacus/__init__.py`**:
+
+   - Add the name of your module to the `__submodules__` list and import the module in the
+     `__getattr__` function.
 
    ```python
    from __future__ import annotations
@@ -271,7 +313,8 @@ To contribute to the `pyabacus` project, follow these steps:
            raise AttributeError(f"module {__name__} has no attribute {attr}")
    ```
 
-4. **Create two files in `src/pyabacus/{module_name}`**:
+1. **Create two files in `src/pyabacus/{module_name}`**:
+
    - `__init__.py`: This file allows Python to recognize the folder as a module.
    - `_{module_name}.py`: This file is responsible for designing the Python interface (frontend).
 
@@ -305,10 +348,14 @@ To contribute to the `pyabacus` project, follow these steps:
            super().bar(arg1, arg2, ...)
    ```
 
-   For a class, if you do not declare the interface in the frontend, the IDE will not provide type hints and auto-completion. However, if the interface name matches the name binding in pybind11, it will be overridden. To address this, you can use the method as shown above.
+   For a class, if you do not declare the interface in the frontend, the IDE will not provide type
+   hints and auto-completion. However, if the interface name matches the name binding in pybind11,
+   it will be overridden. To address this, you can use the method as shown above.
 
-5. **Handle overloaded functions in C++**:
-   - Since Python does not support function overloading with different parameters, use the following method:
+1. **Handle overloaded functions in C++**:
+
+   - Since Python does not support function overloading with different parameters, use the following
+     method:
 
    ```python
    @overload
@@ -322,60 +369,62 @@ To contribute to the `pyabacus` project, follow these steps:
 
 **Example Python Interface**:
 
-   ```python
-   class diag_comm_info(_diag_comm_info):
-       def __init__(self, rank: int, nproc: int):
-           super().__init__(rank, nproc)
-       
-       @property
-       def rank(self) -> int:
-           return super().rank
-       
-       @property
-       def nproc(self) -> int:
-           return super().nproc
+```python
+class diag_comm_info(_diag_comm_info):
+    def __init__(self, rank: int, nproc: int):
+        super().__init__(rank, nproc)
+    
+    @property
+    def rank(self) -> int:
+        return super().rank
+    
+    @property
+    def nproc(self) -> int:
+        return super().nproc
 
-   class Sphbes(_Sphbes):
-       def __init__(self) -> None: 
-           super().__init__()
-           
-       @overload
-       @staticmethod
-       def sphbesj(l: int, x: float) -> float: ...
-       @overload
-       @staticmethod
-       def sphbesj(
-           n: int, 
-           r: NDArray[np.float64], 
-           q: int, 
-           l: int, 
-           jl: NDArray[np.float64]
-       ) -> None: ...
-       
-       def sphbesj(self, *args, **kwargs): 
-           return super().sphbesj(*args, **kwargs)
-           
-       @overload
-       @staticmethod
-       def dsphbesj(l: int, x: float) -> float: ...
-       @overload
-       @staticmethod
-       def dsphbesj(
-           n: int, 
-           r: NDArray[np.float64], 
-           q: int, 
-           l: int, 
-           djl: NDArray[np.float64]
-       ) -> None: ...
-       
-       def dsphbesj(self, *args, **kwargs):
-           return super().dsphbesj(*args, **kwargs)
-           
-       @staticmethod
-       def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: 
-           super().sphbes_zeros(l, n, zeros)
-   ```
+class Sphbes(_Sphbes):
+    def __init__(self) -> None: 
+        super().__init__()
+        
+    @overload
+    @staticmethod
+    def sphbesj(l: int, x: float) -> float: ...
+    @overload
+    @staticmethod
+    def sphbesj(
+        n: int, 
+        r: NDArray[np.float64], 
+        q: int, 
+        l: int, 
+        jl: NDArray[np.float64]
+    ) -> None: ...
+    
+    def sphbesj(self, *args, **kwargs): 
+        return super().sphbesj(*args, **kwargs)
+        
+    @overload
+    @staticmethod
+    def dsphbesj(l: int, x: float) -> float: ...
+    @overload
+    @staticmethod
+    def dsphbesj(
+        n: int, 
+        r: NDArray[np.float64], 
+        q: int, 
+        l: int, 
+        djl: NDArray[np.float64]
+    ) -> None: ...
+    
+    def dsphbesj(self, *args, **kwargs):
+        return super().dsphbesj(*args, **kwargs)
+        
+    @staticmethod
+    def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: 
+        super().sphbes_zeros(l, n, zeros)
+```
 
 ## Conclusion
 
-By following this guide, you can effectively contribute to the `pyabacus` project. Ensure that you follow the structure and conventions outlined here to maintain consistency and readability in the codebase. Happy coding!
+By following this guide, you can effectively contribute to the `pyabacus` project. Ensure that you
+follow the structure and conventions outlined here to maintain consistency and readability in the
+codebase. Happy coding!

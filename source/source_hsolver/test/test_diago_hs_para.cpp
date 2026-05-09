@@ -14,9 +14,13 @@
 
 template <typename T>
 typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type
-generate_random_hs_impl(int d, std::mt19937& gen, std::uniform_real_distribution<typename GetTypeReal<T>::type>& dis, std::vector<T>& h_mat, std::vector<T>& s_mat) {
+generate_random_hs_impl(int d,
+                        std::mt19937& gen,
+                        std::uniform_real_distribution<typename GetTypeReal<T>::type>& dis,
+                        std::vector<T>& h_mat,
+                        std::vector<T>& s_mat) {
     // For S matrix, firstly we generate a random symmetric matrix s_tmp, then we set S = s_tmp * s_tmp^T + n * I
-    std::vector<T> s_tmp(d*d,0);
+    std::vector<T> s_tmp(d * d, 0);
     for (int i = 0; i < d; ++i) {
         for (int j = i; j < d; ++j) {
             typename GetTypeReal<T>::type value1 = static_cast<typename GetTypeReal<T>::type>(dis(gen));
@@ -44,19 +48,22 @@ generate_random_hs_impl(int d, std::mt19937& gen, std::uniform_real_distribution
 }
 
 template <typename T>
-typename std::enable_if<std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value>::type
-generate_random_hs_impl(int d, std::mt19937& gen, std::uniform_real_distribution<typename GetTypeReal<T>::type>& dis, std::vector<T>& h_mat, std::vector<T>& s_mat) {
-    std::vector<T> s_tmp(d*d,0);
+typename std::enable_if<std::is_same<T, std::complex<double>>::value ||
+                        std::is_same<T, std::complex<float>>::value>::type
+generate_random_hs_impl(int d,
+                        std::mt19937& gen,
+                        std::uniform_real_distribution<typename GetTypeReal<T>::type>& dis,
+                        std::vector<T>& h_mat,
+                        std::vector<T>& s_mat) {
+    std::vector<T> s_tmp(d * d, 0);
     for (int i = 0; i < d; ++i) {
         for (int j = i; j < d; ++j) {
             typename GetTypeReal<T>::type value1 = static_cast<typename GetTypeReal<T>::type>(dis(gen));
             typename GetTypeReal<T>::type value2 = static_cast<typename GetTypeReal<T>::type>(dis(gen));
             h_mat[i * d + j] = T(value1, value2);
-            if (i != j)
-            {
+            if (i != j) {
                 h_mat[j * d + i] = T(value1, -value2);
-            }
-            else{
+            } else {
                 h_mat[j * d + i] = T(value1, 0);
             }
 
@@ -82,19 +89,23 @@ generate_random_hs_impl(int d, std::mt19937& gen, std::uniform_real_distribution
 }
 
 template <typename T>
-void generate_random_hs(int d, int random_seed ,std::vector<T>& h_mat, std::vector<T>& s_mat) {
+void generate_random_hs(int d, int random_seed, std::vector<T>& h_mat, std::vector<T>& s_mat) {
     std::mt19937 gen(random_seed);
-    std::uniform_real_distribution<typename GetTypeReal<T>::type> dis(-1.0,1.0);
+    std::uniform_real_distribution<typename GetTypeReal<T>::type> dis(-1.0, 1.0);
 
     h_mat.resize(d * d);
     s_mat.resize(d * d);
     generate_random_hs_impl(d, gen, dis, h_mat, s_mat);
 }
 
-
 template <typename T>
 typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type
-verify_results(const std::vector<T>& h_psi, const std::vector<T>& s_psi, const std::vector<typename GetTypeReal<T>::type>& ekb, int lda, int nbands, double threshold) {
+verify_results(const std::vector<T>& h_psi,
+               const std::vector<T>& s_psi,
+               const std::vector<typename GetTypeReal<T>::type>& ekb,
+               int lda,
+               int nbands,
+               double threshold) {
     for (int i = 0; i < lda; ++i) {
         for (int j = 0; j < nbands; ++j) {
             ASSERT_NEAR(h_psi[j * lda + i], ekb[j] * s_psi[j * lda + i], threshold);
@@ -103,8 +114,14 @@ verify_results(const std::vector<T>& h_psi, const std::vector<T>& s_psi, const s
 }
 
 template <typename T>
-typename std::enable_if<std::is_same<T, std::complex<double>>::value || std::is_same<T, std::complex<float>>::value>::type
-verify_results(const std::vector<T>& h_psi, const std::vector<T>& s_psi, const std::vector<typename GetTypeReal<T>::type>& ekb, int lda, int nbands, double threshold) {
+typename std::enable_if<std::is_same<T, std::complex<double>>::value ||
+                        std::is_same<T, std::complex<float>>::value>::type
+verify_results(const std::vector<T>& h_psi,
+               const std::vector<T>& s_psi,
+               const std::vector<typename GetTypeReal<T>::type>& ekb,
+               int lda,
+               int nbands,
+               double threshold) {
     for (int i = 0; i < lda; ++i) {
         for (int j = 0; j < nbands; ++j) {
             ASSERT_NEAR(h_psi[j * lda + i].real(), ekb[j] * s_psi[j * lda + i].real(), threshold);
@@ -121,17 +138,16 @@ void test_diago_hs(int lda, int nb, int random_seed, int nbands, int diag_type, 
 
     std::vector<T> h_mat, s_mat, wfc, h_psi, s_psi;
     std::vector<typename GetTypeReal<T>::type> ekb(lda);
-    if (my_rank==0)
-    {
+    if (my_rank == 0) {
         h_mat.resize(lda * lda);
         s_mat.resize(lda * lda);
         wfc.resize(lda * lda);
         generate_random_hs(lda, random_seed, h_mat, s_mat);
     }
-    hsolver::diago_hs_para<T>(h_mat.data(), s_mat.data(), lda, nbands,ekb.data(), wfc.data(), comm, diag_type, nb);
+    hsolver::diago_hs_para<T>(h_mat.data(), s_mat.data(), lda, nbands, ekb.data(), wfc.data(), comm, diag_type, nb);
 
     // Verify results
-    if (my_rank == 0){
+    if (my_rank == 0) {
         double threshold = 1e-6;
         if (std::is_same<T, std::complex<double>>::value || std::is_same<T, double>::value) {
             threshold = 1e-12;
@@ -153,7 +169,7 @@ void test_diago_hs(int lda, int nb, int random_seed, int nbands, int diag_type, 
 }
 
 template <typename T>
-void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, int loop_numb) {
+void test_performance(int lda, int nb, int nbands, MPI_Comm comm, int case_numb, int loop_numb) {
     // generate 10 random H/S, and do the diagonalization 100 times by using elpa/scalapack and lapack.
     int my_rank, nproc;
     MPI_Comm_rank(comm, &my_rank);
@@ -166,8 +182,7 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
     std::vector<typename GetTypeReal<T>::type> ekb_scalap(lda);
     std::vector<typename GetTypeReal<T>::type> ekb_lapack(lda);
 
-    if (my_rank==0)
-    {
+    if (my_rank == 0) {
         std::cout << "\nMatrix size: " << lda << " x " << lda << std::endl;
         std::cout << "Number of bands: " << nbands << std::endl;
         std::cout << "Number of processors: " << nproc << std::endl;
@@ -184,10 +199,10 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
     std::vector<double> time_scalap(case_numb, 0);
     std::vector<double> time_lapack(case_numb, 0);
 
-    if (my_rank == 0) { std::cout << "Random matrix ";
-}
-    for (int randomi = 0; randomi < case_numb; ++randomi)
-    {
+    if (my_rank == 0) {
+        std::cout << "Random matrix ";
+    }
+    for (int randomi = 0; randomi < case_numb; ++randomi) {
 
         if (my_rank == 0) {
             std::cout << randomi << " ";
@@ -199,9 +214,16 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
         // ELPA
         MPI_Barrier(comm);
         start = std::chrono::high_resolution_clock::now();
-        for (int j=0;j<loop_numb;j++)
-        {
-            hsolver::diago_hs_para<T>(h_mat.data(), s_mat.data(), lda, nbands,ekb_elpa.data(), wfc.data(), comm, 1, nb);
+        for (int j = 0; j < loop_numb; j++) {
+            hsolver::diago_hs_para<T>(h_mat.data(),
+                                      s_mat.data(),
+                                      lda,
+                                      nbands,
+                                      ekb_elpa.data(),
+                                      wfc.data(),
+                                      comm,
+                                      1,
+                                      nb);
             MPI_Barrier(comm);
         }
         MPI_Barrier(comm);
@@ -211,39 +233,44 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
 
         // scalapack
         start = std::chrono::high_resolution_clock::now();
-        for (int j=0;j<loop_numb;j++)
-        {
-            hsolver::diago_hs_para<T>(h_mat.data(), s_mat.data(), lda, nbands,ekb_scalap.data(), wfc.data(), comm, 2, nb);
+        for (int j = 0; j < loop_numb; j++) {
+            hsolver::diago_hs_para<T>(h_mat.data(),
+                                      s_mat.data(),
+                                      lda,
+                                      nbands,
+                                      ekb_scalap.data(),
+                                      wfc.data(),
+                                      comm,
+                                      2,
+                                      nb);
             MPI_Barrier(comm);
         }
         MPI_Barrier(comm);
         end = std::chrono::high_resolution_clock::now();
         time_scalap[randomi] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-        //LApack
-        if (my_rank == 0)
-        {
+        // LApack
+        if (my_rank == 0) {
             std::vector<T> h_tmp, s_tmp;
             start = std::chrono::high_resolution_clock::now();
             base_device::DEVICE_CPU* ctx = {};
 
-            for (int j=0;j<loop_numb;j++)
-            {
+            for (int j = 0; j < loop_numb; j++) {
                 h_tmp = h_mat;
                 s_tmp = s_mat;
-                hsolver::hegvx_op<T,base_device::DEVICE_CPU>()(ctx,
-                                      lda,
-                                      lda,
-                                      h_tmp.data(),
-                                      s_tmp.data(),
-                                      nbands,
-                                      ekb_lapack.data(),
-                                      wfc.data());
+                hsolver::hegvx_op<T, base_device::DEVICE_CPU>()(ctx,
+                                                                lda,
+                                                                lda,
+                                                                h_tmp.data(),
+                                                                s_tmp.data(),
+                                                                nbands,
+                                                                ekb_lapack.data(),
+                                                                wfc.data());
             }
             end = std::chrono::high_resolution_clock::now();
             time_lapack[randomi] = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-            //COMPARE EKB
+            // COMPARE EKB
             for (int i = 0; i < nbands; ++i) {
                 typename GetTypeReal<T>::type diff_scalap_lapack = std::abs(ekb_scalap[i] - ekb_lapack[i]);
 #ifdef __ELPA
@@ -262,26 +289,27 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
             }
         }
         MPI_Barrier(comm);
-
     }
 
-    if (my_rank == 0)
-    {
+    if (my_rank == 0) {
 #ifdef __ELPA
         std::cout << "\nELPA Time     : ";
-        for (int i=0; i < case_numb;i++)
-        {std::cout << time_elpa[i] << " ";}
+        for (int i = 0; i < case_numb; i++) {
+            std::cout << time_elpa[i] << " ";
+        }
         std::cout << std::endl;
 #endif
 
         std::cout << "scalapack Time: ";
-        for (int i=0; i < case_numb;i++)
-        {std::cout << time_scalap[i] << " ";}
+        for (int i = 0; i < case_numb; i++) {
+            std::cout << time_scalap[i] << " ";
+        }
         std::cout << std::endl;
 
         std::cout << "lapack Time   : ";
-        for (int i=0; i < case_numb;i++)
-        {std::cout << time_lapack[i] << " ";}
+        for (int i = 0; i < case_numb; i++) {
+            std::cout << time_lapack[i] << " ";
+        }
         std::cout << std::endl;
 
         // print out the average time and speedup
@@ -290,8 +318,7 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
 #endif
         double avg_time_scalap = 0;
         double avg_time_lapack = 0;
-        for (int i=0; i < case_numb;i++)
-        {
+        for (int i = 0; i < case_numb; i++) {
 #ifdef __ELPA
             avg_time_elpa += time_elpa[i];
 #endif
@@ -306,13 +333,15 @@ void test_performance(int lda, int nb, int nbands, MPI_Comm comm,int case_numb, 
         avg_time_lapack /= case_numb;
         std::cout << "Average Lapack Time   : " << avg_time_lapack << " ms" << std::endl;
 #ifdef __ELPA
-        std::cout << "Average ELPA Time     : " << avg_time_elpa << " ms, Speedup: " << avg_time_lapack / avg_time_elpa << std::endl;
+        std::cout << "Average ELPA Time     : " << avg_time_elpa << " ms, Speedup: " << avg_time_lapack / avg_time_elpa
+                  << std::endl;
 #endif
-        std::cout << "Average Scalapack Time: " << avg_time_scalap << " ms, Speedup: " << avg_time_lapack / avg_time_scalap << std::endl;
+        std::cout << "Average Scalapack Time: " << avg_time_scalap
+                  << " ms, Speedup: " << avg_time_lapack / avg_time_scalap << std::endl;
     }
 }
 
-//test_diago_hs(int lda, int nb, int random_seed, int nbands, int diag_type, MPI_Comm comm)
+// test_diago_hs(int lda, int nb, int random_seed, int nbands, int diag_type, MPI_Comm comm)
 TEST(DiagoPxxxgvxElpaTest, Double) {
     test_diago_hs<double>(16, 4, 0, 10, 1, MPI_COMM_WORLD);
     test_diago_hs<double>(20, 6, 0, 18, 1, MPI_COMM_WORLD);
@@ -324,28 +353,22 @@ TEST(DiagoPxxxgvxElpaTest, ComplexDouble) {
 }
 
 TEST(DiagoPxxxgvxScalapackTest, Double) {
-    test_diago_hs<double>(16, 4, 0, 10, 2,MPI_COMM_WORLD);
-    test_diago_hs<double>(20, 6, 0, 18, 2,MPI_COMM_WORLD);
+    test_diago_hs<double>(16, 4, 0, 10, 2, MPI_COMM_WORLD);
+    test_diago_hs<double>(20, 6, 0, 18, 2, MPI_COMM_WORLD);
 }
 
-TEST(DiagoPxxxgvxScalapackTest, ComplexDouble) {
-    test_diago_hs<std::complex<double>>(16, 4, 0, 10, 2, MPI_COMM_WORLD);
-}
-TEST(DiagoPxxxgvxScalapackTest, Float) {
-    test_diago_hs<float>(16, 4, 0, 10,2,MPI_COMM_WORLD);
-}
+TEST(DiagoPxxxgvxScalapackTest, ComplexDouble) { test_diago_hs<std::complex<double>>(16, 4, 0, 10, 2, MPI_COMM_WORLD); }
+TEST(DiagoPxxxgvxScalapackTest, Float) { test_diago_hs<float>(16, 4, 0, 10, 2, MPI_COMM_WORLD); }
 
-TEST(DiagoPxxxgvxScalapackTest, ComplexFloat) {
-    test_diago_hs<std::complex<float>>(16, 4, 0, 10,2,MPI_COMM_WORLD);
-}
+TEST(DiagoPxxxgvxScalapackTest, ComplexFloat) { test_diago_hs<std::complex<float>>(16, 4, 0, 10, 2, MPI_COMM_WORLD); }
 
-//TEST(DiagoPxxxgvxPerformanceTest, Double) {
-//    int ndim = 200;
-//    int nband = 180;
-//    int case_numb = 10;
-//    int loop_numb = 10;
-//    test_performance<std::complex<double>>(ndim, 32,  nband, MPI_COMM_WORLD, case_numb, loop_numb);
-//}
+// TEST(DiagoPxxxgvxPerformanceTest, Double) {
+//     int ndim = 200;
+//     int nband = 180;
+//     int case_numb = 10;
+//     int loop_numb = 10;
+//     test_performance<std::complex<double>>(ndim, 32,  nband, MPI_COMM_WORLD, case_numb, loop_numb);
+// }
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
@@ -360,16 +383,15 @@ int main(int argc, char** argv) {
     }
 
     int result = RUN_ALL_TESTS();
-    if (myrank == 0 && result != 0)
-    {
+    if (myrank == 0 && result != 0) {
         std::cout << "ERROR:some tests are not passed" << std::endl;
         MPI_Finalize();
         return result;
-	}
+    }
 
     MPI_Finalize();
 
-	return 0;
+    return 0;
 }
 
 #endif // TEST_DIAGO_PXXXGVX_H

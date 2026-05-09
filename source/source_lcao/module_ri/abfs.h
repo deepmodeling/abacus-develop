@@ -1,5 +1,5 @@
 #ifndef ABFS_H
-#define ABFS_H	
+#define ABFS_H
 
 #include "../../source_base/vector3.h"
 
@@ -9,11 +9,10 @@
 #include <memory>
 #include <pthread.h>
 
-class Abfs
-{
-public:
-	
-	template<typename T> class Vector3_Order;
+class Abfs {
+  public:
+    template <typename T>
+    class Vector3_Order;
 };
 
-#endif	// ABFS_H
+#endif // ABFS_H

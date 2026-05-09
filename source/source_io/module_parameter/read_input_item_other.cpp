@@ -7,10 +7,8 @@
 #include <cstring>
 #include <iostream>
 
-namespace ModuleIO
-{
-void ReadInput::item_others()
-{
+namespace ModuleIO {
+void ReadInput::item_others() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -26,12 +24,11 @@ void ReadInput::item_others()
         item.availability = "";
         read_sync_bool(input.sc_mag_switch);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_mag_switch)
-            {
-//                ModuleBase::WARNING_QUIT("ReadInput",
-//                                         "This feature is not stable yet and might lead to "
-//                                         "erroneous results.\n"
-//                                         " Please wait for the official release version.");
+            if (para.input.sc_mag_switch) {
+                //                ModuleBase::WARNING_QUIT("ReadInput",
+                //                                         "This feature is not stable yet and might lead to "
+                //                                         "erroneous results.\n"
+                //                                         " Please wait for the official release version.");
                 // if (para.input.nspin != 4 && para.input.nspin != 2)
                 // {
                 //     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or
@@ -74,8 +71,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.sc_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_thr < 0)
-            {
+            if (para.input.sc_thr < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_thr must >= 0");
             }
         };
@@ -92,8 +88,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_int(input.nsc);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nsc <= 0)
-            {
+            if (para.input.nsc <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "nsc must > 0");
             }
         };
@@ -110,8 +105,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_int(input.nsc_min);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nsc_min <= 0)
-            {
+            if (para.input.nsc_min <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "nsc_min must > 0");
             }
         };
@@ -129,8 +123,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_int(input.sc_scf_nmin);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_nmin < 2)
-            {
+            if (para.input.sc_scf_nmin < 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_nmin must >= 2");
             }
         };
@@ -147,8 +140,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.alpha_trial);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.alpha_trial <= 0)
-            {
+            if (para.input.alpha_trial <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "alpha_trial must > 0");
             }
         };
@@ -165,8 +157,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.sccut);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sccut <= 0)
-            {
+            if (para.input.sccut <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "sccut must > 0");
             }
         };
@@ -195,8 +186,7 @@ void ReadInput::item_others()
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.sc_scf_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_thr <= 0.0)
-            {
+            if (para.input.sc_scf_thr <= 0.0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
             }
         };
@@ -237,37 +227,28 @@ void ReadInput::item_others()
         item.annotation = "strategy to generate generate radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
         item.type = "Vector of String (1 or n values where n is the number of atomic types)";
-        item.description = "Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all";
+        item.description = "Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for "
+                           "pswfc and szv: all";
         item.default_value = "for hydrogen: energy-valence, for pswfc and szv: all";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
+            for (int i = 0; i < count; i++) {
                 para.input.qo_strategy.push_back(item.str_values[i]);
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.qo_strategy.size() != para.input.ntype)
-            {
-                if (para.input.qo_strategy.size() == 1)
-                {
+            if (para.input.qo_strategy.size() != para.input.ntype) {
+                if (para.input.qo_strategy.size() == 1) {
                     para.input.qo_strategy.resize(para.input.ntype, para.input.qo_strategy[0]);
-                }
-                else
-                {
+                } else {
                     std::string default_strategy;
-                    if (para.input.qo_basis == "hydrogen")
-                    {
+                    if (para.input.qo_basis == "hydrogen") {
                         default_strategy = "energy-valence";
-                    }
-                    else if ((para.input.qo_basis == "pswfc") || (para.input.qo_basis == "szv"))
-                    {
+                    } else if ((para.input.qo_basis == "pswfc") || (para.input.qo_basis == "szv")) {
                         default_strategy = "all";
-                    }
-                    else
-                    {
+                    } else {
                         ModuleBase::WARNING_QUIT("ReadInput",
                                                  "When setting default values for qo_strategy, "
                                                  "unexpected/unknown "
@@ -284,33 +265,28 @@ void ReadInput::item_others()
         Input_Item item("qo_screening_coeff");
         item.annotation = "rescale the shape of radial orbitals";
         item.category = "Quasiatomic Orbital (QO) analysis";
-        item.type = "Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)";
+        item.type =
+            "Vector of Real (n values where n is the number of atomic types; 1 value allowed for qo_basis=pswfc)";
         item.description = "The screening coefficient for each atom type to rescale the shape of radial orbitals";
         item.default_value = "0.1";
         item.unit = "Bohr^-1";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
+            for (int i = 0; i < count; i++) {
                 para.input.qo_screening_coeff.push_back(std::stod(item.str_values[i]));
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!item.is_read())
-            {
+            if (!item.is_read()) {
                 return;
             }
-            if (para.input.qo_screening_coeff.size() != para.input.ntype)
-            {
-                if (para.input.qo_basis == "pswfc")
-                {
-                    double default_screening_coeff
-                        = (para.input.qo_screening_coeff.size() == 1) ? para.input.qo_screening_coeff[0] : 0.1;
+            if (para.input.qo_screening_coeff.size() != para.input.ntype) {
+                if (para.input.qo_basis == "pswfc") {
+                    double default_screening_coeff =
+                        (para.input.qo_screening_coeff.size() == 1) ? para.input.qo_screening_coeff[0] : 0.1;
                     para.input.qo_screening_coeff.resize(para.input.ntype, default_screening_coeff);
-                }
-                else
-                {
+                } else {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "qo_screening_coeff should have the same number of "
                                              "elements as ntype");
@@ -318,16 +294,13 @@ void ReadInput::item_others()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            for (auto screen_coeff: para.input.qo_screening_coeff)
-            {
-                if (screen_coeff < 0)
-                {
+            for (auto screen_coeff: para.input.qo_screening_coeff) {
+                if (screen_coeff < 0) {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "screening coefficient must >= 0 "
                                              "to tune the pswfc decay");
                 }
-                if (std::fabs(screen_coeff) < 1e-6)
-                {
+                if (std::fabs(screen_coeff) < 1e-6) {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "every low screening coefficient might yield very high "
                                              "computational cost");
@@ -342,14 +315,14 @@ void ReadInput::item_others()
         item.annotation = "accuracy for evaluating cutoff radius of QO basis function";
         item.category = "Quasiatomic Orbital (QO) analysis";
         item.type = "Real";
-        item.description = "The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.";
+        item.description = "The convergence threshold determining the cutoff of generated orbital. Lower threshold "
+                           "will yield orbital with larger cutoff radius.";
         item.default_value = "1.0e-6";
         item.unit = "";
         item.availability = "";
         read_sync_double(input.qo_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.qo_thr > 1e-6)
-            {
+            if (para.input.qo_thr > 1e-6) {
                 ModuleBase::WARNING("ReadInput",
                                     "too high the convergence threshold might "
                                     "yield unacceptable result");
@@ -415,7 +388,8 @@ void ReadInput::item_others()
                           "algorithm for symmetric matrices";
         item.category = "PEXSI";
         item.type = "Boolean";
-        item.description = "Whether to use symmetric storage space used by the Selected Inversion algorithm for symmetric matrices.";
+        item.description =
+            "Whether to use symmetric storage space used by the Selected Inversion algorithm for symmetric matrices.";
         item.default_value = "True";
         item.unit = "";
         item.availability = "";
@@ -427,7 +401,8 @@ void ReadInput::item_others()
         item.annotation = "Ordering strategy for factorization and selected inversion";
         item.category = "PEXSI";
         item.type = "Integer";
-        item.description = "Ordering strategy for factorization and selected inversion. 0: Parallel ordering using ParMETIS, 1: Sequential ordering using METIS, 2: Multiple minimum degree ordering";
+        item.description = "Ordering strategy for factorization and selected inversion. 0: Parallel ordering using "
+                           "ParMETIS, 1: Sequential ordering using METIS, 2: Multiple minimum degree ordering";
         item.default_value = "0";
         item.unit = "";
         item.availability = "";
@@ -440,7 +415,8 @@ void ReadInput::item_others()
                           "selected inversion, 0: NoRowPerm, 1: LargeDiag";
         item.category = "PEXSI";
         item.type = "Integer";
-        item.description = "Row permutation strategy for factorization and selected inversion, 0: No row permutation, 1: Make the diagonal entry of the matrix larger than the off-diagonal entries.";
+        item.description = "Row permutation strategy for factorization and selected inversion, 0: No row permutation, "
+                           "1: Make the diagonal entry of the matrix larger than the off-diagonal entries.";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
@@ -489,7 +465,8 @@ void ReadInput::item_others()
                           "2: Moussa optimized method";
         item.category = "PEXSI";
         item.type = "Integer";
-        item.description = "The pole expansion method to be used. 1 for Cauchy Contour Integral method, 2 for Moussa optimized method.";
+        item.description = "The pole expansion method to be used. 1 for Cauchy Contour Integral method, 2 for Moussa "
+                           "optimized method.";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
@@ -513,7 +490,8 @@ void ReadInput::item_others()
         item.annotation = "Temperature, in the same unit as H";
         item.category = "PEXSI";
         item.type = "Real";
-        item.description = "Temperature in Fermi-Dirac distribution, in Ry, should have the same effect as the smearing sigma when smearing method is set to Fermi-Dirac.";
+        item.description = "Temperature in Fermi-Dirac distribution, in Ry, should have the same effect as the "
+                           "smearing sigma when smearing method is set to Fermi-Dirac.";
         item.default_value = "0.015";
         item.unit = "";
         item.availability = "";
@@ -600,7 +578,8 @@ void ReadInput::item_others()
                           "muInertiaExpansion";
         item.category = "PEXSI";
         item.type = "Real";
-        item.description = "If the chemical potential is not in the initial interval, the interval is expanded by this value.";
+        item.description =
+            "If the chemical potential is not in the initial interval, the interval is expanded by this value.";
         item.default_value = "0.3";
         item.unit = "";
         item.availability = "";
@@ -613,7 +592,8 @@ void ReadInput::item_others()
                           "reinvoke the inertia counting procedure";
         item.category = "PEXSI";
         item.type = "Real";
-        item.description = "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure.";
+        item.description =
+            "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure.";
         item.default_value = "0.2";
         item.unit = "";
         item.availability = "";
@@ -627,7 +607,8 @@ void ReadInput::item_others()
                           "numElectronExact";
         item.category = "PEXSI";
         item.type = "Real";
-        item.description = "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact.";
+        item.description = "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to "
+                           "numElectronExact.";
         item.default_value = "0.001";
         item.unit = "";
         item.availability = "";
@@ -640,7 +621,8 @@ void ReadInput::item_others()
                           "than ZERO_Limit, it will be considered as 0";
         item.category = "PEXSI";
         item.type = "Real";
-        item.description = "if the absolute value of CCS matrix element is less than this value, it will be considered as zero.";
+        item.description =
+            "if the absolute value of CCS matrix element is less than this value, it will be considered as zero.";
         item.default_value = "1e-10";
         item.unit = "";
         item.availability = "";
@@ -654,7 +636,9 @@ void ReadInput::item_others()
         item.annotation = "output information for each processor, when parallel";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print information into individual logs from all ranks in an MPI run.\n* True: Information from each rank will be written into individual files named OUT.{calculation}_{suffix}/running_${calculation}.log.";
+        item.description = "Whether to print information into individual logs from all ranks in an MPI run.\n* True: "
+                           "Information from each rank will be written into individual files named "
+                           "OUT.{calculation}_{suffix}/running_${calculation}.log.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
@@ -706,7 +690,8 @@ void ReadInput::item_others()
         item.annotation = "calculate the nonlocal potential or not";
         item.category = "Variables useful for debugging";
         item.type = "Boolean";
-        item.description = R"(Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
+        item.description =
+            R"(Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
 * 0: No.
 * 1: Yes.)";
         item.default_value = "1";
@@ -787,10 +772,12 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("ri_hartree_benchmark");
-        item.annotation = "whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)";
+        item.annotation = "whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with "
+                          "FHI-aims/ABACUS read-in style)";
         item.category = "Linear Response TDDFT";
         item.type = "String";
-        item.description = "Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)";
+        item.description = "Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with "
+                           "FHI-aims/ABACUS read-in style)";
         item.default_value = "none";
         item.unit = "";
         item.availability = "";
@@ -808,11 +795,10 @@ void ReadInput::item_others()
         item.availability = "ri_hartree_benchmark = aims";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
+            for (int i = 0; i < count; i++) {
                 para.input.aims_nbasis.push_back(std::stod(item.str_values[i]));
             }
-            };
+        };
         sync_intvec(input.aims_nbasis, para.input.aims_nbasis.size(), 0);
         this->add_item(item);
     }
@@ -830,8 +816,7 @@ void ReadInput::item_others()
         read_sync_bool(input.rdmft);
         this->add_item(item);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.rdmft && para.input.nspin == 4)
-            {
+            if (para.input.rdmft && para.input.nspin == 4) {
                 ModuleBase::WARNING_QUIT("ReadInput", "rdmft is not available for nspin = 4");
             }
         };
@@ -842,24 +827,21 @@ void ReadInput::item_others()
                           " used in exx-type functionals such as muller and power";
         item.category = "Reduced Density Matrix Functional Theory";
         item.type = "Real";
-        item.description = "The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha";
+        item.description = "The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used "
+                           "in RDMFT, g(occ_number) = occ_number^alpha";
         item.default_value = "0.656";
         item.unit = "";
         item.availability = "";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
-            {
+            if (para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0") {
                 para.input.rdmft_power_alpha = 1.0;
-            }
-            else if( para.input.dft_functional == "muller" )
-            {
+            } else if (para.input.dft_functional == "muller") {
                 para.input.rdmft_power_alpha = 0.5;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if( (para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1) )
-            {
+            if ((para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1)) {
                 ModuleBase::WARNING_QUIT("ReadInput", "rdmft_power_alpha should be greater than 0.0 and less than 1.0");
             }
         };
@@ -872,7 +854,8 @@ void ReadInput::item_others()
         item.annotation = "whether to perform ace calculation in exxpw";
         item.category = "Exact Exchange (PW)";
         item.type = "Boolean";
-        item.description = R"(Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
+        item.description =
+            R"(Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
 * True: Use the ACE method to calculate the Fock exchange operator.
 * False: Use the traditional method to calculate the Fock exchange operator.)";
         item.default_value = "True";
@@ -886,7 +869,9 @@ void ReadInput::item_others()
         item.annotation = "whether to perform gamma extrapolation in exxpw";
         item.category = "Exact Exchange (PW)";
         item.type = "Boolean";
-        item.description = "Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.";
+        item.description =
+            "Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See "
+            "https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.";
         item.default_value = "True";
         item.unit = "";
         item.availability = "";
@@ -898,14 +883,15 @@ void ReadInput::item_others()
         item.annotation = "energy cutoff for exx calculation, Ry";
         item.category = "Exact Exchange (PW)";
         item.type = "Real";
-        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
+        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. "
+                           "Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed "
+                           "improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
         item.default_value = "same as ecutrho";
         item.unit = "Ry";
         item.availability = "";
         read_sync_double(input.ecutexx);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutexx < 0)
-            {
+            if (para.input.ecutexx < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
             }
         };
@@ -917,7 +903,8 @@ void ReadInput::item_others()
         item.annotation = "threshold type for exx outer loop, energy or density";
         item.category = "Exact Exchange (PW)";
         item.type = "String";
-        item.description = R"(The type of threshold used to judge whether the outer loop has converged in the separate loop EXX calculation.
+        item.description =
+            R"(The type of threshold used to judge whether the outer loop has converged in the separate loop EXX calculation.
 * energy: use the change of exact exchange energy to judge convergence.
 * density: if the change of charge density difference between two successive outer loop iterations is seen as converged according to scf_thr, then the outer loop is seen as converged.)";
         item.default_value = "density";
@@ -927,8 +914,7 @@ void ReadInput::item_others()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::string thr_type = para.input.exx_thr_type;
             std::transform(thr_type.begin(), thr_type.end(), thr_type.begin(), ::tolower);
-            if (thr_type != "energy" && thr_type != "density")
-            {
+            if (thr_type != "energy" && thr_type != "density") {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_thr_type should be energy or density");
             }
         };
@@ -939,14 +925,14 @@ void ReadInput::item_others()
         item.annotation = "threshold for exx outer loop when exx_thr_type = energy";
         item.category = "Exact Exchange (PW)";
         item.type = "Real";
-        item.description = "The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.";
+        item.description = "The threshold for the change of exact exchange energy to judge convergence of the outer "
+                           "loop in the separate loop EXX calculation.";
         item.default_value = "1e-5";
         item.unit = "Ry";
         item.availability = "exx_thr_type==energy";
         read_sync_double(input.exx_ene_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ene_thr <= 0)
-            {
+            if (para.input.exx_ene_thr <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ene_thr must > 0");
             }
         };

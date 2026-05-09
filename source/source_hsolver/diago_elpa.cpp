@@ -66,10 +66,9 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm() {
 }
 #endif
 template <>
-void DiagoElpa<std::complex<double>>::diag(
-    hamilt::Hamilt<std::complex<double>>* phm_in,
-    psi::Psi<std::complex<double>>& psi,
-    Real* eigenvalue_in) {
+void DiagoElpa<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
+                                           psi::Psi<std::complex<double>>& psi,
+                                           Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
     matcd h_mat, s_mat;
@@ -85,29 +84,21 @@ void DiagoElpa<std::complex<double>>::diag(
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    this->DecomposedState
-        = 0; // for k pointer, the decomposed s_mat can not be reused
+    this->DecomposedState = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p,
-                               s_mat.p,
-                               this->DecomposedState,
-                               eigen.data(),
-                               psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 #else
-    ModuleBase::WARNING_QUIT("DiagoElpa",
-                             "DiagoElpa only can be used with macro __MPI");
+    ModuleBase::WARNING_QUIT("DiagoElpa", "DiagoElpa only can be used with macro __MPI");
 #endif
 }
 
 template <>
-void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
-                             psi::Psi<double>& psi,
-                             Real* eigenvalue_in) {
+void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
     matd h_mat, s_mat;
@@ -126,31 +117,24 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p,
-                               s_mat.p,
-                               this->DecomposedState,
-                               eigen.data(),
-                               psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 #else
-    ModuleBase::WARNING_QUIT("DiagoElpa",
-                             "DiagoElpa only can be used with macro __MPI");
+    ModuleBase::WARNING_QUIT("DiagoElpa", "DiagoElpa only can be used with macro __MPI");
 #endif
 }
-
 
 #ifdef __MPI
 template <>
 void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
-    psi::Psi<std::complex<double>>& psi,
-    Real* eigenvalue_in,
-    MPI_Comm& comm)
-{
+                                                hamilt::MatrixBlock<std::complex<double>>& s_mat,
+                                                psi::Psi<std::complex<double>>& psi,
+                                                Real* eigenvalue_in,
+                                                MPI_Comm& comm) {
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     bool isReal = false;
     ELPA_Solver es((const bool)isReal,
@@ -159,14 +143,9 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
-    this->DecomposedState
-        = 0; // for k pointer, the decomposed s_mat can not be reused
+    this->DecomposedState = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p,
-                               s_mat.p,
-                               this->DecomposedState,
-                               eigen.data(),
-                               psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
     const int inc = 1;
@@ -175,11 +154,10 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
 
 template <>
 void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
-    psi::Psi<double>& psi,
-    Real* eigenvalue_in,
-    MPI_Comm& comm)
-{
+                                  hamilt::MatrixBlock<double>& s_mat,
+                                  psi::Psi<double>& psi,
+                                  Real* eigenvalue_in,
+                                  MPI_Comm& comm) {
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = true;
@@ -192,24 +170,16 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p,
-                               s_mat.p,
-                               this->DecomposedState,
-                               eigen.data(),
-                               psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "K-S equation was solved by genelpa2");
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "K-S equation was solved by genelpa2");
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "eigenvalues were copied to ekb");
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "eigenvalues were copied to ekb");
 }
 #endif
-
-
 
 #ifdef __MPI
 template <typename T>

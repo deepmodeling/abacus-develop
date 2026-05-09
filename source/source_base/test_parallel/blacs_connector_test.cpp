@@ -17,9 +17,8 @@
  *        coordinates (row, col) in the grid.
  */
 
-class BLACSTest: public testing::Test
-{
-protected:
+class BLACSTest : public testing::Test {
+  protected:
     void SetUp();
 
     int rank = 0;
@@ -35,14 +34,9 @@ protected:
     int ipcol = -1;
 };
 
-void BLACSTest::SetUp()
-{
-    Cblacs_pinfo(&rank, &nprocs);
-}
+void BLACSTest::SetUp() { Cblacs_pinfo(&rank, &nprocs); }
 
-
-TEST_F(BLACSTest, WorldGrid)
-{
+TEST_F(BLACSTest, WorldGrid) {
     // generate a grid of size 1 x nproc
     nprow = 1;
     npcol = nprocs;
@@ -65,13 +59,11 @@ TEST_F(BLACSTest, WorldGrid)
     EXPECT_EQ(iprow, rank);
     EXPECT_EQ(ipcol, 0);
 
-
     // two BLACS grids should have difference context index
     EXPECT_NE(ictxt_row, ictxt_col);
 }
 
-TEST_F(BLACSTest, SplitGrid)
-{
+TEST_F(BLACSTest, SplitGrid) {
     // this test create BLACS grids based on a disjoint communicator
 
     const int n_blacs = 2;
@@ -95,8 +87,7 @@ TEST_F(BLACSTest, SplitGrid)
     EXPECT_EQ(ipcol, rank_sub);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

@@ -12,24 +12,19 @@
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename TK, typename TR>
-ESolver_DM2rho<TK, TR>::ESolver_DM2rho()
-{
+ESolver_DM2rho<TK, TR>::ESolver_DM2rho() {
     this->classname = "ESolver_DM2rho";
     this->basisname = "LCAO";
 }
 
 template <typename TK, typename TR>
-ESolver_DM2rho<TK, TR>::~ESolver_DM2rho()
-{
-}
+ESolver_DM2rho<TK, TR>::~ESolver_DM2rho() {}
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
-{
+void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp) {
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "before_all_runners");
 
@@ -39,8 +34,7 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_par
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
-{
+void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep) {
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
     ModuleBase::timer::start("ESolver_DM2rho", "runner");
 
@@ -53,8 +47,7 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
     ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(1)));
 
     // if nspin=2, need extra reading
-    if (PARAM.inp.nspin == 2)
-    {
+    if (PARAM.inp.nspin == 2) {
         zipname = "output_DM1.npz";
         ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(2)));
     }
@@ -65,8 +58,7 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 
     int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
 
-    for (int is = 0; is < nspin0; is++)
-    {
+    for (int is = 0; is < nspin0; is++) {
         std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
 
         // write electron density
@@ -86,8 +78,7 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell)
-{
+void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell) {
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");
 

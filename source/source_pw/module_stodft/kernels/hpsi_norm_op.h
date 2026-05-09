@@ -3,11 +3,9 @@
 #include "source_base/module_device/types.h"
 #include <complex>
 #include "source_base/module_device/device.h"
-namespace hamilt
-{
+namespace hamilt {
 template <typename FPTYPE, typename Device>
-struct hpsi_norm_op
-{
+struct hpsi_norm_op {
     /// @brief normalize hPsi with emin and emax
     ///
     /// Input Parameters
@@ -33,8 +31,7 @@ struct hpsi_norm_op
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
-struct hpsi_norm_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct hpsi_norm_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* dev,
                     const int& nbands,
                     const int& npwk_max,

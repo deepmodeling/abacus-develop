@@ -1,20 +1,20 @@
 {
-	"exe":
-	{
-		"exe_pw":		"/home/nic/wszhang/eclipse_project/abacus-NewGit/ABACUS.1.0.0/bin/20160621ABACUS.mpi.1.0.0",
-		"exe_orbital":	"/home/nic/wszhang/eclipse_project/abacus-NewGit/ABACUS.1.0.0/tools/opt_orb_pytorch/main.py",
-		"qsub":			[1,8]
-	},
-	"input":
-	{
-		"element":		"Si",
-		"ref_bands":	4.0,							
-		"nbands":		8.0,
-		"ecut":			100,
-		"rcut":			6,
-		"pseudo_dir":	"/home/nic/wszhang/eclipse_project/delta_dft/CIF_POT/SG15_ONCV_PBE-1.0/",
-		"pseudo":		"Si_ONCV_PBE-1.0.upf",
-		"smearing_sigma":		0.01
-	},
-	"orbital":	[2,2,1]
+    "exe":
+    {
+        "exe_pw":        "/home/nic/wszhang/eclipse_project/abacus-NewGit/ABACUS.1.0.0/bin/20160621ABACUS.mpi.1.0.0",
+        "exe_orbital":    "/home/nic/wszhang/eclipse_project/abacus-NewGit/ABACUS.1.0.0/tools/opt_orb_pytorch/main.py",
+        "qsub":            [1,8]
+    },
+    "input":
+    {
+        "element":        "Si",
+        "ref_bands":    4.0,                            
+        "nbands":        8.0,
+        "ecut":            100,
+        "rcut":            6,
+        "pseudo_dir":    "/home/nic/wszhang/eclipse_project/delta_dft/CIF_POT/SG15_ONCV_PBE-1.0/",
+        "pseudo":        "Si_ONCV_PBE-1.0.upf",
+        "smearing_sigma":        0.01
+    },
+    "orbital":    [2,2,1]
 }

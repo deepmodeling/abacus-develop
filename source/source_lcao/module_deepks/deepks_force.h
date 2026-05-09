@@ -12,8 +12,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 //------------------------
 // deepks_force.cpp
 //------------------------

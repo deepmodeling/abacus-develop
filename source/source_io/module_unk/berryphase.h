@@ -9,8 +9,7 @@
 #include "source_psi/psi.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
-class berryphase
-{
+class berryphase {
 
   public:
     berryphase(); // for pw-line
@@ -27,19 +26,16 @@ class berryphase
     const Parallel_Orbitals* paraV = nullptr;
 #endif
 
-    int total_string=0;
+    int total_string = 0;
     std::vector<std::vector<int>> k_index;
-    int nppstr=0;
-    int direction=0;
-    int occ_nbands=0;
+    int nppstr = 0;
+    int direction = 0;
+    int occ_nbands = 0;
     int GDIR;
 
     void get_occupation_bands();
 #ifdef __LCAO
-    void lcao_init(const UnitCell& ucell,
-                   const Grid_Driver& gd,
-                   const K_Vectors& kv,
-                   const LCAO_Orbitals& orb);
+    void lcao_init(const UnitCell& ucell, const Grid_Driver& gd, const K_Vectors& kv, const LCAO_Orbitals& orb);
 #endif
     void set_kpoints(const K_Vectors& kv, const int direction);
 
@@ -67,8 +63,7 @@ class berryphase
                                   const psi::Psi<double>* psi_in,
                                   const ModulePW::PW_Basis* rhopw,
                                   const ModulePW::PW_Basis_K* wfcpw,
-                                  const K_Vectors& kv)
-    {
+                                  const K_Vectors& kv) {
         throw std::logic_error("berry phase supports only multi-k");
     };
     void Macroscopic_polarization(const UnitCell& ucell,
@@ -78,7 +73,8 @@ class berryphase
                                   const ModulePW::PW_Basis_K* wfcpw,
                                   const K_Vectors& kv);
 
-    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
+    std::string
+    outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project) const;
 };
 
 #endif

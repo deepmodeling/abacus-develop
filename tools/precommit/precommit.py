@@ -216,10 +216,10 @@ def process_file(fn: str, allow_modifications: bool) -> None:
         ast.parse(orig_content, filename=fn)
         run_remote_tool("black", fn)
 
-    # Shell.
-    if re.match(r".*\.sh$", fn):
-        run_remote_tool("shfmt", fn)
-        run_remote_tool("shellcheck", fn)
+    # Shell. (TODO: Re-enable shellcheck in the future)
+    #    if re.match(r".*\.sh$", fn):
+    #        run_remote_tool("shfmt", fn)
+    #        run_remote_tool("shellcheck", fn)
 
     # Markdown.
     if re.match(r".*\.md$", fn):

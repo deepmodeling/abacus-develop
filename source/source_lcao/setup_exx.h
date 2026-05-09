@@ -1,12 +1,12 @@
 #ifndef SETUP_EXX_NAO_H
 #define SETUP_EXX_NAO_H
 
-#include "source_cell/unitcell.h" // use unitcell
-#include "source_cell/klist.h" // k points
+#include "source_cell/unitcell.h"                       // use unitcell
+#include "source_cell/klist.h"                          // k points
 #include "source_io/module_parameter/input_parameter.h" // Input_para
-#include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
-#include "source_basis/module_ao/ORB_read.h" // orb
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_basis/module_ao/parallel_orbitals.h"   // parallel orbitals
+#include "source_basis/module_ao/ORB_read.h"            // orb
+#include "source_estate/module_charge/charge_mixing.h"  // use charge mixing
 
 // for EXX
 #ifdef __EXX
@@ -14,10 +14,8 @@
 #endif
 
 template <typename TK>
-class Exx_NAO
-{
-    public:
-
+class Exx_NAO {
+  public:
     Exx_NAO();
     ~Exx_NAO();
 
@@ -28,22 +26,18 @@ class Exx_NAO
 
     void init();
 
-	void before_runner(
-			UnitCell& ucell, // unitcell
-			K_Vectors &kv, // k points
-            const LCAO_Orbitals &orb, // orbital info
-			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp);
+    void before_runner(UnitCell& ucell,             // unitcell
+                       K_Vectors& kv,               // k points
+                       const LCAO_Orbitals& orb,    // orbital info
+                       const Parallel_Orbitals& pv, // parallel orbitals
+                       const Input_para& inp);
 
-	void before_scf(
-			const UnitCell &ucell, // unitcell
-			const K_Vectors &kv,
-			const LCAO_Orbitals &orb, // orbital info
-			Charge_Mixing* p_chgmix,
-			const int istep,
-			const Input_para& inp);
-
+    void before_scf(const UnitCell& ucell, // unitcell
+                    const K_Vectors& kv,
+                    const LCAO_Orbitals& orb, // orbital info
+                    Charge_Mixing* p_chgmix,
+                    const int istep,
+                    const Input_para& inp);
 };
-
 
 #endif

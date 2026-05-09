@@ -29,10 +29,8 @@
  *                          + \beta_0\ ( \tau(t-dt) - \tau(t-2 dt) ). \]
  */
 
-class Charge_Extra
-{
-    public:
-
+class Charge_Extra {
+  public:
     Charge_Extra();
     ~Charge_Extra();
 
@@ -62,13 +60,12 @@ class Charge_Extra
      * @param ofs_running the output stream
      * @param ofs_warning the output stream
      */
-    void extrapolate_charge(
-        Parallel_Grid* Pgrid,
-        UnitCell& ucell,
-        Charge* chr,
-        Structure_Factor* sf,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning);
+    void extrapolate_charge(Parallel_Grid* Pgrid,
+                            UnitCell& ucell,
+                            Charge* chr,
+                            Structure_Factor* sf,
+                            std::ofstream& ofs_running,
+                            std::ofstream& ofs_warning);
 
     /**
      * @brief update displacements
@@ -93,7 +90,7 @@ class Charge_Extra
     int istep = 0; ///< the current step
     int pot_order; ///< the specified charge extrapolation method
     int rho_extr;  ///< the actually used method
-    int nspin;        ///< the number of spins
+    int nspin;     ///< the number of spins
 
     ModuleBase::Vector3<double>* dis_old1 = nullptr; ///< dis_old2 = pos_old1 - pos_old2
     ModuleBase::Vector3<double>* dis_old2 = nullptr; ///< dis_old1 = pos_now - pos_old1

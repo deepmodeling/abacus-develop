@@ -4,26 +4,21 @@
 #include "source_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device>
-StoChe<REAL, Device>::~StoChe()
-{
+StoChe<REAL, Device>::~StoChe() {
     delete p_che;
     delete[] spolyv_cpu;
     delmem_var_op()(spolyv);
 }
 
 template <typename REAL, typename Device>
-StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
-{
+StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto) {
     this->nche = nche;
     this->method_sto = method;
     p_che = new ModuleBase::Chebyshev<REAL, Device>(nche);
-    if (method == 1)
-    {
+    if (method == 1) {
         resmem_var_op()(spolyv, nche);
         spolyv_cpu = new REAL[nche];
-    }
-    else
-    {
+    } else {
         resmem_var_op()(spolyv, nche * nche);
     }
 

@@ -7,23 +7,22 @@
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Stress_PW : public Stress_Func<FPTYPE, Device>
-{
+class Stress_PW : public Stress_Func<FPTYPE, Device> {
   public:
     Stress_PW(const elecstate::ElecState* pelec_in) : pelec(pelec_in){};
 
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
-			UnitCell& ucell,
-			Plus_U &dftu, // mhan add 2025-11-07 
-			const pseudopot_cell_vl& locpp,
-			const pseudopot_cell_vnl& nlpp,
-			ModulePW::PW_Basis* rho_basis,
-			ModuleSymmetry::Symmetry* p_symm,
-			Structure_Factor* p_sf,
-			K_Vectors* p_kv,
-			ModulePW::PW_Basis_K* wfc_basis,
-			const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in = nullptr);
+                    UnitCell& ucell,
+                    Plus_U& dftu, // mhan add 2025-11-07
+                    const pseudopot_cell_vl& locpp,
+                    const pseudopot_cell_vnl& nlpp,
+                    ModulePW::PW_Basis* rho_basis,
+                    ModuleSymmetry::Symmetry* p_symm,
+                    Structure_Factor* p_sf,
+                    K_Vectors* p_kv,
+                    ModulePW::PW_Basis_K* wfc_basis,
+                    const psi::Psi<std::complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:
     // call the vdw stress
@@ -44,7 +43,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     ModulePW::PW_Basis* rho_basis,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const K_Vectors* p_kv,
-                    const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in,
+                    const psi::Psi<std::complex<FPTYPE>, Device>* d_psi_in,
                     const UnitCell& ucell); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;

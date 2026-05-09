@@ -8,11 +8,10 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 
-class Relax
-{
+class Relax {
   public:
-    Relax() {};
-    ~Relax() {};
+    Relax(){};
+    ~Relax(){};
 
     // prepare for relaxation
     void init_relax(const int nat_in);

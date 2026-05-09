@@ -32,8 +32,7 @@ using ModuleBase::SphericalBesselTransformer;
  *
  *                                                          */
 
-class SphericalBesselTransformTest : public ::testing::Test
-{
+class SphericalBesselTransformTest : public ::testing::Test {
 
   protected:
     /// Allocates buffers
@@ -45,8 +44,8 @@ class SphericalBesselTransformTest : public ::testing::Test
     /// Gets the maximum absolute element-wise difference between two arrays
     static double max_diff(int sz, const double* arr1, const double* arr2);
 
-    const int sz_max = 10000;   ///< size of each buffer
-    double* buffer = nullptr;   ///< buffer for all arrays below
+    const int sz_max = 10000; ///< size of each buffer
+    double* buffer = nullptr; ///< buffer for all arrays below
 
     double* f = nullptr;        ///< input array
     double* g = nullptr;        ///< output array
@@ -57,8 +56,7 @@ class SphericalBesselTransformTest : public ::testing::Test
     const double tol = 1e-9; ///< tolerance for element-wise numerical error
 };
 
-void SphericalBesselTransformTest::SetUp()
-{
+void SphericalBesselTransformTest::SetUp() {
     buffer = new double[sz_max * 5];
 
     f = buffer;
@@ -68,28 +66,21 @@ void SphericalBesselTransformTest::SetUp()
     grid_out = grid_in + sz_max;
 }
 
-void SphericalBesselTransformTest::TearDown()
-{
-    delete[] buffer;
-}
+void SphericalBesselTransformTest::TearDown() { delete[] buffer; }
 
-double SphericalBesselTransformTest::max_diff(int sz, const double* arr1, const double* arr2)
-{
+double SphericalBesselTransformTest::max_diff(int sz, const double* arr1, const double* arr2) {
     double diff = 0.0;
     double tmp = 0.0;
-    for (int i = 0; i < sz; ++i)
-    {
+    for (int i = 0; i < sz; ++i) {
         tmp = std::abs(arr1[i] - arr2[i]);
-        if (tmp > diff)
-        {
+        if (tmp > diff) {
             diff = tmp;
         }
     }
     return diff;
 }
 
-TEST_F(SphericalBesselTransformTest, RadrfftBasic)
-{
+TEST_F(SphericalBesselTransformTest, RadrfftBasic) {
     /*
      * Computes the zeroth, first and second order spherical Bessel
      * transforms of r*exp(-r) and compares the results with analytic
@@ -109,15 +100,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
 
     SphericalBesselTransformer sbt;
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double r = i * dr;
         f[i] = r * std::exp(-r);
     }
 
     // zeroth-order transform
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double k = dk * i;
         g_ref[i] = pref * (3.0 - k * k) / std::pow(k * k + 1, 3);
     }
@@ -125,8 +114,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 
     // first-order transform
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double k = dk * i;
         g_ref[i] = pref * 4.0 * k / std::pow(k * k + 1, 3);
     }
@@ -134,8 +122,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 
     // second-order transform
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double k = dk * i;
         g_ref[i] = pref * 4.0 * k * k / std::pow(k * k + 1, 3);
     }
@@ -143,8 +130,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
     EXPECT_LT(max_diff(sz, g_ref, g), tol);
 }
 
-TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
-{
+TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent) {
     /*
      * Computes the second order spherical Bessel transform of
      * r^2*exp(-r) with input given as r^(p+2)*exp(-r) instead of
@@ -163,16 +149,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
 
     SphericalBesselTransformer sbt(true);
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double k = dk * i;
         g_ref[i] = pref * k * k / std::pow(k * k + 1, 4);
     }
 
-    for (int p = -2; p <= 2; ++p)
-    {
-        for (int i = 0; i != sz; ++i)
-        {
+    for (int p = -2; p <= 2; ++p) {
+        for (int i = 0; i != sz; ++i) {
             double r = i * dr;
             f[i] = std::pow(r, 2 + p) * std::exp(-r);
         }
@@ -181,8 +164,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
     }
 }
 
-TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
-{
+TEST_F(SphericalBesselTransformTest, RadrfftVariableSize) {
     /*
      * Computes the second order spherical Bessel transform of
      * r^2*exp(-r) with various input sizes. Compares the results
@@ -195,19 +177,16 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
 
     SphericalBesselTransformer sbt;
 
-    for (int sz = 5000; sz <= sz_max; sz += 1000)
-    {
+    for (int sz = 5000; sz <= sz_max; sz += 1000) {
 
-        for (int i = 0; i != sz; ++i)
-        {
+        for (int i = 0; i != sz; ++i) {
             double r = i * dr;
             f[i] = r * r * std::exp(-r);
         }
 
         const double rcut = dr * (sz - 1);
         const double dk = PI / rcut;
-        for (int i = 0; i != sz; ++i)
-        {
+        for (int i = 0; i != sz; ++i) {
             double k = dk * i;
             g_ref[i] = pref * k * k / std::pow(k * k + 1, 4);
         }
@@ -216,8 +195,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
     }
 }
 
-TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
-{
+TEST_F(SphericalBesselTransformTest, RadrfftInPlace) {
     /*
      * Performs an in-place second order spherical Bessel transform
      * on r^2*exp(-r^2). Compares the results with the analytic
@@ -232,15 +210,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
 
     const double sz = 10000;
     const double rcut = dr * (sz - 1);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double r = i * dr;
         f[i] = r * r * std::exp(-r * r);
     }
 
     double dk = PI / rcut;
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double k = dk * i;
         g_ref[i] = pref * k * k * std::exp(-k * k / 4);
     }
@@ -248,8 +224,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
     EXPECT_LT(max_diff(sz, g_ref, f), tol);
 }
 
-TEST_F(SphericalBesselTransformTest, DirectBasic)
-{
+TEST_F(SphericalBesselTransformTest, DirectBasic) {
     /*
      * Computes the zeroth, first and second order spherical Bessel
      * transforms of r*exp(-r) and compares the results with analytic
@@ -305,8 +280,7 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
     EXPECT_LT(max_diff(sz_out, g_ref, g), tol);
 }
 
-TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
-{
+TEST_F(SphericalBesselTransformTest, DirectImplicitExponent) {
     /*
      * Computes the second order spherical Bessel transform of
      * r^2*exp(-r) with input given as r^(p+2)*exp(-r) instead of
@@ -332,8 +306,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
 
     SphericalBesselTransformer sbt(true);
 
-    for (int p = -2; p <= 2; ++p)
-    {
+    for (int p = -2; p <= 2; ++p) {
         std::for_each(f, f + sz_in, [&](double& x) {
             double r = (&x - f) * dr;
             x = std::pow(r, 2 + p) * std::exp(-r);
@@ -344,8 +317,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
     }
 }
 
-TEST_F(SphericalBesselTransformTest, DirectInPlace)
-{
+TEST_F(SphericalBesselTransformTest, DirectInPlace) {
     /*
      * Performs an in-place second order spherical Bessel transform
      * on r^2*exp(-r^2). Compares the results with the analytic
@@ -379,8 +351,7 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
     EXPECT_LT(max_diff(sz_out, g_ref, f), tol);
 }
 
-TEST_F(SphericalBesselTransformTest, HighOrder)
-{
+TEST_F(SphericalBesselTransformTest, HighOrder) {
     /*
      * Computes the l-order spherical Bessel transforms of
      * r^l*exp(-r^2) using radrfft and direct with some high l,
@@ -397,8 +368,7 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
     std::for_each(grid_in, grid_in + sz, [&](double& x) { x = (&x - grid_in) * dr; });
     std::for_each(grid_out, grid_out + sz, [&](double& x) { x = (&x - grid_out) * dk; });
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double r = i * dr;
         f[i] = std::pow(r, l) * std::exp(-r * r);
     }
@@ -414,8 +384,7 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
     EXPECT_LT(max_diff(sz / 2, g_ref, g), tol);
 }
 
-TEST_F(SphericalBesselTransformTest, HeapUsage)
-{
+TEST_F(SphericalBesselTransformTest, HeapUsage) {
     /*
      * Tests the setter and getter of the planner flag for FFTW plan
      * creation.
@@ -432,8 +401,7 @@ TEST_F(SphericalBesselTransformTest, HeapUsage)
     EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
     EXPECT_EQ(sbt_cached.heap_usage(), 0);
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         f[i] = std::exp(-i * dr);
     }
 
@@ -443,14 +411,14 @@ TEST_F(SphericalBesselTransformTest, HeapUsage)
     // zeroth-order transform does not involve tabulating jl
     // but FFT needs to allocate memory
     EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
-    EXPECT_EQ(sbt_cached.heap_usage(), 2*(sz-1)*sizeof(double));
+    EXPECT_EQ(sbt_cached.heap_usage(), 2 * (sz - 1) * sizeof(double));
 
     // higher-order transforms involve tabulating jl
     sbt_no_cache.radrfft(5, sz, rcut, f, g, 0);
     sbt_cached.radrfft(5, sz, rcut, f, g, 0);
 
     EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
-    EXPECT_GT(sbt_cached.heap_usage(), 2*(sz-1)*sizeof(double));
+    EXPECT_GT(sbt_cached.heap_usage(), 2 * (sz - 1) * sizeof(double));
 
     sbt_no_cache.clear();
     sbt_cached.clear();
@@ -459,9 +427,7 @@ TEST_F(SphericalBesselTransformTest, HeapUsage)
     EXPECT_EQ(sbt_cached.heap_usage(), 0);
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     int nprocs, id;

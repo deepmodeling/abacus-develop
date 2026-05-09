@@ -14,35 +14,31 @@
  *  - read_rhog()
  */
 
-class ReadRhogTest : public ::testing::Test
-{
+class ReadRhogTest : public ::testing::Test {
   protected:
     ModulePW::PW_Basis* rhopw = nullptr;
     std::complex<double>** rhog = nullptr;
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         rhopw = new ModulePW::PW_Basis;
         rhog = new std::complex<double>*[1];
         rhog[0] = new std::complex<double>[1471];
     }
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         if (rhopw != nullptr) {
             delete rhopw;
-}
+        }
         if (rhog[0] != nullptr) {
             delete[] rhog[0];
-}
+        }
         if (rhog != nullptr) {
             delete[] rhog;
-}
+        }
     }
 };
 
 // Test the read_rhog function
-TEST_F(ReadRhogTest, ReadRhog)
-{
+TEST_F(ReadRhogTest, ReadRhog) {
     std::string filename = "./support/charge-density.dat";
     PARAM.input.nspin = 1;
 #ifdef __MPI
@@ -65,8 +61,7 @@ TEST_F(ReadRhogTest, ReadRhog)
 }
 
 // Test the read_rhog function when the file is not found
-TEST_F(ReadRhogTest, NotFoundFile)
-{
+TEST_F(ReadRhogTest, NotFoundFile) {
     std::string filename = "notfound.txt";
 
     GlobalV::ofs_warning.open("test_read_rhog.txt");
@@ -87,8 +82,7 @@ TEST_F(ReadRhogTest, NotFoundFile)
 }
 
 // Test the read_rhog function when tgamma_only is inconsistent
-TEST_F(ReadRhogTest, InconsistentGammaOnly)
-{
+TEST_F(ReadRhogTest, InconsistentGammaOnly) {
     std::string filename = "./support/charge-density.dat";
     PARAM.input.nspin = 2;
     rhopw->gamma_only = true;
@@ -103,10 +97,10 @@ TEST_F(ReadRhogTest, InconsistentGammaOnly)
     std::string file_content = ss.str();
     ifs_running.close();
 
-    std::string expected_content
-        = " ModuleIO::read_rhog  warning : some planewaves in file are not used\n ModuleIO::read_rhog  warning : some "
-          "spin channels in file are missing\n ModuleIO::read_rhog  warning : gamma_only read from file is "
-          "inconsistent with INPUT\n";
+    std::string expected_content =
+        " ModuleIO::read_rhog  warning : some planewaves in file are not used\n ModuleIO::read_rhog  warning : some "
+        "spin channels in file are missing\n ModuleIO::read_rhog  warning : gamma_only read from file is "
+        "inconsistent with INPUT\n";
 
     EXPECT_FALSE(result);
     EXPECT_EQ(file_content, expected_content);
@@ -114,8 +108,7 @@ TEST_F(ReadRhogTest, InconsistentGammaOnly)
 }
 
 // Test the read_rhog function when some planewaves in file are missing
-TEST_F(ReadRhogTest, SomePWMissing)
-{
+TEST_F(ReadRhogTest, SomePWMissing) {
     std::string filename = "./support/charge-density.dat";
     PARAM.input.nspin = 1;
     rhopw->npwtot = 2000;
@@ -137,8 +130,7 @@ TEST_F(ReadRhogTest, SomePWMissing)
     std::remove("test_read_rhog.txt");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
     divide_pools(GlobalV::NPROC,

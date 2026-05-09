@@ -4,8 +4,7 @@
 
 #include "mixing_data.h"
 
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 
 /**
  * @brief Mixing class can mixing different steps of data to solver the iteration problem.
@@ -15,8 +14,7 @@ namespace Base_Mixing
  *        x_in, x_out=f(x_in) in each iterative step.
  *
  */
-class Mixing
-{
+class Mixing {
   public:
     Mixing(){};
     virtual ~Mixing(){};
@@ -29,8 +27,7 @@ class Mixing
      * @param type_size size of type
      *
      */
-    virtual void init_mixing_data(Mixing_Data& mdata, const int& length, const size_t& type_size) const
-    {
+    virtual void init_mixing_data(Mixing_Data& mdata, const int& length, const size_t& type_size) const {
         mdata.resize(data_ndim, length, type_size);
     }
 
@@ -50,16 +47,14 @@ class Mixing
                            const double* data_out,
                            std::function<void(double*)> screen,
                            std::function<void(double*, const double*, const double*)> mix,
-                           const bool& need_calcoef)
-        = 0;
-    virtual void push_data(
-        Mixing_Data& mdata,
-        const std::complex<double>* data_in,
-        const std::complex<double>* data_out,
-        std::function<void(std::complex<double>*)> screen,
-        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
-        const bool& need_calcoef)
-        = 0;
+                           const bool& need_calcoef) = 0;
+    virtual void
+    push_data(Mixing_Data& mdata,
+              const std::complex<double>* data_in,
+              const std::complex<double>* data_out,
+              std::function<void(std::complex<double>*)> screen,
+              std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+              const bool& need_calcoef) = 0;
 
     /**
      * @brief
@@ -90,8 +85,7 @@ class Mixing
      */
     virtual void cal_coef(const Mixing_Data& mdata, std::function<double(double*, double*)> inner_product) = 0;
     virtual void cal_coef(const Mixing_Data& mdata,
-                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product)
-        = 0;
+                          std::function<double(std::complex<double>*, std::complex<double>*)> inner_product) = 0;
 
     /**
      * @brief calculate the mixing data

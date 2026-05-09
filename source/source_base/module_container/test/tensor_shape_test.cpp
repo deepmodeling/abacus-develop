@@ -2,7 +2,6 @@
 
 #include <ATen/core/tensor_shape.h>
 
-
 /**
  * @brief Test cases for constructors of container::TensorShape class.
  */

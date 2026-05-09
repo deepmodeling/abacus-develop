@@ -28,23 +28,15 @@
 
 #include "source_cell/parallel_kpoints.h"
 
-class MPIContext
-{
+class MPIContext {
   public:
-    MPIContext()
-    {
+    MPIContext() {
         MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &_size);
     }
 
-    int GetRank() const
-    {
-        return _rank;
-    }
-    int GetSize() const
-    {
-        return _size;
-    }
+    int GetRank() const { return _rank; }
+    int GetSize() const { return _size; }
 
     int KPAR;
     int NPROC_IN_POOL;
@@ -56,12 +48,9 @@ class MPIContext
     int _size;
 };
 
-class ParaPrepare
-{
+class ParaPrepare {
   public:
-    ParaPrepare(int KPAR_in, int nkstot_in) : KPAR_(KPAR_in), nkstot_(nkstot_in)
-    {
-    }
+    ParaPrepare(int KPAR_in, int nkstot_in) : KPAR_(KPAR_in), nkstot_(nkstot_in) {}
     int KPAR_;
     int nkstot_;
     void test_init_pools(const int& NPROC,
@@ -73,26 +62,22 @@ class ParaPrepare
     void test_gatherkvec(const Parallel_Kpoints* Pkpts, const MPIContext& mpi);
 };
 
-void ParaPrepare::test_gatherkvec(const Parallel_Kpoints* Pkpts, const MPIContext& mpi)
-{
+void ParaPrepare::test_gatherkvec(const Parallel_Kpoints* Pkpts, const MPIContext& mpi) {
     std::vector<ModuleBase::Vector3<double>> vec_local(Pkpts->nks_np);
     std::vector<ModuleBase::Vector3<double>> vec_global;
-    for (int i = 0; i < Pkpts->nks_np; ++i)
-    {
+    for (int i = 0; i < Pkpts->nks_np; ++i) {
         int k_now = i + Pkpts->startk_pool[mpi.MY_POOL];
         vec_local[i] = ModuleBase::Vector3<double>(k_now, k_now, k_now);
     }
     Pkpts->gatherkvec(vec_local, vec_global);
-    for (int i = 0; i < Pkpts->nkstot_np; ++i)
-    {
+    for (int i = 0; i < Pkpts->nkstot_np; ++i) {
         EXPECT_DOUBLE_EQ(vec_global[i].x, i);
         EXPECT_DOUBLE_EQ(vec_global[i].y, i);
         EXPECT_DOUBLE_EQ(vec_global[i].z, i);
     }
 }
 
-void ParaPrepare::test_kinfo(const Parallel_Kpoints* Pkpts)
-{
+void ParaPrepare::test_kinfo(const Parallel_Kpoints* Pkpts) {
     std::vector<int> nks_pool_(KPAR_, 0);
     std::vector<int> startk_pool_(KPAR_, 0);
     std::vector<int> whichpool_(nkstot_, 0);
@@ -100,25 +85,21 @@ void ParaPrepare::test_kinfo(const Parallel_Kpoints* Pkpts)
     int quotient = nkstot_ / KPAR_;
     int residue = nkstot_ % KPAR_;
     // the previous "residue" pools have (quotient+1) kpoints
-    for (int i = 0; i < KPAR_; i++)
-    {
+    for (int i = 0; i < KPAR_; i++) {
         nks_pool_[i] = quotient;
-        if (i < residue)
-        {
+        if (i < residue) {
             nks_pool_[i]++;
         }
         // number of kpoints in each pool
         EXPECT_EQ(Pkpts->nks_pool[i], nks_pool_[i]);
         //
-        if (i > 0)
-        {
+        if (i > 0) {
             startk_pool_[i] = startk_pool_[i - 1] + nks_pool_[i - 1];
         }
         // the rank of the 1st process of each pool in MPI_COMM_WORLD
         EXPECT_EQ(Pkpts->startk_pool[i], startk_pool_[i]);
         //
-        for (int ik = 0; ik < nks_pool_[i]; ik++)
-        {
+        for (int ik = 0; ik < nks_pool_[i]; ik++) {
             int k_now = ik + startk_pool_[i];
             // the pool where this kpoint (k_now) resides
             EXPECT_EQ(Pkpts->whichpool[k_now], i);
@@ -130,27 +111,22 @@ void ParaPrepare::test_init_pools(const int& NPROC,
                                   const int& MY_RANK,
                                   const int& MY_POOL,
                                   const int& RANK_IN_POOL,
-                                  const int& NPROC_IN_POOL)
-{
+                                  const int& NPROC_IN_POOL) {
     int* nproc_pool_ = new int[KPAR_];
     int quotient = NPROC / KPAR_;
     int residue = NPROC % KPAR_;
     // the previous "residue" pools have (quotient+1) processes
-    for (int i = 0; i < KPAR_; i++)
-    {
+    for (int i = 0; i < KPAR_; i++) {
         nproc_pool_[i] = quotient;
-        if (i < residue)
-        {
+        if (i < residue) {
             ++nproc_pool_[i];
         }
     }
     int color = -1;
     int np_now = 0;
-    for (int i = 0; i < KPAR_; i++)
-    {
+    for (int i = 0; i < KPAR_; i++) {
         np_now += nproc_pool_[i];
-        if (MY_RANK < np_now)
-        {
+        if (MY_RANK < np_now) {
             color = i;
             // MY_POOL is the pool where this process resides
             EXPECT_EQ(MY_POOL, i);
@@ -171,27 +147,23 @@ void ParaPrepare::test_init_pools(const int& NPROC,
     MPI_Comm_free(&test_comm);
 }
 
-class ParaKpoints : public ::testing::TestWithParam<ParaPrepare>
-{
+class ParaKpoints : public ::testing::TestWithParam<ParaPrepare> {
   protected:
     MPIContext mpi;
     int NPROC;
     int MY_RANK;
-    void SetUp() override
-    {
+    void SetUp() override {
         NPROC = mpi.GetSize();
         MY_RANK = mpi.GetRank();
     }
 };
 
-TEST_P(ParaKpoints, GatherkvecTest)
-{
+TEST_P(ParaKpoints, GatherkvecTest) {
     ParaPrepare pp = GetParam();
     Parallel_Kpoints* Pkpoints;
     Pkpoints = new Parallel_Kpoints;
     mpi.KPAR = pp.KPAR_;
-    if (mpi.KPAR > NPROC)
-    {
+    if (mpi.KPAR > NPROC) {
         std::string output;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(Parallel_Global::divide_mpi_groups(this->NPROC,
@@ -204,9 +176,7 @@ TEST_P(ParaKpoints, GatherkvecTest)
                     "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("must be greater than the number of groups"));
-    }
-    else
-    {
+    } else {
         Parallel_Global::divide_mpi_groups(this->NPROC,
                                            mpi.KPAR,
                                            this->MY_RANK,
@@ -222,14 +192,12 @@ TEST_P(ParaKpoints, GatherkvecTest)
     delete Pkpoints;
 }
 
-TEST_P(ParaKpoints, DividePools)
-{
+TEST_P(ParaKpoints, DividePools) {
     ParaPrepare pp = GetParam();
     Parallel_Kpoints* Pkpoints;
     Pkpoints = new Parallel_Kpoints;
     mpi.KPAR = pp.KPAR_;
-    if (mpi.KPAR > NPROC)
-    {
+    if (mpi.KPAR > NPROC) {
         std::string output;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(Parallel_Global::divide_mpi_groups(this->NPROC,
@@ -242,9 +210,7 @@ TEST_P(ParaKpoints, DividePools)
                     "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("must be greater than the number of groups"));
-    }
-    else
-    {
+    } else {
         Parallel_Global::divide_mpi_groups(this->NPROC,
                                            mpi.KPAR,
                                            this->MY_RANK,
@@ -268,8 +234,7 @@ INSTANTIATE_TEST_SUITE_P(TESTPK,
                              ParaPrepare(5, 97),
                              ParaPrepare(97, 97)));
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();

@@ -17,6 +17,6 @@ sigma_k           0.6
 nc_k              0.00037
 
 
-#Parameters	(General)
+#Parameters    (General)
 suffix            autotest
 pseudo_dir        ../../PP_ORB

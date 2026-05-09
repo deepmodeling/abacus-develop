@@ -172,7 +172,9 @@ def check_file(path: pathlib.Path) -> List[str]:
         for i, line in enumerate(content.splitlines(), start=1):
             stripped = line.strip()
             if line == stripped and stripped.startswith("using namespace "):
-                warnings += [f"{path}:{i} Do not use '{stripped}' at global scope in a header file"]
+                warnings += [
+                    f"{path}:{i} Do not use '{stripped}' at global scope in a header file"
+                ]
 
     # Find likely ABACUS build-controlled preprocessor condition flags and check
     # whether ABACUS' CMake files know about them.  Unlike CP2K, ABACUS has many
@@ -261,7 +263,9 @@ def find_include_guards(content: str) -> Set[str]:
             continue
         guard = m_ifndef.group(1)
         for next_line in lines[idx + 1 : idx + 6]:
-            m_define = re.match(r"\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\b", next_line)
+            m_define = re.match(
+                r"\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)\b", next_line
+            )
             if m_define:
                 if m_define.group(1) == guard:
                     guards.add(guard)

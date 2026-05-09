@@ -3,12 +3,10 @@
 
 #include "source_pw/module_pwdft/hamilt_pw.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class HamiltSdftPW : public HamiltPW<T, Device>
-{
+class HamiltSdftPW : public HamiltPW<T, Device> {
   public:
     using Real = typename GetTypeReal<T>::type;
     /**
@@ -26,7 +24,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
                  K_Vectors* p_kv,
                  pseudopot_cell_vnl* nlpp,
                  const UnitCell* ucell,
-				 const int& npol,
+                 const int& npol,
                  Real* emin_in,
                  Real* emax_in);
     /**

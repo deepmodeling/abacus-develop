@@ -5,17 +5,15 @@
 
 #include <string>
 
-namespace vdw
-{
+namespace vdw {
 
-class VdwParameters
-{
+class VdwParameters {
   public:
     VdwParameters() = default;
     virtual ~VdwParameters() = default;
 
-    inline const std::string &model() const { return model_; }
-    inline const ModuleBase::Vector3<int> &period() const { return period_; };
+    inline const std::string& model() const { return model_; }
+    inline const ModuleBase::Vector3<int>& period() const { return period_; };
 
   protected:
     std::string model_;

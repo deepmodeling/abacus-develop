@@ -10,16 +10,14 @@
 #endif
 
 template <typename TK, typename TR>
-hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::Nonlocal(
-    HS_Matrix_K<TK>* hsk_in,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-    hamilt::HContainer<TR>* hR_in,
-    const UnitCell* ucell_in,
-    const std::vector<double>& orb_cutoff,
-    const Grid_Driver* GridD_in,
-    const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
-{
+hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::Nonlocal(HS_Matrix_K<TK>* hsk_in,
+                                                         const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                                         hamilt::HContainer<TR>* hR_in,
+                                                         const UnitCell* ucell_in,
+                                                         const std::vector<double>& orb_cutoff,
+                                                         const Grid_Driver* GridD_in,
+                                                         const TwoCenterIntegrator* intor)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor) {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
     this->gridD = GridD_in;
@@ -27,44 +25,38 @@ hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::Nonlocal(
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to allocate sparse Nonlocal matrix memory
-    if(hR_in != nullptr) 
-    {
+    if (hR_in != nullptr) {
         this->initialize_HR(GridD_in);
     }
 }
 
 // destructor
 template <typename TK, typename TR>
-hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::~Nonlocal()
-{
-    if (this->allocated)
-    {
+hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::~Nonlocal() {
+    if (this->allocated) {
         delete this->HR_fixed;
     }
 }
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
-{
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD) {
     ModuleBase::TITLE("Nonlocal", "initialize_HR");
     ModuleBase::timer::start("Nonlocal", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
-    for (int iat0 = 0; iat0 < ucell->nat; iat0++)
-    {
+    for (int iat0 = 0; iat0 < ucell->nat; iat0++) {
         auto tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
+        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1) {
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
@@ -74,28 +66,24 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
-            if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
-            {
+            if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0 <
+                orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max()) {
                 is_adj[ad1] = true;
             }
         }
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
+        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1) {
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
-            {
+            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2) {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->get_col_size(iat2) <= 0 || paraV->get_row_size(iat1) <= 0)
-                {
+                if (paraV->get_col_size(iat2) <= 0 || paraV->get_row_size(iat1) <= 0) {
                     continue;
                 }
                 hamilt::AtomPair<TR> tmp(iat1,
@@ -115,8 +103,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
 }
 
 template <typename TK, typename TR>
-void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
-{
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR() {
     ModuleBase::TITLE("Nonlocal", "calculate_HR");
     ModuleBase::timer::start("Nonlocal", "calculate_HR");
 
@@ -128,13 +115,11 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     {
         std::unordered_set<int> atom_row_list;
 #pragma omp for
-        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-        {
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++) {
             atom_row_list.insert(iat0);
         }
 #endif
-        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-        {
+        for (int iat0 = 0; iat0 < this->ucell->nat; iat0++) {
             auto tau0 = ucell->get_tau(iat0);
             int T0, I0;
             ucell->iat2iait(iat0, &I0, &T0);
@@ -143,8 +128,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
             nlm_tot.resize(adjs.adj_num + 1);
 
-            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-            {
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad) {
                 const int T1 = adjs.ntype[ad];
                 const int I1 = adjs.natom[ad];
                 const int iat1 = ucell->itia2iat(T1, I1);
@@ -153,8 +137,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
                 auto all_indexes = paraV->get_indexes_row(iat1);
 #ifdef _OPENMP
-                if (atom_row_list.find(iat1) == atom_row_list.end())
-                {
+                if (atom_row_list.find(iat1) == atom_row_list.end()) {
                     all_indexes.clear();
                 }
 #endif
@@ -163,8 +146,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
                 std::sort(all_indexes.begin(), all_indexes.end());
                 all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-                {
+                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol) {
                     const int iw1 = all_indexes[iw1l] / npol;
                     std::vector<std::vector<double>> nlm;
                     // nlm is a vector of vectors, but size of outer vector is only 1 here
@@ -184,20 +166,17 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 }
             }
             // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
-            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-            {
+            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1) {
                 const int T1 = adjs.ntype[ad1];
                 const int I1 = adjs.natom[ad1];
                 const int iat1 = ucell->itia2iat(T1, I1);
 #ifdef _OPENMP
-                if (atom_row_list.find(iat1) == atom_row_list.end())
-                {
+                if (atom_row_list.find(iat1) == atom_row_list.end()) {
                     continue;
                 }
 #endif
                 ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
-                {
+                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2) {
                     const int T2 = adjs.ntype[ad2];
                     const int I2 = adjs.natom[ad2];
                     const int iat2 = ucell->itia2iat(T2, I2);
@@ -205,11 +184,10 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                       R_index2[1] - R_index1[1],
                                                       R_index2[2] - R_index1[2]);
-                    hamilt::BaseMatrix<TR>* tmp
-                        = this->HR_fixed->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    hamilt::BaseMatrix<TR>* tmp =
+                        this->HR_fixed->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                     // if not found , skip this pair of atoms
-                    if (tmp != nullptr)
-                    {
+                    if (tmp != nullptr) {
                         this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer());
                     }
                 }
@@ -231,8 +209,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const Parallel_Orbitals* paraV,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    TR* data_pointer)
-{
+    TR* data_pointer) {
 
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -246,29 +223,23 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
-    for (int is = 0; is < npol; is++)
-    {
-        for (int is2 = 0; is2 < npol; is2++)
-        {
+    for (int is = 0; is < npol; is++) {
+        for (int is2 = 0; is2 < npol; is2++) {
             step_trace[is * npol + is2] = col_indexes.size() * is + is2;
         }
     }
     // calculate the local matrix
     const TR* tmp_d = nullptr;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
-    {
+    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol) {
         const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
-        {
+        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol) {
             const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
 #endif
-            for (int is = 0; is < npol * npol; ++is)
-            {
+            for (int is = 0; is < npol * npol; ++is) {
                 TR nlm_tmp = TR(0);
-                for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++)
-                {
+                for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[is]; no++) {
                     const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
                     const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
                     this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
@@ -284,29 +255,24 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
 
 // set_HR_fixed()
 template <typename TK, typename TR>
-void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in)
-{
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in) {
     this->HR_fixed = static_cast<hamilt::HContainer<TR>*>(HR_fixed_in);
     this->allocated = false;
 }
 
 // contributeHR()
 template <typename TK, typename TR>
-void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
-{
+void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR() {
     ModuleBase::TITLE("Nonlocal", "contributeHR");
     ModuleBase::timer::start("Nonlocal", "contributeHR");
-    if (!this->HR_fixed_done)
-    {
+    if (!this->HR_fixed_done) {
         // if this Operator is the first node of the sub_chain, then HR_fixed is nullptr
-        if (this->HR_fixed == nullptr)
-        {
+        if (this->HR_fixed == nullptr) {
             this->HR_fixed = new hamilt::HContainer<TR>(*this->hR);
             this->HR_fixed->set_zero();
             this->allocated = true;
         }
-        if (this->next_sub_op != nullptr)
-        {
+        if (this->next_sub_op != nullptr) {
             // pass pointer of HR_fixed to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
         }
@@ -315,8 +281,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->HR_fixed_done = true;
     }
     // last node of sub-chain, add HR_fixed into HR
-    if (this->next_sub_op == nullptr)
-    {
+    if (this->next_sub_op == nullptr) {
         this->hR->add(*(this->HR_fixed));
     }
     ModuleBase::timer::end("Nonlocal", "contributeHR");

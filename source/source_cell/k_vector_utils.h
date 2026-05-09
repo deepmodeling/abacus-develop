@@ -10,8 +10,7 @@
 
 class K_Vectors;
 
-namespace KVectorUtils
-{
+namespace KVectorUtils {
 void kvec_d2c(K_Vectors& kv, const ModuleBase::Matrix3& reciprocal_vec);
 
 void kvec_c2d(K_Vectors& kv, const ModuleBase::Matrix3& latvec);

@@ -47,9 +47,9 @@ class TestCalculationResult:
         )
 
         energies = result.energies
-        assert 'etot' in energies
-        assert energies['etot'] == -10.0  # All in eV now
-        assert energies['eband'] == -5.0
+        assert "etot" in energies
+        assert energies["etot"] == -10.0  # All in eV now
+        assert energies["eband"] == -5.0
 
     def test_forces_conversion(self):
         """Test force unit conversion."""
@@ -146,7 +146,9 @@ class TestAbacusFunction:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             mock_driver_module = MagicMock()
-            with patch.dict('sys.modules', {'pyabacus.driver._driver_pack': mock_driver_module}):
+            with patch.dict(
+                "sys.modules", {"pyabacus.driver._driver_pack": mock_driver_module}
+            ):
                 with pytest.raises(FileNotFoundError, match="INPUT file not found"):
                     abacus(tmpdir)
 
@@ -187,7 +189,9 @@ class TestAbacusFunction:
             input_file = Path(tmpdir) / "INPUT"
             input_file.write_text("INPUT_PARAMETERS\ncalculation scf\n")
 
-            with patch.dict('sys.modules', {'pyabacus.driver._driver_pack': mock_module}):
+            with patch.dict(
+                "sys.modules", {"pyabacus.driver._driver_pack": mock_module}
+            ):
                 # Change to temp directory and run
                 old_cwd = os.getcwd()
                 try:
@@ -205,7 +209,7 @@ class TestRunScf:
         """Test that run_scf calls abacus with correct arguments."""
         from pyabacus.driver.runner import run_scf, abacus
 
-        with patch('pyabacus.driver.runner.abacus') as mock_abacus:
+        with patch("pyabacus.driver.runner.abacus") as mock_abacus:
             mock_result = MagicMock()
             mock_abacus.return_value = mock_result
 
@@ -221,7 +225,7 @@ class TestRunRelax:
         """Test that run_relax enables force calculation by default."""
         from pyabacus.driver.runner import run_relax
 
-        with patch('pyabacus.driver.runner.abacus') as mock_abacus:
+        with patch("pyabacus.driver.runner.abacus") as mock_abacus:
             mock_result = MagicMock()
             mock_abacus.return_value = mock_result
 
@@ -229,7 +233,7 @@ class TestRunRelax:
 
             # Check that calculate_force=True was passed
             call_kwargs = mock_abacus.call_args[1]
-            assert call_kwargs.get('calculate_force', False) is True
+            assert call_kwargs.get("calculate_force", False) is True
 
 
 class TestDriverModule:
@@ -239,16 +243,16 @@ class TestDriverModule:
         """Test that module exports expected symbols."""
         from pyabacus import driver
 
-        assert hasattr(driver, 'abacus')
-        assert hasattr(driver, 'CalculationResult')
+        assert hasattr(driver, "abacus")
+        assert hasattr(driver, "CalculationResult")
 
     def test_pyabacus_exports_abacus(self):
         """Test that pyabacus exports abacus function."""
         import pyabacus
 
         # The abacus function should be accessible
-        assert 'abacus' in pyabacus.__all__
-        assert 'CalculationResult' in pyabacus.__all__
+        assert "abacus" in pyabacus.__all__
+        assert "CalculationResult" in pyabacus.__all__
 
 
 class TestIntegration:
@@ -322,7 +326,10 @@ class TestCalculationResultOutputTracking:
 
         assert len(result.output_files) == 2
         assert "running_scf.log" in result.output_files
-        assert result.output_files["running_scf.log"] == "/path/to/OUT.ABACUS/running_scf.log"
+        assert (
+            result.output_files["running_scf.log"]
+            == "/path/to/OUT.ABACUS/running_scf.log"
+        )
 
     def test_get_output_file(self):
         """Test get_output_file method."""
@@ -333,7 +340,10 @@ class TestCalculationResultOutputTracking:
         }
         result = CalculationResult(output_files=output_files)
 
-        assert result.get_output_file("running_scf.log") == "/path/to/OUT.ABACUS/running_scf.log"
+        assert (
+            result.get_output_file("running_scf.log")
+            == "/path/to/OUT.ABACUS/running_scf.log"
+        )
         assert result.get_output_file("nonexistent.dat") is None
 
     def test_list_output_files(self):
@@ -360,7 +370,7 @@ class TestCalculationResultOutputTracking:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a mock log file
             log_file = os.path.join(tmpdir, "running_scf.log")
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write("test log")
 
             output_files = {
@@ -453,7 +463,7 @@ class TestParseForces:
         Si2        -0.00100000    -0.00200000    -0.00300000
  ------------------------------------------------------------------------------------
 """
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write(log_content)
 
             forces = _parse_forces_from_log(log_file, 2)
@@ -470,7 +480,7 @@ class TestParseForces:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             log_file = os.path.join(tmpdir, "running_scf.log")
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write("No forces here\n")
 
             forces = _parse_forces_from_log(log_file, 2)
@@ -501,7 +511,7 @@ class TestParseStress:
       0.00000000      0.00000000      1.23456789
  ------------------------------------------------------------------------------------
 """
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write(log_content)
 
             stress = _parse_stress_from_log(log_file)
@@ -516,7 +526,7 @@ class TestParseStress:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             log_file = os.path.join(tmpdir, "running_scf.log")
-            with open(log_file, 'w') as f:
+            with open(log_file, "w") as f:
                 f.write("No stress here\n")
 
             stress = _parse_stress_from_log(log_file)
@@ -534,10 +544,10 @@ class TestParallelParameters:
         sig = inspect.signature(abacus)
         params = sig.parameters
 
-        assert 'nprocs' in params
-        assert 'nthreads' in params
-        assert params['nprocs'].default == 1
-        assert params['nthreads'].default == 1
+        assert "nprocs" in params
+        assert "nthreads" in params
+        assert params["nprocs"].default == 1
+        assert params["nthreads"].default == 1
 
 
 # Fixtures for test data

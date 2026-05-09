@@ -6,13 +6,11 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 // break the circular dependency of HamiltLCAO
-namespace hamilt
-{
+namespace hamilt {
 template <typename TK, typename TR>
 class HamiltLCAO;
 }
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 //------------------------
 // deepks_vdelta.cpp
 //------------------------

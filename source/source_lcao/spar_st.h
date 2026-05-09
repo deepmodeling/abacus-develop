@@ -4,8 +4,7 @@
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/hamilt_lcao.h"
 
-namespace sparse_format
-{
+namespace sparse_format {
 //! calculate overlap matrix with lattice vector R
 template <typename TK>
 void cal_SR(const Parallel_Orbitals& pv,

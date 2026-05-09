@@ -1,6 +1,6 @@
 #!/bin/bash
 # ABACUS Toolchain - Centralized Package Version Management
-# 
+#
 # This file contains all package versions, checksums, and URLs in one place.
 #
 # Usage: source this file in install scripts to get package version information
@@ -121,148 +121,148 @@ nep_sha256="4d4d3c64211a2a39e5d5c795b77befbba987cc809786e0cd6abfa46d0f3bf8cb"
 # =============================================================================
 
 load_package_vars() {
-    local package_name="$1"
-    local version_suffix="$2"  # Optional version suffix for multi-version packages
-    
-    case "${package_name}" in
-        "gcc")
-            if [ "${version_suffix}" = "alt" ]; then
-                gcc_ver="${gcc_alt_ver}"
-                gcc_sha256="${gcc_alt_sha256}"
-            else
-                gcc_ver="${gcc_main_ver}"
-                gcc_sha256="${gcc_main_sha256}"
-            fi
-            ;;
-        "cmake")
-            # Determine architecture for SHA256 selection
-            local arch_suffix=""
-            if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
-                if [ "$(uname -s)" = "Darwin" ]; then
-                    arch_suffix="_macos"
-                else
-                    arch_suffix="_aarch64"
-                fi
-            else
-                arch_suffix="_x86_64"
-            fi
-            
-            if [ "${version_suffix}" = "alt" ]; then
-                cmake_ver="${cmake_alt_ver}"
-                eval "cmake_sha256=\${cmake_alt_sha256${arch_suffix}}"
-            else
-                cmake_ver="${cmake_main_ver}"
-                eval "cmake_sha256=\${cmake_main_sha256${arch_suffix}}"
-            fi
-            ;;
-        "openmpi")
-            if [ "${OPENMPI_4TH}" = "yes" ]; then
-                echo "WARNING: OPENMPI_4TH=yes is deprecated. Please use 'alt' parameter instead." >&2
-                openmpi_ver="${openmpi_alt_ver}"
-                openmpi_sha256="${openmpi_alt_sha256}"
-            elif [ "${version_suffix}" = "alt" ]; then
-                openmpi_ver="${openmpi_alt_ver}"
-                openmpi_sha256="${openmpi_alt_sha256}"
-            else
-                openmpi_ver="${openmpi_main_ver}"
-                openmpi_sha256="${openmpi_main_sha256}"
-            fi
-            ;;
-        "mpich")
-            if [ "${version_suffix}" = "alt" ]; then
-                mpich_ver="${mpich_alt_ver}"
-                mpich_sha256="${mpich_alt_sha256}"
-            else
-                mpich_ver="${mpich_main_ver}"
-                mpich_sha256="${mpich_main_sha256}"
-            fi
-            ;;
-        "openblas")
-            if [ "${version_suffix}" = "alt" ]; then
-                openblas_ver="${openblas_alt_ver}"
-                openblas_sha256="${openblas_alt_sha256}"
-            else
-                openblas_ver="${openblas_main_ver}"
-                openblas_sha256="${openblas_main_sha256}"
-            fi
-            ;;
-        "elpa")
-            if [ "${version_suffix}" = "alt" ]; then
-                elpa_ver="${elpa_alt_ver}"
-                elpa_sha256="${elpa_alt_sha256}"
-            else
-                elpa_ver="${elpa_main_ver}"
-                elpa_sha256="${elpa_main_sha256}"
-            fi
-            ;;
-        "fftw")
-            if [ "${version_suffix}" = "alt" ]; then
-                fftw_ver="${fftw_alt_ver}"
-                fftw_sha256="${fftw_alt_sha256}"
-            else
-                fftw_ver="${fftw_main_ver}"
-                fftw_sha256="${fftw_main_sha256}"
-            fi
-            ;;
-        "libxc")
-            if [ "${version_suffix}" = "alt" ]; then
-                libxc_ver="${libxc_alt_ver}"
-                libxc_sha256="${libxc_alt_sha256}"
-            else
-                libxc_ver="${libxc_main_ver}"
-                libxc_sha256="${libxc_main_sha256}"
-            fi
-            ;;
-        "scalapack")
-            if [ "${version_suffix}" = "alt" ]; then
-                scalapack_ver="${scalapack_alt_ver}"
-                scalapack_sha256="${scalapack_alt_sha256}"
-            else
-                scalapack_ver="${scalapack_main_ver}"
-                scalapack_sha256="${scalapack_main_sha256}"
-            fi
-            ;;
-        "libtorch")
-            if [ "${version_suffix}" = "alt" ]; then
-                libtorch_ver="${libtorch_alt_ver}"
-                libtorch_sha256="${libtorch_alt_sha256}"
-            else
-                libtorch_ver="${libtorch_main_ver}"
-                libtorch_sha256="${libtorch_main_sha256}"
-            fi
-            ;;
-        "libnpy")
-            if [ "${version_suffix}" = "alt" ]; then
-                libnpy_ver="${libnpy_alt_ver}"
-                libnpy_sha256="${libnpy_alt_sha256}"
-            else
-                libnpy_ver="${libnpy_main_ver}"
-                libnpy_sha256="${libnpy_main_sha256}"
-            fi
-            ;;
-        "cereal")
-            cereal_ver="${cereal_ver}"
-            cereal_sha256="${cereal_sha256}"
-            ;;
-        "libcomm")
-            libcomm_ver="${libcomm_ver}"
-            libcomm_sha256="${libcomm_sha256}"
-            ;;
-        "libri")
-            libri_ver="${libri_ver}"
-            libri_sha256="${libri_sha256}"
-            ;;
-        "rapidjson")
-            rapidjson_ver="${rapidjson_ver}"
-            rapidjson_sha256="${rapidjson_sha256}"
-            ;;
-        "nep")
-            nep_ver="${nep_ver}"
-            nep_sha256="${nep_sha256}"
-            ;;
-        *)
-            echo "Error: Unknown package '${package_name}'"
-            return 1
-            ;;
-    esac
+  local package_name="$1"
+  local version_suffix="$2" # Optional version suffix for multi-version packages
+
+  case "${package_name}" in
+    "gcc")
+      if [ "${version_suffix}" = "alt" ]; then
+        gcc_ver="${gcc_alt_ver}"
+        gcc_sha256="${gcc_alt_sha256}"
+      else
+        gcc_ver="${gcc_main_ver}"
+        gcc_sha256="${gcc_main_sha256}"
+      fi
+      ;;
+    "cmake")
+      # Determine architecture for SHA256 selection
+      local arch_suffix=""
+      if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
+        if [ "$(uname -s)" = "Darwin" ]; then
+          arch_suffix="_macos"
+        else
+          arch_suffix="_aarch64"
+        fi
+      else
+        arch_suffix="_x86_64"
+      fi
+
+      if [ "${version_suffix}" = "alt" ]; then
+        cmake_ver="${cmake_alt_ver}"
+        eval "cmake_sha256=\${cmake_alt_sha256${arch_suffix}}"
+      else
+        cmake_ver="${cmake_main_ver}"
+        eval "cmake_sha256=\${cmake_main_sha256${arch_suffix}}"
+      fi
+      ;;
+    "openmpi")
+      if [ "${OPENMPI_4TH}" = "yes" ]; then
+        echo "WARNING: OPENMPI_4TH=yes is deprecated. Please use 'alt' parameter instead." >&2
+        openmpi_ver="${openmpi_alt_ver}"
+        openmpi_sha256="${openmpi_alt_sha256}"
+      elif [ "${version_suffix}" = "alt" ]; then
+        openmpi_ver="${openmpi_alt_ver}"
+        openmpi_sha256="${openmpi_alt_sha256}"
+      else
+        openmpi_ver="${openmpi_main_ver}"
+        openmpi_sha256="${openmpi_main_sha256}"
+      fi
+      ;;
+    "mpich")
+      if [ "${version_suffix}" = "alt" ]; then
+        mpich_ver="${mpich_alt_ver}"
+        mpich_sha256="${mpich_alt_sha256}"
+      else
+        mpich_ver="${mpich_main_ver}"
+        mpich_sha256="${mpich_main_sha256}"
+      fi
+      ;;
+    "openblas")
+      if [ "${version_suffix}" = "alt" ]; then
+        openblas_ver="${openblas_alt_ver}"
+        openblas_sha256="${openblas_alt_sha256}"
+      else
+        openblas_ver="${openblas_main_ver}"
+        openblas_sha256="${openblas_main_sha256}"
+      fi
+      ;;
+    "elpa")
+      if [ "${version_suffix}" = "alt" ]; then
+        elpa_ver="${elpa_alt_ver}"
+        elpa_sha256="${elpa_alt_sha256}"
+      else
+        elpa_ver="${elpa_main_ver}"
+        elpa_sha256="${elpa_main_sha256}"
+      fi
+      ;;
+    "fftw")
+      if [ "${version_suffix}" = "alt" ]; then
+        fftw_ver="${fftw_alt_ver}"
+        fftw_sha256="${fftw_alt_sha256}"
+      else
+        fftw_ver="${fftw_main_ver}"
+        fftw_sha256="${fftw_main_sha256}"
+      fi
+      ;;
+    "libxc")
+      if [ "${version_suffix}" = "alt" ]; then
+        libxc_ver="${libxc_alt_ver}"
+        libxc_sha256="${libxc_alt_sha256}"
+      else
+        libxc_ver="${libxc_main_ver}"
+        libxc_sha256="${libxc_main_sha256}"
+      fi
+      ;;
+    "scalapack")
+      if [ "${version_suffix}" = "alt" ]; then
+        scalapack_ver="${scalapack_alt_ver}"
+        scalapack_sha256="${scalapack_alt_sha256}"
+      else
+        scalapack_ver="${scalapack_main_ver}"
+        scalapack_sha256="${scalapack_main_sha256}"
+      fi
+      ;;
+    "libtorch")
+      if [ "${version_suffix}" = "alt" ]; then
+        libtorch_ver="${libtorch_alt_ver}"
+        libtorch_sha256="${libtorch_alt_sha256}"
+      else
+        libtorch_ver="${libtorch_main_ver}"
+        libtorch_sha256="${libtorch_main_sha256}"
+      fi
+      ;;
+    "libnpy")
+      if [ "${version_suffix}" = "alt" ]; then
+        libnpy_ver="${libnpy_alt_ver}"
+        libnpy_sha256="${libnpy_alt_sha256}"
+      else
+        libnpy_ver="${libnpy_main_ver}"
+        libnpy_sha256="${libnpy_main_sha256}"
+      fi
+      ;;
+    "cereal")
+      cereal_ver="${cereal_ver}"
+      cereal_sha256="${cereal_sha256}"
+      ;;
+    "libcomm")
+      libcomm_ver="${libcomm_ver}"
+      libcomm_sha256="${libcomm_sha256}"
+      ;;
+    "libri")
+      libri_ver="${libri_ver}"
+      libri_sha256="${libri_sha256}"
+      ;;
+    "rapidjson")
+      rapidjson_ver="${rapidjson_ver}"
+      rapidjson_sha256="${rapidjson_sha256}"
+      ;;
+    "nep")
+      nep_ver="${nep_ver}"
+      nep_sha256="${nep_sha256}"
+      ;;
+    *)
+      echo "Error: Unknown package '${package_name}'"
+      return 1
+      ;;
+  esac
 }

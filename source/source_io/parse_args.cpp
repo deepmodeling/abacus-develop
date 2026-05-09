@@ -14,8 +14,7 @@
 #include "commit.h"
 #endif
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /**
  * @brief Format description for brief display in search results.
@@ -74,8 +73,7 @@ static std::string format_brief_description(const std::string& desc, size_t max_
     return result;
 }
 
-void print_build_info()
-{
+void print_build_info() {
     const int label_width = 30;
 
     auto print_section = [](const std::string& title) {
@@ -91,9 +89,9 @@ void print_build_info()
     print_section("ABACUS Core & Platform");
     print_info("ABACUS Version", VERSION);
 #if defined(COMMIT)
-        print_info("Git Commit", COMMIT);
+    print_info("Git Commit", COMMIT);
 #else
-        print_info("Git Commit", "N/A");
+    print_info("Git Commit", "N/A");
 #endif
     print_info("Target Platform", ABACUS_PLATFORM_NAME);
     print_info("Build Type", ABACUS_BUILD_TYPE);
@@ -133,9 +131,9 @@ void print_build_info()
     // --- 7. Core Math Libraries ---
     print_section("Core Math Libraries");
 #if defined(__LCAO)
-        print_info("LCAO Algorithm", "yes");
+    print_info("LCAO Algorithm", "yes");
 #else
-        print_info("LCAO Algorithm", "no");
+    print_info("LCAO Algorithm", "no");
 #endif
     print_info("ELPA Support", ABACUS_ELPA_VERSION);
     print_info("MKL Support", ABACUS_MKL_SUPPORT);
@@ -174,13 +172,11 @@ void print_build_info()
     std::cout << std::endl;
 }
 
-void parse_args(int argc, char** argv)
-{
+void parse_args(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) // Start from 1 to skip the program name
     {
         std::string arg = argv[i];
-        if (arg == "--version" || arg == "-v" || arg == "-V")
-        {
+        if (arg == "--version" || arg == "-v" || arg == "-V") {
 #if defined(VERSION)
             const char* version = VERSION;
 #else
@@ -188,14 +184,10 @@ void parse_args(int argc, char** argv)
 #endif
             std::cout << "ABACUS version " << version << std::endl;
             std::exit(0);
-        }
-        else if (arg == "--info" || arg == "-i" || arg == "-I")
-        {
+        } else if (arg == "--info" || arg == "-i" || arg == "-I") {
             print_build_info();
             std::exit(0);
-        }
-        else if (arg == "-h" || arg == "--help")
-        {
+        } else if (arg == "-h" || arg == "--help") {
             // Handle -h or -h <key>
             if (i + 1 < argc) {
                 // Next argument exists - check if it's a parameter key
@@ -211,7 +203,7 @@ void parse_args(int argc, char** argv)
                         auto suggestions = ParameterHelp::find_similar_parameters(next_arg, 5, 3);
                         if (!suggestions.empty()) {
                             std::cerr << "\nDid you mean one of these?" << std::endl;
-                            for (const auto& suggestion : suggestions) {
+                            for (const auto& suggestion: suggestions) {
                                 std::cerr << "  - " << suggestion << std::endl;
                             }
                         }
@@ -225,9 +217,7 @@ void parse_args(int argc, char** argv)
             // No argument or next is a flag - show general help
             ParameterHelp::show_general_help();
             std::exit(0);
-        }
-        else if (arg == "-s" || arg == "--search")
-        {
+        } else if (arg == "-s" || arg == "--search") {
             // Require search query
             if (i + 1 >= argc || argv[i + 1][0] == '-') {
                 std::cerr << "Error: -s requires a search query" << std::endl;
@@ -247,7 +237,7 @@ void parse_args(int argc, char** argv)
 
             // Display results
             std::cout << "\nFound " << results.size() << " parameter(s) matching '" << query << "':\n\n";
-            for (const auto& param : results) {
+            for (const auto& param: results) {
                 auto metadata = ParameterHelp::get_metadata(param);
                 std::cout << "  " << std::left << std::setw(30) << param;
                 if (!metadata.name.empty() && !metadata.description.empty()) {
@@ -259,18 +249,12 @@ void parse_args(int argc, char** argv)
             }
             std::cout << "\nUse 'abacus -h <parameter>' for detailed help." << std::endl;
             std::exit(0);
-        }
-        else if (arg == "--generate-parameters-yaml")
-        {
+        } else if (arg == "--generate-parameters-yaml") {
             ParameterHelp::generate_yaml(std::cout);
             std::exit(0);
-        }
-        else if (arg == "--check-input")
-        {
+        } else if (arg == "--check-input") {
             ModuleIO::ReadInput::check_mode = true;
-        }
-        else
-        {
+        } else {
             // Error message goes to stderr
             std::cerr << "Error: Unknown argument: " << arg << std::endl;
             std::cerr << std::endl;

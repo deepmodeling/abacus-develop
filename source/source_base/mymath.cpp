@@ -2,18 +2,15 @@
 
 #include "timer.h"
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-void heapAjust(double *r, int *ind, int s, int m)
-{
+void heapAjust(double* r, int* ind, int s, int m) {
     int j = 0, ic = 0;
     double rc = 0.0;
     rc = r[s];
     ic = ind[s];
 
-    for (j = 2 * s; j <= m; j *= 2)
-    {
+    for (j = 2 * s; j <= m; j *= 2) {
         if (j < m && (r[j] < r[j + 1]))
             j++;
 
@@ -33,27 +30,22 @@ void heapAjust(double *r, int *ind, int s, int m)
     return;
 }
 
-void heapsort(const int n, double *r, int *ind)
-{
+void heapsort(const int n, double* r, int* ind) {
     ModuleBase::timer::start("mymath", "heapsort");
     int i = 0, ic = 0;
     double rc = 0.0;
 
-    if (ind[0] == 0)
-    {
-        for (i = 0; i < n; i++)
-        {
+    if (ind[0] == 0) {
+        for (i = 0; i < n; i++) {
             ind[i] = i;
         }
     }
 
-    for (i = n / 2; i >= 0; i--)
-    {
+    for (i = n / 2; i >= 0; i--) {
         heapAjust(r, ind, i, n - 1);
     }
 
-    for (i = n - 1; i > 0; i--)
-    {
+    for (i = n - 1; i > 0; i--) {
         rc = r[0];
         r[0] = r[i];
         r[i] = rc;
@@ -87,13 +79,11 @@ c adapted from Numerical Recipes pg. 329 (new edition)
 *********************************************************************/
 
 // from hpsort.f90
-void hpsort(int n, double *ra, int *ind)
-{
+void hpsort(int n, double* ra, int* ind) {
     int i = 0, ir = 0, j = 0, k = 0, iind = 0;
     double rra = 0.0;
 
-    if (ind[0] == 0)
-    {
+    if (ind[0] == 0) {
         for (i = 1; i <= n; i++)
             ind[i - 1] = i;
     }
@@ -105,25 +95,23 @@ void hpsort(int n, double *ra, int *ind)
 
     ir = n - 1;
 
-    while (true)
-    {
+    while (true) {
         if (k > 0) // still in hiring phase
         {
             k = k - 1;
             rra = ra[k];
             iind = ind[k];
-        }
-        else // in retirement-promotion phase.
+        } else // in retirement-promotion phase.
         {
-            rra = ra[ir]; // clear a space at the end of the array
-            iind = ind[ir]; //
-            ra[ir] = ra[0]; // retire the top of the heap into it
+            rra = ra[ir];     // clear a space at the end of the array
+            iind = ind[ir];   //
+            ra[ir] = ra[0];   // retire the top of the heap into it
             ind[ir] = ind[0]; //
-            ir = ir - 1; // decrease the size of the corporation
+            ir = ir - 1;      // decrease the size of the corporation
 
             if (ir == 0) // done with the last promotion
             {
-                ra[0] = rra; // the least competent worker at all //
+                ra[0] = rra;   // the least competent worker at all //
                 ind[0] = iind; //
                 return;
             }
@@ -133,16 +121,12 @@ void hpsort(int n, double *ra, int *ind)
 
         j = k + k + 1; // set up to place rra in its proper level
 
-        while (j <= ir)
-        {
-            if (j < ir)
-            {
+        while (j <= ir) {
+            if (j < ir) {
                 if (ra[j] < ra[j + 1]) // compare to better underling
                 {
                     j = j + 1;
-                }
-                else if (ra[j] == ra[j + 1])
-                {
+                } else if (ra[j] == ra[j + 1]) {
                     if (ind[j] < ind[j + 1])
                         j = j + 1;
                 }
@@ -154,21 +138,17 @@ void hpsort(int n, double *ra, int *ind)
                 ind[i] = ind[j];
                 i = j;
                 j = j + j + 1;
-            }
-            else if (rra == ra[j])
-            {
+            } else if (rra == ra[j]) {
                 if (iind < ind[j]) // demote rra
                 {
                     ra[i] = ra[j];
                     ind[i] = ind[j];
                     i = j;
                     j = j + j + 1;
-                }
-                else
+                } else
                     j = ir + 1; // set j to terminate do-while loop
-            }
-            else // this is the right place for rra
-                j = ir + 1; // set j to terminate do-while loop
+            } else              // this is the right place for rra
+                j = ir + 1;     // set j to terminate do-while loop
         }
 
         ra[i] = rra;

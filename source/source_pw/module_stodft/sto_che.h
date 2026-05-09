@@ -5,8 +5,7 @@
 #include "source_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device = base_device::DEVICE_CPU>
-class StoChe
-{
+class StoChe {
   public:
     StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto);
     ~StoChe();
@@ -45,8 +44,7 @@ class StoChe
  * @return REAL
  */
 template <typename REAL, typename Device>
-REAL vTMv(const REAL* v, const REAL* M, const int n)
-{
+REAL vTMv(const REAL* v, const REAL* M, const int n) {
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
@@ -61,9 +59,7 @@ REAL vTMv(const REAL* v, const REAL* M, const int n)
     REAL* dot_device = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(dot_device, 1);
     container::kernels::blas_dot<REAL, ct_Device>()(n, y, 1, v, 1, dot_device);
-    base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>()(&result,
-                                                                                        dot_device,
-                                                                                        1);
+    base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>()(&result, dot_device, 1);
     base_device::memory::delete_memory_op<REAL, Device>()(y);
     base_device::memory::delete_memory_op<REAL, Device>()(dot_device);
     return result;

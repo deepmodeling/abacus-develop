@@ -1,9 +1,7 @@
 #ifndef PWBASIS_SUP_H
 #define PWBASIS_SUP_H
 
-
-namespace ModulePW
-{
+namespace ModulePW {
 
 /**
  * @brief Special pw_basis class for sup girds, which is constrcuted in order to be consistent with the smooth grids
@@ -18,15 +16,11 @@ namespace ModulePW
  * USAGE:
  * Similar to PW_Basis, but we need to set up the smooth grids first.
  */
-class PW_Basis_Sup : public PW_Basis
-{
+class PW_Basis_Sup : public PW_Basis {
 
   public:
-    PW_Basis_Sup()
-    {
-    }
-    PW_Basis_Sup(std::string device_, std::string precision_) : PW_Basis(device_, precision_)
-    {
+    PW_Basis_Sup() {}
+    PW_Basis_Sup(std::string device_, std::string precision_) : PW_Basis(device_, precision_) {
         classname = "PW_Basis_Sup";
     }
     ~PW_Basis_Sup();

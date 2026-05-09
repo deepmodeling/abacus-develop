@@ -1,6 +1,5 @@
 #include "read_input.h"
 
-
 #include <algorithm>
 #include <cstring>
 #include <fstream>
@@ -22,16 +21,11 @@
 #include <unistd.h>
 #include <cerrno>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
-std::string longstring(const std::vector<std::string>& words)
-{
-    return FmtCore::join(" ", words);
-}
+std::string longstring(const std::vector<std::string>& words) { return FmtCore::join(" ", words); }
 
-bool assume_as_boolean(const std::string& val)
-{
+bool assume_as_boolean(const std::string& val) {
     const std::string val_ = FmtCore::lower(val);
 
     const std::array<std::string, 7> t_ = {"true", "1", "t", "yes", "y", "on", ".true."};
@@ -43,16 +37,11 @@ bool assume_as_boolean(const std::string& val)
     assert(t_.size() == f_.size());
 #endif
 
-    if (std::find(t_.begin(), t_.end(), val_) != t_.end())
-    {
+    if (std::find(t_.begin(), t_.end(), val_) != t_.end()) {
         return true;
-    }
-    else if (std::find(f_.begin(), f_.end(), val_) != f_.end())
-    {
+    } else if (std::find(f_.begin(), f_.end(), val_) != f_.end()) {
         return false;
-    }
-    else
-    {
+    } else {
         std::string warnmsg = "Bad boolean parameter ";
         warnmsg.append(val);
         warnmsg.append(", please check the input parameters in file INPUT");
@@ -60,32 +49,25 @@ bool assume_as_boolean(const std::string& val)
     }
 }
 
-std::string to_dir(const std::string& str)
-{
+std::string to_dir(const std::string& str) {
     std::string str_dir = str;
-    if (str_dir.empty())
-    {
+    if (str_dir.empty()) {
         return "./";
-    }
-    else if (str_dir.back() != '/')
-    {
+    } else if (str_dir.back() != '/') {
         str_dir += "/";
     }
-    
+
     return str_dir;
 }
 
-void read_information(std::stringstream& ifs, std::vector<std::string>& output, const std::string& delimiters)
-{
+void read_information(std::stringstream& ifs, std::vector<std::string>& output, const std::string& delimiters) {
     std::string line;
     getline(ifs, line);
 
     std::istringstream iss(line);
     std::string word;
-    while (iss >> word)
-    {
-        if (delimiters.find(word[0]) != std::string::npos)
-        {
+    while (iss >> word) {
+        if (delimiters.find(word[0]) != std::string::npos) {
             break;
         }
         output.push_back(word);
@@ -94,43 +76,35 @@ void read_information(std::stringstream& ifs, std::vector<std::string>& output, 
 
 bool ReadInput::check_mode = false;
 
-bool filter_nonascii_and_comment(std::ifstream& ifs,
-                       std::stringstream& out_ascii_stream)
-{
-	if (!ifs.is_open()) 
-	{
-		if (!ifs) return false;
+bool filter_nonascii_and_comment(std::ifstream& ifs, std::stringstream& out_ascii_stream) {
+    if (!ifs.is_open()) {
+        if (!ifs)
+            return false;
     }
 
     std::streampos old_pos = ifs.tellg();
     ifs.clear();
     ifs.seekg(0, std::ios::beg);
 
-	char c = '\0';
-	while (ifs.get(c)) 
-	{
-		// If comment start, skip until end of line (but keep the newline)
-		if (c == '#') 
-		{
-			char d = '\0';
-			bool newline_found = false;
-			while (ifs.get(d)) 
-			{
-				if (d == '\n' || d == '\r') 
-				{
-					// preserve line break in output
-					out_ascii_stream.put('\n');
-					// If CRLF, consume the LF after CR (already wrote a single '\n')
-					if (d == '\r' && ifs.peek() == '\n') 
-					{
-						ifs.get(d); // consume '\n'
-					}
-					newline_found = true;
-					break;
-				}
+    char c = '\0';
+    while (ifs.get(c)) {
+        // If comment start, skip until end of line (but keep the newline)
+        if (c == '#') {
+            char d = '\0';
+            bool newline_found = false;
+            while (ifs.get(d)) {
+                if (d == '\n' || d == '\r') {
+                    // preserve line break in output
+                    out_ascii_stream.put('\n');
+                    // If CRLF, consume the LF after CR (already wrote a single '\n')
+                    if (d == '\r' && ifs.peek() == '\n') {
+                        ifs.get(d); // consume '\n'
+                    }
+                    newline_found = true;
+                    break;
+                }
             }
-			if (!newline_found) 
-			{
+            if (!newline_found) {
                 // reached EOF while skipping comment
                 break;
             }
@@ -138,15 +112,12 @@ bool filter_nonascii_and_comment(std::ifstream& ifs,
         }
 
         unsigned char uc = static_cast<unsigned char>(c);
-		if (uc <= 0x7F) 
-		{
-			// ASCII character
+        if (uc <= 0x7F) {
+            // ASCII character
             out_ascii_stream.put(c);
-        }
-		else 
-		{
-			// replace non-ASCII with space character
-			out_ascii_stream.put(' ');
+        } else {
+            // replace non-ASCII with space character
+            out_ascii_stream.put(' ');
         }
     }
 
@@ -157,9 +128,7 @@ bool filter_nonascii_and_comment(std::ifstream& ifs,
     return true;
 }
 
-
-ReadInput::ReadInput(const int& rank)
-{
+ReadInput::ReadInput(const int& rank) {
     this->rank = rank;
 
     // add items
@@ -181,29 +150,25 @@ ReadInput::ReadInput(const int& rank)
     this->item_others();
 }
 
-void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
-{
+void ReadInput::read_parameters(Parameter& param, const std::string& filename_in) {
     ModuleBase::TITLE("ReadInput", "read_parameters");
 
     // 1. only rank 0 read the input file
-    if (this->rank == 0)
-    {
+    if (this->rank == 0) {
         // We can also easily add other input file formats here
         this->read_txt_input(param, filename_in);
     }
 
     // 2. check the number of atom types from STRU file
     // set the global directories
-    this->set_global_dir(param.inp, param.sys); 
-    if (this->check_ntype_flag && this->rank == 0)
-    {
+    this->set_global_dir(param.inp, param.sys);
+    if (this->check_ntype_flag && this->rank == 0) {
         check_ntype(param.globalv.global_in_stru, param.input.ntype);
     }
 
     // 3. broadcast input parameters
     // It must be after the check_ntype, because some parameters need to be filled due to ntype
-    for (auto& bcastfunc: this->bcastfuncs)
-    {
+    for (auto& bcastfunc: this->bcastfuncs) {
         bcastfunc(param);
     }
 
@@ -213,13 +178,10 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // 5. check the value of the parameters
     // It must be after the check_ntype, because some parameters need to be checked according to ntype
     // It must be after the set_globalv, because some parameters need to be checked according to param.sys
-    if (this->rank == 0)
-    {
-        for (auto& input_item: this->input_lists)
-        {
+    if (this->rank == 0) {
+        for (auto& input_item: this->input_lists) {
             Input_Item* checkvalue_item = &(input_item.second);
-            if (checkvalue_item->check_value != nullptr)
-            {
+            if (checkvalue_item->check_value != nullptr) {
                 checkvalue_item->check_value(*checkvalue_item, param);
             }
         }
@@ -228,13 +190,11 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     // 6. Initialize GPU device context (unified entry point)
     // This must be after bcastfunc to ensure param.inp.device is synchronized across all ranks
     // This replaces scattered cudaSetDevice/hipSetDevice calls throughout the codebase
-    if (param.inp.device == "gpu")
-    {
+    if (param.inp.device == "gpu") {
         base_device::DeviceContext::instance().init();
     }
 
-    if (this->check_mode)
-    {
+    if (this->check_mode) {
         std::cout << "----------------------------------------------------------" << std::endl;
         std::cout << "  INPUT parameters have been successfully checked!" << std::endl;
         std::cout << "----------------------------------------------------------" << std::endl;
@@ -243,8 +203,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     }
 }
 
-void ReadInput::create_directory(const Parameter& param)
-{
+void ReadInput::create_directory(const Parameter& param) {
     ModuleBase::TITLE("ReadInput", "create_directory");
 
     // mohan move forward 2011-02-26
@@ -253,14 +212,13 @@ void ReadInput::create_directory(const Parameter& param)
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2[0] || param.input.out_mat_r[0] || param.input.out_mat_t[0] || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
-    {
+    if (!param.input.out_app_flag &&
+        (param.input.out_mat_hs2[0] || param.input.out_mat_r[0] || param.input.out_mat_t[0] ||
+         param.input.out_mat_dh[0] || param.input.out_mat_ds[0])) {
         out_dir = true;
     }
     bool out_wfc_dir = false;
-    if (param.input.out_wfc_lcao && !param.input.out_app_flag)
-    {
+    if (param.input.out_wfc_lcao && !param.input.out_app_flag) {
         out_wfc_dir = true;
     }
     // NOTE: "make_dir_out" must be called by all processes!!!
@@ -272,97 +230,87 @@ void ReadInput::create_directory(const Parameter& param)
                                           this->rank,
                                           param.input.mdp.md_restart,
                                           param.input.out_alllog); // xiaohui add 2013-09-01
-    //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
+    // const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     struct stat st;
-    if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
-    {
+    if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
         ModuleBase::WARNING_QUIT("ReadInput", "please set right files directory for reading in.");
     }
     return;
 }
 
-void ReadInput::write_parameters(const Parameter& param, const std::string& filename_out)
-{
-    if (this->rank == 0)
-    {
+void ReadInput::write_parameters(const Parameter& param, const std::string& filename_out) {
+    if (this->rank == 0) {
         this->write_txt_input(param, filename_out);
     }
 }
 
-void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
-{
+void ReadInput::read_txt_input(Parameter& param, const std::string& filename) {
     ModuleBase::TITLE("ReadInput", "read_txt_input");
 
     std::stringstream ascii_stream;
 
-	std::ifstream ifs(filename.c_str(), std::ios::in);
+    std::ifstream ifs(filename.c_str(), std::ios::in);
 
-	if (!ifs)
-	{
-		std::cout << " Can't find the INPUT file." << std::endl;
-		ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
-	}
+    if (!ifs) {
+        std::cout << " Can't find the INPUT file." << std::endl;
+        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+    }
 
-	ifs.clear();
-	ifs.seekg(0);
+    ifs.clear();
+    ifs.seekg(0);
 
-	filter_nonascii_and_comment(ifs, ascii_stream);
-	ifs.clear();
+    filter_nonascii_and_comment(ifs, ascii_stream);
+    ifs.clear();
 
-	// file close after reading
+    // file close after reading
 
     int ierr = 0;
     ascii_stream.rdstate();
-    while (ascii_stream.good())
-    {
+    while (ascii_stream.good()) {
         std::string word;
         ascii_stream >> word;
         ascii_stream.ignore(150, '\n');
-        if (word == "INPUT_PARAMETERS")
-        {
+        if (word == "INPUT_PARAMETERS") {
             ierr = 1;
             break;
         }
     }
 
-    if (ierr == 0)
-    {
+    if (ierr == 0) {
         std::cout << " Error parameter list. "
                   << " The parameter list always starts with key word "
                      "'INPUT_PARAMETERS'. "
                   << std::endl;
-        ModuleBase::WARNING_QUIT("Input", 
-            "Bad parameter, please check the input parameters in file INPUT", 1);
+        ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT", 1);
     }
 
     ascii_stream.rdstate();
-    while (ascii_stream.good())
-    {
+    while (ascii_stream.good()) {
         std::string word; // temporary variable to store the keyword read-in
         ascii_stream >> word;
-        if (ascii_stream.eof()) { break; }
+        if (ascii_stream.eof()) {
+            break;
+        }
         word = FmtCore::lower(word); // the lowercase of the keyword
-        auto it = std::find_if(input_lists.begin(), input_lists.end(),
-            [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
+        auto it = std::find_if(input_lists.begin(),
+                               input_lists.end(),
+                               [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
         {
             Input_Item* p_item = &(it->second);
             this->readvalue_items.push_back(p_item);
-            if(p_item->is_read())
-            {
+            if (p_item->is_read()) {
                 std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             // qianrui delete '/' 2024-07-10, because path has '/' head.
             read_information(ascii_stream, p_item->str_values, "#!");
-        }
-        else // otherwise, it should be a comment or an unrecognized parameter
+        } else // otherwise, it should be a comment or an unrecognized parameter
         {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!') // if not recognized
             {
                 std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
-                ModuleBase::WARNING_QUIT("Input",
-                    "Bad parameter, please check the input parameters in file INPUT", 1);
+                ModuleBase::WARNING_QUIT("Input", "Bad parameter, please check the input parameters in file INPUT", 1);
             }
             // otherwise, it is a comment. However, ...
             // but it is not always to be shorter than 150 characters
@@ -371,130 +319,81 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         }
 
         ascii_stream.rdstate();
-        if (ascii_stream.eof())
-        {
+        if (ascii_stream.eof()) {
             break;
-        }
-        else if (ascii_stream.bad())
-        {
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " Bad input parameters. ", 1);
-        }
-        else if (ascii_stream.fail())
-        {
+        } else if (ascii_stream.bad()) {
+            ModuleBase::WARNING_QUIT("Input", " Bad input parameters. ", 1);
+        } else if (ascii_stream.fail()) {
             ascii_stream.clear();
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " fail to read parameters. ", 1);
+            ModuleBase::WARNING_QUIT("Input", " fail to read parameters. ", 1);
         }
     }
 
     // 1) read the value of the parameters
-    for (auto& readvalue_item: this->readvalue_items)
-    {
+    for (auto& readvalue_item: this->readvalue_items) {
         readvalue_item->read_value(*readvalue_item, param);
     }
 
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
-    {
+    for (auto& input_item: this->input_lists) {
         Input_Item* resetvalue_item = &(input_item.second);
-        if (resetvalue_item->reset_value != nullptr) 
-		{
-			resetvalue_item->reset_value(*resetvalue_item, param);
+        if (resetvalue_item->reset_value != nullptr) {
+            resetvalue_item->reset_value(*resetvalue_item, param);
         }
     }
 }
 
-void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)
-{
+void ReadInput::write_txt_input(const Parameter& param, const std::string& filename) {
     ModuleBase::TITLE("ReadInput", "write_txt_input");
     std::ofstream ofs(filename.c_str(), std::ios::out);
     ofs << "INPUT_PARAMETERS" << std::endl;
     ofs << std::setiosflags(std::ios::left);
 
     ofs << "#Parameters (1.System)" << std::endl;
-    for (auto& item: this->input_lists)
-    {
+    for (auto& item: this->input_lists) {
         Input_Item* p_item = &(item.second);
         if (p_item->get_final_value == nullptr) {
             continue;
-}
+        }
         p_item->get_final_value(*p_item, param);
-        if (p_item->label == "ks_solver")
-        {
+        if (p_item->label == "ks_solver") {
             ofs << "\n#Parameters (2.Electronic structure)" << std::endl;
-        }
-        else if (p_item->label == "nb2d")
-        {
+        } else if (p_item->label == "nb2d") {
             ofs << "\n#Parameters (3.LCAO)" << std::endl;
-        }
-        else if (p_item->label == "relax_method")
-        {
+        } else if (p_item->label == "relax_method") {
             ofs << "\n#Parameters (4.Relaxation)" << std::endl;
-        }
-        else if (p_item->label == "md_type")
-        {
+        } else if (p_item->label == "md_type") {
             ofs << "\n#Parameters (5.Molecular dynamics)" << std::endl;
-        }
-        else if (p_item->label == "of_kinetic")
-        {
+        } else if (p_item->label == "of_kinetic") {
             ofs << "\n#Parameters (6.orbital free density functional theory)" << std::endl;
-        }
-        else if (p_item->label == "method_sto")
-        {
+        } else if (p_item->label == "method_sto") {
             ofs << "\n#Parameters (7.Stochastic DFT)" << std::endl;
-        }
-        else if (p_item->label == "deepks_out_labels")
-        {
+        } else if (p_item->label == "deepks_out_labels") {
             ofs << "\n#Parameters (8.DeepKS)" << std::endl;
-        }
-        else if (p_item->label == "td_dt")
-        {
+        } else if (p_item->label == "td_dt") {
             ofs << "\n#Parameters (9.rt-tddft)" << std::endl;
-        }
-        else if (p_item->label == "lr_nstates")
-        {
+        } else if (p_item->label == "lr_nstates") {
             ofs << "\n#Parameters (10.lr-tddft)" << std::endl;
-        }
-        else if (p_item->label == "out_stru")
-        {
+        } else if (p_item->label == "out_stru") {
             ofs << "\n#Parameters (11.Output)" << std::endl;
-        }
-        else if (p_item->label == "dos_emin_ev")
-        {
+        } else if (p_item->label == "dos_emin_ev") {
             ofs << "\n#Parameters (12.Postprocess)" << std::endl;
-        }
-        else if (p_item->label == "efield_flag")
-        {
+        } else if (p_item->label == "efield_flag") {
             ofs << "\n#Parameters (13.Model)" << std::endl;
-        }
-        else if (p_item->label == "vdw_method")
-        {
+        } else if (p_item->label == "vdw_method") {
             ofs << "\n#Parameters (14.vdW Correction)" << std::endl;
-        }
-        else if (p_item->label == "exx_fock_alpha")
-        {
+        } else if (p_item->label == "exx_fock_alpha") {
             ofs << "\n#Parameters (15.exx)" << std::endl;
-        }
-        else if (p_item->label == "dft_plus_u")
-        {
+        } else if (p_item->label == "dft_plus_u") {
             ofs << "\n#Parameters (16.dft+u)" << std::endl;
-        }
-        else if (p_item->label == "sc_mag_switch")
-        {
+        } else if (p_item->label == "sc_mag_switch") {
             ofs << "\n#Parameters (17.non-collinear spin-constrained DFT)" << std::endl;
-        }
-        else if (p_item->label == "qo_switch")
-        {
+        } else if (p_item->label == "qo_switch") {
             ofs << "\n#Parameters (18.Quasiatomic Orbital analysis)" << std::endl;
-        }
-        else if (p_item->label == "pexsi_npole")
-        {
+        } else if (p_item->label == "pexsi_npole") {
             ofs << "\n#Parameters (19.PEXSI)" << std::endl;
-        }
-        else if (p_item->label == "out_alllog")
-        {
+        } else if (p_item->label == "out_alllog") {
             ofs << "\n#Parameters (20.Test)" << std::endl;
         }
 
@@ -502,65 +401,50 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     }
 }
 
-void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
-{
+void ReadInput::check_ntype(const std::string& fn, int& param_ntype) {
     std::ifstream ifa(fn.c_str(), std::ios::in);
-    if (!ifa)
-    {
+    if (!ifa) {
         GlobalV::ofs_warning << fn;
         ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "Can not find the file: " + fn);
     }
 
     int ntype_stru = 0;
     std::string temp;
-    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES"))
-    {
-        while (true)
-        {
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ATOMIC_SPECIES")) {
+        while (true) {
             ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
-                || temp == "PAW_FILES" || ifa.eof())
-            {
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" ||
+                temp == "PAW_FILES" || ifa.eof()) {
                 break;
-            }
-            else if (!temp.empty() && std::isalpha(static_cast<unsigned char>(temp[0])))
-            {
+            } else if (!temp.empty() && std::isalpha(static_cast<unsigned char>(temp[0]))) {
                 ntype_stru += 1;
             }
         }
     }
 
-    if (ntype_stru <= 0)
-    {
+    if (ntype_stru <= 0) {
         ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "Failed to detect valid ntype from STRU: no valid ATOMIC_SPECIES entries were found.");
     }
 
-    if (param_ntype < 0)
-    {
+    if (param_ntype < 0) {
         ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "The ntype in INPUT should not be less than 0.");
-    }
-    else if (param_ntype != 0 && param_ntype != ntype_stru)
-    {
+    } else if (param_ntype != 0 && param_ntype != ntype_stru) {
         ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "The ntype in INPUT is not equal to the ntype "
                                  "counted in STRU, check it.");
-    }
-    else if (param_ntype == 0)
-    {
+    } else if (param_ntype == 0) {
         param_ntype = ntype_stru;
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
     }
 }
 
-int ReadInput::current_md_step(const std::string& file_dir)
-{
+int ReadInput::current_md_step(const std::string& file_dir) {
     std::stringstream ssc;
     ssc << file_dir << "Restart_md.txt";
     std::ifstream file(ssc.str().c_str());
 
-    if (!file)
-    {
+    if (!file) {
         ModuleBase::WARNING_QUIT("current_md_step", "no Restart_md.txt");
     }
 
@@ -571,32 +455,25 @@ int ReadInput::current_md_step(const std::string& file_dir)
     return md_step;
 }
 
-void ReadInput::add_item(const Input_Item& item)
-{
+void ReadInput::add_item(const Input_Item& item) {
     // Normally only rank 0 reads the input file
     // But rank -1 is used for help system mode where items should also be added
-    if (this->rank == 0 || this->rank == -1)
-    {
+    if (this->rank == 0 || this->rank == -1) {
         this->input_lists.push_back(make_pair(item.label, item));
     }
 }
 
-std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str)
-{
+std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str) {
     std::string warningstr = "The parameter ";
     warningstr.append(str);
     warningstr.append(" must be ");
-    for(int i = 0; i < init_chgs.size(); i++)
-    {
+    for (int i = 0; i < init_chgs.size(); i++) {
         warningstr.append("'");
         warningstr.append(init_chgs[i]);
         warningstr.append("'");
-        if(i < init_chgs.size() - 2)
-        {
+        if (i < init_chgs.size() - 2) {
             warningstr.append(", ");
-        }
-        else if(i == init_chgs.size() - 2)
-        {
+        } else if (i == init_chgs.size() - 2) {
             warningstr.append(" or ");
         }
     }

@@ -1790,7 +1790,7 @@
 
  Warning_Memory_Consuming allocated:  ORB::Jl(x) 922 MB
  Auxiliary basis functions
-		Si		5 s		4 p		5 d		2 f		1 g		
+        Si        5 s        4 p        5 d        2 f        1 g        
 
  Warning_Memory_Consuming allocated:  ORB::Jl(x) 1.15e+03 MB
 

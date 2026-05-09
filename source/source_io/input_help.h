@@ -18,8 +18,8 @@ struct ParameterMetadata {
     std::string description;
     std::string default_value;
     std::string category;
-    std::string unit;         // Empty string if no unit
-    std::string availability; // Empty string if always available
+    std::string unit;           // Empty string if no unit
+    std::string availability;   // Empty string if always available
     std::string name_lowercase; // Pre-computed lowercase for fast fuzzy matching
 };
 
@@ -31,7 +31,7 @@ struct ParameterMetadata {
  * code that parses the documentation at build time.
  */
 class ParameterHelp {
-public:
+  public:
     /**
      * @brief Initialize the help registry from generated data
      *
@@ -112,11 +112,10 @@ public:
      * @param max_distance Maximum edit distance for fuzzy matches (default: 3)
      * @return Vector of similar parameter names sorted by relevance
      */
-    static std::vector<std::string> find_similar_parameters(const std::string& query,
-                                                             int max_suggestions = 5,
-                                                             int max_distance = 3);
+    static std::vector<std::string>
+    find_similar_parameters(const std::string& query, int max_suggestions = 5, int max_distance = 3);
 
-private:
+  private:
     static std::map<std::string, ParameterMetadata> registry_;
     static std::map<std::string, std::string> lowercase_to_actual_;
     static std::once_flag init_flag_;
@@ -137,8 +136,7 @@ private:
      * @param key The parameter name to look up (any case)
      * @return Iterator to the parameter in registry_, or registry_.end() if not found
      */
-    static std::map<std::string, ParameterMetadata>::const_iterator
-    find_case_insensitive(const std::string& key);
+    static std::map<std::string, ParameterMetadata>::const_iterator find_case_insensitive(const std::string& key);
 
     /**
      * @brief Convert string to lowercase for case-insensitive comparison

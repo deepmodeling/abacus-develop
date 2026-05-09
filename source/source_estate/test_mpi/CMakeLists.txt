@@ -6,13 +6,21 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__MLALGO)
 remove_definitions(-D_OPENMP)
 
-AddTest(
-  TARGET MODULE_ESTATE_charge_mpi_test
-  LIBS parameter ${math_libs} psi base device planewave 
-  SOURCES charge_mpi_test.cpp ../module_charge/charge_mpi.cpp
-)
+addtest(
+  TARGET
+  MODULE_ESTATE_charge_mpi_test
+  LIBS
+  parameter
+  ${math_libs}
+  psi
+  base
+  device
+  planewave
+  SOURCES
+  charge_mpi_test.cpp
+  ../module_charge/charge_mpi.cpp)
 
-add_test(NAME MODULE_ESTATE_charge_mpi_test_4np
-      COMMAND mpirun -np 4 ./MODULE_ESTATE_charge_mpi_test;
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+add_test(
+  NAME MODULE_ESTATE_charge_mpi_test_4np
+  COMMAND mpirun -np 4 ./MODULE_ESTATE_charge_mpi_test;
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

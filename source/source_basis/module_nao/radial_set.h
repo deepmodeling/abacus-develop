@@ -22,8 +22,7 @@
  *
  * @see AtomicRadials BetaRadials
  */
-class RadialSet
-{
+class RadialSet {
   public:
     RadialSet() = default;
     RadialSet(const RadialSet&);            ///< deep copy
@@ -57,7 +56,7 @@ class RadialSet
                        const int = 0,                  ///< the element index in calculation
                        std::ofstream* const = nullptr, ///< output file stream for logging
                        const int = 0                   ///< MPI rank
-                       ) {}
+    ) {}
 
     /**
      * @brief Builds from a Numerical_Nonlocal object.
@@ -68,7 +67,7 @@ class RadialSet
     virtual void build(const Numerical_Nonlocal&,     ///< Numerical_Nonlocal object
                        const int = 0,                 ///< the element index in calculation
                        std::ofstream* const = nullptr ///< output file stream for logging
-                       ) {}
+    ) {}
 
     /**
      * @brief Builds from hydrogen-like radial functions.
@@ -76,18 +75,19 @@ class RadialSet
      * Currently only HydrogenRadials objects are supposed to used this
      * interface.
      */
-    virtual void build(const int = 0,                         ///< the element index in calculation
-                       const double = 1.0,                    ///< nuclear charge
-                       const bool = false,                    ///< whether to include Slater screening
-                       const int = 0,                         ///< maximal principal quantum number or electrons
-                       const double = 10.0,                   ///< maximal radius
-                       const double = 0.01,                   ///< radial grid step
-                       const double = 1e-6,                   ///< convergence threshold for norm of pseudowavefunction
-                       const int = 0,                         ///< MPI rank
-                       const std::string = "",                ///< the name of the element
-                       const std::string = "minimal-valence", ///< the strategy to generate whole set of radial functions
-                       std::ofstream* const = nullptr         ///< output file stream for logging
-                       ) {}
+    virtual void
+    build(const int = 0,                         ///< the element index in calculation
+          const double = 1.0,                    ///< nuclear charge
+          const bool = false,                    ///< whether to include Slater screening
+          const int = 0,                         ///< maximal principal quantum number or electrons
+          const double = 10.0,                   ///< maximal radius
+          const double = 0.01,                   ///< radial grid step
+          const double = 1e-6,                   ///< convergence threshold for norm of pseudowavefunction
+          const int = 0,                         ///< MPI rank
+          const std::string = "",                ///< the name of the element
+          const std::string = "minimal-valence", ///< the strategy to generate whole set of radial functions
+          std::ofstream* const = nullptr         ///< output file stream for logging
+    ) {}
 
     /**
      * @brief Builds from pseudopotential file
@@ -101,7 +101,7 @@ class RadialSet
                        const double,                   ///< convergence threshold of norm of pseudowavefunction
                        std::ofstream* const = nullptr, ///< output file stream for logging
                        const int = 0                   ///< MPI rank
-                       ) {}
+    ) {}
 
     /**
      * @brief Builds with the truncated spherical Bessel functions.
@@ -110,29 +110,29 @@ class RadialSet
      * spherical Bessel functions.
      * See the derived class "SphbesRadials" for the implementation.
      */
-    virtual void build(const int,                   ///< maximum angular momentum
-                       const int,                   ///< number of spherical Bessel functions
-                       const double,                ///< cutoff radius
-                       const double = 0.1,          ///< smoothing parameter
-                       const double = 0.01,         ///< radial grid spacing
-                       const int = 0,               ///< element index
-                       std::ofstream* = nullptr,    ///< output file stream for logging
-                       const int = 0                ///< MPI rank
+    virtual void build(const int,                ///< maximum angular momentum
+                       const int,                ///< number of spherical Bessel functions
+                       const double,             ///< cutoff radius
+                       const double = 0.1,       ///< smoothing parameter
+                       const double = 0.01,      ///< radial grid spacing
+                       const int = 0,            ///< element index
+                       std::ofstream* = nullptr, ///< output file stream for logging
+                       const int = 0             ///< MPI rank
     ) {};
 
     /**
      * @brief write any RadialSet object to a file in ABACUS numerical atomic orbital format.
-     * 
+     *
      * This function will write any RadialSet object to file in ABACUS numerical atomic orbital format.
-     * However its counterparts,  
-     * `read_abacus_orb()` is in AtomicRadials,  
+     * However its counterparts,
+     * `read_abacus_orb()` is in AtomicRadials,
      * `read_beta_upf100()` and `read_beta_upf201()` are in BetaRadials,
-     * `read_upf_pswfc()` is in PswfcRadials,  
-     * `read_coeff()` is in SphbesRadials,  
+     * `read_upf_pswfc()` is in PswfcRadials,
+     * `read_coeff()` is in SphbesRadials,
      * due to read-in procedures always vary from one to another.
      */
-    void write_abacus_orb(const std::string&,      ///< file name
-                          const int = 0) const;    ///< MPI rank
+    void write_abacus_orb(const std::string&,   ///< file name
+                          const int = 0) const; ///< MPI rank
 
     ///@}
 
@@ -143,8 +143,7 @@ class RadialSet
      */
     virtual void to_numerical_orbital(Numerical_Orbital&,
                                       const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
-                                      const double lcao_dk = 0.01
-                                      ) const;
+                                      const double lcao_dk = 0.01) const;
 
     /**
      * @name Getters
@@ -183,14 +182,14 @@ class RadialSet
     ///@}
 
   protected:
-    std::string symbol_ = "";   ///< usually the chemical symbol
-    int itype_ = 0;             ///< usually the index for element in calculation
-    int lmax_ = -1;             ///< maximum angular momentum among all NumericalRadial objects
-    double rcut_max_ = 0.0;     ///< maximum rcut (NOT rmax!) among all NumericalRadial objects
+    std::string symbol_ = ""; ///< usually the chemical symbol
+    int itype_ = 0;           ///< usually the index for element in calculation
+    int lmax_ = -1;           ///< maximum angular momentum among all NumericalRadial objects
+    double rcut_max_ = 0.0;   ///< maximum rcut (NOT rmax!) among all NumericalRadial objects
 
-    int* nzeta_ = nullptr;      ///< number of NumericalRadial objects for each angular momentum
-    int nzeta_max_ = 0;         ///< maximum number of NumericalRadial objects among each angular momentum
-    int nchi_ = 0;              ///< total number of NumericalRadial objects
+    int* nzeta_ = nullptr; ///< number of NumericalRadial objects for each angular momentum
+    int nzeta_max_ = 0;    ///< maximum number of NumericalRadial objects among each angular momentum
+    int nchi_ = 0;         ///< total number of NumericalRadial objects
 
     NumericalRadial* chi_ = nullptr; ///< array of NumericalRadial objects
 

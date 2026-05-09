@@ -9,8 +9,7 @@
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 
-class surchem
-{
+class surchem {
   public:
     surchem();
     ~surchem();
@@ -33,7 +32,8 @@ class surchem
 
     void clear();
 
-    void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
+    void
+    cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
                     const Parallel_Grid& pgrid,
@@ -95,10 +95,10 @@ class surchem
     void Leps2(const UnitCell& ucell,
                const ModulePW::PW_Basis* rho_basis,
                std::complex<double>* phi,
-               double* epsilon,            // epsilon from shapefunc, dim=nrxx
+               double* epsilon, // epsilon from shapefunc, dim=nrxx
                std::complex<double>* gradphi_G_work,
                std::complex<double>* lp,
-               ModuleBase::Vector3<double>* grad_phi_R,   // size: nrxx
+               ModuleBase::Vector3<double>* grad_phi_R, // size: nrxx
                double* aux_R);
 
     void v_correction(const UnitCell& cell,

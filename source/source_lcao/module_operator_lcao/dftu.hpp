@@ -1,5 +1,4 @@
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __DFTUTEMPLATE
 #define __DFTUTEMPLATE
@@ -9,10 +8,8 @@ namespace hamilt
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK, TR> or OperatorPW<TK>
 template <class T>
-class DFTU : public T
-{
-};
+class DFTU : public T {};
 
 #endif
 
-}
+} // namespace hamilt

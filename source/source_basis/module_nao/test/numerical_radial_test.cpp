@@ -49,8 +49,7 @@ using ModuleBase::SphericalBesselTransformer;
  *  - all "getters"
  *      - Get access to private members.
  *                                                          */
-class NumericalRadialTest : public ::testing::Test
-{
+class NumericalRadialTest : public ::testing::Test {
   protected:
     void SetUp();
     void TearDown();
@@ -65,22 +64,19 @@ class NumericalRadialTest : public ::testing::Test
     double tol = 1e-8; //!< tolerance for element-wise numerical error
 };
 
-void NumericalRadialTest::SetUp()
-{
+void NumericalRadialTest::SetUp() {
     grid = new double[sz_max];
     f = new double[sz_max];
     g = new double[sz_max];
 }
 
-void NumericalRadialTest::TearDown()
-{
+void NumericalRadialTest::TearDown() {
     delete[] f;
     delete[] g;
     delete[] grid;
 }
 
-TEST_F(NumericalRadialTest, ConstructAndAssign)
-{
+TEST_F(NumericalRadialTest, ConstructAndAssign) {
     /*
      * Tests the copy constructor and copy assignment operator.
      *                                                                      */
@@ -88,8 +84,7 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     int sz = 10000;
     int pk = -2;
     double pref = 48 * std::sqrt(2. / PI);
-    for (int ik = 0; ik != sz; ++ik)
-    {
+    for (int ik = 0; ik != sz; ++ik) {
         double k = ik * dk;
         grid[ik] = k;
         f[ik] = pref / std::pow(k * k + 1, 4);
@@ -111,16 +106,14 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
 
     ASSERT_NE(chi2.rgrid(), nullptr);
     ASSERT_NE(chi2.rvalue(), nullptr);
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         EXPECT_EQ(chi.rgrid(ir), chi2.rgrid(ir));
         EXPECT_EQ(chi.rvalue(ir), chi2.rvalue(ir));
     }
 
     ASSERT_NE(chi2.kgrid(), nullptr);
     ASSERT_NE(chi2.kvalue(), nullptr);
-    for (int ik = 0; ik != sz; ++ik)
-    {
+    for (int ik = 0; ik != sz; ++ik) {
         EXPECT_EQ(chi.kgrid(ik), chi2.kgrid(ik));
         EXPECT_EQ(chi.kvalue(ik), chi2.kvalue(ik));
     }
@@ -144,16 +137,14 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
 
     ASSERT_NE(chi3.rgrid(), nullptr);
     ASSERT_NE(chi3.rvalue(), nullptr);
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         EXPECT_EQ(chi.rgrid(ir), chi3.rgrid(ir));
         EXPECT_EQ(chi.rvalue(ir), chi3.rvalue(ir));
     }
 
     ASSERT_NE(chi3.kgrid(), nullptr);
     ASSERT_NE(chi3.kvalue(), nullptr);
-    for (int ik = 0; ik != sz; ++ik)
-    {
+    for (int ik = 0; ik != sz; ++ik) {
         EXPECT_EQ(chi.kgrid(ik), chi3.kgrid(ik));
         EXPECT_EQ(chi.kvalue(ik), chi3.kvalue(ik));
     }
@@ -171,8 +162,7 @@ TEST_F(NumericalRadialTest, ConstructAndAssign)
     EXPECT_NO_THROW(chi3 = chi3);
 }
 
-TEST_F(NumericalRadialTest, BuildAndGet)
-{
+TEST_F(NumericalRadialTest, BuildAndGet) {
     /*
      * Builds a NumericalRadial object and gets access to its members.
      *                                                                      */
@@ -183,8 +173,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     int itype = 3;
     int izeta = 5;
     std::string symbol = "Au";
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         double r = ir * dr;
         grid[ir] = r;
         f[ir] = std::exp(-r);
@@ -203,8 +192,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
 
     ASSERT_NE(chi.rgrid(), nullptr);
     ASSERT_NE(chi.rvalue(), nullptr);
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         EXPECT_EQ(chi.rgrid(ir), grid[ir]);
         EXPECT_EQ(chi.rvalue(ir), f[ir]);
     }
@@ -217,8 +205,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
     EXPECT_EQ(chi.is_fft_compliant(), false);
 }
 
-TEST_F(NumericalRadialTest, GridSetAndWipe)
-{
+TEST_F(NumericalRadialTest, GridSetAndWipe) {
     /*
      * This test first builds a NumericalRadial object with r-space values
      *
@@ -236,8 +223,7 @@ TEST_F(NumericalRadialTest, GridSetAndWipe)
     double dr = 0.01;
     int nr = 5000;
     int pr = -1;
-    for (int ir = 0; ir != nr ; ++ir)
-    {
+    for (int ir = 0; ir != nr; ++ir) {
         double r = ir * dr;
         grid[ir] = r;
         f[ir] = std::exp(-r);
@@ -249,16 +235,14 @@ TEST_F(NumericalRadialTest, GridSetAndWipe)
     double* kgrid = new double[nk];
     double dk = 0.01;
 
-    for (int ik = 0; ik != nk; ++ik)
-    {
+    for (int ik = 0; ik != nk; ++ik) {
         kgrid[ik] = ik * dk;
     }
 
     chi.set_grid(false, nk, kgrid, 't');
 
     double pref = 8 * std::sqrt(2. / PI);
-    for (int ik = 0; ik != nk; ++ik)
-    {
+    for (int ik = 0; ik != nk; ++ik) {
         double k = ik * dk;
         EXPECT_NEAR(pref * k / std::pow(k * k + 1, 3), chi.kvalue(ik), tol);
     }
@@ -279,8 +263,7 @@ TEST_F(NumericalRadialTest, GridSetAndWipe)
     delete[] kgrid;
 }
 
-TEST_F(NumericalRadialTest, SetUniformGrid)
-{
+TEST_F(NumericalRadialTest, SetUniformGrid) {
     /*
      * This test starts from a NumericalRadial object with k-space values of
      *
@@ -295,8 +278,7 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     int sz = 10000;
     int pk = -2;
     double pref = 48 * std::sqrt(2. / PI);
-    for (int ik = 0; ik != sz; ++ik)
-    {
+    for (int ik = 0; ik != sz; ++ik) {
         double k = ik * dk;
         grid[ik] = k;
         f[ik] = pref / std::pow(k * k + 1, 4);
@@ -306,8 +288,7 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     chi.set_uniform_grid(true, sz, PI / dk, 't', true);
 
     double dr = PI / chi.kmax();
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         double r = ir * dr;
         EXPECT_NEAR(r * r * std::exp(-r), chi.rvalue(ir), tol);
     }
@@ -328,23 +309,22 @@ TEST_F(NumericalRadialTest, Interpolate) {
     double dk = 0.01;
     int sz = 10000;
     int pk = -2;
-    double pref = 48 * std::sqrt(2./PI);
+    double pref = 48 * std::sqrt(2. / PI);
     for (int ik = 0; ik != sz; ++ik) {
         double k = ik * dk;
-        k *= std::exp(0.02*k);
+        k *= std::exp(0.02 * k);
         grid[ik] = k;
-        f[ik] = pref / std::pow(k*k+1, 4);
+        f[ik] = pref / std::pow(k * k + 1, 4);
     }
 
     chi.build(2, false, sz, grid, f, pk);
 
-    chi.set_uniform_grid(false, sz, PI/50*(sz-1), 'i', true);
+    chi.set_uniform_grid(false, sz, PI / 50 * (sz - 1), 'i', true);
 
     double dr = PI / chi.kmax();
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         double r = ir * dr;
-        EXPECT_NEAR(r*r*std::exp(-r), chi.rvalue(ir), tol*2); // slightly relax the tolerance due to interpolation
+        EXPECT_NEAR(r * r * std::exp(-r), chi.rvalue(ir), tol * 2); // slightly relax the tolerance due to interpolation
     }
 }
 
@@ -356,8 +336,7 @@ TEST_F(NumericalRadialTest, ZeroPadding) {
     int sz1 = 2000;
     int pk = -2;
     double pref = 48 * std::sqrt(2. / PI);
-    for (int ik = 0; ik != sz1; ++ik)
-    {
+    for (int ik = 0; ik != sz1; ++ik) {
         double k = ik * dk;
         grid[ik] = k;
         f[ik] = pref / std::pow(k * k + 1, 4);
@@ -366,29 +345,25 @@ TEST_F(NumericalRadialTest, ZeroPadding) {
     chi.build(2, false, sz1, grid, f, pk);
 
     int sz2 = 10000;
-    chi.set_uniform_grid(false, sz2, dk*(sz2-1), 'i');
+    chi.set_uniform_grid(false, sz2, dk * (sz2 - 1), 'i');
 
-    for (int ik = 0; ik != sz1; ++ik)
-    {
+    for (int ik = 0; ik != sz1; ++ik) {
         EXPECT_EQ(f[ik], chi.kvalue(ik));
     }
 
-    for (int ik = sz1; ik != sz2; ++ik)
-    {
+    for (int ik = sz1; ik != sz2; ++ik) {
         EXPECT_EQ(0.0, chi.kvalue(ik));
     }
 }
 
-TEST_F(NumericalRadialTest, SetValue)
-{
+TEST_F(NumericalRadialTest, SetValue) {
     /*
      * This test attempts to updates values in a NumericalRadial object.
      *                                                                      */
     double dx = 0.01;
     int sz = 5000;
     int p = -1;
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double r = i * dx;
         grid[i] = r;
         f[i] = std::exp(-r);
@@ -400,34 +375,29 @@ TEST_F(NumericalRadialTest, SetValue)
     chi.build(1, true, sz, grid, f, p);
 
     EXPECT_EQ(chi.rcut(), sz_cut * dx);
-    EXPECT_EQ(chi.rmax(), (sz-1) * dx);
+    EXPECT_EQ(chi.rmax(), (sz - 1) * dx);
 
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         f[ir] *= 2;
     }
     chi.set_value(true, f, p);
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         EXPECT_EQ(chi.rvalue(i), f[i]);
     }
 
     chi.build(1, false, sz, grid, f, p);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         f[i] *= 2;
     }
     chi.set_value(false, f, p);
 
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         EXPECT_EQ(chi.kvalue(i), f[i]);
     }
 }
 
-TEST_F(NumericalRadialTest, RadialTable)
-{
+TEST_F(NumericalRadialTest, RadialTable) {
     /*
      * This test checks the radial table for the two-center integral
      * between the following two radial functions:
@@ -451,8 +421,7 @@ TEST_F(NumericalRadialTest, RadialTable)
     int sz = 5000;
     double dr = 0.01;
     double dk = PI / ((sz - 1) * dr);
-    for (int ir = 0; ir != sz; ++ir)
-    {
+    for (int ir = 0; ir != sz; ++ir) {
         double r = ir * dr;
         grid[ir] = r;
         f[ir] = std::exp(-r * r);
@@ -466,8 +435,7 @@ TEST_F(NumericalRadialTest, RadialTable)
     chi2.set_uniform_grid(false, sz, PI / dr, 't');
 
     // make sure chi(k) have expected values
-    for (int ik = 1; ik != sz; ++ik)
-    {
+    for (int ik = 1; ik != sz; ++ik) {
         double k = ik * dk;
         ASSERT_NEAR(chi1.kvalue(ik), 4 * pref * std::exp(-k * k / 4), tol);
         ASSERT_NEAR(chi2.kvalue(ik), pref * k * k * std::exp(-k * k / 4), tol);
@@ -478,29 +446,25 @@ TEST_F(NumericalRadialTest, RadialTable)
     double rmax_tab = chi1.rmax();
 
     chi1.radtab('S', chi2, 0, table, chi1.nr(), rmax_tab);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (3 - R * R) / 32 * std::exp(-R * R / 2), tol);
     }
 
     chi1.radtab('S', chi2, 2, table, chi1.nr(), rmax_tab);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * R * R / 32 * std::exp(-R * R / 2), tol);
     }
 
     chi1.radtab('T', chi2, 0, table, chi1.nr(), rmax_tab);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * (std::pow(R, 4) - 10 * R * R + 15) / 32 * std::exp(-R * R / 2), tol);
     }
 
     chi1.radtab('U', chi2, 0, table, chi1.nr(), rmax_tab);
-    for (int i = 0; i != sz; ++i)
-    {
+    for (int i = 0; i != sz; ++i) {
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * 1. / 32 * std::exp(-R * R / 2), tol);
     }
@@ -508,8 +472,7 @@ TEST_F(NumericalRadialTest, RadialTable)
     delete[] table;
 }
 
-TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
-{
+TEST_F(NumericalRadialTest, ToNumericalOrbitalLm) {
     /*
      * Builds a Numerical_Orbital_Lm object from a NumericalRadial object.
      *                                                                      */
@@ -520,8 +483,7 @@ TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
     int itype = 3;
     int izeta = 5;
     std::string symbol = "Au";
-    for (int ir = 0; ir != nr; ++ir)
-    {
+    for (int ir = 0; ir != nr; ++ir) {
         double r = ir * dr;
         grid[ir] = r;
         f[ir] = std::exp(-r);
@@ -569,8 +531,7 @@ TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
     // k values may have noticable difference due to algorithmic distinction
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

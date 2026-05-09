@@ -9,8 +9,7 @@
 
 #include <vector>
 
-namespace elecstate
-{
+namespace elecstate {
 /**
  * Potential is the main class of potentials module, it contains:
  * 1. Constructors and deconstructor
@@ -44,8 +43,7 @@ namespace elecstate
  * 10. Func interpolate_vrs()
  *    a. interpolate v_eff on the smooth mesh
  */
-class Potential : public PotBase
-{
+class Potential : public PotBase {
   public:
     // default constructor for UT
     Potential(){};
@@ -66,96 +64,56 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(const Charge*const chg);
+    void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge
-    void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
+    void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
     PotBase* get_pot_type(const std::string& pot_type);
 
     // interfaces to get values
-    ModuleBase::matrix& get_eff_v()
-    {
-        return this->v_eff;
-    }
-    const ModuleBase::matrix& get_eff_v() const
-    {
-        return this->v_eff;
-    }
+    ModuleBase::matrix& get_eff_v() { return this->v_eff; }
+    const ModuleBase::matrix& get_eff_v() const { return this->v_eff; }
 
-    double* get_eff_v(int is)
-    {
-        if (this->v_eff.nc > 0)
-        {
+    double* get_eff_v(int is) {
+        if (this->v_eff.nc > 0) {
             return &(this->v_eff(is, 0));
-        }
-        else
-        {
+        } else {
             return nullptr;
         }
     }
-    const double* get_eff_v(int is) const
-    {
-        if (this->v_eff.nc > 0)
-        {
+    const double* get_eff_v(int is) const {
+        if (this->v_eff.nc > 0) {
             return &(this->v_eff(is, 0));
-        }
-        else
-        {
+        } else {
             return nullptr;
         }
     }
-    ModuleBase::matrix& get_eff_vofk()
-    {
-        return this->vofk_eff;
-    }
-    const ModuleBase::matrix& get_eff_vofk() const
-    {
-        return this->vofk_eff;
-    }
-    double* get_eff_vofk(int is)
-    {
-        if (this->vofk_eff.nc > 0)
-        {
+    ModuleBase::matrix& get_eff_vofk() { return this->vofk_eff; }
+    const ModuleBase::matrix& get_eff_vofk() const { return this->vofk_eff; }
+    double* get_eff_vofk(int is) {
+        if (this->vofk_eff.nc > 0) {
             return &(this->vofk_eff(is, 0));
-        }
-        else
-        {
+        } else {
             return nullptr;
         }
     }
-    const double* get_eff_vofk(int is) const
-    {
-        if (this->vofk_eff.nc > 0)
-        {
+    const double* get_eff_vofk(int is) const {
+        if (this->vofk_eff.nc > 0) {
             return &(this->vofk_eff(is, 0));
-        }
-        else
-        {
+        } else {
             return nullptr;
         }
     }
 
-    ModuleBase::matrix& get_veff_smooth()
-    {
-        return this->veff_smooth;
-    }
-    const ModuleBase::matrix& get_veff_smooth() const
-    {
-        return this->veff_smooth;
-    }
+    ModuleBase::matrix& get_veff_smooth() { return this->veff_smooth; }
+    const ModuleBase::matrix& get_veff_smooth() const { return this->veff_smooth; }
 
-    ModuleBase::matrix& get_vofk_smooth()
-    {
-        return this->vofk_smooth;
-    }
-    const ModuleBase::matrix& get_vofk_smooth() const
-    {
-        return this->vofk_smooth;
-    }
+    ModuleBase::matrix& get_vofk_smooth() { return this->vofk_smooth; }
+    const ModuleBase::matrix& get_vofk_smooth() const { return this->vofk_smooth; }
 
     template <typename FPTYPE>
     FPTYPE* get_veff_smooth_data();
@@ -163,35 +121,22 @@ class Potential : public PotBase
     template <typename FPTYPE>
     FPTYPE* get_vofk_smooth_data();
 
-    double* get_fixed_v()
-    {
-        return this->v_eff_fixed.data();
-    }
-    const double* get_fixed_v() const
-    {
-        return this->v_eff_fixed.data();
-    }
-    const ModulePW::PW_Basis *get_rho_basis() const
-    {
-        return this->rho_basis_;
-    }
+    double* get_fixed_v() { return this->v_eff_fixed.data(); }
+    const double* get_fixed_v() const { return this->v_eff_fixed.data(); }
+    const ModulePW::PW_Basis* get_rho_basis() const { return this->rho_basis_; }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 
-
     /// @brief get the value of vloc at G=0;
     /// @return vl(0)
-    double get_vl_of_0() const
-    {
-        return this->vl_of_0;
-    }
+    double get_vl_of_0() const { return this->vl_of_0; }
 
     /// @brief  get the ML-EXX energy, avoiding static variable
     /// @return E_ML-EXX
     double get_ml_exx_energy() const;
 
   private:
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
     // interpolate potential on the smooth mesh if necessary
     void interpolate_vrs();
@@ -206,10 +151,10 @@ class Potential : public PotBase
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 
-    float *s_veff_smooth = nullptr;
-    float *s_vofk_smooth = nullptr;
-    double *d_veff_smooth = nullptr;
-    double *d_vofk_smooth = nullptr;
+    float* s_veff_smooth = nullptr;
+    float* s_vofk_smooth = nullptr;
+    double* d_veff_smooth = nullptr;
+    double* d_vofk_smooth = nullptr;
 
     ModuleBase::matrix vofk_eff;
 

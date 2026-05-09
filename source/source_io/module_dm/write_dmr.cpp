@@ -5,65 +5,48 @@
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
 #include "source_io/module_output/ucell_io.h"
 
-namespace ModuleIO
-{
-std::string dmr_gen_fname(const int out_type, const int ispin, const bool append, const int istep)
-{
+namespace ModuleIO {
+std::string dmr_gen_fname(const int out_type, const int ispin, const bool append, const int istep) {
     std::string fname = "dmr.csr";
-    if (out_type == 1)
-    {
-        if (!append && istep >= 0)
-        {
+    if (out_type == 1) {
+        if (!append && istep >= 0) {
             // spa stands for sparse
-            fname = "dmrs" + std::to_string(ispin+1) + "g" + std::to_string(istep + 1) + "_nao.csr";
+            fname = "dmrs" + std::to_string(ispin + 1) + "g" + std::to_string(istep + 1) + "_nao.csr";
+        } else {
+            fname = "dmrs" + std::to_string(ispin + 1) + "_nao.csr";
         }
-        else
-        {
-            fname = "dmrs" + std::to_string(ispin+1) + "_nao.csr";
-        }
-    }
-    else if (out_type == 2)
-    {
-        fname = "dmrs" + std::to_string(ispin+1) + "_nao.npz";
-    }
-    else
-    {
+    } else if (out_type == 2) {
+        fname = "dmrs" + std::to_string(ispin + 1) + "_nao.npz";
+    } else {
         ModuleBase::WARNING("write_dmr", "the output type of density matrix DM(R) should be csr or npz.");
     }
     return fname;
 }
 
-void write_dmr_csr(std::string& fname, 
-                   const UnitCell *ucell,
+void write_dmr_csr(std::string& fname,
+                   const UnitCell* ucell,
                    const int precision,
                    hamilt::HContainer<double>* dm_serial,
                    const int istep,
-		   const int ispin,
-		   const int nspin)
-{
+                   const int ispin,
+                   const int nspin) {
     // write the head: ION step number, basis number and R loop number
 
     std::ofstream ofs;
 
     // mohan update 2025-05-26
-    if(istep<=0)
-    {
+    if (istep <= 0) {
         ofs.open(fname);
-    }
-    else if(istep>0)
-    {
+    } else if (istep > 0) {
         ofs.open(fname, std::ios::app);
     }
 
-
-    ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;
     ofs << " # print density matrix in real space DM(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
-    ofs << " " << ispin+1 << " # spin index" << std::endl;
-    ofs << " " << dm_serial->get_nbasis() 
-	    << " # number of localized basis" << std::endl;
-    ofs << " " << dm_serial->size_R_loop() 
-	    << " # number of Bravais lattice vector R" << std::endl;
+    ofs << " " << ispin + 1 << " # spin index" << std::endl;
+    ofs << " " << dm_serial->get_nbasis() << " # number of localized basis" << std::endl;
+    ofs << " " << dm_serial->size_R_loop() << " # number of Bravais lattice vector R" << std::endl;
     ofs << std::endl;
 
     // write ucell
@@ -84,12 +67,10 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool append,
                const int* iat2iwt,
                const int nat,
-               const int istep)
-{
+               const int istep) {
     const int nspin = dmr.size();
     assert(nspin > 0);
-    for (int ispin = 0; ispin < nspin; ispin++)
-    {
+    for (int ispin = 0; ispin < nspin; ispin++) {
         const int nbasis = dmr[ispin]->get_nbasis();
 
         // gather the parallel matrix to serial matrix
@@ -104,8 +85,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
         hamilt::HContainer<double> dm_serial(*dmr[ispin]);
 #endif
 
-        if (GlobalV::MY_RANK == 0)
-        {
+        if (GlobalV::MY_RANK == 0) {
             // out_type = 1, csr format;
             // out_type = 2, npz format (currently not support)
             const int out_type = 1;

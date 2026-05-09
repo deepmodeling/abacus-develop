@@ -5,12 +5,10 @@
 #include "fft_cpu.h"
 
 #include <memory>
-namespace ModuleBase
-{
-class FFT_Bundle
-{
+namespace ModuleBase {
+class FFT_Bundle {
   public:
-    FFT_Bundle() {};
+    FFT_Bundle(){};
     ~FFT_Bundle();
     /**
      * @brief Constructor with device and precision.
@@ -20,7 +18,7 @@ class FFT_Bundle
      * the function will check the input device and precision,
      * and set the device and precision.
      */
-    FFT_Bundle(std::string device_in, std::string precision_in) : device(device_in), precision(precision_in) {};
+    FFT_Bundle(std::string device_in, std::string precision_in) : device(device_in), precision(precision_in){};
 
     /**
      * @brief Set device and precision.
@@ -78,10 +76,7 @@ class FFT_Bundle
      * the function will initialize the fft mode.
      */
 
-    void initfftmode(int fft_mode_in)
-    {
-        this->fft_mode = fft_mode_in;
-    }
+    void initfftmode(int fft_mode_in) { this->fft_mode = fft_mode_in; }
 
     void setupFFT();
 
@@ -212,18 +207,13 @@ class FFT_Bundle
     std::string precision = "double";
     int dsp_cluster_id_ = 0;
 };
-// Use RAII (Resource Acquisition Is Initialization) to 
+// Use RAII (Resource Acquisition Is Initialization) to
 // control the resources used by hthread when setting the DSP
-struct FFT_Guard
-  {
-      const FFT_Bundle& fft_;
-      FFT_Guard(const FFT_Bundle& fft) : fft_(fft) 
-        {fft_.resource_handler(1);}
-      ~FFT_Guard()
-      {
-        fft_.resource_handler(0);
-      }
-  };
+struct FFT_Guard {
+    const FFT_Bundle& fft_;
+    FFT_Guard(const FFT_Bundle& fft) : fft_(fft) { fft_.resource_handler(1); }
+    ~FFT_Guard() { fft_.resource_handler(0); }
+};
 
 } // namespace ModuleBase
 #endif // FFT_H

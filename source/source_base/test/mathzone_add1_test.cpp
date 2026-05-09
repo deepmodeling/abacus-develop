@@ -28,8 +28,7 @@
  *     - semifactorial of an integer
  */
 
-class MathzoneAdd1Test : public testing::Test
-{
+class MathzoneAdd1Test : public testing::Test {
   protected:
     const int MaxInt = 100;
     int nr_in = 17;
@@ -40,8 +39,7 @@ class MathzoneAdd1Test : public testing::Test
     double* psi_in;
     double* psi_out;
     double* dpsi;
-    void SetUp()
-    {
+    void SetUp() {
         r_in = new double[nr_in];
         r_out = new double[nr_out];
         y2 = new double[nr_in];
@@ -49,8 +47,7 @@ class MathzoneAdd1Test : public testing::Test
         psi_out = new double[nr_out];
         dpsi = new double[nr_out];
     }
-    void TearDown()
-    {
+    void TearDown() {
         delete[] r_in;
         delete[] r_out;
         delete[] y2;
@@ -60,15 +57,11 @@ class MathzoneAdd1Test : public testing::Test
     }
 };
 
-TEST_F(MathzoneAdd1Test, Constructor)
-{
-    EXPECT_NO_THROW(ModuleBase::Mathzone_Add1 MA1);
-}
+TEST_F(MathzoneAdd1Test, Constructor) { EXPECT_NO_THROW(ModuleBase::Mathzone_Add1 MA1); }
 
 #define PI 3.1415926535897932
 /// first kind boundary condition: f'(0) = f'(n) = 0.0
-TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
-{
+TEST_F(MathzoneAdd1Test, CubicSplineBoundary1) {
     // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for d orbital of Si : L = 2, N = 0
     psi_in[0] = 0;
@@ -88,23 +81,19 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
     psi_in[14] = 3.221037475903e-03;
     psi_in[15] = 3.802139894646e-03;
     psi_in[16] = 0;
-    for (int i = 0; i < nr_in; i++)
-    {
+    for (int i = 0; i < nr_in; i++) {
         r_in[i] = i * 0.5;
         // std::cout<< r_in[i] << " " << psi_in[i] << std::endl; // for plotting
     }
-    for (int i = 0; i < nr_out; i++)
-    {
+    for (int i = 0; i < nr_out; i++) {
         r_out[i] = i * 0.05;
     }
     ModuleBase::Mathzone_Add1::SplineD2(r_in, psi_in, nr_in, 0.0, 0.0, y2);
     // std::cout << "y2[0] "<< y2[0] << " y2[nr_in] "<< y2[nr_in-1] << std::endl; // for checking
     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in, psi_in, y2, nr_in, r_out, nr_out, psi_out, dpsi);
-    for (int i = 0; i < nr_out; i++)
-    {
+    for (int i = 0; i < nr_out; i++) {
         int j = i / 10;
-        if (i % 10 == 0)
-        {
+        if (i % 10 == 0) {
             EXPECT_EQ(psi_in[j], psi_out[i]);
         }
         // std::cout<< r_out[i] << " " << psi_out[i] << std::endl; // for plotting
@@ -115,18 +104,15 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary1)
 }
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
-double count_err(double* x, std::function<double(double)> func, int n, int derivative)
-{
+double count_err(double* x, std::function<double(double)> func, int n, int derivative) {
     double maxf4x = -10000000000;
     double maxh = 0;
 
-    for (int i = 0; i != n; ++i)
-    {
+    for (int i = 0; i != n; ++i) {
         maxf4x = MAX(abs(func(x[i])), maxf4x);
     }
     // printf("maxf4x = %.8lf\n", maxf4x);
-    for (int i = 1; i != n; ++i)
-    {
+    for (int i = 1; i != n; ++i) {
         maxh = MAX(x[i + 1] - x[i], maxh);
     }
 
@@ -137,69 +123,57 @@ double count_err(double* x, std::function<double(double)> func, int n, int deriv
 }
 
 /// first kind boundary condition: f'(0) = f'(n) = 0.0
-TEST_F(MathzoneAdd1Test, sinx_Boundary1)
-{
-    for (int i = 0; i <= 10; i++)
-    {
+TEST_F(MathzoneAdd1Test, sinx_Boundary1) {
+    for (int i = 0; i <= 10; i++) {
         r_in[i] = i * 0.1 * PI + 0.5 * PI;
         psi_in[i] = sin(r_in[i]);
     }
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(r_in, f, 11, 0);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         r_out[i] = i * 0.01 * PI + 0.5 * PI;
     }
     ModuleBase::Mathzone_Add1::SplineD2(r_in, psi_in, 11, 0.0, 0.0, y2);
     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in, psi_in, y2, 11, r_out, 100, psi_out, dpsi);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         double ans = sin(r_out[i]);
         EXPECT_NEAR(psi_out[i], ans, err);
     }
 }
 
 /// second kind boundary condition: f''(0) = f''(n) = 0.0
-TEST_F(MathzoneAdd1Test, sinx_Boundary2)
-{
-    for (int i = 0; i <= 10; i++)
-    {
+TEST_F(MathzoneAdd1Test, sinx_Boundary2) {
+    for (int i = 0; i <= 10; i++) {
         r_in[i] = i * 0.1 * PI;
         psi_in[i] = sin(r_in[i]);
     }
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(r_in, f, 11, 0);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         r_out[i] = i * 0.01 * PI;
     }
     ModuleBase::Mathzone_Add1::SplineD2(r_in, psi_in, 11, 0.0, 0.0, y2);
     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in, psi_in, y2, 11, r_out, 100, psi_out, dpsi);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         double ans = sin(r_out[i]);
         EXPECT_NEAR(psi_out[i], ans, err);
     }
 }
 
-TEST_F(MathzoneAdd1Test, expx)
-{
-    for (int i = 0; i <= 10; i++)
-    {
+TEST_F(MathzoneAdd1Test, expx) {
+    for (int i = 0; i <= 10; i++) {
         r_in[i] = i;
         psi_in[i] = exp(r_in[i]);
     }
     auto f = [](double x) -> double { return exp(x); };
     double err = count_err(r_in, f, 11, 0);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         r_out[i] = i * 0.1;
     }
     double d2 = exp(10);
     ModuleBase::Mathzone_Add1::SplineD2(r_in, psi_in, 11, 1, d2, y2);
     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in, psi_in, y2, 11, r_out, 100, psi_out, dpsi);
-    for (int i = 0; i < 100; i++)
-    {
+    for (int i = 0; i < 100; i++) {
         double ans = exp(r_out[i]);
         EXPECT_NEAR(psi_out[i], ans, err);
     }
@@ -208,30 +182,29 @@ TEST_F(MathzoneAdd1Test, expx)
 // /// second kind boundary condition: f''(0) = f''(n) = 0.0
 // TEST_F(MathzoneAdd1Test, expx_Boundary2)
 // {
-// 	for (int i=0; i<=10; i++)
-// 	{
-// 		r_in[i] = i;
-// 		psi_in[i] = exp(r_in[i]);
+//     for (int i=0; i<=10; i++)
+//     {
+//         r_in[i] = i;
+//         psi_in[i] = exp(r_in[i]);
 
-// 	}
-// 	double err = count_err(r_in, 2, 11, 0);
-// 	for (int i=0; i< 100; i++)
-// 	{
-// 		r_out[i] = i*0.1;
-// 	}
-// 	double d2 = exp(10);
-// 	ModuleBase::Mathzone_Add1::SplineD2(r_in,psi_in,11,1,d2,y2);
-// 	ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in,psi_in,y2,11,r_out,100,psi_out,dpsi);
-// 	for (int i=0; i< 100; i++)
-// 	{
-// 		double ans = exp(r_out[i]);
-// 		EXPECT_NEAR(psi_out[i],ans,err);
-// 	}
+//     }
+//     double err = count_err(r_in, 2, 11, 0);
+//     for (int i=0; i< 100; i++)
+//     {
+//         r_out[i] = i*0.1;
+//     }
+//     double d2 = exp(10);
+//     ModuleBase::Mathzone_Add1::SplineD2(r_in,psi_in,11,1,d2,y2);
+//     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in,psi_in,y2,11,r_out,100,psi_out,dpsi);
+//     for (int i=0; i< 100; i++)
+//     {
+//         double ans = exp(r_out[i]);
+//         EXPECT_NEAR(psi_out[i],ans,err);
+//     }
 // }
 
 /// second kind boundary condition: f''(0) = f''(n) = 0.0
-TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
-{
+TEST_F(MathzoneAdd1Test, CubicSplineBoundary2) {
     // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for 1st p orbital of Si: L = 1, N= 0
     psi_in[0] = 0;
@@ -251,13 +224,11 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
     psi_in[14] = 9.880871041599e-03;
     psi_in[15] = 7.795456942712e-03;
     psi_in[16] = 0;
-    for (int i = 0; i < nr_in; i++)
-    {
+    for (int i = 0; i < nr_in; i++) {
         r_in[i] = i * 0.5;
         // std::cout<< r_in[i] << " " << psi_in[i] << std::endl; // for plotting
     }
-    for (int i = 0; i < nr_out; i++)
-    {
+    for (int i = 0; i < nr_out; i++) {
         r_out[i] = i * 0.05;
     }
     ModuleBase::Mathzone_Add1::SplineD2(r_in, psi_in, nr_in, 100000.0, 100000.0, y2);
@@ -265,11 +236,9 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
     EXPECT_EQ(y2[nr_in - 1], 0.0);
     // std::cout << "y2[0] "<< y2[0] << " y2[nr_in] "<< y2[nr_in-1] << std::endl; // for checking
     ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(r_in, psi_in, y2, nr_in, r_out, nr_out, psi_out, dpsi);
-    for (int i = 0; i < nr_out; i++)
-    {
+    for (int i = 0; i < nr_out; i++) {
         int j = i / 10;
-        if (i % 10 == 0)
-        {
+        if (i % 10 == 0) {
             EXPECT_EQ(psi_in[j], psi_out[i]);
         }
         // std::cout<< r_out[i] << " " << psi_out[i] << std::endl; // for plotting
@@ -277,8 +246,7 @@ TEST_F(MathzoneAdd1Test, CubicSplineBoundary2)
     // std::cout<<dpsi[0] << " " << dpsi[nr_out-1] << std::endl; // for checking
 }
 
-TEST_F(MathzoneAdd1Test, UniRadialF)
-{
+TEST_F(MathzoneAdd1Test, UniRadialF) {
     // data from abacus/tests/integrate/tools/PP_ORB/Si_gga_8au_60Ry_2s2p1d.orb
     // data for 1st p orbital of Si: L = 1, N= 0
     psi_in[0] = 0;
@@ -298,27 +266,23 @@ TEST_F(MathzoneAdd1Test, UniRadialF)
     psi_in[14] = 9.880871041599e-03;
     psi_in[15] = 7.795456942712e-03;
     psi_in[16] = 0;
-    for (int i = 0; i < nr_in; i++)
-    {
+    for (int i = 0; i < nr_in; i++) {
         r_in[i] = i * 0.5;
         // std::cout<< r_in[i] << " " << psi_in[i] << std::endl; // for plotting
     }
     double dr = 0.5;
-    for (int i = 0; i < nr_out; i++)
-    {
+    for (int i = 0; i < nr_out; i++) {
         int j = i / 10;
         r_out[i] = i * 0.05;
         psi_out[i] = ModuleBase::Mathzone_Add1::Uni_RadialF(psi_in, nr_in, dr, r_out[i]);
-        if (i % 10 == 0)
-        {
+        if (i % 10 == 0) {
             EXPECT_NEAR(psi_in[j], psi_out[i], 1e-15);
         }
         // std::cout<< r_out[i] << " " << psi_out[i] << std::endl; // for plotting
     }
 }
 
-TEST_F(MathzoneAdd1Test, Factorial)
-{
+TEST_F(MathzoneAdd1Test, Factorial) {
     double fac[MaxInt];
     double fac1;
     fac[1] = fac[0] = 1.0;
@@ -326,16 +290,14 @@ TEST_F(MathzoneAdd1Test, Factorial)
     EXPECT_EQ(fac[0], fac1);
     fac1 = ModuleBase::Mathzone_Add1::factorial(1);
     EXPECT_EQ(fac[1], fac1);
-    for (int i = 2; i < MaxInt; i++)
-    {
+    for (int i = 2; i < MaxInt; i++) {
         fac[i] = i * fac[i - 1];
         fac1 = ModuleBase::Mathzone_Add1::factorial(i);
         EXPECT_EQ(fac[i], fac1);
     }
 }
 
-TEST_F(MathzoneAdd1Test, DualFac)
-{
+TEST_F(MathzoneAdd1Test, DualFac) {
     double dualfac[MaxInt];
     double dualfacm1;
     double dualfac1;
@@ -347,8 +309,7 @@ TEST_F(MathzoneAdd1Test, DualFac)
     dualfac[1] = 1.0;
     dualfac1 = ModuleBase::Mathzone_Add1::dualfac(1);
     EXPECT_EQ(dualfac[1], dualfac1);
-    for (int i = 2; i < MaxInt; i++)
-    {
+    for (int i = 2; i < MaxInt; i++) {
         dualfac[i] = i * dualfac[i - 2];
         dualfac1 = ModuleBase::Mathzone_Add1::dualfac(i);
         EXPECT_EQ(dualfac[i], dualfac1);

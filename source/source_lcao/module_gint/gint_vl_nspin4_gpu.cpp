@@ -5,11 +5,9 @@
 #include "kernel/phi_operator_gpu.h"
 #include "source_base/module_device/device_check.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-void Gint_vl_nspin4_gpu::cal_gint()
-{
+void Gint_vl_nspin4_gpu::cal_gint() {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
     ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
@@ -18,44 +16,40 @@ void Gint_vl_nspin4_gpu::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
-void Gint_vl_nspin4_gpu::init_hr_gint_()
-{
+void Gint_vl_nspin4_gpu::init_hr_gint_() {
     hr_gint_part_.resize(nspin_);
-    for(int i = 0; i < nspin_; i++)
-    {
+    for (int i = 0; i < nspin_; i++) {
         hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
 }
 
-void Gint_vl_nspin4_gpu::transfer_cpu_to_gpu_()
-{
+void Gint_vl_nspin4_gpu::transfer_cpu_to_gpu_() {
     vr_eff_d_.resize(nspin_);
     hr_gint_part_d_.resize(nspin_);
-    for(int i = 0; i < nspin_; i++)
-    {
+    for (int i = 0; i < nspin_; i++) {
         hr_gint_part_d_[i] = CudaMemWrapper<double>(hr_gint_part_[i].get_nnr(), 0, false);
         vr_eff_d_[i] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
-        CHECK_CUDA(cudaMemcpy(vr_eff_d_[i].get_device_ptr(), vr_eff_[i],
-                  gint_info_->get_local_mgrid_num() * sizeof(double), cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(vr_eff_d_[i].get_device_ptr(),
+                              vr_eff_[i],
+                              gint_info_->get_local_mgrid_num() * sizeof(double),
+                              cudaMemcpyHostToDevice));
     }
 }
 
-void Gint_vl_nspin4_gpu::transfer_gpu_to_cpu_()
-{
-    for(int i = 0; i < nspin_; i++)
-    {
-        CHECK_CUDA(cudaMemcpy(hr_gint_part_[i].get_wrapper(), hr_gint_part_d_[i].get_device_ptr(), 
-                             hr_gint_part_[i].get_nnr() * sizeof(double), cudaMemcpyDeviceToHost));
+void Gint_vl_nspin4_gpu::transfer_gpu_to_cpu_() {
+    for (int i = 0; i < nspin_; i++) {
+        CHECK_CUDA(cudaMemcpy(hr_gint_part_[i].get_wrapper(),
+                              hr_gint_part_d_[i].get_device_ptr(),
+                              hr_gint_part_[i].get_nnr() * sizeof(double),
+                              cudaMemcpyDeviceToHost));
     }
 }
 
-
-void Gint_vl_nspin4_gpu::cal_hr_gint_()
-{
+void Gint_vl_nspin4_gpu::cal_hr_gint_() {
     transfer_cpu_to_gpu_();
 #pragma omp parallel num_threads(gint_info_->get_streams_num())
     {
-        // 20240620 Note that it must be set again here because 
+        // 20240620 Note that it must be set again here because
         // cuda's device is not safe in a multi-threaded environment.
         CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
@@ -63,22 +57,23 @@ void Gint_vl_nspin4_gpu::cal_hr_gint_()
         PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
-        #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
-        {
+#pragma omp for schedule(dynamic)
+        for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i) {
             const auto& bgrid_batch = gint_info_->get_bgrid_batches()[i];
-            if(bgrid_batch->empty())
-            {
+            if (bgrid_batch->empty()) {
                 continue;
             }
             phi_op.set_bgrid_batch(bgrid_batch);
             phi_op.set_phi(phi.get_device_ptr());
-            for(int is = 0; is < nspin_; is++)
-            {
-                phi_op.phi_mul_vldr3(vr_eff_d_[is].get_device_ptr(), dr3_,
-                                     phi.get_device_ptr(), phi_vldr3.get_device_ptr());
-                phi_op.phi_mul_phi(phi.get_device_ptr(), phi_vldr3.get_device_ptr(),
-                                   hr_gint_part_[is], hr_gint_part_d_[is].get_device_ptr());
+            for (int is = 0; is < nspin_; is++) {
+                phi_op.phi_mul_vldr3(vr_eff_d_[is].get_device_ptr(),
+                                     dr3_,
+                                     phi.get_device_ptr(),
+                                     phi_vldr3.get_device_ptr());
+                phi_op.phi_mul_phi(phi.get_device_ptr(),
+                                   phi_vldr3.get_device_ptr(),
+                                   hr_gint_part_[is],
+                                   hr_gint_part_d_[is].get_device_ptr());
             }
         }
         CHECK_CUDA(cudaStreamSynchronize(stream));

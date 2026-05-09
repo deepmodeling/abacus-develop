@@ -10,19 +10,13 @@
  *  unit test of read_exit_file.cpp
  ***********************************************/
 
-class ReadStopFileTest : public testing::Test
-{
+class ReadStopFileTest : public testing::Test {
   protected:
-    virtual void SetUp()
-    {
-    }
-    virtual void TearDown()
-    {
-    }
+    virtual void SetUp() {}
+    virtual void TearDown() {}
 };
 
-TEST_F(ReadStopFileTest, read_exit_file)
-{
+TEST_F(ReadStopFileTest, read_exit_file) {
     std::string filename = "EXIT";
     std::string output = "running.txt";
     std::ofstream ofs_running(output.c_str(), std::ios::out);
@@ -34,8 +28,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
 
     // case 2: no keywords in the file
     std::ofstream ofs;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ofs.open(filename.c_str(), std::ios::out);
         ofs << "no keywords\n\ntest" << std::endl;
         ofs.close();
@@ -46,8 +39,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // case 3:  stop_ion = false    stop_elec = false
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::remove(filename.c_str());
         ofs.open(filename.c_str(), std::ios::out);
         ofs << "stop_ion    false\nstop_elec    0" << std::endl;
@@ -59,8 +51,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // case 4:  stop_ion = true    stop_elec = false
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::remove(filename.c_str());
         ofs.open(filename.c_str(), std::ios::out);
         ofs << "stop_ion    true\nstop_elec    f" << std::endl;
@@ -72,8 +63,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // case 5:  stop_ion = false    stop_elec = true
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::remove(filename.c_str());
         ofs.open(filename.c_str(), std::ios::out);
         ofs << "stop_ion    F\nstop_elec    1" << std::endl;
@@ -85,8 +75,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // case 6:  stop_ion = true    stop_elec = true
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::remove(filename.c_str());
         ofs.open(filename.c_str(), std::ios::out);
         ofs << "stop_ion    T\nstop_elec    t" << std::endl;
@@ -102,8 +91,7 @@ TEST_F(ReadStopFileTest, read_exit_file)
     std::remove(filename.c_str());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 

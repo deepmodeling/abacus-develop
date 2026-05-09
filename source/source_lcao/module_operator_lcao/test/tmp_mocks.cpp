@@ -20,8 +20,8 @@ pseudo::~pseudo() {}
 // constructor of UnitCell
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
@@ -120,31 +120,29 @@ void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
                                    const int nr,
                                    const double cutoff) {}
 
-void TwoCenterIntegrator::calculate(
-    const int itype1,
-    const int l1,
-    const int izeta1,
-    const int m1,
-    const int itype2,
-    const int l2,
-    const int izeta2,
-    const int m2,
-    const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
-    double* out,
-    double* grad_out,
-    double* hess_out) const {
+void TwoCenterIntegrator::calculate(const int itype1,
+                                    const int l1,
+                                    const int izeta1,
+                                    const int m1,
+                                    const int itype2,
+                                    const int l2,
+                                    const int izeta2,
+                                    const int m2,
+                                    const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+                                    double* out,
+                                    double* grad_out,
+                                    double* hess_out) const {
     out[0] = 1.0;
 }
 
-void TwoCenterIntegrator::snap(
-    const int itype1,
-    const int l1,
-    const int izeta1,
-    const int m1,
-    const int itype2,
-    const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
-    const bool deriv,
-    std::vector<std::vector<double>>& out) const {
+void TwoCenterIntegrator::snap(const int itype1,
+                               const int l1,
+                               const int izeta1,
+                               const int m1,
+                               const int itype2,
+                               const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+                               const bool deriv,
+                               std::vector<std::vector<double>>& out) const {
     out.resize(1);
     for (int i = 0; i < out.size(); ++i) {
         out[i].resize(5, 1.0);
@@ -161,8 +159,7 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,
                             const int& I,
-                            AdjacentAtomInfo* adjs) const
-{
+                            AdjacentAtomInfo* adjs) const {
     adjs->adj_num = ucell.nat - 1;
     adjs->adjacent_tau.resize(ucell.nat);
     adjs->ntype.resize(ucell.nat, 0);
@@ -178,10 +175,8 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
 }
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
 Grid::~Grid() {}
-Grid_Driver::Grid_Driver(const int& test_d_in,
-                         const int& test_grid_in)
-    : Grid(test_grid_in), test_deconstructor(test_d_in) {
-}
+Grid_Driver::Grid_Driver(const int& test_d_in, const int& test_grid_in)
+    : Grid(test_grid_in), test_deconstructor(test_d_in) {}
 Grid_Driver::~Grid_Driver() {}
 
 // filter_adjs delete not adjacent atoms in adjs
@@ -204,15 +199,11 @@ Numerical_Nonlocal::~Numerical_Nonlocal() {}
 Numerical_Orbital::Numerical_Orbital() { this->rcut = 1.0; }
 Numerical_Orbital::~Numerical_Orbital() {}
 
-void Numerical_Orbital::set_orbital_info(const int&,
-                                         const std::string&,
-                                         const int&,
-                                         const int*,
-                                         const int&) {}
+void Numerical_Orbital::set_orbital_info(const int&, const std::string&, const int&, const int*, const int&) {}
 
 // mock of TD_info
 class TD_info {
-public:
+  public:
     TD_info() {}
     ~TD_info() {}
     static ModuleBase::Vector3<double> cart_At;

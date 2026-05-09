@@ -1,2 +1,3 @@
 import profile
-profile.run("import main","profile.dat")
+
+profile.run("import main", "profile.dat")

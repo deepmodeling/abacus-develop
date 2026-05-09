@@ -3,15 +3,15 @@
  * -----
  * This file stores XC dependent DFT-D3 parameters for Grimme-D3
  * dispersion correction.
- * 
+ *
  * Supported forms:
- * 
+ *
  * DFT-D3(0): zero-damping
  * DFT-D3(BJ): Becke-Johnson damping
  * DFT-D3M(0): zero-damping with modified damping function
  * DFT-D3M(BJ): Becke-Johnson damping with modified damping function
- * 
- * A detailed introduction of undamped, and BJ damping, the modified 
+ *
+ * A detailed introduction of undamped, and BJ damping, the modified
  * damping can be found in DFT-D3 software manual, see:
  * https://www.chemie.uni-bonn.de/grimme/de/software/dft-d3/man.pdf
  *
@@ -19,31 +19,31 @@
  * of both DFT-D2 and DFT-D3):
  * DFT-D2: https://www.vasp.at/wiki/index.php/DFT-D2
  * DFT-D3: https://www.vasp.at/wiki/index.php/DFT-D3
- * 
+ *
  * Usage
  * -----
  * call function DFTD3::search(xc, method, param) to get the DFT-D3 parameters
  * for the given XC functional. The obtained param should be a std::vector<double>,
  * in which the first 9 elements are the DFT-D3 parameters:
  * 's6', 'sr6', 'a1', 's8', 'sr8', 'a2', 's9', 'alp', 'bet'
- * 
+ *
  * ParamNotFoundError
  * ------------------
- * If the requested D3 parameters of XC are not found, then the ABACUS will 
+ * If the requested D3 parameters of XC are not found, then the ABACUS will
  * WARNING_QUIT with the message "DFT-D3 parameters for XC not found".
- * 
+ *
  * Other dispersion correction
  * ---------------------------
  * there are other kinds of dispersion correction, such as the xc VV09, VV10,
  * and rVV10, and the vdw-DF family nonlocal dispersion correction. They will
- * be mixed directly with the correlation and exchange part, which act 
+ * be mixed directly with the correlation and exchange part, which act
  * differently from the DFT-D2 and D3 methods.
- * 
+ *
  * Special: Omega-B97 family
  * -------------------------
  * (thanks for help and discussion with @hhebrewsnabla and @moolawooda)
  * wB97 XC family is special, their DFT-D3 supports are quite complicated.
- * 
+ *
  * wB97          long-range exx with B97
  * wB97X         wB97 with additional short-range exx
  * wB97X-D       wB97X_D from libXC with DFTD2, not in DFTD3 framework
@@ -51,11 +51,11 @@
  * wB97X-D3(BJ)  wB97X_V from libXC with DFTD3(BJ)
  * wB97X-V       with VV10, not in DFTD3 framework
  * wB97M-V       with VV10, not in DFTD3 framework
- * 
+ *
  * Recommended: http://bbs.keinsci.com/thread-19076-1-1.html
- * Related information from Pyscf Github repo: 
+ * Related information from Pyscf Github repo:
  * https://github.com/pyscf/pyscf/issues/2069
- * 
+ *
  */
 #include <map>
 #include <string>
@@ -140,7 +140,7 @@ const std::pair<const char*, std::vector<double>> bj_data[] = {
     {"r2scanh", {1.0, 0.4709, 0.4709, 1.1236, 5.9157, 5.9157, 1.0, 14.0, 0.0}},
     {"r2scan0", {1.0, 0.4534, 0.4534, 1.1846, 5.8972, 5.8972, 1.0, 14.0, 0.0}},
     {"r2scan50", {1.0, 0.4311, 0.4311, 1.3294, 5.924, 5.924, 1.0, 14.0, 0.0}},
-    {"wb97x_v", {1.0, 0.0, 0.0, 0.2641, 5.4959, 5.4959, 1.0, 14.0, 0.0}}, 
+    {"wb97x_v", {1.0, 0.0, 0.0, 0.2641, 5.4959, 5.4959, 1.0, 14.0, 0.0}},
     // NOTE: the key `wb97x_v` directly corresonding to HYB_GGA_XC_WB97X_V, which can be further
     // employed to construct either wB97X-V with VV10, or wB97X-D3BJ with D3BJ. Here it is the D3BJ
     // parameter of wB97X-D3BJ, instead of those of wB97X-V.
@@ -243,8 +243,8 @@ const std::pair<const char*, std::vector<double>> zero_data[] = {
     {"b97_d", {1.0, 0.892, 0.892, 0.909, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"b973c", {1.0, 1.06, 1.06, 1.5, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"pbe", {1.0, 1.217, 1.217, 0.722, 1.0, 1.0, 1.0, 14.0, 0.0}},
-    {"pbesol", {1.0, 1.345, 1.345, 0.612, 1.0, 1.0, 1.0, 14.0, 0.0}}, 
-    // issue#6646, d3 zero-damping support for PBEsol, 
+    {"pbesol", {1.0, 1.345, 1.345, 0.612, 1.0, 1.0, 1.0, 14.0, 0.0}},
+    // issue#6646, d3 zero-damping support for PBEsol,
     // parameters retrived from https://www.chemie.uni-bonn.de/grimme/de/software/dft-d3/zero_damping
     {"rpw86pbe", {1.0, 1.224, 1.224, 0.901, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"b3lyp", {1.0, 1.261, 1.261, 1.703, 1.0, 1.0, 1.0, 14.0, 0.0}},
@@ -279,7 +279,7 @@ const std::pair<const char*, std::vector<double>> zero_data[] = {
     {"pwpb95", {0.82, 1.557, 1.557, 0.705, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"pw1pw", {1.0, 1.4968, 1.4968, 1.1786, 1.0, 1.0, 1.0, 14.0, 0.0}},
     {"scan", {1.0, 1.324, 1.324, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
-    {"wb97x_d3", {1.0, 1.281, 1.281, 1.0, 1.094, 1.094, 1.0, 14.0, 0.0}}, 
+    {"wb97x_d3", {1.0, 1.281, 1.281, 1.0, 1.094, 1.094, 1.0, 14.0, 0.0}},
     // NOTE: simple-dftd3 assign the D3(0) parameters of functional wB97X-D3
     // to a key `wb97x`, but the functional wB97X itself does not own these params.
     // instead, there is a XC in libxc really names HYB_GGA_WB97X_D3
@@ -373,46 +373,37 @@ const std::pair<const char*, std::vector<double>> op_data[] = {
     {"ms2h", {1.0, 0.65, 0.65, 1.69464, 4.75, 4.75, 1.0, 14.0, 0.0}},
 };
 const std::map<std::string, std::vector<double>> op = {std::begin(op_data), std::end(op_data)};
-    
-std::vector<double> _search_impl(const std::string& xc,
-                                 const std::map<std::string, std::vector<double>>& dict)
-{
-    if (dict.find(xc) != dict.end())
-    {
+
+std::vector<double> _search_impl(const std::string& xc, const std::map<std::string, std::vector<double>>& dict) {
+    if (dict.find(xc) != dict.end()) {
         return dict.at(xc);
-    }
-    else
-    {
+    } else {
         return std::vector<double>();
     }
 }
 // 's6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'
 /**
- * @brief Get the dftd3 params object. 
+ * @brief Get the dftd3 params object.
  * dftd3 method fall back: xc-bjm -> xc-bj -> pbe-bj
  *                         xc-zerom -> xc-zero -> pbe-zero
- * 
+ *
  * @param xc the functional name
  * @param d3method the d3 method, can be "bj", "zero-damping", "bj-modified", "zero-damping-modified", "op"
  * @param param the dftd3 parameters, ALL_KEYS = {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
  */
-void _search(const std::string& xc, 
-             const std::string& method, 
-             std::vector<double>& param)
-{
+void _search(const std::string& xc, const std::string& method, std::vector<double>& param) {
     const std::string xc_lowercase = FmtCore::lower(xc);
-    const std::vector<std::string> allowed_ = { "bj", "zero", "bjm", "zerom", "op" };
+    const std::vector<std::string> allowed_ = {"bj", "zero", "bjm", "zerom", "op"};
     const int i = std::find(allowed_.begin(), allowed_.end(), method) - allowed_.begin();
-    std::map<std::string, std::vector<double>> const * pdict = nullptr;
-    switch (i)
-    {
+    std::map<std::string, std::vector<double>> const* pdict = nullptr;
+    switch (i) {
     case 0:
         pdict = &bj;
         break;
     case 1:
         pdict = &zero;
         break;
-    case 2: 
+    case 2:
         pdict = &bjm;
         break;
     case 3:
@@ -425,19 +416,15 @@ void _search(const std::string& xc,
         pdict = nullptr;
         break;
     }
-    if (pdict == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
-                                 "Unknown DFT-D3 method: " + method);
+    if (pdict == nullptr) {
+        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search", "Unknown DFT-D3 method: " + method);
     }
     param = _search_impl(xc_lowercase, *pdict);
-    if (param.empty())
-    {
+    if (param.empty()) {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
                                  "XC (`" + xc + "`)'s DFT-D3(" + method + ") parameters not found");
         // is it meaningful to return a so-called default value?
-        std::cout << " ***WARNING*** "
-                  << "XC (`" << xc << "`)'s DFT-D3(" << method << ") parameters not found, "
+        std::cout << " ***WARNING*** " << "XC (`" << xc << "`)'s DFT-D3(" << method << ") parameters not found, "
                   << "using default values. Please use at your own risk!" << std::endl;
         param = _search_impl("__default__", *pdict);
     }
@@ -446,8 +433,8 @@ void _search(const std::string& xc,
 /**
  * @brief Get DFT-D3 parameters. If if there are parameters defined,
  * then it will overwrite the search result. If all parameters are
- * defined already by user, then search will not performed. 
- * 
+ * defined already by user, then search will not performed.
+ *
  * @param xc XC functional name
  * @param d3method can be "d3_0" or "d3_bj"
  * @param s6_in user defined s6, default is "default"
@@ -469,11 +456,12 @@ void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
                                                   double& s8,
                                                   double& a1,
                                                   double& a2,
-                                                  std::ofstream* plog)
-{
-    const std::map<std::string, std::string> param_map = {
-        {"d3_bj", "bj"}, {"d3_0", "zero"}, {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
-        {"op", "op"}};
+                                                  std::ofstream* plog) {
+    const std::map<std::string, std::string> param_map = {{"d3_bj", "bj"},
+                                                          {"d3_0", "zero"},
+                                                          {"d3_bjm", "bjm"},
+                                                          {"d3_0m", "zerom"},
+                                                          {"op", "op"}};
 
     const std::vector<std::string> flag = {s6_in, s8_in, a1_in, a2_in};
     const bool autoset = std::any_of(flag.begin(), flag.end(), [](const std::string& s) { return s == "default"; });
@@ -483,9 +471,7 @@ void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
         s8 = std::stod(s8_in);
         a1 = std::stod(a1_in);
         a2 = std::stod(a2_in);
-    }
-    else
-    {
+    } else {
         std::vector<double> param;
         const std::string xc = _vdwd3_xcname(xc_in);
         _search(xc, param_map.at(d3method), param);
@@ -496,23 +482,21 @@ void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
         if (plog != nullptr) // logging the autoset
         {
             param = {s6, s8, a1, a2};
-            FmtTable vdwd3tab(/*titles=*/{"Parameters", "Original", "Autoset"}, 
-                              /*nrows=*/4, 
-                              /*formats=*/{"%10s", "%10s", "%10.4f"}, 
+            FmtTable vdwd3tab(/*titles=*/{"Parameters", "Original", "Autoset"},
+                              /*nrows=*/4,
+                              /*formats=*/{"%10s", "%10s", "%10.4f"},
                               /*indent=*/0);
             const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
             vdwd3tab << items << flag << param;
-            (*plog) << "\nDFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
-                    << "XC functional: " << xc_in << std::endl;
+            (*plog) << "\nDFT-D3 Dispersion correction parameters autoset\n"
+                    << vdwd3tab.str() << "XC functional: " << xc_in << std::endl;
         }
-
     }
 }
 
-
 /*
 '''
-dftd3 parameters from 
+dftd3 parameters from
 https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml
 
 this script is to convert the toml file to c++ map
@@ -535,9 +519,9 @@ def xc_indexing(data):
 def complete(vdw_method, value):
     '''
     for each functional, the zero damping version must be provided
-    for each vdw method, all parameters including 
+    for each vdw method, all parameters including
     s6, rs6/a1, s8, rs8/a2, s9, alp, bet must be provided, otherwise
-    use the default value 
+    use the default value
     '''
     DEFAULT = {
         'bj': {'s6': 1.0, 's9': 1.0, 'alp': 14.0},
@@ -551,14 +535,14 @@ def complete(vdw_method, value):
     out = value.copy()
     for k in ALL_KEYS:
         equilk = EQUIVALENT.get(k, k)
-        val = [out.get(k), out.get(equilk), 
+        val = [out.get(k), out.get(equilk),
                DEFAULT[vdw_method].get(k), DEFAULT[vdw_method].get(equilk)]
         val = [v for v in val if v is not None]
         val = [0.0] if not val else val
         out[k] = val[0]
         out[equilk] = out[k]
-    # equivalent? 
-    # according to 
+    # equivalent?
+    # according to
     # abacus-develop/source/source_hamilt/module_vdw/vdwd3_parameters.cpp
     # https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html
 
@@ -572,7 +556,7 @@ def make_stdmap(data):
             print(', '.join([f'{v}' for v in value.values()]), end='')
             print('}},')
         print('};')
-    
+
 if __name__ == '__main__':
     fn = 'dftd3.toml'
     data = load(fn)
@@ -580,8 +564,7 @@ if __name__ == '__main__':
     for vdw_method, param in data.items():
         for xc, value in param.items():
             raw = complete(vdw_method, value)
-            data[vdw_method][xc] = {k: raw[k] 
+            data[vdw_method][xc] = {k: raw[k]
             for k in ['s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet']}
     make_stdmap(data)
 */
-

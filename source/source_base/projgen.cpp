@@ -18,8 +18,7 @@ void projgen(const int l,
              const double* chi,
              const double rcut,
              const int nbes,
-             std::vector<double>& alpha)
-{
+             std::vector<double>& alpha) {
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
 
@@ -48,8 +47,7 @@ void projgen(const int l,
     // r^2 * chi * j_l(theta[p] * r / rcut) (dependent on p)
     std::vector<double> integrand(nr_proj);
 
-    for (int p = 0; p < nbes; ++p)
-    {
+    for (int p = 0; p < nbes; ++p) {
         std::transform(r, r + nr_proj, tmp.begin(), integrand.begin(), [theta, p, rcut, l](double r_i, double tmp_i) {
             return tmp_i * Sphbes::sphbesj(l, theta[p] * r_i / rcut);
         });
@@ -67,17 +65,14 @@ void projgen(const int l,
     // new radial function
     alpha.resize(nr_proj);
     std::fill(alpha.begin(), alpha.end(), 0.0);
-    for (int i = 0; i < nr_proj; ++i)
-    {
-        for (int p = 0; p < nbes; ++p)
-        {
+    for (int i = 0; i < nr_proj; ++i) {
+        for (int p = 0; p < nbes; ++p) {
             alpha[i] += c[p] * Sphbes::sphbesj(l, theta[p] * r[i] / rcut);
         }
     }
 }
 
-void smoothgen(const int nr, const double* r, const double* chi, const double rcut, std::vector<double>& alpha)
-{
+void smoothgen(const int nr, const double* r, const double* chi, const double rcut, std::vector<double>& alpha) {
     // lambda function for generate the new radial function
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
@@ -89,8 +84,7 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
     int nr_proj = std::distance(r, std::lower_bound(r, r + nr, rcut)) + 1;
     alpha.resize(nr_proj);
     auto smooth_sigma = [&](double sigma_in) {
-        for (int i = 0; i < nr_proj; i++)
-        {
+        for (int i = 0; i < nr_proj; i++) {
             alpha[i] = chi[i] * (1 - std::exp(-std::pow((r[i] - rcut), 2) / 2 / sigma_in / sigma_in));
         }
         // r^2 * chi (independent from p)
@@ -108,8 +102,7 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
                        integrand.begin(),
                        [](double chi_i, double tmp_i) { return tmp_i * chi_i; });
         double overlap = ModuleBase::Integral::simpson(nr_proj, integrand.data(), &dr[1]);
-        for (int i = 0; i < nr_proj; i++)
-        {
+        for (int i = 0; i < nr_proj; i++) {
             alpha[i] /= std::sqrt(overlap);
         }
         return;
@@ -154,36 +147,27 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
     double overlap_alpha_chi_right = overlap_dalpha_dchi();
     double overlap_alpha_chi = 0.0;
     double sigma = 0.0;
-    while (std::abs(overlap_alpha_chi_right - overlap_alpha_chi_left) > 1e-6)
-    {
+    while (std::abs(overlap_alpha_chi_right - overlap_alpha_chi_left) > 1e-6) {
         sigma = (sigma_left + sigma_right) / 2;
         smooth_sigma(sigma);
         overlap_alpha_chi = overlap_dalpha_dchi();
-        if (overlap_alpha_chi < overlap_alpha_chi_left && overlap_alpha_chi < overlap_alpha_chi_right)
-        { // the minimum is in the middle
-            if (overlap_alpha_chi_left > overlap_alpha_chi_right)
-            {
+        if (overlap_alpha_chi < overlap_alpha_chi_left &&
+            overlap_alpha_chi < overlap_alpha_chi_right) { // the minimum is in the middle
+            if (overlap_alpha_chi_left > overlap_alpha_chi_right) {
                 sigma_left = sigma;
                 overlap_alpha_chi_left = overlap_alpha_chi;
-            }
-            else
-            {
+            } else {
                 sigma_right = sigma;
                 overlap_alpha_chi_right = overlap_alpha_chi;
             }
-        }
-        else
-        { // the minimum is on the left or right
-            if (overlap_alpha_chi_left < overlap_alpha_chi_right)
-            {
+        } else { // the minimum is on the left or right
+            if (overlap_alpha_chi_left < overlap_alpha_chi_right) {
                 sigma_right = sigma;
                 overlap_alpha_chi_right = overlap_alpha_chi;
                 sigma_left = sigma_left - (sigma_right - sigma_left) * 0.5;
                 smooth_sigma(sigma_left);
                 overlap_alpha_chi_left = overlap_dalpha_dchi();
-            }
-            else
-            {
+            } else {
                 sigma_left = sigma;
                 overlap_alpha_chi_left = overlap_alpha_chi;
                 sigma_right = sigma_right + (sigma_right - sigma_left) * 0.5;

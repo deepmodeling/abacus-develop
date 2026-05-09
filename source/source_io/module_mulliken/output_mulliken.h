@@ -13,13 +13,11 @@
 #include <map>
 #include <vector>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /// @brief the output interface to write the Mulliken population charges
 template <typename TK>
-class Output_Mulliken
-{
+class Output_Mulliken {
   public:
     /// constructor of Output_Mulliken
     Output_Mulliken(Output_Sk<TK>* output_sk,
@@ -89,30 +87,25 @@ template <typename TK>
 void cal_mag(Parallel_Orbitals* pv,
              hamilt::Hamilt<TK>* p_ham,
              K_Vectors& kv,
-             elecstate::DensityMatrix<TK,double>* dm, // mohan add 2025-11-04
+             elecstate::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,
              UnitCell& ucell,
              const Grid_Driver& gd,
              const int istep,
-             const bool print)
-{
+             const bool print) {
     // 1) calculate and output Mulliken population charges and magnetic moments
-    if (PARAM.inp.out_mul)
-    {
-        auto cell_index
-            = CellIndex(ucell.get_atomLabels(), 
-			ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
+    if (PARAM.inp.out_mul) {
+        auto cell_index =
+            CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
         auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
         auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
 
-        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), 
-			&(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
+        auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_s_k), &(out_dm_k), pv, &cell_index, kv.isk, PARAM.inp.nspin);
         auto atom_chg = mulp.get_atom_chg();
         /// used in updating mag info in STRU file
         ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
-        if (print && GlobalV::MY_RANK == 0)
-        {
+        if (print && GlobalV::MY_RANK == 0) {
             /// write the Orbital file
             cell_index.write_orb_info(PARAM.globalv.global_out_dir);
             /// write mulliken.txt
@@ -122,8 +115,7 @@ void cal_mag(Parallel_Orbitals* pv,
         }
     }
     // 2) calculate and output the magnetizations of each atom with projection method
-    if (PARAM.inp.onsite_radius > 0)
-    {
+    if (PARAM.inp.onsite_radius > 0) {
         std::vector<std::vector<double>> atom_mag(ucell.nat, std::vector<double>(PARAM.inp.nspin, 0.0));
         std::vector<ModuleBase::Vector3<int>> constrain(ucell.nat, ModuleBase::Vector3<int>(1, 1, 1));
         const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
@@ -133,30 +125,27 @@ void cal_mag(Parallel_Orbitals* pv,
         std::vector<double> mag_z(ucell.nat, 0.0);
         auto atomLabels = ucell.get_atomLabels();
 
-        if(PARAM.inp.nspin == 2)
-        {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
-		kv.kvec_d,
-		dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
-		ucell,
-		&gd,
-		two_center_bundle.overlap_orb_onsite.get(),
-		orb.cutoffs());
+        if (PARAM.inp.nspin == 2) {
+            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(
+                nullptr,
+                kv.kvec_d,
+                dynamic_cast<hamilt::HamiltLCAO<TK, double>*>(p_ham)->getHR(),
+                ucell,
+                &gd,
+                two_center_bundle.overlap_orb_onsite.get(),
+                orb.cutoffs());
 
-	    dm->switch_dmr(2);
-	    moments = sc_lambda->cal_moment(dmr, constrain);
-	    dm->switch_dmr(0);
+            dm->switch_dmr(2);
+            moments = sc_lambda->cal_moment(dmr, constrain);
+            dm->switch_dmr(0);
 
-	    delete sc_lambda;
+            delete sc_lambda;
 
-            for(int iat=0;iat<ucell.nat;iat++)
-            {
+            for (int iat = 0; iat < ucell.nat; iat++) {
                 atom_mag[iat][0] = 0.0;
                 atom_mag[iat][1] = moments[iat];
             }
-        }
-        else if(PARAM.inp.nspin == 4)
-        {
+        } else if (PARAM.inp.nspin == 4) {
             auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
                 nullptr,
                 kv.kvec_d,
@@ -168,12 +157,11 @@ void cal_mag(Parallel_Orbitals* pv,
             moments = sc_lambda->cal_moment(dmr, constrain);
             delete sc_lambda;
 
-            for(int iat=0;iat<ucell.nat;iat++)
-            {
+            for (int iat = 0; iat < ucell.nat; iat++) {
                 atom_mag[iat][0] = 0.0;
-                atom_mag[iat][1] = moments[iat*3];
-                atom_mag[iat][2] = moments[iat*3+1];
-                atom_mag[iat][3] = moments[iat*3+2];
+                atom_mag[iat][1] = moments[iat * 3];
+                atom_mag[iat][2] = moments[iat * 3 + 1];
+                atom_mag[iat][3] = moments[iat * 3 + 2];
             }
         }
         ucell.atom_mulliken = atom_mag;

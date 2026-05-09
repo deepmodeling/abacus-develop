@@ -12,7 +12,7 @@ namespace core {
  * @brief The base class for reference-counted objects.
  */
 class counted_base {
- public:
+  public:
     /**
      * @brief Default constructor. Initializes the reference count to one.
      */
@@ -41,14 +41,14 @@ class counted_base {
      */
     bool ref_count_is_one() const;
 
- protected:
+  protected:
     /**
      * @brief Virtual destructor.
      * @details The destructor is protected to prevent the explicit initialization of the base class.
      */
     virtual ~counted_base() {}
 
- private:
+  private:
     mutable std::atomic_int_fast32_t ref_;
     counted_base(const counted_base&) = delete;
     void operator=(const counted_base&) = delete;
@@ -62,9 +62,7 @@ struct ref_count_deleter {
      * @brief Calls unref on the object.
      * @param o Pointer to the object.
      */
-    void operator()(const counted_base* o) const {
-        o->unref();
-    }
+    void operator()(const counted_base* o) const { o->unref(); }
 };
 
 /**
@@ -82,8 +80,7 @@ class ref_count_ptr;
  */
 template <typename T>
 std::unique_ptr<T, ref_count_deleter> get_new_ref(T* ptr) {
-    static_assert(std::is_base_of<counted_base, T>::value,
-                  "T must be derived from counted_base");
+    static_assert(std::is_base_of<counted_base, T>::value, "T must be derived from counted_base");
 
     if (ptr == nullptr) {
         return std::unique_ptr<T, ref_count_deleter>();
@@ -98,7 +95,7 @@ std::unique_ptr<T, ref_count_deleter> get_new_ref(T* ptr) {
  */
 template <typename T>
 class ref_count_ptr : public std::unique_ptr<T, ref_count_deleter> {
- public:
+  public:
     using std::unique_ptr<T, ref_count_deleter>::unique_ptr;
 
     /**

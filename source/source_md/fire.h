@@ -10,15 +10,13 @@
  * It is based on conventional molecular dynamics with additional velocity modifications and adaptive time steps.
  * The MD trajectory will descend to an energy-minimum.
  */
-class FIRE : public MD_base
-{
+class FIRE : public MD_base {
   public:
     FIRE(const Parameter& param_in, UnitCell& unit_in);
 
     ~FIRE();
 
   private:
-
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
 
     void first_half(std::ofstream& ofs);

@@ -5,23 +5,19 @@
 
 #include "constants.h"
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /**
  * @brief A interface to line search
  *
  */
-class Opt_DCsrch
-{
+class Opt_DCsrch {
   public:
-    Opt_DCsrch()
-    {
+    Opt_DCsrch() {
         this->isave_ = new int[3];
         this->dsave_ = new double[14];
     }
-    ~Opt_DCsrch()
-    {
+    ~Opt_DCsrch() {
         delete[] this->isave_;
         delete[] this->dsave_;
     }
@@ -47,8 +43,7 @@ class Opt_DCsrch
                    double gtol = 2e-1,
                    double xtol = 1e-12,
                    double stpmin = 0.,
-                   double stpmax = ModuleBase::PI)
-    {
+                   double stpmax = ModuleBase::PI) {
         this->ftol_ = ftol;
         this->gtol_ = gtol;
         this->xtol_ = xtol;
@@ -60,7 +55,7 @@ class Opt_DCsrch
      * @brief Interface to dcsrch, finding the optimal step length with line search.
      *
      * @param f the value of the function at x on initial entry.
-     *	        On subsequent entries f is the value of the function at x + stp * d.
+     *            On subsequent entries f is the value of the function at x + stp * d.
      * @param g the derivative of the function at 0 on initial entry.
      *          On subsequent entries g is the derivative of the function at x + stp * d.
      * @param rstp the optimized step length, assert the initial value is larger than zero.
@@ -68,7 +63,7 @@ class Opt_DCsrch
      *              On initial entry task must be set to 'START'.
      *              On exit task indicates the required action:
      *              If task(1:2) = 'FG' then evaluate the function and derivative at stp and call dcsrch again.
-     *        		 If task(1:4) = 'CONV' then the search is successful.
+     *                 If task(1:4) = 'CONV' then the search is successful.
      *              If task(1:4) = 'WARN' then the subroutine is not able to satisfy the convergence conditions.
      *                 The exit value of stp contains the best point found during the search.
      *              If task(1:5) = 'ERROR' then there is an error in the input arguments.

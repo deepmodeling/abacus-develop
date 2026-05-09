@@ -10,11 +10,8 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
-Propagator::~Propagator()
-{
-}
+namespace module_rt {
+Propagator::~Propagator() {}
 #ifdef __MPI
 void Propagator::compute_propagator(const int nlocal,
                                     const std::complex<double>* Stmp,
@@ -22,11 +19,9 @@ void Propagator::compute_propagator(const int nlocal,
                                     const std::complex<double>* H_laststep,
                                     std::complex<double>* U_operator,
                                     std::ofstream& ofs_running,
-                                    const int print_matrix) const
-{
+                                    const int print_matrix) const {
     int tag = 0;
-    switch (ptype)
-    {
+    switch (ptype) {
     case 0:
         compute_propagator_cn2(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix);
         break;
@@ -55,23 +50,17 @@ void Propagator::compute_propagator_tensor(const int nlocal,
                                            std::ofstream& ofs_running,
                                            const int print_matrix,
                                            const bool use_lapack,
-                                           CublasMpResources& cublas_res) const
-{
+                                           CublasMpResources& cublas_res) const {
     int tag = 0;
-    switch (ptype)
-    {
+    switch (ptype) {
     case 0:
-        if (!use_lapack)
-        {
+        if (!use_lapack) {
             compute_propagator_cn2_tensor(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix, cublas_res);
-        }
-        else
-        {
+        } else {
             int myid = 0;
             int root_proc = 0;
             MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-            if (myid == root_proc)
-            {
+            if (myid == root_proc) {
                 compute_propagator_cn2_tensor_lapack<Device>(nlocal, Stmp, Htmp, U_operator, ofs_running, print_matrix);
             }
         }

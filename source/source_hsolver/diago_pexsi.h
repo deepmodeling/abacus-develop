@@ -3,17 +3,15 @@
 
 #include <vector>
 #include <memory>
-#include "source_base/macros.h"   // GetRealType
+#include "source_base/macros.h" // GetRealType
 #include "source_hamilt/hamilt.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
 template <typename T>
-class DiagoPexsi
-{
+class DiagoPexsi {
   private:
     using Real = typename GetTypeReal<T>::type;
     static std::vector<double> mu_buffer;

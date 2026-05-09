@@ -7,10 +7,9 @@
 
 #include <map>
 // Class to store TDDFT infos, mainly for periodic system.
-class TD_info
-{
+class TD_info {
   public:
-    TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
     ~TD_info();
 
     /// @brief switch to control the output of HR
@@ -44,41 +43,28 @@ class TD_info
     void cal_cart_At(const ModuleBase::Vector3<double>& At);
 
     /// @brief output RT-TDDFT info for restart
-    void out_restart_info(const int nstep, 
-                          const ModuleBase::Vector3<double>& At_current, 
+    void out_restart_info(const int nstep,
+                          const ModuleBase::Vector3<double>& At_current,
                           const ModuleBase::Vector3<double>& At_laststep);
 
     // allocate memory for current term.
     void initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV);
 
-    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const
-    {
+    hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i) const {
         return this->current_term[i];
     }
     // set velocity HR.
-    void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR)
-    {
-        this->velocity_HR = HR;
-    }
-    hamilt::HContainer<std::complex<double>>* get_velocity_HR_pointer() const
-    {
-        return this->velocity_HR;
-    }
+    void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR) { this->velocity_HR = HR; }
+    hamilt::HContainer<std::complex<double>>* get_velocity_HR_pointer() const { return this->velocity_HR; }
 
-    int get_istep()
-    {
-      return istep;
-    }
+    int get_istep() { return istep; }
 
-    const UnitCell* get_ucell()
-    {
-        return this->ucell;
-    }
+    const UnitCell* get_ucell() { return this->ucell; }
 
     // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
-    //r_calculator
+    // r_calculator
     cal_r_overlap_R r_calculator;
 
   private:

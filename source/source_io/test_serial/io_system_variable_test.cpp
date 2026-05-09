@@ -20,13 +20,10 @@
 #include "source_io/module_parameter/read_input.h"
 #undef private
 
-class InputTest : public testing::Test
-{
+class InputTest : public testing::Test {
   protected:
-    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator find_label(
-        const std::string& label,
-        std::vector<std::pair<std::string, ModuleIO::Input_Item>>& bcastfuncs)
-    {
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator
+    find_label(const std::string& label, std::vector<std::pair<std::string, ModuleIO::Input_Item>>& bcastfuncs) {
         auto it = std::find_if(
             bcastfuncs.begin(),
             bcastfuncs.end(),
@@ -38,11 +35,10 @@ ModuleIO::ReadInput readinput(0);
 Parameter param;
 std::string output = "";
 
-TEST_F(InputTest, Item_test)
-{
+TEST_F(InputTest, Item_test) {
     readinput.check_ntype_flag = false;
 
-    { 
+    {
         param.input.suffix = "test";
         readinput.set_global_dir(param.inp, param.sys);
 
@@ -51,14 +47,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.global_matrix_dir, "OUT.test/matrix/");
 
         readinput.set_globalv(param.inp, param.sys);
-    
+
         param.input.basis_type = "lcao";
         param.input.gamma_only = true;
         param.input.esolver_type = "tddft";
         param.input.nspin = 2;
         readinput.set_globalv(param.inp, param.sys);
         EXPECT_EQ(param.sys.gamma_only_local, 0);
-        
+
         param.input.deepks_scf = true;
         param.input.deepks_out_labels = true;
         readinput.set_globalv(param.inp, param.sys);
@@ -78,7 +74,5 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.sys.domag, 0);
         EXPECT_EQ(param.sys.domag_z, 0);
         EXPECT_EQ(param.sys.npol, 1);
-
-        
     }
 }

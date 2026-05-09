@@ -5,8 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 /**
  * @brief Initialize DeltaSpin for LCAO method
@@ -25,13 +24,13 @@ namespace ModuleESolver
  */
 template <typename TK>
 void init_deltaspin_lcao(const UnitCell& ucell,
-                          const Input_para& inp,
-                          void* pv,
-                          const K_Vectors& kv,
-                          void* p_hamilt,
-                          void* psi,
-                          void* dm,
-                          void* pelec);
+                         const Input_para& inp,
+                         void* pv,
+                         const K_Vectors& kv,
+                         void* p_hamilt,
+                         void* psi,
+                         void* dm,
+                         void* pelec);
 
 /**
  * @brief Calculate magnetic moments for DeltaSpin in LCAO method
@@ -58,9 +57,7 @@ void cal_mi_lcao_wrapper(const int iter, const Input_para& inp);
  * @return bool Whether to skip the Hamiltonian solve
  */
 template <typename TK>
-bool run_deltaspin_lambda_loop_lcao(const int iter,
-                                     const double drho,
-                                     const Input_para& inp);
+bool run_deltaspin_lambda_loop_lcao(const int iter, const double drho, const Input_para& inp);
 
 } // namespace ModuleESolver
 

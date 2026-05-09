@@ -12,8 +12,7 @@
 
 #include <unordered_map>
 
-namespace hamilt
-{
+namespace hamilt {
 
 /// DFTU class template specialization for OperatorLCAO<TK> base class
 /// It is used to calculate the non-local pseudopotential matrix in real space and fold it to k-space
@@ -23,8 +22,7 @@ namespace hamilt
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     DFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,

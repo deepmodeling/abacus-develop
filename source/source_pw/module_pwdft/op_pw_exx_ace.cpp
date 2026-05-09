@@ -5,17 +5,15 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h"
 
-namespace hamilt
-{
+namespace hamilt {
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                                           const int nbasis,
                                           const int npol,
-                                          const T *tmpsi_in,
-                                          T *tmhpsi,
+                                          const T* tmpsi_in,
+                                          T* tmhpsi,
                                           const int ngk_ik,
-                                          const bool is_first_node) const
-{
+                                          const bool is_first_node) const {
     ModuleBase::timer::start("OperatorEXXPW", "act_op_ace");
     //    std::cout << "act_op_ace" << std::endl;
     // hpsi += -Xi^\dagger * Xi * psi
@@ -44,8 +42,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbasis,
                       &intermediate_zero,
                       Xi_psi,
-                      nbands_tot
-    );
+                      nbands_tot);
 
 #ifdef __MPI
     Parallel_Common::reduce_dev<T, Device>(Xi_psi, nbands_tot * nbands, POOL_WORLD);
@@ -64,17 +61,14 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbands_tot,
                       &intermediate_one,
                       tmhpsi,
-                      nbasis
-    );
+                      nbasis);
 
     delmem_complex_op()(Xi_psi);
     ModuleBase::timer::end("OperatorEXXPW", "act_op_ace");
-
 }
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::construct_ace() const
-{
+void OperatorEXXPW<T, Device>::construct_ace() const {
     int nbands = psi.get_nbands();
     int nbasis = psi.get_nbasis();
     int nk = psi.get_nk();
@@ -84,46 +78,39 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 
     T intermediate_one = 1.0, intermediate_zero = 0.0;
 
-    if (h_psi_ace == nullptr)
-    {
+    if (h_psi_ace == nullptr) {
         resmem_complex_op()(h_psi_ace, nbands * nbasis);
         setmem_complex_op()(h_psi_ace, 0, nbands * nbasis);
     }
 
-    if (Xi_ace_k.size() != nk)
-    {
+    if (Xi_ace_k.size() != nk) {
         Xi_ace_k.resize(nk);
-        for (int i = 0; i < nk; i++)
-        {
+        for (int i = 0; i < nk; i++) {
             resmem_complex_op()(Xi_ace_k[i], nbands * nbasis);
         }
     }
 
-    for (int i = 0; i < nk; i++)
-    {
+    for (int i = 0; i < nk; i++) {
         setmem_complex_op()(Xi_ace_k[i], 0, nbands * nbasis);
     }
 
-    if (L_ace == nullptr)
-    {
+    if (L_ace == nullptr) {
         resmem_complex_op()(L_ace, nbands * nbands);
         setmem_complex_op()(L_ace, 0, nbands * nbands);
     }
 
-    if (psi_h_psi_ace == nullptr)
-    {
+    if (psi_h_psi_ace == nullptr) {
         resmem_complex_op()(psi_h_psi_ace, nbands * nbands);
     }
 
-    if (first_iter) return;
+    if (first_iter)
+        return;
     ModuleBase::timer::start("OperatorEXXPW", "construct_ace");
 
     int nk_max = kv->para_k.get_max_nks_pool();
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
-    for (int ispin = 0; ispin < nspin_fac; ispin++)
-    {
-        for (int ik0 = 0; ik0 < nk_max; ik0++)
-        {
+    for (int ispin = 0; ispin < nspin_fac; ispin++) {
+        for (int ik0 = 0; ik0 < nk_max; ik0++) {
             int ik = ik0 + ispin * wfcpw->nks / nspin_fac;
             // printf("ik: %d\n", ik);
             int npwk = wfcpw->npwk[ik];
@@ -143,15 +130,12 @@ void OperatorEXXPW<T, Device>::construct_ace() const
             int nqs = kv->get_nkstot_full();
 
             bool skip_ik = false;
-            if (ik >= wfcpw->nks)
-            {
+            if (ik >= wfcpw->nks) {
                 skip_ik = true;
             }
-            if (skip_ik)
-            {
+            if (skip_ik) {
                 // ik fixed here, select band n
-                for (int iq0 = 0; iq0 < nqs; iq0++)
-                {
+                for (int iq0 = 0; iq0 < nqs; iq0++) {
                     // For nspin=2, iq should be in the same spin channel as ik
                     int iq = 0;
 
@@ -159,17 +143,23 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                     iq = iq0 + ispin * nk; // iq in the same spin channel
 
                     // for \psi_nk, get the pw of iq and band m
-                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
+                    get_exx_potential<Real, Device>(kv,
+                                                    wfcpw,
+                                                    rhopw_dev,
+                                                    pot,
+                                                    tpiba,
+                                                    gamma_extrapolation,
+                                                    ucell->omega,
+                                                    ik,
+                                                    iq);
 
                     // decide which pool does the iq belong to
                     int iq_pool = kv->para_k.whichpool[iq0];
-                    int iq_loc  = iq - kv->para_k.startk_pool[iq_pool];
+                    int iq_loc = iq - kv->para_k.startk_pool[iq_pool];
 
-                    for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
-                    {
+                    for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++) {
                         double wg_mqb = 0;
-                        if (iq_pool == GlobalV::MY_POOL)
-                        {
+                        if (iq_pool == GlobalV::MY_POOL) {
                             wg_mqb = (*wg)(iq_loc, m_iband);
                         }
 #ifdef __MPI
@@ -178,8 +168,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                         if (wg_mqb < 1e-12)
                             continue;
 
-                        if (iq_pool == GlobalV::MY_POOL)
-                        {
+                        if (iq_pool == GlobalV::MY_POOL) {
                             const T* psi_mq = get_pw(m_iband, iq_loc);
                             wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
                         }
@@ -188,11 +177,8 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 #endif
 
                     } // end of iq
-
                 }
-            }
-            else
-            {
+            } else {
                 *ik_ = ik;
                 act_op_kpar(nbands, nbasis, 1, p_psi, h_psi_ace, nbasis, false);
                 // psi_h_psi_ace = psi^\dagger * h_psi_ace
@@ -217,13 +203,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 #endif
 
                 T intermediate_minus_one = -1.0;
-                axpy_complex_op()(nbands * nbands,
-                                  &intermediate_minus_one,
-                                  psi_h_psi_ace,
-                                  1,
-                                  L_ace,
-                                  1);
-
+                axpy_complex_op()(nbands * nbands, &intermediate_minus_one, psi_h_psi_ace, 1, L_ace, 1);
 
                 int info = 0;
                 char up = 'U', lo = 'L';
@@ -235,7 +215,8 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                 //         // std::cout << L_ace[i * nbands + j]. << " ";
                 //         if (L_ace[i * nbands + j].imag() >= 0.0)
                 //         {
-                //             std::cout << L_ace[i * nbands + j].real() << "+" << L_ace[i * nbands + j].imag() << "im ";
+                //             std::cout << L_ace[i * nbands + j].real() << "+" << L_ace[i * nbands + j].imag() << "im
+                //             ";
                 //         }
                 //         else
                 //         {
@@ -284,28 +265,24 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     *ik_ = ik_save;
 
     ModuleBase::timer::end("OperatorEXXPW", "construct_ace");
-
 }
 
 template <typename T, typename Device>
-double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) const
-{
+double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) const {
     double Eexx = 0;
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     psi::Psi<T, Device> psi_ = *ppsi_;
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
     Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    for (int i = 0; i < wfcpw->nks; i++)
-    {
+    for (int i = 0; i < wfcpw->nks; i++) {
         setmem_complex_op()(h_psi_ace, 0, psi_.get_nbands() * psi_.get_nbasis());
         *ik_ = i;
         psi_.fix_kb(i, 0);
         T* psi_i = psi_.get_pointer();
         act_op_ace(psi_.get_nbands(), psi_.get_nbasis(), 1, psi_i, h_psi_ace, 0, true);
 
-        for (int nband = 0; nband < psi_.get_nbands(); nband++)
-        {
+        for (int nband = 0; nband < psi_.get_nbands(); nband++) {
             psi_.fix_kb(i, nband);
             T* psi_i_n = psi_.get_pointer();
             T* hpsi_i_n = h_psi_ace + nband * psi_.get_nbasis();
@@ -326,4 +303,4 @@ template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
-}
+} // namespace hamilt

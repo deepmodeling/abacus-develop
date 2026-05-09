@@ -16,10 +16,8 @@
 #include <cuda_runtime.h>
 #endif
 
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 /**
  * @brief Initialize GPU resources for snap_psibeta module (copy grids to constant memory)

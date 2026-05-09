@@ -14,8 +14,7 @@ void TwoCenterTable::build(const RadialCollection& bra,
                            const RadialCollection& ket,
                            const char op,
                            const int nr,
-                           const double cutoff)
-{
+                           const double cutoff) {
 #ifdef __DEBUG
     assert(nr >= 3 && cutoff > 0.0);
 #endif
@@ -61,8 +60,7 @@ const double* TwoCenterTable::table(const int itype1,
                                     const int l2,
                                     const int izeta2,
                                     const int l,
-                                    const bool deriv) const
-{
+                                    const bool deriv) const {
 #ifdef __DEBUG
     assert(is_present(itype1, l1, izeta1, itype2, l2, izeta2, l));
 #endif
@@ -80,14 +78,12 @@ void TwoCenterTable::lookup(const int itype1,
                             const double R,
                             double* val,
                             double* dval,
-                            double* d2val) const
-{
+                            double* d2val) const {
 #ifdef __DEBUG
     assert(R >= 0);
 #endif
 
-    if (R > rmax())
-    {
+    if (R > rmax()) {
         if (val)
             *val = 0.0;
         if (dval)
@@ -102,13 +98,11 @@ void TwoCenterTable::lookup(const int itype1,
     ModuleBase::CubicSpline::eval(nr_, rgrid_, tab, dtab, 1, &R, val, dval, d2val);
 }
 
-int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
-{
+int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l) {
     return index_map_.get_value<int>(it1->itype(), it1->l(), it1->izeta(), it2->itype(), it2->l(), it2->izeta(), l);
 }
 
-void TwoCenterTable::cleanup()
-{
+void TwoCenterTable::cleanup() {
     op_ = '\0';
     ntab_ = 0;
     nr_ = 0;
@@ -128,29 +122,25 @@ bool TwoCenterTable::is_present(const int itype1,
                                 const int itype2,
                                 const int l2,
                                 const int izeta2,
-                                const int l) const
-{
+                                const int l) const {
     // The given indices map to an entry in the table if they fall within the bounds of index_map_ and
     // the value of the entry in index_map_ is non-negative
-    return itype1 >= 0 && itype1 < index_map_.shape().dim_size(0) && l1 >= 0 && l1 < index_map_.shape().dim_size(1)
-           && izeta1 >= 0 && izeta1 < index_map_.shape().dim_size(2) && itype2 >= 0
-           && itype2 < index_map_.shape().dim_size(3) && l2 >= 0 && l2 < index_map_.shape().dim_size(4) && izeta2 >= 0
-           && izeta2 < index_map_.shape().dim_size(5) && l >= 0 && l <= index_map_.shape().dim_size(6)
-           && index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l) >= 0;
+    return itype1 >= 0 && itype1 < index_map_.shape().dim_size(0) && l1 >= 0 && l1 < index_map_.shape().dim_size(1) &&
+           izeta1 >= 0 && izeta1 < index_map_.shape().dim_size(2) && itype2 >= 0 &&
+           itype2 < index_map_.shape().dim_size(3) && l2 >= 0 && l2 < index_map_.shape().dim_size(4) && izeta2 >= 0 &&
+           izeta2 < index_map_.shape().dim_size(5) && l >= 0 && l <= index_map_.shape().dim_size(6) &&
+           index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l) >= 0;
 }
 
-double TwoCenterTable::dfact(int l) const
-{
+double TwoCenterTable::dfact(int l) const {
     double result = 1.0;
-    for (int i = l; i > 1; i -= 2)
-    {
+    for (int i = l; i > 1; i -= 2) {
         result *= i;
     }
     return result;
 }
 
-void TwoCenterTable::two_center_loop(const RadialCollection& bra, const RadialCollection& ket, looped_func f)
-{
+void TwoCenterTable::two_center_loop(const RadialCollection& bra, const RadialCollection& ket, looped_func f) {
     for (int l = 0; l <= bra.lmax() + ket.lmax(); ++l)
         for (int l1 = 0; l1 <= bra.lmax(); ++l1)
             for (const NumericalRadial** it1 = bra.cbegin(l1); it1 != bra.cend(l1); ++it1)
@@ -159,13 +149,11 @@ void TwoCenterTable::two_center_loop(const RadialCollection& bra, const RadialCo
                         (this->*f)(*it1, *it2, l);
 }
 
-void TwoCenterTable::_indexing(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
-{
+void TwoCenterTable::_indexing(const NumericalRadial* it1, const NumericalRadial* it2, const int l) {
     table_index(it1, it2, l) = ntab_++;
 }
 
-void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial* it2, const int l)
-{
+void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial* it2, const int l) {
     int itab = table_index(it1, it2, l);
     double* tab = table_.inner_most_ptr<double>(itab);
     it1->radtab(op_, *it2, l, tab, nr_, rmax_, false);
@@ -189,8 +177,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
     //
     // See the developer's document for more details.
     double dr = rmax_ / (nr_ - 1);
-    if (l > 0)
-    {
+    if (l > 0) {
         // divide S(R) by R^l (except the R=0 point)
         std::for_each(&tab[1], tab + nr_, [&](double& val) { val /= std::pow(dr * (&val - tab), l); });
 
@@ -203,8 +190,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
         std::adjacent_difference(kgrid, kgrid + nk, h);
 
         int op_exp = l;
-        switch (op_)
-        {
+        switch (op_) {
         case 'S':
             op_exp += 2;
             break;
@@ -214,8 +200,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
         default:; // currently not supposed to happen
         }
 
-        for (int ik = 0; ik != nk; ++ik)
-        {
+        for (int ik = 0; ik != nk; ++ik) {
             fk[ik] = it1->kvalue(ik) * it2->kvalue(ik) * std::pow(kgrid[ik], op_exp);
         }
 

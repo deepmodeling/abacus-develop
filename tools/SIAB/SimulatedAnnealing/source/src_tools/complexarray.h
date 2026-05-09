@@ -12,57 +12,49 @@
 
 using namespace std;
 
-class ComplexArray
-{
-public:
-	complex<double> *ptr;
+class ComplexArray {
+  public:
+    complex<double>* ptr;
 
-	ComplexArray(const int d1 = 1 ,const int d2 = 1,const int d3 = 1);
-	ComplexArray(const int d1, const int d2,const int d3,const int d4);
-	~ComplexArray();
+    ComplexArray(const int d1 = 1, const int d2 = 1, const int d3 = 1);
+    ComplexArray(const int d1, const int d2, const int d3, const int d4);
+    ~ComplexArray();
 
-	void create(const int d1,const int d2,const int d3);
-	void create(const int d1,const int d2,const int d3,const int d4);
+    void create(const int d1, const int d2, const int d3);
+    void create(const int d1, const int d2, const int d3, const int d4);
 
-	const ComplexArray &operator=(const ComplexArray &right);
-	const ComplexArray &operator=(const std::complex<double> &right);
+    const ComplexArray& operator=(const ComplexArray& right);
+    const ComplexArray& operator=(const std::complex<double>& right);
 
-	complex<double> &operator()(const int d1,const int d2,const int d3);
-	complex<double> &operator()(const int d1,const int d2,const int d3,const int d4);
+    complex<double>& operator()(const int d1, const int d2, const int d3);
+    complex<double>& operator()(const int d1, const int d2, const int d3, const int d4);
 
-	const std::complex<double> &operator()(const int d1,const int d2,const int d3)const;
-	const std::complex<double> &operator()(const int d1,const int d2,const int d3,const int d4)const;
+    const std::complex<double>& operator()(const int d1, const int d2, const int d3) const;
+    const std::complex<double>& operator()(const int d1, const int d2, const int d3, const int d4) const;
 
-	void zero_out(void);
+    void zero_out(void);
 
-	int getSize() const
-	{ return size;}
+    int getSize() const { return size; }
 
-	int getDim() const
-	{ return dim;}
+    int getDim() const { return dim; }
 
-	int getBound1() const
-	{ return bound1;}
+    int getBound1() const { return bound1; }
 
-	int getBound2() const
-	{ return bound2;}
+    int getBound2() const { return bound2; }
 
-	int getBound3() const
-	{ return bound3;}
+    int getBound3() const { return bound3; }
 
-	int getBound4() const
-	{ return bound4;}
+    int getBound4() const { return bound4; }
 
-    int getArrayCount(void)
-	{ return arrayCount;}
+    int getArrayCount(void) { return arrayCount; }
 
-private:
-	int size;
-	int dim;
-	int bound1, bound2, bound3, bound4;
-	static int arrayCount;
+  private:
+    int size;
+    int dim;
+    int bound1, bound2, bound3, bound4;
+    static int arrayCount;
 
-	void freemem();
+    void freemem();
 };
 
-#endif	// ComplexArray class
+#endif // ComplexArray class

@@ -9,22 +9,19 @@
 //     EXPECT_EQ(a.empty(), true);
 // }
 
-TEST(NDArray, InitializerListConstructor)
-{
+TEST(NDArray, InitializerListConstructor) {
     const NDArray<int> a({1, 2, 3}); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
 }
 
-TEST(NDArray, VariadicTemplateConstructor)
-{
+TEST(NDArray, VariadicTemplateConstructor) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
 }
 
-TEST(NDArray, CopyConstructor)
-{
+TEST(NDArray, CopyConstructor) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> b(a);
     EXPECT_EQ(b.size(), 6);
@@ -34,8 +31,7 @@ TEST(NDArray, CopyConstructor)
     EXPECT_EQ(a.empty(), false);
 }
 
-TEST(NDArray, MoveConstructor)
-{
+TEST(NDArray, MoveConstructor) {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> b(std::move(a));
     EXPECT_EQ(b.size(), 6);
@@ -45,8 +41,7 @@ TEST(NDArray, MoveConstructor)
     EXPECT_EQ(a.empty(), true);
 }
 
-TEST(NDArray, CopyAssignment)
-{
+TEST(NDArray, CopyAssignment) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     NDArray<int> b(1);
     b = a;
@@ -57,8 +52,7 @@ TEST(NDArray, CopyAssignment)
     EXPECT_EQ(a.empty(), false);
 }
 
-TEST(NDArray, MoveAssignment)
-{
+TEST(NDArray, MoveAssignment) {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     NDArray<int> b(1);
     b = std::move(a);
@@ -69,8 +63,7 @@ TEST(NDArray, MoveAssignment)
     EXPECT_EQ(a.empty(), true);
 }
 
-TEST(NDArray, EqualityOperator)
-{
+TEST(NDArray, EqualityOperator) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
@@ -78,8 +71,7 @@ TEST(NDArray, EqualityOperator)
     EXPECT_EQ(a == c, false);
 }
 
-TEST(NDArray, InequalityOperator)
-{
+TEST(NDArray, InequalityOperator) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
     const NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
@@ -87,8 +79,7 @@ TEST(NDArray, InequalityOperator)
     EXPECT_EQ(a != c, true);
 }
 
-TEST(NDArray, Index)
-{
+TEST(NDArray, Index) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.index(0, 0, 0), 0);
     EXPECT_EQ(a.index(0, 0, 1), 1);
@@ -98,8 +89,7 @@ TEST(NDArray, Index)
     EXPECT_EQ(a.index(0, 1, 2), 5);
 }
 
-TEST(NDArray, AtMethodMultiIndex)
-{
+TEST(NDArray, AtMethodMultiIndex) {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     a.at(0, 0, 0) = 1;
     a.at(0, 0, 1) = 2;
@@ -115,8 +105,7 @@ TEST(NDArray, AtMethodMultiIndex)
     EXPECT_EQ(a.at(0, 1, 2), 6);
 }
 
-TEST(NDArray, IndexOperatorMultiIndex)
-{
+TEST(NDArray, IndexOperatorMultiIndex) {
     NDArray<int> a(1, 2, 3);
     a(0, 0, 0) = 1;
     a(0, 0, 1) = 2;
@@ -132,18 +121,16 @@ TEST(NDArray, IndexOperatorMultiIndex)
     EXPECT_EQ(a(0, 1, 2), 6);
 }
 
-TEST(NDArray, Reshape)
-{
+TEST(NDArray, Reshape) {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    a.reshape(2, 3, 1); /* 2 * 3 * 1, 3d array */
+    a.reshape(2, 3, 1);      /* 2 * 3 * 1, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
     // expect assert error if the size is not the same
     EXPECT_DEATH(a.reshape(2, 3, 2), "");
 }
 
-TEST(NDArray, ReshapeValue)
-{
+TEST(NDArray, ReshapeValue) {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     /*
     [
@@ -182,16 +169,14 @@ TEST(NDArray, ReshapeValue)
     EXPECT_EQ(a(1, 2, 0), 6);
 }
 
-TEST(NDArray, ReshapeInfer)
-{
+TEST(NDArray, ReshapeInfer) {
     const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     // infer the first dimension
     // infer the second dimension
     // infer the last dimension
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

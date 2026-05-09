@@ -7,13 +7,12 @@
 #endif
 #include "source_base/timer.h"
 
-MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
-{
+MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in) {
     msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
     msst_vis = mdp.msst_vis / ModuleBase::AU_to_MASS / ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
 
-    assert(ucell.nat>0);
+    assert(ucell.nat > 0);
 
     old_v = new ModuleBase::Vector3<double>[ucell.nat];
     dilation.set(1, 1, 1);
@@ -24,20 +23,15 @@ MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     totmass = 0;
     lag_pos = 0;
     vsum = 0;
-    
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+
+    for (int i = 0; i < ucell.nat; ++i) {
         totmass += allmass[i];
     }
 }
 
-MSST::~MSST()
-{
-    delete[] old_v;
-}
+MSST::~MSST() { delete[] old_v; }
 
-void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
-{
+void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir) {
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::start("MSST", "setup");
 
@@ -46,23 +40,20 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
     int sd = mdp.msst_direction;
 
-    if (!mdp.md_restart)
-    {
+    if (!mdp.md_restart) {
         lag_pos = 0;
         v0 = ucell.omega;
         p0 = stress(sd, sd);
         e0 = potential + kinetic;
 
-        if (kinetic > 0 && mdp.msst_tscale > 0)
-        {
+        if (kinetic > 0 && mdp.msst_tscale > 0) {
             double fac1 = mdp.msst_tscale * totmass * 2.0 * kinetic / msst_qmass;
             omega[sd] = -1.0 * sqrt(fac1);
             double fac2 = omega[sd] / v0;
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (int i = 0; i < ucell.nat; ++i)
-            {
+            for (int i = 0; i < ucell.nat; ++i) {
                 vel[i] *= sqrt(1.0 - mdp.msst_tscale);
             }
         }
@@ -76,8 +67,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     return;
 }
 
-void MSST::first_half(std::ofstream& ofs)
-{
+void MSST::first_half(std::ofstream& ofs) {
     ModuleBase::TITLE("MSST", "first_half");
     ModuleBase::timer::start("MSST", "first_half");
 
@@ -92,8 +82,7 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// save the velocities
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+    for (int i = 0; i < ucell.nat; ++i) {
         old_v[i] = vel[i];
     }
 
@@ -103,8 +92,7 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// reset the velocities
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+    for (int i = 0; i < ucell.nat; ++i) {
         vel[i] = old_v[i];
     }
 
@@ -131,8 +119,7 @@ void MSST::first_half(std::ofstream& ofs)
     return;
 }
 
-void MSST::second_half()
-{
+void MSST::second_half() {
     ModuleBase::TITLE("MSST", "second_half");
     ModuleBase::timer::start("MSST", "second_half");
 
@@ -158,18 +145,14 @@ void MSST::second_half()
     return;
 }
 
-
-void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
-{
+void MSST::print_md(std::ofstream& ofs, const bool& cal_stress) {
     MD_base::print_md(ofs, cal_stress);
 
     return;
 }
 
-void MSST::write_restart(const std::string& global_out_dir)
-{
-    if (!my_rank)
-    {
+void MSST::write_restart(const std::string& global_out_dir) {
+    if (!my_rank) {
         std::stringstream ssc;
         ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
@@ -191,24 +174,19 @@ void MSST::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
-void MSST::restart(const std::string& global_readin_dir)
-{
+void MSST::restart(const std::string& global_readin_dir) {
     bool ok = true;
 
-    if (!my_rank)
-    {
+    if (!my_rank) {
         std::stringstream ssc;
         ssc << global_readin_dir << "Restart_md.txt";
         std::ifstream file(ssc.str().c_str());
 
-        if (!file)
-        {
+        if (!file) {
             ok = false;
         }
 
-        if (ok)
-        {
+        if (ok) {
             file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
             file.close();
         }
@@ -218,8 +196,7 @@ void MSST::restart(const std::string& global_readin_dir)
     MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
-    if (!ok)
-    {
+    if (!ok) {
         ModuleBase::WARNING_QUIT("mdrun", "no Restart_md.txt !");
     }
 
@@ -236,66 +213,54 @@ void MSST::restart(const std::string& global_readin_dir)
     return;
 }
 
-double MSST::vel_sum() const
-{
+double MSST::vel_sum() const {
     double vsum = 0;
 
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+    for (int i = 0; i < ucell.nat; ++i) {
         vsum += vel[i].norm2();
     }
 
     return vsum;
 }
 
-void MSST::rescale(std::ofstream& ofs, const double& volume)
-{
+void MSST::rescale(std::ofstream& ofs, const double& volume) {
     int sd = mdp.msst_direction;
 
-    assert(ucell.omega>0.0);
+    assert(ucell.omega > 0.0);
 
     dilation[sd] = volume / ucell.omega;
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
 
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell, ofs);
 
     /// rescale velocity
-    for (int i = 0; i < ucell.nat; ++i)
-    {
+    for (int i = 0; i < ucell.nat; ++i) {
         vel[i][sd] *= dilation[sd];
     }
 }
 
-
-void MSST::propagate_vel()
-{
-    if (my_rank == 0)
-    {
+void MSST::propagate_vel() {
+    if (my_rank == 0) {
         const int sd = mdp.msst_direction;
         const double dthalf = 0.5 * md_dt;
         const double fac = msst_vis * pow(omega[sd], 2) / (vsum * ucell.omega);
 
-        for (int i = 0; i < ucell.nat; ++i)
-        {
+        for (int i = 0; i < ucell.nat; ++i) {
             ModuleBase::Vector3<double> const_C = force[i] / allmass[i];
             ModuleBase::Vector3<double> const_D;
             const_D.set(fac / allmass[i], fac / allmass[i], fac / allmass[i]);
             const_D[sd] -= 2 * omega[sd] / ucell.omega;
 
-            for (int k = 0; k < 3; ++k)
-            {
-                if (fabs(dthalf * const_D[k]) > 1e-6)
-                {
+            for (int k = 0; k < 3; ++k) {
+                if (fabs(dthalf * const_D[k]) > 1e-6) {
                     double expd = exp(dthalf * const_D[k]);
                     vel[i][k] = expd * (const_C[k] + const_D[k] * vel[i][k] - const_C[k] / expd) / const_D[k];
-                }
-                else
-                {
-                    vel[i][k]
-                        += (const_C[k] + const_D[k] * vel[i][k]) * dthalf
-                           + 0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
+                } else {
+                    vel[i][k] +=
+                        (const_C[k] + const_D[k] * vel[i][k]) * dthalf +
+                        0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
                 }
             }
         }
@@ -308,9 +273,7 @@ void MSST::propagate_vel()
     return;
 }
 
-
-void MSST::propagate_voldot()
-{
+void MSST::propagate_voldot() {
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
     double p_current = stress(sd, sd);
@@ -319,21 +282,17 @@ void MSST::propagate_voldot()
     double const_B = totmass * msst_vis / (msst_qmass * ucell.omega);
 
     /// prevent the increase of volume
-    if (ucell.omega > v0 && const_A > 0)
-    {
+    if (ucell.omega > v0 && const_A > 0) {
         const_A = -const_A;
     }
 
     /// avoid singularity at B = 0 with Taylor expansion
     double fac = const_B * dthalf;
-    if (fac > 1e-6)
-    {
+    if (fac > 1e-6) {
         omega[sd] = (omega[sd] + const_A * (exp(fac) - 1) / const_B) * exp(-fac);
-    }
-    else
-    {
-        omega[sd] += (const_A - const_B * omega[sd]) * dthalf
-                     + 0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
+    } else {
+        omega[sd] += (const_A - const_B * omega[sd]) * dthalf +
+                     0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
     }
 
     return;

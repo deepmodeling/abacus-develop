@@ -14,14 +14,11 @@ Plus_U::~Plus_U(){};
 Plus_U dftu;
 double Plus_U::energy_u = 0.0;
 std::vector<double> Plus_U::U = {}; // U (Hubbard parameter U)
-std::vector<int> Plus_U::orbital_corr = {}; 
+std::vector<int> Plus_U::orbital_corr = {};
 
 const hamilt::HContainer<double>* tmp_DMR;
 
-const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
-{
-    return tmp_DMR;
-}
+const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const { return tmp_DMR; }
 
 //---------------------------------------
 // Unit test of Plus_U class
@@ -40,11 +37,9 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
 int test_size = 10;
 int test_nw = 10; // please larger than 5
 
-class DFTUTest : public ::testing::Test
-{
+class DFTUTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
 #ifdef __MPI
         // MPI parallel settings
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -60,8 +55,7 @@ class DFTUTest : public ::testing::Test
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.lat0 = 1.0;
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2it[iat] = 0;
             ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -72,8 +66,7 @@ class DFTUTest : public ::testing::Test
         ucell.atoms[0].iw2l.resize(test_nw);
         ucell.atoms[0].iw2m.resize(test_nw);
         ucell.atoms[0].iw2n.resize(test_nw);
-        for (int iw = 0; iw < test_nw; ++iw)
-        {
+        for (int iw = 0; iw < test_nw; ++iw) {
             ucell.atoms[0].iw2l[iw] = 2;
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
@@ -88,11 +81,9 @@ class DFTUTest : public ::testing::Test
 
         // setting of DFTU
         dftu.locale.resize(test_size);
-        for (int iat = 0; iat < test_size; iat++)
-        {
+        for (int iat = 0; iat < test_size; iat++) {
             dftu.locale[iat].resize(3);
-            for (int l = 0; l < 3; l++)
-            {
+            for (int l = 0; l < 3; l++) {
                 dftu.locale[iat][l].resize(1);
                 dftu.locale[iat][l][0].resize(2);
                 dftu.locale[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
@@ -105,8 +96,7 @@ class DFTUTest : public ::testing::Test
         PARAM.input.onsite_radius = 1.0;
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         delete HR;
         delete DMR;
         delete paraV;
@@ -114,8 +104,7 @@ class DFTUTest : public ::testing::Test
     }
 
 #ifdef __MPI
-    void init_parav()
-    {
+    void init_parav() {
         int nb = 10;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
@@ -125,9 +114,7 @@ class DFTUTest : public ::testing::Test
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {
-    }
+    void init_parav() {}
 #endif
 
     UnitCell ucell;
@@ -143,8 +130,7 @@ class DFTUTest : public ::testing::Test
 };
 
 // using TEST_F to test DFTU
-TEST_F(DFTUTest, constructHRd2d)
-{
+TEST_F(DFTUTest, constructHRd2d) {
     // test for nspin=1
     PARAM.input.nspin = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -153,41 +139,35 @@ TEST_F(DFTUTest, constructHRd2d)
     Grid_Driver gd(0, 0);
     // reset HR and DMR
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
-    for (int i = 0; i < DMR->get_nnr(); i++)
-    {
+    for (int i = 0; i < DMR->get_nnr(); i++) {
         DMR->get_wrapper()[i] = factor;
         HR->get_wrapper()[i] = 0.0;
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
+    hamilt::DFTU<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time
-        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     op.contributeHR();
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1
-        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time1 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the occupations of dftu
-    for (int iat = 0; iat < test_size; iat++)
-    {
-        for (int icc = 0; icc < 25; icc++)
-        {
+    for (int iat = 0; iat < test_size; iat++) {
+        for (int icc = 0; icc < 25; icc++) {
             EXPECT_NEAR(dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
     }
     // check the value of HR
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0 * test_size, 1e-10);
         }
     }
@@ -195,12 +175,11 @@ TEST_F(DFTUTest, constructHRd2d)
     start_time = std::chrono::high_resolution_clock::now();
     op.contributeHk(0);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2
-        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time2 =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     // check the value of HK
     double* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
-    {
+    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i) {
         EXPECT_NEAR(hk[i], -10.0 * test_size, 1e-10);
     }
     std::cout << "Test terms:   " << std::setw(15) << "initialize_HR" << std::setw(15) << "contributeHR"
@@ -209,8 +188,7 @@ TEST_F(DFTUTest, constructHRd2d)
               << std::setw(15) << elapsed_time2.count() << " seconds." << std::endl;
 }
 
-TEST_F(DFTUTest, constructHRd2cd)
-{
+TEST_F(DFTUTest, constructHRd2cd) {
     // test for nspin=2
     PARAM.input.nspin = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -219,8 +197,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     Grid_Driver gd(0, 0);
     // reset HR and DMR
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;
-    for (int i = 0; i < DMR->get_nnr(); i++)
-    {
+    for (int i = 0; i < DMR->get_nnr(); i++) {
         DMR->get_wrapper()[i] = factor;
         HR->get_wrapper()[i] = 0.0;
     }
@@ -228,24 +205,20 @@ TEST_F(DFTUTest, constructHRd2cd)
         op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
     op.contributeHR();
     // check the occupations of dftu for spin-up
-    for (int iat = 0; iat < test_size; iat++)
-    {
-        for (int icc = 0; icc < 25; icc++)
-        {
+    for (int iat = 0; iat < test_size; iat++) {
+        for (int icc = 0; icc < 25; icc++) {
             EXPECT_NEAR(dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
     }
     // check the value of HR
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_NEAR(tmp.get_pointer(0)[i], -10.0 * test_size, 1e-10);
         }
     }
@@ -253,25 +226,21 @@ TEST_F(DFTUTest, constructHRd2cd)
     op.contributeHk(0);
     // check the value of HK of gamma point
     std::complex<double>* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
-    {
+    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i) {
         EXPECT_NEAR(hk[i].real(), -10.0 * test_size, 1e-10);
         EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
     }
     // calculate spin-down hamiltonian
     op.contributeHR();
     // check the occupations of dftu for spin-down
-    for (int iat = 0; iat < test_size; iat++)
-    {
-        for (int icc = 0; icc < 25; icc++)
-        {
+    for (int iat = 0; iat < test_size; iat++) {
+        for (int icc = 0; icc < 25; icc++) {
             EXPECT_NEAR(dftu.locale[iat][2][0][1].c[icc], 0.5, 1e-10);
         }
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

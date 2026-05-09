@@ -7,14 +7,12 @@
  * @file fp_energy.h
  * @brief This file contains all energies about first-principle calculations
  */
-namespace elecstate
-{
+namespace elecstate {
 /**
  * @struct fp_energy
  * @brief energies contribute to Hamholtz free energy
  */
-struct fenergy
-{
+struct fenergy {
     double etot = 0.0;       ///< the total free energy
     double etot_old = 0.0;   ///< old total free energy
     double etot_delta = 0.0; // the difference of total energy between two steps = etot - etot_old
@@ -60,12 +58,11 @@ struct fenergy
  * @struct efermi
  * @brief Fermi energies
  */
-struct Efermi
-{
-    double ef = 0.0;         ///< Fermi energy
-    double ef_up = 0.0;      ///< spin up Fermi energy
-    double ef_dw = 0.0;      ///< spin down Fermi energy
-    bool two_efermi = false; 
+struct Efermi {
+    double ef = 0.0;    ///< Fermi energy
+    double ef_up = 0.0; ///< spin up Fermi energy
+    double ef_dw = 0.0; ///< spin down Fermi energy
+    bool two_efermi = false;
     void set_efval(const int& is, const double& ef_in);
     double get_efval(const int& is) const;
     std::vector<double> get_all_ef() const;

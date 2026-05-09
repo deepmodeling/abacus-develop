@@ -8,8 +8,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include <vector>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __OVERLAPTEMPLATE
 #define __OVERLAPTEMPLATE
@@ -20,9 +19,7 @@ namespace hamilt
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
-class Overlap : public T
-{
-};
+class Overlap : public T {};
 
 #endif
 
@@ -34,17 +31,16 @@ class Overlap : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     Overlap<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                     hamilt::HContainer<TR>* hR_in,
-                                     hamilt::HContainer<TR>* SR_in,
-                                     const UnitCell* ucell_in,
-                                     const std::vector<double>& orb_cutoff,
-                                     const Grid_Driver* GridD_in,
-                                     const TwoCenterIntegrator* intor);
+                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                  hamilt::HContainer<TR>* hR_in,
+                                  hamilt::HContainer<TR>* SR_in,
+                                  const UnitCell* ucell_in,
+                                  const std::vector<double>& orb_cutoff,
+                                  const Grid_Driver* GridD_in,
+                                  const TwoCenterIntegrator* intor);
 
     ~Overlap();
 
@@ -142,7 +138,8 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param paraV parallel orbitals object for matrix distribution
      * @return pointer to the created SR_async container (caller must delete)
      */
-    hamilt::HContainer<TR>* calculate_SR_async(const UnitCell& ucell, const double md_dt, const Parallel_Orbitals* paraV);
+    hamilt::HContainer<TR>*
+    calculate_SR_async(const UnitCell& ucell, const double md_dt, const Parallel_Orbitals* paraV);
 
     /**
      * @brief output asynchronous overlap matrix in CSR format

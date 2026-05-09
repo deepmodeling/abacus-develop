@@ -18,10 +18,10 @@
 //----------------------------------------------
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Stochastic_Iter
-{
+class Stochastic_Iter {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     // constructor and deconstructor
     Stochastic_Iter();
@@ -53,9 +53,9 @@ class Stochastic_Iter
      * @param wfc_basis wfc pw basis
      */
     void sum_stoeband(Stochastic_WF<T, Device>& stowf,
-                     elecstate::ElecStatePW<T, Device>* pes,
-                     hamilt::Hamilt<T, Device>* pHamilt,
-                     ModulePW::PW_Basis_K* wfc_basis);
+                      elecstate::ElecStatePW<T, Device>* pes,
+                      hamilt::Hamilt<T, Device>* pHamilt,
+                      ModulePW::PW_Basis_K* wfc_basis);
 
     /**
      * @brief calculate the density
@@ -121,15 +121,15 @@ class Stochastic_Iter
 
     double mu0 = 0.0; // chemical potential; unit in Ry
     bool change = false;
-    double targetne=0.0;
+    double targetne = 0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
     bool check = false;
-    double th_ne=0.0;
-    double KS_ne=0.0;
+    double th_ne = 0.0;
+    double KS_ne = 0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
@@ -141,14 +141,15 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
-    K_Vectors* pkv=nullptr;
+    K_Vectors* pkv = nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]
      * @param y [Device]
      * @param result [CPU] dot result
      */
-    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy,  Real& result);
+    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy, Real& result);
+
   private:
     const Device* ctx = {};
     const base_device::DEVICE_CPU* cpu_ctx = {};

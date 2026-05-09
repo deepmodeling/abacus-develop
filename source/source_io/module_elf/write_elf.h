@@ -5,8 +5,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_charge/charge.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 void write_elf(
 #ifdef __MPI
     const int& bz,
@@ -21,6 +20,6 @@ void write_elf(
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision);
-}
+} // namespace ModuleIO
 
 #endif

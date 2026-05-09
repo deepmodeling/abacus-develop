@@ -14,20 +14,17 @@
 double deg2rad(double deg) { return deg * M_PI / 180.0; }
 double rad2deg(double rad) { return rad * 180.0 / M_PI; }
 
-void _build_chem_formula(const int natom, 
+void _build_chem_formula(const int natom,
                          const std::string* atom_site_labels,
                          std::string& sum,
-                         std::string& structural)
-{
+                         std::string& structural) {
     sum.clear();
     structural.clear();
     std::vector<std::string> kinds;
     std::vector<std::string> labels(natom);
     std::copy(atom_site_labels, atom_site_labels + natom, labels.begin());
-    for (int i = 0; i < natom; ++i)
-    {
-        if (std::find(kinds.begin(), kinds.end(), labels[i]) == kinds.end())
-        {
+    for (int i = 0; i < natom; ++i) {
+        if (std::find(kinds.begin(), kinds.end(), labels[i]) == kinds.end()) {
             kinds.push_back(labels[i]);
         }
     }
@@ -35,19 +32,16 @@ void _build_chem_formula(const int natom,
     std::transform(kinds.begin(), kinds.end(), counts.begin(), [&labels](const std::string& kind) {
         return std::count(labels.begin(), labels.end(), kind);
     });
-    for (size_t i = 0; i < kinds.size(); ++i)
-    {
+    for (size_t i = 0; i < kinds.size(); ++i) {
         sum += kinds[i];
         structural += kinds[i];
-        if (counts[i] > 1)
-        {
+        if (counts[i] > 1) {
             sum += std::to_string(counts[i]);
         }
     }
 }
 
-void vec_to_abc_angles(const double* vec, double* abc_angles)
-{
+void vec_to_abc_angles(const double* vec, double* abc_angles) {
     const std::vector<double> a = {vec[0], vec[1], vec[2]};
     const std::vector<double> b = {vec[3], vec[4], vec[5]};
     const std::vector<double> c = {vec[6], vec[7], vec[8]};
@@ -64,8 +58,7 @@ void vec_to_abc_angles(const double* vec, double* abc_angles)
     abc_angles[4] = rad2deg(beta);
     abc_angles[5] = rad2deg(gamma);
 }
-void abc_angles_to_vec(const double* abc_angles, double* vec)
-{
+void abc_angles_to_vec(const double* abc_angles, double* vec) {
     const double a = abc_angles[0];
     const double b = abc_angles[1];
     const double c = abc_angles[2];
@@ -79,24 +72,22 @@ void abc_angles_to_vec(const double* abc_angles, double* vec)
     vec[4] = b * std::sin(deg2rad(gamma));
     vec[5] = 0.0;
     vec[6] = c * std::cos(deg2rad(beta));
-    vec[7] = c * (std::cos(deg2rad(alpha)) - std::cos(deg2rad(beta)) * std::cos(deg2rad(gamma))) / std::sin(deg2rad(gamma));
+    vec[7] =
+        c * (std::cos(deg2rad(alpha)) - std::cos(deg2rad(beta)) * std::cos(deg2rad(gamma))) / std::sin(deg2rad(gamma));
     vec[8] = std::sqrt(c * c - vec[6] * vec[6] - vec[7] * vec[7]);
 }
-double vec_to_volume(const double* vec)
-{
+double vec_to_volume(const double* vec) {
     // vector's mixed product
-    return vec[0] * (vec[4] * vec[8] - vec[5] * vec[7]) - vec[1] * (vec[3] * vec[8] - vec[5] * vec[6]) + vec[2] * (vec[3] * vec[7] - vec[4] * vec[6]);
+    return vec[0] * (vec[4] * vec[8] - vec[5] * vec[7]) - vec[1] * (vec[3] * vec[8] - vec[5] * vec[6]) +
+           vec[2] * (vec[3] * vec[7] - vec[4] * vec[6]);
 }
-double abc_angles_to_volume(const double* abc_angles)
-{
+double abc_angles_to_volume(const double* abc_angles) {
     std::vector<double> vec(9);
     abc_angles_to_vec(abc_angles, vec.data());
     return vec_to_volume(vec.data());
 }
-std::vector<std::string> _split_outside_enclose(const std::string& in, 
-                                                const std::string& delim,
-                                                const std::vector<std::string>& enclose)
-{
+std::vector<std::string>
+_split_outside_enclose(const std::string& in, const std::string& delim, const std::vector<std::string>& enclose) {
     // a very naive impl. for only CIF possible cases
     assert(enclose.size() == 2); // other complicated case not implemented yet
     // first split with delim. then scan all fragments, if there are enclose symbol, then will first meet
@@ -106,28 +97,19 @@ std::vector<std::string> _split_outside_enclose(const std::string& in,
     std::string cache;
     std::vector<std::string> words = FmtCore::split(in, delim);
     bool in_enclose = false;
-    for (auto& word: words)
-    {
-        if (FmtCore::startswith(word, enclose[0]))
-        {
+    for (auto& word: words) {
+        if (FmtCore::startswith(word, enclose[0])) {
             in_enclose = true;
             cache += word + delim;
-        }
-        else if (FmtCore::endswith(word, enclose[1]))
-        {
+        } else if (FmtCore::endswith(word, enclose[1])) {
             in_enclose = false;
             cache += word;
             out.push_back(cache);
             cache.clear();
-        }
-        else
-        {
-            if (in_enclose)
-            {
+        } else {
+            if (in_enclose) {
                 cache += word + delim;
-            }
-            else
-            {
+            } else {
                 out.push_back(word);
             }
         }
@@ -136,48 +118,38 @@ std::vector<std::string> _split_outside_enclose(const std::string& in,
 }
 
 // the second step, for each block, split with words starting with "_"
-std::vector<std::string> _split_loop_block(const std::string& block)
-{
+std::vector<std::string> _split_loop_block(const std::string& block) {
     std::vector<std::string> out;
     std::string word, cache;
     std::stringstream ss(FmtCore::strip(FmtCore::strip(block, "\n")));
-    while (ss.good())
-    {
+    while (ss.good()) {
         ss >> word;
-        if (FmtCore::startswith(word, "_"))
-        {
-            if (!cache.empty())
-            {
+        if (FmtCore::startswith(word, "_")) {
+            if (!cache.empty()) {
                 out.push_back(FmtCore::strip(cache));
                 cache.clear();
             }
             out.push_back(FmtCore::strip(word));
-        }
-        else
-        {
+        } else {
             cache += word + " ";
         }
     }
     // the last word
-    if (!cache.empty())
-    {
+    if (!cache.empty()) {
         out.push_back(FmtCore::strip(cache));
     }
     return out;
 }
 
 std::map<std::string, std::vector<std::string>> _build_table(const std::vector<std::string>& keys,
-                                                             const std::vector<std::string>& values)
-{
+                                                             const std::vector<std::string>& values) {
     std::map<std::string, std::vector<std::string>> out;
     const size_t ncols = keys.size();
     assert(values.size() % ncols == 0);
     const size_t nrows = values.size() / ncols;
-    for (size_t i = 0; i < ncols; i++)
-    {
+    for (size_t i = 0; i < ncols; i++) {
         std::vector<std::string> col(nrows);
-        for (size_t j = 0; j < nrows; j++)
-        {
+        for (size_t j = 0; j < nrows; j++) {
             col[j] = values[j * ncols + i];
         }
         out[keys[i]] = col;
@@ -185,8 +157,7 @@ std::map<std::string, std::vector<std::string>> _build_table(const std::vector<s
     return out;
 }
 
-std::map<std::string, std::vector<std::string>> _build_block_data(const std::vector<std::string>& block)
-{
+std::map<std::string, std::vector<std::string>> _build_block_data(const std::vector<std::string>& block) {
     // after calling the _split_loop_block, the data now composed of elements that either startswith "_"
     // or not. Between elements startswith "_", there is at most one element that does not startswith "_".
     // a scan can be performed to group those keys.
@@ -195,19 +166,15 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     std::vector<std::string> values;
     // first drop all elements that does not startswith "_" before the first element that startswith "_"
     std::vector<std::string> block_ = block;
-    auto it = std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
-    if (it != block.begin())
-    {
+    auto it =
+        std::find_if(block.begin(), block.end(), [](const std::string& s) { return FmtCore::startswith(s, "_"); });
+    if (it != block.begin()) {
         block_.erase(block_.begin(), it);
     }
-    for (auto& elem: block_)
-    {
-        if (FmtCore::startswith(elem, "_"))
-        {
+    for (auto& elem: block_) {
+        if (FmtCore::startswith(elem, "_")) {
             kcache.push_back(elem);
-        }
-        else
-        {
+        } else {
             keys.push_back(kcache);
             values.push_back(elem);
             kcache.clear();
@@ -217,25 +184,21 @@ std::map<std::string, std::vector<std::string>> _build_block_data(const std::vec
     // then for each elem in keys, if there are more than one element, then it is a table. Make it a table
     // , otherwise it is a simple key-value pair, directly add it to the output.
     std::map<std::string, std::vector<std::string>> out;
-    for (size_t i = 0; i < keys.size(); i++)
-    {
-        if (keys[i].size() > 1)
-        {
+    for (size_t i = 0; i < keys.size(); i++) {
+        if (keys[i].size() > 1) {
             const std::vector<std::string> words = _split_outside_enclose(values[i], " ", {"'", "'"});
             std::map<std::string, std::vector<std::string>> table = _build_table(keys[i], words);
             out.insert(table.begin(), table.end());
-        }
-        else
-        {
+        } else {
             out[keys[i][0]] = {values[i]};
         }
     }
-    
+
     return out;
 }
 
-void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the map to be broadcasted 
-                  const int rank = 0)   // source rank: from which rank to broadcast
+void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the map to be broadcasted
+                  const int rank = 0)                                   // source rank: from which rank to broadcast
 {
 #ifdef __MPI
     int myrank = 0;
@@ -249,15 +212,13 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
     int i = 0;
     if (myrank == rank) // if the rank is the source rank, then pack the map to keys and values
     {
-        for (auto& elem: map)
-        {
+        for (auto& elem: map) {
             keys[i] = elem.first;
             values[i] = elem.second;
             i++;
         }
     }
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         Parallel_Common::bcast_string(keys[i]);
         int valsize = values[i].size();
         Parallel_Common::bcast_int(valsize);
@@ -267,8 +228,7 @@ void bcast_cifmap(std::map<std::string, std::vector<std::string>>& map, // the m
     if (myrank != rank) // if the rank is not the source rank, then unpack the keys and values to map
     {
         map.clear();
-        for (int i = 0; i < size; i++)
-        {
+        for (int i = 0; i < size; i++) {
             map[keys[i]] = values[i];
         }
     }
@@ -281,8 +241,7 @@ void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
                                         std::vector<double>& vecc,
                                         int& natom,
                                         std::vector<std::string>& atom_site_labels,
-                                        std::vector<double>& atom_site_fract_coords)
-{
+                                        std::vector<double>& atom_site_fract_coords) {
     const double bohr2angstrom = 0.52917721067;
     const double lat0 = ucell.lat.lat0;
     veca.resize(3);
@@ -304,11 +263,10 @@ void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
     assert(natom > 0); // ensure the number of atoms is positive
     atom_site_labels.resize(natom);
     atom_site_fract_coords.resize(3 * natom);
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         atom_site_labels[i] = ucell.atoms[ucell.iat2it[i]].ncpp.psd; // the most standard label
-        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atom_label[ucell.iat2it[i]]: atom_site_labels[i];
-        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atoms[ucell.iat2it[i]].label: atom_site_labels[i];
+        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atom_label[ucell.iat2it[i]] : atom_site_labels[i];
+        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atoms[ucell.iat2it[i]].label : atom_site_labels[i];
         assert(!atom_site_labels[i].empty()); // ensure the label is not empty
         atom_site_fract_coords[3 * i] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].x;
         atom_site_fract_coords[3 * i + 1] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].y;
@@ -325,8 +283,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& data_tag,
                                 const int rank,
                                 const double* atom_site_occups,
-                                const std::string& cell_formula_units_z)
-{
+                                const std::string& cell_formula_units_z) {
 #ifdef __MPI // well...very simple...
     int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -336,8 +293,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     }
 #endif
     std::ofstream ofs(fcif);
-    if (!ofs)
-    {
+    if (!ofs) {
         ModuleBase::WARNING_QUIT("ModuleIO::CifParser::write", "Cannot open file " + fcif);
     }
     ofs << title << std::endl;
@@ -369,8 +325,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     ofs << " _atom_site_fract_z" << std::endl;
     ofs << " _atom_site_occupancy" << std::endl;
     std::vector<double> occups(natom, 1.0);
-    if (atom_site_occups != nullptr)
-    {// overwrite the default occupancies
+    if (atom_site_occups != nullptr) { // overwrite the default occupancies
         std::copy(atom_site_occups, atom_site_occups + natom, occups.begin());
     }
     // then output atomic information with format: %3s%4s%3d%12.8f%12.8f%12.8f%3d
@@ -378,12 +333,16 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     int j = 0;
     std::string numbered_label;
     std::string cache;
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         const std::string label = atom_site_labels[i];
         numbered_label = label + std::to_string(i);
-        cache = fmt.format(label, numbered_label, 1, 
-        atom_site_fract_coords[j], atom_site_fract_coords[j + 1], atom_site_fract_coords[j + 2], occups[i]);
+        cache = fmt.format(label,
+                           numbered_label,
+                           1,
+                           atom_site_fract_coords[j],
+                           atom_site_fract_coords[j + 1],
+                           atom_site_fract_coords[j + 2],
+                           occups[i]);
         ofs << cache << std::endl;
         j += 3;
     }
@@ -399,8 +358,7 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const std::string& data_tag,
                                 const int rank,
                                 const std::vector<double>& atom_site_occups,
-                                const std::string& cell_formula_units_z)
-{
+                                const std::string& cell_formula_units_z) {
 #ifdef __MPI
     int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -410,15 +368,15 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     }
 #endif
     const double* occups = atom_site_occups.empty() ? nullptr : atom_site_occups.data();
-    write(fcif.c_str(), 
-          abc_angles.data(), 
-          atom_site_labels.size(), 
-          atom_site_labels.data(), 
-          atom_site_fract_coords.data(), 
-          title, 
-          data_tag, 
+    write(fcif.c_str(),
+          abc_angles.data(),
+          atom_site_labels.size(),
+          atom_site_labels.data(),
+          atom_site_fract_coords.data(),
+          title,
+          data_tag,
           rank,
-          occups, 
+          occups,
           cell_formula_units_z);
 }
 
@@ -426,12 +384,11 @@ void ModuleIO::CifParser::write(const std::string& fcif,
                                 const UnitCell& ucell,
                                 const std::string& title,
                                 const std::string& data_tag,
-                                const int rank)
-{
+                                const int rank) {
 #ifdef __MPI
     int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    if (myrank != rank)  // if present rank is not the rank assigned to write the cif file, then return
+    if (myrank != rank) // if present rank is not the rank assigned to write the cif file, then return
     {
         return;
     }
@@ -447,24 +404,29 @@ void ModuleIO::CifParser::write(const std::string& fcif,
     std::copy(vecc.begin(), vecc.end(), vec.begin() + 6);
     std::vector<double> abc_angles(6);
     vec_to_abc_angles(vec.data(), abc_angles.data());
-    write(fcif.c_str(), abc_angles.data(), natom, atom_site_labels.data(), atom_site_fract_coords.data(), title, data_tag);
+    write(fcif.c_str(),
+          abc_angles.data(),
+          natom,
+          atom_site_labels.data(),
+          atom_site_fract_coords.data(),
+          title,
+          data_tag);
 }
 
 // reading cif is another hard (physically) and laborious work. The cif sometimes can be easily read line by line,
 // sometimes word by word. The structure of cif file is, except the line startswith "#", all other lines can be split
-// by blocks leading by "loop_", then in each "loop_", there are contents can be split by those keywords that 
+// by blocks leading by "loop_", then in each "loop_", there are contents can be split by those keywords that
 // startswith "_". There is also another exception that, if there is no space between keywords, then their values will
-// appear after all keywords are listed. In this case, all values actually form a table, which is needed to be 
+// appear after all keywords are listed. In this case, all values actually form a table, which is needed to be
 // furtherly formatted (rows are memory-contiguous).
-// Thus the reading strategy are, 
+// Thus the reading strategy are,
 // 1. first split the file into blocks by "loop_"
 // 2. in each block, split with words starting with "_"
 // 3. scan the splited words
 
 void ModuleIO::CifParser::read(const std::string& fcif,
                                std::map<std::string, std::vector<std::string>>& out,
-                               const int rank)
-{
+                               const int rank) {
     // okey for read, cannot just use if rank != 0 then return, because need to broadcast the map
     out.clear();
 #ifdef __MPI
@@ -473,57 +435,43 @@ void ModuleIO::CifParser::read(const std::string& fcif,
     if (myrank == rank) // only the rank assigned to read the cif file will read the file
     {
 #endif
-    std::ifstream ifs(fcif);
-    if (!ifs)
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::CifParser::read", "Cannot open file " + fcif);
-    }
-    std::string cache; // first read all lines into cache
-    while (ifs.good())
-    {
-        std::string line;
-        std::getline(ifs, line);
-        if (FmtCore::startswith(FmtCore::strip(line), "#"))
-        {
-            out["comment"].push_back(line);
+        std::ifstream ifs(fcif);
+        if (!ifs) {
+            ModuleBase::WARNING_QUIT("ModuleIO::CifParser::read", "Cannot open file " + fcif);
         }
-        else if (FmtCore::startswith(FmtCore::strip(line), "data_"))
-        {
-            out["data_tag"].push_back(line);
+        std::string cache; // first read all lines into cache
+        while (ifs.good()) {
+            std::string line;
+            std::getline(ifs, line);
+            if (FmtCore::startswith(FmtCore::strip(line), "#")) {
+                out["comment"].push_back(line);
+            } else if (FmtCore::startswith(FmtCore::strip(line), "data_")) {
+                out["data_tag"].push_back(line);
+            } else {
+                cache += line + " ";
+            }
         }
-        else
-        {
-            cache += line + " ";
+        std::vector<std::string> blocks = FmtCore::split(FmtCore::strip(cache), "loop_");
+        blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](const std::string& s) { return s.empty(); }),
+                     blocks.end());
+
+        for (auto& block: blocks) {
+            std::vector<std::string> words = _split_loop_block(block);
+            std::map<std::string, std::vector<std::string>> data = _build_block_data(words);
+            out.insert(data.begin(), data.end());
         }
-    }
-    std::vector<std::string> blocks = FmtCore::split(FmtCore::strip(cache), "loop_");
-    blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [](const std::string& s) { return s.empty(); }), blocks.end());
-    
-    for (auto& block: blocks)
-    {
-        std::vector<std::string> words = _split_loop_block(block);
-        std::map<std::string, std::vector<std::string>> data = _build_block_data(words);
-        out.insert(data.begin(), data.end());
-    }
 #ifdef __MPI
     }
     bcast_cifmap(out, rank);
 #endif
 }
 
-ModuleIO::CifParser::CifParser(const std::string& fcif)
-{
-    read(fcif, raw_);
-}
+ModuleIO::CifParser::CifParser(const std::string& fcif) { read(fcif, raw_); }
 
-std::vector<std::string> ModuleIO::CifParser::get(const std::string& key)
-{
-    if (raw_.find(key) != raw_.end())
-    {
+std::vector<std::string> ModuleIO::CifParser::get(const std::string& key) {
+    if (raw_.find(key) != raw_.end()) {
         return raw_[key];
-    }
-    else
-    {
+    } else {
         return std::vector<std::string>();
     }
 }

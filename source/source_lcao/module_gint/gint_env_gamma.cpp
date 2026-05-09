@@ -2,23 +2,19 @@
 #include "gint_common.h"
 #include "phi_operator.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-Gint_env_gamma::Gint_env_gamma(
-    const double* psid,
-    const Parallel_Orbitals* pv,
-    const int nbands,
-    const int nlocal,
-    double* rho)
-    :rho_(rho)
-{
+Gint_env_gamma::Gint_env_gamma(const double* psid,
+                               const Parallel_Orbitals* pv,
+                               const int nbands,
+                               const int nlocal,
+                               double* rho)
+    : rho_(rho) {
     wfc_gint_.resize(nbands * gint_info_->get_lgd());
     wfc_2d_to_gint(psid, nbands, nlocal, *pv, wfc_gint_.data(), *gint_info_);
 }
 
-void Gint_env_gamma::cal_env_band(const int iband)
-{
+void Gint_env_gamma::cal_env_band(const int iband) {
     ModuleBase::TITLE("Gint", "cal_gint_env");
     ModuleBase::timer::start("Gint", "cal_gint_env");
     ModuleBase::GlobalFunc::ZEROS(rho_, gint_info_->get_local_mgrid_num());
@@ -28,11 +24,9 @@ void Gint_env_gamma::cal_env_band(const int iband)
         PhiOperator phi_op;
         std::vector<double> phi;
 #pragma omp for schedule(dynamic)
-        for (int i = 0; i < gint_info_->get_bgrids_num(); i++)
-        {
+        for (int i = 0; i < gint_info_->get_bgrids_num(); i++) {
             const auto& biggrid = gint_info_->get_biggrids()[i];
-            if(biggrid->get_atoms().size() == 0)
-            {
+            if (biggrid->get_atoms().size() == 0) {
                 continue;
             }
             phi_op.set_bgrid(biggrid);
@@ -45,5 +39,4 @@ void Gint_env_gamma::cal_env_band(const int iband)
     ModuleBase::timer::end("Gint", "cal_gint_env");
 }
 
-
-}
+} // namespace ModuleGint

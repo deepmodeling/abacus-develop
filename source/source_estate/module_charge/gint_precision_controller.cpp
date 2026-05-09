@@ -2,28 +2,20 @@
 
 #include <algorithm>
 
-void GintPrecisionController::set_mode(const std::string& precision_mode)
-{
-    this->mode_ = parse_mode_(precision_mode);
-}
+void GintPrecisionController::set_mode(const std::string& precision_mode) { this->mode_ = parse_mode_(precision_mode); }
 
-GintPrecisionController::PrecisionMode GintPrecisionController::parse_mode_(const std::string& precision_mode)
-{
-    if (precision_mode == "single")
-    {
+GintPrecisionController::PrecisionMode GintPrecisionController::parse_mode_(const std::string& precision_mode) {
+    if (precision_mode == "single") {
         return PrecisionMode::single;
     }
-    if (precision_mode == "mix")
-    {
+    if (precision_mode == "mix") {
         return PrecisionMode::mix;
     }
     return PrecisionMode::double_mode;
 }
 
-void GintPrecisionController::reset_for_new_scf()
-{
-    switch (this->mode_)
-    {
+void GintPrecisionController::reset_for_new_scf() {
+    switch (this->mode_) {
     case PrecisionMode::single:
     case PrecisionMode::mix:
         this->current_precision_ = ModuleGint::GintPrecision::fp32;
@@ -37,10 +29,8 @@ void GintPrecisionController::reset_for_new_scf()
     }
 }
 
-bool GintPrecisionController::update_after_iteration(double drho, double scf_thr)
-{
-    if (this->locked_double_precision_ || this->mode_ != PrecisionMode::mix)
-    {
+bool GintPrecisionController::update_after_iteration(double drho, double scf_thr) {
+    if (this->locked_double_precision_ || this->mode_ != PrecisionMode::mix) {
         return false;
     }
 
@@ -52,8 +42,7 @@ bool GintPrecisionController::update_after_iteration(double drho, double scf_thr
     constexpr double kSwitchFactor = 1000.0;
     constexpr double kMinSwitchThreshold = 1.0e-5;
     const double switch_thr = std::max(kSwitchFactor * scf_thr, kMinSwitchThreshold);
-    if (drho <= switch_thr)
-    {
+    if (drho <= switch_thr) {
         this->current_precision_ = ModuleGint::GintPrecision::fp64;
         this->locked_double_precision_ = true;
         return true;
@@ -61,7 +50,4 @@ bool GintPrecisionController::update_after_iteration(double drho, double scf_thr
     return false;
 }
 
-ModuleGint::GintPrecision GintPrecisionController::current_precision() const
-{
-    return this->current_precision_;
-}
+ModuleGint::GintPrecision GintPrecisionController::current_precision() const { return this->current_precision_; }

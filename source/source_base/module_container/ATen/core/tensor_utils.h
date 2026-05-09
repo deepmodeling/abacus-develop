@@ -16,8 +16,7 @@ namespace container {
  *
  * @return A string without trailing zeros.
  */
-__inline__
-std::string removeTrailingZeros(std::string str) {
+__inline__ std::string removeTrailingZeros(std::string str) {
     int i = static_cast<int>(str.length()) - 1;
     while (i >= 0 && str[i] == '0') {
         i--;
@@ -44,14 +43,8 @@ std::string removeTrailingZeros(std::string str) {
  * @return The total length of the longest integer and fractional part.
  */
 
-template<typename T>
-__inline__
-int _get_digit_places(
-        const T* arr,
-        int size,
-        int& integer_count,
-        int& fraction_count)
-{
+template <typename T>
+__inline__ int _get_digit_places(const T* arr, int size, int& integer_count, int& fraction_count) {
     integer_count = 0;
     fraction_count = 0;
 
@@ -62,8 +55,7 @@ int _get_digit_places(
             if (digits + 1 > integer_count) {
                 integer_count = digits + 1;
             }
-        }
-        else {
+        } else {
             digits = log10(arr[i]) + 1;
             if (digits > integer_count) {
                 integer_count = digits;
@@ -86,7 +78,8 @@ int _get_digit_places(
 
 /**
  *
- * @brief Overloaded function to calculate the length of the longest integer and fractional part of an array of complex numbers.
+ * @brief Overloaded function to calculate the length of the longest integer and fractional part of an array of complex
+ * numbers.
  *
  * This function is an overloaded version of _get_digit_places for an array of complex numbers.
  *
@@ -99,14 +92,8 @@ int _get_digit_places(
  *
  * @return The total length of the longest integer and fractional part.
  */
-template<typename T>
-__inline__
-int _get_digit_places(
-        const std::complex<T>* arr,
-        int size,
-        int& integer_count,
-        int& fraction_count)
-{
+template <typename T>
+__inline__ int _get_digit_places(const std::complex<T>* arr, int size, int& integer_count, int& fraction_count) {
     return _get_digit_places<T>(reinterpret_cast<const T*>(arr), size * 2, integer_count, fraction_count);
 }
 
@@ -122,15 +109,8 @@ int _get_digit_places(
  * @param fraction_count The number of digits to display after the decimal point.
  */
 template <typename T>
-__inline__
-void _output_wrapper(
-        std::ostream& os,
-        const T data,
-        const int& digit_width,
-        const int& fraction_count)
-{
-    os << std::setw(digit_width) \
-       << std::setprecision(fraction_count) << std::fixed << data;
+__inline__ void _output_wrapper(std::ostream& os, const T data, const int& digit_width, const int& fraction_count) {
+    os << std::setw(digit_width) << std::setprecision(fraction_count) << std::fixed << data;
 }
 
 /**
@@ -145,23 +125,14 @@ void _output_wrapper(
  * @param fraction_count The number of digits to display after the decimal point.
  */
 template <typename T>
-__inline__
-void _output_wrapper(
-        std::ostream& os,
-        const std::complex<T> data,
-        const int& digit_width,
-        const int& fraction_count)
-{
+__inline__ void
+_output_wrapper(std::ostream& os, const std::complex<T> data, const int& digit_width, const int& fraction_count) {
     // Write the real and imaginary parts of the complex value to the output stream
     // with the specified formatting.
     os << "{";
-    os << std::setw(digit_width) \
-       << std::setprecision(fraction_count) << std::fixed
-       << data.real();
+    os << std::setw(digit_width) << std::setprecision(fraction_count) << std::fixed << data.real();
     os << ", ";
-    os << std::setw(digit_width) \
-       << std::setprecision(fraction_count) << std::fixed
-       << data.imag();
+    os << std::setw(digit_width) << std::setprecision(fraction_count) << std::fixed << data.imag();
     os << "}";
 }
 
@@ -175,15 +146,8 @@ void _output_wrapper(
  * @param fraction_count The number of digits to display after the decimal point.
  */
 template <>
-__inline__
-void _output_wrapper(
-        std::ostream& os,
-        const int data,
-        const int& digit_width,
-        const int& fraction_count)
-{
-    os << std::setw(digit_width - 1) \
-       << std::setprecision(fraction_count) << std::fixed << data;
+__inline__ void _output_wrapper(std::ostream& os, const int data, const int& digit_width, const int& fraction_count) {
+    os << std::setw(digit_width - 1) << std::setprecision(fraction_count) << std::fixed << data;
 }
 
 /**
@@ -199,15 +163,10 @@ void _output_wrapper(
  * @param data A pointer to the tensor data.
  * @param shape The shape of the tensor.
  * @param num_elements The total number of elements in the tensor.
-*/
+ */
 template <typename T>
-__inline__
-void _internal_output(
-        std::ostream& os,
-        const T * data,
-        const TensorShape& shape,
-        const int64_t& num_elements)
-{
+__inline__ void
+_internal_output(std::ostream& os, const T* data, const TensorShape& shape, const int64_t& num_elements) {
     int integer_count = 0, fraction_count = 0;
     int digit_width = _get_digit_places(data, num_elements, integer_count, fraction_count) + 1;
     if (shape.ndim() == 1) {
@@ -219,11 +178,11 @@ void _internal_output(
             }
         }
         os << "]";
-    }
-    else if (shape.ndim() == 2) {
+    } else if (shape.ndim() == 2) {
         os << "[";
         for (int i = 0; i < shape.dim_size(0); ++i) {
-            if (i != 0) os << "       ";
+            if (i != 0)
+                os << "       ";
             os << "[";
             for (int j = 0; j < shape.dim_size(1); ++j) {
                 _output_wrapper(os, data[i * shape.dim_size(1) + j], digit_width, fraction_count);
@@ -232,33 +191,39 @@ void _internal_output(
                 }
             }
             os << "]";
-            if (i != shape.dim_size(0) - 1) os << ",\n";
+            if (i != shape.dim_size(0) - 1)
+                os << ",\n";
         }
         os << "]";
-    }
-    else if (shape.ndim() == 3) {
+    } else if (shape.ndim() == 3) {
         os << "[";
         for (int i = 0; i < shape.dim_size(0); ++i) {
-            if (i != 0) os << "       ";
+            if (i != 0)
+                os << "       ";
             os << "[";
             for (int j = 0; j < shape.dim_size(1); ++j) {
-                if (j != 0) os << "        ";
+                if (j != 0)
+                    os << "        ";
                 os << "[";
                 for (int k = 0; k < shape.dim_size(2); ++k) {
-                    _output_wrapper(os, data[i * shape.dim_size(1) * shape.dim_size(2) + j * shape.dim_size(2) + k], digit_width, fraction_count);
+                    _output_wrapper(os,
+                                    data[i * shape.dim_size(1) * shape.dim_size(2) + j * shape.dim_size(2) + k],
+                                    digit_width,
+                                    fraction_count);
                     if (k != shape.dim_size(2) - 1) {
                         os << ", ";
                     }
                 }
                 os << "]";
-                if (j != shape.dim_size(1) - 1) os << ",\n";
+                if (j != shape.dim_size(1) - 1)
+                    os << ",\n";
             }
             os << "]";
-            if (i != shape.dim_size(0) - 1) os << ",\n\n";
+            if (i != shape.dim_size(0) - 1)
+                os << ",\n\n";
         }
         os << "]";
-    }
-    else {
+    } else {
         for (int64_t i = 0; i < num_elements; ++i) {
             _output_wrapper(os, data[i], 0, 0);
             if (i < num_elements - 1) {
@@ -272,12 +237,12 @@ template <typename T>
 T extract(const container::Tensor& tensor) {
     if (tensor.device_type() == DeviceType::CpuDevice) {
         return reinterpret_cast<T*>(tensor.data())[0];
-    }
-    else {
+    } else {
         T result = 0;
-        TEMPLATE_ALL_2(tensor.data_type(), tensor.device_type(),
-            kernels::synchronize_memory<T, DEVICE_CPU, DEVICE_>()(
-                &result, reinterpret_cast<T*>(tensor.data()), 1))
+        TEMPLATE_ALL_2(
+            tensor.data_type(),
+            tensor.device_type(),
+            kernels::synchronize_memory<T, DEVICE_CPU, DEVICE_>()(&result, reinterpret_cast<T*>(tensor.data()), 1))
         return result;
     }
 }

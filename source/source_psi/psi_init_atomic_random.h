@@ -7,14 +7,12 @@
 Psi (planewave based wavefunction) initializer: atomic+random
 */
 template <typename T>
-class psi_init_atomic_random : public psi_init_atomic<T>
-{
+class psi_init_atomic_random : public psi_init_atomic<T> {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_atomic_random()
-    {
+    psi_init_atomic_random() {
         this->method_ = "atomic+random";
         this->mixing_coef_ = 0.05;
     }

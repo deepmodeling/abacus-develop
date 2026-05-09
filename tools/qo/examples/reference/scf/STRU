@@ -7,7 +7,7 @@ NUMERICAL_ORBITAL
 ./Si_gga_8au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-1.8897261258369282 			#Lattice constant
+1.8897261258369282             #Lattice constant
 
 LATTICE_VECTORS
 0.0000000000      2.7218510000      2.7218510000
@@ -15,9 +15,9 @@ LATTICE_VECTORS
 2.7218510000      2.7218510000      0.0000000000
 
 ATOMIC_POSITIONS
-Direct 		#Cartesian(Unit is LATTICE_CONSTANT)
-Si 			#Name of element	
-0.0			#Magnetic for this element.
-2			#Number of atoms
-0.00 0.00 0.00 1 1 1	#x,y,z, move_x, move_y, move_z
+Direct         #Cartesian(Unit is LATTICE_CONSTANT)
+Si             #Name of element    
+0.0            #Magnetic for this element.
+2            #Number of atoms
+0.00 0.00 0.00 1 1 1    #x,y,z, move_x, move_y, move_z
 0.25 0.25 0.25 1 1 1

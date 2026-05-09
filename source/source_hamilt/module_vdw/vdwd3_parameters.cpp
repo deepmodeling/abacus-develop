@@ -7,13 +7,9 @@
 #include "vdwd3_parameters.h"
 #include "source_base/constants.h"
 #include <map>
-namespace vdw
-{
+namespace vdw {
 
-void Vdwd3Parameters::initial_parameters(const std::string& xc,
-                                         const Input_para& input, 
-                                         std::ofstream* plog)
-{
+void Vdwd3Parameters::initial_parameters(const std::string& xc, const Input_para& input, std::ofstream* plog) {
     // initialize the dftd3 parameters
     mxc_.resize(max_elem_, 1);
     r0ab_.resize(max_elem_, std::vector<double>(max_elem_, 0.0));
@@ -24,35 +20,33 @@ void Vdwd3Parameters::initial_parameters(const std::string& xc,
                      std::vector<std::vector<std::vector<double>>>(
                          5,
                          std::vector<std::vector<double>>(max_elem_, std::vector<double>(max_elem_, 0.0)))));
-    
-    _vdwd3_autoset_xcparam(xc, input.vdw_method,
-                           input.vdw_s6, input.vdw_s8, input.vdw_a1, input.vdw_a2,
-                           s6_, s18_, rs6_, rs18_, /* rs6: a1, rs18: a2 */
+
+    _vdwd3_autoset_xcparam(xc,
+                           input.vdw_method,
+                           input.vdw_s6,
+                           input.vdw_s8,
+                           input.vdw_a1,
+                           input.vdw_a2,
+                           s6_,
+                           s18_,
+                           rs6_,
+                           rs18_, /* rs6: a1, rs18: a2 */
                            plog);
     abc_ = input.vdw_abc;
     version_ = input.vdw_method;
     model_ = input.vdw_cutoff_type;
-    if (input.vdw_cutoff_type == "radius")
-    {
-        if (input.vdw_radius_unit == "Bohr")
-        {
+    if (input.vdw_cutoff_type == "radius") {
+        if (input.vdw_radius_unit == "Bohr") {
             rthr2_ = std::pow(std::stod(input.vdw_cutoff_radius), 2);
-        }
-        else
-        {
+        } else {
             rthr2_ = std::pow((std::stod(input.vdw_cutoff_radius) / ModuleBase::BOHR_TO_A), 2);
         }
-        if (input.vdw_cn_thr_unit == "Bohr")
-        {
+        if (input.vdw_cn_thr_unit == "Bohr") {
             cn_thr2_ = std::pow(input.vdw_cn_thr, 2);
-        }
-        else
-        {
+        } else {
             cn_thr2_ = std::pow((input.vdw_cn_thr / ModuleBase::BOHR_TO_A), 2);
         }
-    }
-    else if (input.vdw_cutoff_type == "period")
-    {
+    } else if (input.vdw_cutoff_type == "period") {
         period_ = input.vdw_cutoff_period;
     }
     init_C6();
@@ -61,11 +55,9 @@ void Vdwd3Parameters::initial_parameters(const std::string& xc,
     init_r0ab();
 }
 
-int Vdwd3Parameters::limit(int &i)
-{
+int Vdwd3Parameters::limit(int& i) {
     int icn = 1;
-    while (i >= 100)
-    {
+    while (i >= 100) {
         i -= 100;
         icn += 1;
     }

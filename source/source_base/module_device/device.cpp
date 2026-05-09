@@ -24,17 +24,16 @@ namespace information {
 
 #if __MPI
 int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm) {
-  // 20240530 zhanghaochong
-  // The main difference between this function and the above is that it does not
-  // use hostname, but uses MPI's built-in function to achieve similar
-  // functions.
-  MPI_Comm localComm;
-  int localMpiRank;
-  MPI_Comm_split_type(mpi_comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL,
-                      &localComm);
-  MPI_Comm_rank(localComm, &localMpiRank);
-  MPI_Comm_free(&localComm);
-  return localMpiRank;
+    // 20240530 zhanghaochong
+    // The main difference between this function and the above is that it does not
+    // use hostname, but uses MPI's built-in function to achieve similar
+    // functions.
+    MPI_Comm localComm;
+    int localMpiRank;
+    MPI_Comm_split_type(mpi_comm, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &localComm);
+    MPI_Comm_rank(localComm, &localMpiRank);
+    MPI_Comm_free(&localComm);
+    return localMpiRank;
 }
 #endif
 
@@ -60,25 +59,26 @@ bool probe_gpu_availability() {
 #endif
 }
 
-std::string get_device_flag(const std::string &device,
-                            const std::string &basis_type) {
+std::string get_device_flag(const std::string& device, const std::string& basis_type) {
     // 1. Validate input string
     if (device != "cpu" && device != "gpu" && device != "auto") {
         ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\", \"gpu\", or \"auto\"!");
     }
-    
+
     // NOTE: This function is called only on rank 0 during input parsing.
     // The result will be broadcast to other ranks via the standard bcast mechanism.
     // DO NOT use MPI_Bcast here as other ranks are not in this code path.
-    
+
     std::string result = "cpu";
-    
+
     if (device == "gpu") {
         if (probe_gpu_availability()) {
             result = "gpu";
             // std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
         } else {
-            ModuleBase::WARNING_QUIT("device", "Device is set to 'gpu', but no available GPU was found. Please check your hardware/drivers or set 'device=cpu'.");
+            ModuleBase::WARNING_QUIT("device",
+                                     "Device is set to 'gpu', but no available GPU was found. Please check your "
+                                     "hardware/drivers or set 'device=cpu'.");
         }
     } else if (device == "auto") {
         if (probe_gpu_availability()) {
@@ -86,8 +86,9 @@ std::string get_device_flag(const std::string &device,
             // std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
         } else {
             result = "cpu";
-            // std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
-            // std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;
+            // std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." <<
+            // std::endl; std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your
+            // input." << std::endl;
         }
     } else { // device == "cpu"
         result = "cpu";
@@ -142,7 +143,7 @@ void DeviceContext::init() {
     cudaError_t err = cudaGetDeviceCount(&device_count_);
     if (err != cudaSuccess || device_count_ <= 0) {
         ModuleBase::WARNING_QUIT("DeviceContext::init",
-            "No CUDA-capable GPU device found! Please check your hardware/drivers.");
+                                 "No CUDA-capable GPU device found! Please check your hardware/drivers.");
         return;
     }
 
@@ -151,14 +152,14 @@ void DeviceContext::init() {
     err = cudaSetDevice(device_id_);
     if (err != cudaSuccess) {
         ModuleBase::WARNING_QUIT("DeviceContext::init",
-            "cudaSetDevice failed! Device ID: " + std::to_string(device_id_));
+                                 "cudaSetDevice failed! Device ID: " + std::to_string(device_id_));
         return;
     }
 #elif defined(__ROCM)
     hipError_t err = hipGetDeviceCount(&device_count_);
     if (err != hipSuccess || device_count_ <= 0) {
         ModuleBase::WARNING_QUIT("DeviceContext::init",
-            "No ROCm-capable GPU device found! Please check your hardware/drivers.");
+                                 "No ROCm-capable GPU device found! Please check your hardware/drivers.");
         return;
     }
 
@@ -167,7 +168,7 @@ void DeviceContext::init() {
     err = hipSetDevice(device_id_);
     if (err != hipSuccess) {
         ModuleBase::WARNING_QUIT("DeviceContext::init",
-            "hipSetDevice failed! Device ID: " + std::to_string(device_id_));
+                                 "hipSetDevice failed! Device ID: " + std::to_string(device_id_));
         return;
     }
 #endif

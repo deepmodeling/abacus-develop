@@ -2,26 +2,24 @@
 #define PARAMETER_H
 #include "input_parameter.h"
 #include "system_parameter.h"
-namespace ModuleIO
-{
-	class ReadInput;
+namespace ModuleIO {
+class ReadInput;
 }
 
 class CalAtomInfo;
 
-class Parameter
-{
+class Parameter {
   public:
     // Construct a new Parameter object
     Parameter(){};
     // Destruct the Parameter object
     ~Parameter(){};
-    
+
   public:
     // ---------------------------------------------------------------
     // --------------          Getters                ----------------
     // ---------------------------------------------------------------
-    
+
     // We can only read the value of input, but cannot modify it.
     const Input_para& inp = input;
     // We can only read the value of mdp, but cannot modify it.
@@ -34,6 +32,7 @@ class Parameter
     void set_pal_param(const int& myrank, const int& nproc, const int& nthread_per_proc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
+
   private:
     // Only ReadInput and CalAtomInfo can modify the value of Parameter.
     // Do not add extra friend class here!!!
@@ -50,11 +49,10 @@ class Parameter
 extern Parameter PARAM;
 
 // temperarily put here
-namespace GlobalV
-{
-	extern int NPROC;
-	extern int MY_RANK;
-	extern std::ofstream ofs_running;
-	extern std::ofstream ofs_warning;
+namespace GlobalV {
+extern int NPROC;
+extern int MY_RANK;
+extern std::ofstream ofs_running;
+extern std::ofstream ofs_warning;
 } // namespace GlobalV
 #endif

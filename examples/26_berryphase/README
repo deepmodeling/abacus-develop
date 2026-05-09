@@ -101,7 +101,7 @@ The polarization is calculated as:
 abla_k | u_{n,k} 
 angle 
 
-where  u_{n,k}  are the periodic parts of the Bloch wavefunctions. The result is typically reported in units of  e/	ext{Å}^2  or  u	ext{C}/	ext{cm}^2 .
+where  u_{n,k}  are the periodic parts of the Bloch wavefunctions. The result is typically reported in units of  e/    ext{Å}^2  or  u    ext{C}/    ext{cm}^2 .
 
 ## Notes
 

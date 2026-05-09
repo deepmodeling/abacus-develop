@@ -7,13 +7,11 @@
 #include <tuple>
 #include <vector>
 
-namespace psi
-{
+namespace psi {
 
 // structure for getting range of Psi
 // two display method: k index first or bands index first
-struct Range
-{
+struct Range {
     /// k_first = 0: Psi(nbands, nks, nbasis) ; 1: Psi(nks, nbands, nbasis)
     bool k_first;
     /// index_1>= 0: target first index; index_1<0: no use
@@ -33,8 +31,7 @@ struct Range
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Psi
-{
+class Psi {
   public:
     // Constructor 0: basic
     Psi();

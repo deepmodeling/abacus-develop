@@ -9,16 +9,14 @@
    endless compile troubles like undefined behavior"
 */
 void UnitCell::set_iat2iwt(const int& npol_in) {}
-UnitCell::UnitCell() {
-    itia2iat.create(1, 1);
-}
+UnitCell::UnitCell() { itia2iat.create(1, 1); }
 UnitCell::~UnitCell() {
     if (set_atom_flag) {
         delete[] atoms;
     }
 }
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
@@ -40,4 +38,4 @@ void UnitCell::setup(const std::string& latname_in,
 
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) const {}
+void UnitCell::compare_atom_labels(const std::string& label1, const std::string& label2) const {}

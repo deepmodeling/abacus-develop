@@ -10,9 +10,8 @@
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 
-namespace GlobalC
-{
-    ModulePW::PW_Basis* rhopw;
+namespace GlobalC {
+ModulePW::PW_Basis* rhopw;
 }
 
 UnitCell::UnitCell(){};
@@ -27,8 +26,8 @@ Atom_pseudo::Atom_pseudo(){};
 Atom_pseudo::~Atom_pseudo(){};
 pseudo::pseudo(){};
 pseudo::~pseudo(){};
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 /*
@@ -36,11 +35,9 @@ Structure_Factor::Structure_Factor(){};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis){};
 */
-class Setcell
-{
+class Setcell {
   public:
-    static void setupcell(UnitCell &ucell)
-    {
+    static void setupcell(UnitCell& ucell) {
         ucell.ntype = 2;
 
         ucell.atoms = new Atom[ucell.ntype];
@@ -85,7 +82,6 @@ class Setcell
         ucell.atoms[1].ncpp.zv = 6;
 
         ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
-
     };
 };
 

@@ -6,28 +6,47 @@
 #include "gint_type.h"
 #include "source_base/memory.h"
 
-namespace ModuleGint
-{
+namespace ModuleGint {
 
-GintInfo::GintInfo(
-    int nbx, int nby, int nbz,
-    int nmx, int nmy, int nmz,
-    int startidx_bx, int startidx_by, int startidx_bz,
-    int nbx_local, int nby_local, int nbz_local,
-    const Numerical_Orbital* Phi,
-    const UnitCell& ucell, Grid_Driver& gd)
-    : ucell_(&ucell)
-{
+GintInfo::GintInfo(int nbx,
+                   int nby,
+                   int nbz,
+                   int nmx,
+                   int nmy,
+                   int nmz,
+                   int startidx_bx,
+                   int startidx_by,
+                   int startidx_bz,
+                   int nbx_local,
+                   int nby_local,
+                   int nbz_local,
+                   const Numerical_Orbital* Phi,
+                   const UnitCell& ucell,
+                   Grid_Driver& gd)
+    : ucell_(&ucell) {
     // initialize the unitcell information
-    unitcell_info_ = std::make_shared<UnitCellInfo>(ucell_->a1 * ucell_->lat0, ucell_->a2 * ucell_->lat0, ucell_->a3 * ucell_->lat0,
-                                                    nbx, nby, nbz, nmx, nmy, nmz);
+    unitcell_info_ = std::make_shared<UnitCellInfo>(ucell_->a1 * ucell_->lat0,
+                                                    ucell_->a2 * ucell_->lat0,
+                                                    ucell_->a3 * ucell_->lat0,
+                                                    nbx,
+                                                    nby,
+                                                    nbz,
+                                                    nmx,
+                                                    nmy,
+                                                    nmz);
 
     biggrid_info_ = unitcell_info_->get_bgrid_info();
     meshgrid_info_ = biggrid_info_->get_mgrid_info();
 
     // initialize the divide information
-    divide_info_ = std::make_shared<DivideInfo>(startidx_bx, startidx_by, startidx_bz,
-                                                nbx_local, nby_local, nbz_local, unitcell_info_, false);
+    divide_info_ = std::make_shared<DivideInfo>(startidx_bx,
+                                                startidx_by,
+                                                startidx_bz,
+                                                nbx_local,
+                                                nby_local,
+                                                nbz_local,
+                                                unitcell_info_,
+                                                false);
 
     // initialize the localcell information
     localcell_info_ = divide_info_->get_localcell_info();
@@ -37,8 +56,7 @@ GintInfo::GintInfo(
     BigGrid::init_unitcell_info(unitcell_info_);
     BigGrid::init_bgrid_info(biggrid_info_);
 
-    for (int i = 0; i < localcell_info_->get_bgrids_num(); i++)
-    {
+    for (int i = 0; i < localcell_info_->get_bgrids_num(); i++) {
         biggrids_.push_back(std::make_shared<BigGrid>(i));
     }
 
@@ -52,47 +70,42 @@ GintInfo::GintInfo(
     // this step needs to be done after init_atoms_, because it requires the information of is_atom_on_bgrid
     init_ijr_info_(ucell, gd);
 
-    #ifdef __CUDA
-    if(PARAM.inp.device == "gpu")
-    {
-        streams_num_ = PARAM.inp.nstream;  // the default value of num_stream is 4
+#ifdef __CUDA
+    if (PARAM.inp.device == "gpu") {
+        streams_num_ = PARAM.inp.nstream; // the default value of num_stream is 4
         const int batch_size = nbz_local;
         init_bgrid_batches_(batch_size);
         gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);
     }
-    #endif
+#endif
 }
 
-GintInfo::~GintInfo()
-{
+GintInfo::~GintInfo() {
     ModuleBase::Memory::record("GintInfo::trace_lo_", -(long long)(sizeof(int) * trace_lo_.size()), true);
     ModuleBase::Memory::record("GintInfo::ijr_info_", -(long long)(sizeof(int) * ijr_info_.size()), true);
 }
 
-void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
-{
+void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi) {
     ModuleBase::timer::start("GintInfo", "init_atoms");
     int iat = 0;
     is_atom_in_proc_.resize(ucell_->nat, false);
     atoms_.resize(ucell_->nat);
     orbs_.resize(ntype);
 
-// TODO: USE OPENMP TO PARALLELIZE THIS LOOP
-    for(int i = 0; i < ntype; i++)
-    {
+    // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
+    for (int i = 0; i < ntype; i++) {
         const auto& atom = atoms[i];
         orbs_[i] = Phi[i];
-        const auto *orb = &orbs_[i];
+        const auto* orb = &orbs_[i];
 
         // rcut extends to the maximum big grids in x, y, z directions
         Vec3i ext_bgrid = biggrid_info_->max_ext_bgrid_num(atom.Rcut);
 
-        for(int j = 0; j < atom.na; j++)
-        {
+        for (int j = 0; j < atom.na; j++) {
             Vec3d fraction;
             fraction.x = atom.taud[j].x * unitcell_info_->get_nbx();
-			fraction.y = atom.taud[j].y * unitcell_info_->get_nby();
-			fraction.z = atom.taud[j].z * unitcell_info_->get_nbz();
+            fraction.y = atom.taud[j].y * unitcell_info_->get_nby();
+            fraction.z = atom.taud[j].z * unitcell_info_->get_nbz();
             const Vec3i atom_bgrid_idx(static_cast<int>(fraction.x),
                                        static_cast<int>(fraction.y),
                                        static_cast<int>(fraction.z));
@@ -104,39 +117,44 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
             auto& r_to_atom = atoms_[iat];
 
-            for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++)
-            {
-                for(int bgrid_y = atom_bgrid_idx.y - ext_bgrid.y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid.y; bgrid_y++)
-                {
-                    for(int bgrid_z = atom_bgrid_idx.z - ext_bgrid.z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid.z; bgrid_z++)
-                    {
+            for (int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++) {
+                for (int bgrid_y = atom_bgrid_idx.y - ext_bgrid.y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid.y;
+                     bgrid_y++) {
+                    for (int bgrid_z = atom_bgrid_idx.z - ext_bgrid.z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid.z;
+                         bgrid_z++) {
                         // get the extended biggrid idx of the affected biggrid
                         const Vec3i ext_bgrid_idx(bgrid_x, bgrid_y, bgrid_z);
                         const Vec3i normal_bgrid_idx = unitcell_info_->map_ext_idx_to_ucell(ext_bgrid_idx);
-                        if(localcell_info_->is_bgrid_in_lcell(normal_bgrid_idx) == false)
-                        {
+                        if (localcell_info_->is_bgrid_in_lcell(normal_bgrid_idx) == false) {
                             continue;
                         }
                         const int bgrid_local_idx = localcell_info_->get_bgrid_local_idx_1D(normal_bgrid_idx);
                         // get the unitcell idx of the big grid
                         const Vec3i ucell_idx_bgrid = unitcell_info_->get_unitcell_idx(ext_bgrid_idx);
 
-                        // The index of the unitcell containing the biggrid relative to the unitcell containing the atom.
+                        // The index of the unitcell containing the biggrid relative to the unitcell containing the
+                        // atom.
                         const Vec3i ucell_idx_relative = ucell_idx_bgrid - ucell_idx_atom;
                         auto it = r_to_atom.find(ucell_idx_relative);
                         // if the gint_atom is not in the map,
                         // it means this is the first time we find this atom may affect some biggrids,
                         // add it to the r_to_atom map
-                        if(it == r_to_atom.end())
-                        {
+                        if (it == r_to_atom.end()) {
                             Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
                                                      atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
                                                      atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
-                            r_to_atom.insert(std::make_pair(ucell_idx_relative, 
-                                GintAtom(&atom, i, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb, ucell_)));
+                            r_to_atom.insert(std::make_pair(ucell_idx_relative,
+                                                            GintAtom(&atom,
+                                                                     i,
+                                                                     j,
+                                                                     iat,
+                                                                     ext_atom_bgrid_idx,
+                                                                     ucell_idx_relative,
+                                                                     tau_in_biggrid,
+                                                                     orb,
+                                                                     ucell_)));
                         }
-                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_relative)))
-                        {
+                        if (biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_relative))) {
                             biggrids_[bgrid_local_idx]->add_atom(&r_to_atom.at(ucell_idx_relative));
                             is_atom_in_proc_[iat] = true;
                         }
@@ -149,30 +167,24 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
     ModuleBase::timer::end("GintInfo", "init_atoms");
 }
 
-void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
-{
+void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin) {
     this->trace_lo_ = std::vector<int>(PARAM.globalv.nlocal, -1);
     this->lgd_ = 0;
     int iat = 0;
     int iw_all = 0;
     int iw_local = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            if (is_atom_in_proc_[iat]) 
-            {
+    for (int it = 0; it < ucell.ntype; it++) {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++) {
+            if (is_atom_in_proc_[iat]) {
                 int nw0 = ucell.atoms[it].nw;
-                if (nspin== 4)
-                { // added by zhengdy-soc, need to be double in soc
+                if (nspin == 4) { // added by zhengdy-soc, need to be double in soc
                     nw0 *= 2;
                     this->lgd_ += nw0;
                 } else {
                     this->lgd_ += nw0;
                 }
 
-                for (int iw = 0; iw < nw0; iw++)
-                {
+                for (int iw = 0; iw < nw0; iw++) {
                     this->trace_lo_[iw_all] = iw_local;
                     ++iw_local;
                     ++iw_all;
@@ -180,8 +192,7 @@ void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
             } else {
                 // global index of atomic orbitals
                 iw_all += ucell.atoms[it].nw;
-                if (nspin == 4)
-                {
+                if (nspin == 4) {
                     iw_all += ucell.atoms[it].nw;
                 }
             }
@@ -191,8 +202,7 @@ void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
     ModuleBase::Memory::record("GintInfo::trace_lo_", (long long)(sizeof(int) * trace_lo_.size()), true);
 }
 
-void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
-{
+void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd) {
     HContainer<double> hr_gint_local(ucell.nat);
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
@@ -204,55 +214,54 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
     }
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1) {
-            const Atom* atom1 = &(ucell.atoms[T1]);
-            for (int I1 = 0; I1 < atom1->na; ++I1) {
-                auto& tau1 = atom1->tau[I1];
-                const int iat1 = ucell.itia2iat(T1, I1);
-                // whether this atom is in this processor.
-                if (this->is_atom_in_proc_[iat1]) {
-                    gd.Find_atom(ucell, tau1, T1, I1);
-                    for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad) {
-                        const int T2 = gd.getType(ad);
-                        const int I2 = gd.getNatom(ad);
-                        const int iat2 = ucell.itia2iat(T2, I2);
-                        const Atom* atom2 = &(ucell.atoms[T2]);
+        const Atom* atom1 = &(ucell.atoms[T1]);
+        for (int I1 = 0; I1 < atom1->na; ++I1) {
+            auto& tau1 = atom1->tau[I1];
+            const int iat1 = ucell.itia2iat(T1, I1);
+            // whether this atom is in this processor.
+            if (this->is_atom_in_proc_[iat1]) {
+                gd.Find_atom(ucell, tau1, T1, I1);
+                for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad) {
+                    const int T2 = gd.getType(ad);
+                    const int I2 = gd.getNatom(ad);
+                    const int iat2 = ucell.itia2iat(T2, I2);
+                    const Atom* atom2 = &(ucell.atoms[T2]);
 
-                        // NOTE: hr_gint wil save total number of atom pairs,
-                        // if only upper triangle is saved, the lower triangle will
-                        // be lost in 2D-block parallelization. if the adjacent atom
-                        // is in this processor.
-                        if (this->is_atom_in_proc_[iat2]) {
-                            Vec3d dtau = gd.getAdjacentTau(ad) - tau1;
-                            double distance = dtau.norm() * ucell.lat0;
-                            double rcut = atom1->Rcut + atom2->Rcut;
+                    // NOTE: hr_gint wil save total number of atom pairs,
+                    // if only upper triangle is saved, the lower triangle will
+                    // be lost in 2D-block parallelization. if the adjacent atom
+                    // is in this processor.
+                    if (this->is_atom_in_proc_[iat2]) {
+                        Vec3d dtau = gd.getAdjacentTau(ad) - tau1;
+                        double distance = dtau.norm() * ucell.lat0;
+                        double rcut = atom1->Rcut + atom2->Rcut;
 
-                            // if(distance < rcut)
-                            //  mohan reset this 2013-07-02 in Princeton
-                            //  we should make absolutely sure that the distance is
-                            //  smaller than rcuts[it] this should be consistant
-                            //  with LCAO_nnr::cal_nnrg function typical example : 7
-                            //  Bohr cutoff Si orbital in 14 Bohr length of cell.
-                            //  distance = 7.0000000000000000
-                            //  rcuts[it] = 7.0000000000000008
-                            if (distance < rcut - 1.0e-15) {
-                                // calculate R index
-                                auto& R_index = gd.getBox(ad);
-                                // insert this atom-pair into this->hr_gint
-                                hamilt::AtomPair<double> tmp_atom_pair(
-                                    iat1,
-                                    iat2,
-                                    R_index.x,
-                                    R_index.y,
-                                    R_index.z,
-                                    orb_index.data(),
-                                    orb_index.data(),
-                                    ucell.nat);
-                                hr_gint_local.insert_pair(tmp_atom_pair);
-                            }
+                        // if(distance < rcut)
+                        //  mohan reset this 2013-07-02 in Princeton
+                        //  we should make absolutely sure that the distance is
+                        //  smaller than rcuts[it] this should be consistant
+                        //  with LCAO_nnr::cal_nnrg function typical example : 7
+                        //  Bohr cutoff Si orbital in 14 Bohr length of cell.
+                        //  distance = 7.0000000000000000
+                        //  rcuts[it] = 7.0000000000000008
+                        if (distance < rcut - 1.0e-15) {
+                            // calculate R index
+                            auto& R_index = gd.getBox(ad);
+                            // insert this atom-pair into this->hr_gint
+                            hamilt::AtomPair<double> tmp_atom_pair(iat1,
+                                                                   iat2,
+                                                                   R_index.x,
+                                                                   R_index.y,
+                                                                   R_index.z,
+                                                                   orb_index.data(),
+                                                                   orb_index.data(),
+                                                                   ucell.nat);
+                            hr_gint_local.insert_pair(tmp_atom_pair);
                         }
                     }
                 }
             }
+        }
     }
     this->ijr_info_ = hr_gint_local.get_ijr_info();
     ModuleBase::Memory::record("GintInfo::ijr_info_", (long long)(sizeof(int) * ijr_info_.size()), true);
@@ -260,13 +269,10 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
 }
 
 #ifdef __CUDA
-void GintInfo::init_bgrid_batches_(int batch_size)
-{
-    for (int i = 0; i < biggrids_.size(); i += batch_size)
-    {
+void GintInfo::init_bgrid_batches_(int batch_size) {
+    for (int i = 0; i < biggrids_.size(); i += batch_size) {
         std::vector<std::shared_ptr<BigGrid>> bgrid_vec;
-        for(int j = i; j < i + batch_size && j < biggrids_.size(); j++)
-        {
+        for (int j = i; j < i + batch_size && j < biggrids_.size(); j++) {
             bgrid_vec.push_back(biggrids_[j]);
         }
         auto bgrid_batch = std::make_shared<BatchBigGrid>(bgrid_vec);
@@ -275,4 +281,4 @@ void GintInfo::init_bgrid_batches_(int batch_size)
 }
 #endif
 
-}
+} // namespace ModuleGint

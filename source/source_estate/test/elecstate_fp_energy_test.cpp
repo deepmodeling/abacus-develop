@@ -17,31 +17,27 @@
  *   - Efermi::set_efval()
  *   - Efermi::get_efval()
  */
-class fenergy : public ::testing::Test
-{
+class fenergy : public ::testing::Test {
   protected:
     elecstate::fenergy f_en;
     elecstate::Efermi eferm;
 };
 
-TEST_F(fenergy, calculate_etot)
-{
+TEST_F(fenergy, calculate_etot) {
     f_en.eband = 1.0;
     f_en.deband = 2.0;
     f_en.calculate_etot();
     EXPECT_EQ(f_en.etot, 3.0);
 }
 
-TEST_F(fenergy, calculate_harris)
-{
+TEST_F(fenergy, calculate_harris) {
     f_en.eband = 1.0;
     f_en.deband_harris = 2.0;
     f_en.calculate_harris();
     EXPECT_EQ(f_en.etot_harris, 3.0);
 }
 
-TEST_F(fenergy, clear_all)
-{
+TEST_F(fenergy, clear_all) {
     f_en.eband = 1.0;
     f_en.etot = 2.0;
     f_en.clear_all();
@@ -49,8 +45,7 @@ TEST_F(fenergy, clear_all)
     EXPECT_EQ(f_en.etot, 0.0);
 }
 
-TEST_F(fenergy, print_all)
-{
+TEST_F(fenergy, print_all) {
     testing::internal::CaptureStdout();
     f_en.print_all();
     std::string output = testing::internal::GetCapturedStdout();
@@ -58,8 +53,7 @@ TEST_F(fenergy, print_all)
     EXPECT_THAT(output, testing::HasSubstr("entropy(-TS)="));
 }
 
-TEST_F(fenergy, eferm_get_ef)
-{
+TEST_F(fenergy, eferm_get_ef) {
     eferm.two_efermi = false;
     eferm.set_efval(0, 0.7);
     EXPECT_EQ(eferm.ef, 0.7);
@@ -77,8 +71,7 @@ TEST_F(fenergy, eferm_get_ef)
     EXPECT_THAT(output, testing::HasSubstr("Please check NSPIN when TWO_EFERMI is true"));
 }
 
-TEST_F(fenergy, eferm_get_efval)
-{
+TEST_F(fenergy, eferm_get_efval) {
     eferm.ef = 0.0;
     eferm.ef_up = 1.0;
     eferm.ef_dw = -1.0;

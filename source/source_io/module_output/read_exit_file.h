@@ -3,8 +3,7 @@
 
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 /**
  * @brief read file to determine whether to stop the current execution
  *

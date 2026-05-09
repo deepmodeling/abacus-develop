@@ -11,9 +11,9 @@
  *
  * This class computes two-center integrals
  *
- *                     /    
+ *                     /
  *              I(R) = | dr phi1(r) (op) phi2(r - R)
- *                     /               
+ *                     /
  *
  * as well as their gradients, where op is 1 (overlap) or minus Laplacian (kinetic),
  * and phi1, phi2 are "atomic-orbital-like" functions of the form
@@ -22,8 +22,8 @@
  *
  * where chi is some numerical radial function and Ylm is some real spherical harmonics.
  *
- * This class is designed to efficiently compute the two-center integrals between 
- * two "collections" of the above functions with various R, e.g., the overlap integrals 
+ * This class is designed to efficiently compute the two-center integrals between
+ * two "collections" of the above functions with various R, e.g., the overlap integrals
  * between all numerical atomic orbitals and all Kleinman-Bylander nonlocal projectors,
  * the overlap & kinetic integrals between all numerical atomic orbitals, etc.
  * This is done by tabulating the radial part of the integrals on an r-space grid and
@@ -31,8 +31,7 @@
  *
  * See the developer's document for more details.
  *                                                                                      */
-class TwoCenterIntegrator
-{
+class TwoCenterIntegrator {
   public:
     TwoCenterIntegrator();
     TwoCenterIntegrator(const TwoCenterIntegrator&) = delete;
@@ -53,8 +52,7 @@ class TwoCenterIntegrator
                   const RadialCollection& ket,
                   const char op,
                   const int nr,
-                  const double cutoff
-    );
+                  const double cutoff);
 
     /*!
      * @brief Compute the two-center integrals and optionally their derivatives.
@@ -97,11 +95,10 @@ class TwoCenterIntegrator
                    const int l2,
                    const int izeta2,
                    const int m2,
-	                 const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+                   const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
                    double* out = nullptr,
                    double* grad_out = nullptr,
-                   double* hess_out = nullptr
-    ) const;
+                   double* hess_out = nullptr) const;
 
     /*!
      * @brief Compute a batch of two-center integrals.
@@ -109,15 +106,14 @@ class TwoCenterIntegrator
      * This function calculates the two-center integrals (and optionally their gradients)
      * between one orbital and all orbitals of a certain type from the other collection.
      *                                                                                  */
-    void snap(const int itype1, 
-              const int l1, 
-              const int izeta1, 
-              const int m1, 
+    void snap(const int itype1,
+              const int l1,
+              const int izeta1,
+              const int m1,
               const int itype2,
-	          const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+              const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
               const bool deriv,
-              std::vector<std::vector<double>>& out
-    ) const;
+              std::vector<std::vector<double>>& out) const;
 
     /// Returns the amount of heap memory used by table_ (in bytes).
     size_t table_memory() const { return table_.memory(); }

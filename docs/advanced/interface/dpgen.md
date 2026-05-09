@@ -1,16 +1,23 @@
 # DP-GEN
 
-
-[DP-GEN](https://github.com/deepmodeling/dpgen), the deep potential generator, is a package designed to generate deep learning based model of interatomic potential energy and force fields (Yuzhi Zhang, Haidi Wang, Weijie Chen, Jinzhe Zeng, Linfeng Zhang, Han Wang, and Weinan E, DP-GEN: A concurrent learning platform for the generation of reliable deep learning based potential energy models, Computer Physics Communications, 2020, 107206). ABACUS can now interface with DP-GEN to generate deep potentials and perform autotests. The minimum recommended version is ABACUS 3.0, dpdata 0.2.8, and dpgen 0.10.7 . In the following part, we take the FCC aluminum as an example.
+[DP-GEN](https://github.com/deepmodeling/dpgen), the deep potential generator, is a package designed
+to generate deep learning based model of interatomic potential energy and force fields (Yuzhi Zhang,
+Haidi Wang, Weijie Chen, Jinzhe Zeng, Linfeng Zhang, Han Wang, and Weinan E, DP-GEN: A concurrent
+learning platform for the generation of reliable deep learning based potential energy models,
+Computer Physics Communications, 2020, 107206). ABACUS can now interface with DP-GEN to generate
+deep potentials and perform autotests. The minimum recommended version is ABACUS 3.0, dpdata 0.2.8,
+and dpgen 0.10.7 . In the following part, we take the FCC aluminum as an example.
 
 ## init_bulk and run
 
 This example can be found in examples/dpgen-example/init_and_run directory.
 
-Firstly, one needs to prepare input files for ABACUS calculation, e.g., “INPUT”, "INPUT.md", "KPT", "Al.STRU", "Al_ONCV_PBE-1.0.upf", which are the main input file containing input tags, k-point mesh, crystal structure and pseudoptential, respectively. "INPUT" is for scf calculation, and "INPUT.md" is for AIMD (ab-initio molecular dynamic) calculation.
+Firstly, one needs to prepare input files for ABACUS calculation, e.g., “INPUT”, "INPUT.md", "KPT",
+"Al.STRU", "Al_ONCV_PBE-1.0.upf", which are the main input file containing input tags, k-point mesh,
+crystal structure and pseudoptential, respectively. "INPUT" is for scf calculation, and "INPUT.md"
+is for AIMD (ab-initio molecular dynamic) calculation.
 
 Secondly, for the "dpgen init_bulk" step, an `init.json` file should be provided:
-
 
 ```json
 {
@@ -37,6 +44,7 @@ Secondly, for the "dpgen init_bulk" step, an `init.json` file should be provided
 ```
 
 Next, for the "dpgen run" step, the following `run_param.json` should be provided.
+
 ```json
 {
     "type_map": [
@@ -186,9 +194,12 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
 
 This example can be found in examples/dpgen-example/autotest directory.
 
-`dpgen autotest` supports to perform `relaxation`,`eos` (equation of state),`elastic`,`surface`,`vacancy`, and `interstitial` calculations with ABACUS. A `property.json` and `machine.json` file need to be provided. For example,
+`dpgen autotest` supports to perform `relaxation`,`eos` (equation of
+state),`elastic`,`surface`,`vacancy`, and `interstitial` calculations with ABACUS. A `property.json`
+and `machine.json` file need to be provided. For example,
 
 `property.json`:
+
 ```json
 
 {
@@ -362,8 +373,10 @@ This example can be found in examples/dpgen-example/autotest directory.
 
 ```
 
-For each property, the command `dpgen autotest make property.json` will generate the input files, `dpgen autotest run property.json machine.json` will run the corresponding tasks, and `dpgen autotest post property.json` will collect the final results. 
+For each property, the command `dpgen autotest make property.json` will generate the input files,
+`dpgen autotest run property.json machine.json` will run the corresponding tasks, and
+`dpgen autotest post property.json` will collect the final results.
 
 Notes:
-- The ABACUS-DPGEN interface can be used in both pw and lcao basis.
 
+- The ABACUS-DPGEN interface can be used in both pw and lcao basis.

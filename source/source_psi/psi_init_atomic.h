@@ -7,16 +7,12 @@
 Psi (planewave based wavefunction) initializer: atomic
 */
 template <typename T>
-class psi_init_atomic : public psi_initializer<T>
-{
+class psi_init_atomic : public psi_initializer<T> {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_init_atomic()
-    {
-        this->method_ = "atomic";
-    }
+    psi_init_atomic() { this->method_ = "atomic"; }
     ~psi_init_atomic(){};
 
     /// @brief initialize the psi_init with external data and methods

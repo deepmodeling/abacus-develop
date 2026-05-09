@@ -7,8 +7,7 @@
 #include <memory>
 #include <string>
 
-class TwoCenterBundle
-{
+class TwoCenterBundle {
   public:
     TwoCenterBundle() = default;
     ~TwoCenterBundle() = default;

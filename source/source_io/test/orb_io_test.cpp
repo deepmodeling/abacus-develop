@@ -8,38 +8,33 @@
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
 
-class OrbIOTest : public testing::Test
-{
+class OrbIOTest : public testing::Test {
   protected:
     void SetUp();
-    void TearDown(){};
+    void TearDown() {};
 
     const std::string file = "../../../../tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb";
     const double tol = 1e-12;
 };
 
-void OrbIOTest::SetUp()
-{
+void OrbIOTest::SetUp() {
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 }
 
-TEST_F(OrbIOTest, ReadAbacusOrb)
-{
+TEST_F(OrbIOTest, ReadAbacusOrb) {
     std::ifstream ifs;
     std::string elem;
     double ecut, dr;
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs.open(file);
     }
     ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs.close();
     }
     EXPECT_EQ(elem, "Ti");
@@ -52,8 +47,7 @@ TEST_F(OrbIOTest, ReadAbacusOrb)
     EXPECT_EQ(nzeta[2], 2);
     EXPECT_EQ(nzeta[3], 1);
     EXPECT_EQ(radials.size(), 9); // 4 + 2 + 2 + 1
-    for(auto& radial: radials)
-    {
+    for (auto& radial: radials) {
         EXPECT_EQ(radial.size(), 1001);
     }
     EXPECT_EQ(radials[0][0], -1.581711853170e-01);
@@ -70,33 +64,28 @@ TEST_F(OrbIOTest, ReadAbacusOrb)
     EXPECT_EQ(radials[8][1000], 0);
 }
 
-TEST_F(OrbIOTest, WriteAbacusOrb)
-{
+TEST_F(OrbIOTest, WriteAbacusOrb) {
     std::ifstream ifs;
     std::string elem;
     double ecut, dr;
     int nr;
     std::vector<int> nzeta;
     std::vector<std::vector<double>> radials;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs.open(file);
     }
     ModuleIO::read_abacus_orb(ifs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs.close();
     }
 
     const std::string ftmp = "tmp.orb";
     std::ofstream ofs;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ofs.open(ftmp);
     }
     ModuleIO::write_abacus_orb(ofs, elem, ecut, nr, dr, nzeta, radials, GlobalV::MY_RANK);
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ofs.close();
     }
 #ifdef __MPI
@@ -110,13 +99,11 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
     int nr1;
     std::vector<int> nzeta1;
     std::vector<std::vector<double>> radials1;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs1.open(ftmp);
     }
     ModuleIO::read_abacus_orb(ifs1, elem1, ecut1, nr1, dr1, nzeta1, radials1, GlobalV::MY_RANK);
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         ifs1.close();
     }
 
@@ -125,27 +112,22 @@ TEST_F(OrbIOTest, WriteAbacusOrb)
     EXPECT_EQ(nr, nr1);
     EXPECT_DOUBLE_EQ(dr, dr1);
     EXPECT_EQ(nzeta.size(), nzeta1.size());
-    for (int i = 0; i < nzeta.size(); ++i)
-    {
+    for (int i = 0; i < nzeta.size(); ++i) {
         EXPECT_EQ(nzeta[i], nzeta1[i]);
     }
     EXPECT_EQ(radials.size(), radials1.size());
-    for (int i = 0; i < radials.size(); ++i)
-    {
+    for (int i = 0; i < radials.size(); ++i) {
         EXPECT_EQ(radials[i].size(), radials1[i].size());
-        for (int j = 0; j < radials[i].size(); ++j)
-        {
+        for (int j = 0; j < radials[i].size(); ++j) {
             EXPECT_NEAR(radials[i][j], radials1[i][j], tol);
         }
     }
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         remove(ftmp.c_str());
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

@@ -15,8 +15,7 @@
 #include <vector>
 
 template <typename Tdata>
-class Moment_abfs
-{
+class Moment_abfs {
   private:
     using TA = int;
     using Tcell = int;
@@ -27,16 +26,16 @@ class Moment_abfs
     using TAq = std::pair<TA, Tq>;
 
   public:
-    Moment_abfs(Exx_Info::Exx_Info_RI& info_in) : info(info_in) {};
-    ~Moment_abfs() {};
-    void cal_VR(
-        const UnitCell& ucell,
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,
-        const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>>& list_r,
-        const std::vector<double>& orb_cutoff,
-        const double Rc,
-        LRI_CV<Tdata>& cv,
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
+    Moment_abfs(Exx_Info::Exx_Info_RI& info_in) : info(info_in){};
+    ~Moment_abfs(){};
+    void
+    cal_VR(const UnitCell& ucell,
+           const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,
+           const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>>& list_r,
+           const std::vector<double>& orb_cutoff,
+           const double Rc,
+           LRI_CV<Tdata>& cv,
+           std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut);
     void discard0_VR(
         const UnitCell& ucell,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_in,

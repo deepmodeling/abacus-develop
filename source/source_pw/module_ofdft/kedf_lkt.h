@@ -13,16 +13,10 @@
  * See Luo K, Karasiev V V, Trickey S B. Physical Review B, 2018, 98(4): 041111.
  * @author sunliang on 2023-04-28
  */
-class KEDF_LKT
-{
+class KEDF_LKT {
   public:
-    KEDF_LKT()
-    {
-        this->stress.create(3, 3);
-    }
-    ~KEDF_LKT()
-    {
-    }
+    KEDF_LKT() { this->stress.create(3, 3); }
+    ~KEDF_LKT() {}
 
     void set_para(double dV, double lkt_a);
 
@@ -41,11 +35,11 @@ class KEDF_LKT
     void get_as(const double* prho, const double* const* pnabla_rho, const int nrxx, double* as);
 
     double dV_ = 0.; // volume element = V/nxyz
-    const double c_tf_
-        = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
-          * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
-    const double s_coef_
-        = 1.0 / (2. * std::pow(3 * std::pow(M_PI, 2.0), 1.0 / 3.0)); // coef of s, s=s_coef * |nabla rho|/rho^{4/3}
+    const double c_tf_ =
+        3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0) *
+        2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    const double s_coef_ =
+        1.0 / (2. * std::pow(3 * std::pow(M_PI, 2.0), 1.0 / 3.0)); // coef of s, s=s_coef * |nabla rho|/rho^{4/3}
     double lkt_a_ = 1.3;
 };
 #endif

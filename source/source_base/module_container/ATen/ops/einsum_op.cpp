@@ -12,7 +12,6 @@ namespace einsum_utils {
 
 struct BCast {
   public:
-
     bool valid = true;
     bool requires_broadcast = false;
 
@@ -27,16 +26,11 @@ struct BCast {
     std::vector<int64_t> x_bcast_shape = {}; // input a bcast shape
     std::vector<int64_t> y_bcast_shape = {}; // input b bcast shape
 
-    static void reverse(std::vector<int64_t>& vec) {
-        std::reverse(vec.begin(), vec.end());
-    }
+    static void reverse(std::vector<int64_t>& vec) { std::reverse(vec.begin(), vec.end()); }
 };
 
 // Do some initialization work for bcast dimensions
-static BCast prepare_bcast(
-    const std::vector<int64_t>& x_, 
-    const std::vector<int64_t>& y_) 
-{
+static BCast prepare_bcast(const std::vector<int64_t>& x_, const std::vector<int64_t>& y_) {
     const std::vector<int64_t> x(x_.begin(), x_.end() - 2);
     const std::vector<int64_t> y(y_.begin(), y_.end() - 2);
 
@@ -75,7 +69,7 @@ static BCast prepare_bcast(
         bcast.y_batch_size = TensorShape(bcast.y_batch_shape).NumElements();
         return std::move(bcast);
     }
-    
+
     std::vector<int64_t> inv_x = x;
     std::vector<int64_t> inv_y = y;
     BCast::reverse(inv_x);
@@ -102,8 +96,7 @@ static BCast prepare_bcast(
         if (inv_x[ii] == 1) {
             none_is_one = false;
             x_current_is_one = true;
-        }
-        else {
+        } else {
             x_current_is_one = false;
             output_dim = inv_x[ii];
             output_dim_set = true;
@@ -111,21 +104,19 @@ static BCast prepare_bcast(
         if (inv_x[ii] == 1) {
             none_is_one = false;
             y_current_is_one = true;
-        }
-        else {
+        } else {
             y_current_is_one = false;
             if (!output_dim_set || output_dim == inv_y[ii]) {
                 output_dim = inv_y[ii];
                 output_dim_set = true;
-            }
-            else {
+            } else {
                 bcast.valid = false;
                 return std::move(bcast);
             }
         }
         bcast.z_batch_shape.push_back(output_dim_set ? output_dim : 1);
         bcast.z_batch_size = mul_dims(bcast.z_batch_size, bcast.z_batch_shape.back());
-        
+
         // All dimensions are 1
         if (!output_dim_set) {
             // This will skip updating the previous state to the current one. We'll
@@ -143,8 +134,7 @@ static BCast prepare_bcast(
             // In essence, we only need to check whether the previous non-one state is
             // equal to the current non-one state.
             continue;
-        }
-        else if (x_current_is_one == x_prev_is_one && y_current_is_one == y_prev_is_one && set_one) {
+        } else if (x_current_is_one == x_prev_is_one && y_current_is_one == y_prev_is_one && set_one) {
             // fewer_dims_optimization
             // If the previous state is the same as the current state, we can skip
             // broadcasting / reshaping. This is because we can ignore dimensions of
@@ -159,8 +149,7 @@ static BCast prepare_bcast(
 
             bcast.x_bcast_shape.back() = mul_dims(bcast.x_bcast_shape.back(), x_current_is_one ? output_dim : 1);
             bcast.y_bcast_shape.back() = mul_dims(bcast.y_bcast_shape.back(), y_current_is_one ? output_dim : 1);
-        }
-        else {
+        } else {
             bcast.x_batch_shape.push_back(inv_x[ii]);
             bcast.y_batch_shape.push_back(inv_y[ii]);
 
@@ -202,7 +191,7 @@ static inline int64_t IPow(int64_t base, int64_t exponent) {
 }
 
 // Returns a reshaped input Tensor. The underlying buffer is not copied.
-// Note: This method will not allocate memory for output tensor, 
+// Note: This method will not allocate memory for output tensor,
 // intead use the reference of the input buffer.
 static inline bool CopyFrom(const Tensor& input, const TensorShape& shape, Tensor* output) {
     return output->CopyFrom(input, shape);
@@ -215,20 +204,15 @@ static inline bool CopyFromWithAllocate(const Tensor& input, const TensorShape& 
 }
 
 // Reshapes a Tensor of shape [b0,b1...bk,N,M] to [prod(b0,b1...bk),N,M].
-static bool ReshapeToRank3(Tensor& input, int batch_size, Tensor& output)
-{
+static bool ReshapeToRank3(Tensor& input, int batch_size, Tensor& output) {
     const int rank = input.shape().ndim();
-    TensorShape output_shape = {batch_size, input.shape().dim_size(rank - 2),
-                                input.shape().dim_size(rank - 1)};
+    TensorShape output_shape = {batch_size, input.shape().dim_size(rank - 2), input.shape().dim_size(rank - 1)};
     return CopyFrom(input, output_shape, &output);
 }
 
 template <typename T>
-static inline bool all_of(
-    const std::vector<T>& vec, 
-    const std::function<bool(T)>& predicate) 
-{
-    for (const auto& element : vec) {
+static inline bool all_of(const std::vector<T>& vec, const std::function<bool(T)>& predicate) {
+    for (const auto& element: vec) {
         if (!predicate(element)) {
             return false;
         }
@@ -238,15 +222,14 @@ static inline bool all_of(
 
 // If there are repeated labels in either the input or output, then this
 // strides the input (e.g. iii->i) or inflates it (e.g. i->iii), respectively.
-static bool StrideOrInflateOperand(
-        Tensor& input,
-        const std::vector<int>& labels,
-        const std::vector<int>& label_counts,
-        const bool should_inflate,
-        Tensor& output) // output is the result of stride or inflate
+static bool StrideOrInflateOperand(Tensor& input,
+                                   const std::vector<int>& labels,
+                                   const std::vector<int>& label_counts,
+                                   const bool should_inflate,
+                                   Tensor& output) // output is the result of stride or inflate
 {
     // Return early if there are no repeated indices.
-    if (all_of<int>(label_counts, [](int var) {return var <= 1;})) {
+    if (all_of<int>(label_counts, [](int var) { return var <= 1; })) {
         return CopyFrom(input, input.shape(), &output);
     }
 
@@ -261,10 +244,9 @@ static bool StrideOrInflateOperand(
     // false). E.g. they are [3, 5] and [3, 3, 3, 5] in the above example.
     std::vector<int64_t> strided_shape = {};
     std::vector<int64_t> inflated_shape = {};
-    for (int label : labels) {
+    for (int label: labels) {
         const int count = label_counts[label];
-        const int current_axis = static_cast<int>(
-            should_inflate ? strided_shape.size() : inflated_shape.size());
+        const int current_axis = static_cast<int>(should_inflate ? strided_shape.size() : inflated_shape.size());
         const int64_t dim = input.shape().dim_size(current_axis);
         strided_shape.push_back(dim);
         inflated_shape.insert(inflated_shape.end(), count, dim);
@@ -273,32 +255,26 @@ static bool StrideOrInflateOperand(
         // While taking the d-diagonal in a rank k Tensor, we take d
         // equally-spaced elements including the first and last element. Then, (k
         // - 1) * stride = d^k - 1, or, stride = (d^k - 1)/(d - 1).
-        const int64_t stride =
-            (dim > 1 && count > 1) ? (reshape_dim - 1) / (dim - 1) : 1;
+        const int64_t stride = (dim > 1 && count > 1) ? (reshape_dim - 1) / (dim - 1) : 1;
         strides.add_dim(stride);
     }
 
-    TensorShape output_shape =
-        TensorShape(should_inflate ? inflated_shape : strided_shape);
+    TensorShape output_shape = TensorShape(should_inflate ? inflated_shape : strided_shape);
     // Also allocate memory for the output tensor with the given shape.
     CopyFromWithAllocate(input, output_shape, &output);
- 
+
     if (should_inflate) {
         Tensor output_reshaped = output.shaped(reshape);
         op::inflate_op()(input.shaped(strided_shape), strides.dims(), output_reshaped);
-    }
-    else {
+    } else {
         op::stride_op()(input.shaped(reshape), strides.dims(), output);
     }
 
-    return true;     
+    return true;
 }
 
 // Permutes the labels according to the given permutation.
-static void PermuteLabels(
-        const std::vector<int>& permutation,
-        std::vector<int>& labels)
-{
+static void PermuteLabels(const std::vector<int>& permutation, std::vector<int>& labels) {
     auto num_labels = labels.size();
     std::vector<int> permuted_labels(num_labels, 0);
     for (int ii = 0; ii < num_labels; ii++) {
@@ -309,24 +285,19 @@ static void PermuteLabels(
 
 // Returns whether transposing would be a no-op; whether input has rank < 2 or
 // the permutation is the identity permutation.
-static bool ShouldTranspose(
-        const TensorShape& input_shape,
-        const std::vector<int>& permutation) 
-{
-    if (input_shape.ndim() < 2) return false;
+static bool ShouldTranspose(const TensorShape& input_shape, const std::vector<int>& permutation) {
+    if (input_shape.ndim() < 2)
+        return false;
     for (int ii = 0; ii < permutation.size(); ++ii) {
-      if (permutation[ii] != ii) return true;
+        if (permutation[ii] != ii)
+            return true;
     }
     return false;
 }
 
 // Transpose the input given a permutation. Returns a reference to the input
 // if transposing is not necessary.
-static bool TransposeOperand(
-        const Tensor& input,
-        const std::vector<int>& permutation,
-        Tensor& output)
-{
+static bool TransposeOperand(const Tensor& input, const std::vector<int>& permutation, Tensor& output) {
     if (!ShouldTranspose(input.shape(), permutation)) {
         return CopyFrom(input, input.shape(), &output);
     }
@@ -351,10 +322,8 @@ static bool TransposeOperand(
 // Returns true if the input dimensions are already sorted in the order
 // [broadcasting, batch, contract, free, reduce]. Used to implement an optimization to avoid
 // an extra transpose and instead uses (conj_x and conj_y) in BatchMatMul.
-static bool ShouldSwapFreeAndContract(
-        const std::vector<int>& labels,
-        const std::vector<EinsumDimensionType>& label_types)
-{
+static bool ShouldSwapFreeAndContract(const std::vector<int>& labels,
+                                      const std::vector<EinsumDimensionType>& label_types) {
     // Check that ordering is according to dimension type, with the role of
     // free and contract dimensions swapped.
     std::array<int, 5> remap = {0, 1, 3, 2, 4};
@@ -369,13 +338,11 @@ static bool ShouldSwapFreeAndContract(
 }
 
 // Insert new (unnamed) broadcasting labels at the location of ellipsis.
-static void InsertBroadcastLabels(
-        int num_bcast_labels, 
-        int num_named_labels,
-        int ellipsis_idx,
-        std::vector<int>& labels,
-        std::vector<int>& label_counts) 
-{
+static void InsertBroadcastLabels(int num_bcast_labels,
+                                  int num_named_labels,
+                                  int ellipsis_idx,
+                                  std::vector<int>& labels,
+                                  std::vector<int>& label_counts) {
     labels.erase(labels.begin() + ellipsis_idx);
     labels.insert(labels.begin() + ellipsis_idx, num_bcast_labels, 0);
 
@@ -384,9 +351,7 @@ static void InsertBroadcastLabels(
     // Now I understand finally!
     // Start from the num_named_labels, and insert num_bcast_labels
     // These broadcasting labels are not overlapped with the named labels
-    std::iota(labels.begin() + ellipsis_idx,
-              labels.begin() + ellipsis_idx + num_bcast_labels,
-              num_named_labels);
+    std::iota(labels.begin() + ellipsis_idx, labels.begin() + ellipsis_idx + num_bcast_labels, num_named_labels);
 
     label_counts.resize(num_named_labels + num_bcast_labels, 1);
 }
@@ -395,22 +360,20 @@ static void InsertBroadcastLabels(
 // present in exactly one input subscript (is_unique) and whether it is absent
 // from the output subscripts (is_removed). Does not handle broadcasting
 // dimensions.
-static EinsumDimensionType GetDimensionType(bool is_removed, bool is_unique)
-{
+static EinsumDimensionType GetDimensionType(bool is_removed, bool is_unique) {
     if (!is_removed && !is_unique)
         return kBatch;
     else if (!is_removed && is_unique)
         return kFree;
     else if (is_removed && !is_unique)
         return kContract;
-    else  // is_removed && is_unique
+    else // is_removed && is_unique
         return kReduce;
 }
 
 // Maps the character labels to consecutive integers.
-static void MapToLabels(const std::string& subscript, std::vector<int>& labels,
-                 std::unordered_map<char, int>& label_mapping)
-{
+static void
+MapToLabels(const std::string& subscript, std::vector<int>& labels, std::unordered_map<char, int>& label_mapping) {
     for (int ii = 0; ii < subscript.size(); ii++) {
         const char label_char = subscript[ii];
         if (label_char == '.') {
@@ -419,7 +382,7 @@ static void MapToLabels(const std::string& subscript, std::vector<int>& labels,
                 throw std::invalid_argument("Invalid ellipsis in subscript: " + subscript);
             }
             labels.push_back(kEllipsisLabel);
-            ii += 2;  // Skip next 2 characters as well.
+            ii += 2; // Skip next 2 characters as well.
             continue;
         }
         // Check that the label is a valid character.
@@ -439,11 +402,9 @@ static void MapToLabels(const std::string& subscript, std::vector<int>& labels,
 }
 
 /// Check the validation of the input equations
-bool ValidateEinsumEquation(
-        const std::string& equation,
-        std::vector<std::string>& input_subscripts,
-        std::string& output_subscript)
-{
+bool ValidateEinsumEquation(const std::string& equation,
+                            std::vector<std::string>& input_subscripts,
+                            std::string& output_subscript) {
     // Part 1: Check the equation's validation
     if (equation.empty()) {
         throw std::invalid_argument("Empty einsum equation");
@@ -451,7 +412,7 @@ bool ValidateEinsumEquation(
 
     // Part 2: Remove the white space in the equation
     std::string equation_no_space;
-    for (const char c : equation) {
+    for (const char c: equation) {
         if (c != ' ') {
             equation_no_space.push_back(c);
         }
@@ -462,8 +423,7 @@ bool ValidateEinsumEquation(
     auto delimiter_pos = equation_no_space.find("->");
     if (delimiter_pos == std::string::npos) {
         throw std::invalid_argument("No '->' in einsum equation: " + equation_no_space);
-    }
-    else if (equation_no_space.find("->", delimiter_pos + 1) != std::string::npos) {
+    } else if (equation_no_space.find("->", delimiter_pos + 1) != std::string::npos) {
         throw std::invalid_argument("Expecting exactly one '->' in einsum equation: " + equation_no_space);
     }
     inputs_and_output_subscripts.push_back(equation_no_space.substr(0, delimiter_pos));
@@ -491,29 +451,25 @@ bool ValidateEinsumEquation(
         if (std::regex_search(input_subscripts[0] + input_subscripts[1] + output_subscript, pattern)) {
             throw std::invalid_argument("Invalid character in einsum equation: " + equation);
         }
-    }
-    else if (input_subscripts.size() == 1) {
+    } else if (input_subscripts.size() == 1) {
         if (std::regex_search(input_subscripts[0] + output_subscript, pattern)) {
             throw std::invalid_argument("Invalid character in einsum equation: " + equation);
         }
-    }
-    else {
+    } else {
         throw std::invalid_argument("Invalid einsum equation: " + equation);
     }
     return true;
 }
 
 // Preprocessing for the input equation expr
-bool ParseEinsumEquation(
-    const std::string& equation, 
-    std::vector<EinsumDimensionType>& label_types,
-    std::vector<std::vector<int>>& input_labels,
-    std::vector<int>& output_labels,
-    std::vector<std::vector<int>>& input_label_counts,
-    std::vector<int>& output_label_counts,
-    std::vector<bool>& input_has_ellipsis,
-    bool& output_has_ellipsis)
-{
+bool ParseEinsumEquation(const std::string& equation,
+                         std::vector<EinsumDimensionType>& label_types,
+                         std::vector<std::vector<int>>& input_labels,
+                         std::vector<int>& output_labels,
+                         std::vector<std::vector<int>>& input_label_counts,
+                         std::vector<int>& output_label_counts,
+                         std::vector<bool>& input_has_ellipsis,
+                         bool& output_has_ellipsis) {
     // Check the equation's validation
     std::vector<std::string> input_str;
     std::string output_str;
@@ -525,7 +481,8 @@ bool ParseEinsumEquation(
     input_labels.resize(num_inputs);
 
     // Map from single characters to integer labels.
-    // Labels that are identical in the output equation and distinct input equations are assigned the same integer mapping.
+    // Labels that are identical in the output equation and distinct input equations are assigned the same integer
+    // mapping.
     for (int ii = 0; ii < num_inputs; ii++) {
         MapToLabels(input_str[ii], input_labels[ii], label_mapping);
     }
@@ -538,7 +495,7 @@ bool ParseEinsumEquation(
     for (int ii = 0; ii < num_inputs; ii++) {
         input_label_counts[ii].resize(num_labels, 0);
         input_has_ellipsis[ii] = false;
-        for (const int label : input_labels[ii]) {
+        for (const int label: input_labels[ii]) {
             if (label != kEllipsisLabel) {
                 input_label_counts[ii][label] += 1;
             } else {
@@ -548,7 +505,7 @@ bool ParseEinsumEquation(
     }
     output_label_counts.resize(num_labels, 0);
     output_has_ellipsis = false;
-    for (const int label : output_labels) {
+    for (const int label: output_labels) {
         if (label != kEllipsisLabel) {
             output_label_counts[label] += 1;
         } else {
@@ -561,23 +518,23 @@ bool ParseEinsumEquation(
     for (int label = 0; label < num_labels; label++) {
         // if (label == kEllipsisLabel) continue; Not necessary here.
         bool removed = output_label_counts[label] == 0;
-        bool unique = num_inputs == 1 || input_label_counts[0][label] == 0 ||
-                      input_label_counts[1][label] == 0;
+        bool unique = num_inputs == 1 || input_label_counts[0][label] == 0 || input_label_counts[1][label] == 0;
         label_types[label] = GetDimensionType(removed, unique);
     }
     return true;
 }
 
 // Records the dimension size for the given label. Checks that the dimension
-bool RecordLabelToDimension(const int label, const int axis, const Tensor& input,
+bool RecordLabelToDimension(const int label,
+                            const int axis,
+                            const Tensor& input,
                             std::unordered_map<int, int64_t>& label_to_dim_sizes) {
     const int64_t input_dim = input.shape().dim_size(axis);
     auto& label_dim = label_to_dim_sizes[label];
     if (label_dim != 0 && label_dim != input_dim) {
-        throw std::invalid_argument(
-            "Expected dimension " + std::to_string(label_to_dim_sizes[label]) + " at axis " +
-            std::to_string(axis) + " of the input shaped " +
-            " but got dimension " + std::to_string(input_dim));
+        throw std::invalid_argument("Expected dimension " + std::to_string(label_to_dim_sizes[label]) + " at axis " +
+                                    std::to_string(axis) + " of the input shaped " + " but got dimension " +
+                                    std::to_string(input_dim));
     }
     label_to_dim_sizes[label] = input_dim;
     return true;
@@ -585,17 +542,15 @@ bool RecordLabelToDimension(const int label, const int axis, const Tensor& input
 
 // Validate input dimensions and populate unnamed labels and their label counts.
 // Also populate the mapping from named labels to their dimension sizes.
-bool ProcessDimensions(
-    const std::vector<const Tensor*>& inputs,
-    std::vector<EinsumDimensionType>& label_types,
-    std::vector<std::vector<int>>& input_labels,
-    std::vector<int>& output_labels,
-    std::vector<std::vector<int>>& input_label_counts,
-    std::vector<int>& output_label_counts,
-    const std::vector<bool>& input_has_ellipsis,
-    const bool output_has_ellipsis,
-    std::unordered_map<int, int64_t>& label_to_dim_sizes) 
-{
+bool ProcessDimensions(const std::vector<const Tensor*>& inputs,
+                       std::vector<EinsumDimensionType>& label_types,
+                       std::vector<std::vector<int>>& input_labels,
+                       std::vector<int>& output_labels,
+                       std::vector<std::vector<int>>& input_label_counts,
+                       std::vector<int>& output_label_counts,
+                       const std::vector<bool>& input_has_ellipsis,
+                       const bool output_has_ellipsis,
+                       std::unordered_map<int, int64_t>& label_to_dim_sizes) {
     const int num_inputs = inputs.size();
     const int num_labels = label_types.size();
     int max_bcast_dims = 0;
@@ -611,9 +566,8 @@ bool ProcessDimensions(
         if (!has_ellipsis) {
             // If there is no ellipsis, the number of dimensions must match the number
             if (num_dims != labels.size()) {
-                throw std::invalid_argument(
-                    "Input " + std::to_string(ii) + " has " + std::to_string(num_dims) +
-                    " dimensions but got" + std::to_string(num_labels) + " labels");
+                throw std::invalid_argument("Input " + std::to_string(ii) + " has " + std::to_string(num_dims) +
+                                            " dimensions but got" + std::to_string(num_labels) + " labels");
             }
             for (int label_idx = 0; label_idx < labels.size(); label_idx++) {
                 const int label = labels[label_idx];
@@ -635,9 +589,8 @@ bool ProcessDimensions(
         // 2. The ellipsis shadows no labels: num_dims == labels.size() - 1.
         // In both cases, num_dims >= labels.size() - 1.
         if (num_dims < labels.size() - 1) {
-            throw std::invalid_argument(
-                "Input " + std::to_string(ii) + " has " + std::to_string(num_dims) +
-                " dimensions but " + std::to_string(num_labels) + " labels");
+            throw std::invalid_argument("Input " + std::to_string(ii) + " has " + std::to_string(num_dims) +
+                                        " dimensions but " + std::to_string(num_labels) + " labels");
         }
         int ellipsis_idx = -1;
         // Number of shadowed labels = num_dims - (labels.size() - 1).
@@ -659,23 +612,18 @@ bool ProcessDimensions(
         // Found an ellipsis. Replace it with the appropriate number of broadcasting
         // labels.
         if (ellipsis_idx != -1) {
-            InsertBroadcastLabels(num_bcast_labels, num_labels, ellipsis_idx, input_labels[ii],
-                                  input_label_counts[ii]);
+            InsertBroadcastLabels(num_bcast_labels, num_labels, ellipsis_idx, input_labels[ii], input_label_counts[ii]);
             max_bcast_dims = std::max(max_bcast_dims, num_bcast_labels);
         }
     }
-    if (!input_has_ellipsis[0] 
-        && (input_has_ellipsis.size() == 1 || !input_has_ellipsis[1])
-        && !output_has_ellipsis) 
-    {
+    if (!input_has_ellipsis[0] && (input_has_ellipsis.size() == 1 || !input_has_ellipsis[1]) && !output_has_ellipsis) {
         return true;
     }
     // Insert broadcasting labels into the output labels.
     auto it = std::find(output_labels.begin(), output_labels.end(), kEllipsisLabel);
     if (it != output_labels.end()) {
         const int ellipsis_idx = it - output_labels.begin();
-        InsertBroadcastLabels(max_bcast_dims, num_labels, ellipsis_idx,
-                              output_labels, output_label_counts);
+        InsertBroadcastLabels(max_bcast_dims, num_labels, ellipsis_idx, output_labels, output_label_counts);
     } else if (max_bcast_dims > 0) {
         throw std::invalid_argument(
             "Output has no ellipsis but input has ellipsis. Cannot insert broadcasting labels.");
@@ -685,16 +633,13 @@ bool ProcessDimensions(
     return true;
 }
 
-
-bool ReduceOperand(
-    const Tensor& input,
-    const std::vector<EinsumDimensionType>& label_types,
-    std::vector<int>& labels,
-    const std::vector<int>& label_counts,
-    std::vector<int>& free_labels,
-    int& swap_free_and_contract,
-    Tensor& output)
-{
+bool ReduceOperand(const Tensor& input,
+                   const std::vector<EinsumDimensionType>& label_types,
+                   std::vector<int>& labels,
+                   const std::vector<int>& label_counts,
+                   std::vector<int>& free_labels,
+                   int& swap_free_and_contract,
+                   Tensor& output) {
     // Find the permutation to transpose the input dimensions in the order of
     // EinsumDimensionType; i.e. batch, free, contract and reduce dimensions.
     // This makes it more convenient to invoke Reduce/Contract operations.
@@ -705,15 +650,13 @@ bool ReduceOperand(
     // Check if we can avoid the transpose. We need to flip the conj_x (or conj_y)
     // flag during BatchMatMul. This is an extra optimization not necessary for
     // correctness.
-    if(ShouldSwapFreeAndContract(labels, label_types)) {
+    if (ShouldSwapFreeAndContract(labels, label_types)) {
         swap_free_and_contract = 1;
-    }
-    else {
+    } else {
         std::sort(permutation.begin(), permutation.end(), [&](int ii, int jj) {
             int label_ii = labels[ii];
             int label_jj = labels[jj];
-            return std::tie(label_types[label_ii], label_ii) <
-                   std::tie(label_types[label_jj], label_jj);
+            return std::tie(label_types[label_ii], label_ii) < std::tie(label_types[label_jj], label_jj);
         });
     }
 
@@ -727,7 +670,6 @@ bool ReduceOperand(
     Tensor input_deduped;
     labels.erase(std::unique(labels.begin(), labels.end()), labels.end());
 
-
     StrideOrInflateOperand(input_transposed, labels, label_counts, false, input_deduped);
 
     // Reshape denotes the rank-5 shape [broadcast, batch, free, contract,
@@ -736,16 +678,15 @@ bool ReduceOperand(
     // The output shape is [batch shape] + [free size, contract size]
     // That is, the batch shape is preserved (for broadcasting while
     // contracting) while the free dims and contract dims are compressed to one
-    // dimension each.   
+    // dimension each.
     TensorShape output_shape;
     for (int label_idx = 0; label_idx < labels.size(); label_idx++) {
         const int label = labels[label_idx];
         int64_t dim = input_deduped.shape().dim_size(label_idx);
         if (label_types[label] == EinsumDimensionType::kBroadcasting ||
             label_types[label] == EinsumDimensionType::kBatch) {
-              output_shape.add_dim(dim);
-        } 
-        else if (label_types[label] == EinsumDimensionType::kFree) {
+            output_shape.add_dim(dim);
+        } else if (label_types[label] == EinsumDimensionType::kFree) {
             free_labels.push_back(label);
         }
         // All together, the reshape is [broadcast, batch, free, contract, reduce]
@@ -758,44 +699,43 @@ bool ReduceOperand(
     output_shape.add_dim(reshape[EinsumDimensionType::kFree]);
     output_shape.add_dim(reshape[EinsumDimensionType::kContract]);
 
-
-    if (reshape[EinsumDimensionType::kReduce] ==
-        1) {  // No need to actually reduce.
-      return CopyFrom(input_deduped, output_shape, &output);
+    if (reshape[EinsumDimensionType::kReduce] == 1) { // No need to actually reduce.
+        return CopyFrom(input_deduped, output_shape, &output);
     }
 
     // This command will actually allocate memory for the output tensor
     CopyFromWithAllocate(input_deduped, output_shape, &output);
     Tensor output_shaped = output.shaped({-1});
 
-    op::reduce_op()(
-         input_deduped.shaped({-1, reshape[EinsumDimensionType::kReduce]}),
-         reshape[EinsumDimensionType::kReduce], output_shaped);
+    op::reduce_op()(input_deduped.shaped({-1, reshape[EinsumDimensionType::kReduce]}),
+                    reshape[EinsumDimensionType::kReduce],
+                    output_shaped);
 
     return true;
 }
 
 template <typename T, typename Device>
-static void DoContract(
-        const Tensor& in_x,
-        const Tensor& in_y,
-        const EinsumOption& option,
-        const bool& trans_x,
-        const bool& trans_y,
-        const einsum_utils::BCast& bcast,
-        Tensor& out_z)
-{
+static void DoContract(const Tensor& in_x,
+                       const Tensor& in_y,
+                       const EinsumOption& option,
+                       const bool& trans_x,
+                       const bool& trans_y,
+                       const einsum_utils::BCast& bcast,
+                       Tensor& out_z) {
     const T alpha = static_cast<T>(option.alpha);
-    const T beta  = static_cast<T>(option.beta);
+    const T beta = static_cast<T>(option.beta);
     const int m = in_x.shape().dim_size(option.conj_x || trans_x ? 2 : 1);
     const int k = in_x.shape().dim_size(option.conj_x || trans_x ? 1 : 2);
     const int n = in_y.shape().dim_size(option.conj_y || trans_y ? 1 : 2);
 
     const int64_t batch_size = bcast.z_batch_size;
 
-    std::vector<T*> x_device_memory_ptrs = {}; x_device_memory_ptrs.reserve(batch_size);
-    std::vector<T*> y_device_memory_ptrs = {}; y_device_memory_ptrs.reserve(batch_size);
-    std::vector<T*> z_device_memory_ptrs = {}; z_device_memory_ptrs.reserve(batch_size);
+    std::vector<T*> x_device_memory_ptrs = {};
+    x_device_memory_ptrs.reserve(batch_size);
+    std::vector<T*> y_device_memory_ptrs = {};
+    y_device_memory_ptrs.reserve(batch_size);
+    std::vector<T*> z_device_memory_ptrs = {};
+    z_device_memory_ptrs.reserve(batch_size);
 
     auto* x_base_ptr = in_x.data<T>();
     auto* y_base_ptr = in_y.data<T>();
@@ -805,12 +745,10 @@ static void DoContract(
     int64_t y_stride = 0;
     int64_t z_stride = 0;
 
-    bool is_full_broadcast = 
-        std::min(bcast.x_batch_size, bcast.y_batch_size) == 1;
+    bool is_full_broadcast = std::min(bcast.x_batch_size, bcast.y_batch_size) == 1;
 
-    bool use_strided_batched = 
-        (!bcast.requires_broadcast || is_full_broadcast) && batch_size > 1;
-    
+    bool use_strided_batched = (!bcast.requires_broadcast || is_full_broadcast) && batch_size > 1;
+
     if (use_strided_batched) {
         x_stride = bcast.x_batch_size != 1 ? m * k : 0;
         y_stride = bcast.y_batch_size != 1 ? k * n : 0;
@@ -819,15 +757,13 @@ static void DoContract(
         x_device_memory_ptrs.push_back(x_base_ptr);
         y_device_memory_ptrs.push_back(y_base_ptr);
         z_device_memory_ptrs.push_back(z_base_ptr);
-    }
-    else if (!bcast.requires_broadcast) {
+    } else if (!bcast.requires_broadcast) {
         for (int ii = 0; ii < batch_size; ii++) {
             x_device_memory_ptrs.push_back(x_base_ptr + ii * m * k);
             y_device_memory_ptrs.push_back(y_base_ptr + ii * k * n);
             z_device_memory_ptrs.push_back(z_base_ptr + ii * m * n);
         }
-    }
-    else {
+    } else {
         std::vector<T*> x_device_memory = {};
         std::vector<T*> y_device_memory = {};
         for (int ii = 0; ii < bcast.x_batch_size; ii++) {
@@ -852,7 +788,12 @@ static void DoContract(
         if (m == 1 && n == 1 && option.conj_x != true && option.conj_y != true) {
             // Dot product
             // TODO: implement the Conjugate version of Dot product.
-            kernels::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
+            kernels::blas_dot<T, Device>()(k,
+                                           x_device_memory_ptrs[0],
+                                           1,
+                                           y_device_memory_ptrs[0],
+                                           1,
+                                           z_device_memory_ptrs[0]);
         }
         // Gemv
         else if (n == 1 && option.conj_x != true) {
@@ -861,66 +802,91 @@ static void DoContract(
             // the transposition flag to compensate for the tensor being stored
             // row-major. Since GEMV doesn't provide a way to just conjugate an
             // argument, we have to defer those cases to GEMM below.
-            kernels::blas_gemv<T, Device>()(
-                trans_x ? 'N' : 'T',
-                trans_x ? m : k,
-                trans_x ? k : m,
-                &alpha,
-                x_device_memory_ptrs[0], trans_x ? m : k,
-                y_device_memory_ptrs[0], 1, 
-                &beta, 
-                z_device_memory_ptrs[0], 1);
+            kernels::blas_gemv<T, Device>()(trans_x ? 'N' : 'T',
+                                            trans_x ? m : k,
+                                            trans_x ? k : m,
+                                            &alpha,
+                                            x_device_memory_ptrs[0],
+                                            trans_x ? m : k,
+                                            y_device_memory_ptrs[0],
+                                            1,
+                                            &beta,
+                                            z_device_memory_ptrs[0],
+                                            1);
         }
         // Gemm
         else {
             // Call the column-major Blas library
-            kernels::blas_gemm<T, Device>()(
-                option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
-                option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
-                n, m, k, 
-                &alpha, 
-                y_device_memory_ptrs[0], option.conj_y || trans_y ? k : n, 
-                x_device_memory_ptrs[0], option.conj_x || trans_x ? m : k, 
-                &beta, 
-                z_device_memory_ptrs[0], n);
+            kernels::blas_gemm<T, Device>()(option.conj_y ? 'C'
+                                            : trans_y     ? 'T'
+                                                          : 'N',
+                                            option.conj_x ? 'C'
+                                            : trans_x     ? 'T'
+                                                          : 'N',
+                                            n,
+                                            m,
+                                            k,
+                                            &alpha,
+                                            y_device_memory_ptrs[0],
+                                            option.conj_y || trans_y ? k : n,
+                                            x_device_memory_ptrs[0],
+                                            option.conj_x || trans_x ? m : k,
+                                            &beta,
+                                            z_device_memory_ptrs[0],
+                                            n);
         }
         return;
-    }
-    else if (use_strided_batched) {
-        kernels::blas_gemm_batched_strided<T, Device>()(
-            option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
-            option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
-            n, m, k, 
-            &alpha, 
-            y_device_memory_ptrs[0], option.conj_y || trans_y ? k : n, y_stride,
-            x_device_memory_ptrs[0], option.conj_x || trans_x ? m : k, x_stride,
-            &beta, 
-            z_device_memory_ptrs[0], n, z_stride,
-            batch_size);
-    }
-    else {
-        kernels::blas_gemm_batched<T, Device>()(
-            option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
-            option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
-            n, m, k, 
-            &alpha, 
-            y_device_memory_ptrs.data(), option.conj_y || trans_y ? k : n, 
-            x_device_memory_ptrs.data(), option.conj_x || trans_x ? m : k, 
-            &beta, 
-            z_device_memory_ptrs.data(), n,
-            batch_size);
+    } else if (use_strided_batched) {
+        kernels::blas_gemm_batched_strided<T, Device>()(option.conj_y ? 'C'
+                                                        : trans_y     ? 'T'
+                                                                      : 'N',
+                                                        option.conj_x ? 'C'
+                                                        : trans_x     ? 'T'
+                                                                      : 'N',
+                                                        n,
+                                                        m,
+                                                        k,
+                                                        &alpha,
+                                                        y_device_memory_ptrs[0],
+                                                        option.conj_y || trans_y ? k : n,
+                                                        y_stride,
+                                                        x_device_memory_ptrs[0],
+                                                        option.conj_x || trans_x ? m : k,
+                                                        x_stride,
+                                                        &beta,
+                                                        z_device_memory_ptrs[0],
+                                                        n,
+                                                        z_stride,
+                                                        batch_size);
+    } else {
+        kernels::blas_gemm_batched<T, Device>()(option.conj_y ? 'C'
+                                                : trans_y     ? 'T'
+                                                              : 'N',
+                                                option.conj_x ? 'C'
+                                                : trans_x     ? 'T'
+                                                              : 'N',
+                                                n,
+                                                m,
+                                                k,
+                                                &alpha,
+                                                y_device_memory_ptrs.data(),
+                                                option.conj_y || trans_y ? k : n,
+                                                x_device_memory_ptrs.data(),
+                                                option.conj_x || trans_x ? m : k,
+                                                &beta,
+                                                z_device_memory_ptrs.data(),
+                                                n,
+                                                batch_size);
     }
 }
 
 // Contracts the inputs along the last axis (or the second last if the
 // corresponding value of swap_free_and_contract is true). The batch
 // dimensions are broadcast to the output shape.
-bool ContractOperands(
-    std::vector<Tensor>& inputs,
-    const std::vector<int>& swap_free_and_contract,
-    const EinsumOption& option,
-    Tensor& output)
-{
+bool ContractOperands(std::vector<Tensor>& inputs,
+                      const std::vector<int>& swap_free_and_contract,
+                      const EinsumOption& option,
+                      Tensor& output) {
     if (inputs.size() == 1) {
         return CopyFrom(inputs[0], inputs[0].shape(), &output);
     }
@@ -935,9 +901,8 @@ bool ContractOperands(
 
     TensorShape output_shape = bcast.z_batch_shape;
     for (int ii = 0; ii < inputs.size(); ii++) {
-      const int64_t free_axis =
-          inputs[ii].shape().ndim() - (swap_free_and_contract[ii] ? 1 : 2);
-          output_shape.add_dim(inputs[ii].shape().dim_size(free_axis));
+        const int64_t free_axis = inputs[ii].shape().ndim() - (swap_free_and_contract[ii] ? 1 : 2);
+        output_shape.add_dim(inputs[ii].shape().dim_size(free_axis));
     }
     bool trans_x = swap_free_and_contract[0];
     bool trans_y = !swap_free_and_contract[1];
@@ -947,8 +912,7 @@ bool ContractOperands(
             throw std::invalid_argument("Invalid option: output shape mismatch the requested shape");
         }
         CopyFrom(*option.out, output_shape, &output);
-    }
-    else {
+    } else {
         CopyFromWithAllocate(inputs[0], output_shape, &output);
     }
     if (lhs.NumElements() == 0 || rhs.NumElements() == 0) {
@@ -959,21 +923,20 @@ bool ContractOperands(
     Tensor output_reshaped;
     ReshapeToRank3(output, bcast.z_batch_size, output_reshaped);
 
-    TEMPLATE_BLAS_2(output_reshaped.data_type(), output_reshaped.device_type(),
-        einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, option, trans_x, trans_y, bcast, output_reshaped))
+    TEMPLATE_BLAS_2(output_reshaped.data_type(),
+                    output_reshaped.device_type(),
+                    einsum_utils::DoContract<T_, DEVICE_>(lhs, rhs, option, trans_x, trans_y, bcast, output_reshaped))
 
     return true;
 }
 
-void ProcessOutput(
-    const Tensor& input,
-    const std::vector<einsum_utils::EinsumDimensionType>& label_types,
-    const std::vector<std::vector<int>>& free_labels,
-    std::unordered_map<int, int64_t>& label_to_dim_sizes,
-    const std::vector<int>& output_labels,
-    const std::vector<int>& output_label_counts,
-    Tensor& output)
-{
+void ProcessOutput(const Tensor& input,
+                   const std::vector<einsum_utils::EinsumDimensionType>& label_types,
+                   const std::vector<std::vector<int>>& free_labels,
+                   std::unordered_map<int, int64_t>& label_to_dim_sizes,
+                   const std::vector<int>& output_labels,
+                   const std::vector<int>& output_label_counts,
+                   Tensor& output) {
     TensorShape result_shape = input.shape();
     result_shape.remove_dim(result_shape.ndim() - 1);
     result_shape.remove_dim(result_shape.ndim() - 1);
@@ -983,13 +946,14 @@ void ProcessOutput(
     // All batch dimensions should be present in the contracted result. First
     // the broadcasting dimensions, then the named batch dimensions.
     for (int label = 0; label < num_labels; ++label) {
-        if (label_types[label] == EinsumDimensionType::kBroadcasting || label_types[label] == EinsumDimensionType::kBatch) {
+        if (label_types[label] == EinsumDimensionType::kBroadcasting ||
+            label_types[label] == EinsumDimensionType::kBatch) {
             result_labels.push_back(label);
         }
     }
 
     for (int ii = 0; ii < free_labels.size(); ii++) {
-        for (int label : free_labels[ii]) {
+        for (int label: free_labels[ii]) {
             result_labels.push_back(label);
             result_shape.add_dim(label_to_dim_sizes[label]);
         }
@@ -1008,13 +972,16 @@ void ProcessOutput(
     // Inflate the output if necessary. (E.g. for the equation 'i->iii' which
     // may arise while computing gradient of a regular Einsum).
     Tensor output_inflated;
-    StrideOrInflateOperand(contraction_output, 
-        result_labels, output_label_counts, true /* should_inflate */, output_inflated);
+    StrideOrInflateOperand(contraction_output,
+                           result_labels,
+                           output_label_counts,
+                           true /* should_inflate */,
+                           output_inflated);
 
     if (output_inflated.shape().ndim() > contraction_output.shape().ndim()) {
         // We inflated the output. Modify result labels accordingly.
         std::vector<int> inflated_labels = {};
-        for (int label : result_labels) {
+        for (int label: result_labels) {
             inflated_labels.insert(inflated_labels.end(), output_label_counts[label], label);
         }
         result_labels.swap(inflated_labels);
@@ -1044,5 +1011,5 @@ void ProcessOutput(
     TransposeOperand(output_inflated, output_permutation, output);
 }
 
-}   // namespace utils
-}   // namespace container
+} // namespace einsum_utils
+} // namespace container

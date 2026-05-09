@@ -1,6 +1,7 @@
 # PyABACUS
 
-PyABACUS is the official Python interface for ABACUS, providing a convenient way to run DFT calculations directly from Python scripts.
+PyABACUS is the official Python interface for ABACUS, providing a convenient way to run DFT
+calculations directly from Python scripts.
 
 ## Installation
 
@@ -13,7 +14,8 @@ pip install -e .
 
 ### With C++ Driver Support
 
-For full functionality including direct library calls (faster than subprocess), build ABACUS with Python bindings:
+For full functionality including direct library calls (faster than subprocess), build ABACUS with
+Python bindings:
 
 ```bash
 cmake -B build -DENABLE_PYABACUS=ON -DENABLE_LCAO=ON
@@ -21,7 +23,8 @@ cmake --build build -j8
 pip install -e python/pyabacus
 ```
 
-**Note:** The `pyabacus` package on PyPI is a different project and is NOT related to ABACUS. Please install from source as shown above.
+**Note:** The `pyabacus` package on PyPI is a different project and is NOT related to ABACUS. Please
+install from source as shown above.
 
 ## Quick Start
 
@@ -70,6 +73,7 @@ result = pyabacus.abacus(
 ```
 
 This is equivalent to running:
+
 ```bash
 OMP_NUM_THREADS=2 mpirun -np 4 abacus
 ```
@@ -107,20 +111,20 @@ def abacus(
 
 **Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `input_dir` | str | `"."` | Directory containing INPUT, STRU, KPT files |
-| `input_file` | str | None | Explicit path to INPUT file |
-| `stru_file` | str | None | Explicit path to STRU file |
-| `kpt_file` | str | None | Explicit path to KPT file |
-| `pseudo_dir` | str | None | Directory containing pseudopotentials |
-| `orbital_dir` | str | None | Directory containing orbital files (LCAO) |
-| `output_dir` | str | `"OUT.PYABACUS"` | Directory for output files |
-| `calculate_force` | bool | True | Whether to calculate forces |
-| `calculate_stress` | bool | False | Whether to calculate stress tensor |
-| `verbosity` | int | 1 | Output level (0=silent, 1=normal, 2=verbose) |
-| `nprocs` | int | 1 | Number of MPI processes |
-| `nthreads` | int | 1 | Number of OpenMP threads |
+| Parameter          | Type | Default          | Description                                  |
+| ------------------ | ---- | ---------------- | -------------------------------------------- |
+| `input_dir`        | str  | `"."`            | Directory containing INPUT, STRU, KPT files  |
+| `input_file`       | str  | None             | Explicit path to INPUT file                  |
+| `stru_file`        | str  | None             | Explicit path to STRU file                   |
+| `kpt_file`         | str  | None             | Explicit path to KPT file                    |
+| `pseudo_dir`       | str  | None             | Directory containing pseudopotentials        |
+| `orbital_dir`      | str  | None             | Directory containing orbital files (LCAO)    |
+| `output_dir`       | str  | `"OUT.PYABACUS"` | Directory for output files                   |
+| `calculate_force`  | bool | True             | Whether to calculate forces                  |
+| `calculate_stress` | bool | False            | Whether to calculate stress tensor           |
+| `verbosity`        | int  | 1                | Output level (0=silent, 1=normal, 2=verbose) |
+| `nprocs`           | int  | 1                | Number of MPI processes                      |
+| `nthreads`         | int  | 1                | Number of OpenMP threads                     |
 
 **Returns:** `CalculationResult` object
 
@@ -130,37 +134,37 @@ Container for calculation results.
 
 **Attributes:**
 
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `converged` | bool | Whether SCF converged |
-| `niter` | int | Number of SCF iterations |
-| `drho` | float | Final charge density difference |
-| `etot` | float | Total energy (Ry) |
-| `etot_ev` | float | Total energy (eV) |
-| `forces` | ndarray | Forces on atoms (nat, 3) in Ry/Bohr |
-| `forces_ev_ang` | ndarray | Forces in eV/Angstrom |
-| `stress` | ndarray | Stress tensor (3, 3) in kbar |
-| `fermi_energy` | float | Fermi energy (eV) |
-| `bandgap` | float | Band gap (eV) |
-| `nat` | int | Number of atoms |
-| `ntype` | int | Number of atom types |
-| `nbands` | int | Number of bands |
-| `nks` | int | Number of k-points |
-| `output_dir` | str | Path to output directory (OUT.$suffix) |
-| `log_file` | str | Path to the main log file |
-| `output_files` | dict | Dictionary of output files (filename -> path) |
+| Attribute       | Type    | Description                                   |
+| --------------- | ------- | --------------------------------------------- |
+| `converged`     | bool    | Whether SCF converged                         |
+| `niter`         | int     | Number of SCF iterations                      |
+| `drho`          | float   | Final charge density difference               |
+| `etot`          | float   | Total energy (Ry)                             |
+| `etot_ev`       | float   | Total energy (eV)                             |
+| `forces`        | ndarray | Forces on atoms (nat, 3) in Ry/Bohr           |
+| `forces_ev_ang` | ndarray | Forces in eV/Angstrom                         |
+| `stress`        | ndarray | Stress tensor (3, 3) in kbar                  |
+| `fermi_energy`  | float   | Fermi energy (eV)                             |
+| `bandgap`       | float   | Band gap (eV)                                 |
+| `nat`           | int     | Number of atoms                               |
+| `ntype`         | int     | Number of atom types                          |
+| `nbands`        | int     | Number of bands                               |
+| `nks`           | int     | Number of k-points                            |
+| `output_dir`    | str     | Path to output directory (OUT.\$suffix)       |
+| `log_file`      | str     | Path to the main log file                     |
+| `output_files`  | dict    | Dictionary of output files (filename -> path) |
 
 **Methods:**
 
-| Method | Description |
-|--------|-------------|
-| `summary()` | Return a formatted summary string |
-| `energies` | Dictionary of all energy components |
-| `has_forces` | Whether forces are available |
-| `has_stress` | Whether stress is available |
-| `has_output_dir` | Whether output directory exists |
+| Method                  | Description                           |
+| ----------------------- | ------------------------------------- |
+| `summary()`             | Return a formatted summary string     |
+| `energies`              | Dictionary of all energy components   |
+| `has_forces`            | Whether forces are available          |
+| `has_stress`            | Whether stress is available           |
+| `has_output_dir`        | Whether output directory exists       |
 | `get_output_file(name)` | Get full path to specific output file |
-| `list_output_files()` | List all output file names |
+| `list_output_files()`   | List all output file names            |
 
 ## Output File Tracking
 
@@ -188,16 +192,16 @@ if bands_file:
 
 ### Common Output Files
 
-| File | Description |
-|------|-------------|
-| `running_scf.log` | Main calculation log |
-| `BANDS_1.dat` | Band structure data |
-| `PDOS` | Projected density of states |
-| `CHARGE.cube` | Charge density in cube format |
-| `SPIN1_CHG.cube` | Spin-up charge density |
-| `SPIN2_CHG.cube` | Spin-down charge density |
-| `istate.info` | Band eigenvalues and occupations |
-| `kpoints` | K-point information |
+| File              | Description                      |
+| ----------------- | -------------------------------- |
+| `running_scf.log` | Main calculation log             |
+| `BANDS_1.dat`     | Band structure data              |
+| `PDOS`            | Projected density of states      |
+| `CHARGE.cube`     | Charge density in cube format    |
+| `SPIN1_CHG.cube`  | Spin-up charge density           |
+| `SPIN2_CHG.cube`  | Spin-down charge density         |
+| `istate.info`     | Band eigenvalues and occupations |
+| `kpoints`         | K-point information              |
 
 ## Convenience Functions
 
@@ -277,25 +281,29 @@ for system, data in results.items():
 ### ABACUS executable not found
 
 If you see "ABACUS executable not found", ensure:
+
 1. ABACUS is installed and in your PATH
-2. Or build with C++ driver support (see Installation)
+1. Or build with C++ driver support (see Installation)
 
 ### MPI not found
 
 If you see "mpirun/mpiexec not found" when using `nprocs > 1`:
+
 1. Install MPI (OpenMPI or MPICH)
-2. Ensure `mpirun` or `mpiexec` is in your PATH
-3. Or set `nprocs=1` to run without MPI
+1. Ensure `mpirun` or `mpiexec` is in your PATH
+1. Or set `nprocs=1` to run without MPI
 
 ### Import errors
 
 If `import pyabacus` fails:
+
 1. Ensure pyabacus is installed: `pip install pyabacus`
-2. Check Python version compatibility (Python 3.8+)
+1. Check Python version compatibility (Python 3.8+)
 
 ### Calculation not converging
 
 Check the log file for details:
+
 ```python
 result = pyabacus.abacus("./problem_case/")
 if not result.converged:
@@ -308,6 +316,7 @@ if not result.converged:
 ### Forces or stress not available
 
 Forces and stress are parsed from the ABACUS output log. Ensure:
+
 1. `cal_force` is set in your INPUT file for forces
-2. `cal_stress` is set in your INPUT file for stress
-3. The calculation completed successfully
+1. `cal_stress` is set in your INPUT file for stress
+1. The calculation completed successfully

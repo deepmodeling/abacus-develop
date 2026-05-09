@@ -2,9 +2,12 @@
 
 ## Overview
 
-Starting from ABACUS v3.9.0.25, the output format for Hamiltonian H(R) and overlap S(R) matrices has been unified to use standard CSR (Compressed Sparse Row) format, matching the format used by `out_dmr` for density matrices.
+Starting from ABACUS v3.9.0.25, the output format for Hamiltonian H(R) and overlap S(R) matrices has
+been unified to use standard CSR (Compressed Sparse Row) format, matching the format used by
+`out_dmr` for density matrices.
 
 This change affects downstream tools that read H(R) and S(R) matrices, including:
+
 - TB2J (magnetic exchange parameters)
 - DeepH (machine learning Hamiltonian)
 - pyATB (tight-binding analysis)
@@ -15,6 +18,7 @@ This change affects downstream tools that read H(R) and S(R) matrices, including
 ### File Names
 
 **Old format (ABACUS ≤ v3.8.x):**
+
 ```
 OUT.${suffix}/data-HR-sparse_SPIN0.csr
 OUT.${suffix}/data-HR-sparse_SPIN1.csr  (nspin=2 only)
@@ -22,6 +26,7 @@ OUT.${suffix}/data-SR-sparse_SPIN0.csr
 ```
 
 **New format (ABACUS ≥ v3.9.0.25):**
+
 ```
 OUT.${suffix}/hrs1_nao.csr
 OUT.${suffix}/hrs2_nao.csr  (nspin=2 only)
@@ -33,6 +38,7 @@ OUT.${suffix}/srs1_nao.csr
 Both old and new formats use CSR structure, but with different headers and metadata.
 
 #### Old Format Header
+
 ```
 STEP: 0
 Matrix Dimension of H(R): 26
@@ -42,6 +48,7 @@ Matrix number of H(R): 183
 ```
 
 #### New Format Header
+
 ```
  --- Ionic Step 1 ---
  # print H matrix in real space H(R)
@@ -81,11 +88,14 @@ Matrix number of H(R): 183
 
 ### Key Differences
 
-1. **UnitCell Information**: New format includes complete unit cell information (lattice vectors, atomic positions)
-2. **Header Format**: New format uses descriptive comments with `#` prefix
-3. **Section Labels**: New format explicitly labels CSR sections ("# CSR values", "# CSR column indices", "# CSR row pointers")
-4. **Ionic Step**: New format uses "Ionic Step N" instead of "STEP: N"
-5. **Precision Control**: New format supports optional precision parameter: `out_mat_hs2 1 12` (default 8)
+1. **UnitCell Information**: New format includes complete unit cell information (lattice vectors,
+   atomic positions)
+1. **Header Format**: New format uses descriptive comments with `#` prefix
+1. **Section Labels**: New format explicitly labels CSR sections ("# CSR values", "# CSR column
+   indices", "# CSR row pointers")
+1. **Ionic Step**: New format uses "Ionic Step N" instead of "STEP: N"
+1. **Precision Control**: New format supports optional precision parameter: `out_mat_hs2 1 12`
+   (default 8)
 
 ## Migration Steps for Tool Developers
 
@@ -251,11 +261,13 @@ def read_hamiltonian(filename):
 **Required version:** TB2J v0.9.0+
 
 **Changes needed:**
+
 - Update file name detection to look for `hrs*_nao.csr` and `srs*_nao.csr`
 - Update parser to handle new header format with UnitCell information
 - Update parser to skip comment lines starting with `#`
 
 **Example:**
+
 ```python
 # In abacus2J.py or relevant parser
 def find_hr_files(path, suffix):
@@ -282,6 +294,7 @@ def find_hr_files(path, suffix):
 **Required version:** DeepH v1.0.0+
 
 **Changes needed:**
+
 - Update `parse_abacus.py` to handle new file names
 - Update CSR parser to skip UnitCell section
 - Update parser to handle comment lines with `#` prefix
@@ -289,6 +302,7 @@ def find_hr_files(path, suffix):
 ### pyATB
 
 **Changes needed:**
+
 - Update file I/O module to detect and parse new format
 - Add format version detection
 - Maintain backward compatibility with old format
@@ -309,7 +323,8 @@ abacus_new > log_new
 
 ### 2. Verify Numerical Equivalence
 
-The CSR data (values, indices, pointers) should be numerically identical between old and new formats, only the header differs.
+The CSR data (values, indices, pointers) should be numerically identical between old and new
+formats, only the header differs.
 
 ```python
 def compare_csr_data(old_file, new_file):
@@ -352,17 +367,20 @@ This affects the output format of floating-point values in the CSR data.
 ## Support and Resources
 
 - **ABACUS Documentation:** [https://abacus.deepmodeling.com/](https://abacus.deepmodeling.com/)
-- **GitHub Issues:** [https://github.com/deepmodeling/abacus-develop/issues](https://github.com/deepmodeling/abacus-develop/issues)
+- **GitHub Issues:**
+  [https://github.com/deepmodeling/abacus-develop/issues](https://github.com/deepmodeling/abacus-develop/issues)
 - **Design Document:** `docs/plans/2026-02-28-unify-out-mat-hs2-design.md`
 - **Implementation Plan:** `docs/plans/2026-02-28-unify-out-mat-hs2-plan.md`
 
 ## Summary
 
 The new CSR format provides:
+
 - ✅ Unified interface with `out_dmr` output
 - ✅ Complete UnitCell information in output files
 - ✅ Precision control for output values
 - ✅ Better documentation with inline comments
 - ✅ Clearer section labels for easier parsing
 
-Tool developers should update their parsers to support the new format while maintaining backward compatibility with the old format for users running older ABACUS versions.
+Tool developers should update their parsers to support the new format while maintaining backward
+compatibility with the old format for users running older ABACUS versions.

@@ -21,25 +21,23 @@ namespace esolver {
 /**
  * @brief Mixing method types
  */
-enum class MixingMethod
-{
-    Plain,    ///< Simple linear mixing
-    Pulay,    ///< Pulay mixing (DIIS)
-    Broyden,  ///< Broyden mixing
-    Anderson  ///< Anderson mixing
+enum class MixingMethod {
+    Plain,   ///< Simple linear mixing
+    Pulay,   ///< Pulay mixing (DIIS)
+    Broyden, ///< Broyden mixing
+    Anderson ///< Anderson mixing
 };
 
 /**
  * @brief Configuration for charge mixing
  */
-struct MixingConfig
-{
+struct MixingConfig {
     MixingMethod method = MixingMethod::Pulay;
-    double beta = 0.7;           ///< Mixing parameter
-    int ndim = 8;                ///< Number of history steps for Pulay/Broyden
-    double gg0 = 1.0;            ///< Kerker mixing parameter
-    bool mix_gg0 = false;        ///< Whether to use Kerker mixing
-    bool mix_rho = true;         ///< Mix charge density (vs potential)
+    double beta = 0.7;    ///< Mixing parameter
+    int ndim = 8;         ///< Number of history steps for Pulay/Broyden
+    double gg0 = 1.0;     ///< Kerker mixing parameter
+    bool mix_gg0 = false; ///< Whether to use Kerker mixing
+    bool mix_rho = true;  ///< Mix charge density (vs potential)
 };
 
 /**
@@ -48,9 +46,8 @@ struct MixingConfig
  * This interface defines the contract for mixing charge densities
  * during SCF iterations to achieve convergence.
  */
-class IChargeMixer
-{
-public:
+class IChargeMixer {
+  public:
     virtual ~IChargeMixer() = default;
 
     // ==================== Core Mixing Operations ====================
@@ -61,8 +58,7 @@ public:
      * @param rho_out Output charge density (from current iteration)
      * @return Mixed charge density for next iteration
      */
-    virtual py::array_t<double> mix(const py::array_t<double>& rho_in,
-                                    const py::array_t<double>& rho_out) = 0;
+    virtual py::array_t<double> mix(const py::array_t<double>& rho_in, const py::array_t<double>& rho_out) = 0;
 
     /**
      * @brief Reset mixer state (clear history)
@@ -125,27 +121,33 @@ public:
 /**
  * @brief Convert MixingMethod enum to string
  */
-inline std::string mixing_method_to_string(MixingMethod method)
-{
-    switch (method)
-    {
-        case MixingMethod::Plain: return "plain";
-        case MixingMethod::Pulay: return "pulay";
-        case MixingMethod::Broyden: return "broyden";
-        case MixingMethod::Anderson: return "anderson";
-        default: return "unknown";
+inline std::string mixing_method_to_string(MixingMethod method) {
+    switch (method) {
+    case MixingMethod::Plain:
+        return "plain";
+    case MixingMethod::Pulay:
+        return "pulay";
+    case MixingMethod::Broyden:
+        return "broyden";
+    case MixingMethod::Anderson:
+        return "anderson";
+    default:
+        return "unknown";
     }
 }
 
 /**
  * @brief Convert string to MixingMethod enum
  */
-inline MixingMethod string_to_mixing_method(const std::string& str)
-{
-    if (str == "plain") return MixingMethod::Plain;
-    if (str == "pulay") return MixingMethod::Pulay;
-    if (str == "broyden") return MixingMethod::Broyden;
-    if (str == "anderson") return MixingMethod::Anderson;
+inline MixingMethod string_to_mixing_method(const std::string& str) {
+    if (str == "plain")
+        return MixingMethod::Plain;
+    if (str == "pulay")
+        return MixingMethod::Pulay;
+    if (str == "broyden")
+        return MixingMethod::Broyden;
+    if (str == "anderson")
+        return MixingMethod::Anderson;
     return MixingMethod::Pulay; // default
 }
 

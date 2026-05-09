@@ -18,11 +18,7 @@ struct veff_pw_op {
     ///
     /// Output Parameters
     /// \param out : output array
-    void operator() (
-        const Device* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        const FPTYPE* in);
+    void operator()(const Device* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in);
 
     /// @brief Compute the effective potential of hPsi in real space with NSPIN > 2,
     ///
@@ -44,19 +40,17 @@ struct veff_pw_op {
     /// Output Parameters
     /// \param out : output array 1
     /// \param out1 : output array 2
-    void operator() (
-        const Device* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        std::complex<FPTYPE>* out1,
-        const FPTYPE** in);
+    void operator()(const Device* dev,
+                    const int& size,
+                    std::complex<FPTYPE>* out,
+                    std::complex<FPTYPE>* out1,
+                    const FPTYPE** in);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
-struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU>
-{
+struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in);
 
     void operator()(const base_device::DEVICE_GPU* dev,
@@ -67,4 +61,4 @@ struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU>
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt
-#endif //MODULE_HAMILT_VEFF_H
+#endif // MODULE_HAMILT_VEFF_H

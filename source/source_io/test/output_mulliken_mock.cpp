@@ -4,11 +4,9 @@
 #include <string>
 #include <vector>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
-std::vector<double> read_k(std::string filename, int ik)
-{
+std::vector<double> read_k(std::string filename, int ik) {
     std::ifstream skFile(filename);
     // Initialize variables for file parsing
     std::string line;
@@ -16,30 +14,23 @@ std::vector<double> read_k(std::string filename, int ik)
     int ncol = 0;
 
     // find ik before read the following
-    while (std::getline(skFile, line))
-    {
-        if (line.rfind("# k-point", 0) == 0)
-        {
+    while (std::getline(skFile, line)) {
+        if (line.rfind("# k-point", 0) == 0) {
             std::istringstream ss(line.substr(9)); // 9 to skip "# k-point"
             int ik_read;
             ss >> ik_read;
-            if (ik_read == ik)
-            {
+            if (ik_read == ik) {
                 break;
             }
         }
     }
 
     // Read the file comments, begin parsing when nrow and ncol are found
-    while (std::getline(skFile, line))
-    {
-        if (line.rfind("# nrow", 0) == 0)
-        {
+    while (std::getline(skFile, line)) {
+        if (line.rfind("# nrow", 0) == 0) {
             std::istringstream ss(line.substr(7)); // 7 to skip "# nrow "
             ss >> nrow;
-        }
-        else if (line.rfind("# ncol", 0) == 0)
-        {
+        } else if (line.rfind("# ncol", 0) == 0) {
             std::istringstream ss(line.substr(7)); // 7 to skip "# ncol "
             ss >> ncol;
             break;
@@ -52,10 +43,8 @@ std::vector<double> read_k(std::string filename, int ik)
     // Read the rest of the file and populate the vector
     int index;
     double value;
-    while (skFile >> index >> value)
-    {
-        if (index >= 0 && index < nrow * ncol)
-        {
+    while (skFile >> index >> value) {
+        if (index >= 0 && index < nrow * ncol) {
             matrix[index] = value;
         }
     }
@@ -69,47 +58,35 @@ std::vector<double> read_k(std::string filename, int ik)
 #include "source_io/module_mulliken/output_dmk.h"
 #include "source_io/module_mulliken/output_sk.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 template <typename TK>
 Output_DMK<TK>::Output_DMK(elecstate::DensityMatrix<TK, double>* p_DM, Parallel_Orbitals* ParaV, int nspin, int nks)
-    : p_DM_(p_DM), ParaV_(ParaV), nspin_(nspin), nks_(nks)
-{
-}
+    : p_DM_(p_DM), ParaV_(ParaV), nspin_(nspin), nks_(nks) {}
 
 template <typename TK>
-TK* Output_DMK<TK>::get_DMK(int ik)
-{
-    if (this->nspin_ == 1)
-    {
+TK* Output_DMK<TK>::get_DMK(int ik) {
+    if (this->nspin_ == 1) {
         std::vector<double> dmk = read_k("./support/DMK_nspin1", ik);
         /// convert sk to TK
         this->DMK.resize(dmk.size());
-        for (size_t i = 0; i < dmk.size(); i++)
-        {
+        for (size_t i = 0; i < dmk.size(); i++) {
             this->DMK[i] = dmk[i];
             // std::cout << "DMK[" << i << "] = " << DMK[i] << std::endl;
         }
-    }
-    else if (this->nspin_ == 2)
-    {
+    } else if (this->nspin_ == 2) {
         std::vector<double> dmk = read_k("./support/DMK_nspin2", ik);
         /// convert sk to TK
         this->DMK.resize(dmk.size());
-        for (size_t i = 0; i < dmk.size(); i++)
-        {
+        for (size_t i = 0; i < dmk.size(); i++) {
             this->DMK[i] = dmk[i];
             // std::cout << "DMK[" << i << "] = " << DMK[i] << std::endl;
         }
-    }
-    else if (this->nspin_ == 4)
-    {
+    } else if (this->nspin_ == 4) {
         std::vector<double> dmk1 = read_k("./support/DMK_nspin2", 0);
         std::vector<double> dmk2 = read_k("./support/DMK_nspin2", 1);
         this->DMK.resize(dmk1.size() * 4, 0.0);
-        for (size_t i = 0; i < dmk1.size(); i++)
-        {
+        for (size_t i = 0; i < dmk1.size(); i++) {
             /// sk1 is column-major, find ir and irc
             int ir_nspin2 = i % (ParaV_->nrow / 2);
             int ic_nspin2 = i / (ParaV_->nrow / 2);
@@ -129,42 +106,31 @@ template class Output_DMK<std::complex<double>>;
 
 template <typename TK>
 Output_Sk<TK>::Output_Sk(hamilt::Hamilt<TK>* p_hamilt, Parallel_Orbitals* ParaV, int nspin, int nks)
-    : p_hamilt_(p_hamilt), ParaV_(ParaV), nspin_(nspin), nks_(nks)
-{
-}
+    : p_hamilt_(p_hamilt), ParaV_(ParaV), nspin_(nspin), nks_(nks) {}
 
 template <typename TK>
-TK* Output_Sk<TK>::get_Sk(int ik)
-{
-    if (this->nspin_ == 1)
-    {
+TK* Output_Sk<TK>::get_Sk(int ik) {
+    if (this->nspin_ == 1) {
         std::vector<double> sk = read_k("./support/SK_nspin1", ik);
         /// convert sk to TK
         this->SK.resize(sk.size());
-        for (size_t i = 0; i < sk.size(); i++)
-        {
+        for (size_t i = 0; i < sk.size(); i++) {
             this->SK[i] = sk[i];
             // std::cout << "SK[" << i << "] = " << SK[i] << std::endl;
         }
-    }
-    else if (this->nspin_ == 2)
-    {
+    } else if (this->nspin_ == 2) {
         std::vector<double> sk = read_k("./support/SK_nspin2", ik);
         /// convert sk to TK
         this->SK.resize(sk.size());
-        for (size_t i = 0; i < sk.size(); i++)
-        {
+        for (size_t i = 0; i < sk.size(); i++) {
             this->SK[i] = sk[i];
             // std::cout << "SK[" << i << "] = " << SK[i] << std::endl;
         }
-    }
-    else if (this->nspin_ == 4)
-    {
+    } else if (this->nspin_ == 4) {
         std::vector<double> sk1 = read_k("./support/SK_nspin2", 0);
         std::vector<double> sk2 = read_k("./support/SK_nspin2", 1);
         this->SK.resize(sk1.size() * 4, 0.0);
-        for (size_t i = 0; i < sk1.size(); i++)
-        {
+        for (size_t i = 0; i < sk1.size(); i++) {
             /// sk1 is column-major, find ir and irc
             int ir_nspin2 = i % (ParaV_->nrow / 2);
             int ic_nspin2 = i / (ParaV_->nrow / 2);

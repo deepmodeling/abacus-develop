@@ -15,16 +15,17 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
-sys.path.append( "/usr/local/lib/python3.9/site-packages/breathe" )
+
+sys.path.append("/usr/local/lib/python3.9/site-packages/breathe")
 
 # -- Project information -----------------------------------------------------
 
-project = 'ABACUS-source_basis/module_ao'
-copyright = '2021, x'
-author = 'mohan'
+project = "ABACUS-source_basis/module_ao"
+copyright = "2021, x"
+author = "mohan"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = "0.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,11 +33,17 @@ release = '0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [ 'sphinx.ext.todo', 'breathe', 'exhale', 'sphinx.ext.mathjax', "sphinx_rtd_theme", 'myst_parser'
+extensions = [
+    "sphinx.ext.todo",
+    "breathe",
+    "exhale",
+    "sphinx.ext.mathjax",
+    "sphinx_rtd_theme",
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -54,31 +61,31 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # -- Options for breathe -------------------------------------------------
 
-breathe_projects = { "ABACUS-source_basis/module_ao": "../../doxygen/xml/" }
+breathe_projects = {"ABACUS-source_basis/module_ao": "../../doxygen/xml/"}
 breathe_default_project = "ABACUS-source_basis/module_ao"
 
-#-- Options for exhale-------------------------------------
+# -- Options for exhale-------------------------------------
 # Setup the exhale extension
 exhale_args = {
     # These arguments are required
-    "containmentFolder":     "./ORB_api",
-    "rootFileName":          "library_root.rst",
-    "rootFileTitle":         "ORB API",
-    "doxygenStripFromPath":  "..",
+    "containmentFolder": "./ORB_api",
+    "rootFileName": "library_root.rst",
+    "rootFileTitle": "ORB API",
+    "doxygenStripFromPath": "..",
     # Suggested optional arguments
-    "createTreeView":        True,
+    "createTreeView": True,
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
-    "exhaleDoxygenStdin":    "INPUT = ../../.."
+    "exhaleDoxygenStdin": "INPUT = ../../..",
 }
 
 # Tell sphinx what the primary language being documented is.
-primary_domain = 'cpp'
+primary_domain = "cpp"
 
 # Tell sphinx what the pygments highlight language should be.
-highlight_language = 'cpp'
+highlight_language = "cpp"

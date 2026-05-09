@@ -9,20 +9,11 @@
 #include "gtest/gtest.h"
 
 #define DOUBLETHRESHOLD 1e-8
-double ext_inner_product_mock(double* x1, double* x2)
-{
-    return 0.0;
-}
-class Mixing_Test : public testing::Test
-{
+double ext_inner_product_mock(double* x1, double* x2) { return 0.0; }
+class Mixing_Test : public testing::Test {
   protected:
-    Mixing_Test()
-    {
-    }
-    ~Mixing_Test()
-    {
-        delete this->mixing;
-    }
+    Mixing_Test() {}
+    ~Mixing_Test() { delete this->mixing; }
     const double mixing_beta = 0.6;
     const int mixing_ndim = 3;
     Base_Mixing::Mixing_Data xdata;
@@ -31,29 +22,18 @@ class Mixing_Test : public testing::Test
     int niter = 0;
     int maxiter = 10;
     std::vector<double> xd_ref = {0.0, 0.0, 0.0};
-    std::vector<std::complex<double>> xc_ref = {
-        {0.0, 1.0},
-        {1.0, 0.0},
-        0.0
-    };
-    void init_method(std::string method)
-    {
-        if (method == "broyden")
-        {
+    std::vector<std::complex<double>> xc_ref = {{0.0, 1.0}, {1.0, 0.0}, 0.0};
+    void init_method(std::string method) {
+        if (method == "broyden") {
             this->mixing = new Base_Mixing::Broyden_Mixing(this->mixing_ndim, this->mixing_beta);
-        }
-        else if (method == "pulay")
-        {
+        } else if (method == "pulay") {
             this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
-        }
-        else if (method == "plain")
-        {
+        } else if (method == "plain") {
             this->mixing = new Base_Mixing::Plain_Mixing(this->mixing_beta);
         }
     }
 
-    void clear()
-    {
+    void clear() {
         delete this->mixing;
         this->mixing = nullptr;
     }
@@ -69,39 +49,34 @@ class Mixing_Test : public testing::Test
      *         [x3]   [-6/12 -3/12  36/12][x3]
      */
     template <typename FPTYPE>
-    void solve_linear_eq(FPTYPE* x_in, FPTYPE* x_out, bool diff_beta = false)
-    {
+    void solve_linear_eq(FPTYPE* x_in, FPTYPE* x_out, bool diff_beta = false) {
         this->mixing->init_mixing_data(xdata, 3, sizeof(FPTYPE));
         std::vector<FPTYPE> delta_x(3);
 
         auto screen = std::bind(&Mixing_Test::Kerker_mock<FPTYPE>, this, std::placeholders::_1);
-        auto inner_product
-            = std::bind(static_cast<double (Mixing_Test::*)(FPTYPE*, FPTYPE*)>(&Mixing_Test::inner_product_mock),
-                        this,
-                        std::placeholders::_1,
-                        std::placeholders::_2);
+        auto inner_product =
+            std::bind(static_cast<double (Mixing_Test::*)(FPTYPE*, FPTYPE*)>(&Mixing_Test::inner_product_mock),
+                      this,
+                      std::placeholders::_1,
+                      std::placeholders::_2);
 
         double residual = 10.;
         this->niter = 0;
-        while (niter < maxiter)
-        {
+        while (niter < maxiter) {
             x_out[0] = (3. * x_in[1] - 2. * x_in[2] + 20.) / 8.;
             x_out[1] = (-4. * x_out[0] + 1. * x_in[2] + 33.) / 11.;
             x_out[2] = (-6. * x_out[0] - 3. * x_out[1] + 36.) / 12.;
 
             niter++;
 
-            for (int i = 0; i < 3; ++i)
-            {
+            for (int i = 0; i < 3; ++i) {
                 delta_x[i] = x_out[i] - x_in[i];
             }
             residual = this->inner_product_mock(delta_x.data(), delta_x.data());
-            if (residual <= thr)
-            {
+            if (residual <= thr) {
                 break;
             }
-            if (diff_beta)
-            {
+            if (diff_beta) {
                 this->mixing->push_data(
                     this->xdata,
                     x_in,
@@ -114,9 +89,7 @@ class Mixing_Test : public testing::Test
                         out[2] = in[2] + 0.5 * sres[2];
                     },
                     true);
-            }
-            else
-            {
+            } else {
                 this->mixing->push_data(this->xdata, x_in, x_out, screen, true);
             }
 
@@ -127,32 +100,25 @@ class Mixing_Test : public testing::Test
     }
 
     template <typename FPTYPE>
-    void Kerker_mock(FPTYPE* drho)
-    {
-    }
+    void Kerker_mock(FPTYPE* drho) {}
 
-    double inner_product_mock(double* x1, double* x2)
-    {
+    double inner_product_mock(double* x1, double* x2) {
         double xnorm = 0.0;
-        for (int ir = 0; ir < 3; ++ir)
-        {
+        for (int ir = 0; ir < 3; ++ir) {
             xnorm += x1[ir] * x2[ir];
         }
         return xnorm;
     }
-    double inner_product_mock(std::complex<double>* x1, std::complex<double>* x2)
-    {
+    double inner_product_mock(std::complex<double>* x1, std::complex<double>* x2) {
         double xnorm = 0.0;
-        for (int ir = 0; ir < 3; ++ir)
-        {
+        for (int ir = 0; ir < 3; ++ir) {
             xnorm += x1[ir].real() * x2[ir].real() + x1[ir].imag() * x2[ir].imag();
         }
         return xnorm;
     }
 };
 
-TEST_F(Mixing_Test, BroydenSolveLinearEq)
-{
+TEST_F(Mixing_Test, BroydenSolveLinearEq) {
 #ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
@@ -198,8 +164,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
     clear();
 }
 
-TEST_F(Mixing_Test, PulaySolveLinearEq)
-{
+TEST_F(Mixing_Test, PulaySolveLinearEq) {
 #ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
@@ -246,8 +211,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
     clear();
 }
 
-TEST_F(Mixing_Test, PlainSolveLinearEq)
-{
+TEST_F(Mixing_Test, PlainSolveLinearEq) {
 #ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
@@ -280,7 +244,7 @@ TEST_F(Mixing_Test, PlainSolveLinearEq)
     EXPECT_NEAR(x_tmp[0], x_in[0], DOUBLETHRESHOLD);
     EXPECT_NEAR(x_tmp[1], x_in[1], DOUBLETHRESHOLD);
     EXPECT_NEAR(x_tmp[2], x_in[2], DOUBLETHRESHOLD);
-    
+
     std::vector<std::complex<double>> xc_tmp(3);
     this->mixing->push_data(this->xdata, xc_in.data(), xc_out.data(), nullptr, true);
     this->mixing->mix_data(this->xdata, xc_tmp.data());
@@ -288,14 +252,13 @@ TEST_F(Mixing_Test, PlainSolveLinearEq)
     EXPECT_NEAR(xc_tmp[0].real(), xc_in[0].real(), DOUBLETHRESHOLD);
     EXPECT_NEAR(xc_tmp[1].real(), xc_in[1].real(), DOUBLETHRESHOLD);
     EXPECT_NEAR(xc_tmp[2].real(), xc_in[2].real(), DOUBLETHRESHOLD);
-    
+
     this->mixing->reset();
 
     clear();
 }
 
-TEST_F(Mixing_Test, OtherCover)
-{
+TEST_F(Mixing_Test, OtherCover) {
     this->mixing = new Base_Mixing::Broyden_Mixing(2, 0.7);
     Base_Mixing::Mixing_Data nodata;
     this->mixing->init_mixing_data(nodata, 0, sizeof(double));

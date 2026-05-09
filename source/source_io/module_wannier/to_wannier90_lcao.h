@@ -34,19 +34,15 @@
 #include "fR_overlap.h"
 #include "source_base/math_lebedev_laikov.h"
 
-class Coordinate_3D
-{
+class Coordinate_3D {
   public:
     double x = 0;
     double y = 0;
     double z = 0;
 
-    Coordinate_3D(double x = 0.0, double y = 0.0, double z = 0.0) : x(x), y(y), z(z)
-    {
-    }
+    Coordinate_3D(double x = 0.0, double y = 0.0, double z = 0.0) : x(x), y(y), z(z) {}
 
-    bool operator<(const Coordinate_3D& other) const
-    {
+    bool operator<(const Coordinate_3D& other) const {
         const double threshold = 1e-8;
         if (std::abs(x - other.x) >= threshold)
             return x < other.x;
@@ -56,8 +52,7 @@ class Coordinate_3D
     }
 };
 
-class toWannier90_LCAO : public toWannier90
-{
+class toWannier90_LCAO : public toWannier90 {
   public:
     toWannier90_LCAO(const bool& out_wannier_mmn,
                      const bool& out_wannier_amn,
@@ -66,8 +61,7 @@ class toWannier90_LCAO : public toWannier90
                      const bool& out_wannier_wvfn_formatted,
                      const std::string& nnkpfile,
                      const std::string& wannier_spin,
-                     const LCAO_Orbitals& orb
-                     );
+                     const LCAO_Orbitals& orb);
     ~toWannier90_LCAO();
 
     void calculate(const UnitCell& ucell,
@@ -82,9 +76,8 @@ class toWannier90_LCAO : public toWannier90
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<double>& psi,
-                   const Parallel_Orbitals* pv)
-    {
-        ModuleBase::WARNING_QUIT("toWannier90_LCAO::calculate", 
+                   const Parallel_Orbitals* pv) {
+        ModuleBase::WARNING_QUIT("toWannier90_LCAO::calculate",
                                  "The wave function is real (double type), indicating 'gamma_only = 1'. "
                                  "The Wannier90 interface does not support Gamma-only calculations. "
                                  "Please set 'gamma_only 0' in your INPUT file.");

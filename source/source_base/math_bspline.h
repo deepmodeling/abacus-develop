@@ -1,8 +1,7 @@
 #ifndef MATH_BSPLINE_H
 #define MATH_BSPLINE_H
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
 /**
  * @brief A class to treat Cardinal B-spline interpolation.
@@ -24,20 +23,19 @@ namespace ModuleBase
  *               x+n*Dx-xi               xi+(k-n+1)*Dx-x
  *      Bk[n] = -----------*B(k-1)[n] + -----------------*B(k-1)[n-1]
  *                 k*Dx                        k*Dx
- * USAGE: 
+ * USAGE:
  *   ModuleBase::Bspline bp;
  *   bp.init(10,0.7,2); //Dx = 0.7, xi = 2
  *   bp.getbslpine(0.5); //x = 0.5
  *   cout<<bp.bezier_ele(3)<<endl; //print M_ik[xi+3*Dx+x]: M_i[10](4.6)
  *
  */
-class Bspline
-{
+class Bspline {
   private:
-    int norder; // the order of bezier base; norder >= 0
-    double Dx; // Dx: the interval of control node
-    double xi; // xi: the starting point
-    double * bezier = nullptr; // bezier[n] = Bk[n]
+    int norder;               // the order of bezier base; norder >= 0
+    double Dx;                // Dx: the interval of control node
+    double xi;                // xi: the starting point
+    double* bezier = nullptr; // bezier[n] = Bk[n]
 
   public:
     Bspline();

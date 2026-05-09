@@ -2,10 +2,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
-namespace ModuleIO
-{
-void ReadInput::item_md()
-{
+namespace ModuleIO {
+void ReadInput::item_md() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -15,7 +13,8 @@ void ReadInput::item_md()
         item.annotation = "choose ensemble";
         item.category = "Molecular dynamics";
         item.type = "String";
-        item.description = R"(Control the algorithm to integrate the equation of motion for molecular dynamics (MD), see md.md in detail.
+        item.description =
+            R"(Control the algorithm to integrate the equation of motion for molecular dynamics (MD), see md.md in detail.
 
 * fire: a MD-based relaxation algorithm, named fast inertial relaxation engine.
 * nve: NVE ensemble with velocity Verlet algorithm.
@@ -39,8 +38,7 @@ void ReadInput::item_md()
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_nstep == 0 && para.input.esolver_type != "tddft")
-            {
+            if (para.input.mdp.md_nstep == 0 && para.input.esolver_type != "tddft") {
                 GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
                 para.input.mdp.md_nstep = 50;
             }
@@ -60,11 +58,10 @@ void ReadInput::item_md()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.mdp.md_dt < 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "time interval of MD calculation should be positive");
-}
+            }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.td_dt != -1.0)
-            {
+            if (para.input.td_dt != -1.0) {
                 GlobalV::ofs_running << "td_dt exist, set md_dt with td_dt" << std::endl;
                 para.input.mdp.md_dt = para.input.td_dt * para.input.estep_per_md;
             }
@@ -124,8 +121,7 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.unit = "K";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.mdp.md_tlast < 0)
-            {
+            if (para.mdp.md_tlast < 0) {
                 para.input.mdp.md_tlast = para.mdp.md_tfirst;
             }
         };
@@ -144,13 +140,11 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation != "md")
-            {
+            if (para.input.calculation != "md") {
                 para.input.mdp.md_prec_level = 0;
             }
             // md_prec_level only used in vc-md  liuyu 2023-03-27
-            else if (para.input.mdp.md_type != "msst" && para.input.mdp.md_type != "npt")
-            {
+            else if (para.input.mdp.md_type != "msst" && para.input.mdp.md_type != "npt") {
                 para.input.mdp.md_prec_level = 0;
             }
         };
@@ -162,7 +156,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "whether restart";
         item.category = "Molecular dynamics";
         item.type = "Boolean";
-        item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
+        item.description =
+            R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
 * True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
@@ -176,7 +171,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.";
+        item.description = "The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics "
+                           "calculations, see md_restart in detail.";
         item.default_value = "5";
         item.unit = "";
         item.availability = "";
@@ -188,7 +184,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to dump MD information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.";
+        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which "
+                           "including the information of lattices and atoms.";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
@@ -250,15 +247,15 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "oscillation frequency, used to determine qmass of NHC";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = R"(Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
+        item.description =
+            R"(Control the frequency of temperature oscillations during the simulation. If it is too large, the temperature will fluctuate violently; if it is too small, the temperature will take a very long time to equilibrate with the atomic system.
 
 Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to 1/(100*md_dt). An improper choice might lead to the failure of jobs.)";
         item.default_value = "1/40/md_dt";
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md")
-            {
+            if (para.input.mdp.md_tfreq == 0 && para.input.calculation == "md") {
                 para.input.mdp.md_tfreq = 1.0 / 40 / para.input.mdp.md_dt;
             }
         };
@@ -270,7 +267,8 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.annotation = "number of Nose-Hoover chains";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
+        item.description = "Number of thermostats coupled with the particles in the NVT/NPT ensemble based on the "
+                           "Nose-Hoover style non-Hamiltonian equations of motion.";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
@@ -296,7 +294,12 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.annotation = "construct a reference cell bigger than the initial cell";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and thermodynamic conditions. So users must test for a proper choice. This parameters should be used in conjunction with erf_ecut, erf_height, and erf_sigma.";
+        item.description =
+            "Construct a reference cell bigger than the initial cell. The reference cell has to be large enough so "
+            "that the lattice vectors of the fluctuating cell do not exceed the reference lattice vectors during MD. "
+            "Typically, 1.02 ~ 1.10 is sufficient. However, the cell fluctuations depend on the specific system and "
+            "thermodynamic conditions. So users must test for a proper choice. This parameters should be used in "
+            "conjunction with erf_ecut, erf_height, and erf_sigma.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "";
@@ -308,7 +311,8 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
         item.category = "Molecular dynamics";
         item.type = "String";
-        item.description = R"(The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
+        item.description =
+            R"(The coupled lattice vectors will scale proportionally in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 * none: Three lattice vectors scale independently.
 * xyz: Lattice vectors x, y, and z scale proportionally.
 * xy: Lattice vectors x and y scale proportionally.
@@ -318,8 +322,7 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.mdp.md_pmode == "iso")
-            {
+            if (para.mdp.md_pmode == "iso") {
                 para.input.mdp.md_pcouple = "xyz";
             }
         };
@@ -331,7 +334,9 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.annotation = "initial target pressure";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
+        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is "
+                           "md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically "
+                           "change the target pressure from md_pfirst to md_plast.";
         item.default_value = "-1.0";
         item.unit = "kbar";
         item.availability = "";
@@ -343,14 +348,16 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.annotation = "final target pressure";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically change the target pressure from md_pfirst to md_plast.";
+        item.description = "The target pressure used in NPT ensemble simulations, the default value of md_plast is "
+                           "md_pfirst. If md_plast is set to be different from md_pfirst, ABACUS will automatically "
+                           "change the target pressure from md_pfirst to md_plast.";
         item.default_value = "-1.0";
         item.unit = "kbar";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!item.is_read()) { // no md_plast in INPUT
                 para.input.mdp.md_plast = para.input.mdp.md_pfirst;
-}
+            }
         };
         read_sync_double(input.mdp.md_plast);
         this->add_item(item);
@@ -361,15 +368,15 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
                           "thermostats coupled with barostat";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = R"(The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
+        item.description =
+            R"(The frequency of pressure oscillations during the NPT ensemble simulation. If it is too large, the pressure will fluctuate violently; if it is too small, the pressure will take a very long time to equilibrate with the atomic system.
 
 Note: It is a system-dependent empirical parameter. An improper choice might lead to the failure of jobs.)";
         item.default_value = "1/400/md_dt";
         item.unit = "";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md")
-            {
+            if (para.input.mdp.md_pfreq == 0 && para.input.calculation == "md") {
                 para.input.mdp.md_pfreq = 1.0 / 400 / para.input.mdp.md_dt;
             }
         };
@@ -381,7 +388,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "num of thermostats coupled with barostat";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The number of thermostats coupled with the barostat in the NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.";
+        item.description = "The number of thermostats coupled with the barostat in the NPT ensemble based on the "
+                           "Nose-Hoover style non-Hamiltonian equations of motion.";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
@@ -398,8 +406,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.unit = "";
         item.availability = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.esolver_type == "lj" && para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2)
-            {
+            if (para.input.esolver_type == "lj" && para.input.mdp.lj_rule != 1 && para.input.mdp.lj_rule != 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", "lj_rule must be 1 or 2");
             }
         };
@@ -411,7 +418,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "whether to use energy shift for LJ potential";
         item.category = "Molecular dynamics";
         item.type = "Boolean";
-        item.description = "It True, the LJ potential is shifted by a constant such that it is zero at the cut-off distance.";
+        item.description =
+            "It True, the LJ potential is shifted by a constant such that it is zero at the cut-off distance.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
@@ -423,7 +431,10 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "cutoff radius of LJ potential";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "Cut-off radius for Leonard Jones potential, beyond which the interaction will be neglected. It can be a single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it should be a multiple-component vector, containing values, see details in lj_rule.";
+        item.description =
+            "Cut-off radius for Leonard Jones potential, beyond which the interaction will be neglected. It can be a "
+            "single value, which means that all pairs of atoms types share the same cut-off radius. Otherwise, it "
+            "should be a multiple-component vector, containing values, see details in lj_rule.";
         item.default_value = "No default";
         item.unit = "Angstrom";
         item.availability = "";
@@ -438,16 +449,13 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) {
                 return;
-}
+            }
             size_t n_ljrcut = para.input.mdp.lj_rcut.size();
-            if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2)
-            {
+            if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_rcut should be 1 or ntype(ntype+1)/2 ");
             }
-            for (auto rcut: para.input.mdp.lj_rcut)
-            {
-                if (rcut <= 0)
-                {
+            for (auto rcut: para.input.mdp.lj_rcut) {
+                if (rcut <= 0) {
                     ModuleBase::WARNING_QUIT("ReadInput", "lj_rcut must > 0");
                 }
             }
@@ -475,10 +483,9 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) {
                 return;
-}
+            }
             size_t n_ljepsilon = para.input.mdp.lj_epsilon.size();
-            if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
-            {
+            if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_epsilon should be ntype or ntype(ntype+1)/2 ");
             }
         };
@@ -505,10 +512,9 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) {
                 return;
-}
+            }
             size_t n_ljsigma = para.input.mdp.lj_sigma.size();
-            if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
-            {
+            if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", " the number of lj_sigma should be ntype or ntype(ntype+1)/2 ");
             }
         };
@@ -532,7 +538,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "rescaling factor for dp potential";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "Rescaling factor to use a temperature-dependent DP. Energy, stress and force calculated by DP will be multiplied by this factor.";
+        item.description = "Rescaling factor to use a temperature-dependent DP. Energy, stress and force calculated by "
+                           "DP will be multiplied by this factor.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "esolver_type = dp.";
@@ -544,7 +551,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "the frame parameter for dp potential";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The frame parameter for dp potential. The array size is dim_fparam, then all frames are assumed to be provided with the same fparam.";
+        item.description = "The frame parameter for dp potential. The array size is dim_fparam, then all frames are "
+                           "assumed to be provided with the same fparam.";
         item.default_value = "{}";
         item.unit = "";
         item.availability = "esolver_type = dp.";
@@ -564,7 +572,9 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "the atomic parameter for dp potential";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The atomic parameter for dp potential. The array size can be (1) natoms x dim_aparam, then all frames are assumed to be provided with the same aparam; (2) dim_aparam, then all frames and atoms are assumed to be provided with the same aparam.";
+        item.description = "The atomic parameter for dp potential. The array size can be (1) natoms x dim_aparam, then "
+                           "all frames are assumed to be provided with the same aparam; (2) dim_aparam, then all "
+                           "frames and atoms are assumed to be provided with the same aparam.";
         item.default_value = "{}";
         item.unit = "";
         item.availability = "esolver_type = dp.";
@@ -623,7 +633,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "reduction in initial temperature";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The reduction percentage of the initial temperature used to compress volume in the MSST method.";
+        item.description =
+            "The reduction percentage of the initial temperature used to compress volume in the MSST method.";
         item.default_value = "0.01";
         item.unit = "";
         item.availability = "";
@@ -640,8 +651,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.unit = "";
         item.availability = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.msst_qmass <= 0)
-            {
+            if (para.input.mdp.msst_qmass <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
             }
         };
@@ -666,7 +676,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "tolerance for velocity rescaling (K)";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The temperature tolerance for velocity rescaling. Velocities are rescaled if the current and target temperature differ more than md_tolerance.";
+        item.description = "The temperature tolerance for velocity rescaling. Velocities are rescaled if the current "
+                           "and target temperature differ more than md_tolerance.";
         item.default_value = "100.0";
         item.unit = "K";
         item.availability = "";
@@ -692,7 +703,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
         item.category = "Molecular dynamics";
         item.type = R"(Boolean [Integer](optional))";
-        item.description = R"(Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
+        item.description =
+            R"(Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
 * 0 or false: disable
 * 1 or true: enable with default precision (8 digits)
@@ -704,12 +716,16 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "cal_syns needs at least 1 value");
+            if (count < 1)
+                ModuleBase::WARNING_QUIT("ReadInput", "cal_syns needs at least 1 value");
             para.input.cal_syns[0] = assume_as_boolean(item.str_values[0]);
             para.input.cal_syns[1] = 8;
-            if (count >= 2) try { para.input.cal_syns[1] = std::stoi(item.str_values[1]); }
-            catch (const std::invalid_argument&) { /* do nothing */ }
-            catch (const std::out_of_range&) {/* do nothing */}
+            if (count >= 2)
+                try {
+                    para.input.cal_syns[1] = std::stoi(item.str_values[1]);
+                } catch (const std::invalid_argument&) { /* do nothing */
+                } catch (const std::out_of_range&) {     /* do nothing */
+                }
         };
 
         sync_intvec(input.cal_syns, 2, 0);
@@ -720,7 +736,8 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.annotation = "maximum displacement of all atoms in one step (bohr)";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.";
+        item.description =
+            "The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.";
         item.default_value = "0.01";
         item.unit = "bohr";
         item.availability = "";

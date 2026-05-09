@@ -4,19 +4,17 @@
 #include "../../source_base/element_basis_index.h"
 #include <vector>
 
-	class Numerical_Orbital_Lm;
-	class LCAO_Orbitals;
+class Numerical_Orbital_Lm;
+class LCAO_Orbitals;
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-namespace Element_Basis_Index
-{
-	extern Range construct_range( const LCAO_Orbitals &orb );
+namespace Element_Basis_Index {
+extern Range construct_range(const LCAO_Orbitals& orb);
 
-	extern Range construct_range( const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orb );		// orb[T][L][N]
-}
+extern Range construct_range(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb); // orb[T][L][N]
+} // namespace Element_Basis_Index
 
-}
+} // namespace ModuleBase
 
 #endif

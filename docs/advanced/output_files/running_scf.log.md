@@ -1,6 +1,6 @@
 # The running_scf.log file
 
-- [The running\_scf.log file](#the-running_scf.log-file)
+- [The running_scf.log file](#the-running_scf.log-file)
   - [Reading information](#reading-information)
     - [Reading version information](#reading-version-information)
     - [Reading general information](#reading-general-information)
@@ -18,16 +18,15 @@
   - [Results summary](#results-summary)
     - [TOTAL-FORCE](#total-force)
     - [TOTAL-STRESS](#total-stress)
-    - [FINAL\_ETOT\_IS](#final_etot_is)
+    - [FINAL_ETOT_IS](#final_etot_is)
     - [TIME STATISTICS](#time-statistics)
     - [MEMORY STATISTICS](#memory-statistics)
     - [Start and end times](#start-and-end-times)
 
-  
-
-  
 ## Reading information
+
 ### Reading version information
+
 ```
 ABACUS v3.7.0
 Atomic-orbital Based Ab-initio Computation at UStc 
@@ -51,10 +50,10 @@ Start Time is Thu Jul 18 11:34:56 2024
 // The start time of the ABACUS calculation.
 ```
 
+______________________________________________________________________
 
-
-------------------------------------------------------------------------------------
 ### Reading general information
+
 ```
 READING GENERAL INFORMATION
 // The following section is reading general settings and preparing the computation.
@@ -84,6 +83,7 @@ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum
 ```
 
 ### Reading unitcell
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>=
 |                                                                    |
@@ -177,6 +177,7 @@ Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
 ```
 
 ### Reading pseudopotentials files
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -271,8 +272,11 @@ Warning_Memory_Consuming allocated:  FFT::grid 6.5918 MB
 // A warning about the memory consumption for the Fast Fourier Transform (FFT) grid.
 
 ```
+
 ## Setup Tasks
+
 ### Setup plane waves of charge/potential
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -356,6 +360,7 @@ DONE : SETUP UNITCELL Time : 0.611609 (SEC)
 ```
 
 ### Doing symmetry analysis
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -438,6 +443,7 @@ DONE : SYMMETRY Time : 0.781568 (SEC)
 ```
 
 ### Setup K-points
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -520,8 +526,8 @@ K-POINTS DIRECT COORDINATES
 // The time taken to initialize the k-points.
 ```
 
-
 ### Setup plane waves of wave functions
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -605,8 +611,11 @@ SELF-CONSISTENT
 -------------------------------------------
 // The beginning of the self-consistent field (SCF) calculation section.
 ```
+
 ## Running scf processes
+
 ### Search adjacent atoms (init)
+
 ```
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 |                                                                    |
@@ -687,6 +696,7 @@ DONE : INIT SCF Time : 4.10934 (SEC)
 ```
 
 ### Scf iteration
+
 ```
 LC AO ALGORITHM --------------- ION= 1 ELEC= 1--------------------------------
 
@@ -889,7 +899,9 @@ Density error is 6.53205775131e-08
 // The error in the electron density has become very small, indicating near-convergence of the SCF cycle.
 // Additional iterations of the SCF calculation, showing the gradual convergence of the density error and energies.
 ```
+
 ### Scf results
+
 ```
 
 ----------------------------------------------------------
@@ -1151,8 +1163,11 @@ correction force for each atom along direction 2 is 2.49665e-14
 correction force for each atom along direction 3 is -3.50742e-14
 // The correction forces applied to each atom in the unit cell along the three principal directions.
 ```
+
 ## Results summary
+
 ### TOTAL-FORCE
+
 ```
 ------------------------------------------------------------------------------------------
  TOTAL-FORCE (eV/Angstrom)                                                                
@@ -1187,6 +1202,7 @@ correction force for each atom along direction 3 is -3.50742e-14
 ```
 
 ### TOTAL-STRESS
+
 ```
 ----------------------------------------------------------------
  TOTAL-STRESS (KBAR)                                            
@@ -1202,6 +1218,7 @@ TOTAL-PRESSURE: 20.928031 KBAR
 ```
 
 ### FINAL_ETOT_IS
+
 ```
 --------------------------------------------
  !FINAL_ETOT_IS -40425.5513255625628517 eV
@@ -1209,9 +1226,8 @@ TOTAL-PRESSURE: 20.928031 KBAR
 // The final total energy of the system after the SCF calculation, expressed in electron volts.
 ```
 
-
-
 ### TIME STATISTICS
+
 ```
 TIME STATISTICS
 --------------------------------------------------------------------------------
@@ -1330,6 +1346,7 @@ TIME STATISTICS
 ```
 
 ### MEMORY STATISTICS
+
 ```
 
 NAME-------------------------|MEMORY(MB)--------
@@ -1382,8 +1399,10 @@ NAME-------------------------|MEMORY(MB)--------
 ```
 
 ### Start and end times
-```
+
+````
 Start  Time  : Thu Jul 18 11:34:56 2024
 Finish Time  : Thu Jul 18 11:43:20 2024
 Total  Time  : 0 h 8 mins 24 secs
-// The start and end times of the calculation, along with the total duration.
+// The start and end times of the calculation, along with the total duration.```
+````

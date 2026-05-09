@@ -22,14 +22,13 @@ namespace hsolver {
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoBPCG
-{
+class DiagoBPCG {
   private:
-    // Note GetTypeReal<T>::type will 
-    // return T if T is real type(float, double), 
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
-  // Column major psi in this class
+    // Column major psi in this class
   public:
     /**
      * @brief Constructor for DiagoBPCG class.
@@ -68,10 +67,7 @@ class DiagoBPCG
      * @param psi_in Pointer to input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(const HPsiFunc& hpsi_func,
-              T* psi_in,
-              Real* eigenvalue_in,
-              const std::vector<double>& ethr_band);
+    void diag(const HPsiFunc& hpsi_func, T* psi_in, Real* eigenvalue_in, const std::vector<double>& ethr_band);
 
   private:
     /// the number of bands of all processes
@@ -88,9 +84,8 @@ class DiagoBPCG
     ModuleBase::PGemmCN<T, Device> pmmcn;
     PLinearTransform<T, Device> plintrans;
 
-
-    ct::DataType r_type  = ct::DataType::DT_INVALID;
-    ct::DataType t_type  = ct::DataType::DT_INVALID;
+    ct::DataType r_type = ct::DataType::DT_INVALID;
+    ct::DataType t_type = ct::DataType::DT_INVALID;
     ct::DeviceType device_type = ct::DeviceType::UnKnown;
 
     ct::Tensor prec = {}, h_prec = {};
@@ -106,7 +101,7 @@ class DiagoBPCG
     /// Note: this pointer does not own memory, instead it ref the psi_in object.
     /// H|psi> matrix.
     ct::Tensor psi = {}, hpsi = {};
-    
+
     ct::Tensor hsub = {};
 
     /// H|psi> - epsilo * psi, grad of the given problem.
@@ -118,8 +113,8 @@ class DiagoBPCG
 
     // These are for hsolver gemm_op use
     /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
-    Device * ctx = {};
-    // Pointer to objects of 1 and 0 for gemm 
+    Device* ctx = {};
+    // Pointer to objects of 1 and 0 for gemm
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
 
@@ -158,10 +153,7 @@ class DiagoBPCG
      * @param psi_in The input wavefunction psi.
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
-    void calc_hpsi_with_block(
-        const HPsiFunc& hpsi_func,
-        T *psi_in, 
-        ct::Tensor& hpsi_out);
+    void calc_hpsi_with_block(const HPsiFunc& hpsi_func, T* psi_in, ct::Tensor& hpsi_out);
 
     /**
      * @brief Diagonalization of the subspace matrix.
@@ -177,11 +169,8 @@ class DiagoBPCG
      * @param hsub_out Output Hamiltonian subtracted matrix with [dim: n_band x n_band, column major]
      * @param eigenvalue_out Computed eigen array with [dim: n_band]
      */
-    void diag_hsub(
-        const ct::Tensor& psi_in, 
-        const ct::Tensor& hpsi_in,
-        ct::Tensor& hsub_out, 
-        ct::Tensor& eigenvalue_out);
+    void
+    diag_hsub(const ct::Tensor& psi_in, const ct::Tensor& hpsi_in, ct::Tensor& hsub_out, ct::Tensor& eigenvalue_out);
 
     /**
      * @brief Inplace matrix multiplication to obtain the initial guessed wavefunction.
@@ -193,10 +182,7 @@ class DiagoBPCG
      * @param hsub_in Subspace matrix input, dim [n_basis, n_band] with column major.
      * @param psi_out output wavefunction matrix with dim [n_basis, n_band], column major.
      */
-    void rotate_wf(
-        const ct::Tensor& hsub_in,
-        ct::Tensor& psi_out, 
-        ct::Tensor& workspace_in);
+    void rotate_wf(const ct::Tensor& hsub_in, ct::Tensor& psi_out, ct::Tensor& workspace_in);
 
     /**
      * @brief Calculate the gradient for all bands used in CG method.
@@ -223,12 +209,13 @@ class DiagoBPCG
      *   4. gradient mix with the previous gradient
      *   5. Do precondition
      */
-    void calc_grad_with_block(
-        const ct::Tensor& prec_in, 
-        ct::Tensor& err_out, 
-        ct::Tensor& beta_out,
-        ct::Tensor& psi_in, ct::Tensor& hpsi_in,
-        ct::Tensor& grad_out, ct::Tensor& grad_old_out);
+    void calc_grad_with_block(const ct::Tensor& prec_in,
+                              ct::Tensor& err_out,
+                              ct::Tensor& beta_out,
+                              ct::Tensor& psi_in,
+                              ct::Tensor& hpsi_in,
+                              ct::Tensor& grad_out,
+                              ct::Tensor& grad_old_out);
 
     /**
      *
@@ -246,13 +233,14 @@ class DiagoBPCG
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
-    void calc_hsub_with_block(
-        const HPsiFunc& hpsi_func,
-        T *psi_in,
-        ct::Tensor& psi_out, ct::Tensor& hpsi_out,
-        ct::Tensor& hsub_out, ct::Tensor& workspace_in,
-        ct::Tensor& eigenvalue_out);
-    
+    void calc_hsub_with_block(const HPsiFunc& hpsi_func,
+                              T* psi_in,
+                              ct::Tensor& psi_out,
+                              ct::Tensor& hpsi_out,
+                              ct::Tensor& hsub_out,
+                              ct::Tensor& workspace_in,
+                              ct::Tensor& eigenvalue_out);
+
     /**
      *
      * @brief Apply the Hamiltonian operator to psi and obtain the hpsi matrix.
@@ -269,12 +257,11 @@ class DiagoBPCG
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
-    void calc_hsub_with_block_exit(
-        ct::Tensor& psi_out, 
-        ct::Tensor& hpsi_out,
-        ct::Tensor& hsub_out, 
-        ct::Tensor& workspace_in,
-        ct::Tensor& eigenvalue_out);
+    void calc_hsub_with_block_exit(ct::Tensor& psi_out,
+                                   ct::Tensor& hpsi_out,
+                                   ct::Tensor& hsub_out,
+                                   ct::Tensor& workspace_in,
+                                   ct::Tensor& eigenvalue_out);
 
     /**
      * @brief Orthogonalize column vectors in grad to column vectors in psi.
@@ -286,10 +273,7 @@ class DiagoBPCG
      * @param grad_out Input and output gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @note This function is a member of the DiagoBPCG class.
      */
-    void orth_projection(
-        const ct::Tensor& psi_in,
-        ct::Tensor& hsub_in,
-        ct::Tensor& grad_out);
+    void orth_projection(const ct::Tensor& psi_in, ct::Tensor& hsub_in, ct::Tensor& grad_out);
 
     /**
      *
@@ -304,11 +288,7 @@ class DiagoBPCG
      *  2. Calculate theta.
      *  3. Update psi as well as hpsi.
      */
-    void line_minimize(
-        ct::Tensor& grad_in,
-        ct::Tensor& hgrad_in,
-        ct::Tensor& psi_out,
-        ct::Tensor& hpsi_out);
+    void line_minimize(ct::Tensor& grad_in, ct::Tensor& hgrad_in, ct::Tensor& psi_out, ct::Tensor& hpsi_out);
 
     /**
      * @brief Orthogonalize and normalize the column vectors in psi_out using Cholesky decomposition.
@@ -318,11 +298,7 @@ class DiagoBPCG
      * @param hpsi_out Input and output hpsi array. [dim: n_basis x n_band, column major, lda = n_basis_max].
      * @param hsub_out Input Hamiltonian product array. [dim: n_band x n_band, column major, lda = n_band].
      */
-    void orth_cholesky(
-        ct::Tensor& workspace_in, 
-        ct::Tensor& psi_out, 
-        ct::Tensor& hpsi_out, 
-        ct::Tensor& hsub_out);
+    void orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& psi_out, ct::Tensor& hpsi_out, ct::Tensor& hsub_out);
 
     /**
      * @brief Checks if the error satisfies the given threshold.
@@ -349,7 +325,6 @@ class DiagoBPCG
     // defined in source_base/module_device/types.h
     // different from ct_Device!
     using gemm_op = ModuleBase::gemm_op<T, Device>;
-
 };
 
 } // namespace hsolver

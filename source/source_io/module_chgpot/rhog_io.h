@@ -7,10 +7,10 @@
 /**
  * I/O free function of rho(G) in binary format
  * Author: YuLiu98, Kirk0830
- * 
+ *
  * The designed foramt of the binary file is kept similar to the one in QuantumESPRESSO
  * Modules/io_base.f90, function write_rhog (non-HDF5):
- * 
+ *
  * /3/ /gammaonly/ /ngm_g/ /nspin/ /3/ ! bool, int, int. ngm_g is the global, total number of G-vectors
  * /9/ /b11/ /b12/ /b13/ /b21/ /b22/ /b23/ /b31/ /b32/ /b33/ /9/ ! 9 real numbers, the three lattice vectors
  * /ngm_g*3/
@@ -25,23 +25,22 @@
  * !/ngm_g/ ! ngm_g complex numbers, the rho(G) values for the second spin component
  * !/rhog(1)/ /rhog(2)/ /rhog(3)/ ...
  * !/ngm_g/ ! ngm_g complex numbers, the rho(G) values for the second spin component
- * 
+ *
  * There are some aspects needed to ensure:
  * 1. the correspondence between ABACUS PW and QuantumESPRESSO
  *                      ABACUS PW      QuantumESPRESSO
  *    bij              UnitCell::GT      b1, b2, b3
  *    miller index        ibox[*]           mill
  *    rho              Charge::rhog          rho
- * 
+ *
  * 2. the unit of each quantity
  *                      ABACUS PW      QuantumESPRESSO
  *    bij                                   a.u.
  *    miller index
- *    rho   
+ *    rho
  */
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 bool read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog);
 

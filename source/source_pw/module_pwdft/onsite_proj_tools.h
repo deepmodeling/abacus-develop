@@ -12,8 +12,7 @@
 
 #include <complex>
 
-namespace hamilt
-{
+namespace hamilt {
 
 /**
  * @brief Nonlocal pseudopotential tools in plane wave basis set.
@@ -27,42 +26,38 @@ namespace hamilt
  * 4. cal_force: calculate the force^I_i = - \sum_{n,k}f_{nk} \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
  */
 template <typename FPTYPE, typename Device>
-class Onsite_Proj_tools
-{
+class Onsite_Proj_tools {
   public:
-    Onsite_Proj_tools(
-        const pseudopot_cell_vnl* nlpp_in,
-        const UnitCell* ucell_in,
-        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-        const K_Vectors* kv_in,
-        const ModulePW::PW_Basis_K* wfc_basis_in,
-        const Structure_Factor* sf_in,
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb
-    );
+    Onsite_Proj_tools(const pseudopot_cell_vnl* nlpp_in,
+                      const UnitCell* ucell_in,
+                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+                      const K_Vectors* kv_in,
+                      const ModulePW::PW_Basis_K* wfc_basis_in,
+                      const Structure_Factor* sf_in,
+                      const ModuleBase::matrix& wg,
+                      const ModuleBase::matrix& ekb);
 
     // a more general constructor is in the following
-    Onsite_Proj_tools(
-        const std::vector<int>& nproj,     // number of projectors for each atom type
-        const std::vector<int>& lproj,
-        const ModuleBase::realArray& tab,  // radials' spherical bessel transform
-        const ModuleBase::matrix& nhtol,
-        std::complex<FPTYPE>* vkb_buf,
-        const UnitCell* ucell_in,
-        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-        const K_Vectors* kv_in,
-        const ModulePW::PW_Basis_K* wfc_basis_in,
-        const Structure_Factor* sf_in,
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb
-    );
+    Onsite_Proj_tools(const std::vector<int>& nproj, // number of projectors for each atom type
+                      const std::vector<int>& lproj,
+                      const ModuleBase::realArray& tab, // radials' spherical bessel transform
+                      const ModuleBase::matrix& nhtol,
+                      std::complex<FPTYPE>* vkb_buf,
+                      const UnitCell* ucell_in,
+                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+                      const K_Vectors* kv_in,
+                      const ModulePW::PW_Basis_K* wfc_basis_in,
+                      const Structure_Factor* sf_in,
+                      const ModuleBase::matrix& wg,
+                      const ModuleBase::matrix& ekb);
 
     ~Onsite_Proj_tools();
 
     /**
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr);
+    void
+    cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr);
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
@@ -73,42 +68,26 @@ class Onsite_Proj_tools
      */
     void cal_dbecp_f(int ik, int npm, int ipol);
 
-    void cal_force_dftu(
-        int ik,
-        int npm,
-        FPTYPE* force,
-        const int* orbital_corr,
-        const std::complex<FPTYPE>* vu,
-        const int size_vu,
-        const FPTYPE* h_wg
-    );
+    void cal_force_dftu(int ik,
+                        int npm,
+                        FPTYPE* force,
+                        const int* orbital_corr,
+                        const std::complex<FPTYPE>* vu,
+                        const int size_vu,
+                        const FPTYPE* h_wg);
 
-    void cal_force_dspin(
-        int ik,
-        int npm,
-        FPTYPE* force,
-        const ModuleBase::Vector3<double>* lambda,
-        const FPTYPE* h_wg
-    );
+    void cal_force_dspin(int ik, int npm, FPTYPE* force, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
 
     // return stress(i,j) value
-    double cal_stress_dftu(
-        int ik,
-        int npm,
-        const int* orbital_corr,
-        const std::complex<FPTYPE>* vu,
-        const int size_vu,
-        const FPTYPE* h_wg
-    );
+    double cal_stress_dftu(int ik,
+                           int npm,
+                           const int* orbital_corr,
+                           const std::complex<FPTYPE>* vu,
+                           const int size_vu,
+                           const FPTYPE* h_wg);
 
     // return stress(i,j) value
-    double cal_stress_dspin(
-        int ik,
-        int npm,
-        const ModuleBase::Vector3<double>* lambda,
-        const FPTYPE* h_wg
-    );
-
+    double cal_stress_dspin(int ik, int npm, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
 
     std::complex<FPTYPE>* get_becp() const { return becp; }
     std::complex<FPTYPE>* get_dbecp() const { return dbecp; }
@@ -117,12 +96,10 @@ class Onsite_Proj_tools
     /**
      * @brief allocate the memory for the variables
      */
-    void allocate_memory(
-        const ModuleBase::matrix& wg,
-        const ModuleBase::matrix& ekb,
-        const std::vector<int>& nproj,
-        const std::vector<int>& nch
-    );
+    void allocate_memory(const ModuleBase::matrix& wg,
+                         const ModuleBase::matrix& ekb,
+                         const std::vector<int>& nproj,
+                         const std::vector<int>& nch);
     /**
      * @brief delete the memory for the variables
      */
@@ -143,7 +120,7 @@ class Onsite_Proj_tools
     base_device::AbacusDevice_t device = {};
     int nkb = 0;
     int nbands = 0;
-    int deeq_dims[4] = {0, 0, 0, 0};    // deeq can be something other than that in pseudopotentials
+    int deeq_dims[4] = {0, 0, 0, 0}; // deeq can be something other than that in pseudopotentials
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
     int current_ik = -1;
@@ -224,10 +201,10 @@ class Onsite_Proj_tools
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;

@@ -21,8 +21,8 @@ LCAO_Orbitals::~LCAO_Orbitals() {}
 
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
@@ -30,16 +30,13 @@ Sep_Cell::~Sep_Cell() noexcept {}
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
 
-void UnitCell::set_iat2iwt(const int& npol_in)
-{
+void UnitCell::set_iat2iwt(const int& npol_in) {
     this->iat2iwt.resize(this->nat);
     this->npol = npol_in;
     int iat = 0;
     int iwt = 0;
-    for (int it = 0; it < this->ntype; it++)
-    {
-        for (int ia = 0; ia < atoms[it].na; ia++)
-        {
+    for (int it = 0; it < this->ntype; it++) {
+        for (int ia = 0; ia < atoms[it].na; ia++) {
             this->iat2iwt[iat] = iwt;
             iwt += atoms[it].nw * this->npol;
             ++iat;
@@ -53,6 +50,4 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,
                             const int& I,
-                            AdjacentAtomInfo* adjs) const
-{
-}
+                            AdjacentAtomInfo* adjs) const {}

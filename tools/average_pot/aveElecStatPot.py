@@ -17,15 +17,15 @@ else:
         if os.path.isdir(dir_path) and dir_name.startswith("OUT."):
             input_file = os.path.join(dir_path, "ElecStaticPot.cube")
             output_file = os.path.join(dir_path, "ElecStaticPot_AVE")
-            output_png = os.path.join(dir_path, "ElecStaticPot-vs-Z.png") 
+            output_png = os.path.join(dir_path, "ElecStaticPot-vs-Z.png")
             if os.path.exists(input_file):
                 print(f"Processeding: {input_file}")
                 break
             else:
                 print(f"File does not exist: {input_file}")
                 sys.exit()
-                        
-with open(input_file, 'r') as inpt:
+
+with open(input_file, "r") as inpt:
     temp = inpt.readlines()
 
 Ry_to_eV = 13.605698066819
@@ -40,7 +40,8 @@ step_z = step_z_bohr / bohr_to_Ang
 z_Ang = np.arange(nz) * step_z
 
 nrow = nz // 6
-if nz % 6 != 0: nrow += 1
+if nz % 6 != 0:
+    nrow += 1
 
 data_start = 6 + natom
 average = np.zeros(nz)
@@ -57,27 +58,31 @@ average /= nxy
 
 average_eV = average * Ry_to_eV
 
-with open(output_file, 'w') as output:
+with open(output_file, "w") as output:
     output.write("Average electrostatic potential along z axis\n")
     for i in range(1, data_start):
         output.write(temp[i])
-    
+
     output.write("iz\t\t Average(Ry)\t\t z(Angstrom)\t\t Average(eV)\n")
     for iz in range(nz):
-        output.write("{:<7d}\t{:>16.9e}\t{:>16.9e}\t{:>16.9e}\n".format(iz, average[iz], z_Ang[iz], average_eV[iz]))
+        output.write(
+            "{:<7d}\t{:>16.9e}\t{:>16.9e}\t{:>16.9e}\n".format(
+                iz, average[iz], z_Ang[iz], average_eV[iz]
+            )
+        )
 
 
 z_values = z_Ang
-interpolation_func = interp1d(z_values, average_eV, kind='cubic')
+interpolation_func = interp1d(z_values, average_eV, kind="cubic")
 
 z_interpolated = np.linspace(z_values.min(), z_values.max(), nz * 5)
 average_interpolated = interpolation_func(z_interpolated)
 
-plt.figure(figsize=(4.5, 8)) 
+plt.figure(figsize=(4.5, 8))
 plt.plot(average_interpolated, z_interpolated)
-plt.xlabel('Average Electrostatic Potential (eV)')
-plt.ylabel('Z axis (Angstrom)')
-plt.title('Average Electrostatic Potential along Z')
+plt.xlabel("Average Electrostatic Potential (eV)")
+plt.ylabel("Z axis (Angstrom)")
+plt.title("Average Electrostatic Potential along Z")
 plt.grid(True)
 
 plt.savefig(output_png, dpi=300)

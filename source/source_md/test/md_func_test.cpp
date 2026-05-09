@@ -50,8 +50,7 @@
  *     - test the current_md_info function with an incorrect file path
  */
 
-class MD_func_test : public testing::Test
-{
+class MD_func_test : public testing::Test {
   protected:
     UnitCell ucell;
     double* allmass;                    // atom mass
@@ -67,8 +66,7 @@ class MD_func_test : public testing::Test
     int frozen_freedom;                 // frozen_freedom
     Parameter param_in;
 
-    void SetUp()
-    {
+    void SetUp() {
         Setcell::setupcell(ucell);
         Setcell::parameters(param_in.input);
         natom = ucell.nat;
@@ -81,8 +79,7 @@ class MD_func_test : public testing::Test
         virial.create(3, 3);
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete[] allmass;
         delete[] pos;
         delete[] vel;
@@ -91,15 +88,13 @@ class MD_func_test : public testing::Test
     }
 };
 
-TEST_F(MD_func_test, gaussrand)
-{
+TEST_F(MD_func_test, gaussrand) {
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 1.1122716058967226);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), -0.34532367182326629);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 0.60805637857480721);
 }
 
-TEST_F(MD_func_test, randomvel)
-{
+TEST_F(MD_func_test, randomvel) {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
@@ -118,14 +113,12 @@ TEST_F(MD_func_test, randomvel)
     EXPECT_NEAR(vel[3].z, -8.177238706840153e-05, doublethreshold);
 }
 
-TEST_F(MD_func_test, getmassmbl)
-{
+TEST_F(MD_func_test, getmassmbl) {
     ucell.init_vel = 0;
     temperature = 300 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
 
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         EXPECT_DOUBLE_EQ(allmass[i], 39.948 / ModuleBase::AU_to_MASS);
         EXPECT_TRUE(ionmbl[i].x == 1);
         EXPECT_TRUE(ionmbl[i].y == 1);
@@ -135,8 +128,7 @@ TEST_F(MD_func_test, getmassmbl)
     EXPECT_TRUE(frozen_freedom == 3);
 }
 
-TEST_F(MD_func_test, readvel)
-{
+TEST_F(MD_func_test, readvel) {
     MD_func::read_vel(ucell, vel);
 
     EXPECT_DOUBLE_EQ(vel[0].x, -0.0001320807363640);
@@ -153,11 +145,9 @@ TEST_F(MD_func_test, readvel)
     EXPECT_DOUBLE_EQ(vel[3].z, -2.83313122596e-05);
 }
 
-TEST_F(MD_func_test, RescaleVel)
-{
+TEST_F(MD_func_test, RescaleVel) {
     int frozen_freedom = 3;
-    for (int i = 0; i < natom; ++i)
-    {
+    for (int i = 0; i < natom; ++i) {
         allmass[i] = 39.948 / ModuleBase::AU_to_MASS;
         vel[i].x = 0.1;
         vel[i].y = 0.2;
@@ -180,8 +170,7 @@ TEST_F(MD_func_test, RescaleVel)
     EXPECT_DOUBLE_EQ(vel[3].z, 0.00013737032325207373);
 }
 
-TEST_F(MD_func_test, InitVelCase1)
-{
+TEST_F(MD_func_test, InitVelCase1) {
     ucell.init_vel = 1;
     temperature = -1.0;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
@@ -189,8 +178,7 @@ TEST_F(MD_func_test, InitVelCase1)
     EXPECT_NEAR(temperature, 300.0 / ModuleBase::Hartree_to_K, doublethreshold);
 }
 
-TEST_F(MD_func_test, InitVelCase2)
-{
+TEST_F(MD_func_test, InitVelCase2) {
     ucell.init_vel = 1;
     temperature = 300.0 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
@@ -198,16 +186,14 @@ TEST_F(MD_func_test, InitVelCase2)
     EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
 }
 
-TEST_F(MD_func_test, InitVelCase3)
-{
+TEST_F(MD_func_test, InitVelCase3) {
     ucell.init_vel = 1;
     temperature = 310.0 / ModuleBase::Hartree_to_K;
 
     EXPECT_DOUBLE_EQ(temperature, 310.0 / ModuleBase::Hartree_to_K);
 }
 
-TEST_F(MD_func_test, InitVelCase4)
-{
+TEST_F(MD_func_test, InitVelCase4) {
     ucell.init_vel = 0;
     temperature = 300.0 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
@@ -215,8 +201,7 @@ TEST_F(MD_func_test, InitVelCase4)
     EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
 }
 
-TEST_F(MD_func_test, InitVelCase5)
-{
+TEST_F(MD_func_test, InitVelCase5) {
     ucell.init_vel = 1;
     temperature = 330.0 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, true, temperature, allmass, frozen_freedom, ionmbl, vel);
@@ -224,8 +209,7 @@ TEST_F(MD_func_test, InitVelCase5)
     EXPECT_DOUBLE_EQ(temperature, 330.0 / ModuleBase::Hartree_to_K);
 }
 
-TEST_F(MD_func_test, compute_stress)
-{
+TEST_F(MD_func_test, compute_stress) {
     temperature = 300.0 / ModuleBase::Hartree_to_K;
     MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
     MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
@@ -240,8 +224,7 @@ TEST_F(MD_func_test, compute_stress)
     EXPECT_DOUBLE_EQ(stress(2, 2), 9.6330189688583664e-07);
 }
 
-TEST_F(MD_func_test, dump_info)
-{
+TEST_F(MD_func_test, dump_info) {
     MD_func::dump_info(0, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
     std::ifstream ifs("MD_dump");
     std::string output_str;
@@ -377,8 +360,7 @@ TEST_F(MD_func_test, dump_info)
     remove("MD_dump");
 }
 
-TEST_F(MD_func_test, print_stress)
-{
+TEST_F(MD_func_test, print_stress) {
     GlobalV::ofs_running.open("running.log");
     MD_func::print_stress(GlobalV::ofs_running, virial, stress);
 
@@ -390,34 +372,33 @@ TEST_F(MD_func_test, print_stress)
     EXPECT_THAT(output_str, testing::HasSubstr("IONIC (KINETIC) PART OF STRESS: 0 kbar"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
-/*
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" MD STRESS (kbar)"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-*/
+    /*
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str,
+                    testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr(" MD STRESS (kbar)"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str,
+                    testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+    */
 
     ifs.close();
     remove("running.log");
 }
 
-TEST_F(MD_func_test, current_md_info)
-{
+TEST_F(MD_func_test, current_md_info) {
     // Set up the file directory and create the Restart_md.txt file
     std::string file_dir = "./";
     std::ofstream file(file_dir + "Restart_md.txt");
@@ -433,8 +414,7 @@ TEST_F(MD_func_test, current_md_info)
     remove("Restart_md.txt");
 }
 
-TEST_F(MD_func_test, current_step_warning)
-{
+TEST_F(MD_func_test, current_step_warning) {
     // Call the function and check that it outputs a warning and quits
     std::string file_dir = "./";
     int istep = 0;

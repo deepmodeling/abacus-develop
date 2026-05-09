@@ -4,21 +4,18 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-void PW_Basis::initgrids(
-    const double lat0_in, // unit length (unit in bohr)
-    const ModuleBase::Matrix3
-        latvec_in,        // Unitcell lattice vectors (unit in lat0)
-    const double gridecut // unit in Ry, ecut to set up grids
+void PW_Basis::initgrids(const double lat0_in,                // unit length (unit in bohr)
+                         const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
+                         const double gridecut                // unit in Ry, ecut to set up grids
 ) {
     return;
 }
 
-void PW_Basis::initgrids(
-    const double lat0_in,
-    const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors
-    const int nx_in,
-    int ny_in,
-    int nz_in) {
+void PW_Basis::initgrids(const double lat0_in,
+                         const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors
+                         const int nx_in,
+                         int ny_in,
+                         int nz_in) {
     return;
 }
 
@@ -44,19 +41,16 @@ double& PW_Basis_K::getgk2(const int ik, const int igl) const {
     return this->gk2[igl];
 }
 
-
 } // namespace ModulePW
 
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
 
-
 namespace hsolver {
 
 template <typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
-                            const std::string& calculation) {
+DiagoCG<T, Device>::DiagoCG(const std::string& basis_type, const std::string& calculation) {
     basis_type_ = basis_type;
     calculation_ = calculation;
     this->one_ = new T(static_cast<T>(1.0));
@@ -124,7 +118,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int dim_in,
                                   const int david_ndim_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in) {
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in),
+      diag_comm(diag_comm_in) {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 

@@ -7,8 +7,7 @@
 /**
  * @brief In this part of the code to complete the init part of the json tree.
  */
-namespace Json
-{
+namespace Json {
 #ifdef __RAPIDJSON
 // void gen_init(ModuleSymmetry::Symmetry *symm,Atom *atoms);
 

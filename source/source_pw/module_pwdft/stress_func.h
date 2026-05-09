@@ -47,26 +47,26 @@
 // 5) the stress from the non-linear core correction (if any)
 // 6) the strees from the exchange-correlation functional term
 // 7) the stress from the ewald term (ion-ion intraction under
-//		periodic boundary conditions).
+//        periodic boundary conditions).
 // 8) the stress from ionic contributions (for molecular dynamics)
 //----------------------------------------------------------------
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Stress_Func
-{
+class Stress_Func {
   public:
     Stress_Func(){};
     ~Stress_Func(){};
 
     // stress functions
     //  1) the stress from the electron kinetic energy
-    void stress_kin(ModuleBase::matrix& sigma,
-                    const ModuleBase::matrix& wg,
-                    ModuleSymmetry::Symmetry* p_symm,
-                    K_Vectors* p_kv,
-                    ModulePW::PW_Basis_K* wfc_basis,
-                    const UnitCell& ucell_in,
-                    const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
+    void
+    stress_kin(ModuleBase::matrix& sigma,
+               const ModuleBase::matrix& wg,
+               ModuleSymmetry::Symmetry* p_symm,
+               K_Vectors* p_kv,
+               ModulePW::PW_Basis_K* wfc_basis,
+               const UnitCell& ucell_in,
+               const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
     void stress_har(const UnitCell& ucell,
@@ -76,7 +76,7 @@ class Stress_Func
                     const Charge* const chr); // hartree part in PW or LCAO basis
 
     // 3) the stress from the ewald term (ion-ion intraction under
-    //		periodic boundary conditions).
+    //        periodic boundary conditions).
     void stress_ewa(const UnitCell& ucell,
                     ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
@@ -116,7 +116,7 @@ class Stress_Func
                    UnitCell& ucell,
                    const Structure_Factor* p_sf,
                    const bool is_pw,
-                   const bool *numeric,
+                   const bool* numeric,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
@@ -129,7 +129,7 @@ class Stress_Func
                      FPTYPE* drhocg,
                      ModulePW::PW_Basis* rho_basis,
                      int type); // used in nonlinear core correction stress
-                     
+
     // 6) the stress from the exchange-correlation functional term
     void stress_gga(const UnitCell& ucell,
                     ModuleBase::matrix& sigma,
@@ -142,7 +142,7 @@ class Stress_Func
                      const Charge* const chr,
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
-                     const psi::Psi <std::complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
+                     const psi::Psi<std::complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
 
     // 7) the stress from the non-local pseudopotentials
     /**
@@ -161,7 +161,7 @@ class Stress_Func
                    K_Vectors* p_kv,
                    ModuleSymmetry::Symmetry* p_symm,
                    ModulePW::PW_Basis_K* wfc_basis,
-                   const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
+                   const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
                    const pseudopot_cell_vnl& nlpp_in,
                    const UnitCell& ucell_in); // nonlocal part in PW basis
     // 8) the stress from the DFT+U and DeltaSpin calculations
@@ -178,9 +178,9 @@ class Stress_Func
     void stress_onsite(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
                        const ModulePW::PW_Basis_K* wfc_basis,
-		               const UnitCell& ucell_in,
-		               const Plus_U &dftu, // mohan add 2025-11-06
-		               const void* psi_in,
+                       const UnitCell& ucell_in,
+                       const Plus_U& dftu, // mohan add 2025-11-06
+                       const void* psi_in,
                        ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
@@ -240,6 +240,7 @@ class Stress_Func
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+
   private:
     using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
@@ -250,10 +251,10 @@ class Stress_Func
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
     using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;

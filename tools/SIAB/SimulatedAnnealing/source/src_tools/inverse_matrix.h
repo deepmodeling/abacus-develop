@@ -3,23 +3,22 @@
 
 #include "../src_spillage/common.h"
 
-class Inverse_Matrix
-{
-    public:
+class Inverse_Matrix {
+  public:
     ComplexMatrix A;
-    void using_zpotrf( const ComplexMatrix &Sin);
+    void using_zpotrf(const ComplexMatrix& Sin);
 
-    void using_zheev(const ComplexMatrix &in, ComplexMatrix &out);
-    void init( const int &dim_in);
+    void using_zheev(const ComplexMatrix& in, ComplexMatrix& out);
+    void init(const int& dim_in);
 
     Inverse_Matrix();
     ~Inverse_Matrix();
 
-    private:
+  private:
     int dim;
-    double *e;
+    double* e;
     int lwork;
-    std::complex<double> *work2;
+    std::complex<double>* work2;
     double* rwork;
     int info;
 

@@ -8,14 +8,15 @@
 
 #include <vector>
 
-class VSep
-{
+class VSep {
   public:
     VSep();
     ~VSep();
 
     void init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_cell);
-    void generate_vsep_r(const ModulePW::PW_Basis& rho_basis, const ModuleBase::ComplexMatrix& sf_in, const Sep_Cell& sep_cell);
+    void generate_vsep_r(const ModulePW::PW_Basis& rho_basis,
+                         const ModuleBase::ComplexMatrix& sf_in,
+                         const Sep_Cell& sep_cell);
 
     ModuleBase::matrix vsep_form;
     std::vector<double> vsep_r;

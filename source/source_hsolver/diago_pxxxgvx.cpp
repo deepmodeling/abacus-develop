@@ -8,8 +8,7 @@
 #include <iostream>
 #include <vector>
 
-namespace hsolver
-{
+namespace hsolver {
 
 #ifdef __MPI
 
@@ -33,7 +32,7 @@ namespace hsolver
 
 /**
  * @brief Wrapper function for Scalapack's generalized eigensolver routines.
- * 
+ *
  * @param itype Specifies the problem type to be solved.
  * @param jobz Specifies whether to compute eigenvectors.
  * @param range Specifies the range of eigenvalues to be found.
@@ -70,7 +69,7 @@ namespace hsolver
  * @param iclustr The array to store the indices of the eigenvalue clusters.
  * @param gap The array to store the gaps between eigenvalue clusters.
  * @param info Output status of the computation.
- * 
+ *
  * @note for a uniform interface, rwork and lrwork are input arguments, but not used in pdsygvx_/pssygvx_
  */
 void pxxxgvx_(const int* itype,
@@ -101,15 +100,14 @@ void pxxxgvx_(const int* itype,
               const int* descz,
               double* work,
               int* lwork,
-              double* rwork, 
+              double* rwork,
               int* lrwork,
               int* iwork,
               int* liwork,
               int* ifail,
               int* iclustr,
               double* gap,
-              int* info)
-{
+              int* info) {
     // double
     pdsygvx_(itype,
              jobz,
@@ -182,8 +180,7 @@ void pxxxgvx_(const int* itype,
               int* ifail,
               int* iclustr,
               double* gap,
-              int* info)
-{
+              int* info) {
     // std::complex<double>
     pzhegvx_(itype,
              jobz,
@@ -258,8 +255,7 @@ void pxxxgvx_(const int* itype,
               int* ifail,
               int* iclustr,
               float* gap,
-              int* info)
-{
+              int* info) {
     // float
     pssygvx_(itype,
              jobz,
@@ -332,8 +328,7 @@ void pxxxgvx_(const int* itype,
               int* ifail,
               int* iclustr,
               float* gap,
-              int* info)
-{
+              int* info) {
     // std::complex<float>
     pchegvx_(itype,
              jobz,
@@ -379,89 +374,58 @@ void pxxxgvx_post_processing(const int info,
                              const int M,
                              const int NZ,
                              const int nbands,
-                             int& degeneracy_max)
-{
+                             int& degeneracy_max) {
     const std::string str_info = "Scalapack diagonalization: \n    info = " + std::to_string(info) + ".\n";
 
-    if (info == 0)
-    {
+    if (info == 0) {
         return;
-    }
-    else if (info < 0)
-    {
+    } else if (info < 0) {
         const int info_negative = -info;
         const std::string str_index = (info_negative > 100)
-                                          ? std::to_string(info_negative / 100) + "-th argument "
-                                                + std::to_string(info_negative % 100) + "-entry is illegal.\n"
+                                          ? std::to_string(info_negative / 100) + "-th argument " +
+                                                std::to_string(info_negative % 100) + "-entry is illegal.\n"
                                           : std::to_string(info_negative) + "-th argument is illegal.\n";
         throw std::runtime_error(str_info + str_index);
-    }
-    else if (info % 2)
-    {
+    } else if (info % 2) {
         std::string str_ifail = "ifail = ";
-        for (const int i: ifail)
-        {
+        for (const int i: ifail) {
             str_ifail += std::to_string(i) + " ";
         }
         throw std::runtime_error(str_info + str_ifail);
-    }
-    else if (info / 2 % 2)
-    {
+    } else if (info / 2 % 2) {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < iclustr.size() / 2; ++irank)
-        {
+        for (int irank = 0; irank < iclustr.size() / 2; ++irank) {
             degeneracy_need = std::max(degeneracy_need, iclustr[2 * irank + 1] - iclustr[2 * irank]);
         }
         const std::string str_need = "degeneracy_need = " + std::to_string(degeneracy_need) + ".\n";
         const std::string str_saved = "degeneracy_saved = " + std::to_string(degeneracy_max) + ".\n";
-        if (degeneracy_need <= degeneracy_max)
-        {
+        if (degeneracy_need <= degeneracy_max) {
             throw std::runtime_error(str_info + str_need + str_saved);
-        }
-        else
-        {
+        } else {
             std::cout << str_need << str_saved;
             degeneracy_max = degeneracy_need;
             return;
         }
-    }
-    else if (info / 4 % 2)
-    {
+    } else if (info / 4 % 2) {
         const std::string str_M = "M = " + std::to_string(M) + ".\n";
         const std::string str_NZ = "NZ = " + std::to_string(NZ) + ".\n";
         const std::string str_NBANDS = "Number of eigenvalues solved = " + std::to_string(nbands) + ".\n";
         throw std::runtime_error(str_info + str_M + str_NZ + str_NBANDS);
-    }
-    else if (info / 16 % 2)
-    {
+    } else if (info / 16 % 2) {
         const std::string str_npos = "Not positive definite = " + std::to_string(ifail[0]) + ".\n";
         throw std::runtime_error(str_info + str_npos);
-    }
-    else
-    {
+    } else {
         throw std::runtime_error(str_info);
     }
 }
 
-void get_lwork(int& lwork, std::vector<double>& work)
-{
-    lwork = work[0];
-}
+void get_lwork(int& lwork, std::vector<double>& work) { lwork = work[0]; }
 
-void get_lwork(int& lwork, std::vector<float>& work)
-{
-    lwork = work[0];
-}
+void get_lwork(int& lwork, std::vector<float>& work) { lwork = work[0]; }
 
-void get_lwork(int& lwork, std::vector<std::complex<double>>& work)
-{
-    lwork = work[0].real();
-}
+void get_lwork(int& lwork, std::vector<std::complex<double>>& work) { lwork = work[0].real(); }
 
-void get_lwork(int& lwork, std::vector<std::complex<float>>& work)
-{
-    lwork = work[0].real();
-}
+void get_lwork(int& lwork, std::vector<std::complex<float>>& work) { lwork = work[0].real(); }
 
 template <typename T>
 void pxxxgvx_diag(const int* const desc,
@@ -471,8 +435,7 @@ void pxxxgvx_diag(const int* const desc,
                   const T* const h_mat,
                   const T* const s_mat,
                   typename GetTypeReal<T>::type* const ekb,
-                  T* const wfc_2d)
-{
+                  T* const wfc_2d) {
     int nprow = 1;
     int npcol = 1;
     int myprow = 0;
@@ -481,8 +444,7 @@ void pxxxgvx_diag(const int* const desc,
     int dsize = nprow * npcol;
 
     int degeneracy_max = 12; // only used for complex<float> and std::complex<double>
-    while (true)
-    {
+    while (true) {
         std::vector<T> h_tmp(ncol * nrow, 0);
         std::vector<T> s_tmp(ncol * nrow, 0);
         memcpy(h_tmp.data(), h_mat, sizeof(T) * ncol * nrow);
@@ -550,13 +512,11 @@ void pxxxgvx_diag(const int* const desc,
                  gap.data(),
                  &info);
 
-        if (info)
-        {
+        if (info) {
             throw std::runtime_error("Scalapack diagonalization: \n    info = " + std::to_string(info) + ".\n");
         }
 
-        if (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value)
-        {
+        if (std::is_same<T, std::complex<float>>::value || std::is_same<T, std::complex<double>>::value) {
             get_lwork(lwork, work);
             work.resize(lwork, 0);
             liwork = iwork[0];
@@ -564,9 +524,7 @@ void pxxxgvx_diag(const int* const desc,
             lrwork = rwork[0] + degeneracy_max * ndim_global;
             int maxlrwork = std::max(lrwork, 3);
             rwork.resize(maxlrwork, 0);
-        }
-        else
-        {
+        } else {
             get_lwork(lwork, work);
             work.resize(std::max(lwork, 3), 0);
             liwork = iwork[0];
@@ -610,15 +568,13 @@ void pxxxgvx_diag(const int* const desc,
                  gap.data(),
                  &info);
 
-        if (info == 0)
-        {
+        if (info == 0) {
             return;
         }
         pxxxgvx_post_processing(info, ifail, iclustr, M, NZ, nbands, degeneracy_max);
 
         // break the loop for real data type
-        if (std::is_same<T, float>::value || std::is_same<T, double>::value)
-        {
+        if (std::is_same<T, float>::value || std::is_same<T, double>::value) {
             return;
         }
     }
@@ -635,7 +591,7 @@ template void pxxxgvx_diag(const int* const desc,
                            double* const ekb,
                            double* const wfc_2d);
 
-// std::complex<double>                           
+// std::complex<double>
 template void pxxxgvx_diag(const int* const desc,
                            const int ncol,
                            const int nrow,

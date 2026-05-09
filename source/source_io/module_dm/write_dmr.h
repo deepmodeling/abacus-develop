@@ -7,8 +7,7 @@
 
 #include <string>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 /**
  * Generates a filename for the DMR output based on the given parameters.
@@ -19,10 +18,7 @@ namespace ModuleIO
  * @param istep    The ION step (default: -1), starting from 0.
  * @return         The generated filename as a string.
  */
-std::string dmr_gen_fname(const int out_type, 
-	const int ispin, 
-	const bool append = true, 
-	const int istep = -1);
+std::string dmr_gen_fname(const int out_type, const int ispin, const bool append = true, const int istep = -1);
 
 /**
  * Writes HContainer to a csr file.
@@ -33,13 +29,13 @@ std::string dmr_gen_fname(const int out_type,
  * @param dm_serial A pointer to the Hamiltonian container.
  * @param istep The current step number.
  */
-void write_dmr_csr(std::string& fname, 
-        const UnitCell *ucell,
-	const int precision, 
-	hamilt::HContainer<double>* dm_serial, 
-	const int istep,
-	const int ispin,
-	const int nspin);
+void write_dmr_csr(std::string& fname,
+                   const UnitCell* ucell,
+                   const int precision,
+                   hamilt::HContainer<double>* dm_serial,
+                   const int istep,
+                   const int ispin,
+                   const int nspin);
 
 /**
  * Writes DMR to a file.
@@ -56,7 +52,7 @@ void write_dmr_csr(std::string& fname,
  * @param istep The ION step, starting from 0.
  */
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
-               const UnitCell *ucell,
+               const UnitCell* ucell,
                const int precision,
                const Parallel_2D& paraV,
                const bool append,

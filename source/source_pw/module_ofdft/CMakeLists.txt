@@ -1,40 +1,34 @@
-list(APPEND hamilt_ofdft_srcs
-    kedf_tf.cpp
-    kedf_vw.cpp
-    kedf_wt.cpp
-    kedf_extwt.cpp
-    kedf_xwm.cpp
-    kedf_lkt.cpp
-    kedf_manager.cpp
-    of_stress_pw.cpp
-    of_print_info.cpp
-    evolve_ofdft.cpp
-)
+list(
+  APPEND
+  hamilt_ofdft_srcs
+  kedf_tf.cpp
+  kedf_vw.cpp
+  kedf_wt.cpp
+  kedf_extwt.cpp
+  kedf_xwm.cpp
+  kedf_lkt.cpp
+  kedf_manager.cpp
+  of_stress_pw.cpp
+  of_print_info.cpp
+  evolve_ofdft.cpp)
 
-add_library(
-    module_ofdft
-    OBJECT
-    ${hamilt_ofdft_srcs}
-)
+add_library(module_ofdft OBJECT ${hamilt_ofdft_srcs})
 
 if(ENABLE_COVERAGE)
   add_coverage(module_ofdft)
 endif()
 
 if(ENABLE_MLALGO)
-  list(APPEND hamilt_mlkedf_srcs
-      kedf_ml.cpp
-      kedf_ml_label.cpp
-      ml_base.cpp
-      ml_base_pot.cpp
-      nn_of.cpp
-  )
+  list(
+    APPEND
+    hamilt_mlkedf_srcs
+    kedf_ml.cpp
+    kedf_ml_label.cpp
+    ml_base.cpp
+    ml_base_pot.cpp
+    nn_of.cpp)
 
-  add_library(
-      hamilt_mlkedf
-      OBJECT
-      ${hamilt_mlkedf_srcs}
-  )
+  add_library(hamilt_mlkedf OBJECT ${hamilt_mlkedf_srcs})
 
   if(ENABLE_COVERAGE)
     add_coverage(hamilt_mlkedf)

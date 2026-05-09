@@ -19,15 +19,13 @@
 int test_size = 10;
 int test_nw = 26;
 
-class DMTest : public testing::Test
-{
+class DMTest : public testing::Test {
   protected:
     Parallel_Orbitals* paraV;
     int dsize;
     int my_rank = 0;
     UnitCell ucell;
-    void SetUp() override
-    {
+    void SetUp() override {
 #ifdef __MPI
         // MPI parallel settings
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -42,8 +40,7 @@ class DMTest : public testing::Test
         ucell.iat2ia = new int[ucell.nat];
         ucell.atoms[0].tau = new ModuleBase::Vector3<double>[ucell.nat];
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2it[iat] = 0;
             ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -54,8 +51,7 @@ class DMTest : public testing::Test
         ucell.atoms[0].iw2l = new int[test_nw];
         ucell.atoms[0].iw2m = new int[test_nw];
         ucell.atoms[0].iw2n = new int[test_nw];
-        for (int iw = 0; iw < test_nw; ++iw)
-        {
+        for (int iw = 0; iw < test_nw; ++iw) {
             ucell.atoms[0].iw2l[iw] = 0;
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
@@ -66,8 +62,7 @@ class DMTest : public testing::Test
         init_parav();
     }
 
-    void TearDown()
-    {
+    void TearDown() {
         delete paraV;
         delete[] ucell.atoms[0].tau;
         delete[] ucell.atoms[0].iw2l;
@@ -77,8 +72,7 @@ class DMTest : public testing::Test
     }
 
 #ifdef __MPI
-    void init_parav()
-    {
+    void init_parav() {
         int nb = 2;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
@@ -88,14 +82,11 @@ class DMTest : public testing::Test
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {
-    }
+    void init_parav() {}
 #endif
 };
 
-TEST_F(DMTest, cal_dmk_psi_nspin1)
-{
+TEST_F(DMTest, cal_dmk_psi_nspin1) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nks = 2;
@@ -114,44 +105,32 @@ TEST_F(DMTest, cal_dmk_psi_nspin1)
     EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
 
     // set elements of DMK
-    for (int is = 1; is <= nspin; is++)
-    {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
-        {
-            for (int i = 0; i < paraV->nrow; i++)
-            {
-                for (int j = 0; j < paraV->ncol; j++)
-                {
+    for (int is = 1; is <= nspin; is++) {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ik++) {
+            for (int i = 0; i < paraV->nrow; i++) {
+                for (int j = 0; j < paraV->ncol; j++) {
                     DM.set_DMK(is, ik, i, j, is + ik * i + j);
                 }
             }
         }
     }
     // compare
-    for (int is = 1; is <= nspin; is++)
-    {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
-        {
-            for (int i = 0; i < paraV->nrow; i++)
-            {
-                for (int j = 0; j < paraV->ncol; j++)
-                {
+    for (int is = 1; is <= nspin; is++) {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ik++) {
+            for (int i = 0; i < paraV->nrow; i++) {
+                for (int j = 0; j < paraV->ncol; j++) {
                     EXPECT_EQ(DM.get_DMK(is, ik, i, j), is + ik * i + j);
                 }
             }
         }
     }
     // test for get_DMK_pointer
-    for (int is = 1; is <= nspin; is++)
-    {
+    for (int is = 1; is <= nspin; is++) {
         int ik_begin = (is - 1) * kv->get_nks() / nspin;
-        for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
-        {
+        for (int ik = 0; ik < kv->get_nks() / nspin; ik++) {
             double* ptr = DM.get_DMK_pointer(ik + ik_begin);
-            for (int i = 0; i < paraV->nrow; i++)
-            {
-                for (int j = 0; j < paraV->ncol; j++)
-                {
+            for (int i = 0; i < paraV->nrow; i++) {
+                for (int j = 0; j < paraV->ncol; j++) {
                     // std::cout << ptr[i*paraV->ncol+j] << " ";
                     EXPECT_EQ(ptr[i * paraV->ncol + j], is + ik * i + j);
                 }
@@ -162,8 +141,7 @@ TEST_F(DMTest, cal_dmk_psi_nspin1)
     delete kv;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

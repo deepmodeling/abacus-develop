@@ -1,13 +1,16 @@
 # Extracting Charge Density
 
-ABACUS can output the charge density by adding the keyword [out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg) in INPUT file:
+ABACUS can output the charge density by adding the keyword
+[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)
+in INPUT file:
 
 ```
 out_chg             1
 ```
 
-After finishing the calculation, the information of the charge density is stroed in files `OUT.${suffix}/SPIN${spin}_CHG.cube`, which can be used to do visualization.
-The SPIN${spin}_CHG.cube file looks like:
+After finishing the calculation, the information of the charge density is stroed in files
+`OUT.${suffix}/SPIN${spin}_CHG.cube`, which can be used to do visualization. The
+SPIN\$\{spin}\_CHG.cube file looks like:
 
 ```
 STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x
@@ -34,10 +37,13 @@ STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x
 The first line contains the current ion step.\
 The second line contains NSPIN and Fermi energy.\
 The following 4 lines are the informations of lattice, in order:\
-&emsp;total number of atoms, the coordinate of original point.\
-&emsp;the number of lattice points along lattice vector a1 (nx), a1/nx, in Bohr.\
-&emsp;the number of lattice points along lattice vector a2 (ny), a2/ny, in Bohr.\
-&emsp;the number of lattice points along lattice vector a3 (nz), a3/nz, in Bohr.\
-The following lines are about the elements and coordinates, in order: the atom number of each atoms, the electron number in pseudopotential, the Cartesian coordinates, in Bohr.\
-The rest lines are the value of charge density at each grid. Note that the inner loop is z index, followed by y index, x index in turn.\
-The examples can be found in [examples/charge_density](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/charge_density)
+total number of atoms, the coordinate of original point.\
+the number of lattice points along lattice vector a1 (nx), a1/nx, in Bohr.\
+the number of lattice points along lattice vector a2 (ny), a2/ny, in Bohr.\
+the number of lattice points along lattice vector a3 (nz), a3/nz, in Bohr.\
+The following lines are about the elements and coordinates, in order: the atom number of each atoms,
+the electron number in pseudopotential, the Cartesian coordinates, in Bohr.\
+The rest lines are the value of charge density at each grid. Note that the inner loop is z index,
+followed by y index, x index in turn.\
+The examples can be found in
+[examples/charge_density](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/charge_density)

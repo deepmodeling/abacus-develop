@@ -3,8 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
-namespace hamilt
-{
+namespace hamilt {
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
@@ -15,8 +14,7 @@ void get_exx_potential(const K_Vectors* kv,
                        double ucell_omega,
                        int ik,
                        int iq,
-                       bool is_stress)
-{
+                       bool is_stress) {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 
@@ -40,15 +38,13 @@ void get_exx_potential(const K_Vectors* kv,
     qvec_d = kv->kvec_d;
 #endif
 
-    if (ik > nks)
-    {
+    if (ik > nks) {
         return;
     }
 
     // calculate Fock pot
     auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (int i = 0; i < param_fock.size(); i++)
-    {
+    for (int i = 0; i < param_fock.size(); i++) {
         auto param = param_fock[i];
         double exx_div = OperatorEXXPW<std::complex<Real>, Device>::fock_div[i];
         double alpha = std::stod(param["alpha"]);
@@ -60,8 +56,7 @@ void get_exx_potential(const K_Vectors* kv,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < rhopw_dev->npw; ig++)
-        {
+        for (int ig = 0; ig < rhopw_dev->npw; ig++) {
             const ModuleBase::Vector3<double> g_d = rhopw_dev->gdirect[ig];
             const ModuleBase::Vector3<double> kqg_d = k_d - q_d + g_d;
             // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
@@ -69,19 +64,15 @@ void get_exx_potential(const K_Vectors* kv,
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             Real grid_factor = 1;
             double extrapolate_grid = 8.0 / 7.0;
-            if (gamma_extrapolation)
-            {
+            if (gamma_extrapolation) {
                 // if isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)
                 auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3))
-                {
+                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)) {
                     grid_factor = 0;
-                }
-                else
-                {
+                } else {
                     grid_factor = extrapolate_grid;
                 }
             }
@@ -91,14 +82,12 @@ void get_exx_potential(const K_Vectors* kv,
 
             Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
             // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
-            if (gg >= 1e-8)
-            {
+            if (gg >= 1e-8) {
                 Real fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / gg;
                 pot_cpu[ig] += fac * grid_factor * alpha;
             }
             // }
-            else
-            {
+            else {
                 pot_cpu[ig] += exx_div * alpha;
             }
             // assert(is_finite(density_recip[ig]));
@@ -107,21 +96,20 @@ void get_exx_potential(const K_Vectors* kv,
 
     // calculate erfc pot
     auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (int i = 0; i < param_erfc.size(); i++)
-    {
+    for (int i = 0; i < param_erfc.size(); i++) {
         auto param = param_erfc[i];
         double erfc_omega = std::stod(param["omega"]);
         double erfc_omega2 = erfc_omega * erfc_omega;
         double alpha = std::stod(param["alpha"]);
         // double exx_div = OperatorEXXPW<std::complex<Real>, Device>::erfc_div[i];
         double exx_div = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
-                                          erfc_omega,
-                                          kv,
-                                          wfcpw,
-                                          rhopw_dev,
-                                          tpiba,
-                                          gamma_extrapolation,
-                                          ucell_omega);
+                                        erfc_omega,
+                                        kv,
+                                        wfcpw,
+                                        rhopw_dev,
+                                        tpiba,
+                                        gamma_extrapolation,
+                                        ucell_omega);
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
         const ModuleBase::Vector3<double> q_c = qvec_c[iq];
@@ -130,8 +118,7 @@ void get_exx_potential(const K_Vectors* kv,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < rhopw_dev->npw; ig++)
-        {
+        for (int ig = 0; ig < rhopw_dev->npw; ig++) {
             const ModuleBase::Vector3<double> g_d = rhopw_dev->gdirect[ig];
             const ModuleBase::Vector3<double> kqg_d = k_d - q_d + g_d;
             // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
@@ -139,19 +126,15 @@ void get_exx_potential(const K_Vectors* kv,
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             Real grid_factor = 1;
             double extrapolate_grid = 8.0 / 7.0;
-            if (gamma_extrapolation)
-            {
+            if (gamma_extrapolation) {
                 // if isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)
                 auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3))
-                {
+                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)) {
                     grid_factor = 0;
-                }
-                else
-                {
+                } else {
                     grid_factor = extrapolate_grid;
                 }
             }
@@ -163,27 +146,23 @@ void get_exx_potential(const K_Vectors* kv,
             Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
             // if (ig == 0 && GlobalV::MY_RANK==1)
             // {
-            //     printf("k-q+G: %f %f %f\n", (k_c - q_c + rhopw_dev->gcar[ig])[0], (k_c - q_c + rhopw_dev->gcar[ig])[1], (k_c - q_c + rhopw_dev->gcar[ig])[2]);
+            //     printf("k-q+G: %f %f %f\n", (k_c - q_c + rhopw_dev->gcar[ig])[0], (k_c - q_c +
+            //     rhopw_dev->gcar[ig])[1], (k_c - q_c + rhopw_dev->gcar[ig])[2]);
             // }
             // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
-            if (gg >= 1e-8)
-            {
+            if (gg >= 1e-8) {
                 Real fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / gg;
                 pot_cpu[ig] += fac * (1.0 - std::exp(-gg / 4.0 / erfc_omega2)) * grid_factor * alpha;
             }
             // }
-            else
-            {
+            else {
                 // if (PARAM.inp.dft_functional == "hse")
-                if (!gamma_extrapolation)
-                {
+                if (!gamma_extrapolation) {
                     if (is_stress)
-                        pot_cpu[ig] += (- ModuleBase::PI * ModuleBase::e2 / erfc_omega2) * alpha;
+                        pot_cpu[ig] += (-ModuleBase::PI * ModuleBase::e2 / erfc_omega2) * alpha;
                     else
                         pot_cpu[ig] += (exx_div - ModuleBase::PI * ModuleBase::e2 / erfc_omega2) * alpha;
-                }
-                else
-                {
+                } else {
                     pot_cpu[ig] += exx_div * alpha;
                 }
             }
@@ -193,8 +172,7 @@ void get_exx_potential(const K_Vectors* kv,
 
     // copy the potential to the device memory
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
         if (err != cudaSuccess) {
             throw std::runtime_error("failed to register potential CPU memory operations");
@@ -203,8 +181,7 @@ void get_exx_potential(const K_Vectors* kv,
 #endif
     syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         cudaHostUnregister(pot_cpu);
     }
 #endif
@@ -221,8 +198,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               bool gamma_extrapolation,
                               double ucell_omega,
                               int ik,
-                              int iq)
-{
+                              int iq) {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 
@@ -239,8 +215,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
     // calculate Fock pot
     auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (auto param: param_fock)
-    {
+    for (auto param: param_fock) {
         // double exx_div = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
         //                                 0.0,
         //                                 kv,
@@ -259,8 +234,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < rhopw_dev->npw; ig++)
-        {
+        for (int ig = 0; ig < rhopw_dev->npw; ig++) {
             const ModuleBase::Vector3<double> g_d = rhopw_dev->gdirect[ig];
             const ModuleBase::Vector3<double> kqg_d = k_d - q_d + g_d;
             // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
@@ -268,19 +242,15 @@ void get_exx_stress_potential(const K_Vectors* kv,
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             Real grid_factor = 1;
             double extrapolate_grid = 8.0 / 7.0;
-            if (gamma_extrapolation)
-            {
+            if (gamma_extrapolation) {
                 // if isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)
                 auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3))
-                {
+                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)) {
                     grid_factor = 0;
-                }
-                else
-                {
+                } else {
                     grid_factor = extrapolate_grid;
                 }
             }
@@ -291,8 +261,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
             Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
             // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
-            if (gg >= 1e-8)
-            {
+            if (gg >= 1e-8) {
                 Real fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / gg;
                 pot_cpu[ig] += 1.0 / gg * grid_factor * alpha;
             }
@@ -301,8 +270,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
     // calculate erfc pot
     auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (auto param: param_erfc)
-    {
+    for (auto param: param_erfc) {
         double erfc_omega = std::stod(param["omega"]);
         double erfc_omega2 = erfc_omega * erfc_omega;
         double alpha = std::stod(param["alpha"]);
@@ -323,8 +291,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for (int ig = 0; ig < rhopw_dev->npw; ig++)
-        {
+        for (int ig = 0; ig < rhopw_dev->npw; ig++) {
             const ModuleBase::Vector3<double> g_d = rhopw_dev->gdirect[ig];
             const ModuleBase::Vector3<double> kqg_d = k_d - q_d + g_d;
             // For gamma_extrapolation (https://doi.org/10.1103/PhysRevB.79.205114)
@@ -332,19 +299,15 @@ void get_exx_stress_potential(const K_Vectors* kv,
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             Real grid_factor = 1;
             double extrapolate_grid = 8.0 / 7.0;
-            if (gamma_extrapolation)
-            {
+            if (gamma_extrapolation) {
                 // if isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)
                 auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3))
-                {
+                if (isint(kqg_d[0] * nqs_half1) && isint(kqg_d[1] * nqs_half2) && isint(kqg_d[2] * nqs_half3)) {
                     grid_factor = 0;
-                }
-                else
-                {
+                } else {
                     grid_factor = extrapolate_grid;
                 }
             }
@@ -355,18 +318,15 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
             Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
             // if (kqgcar2 > 1e-12) // vasp uses 1/40 of the smallest (k spacing)**2
-            if (gg >= 1e-8)
-            {
+            if (gg >= 1e-8) {
                 Real fac = -ModuleBase::FOUR_PI * ModuleBase::e2 / gg;
-                pot_cpu[ig] += (1.0 - (1.0 + gg / 4.0 / erfc_omega2) * std::exp(-gg / 4.0 / erfc_omega2))
-                               / (1.0 - std::exp(-gg / 4.0 / erfc_omega2)) / gg * grid_factor * alpha;
+                pot_cpu[ig] += (1.0 - (1.0 + gg / 4.0 / erfc_omega2) * std::exp(-gg / 4.0 / erfc_omega2)) /
+                               (1.0 - std::exp(-gg / 4.0 / erfc_omega2)) / gg * grid_factor * alpha;
             }
             // }
-            else
-            {
+            else {
                 // if (PARAM.inp.dft_functional == "hse")
-                if (!gamma_extrapolation)
-                {
+                if (!gamma_extrapolation) {
                     pot_cpu[ig] += 1.0 / 4.0 / erfc_omega2 * alpha;
                 }
             }
@@ -376,8 +336,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
     // copy the potential to the device memory
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
         if (err != cudaSuccess) {
             throw std::runtime_error("failed to register potential CPU memory operations");
@@ -386,8 +345,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
 #endif
     syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
+    if (PARAM.inp.device == "gpu") {
         cudaHostUnregister(pot_cpu);
     }
 #endif
@@ -402,8 +360,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
                       ModulePW::PW_Basis* rhopw_dev,
                       double tpiba,
                       bool gamma_extrapolation,
-                      double ucell_omega)
-{
+                      double ucell_omega) {
     double exx_div = 0;
     // return exx_div;
     double nqs_half1 = 0.5 * kv->nmp[0];
@@ -419,15 +376,13 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
 
     // this is the \sum_q F(q) part
     // temporarily for all k points, should be replaced to q points later
-    for (int ik = 0; ik < wfcpw->nks / nk_fac; ik++)
-    {
+    for (int ik = 0; ik < wfcpw->nks / nk_fac; ik++) {
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
         const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : div)
 #endif
-        for (int ig = 0; ig < rhopw_dev->npw; ig++)
-        {
+        for (int ig = 0; ig < rhopw_dev->npw; ig++) {
             const ModuleBase::Vector3<double> q_c = k_c + rhopw_dev->gcar[ig];
             const ModuleBase::Vector3<double> q_d = k_d + rhopw_dev->gdirect[ig];
             double qq = q_c.norm2();
@@ -436,18 +391,14 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
             // grid_factor is designed for the 7/8 of the grid to function like all of the points
             double grid_factor = 1;
             double extrapolate_grid = 8.0 / 7.0;
-            if (gamma_extrapolation)
-            {
+            if (gamma_extrapolation) {
                 auto isint = [](double x) {
                     double epsilon = 1e-6; // this follows the isint judgement in q-e
                     return std::abs(x - std::round(x)) < epsilon;
                 };
-                if (isint(q_d[0] * nqs_half1) && isint(q_d[1] * nqs_half2) && isint(q_d[2] * nqs_half3))
-                {
+                if (isint(q_d[0] * nqs_half1) && isint(q_d[1] * nqs_half2) && isint(q_d[2] * nqs_half3)) {
                     grid_factor = 0;
-                }
-                else
-                {
+                } else {
                     grid_factor = extrapolate_grid;
                 }
             }
@@ -455,14 +406,11 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
             if (qq <= 1e-8)
                 continue;
             // else if (PARAM.inp.dft_functional == "hse")
-            else if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc)
-            {
+            else if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc) {
                 double omega = erfc_omega;
                 double omega2 = omega * omega;
                 div += std::exp(-alpha * qq) / qq * (1.0 - std::exp(-qq * tpiba2 / 4.0 / omega2)) * grid_factor;
-            }
-            else
-            {
+            } else {
                 div += std::exp(-alpha * qq) / qq * grid_factor;
             }
         }
@@ -472,15 +420,11 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     // std::cout << "EXX div: " << div << std::endl;
 
     // if (PARAM.inp.dft_functional == "hse")
-    if (!gamma_extrapolation)
-    {
-        if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc)
-        {
+    if (!gamma_extrapolation) {
+        if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc) {
             double omega = erfc_omega;
             div += tpiba2 / 4.0 / omega / omega; // compensate for the finite value when qq = 0
-        }
-        else
-        {
+        } else {
             div -= alpha;
         }
     }
@@ -495,15 +439,13 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     double dq = 5.0 / std::sqrt(alpha) / nqq;
     double aa = 0.0;
     // if (PARAM.inp.dft_functional == "hse")
-    if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc)
-    {
+    if (coulomb_type == Conv_Coulomb_Pot_K::Coulomb_Type::Erfc) {
         double omega = erfc_omega;
         double omega2 = omega * omega;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : aa)
 #endif
-        for (int i = 0; i < nqq; i++)
-        {
+        for (int i = 0; i < nqq; i++) {
             double q = dq * (i + 0.5);
             aa -= exp(-alpha * q * q) * exp(-q * q / 4.0 / omega2) * dq;
         }
@@ -529,7 +471,7 @@ template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*
                                                                 double,
                                                                 int,
                                                                 int,
-                                                                        bool);
+                                                                bool);
 template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
@@ -539,7 +481,7 @@ template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors
                                                                  double,
                                                                  int,
                                                                  int,
-                                                                        bool);
+                                                                 bool);
 template void get_exx_stress_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                        const ModulePW::PW_Basis_K*,
                                                                        ModulePW::PW_Basis*,

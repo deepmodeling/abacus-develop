@@ -10,18 +10,17 @@
 #ifdef _MCD_CHECK
 #endif
 
-namespace ModuleBase
-{
-    // Small epsilon value for numerical comparisons
-    constexpr double epsilon = 1e-10;
+namespace ModuleBase {
+// Small epsilon value for numerical comparisons
+constexpr double epsilon = 1e-10;
 
 /**
  * @brief 3 elements vector
  *
  * @tparam T
  */
-template <class T> class Vector3
-{
+template <class T>
+class Vector3 {
   public:
     T x;
     T y;
@@ -34,24 +33,15 @@ template <class T> class Vector3
      * @param y1
      * @param z1
      */
-    Vector3(const T &x1 = 0, const T &y1 = 0, const T &z1 = 0)
-        : x(x1), y(y1), z(z1)
-    {}
-    Vector3(const Vector3<T> &v)
-        : x(v.x), y(v.y), z(v.z)
-    {} 
-    explicit Vector3(const std::array<T,3> &v)
-        : x(v[0]), y(v[1]), z(v[2])
-    {}
+    Vector3(const T& x1 = 0, const T& y1 = 0, const T& z1 = 0) : x(x1), y(y1), z(z1) {}
+    Vector3(const Vector3<T>& v) : x(v.x), y(v.y), z(v.z) {}
+    explicit Vector3(const std::array<T, 3>& v) : x(v[0]), y(v[1]), z(v[2]) {}
 
     template <typename U>
     explicit Vector3(const Vector3<U>& other)
-        : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)), z(static_cast<T>(other.z))
-    {}
+        : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)), z(static_cast<T>(other.z)) {}
 
-    Vector3(Vector3<T> &&v) noexcept
-        : x(v.x), y(v.y), z(v.z)
-    {}
+    Vector3(Vector3<T>&& v) noexcept : x(v.x), y(v.y), z(v.z) {}
 
     /**
      * @brief set a 3d vector
@@ -60,8 +50,7 @@ template <class T> class Vector3
      * @param y1
      * @param z1
      */
-    void set(const T &x1, const T &y1, const T &z1)
-    {
+    void set(const T& x1, const T& y1, const T& z1) {
         x = x1;
         y = y1;
         z = z1;
@@ -73,16 +62,14 @@ template <class T> class Vector3
      * @param u
      * @return Vector3<T>&
      */
-    Vector3<T> &operator=(const Vector3<T> &u)
-    {
+    Vector3<T>& operator=(const Vector3<T>& u) {
         x = u.x;
         y = u.y;
         z = u.z;
         return *this;
     }
 
-    Vector3<T> &operator=(const T &u)
-    {
+    Vector3<T>& operator=(const T& u) {
         x = u;
         y = u;
         z = u;
@@ -95,8 +82,7 @@ template <class T> class Vector3
      * @param u
      * @return Vector3<T>&
      */
-    Vector3<T> &operator=(Vector3<T> &&u) noexcept
-    {
+    Vector3<T>& operator=(Vector3<T>&& u) noexcept {
         x = u.x;
         y = u.y;
         z = u.z;
@@ -109,8 +95,7 @@ template <class T> class Vector3
      * @param u
      * @return Vector3<T>&
      */
-    Vector3<T> &operator+=(const Vector3<T> &u)
-    {
+    Vector3<T>& operator+=(const Vector3<T>& u) {
         x += u.x;
         y += u.y;
         z += u.z;
@@ -123,8 +108,7 @@ template <class T> class Vector3
      * @param u
      * @return Vector3<T>&
      */
-    Vector3<T> &operator-=(const Vector3<T> &u)
-    {
+    Vector3<T>& operator-=(const Vector3<T>& u) {
         x -= u.x;
         y -= u.y;
         z -= u.z;
@@ -137,8 +121,7 @@ template <class T> class Vector3
      * @param s
      * @return Vector3<T>&
      */
-    Vector3<T> &operator*=(const T &s)
-    {
+    Vector3<T>& operator*=(const T& s) {
         x *= s;
         y *= s;
         z *= s;
@@ -151,8 +134,7 @@ template <class T> class Vector3
      * @param s
      * @return Vector3<T>&
      */
-    Vector3<T> &operator/=(const T &s)
-    {
+    Vector3<T>& operator/=(const T& s) {
         assert(s != 0); // Avoid division by zero
         x /= s;
         y /= s;
@@ -165,10 +147,7 @@ template <class T> class Vector3
      *
      * @return Vector3<T>
      */
-    Vector3<T> operator-() const
-    {
-        return Vector3<T>(-x, -y, -z);
-    }
+    Vector3<T> operator-() const { return Vector3<T>(-x, -y, -z); }
 
     /**
      * @brief Over load "[]" for accessing elements with pointers
@@ -176,10 +155,9 @@ template <class T> class Vector3
      * @param index
      * @return T
      */
-    T operator[](int index) const
-    {
+    T operator[](int index) const {
         assert(index >= 0 && index < 3);
-        //return (&x)[index]; // this is undefind behavior and breaks with icpx
+        // return (&x)[index]; // this is undefind behavior and breaks with icpx
         T const* ptr[3] = {&x, &y, &z};
         return *ptr[index];
     }
@@ -190,10 +168,9 @@ template <class T> class Vector3
      * @param index
      * @return T&
      */
-    T &operator[](int index)
-    {
+    T& operator[](int index) {
         assert(index >= 0 && index < 3);
-        //return (&x)[index]; // this is undefind behavior and breaks with icpx
+        // return (&x)[index]; // this is undefind behavior and breaks with icpx
         T* ptr[3] = {&x, &y, &z};
         return *ptr[index];
     }
@@ -203,28 +180,21 @@ template <class T> class Vector3
      *
      * @return T
      */
-    inline T norm2(void) const
-    {
-        return x * x + y * y + z * z;
-    }
+    inline T norm2(void) const { return x * x + y * y + z * z; }
 
     /**
      * @brief Get the norm of a Vector3
      *
      * @return T
      */
-    inline T norm(void) const
-    {
-        return sqrt(norm2());
-    }
+    inline T norm(void) const { return sqrt(norm2()); }
 
     /**
      * @brief Normalize a Vector3
      *
      * @return Vector3<T>&
      */
-    Vector3<T> &normalize(void)
-    {
+    Vector3<T>& normalize(void) {
         const T m = norm();
         if (m > epsilon) // Avoid division by zero
         {
@@ -240,8 +210,7 @@ template <class T> class Vector3
      *
      * @return Vector3<T>&
      */
-    Vector3<T> &reverse(void)
-    {
+    Vector3<T>& reverse(void) {
         x = -x;
         y = -y;
         z = -z;
@@ -268,8 +237,8 @@ template <class T> class Vector3
  * @param[in] v
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator+(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline Vector3<T> operator+(const Vector3<T>& u, const Vector3<T>& v) {
     return Vector3<T>(u.x + v.x, u.y + v.y, u.z + v.z);
 }
 
@@ -280,8 +249,8 @@ template <class T> inline Vector3<T> operator+(const Vector3<T> &u, const Vector
  * @param[in] v
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator-(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline Vector3<T> operator-(const Vector3<T>& u, const Vector3<T>& v) {
     return Vector3<T>(u.x - v.x, u.y - v.y, u.z - v.z);
 }
 
@@ -293,8 +262,8 @@ template <class T> inline Vector3<T> operator-(const Vector3<T> &u, const Vector
  * @param v
  * @return template <class T>
  */
-template <class T> inline T operator*(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline T operator*(const Vector3<T>& u, const Vector3<T>& v) {
     return (u.x * v.x + u.y * v.y + u.z * v.z);
 }
 
@@ -305,8 +274,8 @@ template <class T> inline T operator*(const Vector3<T> &u, const Vector3<T> &v)
  * @param[in] u
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator*(const T &s, const Vector3<T> &u)
-{
+template <class T>
+inline Vector3<T> operator*(const T& s, const Vector3<T>& u) {
     return Vector3<T>(u.x * s, u.y * s, u.z * s);
 }
 
@@ -317,8 +286,8 @@ template <class T> inline Vector3<T> operator*(const T &s, const Vector3<T> &u)
  * @param s
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator*(const Vector3<T> &u, const T &s)
-{
+template <class T>
+inline Vector3<T> operator*(const Vector3<T>& u, const T& s) {
     return Vector3<T>(u.x * s, u.y * s, u.z * s);
 } // mohan add 2009-5-10
 
@@ -330,8 +299,8 @@ template <class T> inline Vector3<T> operator*(const Vector3<T> &u, const T &s)
  * @param s
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator/(const Vector3<T> &u, const T &s)
-{
+template <class T>
+inline Vector3<T> operator/(const Vector3<T>& u, const T& s) {
     return Vector3<T>(u.x / s, u.y / s, u.z / s);
 }
 
@@ -343,9 +312,9 @@ template <class T> inline Vector3<T> operator/(const Vector3<T> &u, const T &s)
  * @param u
  * @return Vector3<T>
  */
-template <class T> inline Vector3<T> operator/(const T &s, const Vector3<T> &u)
-{
-    return Vector3<T>(s/u.x, s/u.y, s/u.z);
+template <class T>
+inline Vector3<T> operator/(const T& s, const Vector3<T>& u) {
+    return Vector3<T>(s / u.x, s / u.y, s / u.z);
 }
 
 /**
@@ -356,8 +325,8 @@ template <class T> inline Vector3<T> operator/(const T &s, const Vector3<T> &u)
  * @return T
  * @note u.v=(ux*vx)+(uy*vy)+(uz*vz)
  */
-template <class T> inline T dot(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline T dot(const Vector3<T>& u, const Vector3<T>& v) {
     return (u.x * v.x + u.y * v.y + u.z * v.z);
 }
 
@@ -373,8 +342,8 @@ template <class T> inline T dot(const Vector3<T> &u, const Vector3<T> &v)
  * | vx vy vz |
  * u.v=(uy*vz-uz*vy)i+(-ux*vz+uz*vx)j+(ux*vy-uy*vx)k
  */
-template <class T> inline Vector3<T> operator^(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline Vector3<T> operator^(const Vector3<T>& u, const Vector3<T>& v) {
     return Vector3<T>(u.y * v.z - u.z * v.y, -u.x * v.z + u.z * v.x, u.x * v.y - u.y * v.x);
 }
 
@@ -390,54 +359,48 @@ template <class T> inline Vector3<T> operator^(const Vector3<T> &u, const Vector
  * | vx vy vz |
  * u.v=(uy*vz-uz*vy)i+(-ux*vz+uz*vx)j+(ux*vy-uy*vx)k
  */
-template <class T> inline Vector3<T> cross(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline Vector3<T> cross(const Vector3<T>& u, const Vector3<T>& v) {
     return Vector3<T>(u.y * v.z - u.z * v.y, -u.x * v.z + u.z * v.x, u.x * v.y - u.y * v.x);
 }
 // s = u.(v x w)
 // template <class T> T TripleScalarProduct(Vector3<T> u, Vector3<T> v, Vector3<T> w)
 //{
-//	return T((u.x * (v.y * w.z - v.z * w.y)) +
-//	         (u.y * (-v.x * w.z + v.z * w.x)) +
-//	         (u.z * (v.x * w.y - v.y * w.x)));
+//    return T((u.x * (v.y * w.z - v.z * w.y)) +
+//             (u.y * (-v.x * w.z + v.z * w.x)) +
+//             (u.z * (v.x * w.y - v.y * w.x)));
 // }
 
 // Overload the < operator for sorting
-template <class T> bool operator<(const Vector3<T> &u, const Vector3<T> &v)
-{
-    if (u.x < v.x)
-    {
+template <class T>
+bool operator<(const Vector3<T>& u, const Vector3<T>& v) {
+    if (u.x < v.x) {
         return true;
     }
-    if (u.x > v.x)
-    {
+    if (u.x > v.x) {
         return false;
     }
-    if (u.y < v.y)
-    {
+    if (u.y < v.y) {
         return true;
     }
-    if (u.y > v.y)
-    {
+    if (u.y > v.y) {
         return false;
     }
-    if (u.z < v.z)
-    {
+    if (u.z < v.z) {
         return true;
     }
     return false;
 }
 
 // whether m1 != m2
-template <class T> inline bool operator!=(const Vector3<T> &u, const Vector3<T> &v)
-{
+template <class T>
+inline bool operator!=(const Vector3<T>& u, const Vector3<T>& v) {
     return !(u == v);
 }
 // whether u == v
-template <class T> inline bool operator==(const Vector3<T> &u, const Vector3<T> &v)
-{
-    if (u.x == v.x && u.y == v.y && u.z == v.z)
-    {
+template <class T>
+inline bool operator==(const Vector3<T>& u, const Vector3<T>& v) {
+    if (u.x == v.x && u.y == v.y && u.z == v.z) {
         return true;
     }
     return false;
@@ -448,8 +411,8 @@ template <class T> inline bool operator==(const Vector3<T> &u, const Vector3<T> 
  *
  * @param precision The number of decimal places to display (must be positive, default: 5)
  */
-template <class T> void Vector3<T>::print(const int precision) const
-{
+template <class T>
+void Vector3<T>::print(const int precision) const {
     // Ensure precision is non-negative
     int valid_precision = precision > 0 ? precision : 5;
     std::cout.precision(valid_precision);
@@ -467,8 +430,8 @@ template <class T> void Vector3<T>::print(const int precision) const
  * @param[in] u
  * @return std::ostream&
  */
-template <class T> static std::ostream &operator<<(std::ostream &os, const Vector3<T> &u)
-{
+template <class T>
+static std::ostream& operator<<(std::ostream& os, const Vector3<T>& u) {
     os << "(" << std::setw(10) << u.x << "," << std::setw(10) << u.y << "," << std::setw(10) << u.z << ")";
     return os;
 }

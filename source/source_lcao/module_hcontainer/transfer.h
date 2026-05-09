@@ -7,12 +7,10 @@
 #include "./hcontainer.h"
 
 #ifdef __MPI
-namespace hamilt
-{
+namespace hamilt {
 
 template <typename T>
-class HTransPara
-{
+class HTransPara {
   public:
     HTransPara(int n_processes, HContainer<T>* hr_in);
     ~HTransPara();
@@ -79,8 +77,7 @@ class HTransPara
 };
 
 template <typename T>
-class HTransSerial
-{
+class HTransSerial {
   public:
     HTransSerial(int n_processes, HContainer<T>* hr_in);
     ~HTransSerial();
@@ -152,30 +149,18 @@ template <typename T>
 struct MPITraits;
 
 template <>
-struct MPITraits<int>
-{
-    static MPI_Datatype datatype()
-    {
-        return MPI_INT;
-    }
+struct MPITraits<int> {
+    static MPI_Datatype datatype() { return MPI_INT; }
 };
 
 template <>
-struct MPITraits<double>
-{
-    static MPI_Datatype datatype()
-    {
-        return MPI_DOUBLE;
-    }
+struct MPITraits<double> {
+    static MPI_Datatype datatype() { return MPI_DOUBLE; }
 };
 
 template <>
-struct MPITraits<std::complex<double>>
-{
-    static MPI_Datatype datatype()
-    {
-        return MPI_DOUBLE_COMPLEX;
-    }
+struct MPITraits<std::complex<double>> {
+    static MPI_Datatype datatype() { return MPI_DOUBLE_COMPLEX; }
 };
 
 #endif // __MPI

@@ -22,82 +22,50 @@
 #include "mpi.h"
 #endif
 
-Parallel_Grid::Parallel_Grid()
-{
-}
-Parallel_Grid::~Parallel_Grid()
-{
-}
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Parallel_Grid::Parallel_Grid() {}
+Parallel_Grid::~Parallel_Grid() {}
+Charge::Charge() {}
+Charge::~Charge() {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 
-Symmetry_rho::Symmetry_rho()
-{
-}
-Symmetry_rho::~Symmetry_rho()
-{
-}
+Symmetry_rho::Symmetry_rho() {}
+Symmetry_rho::~Symmetry_rho() {}
 void Symmetry_rho::begin(const int& spin_now,
                          const Charge& CHR,
                          const ModulePW::PW_Basis* rho_basis,
-                         ModuleSymmetry::Symmetry& symm) const
-{
+                         ModuleSymmetry::Symmetry& symm) const {
     return;
 }
 
-void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot)
-{
-    if(PARAM.inp.kpar==1)
-	{
-		for(int ik = 0; ik < nks; ++ik)
-		{
-			ik2iktot[ik] = ik;
-		}
-    }
-    else if(PARAM.inp.kpar==2)
-    {
-        if(GlobalV::MY_POOL==0)
-		{
-			for(int ik = 0; ik < nks; ++ik)
-			{
-				ik2iktot[ik] = ik;
-			}
-		}
-		else if(GlobalV::MY_POOL==1)
-		{
-			for(int ik = 0; ik < nks; ++ik)
-			{
-				ik2iktot[ik] = ik+2; // only works for this test
-			}
-		}
+void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot) {
+    if (PARAM.inp.kpar == 1) {
+        for (int ik = 0; ik < nks; ++ik) {
+            ik2iktot[ik] = ik;
+        }
+    } else if (PARAM.inp.kpar == 2) {
+        if (GlobalV::MY_POOL == 0) {
+            for (int ik = 0; ik < nks; ++ik) {
+                ik2iktot[ik] = ik;
+            }
+        } else if (GlobalV::MY_POOL == 1) {
+            for (int ik = 0; ik < nks; ++ik) {
+                ik2iktot[ik] = ik + 2; // only works for this test
+            }
+        }
     }
 }
 
-namespace GlobalC
-{
-	Parallel_Grid Pgrid;
+namespace GlobalC {
+Parallel_Grid Pgrid;
 } // namespace GlobalC
 
 /**
@@ -106,8 +74,7 @@ namespace GlobalC
  *  - read_wf2rho_pw()
  */
 
-class ReadWfcRhoTest : public ::testing::Test
-{
+class ReadWfcRhoTest : public ::testing::Test {
   protected:
     ModulePW::PW_Basis_K* wfcpw = nullptr;
     ModulePW::PW_Basis* rhopw = nullptr;
@@ -115,24 +82,21 @@ class ReadWfcRhoTest : public ::testing::Test
     psi::Psi<std::complex<double>>* psi = nullptr;
     Charge chg;
     ModuleSymmetry::Symmetry symm;
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         wfcpw = new ModulePW::PW_Basis_K;
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
         // output .dat file
         PARAM.input.out_wfc_pw = 2;
     }
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         delete wfcpw;
         delete rhopw;
         delete kv;
     }
 };
 
-TEST_F(ReadWfcRhoTest, ReadWfcRho)
-{
+TEST_F(ReadWfcRhoTest, ReadWfcRho) {
     // kpar=1, if nproc=1
     // kpar=2, if nproc>1
     const int kpar = GlobalV::KPAR;
@@ -176,8 +140,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     // Initialize k points
     //-------------------------
     kv->kvec_c.clear();
-    for (int ik = 0; ik < nks; ++ik)
-    {
+    for (int ik = 0; ik < nks; ++ik) {
         kv->kvec_c.push_back(wfcpw->kvec_c[ik]);
     }
     kv->ngk = {wfcpw->npwk[0], wfcpw->npwk[1]};
@@ -188,8 +151,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     //----------------------------------------
     ModuleBase::matrix wg(nkstot, nbands);
     wg.fill_out(1.0);
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         // mohan update 2025-06-02
         std::ofstream ofs("eig.txt");
         ofs << " Electronic state energy (eV) and occupations" << std::endl;
@@ -198,21 +160,18 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
         ofs << std::setiosflags(std::ios::showpoint);
 
         const int is = 0; // nspin is 1
-        for (int ik = 0; ik < nkstot; ++ik)
-		{
-			ofs << " spin=" << is+1 << " k-point="
-				<< ik + 1 << "/" << nkstot
-				<< " Cartesian=" << kv->kvec_c[ik].x << " " << kv->kvec_c[ik].y
-				<< " " << kv->kvec_c[ik].z << " (" << kv->ngk[ik] << " plane wave)" << std::endl;
+        for (int ik = 0; ik < nkstot; ++ik) {
+            ofs << " spin=" << is + 1 << " k-point=" << ik + 1 << "/" << nkstot << " Cartesian=" << kv->kvec_c[ik].x
+                << " " << kv->kvec_c[ik].y << " " << kv->kvec_c[ik].z << " (" << kv->ngk[ik] << " plane wave)"
+                << std::endl;
 
             ofs << std::setprecision(16);
             ofs << std::setiosflags(std::ios::showpoint);
 
             double ekb = -1.23456; // energy
-            for (int ib = 0; ib < nbands; ib++)
-			{
-                ofs << " " << ib + 1 << " " << ekb  << " " << wg(ik,ib) << std::endl;
-			}
+            for (int ib = 0; ib < nbands; ib++) {
+                ofs << " " << ib + 1 << " " << ekb << " " << wg(ik, ib) << std::endl;
+            }
 
             ofs << std::endl;
         }
@@ -224,8 +183,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     //----------------------------------------
     psi = new psi::Psi<std::complex<double>>(nks, nbands, wfcpw->npwk_max, kv->ngk, true);
     std::complex<double>* ptr = psi->get_pointer();
-    for (int i = 0; i < nks * nbands * wfcpw->npwk_max; i++)
-    {
+    for (int i = 0; i < nks * nbands * wfcpw->npwk_max; i++) {
         ptr[i] = std::complex<double>((i + my_pool * 100) / 100.0, (i + my_pool) / 100.0);
     }
 
@@ -250,17 +208,14 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     std::vector<std::complex<double>> rho_tmp(rhopw->nrxx);
     chg_ref.nrxx = rhopw->nrxx;
 
-    for (int ik = 0; ik < nks; ++ik)
-    {
-        for (int ib = 0; ib < nbands; ++ib)
-        {
+    for (int ik = 0; ik < nks; ++ik) {
+        for (int ib = 0; ib < nbands; ++ib) {
             const std::complex<double>* wfc_ib = ptr + ik * nbands * wfcpw->npwk_max + ib * wfcpw->npwk_max;
             wfcpw->recip2real(wfc_ib, rho_tmp.data(), ik);
 
             const double w1 = wg(ik, ib) / wfcpw->omega;
 
-            for (int ir = 0; ir < rhopw->nrxx; ir++)
-            {
+            for (int ir = 0; ir < rhopw->nrxx; ir++) {
                 chg_ref.rho[0][ir] += w1 * std::norm(rho_tmp[ir]);
             }
         }
@@ -272,61 +227,78 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 #endif
 
     // for spin=1 or 2, npol=1
-    const int npol=1;
+    const int npol = 1;
 
     // Write the wave functions to file
-	const std::string out_dir = "./";
+    const std::string out_dir = "./";
 
     // Read the wave functions to charge density
     std::stringstream ss;
     ss << "running_log" << GlobalV::MY_RANK << ".txt";
-	std::ofstream running_log(ss.str().c_str());
+    std::ofstream running_log(ss.str().c_str());
 
     running_log << " rank=" << GlobalV::MY_RANK << std::endl;
 
-
     const double ecutwfc = 20; // this is a fake number
 
-
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
+    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
 
-	ModuleIO::write_wfc_pw(istep, iter,
-			kpar, my_pool, my_rank, nbands, nspin, npol,
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-			PARAM.input.out_wfc_pw, ecutwfc, out_dir, *psi, *kv, wfcpw,
-			running_log);
+    ModuleIO::write_wfc_pw(istep,
+                           iter,
+                           kpar,
+                           my_pool,
+                           my_rank,
+                           nbands,
+                           nspin,
+                           npol,
+                           GlobalV::RANK_IN_POOL,
+                           GlobalV::NPROC_IN_POOL,
+                           PARAM.input.out_wfc_pw,
+                           ecutwfc,
+                           out_dir,
+                           *psi,
+                           *kv,
+                           wfcpw,
+                           running_log);
 
-	ModuleIO::read_wf2rho_pw(wfcpw, symm, chg,
-			out_dir, kpar, my_pool, my_rank,
-			GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL,
-			nbands, nspin, npol,
-			nkstot, kv->ik2iktot, kv->isk, running_log);
+    ModuleIO::read_wf2rho_pw(wfcpw,
+                             symm,
+                             chg,
+                             out_dir,
+                             kpar,
+                             my_pool,
+                             my_rank,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::RANK_IN_POOL,
+                             nbands,
+                             nspin,
+                             npol,
+                             nkstot,
+                             kv->ik2iktot,
+                             kv->isk,
+                             running_log);
 
     // compare the charge density
-    for (int ir = 0; ir < rhopw->nrxx; ++ir)
-    {
+    for (int ir = 0; ir < rhopw->nrxx; ++ir) {
         EXPECT_NEAR(chg.rho[0][ir], chg_ref.rho[0][ir], 1e-8);
     }
 
-	if (GlobalV::NPROC == 1)
-	{
-		EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-	}
-	else if (GlobalV::NPROC == 4)
-	{
-		const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
-		EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
-		// for (int ip = 0; ip < GlobalV::NPROC; ++ip)
-		// {
-		//     if (GlobalV::MY_RANK == ip)
-		//     {
-		//         std::cout.precision(16);
-		//         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
-		//     }
-		//     MPI_Barrier(MPI_COMM_WORLD);
-		// }
-	}
+    if (GlobalV::NPROC == 1) {
+        EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
+    } else if (GlobalV::NPROC == 4) {
+        const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
+        EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
+        // for (int ip = 0; ip < GlobalV::NPROC; ++ip)
+        // {
+        //     if (GlobalV::MY_RANK == ip)
+        //     {
+        //         std::cout.precision(16);
+        //         std::cout << GlobalV::MY_RANK << " " << chg.rho[0][0] << std::endl;
+        //     }
+        //     MPI_Barrier(MPI_COMM_WORLD);
+        // }
+    }
 
     delete[] chg.rho;
     delete[] chg._space_rho;
@@ -334,25 +306,22 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     delete[] chg_ref._space_rho;
     delete psi;
 
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         remove("running_log0.txt");
         remove("eig.txt");
         remove("wfs1k1_pw.dat");
         remove("wfs1k2_pw.dat");
-        if (GlobalV::KPAR == 2)
-        {
+        if (GlobalV::KPAR == 2) {
             remove("wfs1k3_pw.dat");
-			remove("wfs1k4_pw.dat");
-			remove("running_log1.txt");
-			remove("running_log2.txt");
-			remove("running_log3.txt");
-		}
+            remove("wfs1k4_pw.dat");
+            remove("running_log1.txt");
+            remove("running_log2.txt");
+            remove("running_log3.txt");
+        }
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
 

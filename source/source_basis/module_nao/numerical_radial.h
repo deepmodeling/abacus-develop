@@ -36,7 +36,7 @@
  *     double dr = 0.01;
  *     double* grid = new double[sz];
  *     for (int ir = 0; ir != sz; ++ir) {
- *         grid[ir] = ir * dr; 
+ *         grid[ir] = ir * dr;
  *         f[ir] = std::exp(-grid[ir] * grid[ir]);
  *     }
  *     // grid does not necessarily have to be uniform; it just
@@ -61,9 +61,8 @@
  *     // k-space values are automatically computed above
  *
  */
-class NumericalRadial
-{
-public:
+class NumericalRadial {
+  public:
     NumericalRadial() = default;
     NumericalRadial(NumericalRadial const&); ///< Deep-copy grid & values
 
@@ -98,8 +97,7 @@ public:
                const int izeta = 0,
                const std::string symbol = "",
                const int itype = 0,
-               const bool init_sbt = true
-    );
+               const bool init_sbt = true);
 
     /**
      * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
@@ -109,13 +107,13 @@ public:
      * use the k grid of NumericalRadial (which is FFT-compliant with r grid) to initialize
      * the k grid of Numerical_Orbital_Lm.
      */
-    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
+    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm,
                                  const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
                                  const double lcao_dk = 0.01) const;
 
-    /** 
+    /**
      * @brief Sets a SphericalBesselTransformer.
-     * 
+     *
      * By default the class uses an internal SphericalBesselTransformer, but one can optionally
      * use a shared one. This could be beneficial when there are a lot of NumericalRadial objects
      * whose grids have the same size.
@@ -182,10 +180,7 @@ public:
      *
      * @note This function does not check the index bound; use with care!
      */
-    void set_value(const bool for_r_space,
-                   const double* const value,
-                   const int p
-    );
+    void set_value(const bool for_r_space, const double* const value, const int p);
 
     /// Removes the grid & values in r or k space.
     void wipe(const bool r_space = true, const bool k_space = true);
@@ -268,10 +263,10 @@ public:
     int l() const { return l_; }
     int nr() const { return nr_; } // paired with rmax(), not rcut!
     int nk() const { return nk_; }
-    double rcut() const { return rgrid_[std::min(ircut_, nr_-1)]; } ///< padded zeros ignored
-    double kcut() const { return kgrid_[std::min(ikcut_, nk_-1)]; }
-    double rmax() const { return rgrid_[nr_-1]; } ///< padded zeros considered
-    double kmax() const { return kgrid_[nk_-1]; }
+    double rcut() const { return rgrid_[std::min(ircut_, nr_ - 1)]; } ///< padded zeros ignored
+    double kcut() const { return kgrid_[std::min(ikcut_, nk_ - 1)]; }
+    double rmax() const { return rgrid_[nr_ - 1]; } ///< padded zeros considered
+    double kmax() const { return kgrid_[nk_ - 1]; }
     const double* rgrid() const { return rgrid_; }
     const double* kgrid() const { return kgrid_; }
     const double* rvalue() const { return rvalue_; }
@@ -287,17 +282,17 @@ public:
     double kvalue(int ik) const { return kvalue_[ik]; }
     ///@}
 
-private:
-    std::string symbol_ = "";   ///< chemical symbol
-    int itype_ = 0;             ///< element index in calculation
-    int l_ = -1;                ///< angular momentum
-    int izeta_ = 0;             ///< further index for NumericalRadial objects with the same itype_and l_
+  private:
+    std::string symbol_ = ""; ///< chemical symbol
+    int itype_ = 0;           ///< element index in calculation
+    int l_ = -1;              ///< angular momentum
+    int izeta_ = 0;           ///< further index for NumericalRadial objects with the same itype_and l_
 
-    int nr_ = 0;                ///< number of r-space grid points
-    int nk_ = 0;                ///< number of k-space grid points
+    int nr_ = 0; ///< number of r-space grid points
+    int nk_ = 0; ///< number of k-space grid points
 
-    double* rgrid_ = nullptr;   ///< r-space grid
-    double* kgrid_ = nullptr;   ///< k-space grid
+    double* rgrid_ = nullptr; ///< r-space grid
+    double* kgrid_ = nullptr; ///< k-space grid
 
     /**
      * @brief Index of the first trailing zero.
@@ -307,7 +302,7 @@ private:
      * variables keep track of the actual cutoff radius. Specifically,
      * if there are no trailing zeros in rvalues_, then ircut_ = nr_;
      * if there are trailing zeros, then ircut_ is the index of the first
-     * trailing zero. For example, 
+     * trailing zero. For example,
      * rvalues_ = {1, 2, 3, 0, 0, 0} -> ircut_ = 3
      * rvalues_ = {1, 2, 3, 4, 5, 6} -> ircut_ = 6
      * rvalues_ = {0, 0, 0, 0, 0, 0} -> ircut_ = 0
@@ -315,8 +310,8 @@ private:
     int ircut_ = 0;
     int ikcut_ = 0;
 
-    double* rvalue_ = nullptr;  ///< r-space value
-    double* kvalue_ = nullptr;  ///< k-space value
+    double* rvalue_ = nullptr; ///< r-space value
+    double* kvalue_ = nullptr; ///< k-space value
 
     /**
      * @brief A flag that tells whether the r & k grids are FFT-compliant.
@@ -395,8 +390,7 @@ private:
                                  const double* const rgrid,
                                  const int nk,
                                  const double* const kgrid,
-                                 const double tol = 1e-15
-                                 );
+                                 const double tol = 1e-15);
 };
 
 #endif

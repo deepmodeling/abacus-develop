@@ -38,8 +38,7 @@
 #include "source_cell/klist.h"
 
 template <typename T>
-class SpinConstrainTest : public testing::Test
-{
+class SpinConstrainTest : public testing::Test {
   protected:
     spinconstrain::SpinConstrain<T>& sc = spinconstrain::SpinConstrain<T>::getScInstance();
 };
@@ -47,38 +46,28 @@ class SpinConstrainTest : public testing::Test
 using MyTypes = ::testing::Types<double, std::complex<double>>;
 TYPED_TEST_SUITE(SpinConstrainTest, MyTypes);
 
-TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
-{
+TYPED_TEST(SpinConstrainTest, CheckAtomCounts) {
     // Warning 1: atomCounts is not set
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("atomCounts is not set"));
     // Warning 2: nat < 0
-    std::map<int, int> atomCounts = {
-        {0, -1},
-        {1, 0 }
-    };
+    std::map<int, int> atomCounts = {{0, -1}, {1, 0}};
     this->sc.set_atomCounts(atomCounts);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nat <= 0"));
     // Warning 3: itype out of range
-    std::map<int, int> atomCounts1 = {
-        {1, 1},
-        {2, 2}
-    };
+    std::map<int, int> atomCounts1 = {{1, 1}, {2, 2}};
     this->sc.set_atomCounts(atomCounts1);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("itype out of range [0, ntype)"));
     // Warning 4: number of atoms <= 0 for some element
-    std::map<int, int> atomCounts2 = {
-        {0, 2 },
-        {1, -1}
-    };
+    std::map<int, int> atomCounts2 = {{0, 2}, {1, -1}};
     this->sc.set_atomCounts(atomCounts2);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
@@ -86,12 +75,8 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     EXPECT_THAT(output, testing::HasSubstr("number of atoms <= 0 for some element"));
 }
 
-TYPED_TEST(SpinConstrainTest, AtomCounts)
-{
-    std::map<int, int> atomCounts = {
-        {0, 5 },
-        {1, 10}
-    };
+TYPED_TEST(SpinConstrainTest, AtomCounts) {
+    std::map<int, int> atomCounts = {{0, 5}, {1, 10}};
     this->sc.set_atomCounts(atomCounts);
     std::map<int, int> atomCounts2 = this->sc.get_atomCounts();
     int ntype = atomCounts2.size();
@@ -111,23 +96,20 @@ TYPED_TEST(SpinConstrainTest, AtomCounts)
     EXPECT_THAT(output, testing::HasSubstr("atom index out of range [0, nat)"));
 }
 
-TYPED_TEST(SpinConstrainTest, NSPIN)
-{
+TYPED_TEST(SpinConstrainTest, NSPIN) {
     this->sc.set_nspin(4);
     int nspin = this->sc.get_nspin();
     EXPECT_EQ(nspin, 4);
 }
 
-TYPED_TEST(SpinConstrainTest, NSPINwarning)
-{
+TYPED_TEST(SpinConstrainTest, NSPINwarning) {
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->sc.set_nspin(1), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nspin must be 2 or 4"));
 }
 
-TYPED_TEST(SpinConstrainTest, SetInputParameters)
-{
+TYPED_TEST(SpinConstrainTest, SetInputParameters) {
     double sc_thr = 1e-6;
     int nsc = 100;
     int nsc_min = 2;
@@ -143,8 +125,7 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
     EXPECT_EQ(this->sc.get_sc_drop_thr(), sc_drop_thr);
 }
 
-TYPED_TEST(SpinConstrainTest, SetSolverParameters)
-{
+TYPED_TEST(SpinConstrainTest, SetSolverParameters) {
     K_Vectors kv;
     this->sc.set_nspin(4);
     this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr);
@@ -154,8 +135,7 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
     EXPECT_EQ(this->sc.pelec, nullptr);
 }
 
-TYPED_TEST(SpinConstrainTest, SetParaV)
-{
+TYPED_TEST(SpinConstrainTest, SetParaV) {
     Parallel_Orbitals paraV;
     // warning 1
     paraV.nloc = 0;
@@ -181,7 +161,7 @@ TYPED_TEST(SpinConstrainTest, PrintMi)
     this->sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000         0.0000000000         0.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000         0.0000000000 0.0000000000"));
     this->sc.set_nspin(2);
      testing::internal::CaptureStdout();
     this->sc.print_Mi(true);

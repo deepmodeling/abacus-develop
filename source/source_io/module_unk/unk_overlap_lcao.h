@@ -19,8 +19,7 @@
 #include <set>
 #include <vector>
 
-class unkOverlap_lcao
-{
+class unkOverlap_lcao {
   public:
     ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     ORB_gaunt_table MGT;
@@ -29,10 +28,10 @@ class unkOverlap_lcao
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> orb1_orb2_R;
     std::vector<std::vector<std::vector<double>>> psi_psi;
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> psi_r_psi;
-    bool allocate_flag;                      // translate: Used to initialize the array
-    int** cal_tag=nullptr;                           // Used for parallel scheme
+    bool allocate_flag;      // translate: Used to initialize the array
+    int** cal_tag = nullptr; // Used for parallel scheme
 
-    int kpoints_number=0;
+    int kpoints_number = 0;
 
     std::vector<double> rcut_orb_; // real space cutoffs of LCAO orbitals' radial functions
 

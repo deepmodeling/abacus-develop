@@ -2,16 +2,14 @@
 #include <complex>
 #include <mpi.h>
 
-static inline int globalIndex(int localIndex, int nblk, int nprocs, int myproc)
-{
+static inline int globalIndex(int localIndex, int nblk, int nprocs, int myproc) {
     int iblock, gIndex;
     iblock = localIndex / nblk;
     gIndex = (iblock * nprocs + myproc) * nblk + localIndex % nblk;
     return gIndex;
 }
 
-static inline int localIndex(int globalIndex, int nblk, int nprocs, int& lcoalProc)
-{
+static inline int localIndex(int globalIndex, int nblk, int nprocs, int& lcoalProc) {
     lcoalProc = int((globalIndex % (nblk * nprocs)) / nblk);
     return int(globalIndex / (nblk * nprocs)) * nblk + globalIndex % nblk;
 }

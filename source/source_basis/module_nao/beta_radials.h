@@ -20,8 +20,7 @@
  *      O_beta.build(orb_file, element_index, ofs_log, GlobalV::MY_RANK);
  *
  *                                                                          */
-class BetaRadials : public RadialSet
-{
+class BetaRadials : public RadialSet {
   public:
     BetaRadials() {}
     BetaRadials(const BetaRadials& other) : RadialSet(other) {} //!< deep copy
@@ -32,9 +31,7 @@ class BetaRadials : public RadialSet
     ~BetaRadials() {}
 
     /// Build the class from a Numerical_Nonlocal object
-    void build(const Numerical_Nonlocal& nl,
-               const int itype = 0,
-               std::ofstream* const ptr_log = nullptr);
+    void build(const Numerical_Nonlocal& nl, const int itype = 0, std::ofstream* const ptr_log = nullptr);
 
     /*
     void build(const std::string& file,          //!< pseudopotential file name

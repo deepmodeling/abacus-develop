@@ -12,17 +12,16 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 rm INPUT
 
 if [[ ! -f scf.output ]] ||
-   [[ ! -f get_wf.output ]] || 
-   [[ ! -f OUT.ABACUS/running_scf.log ]] ||
-   [[ ! -f OUT.ABACUS/running_get_wf.log ]] ||
-   [[ ! -f OUT.ABACUS/wfs1k1_nao.txt ]] ||
-   [[ ! -f OUT.ABACUS/wfs1k36_nao.txt ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_get_wf.log)" == " Total  Time  :"* ) ]] 
-then
-	echo "job failed!"
-	exit 1
+  [[ ! -f get_wf.output ]] ||
+  [[ ! -f OUT.ABACUS/running_scf.log ]] ||
+  [[ ! -f OUT.ABACUS/running_get_wf.log ]] ||
+  [[ ! -f OUT.ABACUS/wfs1k1_nao.txt ]] ||
+  [[ ! -f OUT.ABACUS/wfs1k36_nao.txt ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"*) ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_get_wf.log)" == " Total  Time  :"*) ]]; then
+  echo "job failed!"
+  exit 1
 else
-	echo "job succeeded!"
-	exit 0
+  echo "job succeeded!"
+  exit 0
 fi

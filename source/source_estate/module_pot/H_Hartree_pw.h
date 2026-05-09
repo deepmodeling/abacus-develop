@@ -6,11 +6,9 @@
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
-class H_Hartree_pw
-{
+class H_Hartree_pw {
   public:
     H_Hartree_pw();
     ~H_Hartree_pw();
@@ -19,18 +17,16 @@ class H_Hartree_pw
     static double hartree_energy;
 
     // compute the Hartree energy
-    static ModuleBase::matrix v_hartree(const UnitCell &cell,
-                                        ModulePW::PW_Basis *rho_basis,
-                                        const int &nspin,
-                                        const double *const *const rho);
+    static ModuleBase::matrix
+    v_hartree(const UnitCell& cell, ModulePW::PW_Basis* rho_basis, const int& nspin, const double* const* const rho);
 
     static int get_Z(std::string str);
 
-    static void cast_C2R(std::complex<double> *src, double *dst, int dim);
+    static void cast_C2R(std::complex<double>* src, double* dst, int dim);
 
-    static void lapl_rho(const std::complex<double> *rhog, double *lapn);
+    static void lapl_rho(const std::complex<double>* rhog, double* lapn);
 
-    static void shape_gradn(const std::complex<double> *PS_TOTN, ModulePW::PW_Basis *rho_basis, double *eprime);
+    static void shape_gradn(const std::complex<double>* PS_TOTN, ModulePW::PW_Basis* rho_basis, double* eprime);
 
     static void eps_pot(const std::complex<double>* PS_TOTN,
                         const std::complex<double>* phi,
@@ -38,11 +34,11 @@ class H_Hartree_pw
                         double* d_eps,
                         double* vwork);
 
-    static void test_res(const UnitCell &ucell,
-                         ModulePW::PW_Basis *rho_basis,
-                         const std::complex<double> *tot_N,
-                         std::complex<double> *phi,
-                         double *d_eps);
+    static void test_res(const UnitCell& ucell,
+                         ModulePW::PW_Basis* rho_basis,
+                         const std::complex<double>* tot_N,
+                         std::complex<double>* phi,
+                         double* d_eps);
 
   private:
 };
@@ -50,15 +46,13 @@ class H_Hartree_pw
 } // namespace elecstate
 
 #include "pot_base.h"
-namespace elecstate
-{
+namespace elecstate {
 // new interface for elecstate::Potential
-class PotHartree : public PotBase
-{
+class PotHartree : public PotBase {
   public:
     PotHartree(const ModulePW::PW_Basis* rho_basis_in);
 
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff);
+    void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff);
 };
 
 } // namespace elecstate

@@ -12,8 +12,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               ModuleSymmetry::Symmetry* p_symm,
                               const pseudopot_cell_vl& locpp,
                               Structure_Factor* p_sf,
-                              K_Vectors* p_kv)
-{
+                              K_Vectors* p_kv) {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
 
@@ -44,10 +43,8 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     ModuleBase::matrix sigmavdw;
     sigmavdw.create(3, 3);
 
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
             sigmatot(i, j) = 0.0;
             sigmaxc(i, j) = 0.0;
             sigmahar(i, j) = 0.0;
@@ -62,20 +59,19 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // hartree contribution
-    stress_har(ucell,sigmahar, this->rhopw, true, pelec->charge);
+    stress_har(ucell, sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(ucell,sigmaewa, this->rhopw, true);
+    stress_ewa(ucell, sigmaewa, this->rhopw, true);
 
     // xc contribution: add gradient corrections(non diagonal)
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge);
+    stress_gga(ucell, sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
+    stress_loc(ucell, sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
     stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
@@ -83,18 +79,15 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     // vdw term
     stress_vdw(sigmavdw, ucell);
 
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
-        for (int jpol = 0; jpol < 3; jpol++)
-        {
-            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
-                                   + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol);
+    for (int ipol = 0; ipol < 3; ipol++) {
+        for (int jpol = 0; jpol < 3; jpol++) {
+            sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol) +
+                                   sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol) +
+                                   sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol);
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
+    if (ModuleSymmetry::Symmetry::symm_flag == 1) {
         p_symm->symmetrize_mat3(sigmatot, ucell.lat);
     }
 
@@ -102,8 +95,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     const bool screen = PARAM.inp.test_stress;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry, GlobalV::ofs_running);
 
-    if (screen)
-    {
+    if (screen) {
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
@@ -120,11 +112,9 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     return;
 }
 
-void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
-{
+void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell) {
     auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
-    {
+    if (vdw_solver != nullptr) {
         sigma = vdw_solver->get_stress().to_matrix();
     }
     return;

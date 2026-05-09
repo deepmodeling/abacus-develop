@@ -12,8 +12,7 @@
 #include "RI/global/Tensor.h" // for RI::Tensor
 #endif
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 void output_dHR(const int& istep,
                 const ModuleBase::matrix& v_eff,
                 const UnitCell& ucell,
@@ -57,16 +56,10 @@ void output_SR(Parallel_Orbitals& pv,
                const double& sparse_threshold = 1e-10);
 
 /// Generate filename for HR/SR CSR output.
-std::string hsr_gen_fname(const std::string& prefix,
-                          const int ispin,
-                          const bool append,
-                          const int istep);
+std::string hsr_gen_fname(const std::string& prefix, const int ispin, const bool append, const int istep);
 
 /// Generate filename for derivative matrices (dH/dR, dS/dR).
-std::string dhr_gen_fname(const std::string& prefix,
-                          const int ispin,
-                          const bool append,
-                          const int istep);
+std::string dhr_gen_fname(const std::string& prefix, const int ispin, const bool append, const int istep);
 
 /// Write a single HContainer to CSR file with header.
 template <typename TR>

@@ -1,24 +1,23 @@
 #ifndef SETUP_PWWFC_H
 #define SETUP_PWWFC_H
 
-#include "source_cell/unitcell.h" // cell information
-#include "source_cell/klist.h" // k-points
-#include "source_basis/module_pw/pw_basis.h" // pw_rho
-#include "source_basis/module_pw/pw_basis_k.h" // pw_wfc 
+#include "source_cell/unitcell.h"              // cell information
+#include "source_cell/klist.h"                 // k-points
+#include "source_basis/module_pw/pw_basis.h"   // pw_rho
+#include "source_basis/module_pw/pw_basis_k.h" // pw_wfc
 
 struct Input_para;
 
-namespace pw
-{
+namespace pw {
 
-void teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc);
+void teardown_pwwfc(ModulePW::PW_Basis_K*& pw_wfc);
 
 void setup_pwwfc(const Input_para& inp,
-		const UnitCell& ucell, 
-		const ModulePW::PW_Basis& pw_rho,
-		K_Vectors& kv,
-		ModulePW::PW_Basis_K* &pw_wfc);
+                 const UnitCell& ucell,
+                 const ModulePW::PW_Basis& pw_rho,
+                 K_Vectors& kv,
+                 ModulePW::PW_Basis_K*& pw_wfc);
 
-}
+} // namespace pw
 
 #endif

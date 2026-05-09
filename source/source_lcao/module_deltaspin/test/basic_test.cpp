@@ -18,16 +18,15 @@
  *      result[i] = array_1[i] - array_2[i];
  *  - fill_scalar_2d(): fill an array of Vector3 with a scalar
  *  - where_fill_scalar_2d(): fill an array of Vector3 with a scalar if the corresponding element is equal to mask
- *  - where_fill_scalar_else_2d(): fill an array of Vector3 with a scalar if the corresponding element is equal to mask, other places are filled with another array of Vector3 "rest"
+ *  - where_fill_scalar_else_2d(): fill an array of Vector3 with a scalar if the corresponding element is equal to mask,
+ * other places are filled with another array of Vector3 "rest"
  * - print_2d(): print an array of Vector3
  */
 
-class BasicFuncsTest : public testing::Test
-{
+class BasicFuncsTest : public testing::Test {
   protected:
     std::vector<ModuleBase::Vector3<double>> array;
-    void SetUp()
-    {
+    void SetUp() {
         array.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
         array.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
         array.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
@@ -35,26 +34,18 @@ class BasicFuncsTest : public testing::Test
     std::string output;
 };
 
-TEST_F(BasicFuncsTest, MaxvalAbs2d)
-{
-    EXPECT_DOUBLE_EQ(maxval_abs_2d(array), 9.0);
-}
+TEST_F(BasicFuncsTest, MaxvalAbs2d) { EXPECT_DOUBLE_EQ(maxval_abs_2d(array), 9.0); }
 
-TEST_F(BasicFuncsTest, MaxlocAbs2d)
-{
-    std::pair<int,int> maxloc;
+TEST_F(BasicFuncsTest, MaxlocAbs2d) {
+    std::pair<int, int> maxloc;
     maxloc = maxloc_abs_2d(array);
     EXPECT_EQ(maxloc.first, 2);
     EXPECT_EQ(maxloc.second, 2);
 }
 
-TEST_F(BasicFuncsTest, Sum2dDoubleArray)
-{
-    EXPECT_DOUBLE_EQ(sum_2d(array), 45.0);
-}
+TEST_F(BasicFuncsTest, Sum2dDoubleArray) { EXPECT_DOUBLE_EQ(sum_2d(array), 45.0); }
 
-TEST_F(BasicFuncsTest, Sum2dIntArray)
-{
+TEST_F(BasicFuncsTest, Sum2dIntArray) {
     std::vector<ModuleBase::Vector3<int>> arrayInt;
     arrayInt.push_back(ModuleBase::Vector3<int>(1, 2, 3));
     arrayInt.push_back(ModuleBase::Vector3<int>(4, 5, 6));
@@ -65,8 +56,7 @@ TEST_F(BasicFuncsTest, Sum2dIntArray)
     EXPECT_DOUBLE_EQ(sum2, 45.0);
 }
 
-TEST_F(BasicFuncsTest, ScalarMul2d)
-{
+TEST_F(BasicFuncsTest, ScalarMul2d) {
     std::vector<ModuleBase::Vector3<double>> result;
     scalar_multiply_2d(array, 2.0, result);
     EXPECT_DOUBLE_EQ(result[0][0], 2.0);
@@ -80,8 +70,7 @@ TEST_F(BasicFuncsTest, ScalarMul2d)
     EXPECT_DOUBLE_EQ(result[2][2], 18.0);
 }
 
-TEST_F(BasicFuncsTest, AddScalarMul2d)
-{
+TEST_F(BasicFuncsTest, AddScalarMul2d) {
     std::vector<ModuleBase::Vector3<double>> array_2, result;
     array_2.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
     array_2.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
@@ -98,8 +87,7 @@ TEST_F(BasicFuncsTest, AddScalarMul2d)
     EXPECT_DOUBLE_EQ(result[2][2], 27.0);
 }
 
-TEST_F(BasicFuncsTest, Subtract2d)
-{
+TEST_F(BasicFuncsTest, Subtract2d) {
     std::vector<ModuleBase::Vector3<double>> array_2, result;
     array_2.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
     array_2.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
@@ -116,8 +104,7 @@ TEST_F(BasicFuncsTest, Subtract2d)
     EXPECT_DOUBLE_EQ(result[2][2], 0.0);
 }
 
-TEST_F(BasicFuncsTest, FillScalar2d)
-{
+TEST_F(BasicFuncsTest, FillScalar2d) {
     std::vector<ModuleBase::Vector3<double>> result;
     result.resize(3);
     fill_scalar_2d(2.0, result);
@@ -132,12 +119,11 @@ TEST_F(BasicFuncsTest, FillScalar2d)
     EXPECT_DOUBLE_EQ(result[2][2], 2.0);
 }
 
-TEST_F(BasicFuncsTest, WhereFillScalar2d)
-{
+TEST_F(BasicFuncsTest, WhereFillScalar2d) {
     std::vector<ModuleBase::Vector3<int>> array_mask;
-    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
-    array_mask.push_back(ModuleBase::Vector3<int>(0,1,0));
-    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
+    array_mask.push_back(ModuleBase::Vector3<int>(1, 0, 1));
+    array_mask.push_back(ModuleBase::Vector3<int>(0, 1, 0));
+    array_mask.push_back(ModuleBase::Vector3<int>(1, 0, 1));
     std::vector<ModuleBase::Vector3<double>> result;
     where_fill_scalar_2d(array_mask, 1, 2.0, result);
     EXPECT_DOUBLE_EQ(result[0][0], 2.0);
@@ -151,12 +137,11 @@ TEST_F(BasicFuncsTest, WhereFillScalar2d)
     EXPECT_DOUBLE_EQ(result[2][2], 2.0);
 }
 
-TEST_F(BasicFuncsTest, WhereFillScalarElse2d)
-{
+TEST_F(BasicFuncsTest, WhereFillScalarElse2d) {
     std::vector<ModuleBase::Vector3<int>> array_mask;
-    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
-    array_mask.push_back(ModuleBase::Vector3<int>(0,1,0));
-    array_mask.push_back(ModuleBase::Vector3<int>(1,0,1));
+    array_mask.push_back(ModuleBase::Vector3<int>(1, 0, 1));
+    array_mask.push_back(ModuleBase::Vector3<int>(0, 1, 0));
+    array_mask.push_back(ModuleBase::Vector3<int>(1, 0, 1));
     std::vector<ModuleBase::Vector3<double>> result;
     std::vector<ModuleBase::Vector3<double>> rest;
     rest.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
@@ -174,21 +159,23 @@ TEST_F(BasicFuncsTest, WhereFillScalarElse2d)
     EXPECT_DOUBLE_EQ(result[2][2], 2.0);
 }
 
-TEST_F(BasicFuncsTest, Prin2d)
-{
+TEST_F(BasicFuncsTest, Prin2d) {
     std::string info = "initial spin";
     testing::internal::CaptureStdout();
     print_2d(info, array, 4);
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("initial spin"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      2         4.0000000000         5.0000000000         6.0000000000"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      3         7.0000000000         8.0000000000         9.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("initial spin"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("ATOM      2         4.0000000000         5.0000000000         6.0000000000"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("ATOM      3         7.0000000000         8.0000000000         9.0000000000"));
     testing::internal::CaptureStdout();
     print_2d(info, array, 2);
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("initial spin"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      1         3.0000000000"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      2         6.0000000000"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM      3         9.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("initial spin"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         3.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      2         6.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      3         9.0000000000"));
 }

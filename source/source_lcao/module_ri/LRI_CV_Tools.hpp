@@ -17,8 +17,7 @@
 template <typename Tdata>
 RI::Tensor<Tdata> LRI_CV_Tools::cal_I(const RI::Tensor<Tdata>& m,
                                       const typename Inverse_Matrix<Tdata>::Method method,
-                                      const double& threshold_condition_number)
-{
+                                      const double& threshold_condition_number) {
     Inverse_Matrix<Tdata> I;
     I.input(m);
     I.cal_inverse(method, threshold_condition_number);
@@ -28,8 +27,7 @@ RI::Tensor<Tdata> LRI_CV_Tools::cal_I(const RI::Tensor<Tdata>& m,
 template <typename Tdata>
 std::vector<std::vector<RI::Tensor<Tdata>>> LRI_CV_Tools::cal_I(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms,
                                                                 const typename Inverse_Matrix<Tdata>::Method method,
-                                                                const double& threshold_condition_number)
-{
+                                                                const double& threshold_condition_number) {
     Inverse_Matrix<Tdata> I;
     I.input(ms);
     I.cal_inverse(method, threshold_condition_number);
@@ -42,11 +40,8 @@ RI::Tensor<Tdata> LRI_CV_Tools::transform_Rm(const RI::Tensor<Tdata>& V) {
 }
 
 template <typename Tdata>
-std::array<RI::Tensor<Tdata>, 3>
-    LRI_CV_Tools::transform_Rm(const std::array<RI::Tensor<Tdata>, 3>& dV) {
-    return std::array<RI::Tensor<Tdata>, 3>{-dV[0].transpose(),
-                                            -dV[1].transpose(),
-                                            -dV[2].transpose()};
+std::array<RI::Tensor<Tdata>, 3> LRI_CV_Tools::transform_Rm(const std::array<RI::Tensor<Tdata>, 3>& dV) {
+    return std::array<RI::Tensor<Tdata>, 3>{-dV[0].transpose(), -dV[1].transpose(), -dV[2].transpose()};
 }
 
 template <typename Tdata>
@@ -63,10 +58,8 @@ bool LRI_CV_Tools::exist(const std::array<T, N>& dV) {
 }
 
 template <typename Tdata>
-RI::Tensor<Tdata> LRI_CV_Tools::mul1(const RI::Tensor<Tdata>& t1,
-                                     const RI::Tensor<Tdata>& t2) {
-    const size_t sa0 = t1.shape[0], sa1 = t2.shape[0], sl0 = t2.shape[1],
-                 sl1 = t2.shape[2];
+RI::Tensor<Tdata> LRI_CV_Tools::mul1(const RI::Tensor<Tdata>& t1, const RI::Tensor<Tdata>& t2) {
+    const size_t sa0 = t1.shape[0], sa1 = t2.shape[0], sl0 = t2.shape[1], sl1 = t2.shape[2];
     return (t1 * t2.reshape({sa1, sl0 * sl1})).reshape({sa0, sl0, sl1});
 }
 template <typename T>
@@ -85,16 +78,12 @@ std::array<T,3> LRI_CV_Tools::mul1(
 */
 
 template <typename Tdata>
-std::vector<RI::Tensor<Tdata>>
-    LRI_CV_Tools::mul2(const std::vector<std::vector<RI::Tensor<Tdata>>>& mat,
-                       const std::vector<RI::Tensor<Tdata>>& vec) {
-    const size_t sa0 = vec[0].shape[0], sa1 = vec[1].shape[0],
-                 sl0 = vec[0].shape[1], sl1 = vec[0].shape[2];
-    const RI::Tensor<Tdata> vec0 = vec[0].reshape({sa0, sl0 * sl1}),
-                            vec1 = vec[1].reshape({sa1, sl0 * sl1});
-    return std::vector<RI::Tensor<Tdata>>{
-        (mat[0][0] * vec0 + mat[0][1] * vec1).reshape({sa0, sl0, sl1}),
-        (mat[1][0] * vec0 + mat[1][1] * vec1).reshape({sa1, sl0, sl1})};
+std::vector<RI::Tensor<Tdata>> LRI_CV_Tools::mul2(const std::vector<std::vector<RI::Tensor<Tdata>>>& mat,
+                                                  const std::vector<RI::Tensor<Tdata>>& vec) {
+    const size_t sa0 = vec[0].shape[0], sa1 = vec[1].shape[0], sl0 = vec[0].shape[1], sl1 = vec[0].shape[2];
+    const RI::Tensor<Tdata> vec0 = vec[0].reshape({sa0, sl0 * sl1}), vec1 = vec[1].reshape({sa1, sl0 * sl1});
+    return std::vector<RI::Tensor<Tdata>>{(mat[0][0] * vec0 + mat[0][1] * vec1).reshape({sa0, sl0, sl1}),
+                                          (mat[1][0] * vec0 + mat[1][1] * vec1).reshape({sa1, sl0, sl1})};
 }
 /*
 template<typename T1, typename T2>
@@ -107,8 +96,7 @@ std::array<T2,3> LRI_CV_Tools::mul2(
 }
 */
 template <typename T1, typename T2>
-std::array<T2, 3> LRI_CV_Tools::mul2(const T1& t1,
-                                     const std::array<T2, 3>& t2) {
+std::array<T2, 3> LRI_CV_Tools::mul2(const T1& t1, const std::array<T2, 3>& t2) {
     return std::array<T2, 3>{mul2(t1, t2[0]), mul2(t1, t2[1]), mul2(t1, t2[2])};
 }
 
@@ -118,9 +106,8 @@ RI::Tensor<T> LRI_CV_Tools::mul2(const T& t1, const RI::Tensor<T>& t2) {
 }
 
 template <typename T, typename TkeyA, typename TkeyB, typename Tvalue>
-std::map<TkeyA, std::map<TkeyB, Tvalue>>
-    LRI_CV_Tools::mul2(const T& t1,
-                       const std::map<TkeyA, std::map<TkeyB, Tvalue>>& t2) {
+std::map<TkeyA, std::map<TkeyB, Tvalue>> LRI_CV_Tools::mul2(const T& t1,
+                                                            const std::map<TkeyA, std::map<TkeyB, Tvalue>>& t2) {
     std::map<TkeyA, std::map<TkeyB, Tvalue>> res;
     for (const auto& outerPair: t2) {
         const TkeyA keyA = outerPair.first;
@@ -161,9 +148,8 @@ std::vector<T> &v2)
 }
 */
 template <typename T, std::size_t N>
-std::vector<std::array<T, N>>
-    LRI_CV_Tools::minus(const std::vector<std::array<T, N>>& v1,
-                        const std::vector<std::array<T, N>>& v2) {
+std::vector<std::array<T, N>> LRI_CV_Tools::minus(const std::vector<std::array<T, N>>& v1,
+                                                  const std::vector<std::array<T, N>>& v2) {
     assert(v1.size() == v2.size());
     std::vector<std::array<T, N>> v(v1.size());
     for (std::size_t i = 0; i < v.size(); ++i)
@@ -173,21 +159,19 @@ std::vector<std::array<T, N>>
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> LRI_CV_Tools::minus(
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2) {
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v1_order
-        = change_order(std::move(v1));
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v2_order
-        = change_order(std::move(v2));
+std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
+LRI_CV_Tools::minus(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
+                    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2) {
+    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v1_order = change_order(std::move(v1));
+    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v2_order = change_order(std::move(v2));
     auto dv = minus(v1_order, v2_order);
     return change_order(std::move(dv));
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> LRI_CV_Tools::minus(
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2) {
+std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
+LRI_CV_Tools::minus(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
+                    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2) {
     std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> dv;
     for (size_t i = 0; i != N; ++i)
         dv[i] = minus(v1[i], v2[i]);
@@ -195,9 +179,8 @@ std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> LRI_CV_Tools::minus(
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue>
-std::map<TkeyA, std::map<TkeyB, Tvalue>>
-    LRI_CV_Tools::minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
-                        std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
+std::map<TkeyA, std::map<TkeyB, Tvalue>> LRI_CV_Tools::minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
+                                                             std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
     assert(v1.size() == v2.size());
     using namespace RI::Map_Operator;
     using namespace RI::Array_Operator;
@@ -218,9 +201,8 @@ std::map<TkeyA, std::map<TkeyB, Tvalue>>
 }
 
 template <typename T, std::size_t N>
-std::vector<std::array<T, N>>
-    LRI_CV_Tools::add(const std::vector<std::array<T, N>>& v1,
-                        const std::vector<std::array<T, N>>& v2) {
+std::vector<std::array<T, N>> LRI_CV_Tools::add(const std::vector<std::array<T, N>>& v1,
+                                                const std::vector<std::array<T, N>>& v2) {
     assert(v1.size() == v2.size());
     std::vector<std::array<T, N>> v(v1.size());
     for (std::size_t i = 0; i < v.size(); ++i)
@@ -230,21 +212,19 @@ std::vector<std::array<T, N>>
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> LRI_CV_Tools::add(
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
-    std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2) {
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v1_order
-        = change_order(std::move(v1));
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v2_order
-        = change_order(std::move(v2));
+std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
+LRI_CV_Tools::add(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v1,
+                  std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>& v2) {
+    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v1_order = change_order(std::move(v1));
+    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> v2_order = change_order(std::move(v2));
     auto dv = add(v1_order, v2_order);
     return change_order(std::move(dv));
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
-std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> LRI_CV_Tools::add(
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
-    std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2) {
+std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
+LRI_CV_Tools::add(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v1,
+                  std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>& v2) {
     std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> dv;
     for (size_t i = 0; i != N; ++i)
         dv[i] = add(v1[i], v2[i]);
@@ -252,9 +232,8 @@ std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> LRI_CV_Tools::add(
 }
 
 template <typename TkeyA, typename TkeyB, typename Tvalue>
-std::map<TkeyA, std::map<TkeyB, Tvalue>>
-    LRI_CV_Tools::add(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
-                        std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
+std::map<TkeyA, std::map<TkeyB, Tvalue>> LRI_CV_Tools::add(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
+                                                           std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
     assert(v1.size() == v2.size());
     using namespace RI::Map_Operator;
     using namespace RI::Array_Operator;
@@ -301,8 +280,7 @@ std::array<T, N> LRI_CV_Tools::transpose12(const std::array<T, N>& c_in) {
 }
 
 template <typename T, std::size_t N>
-std::array<std::vector<T>, N>
-    LRI_CV_Tools::change_order(std::vector<std::array<T, N>>&& ds_in) {
+std::array<std::vector<T>, N> LRI_CV_Tools::change_order(std::vector<std::array<T, N>>&& ds_in) {
     std::array<std::vector<T>, N> ds;
     for (int ix = 0; ix < N; ++ix) {
         ds[ix].resize(ds_in.size());
@@ -313,8 +291,7 @@ std::array<std::vector<T>, N>
 }
 
 template <typename T, std::size_t N>
-std::vector<std::array<T, N>>
-    LRI_CV_Tools::change_order(std::array<std::vector<T>, N>&& ds_in) {
+std::vector<std::array<T, N>> LRI_CV_Tools::change_order(std::array<std::vector<T>, N>&& ds_in) {
     std::vector<std::array<T, N>> ds(ds_in[0].size());
     for (int ix = 0; ix < N; ++ix) {
         assert(ds.size() == ds_in[ix].size());
@@ -325,8 +302,8 @@ std::vector<std::array<T, N>>
 }
 
 template <typename T, std::size_t N>
-std::array<std::vector<std::vector<T>>, N> LRI_CV_Tools::change_order(
-    std::vector<std::vector<std::array<T, N>>>&& ds_in) {
+std::array<std::vector<std::vector<T>>, N>
+LRI_CV_Tools::change_order(std::vector<std::vector<std::array<T, N>>>&& ds_in) {
     std::array<std::vector<std::vector<T>>, N> ds;
     for (int ix = 0; ix < N; ++ix) {
         ds[ix].resize(ds_in.size());
@@ -341,8 +318,7 @@ std::array<std::vector<std::vector<T>>, N> LRI_CV_Tools::change_order(
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
 std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
-    LRI_CV_Tools::change_order(
-        std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>&& ds_in) {
+LRI_CV_Tools::change_order(std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>&& ds_in) {
     std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N> ds;
     for (auto& ds_A: ds_in)
         for (auto& ds_B: ds_A.second)
@@ -353,8 +329,7 @@ std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>
 
 template <typename TkeyA, typename TkeyB, typename Tvalue, std::size_t N>
 std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
-    LRI_CV_Tools::change_order(
-        std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>&& ds_in) {
+LRI_CV_Tools::change_order(std::array<std::map<TkeyA, std::map<TkeyB, Tvalue>>, N>&& ds_in) {
     std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> ds;
     for (int ix = 0; ix < N; ++ix)
         for (auto& ds_A: ds_in[ix])
@@ -364,70 +339,64 @@ std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>>
 }
 
 template <typename Tcell>
-std::array<Tcell, 3> LRI_CV_Tools::cal_latvec_range(const double& rcut_times,
-							   const UnitCell &ucell,
-							   const std::vector<double>& orb_cutoff) {
+std::array<Tcell, 3>
+LRI_CV_Tools::cal_latvec_range(const double& rcut_times, const UnitCell& ucell, const std::vector<double>& orb_cutoff) {
     double Rcut_max = 0;
-    for(int T=0; T<ucell.ntype; ++T)
-		Rcut_max = std::max(Rcut_max, orb_cutoff[T]);
-	const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
-		std::array<ModuleBase::Vector3<double>,3>{ucell.a1, ucell.a2, ucell.a3});
-	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * ucell.lat0);
+    for (int T = 0; T < ucell.ntype; ++T)
+        Rcut_max = std::max(Rcut_max, orb_cutoff[T]);
+    const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
+        std::array<ModuleBase::Vector3<double>, 3>{ucell.a1, ucell.a2, ucell.a3});
+    const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * ucell.lat0);
     const ModuleBase::Vector3<Tcell> latvec_times_ceil = {static_cast<Tcell>(std::ceil(latvec_times.x)),
                                                           static_cast<Tcell>(std::ceil(latvec_times.y)),
                                                           static_cast<Tcell>(std::ceil(latvec_times.z))};
-    const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
-	return std::array<Tcell,3>{period.x, period.y, period.z};
-}
-
-template<typename TA, typename Tcell, typename Tdata>
-std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>
-LRI_CV_Tools::get_CVws(
-	const UnitCell &ucell,
-	const std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>> &CVs)
-{
-	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> CVws;
-	for(const auto &CVs_A : CVs)
-	{
-		const TA iat0 = CVs_A.first;
-		const int it0 = ucell.iat2it[iat0];
-		const int ia0 = ucell.iat2ia[iat0];
-		const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
-		for(const auto &CVs_B : CVs_A.second)
-		{
-			const TA iat1 = CVs_B.first.first;
-			const int it1 = ucell.iat2it[iat1];
-			const int ia1 = ucell.iat2ia[iat1];
-			const std::array<int,3> &cell1 = CVs_B.first.second;
-			const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
-			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
-			CVws[it0][it1][R_delta] = CVs_B.second;
-		}
-	}
-	return CVws;
+    const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1, 1, 1};
+    return std::array<Tcell, 3>{period.x, period.y, period.z};
 }
 
 template <typename TA, typename Tcell, typename Tdata>
-std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> LRI_CV_Tools::
-    get_dCVws(const UnitCell& ucell,
-              const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, std::array<RI::Tensor<Tdata>, 3>>>& dCVs)
-{
+std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>>
+LRI_CV_Tools::get_CVws(const UnitCell& ucell,
+                       const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, RI::Tensor<Tdata>>>& CVs) {
+    std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, RI::Tensor<Tdata>>>> CVws;
+    for (const auto& CVs_A: CVs) {
+        const TA iat0 = CVs_A.first;
+        const int it0 = ucell.iat2it[iat0];
+        const int ia0 = ucell.iat2ia[iat0];
+        const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+        for (const auto& CVs_B: CVs_A.second) {
+            const TA iat1 = CVs_B.first.first;
+            const int it1 = ucell.iat2it[iat1];
+            const int ia1 = ucell.iat2ia[iat1];
+            const std::array<int, 3>& cell1 = CVs_B.first.second;
+            const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+            const Abfs::Vector3_Order<double> R_delta =
+                -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+            CVws[it0][it1][R_delta] = CVs_B.second;
+        }
+    }
+    return CVws;
+}
+
+template <typename TA, typename Tcell, typename Tdata>
+std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>>
+LRI_CV_Tools::get_dCVws(
+    const UnitCell& ucell,
+    const std::map<TA, std::map<std::pair<TA, std::array<Tcell, 3>>, std::array<RI::Tensor<Tdata>, 3>>>& dCVs) {
     std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI::Tensor<Tdata>, 3>>>> dCVws;
-    for (const auto& dCVs_A: dCVs)
-    {
+    for (const auto& dCVs_A: dCVs) {
         const TA iat0 = dCVs_A.first;
         const int it0 = ucell.iat2it[iat0];
         const int ia0 = ucell.iat2ia[iat0];
         const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
-        for (const auto& dCVs_B: dCVs_A.second)
-        {
+        for (const auto& dCVs_B: dCVs_A.second) {
             const TA iat1 = dCVs_B.first.first;
             const int it1 = ucell.iat2it[iat1];
             const int ia1 = ucell.iat2ia[iat1];
             const std::array<int, 3>& cell1 = dCVs_B.first.second;
             const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
-            const Abfs::Vector3_Order<double> R_delta
-                = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+            const Abfs::Vector3_Order<double> R_delta =
+                -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
             dCVws[it0][it1][R_delta] = dCVs_B.second;
         }
     }
@@ -435,18 +404,14 @@ std::map<int, std::map<int, std::map<Abfs::Vector3_Order<double>, std::array<RI:
 }
 
 template <typename T, std::size_t N>
-void LRI_CV_Tools::init_elem(std::array<RI::Tensor<T>, N>& data,
-                             const size_t ndim0,
-                             const size_t ndim1) {
+void LRI_CV_Tools::init_elem(std::array<RI::Tensor<T>, N>& data, const size_t ndim0, const size_t ndim1) {
     for (size_t i = 0; i < N; ++i) {
         data[i] = RI::Tensor<T>({ndim0, ndim1});
     }
 }
 
 template <typename T, std::size_t N>
-void LRI_CV_Tools::add_elem(std::array<T, N>& data,
-                            const T& val,
-                            const T& frac) {
+void LRI_CV_Tools::add_elem(std::array<T, N>& data, const T& val, const T& frac) {
     for (size_t i = 0; i < N; ++i)
         data[i] += frac * val;
 }
@@ -481,8 +446,7 @@ RI::Tensor<Tout> LRI_CV_Tools::convert(RI::Tensor<Tin>&& data) {
 }
 
 template <typename Tout, typename Tin, std::size_t N>
-std::array<RI::Tensor<Tout>, N>
-    LRI_CV_Tools::convert(std::array<RI::Tensor<Tin>, N>&& data) {
+std::array<RI::Tensor<Tout>, N> LRI_CV_Tools::convert(std::array<RI::Tensor<Tin>, N>&& data) {
     std::array<RI::Tensor<Tout>, N> out;
     for (size_t i = 0; i != N; ++i)
         out[i] = RI::Global_Func::convert<Tout>(data[i]);
@@ -516,47 +480,39 @@ std::array<RI::Tensor<Tout>, N>
 //     return result;
 // }
 
-
 // dMRs[ipos0][ipos1] = \nabla_{ipos0} M R_{ipos1}
-template<typename TA, typename TC, typename Tdata>
-std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
-LRI_CV_Tools::cal_dMRs(
-	const UnitCell &ucell,
-	const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs)
-{
-	auto get_R_delta = [&](const TA &iat0, const std::pair<TA,TC> &A1) -> std::array<Tdata,3>
-	{
-		const TA iat1 = A1.first;
-		const TC &cell1 = A1.second;
-		const int it0 = ucell.iat2it[iat0];
-		const int ia0 = ucell.iat2ia[iat0];
-		const int it1 = ucell.iat2it[iat1];
-		const int ia1 = ucell.iat2ia[iat1];
-		const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
-		const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
-		const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
-		return std::array<Tdata,3>{R_delta.x, R_delta.y, R_delta.z};
-	};
-	constexpr int Npos = 3;
-	std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,Npos>,Npos> dMRs;
-	for(int ipos0=0; ipos0<Npos; ++ipos0)
-	{
-		for(int ipos1=0; ipos1<Npos; ++ipos1)
-		{
-			for(const auto &dMs_A : dMs[ipos0])
-			{
-				const TA iat0 = dMs_A.first;
-				for(const auto &dMs_B : dMs_A.second)
-				{
-					const std::pair<TA,TC> A1 = dMs_B.first;
-					const RI::Tensor<Tdata> &dM = dMs_B.second;
-					const std::array<Tdata,3> R_delta = get_R_delta(iat0, A1);
-					dMRs[ipos0][ipos1][iat0][A1] = dM * R_delta[ipos1];
-				}
-			}
-		}
-	}
-	return dMRs;
+template <typename TA, typename TC, typename Tdata>
+std::array<std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>, 3>
+LRI_CV_Tools::cal_dMRs(const UnitCell& ucell,
+                       const std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, 3>& dMs) {
+    auto get_R_delta = [&](const TA& iat0, const std::pair<TA, TC>& A1) -> std::array<Tdata, 3> {
+        const TA iat1 = A1.first;
+        const TC& cell1 = A1.second;
+        const int it0 = ucell.iat2it[iat0];
+        const int ia0 = ucell.iat2ia[iat0];
+        const int it1 = ucell.iat2it[iat1];
+        const int ia1 = ucell.iat2ia[iat1];
+        const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+        const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+        const Abfs::Vector3_Order<double> R_delta = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+        return std::array<Tdata, 3>{R_delta.x, R_delta.y, R_delta.z};
+    };
+    constexpr int Npos = 3;
+    std::array<std::array<std::map<TA, std::map<std::pair<TA, TC>, RI::Tensor<Tdata>>>, Npos>, Npos> dMRs;
+    for (int ipos0 = 0; ipos0 < Npos; ++ipos0) {
+        for (int ipos1 = 0; ipos1 < Npos; ++ipos1) {
+            for (const auto& dMs_A: dMs[ipos0]) {
+                const TA iat0 = dMs_A.first;
+                for (const auto& dMs_B: dMs_A.second) {
+                    const std::pair<TA, TC> A1 = dMs_B.first;
+                    const RI::Tensor<Tdata>& dM = dMs_B.second;
+                    const std::array<Tdata, 3> R_delta = get_R_delta(iat0, A1);
+                    dMRs[ipos0][ipos1][iat0][A1] = dM * R_delta[ipos1];
+                }
+            }
+        }
+    }
+    return dMRs;
 }
 
 #endif

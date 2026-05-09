@@ -3,10 +3,8 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-namespace ModuleIO
-{
-void ReadInput::item_ofdft()
-{
+namespace ModuleIO {
+void ReadInput::item_ofdft() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -31,24 +29,23 @@ void ReadInput::item_ofdft()
         item.availability = "OFDFT";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
 #ifndef __MLALGO
-            if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "Error: ML KEDF requires ENABLE_MLALGO option.\n "
-                                                      "Please enable ENABLE_MLALGO during compilation to use this feature.");
+            if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5") {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "Error: ML KEDF requires ENABLE_MLALGO option.\n "
+                                         "Please enable ENABLE_MLALGO during compilation to use this feature.");
             }
 #endif
-            if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt"
-                && para.input.of_kinetic != "ext-wt"
-                && para.input.of_kinetic != "xwm" && para.input.of_kinetic != "lkt" && para.input.of_kinetic != "tf+" 
-                && para.input.of_kinetic != "ml" && para.input.of_kinetic != "mpn" && para.input.of_kinetic != "cpn5")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "of_kinetic must be tf, vw, tf+, wt, ext-wt, xwm, lkt, ml, mpn, or cpn5");
+            if (para.input.of_kinetic != "tf" && para.input.of_kinetic != "vw" && para.input.of_kinetic != "wt" &&
+                para.input.of_kinetic != "ext-wt" && para.input.of_kinetic != "xwm" && para.input.of_kinetic != "lkt" &&
+                para.input.of_kinetic != "tf+" && para.input.of_kinetic != "ml" && para.input.of_kinetic != "mpn" &&
+                para.input.of_kinetic != "cpn5") {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "of_kinetic must be tf, vw, tf+, wt, ext-wt, xwm, lkt, ml, mpn, or cpn5");
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             // Set the default parameters for MPN or CPN5 KEDF
-            if (para.input.of_kinetic == "mpn")
-            {
+            if (para.input.of_kinetic == "mpn") {
                 para.input.of_kinetic = "ml";
 
                 para.input.of_ml_feg = 3;
@@ -78,8 +75,7 @@ void ReadInput::item_ofdft()
                 para.input.of_ml_chi_qnl = {0.1};
             }
 
-            if (para.input.of_kinetic == "cpn5")
-            {
+            if (para.input.of_kinetic == "cpn5") {
                 para.input.of_kinetic = "ml";
 
                 para.input.of_ml_feg = 3;
@@ -256,8 +252,7 @@ void ReadInput::item_ofdft()
         item.availability = "OFDFT with of_kinetic=wt";
         read_sync_bool(input.of_hold_rho0);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.of_wt_rho0 != 0)
-            {
+            if (para.input.of_wt_rho0 != 0) {
                 para.input.of_hold_rho0 = true; // sunliang add 2022-06-17
             }
         };
@@ -280,7 +275,8 @@ void ReadInput::item_ofdft()
         item.annotation = "The reference density of XWM KEDF";
         item.category = "OFDFT: orbital free density functional theory";
         item.type = "Real";
-        item.description = "Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.";
+        item.description = "Reference charge density for XWM kinetic energy functional. If set to 0, the program will "
+                           "use average charge density.";
         item.default_value = "0.0";
         item.unit = "";
         item.availability = "OFDFT with of_kinetic=xwm";
@@ -292,7 +288,8 @@ void ReadInput::item_ofdft()
         item.annotation = "The parameter kappa of XWM KEDF";
         item.category = "OFDFT: orbital free density functional theory";
         item.type = "Real";
-        item.description = "Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.";
+        item.description =
+            "Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.";
         item.default_value = "0.0";
         item.unit = "";
         item.availability = "OFDFT with of_kinetic=xwm";
@@ -314,8 +311,7 @@ void ReadInput::item_ofdft()
         item.availability = "OFDFT with of_kinetic=wt";
         read_sync_bool(input.of_read_kernel);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.of_kinetic != "wt")
-            {
+            if (para.input.of_kinetic != "wt") {
                 para.input.of_read_kernel = false; // sunliang add 2022-09-12
             }
         };
@@ -366,8 +362,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.availability = "OFDFT with of_full_pw = True";
         read_sync_int(input.of_full_pw_dim);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (!para.input.of_full_pw)
-            {
+            if (!para.input.of_full_pw) {
                 para.input.of_full_pw_dim = 0; // sunliang add 2022-08-31
             }
         };
@@ -378,7 +373,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Generate training data or not";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Boolean";
-        item.description = "Controls the generation of machine learning training data. When enabled, training data in .npy format will be saved in the directory OUT.${suffix}/.";
+        item.description = "Controls the generation of machine learning training data. When enabled, training data in "
+                           ".npy format will be saved in the directory OUT.${suffix}/.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "Used only for KSDFT with plane wave basis";
@@ -424,8 +420,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.unit = "";
         item.availability = "OFDFT";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.of_ml_nkernel > 0)
-            {
+            if (para.input.of_ml_nkernel > 0) {
                 reset_vector(para.input.of_ml_gammanl, para.input.of_ml_nkernel, 0);
                 reset_vector(para.input.of_ml_pnl, para.input.of_ml_nkernel, 0);
                 reset_vector(para.input.of_ml_qnl, para.input.of_ml_nkernel, 0);
@@ -454,7 +449,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Type of kernel, 1 for wt, 2 for yukawa, and 3 for TKK";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = R"(Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the type of the i-th kernel function.
+        item.description =
+            R"(Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the type of the i-th kernel function.
 * 1: Wang-Teter kernel function.
 * 2: Modified Yukawa function, and alpha is specified by of_ml_yukawa_alpha.
 * 3: Truncated kinetic kernel (TKK), the file containing TKK is specified by of_ml_kernel_file.)";
@@ -472,7 +468,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Scaling parameter of kernel, w(r-r') = scaling^3 * w(scaling (r-r'))";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Real";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the RECIPROCAL of scaling parameter of the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the RECIPROCAL "
+                           "of scaling parameter of the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -487,7 +484,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Parameter alpha of yukawa kernel";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Real";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the parameter alpha of i-th kernel function. ONLY used for Yukawa kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the parameter "
+                           "alpha of i-th kernel function. ONLY used for Yukawa kernel function.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -502,14 +500,14 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "The file of TKK";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of String";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the file containing the i-th kernel function. ONLY used for TKK.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the file "
+                           "containing the i-th kernel function. ONLY used for TKK.";
         item.default_value = "none";
         item.unit = "";
         item.availability = "OFDFT";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            { 
+            for (int i = 0; i < count; i++) {
                 para.input.of_ml_kernel_file.push_back(item.str_values[i]);
             }
         };
@@ -605,7 +603,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: gammanl = int{gamma(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor gammanl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor gammanl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -620,7 +619,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: pnl = int{p(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor pnl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor pnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -635,7 +635,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: qnl = int{q(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor qnl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor qnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -650,7 +651,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: xi = int{rho(r')^(1/3) * w(r-r') dr'} / rho^(1/3)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor xi defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor xi defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -665,7 +667,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanhxi = tanh(chi_xi * xi)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanhxi defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -680,7 +683,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanhxi_nl = int{tanhxi(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi_nl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanhxi_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -695,7 +699,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanh_pnl = tanh(chi_pnl * pnl)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_pnl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanh_pnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -710,7 +715,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanh_qnl = tanh(chi_qnl * qnl)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_qnl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanh_qnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -725,7 +731,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanhp_nl = int{tanhp(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhp_nl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanhp_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -740,7 +747,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Descriptor: tanhq_nl = int{tanhq(r') * w(r-r') dr'}";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Integer";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhq_nl defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local "
+                           "descriptor tanhq_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -755,7 +763,8 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Hyperparameter: tanhpxi = tanh(chi_xi * xi)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Real";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_xi of non-local descriptor tanhxi defined by the i-th kernel function.";
+        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the "
+                           "hyperparameter chi_xi of non-local descriptor tanhxi defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -770,7 +779,9 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Hyperparameter: tanh_pnl = tanh(chi_pnl * pnl)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Real";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_pnl of non-local descriptor tanh_pnl defined by the i-th kernel function.";
+        item.description =
+            "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_pnl of "
+            "non-local descriptor tanh_pnl defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "OFDFT";
@@ -785,7 +796,9 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.annotation = "Hyperparameter: tanh_qnl = tanh(chi_qnl * qnl)";
         item.category = "ML-KEDF: machine learning based kinetic energy density functional for OFDFT";
         item.type = "Vector of Real";
-        item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_qnl of non-local descriptor tanh_qnl defined by the i-th kernel function.";
+        item.description =
+            "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_qnl of "
+            "non-local descriptor tanh_qnl defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "OFDFT";

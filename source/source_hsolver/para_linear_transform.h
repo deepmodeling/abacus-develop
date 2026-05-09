@@ -7,8 +7,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-namespace hsolver
-{
+namespace hsolver {
 
 /**
  * @brief B =  alpha * A * U + beta * B
@@ -16,8 +15,7 @@ namespace hsolver
  *        U can be a local matrix or a global matrix
  */
 template <typename T, typename Device>
-class PLinearTransform
-{
+class PLinearTransform {
   public:
     using syncmem_dev_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;

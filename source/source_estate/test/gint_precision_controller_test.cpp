@@ -2,8 +2,7 @@
 
 #include "../module_charge/gint_precision_controller.h"
 
-TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSmallEnough)
-{
+TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSmallEnough) {
     GintPrecisionController controller;
 
     controller.set_mode("mix");
@@ -14,8 +13,7 @@ TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSma
     EXPECT_EQ(controller.current_precision(), ModuleGint::GintPrecision::fp64);
 }
 
-TEST(GintPrecisionControllerTest, DefaultModeStartsAndStaysFp64)
-{
+TEST(GintPrecisionControllerTest, DefaultModeStartsAndStaysFp64) {
     GintPrecisionController controller;
 
     controller.reset_for_new_scf();
@@ -25,8 +23,7 @@ TEST(GintPrecisionControllerTest, DefaultModeStartsAndStaysFp64)
     EXPECT_EQ(controller.current_precision(), ModuleGint::GintPrecision::fp64);
 }
 
-TEST(GintPrecisionControllerTest, SingleModeStartsAndStaysFp32)
-{
+TEST(GintPrecisionControllerTest, SingleModeStartsAndStaysFp32) {
     GintPrecisionController controller;
 
     controller.set_mode("single");
@@ -37,8 +34,7 @@ TEST(GintPrecisionControllerTest, SingleModeStartsAndStaysFp32)
     EXPECT_EQ(controller.current_precision(), ModuleGint::GintPrecision::fp32);
 }
 
-TEST(GintPrecisionControllerTest, MixModeLocksFp64AfterSwitch)
-{
+TEST(GintPrecisionControllerTest, MixModeLocksFp64AfterSwitch) {
     GintPrecisionController controller;
 
     controller.set_mode("mix");
@@ -51,8 +47,7 @@ TEST(GintPrecisionControllerTest, MixModeLocksFp64AfterSwitch)
     EXPECT_EQ(controller.current_precision(), ModuleGint::GintPrecision::fp64);
 }
 
-TEST(GintPrecisionControllerTest, MixModeReturnsFalseWhenDrhoTooLarge)
-{
+TEST(GintPrecisionControllerTest, MixModeReturnsFalseWhenDrhoTooLarge) {
     GintPrecisionController controller;
 
     controller.set_mode("mix");

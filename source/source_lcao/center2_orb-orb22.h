@@ -16,8 +16,7 @@
 #include <set>
 #include <vector>
 
-class Center2_Orb::Orb22
-{
+class Center2_Orb::Orb22 {
   public:
     Orb22(const Numerical_Orbital_Lm& nA1_in,
           const Numerical_Orbital_Lm& nA2_in,

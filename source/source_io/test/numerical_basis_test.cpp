@@ -22,37 +22,27 @@ using ModuleBase::Sphbes;
  *   computes <jy|jy> and <jy|-\nabla^2|jy> with two-center integration
  *
  */
-class NumericalBasisTest : public ::testing::Test
-{
+class NumericalBasisTest : public ::testing::Test {
   protected:
     void SetUp();
     void TearDown();
 };
 
-void NumericalBasisTest::SetUp()
-{
-}
+void NumericalBasisTest::SetUp() {}
 
-void NumericalBasisTest::TearDown()
-{
-}
+void NumericalBasisTest::TearDown() {}
 
-TEST_F(NumericalBasisTest, indexgen)
-{
+TEST_F(NumericalBasisTest, indexgen) {
     const std::vector<int> natom = {1, 2, 3};
     const std::vector<int> lmax = {2, 1, 2};
 
     const auto index = indexgen(natom, lmax);
     size_t idx = 0;
 
-    for (size_t it = 0; it < natom.size(); ++it)
-    {
-        for (int ia = 0; ia != natom[it]; ++ia)
-        {
-            for (int l = 0; l <= lmax[it]; ++l)
-            {
-                for (int M = 0; M < 2 * l + 1; ++M)
-                {
+    for (size_t it = 0; it < natom.size(); ++it) {
+        for (int ia = 0; ia != natom[it]; ++ia) {
+            for (int l = 0; l <= lmax[it]; ++l) {
+                for (int M = 0; M < 2 * l + 1; ++M) {
                     // convert the "abacus M" to the conventional m
                     const int m = (M % 2 == 0) ? -M / 2 : (M + 1) / 2;
                     EXPECT_EQ(index[idx], std::make_tuple(int(it), ia, l, m));
@@ -63,8 +53,7 @@ TEST_F(NumericalBasisTest, indexgen)
     }
 }
 
-TEST_F(NumericalBasisTest, cal_overlap_Sq)
-{
+TEST_F(NumericalBasisTest, cal_overlap_Sq) {
     const int lmax = 3;
     const int nbes = 7;
     const double rcut = 7.0;
@@ -94,34 +83,26 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     const auto S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
     const auto T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, latvec, index);
     int t1, a1, l1, m1, t2, a2, l2, m2; // values will be updated in the loop
-    for (int i = 0; i < nao; ++i)
-    {
+    for (int i = 0; i < nao; ++i) {
         std::tie(t1, a1, l1, m1) = index[i];
-        for (int j = 0; j < nao; ++j)
-        {
+        for (int j = 0; j < nao; ++j) {
             std::tie(t2, a2, l2, m2) = index[j];
-            for (int q1 = 0; q1 < nbes; ++q1)
-            {
-                for (int q2 = 0; q2 < nbes; ++q2)
-                {
-                    if (i == j)
-                    {
-                        if (q1 == q2)
-                        {
+            for (int q1 = 0; q1 < nbes; ++q1) {
+                for (int q2 = 0; q2 < nbes; ++q2) {
+                    if (i == j) {
+                        if (q1 == q2) {
                             // diagonal elements have analytical results
-                            double S_ref
-                                = std::pow(rcut, 3) * 0.5 * std::pow(Sphbes::sphbesj(l1 + 1, zeros[l1 * nbes + q1]), 2);
+                            double S_ref =
+                                std::pow(rcut, 3) * 0.5 * std::pow(Sphbes::sphbesj(l1 + 1, zeros[l1 * nbes + q1]), 2);
                             EXPECT_NEAR(S(i, i, q1, q1).real(), S_ref, S_thr);
                             EXPECT_EQ(S(i, i, q1, q1).imag(), 0);
 
-                            double T_ref
-                                = 0.5 * rcut
-                                  * std::pow(zeros[l1 * nbes + q1] * Sphbes::sphbesj(l1 + 1, zeros[l1 * nbes + q1]), 2);
+                            double T_ref =
+                                0.5 * rcut *
+                                std::pow(zeros[l1 * nbes + q1] * Sphbes::sphbesj(l1 + 1, zeros[l1 * nbes + q1]), 2);
                             EXPECT_NEAR(T(i, i, q1, q1).real(), T_ref, T_thr);
                             EXPECT_EQ(T(i, i, q1, q1).imag(), 0);
-                        }
-                        else
-                        {
+                        } else {
                             // off-diagonal elements should be zero due to orthogonality
                             EXPECT_NEAR(S(i, i, q1, q2).real(), 0, S_thr);
                             EXPECT_EQ(S(i, i, q1, q2).imag(), 0);
@@ -131,8 +112,7 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
                         }
                     }
 
-                    if ((a1 == 2) != (a2 == 2))
-                    {
+                    if ((a1 == 2) != (a2 == 2)) {
                         // atom-2 has no overlap with atom-0/1
                         EXPECT_EQ(S(i, j, q1, q2).real(), 0);
                         EXPECT_EQ(S(i, j, q1, q2).imag(), 0);
@@ -141,8 +121,7 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
                         EXPECT_EQ(T(i, j, q1, q2).imag(), 0);
                     }
 
-                    if (a1 != a2 && a1 != 2 && a2 != 2)
-                    {
+                    if (a1 != a2 && a1 != 2 && a2 != 2) {
                         // overlap between atom-0 and atom-1 orbitals should be non-zero
                         EXPECT_NE(S(i, j, q1, q2).real(), 0);
                         EXPECT_EQ(S(i, j, q1, q2).imag(), 0);
@@ -162,16 +141,12 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     tau_cart[0][2].x -= 0.5;
     const auto S_wrap = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, latvec, index);
 
-    for (int i = 0; i < nao; ++i)
-    {
+    for (int i = 0; i < nao; ++i) {
         std::tie(t1, a1, l1, m1) = index[i];
-        for (int j = 0; j < nao; ++j)
-        {
+        for (int j = 0; j < nao; ++j) {
             std::tie(t2, a2, l2, m2) = index[j];
-            for (int q1 = 0; q1 < nbes; ++q1)
-            {
-                for (int q2 = 0; q2 < nbes; ++q2)
-                {
+            for (int q1 = 0; q1 < nbes; ++q1) {
+                for (int q2 = 0; q2 < nbes; ++q2) {
                     EXPECT_EQ(S(i, j, q1, q2), S_wrap(i, j, q1, q2));
                 }
             }
@@ -179,8 +154,7 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     }
 }
 
-TEST_F(NumericalBasisTest, neighbor_vec)
-{
+TEST_F(NumericalBasisTest, neighbor_vec) {
     const ModuleBase::Vector3<double> d0(2.5, 0.0, 0.0);
     const ModuleBase::Matrix3 latvec(3.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 5.0);
 

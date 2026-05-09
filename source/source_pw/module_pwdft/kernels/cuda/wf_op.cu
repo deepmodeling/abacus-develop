@@ -11,35 +11,35 @@
 
 namespace hamilt {
 
-template<typename FPTYPE>
-__global__ void cal_sk(
-    const int ik,
-    const int ntype,
-    const int nx,
-    const int ny,
-    const int nz,
-    const int rho_nx,
-    const int rho_ny,
-    const int rho_nz,
-    const int npw,
-    const int npwx,
-    const int fftny,
-    const int eigts1_nc,
-    const int eigts2_nc,
-    const int eigts3_nc,
-    const int * atom_na,
-    const int * igl2isz,
-    const int * is2fftixy,
-    const FPTYPE TWO_PI,
-    const FPTYPE *kvec_c,
-    const FPTYPE *atom_tau,
-    thrust::complex<FPTYPE> *eigts1,
-    thrust::complex<FPTYPE> *eigts2,
-    thrust::complex<FPTYPE> *eigts3,
-    thrust::complex<FPTYPE> *sk)
-{
+template <typename FPTYPE>
+__global__ void cal_sk(const int ik,
+                       const int ntype,
+                       const int nx,
+                       const int ny,
+                       const int nz,
+                       const int rho_nx,
+                       const int rho_ny,
+                       const int rho_nz,
+                       const int npw,
+                       const int npwx,
+                       const int fftny,
+                       const int eigts1_nc,
+                       const int eigts2_nc,
+                       const int eigts3_nc,
+                       const int* atom_na,
+                       const int* igl2isz,
+                       const int* is2fftixy,
+                       const FPTYPE TWO_PI,
+                       const FPTYPE* kvec_c,
+                       const FPTYPE* atom_tau,
+                       thrust::complex<FPTYPE>* eigts1,
+                       thrust::complex<FPTYPE>* eigts2,
+                       thrust::complex<FPTYPE>* eigts3,
+                       thrust::complex<FPTYPE>* sk) {
     int iat = 0, igl = blockIdx.x * blockDim.x + threadIdx.x;
-    if (igl >= npw) {return;}
+    if (igl >= npw) {
+        return;
+    }
     for (int it = 0; it < ntype; it++) {
         for (int ia = 0; ia < atom_na[it]; ia++) {
             FPTYPE arg = 0.0;
@@ -63,8 +63,8 @@ __global__ void cal_sk(
             ix += rho_nx;
             iy += rho_ny;
             iz += rho_nz;
-            sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
-                                  * eigts3[iat * eigts3_nc + iz];
+            sk[iat * npw + igl] =
+                kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy] * eigts3[iat * eigts3_nc + iz];
             iat++;
         }
     }
@@ -95,24 +95,32 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
                                                             std::complex<FPTYPE>* eigts1,
                                                             std::complex<FPTYPE>* eigts2,
                                                             std::complex<FPTYPE>* eigts3,
-                                                            std::complex<FPTYPE>* sk)
-{
+                                                            std::complex<FPTYPE>* sk) {
     int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    cal_sk<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-         ik, ntype,
-         nx, ny, nz,
-         rho_nx, rho_ny, rho_nz,
-         npw, npwx,
-         fftny,
-         eigts1_nc, eigts2_nc, eigts3_nc,
-         atom_na, igl2isz, is2fftixy,
-         TWO_PI,
-         kvec_c,
-         atom_tau,
-         reinterpret_cast<thrust::complex<FPTYPE>*>(eigts1),
-         reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
-         reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
-         reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
+    cal_sk<FPTYPE><<<block, THREADS_PER_BLOCK>>>(ik,
+                                                 ntype,
+                                                 nx,
+                                                 ny,
+                                                 nz,
+                                                 rho_nx,
+                                                 rho_ny,
+                                                 rho_nz,
+                                                 npw,
+                                                 npwx,
+                                                 fftny,
+                                                 eigts1_nc,
+                                                 eigts2_nc,
+                                                 eigts3_nc,
+                                                 atom_na,
+                                                 igl2isz,
+                                                 is2fftixy,
+                                                 TWO_PI,
+                                                 kvec_c,
+                                                 atom_tau,
+                                                 reinterpret_cast<thrust::complex<FPTYPE>*>(eigts1),
+                                                 reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
+                                                 reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
+                                                 reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
 
     CHECK_CUDA_SYNC();
 }
@@ -120,4 +128,4 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
 template struct cal_sk_op<float, base_device::DEVICE_GPU>;
 template struct cal_sk_op<double, base_device::DEVICE_GPU>;
 
-}  // namespace hamilt
+} // namespace hamilt

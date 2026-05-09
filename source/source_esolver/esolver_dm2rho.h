@@ -5,12 +5,10 @@
 
 #include <memory>
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename TK, typename TR>
-class ESolver_DM2rho : public ESolver_KS_LCAO<TK, TR>
-{
+class ESolver_DM2rho : public ESolver_KS_LCAO<TK, TR> {
   public:
     ESolver_DM2rho();
     ~ESolver_DM2rho();

@@ -9,10 +9,8 @@
 #include <fstream>
 #include <iostream>
 
-namespace Test_Deepks
-{
-class K_Vectors
-{
+namespace Test_Deepks {
+class K_Vectors {
   public:
     ModuleBase::Vector3<double>* kvec_c;             // Cartesian coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_d; // Direct coordinates of k points
@@ -45,10 +43,8 @@ class K_Vectors
     int k_nkstot;        // LiuXh add 20180619
 
     // step 1 : generate kpoints
-    bool read_kpoints(const std::string& fn,
-                      bool& GAMMA_ONLY_LOCAL,
-                      std::ofstream& ofs_warning,
-                      std::ofstream& ofs_running);
+    bool
+    read_kpoints(const std::string& fn, bool& GAMMA_ONLY_LOCAL, std::ofstream& ofs_warning, std::ofstream& ofs_running);
     void Monkhorst_Pack(const int* nmp_in, const double* koffset_in, const int tipo);
     double Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim);
 

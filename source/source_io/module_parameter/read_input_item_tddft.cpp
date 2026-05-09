@@ -3,10 +3,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
-namespace ModuleIO
-{
-void ReadInput::item_rt_tddft()
-{ 
+namespace ModuleIO {
+void ReadInput::item_rt_tddft() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -28,13 +26,13 @@ void ReadInput::item_rt_tddft()
         item.annotation = "time step for evolving wavefunction";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Real";
-        item.description = "The time step used in electronic propagation. Setting td_dt will reset the value of md_dt to td_dt * estep_per_md.";
+        item.description = "The time step used in electronic propagation. Setting td_dt will reset the value of md_dt "
+                           "to td_dt * estep_per_md.";
         item.default_value = "md_dt / estep_per_md";
         item.unit = "fs";
         item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.td_dt == -1.0)
-            {
+            if (para.input.td_dt == -1.0) {
                 GlobalV::ofs_running << "td_dt don't exist, set td_dt with md_dt" << std::endl;
                 para.input.td_dt = para.input.mdp.md_dt / para.input.estep_per_md;
             }
@@ -47,7 +45,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "the method to calculate the energy density matrix";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = R"(Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
+        item.description =
+            R"(Method to calculate the energy-density matrix, mainly affects the calculation of force and stress.
 * 0: Using the original formula.
 * 1: Using the formula for ground state (deprecated). Note that this usually does not hold if wave function is not the eigenstate of the Hamiltonian.)";
         item.default_value = "0";
@@ -113,7 +112,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "extern potential direction";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "String";
-        item.description = R"(Specifies the direction(s) of the external electric field when td_vext is enabled. For example, td_vext_dire 1 2 indicates that external electric fields are applied to both the x and y directions simultaneously. Electric field parameters can also be written as strings. For example, td_gauss_phase 0 1.5707963 indicates that the Gaussian type electric fields in the x and y directions have a phase delay of pi/2.
+        item.description =
+            R"(Specifies the direction(s) of the external electric field when td_vext is enabled. For example, td_vext_dire 1 2 indicates that external electric fields are applied to both the x and y directions simultaneously. Electric field parameters can also be written as strings. For example, td_gauss_phase 0 1.5707963 indicates that the Gaussian type electric fields in the x and y directions have a phase delay of pi/2.
 * 1: The external field direction is along the x-axis.
 * 2: The external field direction is along the y-axis.
 * 3: The external field direction is along the z-axis.)";
@@ -124,8 +124,7 @@ void ReadInput::item_rt_tddft()
             parse_expression(item.str_values, para.input.td_vext_dire);
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if (item.is_read())
-            {
+            if (item.is_read()) {
                 item.final_value.str(longstring(item.str_values));
             }
         };
@@ -183,7 +182,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "number of steps where electric field ends";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = "The final time step when the time-dependent electric field is deactivated. The field remains active between td_tstart and td_tend.";
+        item.description = "The final time step when the time-dependent electric field is deactivated. The field "
+                           "remains active between td_tstart and td_tend.";
         item.default_value = "1000";
         item.unit = "";
         item.availability = "";
@@ -195,7 +195,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "cut1 of interval in length gauge";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Real";
-        item.description = "The lower bound of the interval in the length gauge RT-TDDFT, where the coordinate is the fractional coordinate.";
+        item.description = "The lower bound of the interval in the length gauge RT-TDDFT, where the coordinate is the "
+                           "fractional coordinate.";
         item.default_value = "0.05";
         item.unit = "";
         item.availability = "";
@@ -207,7 +208,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "cut2 of interval in length gauge";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Real";
-        item.description = "The upper bound of the interval in the length gauge RT-TDDFT, where the coordinate is the fractional coordinate.";
+        item.description = "The upper bound of the interval in the length gauge RT-TDDFT, where the coordinate is the "
+                           "fractional coordinate.";
         item.default_value = "0.95";
         item.unit = "";
         item.availability = "";
@@ -516,7 +518,8 @@ void ReadInput::item_rt_tddft()
         item.annotation = "set occupation";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "String";
-        item.description = R"(If ocp is set to 1, ocp_set must be provided as a string specifying the occupation numbers for each band across all k-points. The format follows a space-separated pattern, where occupations are assigned sequentially to bands for each k-point. A shorthand notation Nx can be used to repeat a value x for N bands.
+        item.description =
+            R"(If ocp is set to 1, ocp_set must be provided as a string specifying the occupation numbers for each band across all k-points. The format follows a space-separated pattern, where occupations are assigned sequentially to bands for each k-point. A shorthand notation Nx can be used to repeat a value x for N bands.
 * Example:
   1 10*1 0 1 represents occupations for 13 bands, where the 12th band is fully unoccupied (0), and all others are occupied (1).
 * For a system with multiple k-points, the occupations must be specified for all k-points, following their order in the output file kpoints (may lead to fractional occupations).
@@ -528,19 +531,15 @@ void ReadInput::item_rt_tddft()
             parse_expression(item.str_values, para.input.ocp_kb);
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
-            if(item.is_read())
-            {
+            if (item.is_read()) {
                 item.final_value.str(longstring(item.str_values));
             }
         };
         add_doublevec_bcast(input.ocp_kb, para.input.ocp_kb.size(), 0.0);
         this->add_item(item);
     }
-
-
 }
-void ReadInput::item_tdofdft()
-{
+void ReadInput::item_tdofdft() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -564,7 +563,8 @@ void ReadInput::item_tdofdft()
         item.annotation = "parameter of modified CD Potential";
         item.category = "TDOFDFT: time dependent orbital free density functional theory";
         item.type = "Real";
-        item.description = "The value of the parameter alpha in modified CD potential method. mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)";
+        item.description = "The value of the parameter alpha in modified CD potential method. "
+                           "mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)";
         item.default_value = "1.0";
         item.unit = "";
         item.availability = "TDOFDFT";
@@ -572,8 +572,7 @@ void ReadInput::item_tdofdft()
         this->add_item(item);
     }
 }
-void ReadInput::item_lr_tddft()
-{
+void ReadInput::item_lr_tddft() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -582,7 +581,8 @@ void ReadInput::item_lr_tddft()
         item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
         item.category = "Linear Response TDDFT (Under Development Feature)";
         item.type = "String";
-        item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
+        item.description =
+            "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
         item.default_value = "LDA";
         item.unit = "";
         item.availability = "";
@@ -604,11 +604,15 @@ void ReadInput::item_lr_tddft()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             auto& ifxc = para.input.lr_init_xc_kernel;
-            for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
-            };
+            for (int i = 0; i < count; i++) {
+                ifxc.push_back(item.str_values[i]);
+            }
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("default"); }
-            };
+            if (para.input.lr_init_xc_kernel.empty()) {
+                para.input.lr_init_xc_kernel.push_back("default");
+            }
+        };
         sync_stringvec(input.lr_init_xc_kernel, para.input.lr_init_xc_kernel.size(), "default");
         this->add_item(item);
     }
@@ -617,7 +621,8 @@ void ReadInput::item_lr_tddft()
         item.annotation = "the eigensolver for LR-TDDFT";
         item.category = "Linear Response TDDFT (Under Development Feature)";
         item.type = "String";
-        item.description = R"(The method to solve the Casida equation in LR-TDDFT under Tamm-Dancoff approximation (TDA).
+        item.description =
+            R"(The method to solve the Casida equation in LR-TDDFT under Tamm-Dancoff approximation (TDA).
 * dav/dav_subspace/cg: Construct and diagonalize the Hamiltonian matrix iteratively with Davidson/Non-ortho-Davidson/CG algorithm.
 * lapack: Construct the full matrix and directly diagonalize with LAPACK.
 * spectrum: Calculate absorption spectrum only without solving Casida equation.)";
@@ -632,7 +637,9 @@ void ReadInput::item_lr_tddft()
         item.annotation = "convergence threshold of the LR-TDDFT eigensolver";
         item.category = "Linear Response TDDFT (Under Development Feature)";
         item.type = "Real";
-        item.description = "The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.";
+        item.description = "The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a "
+                           "pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a "
+                           "one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.";
         item.default_value = "1e-2";
         item.unit = "";
         item.availability = "";
@@ -652,8 +659,10 @@ void ReadInput::item_lr_tddft()
         read_sync_int(input.nocc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const int nocc_default = std::max(static_cast<int>(para.input.nelec + 1) / 2, para.input.nbands);
-            if (para.input.nocc <= 0 || para.input.nocc > nocc_default) { para.input.nocc = nocc_default; }
-            };
+            if (para.input.nocc <= 0 || para.input.nocc > nocc_default) {
+                para.input.nocc = nocc_default;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -706,11 +715,10 @@ void ReadInput::item_lr_tddft()
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            for (int i = 0; i < count; i++)
-            {
+            for (int i = 0; i < count; i++) {
                 para.input.abs_wavelen_range.push_back(std::stod(item.str_values[i]));
             }
-            };
+        };
         sync_doublevec(input.abs_wavelen_range, 2, 0.0);
         this->add_item(item);
     }
@@ -719,7 +727,9 @@ void ReadInput::item_lr_tddft()
         item.annotation = "whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis";
         item.category = "Linear Response TDDFT (Under Development Feature)";
         item.type = "Boolean";
-        item.description = "Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.";
+        item.description =
+            "Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the "
+            "LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
@@ -751,4 +761,4 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
 }
-}
+} // namespace ModuleIO

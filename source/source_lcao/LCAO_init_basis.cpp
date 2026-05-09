@@ -3,37 +3,30 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_comm.h"
 
-namespace LCAO_domain
-{
+namespace LCAO_domain {
 
 void init_basis_lcao(Parallel_Orbitals& pv,
-        const double &onsite_radius,
-        const double &lcao_ecut,
-        const double &lcao_dk,
-        const double &lcao_dr,
-        const double &lcao_rmax,
-		UnitCell& ucell,
-        TwoCenterBundle& two_center_bundle,
-        LCAO_Orbitals& orb
-)
-{
+                     const double& onsite_radius,
+                     const double& lcao_ecut,
+                     const double& lcao_dk,
+                     const double& lcao_dr,
+                     const double& lcao_rmax,
+                     UnitCell& ucell,
+                     TwoCenterBundle& two_center_bundle,
+                     LCAO_Orbitals& orb) {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
     const int nlocal = PARAM.globalv.nlocal;
     int nb2d = PARAM.inp.nb2d;
     // autoset NB2D first
-    if (nb2d == 0)
-    {
-        if (nlocal > 0)
-        {
+    if (nb2d == 0) {
+        if (nlocal > 0) {
             nb2d = (PARAM.inp.nspin == 4) ? 2 : 1;
         }
-        if (nlocal > 500)
-        {
+        if (nlocal > 500) {
             nb2d = 32;
         }
-        if (nlocal > 1000)
-        {
+        if (nlocal > 1000) {
             nb2d = 64;
         }
     }
@@ -51,8 +44,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // on the old interface for now.
     two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
-    if (PARAM.inp.vnl_in_h)
-    {
+    if (PARAM.inp.vnl_in_h) {
         ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
         two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
     }
@@ -70,8 +62,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     int try_nb = pv.init(nlocal, nlocal, nb2d, DIAG_WORLD);
     try_nb += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
-    if (try_nb != 0)
-    {
+    if (try_nb != 0) {
         // fall back to the minimum size, 1 or 2 (nspin=4)
         const int min_size = (PARAM.inp.nspin == 4) ? 2 : 1;
         pv.set(nlocal, nlocal, min_size, pv.blacs_ctxt);
@@ -93,4 +84,4 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     return;
 }
 
-}
+} // namespace LCAO_domain

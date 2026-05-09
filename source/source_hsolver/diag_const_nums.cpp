@@ -9,8 +9,7 @@ template class const_nums<std::complex<float>>;
 
 // Specialize templates to support double types
 template <>
-const_nums<double>::const_nums()
-{
+const_nums<double>::const_nums() {
     base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>()(this->zero, 1);
     this->zero[0] = 0.0;
     base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>()(this->one, 1);
@@ -21,8 +20,7 @@ const_nums<double>::const_nums()
 
 // Specialize templates to support double types
 template <>
-const_nums<float>::const_nums()
-{
+const_nums<float>::const_nums() {
     base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(this->zero, 1);
     this->zero[0] = 0.0;
     base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(this->one, 1);
@@ -33,8 +31,7 @@ const_nums<float>::const_nums()
 
 // Specialized templates to support std:: std::complex<double>types
 template <>
-const_nums<std::complex<double>>::const_nums()
-{
+const_nums<std::complex<double>>::const_nums() {
     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(this->zero, 1);
     this->zero[0] = std::complex<double>(0.0, 0.0);
     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(this->one, 1);
@@ -45,8 +42,7 @@ const_nums<std::complex<double>>::const_nums()
 
 // Specialized templates to support std:: complex<float>types
 template <>
-const_nums<std::complex<float>>::const_nums()
-{
+const_nums<std::complex<float>>::const_nums() {
     base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(this->zero, 1);
     this->zero[0] = std::complex<float>(0.0, 0.0);
     base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(this->one, 1);

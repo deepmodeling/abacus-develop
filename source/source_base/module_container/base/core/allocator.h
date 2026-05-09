@@ -48,9 +48,7 @@ class Allocator {
      * @param ptr The pointer to get the allocated size of.
      * @return size_t The size of the allocated block of memory, in bytes.
      */
-    virtual size_t AllocatedSize(void* ptr) {
-        return allocated_size_;
-    }
+    virtual size_t AllocatedSize(void* ptr) { return allocated_size_; }
 
     /**
      * @brief Get the type of memory used by the TensorBuffer.

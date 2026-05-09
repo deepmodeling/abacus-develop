@@ -1,10 +1,10 @@
 INPUT_PARAMETERS 
 
-#Parameters	(General)
+#Parameters    (General)
 suffix            autotest
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
-	
+    
 nbands            8
 calculation       md
 read_file_dir     ./

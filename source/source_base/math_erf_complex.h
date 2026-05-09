@@ -4,11 +4,9 @@
 #include <complex>
 #include <vector>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-class ErrorFunc
-{
+class ErrorFunc {
   public:
     ErrorFunc();
     ~ErrorFunc();
@@ -40,14 +38,10 @@ class ErrorFunc
 
   private:
     static double w_im_y100(double y100, double x);
-    static inline double sinc(double x, double sinx)
-    {
+    static inline double sinc(double x, double sinx) {
         return fabs(x) < 1e-4 ? 1 - (0.1666666666666666666667) * x * x : sinx / x;
     }
-    static inline double copysign(double x, double y)
-    {
-        return x < 0 != y < 0 ? -x : x;
-    }
+    static inline double copysign(double x, double y) { return x < 0 != y < 0 ? -x : x; }
     static const std::vector<double> expa2n2;
 };
 } // namespace ModuleBase

@@ -16,8 +16,7 @@
  *     - computes the inverse of a dim*dim real matrix
  */
 
-TEST(InverseMatrixComplexTest, InverseMatrixComplex)
-{
+TEST(InverseMatrixComplexTest, InverseMatrixComplex) {
     int dim = 10;
     ModuleBase::ComplexMatrix B(dim, dim);
     ModuleBase::ComplexMatrix C(dim, dim);
@@ -26,17 +25,12 @@ TEST(InverseMatrixComplexTest, InverseMatrixComplex)
     double b;
     double c;
     // construct a Hermite matrix
-    for (int j = 0; j < dim; j++)
-    {
-        for (int i = 0; i <= j; i++)
-        {
-            if (i == j)
-            {
+    for (int j = 0; j < dim; j++) {
+        for (int i = 0; i <= j; i++) {
+            if (i == j) {
                 c = std::rand();
                 B(i, j) = std::complex<double>(c, 0.0);
-            }
-            else
-            {
+            } else {
                 a = std::rand();
                 b = std::rand();
                 B(i, j) = std::complex<double>(a, b);
@@ -48,44 +42,32 @@ TEST(InverseMatrixComplexTest, InverseMatrixComplex)
     IMC.init(dim);
     IMC.using_zheev(B, C);
     D = B * C;
-    for (int i = 0; i < dim; i++)
-    {
+    for (int i = 0; i < dim; i++) {
         EXPECT_NEAR(D(i, i).real(), 1.0, 1e-14);
         EXPECT_NEAR(D(i, i).imag(), 0.0, 1e-14);
         // std::cout << D(i,i).real() << " " << D(i,i).imag()  << std::endl;
     }
 }
 
-TEST(InverseMatrixRealTest, InverseMatrixReal)
-{
+TEST(InverseMatrixRealTest, InverseMatrixReal) {
     int dim = 3;
     double in[9];
     double out[9];
-    for (int i = 0; i < dim; i++)
-    {
-        for (int j = 0; j < dim; j++)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < dim; i++) {
+        for (int j = 0; j < dim; j++) {
+            if (i == j) {
                 in[i * dim + j] = 2.0;
-            }
-            else
-            {
+            } else {
                 in[i * dim + j] = 0.0;
             }
         }
     }
     ModuleBase::Inverse_Matrix_Real(dim, in, out);
-    for (int i = 0; i < dim; i++)
-    {
-        for (int j = 0; j < dim; j++)
-        {
-            if (i == j)
-            {
+    for (int i = 0; i < dim; i++) {
+        for (int j = 0; j < dim; j++) {
+            if (i == j) {
                 EXPECT_DOUBLE_EQ(in[i * dim + j], 2.0);
-            }
-            else
-            {
+            } else {
                 EXPECT_DOUBLE_EQ(in[i * dim + j], 0.0);
             }
         }

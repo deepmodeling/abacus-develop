@@ -2,8 +2,7 @@
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_io/module_parameter/parameter.h"
 
-namespace pw
-{
+namespace pw {
 
 void iter_init_dftu_pw(const int iter,
                        const int istep,
@@ -11,23 +10,19 @@ void iter_init_dftu_pw(const int iter,
                        const void* psi,
                        const ModuleBase::matrix& wg,
                        const UnitCell& ucell,
-                       const Input_para& inp)
-{
-    if (!inp.dft_plus_u)
-    {
+                       const Input_para& inp) {
+    if (!inp.dft_plus_u) {
         return;
     }
 
-    if (iter == 1 && istep == 0)
-    {
+    if (iter == 1 && istep == 0) {
         return;
     }
 
-    if (dftu.omc != 2)
-    {
+    if (dftu.omc != 2) {
         dftu.cal_occ_pw(iter, psi, wg, ucell, inp.mixing_beta);
     }
     dftu.output(ucell);
 }
 
-}
+} // namespace pw

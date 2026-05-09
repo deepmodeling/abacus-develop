@@ -16,7 +16,8 @@ TEST(Tensor, Constructor) {
 
 #if __CUDA || __ROCM
     // Test constructor with specified device type
-    container::Tensor t2(container::DataType::DT_DOUBLE, container::DeviceType::GpuDevice,
+    container::Tensor t2(container::DataType::DT_DOUBLE,
+                         container::DeviceType::GpuDevice,
                          container::TensorShape({3, 4}));
     EXPECT_EQ(t2.data_type(), container::DataType::DT_DOUBLE);
     EXPECT_EQ(t2.device_type(), container::DeviceType::GpuDevice);
@@ -34,7 +35,9 @@ TEST(Tensor, Constructor) {
 
     // Test reference constructor
     std::vector<float> vec{1.0, 2.0, 3.0};
-    container::TensorMap t4(&vec[0], container::DataType::DT_FLOAT, container::DeviceType::CpuDevice,
+    container::TensorMap t4(&vec[0],
+                            container::DataType::DT_FLOAT,
+                            container::DeviceType::CpuDevice,
                             container::TensorShape({1, 3}));
     EXPECT_EQ(t4.data_type(), container::DataType::DT_FLOAT);
     EXPECT_EQ(t4.device_type(), container::DeviceType::CpuDevice);
@@ -42,7 +45,6 @@ TEST(Tensor, Constructor) {
     EXPECT_EQ(t4.NumElements(), 3);
     EXPECT_EQ(t4.data(), vec.data());
 }
-
 
 TEST(Tensor, GetDataPointer) {
     // Create a 1x1 float tensor with data [1.0, 2.0, 3.0, 4.0].
@@ -59,12 +61,12 @@ TEST(Tensor, GetDataPointer) {
     t5.data<std::complex<float>>()[0] = {1.0f, 0.0f};
     t6.data<std::complex<double>>()[0] = {1.0f, 0.0f};
     // Get a pointer to the data buffer.
-    void *ptr1 = t1.data();
-    void *ptr2 = t2.data();
-    void *ptr3 = t3.data();
-    void *ptr4 = t4.data();
-    void *ptr5 = t5.data();
-    void *ptr6 = t6.data();
+    void* ptr1 = t1.data();
+    void* ptr2 = t2.data();
+    void* ptr3 = t3.data();
+    void* ptr4 = t4.data();
+    void* ptr5 = t5.data();
+    void* ptr6 = t6.data();
     // Ensure that the returned pointer is not null and points to the expected data.
     EXPECT_NE(ptr1, nullptr);
     EXPECT_NE(ptr2, nullptr);
@@ -72,17 +74,16 @@ TEST(Tensor, GetDataPointer) {
     EXPECT_NE(ptr4, nullptr);
     EXPECT_NE(ptr5, nullptr);
     EXPECT_NE(ptr6, nullptr);
-    EXPECT_EQ(static_cast<int *>(ptr1)[0], 1);
-    EXPECT_EQ(static_cast<int64_t *>(ptr2)[0], 1);
-    EXPECT_EQ(static_cast<float *>(ptr3)[0], 1.0f);
-    EXPECT_EQ(static_cast<double *>(ptr4)[0], 1.0f);
+    EXPECT_EQ(static_cast<int*>(ptr1)[0], 1);
+    EXPECT_EQ(static_cast<int64_t*>(ptr2)[0], 1);
+    EXPECT_EQ(static_cast<float*>(ptr3)[0], 1.0f);
+    EXPECT_EQ(static_cast<double*>(ptr4)[0], 1.0f);
 
-    EXPECT_EQ(static_cast<std::complex<float> *>(ptr5)[0].real(), 1.0);
-    EXPECT_EQ(static_cast<std::complex<float> *>(ptr5)[0].imag(), 0.0);
-    EXPECT_EQ(static_cast<std::complex<double> *>(ptr6)[0].real(), 1.0);
-    EXPECT_EQ(static_cast<std::complex<double> *>(ptr6)[0].imag(), 0.0);
+    EXPECT_EQ(static_cast<std::complex<float>*>(ptr5)[0].real(), 1.0);
+    EXPECT_EQ(static_cast<std::complex<float>*>(ptr5)[0].imag(), 0.0);
+    EXPECT_EQ(static_cast<std::complex<double>*>(ptr6)[0].real(), 1.0);
+    EXPECT_EQ(static_cast<std::complex<double>*>(ptr6)[0].imag(), 0.0);
 }
-
 
 TEST(Tensor, GetDataPointerDeathTest) {
     ::testing::FLAGS_gtest_death_test_style = "threadsafe";
@@ -90,11 +91,9 @@ TEST(Tensor, GetDataPointerDeathTest) {
     // This should cause an error message to be printed and the program to exit with failure.
     container::Tensor tensor(container::DataType::DT_FLOAT, container::TensorShape({1, 1}));
     // Verify that requesting data with an unsupported data type causes the program to exit.
-    ASSERT_EXIT(
-        tensor.data<int>(), // Unsupported data type
-        ::testing::ExitedWithCode(EXIT_FAILURE),
-        "Tensor data type does not match requested type."
-    );
+    ASSERT_EXIT(tensor.data<int>(), // Unsupported data type
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                "Tensor data type does not match requested type.");
 }
 
 TEST(Tensor, SizeOfType) {
@@ -115,17 +114,14 @@ TEST(Tensor, SizeOfType) {
 
     // Test DT_COMPLEX_DOUBLE
     EXPECT_EQ(container::Tensor::SizeOfType(container::DataType::DT_COMPLEX_DOUBLE), sizeof(std::complex<double>));
-
 }
 
 TEST(Tensor, SizeOfTypeDeathTest) {
     ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // Verify that requesting data with an unsupported data type causes the program to exit.
-    ASSERT_EXIT(
-        container::Tensor::SizeOfType(container::DataType::DT_INVALID),
-        ::testing::ExitedWithCode(EXIT_FAILURE),
-        "Unsupported data type!"
-    );
+    ASSERT_EXIT(container::Tensor::SizeOfType(container::DataType::DT_INVALID),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                "Unsupported data type!");
 }
 
 TEST(Tensor, ToDeviceAndSetZero) {
@@ -292,21 +288,21 @@ TEST(Tensor, Buffer) {
     container::Tensor tensor(container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, shape);
 
     // fill the tensor with some values
-    auto *data_ptr = tensor.data<float>();
+    auto* data_ptr = tensor.data<float>();
     for (int ii = 0; ii < tensor.NumElements(); ii++) {
         data_ptr[ii] = static_cast<float>(ii);
     }
 
     // get the tensor buffer
-    const container::TensorBuffer &buffer = tensor.buffer();
+    const container::TensorBuffer& buffer = tensor.buffer();
 
     // check if the data pointer is the same as the tensor data pointer
-    assert(buffer.data() == static_cast<void *>(data_ptr));
+    assert(buffer.data() == static_cast<void*>(data_ptr));
 }
 
 TEST(Tensor, Resize) {
     container::Tensor t1(container::DataType::DT_FLOAT, container::TensorShape({2, 2}));
-    const float *data_ptr1 = t1.data<float>();
+    const float* data_ptr1 = t1.data<float>();
 
     container::TensorShape new_shape({3, 3});
     t1.resize(new_shape);
@@ -322,7 +318,7 @@ TEST(Tensor, Resize) {
     EXPECT_NE(t1.data<float>(), data_ptr1);
 
     // Check if the data buffer is correctly zeroed
-    const float *data_ptr2 = t1.data<float>();
+    const float* data_ptr2 = t1.data<float>();
     for (int ii = 0; ii < new_shape.NumElements(); ++ii) {
         EXPECT_FLOAT_EQ(data_ptr2[ii], 0.0);
     }
@@ -335,22 +331,20 @@ TEST(Tensor, Resize) {
 TEST(Tensor, GetAllocatorDeathTest) {
     ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     container::Tensor t1(container::DataType::DT_FLOAT, container::TensorShape({2, 2}));
-    ASSERT_EXIT(
-        base::core::Allocator *alloc = container::Tensor::GetAllocator(container::DeviceType::UnKnown),
-        ::testing::ExitedWithCode(EXIT_FAILURE),
-        "Tensor device type unknown does not match requested type."
-    );
+    ASSERT_EXIT(base::core::Allocator* alloc = container::Tensor::GetAllocator(container::DeviceType::UnKnown),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                "Tensor device type unknown does not match requested type.");
 }
 
 TEST(Tensor, OutputOperator) {
     // Create a tensor of shape [2, 2] with random values
     const int64_t num_elements = 4;
-    int *data1 = new int[num_elements];
-    auto *data2 = new int64_t[num_elements];
-    auto *data3 = new float[num_elements];
-    auto *data4 = new double[num_elements];
-    auto *data5 = new std::complex<float>[num_elements];
-    auto *data6 = new std::complex<double>[num_elements];
+    int* data1 = new int[num_elements];
+    auto* data2 = new int64_t[num_elements];
+    auto* data3 = new float[num_elements];
+    auto* data4 = new double[num_elements];
+    auto* data5 = new std::complex<float>[num_elements];
+    auto* data6 = new std::complex<double>[num_elements];
     for (int ii = 0; ii < num_elements; ++ii) {
         data1[ii] = static_cast<int>(ii);
         data2[ii] = static_cast<int64_t>(ii);
@@ -365,7 +359,9 @@ TEST(Tensor, OutputOperator) {
     const container::TensorMap t3(data3, container::DataType::DT_FLOAT, container::DeviceType::CpuDevice, shape);
     const container::TensorMap t4(data4, container::DataType::DT_DOUBLE, container::DeviceType::CpuDevice, shape);
     const container::TensorMap t5(data5, container::DataType::DT_COMPLEX, container::DeviceType::CpuDevice, shape);
-    const container::TensorMap t6(data6, container::DataType::DT_COMPLEX_DOUBLE, container::DeviceType::CpuDevice,
+    const container::TensorMap t6(data6,
+                                  container::DataType::DT_COMPLEX_DOUBLE,
+                                  container::DeviceType::CpuDevice,
                                   shape);
     // Test if the output operator produces the expected output
     std::ostringstream oss;
@@ -383,7 +379,7 @@ TEST(Tensor, CopyFrom) {
     container::Tensor destTensor(DataType::DT_FLOAT, DeviceType::CpuDevice, TensorShape({2, 3}));
 
     // Initialize data in the source tensor
-    int *sourceData = sourceTensor.data<int>();
+    int* sourceData = sourceTensor.data<int>();
     for (int ii = 0; ii < sourceTensor.NumElements(); ++ii) {
         sourceData[ii] = ii;
     }
@@ -401,7 +397,7 @@ TEST(Tensor, CopyFrom) {
     EXPECT_EQ(destTensor.NumElements(), 6);
 
     // Check that the data in the destination tensor matches the source tensor
-    int *destData = destTensor.data<int>();
+    int* destData = destTensor.data<int>();
     for (int ii = 0; ii < destTensor.NumElements(); ++ii) {
         EXPECT_EQ(destData[ii], ii);
     }
@@ -496,18 +492,18 @@ TEST(Tensor, SubTensor) {
     }
 
     // Access a sub-tensor based on the provided index
-    container::Tensor subTensor = tensor[1];  // Get the second row
+    container::Tensor subTensor = tensor[1]; // Get the second row
 
     // Check the properties of the sub-tensor
     EXPECT_EQ(subTensor.data_type(), DataType::DT_INT);
     EXPECT_EQ(subTensor.device_type(), DeviceType::CpuDevice);
-    EXPECT_EQ(subTensor.shape().ndim(), 1);  // Sub-tensor should be 1D
-    EXPECT_EQ(subTensor.shape().dim_size(0), 3);  // Sub-tensor should have 3 elements
+    EXPECT_EQ(subTensor.shape().ndim(), 1);      // Sub-tensor should be 1D
+    EXPECT_EQ(subTensor.shape().dim_size(0), 3); // Sub-tensor should have 3 elements
 
     // Check the data in the sub-tensor
     int* subTensorData = subTensor.data<int>();
     for (int ii = 0; ii < subTensor.NumElements(); ++ii) {
-        EXPECT_EQ(subTensorData[ii], ii + 3);  // Offset by 3 elements (second row)
+        EXPECT_EQ(subTensorData[ii], ii + 3); // Offset by 3 elements (second row)
     }
 }
 

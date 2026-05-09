@@ -20,8 +20,7 @@
  *      O_radials.build(orb_file, element_index, ofs_log, GlobalV::MY_RANK);
  *
  *                                                                          */
-class AtomicRadials : public RadialSet
-{
+class AtomicRadials : public RadialSet {
   public:
     AtomicRadials() {}
     AtomicRadials(const AtomicRadials& other) : RadialSet(other), orb_ecut_(other.orb_ecut_) {}
@@ -51,7 +50,6 @@ class AtomicRadials : public RadialSet
                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                          const int rank = 0                //!< MPI rank
     );
-
 };
 
 #endif

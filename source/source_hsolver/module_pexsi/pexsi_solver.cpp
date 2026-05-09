@@ -12,8 +12,7 @@
 
 extern MPI_Comm DIAG_WORLD;
 extern MPI_Comm GRID_WORLD;
-namespace pexsi
-{
+namespace pexsi {
 
 int PEXSI_Solver::pexsi_npole = 0;
 bool PEXSI_Solver::pexsi_inertia = 0;
@@ -48,8 +47,7 @@ void PEXSI_Solver::prepare(const int blacs_text,
                            const double* h,
                            const double* s,
                            double*& _DM,
-                           double*& _EDM)
-{
+                           double*& _EDM) {
     this->blacs_text = blacs_text;
     this->nb = nb;
     this->nrow = nrow;
@@ -63,8 +61,7 @@ void PEXSI_Solver::prepare(const int blacs_text,
     this->totalFreeEnergy = 0.0;
 }
 
-int PEXSI_Solver::solve(double mu0)
-{
+int PEXSI_Solver::solve(double mu0) {
     MPI_Group grid_group;
     int myid, grid_np;
     MPI_Group world_group;
@@ -72,7 +69,7 @@ int PEXSI_Solver::solve(double mu0)
     MPI_Comm_size(DIAG_WORLD, &grid_np);
     MPI_Comm_group(DIAG_WORLD, &world_group);
 
-    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
+    int grid_proc_range[3] = {0, (GlobalV::NPROC / grid_np) * grid_np - 1, GlobalV::NPROC / grid_np};
     MPI_Group_range_incl(world_group, 1, &grid_proc_range, &grid_group);
 
     simplePEXSI(DIAG_WORLD,
@@ -98,25 +95,13 @@ int PEXSI_Solver::solve(double mu0)
     return 0;
 }
 
-const double PEXSI_Solver::get_totalFreeEnergy() const
-{
-    return totalFreeEnergy;
-}
+const double PEXSI_Solver::get_totalFreeEnergy() const { return totalFreeEnergy; }
 
-const double PEXSI_Solver::get_totalEnergyH() const
-{
-    return totalEnergyH;
-}
+const double PEXSI_Solver::get_totalEnergyH() const { return totalEnergyH; }
 
-const double PEXSI_Solver::get_totalEnergyS() const
-{
-    return totalEnergyS;
-}
+const double PEXSI_Solver::get_totalEnergyS() const { return totalEnergyS; }
 
-const double PEXSI_Solver::get_mu() const
-{
-    return mu;
-}
+const double PEXSI_Solver::get_mu() const { return mu; }
 
 } // namespace pexsi
 #endif

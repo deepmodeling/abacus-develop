@@ -3,8 +3,7 @@
 #include "elecstate.h"
 #include "source_base/matrix.h"
 
-namespace elecstate
-{
+namespace elecstate {
 void calEBand(const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, fenergy& f_en);
 
 void calculate_weights(const ModuleBase::matrix& ekb,

@@ -8,20 +8,20 @@
 #include <complex>
 
 // functions
-#include "../module_unk/berryphase.h"                          // use berryphase
-#include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
-#include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
-#include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
-#include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
-#include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
-#include "../module_hs/write_HS.h"                            // use ModuleIO::write_hsk()
-#include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
-#include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
-#include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
-#include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
-#include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
-#include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
+#include "../module_unk/berryphase.h"                    // use berryphase
+#include "../module_hs/cal_pLpR.h"                       // use AngularMomentumCalculator()
+#include "source_io/module_hs/output_mat_sparse.h"       // use ModuleIO::output_mat_sparse()
+#include "../module_hs/write_HS_R.h"                     // use ModuleIO::write_hsr()
+#include "../module_mulliken/output_mulliken.h"          // use cal_mag()
+#include "../module_wannier/to_wannier90_lcao.h"         // use toWannier90_LCAO
+#include "../module_wannier/to_wannier90_lcao_in_pw.h"   // use toWannier90_LCAO_IN_PW
+#include "../module_hs/write_HS.h"                       // use ModuleIO::write_hsk()
+#include "../module_dm/write_dmk.h"                      // use ModuleIO::write_dmk()
+#include "../module_dm/write_dmr.h"                      // use ModuleIO::write_dmr()
+#include "../module_dos/write_dos_lcao.h"                // use ModuleIO::write_dos_lcao()
+#include "../module_wf/write_wfc_nao.h"                  // use ModuleIO::write_wfc_nao()
+#include "source_lcao/module_deltaspin/spin_constrain.h" // use spinconstrain::SpinConstrain<TK>
+#include "source_lcao/module_operator_lcao/ekinetic.h"   // use hamilt::EKinetic
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
@@ -30,9 +30,9 @@
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
 #include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
 #endif
-#include "../module_qo/to_qo.h"                // use toQO
-#include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
-#include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
+#include "../module_qo/to_qo.h"                       // use toQO
+#include "source_lcao/module_rdmft/rdmft.h"           // use RDMFT codes
+#include "source_lcao/rho_tau_lcao.h"                 // mohan add 2025-10-24
 #include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
 template <typename TK, typename TR>
@@ -57,8 +57,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              Exx_NAO<TK>& exx_nao,
                              const bool conv_esolver,
                              const bool scf_nmax_flag,
-                             const int istep)
-{
+                             const int istep) {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
 
@@ -70,27 +69,22 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     bool out_flag = false;
     if (PARAM.inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
-        if (istep % inp.out_freq_ion == 0)
-        {
+        if (istep % inp.out_freq_ion == 0) {
             istep_in = istep;
             out_flag = true;
         }
-    }
-    else if (PARAM.inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
+    } else if (PARAM.inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
     {
-        if (istep % inp.out_freq_td == 0)
-        {
+        if (istep % inp.out_freq_td == 0) {
             istep_in = istep;
             out_flag = true;
         }
-    }
-    else if (conv_esolver || scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
+    } else if (conv_esolver || scf_nmax_flag) // mohan add scf_nmax_flag on 20250921
     {
         out_flag = true;
     }
 
-    if (!out_flag)
-    {
+    if (!out_flag) {
         ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
         return;
     }
@@ -105,8 +99,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
     //------------------------------------------------------------------
-    if (inp.out_dos)
-    {
+    if (inp.out_dos) {
         ModuleIO::write_dos_lcao(psi,
                                  p_hamilt,
                                  pv,
@@ -127,22 +120,25 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 2) Output density matrix DM(R)
     //------------------------------------------------------------------
-    if (inp.out_dmr[0])
-    {
+    if (inp.out_dmr[0]) {
         const int precision = inp.out_dmr[1];
 
-        ModuleIO::write_dmr(dm->get_DMR_vector(), &ucell, precision, pv, out_app_flag, 
-			ucell.get_iat2iwt(), ucell.nat, istep);
+        ModuleIO::write_dmr(dm->get_DMR_vector(),
+                            &ucell,
+                            precision,
+                            pv,
+                            out_app_flag,
+                            ucell.get_iat2iwt(),
+                            ucell.nat,
+                            istep);
     }
 
     //------------------------------------------------------------------
     //! 3) Output density matrix DM(k)
     //------------------------------------------------------------------
-    if (inp.out_dmk[0])
-    {
+    if (inp.out_dmk[0]) {
         std::vector<double> efermis(nspin == 2 ? 2 : 1);
-        for (int ispin = 0; ispin < efermis.size(); ispin++)
-        {
+        for (int ispin = 0; ispin < efermis.size(); ispin++) {
             efermis[ispin] = pelec->eferm.get_efval(ispin);
         }
         const int precision = inp.out_dmk[1];
@@ -153,8 +149,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     // 4) Output H(k) and S(k) matrices for each k-point
     //------------------------------------------------------------------
-    if (inp.out_mat_hs[0])
-    {
+    if (inp.out_mat_hs[0]) {
         ModuleIO::write_hsk(global_out_dir,
                             nspin,
                             kv.get_nks(),
@@ -172,8 +167,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 5) Output electronic wavefunctions Psi(k)
     //------------------------------------------------------------------
-    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
-    {
+    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao) {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
                                 out_app_flag,
                                 psi[0],
@@ -218,14 +212,12 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 7a) Output H(R) and S(R) matrices in CSR format
     //------------------------------------------------------------------
-    if (inp.out_mat_hs2[0])
-    {
+    if (inp.out_mat_hs2[0]) {
         const int precision = inp.out_mat_hs2[1];
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
-        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
-                            out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv, out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
     }
 
     //------------------------------------------------------------------
@@ -251,22 +243,20 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 8) Output kinetic matrix
     //------------------------------------------------------------------
-    if (inp.out_mat_tk[0])
-    {
+    if (inp.out_mat_tk[0]) {
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
-        hamilt::Operator<TK>* ekinetic
-            = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(&hsk,
-                                                                    kv.kvec_d,
-                                                                    &hR,
-                                                                    &ucell,
-                                                                    orb.cutoffs(),
-                                                                    &gd,
-                                                                    two_center_bundle.kinetic_orb.get());
+        hamilt::Operator<TK>* ekinetic =
+            new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(&hsk,
+                                                               kv.kvec_d,
+                                                               &hR,
+                                                               &ucell,
+                                                               orb.cutoffs(),
+                                                               &gd,
+                                                               two_center_bundle.kinetic_orb.get());
 
         const int nspin_k = (nspin == 2 ? 2 : 1);
-        for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik)
-        {
+        for (int ik = 0; ik < kv.get_nks() / nspin_k; ++ik) {
             ekinetic->init(ik);
 
             const int out_label = 1; // 1: .txt, 2: .dat
@@ -301,8 +291,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 9) Output expectation of angular momentum operator
     //------------------------------------------------------------------
-    if (inp.out_mat_l[0])
-    {
+    if (inp.out_mat_l[0]) {
         ModuleIO::AngularMomentumCalculator mylcalculator(inp.orbital_dir,
                                                           ucell,
                                                           orb.get_rcutmax_Phi(),
@@ -318,8 +307,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 10) Output Mulliken charge
     //------------------------------------------------------------------
-    if (inp.out_mul)
-    {
+    if (inp.out_mul) {
         ModuleIO::cal_mag(&pv,
                           p_hamilt,
                           kv,
@@ -335,8 +323,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 11) Output atomic magnetization by using 'spin_constraint'
     //------------------------------------------------------------------
-    if (inp.sc_mag_switch)
-    {
+    if (inp.sc_mag_switch) {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
         sc.print_Mi(GlobalV::ofs_running);
@@ -346,8 +333,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 12) Output Berry phase
     //------------------------------------------------------------------
-    if (inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
-    {
+    if (inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&pv);
         bp.lcao_init(ucell, gd, kv, orb);
@@ -360,11 +346,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //! 13) Wannier90 interface in LCAO basis
     // added by jingan in 2018.11.7
     //------------------------------------------------------------------
-    if (inp.calculation == "nscf" && inp.towannier90)
-    {
+    if (inp.calculation == "nscf" && inp.towannier90) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
-        if (inp.wannier_method == 1)
-        {
+        if (inp.wannier_method == 1) {
             toWannier90_LCAO_IN_PW wan(inp.out_wannier_mmn,
                                        inp.out_wannier_amn,
                                        inp.out_wannier_unk,
@@ -374,9 +358,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                        inp.wannier_spin);
             wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
             wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, sf, kv, psi, &pv);
-        }
-        else if (inp.wannier_method == 2)
-        {
+        } else if (inp.wannier_method == 2) {
             toWannier90_LCAO wan(inp.out_wannier_mmn,
                                  inp.out_wannier_amn,
                                  inp.out_wannier_unk,
@@ -394,26 +376,22 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     // 14) calculate the kinetic energy density tau
     // mohan add 2025-10-24
     //    if (inp.out_elf[0] > 0)
-    //	{
-    //		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
-    //	}
+    //    {
+    //        LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
+    //    }
 
 #ifdef __EXX
     //------------------------------------------------------------------
     //! 15) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
-    if (inp.out_chg[0])
-    {
+    if (inp.out_chg[0]) {
         if (GlobalC::exx_info.info_global.cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
             const std::string file_name_exx = global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
+            if (GlobalC::exx_info.info_ri.real_number) {
                 ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs());
-            }
-            else
-            {
+            } else {
                 ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs());
             }
         }
@@ -422,8 +400,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 16) Write RPA information in LCAO basis
     //------------------------------------------------------------------
-    if (inp.rpa)
-    {
+    if (inp.rpa) {
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
     }
@@ -432,13 +409,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 17) Perform RDMFT calculations, added by jghan, 2024-10-17
     //------------------------------------------------------------------
-    if (inp.rdmft == true)
-    {
+    if (inp.rdmft == true) {
         ModuleBase::matrix occ_num(pelec->wg);
-        for (int ik = 0; ik < occ_num.nr; ++ik)
-        {
-            for (int inb = 0; inb < occ_num.nc; ++inb)
-            {
+        for (int ik = 0; ik < occ_num.nr; ++ik) {
+            for (int inb = 0; inb < occ_num.nc; ++inb) {
                 occ_num(ik, inb) /= kv.wk[ik];
             }
         }
@@ -459,8 +433,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 17) Output quasi orbitals
     //------------------------------------------------------------------
-    if (inp.qo_switch)
-    {
+    if (inp.qo_switch) {
         toQO tqo(inp.qo_basis, inp.qo_strategy, inp.qo_thr, inp.qo_screening_coeff);
         tqo.initialize(global_out_dir,
                        inp.pseudo_dir,
@@ -476,23 +449,21 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 18) Calculate and output asynchronous overlap matrix for Hefei-NAMD
     //------------------------------------------------------------------
-    if (inp.cal_syns[0] > 0 && (istep > 0 || inp.init_vel))
-    {
+    if (inp.cal_syns[0] > 0 && (istep > 0 || inp.init_vel)) {
         ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
         ModuleBase::timer::start("ModuleIO", "output_namd_async_overlap");
 
         // Create a new Overlap instance specifically for SR_async calculation
         // This allows SR_async to be initialized with velocity-shifted dtau
         hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>* overlap_async =
-            new hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>(
-                nullptr,  // hsk_in: not needed for SR_async calculation
-                kv.kvec_d,
-                nullptr,  // hR_in: not needed for SR_async calculation
-                nullptr,  // SR_in: not needed for SR_async calculation
-                &ucell,
-                orb.cutoffs(),
-                &gd,
-                two_center_bundle.overlap_orb.get());
+            new hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>(nullptr, // hsk_in: not needed for SR_async calculation
+                                                              kv.kvec_d,
+                                                              nullptr, // hR_in: not needed for SR_async calculation
+                                                              nullptr, // SR_in: not needed for SR_async calculation
+                                                              &ucell,
+                                                              orb.cutoffs(),
+                                                              &gd,
+                                                              two_center_bundle.overlap_orb.get());
 
         // Use precision from cal_syns[1] (default 8 if not specified)
         const int precision = inp.cal_syns[1];
@@ -511,29 +482,29 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 }
 
 // For gamma only
-template void ModuleIO::ctrl_scf_lcao<double, double>(
-    UnitCell& ucell,
-    const Input_para& inp,
-    K_Vectors& kv,
-    elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
-    Parallel_Orbitals& pv,
-    Grid_Driver& gd,
-    psi::Psi<double>* psi,
-    hamilt::HamiltLCAO<double, double>* p_hamilt,
-    Plus_U& dftu, // mohan add 2025-11-07
-    TwoCenterBundle& two_center_bundle,
-    LCAO_Orbitals& orb,
-    const ModulePW::PW_Basis_K* pw_wfc,         // for berryphase
-    const ModulePW::PW_Basis* pw_rho,           // for berryphase
-    const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
-    const Structure_Factor& sf,                 // for Wannier90
-    rdmft::RDMFT<double, double>& rdmft_solver, // for RDMFT
-    Setup_DeePKS<double>& deepks,
-    Exx_NAO<double>& exx_nao,
-    const bool conv_esolver,
-    const bool scf_nmax_flag,
-    const int istep);
+template void
+ModuleIO::ctrl_scf_lcao<double, double>(UnitCell& ucell,
+                                        const Input_para& inp,
+                                        K_Vectors& kv,
+                                        elecstate::ElecState* pelec,
+                                        elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+                                        Parallel_Orbitals& pv,
+                                        Grid_Driver& gd,
+                                        psi::Psi<double>* psi,
+                                        hamilt::HamiltLCAO<double, double>* p_hamilt,
+                                        Plus_U& dftu, // mohan add 2025-11-07
+                                        TwoCenterBundle& two_center_bundle,
+                                        LCAO_Orbitals& orb,
+                                        const ModulePW::PW_Basis_K* pw_wfc,         // for berryphase
+                                        const ModulePW::PW_Basis* pw_rho,           // for berryphase
+                                        const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
+                                        const Structure_Factor& sf,                 // for Wannier90
+                                        rdmft::RDMFT<double, double>& rdmft_solver, // for RDMFT
+                                        Setup_DeePKS<double>& deepks,
+                                        Exx_NAO<double>& exx_nao,
+                                        const bool conv_esolver,
+                                        const bool scf_nmax_flag,
+                                        const int istep);
 
 // For multiple k-points
 template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(

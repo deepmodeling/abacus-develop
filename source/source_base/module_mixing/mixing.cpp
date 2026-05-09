@@ -1,15 +1,13 @@
 #include "mixing.h"
 
 #include "source_base/module_container/base/third_party/blas.h"
-namespace Base_Mixing
-{
+namespace Base_Mixing {
 
 void Mixing::push_data(Mixing_Data& mdata,
                        const double* data_in,
                        const double* data_out,
                        std::function<void(double*)> screen,
-                       const bool& need_calcoef)
-{
+                       const bool& need_calcoef) {
     const size_t length = mdata.length;
     this->push_data(
         mdata,
@@ -20,8 +18,7 @@ void Mixing::push_data(Mixing_Data& mdata,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-            for (int i = 0; i < length; ++i)
-            {
+            for (int i = 0; i < length; ++i) {
                 out[i] = in[i] + this->mixing_beta * sres[i];
             }
         },
@@ -33,8 +30,7 @@ void Mixing::push_data(Mixing_Data& mdata,
                        const std::complex<double>* data_in,
                        const std::complex<double>* data_out,
                        std::function<void(std::complex<double>*)> screen,
-                       const bool& need_calcoef)
-{
+                       const bool& need_calcoef) {
     const size_t length = mdata.length;
     this->push_data(
         mdata,
@@ -45,8 +41,7 @@ void Mixing::push_data(Mixing_Data& mdata,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-            for (int i = 0; i < length; ++i)
-            {
+            for (int i = 0; i < length; ++i) {
                 out[i] = in[i] + this->mixing_beta * sres[i];
             }
         },
@@ -54,13 +49,11 @@ void Mixing::push_data(Mixing_Data& mdata,
     return;
 }
 
-void Mixing::mix_data(const Mixing_Data& mdata, double* data_mix)
-{
+void Mixing::mix_data(const Mixing_Data& mdata, double* data_mix) {
     if (mdata.length <= 0)
         return;
     double* FP_data = static_cast<double*>(mdata.data);
-    if (mdata.ndim_use == 1)
-    {
+    if (mdata.ndim_use == 1) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -80,13 +73,11 @@ void Mixing::mix_data(const Mixing_Data& mdata, double* data_mix)
                                    data_mix,
                                    1);
 }
-void Mixing::mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
-{
+void Mixing::mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix) {
     if (mdata.length <= 0)
         return;
     std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
-    if (mdata.ndim_use == 1)
-    {
+    if (mdata.ndim_use == 1) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif

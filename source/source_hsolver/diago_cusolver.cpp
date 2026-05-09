@@ -15,30 +15,23 @@
 using complex = std::complex<double>;
 
 // Namespace for the diagonalization solver
-namespace hsolver
-{
+namespace hsolver {
 // Initialize the DecomposedState variable for real and complex numbers
 template <typename T>
 int DiagoCusolver<T>::DecomposedState = 0;
 
 template <typename T>
-DiagoCusolver<T>::DiagoCusolver()
-{
-}
+DiagoCusolver<T>::DiagoCusolver() {}
 
 template <typename T>
-DiagoCusolver<T>::~DiagoCusolver()
-{
-}
+DiagoCusolver<T>::~DiagoCusolver() {}
 
 // Diagonalization function
 template <typename T>
-void DiagoCusolver<T>::diag(
-    hamilt::MatrixBlock<T>& h_mat,
-    hamilt::MatrixBlock<T>& s_mat,
-    psi::Psi<T>& psi,
-    Real* eigenvalue_in)
-{
+void DiagoCusolver<T>::diag(hamilt::MatrixBlock<T>& h_mat,
+                            hamilt::MatrixBlock<T>& s_mat,
+                            psi::Psi<T>& psi,
+                            Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoCusolver", "diag");
     ModuleBase::timer::start("DiagoCusolver", "cusolver");
     // Allocate memory for eigenvalues

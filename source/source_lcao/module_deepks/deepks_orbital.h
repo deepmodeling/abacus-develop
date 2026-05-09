@@ -9,8 +9,7 @@
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 //------------------------
 // deepks_orbital.cpp
 //------------------------

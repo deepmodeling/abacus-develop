@@ -7,8 +7,7 @@
 #include "source_io/module_output/output_log.h"
 #include "write_elecstat_pot.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 void write_elecstat_pot(
 #ifdef __MPI
@@ -22,8 +21,7 @@ void write_elecstat_pot(
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent,
-    const int precision)
-{
+    const int precision) {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
@@ -44,30 +42,23 @@ void write_elecstat_pot(
     //! Dipole correction
     //==========================================
     ModuleBase::matrix v_efield;
-    if (efield>0 && dip_corr>0)
-    {
+    if (efield > 0 && dip_corr > 0) {
         v_efield.create(nspin, rho_basis->nrxx);
-        v_efield = elecstate::Efield::add_efield(*ucell,
-                                                 const_cast<ModulePW::PW_Basis*>(rho_basis),
-                                                 nspin,
-                                                 chr->rho,
-                                                 solvent);
+        v_efield =
+            elecstate::Efield::add_efield(*ucell, const_cast<ModulePW::PW_Basis*>(rho_basis), nspin, chr->rho, solvent);
     }
 
     //==========================================
     //! Add hartree potential and local pseudopot
     //==========================================
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
+    for (int ir = 0; ir < rho_basis->nrxx; ir++) {
         // the spin index is 0
         v_elecstat[ir] = vh(0, ir) + v_eff[ir];
 
-        if (efield>0 && dip_corr>0)
-        {
+        if (efield > 0 && dip_corr > 0) {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if(imp_sol == true)
-        {
+        if (imp_sol == true) {
             v_elecstat[ir] += solvent.delta_phi[ir];
         }
     }
@@ -94,15 +85,15 @@ void write_elecstat_pot(
     int out_fermi = 0;
 
     ModuleIO::write_vdata_palgrid(*chr->pgrid,
-        v_elecstat.data(),
-        is,
-        nspin,
-        istep,
-        fn,
-        ef_tmp,
-        ucell,
-        precision,
-        out_fermi);
+                                  v_elecstat.data(),
+                                  is,
+                                  nspin,
+                                  istep,
+                                  fn,
+                                  ef_tmp,
+                                  ucell,
+                                  precision,
+                                  out_fermi);
 
     ModuleBase::timer::end("ModuleIO", "write_elecstat_pot");
     return;

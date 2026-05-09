@@ -1,6 +1,6 @@
 SIAB: codes to generate numerical atomic orbitals.
 
-molden: generate molden style file for Multiwfn analysis. 
+molden: generate molden style file for Multiwfn analysis.
 
 plot-tools: band structure, dos and pdos, dipole and adsorption.
 

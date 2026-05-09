@@ -5,8 +5,7 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
 
-class OF_Stress_PW : public Stress_Func<double>
-{
+class OF_Stress_PW : public Stress_Func<double> {
   public:
     OF_Stress_PW(const elecstate::ElecState* pelec_in, ModulePW::PW_Basis* rhopw_in)
         : pelec(pelec_in), rhopw(rhopw_in){};

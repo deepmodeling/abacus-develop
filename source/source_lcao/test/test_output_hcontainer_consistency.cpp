@@ -27,17 +27,15 @@
  *  (which uses csrFileReader) and compares values.
  ***********************************************/
 
-class OutputHContainerTest : public testing::Test
-{
-protected:
+class OutputHContainerTest : public testing::Test {
+  protected:
     Parallel_Orbitals* paraV;
     UnitCell ucell;
     int nlocal;
     int test_size = 2;
     int test_nw = 4;
 
-    void SetUp() override
-    {
+    void SetUp() override {
         nlocal = test_size * test_nw;
 
         ucell.ntype = 1;
@@ -49,8 +47,7 @@ protected:
         ucell.atoms[0].taud.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
 
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2it[iat] = 0;
             ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -66,9 +63,15 @@ protected:
         ucell.atoms[0].label = "Si";
         ucell.latName = "fcc";
         ucell.lat0 = 10.0;
-        ucell.latvec.e11 = 1.0; ucell.latvec.e12 = 0.0; ucell.latvec.e13 = 0.0;
-        ucell.latvec.e21 = 0.0; ucell.latvec.e22 = 1.0; ucell.latvec.e23 = 0.0;
-        ucell.latvec.e31 = 0.0; ucell.latvec.e32 = 0.0; ucell.latvec.e33 = 1.0;
+        ucell.latvec.e11 = 1.0;
+        ucell.latvec.e12 = 0.0;
+        ucell.latvec.e13 = 0.0;
+        ucell.latvec.e21 = 0.0;
+        ucell.latvec.e22 = 1.0;
+        ucell.latvec.e23 = 0.0;
+        ucell.latvec.e31 = 0.0;
+        ucell.latvec.e32 = 0.0;
+        ucell.latvec.e33 = 1.0;
         ucell.set_iat2iwt(1);
 
         paraV = new Parallel_Orbitals();
@@ -76,34 +79,27 @@ protected:
         paraV->set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         delete paraV;
         delete[] ucell.atoms;
     }
 
     /// Build an HContainer with diagonal values at R=(0,0,0)
-    hamilt::HContainer<double>* create_hcontainer(double scale)
-    {
+    hamilt::HContainer<double>* create_hcontainer(double scale) {
         auto* hc = new hamilt::HContainer<double>(paraV);
-        for (int i = 0; i < ucell.nat; i++)
-        {
-            for (int j = 0; j < ucell.nat; j++)
-            {
+        for (int i = 0; i < ucell.nat; i++) {
+            for (int j = 0; j < ucell.nat; j++) {
                 hamilt::AtomPair<double> ap(i, j, 0, 0, 0, paraV);
                 hc->insert_pair(ap);
             }
         }
         hc->allocate(nullptr, true);
 
-        for (int i = 0; i < ucell.nat; i++)
-        {
+        for (int i = 0; i < ucell.nat; i++) {
             auto* ap = hc->find_pair(i, i);
-            if (ap)
-            {
+            if (ap) {
                 int nw = ucell.atoms[0].nw;
-                for (int k = 0; k < nw; k++)
-                {
+                for (int k = 0; k < nw; k++) {
                     ap->get_pointer()[k * nw + k] = scale * (k + 1) * 0.1;
                 }
             }
@@ -112,17 +108,18 @@ protected:
     }
 
     /// Write a full CSR file via write_dmr_csr (uses Output_HContainer internally)
-    void write_full_csr(const std::string& filename, hamilt::HContainer<double>* hc,
-                        int ispin, int nspin, int precision = 8)
-    {
+    void write_full_csr(const std::string& filename,
+                        hamilt::HContainer<double>* hc,
+                        int ispin,
+                        int nspin,
+                        int precision = 8) {
         std::string fname = filename;
         ModuleIO::write_dmr_csr(fname, &ucell, precision, hc, 0, ispin, nspin);
     }
 };
 
 // ---- Test 1: write-read round-trip, verify element-wise consistency ----
-TEST_F(OutputHContainerTest, WriteReadConsistency)
-{
+TEST_F(OutputHContainerTest, WriteReadConsistency) {
     mkdir("./test_ohc_dir", 0755);
 
     auto* hc_write = create_hcontainer(2.5);
@@ -136,35 +133,28 @@ TEST_F(OutputHContainerTest, WriteReadConsistency)
 
     // Compare every diagonal element of every atom pair
     int nw = ucell.atoms[0].nw;
-    for (int i = 0; i < ucell.nat; i++)
-    {
+    for (int i = 0; i < ucell.nat; i++) {
         auto* ap_w = hc_write->find_pair(i, i);
         auto* ap_r = hc_read->find_pair(i, i);
         ASSERT_NE(ap_w, nullptr);
         ASSERT_NE(ap_r, nullptr);
 
-        for (int k = 0; k < nw; k++)
-        {
-            EXPECT_NEAR(ap_w->get_pointer()[k * nw + k],
-                        ap_r->get_pointer()[k * nw + k], 1e-8)
+        for (int k = 0; k < nw; k++) {
+            EXPECT_NEAR(ap_w->get_pointer()[k * nw + k], ap_r->get_pointer()[k * nw + k], 1e-8)
                 << "Mismatch at atom " << i << " orbital " << k;
         }
     }
 
     // Off-diagonal atom pairs should be zero in both
-    for (int i = 0; i < ucell.nat; i++)
-    {
-        for (int j = 0; j < ucell.nat; j++)
-        {
-            if (i == j) continue;
+    for (int i = 0; i < ucell.nat; i++) {
+        for (int j = 0; j < ucell.nat; j++) {
+            if (i == j)
+                continue;
             auto* ap_w = hc_write->find_pair(i, j);
             auto* ap_r = hc_read->find_pair(i, j);
-            if (ap_w && ap_r)
-            {
-                for (int k = 0; k < nw * nw; k++)
-                {
-                    EXPECT_NEAR(ap_w->get_pointer()[k],
-                                ap_r->get_pointer()[k], 1e-10);
+            if (ap_w && ap_r) {
+                for (int k = 0; k < nw * nw; k++) {
+                    EXPECT_NEAR(ap_w->get_pointer()[k], ap_r->get_pointer()[k], 1e-10);
                 }
             }
         }
@@ -177,8 +167,7 @@ TEST_F(OutputHContainerTest, WriteReadConsistency)
 }
 
 // ---- Test 2: sparse threshold filters out tiny values ----
-TEST_F(OutputHContainerTest, SparseThresholdFiltering)
-{
+TEST_F(OutputHContainerTest, SparseThresholdFiltering) {
     mkdir("./test_ohc_dir", 0755);
 
     // scale = 1e-12 => all values < default sparse_threshold (1e-10)
@@ -192,16 +181,14 @@ TEST_F(OutputHContainerTest, SparseThresholdFiltering)
     ASSERT_TRUE(ifs.is_open());
     std::string line;
     std::string file_content;
-    while (std::getline(ifs, line))
-    {
+    while (std::getline(ifs, line)) {
         file_content += line + "\n";
     }
     ifs.close();
 
     // After the fix, nonZero=0 R-blocks are also written to keep
     // nR consistent. Verify the file contains "0 0 0 0" (R=(0,0,0) with 0 nonzero).
-    EXPECT_NE(file_content.find("0 0 0 0"), std::string::npos)
-        << "Expected R=(0,0,0) block with 0 nonzero elements";
+    EXPECT_NE(file_content.find("0 0 0 0"), std::string::npos) << "Expected R=(0,0,0) block with 0 nonzero elements";
 
     delete hc;
     std::remove("./test_ohc_dir/hrs1_nao.csr");
@@ -209,8 +196,7 @@ TEST_F(OutputHContainerTest, SparseThresholdFiltering)
 }
 
 // ---- Test 3: precision parameter affects round-trip accuracy ----
-TEST_F(OutputHContainerTest, PrecisionParameter)
-{
+TEST_F(OutputHContainerTest, PrecisionParameter) {
     mkdir("./test_ohc_dir", 0755);
 
     auto* hc = create_hcontainer(1.23456789);
@@ -227,8 +213,7 @@ TEST_F(OutputHContainerTest, PrecisionParameter)
     auto* ap_r = hc_read->find_pair(0, 0);
     ASSERT_NE(ap_r, nullptr);
 
-    for (int k = 0; k < nw; k++)
-    {
+    for (int k = 0; k < nw; k++) {
         double expected = 1.23456789 * (k + 1) * 0.1;
         // 4-digit precision => ~1e-4 tolerance
         EXPECT_NEAR(ap_r->get_pointer()[k * nw + k], expected, 5e-4)
@@ -242,8 +227,7 @@ TEST_F(OutputHContainerTest, PrecisionParameter)
 }
 
 // ---- Test 4: nspin=2 two-file round-trip ----
-TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
-{
+TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency) {
     mkdir("./test_ohc_dir", 0755);
 
     auto* hc_up = create_hcontainer(1.0);
@@ -264,8 +248,7 @@ TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
     reader_down.read();
 
     int nw = ucell.atoms[0].nw;
-    for (int k = 0; k < nw; k++)
-    {
+    for (int k = 0; k < nw; k++) {
         double exp_up = 1.0 * (k + 1) * 0.1;
         double exp_down = 3.0 * (k + 1) * 0.1;
         EXPECT_NEAR(hc_read_up->find_pair(0, 0)->get_pointer()[k * nw + k], exp_up, 1e-8);
@@ -273,8 +256,8 @@ TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
     }
 
     // Verify the two are independent
-    EXPECT_GT(std::abs(hc_read_up->find_pair(0, 0)->get_pointer()[0]
-                     - hc_read_down->find_pair(0, 0)->get_pointer()[0]), 1e-6);
+    EXPECT_GT(std::abs(hc_read_up->find_pair(0, 0)->get_pointer()[0] - hc_read_down->find_pair(0, 0)->get_pointer()[0]),
+              1e-6);
 
     delete hc_up;
     delete hc_down;
@@ -285,8 +268,7 @@ TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
     rmdir("./test_ohc_dir");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

@@ -4,14 +4,11 @@
 #include "pot_base.h"
 #include "source_io/module_parameter/parameter.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
-class H_TDDFT_pw : public PotBase
-{
+class H_TDDFT_pw : public PotBase {
   public:
-    H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in) : ucell_(ucell_in)
-    {
+    H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in) : ucell_(ucell_in) {
         this->dynamic_mode = false;
         this->fixed_mode = true;
 
@@ -19,14 +16,12 @@ class H_TDDFT_pw : public PotBase
 
         // If it is the first time to create an H_TDDFT_pw instance and is restart calculation,
         // initialize istep using current_step_info
-        if (!is_initialized && PARAM.inp.mdp.md_restart)
-        {
+        if (!is_initialized && PARAM.inp.mdp.md_restart) {
             int restart_istep = -1;
             std::string file_dir = PARAM.globalv.global_readin_dir;
             current_step_info(file_dir, restart_istep);
 
-            if (restart_istep >= 0)
-            {
+            if (restart_istep >= 0) {
                 H_TDDFT_pw::istep = restart_istep - 1; // Update istep
             }
 
@@ -34,7 +29,7 @@ class H_TDDFT_pw : public PotBase
         }
     }
 
-    ~H_TDDFT_pw() {};
+    ~H_TDDFT_pw(){};
 
     void cal_fixed_v(double* vl_pseudo) override;
 

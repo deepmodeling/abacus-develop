@@ -7,8 +7,7 @@
 #include <unistd.h>
 #include <algorithm>
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 // There are some examples:
 // Generallly:
 // {
@@ -45,8 +44,7 @@ namespace ModuleIO
 //      add_doublevec_bcast(&Parameter::PARAMETER, N);
 //      this->add_item(item);
 //  }
-void ReadInput::item_system()
-{
+void ReadInput::item_system() {
     // NOTE: The order of add_item() calls below determines the parameter order
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
@@ -56,8 +54,9 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "String";
         item.description = "In each run, ABACUS will generate a subdirectory in the working directory. "
-                          "This subdirectory contains all the information of the run. "
-                          "The subdirectory name has the format: OUT.suffix, where the suffix is the name you can pick up for your convenience.";
+                           "This subdirectory contains all the information of the run. "
+                           "The subdirectory name has the format: OUT.suffix, where the suffix is the name you can "
+                           "pick up for your convenience.";
         item.default_value = "ABACUS";
         read_sync_string(input.suffix);
         this->add_item(item);
@@ -75,7 +74,8 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("calculation");
-        item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
+        item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; "
+                          "test_memory; test_neighbour";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Specify the type of calculation.
@@ -111,24 +111,19 @@ void ReadInput::item_system()
                                                 "gen_opt_abfs",
                                                 "test_memory",
                                                 "test_neighbour"};
-            if (std::find(callist.begin(), callist.end(), calculation) == callist.end())
-            {
+            if (std::find(callist.begin(), callist.end(), calculation) == callist.end()) {
                 const std::string warningstr = nofound_str(callist, "calculation");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (calculation == "get_pchg" || calculation == "get_wf")
-            {
+            if (calculation == "get_pchg" || calculation == "get_wf") {
                 if (para.input.basis_type == "pw") // xiaohui add 2013-09-01
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "calculate = get_pchg or get_wf "
                                              "is only availble for LCAO.");
                 }
-            }
-            else if (calculation == "gen_bessel")
-            {
-                if (para.input.basis_type != "pw")
-                {
+            } else if (calculation == "gen_bessel") {
+                if (para.input.basis_type != "pw") {
                     ModuleBase::WARNING_QUIT("ReadInput", "to generate descriptors, please use pw basis");
                 }
             }
@@ -155,26 +150,25 @@ void ReadInput::item_system()
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr" };
-            if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
-            {
+            const std::vector<std::string> esolver_types =
+                {"ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr"};
+            if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end()) {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
-            {
-                if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
-                {
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep") {
+                if (access(para.input.mdp.pot_file.c_str(), 0) == -1) {
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
                 }
             }
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type == "lr" && para.input.calculation == "scf")
-            {   // for LR-only calculation based on the ground-state, set calculation to "nscf"
+            if (para.input.esolver_type == "lr" &&
+                para.input.calculation ==
+                    "scf") { // for LR-only calculation based on the ground-state, set calculation to "nscf"
                 para.input.calculation = "nscf";
             }
-            };
+        };
         this->add_item(item);
     }
     {
@@ -191,37 +185,28 @@ void ReadInput::item_system()
         item.default_value = "default";
         read_sync_string(input.symmetry);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.symmetry == "default")
-            {
-                if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
-                    || para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-                {
+            if (para.input.symmetry == "default") {
+                if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s" ||
+                    para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
                     para.input.symmetry = "0"; // if md or exx, symmetry will be
                                                // force-set to 0 or -1 later
-                }
-                else
-                {
+                } else {
                     para.input.symmetry = "1";
                 }
             }
-            if (para.input.calculation == "md")
-            {
+            if (para.input.calculation == "md") {
                 para.input.symmetry = "0";
             }
-            if (para.input.efield_flag)
-            {
+            if (para.input.efield_flag) {
                 para.input.symmetry = "0";
             }
-            if (para.input.esolver_type == "tddft")
-            {
+            if (para.input.esolver_type == "tddft") {
                 para.input.symmetry = "-1";
             }
-            if (para.input.qo_switch)
-            {
+            if (para.input.qo_switch) {
                 para.input.symmetry = "-1"; // disable kpoint reduce
             }
-            if (para.input.berry_phase)
-            {
+            if (para.input.berry_phase) {
                 para.input.symmetry = "-1"; // disable kpoint reduce
             }
         };
@@ -233,11 +218,11 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Real";
         item.description = "The accuracy for symmetry analysis. Typically, the default value is good enough, "
-                          "but if the lattice parameters or atom positions in STRU file are not accurate enough, "
-                          "this value should be enlarged.\n"
-                          "[NOTE] Note: if calculation==cell_relax, this value can be dynamically changed "
-                          "corresponding to the variation of accuracy of the lattice parameters and atom positions "
-                          "during the relaxation.";
+                           "but if the lattice parameters or atom positions in STRU file are not accurate enough, "
+                           "this value should be enlarged.\n"
+                           "[NOTE] Note: if calculation==cell_relax, this value can be dynamically changed "
+                           "corresponding to the variation of accuracy of the lattice parameters and atom positions "
+                           "during the relaxation.";
         item.default_value = "1.0e-6";
         item.unit = "Bohr";
         read_sync_double(input.symmetry_prec);
@@ -250,9 +235,9 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Boolean";
         item.description = "Control how to deal with error in symmetry analysis due to inaccurate lattice parameters "
-                          "or atom positions in STRU file, especially useful when calculation==cell-relax\n"
-                          "* False: quit with an error message\n"
-                          "* True: automatically set symmetry to 0 and continue running without symmetry analysis";
+                           "or atom positions in STRU file, especially useful when calculation==cell-relax\n"
+                           "* False: quit with an error message\n"
+                           "* True: automatically set symmetry to 0 and continue running without symmetry analysis";
         item.default_value = "True";
         item.availability = "symmetry==1";
         read_sync_bool(input.symmetry_autoclose);
@@ -268,18 +253,14 @@ void ReadInput::item_system()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
             std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "get_s"};
-            if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
-            {
-                if (!para.input.cal_force)
-                {
+            if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end()) {
+                if (!para.input.cal_force) {
                     ModuleBase::GlobalFunc::AUTO_SET("cal_force", "true");
                 }
                 para.input.cal_force = true;
-            }
-            else if (std::find(not_use_force.begin(), not_use_force.end(), para.input.calculation) != not_use_force.end())
-            {
-                if (para.input.cal_force)
-                {
+            } else if (std::find(not_use_force.begin(), not_use_force.end(), para.input.calculation) !=
+                       not_use_force.end()) {
+                if (para.input.cal_force) {
                     ModuleBase::GlobalFunc::AUTO_SET("cal_force", "false");
                 }
                 para.input.cal_force = false;
@@ -295,13 +276,13 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Integer";
         item.description = "Divide all processors into kpar groups, and k points will be distributed among each group. "
-                          "The value taken should be less than or equal to the number of k points as well as the number of MPI processes.";
+                           "The value taken should be less than or equal to the number of k points as well as the "
+                           "number of MPI processes.";
         item.default_value = "1";
         read_sync_int(input.kpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
 #ifdef __LCAO
-            if (para.inp.basis_type == "lcao")
-            {
+            if (para.inp.basis_type == "lcao") {
                 para.sys.kpar_lcao = para.inp.kpar;
                 para.input.kpar = 1;
             }
@@ -309,20 +290,17 @@ void ReadInput::item_system()
             // GPU + PW: validate kpar against total processors
             // Moved from base_device::information::get_device_kpar()
 #if defined(__CUDA) || defined(__ROCM)
-            if (para.input.device == "gpu" && para.input.basis_type == "pw")
-            {
-                if (GlobalV::NPROC != para.input.kpar * para.input.bndpar)
-                {
+            if (para.input.device == "gpu" && para.input.basis_type == "pw") {
+                if (GlobalV::NPROC != para.input.kpar * para.input.bndpar) {
                     para.input.kpar = GlobalV::NPROC / para.input.bndpar;
                     ModuleBase::WARNING("ReadInput",
-                        "kpar is not compatible with the number of processors, auto set kpar value.");
+                                        "kpar is not compatible with the number of processors, auto set kpar value.");
                 }
             }
 #endif
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "lcao" && para.input.kpar > 1)
-            {
+            if (para.input.basis_type == "lcao" && para.input.kpar > 1) {
                 ModuleBase::WARNING("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
             }
         };
@@ -336,22 +314,19 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Integer";
         item.description = "Divide all processors into bndpar groups, and bands (only stochastic orbitals now) "
-                          "will be distributed among each group. It should be larger than 0.";
+                           "will be distributed among each group. It should be larger than 0.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
-            {
+            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg") {
                 para.input.bndpar = 1;
             }
-            if (para.input.bndpar > GlobalV::NPROC)
-            {
+            if (para.input.bndpar > GlobalV::NPROC) {
                 para.input.bndpar = GlobalV::NPROC;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (GlobalV::NPROC % para.input.bndpar != 0)
-            {
+            if (GlobalV::NPROC % para.input.bndpar != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "The number of processors can not be divided by bndpar");
             }
         };
@@ -362,7 +337,8 @@ void ReadInput::item_system()
         item.annotation = "the name of lattice name";
         item.category = "System variables";
         item.type = "String";
-        item.description = R"(Specifies the type of Bravias lattice. When set to none, the three lattice vectors are supplied explicitly in STRU file.
+        item.description =
+            R"(Specifies the type of Bravias lattice. When set to none, the three lattice vectors are supplied explicitly in STRU file.
 
 Available options are:
 * none: free structure
@@ -403,14 +379,11 @@ Available options are:
 [NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.)";
         item.default_value = "atomic";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
                 para.input.init_wfc = "file";
             }
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                if (para.input.init_wfc != "nao")
-                {
+            if (para.input.basis_type == "lcao_in_pw") {
+                if (para.input.init_wfc != "nao") {
                     para.input.init_wfc = "nao";
                     GlobalV::ofs_warning << "init_wfc is set to nao when "
                                             "basis_type is lcao_in_pw"
@@ -426,7 +399,8 @@ Available options are:
         item.annotation = "start charge is from 'atomic' or file";
         item.category = "System variables";
         item.type = "String";
-        item.description = R"(This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
+        item.description =
+            R"(This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
 * atomic: the density is starting from the summation of the atomic density of single atoms.
 * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
@@ -437,17 +411,12 @@ Available options are:
         item.default_value = "atomic";
         read_sync_string(input.init_chg);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
-            {
+            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf") {
                 para.input.init_chg = "atomic";
             }
-            if (para.input.calculation == "nscf" || para.input.calculation == "get_s")
-            {
+            if (para.input.calculation == "nscf" || para.input.calculation == "get_s") {
                 // dm and hr are valid options for nscf calculation (e.g., band structure, wannier90)
-                if (para.input.init_chg != "file" && 
-                    para.input.init_chg != "dm" && 
-                    para.input.init_chg != "hr")
-                {
+                if (para.input.init_chg != "file" && para.input.init_chg != "dm" && para.input.init_chg != "hr") {
                     ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
                     para.input.init_chg = "file";
                 }
@@ -455,8 +424,7 @@ Available options are:
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "hr"};
-            if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
-            {
+            if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end()) {
                 const std::string warningstr = nofound_str(init_chgs, "init_chg");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
@@ -468,14 +436,13 @@ Available options are:
         item.annotation = "read velocity from STRU or not";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = R"(* True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
+        item.description =
+            R"(* True: read the atom velocity (atomic unit : 1 a.u. = 21.877 Angstrom/fs) from the atom file (STRU) and determine the initial temperature md_tfirst. If md_tfirst is unset or less than zero, init_vel is autoset to be true.
 * False: assign value to atom velocity using Gaussian distributed random numbers.)";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "md")
-            {
-                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart)
-                {
+            if (para.input.calculation == "md") {
+                if (para.input.mdp.md_tfirst < 0 || para.input.mdp.md_restart) {
                     para.input.init_vel = true;
                 }
             }
@@ -497,10 +464,8 @@ Available options are:
         item.availability = "Used only for nscf calculations with plane wave basis set.";
         read_sync_int(input.mem_saver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
-            {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
+            if (para.input.mem_saver == 1) {
+                if (para.input.calculation == "scf" || para.input.calculation == "relax") {
                     para.input.mem_saver = 0;
                     ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
                 }
@@ -516,16 +481,12 @@ Available options are:
         item.description = "If set to True, calculate the stress at the end of the electronic iteration.";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "md")
-            {
-                if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp"
-                    || para.input.mdp.md_type == "msst" || para.input.mdp.md_type == "npt")
-                {
+            if (para.input.calculation == "md") {
+                if (para.input.esolver_type == "lj" || para.input.esolver_type == "dp" ||
+                    para.input.mdp.md_type == "msst" || para.input.mdp.md_type == "npt") {
                     para.input.cal_stress = true;
                 }
-            }
-            else if (para.input.calculation == "cell-relax")
-            {
+            } else if (para.input.calculation == "cell-relax") {
                 para.input.cal_stress = true;
             }
         };
@@ -543,8 +504,7 @@ Available options are:
         item.availability = "Used only for plane wave basis set.";
         read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
-            {
+            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0) {
                 para.input.diago_proc = GlobalV::NPROC;
             }
         };
@@ -556,8 +516,8 @@ Available options are:
         item.category = "System variables";
         item.type = "Integer";
         item.description = "If set to a natural number, a Cardinal B-spline interpolation will be used to calculate "
-                          "Structure Factor. nbspline represents the order of B-spline basis and a larger one can get "
-                          "more accurate results but cost more. It is turned off by default.";
+                           "Structure Factor. nbspline represents the order of B-spline basis and a larger one can get "
+                           "more accurate results but cost more. It is turned off by default.";
         item.default_value = "-1";
         read_sync_int(input.nbspline);
         this->add_item(item);
@@ -568,25 +528,21 @@ Available options are:
                           "means read KPT file";
         item.category = "System variables";
         item.type = "Vector of Real (1 or 3 values)";
-        item.description = "Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, "
-                          "and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. "
-                          "The default value 0.0 means that ABACUS will read the applied KPT file."
-                          "\n\n[NOTE] If gamma_only is set to be true, kspacing is invalid.";
+        item.description =
+            "Set the smallest allowed spacing between k points, unit in 1/bohr. It should be larger than 0.0, "
+            "and suggest smaller than 0.25. When you have set this value > 0.0, then the KPT file is unnecessary. "
+            "The default value 0.0 means that ABACUS will read the applied KPT file."
+            "\n\n[NOTE] If gamma_only is set to be true, kspacing is invalid.";
         item.default_value = "0.0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            if (count == 1)
-            {
+            if (count == 1) {
                 para.input.kspacing[0] = para.input.kspacing[1] = para.input.kspacing[2] = doublevalue;
-            }
-            else if (count == 3)
-            {
+            } else if (count == 3) {
                 para.input.kspacing[0] = std::stod(item.str_values[0]);
                 para.input.kspacing[1] = std::stod(item.str_values[1]);
                 para.input.kspacing[2] = std::stod(item.str_values[2]);
-            }
-            else
-            {
+            } else {
                 ModuleBase::WARNING_QUIT("ReadInput", "kspacing can only accept one or three values.");
             }
         };
@@ -594,19 +550,14 @@ Available options are:
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             int kspacing_zero_num = 0;
             const std::vector<double>& kspacing = para.input.kspacing;
-            for (int i = 0; i < 3; i++)
-            {
-                if (kspacing[i] < 0.0)
-                {
+            for (int i = 0; i < 3; i++) {
+                if (kspacing[i] < 0.0) {
                     ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
-                }
-                else if (kspacing[i] == 0.0)
-                {
+                } else if (kspacing[i] == 0.0) {
                     kspacing_zero_num++;
                 }
             }
-            if (kspacing_zero_num > 0 && kspacing_zero_num < 3)
-            {
+            if (kspacing_zero_num > 0 && kspacing_zero_num < 3) {
                 std::cout << "kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2] << std::endl;
                 ModuleBase::WARNING_QUIT("ReadInput", "kspacing must > 0");
             }
@@ -618,12 +569,12 @@ Available options are:
         item.annotation = "offset for kspacing-generated automatic k-point mesh";
         item.category = "System variables";
         item.type = "Vector of Real (3 values)";
-        item.description = "Set offsets for automatic k-point mesh generated by kspacing, in each reciprocal direction. "
-                          "This parameter is only effective when kspacing > 0.0 and gamma_only is false.";
+        item.description =
+            "Set offsets for automatic k-point mesh generated by kspacing, in each reciprocal direction. "
+            "This parameter is only effective when kspacing > 0.0 and gamma_only is false.";
         item.default_value = "0.0 0.0 0.0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            if (item.get_size() != 3)
-            {
+            if (item.get_size() != 3) {
                 ModuleBase::WARNING_QUIT("ReadInput", "koffset must provide three values.");
             }
             para.input.koffset[0] = std::stod(item.str_values[0]);
@@ -639,8 +590,8 @@ Available options are:
         item.category = "System variables";
         item.type = "String";
         item.description = "Set mesh type used for automatic k-point mesh generated by kspacing. "
-                          "Available options are gamma and mp. This parameter is only effective when kspacing > 0.0 "
-                          "and gamma_only is false.";
+                           "Available options are gamma and mp. This parameter is only effective when kspacing > 0.0 "
+                           "and gamma_only is false.";
         item.default_value = "gamma";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.kmesh_type = strvalue;
@@ -652,8 +603,7 @@ Available options are:
         sync_string(input.kmesh_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"gamma", "mp"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.kmesh_type) == avail_list.end())
-            {
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.kmesh_type) == avail_list.end()) {
                 const std::string warningstr = nofound_str(avail_list, "kmesh_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
@@ -667,8 +617,8 @@ Available options are:
         item.category = "System variables";
         item.type = "Real";
         item.description = "A factor related to the allowed minimum distance between two atoms. At the beginning, "
-                          "ABACUS will check the structure, and if the distance of two atoms is shorter than "
-                          "min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.";
+                           "ABACUS will check the structure, and if the distance of two atoms is shorter than "
+                           "min_dist_coef*(standard covalent bond length), we think this structure is unreasonable.";
         item.default_value = "0.2";
         read_sync_double(input.min_dist_coef);
         this->add_item(item);
@@ -688,13 +638,11 @@ Available options are:
         item.default_value = "cpu";
         read_sync_string(input.device);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.device=base_device::information::get_device_flag(
-                                para.inp.device, para.inp.basis_type);
+            para.input.device = base_device::information::get_device_flag(para.inp.device, para.inp.basis_type);
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"cpu", "gpu"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
-            {
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end()) {
                 const std::string warningstr = nofound_str(avail_list, "device");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
@@ -714,20 +662,17 @@ Available options are:
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"single", "double"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
-            {
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end()) {
                 const std::string warningstr = nofound_str(avail_list, "precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
-            {
+            if (para.inp.precision == "single" && para.inp.basis_type == "lcao") {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
             }
             // cpu single precision is not supported while float_fftw lib is not available
-            if (para.inp.device == "cpu" && para.inp.precision == "single")
-            {
+            if (para.inp.device == "cpu" && para.inp.precision == "single") {
 #ifndef __ENABLE_FLOAT_FFTW
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
@@ -752,19 +697,16 @@ Available options are:
         read_sync_string(input.gint_precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"single", "double", "mix"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end())
-            {
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end()) {
                 const std::string warningstr = nofound_str(avail_list, "gint_precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
-            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao")
-            {
+            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao") {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "gint_precision = single or mix is currently supported only for LCAO calculations.\n");
             }
-            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
-            {
+            if (para.inp.gint_precision != "double" && para.inp.nspin == 4) {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
@@ -777,7 +719,8 @@ Available options are:
         item.annotation = "enable NVTX labeling for profiling or not";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = R"(Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
+        item.description =
+            R"(Controls whether NVTX profiling labels are emitted by the timer. This feature is only effective on CUDA platforms.
 
 * True: Enable NVTX profiling labels in the timer.
 * False: Disable NVTX profiling labels in the timer.)";
@@ -791,12 +734,11 @@ Available options are:
         item.category = "System variables";
         item.type = "Real";
         item.description = "Used in the construction of the pseudopotential tables. "
-                          "For cell-relax calculations, this is automatically set to 2.0.";
+                           "For cell-relax calculations, this is automatically set to 2.0.";
         item.default_value = "1.2";
         read_sync_double(input.cell_factor);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "cell-relax" && para.input.cell_factor < 2.0)
-            {
+            if (para.input.calculation == "cell-relax" && para.input.cell_factor < 2.0) {
                 para.input.cell_factor = 2.0; // follows QE
             }
         };
@@ -811,16 +753,13 @@ Available options are:
         item.default_value = "False";
         read_sync_bool(input.dm_to_rho);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dm_to_rho && GlobalV::NPROC > 1)
-            {
+            if (para.input.dm_to_rho && GlobalV::NPROC > 1) {
                 ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
             }
-            if (para.input.dm_to_rho && para.inp.gamma_only)
-            {
+            if (para.input.dm_to_rho && para.inp.gamma_only) {
                 ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for gamma_only calculations");
             }
-            if (para.input.dm_to_rho)
-            {
+            if (para.input.dm_to_rho) {
 #ifndef __USECNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
@@ -839,21 +778,15 @@ Available options are:
         item.default_value = "default";
         read_sync_string(input.chg_extrap);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.chg_extrap == "default" && para.input.calculation == "md")
-            {
+            if (para.input.chg_extrap == "default" && para.input.calculation == "md") {
                 para.input.chg_extrap = "second-order";
-            }
-            else if (para.input.chg_extrap == "default"
-                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax"))
-            {
+            } else if (para.input.chg_extrap == "default" &&
+                       (para.input.calculation == "relax" || para.input.calculation == "cell-relax")) {
                 para.input.chg_extrap = "first-order";
-            }
-            else if (para.input.chg_extrap == "default")
-            {
+            } else if (para.input.chg_extrap == "default") {
                 para.input.chg_extrap = "atomic";
             }
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
+            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") {
                 para.input.chg_extrap = "atomic";
             }
         };
@@ -864,34 +797,28 @@ Available options are:
         item.annotation = "energy cutoff for wave functions";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Energy cutoff for plane wave functions. Note that even for localized orbitals basis, "
-                          "you still need to setup an energy cutoff for this system. Because our local pseudopotential parts "
-                          "and the related force are calculated from plane wave basis set.\n"
-                          "[NOTE] ecutwfc and ecutrho can be set simultaneously. If only one parameter is set, "
-                          "abacus will automatically set another parameter based on the 4-time relationship.";
+        item.description =
+            "Energy cutoff for plane wave functions. Note that even for localized orbitals basis, "
+            "you still need to setup an energy cutoff for this system. Because our local pseudopotential parts "
+            "and the related force are calculated from plane wave basis set.\n"
+            "[NOTE] ecutwfc and ecutrho can be set simultaneously. If only one parameter is set, "
+            "abacus will automatically set another parameter based on the 4-time relationship.";
         item.default_value = "50 for PW basis, 100 for LCAO basis";
         item.unit = "Ry";
         read_sync_double(input.ecutwfc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ecutwfc == 0)
-            { // 0 means no input value
-                if (para.input.ecutrho > 0)
-                {
+            if (para.input.ecutwfc == 0) { // 0 means no input value
+                if (para.input.ecutrho > 0) {
                     para.input.ecutwfc = para.input.ecutrho / 4.0;
-                }
-                else if (para.input.basis_type == "lcao")
-                {
+                } else if (para.input.basis_type == "lcao") {
                     para.input.ecutwfc = 100;
-                }
-                else
-                {
+                } else {
                     para.input.ecutwfc = 50;
                 }
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutwfc <= 0)
-            {
+            if (para.input.ecutwfc <= 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutwfc should be positive");
             }
         };
@@ -902,30 +829,27 @@ Available options are:
         item.annotation = "energy cutoff for charge density and potential";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Energy cutoff for charge density and potential. For norm-conserving pseudopotential "
-                          "you should stick to the default value, you can reduce it by a little but it will introduce noise "
-                          "especially on forces and stress.";
+        item.description =
+            "Energy cutoff for charge density and potential. For norm-conserving pseudopotential "
+            "you should stick to the default value, you can reduce it by a little but it will introduce noise "
+            "especially on forces and stress.";
         item.default_value = "4*ecutwfc";
         item.unit = "Ry";
         read_sync_double(input.ecutrho);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
-            if (input.ecutrho <= 0.0)
-            {
+            if (input.ecutrho <= 0.0) {
                 input.ecutrho = 4.0 * input.ecutwfc;
             }
-            if (input.nx * input.ny * input.nz == 0 && input.ecutrho / input.ecutwfc > 4 + 1e-8)
-            {
+            if (input.nx * input.ny * input.nz == 0 && input.ecutrho / input.ecutwfc > 4 + 1e-8) {
                 para.sys.double_grid = true;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8)
-            {
+            if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must >= 4");
             }
-            if (para.sys.double_grid == true && para.input.basis_type == "lcao")
-            {
+            if (para.sys.double_grid == true && para.input.basis_type == "lcao") {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must = 4 for lcao calculation");
             }
         };
@@ -937,15 +861,12 @@ Available options are:
         item.category = "Plane wave related variables";
         item.type = "Integer";
         item.description = "If set to a positive number, specifies the number of FFT grid points in x direction. "
-                          "If set to 0, the number will be calculated from ecutrho."
-                          "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
+                           "If set to 0, the number will be calculated from ecutrho."
+                           "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
         item.default_value = "0";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.nx = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.nx = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
-            {
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
         };
@@ -958,15 +879,12 @@ Available options are:
         item.category = "Plane wave related variables";
         item.type = "Integer";
         item.description = "If set to a positive number, specifies the number of FFT grid points in y direction. "
-                          "If set to 0, the number will be calculated from ecutrho."
-                          "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
+                           "If set to 0, the number will be calculated from ecutrho."
+                           "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
         item.default_value = "0";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.ny = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.ny = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
-            {
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
         };
@@ -979,15 +897,12 @@ Available options are:
         item.category = "Plane wave related variables";
         item.type = "Integer";
         item.description = "If set to a positive number, specifies the number of FFT grid points in z direction. "
-                          "If set to 0, the number will be calculated from ecutrho."
-                          "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
+                           "If set to 0, the number will be calculated from ecutrho."
+                           "\n\n[NOTE] You must specify all three dimensions (nx, ny, nz) for this setting to be used.";
         item.default_value = "0";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.nz = intvalue;
-        };
+        item.read_value = [](const Input_Item& item, Parameter& para) { para.input.nz = intvalue; };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
-            {
+            if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "nx, ny, nz should be all set to non-zero");
             }
         };
@@ -999,30 +914,27 @@ Available options are:
         item.annotation = "number of points along x axis for FFT smooth grid";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "If set to a positive number, specifies the number of FFT grid points for the dense part "
-                          "of charge density in x direction. If set to 0, the number will be calculated from ecutwfc."
-                          "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
-                          "These parameters must be used combined with nx, ny, nz. "
-                          "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
+        item.description =
+            "If set to a positive number, specifies the number of FFT grid points for the dense part "
+            "of charge density in x direction. If set to 0, the number will be calculated from ecutwfc."
+            "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
+            "These parameters must be used combined with nx, ny, nz. "
+            "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
         item.default_value = "0";
         read_sync_int(input.ndx);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndx > para.input.nx)
-            {
+            if (para.input.ndx > para.input.nx) {
                 para.sys.double_grid = true;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
-            {
+            if (!item.is_read()) {
                 return;
             }
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndx != 0)
-            {
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndx != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }
-            if (para.input.ndx < para.input.nx)
-            {
+            if (para.input.ndx < para.input.nx) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx should be greater than or equal to nx");
             }
         };
@@ -1033,29 +945,27 @@ Available options are:
         item.annotation = "number of points along y axis for FFT smooth grid";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "If set to a positive number, specifies the number of FFT grid points for the dense part "
-                          "of charge density in y direction. If set to 0, the number will be calculated from ecutwfc."
-                          "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
-                          "These parameters must be used combined with nx, ny, nz. "
-                          "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
+        item.description =
+            "If set to a positive number, specifies the number of FFT grid points for the dense part "
+            "of charge density in y direction. If set to 0, the number will be calculated from ecutwfc."
+            "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
+            "These parameters must be used combined with nx, ny, nz. "
+            "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
         item.default_value = "0";
         read_sync_int(input.ndy);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
-            {
+            if (para.input.ndy > para.input.ny) {
                 para.sys.double_grid = true;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) {
                 return;
-}
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0)
-            {
+            }
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndy != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }
-            if (para.input.ndy < para.input.ny)
-            {
+            if (para.input.ndy < para.input.ny) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndy should be greater than or equal to ny");
             }
         };
@@ -1066,29 +976,27 @@ Available options are:
         item.annotation = "number of points along z axis for FFT smooth grid";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "If set to a positive number, specifies the number of FFT grid points for the dense part "
-                          "of charge density in z direction. If set to 0, the number will be calculated from ecutwfc."
-                          "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
-                          "These parameters must be used combined with nx, ny, nz. "
-                          "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
+        item.description =
+            "If set to a positive number, specifies the number of FFT grid points for the dense part "
+            "of charge density in z direction. If set to 0, the number will be calculated from ecutwfc."
+            "\n\n[NOTE] You must specify all three dimensions (ndx, ndy, ndz) for this setting to be used. "
+            "These parameters must be used combined with nx, ny, nz. "
+            "If nx, ny, nz are unset, ndx, ndy, ndz are used as nx, ny, nz.";
         item.default_value = "0";
         read_sync_int(input.ndz);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
-            {
+            if (para.input.ndy > para.input.ny) {
                 para.sys.double_grid = true;
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (!item.is_read()) {
                 return;
-}
-            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0)
-            {
+            }
+            if (para.input.ndx * para.input.ndy * para.input.ndz == 0 && para.input.ndz != 0) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndx, ndy, ndz should be all set to non-zero");
             }
-            if (para.input.ndz < para.input.nz)
-            {
+            if (para.input.ndz < para.input.nz) {
                 ModuleBase::WARNING_QUIT("ReadInput", "ndz should be greater than or equal to nz");
             }
         };
@@ -1099,7 +1007,8 @@ Available options are:
         item.annotation = "random seed for initializing wave functions";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Specify the random seed to initialize wave functions. Only positive integers are available.";
+        item.description =
+            "Specify the random seed to initialize wave functions. Only positive integers are available.";
         item.default_value = "0";
         item.availability = "Only used for plane wave basis.";
         read_sync_int(input.pw_seed);
@@ -1123,7 +1032,8 @@ Available options are:
         item.annotation = "the value of the constant energy cutoff";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.";
+        item.description =
+            "Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.";
         item.default_value = "0.0";
         item.unit = "Ry";
         read_sync_double(input.erf_ecut);
@@ -1148,7 +1058,8 @@ Available options are:
         item.annotation = "the height of the energy step for reciprocal vectors";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.";
+        item.description =
+            "Used in variable-cell molecular dynamics (or in stress calculation). See erf_sigma for details.";
         item.default_value = "0.0";
         item.unit = "Ry";
         read_sync_double(input.erf_height);
@@ -1159,8 +1070,9 @@ Available options are:
         item.annotation = "the width of the energy step for reciprocal vectors";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional "
-                          "is modified, which is used in variable-cell molecular dynamics (or in stress calculation).";
+        item.description =
+            "In order to recover the accuracy of a constant energy cutoff calculation, the kinetic functional "
+            "is modified, which is used in variable-cell molecular dynamics (or in stress calculation).";
         item.default_value = "0.1";
         item.unit = "Ry";
         read_sync_double(input.erf_sigma);
@@ -1172,8 +1084,8 @@ Available options are:
         item.category = "Input files";
         item.type = "String";
         item.description = "The name of the structure file containing various information about atom species, "
-                          "including pseudopotential files, local orbitals files, cell information, atom positions, "
-                          "and whether atoms should be allowed to move.";
+                           "including pseudopotential files, local orbitals files, cell information, atom positions, "
+                           "and whether atoms should be allowed to move.";
         item.default_value = "STRU";
         read_sync_string(input.stru_file);
         this->add_item(item);
@@ -1187,8 +1099,7 @@ Available options are:
         item.default_value = "KPT";
         read_sync_string(input.kpoint_file);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.stru_file == "")
-            {
+            if (para.input.stru_file == "") {
                 GlobalV::ofs_warning << "kpoint_file is set to KPT when stru_file is not set" << std::endl;
                 para.input.stru_file = "KPT";
             }
@@ -1200,16 +1111,14 @@ Available options are:
         item.annotation = "the directory containing pseudo files";
         item.category = "Input files";
         item.type = "String";
-        item.description = "The directory of pseudopotential files. This parameter is combined with the "
-                          "pseudopotential filenames in the STRU file to form the complete pseudopotential file paths.";
+        item.description =
+            "The directory of pseudopotential files. This parameter is combined with the "
+            "pseudopotential filenames in the STRU file to form the complete pseudopotential file paths.";
         item.default_value = "\"\"";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            if(item.get_size() == 0)
-            {
+            if (item.get_size() == 0) {
                 para.input.pseudo_dir = "";
-            }
-            else
-            {
+            } else {
                 para.input.pseudo_dir = to_dir(strvalue);
             }
         };
@@ -1222,15 +1131,12 @@ Available options are:
         item.category = "Input files";
         item.type = "String";
         item.description = "The directory to save numerical atomic orbitals. This parameter is combined with "
-                          "orbital filenames in the STRU file to form the complete orbital file paths.";
+                           "orbital filenames in the STRU file to form the complete orbital file paths.";
         item.default_value = "\"\"";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            if(item.get_size() == 0)
-            {
+            if (item.get_size() == 0) {
                 para.input.orbital_dir = "";
-            }
-            else
-            {
+            } else {
                 para.input.orbital_dir = to_dir(strvalue);
             }
         };
@@ -1242,12 +1148,12 @@ Available options are:
         item.annotation = "directory of files for reading";
         item.category = "Input files";
         item.type = "String";
-        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point.";
+        item.description =
+            "Location of files, such as the electron density (chgs1.cube), required as a starting point.";
         item.default_value = "OUT.$suffix";
         read_sync_string(input.read_file_dir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.read_file_dir == "auto")
-            {
+            if (para.input.read_file_dir == "auto") {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
             }
             para.input.read_file_dir = to_dir(para.input.read_file_dir);
@@ -1259,8 +1165,9 @@ Available options are:
         item.annotation = "restart from disk";
         item.category = "Input files";
         item.type = "Boolean";
-        item.description = "If restart_save is set to true and an electronic iteration is finished, calculations can be "
-                          "restarted from the charge density file, which are saved in the former calculation.";
+        item.description =
+            "If restart_save is set to true and an electronic iteration is finished, calculations can be "
+            "restarted from the charge density file, which are saved in the former calculation.";
         item.default_value = "False";
         item.availability = "Used only when numerical atomic orbitals are employed as basis set.";
         read_sync_bool(input.restart_load);

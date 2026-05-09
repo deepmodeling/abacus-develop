@@ -3,8 +3,7 @@
 
 #include "source_io/module_parameter/input_parameter.h"
 
-namespace hsolver
-{
+namespace hsolver {
 
 /**
  * @brief Setup diagonalization parameters for PW method
@@ -19,10 +18,7 @@ namespace hsolver
  * @param inp Input parameters
  */
 template <typename T, typename Device>
-void setup_diago_params_pw(const int istep,
-                            const int iter,
-                            const double ethr,
-                            const Input_para& inp);
+void setup_diago_params_pw(const int istep, const int iter, const double ethr, const Input_para& inp);
 
 /**
  * @brief Setup diagonalization parameters for SDFT method
@@ -37,10 +33,7 @@ void setup_diago_params_pw(const int istep,
  * @param inp Input parameters
  */
 template <typename T, typename Device>
-void setup_diago_params_sdft(const int istep,
-                              const int iter,
-                              const double ethr,
-                              const Input_para& inp);
+void setup_diago_params_sdft(const int istep, const int iter, const double ethr, const Input_para& inp);
 
 } // namespace hsolver
 

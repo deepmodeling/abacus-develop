@@ -6,60 +6,31 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 // mock functions
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
+Structure_Factor::Structure_Factor() {}
+Structure_Factor::~Structure_Factor() {}
+UnitCell::UnitCell() {}
+UnitCell::~UnitCell() {}
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+SepPot::SepPot() {}
+SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 #endif
-Charge::Charge()
-{
-}
-Charge::~Charge()
-{
-}
-surchem::surchem()
-{
-}
-surchem::~surchem()
-{
-}
+Charge::Charge() {}
+Charge::~Charge() {}
+surchem::surchem() {}
+surchem::~surchem() {}
 int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
-namespace elecstate
-{
+namespace elecstate {
 
-PotBase* Potential::get_pot_type(const std::string& pot_type)
-{
-    return new PotBase;
-}
+PotBase* Potential::get_pot_type(const std::string& pot_type) { return new PotBase; }
 
-void Set_GlobalV_Default()
-{
+void Set_GlobalV_Default() {
     PARAM.input.nspin = 1;
     PARAM.input.device = "cpu";
     PARAM.input.precision = "double";
@@ -99,8 +70,7 @@ void Set_GlobalV_Default()
  *     - get the double pointer to v_effective_fixed
  */
 
-class PotentialNewTest : public ::testing::Test
-{
+class PotentialNewTest : public ::testing::Test {
   protected:
     ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhodpw = nullptr;
@@ -111,8 +81,7 @@ class PotentialNewTest : public ::testing::Test
     double* etxc = nullptr;
     double* vtxc = nullptr;
     elecstate::Potential* pot = nullptr;
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         rhopw = new ModulePW::PW_Basis;
         rhodpw = new ModulePW::PW_Basis;
         ucell = new UnitCell;
@@ -123,49 +92,38 @@ class PotentialNewTest : public ::testing::Test
         vtxc = new double;
         elecstate::Set_GlobalV_Default();
     }
-    virtual void TearDown()
-    {
-        if (rhopw != nullptr)
-        {
+    virtual void TearDown() {
+        if (rhopw != nullptr) {
             delete rhopw;
         }
-        if (rhodpw != nullptr)
-        {
+        if (rhodpw != nullptr) {
             delete rhodpw;
         }
-        if (ucell != nullptr)
-        {
+        if (ucell != nullptr) {
             delete ucell;
         }
-        if (vloc != nullptr)
-        {
+        if (vloc != nullptr) {
             delete vloc;
         }
-        if (structure_factors != nullptr)
-        {
+        if (structure_factors != nullptr) {
             delete structure_factors;
         }
-        if (solvent != nullptr)
-        {
+        if (solvent != nullptr) {
             delete solvent;
         }
-        if (etxc != nullptr)
-        {
+        if (etxc != nullptr) {
             delete etxc;
         }
-        if (vtxc != nullptr)
-        {
+        if (vtxc != nullptr) {
             delete vtxc;
         }
-        if (pot != nullptr)
-        {
+        if (pot != nullptr) {
             delete pot;
         }
     }
 };
 
-TEST_F(PotentialNewTest, ConstructorCPUDouble)
-{
+TEST_F(PotentialNewTest, ConstructorCPUDouble) {
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
@@ -175,8 +133,7 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
     EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
-TEST_F(PotentialNewTest, ConstructorCPUSingle)
-{
+TEST_F(PotentialNewTest, ConstructorCPUSingle) {
     rhopw->nrxx = 100;
     PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
@@ -187,16 +144,14 @@ TEST_F(PotentialNewTest, ConstructorCPUSingle)
     EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
-TEST_F(PotentialNewTest, ConstructorNRXX0)
-{
+TEST_F(PotentialNewTest, ConstructorNRXX0) {
     rhopw->nrxx = 0;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
 }
 
-TEST_F(PotentialNewTest, ConstructorXC3)
-{
+TEST_F(PotentialNewTest, ConstructorXC3) {
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
@@ -210,8 +165,7 @@ TEST_F(PotentialNewTest, ConstructorXC3)
     EXPECT_EQ(pot->vofk_eff.nc, 100);
 }
 
-TEST_F(PotentialNewTest, ConstructorGPUDouble)
-{
+TEST_F(PotentialNewTest, ConstructorGPUDouble) {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     PARAM.input.device = "gpu";
@@ -223,8 +177,7 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
     EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
-TEST_F(PotentialNewTest, ConstructorGPUSingle)
-{
+TEST_F(PotentialNewTest, ConstructorGPUSingle) {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
     PARAM.input.device = "gpu";
@@ -237,8 +190,7 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
     EXPECT_EQ(pot->v_eff.nc, 100);
 }
 
-TEST_F(PotentialNewTest, Getters)
-{
+TEST_F(PotentialNewTest, Getters) {
     pot = new elecstate::Potential;
     pot->veff_smooth.create(10, 10);
     pot->vofk_smooth.create(10, 10);
@@ -256,8 +208,7 @@ TEST_F(PotentialNewTest, Getters)
     delete doo;
 }
 
-TEST_F(PotentialNewTest, PotRegister)
-{
+TEST_F(PotentialNewTest, PotRegister) {
     pot = new elecstate::Potential;
     elecstate::PotBase* pot0 = new elecstate::PotBase;
     pot->components.push_back(pot0);
@@ -268,82 +219,56 @@ TEST_F(PotentialNewTest, PotRegister)
     EXPECT_FALSE(pot->fixed_done);
 }
 
-TEST_F(PotentialNewTest, CalFixedV)
-{
+TEST_F(PotentialNewTest, CalFixedV) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    std::vector<std::string> compnents_list = {"local", "hartree", "xc", "surchem", "gatefield"};
     std::vector<bool> fixed = {true, false, false, false, true};
     pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
-    {
+    for (int i = 0; i < compnents_list.size(); i++) {
         pot->components[i]->fixed_mode = fixed[i];
     }
     double* vl_pseudo = new double[1000];
     pot->cal_fixed_v(vl_pseudo);
-    for (int i = 0; i < pot->v_eff_fixed.size(); i++)
-    {
+    for (int i = 0; i < pot->v_eff_fixed.size(); i++) {
         EXPECT_DOUBLE_EQ(pot->v_eff_fixed[i], 0.0);
     }
     delete[] vl_pseudo;
 }
 
-TEST_F(PotentialNewTest, CalVeff)
-{
+TEST_F(PotentialNewTest, CalVeff) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    std::vector<std::string> compnents_list = {"local", "hartree", "xc", "surchem", "gatefield"};
     std::vector<bool> dynamic = {false, true, true, true, false};
     pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
-    {
+    for (int i = 0; i < compnents_list.size(); i++) {
         pot->components[i]->dynamic_mode = dynamic[i];
     }
     Charge* chg = new Charge;
     ModuleBase::matrix v_eff;
     v_eff.create(2, 100);
-    pot->cal_v_eff(chg,this->ucell,v_eff);
-    for (int i = 0; i < pot->v_eff_fixed.size(); i++)
-    {
+    pot->cal_v_eff(chg, this->ucell, v_eff);
+    for (int i = 0; i < pot->v_eff_fixed.size(); i++) {
         EXPECT_DOUBLE_EQ(pot->v_eff_fixed[i], 0.0);
     }
     delete chg;
 }
 
-TEST_F(PotentialNewTest, UpdateFromCharge)
-{
+TEST_F(PotentialNewTest, UpdateFromCharge) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    std::vector<std::string> compnents_list = {"local", "hartree", "xc", "surchem", "gatefield"};
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
     pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
-    {
+    for (int i = 0; i < compnents_list.size(); i++) {
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
@@ -354,24 +279,16 @@ TEST_F(PotentialNewTest, UpdateFromCharge)
     delete chg;
 }
 
-TEST_F(PotentialNewTest, InitPot)
-{
+TEST_F(PotentialNewTest, InitPot) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    std::vector<std::string> compnents_list = {"local", "hartree", "xc", "surchem", "gatefield"};
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
     pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
-    {
+    for (int i = 0; i < compnents_list.size(); i++) {
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
@@ -382,24 +299,16 @@ TEST_F(PotentialNewTest, InitPot)
     delete chg;
 }
 
-TEST_F(PotentialNewTest, GetVnew)
-{
+TEST_F(PotentialNewTest, GetVnew) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
-    std::vector<std::string> compnents_list = {
-        "local",
-        "hartree",
-        "xc",
-        "surchem",
-        "gatefield"
-    };
+    std::vector<std::string> compnents_list = {"local", "hartree", "xc", "surchem", "gatefield"};
     std::vector<bool> fixed = {true, false, false, false, true};
     std::vector<bool> dynamic = {false, true, true, true, false};
     pot->pot_register(compnents_list);
-    for (int i = 0; i<compnents_list.size(); i++)
-    {
+    for (int i = 0; i < compnents_list.size(); i++) {
         pot->components[i]->fixed_mode = fixed[i];
         pot->components[i]->dynamic_mode = dynamic[i];
     }
@@ -411,8 +320,7 @@ TEST_F(PotentialNewTest, GetVnew)
     delete chg;
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVmatrix)
-{
+TEST_F(PotentialNewTest, GetEffectiveVmatrix) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
@@ -423,26 +331,22 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
     EXPECT_EQ(v_eff_tmp.nc, 100);
     EXPECT_EQ(v_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp_const.nc, 100);
-    for (int ir = 0; ir < v_eff_tmp.nr; ir++)
-    {
-        for (int ic = 0; ic < v_eff_tmp.nc; ic++)
-        {
+    for (int ir = 0; ir < v_eff_tmp.nr; ir++) {
+        for (int ic = 0; ic < v_eff_tmp.nc; ic++) {
             EXPECT_DOUBLE_EQ(v_eff_tmp(ir, ic), pot->v_eff(ir, ic));
             EXPECT_DOUBLE_EQ(v_eff_tmp_const(ir, ic), pot->v_eff(ir, ic));
         }
     }
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVarray)
-{
+TEST_F(PotentialNewTest, GetEffectiveVarray) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
     double* v_eff_tmp = pot->get_eff_v(0);
     const double* v_eff_tmp_const = pot->get_eff_v(0);
-    for (int ic = 0; ic < rhopw->nrxx; ic++)
-    {
+    for (int ic = 0; ic < rhopw->nrxx; ic++) {
         EXPECT_DOUBLE_EQ(v_eff_tmp[ic], pot->v_eff(0, ic));
         EXPECT_DOUBLE_EQ(v_eff_tmp_const[ic], pot->v_eff(0, ic));
     }
@@ -451,8 +355,7 @@ TEST_F(PotentialNewTest, GetEffectiveVarray)
     EXPECT_DOUBLE_EQ(v_eff_tmp_const[0], 1.0);
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr)
-{
+TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr) {
     pot = new elecstate::Potential;
     EXPECT_EQ(pot->v_eff.nc, 0);
     double* v_eff_tmp = pot->get_eff_v(0);
@@ -461,8 +364,7 @@ TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr)
     EXPECT_EQ(v_eff_tmp_const, nullptr);
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
-{
+TEST_F(PotentialNewTest, GetEffectiveVofkmatrix) {
     // construct potential
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
@@ -475,26 +377,22 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
     EXPECT_EQ(vofk_eff_tmp.nc, 100);
     EXPECT_EQ(vofk_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp_const.nc, 100);
-    for (int ir = 0; ir < vofk_eff_tmp.nr; ir++)
-    {
-        for (int ic = 0; ic < vofk_eff_tmp.nc; ic++)
-        {
+    for (int ir = 0; ir < vofk_eff_tmp.nr; ir++) {
+        for (int ic = 0; ic < vofk_eff_tmp.nc; ic++) {
             EXPECT_DOUBLE_EQ(vofk_eff_tmp(ir, ic), pot->vofk_eff(ir, ic));
             EXPECT_DOUBLE_EQ(vofk_eff_tmp_const(ir, ic), pot->vofk_eff(ir, ic));
         }
     }
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVofkarray)
-{
+TEST_F(PotentialNewTest, GetEffectiveVofkarray) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
     double* vofk_eff_tmp = pot->get_eff_vofk(0);
     const double* vofk_eff_tmp_const = pot->get_eff_vofk(0);
-    for (int ic = 0; ic < rhopw->nrxx; ic++)
-    {
+    for (int ic = 0; ic < rhopw->nrxx; ic++) {
         EXPECT_DOUBLE_EQ(vofk_eff_tmp[ic], pot->vofk_eff(0, ic));
         EXPECT_DOUBLE_EQ(vofk_eff_tmp_const[ic], pot->vofk_eff(0, ic));
     }
@@ -503,8 +401,7 @@ TEST_F(PotentialNewTest, GetEffectiveVofkarray)
     EXPECT_DOUBLE_EQ(vofk_eff_tmp_const[0], 1.0);
 }
 
-TEST_F(PotentialNewTest, GetEffectiveVofkarrayNullptr)
-{
+TEST_F(PotentialNewTest, GetEffectiveVofkarrayNullptr) {
     pot = new elecstate::Potential;
     EXPECT_EQ(pot->v_eff.nc, 0);
     double* vofk_eff_tmp = pot->get_eff_vofk(0);
@@ -513,8 +410,7 @@ TEST_F(PotentialNewTest, GetEffectiveVofkarrayNullptr)
     EXPECT_EQ(vofk_eff_tmp_const, nullptr);
 }
 
-TEST_F(PotentialNewTest, GetFixedV)
-{
+TEST_F(PotentialNewTest, GetFixedV) {
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
@@ -522,16 +418,14 @@ TEST_F(PotentialNewTest, GetFixedV)
     EXPECT_EQ(pot->v_eff_fixed.size(), 100);
     double* v_eff_fixed_tmp = pot->get_fixed_v();
     const double* v_eff_fixed_tmp_const = pot->get_fixed_v();
-    for (int ic = 0; ic < rhopw->nrxx; ic++)
-    {
+    for (int ic = 0; ic < rhopw->nrxx; ic++) {
         v_eff_fixed_tmp[ic] = ic;
         EXPECT_DOUBLE_EQ(v_eff_fixed_tmp[ic], pot->v_eff_fixed[ic]);
         EXPECT_DOUBLE_EQ(v_eff_fixed_tmp_const[ic], pot->v_eff_fixed[ic]);
     }
 }
 
-TEST_F(PotentialNewTest, GetVeffSmooth)
-{
+TEST_F(PotentialNewTest, GetVeffSmooth) {
     // construct potential
     rhopw->nrxx = 100;
     XC_Functional::func_type = 3;
@@ -544,18 +438,15 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
     EXPECT_EQ(veff_smooth_tmp.nc, 100);
     EXPECT_EQ(veff_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(veff_smooth_const_tmp.nc, 100);
-    for (int ir = 0; ir < veff_smooth_tmp.nr; ir++)
-    {
-        for (int ic = 0; ic < veff_smooth_tmp.nc; ic++)
-        {
+    for (int ir = 0; ir < veff_smooth_tmp.nr; ir++) {
+        for (int ic = 0; ic < veff_smooth_tmp.nc; ic++) {
             EXPECT_DOUBLE_EQ(veff_smooth_tmp(ir, ic), pot->veff_smooth(ir, ic));
             EXPECT_DOUBLE_EQ(veff_smooth_const_tmp(ir, ic), pot->veff_smooth(ir, ic));
         }
     }
 }
 
-TEST_F(PotentialNewTest, GetVofkSmooth)
-{
+TEST_F(PotentialNewTest, GetVofkSmooth) {
     // construct potential
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
@@ -566,64 +457,57 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
     EXPECT_EQ(vofk_smooth_tmp.nc, 100);
     EXPECT_EQ(vofk_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_smooth_const_tmp.nc, 100);
-    for (int ir = 0; ir < vofk_smooth_tmp.nr; ir++)
-    {
-        for (int ic = 0; ic < vofk_smooth_tmp.nc; ic++)
-        {
+    for (int ir = 0; ir < vofk_smooth_tmp.nr; ir++) {
+        for (int ic = 0; ic < vofk_smooth_tmp.nc; ic++) {
             EXPECT_DOUBLE_EQ(vofk_smooth_tmp(ir, ic), pot->vofk_smooth(ir, ic));
             EXPECT_DOUBLE_EQ(vofk_smooth_const_tmp(ir, ic), pot->vofk_smooth(ir, ic));
         }
     }
 }
 
-TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
-{
-     PARAM.sys.double_grid = true;
-     XC_Functional::func_type = 3;
-     XC_Functional::ked_flag = true;
-     // Init pw_basis
-     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
-     rhopw->initparameters(false, 4);
-     rhopw->setuptransform();
-     rhopw->collect_local_pw();
+TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids) {
+    PARAM.sys.double_grid = true;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
+    // Init pw_basis
+    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+    rhopw->initparameters(false, 4);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
 
-     rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
-     rhodpw->initparameters(false, 6);
-     static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
-     rhodpw->collect_local_pw();
+    rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
+    rhodpw->initparameters(false, 6);
+    static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
+    rhodpw->collect_local_pw();
 
-     pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-     for (int ir = 0; ir < pot->v_eff.nr; ir++)
-     {
-         for (int ic = 0; ic < pot->v_eff.nc; ic++)
-         {
-             pot->v_eff(ir, ic) = ir + ic;
-             pot->vofk_eff(ir, ic) = ir + 2 * ic;
-         }
-     }
-
-    pot->interpolate_vrs();
-
-    std::vector<double> expect_veff = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
-    std::vector<double> expect_vofk =  {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
-
-    int index=0;
-    for (int ir = 0; ir < pot->veff_smooth.nr; ir++)
-    {
-        for (int ic = 0; ic < pot->veff_smooth.nc; ic++)
-        {
-            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir,ic), expect_veff[index]);
-            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir,ic), expect_vofk[index]);
-            index++;
+    for (int ir = 0; ir < pot->v_eff.nr; ir++) {
+        for (int ic = 0; ic < pot->v_eff.nc; ic++) {
+            pot->v_eff(ir, ic) = ir + ic;
+            pot->vofk_eff(ir, ic) = ir + 2 * ic;
         }
     }
 
+    pot->interpolate_vrs();
+
+    std::vector<double> expect_veff = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
+    std::vector<double> expect_vofk = {0,  2,  4,  6,  8,  10, 12, 14, 16, 18, 20, 22, 24, 26,
+                                       28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
+
+    int index = 0;
+    for (int ir = 0; ir < pot->veff_smooth.nr; ir++) {
+        for (int ic = 0; ic < pot->veff_smooth.nc; ic++) {
+            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir, ic), expect_veff[index]);
+            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir, ic), expect_vofk[index]);
+            index++;
+        }
+    }
 }
 
-TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
-{
-     PARAM.sys.double_grid = true;
+TEST_F(PotentialNewTest, InterpolateVrsWarningQuit) {
+    PARAM.sys.double_grid = true;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
     rhopw->initparameters(false, 4);
@@ -642,37 +526,31 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
     EXPECT_EXIT(pot->interpolate_vrs(), ::testing::ExitedWithCode(1), "");
 }
 
-TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
-{
-     PARAM.sys.double_grid = false;
-     XC_Functional::func_type = 3;
-     XC_Functional::ked_flag = true;
-     // Init pw_basis
-     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
-     rhopw->initparameters(false, 4);
-     rhopw->setuptransform();
-     rhopw->collect_local_pw();
+TEST_F(PotentialNewTest, InterpolateVrsSingleGrids) {
+    PARAM.sys.double_grid = false;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
+    // Init pw_basis
+    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+    rhopw->initparameters(false, 4);
+    rhopw->setuptransform();
+    rhopw->collect_local_pw();
 
-     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-     for (int ir = 0; ir < pot->v_eff.nr; ir++)
-     {
-         for (int ic = 0; ic < pot->v_eff.nc; ic++)
-         {
-             pot->v_eff(ir, ic) = ir + ic;
-             pot->vofk_eff(ir, ic) = ir + 2 * ic;
-         }
-     }
-
-    pot->interpolate_vrs();
-
-    for (int ir = 0; ir < pot->veff_smooth.nr; ir++)
-    {
-        for (int ic = 0; ic < pot->veff_smooth.nc; ic++)
-        {
-            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir,ic), ir+ic);
-            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir,ic), ir+2*ic);
+    for (int ir = 0; ir < pot->v_eff.nr; ir++) {
+        for (int ic = 0; ic < pot->v_eff.nc; ic++) {
+            pot->v_eff(ir, ic) = ir + ic;
+            pot->vofk_eff(ir, ic) = ir + 2 * ic;
         }
     }
 
+    pot->interpolate_vrs();
+
+    for (int ir = 0; ir < pot->veff_smooth.nr; ir++) {
+        for (int ic = 0; ic < pot->veff_smooth.nc; ic++) {
+            EXPECT_DOUBLE_EQ(pot->veff_smooth(ir, ic), ir + ic);
+            EXPECT_DOUBLE_EQ(pot->vofk_smooth(ir, ic), ir + 2 * ic);
+        }
+    }
 }

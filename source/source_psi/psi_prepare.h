@@ -4,23 +4,21 @@
 #include "source_psi/psi_initializer.h"
 #include "source_psi/psi_prepare_base.h"
 
-namespace psi
-{
+namespace psi {
 
 // This class is used to prepare the wavefunction
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class PSIPrepare : public PSIPrepareBase
-{
+class PSIPrepare : public PSIPrepareBase {
   public:
     PSIPrepare(const std::string& init_wfc_in,
-            const std::string& ks_solver_in,
-            const std::string& basis_type_in,
-            const int& rank,
-            const UnitCell& ucell,
-            const Structure_Factor& sf,
-            const K_Vectors& kv_in,
-            const pseudopot_cell_vnl& nlpp,
-            const ModulePW::PW_Basis_K& pw_wfc);
+               const std::string& ks_solver_in,
+               const std::string& basis_type_in,
+               const int& rank,
+               const UnitCell& ucell,
+               const Structure_Factor& sf,
+               const K_Vectors& kv_in,
+               const pseudopot_cell_vnl& nlpp,
+               const ModulePW::PW_Basis_K& pw_wfc);
     ~PSIPrepare(){};
 
     ///@brief prepare the wavefunction initialization
@@ -87,7 +85,11 @@ class PSIPrepare : public PSIPrepareBase
 };
 
 ///@brief allocate the wavefunction
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx);
+void allocate_psi(Psi<std::complex<double>>*& psi,
+                  const int& nks,
+                  const std::vector<int>& ngk,
+                  const int& nbands,
+                  const int& npwx);
 
 } // namespace psi
 #endif

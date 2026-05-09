@@ -33,7 +33,7 @@ def test_array_lifetime_after_object_deletion():
         izeta=0,
         symbol="Test",
         itype=0,
-        init_sbt=True
+        init_sbt=True,
     )
 
     # Get arrays
@@ -62,13 +62,7 @@ def test_array_modification_isolation():
     grid = np.array([i * dr for i in range(sz)], dtype=np.float64)
     values = np.exp(-grid)
 
-    chi.build(
-        l=0,
-        for_r_space=True,
-        ngrid=sz,
-        grid=grid,
-        value=values
-    )
+    chi.build(l=0, for_r_space=True, ngrid=sz, grid=grid, value=values)
 
     # Get first array and modify it
     rgrid1 = chi.rgrid
@@ -90,13 +84,7 @@ def test_multiple_array_accesses():
     grid = np.array([i * dr for i in range(sz)], dtype=np.float64)
     values = np.exp(-grid)
 
-    chi.build(
-        l=1,
-        for_r_space=True,
-        ngrid=sz,
-        grid=grid,
-        value=values
-    )
+    chi.build(l=1, for_r_space=True, ngrid=sz, grid=grid, value=values)
 
     # Get multiple arrays
     arrays = [chi.rgrid for _ in range(5)]
@@ -112,12 +100,12 @@ def test_multiple_array_accesses():
 
 def test_radial_collection_array_lifetime():
     """Test array lifetime for RadialCollection objects."""
-    orb_dir = '../../../tests/PP_ORB/'
+    orb_dir = "../../../tests/PP_ORB/"
     file_list = [orb_dir + "C_gga_8au_100Ry_2s2p1d.orb"]
 
     try:
         orb = nao.RadialCollection()
-        orb.build(1, file_list, 'o')
+        orb.build(1, file_list, "o")
 
         # Get a NumericalRadial from the collection
         nr = orb(0, 0, 0)
@@ -155,7 +143,7 @@ def test_empty_array_handling():
         ngrid=sz,
         grid=grid,
         value=values,
-        init_sbt=False  # Don't initialize SBT, so k-space won't be set
+        init_sbt=False,  # Don't initialize SBT, so k-space won't be set
     )
 
     # r-space should be valid

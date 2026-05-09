@@ -34,81 +34,45 @@ namespace hsolver {
 /**
  * @brief Adapter for DiagoDavid solver
  */
-class PyDiagoDavidAdapter
-{
-public:
+class PyDiagoDavidAdapter {
+  public:
     using Traits = DiagoDavidTraits;
     using T = typename Traits::T;
     using SolverType = typename Traits::SolverType;
 
-    PyDiagoDavidAdapter(int nbasis, int nband)
-        : nbasis_(nbasis), nband_(nband)
-    {
-        storage_.allocate(nbasis, nband);
-    }
+    PyDiagoDavidAdapter(int nbasis, int nband) : nbasis_(nbasis), nband_(nband) { storage_.allocate(nbasis, nband); }
 
     PyDiagoDavidAdapter(const PyDiagoDavidAdapter&) = delete;
     PyDiagoDavidAdapter& operator=(const PyDiagoDavidAdapter&) = delete;
 
     PyDiagoDavidAdapter(PyDiagoDavidAdapter&& other) noexcept
-        : storage_(std::move(other.storage_))
-        , nbasis_(other.nbasis_)
-        , nband_(other.nband_)
-    {
-    }
+        : storage_(std::move(other.storage_)), nbasis_(other.nbasis_), nband_(other.nband_) {}
 
-    void set_psi(py::array_t<T> psi_in)
-    {
-        storage_.set_psi(psi_in);
-    }
+    void set_psi(py::array_t<T> psi_in) { storage_.set_psi(psi_in); }
 
-    py::array_t<T> get_psi() const
-    {
-        return storage_.get_psi();
-    }
+    py::array_t<T> get_psi() const { return storage_.get_psi(); }
 
-    void init_eigenvalue()
-    {
-        storage_.init_eigenvalue();
-    }
+    void init_eigenvalue() { storage_.init_eigenvalue(); }
 
-    py::array_t<double> get_eigenvalue() const
-    {
-        return storage_.get_eigenvalue();
-    }
+    py::array_t<double> get_eigenvalue() const { return storage_.get_eigenvalue(); }
 
-    int diag(
-        std::function<py::array_t<T>(py::array_t<T>)> mm_op,
-        std::vector<double>& precond_vec,
-        int dav_ndim,
-        double tol,
-        std::vector<double>& diag_ethr,
-        int max_iter,
-        ::hsolver::diag_comm_info comm_info)
-    {
+    int diag(std::function<py::array_t<T>(py::array_t<T>)> mm_op,
+             std::vector<double>& precond_vec,
+             int dav_ndim,
+             double tol,
+             std::vector<double>& diag_ethr,
+             int max_iter,
+             ::hsolver::diag_comm_info comm_info) {
         auto hpsi_func = make_hpsi_func_fstyle<T>(mm_op);
         auto spsi_func = make_spsi_func_identity<Traits>();
 
-        solver_ = std::make_unique<SolverType>(
-            precond_vec.data(),
-            nband_,
-            nbasis_,
-            dav_ndim,
-            comm_info
-        );
+        solver_ = std::make_unique<SolverType>(precond_vec.data(), nband_, nbasis_, dav_ndim, comm_info);
 
-        return solver_->diag(
-            hpsi_func,
-            spsi_func,
-            nbasis_,
-            storage_.psi_ptr(),
-            storage_.eigenvalue_ptr(),
-            diag_ethr,
-            max_iter
-        );
+        return solver_
+            ->diag(hpsi_func, spsi_func, nbasis_, storage_.psi_ptr(), storage_.eigenvalue_ptr(), diag_ethr, max_iter);
     }
 
-private:
+  private:
     RawPointerStorage<T> storage_;
     std::unique_ptr<SolverType> solver_;
     int nbasis_;
@@ -122,16 +86,13 @@ private:
 /**
  * @brief Adapter for DiagoDavSubspace solver
  */
-class PyDiagoDavSubspaceAdapter
-{
-public:
+class PyDiagoDavSubspaceAdapter {
+  public:
     using Traits = DiagoDavSubspaceTraits;
     using T = typename Traits::T;
     using SolverType = typename Traits::SolverType;
 
-    PyDiagoDavSubspaceAdapter(int nbasis, int nband)
-        : nbasis_(nbasis), nband_(nband)
-    {
+    PyDiagoDavSubspaceAdapter(int nbasis, int nband) : nbasis_(nbasis), nband_(nband) {
         storage_.allocate(nbasis, nband);
     }
 
@@ -139,72 +100,45 @@ public:
     PyDiagoDavSubspaceAdapter& operator=(const PyDiagoDavSubspaceAdapter&) = delete;
 
     PyDiagoDavSubspaceAdapter(PyDiagoDavSubspaceAdapter&& other) noexcept
-        : storage_(std::move(other.storage_))
-        , nbasis_(other.nbasis_)
-        , nband_(other.nband_)
-    {
-    }
+        : storage_(std::move(other.storage_)), nbasis_(other.nbasis_), nband_(other.nband_) {}
 
-    void set_psi(py::array_t<T> psi_in)
-    {
-        storage_.set_psi(psi_in);
-    }
+    void set_psi(py::array_t<T> psi_in) { storage_.set_psi(psi_in); }
 
-    py::array_t<T> get_psi() const
-    {
-        return storage_.get_psi();
-    }
+    py::array_t<T> get_psi() const { return storage_.get_psi(); }
 
-    void init_eigenvalue()
-    {
-        storage_.init_eigenvalue();
-    }
+    void init_eigenvalue() { storage_.init_eigenvalue(); }
 
-    py::array_t<double> get_eigenvalue() const
-    {
-        return storage_.get_eigenvalue();
-    }
+    py::array_t<double> get_eigenvalue() const { return storage_.get_eigenvalue(); }
 
-    int diag(
-        std::function<py::array_t<T>(py::array_t<T>)> mm_op,
-        std::vector<double>& precond_vec,
-        int dav_ndim,
-        double tol,
-        int max_iter,
-        bool need_subspace,
-        std::vector<double>& diag_ethr,
-        bool scf_type,
-        ::hsolver::diag_comm_info comm_info,
-        int diag_subspace,
-        int nb2d)
-    {
+    int diag(std::function<py::array_t<T>(py::array_t<T>)> mm_op,
+             std::vector<double>& precond_vec,
+             int dav_ndim,
+             double tol,
+             int max_iter,
+             bool need_subspace,
+             std::vector<double>& diag_ethr,
+             bool scf_type,
+             ::hsolver::diag_comm_info comm_info,
+             int diag_subspace,
+             int nb2d) {
         auto hpsi_func = make_hpsi_func_fstyle<T>(mm_op);
         auto spsi_func = make_spsi_func_identity<Traits>();
 
-        solver_ = std::make_unique<SolverType>(
-            precond_vec,
-            nband_,
-            nbasis_,
-            dav_ndim,
-            tol,
-            max_iter,
-            comm_info,
-            diag_subspace,
-            nb2d
-        );
+        solver_ = std::make_unique<SolverType>(precond_vec,
+                                               nband_,
+                                               nbasis_,
+                                               dav_ndim,
+                                               tol,
+                                               max_iter,
+                                               comm_info,
+                                               diag_subspace,
+                                               nb2d);
 
-        return solver_->diag(
-            hpsi_func,
-            spsi_func,
-            storage_.psi_ptr(),
-            nbasis_,
-            storage_.eigenvalue_ptr(),
-            diag_ethr,
-            scf_type
-        );
+        return solver_
+            ->diag(hpsi_func, spsi_func, storage_.psi_ptr(), nbasis_, storage_.eigenvalue_ptr(), diag_ethr, scf_type);
     }
 
-private:
+  private:
     RawPointerStorage<T> storage_;
     std::unique_ptr<SolverType> solver_;
     int nbasis_;
@@ -219,63 +153,37 @@ private:
 /**
  * @brief Adapter for DiagoCG solver
  */
-class PyDiagoCGAdapter
-{
-public:
+class PyDiagoCGAdapter {
+  public:
     using Traits = DiagoCGTraits;
     using T = typename Traits::T;
     using SolverType = typename Traits::SolverType;
 
-    PyDiagoCGAdapter(int dim, int num_eigs)
-        : dim_(dim), num_eigs_(num_eigs)
-    {
-        storage_.allocate(dim, num_eigs);
-    }
+    PyDiagoCGAdapter(int dim, int num_eigs) : dim_(dim), num_eigs_(num_eigs) { storage_.allocate(dim, num_eigs); }
 
     PyDiagoCGAdapter(const PyDiagoCGAdapter&) = delete;
     PyDiagoCGAdapter& operator=(const PyDiagoCGAdapter&) = delete;
 
     PyDiagoCGAdapter(PyDiagoCGAdapter&& other) noexcept
-        : storage_(std::move(other.storage_))
-        , dim_(other.dim_)
-        , num_eigs_(other.num_eigs_)
-    {
-    }
+        : storage_(std::move(other.storage_)), dim_(other.dim_), num_eigs_(other.num_eigs_) {}
 
-    void set_psi(py::array_t<T> psi_in)
-    {
-        storage_.set_psi(psi_in);
-    }
+    void set_psi(py::array_t<T> psi_in) { storage_.set_psi(psi_in); }
 
-    py::array_t<T> get_psi() const
-    {
-        return storage_.get_psi();
-    }
+    py::array_t<T> get_psi() const { return storage_.get_psi(); }
 
-    void init_eig()
-    {
-        storage_.init_eigenvalue();
-    }
+    void init_eig() { storage_.init_eigenvalue(); }
 
-    py::array_t<double> get_eig() const
-    {
-        return storage_.get_eigenvalue();
-    }
+    py::array_t<double> get_eig() const { return storage_.get_eigenvalue(); }
 
-    void set_prec(py::array_t<double> prec_in)
-    {
-        storage_.set_preconditioner(prec_in);
-    }
+    void set_prec(py::array_t<double> prec_in) { storage_.set_preconditioner(prec_in); }
 
-    void diag(
-        std::function<py::array_t<T>(py::array_t<T>)> mm_op,
-        int diag_ndim,
-        double tol,
-        const std::vector<double>& diag_ethr,
-        bool need_subspace,
-        bool scf_type,
-        int nproc_in_pool = 1)
-    {
+    void diag(std::function<py::array_t<T>(py::array_t<T>)> mm_op,
+              int diag_ndim,
+              double tol,
+              const std::vector<double>& diag_ethr,
+              bool need_subspace,
+              bool scf_type,
+              int nproc_in_pool = 1) {
         const std::string basis_type = "pw";
         const std::string calculation = scf_type ? "scf" : "nscf";
 
@@ -285,27 +193,23 @@ public:
             // Do nothing - placeholder
         };
 
-        solver_ = std::make_unique<SolverType>(
-            basis_type,
-            calculation,
-            need_subspace,
-            subspace_func,
-            tol,
-            diag_ndim,
-            nproc_in_pool
-        );
+        solver_ = std::make_unique<SolverType>(basis_type,
+                                               calculation,
+                                               need_subspace,
+                                               subspace_func,
+                                               tol,
+                                               diag_ndim,
+                                               nproc_in_pool);
 
-        solver_->diag(
-            hpsi_func,
-            spsi_func,
-            *storage_.psi_tensor(),
-            *storage_.eig_tensor(),
-            diag_ethr,
-            *storage_.prec_tensor()
-        );
+        solver_->diag(hpsi_func,
+                      spsi_func,
+                      *storage_.psi_tensor(),
+                      *storage_.eig_tensor(),
+                      diag_ethr,
+                      *storage_.prec_tensor());
     }
 
-private:
+  private:
     TensorStorage<T> storage_;
     std::unique_ptr<SolverType> solver_;
     int dim_;

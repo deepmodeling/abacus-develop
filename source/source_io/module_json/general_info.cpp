@@ -6,12 +6,10 @@
 #include "source_main/version.h"
 
 // Add json objects to gener_info
-namespace Json
-{
+namespace Json {
 
 #ifdef __RAPIDJSON
-void gen_general_info(const Parameter& param)
-{
+void gen_general_info(const Parameter& param) {
 
 #ifdef VERSION
     const std::string version = VERSION;

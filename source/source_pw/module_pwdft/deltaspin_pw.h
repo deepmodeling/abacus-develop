@@ -1,12 +1,10 @@
 #ifndef DELTASPIN_PW_H
 #define DELTASPIN_PW_H
 
-
 class Charge_Mixing;
 struct Input_para;
 
-namespace pw
-{
+namespace pw {
 
 /**
  * @brief Run the inner lambda loop for DeltaSpin method to constrain atomic magnetic moments.
@@ -20,9 +18,7 @@ namespace pw
  * @return true if the solver should be skipped (lambda loop was executed),
  *         false otherwise.
  */
-bool run_deltaspin_lambda_loop(const int iter,
-                               const double drho,
-                               const Input_para& inp);
+bool run_deltaspin_lambda_loop(const int iter, const double drho, const Input_para& inp);
 
 /**
  * @brief Check if SCF oscillation occurs for DeltaSpin method.
@@ -36,11 +32,8 @@ bool run_deltaspin_lambda_loop(const int iter,
  * @param p_chgmix Pointer to the Charge_Mixing object.
  * @param inp The input parameters.
  */
-void check_deltaspin_oscillation(const int iter,
-                                 const double drho,
-                                 Charge_Mixing* p_chgmix,
-                                 const Input_para& inp);
+void check_deltaspin_oscillation(const int iter, const double drho, Charge_Mixing* p_chgmix, const Input_para& inp);
 
-}
+} // namespace pw
 
 #endif

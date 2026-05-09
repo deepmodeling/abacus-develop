@@ -35,20 +35,20 @@ case "$with_nep" in
     url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
 
     if verify_checksums "${install_lock_file}"; then
-        echo "$dirname is already installed, skipping it."
+      echo "$dirname is already installed, skipping it."
     else
-        retrieve_package "${nep_sha256}" "${filename}" "${url}"
+      retrieve_package "${nep_sha256}" "${filename}" "${url}"
 
-        if [ "${PACK_RUN}" = "__TRUE__" ]; then
-            echo "--pack-run mode specified, skip installation"
-            exit 0
-        fi
-        echo "Installing from scratch into ${pkg_install_dir}"
-        [ -d $dirname ] && rm -rf $dirname
-        tar -xzf $filename
-        cd $dirname
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d $dirname ] && rm -rf $dirname
+      tar -xzf $filename
+      cd $dirname
 
-        cat << EOF > Makefile
+      cat << EOF > Makefile
 CXX ?= g++
 
 # Compiler flags
@@ -71,29 +71,29 @@ all: \$(TARGET)
 
 # Rule to build the shared library
 \$(TARGET): \$(OBJS)
-	\$(CXX) -shared \$(OBJS) -o \$(TARGET)
+    \$(CXX) -shared \$(OBJS) -o \$(TARGET)
 
 # Rule to compile source files into object files
 %.o: %.cpp
-	\$(CXX) \$(CXXFLAGS) \$(INCLUDES) -c \$< -o \$@
+    \$(CXX) \$(CXXFLAGS) \$(INCLUDES) -c \$< -o \$@
 
 # Clean up build files
 clean:
-	rm -f \$(OBJS) \$(TARGET)
+    rm -f \$(OBJS) \$(TARGET)
 
 # Install target
 install:
-	mkdir -p \$(PREFIX)/lib
-	mkdir -p \$(PREFIX)/include
-	cp \$(TARGET) \$(PREFIX)/lib/
-	cp src/*.h \$(PREFIX)/include/
+    mkdir -p \$(PREFIX)/lib
+    mkdir -p \$(PREFIX)/include
+    cp \$(TARGET) \$(PREFIX)/lib/
+    cp src/*.h \$(PREFIX)/include/
 EOF
 
-        make > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-        make PREFIX="${pkg_install_dir}" install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      make > make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make PREFIX="${pkg_install_dir}" install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
 
-        cd ..
-        write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+      cd ..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     NEP_CFLAGS="-I'${pkg_install_dir}/include'"
     NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"

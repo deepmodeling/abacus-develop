@@ -8,8 +8,7 @@
 #include "global_function.h"
 #include "source_base/parallel_reduce.h"
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 /**
  * @brief A class designed to deal with optimization problems with CG method.
  * Three forms of CG methods have been implemented, including standard flow to solve
@@ -21,8 +20,7 @@ namespace ModuleBase
  * g -> gradient
  * @author sunliang
  */
-class Opt_CG
-{
+class Opt_CG {
   public:
     Opt_CG();
     ~Opt_CG();
@@ -45,14 +43,8 @@ class Opt_CG
                        int& ifPD        // if postive definit
     );
 
-    double get_residual() const
-    {
-        return sqrt(this->gg_);
-    };
-    int get_iter() const
-    {
-        return this->iter_;
-    }
+    double get_residual() const { return sqrt(this->gg_); };
+    int get_iter() const { return this->iter_; }
 
     // void ZEROS(double *x, int n)
     // {
@@ -80,8 +72,7 @@ class Opt_CG
     );
     void HZ_beta(double* pgradient // df(x)/dx
     );
-    double inner_product(double* pa, double* pb, int length)
-    {
+    double inner_product(double* pa, double* pb, int length) {
         double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
         innerproduct *= this->dV_;
         return innerproduct;

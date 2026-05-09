@@ -13,8 +13,7 @@
 
 #include <complex>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 /**
  *  @brief apply U_operator to the wave function of the previous step for new wave function

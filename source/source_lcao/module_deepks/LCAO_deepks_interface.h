@@ -10,8 +10,7 @@
 #include <memory>
 
 template <typename TK, typename TR>
-class LCAO_Deepks_Interface
-{
+class LCAO_Deepks_Interface {
   public:
     /// @brief Constructor for LCAO_Deepks_Interface
     /// @param ld_in

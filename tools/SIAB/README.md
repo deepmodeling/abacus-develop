@@ -1,6 +1,5 @@
 # SIAB Package Description
 
-
 **S**ystematically
 
 **I**mprovable
@@ -8,7 +7,6 @@
 **A**tomic orbital
 
 **B**asis generator based on spillage formula
-
 
 # HOW TO USE SIAB
 
@@ -20,21 +18,19 @@ The optimization can choose one of the three minimization methods:
 
 The executable files for the three methods are:
 
-- ./SimulatedAnnealing/source/SIA_s.exe, 
-- ./PyTorchGradient/source/main.py, 
-- ../opt_orb_pytorch_dpsi/main.py, 
+- ./SimulatedAnnealing/source/SIA_s.exe,
+- ./PyTorchGradient/source/main.py,
+- ../opt_orb_pytorch_dpsi/main.py,
 
 respectively.
 
+## 1. Write input file
 
-##  1. Write input file
+Firstly, write the input file, such as **ORBITAL_INPUT_DZP** in example-directories, for script
+**Generate_Orbital_AllInOne.sh**. All three approachs work with the same bash script and use the
+same input file. Please use **absolute path** for each file/directory in input file.
 
-Firstly, write the input file, such as **ORBITAL_INPUT_DZP** in example-directories, for script **Generate_Orbital_AllInOne.sh**.
-All three approachs work with the same bash script and use the same input file.
-Please use **absolute path** for each file/directory in input file.
-
-
-##  2. Set up dependence environment
+## 2. Set up dependence environment
 
 Secondly, we set up the dependence environment for ABACUS and SIAB, such as:
 
@@ -43,7 +39,6 @@ $ module load hpcx/2.9.0/hpcx-intel-2019.update5 mkl/2019.update5 elpa/2019.05.0
 ```
 
 Especially for SIAB with **PyTorch Gradient** approach, we need pytorch v1.1.0.
-
 
 ### How to install pytorch:
 
@@ -70,7 +65,6 @@ $ pip3 install --user scipy numpy
 $ pip3 install --user torch_optimizer
 ```
 
-
 ## 3. Run generation
 
 Finally, `cd` into an example folder, and run command like this:
@@ -80,4 +74,3 @@ $ ../Generate_Orbital_AllInOne.sh ORBITAL_INPUT_DZP
  or
 $ bsub -q idle -n 8 -oo running.log ../Generate_Orbital_AllInOne.sh ORBITAL_INPUT_DZP
 ```
-

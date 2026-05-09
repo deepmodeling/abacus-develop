@@ -1,8 +1,7 @@
 #include "elpa_new.h"
 
 #include "elpa_solver.h"
-extern "C"
-{
+extern "C" {
 #include "Cblacs.h"
 }
 #include "utils.h"
@@ -29,8 +28,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
                          const int narows,
                          const int nacols,
                          const int* desc,
-                         const bool reuse_handle_0)
-{
+                         const bool reuse_handle_0) {
     this->isReal = isReal;
     this->comm = comm;
     this->nev = nev;
@@ -71,9 +69,8 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
 
     handle_id = ++total_handle;
 
-    //delete the old elpa_handle and reuse the handle_id=0
-    if(reuse_handle_0 && total_handle>0)
-    {
+    // delete the old elpa_handle and reuse the handle_id=0
+    if (reuse_handle_0 && total_handle > 0) {
         NEW_ELPA_HANDLE_POOL.erase(0);
         handle_id = 0;
     }
@@ -111,8 +108,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
                          const int narows,
                          const int nacols,
                          const int* desc,
-                         const int* otherParameter)
-{
+                         const int* otherParameter) {
     this->isReal = isReal;
     this->comm = comm;
     this->nev = nev;
@@ -174,19 +170,16 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     this->setLoglevel(loglevel);
 }
 
-void ELPA_Solver::setLoglevel(int loglevel)
-{
+void ELPA_Solver::setLoglevel(int loglevel) {
     int error;
     this->loglevel = loglevel;
     static bool isLogfileInited = false;
 
-    if (loglevel >= 2)
-    {
+    if (loglevel >= 2) {
         wantDebug = 1;
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "verbose", 1, &error);
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "debug", wantDebug, &error);
-        if (!isLogfileInited)
-        {
+        if (!isLogfileInited) {
             std::stringstream logfilename;
             logfilename.str("");
             logfilename << "GenELPA_" << myid << ".log";
@@ -194,15 +187,12 @@ void ELPA_Solver::setLoglevel(int loglevel)
             logfile << "logfile inited\n";
             isLogfileInited = true;
         }
-    }
-    else
-    {
+    } else {
         wantDebug = 0;
     }
 }
 
-void ELPA_Solver::setKernel(bool isReal, int kernel)
-{
+void ELPA_Solver::setKernel(bool isReal, int kernel) {
     this->kernel_id = kernel;
     int error;
     if (isReal)
@@ -211,15 +201,13 @@ void ELPA_Solver::setKernel(bool isReal, int kernel)
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "complex_kernel", kernel, &error);
 }
 
-void ELPA_Solver::setQR(int useQR)
-{
+void ELPA_Solver::setQR(int useQR) {
     this->useQR = useQR;
     int error;
     elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "qr", useQR, &error);
 }
 
-void ELPA_Solver::exit()
-{
+void ELPA_Solver::exit() {
     // delete[] dwork;
     // delete[] zwork;
     if (loglevel > 2)
@@ -229,8 +217,7 @@ void ELPA_Solver::exit()
     elpa_uninit(&error);
 }
 
-int ELPA_Solver::read_cpuflag()
-{
+int ELPA_Solver::read_cpuflag() {
     int cpuflag = 0;
 
     std::ifstream f_cpuinfo("/proc/cpuinfo");
@@ -240,25 +227,16 @@ int ELPA_Solver::read_cpuflag()
     std::regex cpuflag_avx2(".*avx2.*");
     std::regex cpuflag_avx(".*avx.*");
     std::regex cpuflag_sse(".*sse.*");
-    while (getline(f_cpuinfo, cpuinfo_line))
-    {
-        if (std::regex_match(cpuinfo_line, cpuflag_ex))
-        {
+    while (getline(f_cpuinfo, cpuinfo_line)) {
+        if (std::regex_match(cpuinfo_line, cpuflag_ex)) {
             // cout<<cpuinfo_line<<endl;
-            if (std::regex_match(cpuinfo_line, cpuflag_avx512))
-            {
+            if (std::regex_match(cpuinfo_line, cpuflag_avx512)) {
                 cpuflag = 4;
-            }
-            else if (std::regex_match(cpuinfo_line, cpuflag_avx2))
-            {
+            } else if (std::regex_match(cpuinfo_line, cpuflag_avx2)) {
                 cpuflag = 3;
-            }
-            else if (std::regex_match(cpuinfo_line, cpuflag_avx))
-            {
+            } else if (std::regex_match(cpuinfo_line, cpuflag_avx)) {
                 cpuflag = 2;
-            }
-            else if (std::regex_match(cpuinfo_line, cpuflag_sse))
-            {
+            } else if (std::regex_match(cpuinfo_line, cpuflag_sse)) {
                 cpuflag = 1;
             }
             break;
@@ -268,12 +246,10 @@ int ELPA_Solver::read_cpuflag()
     return cpuflag;
 }
 
-int ELPA_Solver::read_real_kernel()
-{
+int ELPA_Solver::read_real_kernel() {
     int kernel_id = 0;
 
-    if (const char* env = getenv("ELPA_DEFAULT_real_kernel"))
-    {
+    if (const char* env = getenv("ELPA_DEFAULT_real_kernel")) {
         if (strcmp(env, "ELPA_2STAGE_REAL_GENERIC_SIMPLE") == 0)
             kernel_id = ELPA_2STAGE_REAL_GENERIC_SIMPLE;
         else if (strcmp(env, "ELPA_2STAGE_REAL_BGP") == 0)
@@ -348,12 +324,9 @@ int ELPA_Solver::read_real_kernel()
             kernel_id = ELPA_2STAGE_REAL_GENERIC_SIMPLE_BLOCK6;
         else
             kernel_id = ELPA_2STAGE_REAL_GENERIC;
-    }
-    else
-    {
+    } else {
         int cpuflag = read_cpuflag();
-        switch (cpuflag)
-        {
+        switch (cpuflag) {
         case 4:
             kernel_id = ELPA_2STAGE_REAL_AVX512_BLOCK4;
             break;
@@ -374,11 +347,9 @@ int ELPA_Solver::read_real_kernel()
     return kernel_id;
 }
 
-int ELPA_Solver::read_complex_kernel()
-{
+int ELPA_Solver::read_complex_kernel() {
     int kernel_id;
-    if (const char* env = getenv("ELPA_DEFAULT_complex_kernel"))
-    {
+    if (const char* env = getenv("ELPA_DEFAULT_complex_kernel")) {
         if (strcmp(env, "ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE") == 0)
             kernel_id = ELPA_2STAGE_COMPLEX_GENERIC_SIMPLE;
         else if (strcmp(env, "ELPA_2STAGE_COMPLEX_BGP") == 0)
@@ -425,12 +396,9 @@ int ELPA_Solver::read_complex_kernel()
             kernel_id = ELPA_2STAGE_COMPLEX_AMD_GPU;
         else
             kernel_id = ELPA_2STAGE_COMPLEX_GENERIC;
-    }
-    else
-    {
+    } else {
         int cpuflag = read_cpuflag();
-        switch (cpuflag)
-        {
+        switch (cpuflag) {
         case 4:
             kernel_id = ELPA_2STAGE_COMPLEX_AVX512_BLOCK2;
             break;
@@ -451,10 +419,9 @@ int ELPA_Solver::read_complex_kernel()
     return kernel_id;
 }
 
-int ELPA_Solver::allocate_work()
-{
+int ELPA_Solver::allocate_work() {
     unsigned long nloc = static_cast<unsigned long>(narows) * nacols; // local size
-    unsigned long maxloc = 0; // maximum local size
+    unsigned long maxloc = 0;                                         // maximum local size
     MPI_Allreduce(&nloc, &maxloc, 1, MPI_UNSIGNED_LONG, MPI_MAX, comm);
     maxloc = nloc;
 
@@ -465,26 +432,22 @@ int ELPA_Solver::allocate_work()
     return 0;
 }
 
-void ELPA_Solver::timer(int myid, const char function[], const char step[], double& t0)
-{
+void ELPA_Solver::timer(int myid, const char function[], const char step[], double& t0) {
     double t1 = 0.0;
     if (t0 < 0) // t0 < 0 means this is the init call before the function
     {
         t0 = MPI_Wtime();
-        t0 = (double)clock()/CLOCKS_PER_SEC;
+        t0 = (double)clock() / CLOCKS_PER_SEC;
         logfile << "DEBUG: Process " << myid << " Call " << function << std::endl;
-    }
-    else
-    {
+    } else {
         t1 = MPI_Wtime();
-        t1 = (double)clock()/CLOCKS_PER_SEC;
+        t1 = (double)clock() / CLOCKS_PER_SEC;
         logfile << "DEBUG: Process " << myid << " Step " << step << " " << function << " time: " << t1 - t0 << " s"
                 << std::endl;
     }
 }
 
-void ELPA_Solver::outputParameters()
-{
+void ELPA_Solver::outputParameters() {
     logfile << "myid " << myid << ": comm id(in FORTRAN):" << MPI_Comm_c2f(comm) << std::endl;
     logfile << "myid " << myid << ": nprows: " << nprows << " npcols: " << npcols << std::endl;
     logfile << "myid " << myid << ": myprow: " << myprow << " mypcol: " << mypcol << std::endl;

@@ -5,8 +5,7 @@
 
 #include "source_base/mathzone.h"
 
-class UcellTestPrepare
-{
+class UcellTestPrepare {
   public:
     UcellTestPrepare() = default;
     UcellTestPrepare(std::string latname_in,
@@ -67,26 +66,24 @@ class UcellTestPrepare
     int ntype;
     int atomic_index;
 
-    UnitCell* SetUcellInfo(const std::vector<int>& nw, int& nlocal)
-    {
+    UnitCell* SetUcellInfo(const std::vector<int>& nw, int& nlocal) {
         // basic info
         this->ntype = this->elements.size();
         static UnitCell ucell;
         ucell.setup(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
-        
+
         delete[] ucell.magnet.start_mag; // mag set here
-        
+
         ucell.atom_label.resize(ucell.ntype);
-		ucell.atom_mass.resize(ucell.ntype);
-		ucell.pseudo_fn.resize(ucell.ntype);
-		ucell.pseudo_type.resize(ucell.ntype);
+        ucell.atom_mass.resize(ucell.ntype);
+        ucell.pseudo_fn.resize(ucell.ntype);
+        ucell.pseudo_type.resize(ucell.ntype);
         ucell.orbital_fn.resize(ucell.ntype);
         ucell.magnet.start_mag = new double[ucell.ntype]; // mag set here
-        ucell.magnet.ux_[0] = 0.0;                                  // ux_ set here
+        ucell.magnet.ux_[0] = 0.0;                        // ux_ set here
         ucell.magnet.ux_[1] = 0.0;
         ucell.magnet.ux_[2] = 0.0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             ucell.atom_label[it] = this->elements[it];
             ucell.atom_mass[it] = this->atomic_mass[it];
             ucell.pseudo_fn[it] = this->pp_files[it];
@@ -127,8 +124,7 @@ class UcellTestPrepare
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
         this->atomic_index = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             ucell.atoms[it].label = this->elements[it];
             /*
             ucell.atoms[it].nw = 0;
@@ -153,17 +149,13 @@ class UcellTestPrepare
             ucell.atoms[it].m_loc_.resize(ucell.atoms[it].na);
             ucell.atoms[it].mbl.resize(ucell.atoms[it].na);
             ucell.atoms[it].mass = ucell.atom_mass[it]; // mass set here
-            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-            {
-                if (ucell.Coordinate == "Direct")
-                {
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
+                if (ucell.Coordinate == "Direct") {
                     ucell.atoms[it].taud[ia].x = this->coordinates[this->atomic_index * 3 + 0];
                     ucell.atoms[it].taud[ia].y = this->coordinates[this->atomic_index * 3 + 1];
                     ucell.atoms[it].taud[ia].z = this->coordinates[this->atomic_index * 3 + 2];
                     ucell.atoms[it].tau[ia] = ucell.atoms[it].taud[ia] * ucell.latvec;
-                }
-                else if (ucell.Coordinate == "Cartesian")
-                {
+                } else if (ucell.Coordinate == "Cartesian") {
                     ucell.atoms[it].tau[ia].x = this->coordinates[this->atomic_index * 3 + 0];
                     ucell.atoms[it].tau[ia].y = this->coordinates[this->atomic_index * 3 + 1];
                     ucell.atoms[it].tau[ia].z = this->coordinates[this->atomic_index * 3 + 2];
@@ -184,27 +176,21 @@ class UcellTestPrepare
                                                               ucell.atoms[it].taud[ia].z);
                 }
                 ucell.atoms[it].dis[ia].set(0, 0, 0);
-                if (this->init_vel)
-                {
+                if (this->init_vel) {
                     ucell.atoms[it].vel[ia].x = this->velocity[this->atomic_index * 3 + 0];
                     ucell.atoms[it].vel[ia].y = this->velocity[this->atomic_index * 3 + 1];
                     ucell.atoms[it].vel[ia].z = this->velocity[this->atomic_index * 3 + 2];
-                }
-                else
-                {
+                } else {
                     ucell.atoms[it].vel[ia].set(0, 0, 0);
                 }
                 ucell.atoms[it].m_loc_[ia].set(0, 0, 0);
                 ucell.atoms[it].angle1[ia] = 0;
                 ucell.atoms[it].angle2[ia] = 0;
-                if (this->selective_dynamics)
-                {
+                if (this->selective_dynamics) {
                     ucell.atoms[it].mbl[ia].x = this->mbl[this->atomic_index * 3 + 0];
                     ucell.atoms[it].mbl[ia].y = this->mbl[this->atomic_index * 3 + 1];
                     ucell.atoms[it].mbl[ia].z = this->mbl[this->atomic_index * 3 + 2];
-                }
-                else
-                {
+                } else {
                     ucell.atoms[it].mbl[ia] = {1, 1, 1};
                 }
                 ++(this->atomic_index);
@@ -213,19 +199,16 @@ class UcellTestPrepare
         ucell.nat = this->natom.sum();
         // set_nw
         assert(nw.size() == ucell.ntype);
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             ucell.atoms[it].nw = nw[it];
         }
         // cal_nloc
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             nlocal += ucell.atoms[it].na * ucell.atoms[it].nw;
         }
         // cal_namax
         int namax = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
+        for (int it = 0; it < ucell.ntype; ++it) {
             namax = std::max(namax, ucell.atoms[it].na);
         }
         ucell.namax = namax;
@@ -243,15 +226,12 @@ class UcellTestPrepare
         ucell.set_iat2iwt(1);
         int iat = 0;
         int iwt = 0;
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
+        for (int it = 0; it < ucell.ntype; it++) {
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++) {
                 ucell.iat2it[iat] = it;
                 ucell.iat2ia[iat] = ia;
                 ucell.itia2iat(it, ia) = iat;
-                for (int iw = 0; iw < ucell.atoms[it].nw; iw++)
-                {
+                for (int iw = 0; iw < ucell.atoms[it].nw; iw++) {
                     ucell.iwt2iat[iwt] = iat;
                     ucell.iwt2iw[iwt] = iw;
                     ++iwt;
@@ -279,25 +259,12 @@ UcellTestPrepare::UcellTestPrepare(std::string latname_in,
                                    std::vector<double> atomic_mass_in,
                                    std::string coor_type_in,
                                    std::valarray<double> coordinates_in)
-    : latname(latname_in),
-      lmaxmax(lmaxmax_in),
-      init_vel(init_vel_in),
-      selective_dynamics(selective_dynamics_in),
-      relax_new(relax_new_in),
-      fixed_axes(fixed_axes_in),
-      lat0(lat0_in),
-      latvec(latvec_in),
-      elements(elements_in),
-      pp_files(pp_files_in),
-      pp_types(pp_types_in),
-      orb_files(orb_files_in),
-      natom(natom_in),
-      atomic_mass(atomic_mass_in),
-      coor_type(coor_type_in),
-      coordinates(coordinates_in)
-{
+    : latname(latname_in), lmaxmax(lmaxmax_in), init_vel(init_vel_in), selective_dynamics(selective_dynamics_in),
+      relax_new(relax_new_in), fixed_axes(fixed_axes_in), lat0(lat0_in), latvec(latvec_in), elements(elements_in),
+      pp_files(pp_files_in), pp_types(pp_types_in), orb_files(orb_files_in), natom(natom_in),
+      atomic_mass(atomic_mass_in), coor_type(coor_type_in), coordinates(coordinates_in) {
     mbl = std::valarray<double>(0.0, coordinates_in.size());
-	velocity = std::valarray<double>(0.0, coordinates_in.size());
+    velocity = std::valarray<double>(0.0, coordinates_in.size());
 }
 
 UcellTestPrepare::UcellTestPrepare(std::string latname_in,
@@ -318,79 +285,49 @@ UcellTestPrepare::UcellTestPrepare(std::string latname_in,
                                    std::valarray<double> coordinates_in,
                                    std::valarray<double> mbl_in,
                                    std::valarray<double> velocity_in)
-    : latname(latname_in),
-      lmaxmax(lmaxmax_in),
-      init_vel(init_vel_in),
-      selective_dynamics(selective_dynamics_in),
-      relax_new(relax_new_in),
-      fixed_axes(fixed_axes_in),
-      lat0(lat0_in),
-      latvec(latvec_in),
-      elements(elements_in),
-      pp_files(pp_files_in),
-      pp_types(pp_types_in),
-      orb_files(orb_files_in),
-      natom(natom_in),
-      atomic_mass(atomic_mass_in),
-      coor_type(coor_type_in),
-      coordinates(coordinates_in),
-      mbl(mbl_in),
+    : latname(latname_in), lmaxmax(lmaxmax_in), init_vel(init_vel_in), selective_dynamics(selective_dynamics_in),
+      relax_new(relax_new_in), fixed_axes(fixed_axes_in), lat0(lat0_in), latvec(latvec_in), elements(elements_in),
+      pp_files(pp_files_in), pp_types(pp_types_in), orb_files(orb_files_in), natom(natom_in),
+      atomic_mass(atomic_mass_in), coor_type(coor_type_in), coordinates(coordinates_in), mbl(mbl_in),
       velocity(velocity_in) // velocity assume the existence of mbl in print_stru_file()
-{
-}
+{}
 
 UcellTestPrepare::UcellTestPrepare(const UcellTestPrepare& utp)
-    : latname(utp.latname),
-      lmaxmax(utp.lmaxmax),
-      init_vel(utp.init_vel),
-      selective_dynamics(utp.selective_dynamics),
-      relax_new(utp.relax_new),
-      fixed_axes(utp.fixed_axes),
-      lat0(utp.lat0),
-      latvec(utp.latvec),
-      elements(utp.elements),
-      pp_files(utp.pp_files),
-      pp_types(utp.pp_types),
-      orb_files(utp.orb_files),
-      natom(utp.natom),
-      atomic_mass(utp.atomic_mass),
-      coor_type(utp.coor_type),
-      coordinates(utp.coordinates),
-      mbl(utp.mbl),
+    : latname(utp.latname), lmaxmax(utp.lmaxmax), init_vel(utp.init_vel), selective_dynamics(utp.selective_dynamics),
+      relax_new(utp.relax_new), fixed_axes(utp.fixed_axes), lat0(utp.lat0), latvec(utp.latvec), elements(utp.elements),
+      pp_files(utp.pp_files), pp_types(utp.pp_types), orb_files(utp.orb_files), natom(utp.natom),
+      atomic_mass(utp.atomic_mass), coor_type(utp.coor_type), coordinates(utp.coordinates), mbl(utp.mbl),
       velocity(utp.velocity) // velocity assume the existence of mbl in print_stru_file()
-{
-}
+{}
 
-std::map<std::string, UcellTestPrepare> UcellTestLib{
-    {"Si",
-     UcellTestPrepare("fcc", // latname
-                      2, // lmaxmax
-                      true, // init_vel
-                      true, // selective_dyanmics
-                      true, // relax_new
-                      "volume", // fixed_axes
-                      10.2, // lat0
-                      {-0.5,
-                       0.0,
-                       0.5, // latvec
-                       0.0,
-                       0.5,
-                       0.5,
-                       -0.5,
-                       0.5,
-                       0.0},
-     {"Si"}, // elements
-                      {"Si.upf"}, // upf file
-                      {"upf201"}, // upf types
-                      {"Si.orb"}, // orb file
-                      {2}, // number of each elements
-                      {28.0}, // atomic mass
-                      "Cartesian", // coordination type
-                      {0.0,
-                       0.0,
-                       0.0, // atomic coordinates
-                       0.25,
-                       0.25,
-                       0.25})}
-};
+std::map<std::string, UcellTestPrepare> UcellTestLib{{"Si",
+                                                      UcellTestPrepare("fcc",    // latname
+                                                                       2,        // lmaxmax
+                                                                       true,     // init_vel
+                                                                       true,     // selective_dyanmics
+                                                                       true,     // relax_new
+                                                                       "volume", // fixed_axes
+                                                                       10.2,     // lat0
+                                                                       {-0.5,
+                                                                        0.0,
+                                                                        0.5, // latvec
+                                                                        0.0,
+                                                                        0.5,
+                                                                        0.5,
+                                                                        -0.5,
+                                                                        0.5,
+                                                                        0.0},
+                                                                       {"Si"},      // elements
+                                                                       {"Si.upf"},  // upf file
+                                                                       {"upf201"},  // upf types
+                                                                       {"Si.orb"},  // orb file
+                                                                       {2},         // number of each elements
+                                                                       {28.0},      // atomic mass
+                                                                       "Cartesian", // coordination type
+                                                                       {0.0,
+                                                                        0.0,
+                                                                        0.0, // atomic coordinates
+                                                                        0.25,
+                                                                        0.25,
+                                                                        0.25})}};
 #endif

@@ -20,15 +20,13 @@
 int test_size = 10;
 int test_nw = 26;
 
-class DMTest : public testing::Test
-{
+class DMTest : public testing::Test {
   protected:
     Parallel_Orbitals* paraV;
     int dsize;
     int my_rank = 0;
     UnitCell ucell;
-    void SetUp() override
-    {
+    void SetUp() override {
 #ifdef __MPI
         // MPI parallel settings
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -43,8 +41,7 @@ class DMTest : public testing::Test
         ucell.iat2ia = new int[ucell.nat];
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2it[iat] = 0;
             ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -55,8 +52,7 @@ class DMTest : public testing::Test
         ucell.atoms[0].iw2l.resize(test_nw);
         ucell.atoms[0].iw2m.resize(test_nw);
         ucell.atoms[0].iw2n.resize(test_nw);
-        for (int iw = 0; iw < test_nw; ++iw)
-        {
+        for (int iw = 0; iw < test_nw; ++iw) {
             ucell.atoms[0].iw2l[iw] = 0;
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
@@ -67,15 +63,13 @@ class DMTest : public testing::Test
         init_parav();
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         delete paraV;
         delete[] ucell.atoms;
     }
 
 #ifdef __MPI
-    void init_parav()
-    {
+    void init_parav() {
         int nb = 2;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
@@ -85,15 +79,12 @@ class DMTest : public testing::Test
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {
-    }
+    void init_parav() {}
 #endif
 };
 
 // test for construct DMR from GridD and UnitCell
-TEST_F(DMTest, DMInit1)
-{
+TEST_F(DMTest, DMInit1) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nspin = 1;
@@ -107,7 +98,7 @@ TEST_F(DMTest, DMInit1)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize this->_DMR
-    Grid_Driver gd(0,0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     // compare
     EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
@@ -119,8 +110,7 @@ TEST_F(DMTest, DMInit1)
 }
 
 // test for construct DMR from RA and UnitCell
-TEST_F(DMTest, DMInit2)
-{
+TEST_F(DMTest, DMInit2) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nspin = 1;
@@ -134,12 +124,11 @@ TEST_F(DMTest, DMInit2)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize Record_adj using Grid_Driver
-    Grid_Driver gd(0,0);
+    Grid_Driver gd(0, 0);
     Record_adj ra;
     ra.na_each = new int[ucell.nat];
     ra.info = new int**[ucell.nat];
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++) {
         auto tau1 = ucell.get_tau(iat1);
         int T1, I1;
         ucell.iat2iait(iat1, &I1, &T1);
@@ -147,8 +136,7 @@ TEST_F(DMTest, DMInit2)
         gd.Find_atom(ucell, tau1, T1, I1, &adjs);
         ra.na_each[iat1] = adjs.adj_num + 1;
         ra.info[iat1] = new int*[ra.na_each[iat1]];
-        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
-        {
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad) {
             ra.info[iat1][ad] = new int[5];
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
@@ -171,10 +159,8 @@ TEST_F(DMTest, DMInit2)
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
     // release memory
     delete kv;
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
-        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
-        {
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++) {
+        for (int ad = 0; ad < ra.na_each[iat1]; ++ad) {
             delete[] ra.info[iat1][ad];
         }
         delete[] ra.info[iat1];
@@ -183,8 +169,7 @@ TEST_F(DMTest, DMInit2)
 }
 
 // test for construct DMR from another HContainer<double>
-TEST_F(DMTest, DMInit3)
-{
+TEST_F(DMTest, DMInit3) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nspin = 2;
@@ -213,8 +198,7 @@ TEST_F(DMTest, DMInit3)
 }
 
 // test for construct DMR from another HContainer <std::complex<double>>
-TEST_F(DMTest, DMInit4)
-{
+TEST_F(DMTest, DMInit4) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nspin = 2;
@@ -229,21 +213,18 @@ TEST_F(DMTest, DMInit4)
     hamilt::HContainer<std::complex<double>>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<std::complex<double>>(paraV);
     // set up a HContainer
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++) {
         auto tau1 = ucell.get_tau(iat1);
         int T1, I1;
         ucell.iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         gd.Find_atom(ucell, tau1, T1, I1, &adjs);
         // std::cout << "adjs.adj_num: " <<adjs.adj_num << std::endl;
-        for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-        {
+        for (int ad = 0; ad < adjs.adj_num + 1; ++ad) {
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
-            {
+            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0) {
                 continue;
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
@@ -267,8 +248,7 @@ TEST_F(DMTest, DMInit4)
 }
 
 // test for save_DMR
-TEST_F(DMTest, saveDMR)
-{
+TEST_F(DMTest, saveDMR) {
     // initalize a kvectors
     K_Vectors* kv = nullptr;
     int nspin = 2;
@@ -295,12 +275,11 @@ TEST_F(DMTest, saveDMR)
     // update DMR_save
     DM_test.save_DMR();
     EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
-    // delete 
-    delete kv;   
+    // delete
+    delete kv;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

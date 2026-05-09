@@ -12,8 +12,8 @@
 #include "source_base/module_device/device_check.h"
 #include "source_base/module_device/kernel_compat.h"
 
-#define sA(i, j) sA[(j)*slda + (i)]
-#define sB(i, j) sB[(j)*sldb + (i)]
+#define sA(i, j) sA[(j) * slda + (i)]
+#define sB(i, j) sB[(j) * sldb + (i)]
 #define fetch(A, m, n, bound) offs_d##A[min(n * LD##A + m, bound)]
 
 template <typename T,
@@ -37,12 +37,11 @@ static __device__ void vbatched_gemm_nn_device(int M,
                                                int LDB,
                                                T* __restrict__ C,
                                                int LDC,
-                                               T*  sA,
+                                               T* sA,
                                                int slda,
-                                               T*  sB,
+                                               T* sB,
                                                int sldb,
-                                               T alpha)
-{
+                                               T alpha) {
     int idx = threadIdx.x; // thread's m dimension
     int idy = threadIdx.y; // thread's n dimension
 
@@ -69,51 +68,42 @@ static __device__ void vbatched_gemm_nn_device(int M,
     // bound is the correction to offs_d in order to not get out of memory bound
     // so bound could be negative value since offs_d could be out of bound
     const T* offs_dA = A + blx * BLK_M + idyA * LDA + idxA;
-    int boundA
-        = (LDA * (K - 1) + M) - (blx * BLK_M + idyA * LDA + idxA) - 1;
+    int boundA = (LDA * (K - 1) + M) - (blx * BLK_M + idyA * LDA + idxA) - 1;
 
     const T* offs_dB = B + bly * BLK_N * LDB + idyB * LDB + idxB;
-    int boundB
-        = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
+    int boundB = (LDB * (N - 1) + K) - (bly * BLK_N * LDB + idyB * LDB + idxB) - 1;
 
     int m, n, k, kk;
 
 // Zero C
 #pragma unroll
-    for (n = 0; n < THR_N; n++)
-    {
+    for (n = 0; n < THR_N; n++) {
 #pragma unroll
-        for (m = 0; m < THR_M; m++)
-        {
+        for (m = 0; m < THR_M; m++) {
             rC[n][m] = 0.0;
         }
     }
 
 // Load A dev->shmem
 #pragma unroll
-    for (n = 0; n < BLK_K; n += DIM_YA)
-    {
+    for (n = 0; n < BLK_K; n += DIM_YA) {
 #pragma unroll
-        for (m = 0; m < BLK_M; m += DIM_XA)
-        {
+        for (m = 0; m < BLK_M; m += DIM_XA) {
             sA(m + idxA, n + idyA) = fetch(A, m, n, boundA);
         }
     }
 
 #pragma unroll
-    for (n = 0; n < BLK_N; n += DIM_YB)
-    {
+    for (n = 0; n < BLK_N; n += DIM_YB) {
 #pragma unroll
-        for (m = 0; m < BLK_K; m += DIM_XB)
-        {
+        for (m = 0; m < BLK_K; m += DIM_XB) {
             sB(m + idxB, n + idyB) = fetch(B, m, n, boundB);
         }
     }
 
     __syncthreads();
 
-    for (kk = 0; kk < K - BLK_K; kk += BLK_K)
-    {
+    for (kk = 0; kk < K - BLK_K; kk += BLK_K) {
         offs_dA += BLK_K * LDA;
         boundA -= BLK_K * LDA;
 
@@ -122,51 +112,42 @@ static __device__ void vbatched_gemm_nn_device(int M,
 
 // Load A dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_K / DIM_YA; n++)
-        {
+        for (n = 0; n < BLK_K / DIM_YA; n++) {
 #pragma unroll
-            for (m = 0; m < BLK_M / DIM_XA; m++)
-            {
+            for (m = 0; m < BLK_M / DIM_XA; m++) {
                 ra[n][m] = fetch(A, m * DIM_XA, n * DIM_YA, boundA);
             }
         }
 
 // Load B dev->regs
 #pragma unroll
-        for (n = 0; n < BLK_N / DIM_YB; n++)
-        {
+        for (n = 0; n < BLK_N / DIM_YB; n++) {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XB; m++)
-            {
+            for (m = 0; m < BLK_K / DIM_XB; m++) {
                 rb[n][m] = fetch(B, m * DIM_XB, n * DIM_YB, boundB);
             }
         }
 
 // Multiply
 #pragma unroll
-        for (k = 0; k < BLK_K; k++)
-        {
+        for (k = 0; k < BLK_K; k++) {
 // Load A shmem->regs
 #pragma unroll
-            for (m = 0; m < THR_M; m++)
-            {
+            for (m = 0; m < THR_M; m++) {
                 rA[m] = sA(m * DIM_X + idx, k);
             }
 
 // Load B shmem->regs
 #pragma unroll
-            for (n = 0; n < THR_N; n++)
-            {
+            for (n = 0; n < THR_N; n++) {
                 rB[n] = sB(k, n * DIM_Y + idy);
             }
 
 // Compute
 #pragma unroll
-            for (n = 0; n < THR_N; n++)
-            {
+            for (n = 0; n < THR_N; n++) {
 #pragma unroll
-                for (m = 0; m < THR_M; m++)
-                {
+                for (m = 0; m < THR_M; m++) {
                     rC[n][m] += rA[m] * rB[n];
                 }
             }
@@ -176,22 +157,18 @@ static __device__ void vbatched_gemm_nn_device(int M,
 
 // Load A regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_K / DIM_YA; n++)
-        {
+        for (n = 0; n < BLK_K / DIM_YA; n++) {
 #pragma unroll
-            for (m = 0; m < BLK_M / DIM_XA; m++)
-            {
+            for (m = 0; m < BLK_M / DIM_XA; m++) {
                 sA(m * DIM_XA + idxA, n * DIM_YA + idyA) = ra[n][m];
             }
         }
 
 // Load B regs->shmem
 #pragma unroll
-        for (n = 0; n < BLK_N / DIM_YB; n++)
-        {
+        for (n = 0; n < BLK_N / DIM_YB; n++) {
 #pragma unroll
-            for (m = 0; m < BLK_K / DIM_XB; m++)
-            {
+            for (m = 0; m < BLK_K / DIM_XB; m++) {
                 sB(m * DIM_XB + idxB, n * DIM_YB + idyB) = rb[n][m];
             }
         }
@@ -204,29 +181,24 @@ static __device__ void vbatched_gemm_nn_device(int M,
     // or shared memory, and out-of-bounds rC[n][m] will not be saved later.
     kk = K - kk;
 #pragma unroll
-    for (k = 0; k < kk; k++)
-    {
+    for (k = 0; k < kk; k++) {
 // Load A shmem->regs
 #pragma unroll
-        for (m = 0; m < THR_M; m++)
-        {
+        for (m = 0; m < THR_M; m++) {
             rA[m] = sA(m * DIM_X + idx, k);
         }
 
 // Load B shmem->regs
 #pragma unroll
-        for (n = 0; n < THR_N; n++)
-        {
+        for (n = 0; n < THR_N; n++) {
             rB[n] = sB(k, n * DIM_Y + idy);
         }
 
 // Compute
 #pragma unroll
-        for (n = 0; n < THR_N; n++)
-        {
+        for (n = 0; n < THR_N; n++) {
 #pragma unroll
-            for (m = 0; m < THR_M; m++)
-            {
+            for (m = 0; m < THR_M; m++) {
                 rC[n][m] += rA[m] * rB[n];
             }
         }
@@ -234,15 +206,12 @@ static __device__ void vbatched_gemm_nn_device(int M,
 
 // Store C regs->dev
 #pragma unroll
-    for (n = 0; n < THR_N; n++)
-    {
+    for (n = 0; n < THR_N; n++) {
         int coord_dCn = bly * BLK_N + n * DIM_Y + idy;
 #pragma unroll
-        for (m = 0; m < THR_M; m++)
-        {
+        for (m = 0; m < THR_M; m++) {
             int coord_dCm = blx * BLK_M + m * DIM_X + idx;
-            if (coord_dCm < M && coord_dCn < N)
-            {
+            if (coord_dCm < M && coord_dCn < N) {
                 int offsC = coord_dCn * LDC + coord_dCm;
 
                 atomicAdd(C + offsC, rC[n][m] * alpha);
@@ -263,16 +232,15 @@ template <typename T,
           int DIM_XB,
           int DIM_YB>
 static __global__ void vbatched_gemm_nn_kernel(const int* M,
-                                              const int* N,
-                                              const int* K,
-                                              const T* const* global_A_array,
-                                              const int* global_lda,
-                                              const T* const* global_B_array,
-                                              const int* global_ldb,
-                                              T** global_C_array,
-                                              const int* global_ldc,
-                                              const T* alpha)
-{
+                                               const int* N,
+                                               const int* K,
+                                               const T* const* global_A_array,
+                                               const int* global_lda,
+                                               const T* const* global_B_array,
+                                               const int* global_ldb,
+                                               T** global_C_array,
+                                               const int* global_ldc,
+                                               const T* alpha) {
     extern __shared__ __align__(sizeof(double)) unsigned char smem[];
     T* shared_mem = reinterpret_cast<T*>(smem);
 
@@ -291,35 +259,34 @@ static __global__ void vbatched_gemm_nn_kernel(const int* M,
     T* shared_A = (T*)shared_mem;
     T* shared_B = shared_A + shared_lda * BLK_K;
     T alpha_tmp = T(1.0);
-    if (alpha != nullptr)
-    {
+    if (alpha != nullptr) {
         alpha_tmp = alpha[batchid];
     }
     vbatched_gemm_nn_device<T,
-                           DIM_X,
-                           DIM_Y,
-                           BLK_M,
-                           BLK_N,
-                           BLK_K,
-                           DIM_XA,
-                           DIM_YA,
-                           DIM_XB,
-                           DIM_YB,
-                           (BLK_M / DIM_X),
-                           (BLK_N / DIM_Y)>(local_M,
-                                            local_N,
-                                            local_K,
-                                            global_A_array[batchid],
-                                            (int)global_lda[batchid],
-                                            global_B_array[batchid],
-                                            (int)global_ldb[batchid],
-                                            global_C_array[batchid],
-                                            (int)global_ldc[batchid],
-                                            shared_A,
-                                            shared_lda,
-                                            shared_B,
-                                            shared_ldb,
-                                            alpha_tmp);
+                            DIM_X,
+                            DIM_Y,
+                            BLK_M,
+                            BLK_N,
+                            BLK_K,
+                            DIM_XA,
+                            DIM_YA,
+                            DIM_XB,
+                            DIM_YB,
+                            (BLK_M / DIM_X),
+                            (BLK_N / DIM_Y)>(local_M,
+                                             local_N,
+                                             local_K,
+                                             global_A_array[batchid],
+                                             (int)global_lda[batchid],
+                                             global_B_array[batchid],
+                                             (int)global_ldb[batchid],
+                                             global_C_array[batchid],
+                                             (int)global_ldc[batchid],
+                                             shared_A,
+                                             shared_lda,
+                                             shared_B,
+                                             shared_ldb,
+                                             alpha_tmp);
 }
 
 /**
@@ -382,8 +349,7 @@ void vbatched_gemm_nn_impl(int max_m,
                            const int* global_ldc,
                            int batchCount,
                            cudaStream_t stream,
-                           const T* alpha = nullptr)
-{
+                           const T* alpha = nullptr) {
     // The positions of A and B have been swapped here.
     // This is because vbatch_gemm_nn_kernel is column major,
     // but vatched_gemm_nn_impl is designed to be row major,
@@ -394,34 +360,25 @@ void vbatched_gemm_nn_impl(int max_m,
     dim3 dimBlock(DIM_X, DIM_Y);
     const int max_batch_count = 32768;
 
-    for (int i = 0; i < batchCount; i += max_batch_count)
-    {
+    for (int i = 0; i < batchCount; i += max_batch_count) {
         const int ibatch = min(max_batch_count, batchCount - i);
-        dim3 dimGrid(ceil_div(max_n, BLK_M),
-                     ceil_div(max_m, BLK_N),
-                     ibatch);
+        dim3 dimGrid(ceil_div(max_n, BLK_M), ceil_div(max_m, BLK_N), ibatch);
         const T* alpha_tmp = nullptr;
-        if (alpha != nullptr)
-        {
+        if (alpha != nullptr) {
             alpha_tmp = alpha + i;
         }
 
-        vbatched_gemm_nn_kernel<T,
-                                DIM_X,
-                                DIM_Y,
-                                BLK_M,
-                                BLK_N,
-                                BLK_K,
-                                DIM_XA,
-                                DIM_YA,
-                                DIM_XB,
-                                DIM_YB>
-            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(
-                n + i, m + i, k + i,
-                global_B_array + i, global_ldb + i,
-                global_A_array + i, global_lda + i,
-                global_C_array + i, global_ldc + i,
-                alpha_tmp);
+        vbatched_gemm_nn_kernel<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
+            <<<dimGrid, dimBlock, shared_mem_size, stream>>>(n + i,
+                                                             m + i,
+                                                             k + i,
+                                                             global_B_array + i,
+                                                             global_ldb + i,
+                                                             global_A_array + i,
+                                                             global_lda + i,
+                                                             global_C_array + i,
+                                                             global_ldc + i,
+                                                             alpha_tmp);
         CHECK_LAST_CUDA_ERROR("kernel launch");
     }
 }

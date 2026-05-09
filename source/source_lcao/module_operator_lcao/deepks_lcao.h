@@ -8,8 +8,7 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __MLALGOTEMPLATE
 #define __MLALGOTEMPLATE
@@ -20,15 +19,12 @@ namespace hamilt
 /// - T: base class, it would be OperatorLCAO<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
-class DeePKS : public T
-{
-};
+class DeePKS : public T {};
 
 #endif
 
 template <typename TK, typename TR>
-class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     DeePKS<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
@@ -59,10 +55,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     virtual void contributeHk(int ik) override;
 
-    HContainer<TR>* get_V_delta_R() const
-    {
-        return this->V_delta_R;
-    }
+    HContainer<TR>* get_V_delta_R() const { return this->V_delta_R; }
 #endif
 
   private:

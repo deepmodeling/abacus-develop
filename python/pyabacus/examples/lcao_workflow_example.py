@@ -92,8 +92,8 @@ def example_with_callbacks():
         print("[Breakpoint] State inspection complete\n")
 
     # Register callbacks
-    workflow.register_callback('after_iter', print_iteration_info)
-    workflow.register_callback('before_after_scf', save_final_state)
+    workflow.register_callback("after_iter", print_iteration_info)
+    workflow.register_callback("before_after_scf", save_final_state)
 
     # Run SCF
     print("\nStarting SCF iterations:")
@@ -249,8 +249,13 @@ def main():
 
         # Show code structure without running
         import inspect
-        for func in [example_basic_scf, example_with_callbacks,
-                     example_manual_control, example_data_extraction]:
+
+        for func in [
+            example_basic_scf,
+            example_with_callbacks,
+            example_manual_control,
+            example_data_extraction,
+        ]:
             print(f"\n{'=' * 60}")
             print(f"Function: {func.__name__}")
             print("=" * 60)

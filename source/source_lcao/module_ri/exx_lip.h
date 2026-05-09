@@ -12,24 +12,31 @@
 #include <vector>
 #include <memory.h>
 
-    class K_Vectors;
-    class UnitCell;
-    class Structure_Factor;
-    namespace elecstate{ class ElecState; }
-    namespace ModulePW{ class PW_Basis_K; }
-    namespace ModulePW{ class PW_Basis; }
-    namespace ModuleSymmetry{ class Symmetry; }
-    namespace psi
-    {
-    template <typename T, typename Device>
-    class PSIInit;
-    }
+class K_Vectors;
+class UnitCell;
+class Structure_Factor;
+namespace elecstate {
+class ElecState;
+}
+namespace ModulePW {
+class PW_Basis_K;
+}
+namespace ModulePW {
+class PW_Basis;
+}
+namespace ModuleSymmetry {
+class Symmetry;
+}
+namespace psi {
+template <typename T, typename Device>
+class PSIInit;
+}
 
-template<typename T, typename Device = base_device::DEVICE_CPU>
-class Exx_Lip
-{
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class Exx_Lip {
     using Treal = typename GetTypeReal<T>::type;
-public:
+
+  public:
     Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in);
     ~Exx_Lip();
 
@@ -48,43 +55,31 @@ public:
 
     // void cal_exx(const int& nks);
     void cal_exx();
-    const std::vector<std::vector<std::vector<T>>>& get_exx_matrix() const
-    {
-        return this->exx_matrix;
-    }
-    Treal get_exx_energy() const
-    {
-        return this->exx_energy;
-    }
+    const std::vector<std::vector<std::vector<T>>>& get_exx_matrix() const { return this->exx_matrix; }
+    Treal get_exx_energy() const { return this->exx_energy; }
 
     void write_q_pack() const;
 
-    void set_hvec(const int ik, const T* const hvec, const int naos, const int nbands)
-    {
+    void set_hvec(const int ik, const T* const hvec, const int naos, const int nbands) {
         memcpy(&(*this->k_pack->hvec_array)(ik, 0, 0), hvec, sizeof(T) * naos * nbands);
     }
-    psi::Psi<T,Device> get_hvec() const
-    {
-        return *this->k_pack->hvec_array;
-    }
+    psi::Psi<T, Device> get_hvec() const { return *this->k_pack->hvec_array; }
 
-private:
-
+  private:
     int gzero_rank_in_pool;
 
     // template<typename T, typename Device = base_device::DEVICE_CPU>
-    struct k_package
-    {
+    struct k_package {
         K_Vectors* kv_ptr = nullptr;
         // wavefunc* wf_ptr;
-        psi::Psi<T, Device>* kspw_psi_ptr = nullptr;  ///< PW  wavefunction
-        psi::Psi<T, Device>* psi_local = nullptr;     ///< NAOs in PW
+        psi::Psi<T, Device>* kspw_psi_ptr = nullptr; ///< PW  wavefunction
+        psi::Psi<T, Device>* psi_local = nullptr;    ///< NAOs in PW
         ModuleBase::matrix wf_wg;
 
         /// @brief LCAO wavefunction, the eigenvectors from lapack diagonalization
         psi::Psi<T, Device>* hvec_array = nullptr;
         const elecstate::ElecState* pelec = nullptr;
-    } *k_pack = nullptr, * q_pack = nullptr;
+    } *k_pack = nullptr, *q_pack = nullptr;
 
     int iq_vecik;
 
@@ -114,9 +109,10 @@ private:
     //                  const ModulePW::PW_Basis_K* wfc_basis,
     //                  const Structure_Factor& sf);
 
-    //2*pi*i
+    // 2*pi*i
     const T two_pi_i = Treal(ModuleBase::TWO_PI) * T(0.0, 1.0);
-public:
+
+  public:
     const ModulePW::PW_Basis* rho_basis = nullptr;
     const ModulePW::PW_Basis_K* wfc_basis = nullptr;
 

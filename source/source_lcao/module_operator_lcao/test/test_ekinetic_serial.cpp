@@ -18,11 +18,9 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
-class EKineticTest : public ::testing::Test
-{
+class EKineticTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
+    void SetUp() override {
 #ifdef __MPI
         // MPI parallel settings
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -37,8 +35,7 @@ class EKineticTest : public ::testing::Test
         ucell.iat2ia = new int[ucell.nat];
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ucell.iat2it[iat] = 0;
             ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -49,8 +46,7 @@ class EKineticTest : public ::testing::Test
         ucell.atoms[0].iw2l.resize(test_nw);
         ucell.atoms[0].iw2m.resize(test_nw);
         ucell.atoms[0].iw2n.resize(test_nw);
-        for (int iw = 0; iw < test_nw; ++iw)
-        {
+        for (int iw = 0; iw < test_nw; ++iw) {
             ucell.atoms[0].iw2l[iw] = 0;
             ucell.atoms[0].iw2m[iw] = 0;
             ucell.atoms[0].iw2n[iw] = 0;
@@ -61,16 +57,14 @@ class EKineticTest : public ::testing::Test
         HR = new hamilt::HContainer<double>(paraV);
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
     }
 
 #ifdef __MPI
-    void init_parav()
-    {
+    void init_parav() {
         int nb = 10;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
@@ -80,9 +74,7 @@ class EKineticTest : public ::testing::Test
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
-    void init_parav()
-    {
-    }
+    void init_parav() {}
 #endif
 
     UnitCell ucell;
@@ -94,8 +86,7 @@ class EKineticTest : public ::testing::Test
     int my_rank = 0;
 };
 // Test complex<double> to complex<double> template specialization
-TEST_F(EKineticTest, constructHRcd2cd)
-{
+TEST_F(EKineticTest, constructHRcd2cd) {
     // Create complex HR container
     hamilt::HContainer<std::complex<double>>* HR_complex = new hamilt::HContainer<std::complex<double>>(paraV);
 
@@ -110,8 +101,7 @@ TEST_F(EKineticTest, constructHRcd2cd)
 
     // Check that HR_complex has been initialized
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR_complex->size_atom_pairs() > 0)
-    {
+    if (HR_complex->size_atom_pairs() > 0) {
         EXPECT_GT(HR_complex->size_atom_pairs(), 0);
     }
 
@@ -121,10 +111,8 @@ TEST_F(EKineticTest, constructHRcd2cd)
 
     // Verify HK is computed (values should be non-zero for non-gamma k-point)
     bool has_nonzero = false;
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
-    {
-        if (std::abs(hk[i]) > 1e-10)
-        {
+    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i) {
+        if (std::abs(hk[i]) > 1e-10) {
             has_nonzero = true;
             break;
         }
@@ -135,30 +123,26 @@ TEST_F(EKineticTest, constructHRcd2cd)
 }
 
 // Test set_HR_fixed method
-TEST_F(EKineticTest, setHRFixed)
-{
+TEST_F(EKineticTest, setHRFixed) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     // First contributeHR - this creates and calculates HR_fixed internally
     op.contributeHR();
 
     // Check that HR values are 1.0 after first call
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
@@ -168,24 +152,21 @@ TEST_F(EKineticTest, setHRFixed)
     op.contributeHR();
 
     // Check that HR values are now 2.0 (accumulated)
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
         }
     }
 }
 
 // Test with single atom system
-TEST_F(EKineticTest, singleAtom)
-{
+TEST_F(EKineticTest, singleAtom) {
     // Create a single atom unit cell
     UnitCell ucell_single;
     ucell_single.ntype = 1;
@@ -204,8 +185,7 @@ TEST_F(EKineticTest, singleAtom)
     ucell_single.atoms[0].iw2l.resize(5);
     ucell_single.atoms[0].iw2m.resize(5);
     ucell_single.atoms[0].iw2n.resize(5);
-    for (int iw = 0; iw < 5; ++iw)
-    {
+    for (int iw = 0; iw < 5; ++iw) {
         ucell_single.atoms[0].iw2l[iw] = 0;
         ucell_single.atoms[0].iw2m[iw] = 0;
         ucell_single.atoms[0].iw2n[iw] = 0;
@@ -235,8 +215,7 @@ TEST_F(EKineticTest, singleAtom)
     // Should have only self-interaction (atom 0 with itself)
     // Note: In MPI parallel runs, some processes may not have any atom pairs
     // so we only check if this process has atom pairs
-    if (HR_single->size_atom_pairs() > 0)
-    {
+    if (HR_single->size_atom_pairs() > 0) {
         EXPECT_GT(HR_single->size_atom_pairs(), 0);
     }
 
@@ -249,8 +228,7 @@ TEST_F(EKineticTest, singleAtom)
 }
 
 // Test with different orbital quantum numbers (L, N, M)
-TEST_F(EKineticTest, differentOrbitals)
-{
+TEST_F(EKineticTest, differentOrbitals) {
     // Modify orbital quantum numbers to test different L, N, M values
     ucell.atoms[0].iw2l[0] = 0; // s orbital
     ucell.atoms[0].iw2l[1] = 1; // p orbital
@@ -275,15 +253,13 @@ TEST_F(EKineticTest, differentOrbitals)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Verify HR is calculated
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR->size_atom_pairs() > 0)
-    {
+    if (HR->size_atom_pairs() > 0) {
         EXPECT_GT(HR->size_atom_pairs(), 0);
     }
 
@@ -291,28 +267,24 @@ TEST_F(EKineticTest, differentOrbitals)
 }
 
 // Test force calculation
-TEST_F(EKineticTest, forceCalculation)
-{
+TEST_F(EKineticTest, forceCalculation) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create a simple density matrix
     hamilt::HContainer<double> dmR(paraV);
     // Initialize dmR with same structure as HR
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
         int iat1 = hr_pair.get_atom_i();
         int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR) {
             ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
@@ -321,16 +293,14 @@ TEST_F(EKineticTest, forceCalculation)
     dmR.allocate(nullptr, true);
 
     // Set density matrix to identity-like values
-    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = dmR.get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             tmp.get_pointer(0)[i] = 0.1;
         }
     }
@@ -343,12 +313,9 @@ TEST_F(EKineticTest, forceCalculation)
 
     // Verify force has been calculated (should have some non-zero values)
     bool has_force = false;
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            if (std::abs(force(i, j)) > 1e-10)
-            {
+    for (int i = 0; i < ucell.nat; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            if (std::abs(force(i, j)) > 1e-10) {
                 has_force = true;
                 break;
             }
@@ -359,11 +326,10 @@ TEST_F(EKineticTest, forceCalculation)
 }
 
 // Test stress calculation
-TEST_F(EKineticTest, stressCalculation)
-{
+TEST_F(EKineticTest, stressCalculation) {
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
-    ucell.omega = 1000.0;  // Set non-zero volume to avoid division by zero
+    ucell.omega = 1000.0; // Set non-zero volume to avoid division by zero
     ucell.latvec.e11 = 10.0;
     ucell.latvec.e22 = 10.0;
     ucell.latvec.e33 = 10.0;
@@ -373,20 +339,17 @@ TEST_F(EKineticTest, stressCalculation)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create density matrix
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
         int iat1 = hr_pair.get_atom_i();
         int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR) {
             ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
@@ -394,16 +357,14 @@ TEST_F(EKineticTest, stressCalculation)
     }
     dmR.allocate(nullptr, true);
 
-    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = dmR.get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             tmp.get_pointer(0)[i] = 0.1;
         }
     }
@@ -415,21 +376,18 @@ TEST_F(EKineticTest, stressCalculation)
     op.cal_force_stress(false, true, &dmR, force, stress);
 
     // Verify stress tensor is symmetric (within numerical precision)
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_NEAR(stress(i, j), stress(j, i), 1e-8);
         }
     }
 }
 
 // Test force and stress together
-TEST_F(EKineticTest, forceStressTogether)
-{
+TEST_F(EKineticTest, forceStressTogether) {
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
-    ucell.omega = 1000.0;  // Set non-zero volume to avoid division by zero
+    ucell.omega = 1000.0; // Set non-zero volume to avoid division by zero
     ucell.latvec.e11 = 10.0;
     ucell.latvec.e22 = 10.0;
     ucell.latvec.e33 = 10.0;
@@ -439,20 +397,17 @@ TEST_F(EKineticTest, forceStressTogether)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // Create density matrix
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& hr_pair = HR->get_atom_pair(iap);
         int iat1 = hr_pair.get_atom_i();
         int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR) {
             ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
@@ -460,16 +415,14 @@ TEST_F(EKineticTest, forceStressTogether)
     }
     dmR.allocate(nullptr, true);
 
-    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = dmR.get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             tmp.get_pointer(0)[i] = 0.1;
         }
     }
@@ -481,10 +434,8 @@ TEST_F(EKineticTest, forceStressTogether)
     op.cal_force_stress(true, true, &dmR, force, stress);
 
     // Verify stress symmetry
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_NEAR(stress(i, j), stress(j, i), 1e-8);
         }
     }
@@ -494,15 +445,13 @@ TEST_F(EKineticTest, forceStressTogether)
 }
 
 // Test with null density matrix pointer
-TEST_F(EKineticTest, nullDensityMatrix)
-{
+TEST_F(EKineticTest, nullDensityMatrix) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -520,16 +469,14 @@ TEST_F(EKineticTest, nullDensityMatrix)
 }
 
 // Test with zero orbital cutoff
-TEST_F(EKineticTest, zeroOrbitalCutoff)
-{
+TEST_F(EKineticTest, zeroOrbitalCutoff) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
     // Use zero cutoff - should result in no atom pairs (except possibly self-interaction)
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {0.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {0.0}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -539,23 +486,20 @@ TEST_F(EKineticTest, zeroOrbitalCutoff)
 }
 
 // Test with large orbital cutoff
-TEST_F(EKineticTest, largeOrbitalCutoff)
-{
+TEST_F(EKineticTest, largeOrbitalCutoff) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
     // Use very large cutoff - should include all atoms
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1000.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1000.0}, &gd, &intor_);
 
     op.contributeHR();
 
     // With large cutoff, should have many atom pairs
     // Note: In MPI parallel runs, some processes may not have any atom pairs
-    if (HR->size_atom_pairs() > 0)
-    {
+    if (HR->size_atom_pairs() > 0) {
         EXPECT_GT(HR->size_atom_pairs(), 0);
     }
 
@@ -563,8 +507,7 @@ TEST_F(EKineticTest, largeOrbitalCutoff)
 }
 
 // Test with atoms at cutoff boundary
-TEST_F(EKineticTest, cutoffBoundary)
-{
+TEST_F(EKineticTest, cutoffBoundary) {
     // Set up atoms at specific distances to test cutoff boundary
     ucell.lat0 = 1.0;
     ucell.latvec.e11 = 10.0;
@@ -581,8 +524,7 @@ TEST_F(EKineticTest, cutoffBoundary)
     Grid_Driver gd(0, 0);
 
     // Use cutoff of 5.0 - atoms at exactly this distance should be excluded
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {2.5}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {2.5}, &gd, &intor_);
 
     op.contributeHR();
 
@@ -591,30 +533,26 @@ TEST_F(EKineticTest, cutoffBoundary)
 }
 
 // Test multiple contributeHR calls for accumulation
-TEST_F(EKineticTest, multipleContributeHRAccumulation)
-{
+TEST_F(EKineticTest, multipleContributeHRAccumulation) {
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
 
-    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
+    hamilt::EKinetic<hamilt::OperatorLCAO<double, double>> op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);
 
     // First call
     op.contributeHR();
 
     // Verify first call results
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_EQ(tmp.get_pointer(0)[i], 1.0);
         }
     }
@@ -623,16 +561,14 @@ TEST_F(EKineticTest, multipleContributeHRAccumulation)
     op.contributeHR();
 
     // Verify accumulation
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_EQ(tmp.get_pointer(0)[i], 2.0);
         }
     }
@@ -641,33 +577,30 @@ TEST_F(EKineticTest, multipleContributeHRAccumulation)
     op.contributeHR();
 
     // Verify triple accumulation
-    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
         auto indexes1 = paraV->get_indexes_row(iat1);
         auto indexes2 = paraV->get_indexes_col(iat2);
         int nwt = indexes1.size() * indexes2.size();
-        for (int i = 0; i < nwt; ++i)
-        {
+        for (int i = 0; i < nwt; ++i) {
             EXPECT_EQ(tmp.get_pointer(0)[i], 3.0);
         }
     }
 }
 
 // Test force calculation with npol=2 (nspin=4, spin-orbit coupling)
-TEST_F(EKineticTest, forceCalculationNpol2)
-{
+TEST_F(EKineticTest, forceCalculationNpol2) {
     // Set up unit cell with npol=2
-    ucell.set_iat2iwt(2);  // npol=2
+    ucell.set_iat2iwt(2); // npol=2
 
     // Reinitialize paraV with doubled size for npol=2
     delete paraV;
     paraV = nullptr;
 #ifdef __MPI
     int nb = 10;
-    int global_row = test_size * test_nw * 2;  // doubled for npol=2
+    int global_row = test_size * test_nw * 2; // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
     paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
@@ -690,13 +623,11 @@ TEST_F(EKineticTest, forceCalculationNpol2)
     // Create REAL density matrix (charge density) for force/stress calculation
     // Even with npol=2, the density matrix for force/stress is real-valued
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<std::complex<double>>& hr_pair = HR_complex->get_atom_pair(iap);
         int iat1 = hr_pair.get_atom_i();
         int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR) {
             ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
@@ -706,8 +637,7 @@ TEST_F(EKineticTest, forceCalculationNpol2)
 
     // Set density matrix values - real values representing charge density
     // For npol=2, the layout is still handled by step_trace in the implementation
-    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = dmR.get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
@@ -716,13 +646,11 @@ TEST_F(EKineticTest, forceCalculationNpol2)
 
         // Fill with real charge density values
         double* dm_ptr = tmp.get_pointer(0);
-        for (int iw1 = 0; iw1 < indexes1.size(); iw1 += 2)
-        {
-            for (int iw2 = 0; iw2 < indexes2.size(); iw2 += 2)
-            {
+        for (int iw1 = 0; iw1 < indexes1.size(); iw1 += 2) {
+            for (int iw2 = 0; iw2 < indexes2.size(); iw2 += 2) {
                 int idx = iw1 * indexes2.size() + iw2;
                 // Set charge density values (diagonal of spin density matrix)
-                dm_ptr[idx] = 0.1;  // Charge density at this orbital pair
+                dm_ptr[idx] = 0.1; // Charge density at this orbital pair
             }
         }
     }
@@ -743,14 +671,13 @@ TEST_F(EKineticTest, forceCalculationNpol2)
 }
 
 // Test stress calculation with npol=2 (nspin=4, spin-orbit coupling)
-TEST_F(EKineticTest, stressCalculationNpol2)
-{
+TEST_F(EKineticTest, stressCalculationNpol2) {
     // Set up unit cell with npol=2
-    ucell.set_iat2iwt(2);  // npol=2
+    ucell.set_iat2iwt(2); // npol=2
 
     // Initialize unit cell parameters for stress calculation
     ucell.lat0 = 1.0;
-    ucell.omega = 1000.0;  // Set non-zero volume to avoid division by zero
+    ucell.omega = 1000.0; // Set non-zero volume to avoid division by zero
     ucell.latvec.e11 = 10.0;
     ucell.latvec.e22 = 10.0;
     ucell.latvec.e33 = 10.0;
@@ -760,7 +687,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     paraV = nullptr;
 #ifdef __MPI
     int nb = 10;
-    int global_row = test_size * test_nw * 2;  // doubled for npol=2
+    int global_row = test_size * test_nw * 2; // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
     paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
@@ -782,13 +709,11 @@ TEST_F(EKineticTest, stressCalculationNpol2)
 
     // Create REAL density matrix (charge density) for force/stress calculation
     hamilt::HContainer<double> dmR(paraV);
-    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < HR_complex->size_atom_pairs(); ++iap) {
         hamilt::AtomPair<std::complex<double>>& hr_pair = HR_complex->get_atom_pair(iap);
         int iat1 = hr_pair.get_atom_i();
         int iat2 = hr_pair.get_atom_j();
-        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR)
-        {
+        for (int iR = 0; iR < hr_pair.get_R_size(); ++iR) {
             ModuleBase::Vector3<int> R_index = hr_pair.get_R_index(iR);
             hamilt::AtomPair<double> dm_pair(iat1, iat2, R_index, paraV);
             dmR.insert_pair(dm_pair);
@@ -797,8 +722,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     dmR.allocate(nullptr, true);
 
     // Set density matrix values - real values representing charge density
-    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap)
-    {
+    for (int iap = 0; iap < dmR.size_atom_pairs(); ++iap) {
         hamilt::AtomPair<double>& tmp = dmR.get_atom_pair(iap);
         int iat1 = tmp.get_atom_i();
         int iat2 = tmp.get_atom_j();
@@ -806,12 +730,10 @@ TEST_F(EKineticTest, stressCalculationNpol2)
         auto indexes2 = paraV->get_indexes_col(iat2);
 
         double* dm_ptr = tmp.get_pointer(0);
-        for (int iw1 = 0; iw1 < indexes1.size(); iw1 += 2)
-        {
-            for (int iw2 = 0; iw2 < indexes2.size(); iw2 += 2)
-            {
+        for (int iw1 = 0; iw1 < indexes1.size(); iw1 += 2) {
+            for (int iw2 = 0; iw2 < indexes2.size(); iw2 += 2) {
                 int idx = iw1 * indexes2.size() + iw2;
-                dm_ptr[idx] = 0.1;  // Charge density
+                dm_ptr[idx] = 0.1; // Charge density
             }
         }
     }
@@ -823,10 +745,8 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     op.cal_force_stress(false, true, &dmR, force, stress);
 
     // Verify stress tensor is symmetric
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
             EXPECT_NEAR(stress(i, j), stress(j, i), 1e-8);
         }
     }
@@ -837,8 +757,7 @@ TEST_F(EKineticTest, stressCalculationNpol2)
     ucell.set_iat2iwt(1);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

@@ -15,8 +15,7 @@ template <typename T>
 class Force_Stress_LCAO;
 
 template <typename T>
-class Force_LCAO
-{
+class Force_LCAO {
   public:
     friend class Force_Stress_LCAO<T>;
 
@@ -35,9 +34,9 @@ class Force_LCAO
                 const UnitCell& ucell,
                 const Grid_Driver& gd,
                 const psi::Psi<T>* psi,
-				const elecstate::ElecState* pelec,
-				const elecstate::DensityMatrix<T, double>* dm, // mohan add 2025-11-04
-				ModuleBase::matrix& foverlap,
+                const elecstate::ElecState* pelec,
+                const elecstate::DensityMatrix<T, double>* dm, // mohan add 2025-11-04
+                ModuleBase::matrix& foverlap,
                 ModuleBase::matrix& ftvnl_dphi,
                 ModuleBase::matrix& fvnl_dbeta,
                 ModuleBase::matrix& fvl_dphi,

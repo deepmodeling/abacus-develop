@@ -12,12 +12,11 @@
 #ifndef CUDA_COMPAT_H_
 #define CUDA_COMPAT_H_
 
-#include <iostream> // For std::ostream
+#include <iostream>  // For std::ostream
 #include <stdexcept> // For std::invalid_argument
-#include <cuda.h> // defines CUDA_VERSION
+#include <cuda.h>    // defines CUDA_VERSION
 #include <cuda_runtime.h>
 #include <cufft.h>
-
 
 // NVTX header for CUDA versions prior to 12.9 vs. 12.9+
 // This block ensures the correct NVTX header path is used based on CUDA_VERSION.
@@ -30,9 +29,9 @@
 // https://docs.nvidia.com/cuda/archive/12.9.0/cuda-toolkit-release-notes/index.html#id4
 #if defined(__CUDA) && defined(__USE_NVTX)
 #if CUDA_VERSION < 12090
-    #include "nvToolsExt.h"
+#include "nvToolsExt.h"
 #else
-    #include "nvtx3/nvToolsExt.h"
+#include "nvtx3/nvToolsExt.h"
 #endif
 #endif
 

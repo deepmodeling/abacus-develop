@@ -8,8 +8,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 /// @brief the output interface to write the sparse matrix of dH, dS, T, and r
 template <typename T>
 void output_mat_sparse(const bool& out_mat_dh,
@@ -24,8 +23,8 @@ void output_mat_sparse(const bool& out_mat_dh,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U* p_dftu);
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U* p_dftu);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

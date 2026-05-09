@@ -14,8 +14,7 @@ class Parameter;
  *
  * Namespace MD_func contains several functions used in md.
  */
-namespace MD_func
-{
+namespace MD_func {
 
 /**
  * @brief generate a Gaussian random number

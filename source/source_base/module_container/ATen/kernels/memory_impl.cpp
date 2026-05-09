@@ -13,7 +13,7 @@ struct resize_memory<T, DEVICE_CPU> {
         if (arr != nullptr) {
             free(arr);
         }
-        arr = (T*) malloc(sizeof(T) * size);
+        arr = (T*)malloc(sizeof(T) * size);
     }
 };
 
@@ -28,33 +28,21 @@ struct set_memory<T, DEVICE_CPU> {
 
 template <typename T>
 struct synchronize_memory<T, DEVICE_CPU, DEVICE_CPU> {
-    void operator()(
-        T* arr_out,
-        const T* arr_in,
-        const size_t& size)
-    {
-      memcpy(arr_out, arr_in, sizeof(T) * size);
-    }
+    void operator()(T* arr_out, const T* arr_in, const size_t& size) { memcpy(arr_out, arr_in, sizeof(T) * size); }
 };
 
 template <typename T_out, typename T_in>
 struct cast_memory<T_out, T_in, DEVICE_CPU, DEVICE_CPU> {
-    void operator()(
-        T_out* arr_out,
-        const T_in* arr_in,
-        const size_t& size)
-        {
-            for (int ii = 0; ii < size; ii++) {
-                arr_out[ii] = static_cast<T_out>(arr_in[ii]);
-            }
+    void operator()(T_out* arr_out, const T_in* arr_in, const size_t& size) {
+        for (int ii = 0; ii < size; ii++) {
+            arr_out[ii] = static_cast<T_out>(arr_in[ii]);
         }
+    }
 };
 
 template <typename T>
 struct delete_memory<T, DEVICE_CPU> {
-    void operator()(T* arr) {
-        free(arr);
-    }
+    void operator()(T* arr) { free(arr); }
 };
 
 template struct resize_memory<int, DEVICE_CPU>;

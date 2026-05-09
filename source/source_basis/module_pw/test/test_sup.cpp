@@ -10,8 +10,7 @@
 extern int nproc_in_pool, rank_in_pool;
 using namespace std;
 
-TEST_F(PWTEST, test_sup)
-{
+TEST_F(PWTEST, test_sup) {
     cout << "dividemthd 3, gamma_only: off, check gcar,gdirect,gg,istot2ixy,ig2isz" << endl;
     //--------------------------------------------------
     ModuleBase::Matrix3 latvec(20, 1, 0, 0, 1, 0, 0, 0, 5);
@@ -60,37 +59,32 @@ TEST_F(PWTEST, test_sup)
     const int nz_ref = 15;
 
     // some results for different number of processors
-    int npw_per_ref[12][12] = {
-        {1751},
-        {874, 877},
-        {583, 584, 584},
-        {439, 436, 438, 438},
-        {351, 350, 350, 350, 350},
-        {293, 293, 293, 291, 291, 290},
-        {249, 251, 251, 251, 251, 249, 249},
-        {221, 218, 220, 218, 218, 218, 218, 220},
-        {196, 196, 196, 194, 194, 194, 194, 193, 194},
-        {177, 176, 176, 176, 174, 174, 174, 176, 174, 174},
-        {161, 161, 161, 159, 159, 158, 158, 158, 159, 158, 159},
-        {147, 148, 148, 145, 146, 146, 145, 145, 145, 146, 145, 145}
-    };
-    int nst_per_ref[12][12] = {
-        {161},
-        {80, 81},
-        {53, 54, 54},
-        {41, 40, 40, 40},
-        {33, 32, 32, 32, 32},
-        {27, 27, 27, 27, 27, 26},
-        {23, 23, 23, 23, 23, 23, 23},
-        {21, 20, 20, 20, 20, 20, 20, 20},
-        {18, 18, 18, 18, 18, 18, 18, 17, 18},
-        {17, 16, 16, 16, 16, 16, 16, 16, 16, 16},
-        {15, 15, 15, 15, 15, 14, 14, 14, 15, 14, 15},
-        {13, 14, 14, 13, 14, 14, 13, 13, 13, 14, 13, 13}
-    };
+    int npw_per_ref[12][12] = {{1751},
+                               {874, 877},
+                               {583, 584, 584},
+                               {439, 436, 438, 438},
+                               {351, 350, 350, 350, 350},
+                               {293, 293, 293, 291, 291, 290},
+                               {249, 251, 251, 251, 251, 249, 249},
+                               {221, 218, 220, 218, 218, 218, 218, 220},
+                               {196, 196, 196, 194, 194, 194, 194, 193, 194},
+                               {177, 176, 176, 176, 174, 174, 174, 176, 174, 174},
+                               {161, 161, 161, 159, 159, 158, 158, 158, 159, 158, 159},
+                               {147, 148, 148, 145, 146, 146, 145, 145, 145, 146, 145, 145}};
+    int nst_per_ref[12][12] = {{161},
+                               {80, 81},
+                               {53, 54, 54},
+                               {41, 40, 40, 40},
+                               {33, 32, 32, 32, 32},
+                               {27, 27, 27, 27, 27, 26},
+                               {23, 23, 23, 23, 23, 23, 23},
+                               {21, 20, 20, 20, 20, 20, 20, 20},
+                               {18, 18, 18, 18, 18, 18, 18, 17, 18},
+                               {17, 16, 16, 16, 16, 16, 16, 16, 16, 16},
+                               {15, 15, 15, 15, 15, 14, 14, 14, 15, 14, 15},
+                               {13, 14, 14, 13, 14, 14, 13, 13, 13, 14, 13, 13}};
     int* npw_per = nullptr;
-    if (rank_in_pool == 0)
-    {
+    if (rank_in_pool == 0) {
         npw_per = new int[nproc_in_pool];
     }
 #ifdef __MPI
@@ -99,18 +93,13 @@ TEST_F(PWTEST, test_sup)
     if (rank_in_pool == 0)
         npw_per[0] = pwdense.npw;
 #endif
-    if (rank_in_pool == 0)
-    {
-        if (nproc_in_pool <= 12)
-        {
-            for (int ip = 0; ip < nproc_in_pool; ++ip)
-            {
+    if (rank_in_pool == 0) {
+        if (nproc_in_pool <= 12) {
+            for (int ip = 0; ip < nproc_in_pool; ++ip) {
                 EXPECT_EQ(npw_per_ref[nproc_in_pool - 1][ip], npw_per[ip]);
                 EXPECT_EQ(nst_per_ref[nproc_in_pool - 1][ip], pwdense.nst_per[ip]);
             }
-        }
-        else
-        {
+        } else {
             cout << "Please use mpi processors no more than 12." << endl;
         }
         delete[] npw_per;
@@ -142,13 +131,11 @@ TEST_F(PWTEST, test_sup)
 
     int* startnst = new int[nproc_in_pool];
     startnst[0] = 0;
-    for (int ip = 1; ip < nproc_in_pool; ++ip)
-    {
+    for (int ip = 1; ip < nproc_in_pool; ++ip) {
         startnst[ip] = startnst[ip - 1] + pwdense.nst_per[ip - 1];
     }
 
-    for (int ig = 0; ig < pwdense.npw; ++ig)
-    {
+    for (int ig = 0; ig < pwdense.npw; ++ig) {
         int istot = pwdense.ig2isz[ig] / pwdense.nz + startnst[rank_in_pool];
         // int is = pwdense.ig2isz[ig] / pwdense.nz;
         int iz = pwdense.ig2isz[ig] % pwdense.nz;
@@ -166,14 +153,10 @@ TEST_F(PWTEST, test_sup)
     MPI_Allreduce(MPI_IN_PLACE, tmpy, pwdense.nxyz, MPI_INT, MPI_SUM, POOL_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, tmpz, pwdense.nxyz, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
-    if (rank_in_pool == 0)
-    {
-        for (int iz = 0; iz < pwdense.nz; ++iz)
-        {
-            for (int iy = 0; iy < pwdense.ny; ++iy)
-            {
-                for (int ix = 0; ix < pwdense.nx; ++ix)
-                {
+    if (rank_in_pool == 0) {
+        for (int iz = 0; iz < pwdense.nz; ++iz) {
+            for (int iy = 0; iy < pwdense.ny; ++iy) {
+                for (int ix = 0; ix < pwdense.nx; ++ix) {
                     ModuleBase::Vector3<double> f;
                     f.x = ix;
                     f.y = iy;
@@ -185,8 +168,7 @@ TEST_F(PWTEST, test_sup)
                     if (ix >= int(pwdense.nx / 2) + 1)
                         f.x -= pwdense.nx;
                     double modulus = f * (GGT * f);
-                    if (modulus <= ggecut)
-                    {
+                    if (modulus <= ggecut) {
                         EXPECT_EQ(tmpx[iz + iy * pwdense.nz + ix * pwdense.ny * pwdense.nz], int(f.x));
                         EXPECT_EQ(tmpy[iz + iy * pwdense.nz + ix * pwdense.ny * pwdense.nz], int(f.y));
                         EXPECT_EQ(tmpz[iz + iy * pwdense.nz + ix * pwdense.ny * pwdense.nz], int(f.z));
@@ -195,8 +177,7 @@ TEST_F(PWTEST, test_sup)
             }
         }
     }
-    for (int ig = 0; ig < pwdense.npw; ++ig)
-    {
+    for (int ig = 0; ig < pwdense.npw; ++ig) {
         ModuleBase::Vector3<double> f;
         f.x = pwdense.gdirect[ig].x;
         f.y = pwdense.gdirect[ig].y;
@@ -210,12 +191,10 @@ TEST_F(PWTEST, test_sup)
         EXPECT_NEAR(modulus, pwdense.gg[ig], 1e-6);
         EXPECT_NEAR(pwdense.gg[ig], pwdense.gg_uniq[pwdense.ig2igg[ig]], 1e-8);
     }
-    for (int igg = 1; igg < pwdense.ngg; ++igg)
-    {
+    for (int igg = 1; igg < pwdense.ngg; ++igg) {
         EXPECT_GT(pwdense.gg_uniq[igg], pwdense.gg_uniq[igg - 1]);
     }
-    if (pwdense.ig_gge0 >= 0)
-    {
+    if (pwdense.ig_gge0 >= 0) {
         EXPECT_NEAR(0.0, pwdense.gg[pwdense.ig_gge0], 1e-8);
     }
     delete[] startnst;
@@ -224,10 +203,8 @@ TEST_F(PWTEST, test_sup)
     delete[] tmpz;
 
     // the planewaves of dense grids must be consistent with the smooth grids
-    for (int ig = 0; ig < pwsmooth.npw; ++ig)
-    {
-        for (int ipol = 0; ipol < 3; ipol++)
-        {
+    for (int ig = 0; ig < pwsmooth.npw; ++ig) {
+        for (int ipol = 0; ipol < 3; ipol++) {
             EXPECT_DOUBLE_EQ(pwsmooth.gcar[ig][ipol], pwdense.gcar[ig][ipol]);
         }
     }

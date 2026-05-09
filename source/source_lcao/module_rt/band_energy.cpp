@@ -11,12 +11,10 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 
-inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
-{
+inline int globalIndex(int localindex, int nblk, int nprocs, int myproc) {
     int iblock, gIndex;
     iblock = localindex / nblk;
     gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
@@ -29,8 +27,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
                  double* ekb,
-                 std::ofstream& ofs_running)
-{
+                 std::ofstream& ofs_running) {
     assert(pv->nloc_wfc > 0 && pv->nloc > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
@@ -79,29 +76,23 @@ void compute_ekb(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_Eij);
 
-    if (PARAM.inp.td_print_eij > 0.0)
-    {
+    if (PARAM.inp.td_print_eij > 0.0) {
         ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
         ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < pv->nrow_bands; i++)
-        {
+        for (int i = 0; i < pv->nrow_bands; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol_bands; j++)
-            {
+            for (int j = 0; j < pv->ncol_bands; j++) {
                 double aa = eij[in + j].real();
                 double bb = eij[in + j].imag();
-                if (std::abs(aa) < PARAM.inp.td_print_eij)
-                {
+                if (std::abs(aa) < PARAM.inp.td_print_eij) {
                     aa = 0.0;
                 }
-                if (std::abs(bb) < PARAM.inp.td_print_eij)
-                {
+                if (std::abs(bb) < PARAM.inp.td_print_eij) {
                     bb = 0.0;
                 }
-                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
-                {
+                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0) {
                     std::streamsize original_precision = ofs_running.precision();
                     ofs_running << std::fixed << std::setprecision(8);
                     ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
@@ -125,30 +116,22 @@ void compute_ekb(const Parallel_Orbitals* pv,
     double* eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(eii, nband);
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
-    {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
-        {
-            if (iprow == pv->coord[0] && ipcol == pv->coord[1])
-            {
+    for (int iprow = 0; iprow < pv->dim0; ++iprow) {
+        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol) {
+            if (iprow == pv->coord[0] && ipcol == pv->coord[1]) {
                 naroc[0] = pv->nrow;
                 naroc[1] = pv->ncol;
-                for (int j = 0; j < naroc[1]; ++j)
-                {
+                for (int j = 0; j < naroc[1]; ++j) {
                     int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
-                    if (igcol >= nband)
-                    {
+                    if (igcol >= nband) {
                         continue;
                     }
-                    for (int i = 0; i < naroc[0]; ++i)
-                    {
+                    for (int i = 0; i < naroc[0]; ++i) {
                         int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
-                        if (igrow >= nband)
-                        {
+                        if (igrow >= nband) {
                             continue;
                         }
-                        if (igcol == igrow)
-                        {
+                        if (igcol == igrow) {
                             eii[igcol] = eij[j * naroc[0] + i].real();
                         }
                     }
@@ -170,12 +153,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const ct::Tensor& psi_k,
                         ct::Tensor& ekb,
                         std::ofstream& ofs_running,
-                        CublasMpResources& cublas_res)
-{
+                        CublasMpResources& cublas_res) {
 #ifdef __CUBLASMP
     // 1. Resource validation
-    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr)
-    {
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr) {
         return;
     }
 
@@ -398,8 +379,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb,
-                               std::ofstream& ofs_running)
-{
+                               std::ofstream& ofs_running) {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -450,31 +430,25 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               eij.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of eij
 
-    if (PARAM.inp.td_print_eij >= 0.0)
-    {
+    if (PARAM.inp.td_print_eij >= 0.0) {
         ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
 
         ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
         ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
+        for (int i = 0; i < nband; i++) {
             const int in = i * nlocal;
-            for (int j = 0; j < nband; j++)
-            {
+            for (int j = 0; j < nband; j++) {
                 double aa = eij_cpu.data<std::complex<double>>()[in + j].real();
                 double bb = eij_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < PARAM.inp.td_print_eij)
-                {
+                if (std::abs(aa) < PARAM.inp.td_print_eij) {
                     aa = 0.0;
                 }
-                if (std::abs(bb) < PARAM.inp.td_print_eij)
-                {
+                if (std::abs(bb) < PARAM.inp.td_print_eij) {
                     bb = 0.0;
                 }
-                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
-                {
+                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0) {
                     std::streamsize original_precision = ofs_running.precision();
                     ofs_running << std::fixed << std::setprecision(8);
                     ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
@@ -492,22 +466,17 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     }
 
     // Extract diagonal elements of eij into ekb
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
+    if (ct_device_type == ct::DeviceType::GpuDevice) {
         // GPU implementation
-        for (int i = 0; i < nband; ++i)
-        {
+        for (int i = 0; i < nband; ++i) {
             base_device::memory::synchronize_memory_op<double, Device, Device>()(
                 ekb.data<double>() + i,
                 reinterpret_cast<const double*>(eij.data<std::complex<double>>() + i * nlocal + i),
                 1);
         }
-    }
-    else
-    {
+    } else {
         // CPU implementation
-        for (int i = 0; i < nband; ++i)
-        {
+        for (int i = 0; i < nband; ++i) {
             ekb.data<double>()[i] = eij.data<std::complex<double>>()[i * nlocal + i].real();
         }
     }

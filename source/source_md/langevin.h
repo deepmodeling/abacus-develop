@@ -11,8 +11,7 @@
  * and by imposing a frictional drag force on the motion of the nanoparticle in the solvent.
  * The damping factor and the random force combine to give the correct NVT ensemble.
  */
-class Langevin : public MD_base
-{
+class Langevin : public MD_base {
   public:
     Langevin(const Parameter& param_in, UnitCell& unit_in);
 

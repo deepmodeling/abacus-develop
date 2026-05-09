@@ -6,8 +6,7 @@
 #include "source_base/realarray.h"
 #include "source_base/vector3.h"
 
-class Parallel_Kpoints
-{
+class Parallel_Kpoints {
   public:
     Parallel_Kpoints(){};
     ~Parallel_Kpoints(){};
@@ -63,10 +62,7 @@ class Parallel_Kpoints
     }
 
     // get the maximum number of k-points in all pools
-    int get_max_nks_pool() const
-    {
-        return *std::max_element(nks_pool.begin(), nks_pool.end());
-    }
+    int get_max_nks_pool() const { return *std::max_element(nks_pool.begin(), nks_pool.end()); }
 
   public:
     int kpar = 0;         // number of pools

@@ -9,22 +9,18 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include <unordered_map>
 
-namespace hamilt
-{
+namespace hamilt {
 
 #ifndef __DELTASPINTEMPLATE
 #define __DELTASPINTEMPLATE
 
 template <class T>
-class DeltaSpin : public T
-{
-};
+class DeltaSpin : public T {};
 
 #endif
 
 template <typename TK, typename TR>
-class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
+class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR> {
   public:
     DeltaSpin<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
@@ -45,16 +41,15 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @brief calculate the magnetization moment for each atom
      * @param dmR the density matrix in real space
      * @return the magnetization moment for each atom
-    */
-    std::vector<double> cal_moment(const HContainer<double>* dmR, const std::vector<ModuleBase::Vector3<int>>& constrain);
+     */
+    std::vector<double> cal_moment(const HContainer<double>* dmR,
+                                   const std::vector<ModuleBase::Vector3<int>>& constrain);
 
     /**
      * @brief set the update_lambda_ to true, which means the lambda will be updated in the next contributeHR()
-    */
-    void update_lambda()
-    {
-        for(int is=0;is<this->spin_num;is++)
-        {
+     */
+    void update_lambda() {
+        for (int is = 0; is < this->spin_num; is++) {
             this->update_lambda_[is] = true;
         }
     }
@@ -99,17 +94,13 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /**
      * @brief calculate the constaint atom list
-    */
+     */
     void cal_constraint_atom_list(const std::vector<ModuleBase::Vector3<int>>& constraints);
 
     /**
      * @brief calculate the atomic magnetization moment for each <IJR>
-    */
-    void cal_moment_IJR(const double* dmR, 
-                        const TR* hr, 
-                        const int row_size,
-                        const int col_size,
-                        double* moment);
+     */
+    void cal_moment_IJR(const double* dmR, const TR* hr, const int row_size, const int col_size, double* moment);
 
     /**
      * @brief calculate the atomic Force of <I,J,R> atom pair
@@ -141,7 +132,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /**
      * @brief calculate the array of coefficient of lambda * d\rho^p/drho^{\sigma\sigma'}
-    */
+     */
     void pre_coeff_array(const std::vector<TR>& coeff, const int row_size, const int col_size);
 
     std::vector<bool> constraint_atom_list;
@@ -156,6 +147,6 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     std::vector<bool> update_lambda_;
 };
 
-}
+} // namespace hamilt
 
 #endif

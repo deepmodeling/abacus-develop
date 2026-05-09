@@ -4,12 +4,10 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/hamilt_lcao.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 template <typename TK>
-class Output_Sk
-{
+class Output_Sk {
   public:
     /// constructur of Output_Sk
     Output_Sk(hamilt::Hamilt<TK>* p_hamilt, Parallel_Orbitals* ParaV, int nspin, int nks);

@@ -7,8 +7,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 
-namespace elecstate
-{
+namespace elecstate {
 
 int H_TDDFT_pw::istep = -1;
 bool H_TDDFT_pw::is_initialized = false;
@@ -78,14 +77,12 @@ int H_TDDFT_pw::heavi_count;
 std::vector<double> H_TDDFT_pw::heavi_t0;
 std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
-{
+void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep) {
     std::stringstream ssc;
     ssc << file_dir << "Restart_td.txt";
     std::ifstream file(ssc.str().c_str());
 
-    if (!file)
-    {
+    if (!file) {
         ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_td.txt!");
     }
 
@@ -96,13 +93,11 @@ void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
     file.close();
 }
 
-void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
-{
+void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_fixed_v");
 
     // skip if not length gauge
-    if (stype != 0)
-    {
+    if (stype != 0) {
         return;
     }
 
@@ -111,8 +106,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     H_TDDFT_pw::istep_int = istep;
 
     // judgement to skip vext
-    if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
-    {
+    if (!PARAM.inp.td_vext || istep > tend || istep < tstart) {
         return;
     }
 
@@ -126,15 +120,13 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     global_vext_time = {0.0, 0.0, 0.0};
 
-    for (auto direc: PARAM.inp.td_vext_dire)
-    {
+    for (auto direc: PARAM.inp.td_vext_dire) {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count], true);
 
         global_vext_time[direc - 1] += vext_time;
 
-        if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
-        {
+        if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0) {
             std::stringstream as;
             as << PARAM.globalv.global_out_dir << "efield_" << count << ".txt";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
@@ -144,8 +136,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         }
 
         cal_v_space(vext_space, direc);
-        for (size_t ir = 0; ir < this->rho_basis_->nrxx; ++ir)
-        {
+        for (size_t ir = 0; ir < this->rho_basis_->nrxx; ++ir) {
             vl_pseudo[ir] += vext_space[ir] * vext_time;
         }
         count++;
@@ -155,13 +146,11 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
-{
+void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space");
     ModuleBase::timer::start("H_TDDFT_pw", "cal_v_space");
 
-    switch (stype)
-    {
+    switch (stype) {
     case 0:
         cal_v_space_length(vext_space, direc);
         break;
@@ -174,13 +163,11 @@ void H_TDDFT_pw::cal_v_space(std::vector<double>& vext_space, int direc)
     return;
 }
 
-void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
-{
+void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc) {
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::start("H_TDDFT_pw", "cal_v_space_length");
 
-    for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
-    {
+    for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir) {
         int i = ir / (this->rho_basis_->ny * this->rho_basis_->nplane);
         int j = ir / this->rho_basis_->nplane - i * this->rho_basis_->ny;
         int k = ir % this->rho_basis_->nplane + this->rho_basis_->startz_current;
@@ -188,24 +175,23 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
         double y = (double)j / this->rho_basis_->ny;
         double z = (double)k / this->rho_basis_->nz;
 
-        switch (direc)
-        {
+        switch (direc) {
         case 1:
-            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e11
-                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e21
-                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e31;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e11 +
+                             cal_v_space_length_potential(y) * this->ucell_->latvec.e21 +
+                             cal_v_space_length_potential(z) * this->ucell_->latvec.e31;
             break;
 
         case 2:
-            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e12
-                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e22
-                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e32;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e12 +
+                             cal_v_space_length_potential(y) * this->ucell_->latvec.e22 +
+                             cal_v_space_length_potential(z) * this->ucell_->latvec.e32;
             break;
 
         case 3:
-            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e13
-                             + cal_v_space_length_potential(y) * this->ucell_->latvec.e23
-                             + cal_v_space_length_potential(z) * this->ucell_->latvec.e33;
+            vext_space[ir] = cal_v_space_length_potential(x) * this->ucell_->latvec.e13 +
+                             cal_v_space_length_potential(y) * this->ucell_->latvec.e23 +
+                             cal_v_space_length_potential(z) * this->ucell_->latvec.e33;
             break;
 
         default:
@@ -218,29 +204,21 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
     return;
 }
 
-double H_TDDFT_pw::cal_v_space_length_potential(double i)
-{
+double H_TDDFT_pw::cal_v_space_length_potential(double i) {
     double vext_space = 0.0;
-    if (i < lcut1)
-    {
+    if (i < lcut1) {
         vext_space = -((i - lcut1) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut1) * this->ucell_->lat0;
-    }
-    else if (i >= lcut1 && i < lcut2)
-    {
+    } else if (i >= lcut1 && i < lcut2) {
         vext_space = i * this->ucell_->lat0;
-    }
-    else if (i >= lcut2)
-    {
+    } else if (i >= lcut2) {
         vext_space = -((i - lcut2) * (lcut2 - lcut1) / (lcut1 + 1.0 - lcut2) - lcut2) * this->ucell_->lat0;
     }
     return vext_space;
 }
 
-int H_TDDFT_pw::check_ncut(int t_type)
-{
+int H_TDDFT_pw::check_ncut(int t_type) {
     int ncut = 0;
-    switch (t_type)
-    {
+    switch (t_type) {
     case 0:
         ncut = *(gauss_ncut.begin() + gauss_count);
         break;
@@ -264,8 +242,7 @@ int H_TDDFT_pw::check_ncut(int t_type)
     return ncut;
 }
 
-void H_TDDFT_pw::update_At()
-{
+void H_TDDFT_pw::update_At() {
     // time evolve
     H_TDDFT_pw::istep++;
     // midpoint rule should be used both in Hamiltonian and here.
@@ -274,8 +251,7 @@ void H_TDDFT_pw::update_At()
     Et.set(0.0, 0.0, 0.0);
 
     // judgement to skip vext
-    if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
-    {
+    if (!PARAM.inp.td_vext || istep > tend || istep < tstart) {
         return;
     }
 
@@ -291,8 +267,7 @@ void H_TDDFT_pw::update_At()
     bool last = false;
     double out = 0.0;
 
-    for (auto direc: PARAM.inp.td_vext_dire)
-    {
+    for (auto direc: PARAM.inp.td_vext_dire) {
         last = false;
         // cut the integral space and initialize relevant parameters
         ncut = check_ncut(ttype[count]);
@@ -301,11 +276,9 @@ void H_TDDFT_pw::update_At()
 
         // store vext_time for each time point, include the first and last point
         std::vector<double> vext_time(ncut + 1, 0.0); // Use std::vector to manage memory
-        for (int i = 0; i <= ncut; i++)
-        {
+        for (int i = 0; i <= ncut; i++) {
             // if this is the last point, type_count++
-            if (i == ncut)
-            {
+            if (i == ncut) {
                 last = true;
             }
             vext_time[i] = cal_v_time(ttype[count], last);
@@ -315,8 +288,7 @@ void H_TDDFT_pw::update_At()
         ModuleBase::Integral::Simpson_Integral(ncut + 1, vext_time.data(), dt_int, out);
 
         // update At value for its direction
-        switch (stype)
-        {
+        switch (stype) {
         case 1:
             At_laststep[direc - 1] -= out;
             break;
@@ -330,8 +302,7 @@ void H_TDDFT_pw::update_At()
         }
 
         // output Efield
-        if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
-        {
+        if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0) {
             std::stringstream as;
             as << PARAM.globalv.global_out_dir << "efield_" << count << ".txt";
             std::ofstream ofs(as.str().c_str(), std::ofstream::app);
@@ -348,12 +319,10 @@ void H_TDDFT_pw::update_At()
     return;
 }
 
-double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
-{
+double H_TDDFT_pw::cal_v_time(int t_type, const bool last) {
     double vext_time = 0.0;
 
-    switch (t_type)
-    {
+    switch (t_type) {
     case 0:
         vext_time = cal_v_time_Gauss(last);
         break;
@@ -377,8 +346,7 @@ double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_Gauss(const bool last) {
     double vext_time = 0.0;
     double t0 = *(gauss_t0.begin() + gauss_count);
     double omega = *(gauss_omega.begin() + gauss_count);
@@ -389,16 +357,14 @@ double H_TDDFT_pw::cal_v_time_Gauss(const bool last)
 
     double gauss_t = (istep_int - t0 * ncut) * dt_int;
     vext_time = cos(omega * gauss_t + phase) * exp(-gauss_t * gauss_t * 0.5 / (sigma * sigma)) * amp;
-    if (last)
-    {
+    if (last) {
         gauss_count++;
     }
 
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_trapezoid(const bool last) {
     double vext_time = 0.0;
     double t1 = *(trape_t1.begin() + trape_count);
     double t2 = *(trape_t2.begin() + trape_count);
@@ -408,30 +374,23 @@ double H_TDDFT_pw::cal_v_time_trapezoid(const bool last)
     double amp = *(trape_amp.begin() + trape_count);
     double ncut = *(trape_ncut.begin() + trape_count);
 
-    if (istep < t1)
-    {
+    if (istep < t1) {
         vext_time = istep_int / ncut / t1;
-    }
-    else if (istep < t2)
-    {
+    } else if (istep < t2) {
         vext_time = 1.0;
-    }
-    else if (istep < t3)
-    {
+    } else if (istep < t3) {
         vext_time = (t3 - istep_int / ncut) / (t3 - t2);
     }
 
     vext_time = vext_time * amp * cos(omega * istep_int * dt_int + phase);
-    if (last)
-    {
+    if (last) {
         trape_count++;
     }
 
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_trigonometric(const bool last) {
     double vext_time = 0.0;
     double omega1 = *(trigo_omega1.begin() + trigo_count);
     double phase1 = *(trigo_phase1.begin() + trigo_count);
@@ -442,44 +401,34 @@ double H_TDDFT_pw::cal_v_time_trigonometric(const bool last)
     const double timenow = istep_int * dt_int;
 
     vext_time = amp * cos(omega1 * timenow + phase1) * sin(omega2 * timenow + phase2) * sin(omega2 * timenow + phase2);
-    if (last)
-    {
+    if (last) {
         trigo_count++;
     }
 
     return vext_time;
 }
 
-double H_TDDFT_pw::cal_v_time_heaviside(const bool last)
-{
+double H_TDDFT_pw::cal_v_time_heaviside(const bool last) {
     double t0 = *(heavi_t0.begin() + heavi_count);
     double amp = *(heavi_amp.begin() + heavi_count);
     double vext_time = 0.0;
-    if (istep < t0)
-    {
+    if (istep < t0) {
         vext_time = amp;
-    }
-    else if (istep >= t0)
-    {
+    } else if (istep >= t0) {
         vext_time = 0.0;
     }
-    if (last)
-    {
+    if (last) {
         heavi_count++;
     }
 
     return vext_time;
 }
 
-void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
-{
+void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe) {
     int iat = 0;
-    for (int it = 0; it < cell.ntype; ++it)
-    {
-        for (int ia = 0; ia < cell.atoms[it].na; ++ia)
-        {
-            for (int direc = 0; direc < 3; ++direc)
-            {
+    for (int it = 0; it < cell.ntype; ++it) {
+        for (int ia = 0; ia < cell.atoms[it].na; ++ia) {
+            for (int direc = 0; direc < 3; ++direc) {
                 // No need to multiply ModuleBase::e2, since the unit of force is Ry/Bohr
                 fe(iat, direc) = global_vext_time[direc] * cell.atoms[it].ncpp.zv;
             }

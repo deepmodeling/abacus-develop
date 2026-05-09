@@ -11,18 +11,14 @@ void random_data(std::vector<double>& A_global,
                  std::vector<double>& B_global,
                  std::vector<double>& U_global,
                  double& alpha,
-                 double& beta)
-{
-    for (auto& val: A_global)
-    {
+                 double& beta) {
+    for (auto& val: A_global) {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto& val: B_global)
-    {
+    for (auto& val: B_global) {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto& val: U_global)
-    {
+    for (auto& val: U_global) {
         val = std::rand() / (RAND_MAX + 1.0);
     }
     alpha = std::rand() / (RAND_MAX + 1.0);
@@ -32,45 +28,29 @@ void random_data(std::vector<std::complex<double>>& A_global,
                  std::vector<std::complex<double>>& B_global,
                  std::vector<std::complex<double>>& U_global,
                  std::complex<double>& alpha,
-                 std::complex<double>& beta)
-{
-    for (auto& val: A_global)
-    {
+                 std::complex<double>& beta) {
+    for (auto& val: A_global) {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto& val: B_global)
-    {
+    for (auto& val: B_global) {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto& val: U_global)
-    {
+    for (auto& val: U_global) {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
     alpha = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     beta = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
 }
-double get_double(std::complex<double>& val)
-{
-    return val.real() + val.imag();
-}
-double get_double(double& val)
-{
-    return val;
-}
+double get_double(std::complex<double>& val) { return val.real() + val.imag(); }
+double get_double(double& val) { return val; }
 
 template <typename T>
-class ParaLinearTransformTest : public ::testing::Test
-{
+class ParaLinearTransformTest : public ::testing::Test {
   protected:
-    void SetUp() override
-    {
-    }
+    void SetUp() override {}
 
-    void TearDown() override
-    {
-    }
-    void prepare(const int nrow, const int ncolA_glo, const int ncolB_glo, const int LDA)
-    {
+    void TearDown() override {}
+    void prepare(const int nrow, const int ncolA_glo, const int ncolB_glo, const int LDA) {
         int rank = 0;
         int nproc = 1;
         int colA_start = 0;
@@ -84,8 +64,7 @@ class ParaLinearTransformTest : public ::testing::Test
         MPI_Comm_size(MPI_COMM_WORLD, &nproc);
         this->ncolA_loc = ncolA_glo / nproc;
         this->ncolB_loc = ncolB_glo / nproc;
-        if (rank < ncolA_glo % nproc)
-        {
+        if (rank < ncolA_glo % nproc) {
             ncolA_loc++;
             ncolB_loc++;
         }
@@ -93,8 +72,7 @@ class ParaLinearTransformTest : public ::testing::Test
         std::vector<int> ncolB_ip(nproc);
         MPI_Allgather(&ncolA_loc, 1, MPI_INT, ncolA_ip.data(), 1, MPI_INT, MPI_COMM_WORLD);
         MPI_Allgather(&ncolB_loc, 1, MPI_INT, ncolB_ip.data(), 1, MPI_INT, MPI_COMM_WORLD);
-        for (int i = 0; i < rank; ++i)
-        {
+        for (int i = 0; i < rank; ++i) {
             colA_start += ncolA_ip[i];
             colB_start += ncolB_ip[i];
         }
@@ -103,8 +81,7 @@ class ParaLinearTransformTest : public ::testing::Test
         B_global.resize(LDA * ncolB_glo);
         B_global_ref.resize(LDA * ncolB_glo);
         U_global.resize(ncolA_glo * ncolB_glo);
-        if (rank == 0)
-        {
+        if (rank == 0) {
             random_data(A_global, B_global, U_global, alpha, beta);
             B_global_ref = B_global;
             const base_device::DEVICE_CPU* ctx = {};
@@ -122,8 +99,7 @@ class ParaLinearTransformTest : public ::testing::Test
                                                               B_global_ref.data(),
                                                               LDA);
         }
-        if (std::is_same<T, double>::value)
-        {
+        if (std::is_same<T, double>::value) {
 #ifdef __MPI
             MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -132,9 +108,7 @@ class ParaLinearTransformTest : public ::testing::Test
             MPI_Bcast(&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(&beta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-        }
-        else if (std::is_same<T, std::complex<double>>::value)
-        {
+        } else if (std::is_same<T, std::complex<double>>::value) {
 #ifdef __MPI
             MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
             MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
@@ -148,12 +122,10 @@ class ParaLinearTransformTest : public ::testing::Test
         A.resize(LDA * ncolA_loc);
         B.resize(LDA * ncolB_loc);
         B_ref.resize(LDA * ncolB_loc);
-        for (int i = 0; i < LDA * ncolA_loc; ++i)
-        {
+        for (int i = 0; i < LDA * ncolA_loc; ++i) {
             A[i] = A_global[colA_start * LDA + i];
         }
-        for (int i = 0; i < LDA * ncolB_loc; ++i)
-        {
+        for (int i = 0; i < LDA * ncolB_loc; ++i) {
             B[i] = B_global[colB_start * LDA + i];
             B_ref[i] = B_global_ref[colB_start * LDA + i];
         }
@@ -176,8 +148,7 @@ class ParaLinearTransformTest : public ::testing::Test
 typedef ::testing::Types<double, std::complex<double>> MyTypes;
 TYPED_TEST_SUITE(ParaLinearTransformTest, MyTypes);
 
-TYPED_TEST(ParaLinearTransformTest, globalU)
-{
+TYPED_TEST(ParaLinearTransformTest, globalU) {
     const int nrowA = 7;
     const int ncolA_glo = 13;
     const int ncolB_glo = 11;
@@ -201,17 +172,14 @@ TYPED_TEST(ParaLinearTransformTest, globalU)
                            false);
     this->lt.act(this->alpha, this->A.data(), this->U_global.data(), this->beta, this->B.data());
 
-    for (int i = 0; i < this->ncolB_loc; ++i)
-    {
-        for (int j = 0; j < nrowA; ++j)
-        {
+    for (int i = 0; i < this->ncolB_loc; ++i) {
+        for (int j = 0; j < nrowA; ++j) {
             EXPECT_NEAR(get_double(this->B[j + i * LDA]), get_double(this->B_ref[j + i * LDA]), 1e-10);
         }
     }
 }
 #ifdef __MPI
-TYPED_TEST(ParaLinearTransformTest, localU)
-{
+TYPED_TEST(ParaLinearTransformTest, localU) {
     const int nrowA = 7;
     const int ncolA_glo = 13;
     const int ncolB_glo = 11;
@@ -227,8 +195,7 @@ TYPED_TEST(ParaLinearTransformTest, localU)
     std::vector<int> start_colB(nproc_col);
     MPI_Allgather(&this->ncolB_loc, 1, MPI_INT, ncolB_ip.data(), 1, MPI_INT, col_world);
     start_colB[0] = 0;
-    for (int i = 1; i < nproc_col; ++i)
-    {
+    for (int i = 1; i < nproc_col; ++i) {
         start_colB[i] = start_colB[i - 1] + ncolB_ip[i - 1];
     }
     int start = start_colB[rank_col];
@@ -237,18 +204,15 @@ TYPED_TEST(ParaLinearTransformTest, localU)
 
     this->lt.act(this->alpha, this->A.data(), this->U_global.data() + start * ncolA_glo, this->beta, this->B.data());
 
-    for (int i = 0; i < this->ncolB_loc; ++i)
-    {
-        for (int j = 0; j < nrowA; ++j)
-        {
+    for (int i = 0; i < this->ncolB_loc; ++i) {
+        for (int j = 0; j < nrowA; ++j) {
             EXPECT_NEAR(get_double(this->B[j + i * LDA]), get_double(this->B_ref[j + i * LDA]), 1e-10);
         }
     }
 }
 #endif
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

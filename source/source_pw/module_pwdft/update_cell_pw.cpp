@@ -3,19 +3,16 @@
 #include "source_base/global_function.h"
 #include "source_io/module_parameter/parameter.h"
 
-namespace pw
-{
+namespace pw {
 
 void update_cell_pw(const UnitCell& ucell,
                     pseudopot_cell_vnl& ppcell,
                     const K_Vectors& kv,
                     ModulePW::PW_Basis_K* pw_wfc,
-                    const Input_para& inp)
-{
+                    const Input_para& inp) {
     ModuleBase::TITLE("pw", "update_cell_pw");
 
-    if (!ucell.cell_parameter_updated)
-    {
+    if (!ucell.cell_parameter_updated) {
         return;
     }
 
@@ -27,4 +24,4 @@ void update_cell_pw(const UnitCell& ucell,
     pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 }
 
-}
+} // namespace pw

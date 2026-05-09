@@ -6,24 +6,18 @@
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
 
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
-namespace GlobalC
-{
+Magnetism::~Magnetism() { delete[] this->start_mag; }
+namespace GlobalC {
 Exx_Info exx_info;
 }
 
 template <typename T>
-void test_deepks<T>::preparation()
-{
+void test_deepks<T>::preparation() {
     this->count_ntype();
     this->set_parameters();
 
@@ -44,8 +38,7 @@ void test_deepks<T>::preparation()
 }
 
 template <typename T>
-void test_deepks<T>::set_parameters()
-{
+void test_deepks<T>::set_parameters() {
     PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
     PARAM.input.pseudo_rcut = 15.0;
@@ -67,13 +60,11 @@ void test_deepks<T>::set_parameters()
 }
 
 template <typename T>
-void test_deepks<T>::count_ntype()
-{
+void test_deepks<T>::count_ntype() {
     GlobalV::ofs_running << "count number of atom types" << std::endl;
     std::ifstream ifs("STRU", std::ios::in);
 
-    if (!ifs)
-    {
+    if (!ifs) {
         GlobalV::ofs_running << "ERROR : file STRU does not exist" << std::endl;
         exit(1);
     }
@@ -84,8 +75,7 @@ void test_deepks<T>::count_ntype()
 
     std::string x;
     ifs.rdstate();
-    while (ifs.good())
-    {
+    while (ifs.good()) {
         // read a line
         std::getline(ifs, x);
 
@@ -94,15 +84,13 @@ void test_deepks<T>::count_ntype()
         x.erase(x.find_last_not_of(typeOfWhitespaces) + 1);
         x.erase(0, x.find_first_not_of(typeOfWhitespaces));
 
-        if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS"
-            || x == "NUMERICAL_DESCRIPTOR")
-        {
+        if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS" ||
+            x == "NUMERICAL_DESCRIPTOR") {
             break;
         }
 
         std::string tmpid = x.substr(0, 1);
-        if (!x.empty() && tmpid != "#")
-        {
+        if (!x.empty() && tmpid != "#") {
             ntype++;
         }
     }
@@ -114,30 +102,25 @@ void test_deepks<T>::count_ntype()
 }
 
 template <typename T>
-void test_deepks<T>::set_ekcut()
-{
+void test_deepks<T>::set_ekcut() {
     GlobalV::ofs_running << "set lcao_ecut from LCAO files" << std::endl;
     // set as max of ekcut from every element
 
     lcao_ecut = 0.0;
     std::ifstream in_ao;
 
-    for (int it = 0; it < ntype; it++)
-    {
+    for (int it = 0; it < ntype; it++) {
         double ek_current;
 
         in_ao.open(ucell.orbital_fn[it].c_str());
-        if (!in_ao)
-        {
+        if (!in_ao) {
             GlobalV::ofs_running << "error : cannot find LCAO file : " << ucell.orbital_fn[it] << std::endl;
         }
 
         std::string word;
-        while (in_ao.good())
-        {
+        while (in_ao.good()) {
             in_ao >> word;
-            if (word == "Cutoff(Ry)")
-            {
+            if (word == "Cutoff(Ry)") {
                 break;
             }
         }
@@ -154,8 +137,7 @@ void test_deepks<T>::set_ekcut()
 }
 
 template <typename T>
-void test_deepks<T>::setup_cell()
-{
+void test_deepks<T>::setup_cell() {
     ucell.setup_cell("STRU", GlobalV::ofs_running);
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
@@ -163,8 +145,7 @@ void test_deepks<T>::setup_cell()
 }
 
 template <typename T>
-void test_deepks<T>::prep_neighbour()
-{
+void test_deepks<T>::prep_neighbour() {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.input.out_level,
                                                    ORB.get_rcutmax_Phi(),
@@ -180,8 +161,7 @@ void test_deepks<T>::prep_neighbour()
 }
 
 template <typename T>
-void test_deepks<T>::set_orbs()
-{
+void test_deepks<T>::set_orbs() {
     ORB.init(GlobalV::ofs_running,
              ucell.ntype,
              PARAM.inp.orbital_dir,
@@ -217,8 +197,7 @@ void test_deepks<T>::set_orbs()
 }
 
 template <typename T>
-void test_deepks<T>::setup_kpt()
-{
+void test_deepks<T>::setup_kpt() {
     this->kv.set("KPT",
                  PARAM.input.nspin,
                  ucell.G,

@@ -27,8 +27,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
                                               const pseudopot_cell_vnl& nlpp,
                                               UnitCell& ucell,
                                               const psi::Psi<std::complex<FPTYPE>, Device>& psi,
-                                              const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
-{
+                                              const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf) {
     ModuleBase::timer::start("Sto_Forces", "cal_force");
     ModuleBase::TITLE("Sto_Forces", "init");
     this->device = base_device::get_device_type(this->ctx);
@@ -42,46 +41,39 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::matrix forcenl(this->nat, 3);
     ModuleBase::matrix forcescc(this->nat, 3);
     this->cal_force_loc(ucell, forcelc, rho_basis, locpp.vloc, chr);
-    this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
+    this->cal_force_ew(ucell, forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp.numeric, ucell);
 
     // impose total force = 0
     ModuleBase::matrix force_e;
-    if (PARAM.inp.efield_flag)
-    {
+    if (PARAM.inp.efield_flag) {
         force_e.create(this->nat, 3);
         elecstate::Efield::compute_force(ucell, force_e);
     }
 
     ModuleBase::matrix force_gate;
-    if (PARAM.inp.gate_flag)
-    {
+    if (PARAM.inp.gate_flag) {
         force_gate.create(this->nat, 3);
         elecstate::Gatefield::compute_force(ucell, force_gate);
     }
 
     int iat = 0;
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
+    for (int ipol = 0; ipol < 3; ipol++) {
         double sum = 0.0;
         iat = 0;
 
-        for (int it = 0; it < ucell.ntype; it++)
-        {
-            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-            {
-                force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
-                                   + forcescc(iat, ipol);
+        for (int it = 0; it < ucell.ntype; it++) {
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++) {
+                force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol) +
+                                   forcescc(iat, ipol);
 
-                if (PARAM.inp.efield_flag)
-                {
+                if (PARAM.inp.efield_flag) {
                     force(iat, ipol) = force(iat, ipol) + force_e(iat, ipol);
                 }
 
-                if (PARAM.inp.gate_flag)
-                {
+                if (PARAM.inp.gate_flag) {
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
 
@@ -91,26 +83,21 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
             }
         }
 
-        if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
-        {
+        if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag)) {
             double compen = sum / ucell.nat;
-            for (int iat = 0; iat < ucell.nat; ++iat)
-            {
+            for (int iat = 0; iat < ucell.nat; ++iat) {
                 force(iat, ipol) = force(iat, ipol) - compen;
             }
         }
     }
 
-    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag)
-    {
+    if (PARAM.inp.gate_flag || PARAM.inp.efield_flag) {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
+    if (ModuleSymmetry::Symmetry::symm_flag == 1) {
         double d1 = 0.0, d2 = 0.0, d3 = 0.0;
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
                                                       force(iat, 1),
                                                       force(iat, 2),
@@ -132,8 +119,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
             force(iat, 2) = d3;
         }
         p_symm->symmetrize_vec3_nat(force.c);
-        for (int iat = 0; iat < ucell.nat; iat++)
-        {
+        for (int iat = 0; iat < ucell.nat; iat++) {
             ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
                                                       force(iat, 1),
                                                       force(iat, 2),
@@ -160,24 +146,17 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     // output force in unit eV/Angstrom
     GlobalV::ofs_running << std::endl;
 
-    if (PARAM.inp.test_force)
-    {
+    if (PARAM.inp.test_force) {
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
-        if (PARAM.inp.efield_flag)
-        {
+        if (PARAM.inp.efield_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
         }
-        if (PARAM.inp.gate_flag)
-        {
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  ucell,
-                                  "GATEFIELD   FORCE (eV/Angstrom)",
-                                  force_gate,
-                                  false);
+        if (PARAM.inp.gate_flag) {
+            ModuleIO::print_force(GlobalV::ofs_running, ucell, "GATEFIELD   FORCE (eV/Angstrom)", force_gate, false);
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
@@ -186,21 +165,18 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
-    ModuleBase::matrix& forcenl,
-    const ModuleBase::matrix& wg,
-    K_Vectors* p_kv,
-    ModulePW::PW_Basis_K* wfc_basis,
-    const Structure_Factor* p_sf,
-    const pseudopot_cell_vnl& nlpp,
-    const UnitCell& ucell,
-    const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
-{
+void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(ModuleBase::matrix& forcenl,
+                                                  const ModuleBase::matrix& wg,
+                                                  K_Vectors* p_kv,
+                                                  ModulePW::PW_Basis_K* wfc_basis,
+                                                  const Structure_Factor* p_sf,
+                                                  const pseudopot_cell_vnl& nlpp,
+                                                  const UnitCell& ucell,
+                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf) {
     ModuleBase::TITLE("Sto_Forces", "cal_force_nl");
     const int nkb = nlpp.nkb;
-    if (nkb == 0)
-    {
+    if (nkb == 0) {
         return;
     }
 
@@ -209,21 +185,18 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     const int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
-    if (!PARAM.globalv.ks_run)
-    {
+    if (!PARAM.globalv.ks_run) {
         nksbands = 0;
     }
 
-   // allocate memory for the force
+    // allocate memory for the force
     FPTYPE* force = nullptr;
     resmem_var_op()(force, ucell.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell.nat * 3);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
 
-
-    for (int ik = 0; ik < wfc_basis->nks; ik++)
-    {
+    for (int ik = 0; ik < wfc_basis->nks; ik++) {
         const int nstobands = nchip[ik];
         const int max_nbands = stowf.shchi->get_nbands() + nksbands;
         const int npw = wfc_basis->npwk[ik];
@@ -237,8 +210,7 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         nl_tools.cal_becp(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
         nl_tools.reduce_pool_becp(max_nbands);
 
-        for (int ipol = 0; ipol < 3; ipol++)
-        {
+        for (int ipol = 0; ipol < 3; ipol++) {
             nl_tools.cal_vkb_deri_f(ik, max_nbands, ipol); // vkb_deri has dimension of nkb * max_nbands * npol
             // calculate dbecp = <psi|\nabla beta> for all beta functions
             nl_tools.cal_dbecp_f(ik, max_nbands, nksbands, ipol, psi_in.get_pointer(), 0);
@@ -254,7 +226,6 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 
-    
     ModuleBase::timer::end("Sto_Forces", "cal_force_nl");
     return;
 }

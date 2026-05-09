@@ -6,18 +6,18 @@ Ge 72.59 ../../PP_ORB/Ge_ONCV_PBE-1.0.upf
 As 74.922 ../../PP_ORB/As_ONCV_PBE-1.0.upf
 
 LATTICE_CONSTANT
-1.890  			#Lattice constant
+1.890              #Lattice constant
 
 LATTICE_VECTORS
-3.68739 0.0 0.0 		#Lattice vector 1
-0.0 10.11690 0.0 		#Lattice vector 2
-0.0 0.0 26.75895 		#Lattice vector 3
+3.68739 0.0 0.0         #Lattice vector 1
+0.0 10.11690 0.0         #Lattice vector 2
+0.0 0.0 26.75895         #Lattice vector 3
 
 ATOMIC_POSITIONS
-Direct 		#Cartesian(Unit is LATTICE_CONSTANT)
-Ge 			#Name of element	
-0.0			#Magnetic for this element.
-4			#Number of atoms
+Direct         #Cartesian(Unit is LATTICE_CONSTANT)
+Ge             #Name of element    
+0.0            #Magnetic for this element.
+4            #Number of atoms
 0.000000000   0.409074337   0.180186755 0 0 0
 0.000000000   0.909074316   0.063569890 0 0 0
 0.500000000   0.194912664   0.107449048 0 0 0

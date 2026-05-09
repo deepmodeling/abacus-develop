@@ -21,10 +21,8 @@
 #include <string>
 #include <vector>
 
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 //=============================================================================
 // GPU Resource Management
@@ -33,14 +31,13 @@ namespace gpu
 /**
  * @brief Initialize module-specific GPU resources for snap_psibeta computation
  *
- * Copies integration grids (Lebedev-Laikov angular and Gauss-Legendre radial) 
+ * Copies integration grids (Lebedev-Laikov angular and Gauss-Legendre radial)
  * to constant memory.
  *
  * @note Call this once at the start of a calculation session before any
  *       snap_psibeta_atom_batch_gpu calls.
  */
-void init_snap_psibeta_gpu()
-{
+void init_snap_psibeta_gpu() {
     // GPU device availability is already verified and initialized by DeviceContext::init()
     // at the startup of the application.
 
@@ -61,8 +58,7 @@ void init_snap_psibeta_gpu()
  * Associates each orbital in the flattened GPU array with its original
  * neighbor and orbital indices for proper result placement.
  */
-struct OrbitalMapping
-{
+struct OrbitalMapping {
     int neighbor_idx; ///< Index of neighbor atom in adjacency list
     int iw_index;     ///< Global orbital index for output mapping
 };
@@ -107,8 +103,7 @@ void snap_psibeta_atom_batch_gpu(
     const Parallel_Orbitals* paraV,
     const int npol,
     const int nlm_dim,
-    std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)
-{
+    std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot) {
     ModuleBase::timer::start("module_rt", "snap_psibeta_gpu");
 
     //=========================================================================
@@ -116,8 +111,7 @@ void snap_psibeta_atom_batch_gpu(
     //=========================================================================
 
     const int nproj = infoNL_.nproj[T0];
-    if (nproj == 0)
-    {
+    if (nproj == 0) {
         ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
         return;
     }
@@ -129,14 +123,12 @@ void snap_psibeta_atom_batch_gpu(
     int natomwfc = 0; // Total number of projector components
     std::vector<int> proj_m0_offset_h(nproj);
 
-    for (int ip = 0; ip < nproj; ip++)
-    {
+    for (int ip = 0; ip < nproj; ip++) {
         proj_m0_offset_h[ip] = natomwfc;
         int L0 = infoNL_.Beta[T0].Proj[ip].getL();
 
         // Validate angular momentum
-        if (L0 > MAX_L)
-        {
+        if (L0 > MAX_L) {
             ModuleBase::WARNING_QUIT("snap_psibeta_gpu",
                                      "L0=" + std::to_string(L0) + " exceeds MAX_L=" + std::to_string(MAX_L));
         }
@@ -151,8 +143,7 @@ void snap_psibeta_atom_batch_gpu(
     std::vector<double> psi_radial_h;
     std::vector<OrbitalMapping> orbital_mappings;
 
-    for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-    {
+    for (int ad = 0; ad < adjs.adj_num + 1; ++ad) {
         const int T1 = adjs.ntype[ad];
         const int I1 = adjs.natom[ad];
         const int iat1 = ucell->itia2iat(T1, I1);
@@ -167,16 +158,14 @@ void snap_psibeta_atom_batch_gpu(
         all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
 
         // Process each orbital
-        for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-        {
+        for (size_t iw1l = 0; iw1l < all_indexes.size(); iw1l += npol) {
             const int iw1 = all_indexes[iw1l] / npol;
             const int L1 = atom1->iw2l[iw1];
             const int m1 = atom1->iw2m[iw1];
             const int N1 = atom1->iw2n[iw1];
 
             // Skip orbitals with angular momentum beyond supported limit
-            if (L1 > MAX_L)
-            {
+            if (L1 > MAX_L) {
                 continue;
             }
 
@@ -214,8 +203,7 @@ void snap_psibeta_atom_batch_gpu(
     }
 
     int total_neighbor_orbitals = static_cast<int>(neighbor_orbitals_h.size());
-    if (total_neighbor_orbitals == 0)
-    {
+    if (total_neighbor_orbitals == 0) {
         ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
         return;
     }
@@ -227,8 +215,7 @@ void snap_psibeta_atom_batch_gpu(
     std::vector<ProjectorData> projectors_h(nproj);
     std::vector<double> beta_radial_h;
 
-    for (int ip = 0; ip < nproj; ip++)
-    {
+    for (int ip = 0; ip < nproj; ip++) {
         const auto& proj = infoNL_.Beta[T0].Proj[ip];
         int L0 = proj.getL();
         int mesh = proj.getNr();
@@ -309,8 +296,7 @@ void snap_psibeta_atom_batch_gpu(
 
     // Check for launch errors
     cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess)
-    {
+    if (err != cudaSuccess) {
         cudaFree(neighbor_orbitals_d);
         cudaFree(projectors_d);
         cudaFree(psi_radial_d);
@@ -334,25 +320,21 @@ void snap_psibeta_atom_batch_gpu(
     // Reconstruct output structure
     //=========================================================================
 
-    for (int i = 0; i < total_neighbor_orbitals; i++)
-    {
+    for (int i = 0; i < total_neighbor_orbitals; i++) {
         int ad = orbital_mappings[i].neighbor_idx;
         int iw_index = orbital_mappings[i].iw_index;
 
         std::vector<std::vector<std::complex<double>>> nlm(nlm_dim);
-        for (int d = 0; d < nlm_dim; d++)
-        {
+        for (int d = 0; d < nlm_dim; d++) {
             nlm[d].resize(natomwfc);
-            for (int k = 0; k < natomwfc; k++)
-            {
+            for (int k = 0; k < natomwfc; k++) {
                 size_t idx = i * nlm_dim * natomwfc + d * natomwfc + k;
                 nlm[d][k] = std::complex<double>(nlm_out_h[idx].x, nlm_out_h[idx].y);
             }
         }
 
         // Insert into nlm_tot[neighbor][direction][orbital]
-        for (int dir = 0; dir < nlm_dim; dir++)
-        {
+        for (int dir = 0; dir < nlm_dim; dir++) {
             nlm_tot[ad][dir].insert({iw_index, nlm[dir]});
         }
     }

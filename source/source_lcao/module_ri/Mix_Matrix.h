@@ -11,16 +11,14 @@
 #include "source_base/module_mixing/mixing.h"
 #include "source_base/module_mixing/plain_mixing.h"
 template <typename Tdata>
-class Mix_Matrix
-{
+class Mix_Matrix {
   public:
     /**
      * @brief init Mix_Matrix with Mixing pointer
      *
      * @param mixing_in Mixing pointer
      */
-    void init(Base_Mixing::Mixing* mixing_in)
-    {
+    void init(Base_Mixing::Mixing* mixing_in) {
         this->mixing = mixing_in;
         if (this->mixing == nullptr)
             this->separate_loop = true;
@@ -30,10 +28,7 @@ class Mix_Matrix
      *
      * @return const Tdata&
      */
-    const Tdata& get_data_out() const
-    {
-        return this->data_out;
-    }
+    const Tdata& get_data_out() const { return this->data_out; }
 
     /**
      * @brief Mixes the input data according to the set mixing mode.

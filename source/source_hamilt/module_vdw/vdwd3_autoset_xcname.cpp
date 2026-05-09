@@ -2,38 +2,38 @@
  * Intro
  * -----
  * This file stores the mapping from LibXC xcname to the "conventional"
- * 
+ *
  * XCNotSupportedError
  * -------------------
  * GGA_X_REVSSB_D
  * GGA_X_SSB_D
- * 
+ *
  * in J. Chem. Phys. 131, 094103 2009, a simplified version of PBC (the
  * correlation part of PBE XC) is used as the correlation part, but libXC
  * does not directly support one named as
  * GGA_C_SPBEC.
- * 
+ *
  * Certainly, those XC with dispersion correction in form of non-local
  * correlation are not supported. Such as:
- * 
+ *
  * vdw-DF family nonlocal dispersion correction included are not supported:
  * GGA_X_OPTB86B_VDW
- * GGA_X_OPTB88_VDW 
- * GGA_X_OPTPBE_VDW 
+ * GGA_X_OPTB88_VDW
+ * GGA_X_OPTPBE_VDW
  * GGA_X_PBEK1_VDW
- * 
+ *
  * VV09, VV10 and rVV10 nonlocal correlation included are not supported:
- * GGA_XC_VV10 
- * HYB_GGA_XC_LC_VV10 
- * HYB_MGGA_XC_WB97M_V 
- * HYB_GGA_XC_WB97X_V 
- * MGGA_X_VCML 
- * MGGA_C_REVSCAN_VV10 
- * MGGA_C_SCAN_VV10 
- * MGGA_C_SCANL_VV10 
- * MGGA_XC_B97M_V 
+ * GGA_XC_VV10
+ * HYB_GGA_XC_LC_VV10
+ * HYB_MGGA_XC_WB97M_V
+ * HYB_GGA_XC_WB97X_V
+ * MGGA_X_VCML
+ * MGGA_C_REVSCAN_VV10
+ * MGGA_C_SCAN_VV10
+ * MGGA_C_SCANL_VV10
+ * MGGA_XC_B97M_V
  * MGGA_XC_VCML_RVV10
- * 
+ *
  * There is also one quite special, the wB97X-D3BJ functional uses the
  * wB97X-V functionals excluding the VV10 part, then use its own DFT-D3(BJ)
  * parameters. This seems not recorded in simple-dftd3, so it is not supported
@@ -53,10 +53,10 @@
 const std::map<std::string, std::string> xcname_libxc_xc_ = {
     {"XC_LDA_XC_TETER93", "teter93"},
     {"XC_LDA_XC_ZLP", "zlp"},
-    {"XC_MGGA_XC_OTPSS_D", "otpss_d"}, // DFT-D2
-    {"XC_GGA_XC_OPBE_D", "opbe_d"}, // DFT-D2
+    {"XC_MGGA_XC_OTPSS_D", "otpss_d"},  // DFT-D2
+    {"XC_GGA_XC_OPBE_D", "opbe_d"},     // DFT-D2
     {"XC_GGA_XC_OPWLYP_D", "opwlyp_d"}, // DFT-D2
-    {"XC_GGA_XC_OBLYP_D", "oblyp_d"}, // DFT-D2
+    {"XC_GGA_XC_OBLYP_D", "oblyp_d"},   // DFT-D2
     {"XC_GGA_XC_HCTH_407P", "hcth_407p"},
     {"XC_GGA_XC_HCTH_P76", "hcth_p76"},
     {"XC_GGA_XC_HCTH_P14", "hcth_p14"},
@@ -336,43 +336,39 @@ const std::map<std::string, std::string> xcname_libxc_xplusc_ = {
     {"XC_MGGA_X_MBEEF+XC_GGA_C_PBE_SOL", "mbeef"},
     {"XC_HYB_MGGA_X_SCAN0+XC_MGGA_C_SCAN", "scan0"},
     {"XC_GGA_X_PBE+XC_GGA_C_OP_PBE", "pbeop"},
-    {"XC_GGA_X_B88+XC_GGA_C_OP_B88", "bop"}
-};
+    {"XC_GGA_X_B88+XC_GGA_C_OP_B88", "bop"}};
 
-void _xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname)
-{
+void _xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname) {
     std::vector<std::string> xc_words = FmtCore::split(xcpattern, "+");
     std::for_each(xc_words.begin(), xc_words.end(), [](std::string& s) {
-            s = (FmtCore::startswith(s, "XC_")? s: "XC_" + s); }); // add XC_ if not present
+        s = (FmtCore::startswith(s, "XC_") ? s : "XC_" + s);
+    }); // add XC_ if not present
     assert(xc_words.size() == 2);
 
     std::vector<std::string> words = FmtCore::split(xc_words[0], "_");
-    const std::string key = (words[2] == "X")? 
-        xc_words[0] + "+" + xc_words[1]: xc_words[1] + "+" + xc_words[0];
+    const std::string key = (words[2] == "X") ? xc_words[0] + "+" + xc_words[1] : xc_words[1] + "+" + xc_words[0];
 
     if (xcname_libxc_xplusc_.find(key) != xcname_libxc_xplusc_.end()) {
         xname = xcname_libxc_xplusc_.at(key);
     } else {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xplusc",
-                                    "XC's LibXC-notation on `" + xcpattern + "` not recognized");
+                                 "XC's LibXC-notation on `" + xcpattern + "` not recognized");
     }
 }
 
-void _xcname_libxc_xc(const std::string& xcpattern, std::string& xname)
-{
+void _xcname_libxc_xc(const std::string& xcpattern, std::string& xname) {
     // add XC_ if not present
-    const std::string key = FmtCore::startswith(xcpattern, "XC_")? xcpattern: "XC_" + xcpattern;
+    const std::string key = FmtCore::startswith(xcpattern, "XC_") ? xcpattern : "XC_" + xcpattern;
 
     if (xcname_libxc_xc_.find(key) != xcname_libxc_xc_.end()) {
         xname = xcname_libxc_xc_.at(key);
     } else {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xc",
-                                    "XC's LibXC-notation on `" + xcpattern + "` not recognized");
+                                 "XC's LibXC-notation on `" + xcpattern + "` not recognized");
     }
 }
 
-void _xcname_libxc(const std::string& xcpattern, std::string& xname)
-{
+void _xcname_libxc(const std::string& xcpattern, std::string& xname) {
     if (xcpattern.find("+") != std::string::npos) {
         _xcname_libxc_xplusc(xcpattern, xname);
     } else {
@@ -380,8 +376,7 @@ void _xcname_libxc(const std::string& xcpattern, std::string& xname)
     }
 }
 
-std::string vdw::Vdwd3Parameters::_vdwd3_xcname(const std::string& xcpattern)
-{
+std::string vdw::Vdwd3Parameters::_vdwd3_xcname(const std::string& xcpattern) {
     std::string xcname = xcpattern;
     const std::regex pattern("(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
     // as long as there is piece in xcpattern that can match, we can search for the corresponding name
@@ -407,12 +402,12 @@ def read_xc_func_h(fn):
 
 def sort_xc(xc_data):
     '''Sort the xc functionals into x, c, xc, k functionals.
-    
+
     Parameters
     ----------
     xc_data : dict
         from function read_xc_func_h
-    
+
     Returns
     -------
     dict, dict, dict, dict
@@ -437,16 +432,16 @@ def sort_xc(xc_data):
 def pair_xc(x, c):
     '''
     Pair the x and c functionals.
-    
+
     Parameters
     ----------
     x : dict
         The dictionary of x functionals, whose keys are the conventional
         xc name, values include approx, annos, id, full.
-    
+
     c : dict
         the same as x
-    
+
     Returns
     -------
     dict, dict
@@ -463,7 +458,7 @@ def pair_xc(x, c):
 
 def xc_to_stdmap(xc, conventional_lower=True):
     '''print the xc in the way of c++ std::map<std::string, std::string>.
-    
+
     Parameters
     ----------
     xc : dict
@@ -471,7 +466,7 @@ def xc_to_stdmap(xc, conventional_lower=True):
         xc name, values include approx, annos, id, full.
     conventional_lower : bool
         Whether to convert the conventional name to lower case.
-    
+
     Returns
     -------
     str
@@ -484,10 +479,10 @@ def xc_to_stdmap(xc, conventional_lower=True):
         out += '    {"%s", "%s"},\n' % (data['full'], name)
     out += '};\n'
     return out
-    
+
 def paired_xc_to_stdmap(pairs, conventional_lower=True):
     '''print the xc in the way of c++ std::map<std::string, std::string>.
-    
+
     Parameters
     ----------
     pairs : dict
@@ -495,7 +490,7 @@ def paired_xc_to_stdmap(pairs, conventional_lower=True):
         xc name, values include approx, annos, id, full.
     conventional_lower : bool
         Whether to convert the conventional name to lower case.
-    
+
     Returns
     -------
     str
@@ -513,21 +508,21 @@ def paired_xc_to_stdmap(pairs, conventional_lower=True):
     return out
 
 def special_x_and_c(x, c):
-    '''Special pairings of x and c functionals. The following data sheet is 
-    from Pyscf: 
+    '''Special pairings of x and c functionals. The following data sheet is
+    from Pyscf:
     https://github.com/pyscf/pyscf/blob/master/pyscf/dft/xcfun.py
     Thanks for pointing out the bug by @QuantumMiska and the help from wsr (@hebrewsnabla)
-    
-    
+
+
     Parameters
     ----------
     x : dict
         The dictionary of x functionals, whose keys are the conventional
         xc name, values include approx, annos, id, full.
-    
+
     c : dict
         the same as x
-    
+
     Returns
     -------
     dict

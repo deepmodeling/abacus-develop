@@ -41,29 +41,29 @@ Magnetism::~Magnetism() { delete[] this->start_mag; }
  *     - the serial version without MPI
  */
 
-void init_pv(int nlocal, Parallel_2D& pv)
-{
+void init_pv(int nlocal, Parallel_2D& pv) {
 #ifdef __MPI
-        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+    pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
 #else
-        pv.set_serial(nlocal, nlocal);
-#endif             
+    pv.set_serial(nlocal, nlocal);
+#endif
 }
 
 template <typename T>
-void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_2D& pv)
-{
+void gen_dmk(std::vector<std::vector<T>>& dmk,
+             std::vector<double>& efs,
+             int nspin,
+             int nk,
+             int nlocal,
+             Parallel_2D& pv) {
     int myrank = 0;
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 #endif
     std::vector<std::vector<T>> dmk_global(nspin * nk, std::vector<T>(nlocal * nlocal, T(0.0)));
-    if (myrank == 0)
-    {
-        for (int i = 0; i < nspin * nk; i++)
-        {
-            for (int j = 0; j < nlocal * nlocal; j++)
-            {
+    if (myrank == 0) {
+        for (int i = 0; i < nspin * nk; i++) {
+            for (int j = 0; j < nlocal * nlocal; j++) {
                 std::complex<double> value = std::complex<double>(1.0 * i + 0.1 * j, 0.1 * i + 1.0 * j);
                 dmk_global[i][j] = reinterpret_cast<T*>(&value)[0];
             }
@@ -73,8 +73,7 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
     Parallel_2D pv_global;
     pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD);
     dmk.resize(nspin * nk, std::vector<T>(pv.get_local_size(), 0.0));
-    for (int i = 0; i < nspin * nk; i++)
-    {
+    for (int i = 0; i < nspin * nk; i++) {
         Cpxgemr2d(nlocal,
                   nlocal,
                   dmk_global[i].data(),
@@ -92,12 +91,10 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
 #endif
 
     efs.resize(nspin, 0.0);
-    for (int i = 0; i < nspin; i++)
-    {
+    for (int i = 0; i < nspin; i++) {
         efs[i] = 0.1 * i;
     }
 }
-
 
 TEST(DMKTest, GenFileName) {
     bool gamma_only = true;
@@ -114,7 +111,7 @@ TEST(DMKTest, GenFileName) {
     EXPECT_EQ(fname, "dms2g1_nao.txt");
 
     ispin = 0;
-    gamma_only = false;    
+    gamma_only = false;
 
     fname = ModuleIO::dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
     EXPECT_EQ(fname, "dmk1s1g1_nao.txt");
@@ -126,8 +123,7 @@ TEST(DMKTest, GenFileName) {
     EXPECT_EQ(fname, "dmk2s2g1_nao.txt");
 };
 
-
-TEST(DMKTest,WriteDMK) {
+TEST(DMKTest, WriteDMK) {
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
@@ -166,59 +162,52 @@ TEST(DMKTest,WriteDMK) {
     kv.isk[0] = 0;
     kv.kc_done = true;
     kv.kd_done = true;
-    
+
     ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, istep);
     ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, istep);
-    
+
     std::ifstream ifs;
 
     int pass = 0;
-    if (GlobalV::MY_RANK == 0)
-    {
+    if (GlobalV::MY_RANK == 0) {
         std::string fn = "dms1_nao.txt";
         ifs.open(fn);
-        std::string str((std::istreambuf_iterator<char>(ifs)),
-                        std::istreambuf_iterator<char>());
+        std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
 
         fn = "dms2_nao.txt";
         ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
+        str = std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
 
         fn = "dmk1s1_nao.txt";
         ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
+        str = std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
 
         fn = "dmk2s1_nao.txt";
         ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
+        str = std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
 
         fn = "dmk1s2_nao.txt";
         ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
+        str = std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
 
         fn = "dmk2s2_nao.txt";
         ifs.open(fn);
-        str = std::string((std::istreambuf_iterator<char>(ifs)),
-                          std::istreambuf_iterator<char>());
+        str = std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_THAT(str, testing::HasSubstr("0.1 # Fermi energy in Ry"));
         EXPECT_THAT(str, testing::HasSubstr("20 # number of localized basis"));
         ifs.close();
@@ -232,7 +221,6 @@ TEST(DMKTest,WriteDMK) {
 
     delete ucell;
     // remove the generated files
-    
 };
 
 /*
@@ -279,10 +267,8 @@ TEST(DMKTest, ReadDMK) {
 }
 */
 
-
 #ifdef __MPI
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     GlobalV::MY_RANK = 0;
 
     MPI_Init(&argc, &argv);
@@ -299,10 +285,9 @@ int main(int argc, char** argv)
     int result = RUN_ALL_TESTS();
     MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (GlobalV::MY_RANK == 0 && result != 0)
-    {
+    if (GlobalV::MY_RANK == 0 && result != 0) {
         std::cout << "ERROR:some tests are not passed" << std::endl;
-	}
+    }
 
     MPI_Finalize();
     return result;

@@ -7,74 +7,65 @@
 #include "source_lcao/record_adj.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
-namespace elecstate
-{
+namespace elecstate {
 /**
  * @brief DensityMatrix Class
  * <TK,TR> = <double,double> for Gamma-only calculation
  * <TK,TR> = <std::complex<double>,double> for multi-k calculation
  */
-template<typename T> struct ShiftRealComplex
-{
+template <typename T>
+struct ShiftRealComplex {
     using type = void;
 };
 
-template<>
-struct ShiftRealComplex<double> 
-{
-	using type = std::complex<double>;
+template <>
+struct ShiftRealComplex<double> {
+    using type = std::complex<double>;
 };
 
-template<>
-struct ShiftRealComplex<std::complex<double>> 
-{
-	using type = double;
+template <>
+struct ShiftRealComplex<std::complex<double>> {
+    using type = double;
 };
-
-
-    template <typename TK, typename TR> class DensityMatrix;
-
-// DensityMatrix<complex<double>,TR>::cal_DMR() is illegal in C++, so DensityMatrix_Tools is used instead.
-namespace DensityMatrix_Tools
-{
-    template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR(
-        const DensityMatrix<TK, TR_in> &dm,
-        std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
-        const int ik_in);
-
-    template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR_td(
-        const DensityMatrix<TK, TR_in> &dm,
-        std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
-        const UnitCell& ucell,
-        const ModuleBase::Vector3<double> At,
-        const int ik_in);
-
-    template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR_full(
-        const DensityMatrix<TK, TR_in> &dm, 
-        hamilt::HContainer<TR_out>* dmR_out,
-        const int ik_in);
-
-    template <typename TR>
-    extern void func_exp_mul_dmk(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, TR* target_DMR_mat);
-
-    template <typename TR>
-    extern void func_xyz_to_updown(const std::complex<double> tmp[4], const int icol, const int step_trace[4], TR* target_DMR_mat);
-}
-
 
 template <typename TK, typename TR>
-class DensityMatrix
-{
-	using TRShift = typename ShiftRealComplex<TR>::type;
+class DensityMatrix;
 
-	public:
-	/**
-	 * @brief Destructor of class DensityMatrix
-	 */
-	~DensityMatrix();
+// DensityMatrix<complex<double>,TR>::cal_DMR() is illegal in C++, so DensityMatrix_Tools is used instead.
+namespace DensityMatrix_Tools {
+template <typename TK, typename TR_in, typename TR_out>
+extern void
+cal_DMR(const DensityMatrix<TK, TR_in>& dm, std::vector<hamilt::HContainer<TR_out>*>& dmR_out, const int ik_in);
+
+template <typename TK, typename TR_in, typename TR_out>
+extern void cal_DMR_td(const DensityMatrix<TK, TR_in>& dm,
+                       std::vector<hamilt::HContainer<TR_out>*>& dmR_out,
+                       const UnitCell& ucell,
+                       const ModuleBase::Vector3<double> At,
+                       const int ik_in);
+
+template <typename TK, typename TR_in, typename TR_out>
+extern void cal_DMR_full(const DensityMatrix<TK, TR_in>& dm, hamilt::HContainer<TR_out>* dmR_out, const int ik_in);
+
+template <typename TR>
+extern void func_exp_mul_dmk(const std::complex<double> kphase,
+                             const std::vector<std::complex<double>>& DMK_mat_trans,
+                             TR* target_DMR_mat);
+
+template <typename TR>
+extern void
+func_xyz_to_updown(const std::complex<double> tmp[4], const int icol, const int step_trace[4], TR* target_DMR_mat);
+} // namespace DensityMatrix_Tools
+
+template <typename TK, typename TR>
+class DensityMatrix {
+    using TRShift = typename ShiftRealComplex<TR>::type;
+
+  public:
+    /**
+     * @brief Destructor of class DensityMatrix
+     */
+    ~DensityMatrix();
 
     /**
      * @brief Constructor of class DensityMatrix for multi-k calculation
@@ -85,10 +76,10 @@ class DensityMatrix
      * @param nk number of k-points, not always equal to K_Vectors::get_nks()/nspin_dm.
      *               it will be set to kvec_d.size() if the value is invalid
      */
-	DensityMatrix(const Parallel_Orbitals* _paraV, 
-			const int nspin, 
-			const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
-			const int nk);
+    DensityMatrix(const Parallel_Orbitals* _paraV,
+                  const int nspin,
+                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                  const int nk);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
@@ -120,10 +111,10 @@ class DensityMatrix
     void init_DMR(const hamilt::HContainer<TR>& _DMR_in);
 
     /// @brief initialize density matrix DMR from another HContainer
-    /// this is a temprory function for NSPIN=4 case 
+    /// this is a temprory function for NSPIN=4 case
     /// since copy HContainer from another HContainer with different TR is not supported yet
     /// would be refactor in the future
-    /// @param _DMR_in 
+    /// @param _DMR_in
     // the old input type ``:HContainer<complex<double>` causes redefination error if TR = complex<double>
     void init_DMR(const hamilt::HContainer<TRShift>& _DMR_in);
 
@@ -139,9 +130,9 @@ class DensityMatrix
 
     /**
      * @brief set _DMK element to zero
-    */
+     */
     void set_DMK_zero();
-    
+
     /**
      * @brief get a matrix element of density matrix dm(k)
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
@@ -179,11 +170,11 @@ class DensityMatrix
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    const std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
-    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() {return this->_DMR;}
+    const std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const { return this->_DMR; }
+    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() { return this->_DMR; }
 
-    const std::vector<std::vector<TR>>& get_DMR_save() const {return this->_DMR_save;}
-    std::vector<std::vector<TR>>& get_DMR_save() {return this->_DMR_save;}
+    const std::vector<std::vector<TR>>& get_DMR_save() const { return this->_DMR_save; }
+    std::vector<std::vector<TR>>& get_DMR_save() { return this->_DMR_save; }
 
     /**
      * @brief get pointer of DMK
@@ -194,20 +185,20 @@ class DensityMatrix
 
     /**
      * @brief get pointer vector of DMK
-    */
-    const std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
-    std::vector<std::vector<TK>>& get_DMK_vector() {return this->_DMK;}
+     */
+    const std::vector<std::vector<TK>>& get_DMK_vector() const { return this->_DMK; }
+    std::vector<std::vector<TK>>& get_DMK_vector() { return this->_DMK; }
 
     /**
      * @brief set _DMK using a input TK* pointer
      * please make sure the size of TK* is correct
-    */
+     */
     void set_DMK_pointer(const int ik, TK* DMK_in);
 
     /**
      * @brief get pointer of paraV
      */
-    const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
+    const Parallel_Orbitals* get_paraV_pointer() const { return this->_paraV; }
 
     const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
 
@@ -263,7 +254,7 @@ class DensityMatrix
      * @brief save _DMR into _DMR_save
      */
     void save_DMR();
-    
+
     std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
 #ifdef __PEXSI
@@ -326,9 +317,17 @@ class DensityMatrix
     std::vector<TR> dmr_origin_;
     TR* dmr_tmp_ = nullptr;
 
-    friend void DensityMatrix_Tools::cal_DMR<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const int ik_in);
-    friend void DensityMatrix_Tools::cal_DMR_td<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in);
-    friend void DensityMatrix_Tools::cal_DMR_full<TK,TR>(const DensityMatrix<TK, TR> &dm, hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR<TK, TR>(const DensityMatrix<TK, TR>& dm,
+                                                     std::vector<hamilt::HContainer<TR>*>& dmR_out,
+                                                     const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR_td<TK, TR>(const DensityMatrix<TK, TR>& dm,
+                                                        std::vector<hamilt::HContainer<TR>*>& dmR_out,
+                                                        const UnitCell& ucell,
+                                                        const ModuleBase::Vector3<double> At,
+                                                        const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR_full<TK, TR>(const DensityMatrix<TK, TR>& dm,
+                                                          hamilt::HContainer<std::complex<double>>* dmR_out,
+                                                          const int ik_in);
 };
 
 } // namespace elecstate

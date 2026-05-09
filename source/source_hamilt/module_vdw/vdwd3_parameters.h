@@ -10,28 +10,26 @@
 #include "source_io/module_parameter/parameter.h"
 #include "vdw_parameters.h"
 
-namespace vdw
-{
+namespace vdw {
 
-class Vdwd3Parameters : public VdwParameters
-{
+class Vdwd3Parameters : public VdwParameters {
 
   public:
-    Vdwd3Parameters() : VdwParameters() {};
+    Vdwd3Parameters() : VdwParameters(){};
 
     ~Vdwd3Parameters() = default;
 
     /**
      * @brief initialize the parameter by either input (from user setting) or autoset by dft XC
-     * 
+     *
      * @param input Parameter instance
      * @param plog optional, for logging the parameter setting process
      */
     void initial_parameters(const std::string& xc,
-                            const Input_para& input, 
+                            const Input_para& input,
                             std::ofstream* plog = nullptr); // for logging the parameter autoset
 
-    inline const std::string &version() const { return version_; }
+    inline const std::string& version() const { return version_; }
 
     inline bool abc() const { return abc_; }
     inline double rthr2() const { return rthr2_; }
@@ -41,11 +39,11 @@ class Vdwd3Parameters : public VdwParameters
     inline double s18() const { return s18_; }
     inline double rs18() const { return rs18_; }
 
-    inline const std::vector<int> &mxc() const { return mxc_; }
-    inline const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> &c6ab() const { return c6ab_; }
-    inline const std::vector<double> &r2r4() const { return r2r4_; }
-    inline const std::vector<double> &rcov() { return rcov_; }
-    inline const std::vector<std::vector<double>> &r0ab() { return r0ab_; }
+    inline const std::vector<int>& mxc() const { return mxc_; }
+    inline const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& c6ab() const { return c6ab_; }
+    inline const std::vector<double>& r2r4() const { return r2r4_; }
+    inline const std::vector<double>& rcov() { return rcov_; }
+    inline const std::vector<std::vector<double>>& r0ab() { return r0ab_; }
 
     inline double k1() const { return k1_; }
     inline double k2() const { return k2_; }
@@ -57,13 +55,13 @@ class Vdwd3Parameters : public VdwParameters
   private:
     std::string version_;
 
-    bool abc_=false; // third-order term?
-    double rthr2_=0.0; // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
-    double cn_thr2_=0.0; // R^2 distance to cutoff for CN_calculation (a.u.)
-    double s6_=0.0;
-    double rs6_=0.0;
-    double s18_=0.0;
-    double rs18_=0.0;
+    bool abc_ = false;     // third-order term?
+    double rthr2_ = 0.0;   // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
+    double cn_thr2_ = 0.0; // R^2 distance to cutoff for CN_calculation (a.u.)
+    double s6_ = 0.0;
+    double rs6_ = 0.0;
+    double s18_ = 0.0;
+    double rs18_ = 0.0;
 
     static constexpr size_t max_elem_ = 94;
     static constexpr double k1_ = 16.0, k2_ = 4.0 / 3.0, k3_ = -4.0;
@@ -94,7 +92,7 @@ class Vdwd3Parameters : public VdwParameters
     void init_rcov();
     void init_r0ab();
 
-    int limit(int &i);
+    int limit(int& i);
 };
 
 } // namespace vdw

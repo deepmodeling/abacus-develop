@@ -4,7 +4,9 @@ if(ENABLE_LCAO)
   add_subdirectory(dm_trans)
   add_subdirectory(ri_benchmark)
 
-  list(APPEND objects
+  list(
+    APPEND
+    objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
     ao_to_mo_transformer/ao_to_mo_parallel.cpp
@@ -20,10 +22,6 @@ if(ENABLE_LCAO)
     esolver_lrtd_lcao.cpp
     potentials/xc_kernel.cpp)
 
-add_library(
-    lr
-    OBJECT
-    ${objects}
-)
+  add_library(lr OBJECT ${objects})
 
 endif()

@@ -6,39 +6,36 @@
 #include "Metropolis.h"
 #include "Orthogonal.h"
 
-class MultiZeta
-{
-	public:
-	MultiZeta();
-	~MultiZeta();
+class MultiZeta {
+  public:
+    MultiZeta();
+    ~MultiZeta();
 
-	SpillageStep *Level;
-	Metropolis metro;
-	Orthogonal Orth; //Orthogonal wave functions.
+    SpillageStep* Level;
+    Metropolis metro;
+    Orthogonal Orth; // Orthogonal wave functions.
 
-	void init(void);
+    void init(void);
 
-	int nlevel;
+    int nlevel;
 
-	int *lmax_type; // lmax for each type(consider all levels)
+    int* lmax_type; // lmax for each type(consider all levels)
 
-	IntArray l_nchi;
+    IntArray l_nchi;
 
-	// mohan add 2010-05-02
-	// convinent for output information
-	int ilevel;
+    // mohan add 2010-05-02
+    // convinent for output information
+    int ilevel;
 
+    void set_levels(void);
+    void cal_lmax_nmax(void);
 
-	void set_levels(void);
-	void cal_lmax_nmax(void);
+  private:
+    int test;
 
-	private:
-	int test;
-
-	// save the coefficients after each level.
-	// mohan add 2010-04-11
-	void saveC(void);
-
+    // save the coefficients after each level.
+    // mohan add 2010-04-11
+    void saveC(void);
 };
 
 #endif

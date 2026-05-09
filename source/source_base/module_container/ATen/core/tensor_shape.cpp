@@ -5,10 +5,10 @@ namespace container {
  * @brief Namespace containing constants for default constructor
  */
 namespace {
-    /**
-     * @brief Default size of a dimension
-     */
-    constexpr int kDefaultDimSize = 0;
+/**
+ * @brief Default size of a dimension
+ */
+constexpr int kDefaultDimSize = 0;
 } // namespace
 
 // Default constructor for TensorShape class
@@ -28,24 +28,16 @@ TensorShape::TensorShape(const TensorShape& other) {
 }
 
 // Get size of a specific dimension in the tensor
-int64_t TensorShape::dim_size(int dim) const {
-    return dims_[dim];
-}
+int64_t TensorShape::dim_size(int dim) const { return dims_[dim]; }
 
 // Get all dimension sizes in the tensor
-const std::vector<int64_t>& TensorShape::dims() const {
-    return dims_;
-}
+const std::vector<int64_t>& TensorShape::dims() const { return dims_; }
 
 // Get all dimension strides in the tensor
-const std::vector<int64_t>& TensorShape::strides() const {
-    return strides_;
-}
+const std::vector<int64_t>& TensorShape::strides() const { return strides_; }
 
 // Get ndim of the tensor, i.e., number of dimensions
-unsigned int TensorShape::ndim() const {
-    return dims_.size();
-}
+unsigned int TensorShape::ndim() const { return dims_.size(); }
 
 // Returns the total number of elements in the shape.
 int64_t TensorShape::NumElements() const {
@@ -78,14 +70,10 @@ void TensorShape::remove_dim(int dim) {
 }
 
 // Overload the == operator to compare two TensorShape objects
-bool TensorShape::operator==(const TensorShape& other) const {
-    return dims_ == other.dims_;
-}
+bool TensorShape::operator==(const TensorShape& other) const { return dims_ == other.dims_; }
 
 // Overload the != operator to compare two TensorShape objects
-bool TensorShape::operator!=(const TensorShape& other) const {
-    return dims_ != other.dims_;
-}
+bool TensorShape::operator!=(const TensorShape& other) const { return dims_ != other.dims_; }
 
 std::vector<int64_t> TensorShape::get_strides_(const std::vector<int64_t>& dim) {
     std::vector<int64_t> strides{};

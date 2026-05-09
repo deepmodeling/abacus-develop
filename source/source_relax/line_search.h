@@ -1,11 +1,10 @@
 #ifndef LINE_SEARCH_H
 #define LINE_SEARCH_H
 
-class Line_Search
-{
+class Line_Search {
   public:
-    Line_Search() {};
-    ~Line_Search() {};
+    Line_Search(){};
+    ~Line_Search(){};
 
     bool line_search(const bool restart,     // whether to restart line search (when cg direction has changed)
                      const double x,         // position for function at x

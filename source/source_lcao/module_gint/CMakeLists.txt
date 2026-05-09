@@ -1,7 +1,9 @@
-#add_subdirectory(kernels/cuda)
+# add_subdirectory(kernels/cuda)
 if(ENABLE_LCAO)
 
-list(APPEND objects
+  list(
+    APPEND
+    objects
     biggrid_info.cpp
     big_grid.cpp
     divide_info.cpp
@@ -24,10 +26,11 @@ list(APPEND objects
     set_ddphi.cpp
     unitcell_info.cpp
     gint_common.cpp
-    gint_interface.cpp
-    )
-if(USE_CUDA)
-  list(APPEND objects
+    gint_interface.cpp)
+  if(USE_CUDA)
+    list(
+      APPEND
+      objects
       kernel/gint_gpu_vars.cpp
       kernel/phi_operator_gpu.cu
       kernel/phi_operator_kernel.cu
@@ -41,22 +44,17 @@ if(USE_CUDA)
       gint_vl_metagga_nspin4_gpu.cpp
       gint_tau_gpu.cpp
       gint_fvl_meta_gpu.cpp
-      kernel/dgemm_vbatch.cu
-  )
-endif()
+      kernel/dgemm_vbatch.cu)
+  endif()
 
-add_library(
-    gint
-    OBJECT
-    ${objects}
-)
+  add_library(gint OBJECT ${objects})
 
-if(BUILD_TESTING)
-  add_subdirectory(test)
-endif()
+  if(BUILD_TESTING)
+    add_subdirectory(test)
+  endif()
 
-if(ENABLE_COVERAGE)
-  add_coverage(gint)
-endif()
+  if(ENABLE_COVERAGE)
+    add_coverage(gint)
+  endif()
 
 endif()

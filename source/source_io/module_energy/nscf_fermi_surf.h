@@ -5,8 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 void nscf_fermi_surface(const std::string& out_band_dir,
                         const int& nband,
                         const double& ef,
@@ -15,4 +14,3 @@ void nscf_fermi_surface(const std::string& out_band_dir,
                         const ModuleBase::matrix& ekb);
 }
 #endif
-

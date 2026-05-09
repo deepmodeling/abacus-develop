@@ -5,8 +5,7 @@
 
 #include <string>
 
-class GintPrecisionController
-{
+class GintPrecisionController {
   public:
     GintPrecisionController() = default;
 
@@ -20,12 +19,7 @@ class GintPrecisionController
     ModuleGint::GintPrecision current_precision() const;
 
   private:
-    enum class PrecisionMode
-    {
-        single,
-        double_mode,
-        mix
-    };
+    enum class PrecisionMode { single, double_mode, mix };
 
     static PrecisionMode parse_mode_(const std::string& precision_mode);
 

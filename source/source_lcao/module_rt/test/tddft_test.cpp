@@ -13,8 +13,7 @@
 
 int myprow, nprow, ictxt, mypcol, npcol;
 
-void MPIInit()
-{
+void MPIInit() {
     int myrank;
     int mysize;
 
@@ -36,8 +35,7 @@ void MPIInit()
 /************************************************
  *  unit test of module_rt
  ***********************************************/
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     MPIInit();
 
     int result = 0;

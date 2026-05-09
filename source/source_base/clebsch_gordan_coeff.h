@@ -6,11 +6,9 @@
 #include "source_base/realarray.h"
 #include "source_base/vector3.h"
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-class Clebsch_Gordan
-{
+class Clebsch_Gordan {
   public:
     Clebsch_Gordan();
     ~Clebsch_Gordan();
@@ -31,10 +29,8 @@ class Clebsch_Gordan
      * @param lpx [out] for each input limi,ljmj is the number of LM in the sum
      * @param lpl [out] for each input limi,ljmj points to the allowed LM
      */
-    static void clebsch_gordan(const int& lli,
-                               ModuleBase::realArray& ap,
-                               ModuleBase::IntArray& lpx,
-                               ModuleBase::IntArray& lpl);
+    static void
+    clebsch_gordan(const int& lli, ModuleBase::realArray& ap, ModuleBase::IntArray& lpx, ModuleBase::IntArray& lpl);
 
   private:
     /**

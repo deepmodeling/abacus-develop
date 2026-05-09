@@ -22,15 +22,13 @@
  */
 
 // Define a fixture for the tests
-class IonsMoveBasicTest : public ::testing::Test
-{
+class IonsMoveBasicTest : public ::testing::Test {
   protected:
     UnitCell ucell;
     double move[6], pos[6], grad[6];
     ModuleBase::matrix force;
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         // Initialize variables before each test
         force.create(ucell.nat, 3);
         force(0, 0) = 1.0;
@@ -41,15 +39,13 @@ class IonsMoveBasicTest : public ::testing::Test
         force(1, 2) = 6.0;
     }
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         // Clean up after each test
     }
 };
 
 // Test the setup_gradient() function
-TEST_F(IonsMoveBasicTest, SetupGradient)
-{
+TEST_F(IonsMoveBasicTest, SetupGradient) {
     // Call the function being tested
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::setup_gradient(ucell, force, pos, grad);
@@ -70,13 +66,11 @@ TEST_F(IonsMoveBasicTest, SetupGradient)
 }
 
 // Test the move_atoms() function
-TEST_F(IonsMoveBasicTest, MoveAtoms)
-{
+TEST_F(IonsMoveBasicTest, MoveAtoms) {
     // Initialize data
     Ions_Move_Basic::dim = 6;
     PARAM.input.test_relax_method = 1;
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         pos[i] = 0.0;
         move[i] = i;
     }
@@ -95,7 +89,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
     ifs.close();
     std::remove("log");
 
-    EXPECT_THAT(output , ::testing::HasSubstr(expected_output));
+    EXPECT_THAT(output, ::testing::HasSubstr(expected_output));
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
     EXPECT_DOUBLE_EQ(pos[1], 1.0);
     EXPECT_DOUBLE_EQ(pos[2], 2.0);
@@ -105,15 +99,13 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
 }
 
 // Test the check_converged() function case 1
-TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
-{
+TEST_F(IonsMoveBasicTest, CheckConvergedCase1) {
     // Initialize data
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
-    for (int i = 0; i < Ions_Move_Basic::dim; ++i)
-    {
+    for (int i = 0; i < Ions_Move_Basic::dim; ++i) {
         grad[i] = 0.0;
     }
 
@@ -130,14 +122,14 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     ifs.close();
     std::remove("log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
-          " Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n largest force is 0, no "
-          "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
+        " Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n largest force is 0, no "
+        "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 0\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
     EXPECT_EQ(Ions_Move_Basic::converged, true);
@@ -145,15 +137,14 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
 }
 
 // Test the check_converged() function case 2
-TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
-{
+TEST_F(IonsMoveBasicTest, CheckConvergedCase2) {
     // Initialize data
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 0.0;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -169,14 +160,14 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     ifs.close();
     std::remove("log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is "
-          "converged!\n\n Energy difference (Ry) = 0\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n\n"
+        " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is "
+        "converged!\n\n Energy difference (Ry) = 0\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 2);
     EXPECT_EQ(Ions_Move_Basic::converged, true);
@@ -184,15 +175,14 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 }
 
 // Test the check_converged() function case 3
-TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
-{
+TEST_F(IonsMoveBasicTest, CheckConvergedCase3) {
     // Initialize data
     Ions_Move_Basic::dim = 6;
     Ions_Move_Basic::update_iter = 1;
     Ions_Move_Basic::ediff = 1.0;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    PARAM.input.force_thr = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -208,14 +198,14 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     ifs.close();
     std::remove("log");
 
-    std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is not "
-          "converged yet (threshold is 25.7111)\n";
+    std::string expected_ofs =
+        "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n\n"
+        " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is not "
+        "converged yet (threshold is 25.7111)\n";
     std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
     EXPECT_EQ(Ions_Move_Basic::converged, false);
@@ -223,8 +213,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 }
 
 // Test the terminate() function when converged
-TEST_F(IonsMoveBasicTest, TerminateConverged)
-{
+TEST_F(IonsMoveBasicTest, TerminateConverged) {
     // Initialize data
     Ions_Move_Basic::converged = true;
     Ions_Move_Basic::istep = 2;
@@ -244,12 +233,11 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
     std::string expected_ofs = " end of geometry optimization\n                                    istep = 2\n         "
                                "                update iteration = 5\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the terminate() function when not converged
-TEST_F(IonsMoveBasicTest, TerminateNotConverged)
-{
+TEST_F(IonsMoveBasicTest, TerminateNotConverged) {
     // Initialize data
     Ions_Move_Basic::converged = false;
 
@@ -266,12 +254,11 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 
     std::string expected_ofs = " the maximum number of steps has been reached.\n end of geometry optimization.\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the setup_etot() function case 1
-TEST_F(IonsMoveBasicTest, SetupEtotCase1)
-{
+TEST_F(IonsMoveBasicTest, SetupEtotCase1) {
     // Initialize data
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::etot_p = 1.0;
@@ -290,8 +277,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase1)
 }
 
 // Test the setup_etot() function case 2
-TEST_F(IonsMoveBasicTest, SetupEtotCase2)
-{
+TEST_F(IonsMoveBasicTest, SetupEtotCase2) {
     // Initialize data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::etot_p = 4.0;
@@ -310,8 +296,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase2)
 }
 
 // Test the setup_etot() function case 3
-TEST_F(IonsMoveBasicTest, SetupEtotCase3)
-{
+TEST_F(IonsMoveBasicTest, SetupEtotCase3) {
     // Initialize data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::etot_p = 1.0;
@@ -330,8 +315,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase3)
 }
 
 // Test the setup_etot() function case 4
-TEST_F(IonsMoveBasicTest, SetupEtotCase4)
-{
+TEST_F(IonsMoveBasicTest, SetupEtotCase4) {
     // Initialize data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::etot_p = 1.0;
@@ -350,8 +334,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase4)
 }
 
 // Test the dot_func() function
-TEST_F(IonsMoveBasicTest, DotFunc)
-{
+TEST_F(IonsMoveBasicTest, DotFunc) {
     // Initialize data
     double dim_in = 3;
     double a[3] = {1.0, 2.0, 3.0};

@@ -15,8 +15,7 @@
 #include <string>
 #include <type_traits>
 
-namespace base_device
-{
+namespace base_device {
 
 // Forward declaration
 class DeviceContext;
@@ -35,12 +34,15 @@ inline AbacusDevice_t get_device_type(const DeviceContext* ctx);
  * @return AbacusDevice_t enum value
  */
 template <typename Device>
-AbacusDevice_t get_device_type(const Device* dev)
-{
-    if (std::is_same<Device, DEVICE_CPU>::value) return CpuDevice;
-    else if (std::is_same<Device, DEVICE_GPU>::value) return GpuDevice;
-    else if (std::is_same<Device, DEVICE_DSP>::value) return DspDevice;
-    else return UnKnown;
+AbacusDevice_t get_device_type(const Device* dev) {
+    if (std::is_same<Device, DEVICE_CPU>::value)
+        return CpuDevice;
+    else if (std::is_same<Device, DEVICE_GPU>::value)
+        return GpuDevice;
+    else if (std::is_same<Device, DEVICE_DSP>::value)
+        return DspDevice;
+    else
+        return UnKnown;
 }
 
 /**

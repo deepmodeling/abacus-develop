@@ -5,14 +5,11 @@
 #include <sstream>
 #include <iomanip>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 
-Lebedev_laikov_grid::Lebedev_laikov_grid(int degree)
-{
+Lebedev_laikov_grid::Lebedev_laikov_grid(int degree) {
     auto it = allowed_degree.find(degree);
-    if (it == allowed_degree.end())
-    {
+    if (it == allowed_degree.end()) {
         std::cerr << "In the Lebedev_laikov_grid class, the degree = " << degree << " is not within the allowed range."
                   << std::endl;
         assert(false);
@@ -23,29 +20,24 @@ Lebedev_laikov_grid::Lebedev_laikov_grid(int degree)
     weight = new double[degree];
 }
 
-Lebedev_laikov_grid::~Lebedev_laikov_grid()
-{
-    if (grid_coor)
-    {
+Lebedev_laikov_grid::~Lebedev_laikov_grid() {
+    if (grid_coor) {
         delete[] grid_coor;
         grid_coor = nullptr;
     }
 
-    if (weight)
-    {
+    if (weight) {
         delete[] weight;
         weight = nullptr;
     }
 }
 
-void Lebedev_laikov_grid::print_grid_and_weight(std::string filename)
-{
+void Lebedev_laikov_grid::print_grid_and_weight(std::string filename) {
     std::stringstream ss;
     ss << filename << "_degree" << degree;
     std::ofstream ofs(ss.str().c_str());
     ofs << "# grid:            x                   y                   z              weight" << std::endl;
-    for (int i = 0; i < degree; i++)
-    {
+    for (int i = 0; i < degree; i++) {
         ofs << std::setw(20) << std::setprecision(15) << std::fixed << grid_coor[i].x;
         ofs << std::setw(20) << std::setprecision(15) << std::fixed << grid_coor[i].y;
         ofs << std::setw(20) << std::setprecision(15) << std::fixed << grid_coor[i].z;
@@ -55,16 +47,14 @@ void Lebedev_laikov_grid::print_grid_and_weight(std::string filename)
     ofs.close();
 }
 
-void Lebedev_laikov_grid::generate_grid_points()
-{
+void Lebedev_laikov_grid::generate_grid_points() {
     int start = 0;
     double a = 0.0;
     double b = 0.0;
     double c = 0.0;
     double v = 0.0;
 
-    switch (degree)
-    {
+    switch (degree) {
     case 6:
 
         v = 0.1666666666666667E+0;
@@ -4732,13 +4722,11 @@ void Lebedev_laikov_grid::generate_grid_points()
     }
 }
 
-int Lebedev_laikov_grid::getLebedevReccurencePoints(int type, int start, double a, double b, double v)
-{
+int Lebedev_laikov_grid::getLebedevReccurencePoints(int type, int start, double a, double b, double v) {
     double pi = ModuleBase::PI;
     double c = 0.0;
 
-    switch (type)
-    {
+    switch (type) {
     case 1:
         a = 1.0;
 

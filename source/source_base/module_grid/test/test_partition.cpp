@@ -22,17 +22,11 @@ using iclock = std::chrono::high_resolution_clock;
 iclock::time_point start;
 std::chrono::duration<double> dur;
 
-double norm(const Vec3& v) {
-    return std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-}
+double norm(const Vec3& v) { return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
 
-Vec3 operator-(const Vec3& v1, const Vec3& v2) {
-    return {v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]};
-}
+Vec3 operator-(const Vec3& v1, const Vec3& v2) { return {v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]}; }
 
-Vec3 operator+(const Vec3& v1, const Vec3& v2) {
-    return {v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]};
-}
+Vec3 operator+(const Vec3& v1, const Vec3& v2) { return {v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]}; }
 
 // |r|^n * exp(-a*|r|^2)
 double func_core(const Vec3& r, double a, double n) {
@@ -47,12 +41,7 @@ double ref_core(double a, double n) {
 }
 
 // the test function is a combination of several func_core
-double func(
-    const Vec3& r,
-    const std::vector<Vec3>& R,
-    const std::vector<double>& a,
-    const std::vector<double>& n
-) {
+double func(const Vec3& r, const std::vector<Vec3>& R, const std::vector<double>& a, const std::vector<double>& n) {
     double val = 0.0;
     for (size_t i = 0; i < R.size(); i++) {
         val += func_core(r - R[i], a[i], n[i]);
@@ -76,67 +65,59 @@ struct Param {
 };
 
 std::vector<Param> test_params = {
-    {
-        {
-            {0.0, 0.0, 0.0},
-            {0.0, 0.0, 2.0},
-        },
-        {0.5, 2.0},
-        {0, 0}
-    },
-    {
-        {
-            {0.0, 0.0, 0.0},
-            {0.0, 0.0, 2.0},
-            {0.0, 3.0, 0.0},
-        },
-        {0.5, 2.0, 1.5},
-        {1, 2, 0.5}
-    },
-    {
-        {
-            {0.0, 0.0, 0.0},
-            {0.0, 0.0, 3.0},
-            {0.0, 3.0, 0.0},
-            {9.0, 0.0, 0.0},
-        },
-        {1.0, 2.0, 1.5, 2.0},
-        {2.5, 2, 0.5, 1}
-    },
-    {
-        {
-            {0.0, 0.0, 0.0},
-            {0.0, 0.0, 3.0},
-            {0.0, 3.0, 0.0},
-            {9.0, 0.0, 0.0},
-            {1.0, 1.0, 1.0},
-            {2.0, 2.0, 2.0},
-            {3.0, 3.0, 3.0},
-            {4.0, 4.0, 4.0},
-            {5.0, 5.0, 5.0},
-            {6.0, 6.0, 6.0},
-        },
-        {1.0, 2.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
-        {2.5, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}
-    },
+    {{
+         {0.0, 0.0, 0.0},
+         {0.0, 0.0, 2.0},
+     },
+     {0.5, 2.0},
+     {0, 0}},
+    {{
+         {0.0, 0.0, 0.0},
+         {0.0, 0.0, 2.0},
+         {0.0, 3.0, 0.0},
+     },
+     {0.5, 2.0, 1.5},
+     {1, 2, 0.5}},
+    {{
+         {0.0, 0.0, 0.0},
+         {0.0, 0.0, 3.0},
+         {0.0, 3.0, 0.0},
+         {9.0, 0.0, 0.0},
+     },
+     {1.0, 2.0, 1.5, 2.0},
+     {2.5, 2, 0.5, 1}},
+    {{
+         {0.0, 0.0, 0.0},
+         {0.0, 0.0, 3.0},
+         {0.0, 3.0, 0.0},
+         {9.0, 0.0, 0.0},
+         {1.0, 1.0, 1.0},
+         {2.0, 2.0, 2.0},
+         {3.0, 3.0, 3.0},
+         {4.0, 4.0, 4.0},
+         {5.0, 5.0, 5.0},
+         {6.0, 6.0, 6.0},
+     },
+     {1.0, 2.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
+     {2.5, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}},
 };
 
 std::vector<double> dist_R_R(const std::vector<Vec3>& R) {
     // tabulate dRR[I,J] = || R[I] - R[J] ||
     size_t nR = R.size();
-    std::vector<double> dRR(nR*nR, 0.0);
+    std::vector<double> dRR(nR * nR, 0.0);
     for (size_t I = 0; I < nR; I++) {
         for (size_t J = I + 1; J < nR; J++) {
             double d = norm(R[I] - R[J]);
-            dRR[I*nR + J] = d;
-            dRR[J*nR + I] = d;
+            dRR[I * nR + J] = d;
+            dRR[J * nR + I] = d;
         }
     }
     return dRR;
 }
 
-class PartitionTest: public ::testing::Test {
-protected:
+class PartitionTest : public ::testing::Test {
+  protected:
     PartitionTest();
 
     // grid & weight for one-center integration
@@ -161,25 +142,24 @@ PartitionTest::PartitionTest() {
 
     // complete grid & weight for one-center integration
     size_t ngrid = w_rad.size() * w_ang.size();
-    r.resize(3*ngrid);
+    r.resize(3 * ngrid);
     w.resize(ngrid);
 
     size_t ir = 0;
     for (size_t i = 0; i < w_rad.size(); i++) {
         for (size_t j = 0; j < w_ang.size(); j++) {
-            r[3*ir] = r_rad[i] * r_ang[3*j];
-            r[3*ir+1] = r_rad[i] * r_ang[3*j+1];
-            r[3*ir+2] = r_rad[i] * r_ang[3*j+2];
+            r[3 * ir] = r_rad[i] * r_ang[3 * j];
+            r[3 * ir + 1] = r_rad[i] * r_ang[3 * j + 1];
+            r[3 * ir + 2] = r_rad[i] * r_ang[3 * j + 2];
             w[ir] = w_rad[i] * w_ang[j] * 4.0 * PI;
             ++ir;
         }
     }
 }
 
-
 TEST_F(PartitionTest, Becke) {
     dur = dur.zero();
-    for (const Param& param : test_params) {
+    for (const Param& param: test_params) {
         double val = 0.0;
         double val_ref = ref(param.a, param.n);
 
@@ -197,7 +177,7 @@ TEST_F(PartitionTest, Becke) {
 
         for (size_t I = 0; I < nR; ++I) { // for each center
             for (size_t i = 0; i < w.size(); i++) {
-                Vec3 ri = Vec3{r[3*i], r[3*i+1], r[3*i+2]} + param.R[I];
+                Vec3 ri = Vec3{r[3 * i], r[3 * i + 1], r[3 * i + 2]} + param.R[I];
 
                 // tabulate || r - R[J] ||
                 std::vector<double> drR(nR);
@@ -207,10 +187,7 @@ TEST_F(PartitionTest, Becke) {
 
                 // partition weight for this grid point
                 start = iclock::now();
-                double w_part = Grid::Partition::w_becke(
-                    drR.size(), drR.data(), dRR.data(),
-                    iR.size(), iR.data(), I
-                );
+                double w_part = Grid::Partition::w_becke(drR.size(), drR.data(), dRR.data(), iR.size(), iR.data(), I);
                 dur += iclock::now() - start;
 
                 val += w_part * w[i] * func(ri, param.R, param.a, param.n);
@@ -222,11 +199,10 @@ TEST_F(PartitionTest, Becke) {
     printf("time elapsed = %8.3e seconds\n", dur.count());
 }
 
-
 TEST_F(PartitionTest, Stratmann) {
     dur = dur.zero();
 
-    for (const Param& param : test_params) {
+    for (const Param& param: test_params) {
         double val = 0.0;
         double val_ref = ref(param.a, param.n);
 
@@ -244,7 +220,7 @@ TEST_F(PartitionTest, Stratmann) {
             double dRRmin = 1e100;
             for (size_t J = 0; J < nR; ++J) {
                 if (J != I) {
-                    dRRmin = std::min(dRRmin, dRR[I*nR + J]);
+                    dRRmin = std::min(dRRmin, dRR[I * nR + J]);
                 }
             }
             drR_thr[I] = 0.5 * (1.0 - Grid::Partition::stratmann_a) * dRRmin;
@@ -252,7 +228,7 @@ TEST_F(PartitionTest, Stratmann) {
 
         for (size_t I = 0; I < nR; ++I) { // for each center
             for (size_t i = 0; i < w.size(); i++) {
-                Vec3 ri = Vec3{r[3*i], r[3*i+1], r[3*i+2]} + param.R[I];
+                Vec3 ri = Vec3{r[3 * i], r[3 * i + 1], r[3 * i + 2]} + param.R[I];
 
                 // tabulate || r - R[J] ||
                 std::vector<double> drR(nR);
@@ -262,10 +238,13 @@ TEST_F(PartitionTest, Stratmann) {
 
                 // partition weight for this grid point
                 start = iclock::now();
-                double w_part = Grid::Partition::w_stratmann(
-                    drR.size(), drR.data(), dRR.data(), drR_thr.data(), 
-                    iR.size(), iR.data(), I
-                );
+                double w_part = Grid::Partition::w_stratmann(drR.size(),
+                                                             drR.data(),
+                                                             dRR.data(),
+                                                             drR_thr.data(),
+                                                             iR.size(),
+                                                             iR.data(),
+                                                             I);
                 dur += iclock::now() - start;
 
                 val += w_part * w[i] * func(ri, param.R, param.a, param.n);
@@ -277,9 +256,7 @@ TEST_F(PartitionTest, Stratmann) {
     printf("time elapsed = %8.3e seconds\n", dur.count());
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
 #endif

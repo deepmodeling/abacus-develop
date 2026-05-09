@@ -8,21 +8,16 @@
 #include <fstream>
 #include <sstream>
 
-
-namespace ModuleIO
-{
-class ReadInput
-{
+namespace ModuleIO {
+class ReadInput {
   public:
     ReadInput(const int& rank);
     ~ReadInput(){};
     /**
      * @brief clear all input items
      */
-    void clear()
-    {
-        for (auto& item: input_lists)
-        {
+    void clear() {
+        for (auto& item: input_lists) {
             item.second.final_value.str("");
             item.second.str_values.clear();
         }
@@ -33,10 +28,7 @@ class ReadInput
      * @brief Get all registered input items (for help system)
      * @return Reference to the vector of input items
      */
-    const std::vector<std::pair<std::string, Input_Item>>& get_input_lists() const
-    {
-        return input_lists;
-    }
+    const std::vector<std::pair<std::string, Input_Item>>& get_input_lists() const { return input_lists; }
     /**
      * @brief read in parameters from input file
      *
@@ -96,7 +88,7 @@ class ReadInput
      */
     void add_item(const Input_Item& item);
     /// @brief set System_para according to input parameters
-    /// INPUT and STRU need to refer to each other in ABACUS, 
+    /// INPUT and STRU need to refer to each other in ABACUS,
     /// so it is necessary to obtain the file paths related to all inputs
     void set_global_dir(const Input_para& inp, System_para& sys);
     // set System_para according to input parameters
@@ -164,12 +156,9 @@ std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
 
-
 // filter non-ASCII characters from ifstream and output to stringstream
 // return true if successful, false otherwise
-bool filter_nonascii_and_comment(std::ifstream& ifs,
-                       std::stringstream& out_ascii_stream);
-
+bool filter_nonascii_and_comment(std::ifstream& ifs, std::stringstream& out_ascii_stream);
 
 } // namespace ModuleIO
 

@@ -47,11 +47,11 @@ void dmk_readData(std::ifstream& ifs, std::complex<double>& data);
 template <typename T>
 bool read_dmk(const int nspin,
               const int nk,
-	      const K_Vectors &kv,
+              const K_Vectors& kv,
               const Parallel_2D& pv,
-	      const std::string& dmk_dir,
-	      std::vector<std::vector<T>>& dmk,
-	      std::ofstream &ofs_running);
+              const std::string& dmk_dir,
+              std::vector<std::vector<T>>& dmk,
+              std::ofstream& ofs_running);
 
 /**
  * @brief Writes the DMK data to a file.
@@ -69,7 +69,7 @@ bool read_dmk(const int nspin,
  */
 template <typename T>
 void write_dmk(const std::vector<std::vector<T>>& dmk,
-	       const K_Vectors &kv,
+               const K_Vectors& kv,
                const int precision,
                const std::vector<double>& efs,
                const UnitCell* ucell,

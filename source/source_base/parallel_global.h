@@ -11,8 +11,7 @@
 
 // void myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr);
 
-namespace Parallel_Global
-{
+namespace Parallel_Global {
 extern int mpi_number;
 extern int omp_number;
 //---------------------------

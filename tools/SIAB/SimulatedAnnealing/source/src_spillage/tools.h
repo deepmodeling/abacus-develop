@@ -6,7 +6,7 @@
 #include "MultiZeta.h"
 #include "read_INPUT.h"
 #include "../src_parallel/parallel_kpoints.h" // add 2010-06-12
-//plane wave , mohan add 2010-06-14
+// plane wave , mohan add 2010-06-14
 extern PW_Basis PW;
 extern MultiZeta mz;
 extern Read_INPUT input;
@@ -31,11 +31,11 @@ extern int NE;
 // global information
 extern int STRNUM;
 extern int NTYPE;
-extern string *LABEL;
-extern int *NA;
-extern double **CARPOSX;
-extern double **CARPOSY;
-extern double **CARPOSZ;
+extern string* LABEL;
+extern int* NA;
+extern double** CARPOSX;
+extern double** CARPOSY;
+extern double** CARPOSZ;
 extern Matrix3 LATVEC;
 
 // plane wave information
@@ -43,11 +43,11 @@ extern bool USEPW;
 extern double LAT0;
 
 // k points
-extern double *CARKX;
-extern double *CARKY;
-extern double *CARKZ;
+extern double* CARKX;
+extern double* CARKY;
+extern double* CARKZ;
 
-//orbital + energy cutoff
+// orbital + energy cutoff
 extern double ECUT;
 extern double ECUT_JLQ;
 extern double RCUT;
@@ -61,12 +61,12 @@ extern int NCHIUSED;
 
 // band information
 extern bool BANDS_CONTROL;
-extern int BANDS_START;//mohan add 2010-05-02
+extern int BANDS_START; // mohan add 2010-05-02
 extern int BANDS_END;
 
 // other global information
-extern int CALSPI; // mohan 2010-06-17
-extern int BLOCK_NE; // if ie < BLOCK_NE, we use this Jlq(ie), mohan add 2009-08-26
+extern int CALSPI;       // mohan 2010-06-17
+extern int BLOCK_NE;     // if ie < BLOCK_NE, we use this Jlq(ie), mohan add 2009-08-26
 extern int BLOCK_NE_MIN; // mohan add 2009-08-27
 extern bool RESTART;
 extern int TEST1;
@@ -76,16 +76,16 @@ extern int ACCEPTANCE_STEPS; // mohan add 2009-10-31
 extern double ACCEPTANCE_HIGH;
 extern double ACCEPTANCE_LOW;
 
-extern double KINETIC_MAX; // mohan add 2009-10-31
-extern double KINETIC_DR; // mohan add 2010-04-12
-extern int OPTIMIZE_METHOD;// mohan add 2010-04-14
+extern double KINETIC_MAX;  // mohan add 2009-10-31
+extern double KINETIC_DR;   // mohan add 2010-04-12
+extern int OPTIMIZE_METHOD; // mohan add 2010-04-14
 
 // constant
-extern const double PI; // mohan add 2010-04-16
+extern const double PI;     // mohan add 2010-04-16
 extern const double TWO_PI; // mohan add 2010-06-14
 extern const double FOUR_PI;
 extern const std::complex<double> IMAG_UNIT;
-extern const std::complex<double> NEG_IMAG_UNIT;//mohan add 2010-06-14
+extern const std::complex<double> NEG_IMAG_UNIT; // mohan add 2010-06-14
 extern const double SQRT_INVERSE_FOUR_PI;
 extern const double PI_HALF;
 extern const double SQRT2;

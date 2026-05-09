@@ -25,8 +25,7 @@ using ModuleBase::Sphbes;
  *  - build
  *      - builds an object for doing a specific two-center integral
  *                                                                      */
-class TwoCenterIntegratorTest : public ::testing::Test
-{
+class TwoCenterIntegratorTest : public ::testing::Test {
   protected:
     void SetUp();
     void TearDown();
@@ -42,8 +41,7 @@ class TwoCenterIntegratorTest : public ::testing::Test
     double elem_tol = 1e-6; //! tolerance for comparison between new and legacy matrix elements
 };
 
-void TwoCenterIntegratorTest::SetUp()
-{
+void TwoCenterIntegratorTest::SetUp() {
 #ifdef __MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
@@ -63,13 +61,9 @@ void TwoCenterIntegratorTest::SetUp()
     ModuleBase::Ylm::set_coefficients();
 }
 
-void TwoCenterIntegratorTest::TearDown()
-{
-    delete[] file;
-}
+void TwoCenterIntegratorTest::TearDown() { delete[] file; }
 
-TEST_F(TwoCenterIntegratorTest, FiniteDifference)
-{
+TEST_F(TwoCenterIntegratorTest, FiniteDifference) {
     nfile = 3;
     orb.build(nfile, file, 'o');
 
@@ -103,22 +97,14 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
     ModuleBase::Vector3<double> vR0 = {1.0, 2.0, 3.0};
     ModuleBase::Vector3<double> vR;
 
-    for (int t1 = 0; t1 < ntype; t1++)
-    {
-        for (int l1 = 0; l1 <= orb(t1).lmax(); l1++)
-        {
-            for (int izeta1 = 0; izeta1 < orb(t1).nzeta(l1); izeta1++)
-            {
-                for (int m1 = -l1; m1 <= l1; ++m1)
-                {
-                    for (int t2 = t1; t2 < ntype; t2++)
-                    {
-                        for (int l2 = 0; l2 <= orb(t2).lmax(); l2++)
-                        {
-                            for (int izeta2 = 0; izeta2 < orb(t2).nzeta(l2); izeta2++)
-                            {
-                                for (int m2 = -l2; m2 <= l2; ++m2)
-                                {
+    for (int t1 = 0; t1 < ntype; t1++) {
+        for (int l1 = 0; l1 <= orb(t1).lmax(); l1++) {
+            for (int izeta1 = 0; izeta1 < orb(t1).nzeta(l1); izeta1++) {
+                for (int m1 = -l1; m1 <= l1; ++m1) {
+                    for (int t2 = t1; t2 < ntype; t2++) {
+                        for (int l2 = 0; l2 <= orb(t2).lmax(); l2++) {
+                            for (int izeta2 = 0; izeta2 < orb(t2).nzeta(l2); izeta2++) {
+                                for (int m2 = -l2; m2 <= l2; ++m2) {
                                     double dx = 1e-4;
                                     double elem_p;
                                     double elem_m;
@@ -159,8 +145,7 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
     }
 }
 
-TEST_F(TwoCenterIntegratorTest, SphericalBessel)
-{
+TEST_F(TwoCenterIntegratorTest, SphericalBessel) {
     int lmax = 3;
     int nbes = 5;
     int rcut = 7.0;
@@ -194,10 +179,8 @@ TEST_F(TwoCenterIntegratorTest, SphericalBessel)
 
     // checks the diagonal elements with analytical expression
     double elem, ref;
-    for (int l = 0; l <= lmax; ++l)
-    {
-        for (int zeta = 0; zeta < nbes; ++zeta)
-        {
+    for (int l = 0; l <= lmax; ++l) {
+        for (int zeta = 0; zeta < nbes; ++zeta) {
             S_intor.calculate(0, l, zeta, 0, 0, l, zeta, 0, R0, &elem);
             ref = 0.5 * std::pow(rcut, 3) * std::pow(Sphbes::sphbesj(l + 1, zeros[l * nbes + zeta]), 2);
             EXPECT_NEAR(elem, ref, 1e-5);
@@ -207,8 +190,7 @@ TEST_F(TwoCenterIntegratorTest, SphericalBessel)
             EXPECT_NEAR(elem, ref, 1e-3);
 
             // orthogonality
-            for (int zeta2 = 0; zeta2 < zeta; ++zeta2)
-            {
+            for (int zeta2 = 0; zeta2 < zeta; ++zeta2) {
                 S_intor.calculate(0, l, zeta, 0, 0, l, zeta2, 0, R0, &elem);
                 ref = 0.0;
                 EXPECT_NEAR(elem, ref, 1e-5);
@@ -218,8 +200,7 @@ TEST_F(TwoCenterIntegratorTest, SphericalBessel)
     delete[] zeros;
 }
 
-TEST_F(TwoCenterIntegratorTest, HessianSymmetry)
-{
+TEST_F(TwoCenterIntegratorTest, HessianSymmetry) {
     nfile = 3;
     orb.build(nfile, file, 'o');
 
@@ -241,20 +222,19 @@ TEST_F(TwoCenterIntegratorTest, HessianSymmetry)
     // Test S operator
     S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess);
 
-    EXPECT_NEAR(hess[1], hess[3], 1e-10);  // H_xy == H_yx
-    EXPECT_NEAR(hess[2], hess[6], 1e-10);  // H_xz == H_zx
-    EXPECT_NEAR(hess[5], hess[7], 1e-10);  // H_yz == H_zy
+    EXPECT_NEAR(hess[1], hess[3], 1e-10); // H_xy == H_yx
+    EXPECT_NEAR(hess[2], hess[6], 1e-10); // H_xz == H_zx
+    EXPECT_NEAR(hess[5], hess[7], 1e-10); // H_yz == H_zy
 
     // Test T operator
     T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess);
 
-    EXPECT_NEAR(hess[1], hess[3], 1e-10);  // H_xy == H_yx
-    EXPECT_NEAR(hess[2], hess[6], 1e-10);  // H_xz == H_zx
-    EXPECT_NEAR(hess[5], hess[7], 1e-10);  // H_yz == H_zy
+    EXPECT_NEAR(hess[1], hess[3], 1e-10); // H_xy == H_yx
+    EXPECT_NEAR(hess[2], hess[6], 1e-10); // H_xz == H_zx
+    EXPECT_NEAR(hess[5], hess[7], 1e-10); // H_yz == H_zy
 }
 
-TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference)
-{
+TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference) {
     nfile = 3;
     orb.build(nfile, file, 'o');
 
@@ -279,10 +259,8 @@ TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference)
     S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess_analytical);
 
     // Compute numerical Hessian via finite differences
-    for (int alpha = 0; alpha < 3; ++alpha)
-    {
-        for (int beta = 0; beta < 3; ++beta)
-        {
+    for (int alpha = 0; alpha < 3; ++alpha) {
+        for (int beta = 0; beta < 3; ++beta) {
             ModuleBase::Vector3<double> R_plus = R, R_minus = R;
             R_plus[beta] += eps;
             R_minus[beta] -= eps;
@@ -296,18 +274,15 @@ TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference)
     }
 
     // Compare with tolerance appropriate for finite differences
-    for (int i = 0; i < 9; ++i)
-    {
+    for (int i = 0; i < 9; ++i) {
         EXPECT_NEAR(hess_analytical[i], hess_numerical[i], 1e-5);
     }
 
     // Test T operator
     T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess_analytical);
 
-    for (int alpha = 0; alpha < 3; ++alpha)
-    {
-        for (int beta = 0; beta < 3; ++beta)
-        {
+    for (int alpha = 0; alpha < 3; ++alpha) {
+        for (int beta = 0; beta < 3; ++beta) {
             ModuleBase::Vector3<double> R_plus = R, R_minus = R;
             R_plus[beta] += eps;
             R_minus[beta] -= eps;
@@ -320,14 +295,12 @@ TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference)
         }
     }
 
-    for (int i = 0; i < 9; ++i)
-    {
+    for (int i = 0; i < 9; ++i) {
         EXPECT_NEAR(hess_analytical[i], hess_numerical[i], 1e-5);
     }
 }
 
-TEST_F(TwoCenterIntegratorTest, HessianDoesNotBreakGradient)
-{
+TEST_F(TwoCenterIntegratorTest, HessianDoesNotBreakGradient) {
     nfile = 3;
     orb.build(nfile, file, 'o');
 
@@ -350,8 +323,7 @@ TEST_F(TwoCenterIntegratorTest, HessianDoesNotBreakGradient)
     S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_only, nullptr);
     S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_with_hess, hess);
 
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         EXPECT_NEAR(grad_only[i], grad_with_hess[i], 1e-12);
     }
 
@@ -359,14 +331,12 @@ TEST_F(TwoCenterIntegratorTest, HessianDoesNotBreakGradient)
     T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_only, nullptr);
     T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_with_hess, hess);
 
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         EXPECT_NEAR(grad_only[i], grad_with_hess[i], 1e-12);
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

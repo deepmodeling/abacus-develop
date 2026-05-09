@@ -8,8 +8,7 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 void upsi(const Parallel_Orbitals* pv,
           const int nband,
@@ -18,8 +17,7 @@ void upsi(const Parallel_Orbitals* pv,
           const std::complex<double>* psi_k_laststep,
           std::complex<double>* psi_k,
           std::ofstream& ofs_running,
-          const int print_matrix)
-{
+          const int print_matrix) {
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
@@ -40,23 +38,18 @@ void upsi(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_wfc);
 
-    if (print_matrix)
-    {
+    if (print_matrix) {
         ofs_running << std::endl;
         ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
-        {
+        for (int i = 0; i < pv->ncol_bands; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
+            for (int j = 0; j < pv->ncol; j++) {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
                 }
-                if (std::abs(bb) < 1e-8)
-                {
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
                 }
                 ofs_running << aa << "+" << bb << "i ";
@@ -65,19 +58,15 @@ void upsi(const Parallel_Orbitals* pv,
         }
         ofs_running << std::endl;
         ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
-        {
+        for (int i = 0; i < pv->ncol_bands; i++) {
             const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
+            for (int j = 0; j < pv->ncol; j++) {
                 double aa = psi_k_laststep[in + j].real();
                 double bb = psi_k_laststep[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
                 }
-                if (std::abs(bb) < 1e-8)
-                {
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
                 }
                 ofs_running << aa << "+" << bb << "i ";
@@ -96,12 +85,10 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  ct::Tensor& psi_k,
                  std::ofstream& ofs_running,
                  const int print_matrix,
-                 CublasMpResources& cublas_res)
-{
+                 CublasMpResources& cublas_res) {
 #ifdef __CUBLASMP
     // 1. Resource validation
-    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr)
-    {
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr) {
         return;
     }
 
@@ -111,8 +98,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
 
     // 2. Extract device pointers
     void* d_U = static_cast<void*>(const_cast<std::complex<double>*>(U_operator.data<std::complex<double>>()));
-    void* d_Psi_old
-        = static_cast<void*>(const_cast<std::complex<double>*>(psi_k_laststep.data<std::complex<double>>()));
+    void* d_Psi_old =
+        static_cast<void*>(const_cast<std::complex<double>*>(psi_k_laststep.data<std::complex<double>>()));
     void* d_Psi_k = static_cast<void*>(psi_k.data<std::complex<double>>());
 
     // 3. Create matrix descriptor for U operator (N x N)
@@ -225,8 +212,7 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         const ct::Tensor& psi_k_laststep,
                         ct::Tensor& psi_k,
                         std::ofstream& ofs_running,
-                        const int print_matrix)
-{
+                        const int print_matrix) {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU

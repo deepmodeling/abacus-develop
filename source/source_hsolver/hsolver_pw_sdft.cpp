@@ -9,8 +9,7 @@
 
 #include <algorithm>
 
-namespace hsolver
-{
+namespace hsolver {
 template <typename T, typename Device>
 void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       hamilt::Hamilt<T, Device>* pHamilt,
@@ -21,8 +20,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       Stochastic_WF<T, Device>& stowf,
                                       const int istep,
                                       const int iter,
-                                      const bool skip_charge)
-{
+                                      const bool skip_charge) {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::start("HSolverPW_SDFT", "solve");
 
@@ -37,18 +35,15 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
-    if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
-    {
+    if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods)) {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
     }
 
     // part of KSDFT to get KS orbitals
-    for (int ik = 0; ik < nks; ++ik)
-    {
+    for (int ik = 0; ik < nks; ++ik) {
         ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
-        if (nbands > 0 && PARAM.globalv.ks_run)
-        {
+        if (nbands > 0 && PARAM.globalv.ks_run) {
             /// update psi pointer for each k point
             psi.fix_k(ik);
             /// template add precondition calculating here
@@ -59,9 +54,8 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        if (nbands > 0 && !PARAM.globalv.all_ks_run)
-        {
-            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
+        if (nbands > 0 && !PARAM.globalv.all_ks_run) {
+            Parallel_Common::bcast_dev<T, Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif
@@ -72,11 +66,9 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     this->output_iterInfo();
 
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         // init k
-        if (nks > 1)
-        {
+        if (nks > 1) {
             pHamilt->updateHk(ik); // necessary , because emax and emin should be decided first
         }
         stoiter.calPn(ik, stowf);
@@ -90,18 +82,14 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
-    elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
-    if(!PARAM.globalv.all_ks_run)
-    {
+    elecstate::calEBand(pes_pw->ekb, pes_pw->wg, pes_pw->f_en);
+    if (!PARAM.globalv.all_ks_run) {
         pes->f_en.eband /= PARAM.inp.bndpar;
     }
     stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
-    
-    
 
     // for nscf, skip charge
-    if (skip_charge)
-    {
+    if (skip_charge) {
         ModuleBase::timer::end("HSolverPW_SDFT", "solve");
         return;
     }
@@ -109,12 +97,11 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     //(5) calculate new charge density
     // calculate KS rho.
     pes_pw->init_rho_data();
-    if (nbands > 0)
-    {
+    if (nbands > 0) {
         pes_pw->psiToRho(psi);
     }
     // calculate stochastic rho
-    stoiter.cal_storho(ucell, stowf, pes_pw,wfc_basis);
+    stoiter.cal_storho(ucell, stowf, pes_pw, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
     ModuleBase::timer::end("HSolverPW_SDFT", "solve");

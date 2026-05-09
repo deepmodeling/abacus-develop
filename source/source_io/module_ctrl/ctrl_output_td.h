@@ -16,8 +16,7 @@
 #include <RI/global/Tensor.h>
 #endif
 
-namespace ModuleIO
-{
+namespace ModuleIO {
 
 template <typename TR>
 void ctrl_output_td(const UnitCell& ucell,
@@ -35,8 +34,7 @@ void ctrl_output_td(const UnitCell& ucell,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
                     TD_info* td_p,
-                    const Exx_NAO<std::complex<double>>& exx_nao
-                    );
+                    const Exx_NAO<std::complex<double>>& exx_nao);
 
 } // namespace ModuleIO
 

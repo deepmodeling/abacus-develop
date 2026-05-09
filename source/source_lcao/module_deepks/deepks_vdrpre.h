@@ -15,8 +15,7 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-namespace DeePKS_domain
-{
+namespace DeePKS_domain {
 //------------------------
 // deepks_vdrpre.cpp
 //------------------------

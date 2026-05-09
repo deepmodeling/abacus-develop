@@ -8,12 +8,10 @@
 #include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_lcao/module_rt/velocity_op.h"
 
-namespace ModuleESolver
-{
+namespace ModuleESolver {
 
 template <typename TR, typename Device = base_device::DEVICE_CPU>
-class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
-{
+class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR> {
   public:
     ESolver_KS_LCAO_TDDFT();
 
@@ -28,12 +26,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     void store_h_s_psi(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
-    void iter_finish(UnitCell& ucell,
-                     const int istep,
-                     const int estep,
-                     const int estep_max,
-                     int& iter,
-                     bool& conv_esolver);
+    void
+    iter_finish(UnitCell& ucell, const int istep, const int estep, const int estep_max, int& iter, bool& conv_esolver);
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 

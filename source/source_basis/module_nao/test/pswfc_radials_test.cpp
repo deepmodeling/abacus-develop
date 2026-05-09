@@ -7,16 +7,16 @@
 #endif
 
 class PswfcRadialsTest : public ::testing::Test {
-    protected:
-        virtual void SetUp() {
+  protected:
+    virtual void SetUp() {
 #ifdef __MPI
-            MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+        MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
-        }
-        virtual void TearDown() {
-            // code here will be called just after the test completes
-            // (each TEST_F)
-        }
+    }
+    virtual void TearDown() {
+        // code here will be called just after the test completes
+        // (each TEST_F)
+    }
 };
 
 TEST_F(PswfcRadialsTest, startswith) {
@@ -41,15 +41,15 @@ TEST_F(PswfcRadialsTest, StealFromQuotesOverload1) {
     ifs.open(pspot);
     // check if file is opened
     bool is_open = ifs.is_open();
-    if(!is_open) {std::cout<<"File path WRONG.\n"; }
+    if (!is_open) {
+        std::cout << "File path WRONG.\n";
+    }
     ASSERT_TRUE(is_open);
 
     std::string line;
-    while(!ifs.eof())
-    {
+    while (!ifs.eof()) {
         ifs >> line;
-        if(pswfc_radials.startswith(line, "mesh_size="))
-        {
+        if (pswfc_radials.startswith(line, "mesh_size=")) {
             int result = std::stoi(pswfc_radials.steal_from_quotes(ifs, line));
             EXPECT_EQ(result, 1358);
         }
@@ -64,15 +64,15 @@ TEST_F(PswfcRadialsTest, ReadKeywordValue) {
     ifs.open(pspot);
     // check if file is opened
     bool is_open = ifs.is_open();
-    if(!is_open) {std::cout<<"File path WRONG.\n"; }
+    if (!is_open) {
+        std::cout << "File path WRONG.\n";
+    }
     ASSERT_TRUE(is_open);
 
     std::string line;
-    while(!ifs.eof())
-    {
+    while (!ifs.eof()) {
         ifs >> line;
-        if(pswfc_radials.startswith(line, "mesh_size="))
-        {
+        if (pswfc_radials.startswith(line, "mesh_size=")) {
             std::string str_result = pswfc_radials.read_keyword_value(ifs, line);
             int result = std::stoi(str_result);
             EXPECT_EQ(result, 1358);
@@ -88,7 +88,9 @@ TEST_F(PswfcRadialsTest, ReadUpfPswfc) {
     ifs.open(pspot);
     // check if file is opened
     bool is_open = ifs.is_open();
-    if(!is_open) {std::cout<<"File path WRONG.\n"; }
+    if (!is_open) {
+        std::cout << "File path WRONG.\n";
+    }
     ASSERT_TRUE(is_open);
 
     pswfc_radials.read_upf_pswfc(ifs, 0.0, 1e-6);
@@ -135,12 +137,11 @@ TEST_F(PswfcRadialsTest, ReadUpfPswfc) {
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(199), 1.3889295980E-01);
 }
 
-TEST_F(PswfcRadialsTest, Build)
-{
+TEST_F(PswfcRadialsTest, Build) {
     PswfcRadials pswfc_radials;
     std::string pspot = "../../../../../tests/PP_ORB/As_dojo.upf";
     pswfc_radials.build(pspot, 0, 0.0);
-    
+
     EXPECT_EQ(pswfc_radials.lmax(), 2);
     EXPECT_EQ(pswfc_radials.nzeta(0), 1);
     EXPECT_EQ(pswfc_radials.nzeta(1), 1);
@@ -167,8 +168,7 @@ TEST_F(PswfcRadialsTest, Build)
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(4), 6.6004347176E-04);
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);

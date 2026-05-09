@@ -68,25 +68,21 @@
  * - TETS_LEVEL
  *    - set the test level
  * - BLOCK_HERE
- * 	  - add the block
+ *       - add the block
  */
 
-inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b)
-{
+inline void EXPECT_COMPLEX_FLOAT_EQ(const std::complex<float>& a, const std::complex<float>& b) {
     EXPECT_FLOAT_EQ(a.real(), b.real());
     EXPECT_FLOAT_EQ(a.imag(), b.imag());
 }
 
-inline void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a, const std::complex<double>& b)
-{
+inline void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a, const std::complex<double>& b) {
     EXPECT_DOUBLE_EQ(a.real(), b.real());
     EXPECT_DOUBLE_EQ(a.imag(), b.imag());
 }
 
-
-template<typename T>
-inline void CHECK_ZEROS(T &size)
-{
+template <typename T>
+inline void CHECK_ZEROS(T& size) {
     bool* pt_b = nullptr;
     int* pt_i = nullptr;
     float* pt_f = nullptr;
@@ -115,9 +111,8 @@ inline void CHECK_ZEROS(T &size)
     std::fill(&pt_d[0], &pt_d[size], value_d);
     std::fill(&pt_cf[0], &pt_cf[size], value_cf);
     std::fill(&pt_cd[0], &pt_cd[size], value_cd);
-    for (int i = 0; i < size; ++i)
-    {
-	    pt_v3[i].set(1.1,2.2,3.3);
+    for (int i = 0; i < size; ++i) {
+        pt_v3[i].set(1.1, 2.2, 3.3);
     }
     ModuleBase::GlobalFunc::ZEROS(pt_b, size);
     ModuleBase::GlobalFunc::ZEROS(pt_i, size);
@@ -131,17 +126,16 @@ inline void CHECK_ZEROS(T &size)
     double zero_d = 0.0;
     std::complex<float> zero_cf{0.0, 0.0};
     std::complex<double> zero_cd{0.0, 0.0};
-    for (int i = 0; i < size; ++i)
-    {
+    for (int i = 0; i < size; ++i) {
         EXPECT_FALSE(pt_b[i]);
-        EXPECT_EQ(pt_i[i],zero_i);
-        EXPECT_FLOAT_EQ(pt_f[i],zero_f);
-        EXPECT_DOUBLE_EQ(pt_d[i],zero_d);
+        EXPECT_EQ(pt_i[i], zero_i);
+        EXPECT_FLOAT_EQ(pt_f[i], zero_f);
+        EXPECT_DOUBLE_EQ(pt_d[i], zero_d);
         EXPECT_COMPLEX_FLOAT_EQ(pt_cf[i], zero_cf);
         EXPECT_COMPLEX_DOUBLE_EQ(pt_cd[i], zero_cd);
-        EXPECT_DOUBLE_EQ(pt_v3[i].x,zero_d);
-        EXPECT_DOUBLE_EQ(pt_v3[i].y,zero_d);
-        EXPECT_DOUBLE_EQ(pt_v3[i].z,zero_d);
+        EXPECT_DOUBLE_EQ(pt_v3[i].x, zero_d);
+        EXPECT_DOUBLE_EQ(pt_v3[i].y, zero_d);
+        EXPECT_DOUBLE_EQ(pt_v3[i].z, zero_d);
     }
     delete[] pt_b;
     delete[] pt_i;
@@ -152,21 +146,18 @@ inline void CHECK_ZEROS(T &size)
     delete[] pt_v3;
 }
 
-class GlobalFunctionTest : public testing::Test
-{
+class GlobalFunctionTest : public testing::Test {
   protected:
     std::ofstream ofs;
     std::ifstream ifs;
     time_t start, end;
     // for capturing output in files and on screen
     std::string output;
-    void SetUp()
-    {
+    void SetUp() {
         GlobalV::ofs_warning.open("warning.log");
         GlobalV::ofs_running.open("running.log");
     }
-    void TearDown()
-    {
+    void TearDown() {
         GlobalV::ofs_warning.close();
         GlobalV::ofs_running.close();
         remove("warning.log");
@@ -175,8 +166,7 @@ class GlobalFunctionTest : public testing::Test
     }
 };
 
-TEST_F(GlobalFunctionTest, NewPart)
-{
+TEST_F(GlobalFunctionTest, NewPart) {
     ModuleBase::GlobalFunc::NEW_PART("New Part Starts ...");
     GlobalV::ofs_running.close();
     ifs.open("running.log");
@@ -189,20 +179,18 @@ TEST_F(GlobalFunctionTest, NewPart)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, OutScreen)
-{
-	testing::internal::CaptureStdout();
-	int nbx = 100;
-	double rcut = 10.5;
-	ModuleBase::GlobalFunc::OUT("nbx", nbx);
-	ModuleBase::GlobalFunc::OUT("rcut", rcut);
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("nbx = 100"));
-	EXPECT_THAT(output,testing::HasSubstr("rcut = 10.5"));
+TEST_F(GlobalFunctionTest, OutScreen) {
+    testing::internal::CaptureStdout();
+    int nbx = 100;
+    double rcut = 10.5;
+    ModuleBase::GlobalFunc::OUT("nbx", nbx);
+    ModuleBase::GlobalFunc::OUT("rcut", rcut);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("nbx = 100"));
+    EXPECT_THAT(output, testing::HasSubstr("rcut = 10.5"));
 }
 
-TEST_F(GlobalFunctionTest, OutV1)
-{
+TEST_F(GlobalFunctionTest, OutV1) {
     ofs.open("tmp");
     ModuleBase::GlobalFunc::OUT(ofs, "abacus");
     ofs.close();
@@ -213,8 +201,7 @@ TEST_F(GlobalFunctionTest, OutV1)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, OutV2)
-{
+TEST_F(GlobalFunctionTest, OutV2) {
     ofs.open("tmp");
     bool tmp_bool = true;
     int tmp_int = 1;
@@ -232,62 +219,62 @@ TEST_F(GlobalFunctionTest, OutV2)
     ModuleBase::GlobalFunc::OUT(ofs, "tmp_string", tmp_string);
     std::string para = "";
     int length = 0;
-    for (int i=0;i<50;i++)
-    {
-    	para += "a";
-	length = para.size()+1;
-	if(length == 5){
-		char tmp_char[5];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 6){
-		char tmp_char[6];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 13){
-		char tmp_char[13];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 15){
-		char tmp_char[15];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 20){
-		char tmp_char[20];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 22){
-		char tmp_char[22];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 23){
-		char tmp_char[23];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 25){
-		char tmp_char[25];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 28){
-		char tmp_char[28];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 29){
-		char tmp_char[29];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 30){
-		char tmp_char[30];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
-	else if (length == 32){
-		char tmp_char[32];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);}
+    for (int i = 0; i < 50; i++) {
+        para += "a";
+        length = para.size() + 1;
+        if (length == 5) {
+            char tmp_char[5];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 6) {
+            char tmp_char[6];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 13) {
+            char tmp_char[13];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 15) {
+            char tmp_char[15];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 20) {
+            char tmp_char[20];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 22) {
+            char tmp_char[22];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 23) {
+            char tmp_char[23];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 25) {
+            char tmp_char[25];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 28) {
+            char tmp_char[28];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 29) {
+            char tmp_char[29];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 30) {
+            char tmp_char[30];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        } else if (length == 32) {
+            char tmp_char[32];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::OUT(ofs, "para", tmp_char);
+        }
     }
     ofs.close();
     ifs.open("tmp");
-    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("tmp_bool = 1"));
     EXPECT_THAT(str, testing::HasSubstr("tmp_int = 1"));
     EXPECT_THAT(str, testing::HasSubstr("tmp_long = 2"));
@@ -296,18 +283,17 @@ TEST_F(GlobalFunctionTest, OutV2)
     EXPECT_THAT(str, testing::HasSubstr("tmp_double = 5"));
     EXPECT_THAT(str, testing::HasSubstr("tmp_string = string"));
     std::string tmp_para = "a";
-    for (int i=0;i<50;i++)
-    {
-	tmp_para += "a";
-	length = tmp_para.size()+1;
-	if (length == 32) { EXPECT_THAT(str, testing::HasSubstr(tmp_para));
-}
+    for (int i = 0; i < 50; i++) {
+        tmp_para += "a";
+        length = tmp_para.size() + 1;
+        if (length == 32) {
+            EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+        }
     }
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, OutV3)
-{
+TEST_F(GlobalFunctionTest, OutV3) {
     ofs.open("tmp");
     int nx = 100;
     int ny = 125;
@@ -326,8 +312,7 @@ TEST_F(GlobalFunctionTest, OutV3)
     ifs.close();
 }
 // P for parameters
-TEST_F(GlobalFunctionTest, OutP)
-{
+TEST_F(GlobalFunctionTest, OutP) {
     ofs.open("tmp");
     bool tmp_bool = true;
     int tmp_int = 1;
@@ -344,7 +329,7 @@ TEST_F(GlobalFunctionTest, OutP)
     ModuleBase::GlobalFunc::OUTP(ofs, "tmp_string", tmp_string, tmp_string_ex);
     ofs.close();
     ifs.open("tmp");
-    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("tmp_bool                       1 #tmp_bool_ex"));
     EXPECT_THAT(str, testing::HasSubstr("tmp_int                        1 #tmp_int_ex"));
     EXPECT_THAT(str, testing::HasSubstr("tmp_double                     2 #tmp_double_ex"));
@@ -352,8 +337,7 @@ TEST_F(GlobalFunctionTest, OutP)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, ToString)
-{
+TEST_F(GlobalFunctionTest, ToString) {
     bool tmp_bool = true;
     int tmp_int = 1;
     long tmp_long = 2;
@@ -361,67 +345,66 @@ TEST_F(GlobalFunctionTest, ToString)
     float tmp_float = 4.0;
     double tmp_double = 5.0;
     std::string tmp_string = "string";
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_bool),"1");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_int),"1");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_long),"2");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_unsigned_long),"3");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_float),"4");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_double),"5");
-    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_string),"string");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_bool), "1");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_int), "1");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_long), "2");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_unsigned_long), "3");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_float), "4");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_double), "5");
+    EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_string), "string");
     std::string para = "";
     int length = 0;
-    for (int i=0;i<100;i++)
-    {
-    	para += "a";
-	length = para.size()+1;
-	if(length == 42){
-		char tmp_char[42];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 47){
-		char tmp_char[47];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 50){
-		char tmp_char[50];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 52){
-		char tmp_char[52];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 53){
-		char tmp_char[53];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 63){
-		char tmp_char[63];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 64){
-		char tmp_char[64];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 74){
-		char tmp_char[74];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 81){
-		char tmp_char[81];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
-	else if (length == 83){
-		char tmp_char[83];
-		strcpy(tmp_char,para.c_str());
-    		EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char),para);}
+    for (int i = 0; i < 100; i++) {
+        para += "a";
+        length = para.size() + 1;
+        if (length == 42) {
+            char tmp_char[42];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 47) {
+            char tmp_char[47];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 50) {
+            char tmp_char[50];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 52) {
+            char tmp_char[52];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 53) {
+            char tmp_char[53];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 63) {
+            char tmp_char[63];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 64) {
+            char tmp_char[64];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 74) {
+            char tmp_char[74];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 81) {
+            char tmp_char[81];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        } else if (length == 83) {
+            char tmp_char[83];
+            strcpy(tmp_char, para.c_str());
+            EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_char), para);
+        }
     }
 }
 
-TEST_F(GlobalFunctionTest, MakeDir)
-{
+TEST_F(GlobalFunctionTest, MakeDir) {
     GlobalV::MY_RANK = 0;
     ModuleBase::GlobalFunc::MAKE_DIR("scf");
-    
+
     struct stat st;
     int error1 = stat("scf", &st);
     EXPECT_EQ(error1, 0);
@@ -432,8 +415,7 @@ TEST_F(GlobalFunctionTest, MakeDir)
     SUCCEED();
 }
 
-TEST_F(GlobalFunctionTest, OutTime)
-{
+TEST_F(GlobalFunctionTest, OutTime) {
     std::string name = "scf";
     start = time(nullptr);
     end = time(nullptr) + 200;
@@ -446,8 +428,7 @@ TEST_F(GlobalFunctionTest, OutTime)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, AutoSet)
-{
+TEST_F(GlobalFunctionTest, AutoSet) {
     bool tmp_b = false;
     int tmp_i = 1;
     float tmp_f = 2.0;
@@ -460,30 +441,30 @@ TEST_F(GlobalFunctionTest, AutoSet)
     ModuleBase::GlobalFunc::AUTO_SET("tmp_string", tmp_string);
     std::string para = "";
     int length = 0;
-    for (int i=0;i<10;i++)
-    {
-    	para += "a";
-	length = para.size()+1;
-	if(length == 2){
-		char tmp_char[2];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::AUTO_SET("tmp_char",tmp_char);}
-	else if (length == 3){
-		char tmp_char[3];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::AUTO_SET("tmp_char",tmp_char);}
-	else if (length == 6){
-		char tmp_char[6];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::AUTO_SET("tmp_char",tmp_char);}
-	else if (length == 8){
-		char tmp_char[8];
-		strcpy(tmp_char,para.c_str());
-    		ModuleBase::GlobalFunc::AUTO_SET("tmp_char",tmp_char);}
+    for (int i = 0; i < 10; i++) {
+        para += "a";
+        length = para.size() + 1;
+        if (length == 2) {
+            char tmp_char[2];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::AUTO_SET("tmp_char", tmp_char);
+        } else if (length == 3) {
+            char tmp_char[3];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::AUTO_SET("tmp_char", tmp_char);
+        } else if (length == 6) {
+            char tmp_char[6];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::AUTO_SET("tmp_char", tmp_char);
+        } else if (length == 8) {
+            char tmp_char[8];
+            strcpy(tmp_char, para.c_str());
+            ModuleBase::GlobalFunc::AUTO_SET("tmp_char", tmp_char);
+        }
     }
     GlobalV::ofs_warning.close();
     ifs.open("warning.log");
-    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("AUTO_SET tmp_b to 0"));
     EXPECT_THAT(str, testing::HasSubstr("AUTO_SET tmp_i to 1"));
     EXPECT_THAT(str, testing::HasSubstr("AUTO_SET tmp_f to 2"));
@@ -493,8 +474,7 @@ TEST_F(GlobalFunctionTest, AutoSet)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, Done)
-{
+TEST_F(GlobalFunctionTest, Done) {
     ofs.open("tmp");
     testing::internal::CaptureStdout();
     ModuleBase::GlobalFunc::DONE(ofs, "SETUP UNITCELL");
@@ -512,8 +492,7 @@ TEST_F(GlobalFunctionTest, Done)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, Zeros)
-{
+TEST_F(GlobalFunctionTest, Zeros) {
     int size_i = 1000;
     CHECK_ZEROS(size_i);
     long size_l = 1000;
@@ -524,8 +503,7 @@ TEST_F(GlobalFunctionTest, Zeros)
     CHECK_ZEROS(size_ll);
 }
 
-TEST_F(GlobalFunctionTest, Scan)
-{
+TEST_F(GlobalFunctionTest, Scan) {
     ofs.open("tmp");
     ofs << "<PP_MESH>" << std::endl;
     ofs << "100 100 100" << std::endl;
@@ -551,16 +529,14 @@ TEST_F(GlobalFunctionTest, Scan)
     ifs.close();
 }
 
-TEST_F(GlobalFunctionTest, MapExist)
-{
+TEST_F(GlobalFunctionTest, MapExist) {
     std::map<int, double> SPIN = {{1, 2}, {3, 4}, {5, 6}};
     EXPECT_EQ(ModuleBase::GlobalFunc::MAP_EXIST(SPIN, 1), &SPIN[1]);
     EXPECT_EQ(ModuleBase::GlobalFunc::MAP_EXIST(SPIN, 3), &SPIN[3]);
     EXPECT_EQ(ModuleBase::GlobalFunc::MAP_EXIST(SPIN, 5), &SPIN[5]);
 }
 
-TEST_F(GlobalFunctionTest, ReadValue)
-{
+TEST_F(GlobalFunctionTest, ReadValue) {
     ofs.open("tmp");
     ofs << "100" << std::endl;
     ofs << "3.0" << std::endl;
@@ -580,33 +556,29 @@ TEST_F(GlobalFunctionTest, ReadValue)
     EXPECT_EQ(tmp_string, "string");
 }
 
-TEST_F(GlobalFunctionTest, Dcopy)
-{
+TEST_F(GlobalFunctionTest, Dcopy) {
     int size = 100;
     std::vector<std::complex<double>> aa(size, std::complex<double>(1.0, 2.0));
     std::vector<std::complex<double>> bb(size);
-    std::vector<double> daa(size,1.1);
+    std::vector<double> daa(size, 1.1);
     std::vector<double> dbb(size);
     std::complex<double>* aalist = new std::complex<double>[size];
     std::complex<double>* bblist = new std::complex<double>[size];
-    for (int i=0;i<size;i++)
-    {
-	    aalist[i] = std::complex<double>(1.0,2.0);
-	    bblist[i] = std::complex<double>(0.0,0.0);
+    for (int i = 0; i < size; i++) {
+        aalist[i] = std::complex<double>(1.0, 2.0);
+        bblist[i] = std::complex<double>(0.0, 0.0);
     }
     double* daalist = new double[size];
     double* dbblist = new double[size];
-    for (int i=0;i<size;i++)
-    {
-	    daalist[i] = 3.0;
-	    dbblist[i] = 0.0;
+    for (int i = 0; i < size; i++) {
+        daalist[i] = 3.0;
+        dbblist[i] = 0.0;
     }
     ModuleBase::GlobalFunc::DCOPY(aa, bb, size);
     ModuleBase::GlobalFunc::DCOPY(daa, dbb, size);
     ModuleBase::GlobalFunc::DCOPY(aalist, bblist, size);
     ModuleBase::GlobalFunc::DCOPY(daalist, dbblist, size);
-    for (int i = 0; i < size; ++i)
-    {
+    for (int i = 0; i < size; ++i) {
         EXPECT_COMPLEX_DOUBLE_EQ(bb[i], aa[i]);
         EXPECT_COMPLEX_DOUBLE_EQ(bblist[i], aalist[i]);
         EXPECT_DOUBLE_EQ(dbb[i], daa[i]);
@@ -614,8 +586,7 @@ TEST_F(GlobalFunctionTest, Dcopy)
     }
 }
 
-TEST_F(GlobalFunctionTest, VectorToPointer)
-{
+TEST_F(GlobalFunctionTest, VectorToPointer) {
     int size = 100;
     std::vector<double> aa(size, 1.0);
     EXPECT_EQ(ModuleBase::GlobalFunc::VECTOR_TO_PTR(aa), aa.data());
@@ -627,8 +598,7 @@ TEST_F(GlobalFunctionTest, VectorToPointer)
     EXPECT_EQ(ModuleBase::GlobalFunc::VECTOR_TO_PTR(dd), &dd[0]);
 }
 
-TEST_F(GlobalFunctionTest, COPYARRAY)
-{
+TEST_F(GlobalFunctionTest, COPYARRAY) {
     long size = 100;
     std::complex<double>* aa = nullptr;
     std::complex<double>* bb = nullptr;
@@ -636,19 +606,17 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     bb = new std::complex<double>[size];
     std::complex<double> value{1.1, 2.2};
     std::fill(&aa[0], &aa[size], value);
-    ModuleBase::GlobalFunc::COPYARRAY(aa,bb,size);
-    for (int i = 0; i < size; ++i)
-    {
+    ModuleBase::GlobalFunc::COPYARRAY(aa, bb, size);
+    for (int i = 0; i < size; ++i) {
         EXPECT_COMPLEX_DOUBLE_EQ(bb[i], value);
     }
     double* daa = nullptr;
     double* dbb = nullptr;
     daa = new double[size];
     dbb = new double[size];
-    std::fill(&daa[0],&daa[size],3.3);
-    ModuleBase::GlobalFunc::COPYARRAY(daa,dbb,size);
-    for (int i = 0; i < size; ++i)
-    {
+    std::fill(&daa[0], &daa[size], 3.3);
+    ModuleBase::GlobalFunc::COPYARRAY(daa, dbb, size);
+    for (int i = 0; i < size; ++i) {
         EXPECT_DOUBLE_EQ(dbb[i], 3.3);
     }
     delete[] aa;
@@ -657,98 +625,88 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     delete[] dbb;
 }
 
-TEST_F(GlobalFunctionTest,IsColumnMajor)
-{
-	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER("genelpa"));
-}
+TEST_F(GlobalFunctionTest, IsColumnMajor) { EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER("genelpa")); }
 
-TEST_F(GlobalFunctionTest,Vector2Ptr)
-{
+TEST_F(GlobalFunctionTest, Vector2Ptr) {
     int size = 100;
     std::vector<std::complex<double>> aa(size, std::complex<double>(1.0, 2.0));
     std::complex<double>* ptr_d = nullptr;
-    ptr_d=ModuleBase::GlobalFunc::VECTOR_TO_PTR(aa);
-    for (int i = 0; i < size; ++i)
-    {
-        EXPECT_COMPLEX_DOUBLE_EQ(ptr_d[i],std::complex<double>(1.0,2.0));
+    ptr_d = ModuleBase::GlobalFunc::VECTOR_TO_PTR(aa);
+    for (int i = 0; i < size; ++i) {
+        EXPECT_COMPLEX_DOUBLE_EQ(ptr_d[i], std::complex<double>(1.0, 2.0));
     }
 }
 
-TEST_F(GlobalFunctionTest,MemAvailable)
-{
-    for(int i=0;i<5;i++)
-    {
+TEST_F(GlobalFunctionTest, MemAvailable) {
+    for (int i = 0; i < 5; i++) {
         std::ifstream ifs("/proc/meminfo");
-        while (ifs.good())
-        {
+        while (ifs.good()) {
             std::string label, size, kB;
             ifs >> label >> size >> kB;
-            if (label == "MemAvailable:")
-            {
-                EXPECT_LE(std::stol(size)-1000,ModuleBase::GlobalFunc::MemAvailable());
-                EXPECT_GE(std::stol(size)+1000,ModuleBase::GlobalFunc::MemAvailable());
+            if (label == "MemAvailable:") {
+                EXPECT_LE(std::stol(size) - 1000, ModuleBase::GlobalFunc::MemAvailable());
+                EXPECT_GE(std::stol(size) + 1000, ModuleBase::GlobalFunc::MemAvailable());
             }
         }
     }
 }
 
-
-TEST_F(GlobalFunctionTest,BlockHere)
-{
+TEST_F(GlobalFunctionTest, BlockHere) {
 #ifdef __MPI
 #undef __MPI
 #endif
-	std::string output2;
-	std::string block_in="111";
-	GlobalV::MY_RANK=1;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
-		"\n Here is a Block, 1: go on 0: quit"
-		"\n 111"
-		"\n********************************************"));
+    std::string output2;
+    std::string block_in = "111";
+    GlobalV::MY_RANK = 1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0), "");
+    output2 = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output2,
+                testing::HasSubstr("\n********************************************"
+                                   "\n Here is a Block, 1: go on 0: quit"
+                                   "\n 111"
+                                   "\n********************************************"));
 }
 
-TEST_F(GlobalFunctionTest,BlockHere2)
-{
+TEST_F(GlobalFunctionTest, BlockHere2) {
 #ifdef __MPI
 #undef __MPI
 #endif
-	std::string output2;
-	std::string block_in="111";
-	GlobalV::MY_RANK=0;
-	std::string fake_input = "1";
-	std::istringstream iss{fake_input};
-	std::cin.rdbuf(iss.rdbuf());
-	testing::internal::CaptureStdout();
-//	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(1),"");
-	ModuleBase::GlobalFunc::BLOCK_HERE(block_in);
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
-		"\n Here is a Block, 1: go on 0: quit"
-		"\n 111"
-		"\n********************************************"));
+    std::string output2;
+    std::string block_in = "111";
+    GlobalV::MY_RANK = 0;
+    std::string fake_input = "1";
+    std::istringstream iss{fake_input};
+    std::cin.rdbuf(iss.rdbuf());
+    testing::internal::CaptureStdout();
+    //    EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(1),"");
+    ModuleBase::GlobalFunc::BLOCK_HERE(block_in);
+    output2 = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output2,
+                testing::HasSubstr("\n********************************************"
+                                   "\n Here is a Block, 1: go on 0: quit"
+                                   "\n 111"
+                                   "\n********************************************"));
 }
 
-TEST_F(GlobalFunctionTest,BlockHere3)
-{
+TEST_F(GlobalFunctionTest, BlockHere3) {
 #ifdef __MPI
 #undef __MPI
 #endif
-	std::string output2;
-	std::string block_in="111";
-	GlobalV::MY_RANK=0;
-	testing::internal::CaptureStdout();
-	std::string fake_input = "0";
-	std::istringstream iss{fake_input};
-	std::cin.rdbuf(iss.rdbuf());
-	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
-	output2 = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"
-		"\n Here is a Block, 1: go on 0: quit"
-		"\n 111"
-		"\n********************************************"));
+    std::string output2;
+    std::string block_in = "111";
+    GlobalV::MY_RANK = 0;
+    testing::internal::CaptureStdout();
+    std::string fake_input = "0";
+    std::istringstream iss{fake_input};
+    std::cin.rdbuf(iss.rdbuf());
+    EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0), "");
+    output2 = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output2,
+                testing::HasSubstr("\n********************************************"
+                                   "\n Here is a Block, 1: go on 0: quit"
+                                   "\n 111"
+                                   "\n********************************************"));
 }
 
 /*
@@ -765,16 +723,12 @@ TEST_F(GlobalFunctionTest, Note)
 }
 */
 
-TEST_F(GlobalFunctionTest,Vector2Ptr_v3double)
-{
+TEST_F(GlobalFunctionTest, Vector2Ptr_v3double) {
     int size = 100;
-    std::vector<ModuleBase::Vector3<double>> abcd(size, ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    std::vector<ModuleBase::Vector3<double>> abcd(size, ModuleBase::Vector3<double>(1.1, 2.2, 3.3));
     ModuleBase::Vector3<double>* ptr_v3d = nullptr;
-    ptr_v3d=ModuleBase::GlobalFunc::VECTOR_TO_PTR(abcd);
-    for (int i = 0; i < size; ++i)
-    {
-        EXPECT_EQ(ptr_v3d[i],ModuleBase::Vector3<double>(1.1,2.2,3.3));
+    ptr_v3d = ModuleBase::GlobalFunc::VECTOR_TO_PTR(abcd);
+    for (int i = 0; i < size; ++i) {
+        EXPECT_EQ(ptr_v3d[i], ModuleBase::Vector3<double>(1.1, 2.2, 3.3));
     }
 }
-
-

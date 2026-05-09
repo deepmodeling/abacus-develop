@@ -7,8 +7,7 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 
-namespace module_rt
-{
+namespace module_rt {
 template <typename Device>
 Evolve_elec<Device>::Evolve_elec(){};
 template <typename Device>
@@ -37,8 +36,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                     module_rt::TD_MovingGauge* td_mg,
                                     const UnitCell* ucell,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                    const bool use_td_moving_gauge)
-{
+                                    const bool use_td_moving_gauge) {
     ModuleBase::TITLE("Evolve_elec", "solve_psi");
     ModuleBase::timer::start("Evolve_elec", "solve_psi");
 
@@ -51,20 +49,17 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
     init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
 #endif
 
-    for (int ik = 0; ik < nks; ik++)
-    {
+    for (int ik = 0; ik < nks; ik++) {
         phm->updateHk(ik);
 
         ModuleBase::timer::start("TD_Efficiency", "evolve_k");
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
 
-        if (!use_tensor)
-        {
+        if (!use_tensor) {
             // Construct the local P_k matrix for moving spatial gauge, CPU only for now
             std::vector<std::complex<double>> P_k_local(para_orb.nloc, {0.0, 0.0});
-            if (use_td_moving_gauge && td_mg != nullptr)
-            {
+            if (use_td_moving_gauge && td_mg != nullptr) {
                 td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.nloc, para_orb.ncol);
             }
 
@@ -85,9 +80,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                        print_matrix);
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
-        }
-        else
-        {
+        } else {
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
 
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
@@ -117,8 +110,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             std::complex<double>* p_psi_host = nullptr;
             std::complex<double>* p_psi_last_host = nullptr;
 
-            if (use_lapack)
-            {
+            if (use_lapack) {
 #ifdef __MPI
                 int myid = 0;
                 const int root_proc = 0;
@@ -126,28 +118,23 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 MPI_Comm_rank(MPI_COMM_WORLD, &myid);
                 MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                if (num_procs == 1)
-                {
+                if (num_procs == 1) {
                     // Single process: directly point to local data without gather
                     p_psi_host = psi[0].get_pointer();
                     p_psi_last_host = psi_laststep[0].get_pointer();
-                }
-                else
-                {
+                } else {
                     // Multiple processes: gather data to the root process (myid == 0) and point to the gathered data
                     gatherPsi(myid, root_proc, psi[0].get_pointer(), para_orb, psi_g);
                     gatherPsi(myid, root_proc, psi_laststep[0].get_pointer(), para_orb, psi_laststep_g);
 
-                    if (myid == root_proc)
-                    {
+                    if (myid == root_proc) {
                         p_psi_host = psi_g.p.get();
                         p_psi_last_host = psi_laststep_g.p.get();
                     }
                 }
 
                 // Only the root process (myid == 0) performs the copy
-                if (myid == root_proc)
-                {
+                if (myid == root_proc) {
                     syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
                                              p_psi_host,
                                              len_psi_k_1 * len_psi_k_2);
@@ -156,9 +143,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                              len_psi_k_1 * len_psi_k_2);
                 }
 #endif
-            }
-            else
-            {
+            } else {
                 // Syncronize data from CPU to Device
                 syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
                                          psi[0].get_pointer(),
@@ -195,16 +180,14 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
-            if (use_lapack)
-            {
+            if (use_lapack) {
 #ifdef __MPI
                 int myid = 0;
                 int num_procs = 1;
                 MPI_Comm_rank(MPI_COMM_WORLD, &myid);
                 MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-                if (myid == 0)
-                {
+                if (myid == 0) {
                     syncmem_complex_d2h_op()(p_psi_host,
                                              psi_k_tensor.data<std::complex<double>>(),
                                              len_psi_k_1 * len_psi_k_2);
@@ -214,15 +197,12 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 }
 
                 // If it's multi-process, distribute back; if it's single-process, the data is already in psi[0]
-                if (num_procs > 1)
-                {
+                if (num_procs > 1) {
                     distributePsi(para_orb, psi[0].get_pointer(), psi_g);
                     distributePsi(para_orb, psi_laststep[0].get_pointer(), psi_laststep_g);
                 }
 #endif
-            }
-            else
-            {
+            } else {
                 // Syncronize data from Device to CPU
                 syncmem_complex_d2h_op()(psi[0].get_pointer(),
                                          psi_k_tensor.data<std::complex<double>>(),
@@ -241,8 +221,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
 #ifdef __MPI
             const int root_proc = 0;
-            if (use_lapack)
-            {
+            if (use_lapack) {
                 // Synchronize ekb to all MPI processes
                 MPI_Bcast(&(ekb(ik, 0)), nband, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
             }

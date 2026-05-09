@@ -8,8 +8,7 @@
 #include <complex>
 #include <functional>
 
-namespace ModuleBase
-{
+namespace ModuleBase {
 // template class for fftw
 template <typename T>
 class FFTW;
@@ -47,32 +46,32 @@ class FFTW;
  *
  * USAGE:
  * Chebyshev che(10); // constructe a chebyshev expansion of 10 orders (n=0,1,...,9)
- * 1. che.calcoef_real(cos) 						// calculate C_n[f], where f is a.cos
- *    for(int i=0;i<10;++i) cout<<che.coef_real[i]<<endl; 	//Then we print C_n[f]
+ * 1. che.calcoef_real(cos)                         // calculate C_n[f], where f is a.cos
+ *    for(int i=0;i<10;++i) cout<<che.coef_real[i]<<endl;     //Then we print C_n[f]
  *
- *    che.calcoef_complex(expi) 					// calculate C_n[g], where g is b.expi
+ *    che.calcoef_complex(expi)                     // calculate C_n[g], where g is b.expi
  *    for(int i=0;i<10;++i) cout<<che.coef_complex[i]<<endl; //Then we print C_n[g]
  *
- *    che.calcoef_pair(cos, sin) 				// calculate C_n[g], where g is (c.cos, c.sin)
+ *    che.calcoef_pair(cos, sin)                 // calculate C_n[g], where g is (c.cos, c.sin)
  *    for(int i=0;i<10;++i) cout<<che.coef_complex[i]<<endl; //Then we print C_n[g]
  *
  * 2. che.calcoef_real(Occupy::fd)
- * 	  che.calfinalvec_real(hpsi, psi_in, psi_out, npw);
+ *       che.calfinalvec_real(hpsi, psi_in, psi_out, npw);
  *    //calculate f(H)|psi>, where f is occ.fd and H is hamilt.hpsi
  *
  *    che.calcoef_complex(expi)
- * 	  che.calfinalvec_complex(hpsi, psi_in, psi_out, npw, npwx, nbands);
+ *       che.calfinalvec_complex(hpsi, psi_in, psi_out, npw, npwx, nbands);
  *    //calculate exp(iH)|psi_i>
  *
  * 3. che.tracepolyA(hpsi, psi_in, npw, npwx, nbands)
- * 	  //calculate \sum_i^{nbands} <psi_i|T_n(H)|psi_i>
+ *       //calculate \sum_i^{nbands} <psi_i|T_n(H)|psi_i>
  *
  * 4. che.calcoef_complex(expi);  //calculate C_n[exp(ix)]
- * 	  che.getpolyval(PI/4, T, norder);             //get T_n(pi/4)
+ *       che.getpolyval(PI/4, T, norder);             //get T_n(pi/4)
  *    std::complex<double> sum(0,0);
  *    for(int i = 0; i < norder ; ++i)
  *    {
- * 		sum += che.coef_complex[i]*T[i];          //sum = exp(i*pi/4) = \sum_n C_n[exp(ix)]*T_n(pi/4)
+ *         sum += che.coef_complex[i]*T[i];          //sum = exp(i*pi/4) = \sum_n C_n[exp(ix)]*T_n(pi/4)
  *    }
  *
  * 5. che.recurs_complex(hpsi, vp1, v, vm1, npw)
@@ -80,8 +79,7 @@ class FFTW;
  *
  */
 template <typename REAL, typename Device = base_device::DEVICE_CPU>
-class Chebyshev
-{
+class Chebyshev {
 
   public:
     // constructor and deconstructor
@@ -209,8 +207,8 @@ class Chebyshev
     REAL* coefr_cpu = nullptr;                  //[CPU] expansion coefficient of each order
     std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
 
-    FFTW<REAL> fftw;          // use for fftw
-    REAL* polytrace = nullptr;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
+    FFTW<REAL> fftw;           // use for fftw
+    REAL* polytrace = nullptr; //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated
@@ -223,27 +221,28 @@ class Chebyshev
                    const int N,
                    const int LDA = 1,
                    const int m = 1);
-  
+
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
-    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<REAL>, Device>; 
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<REAL>, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<REAL, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<REAL>, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<REAL, Device>;
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<REAL, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>;
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op =
+        base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op =
+        base_device::memory::synchronize_memory_op<std::complex<REAL>, base_device::DEVICE_CPU, Device>;
     using memcpy_var_op = base_device::memory::synchronize_memory_op<REAL, Device, Device>;
     using memcpy_complex_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<std::complex<REAL>, Device>;
 };
 
 template <>
-class FFTW<double>
-{
+class FFTW<double> {
   public:
     FFTW(const int norder2_in);
     ~FFTW();
@@ -255,8 +254,7 @@ class FFTW<double>
 
 #ifdef __ENABLE_FLOAT_FFTW
 template <>
-class FFTW<float>
-{
+class FFTW<float> {
   public:
     FFTW(const int norder2_in);
     ~FFTW();

@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix            autotest
 calculation       scf
 
-#nbands			8
+#nbands            8
 symmetry          1
 
 #Parameters (2.Iteration)

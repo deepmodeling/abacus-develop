@@ -10,57 +10,30 @@
 namespace container {
 namespace kernels {
 
-
 template <typename T, typename Device>
 struct set_matrix {
-    void operator() (
-        const char& uplo,
-        T* A,
-        const int& dim);
+    void operator()(const char& uplo, T* A, const int& dim);
 };
-
 
 // --- 1. Matrix Decomposition ---
 template <typename T, typename Device>
 struct lapack_trtri {
-    void operator()(
-        const char& uplo,
-        const char& diag,
-        const int& dim,
-        T* Mat,
-        const int& lda);
+    void operator()(const char& uplo, const char& diag, const int& dim, T* Mat, const int& lda);
 };
-
 
 template <typename T, typename Device>
 struct lapack_potrf {
-    void operator()(
-        const char& uplo,
-        const int& dim,
-        T* Mat,
-        const int& lda);
+    void operator()(const char& uplo, const int& dim, T* Mat, const int& lda);
 };
 
 template <typename T, typename Device>
 struct lapack_getrf {
-    void operator()(
-        const int& m,
-        const int& n,
-        T* Mat,
-        const int& lda,
-        int* ipiv);
+    void operator()(const int& m, const int& n, T* Mat, const int& lda, int* ipiv);
 };
-
 
 template <typename T, typename Device>
 struct lapack_getri {
-    void operator()(
-        const int& n,
-        T* Mat,
-        const int& lda,
-        const int* ipiv,
-        T* work,
-        const int& lwork);
+    void operator()(const int& n, T* Mat, const int& lda, const int* ipiv, T* work, const int& lwork);
 };
 
 // This is QR factorization in-place
@@ -81,11 +54,7 @@ struct lapack_geqrf_inplace {
      * @param A Pointer to the matrix A to be factorized. On exit, contains the QR factorization
      * @param lda The leading dimension of the matrix A. lda >= max(1, m)
      */
-    void operator()(
-        const int m,
-        const int n,
-        T *A,
-        const int lda);
+    void operator()(const int m, const int n, T* A, const int lda);
 };
 
 // This is QR factorization
@@ -112,22 +81,18 @@ struct lapack_geqrf_inplace {
 //         T *tau);
 // };
 
-
 // --- 2. Linear System Solvers ---
 template <typename T, typename Device>
 struct lapack_getrs {
-    void operator()(
-        const char& trans,
-        const int& n,
-        const int& nrhs,
-        T* A,
-        const int& lda,
-        const int* ipiv,
-        T* B,
-        const int& ldb);
+    void operator()(const char& trans,
+                    const int& n,
+                    const int& nrhs,
+                    T* A,
+                    const int& lda,
+                    const int* ipiv,
+                    T* B,
+                    const int& ldb);
 };
-
-
 
 // --- 3. Standard & Generalized Eigenvalue ---
 
@@ -172,11 +137,7 @@ struct lapack_heevd {
      * to the actual implementation).
      */
     using Real = typename GetTypeReal<T>::type;
-    void operator()(
-        const int dim,
-        T* Mat,
-        const int lda,
-        Real* eigen_val);
+    void operator()(const int dim, T* Mat, const int lda, Real* eigen_val);
 };
 
 template <typename T, typename Device>
@@ -203,15 +164,8 @@ struct lapack_heevx {
      * See LAPACK ZHEEVX or CHEEVX documentation for more details.
      * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
      */
-    void operator()(
-        const int dim,
-        const int lda,
-        const T *Mat,
-        const int neig,
-        Real *eigen_val,
-        T *eigen_vec);
+    void operator()(const int dim, const int lda, const T* Mat, const int neig, Real* eigen_val, T* eigen_vec);
 };
-
 
 // ============================================================================
 // Generalized Hermitian-definite Eigenvalue Problem Solvers
@@ -231,9 +185,11 @@ template <typename T, typename Device>
 struct lapack_hegvd {
     using Real = typename GetTypeReal<T>::type;
     /**
-     * @brief Computes all the eigenvalues and, optionally, the eigenvectors of a complex generalized Hermitian-definite eigenproblem.
+     * @brief Computes all the eigenvalues and, optionally, the eigenvectors of a complex generalized Hermitian-definite
+     * eigenproblem.
      *
-     * This function solves the problem A*x = lambda*B*x, where A and B are Hermitian matrices, and B is also positive definite.
+     * This function solves the problem A*x = lambda*B*x, where A and B are Hermitian matrices, and B is also positive
+     * definite.
      *
      * @param n The order of the matrices Mat_A and Mat_B. n >= 0.
      * @param lda The leading dimension of the arrays Mat_A and Mat_B. lda >= max(1, n).
@@ -247,13 +203,7 @@ struct lapack_hegvd {
      * This function assumes that A and B have the same leading dimensions, lda.
      * This function copies B to auxiliary memory to avoid being overwritten.
      */
-    void operator()(
-        const int n,
-        const int lda,
-        T *Mat_A,
-        T *Mat_B,
-        Real *eigen_val,
-        T *eigen_vec);
+    void operator()(const int n, const int lda, T* Mat_A, T* Mat_B, Real* eigen_val, T* eigen_vec);
 };
 
 template <typename T, typename Device>
@@ -271,25 +221,19 @@ struct lapack_hegvx {
      * @param n The order of the matrices A and B. n >= 0.
      * @param lda The leading dimension of the array A and B. lda >= max(1, n).
      * @param A On entry, the Hermitian matrix A. On exit, if info = 0, A contains the matrix Z of eigenvectors.
-     * @param B On entry, the Hermitian positive definite matrix B. On exit, the triangular factor from the Cholesky factorization of B.
+     * @param B On entry, the Hermitian positive definite matrix B. On exit, the triangular factor from the Cholesky
+     * factorization of B.
      * @param m The number of eigenvalues and eigenvectors to be found. 0 < m <= n.
      * @param eigen_val The first m eigenvalues in ascending order.
-     * @param eigen_vec The first m columns contain the orthonormal eigenvectors of the matrix A corresponding to the selected eigenvalues.
+     * @param eigen_vec The first m columns contain the orthonormal eigenvectors of the matrix A corresponding to the
+     * selected eigenvalues.
      *
      * @note
      * See LAPACK ZHEGVX doc for more details.
      * This routine allocates auxiliary memory inside to prevent input matrix from being destroyed.
      */
-    void operator()(
-        const int n,
-        const int lda,
-        T *Mat_A,
-        T *Mat_B,
-        const int m,
-        Real *eigen_val,
-        T *eigen_vec);
+    void operator()(const int n, const int lda, T* Mat_A, T* Mat_B, const int m, Real* eigen_val, T* eigen_vec);
 };
-
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles
@@ -297,7 +241,7 @@ void createGpuSolverHandle();  // create cusolver handle
 void destroyGpuSolverHandle(); // destroy cusolver handle
 #endif
 
-} // namespace container
 } // namespace kernels
+} // namespace container
 
 #endif // ATEN_KERNELS_LAPACK_H_

@@ -11,29 +11,17 @@
 #include "prepare_unitcell.h"
 #include "source_cell/read_stru.h"
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
+Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
     this->start_mag = nullptr;
 }
-Magnetism::~Magnetism()
-{
-    delete[] this->start_mag;
-}
+Magnetism::~Magnetism() { delete[] this->start_mag; }
 
 /************************************************
  *  unit test of atom_arrange
@@ -44,18 +32,14 @@ Magnetism::~Magnetism()
  *   - atom_arrange::delete_vector(void)
  *     - delete vector
  *   - atom_arrange::set_sr_NL
- * 	   - set the sr: search radius including nonlocal beta
+ *        - set the sr: search radius including nonlocal beta
  *   - filter_adjs function
  *     - filter AdjacentAtomInfo to the minimized adjacent atoms
  */
 
-void SetGlobalV()
-{
-    PARAM.input.test_grid = false;
-}
+void SetGlobalV() { PARAM.input.test_grid = false; }
 
-class SltkAtomArrangeTest : public testing::Test
-{
+class SltkAtomArrangeTest : public testing::Test {
   protected:
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
@@ -65,19 +49,14 @@ class SltkAtomArrangeTest : public testing::Test
     double radius = ((8 + 5.01) * 2.0 + 0.01) / 10.2;
     int test_atom_in = 0;
     std::string output;
-    void SetUp()
-    {
+    void SetUp() {
         SetGlobalV();
         ucell = utp.SetUcellInfo();
     }
-    void TearDown()
-    {
-        delete ucell;
-    }
+    void TearDown() { delete ucell; }
 };
 
-TEST_F(SltkAtomArrangeTest, setsrNL)
-{
+TEST_F(SltkAtomArrangeTest, setsrNL) {
     atom_arrange test;
     const std::string teststring = "m";
     double rcutmax_Phi = 1;
@@ -103,17 +82,16 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
     EXPECT_THAT(str, testing::HasSubstr("Orbital max radius cutoff (Bohr) = 1"));
     EXPECT_THAT(str, testing::HasSubstr("Nonlocal proj. max radius cutoff (Bohr) = 2"));
     ifs.close();
-    //remove("./to_test_arrange");
+    // remove("./to_test_arrange");
 }
 
-TEST_F(SltkAtomArrangeTest, Search)
-{
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+TEST_F(SltkAtomArrangeTest, Search) {
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
     ofs.open("test.out");
     bool test_only = true;
     atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);
-    EXPECT_EQ(grid_d.getType(0),0);
+    EXPECT_EQ(grid_d.getType(0), 0);
     EXPECT_EQ(grid_d.getNatom(0), 1); // adjacent atom is 1
     ofs.close();
     ifs.open("test.out");
@@ -122,14 +100,13 @@ TEST_F(SltkAtomArrangeTest, Search)
     remove("test.out");
 }
 
-TEST_F(SltkAtomArrangeTest, Filteradjs)
-{
-    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
+TEST_F(SltkAtomArrangeTest, Filteradjs) {
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
     Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
     ofs.open("test.out");
     bool test_only = true;
     atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);
-    EXPECT_EQ(grid_d.getType(0),0);
+    EXPECT_EQ(grid_d.getType(0), 0);
     EXPECT_EQ(grid_d.getNatom(0), 1); // adjacent atom is 1
     ofs.close();
     ifs.open("test.out");
@@ -142,8 +119,8 @@ TEST_F(SltkAtomArrangeTest, Filteradjs)
     EXPECT_EQ(adjs.adj_num, 0);
     // add one adjacent atom
     adjs.adj_num++;
-    adjs.adjacent_tau.push_back(ModuleBase::Vector3<double>(0,0,0));
-    adjs.box.push_back(ModuleBase::Vector3<int>(0,0,0));
+    adjs.adjacent_tau.push_back(ModuleBase::Vector3<double>(0, 0, 0));
+    adjs.box.push_back(ModuleBase::Vector3<int>(0, 0, 0));
     adjs.natom.push_back(1);
     adjs.ntype.push_back(0);
     EXPECT_EQ(adjs.adj_num, 1);

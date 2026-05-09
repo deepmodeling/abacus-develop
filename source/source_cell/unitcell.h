@@ -63,8 +63,7 @@ class UnitCell {
   public:
     // indexing tool for find orbital global index from it,ia,iw
     template <typename Tiait>
-    inline Tiait
-        itiaiw2iwt(const Tiait& it, const Tiait& ia, const Tiait& iw) const {
+    inline Tiait itiaiw2iwt(const Tiait& it, const Tiait& ia, const Tiait& iw) const {
         return Tiait(this->iat2iwt[this->itia2iat(it, ia)] + iw);
     }
     // initialize iat2iwt
@@ -76,8 +75,8 @@ class UnitCell {
 
   private:
     std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
-    int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
-                  // ----------------- END of iat2iwt part -----------------
+    int npol = 1;             // number of spin polarizations, initialized in set_iat2iwt
+                              // ----------------- END of iat2iwt part -----------------
 
   public:
     //========================================================
@@ -97,11 +96,7 @@ class UnitCell {
     }
 
     template <typename Tiat, typename Tiait>
-    inline bool ijat2iaitjajt(const Tiat ijat,
-                              Tiait* ia,
-                              Tiait* it,
-                              Tiait* ja,
-                              Tiait* jt) const {
+    inline bool ijat2iaitjajt(const Tiat ijat, Tiait* ia, Tiait* it, Tiait* ja, Tiait* jt) const {
         Tiat iat = ijat / nat;
         Tiat jat = ijat % nat;
         iat2iait(iat, ia, it);
@@ -136,8 +131,7 @@ class UnitCell {
     }
 
     template <typename Tiait>
-    inline bool
-        step_jajtiait(Tiait* ja, Tiait* jt, Tiait* ia, Tiait* it) const {
+    inline bool step_jajtiait(Tiait* ja, Tiait* jt, Tiait* ia, Tiait* it) const {
         if (step_iait(ja, jt)) {
             return step_iait(ia, it);
         }
@@ -151,11 +145,8 @@ class UnitCell {
 
     // calculate vector between two atoms with R cell
     inline const ModuleBase::Vector3<double>
-        cal_dtau(const int& iat1,
-                 const int& iat2,
-                 const ModuleBase::Vector3<int>& R) const {
-        return get_tau(iat2) + double(R.x) * a1 + double(R.y) * a2
-               + double(R.z) * a3 - get_tau(iat1);
+    cal_dtau(const int& iat1, const int& iat2, const ModuleBase::Vector3<int>& R) const {
+        return get_tau(iat2) + double(R.x) * a1 + double(R.y) * a2 + double(R.z) * a3 - get_tau(iat1);
     }
 
     // LiuXh add 20180515
@@ -165,10 +156,8 @@ class UnitCell {
     ModuleBase::Matrix3 invGGT0;
 
     // I'm doing a bad thing here! Will change later
-    bool ionic_position_updated
-        = false; // whether the ionic position has been updated
-    bool cell_parameter_updated
-        = false; // whether the cell parameters are updated
+    bool ionic_position_updated = false; // whether the ionic position has been updated
+    bool cell_parameter_updated = false; // whether the cell parameters are updated
 
     //============================================================
     // meshx : max number of mesh point in pseudopotential file
@@ -185,9 +174,9 @@ class UnitCell {
     int nmax = 0;
     int nmax_total = 0; // mohan add 2009-09-10
     int lmax_ppwf = 0;
-    int lmaxmax = 0;   // liuyu 2021-07-04
+    int lmaxmax = 0;       // liuyu 2021-07-04
     bool init_vel = false; // liuyu 2021-07-15
-                       // double nelec;
+                           // double nelec;
 
   private:
     ModuleBase::Matrix3 stress; // calculate stress on the cell
@@ -197,13 +186,13 @@ class UnitCell {
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
 
-    std::vector<double>      atom_mass;
+    std::vector<double> atom_mass;
     std::vector<std::string> atom_label;
     std::vector<std::string> pseudo_fn;
     std::vector<std::string> pseudo_type;
 
-    std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
-    std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
+    std::vector<std::string> orbital_fn; // filenames of orbitals, liuyu add 2022-10-19
+    std::string descriptor_file;         // filenames of descriptor_file, liuyu add 2023-04-06
 
     void set_iat2itia();
 
@@ -220,7 +209,7 @@ class UnitCell {
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions
     // cal_nwfc     : calculate total number of local basis and lmax
-    // cal_meshx	: calculate max number of mesh points in pp file
+    // cal_meshx    : calculate max number of mesh points in pp file
     //================================================================
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;

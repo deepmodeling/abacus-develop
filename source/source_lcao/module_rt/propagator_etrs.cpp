@@ -9,8 +9,7 @@
 #include <complex>
 #include <iostream>
 
-namespace module_rt
-{
+namespace module_rt {
 #ifdef __MPI
 void Propagator::compute_propagator_etrs(const int nlocal,
                                          const std::complex<double>* Stmp,
@@ -18,8 +17,7 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                                          const std::complex<double>* H_laststep,
                                          std::complex<double>* U_operator,
                                          std::ofstream& ofs_running,
-                                         const int print_matrix) const
-{
+                                         const int print_matrix) const {
     std::vector<std::complex<double>> U1(this->ParaV->nloc);
     std::vector<std::complex<double>> U2(this->ParaV->nloc);
     int tag = 2;

@@ -8,8 +8,7 @@
  * @brief the md loop line
  *
  */
-namespace Run_MD
-{
+namespace Run_MD {
 /**
  * @brief the md loop line
  *

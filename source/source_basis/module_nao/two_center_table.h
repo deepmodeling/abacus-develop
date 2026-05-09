@@ -4,8 +4,7 @@
 #include <ATen/tensor.h>
 #include "source_basis/module_nao/radial_collection.h"
 
-class TwoCenterTable
-{
+class TwoCenterTable {
   public:
     TwoCenterTable() = default;
     ~TwoCenterTable() { delete[] rgrid_; }
@@ -13,11 +12,11 @@ class TwoCenterTable
     TwoCenterTable(const TwoCenterTable&) = delete;
     TwoCenterTable& operator=(const TwoCenterTable&) = delete;
 
-    void build(const RadialCollection& bra,  //!< [in] radial collection involved in <bra|op|ket>
-               const RadialCollection& ket,  //!< [in] radial collection involved in <bra|op|ket>
-               const char op,                //!< [in] operator of the two-center integral
-               const int nr,                 //!< [in] number of table grid points
-               const double cutoff           //!< [in] cutoff radius of the table
+    void build(const RadialCollection& bra, //!< [in] radial collection involved in <bra|op|ket>
+               const RadialCollection& ket, //!< [in] radial collection involved in <bra|op|ket>
+               const char op,               //!< [in] operator of the two-center integral
+               const int nr,                //!< [in] number of table grid points
+               const double cutoff          //!< [in] cutoff radius of the table
     );
 
     /*!
@@ -66,8 +65,7 @@ class TwoCenterTable
     // This might not be the intended purpose of this class.
 
     /// number of NumericalRadial objects in the ket with given itype and l
-    int nchi_ket(const int itype, const int l) const
-    {
+    int nchi_ket(const int itype, const int l) const {
         assert(itype >= 0 && itype < nchi_ket_.shape().dim_size(0));
         assert(l >= 0 && l < nchi_ket_.shape().dim_size(1));
         return nchi_ket_.get_value<int>(itype, l);
@@ -78,15 +76,16 @@ class TwoCenterTable
 
     /// Returns the amount of heap memory used by this class (in bytes).
     size_t memory() const {
-        return (table_.NumElements() + dtable_.NumElements()
-                + nchi_ket_.NumElements() + index_map_.NumElements() + nr_) * sizeof(double);
+        return (table_.NumElements() + dtable_.NumElements() + nchi_ket_.NumElements() + index_map_.NumElements() +
+                nr_) *
+               sizeof(double);
     }
 
   private:
-    char op_ = '\0';   //!< operator associated with the present table
-    int ntab_ = 0;     //!< number of table entries
-    int nr_ = 0;       //!< number of radial points of each table
-    double rmax_= 0.0; //!< cutoff radius of the table
+    char op_ = '\0';    //!< operator associated with the present table
+    int ntab_ = 0;      //!< number of table entries
+    int nr_ = 0;        //!< number of radial points of each table
+    double rmax_ = 0.0; //!< cutoff radius of the table
     double* rgrid_ = nullptr;
 
     /// Table of size ntype x lmax that stores the number of radial functions of given type and l
@@ -119,12 +118,10 @@ class TwoCenterTable
     /// double factorial
     double dfact(int l) const;
 
-    typedef void(TwoCenterTable::*looped_func)(const NumericalRadial*, const NumericalRadial*, const int l);
+    typedef void (TwoCenterTable::*looped_func)(const NumericalRadial*, const NumericalRadial*, const int l);
 
     /// loop-execute a function over all pairwise radial functions & l with non-vanishing Gaunt coefficients
-    void two_center_loop(const RadialCollection& bra, 
-                         const RadialCollection& ket, 
-                         looped_func f);
+    void two_center_loop(const RadialCollection& bra, const RadialCollection& ket, looped_func f);
 
     /// various looped functions during the construction of table
     void _indexing(const NumericalRadial* it1, const NumericalRadial* it2, const int l);

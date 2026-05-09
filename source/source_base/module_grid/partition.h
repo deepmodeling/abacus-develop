@@ -35,18 +35,10 @@ extern const double stratmann_a;
  * The Journal of chemical physics, 88(4), 2547-2553.
  *
  */
-double w_becke(
-    int nR0,
-    const double* drR,
-    const double* dRR,
-    int nR,
-    const int* iR,
-    int c
-);
+double w_becke(int nR0, const double* drR, const double* dRR, int nR, const int* iR, int c);
 
 // Becke's cell function (iterated polynomial)
 double s_becke(double mu);
-
 
 /**
  * @brief Becke's partition weight with Stratmann's scheme.
@@ -65,15 +57,7 @@ double s_becke(double mu);
  * Chemical physics letters, 257(3-4), 213-223.
  *
  */
-double w_stratmann(
-    int nR0,
-    const double* drR,
-    const double* dRR,
-    const double* drR_thr,
-    int nR,
-    int* iR,
-    int c
-);
+double w_stratmann(int nR0, const double* drR, const double* dRR, const double* drR_thr, int nR, int* iR, int c);
 
 // Stratmann's piecewise cell function
 double s_stratmann(double mu);

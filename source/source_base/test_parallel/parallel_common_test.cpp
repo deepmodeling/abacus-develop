@@ -19,31 +19,22 @@
  * wrappers.
  */
 
-class MPIContext
-{
+class MPIContext {
   public:
-    MPIContext()
-    {
+    MPIContext() {
         MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &_size);
     }
 
-    int GetRank() const
-    {
-        return _rank;
-    }
-    int GetSize() const
-    {
-        return _size;
-    }
+    int GetRank() const { return _rank; }
+    int GetSize() const { return _size; }
 
   private:
     int _rank;
     int _size;
 };
 
-class ParaCommon : public testing::Test
-{
+class ParaCommon : public testing::Test {
   protected:
     bool boo = true;
     int is = 0;
@@ -58,20 +49,17 @@ class ParaCommon : public testing::Test
     MPIContext mpiContext;
 };
 
-TEST_F(ParaCommon, Bcast)
-{
+TEST_F(ParaCommon, Bcast) {
     // reset data in the first process
     int MY_RANK = mpiContext.GetRank();
-    if (MY_RANK == 0)
-    {
+    if (MY_RANK == 0) {
         boo = false;
         is = 1;
         fs = 1.0;
         imgs = std::complex<double>(1.0, -1.0);
         chs = "ABACUS";
         strcpy(cha, chs.c_str());
-        for (int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 10; i++) {
             double ii = static_cast<double>(i);
             iv[i] = i;
             fv[i] = ii;
@@ -100,8 +88,7 @@ TEST_F(ParaCommon, Bcast)
     EXPECT_NEAR(imgs.imag(), -1.0, 1E-15);
     EXPECT_EQ(chs, "ABACUS");
     EXPECT_STREQ(cha, "ABACUS");
-    for (int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
         double ii = static_cast<double>(i);
         EXPECT_EQ(iv[i], i);
         EXPECT_NEAR(fv[i], ii, 1E-15);
@@ -113,8 +100,7 @@ TEST_F(ParaCommon, Bcast)
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);

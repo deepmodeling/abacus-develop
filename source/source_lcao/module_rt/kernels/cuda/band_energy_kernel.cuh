@@ -6,10 +6,8 @@
 #ifdef __CUBLASMP
 #include <cuComplex.h>
 
-namespace module_rt
-{
-namespace gpu
-{
+namespace module_rt {
+namespace gpu {
 
 // Standard C++ wrapper to launch the diagonal extraction kernel
 void launch_extract_ekb_kernel(const cuDoubleComplex* d_Eij,
