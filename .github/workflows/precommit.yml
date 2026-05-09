@@ -1,0 +1,53 @@
+name: Precommit
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Precommit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          # We will handle submodules manually after fixing ownership
+          submodules: 'false'
+
+      - name: Update submodules
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive
+
+      - name: Configure precommit server
+        run: |
+          cd tools/precommit
+          ./start_local_server.sh &
+
+      - name: Wait for precommit server
+        run: |
+          for i in {1..300}; do
+            if curl -fsS http://127.0.0.1:8080/ >/dev/null; then
+              echo "precommit server is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "precommit server did not become ready" >&2
+          echo "==== precommit server log ====" >&2
+          cat "$RUNNER_TEMP/precommit-server.log" >&2 || true
+          exit 1
+
+      - name: Run precommit
+        env:
+          ABACUS_PRECOMMIT_SERVER: "http://127.0.0.1:8080"
+        run: |
+          ./tools/precommit/precommit.py --no-cache
+
