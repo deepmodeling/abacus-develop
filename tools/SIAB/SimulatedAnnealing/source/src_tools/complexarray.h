@@ -10,11 +10,9 @@
 #include <cassert>
 #include <complex>
 
-using namespace std;
-
 class ComplexArray {
   public:
-    complex<double>* ptr;
+    std::complex<double>* ptr;
 
     ComplexArray(const int d1 = 1, const int d2 = 1, const int d3 = 1);
     ComplexArray(const int d1, const int d2, const int d3, const int d4);
@@ -26,8 +24,8 @@ class ComplexArray {
     const ComplexArray& operator=(const ComplexArray& right);
     const ComplexArray& operator=(const std::complex<double>& right);
 
-    complex<double>& operator()(const int d1, const int d2, const int d3);
-    complex<double>& operator()(const int d1, const int d2, const int d3, const int d4);
+    std::complex<double>& operator()(const int d1, const int d2, const int d3);
+    std::complex<double>& operator()(const int d1, const int d2, const int d3, const int d4);
 
     const std::complex<double>& operator()(const int d1, const int d2, const int d3) const;
     const std::complex<double>& operator()(const int d1, const int d2, const int d3, const int d4) const;

@@ -10,8 +10,6 @@
 #include <iomanip>
 #include <cassert>
 
-using namespace std;
-
 class IntArray {
   public:
     int* ptr;

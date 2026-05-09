@@ -11,7 +11,6 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
-using namespace std;
 
 template <class T>
 class Vector3 {
@@ -31,7 +30,7 @@ class Vector3 {
 
     void set(const T& x1, const T& y1, const T& z1);
 
-    inline T norm(void) const { return sqrt(x * x + y * y + z * z); }
+    inline T norm(void) const { return std::sqrt(x * x + y * y + z * z); }
 
     T norm2(void) const;
     void normalize(void);
@@ -84,10 +83,10 @@ T Vector3<T>::norm2(void) const {
     return x * x + y * y + z * z;
 }
 
-//|v| = sqrt(x*x+y*y+z*z)=1
+//|v| = std::sqrt(x*x+y*y+z*z)=1
 template <class T>
 void Vector3<T>::normalize(void) {
-    T m = sqrt(x * x + y * y + z * z);
+    T m = std::sqrt(x * x + y * y + z * z);
     x /= m;
     y /= m;
     z /= m;
@@ -205,8 +204,9 @@ bool operator!=(const Vector3<T>& u, const Vector3<T>& v) {
 
 template <class T>
 void Vector3<T>::print(void) const {
-    cout.precision(5);
-    cout << "(" << setw(10) << x << "," << setw(10) << y << "," << setw(10) << z << ")" << endl;
+    std::cout.precision(5);
+    std::cout << "(" << std::setw(10) << x << "," << std::setw(10) << y << "," << std::setw(10) << z << ")"
+              << std::endl;
     return;
 }
 

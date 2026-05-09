@@ -6,12 +6,11 @@
 #define COMPLEXMATRIX_H
 
 #include <complex>
-using namespace std;
 
 class ComplexMatrix {
 
   public:
-    complex<double>* c;
+    std::complex<double>* c;
     int nr;
     int nc;
     int size;
@@ -30,7 +29,7 @@ class ComplexMatrix {
     //============
     // Operators
     //============
-    complex<double>& operator()(const int i, const int j) {
+    std::complex<double>& operator()(const int i, const int j) {
         return c[nc * i + j]; // mohan modify in-line 2007-10-1
     }
     const std::complex<double>& operator()(const int i, const int j) const {

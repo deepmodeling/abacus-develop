@@ -20,7 +20,6 @@
 #include <stdexcept>
 
 #include <complex>
-using namespace std;
 
 #include "complexmatrix.h"
 
@@ -86,10 +85,10 @@ void zhegv_(const int* itype,
 void zheev_(const char* jobz,
             const char* uplo,
             const int* n,
-            complex<double>* a,
+            std::complex<double>* a,
             const int* lda,
             double* w,
-            complex<double>* work,
+            std::complex<double>* work,
             const int* lwork,
             double* rwork,
             int* info);
@@ -232,8 +231,8 @@ void zhemm_(const char* Side,
 class LapackConnector {
   private:
     // Transpose the complex matrix to the fortran-form real-complex array.
-    static inline complex<double>* transpose(const ComplexMatrix& a, const int n, const int lda) {
-        complex<double>* aux = new std::complex<double>[lda * n];
+    static inline std::complex<double>* transpose(const ComplexMatrix& a, const int n, const int lda) {
+        std::complex<double>* aux = new std::complex<double>[lda * n];
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < lda; ++j) {
                 aux[i * lda + j] = a(j, i); // aux[i*lda+j] means aux[i][j] in semantic, not in syntax!
@@ -279,10 +278,10 @@ class LapackConnector {
                              ComplexMatrix& A,
                              const int lda,
                              const int* ipiv,
-                             complex<double>* B,
+                             std::complex<double>* B,
                              const int ldb,
                              int* info) {
-        complex<double>* aux = LapackConnector::transpose(A, n, lda);
+        std::complex<double>* aux = LapackConnector::transpose(A, n, lda);
 
         zgesv_(&n, &nrhs, aux, &lda, ipiv, B, &ldb, info);
 
@@ -290,7 +289,7 @@ class LapackConnector {
     }
 
     static inline void zpotrf(char uplo, int n, ComplexMatrix& a, const int lda, int& info) {
-        /*        complex<double> *aux = LapackConnector::transpose(a, n, lda);
+        /*        std::complex<double> *aux = LapackConnector::transpose(a, n, lda);
                 zpotrf_( &uplo, &n, aux, &lda, &info);
                 LapackConnector::transpose(aux, a, n, lda);
                 delete[] aux;
@@ -300,7 +299,7 @@ class LapackConnector {
     }
 
     static inline void zpotri(char uplo, int n, ComplexMatrix& a, const int lda, int& info) {
-        /*        complex<double> *aux = LapackConnector::transpose(a, n, lda);
+        /*        std::complex<double> *aux = LapackConnector::transpose(a, n, lda);
                 zpotri_( &uplo, &n, aux, &lda, &info);
                 LapackConnector::transpose(aux, a, n, lda);
                 delete[] aux;
@@ -323,8 +322,8 @@ class LapackConnector {
                              int lwork,
                              double* rwork,
                              int& info) { // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
-        complex<double>* bux = LapackConnector::transpose(b, n, ldb);
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb);
 
         // call the fortran routine
         zhegv_(&itype, &jobz, &uplo, &n, aux, &lda, bux, &ldb, w, work, &lwork, rwork, &info);
@@ -345,11 +344,11 @@ class LapackConnector {
                              ComplexMatrix& a,
                              const int lda,
                              double* w,
-                             complex<double>* work,
+                             std::complex<double>* work,
                              const int lwork,
                              double* rwork,
                              int* info) { // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
 
         // call the fortran routine
         zheev_(&jobz, &uplo, &n, aux, &lda, w, work, &lwork, rwork, info);
@@ -387,9 +386,9 @@ class LapackConnector {
                               int* ifail,
                               int& info) {
         // Transpose the complex matrix to the fortran-form real-complex array.
-        complex<double>* aux = LapackConnector::transpose(a, n, lda);
-        complex<double>* bux = LapackConnector::transpose(b, n, ldb);
-        complex<double>* zux = LapackConnector::transpose(z, n, ldz);
+        std::complex<double>* aux = LapackConnector::transpose(a, n, lda);
+        std::complex<double>* bux = LapackConnector::transpose(b, n, ldb);
+        std::complex<double>* zux = LapackConnector::transpose(z, n, ldz);
 
         // call the fortran routine
         //        zhegvx_(&itype, &jobz, &range, &uplo, &n, aux, &lda, bux, &ldb, &vl,
