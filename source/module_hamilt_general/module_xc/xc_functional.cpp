@@ -2,6 +2,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
+#include "module_base/tool_title.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -71,6 +72,7 @@ method. */
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/
 void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
+    ModuleBase::TITLE("XC_Functional", "set_xc_type");
     //Note : due to the separation of gcx_spin and gcc_spin,
     //when you are adding new GGA functionals,
     //please put exchange first, followed by correlation,
@@ -364,6 +366,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
 std::string XC_Functional::output_info()
 {
+    ModuleBase::TITLE("XC_Functional", "output_info");
   #ifdef USE_LIBXC
     if(use_libxc)
     {
