@@ -25,16 +25,15 @@ bool run_deltaspin_lambda_loop(const int iter,
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
         /// Optimize lambda to get target magnetic moments
-        sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter - 1);
         sc.set_mag_converged(true);
         return true;
     }
     /// Case 2: Magnetic moments already converged in previous iteration.
-    /// The lambda values and charge density were already updated in Case 1.
-    /// Skip the solver so the SCF can converge with the existing charge density.
-    /// Re-running the lambda loop would re-update the charge density and disrupt SCF mixing.
+    /// Re-run the lambda loop to update psi and charge density with current lambda.
     else if (sc.mag_converged())
     {
+        sc.run_lambda_loop(iter - 1);
         return true;
     }
 

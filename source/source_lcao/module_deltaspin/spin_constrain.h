@@ -16,7 +16,6 @@
 #include "source_cell/unitcell.h"
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
-#include "source_lcao/module_deltaspin/lambda_update_strategies.h"
 
 #ifdef __LCAO
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
@@ -44,14 +43,6 @@ inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> oc
 }
 
 struct ScAtomData;
-
-enum class LambdaStrategyType
-{
-    BFGS,
-    LinearResponse,
-    AugmentedLagrangian,
-    HybridDelayed
-};
 
 template <typename TK>
 class SpinConstrain
@@ -101,9 +92,6 @@ public:
 
   void run_lambda_loop(int outer_step,
 		  bool rerun = true);
-
-  /// @brief optimized lambda loop for LCAO nspin=2: subspace diag + analytical Jacobian
-  void run_lambda_loop_lcao(int outer_step);
 
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
@@ -287,12 +275,6 @@ public:
                                void* p_hamilt_in,
                                void* psi_in,
                                elecstate::ElecState* pelec_in);
-    /// @brief set lambda update strategy type
-    void set_strategy_type(LambdaStrategyType type);
-    /// @brief set strategy-specific parameters
-    void set_strategy_params(double mu_init, double mu_max,
-                             double mu_growth, double mix_beta,
-                             double sc_scf_thr);
 
   private:
     SpinConstrain(){};                               // Private constructor
@@ -333,9 +315,6 @@ public:
     double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
     double restrict_current_; // in unit of Ry/uB = 3 eV/uB
     bool direction_only_ = false; ///< only optimize the direction of magnetization
-    /// lambda update strategy
-    LambdaStrategyType strategy_type_ = LambdaStrategyType::BFGS;
-    std::unique_ptr<LambdaUpdateStrategy> strategy_;
 
   public:
     /// @brief save operator for spin-constrained DFT

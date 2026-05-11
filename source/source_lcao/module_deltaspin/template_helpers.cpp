@@ -18,11 +18,6 @@ void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step,
 }
 
 template <>
-void spinconstrain::SpinConstrain<double>::run_lambda_loop_lcao(int outer_step)
-{
-}
-
-template <>
 bool spinconstrain::SpinConstrain<double>::check_rms_stop(int outer_step,
                                                                     int i_step,
                                                                     double rms_error,

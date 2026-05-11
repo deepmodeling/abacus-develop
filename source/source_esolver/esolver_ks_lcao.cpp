@@ -404,29 +404,13 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
         {
-            // optimize lambda to get target magnetic moments, but the lambda is not near target
-            if (PARAM.inp.nspin == 2)
-            {
-                sc.run_lambda_loop_lcao(iter - 1);
-            }
-            else
-            {
-                sc.run_lambda_loop(iter - 1);
-            }
+            sc.run_lambda_loop(iter - 1);
             sc.set_mag_converged(true);
             skip_solve = true;
         }
         else if (sc.mag_converged())
         {
-            // optimize lambda to get target magnetic moments, but the lambda is not near target
-            if (PARAM.inp.nspin == 2)
-            {
-                sc.run_lambda_loop_lcao(iter - 1);
-            }
-            else
-            {
-                sc.run_lambda_loop(iter - 1);
-            }
+            sc.run_lambda_loop(iter - 1);
             skip_solve = true;
         }
     }

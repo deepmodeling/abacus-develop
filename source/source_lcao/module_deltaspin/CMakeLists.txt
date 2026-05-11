@@ -8,8 +8,6 @@ list(APPEND objects
     cal_mw_from_lambda.cpp
     template_helpers.cpp
     deltaspin_lcao.cpp
-    lambda_update_strategies.cpp
-    lambda_strategy_integration.cpp
     sc_parse_json.cpp
     cal_h_lambda.cpp
     cal_mw_helper.cpp
