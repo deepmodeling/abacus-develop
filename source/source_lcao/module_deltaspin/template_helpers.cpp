@@ -63,3 +63,13 @@ bool spinconstrain::SpinConstrain<double>::check_gradient_decay(
 {
     return false;
 }
+
+template <>
+void spinconstrain::SpinConstrain<double>::run_lambda_bfgs_v2(int outer_step)
+{
+}
+
+template <>
+void spinconstrain::SpinConstrain<double>::run_lambda_linear_scan(int outer_step)
+{
+}

@@ -93,9 +93,13 @@ public:
   void run_lambda_loop(int outer_step,
 		  bool rerun = true);
 
+  void run_lambda_bfgs_v2(int outer_step);
+
+  void run_lambda_linear_scan(int outer_step);
+
   /// @brief update the charge density for LCAO base with new lambda
   /// update the charge density and psi for PW base with new lambda
-  void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true);
+  void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true, bool full_update = false);
 
   /**
    * @brief Wavefunction and charge density update implementation for PW basis
@@ -103,20 +107,21 @@ public:
    *          1. Subspace diagonalization: apply DeltaSpin correction and solve for each k-point
    *          2. Charge update: full-space diagonalization or direct charge update based on pw_solve
    */
-  void update_psi_charge_pw(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+  void update_psi_charge_pw(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update = false);
   
   /// CPU implementation of PW basis update
-  void update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+  void update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update = false);
   
 #if ((defined __CUDA) || (defined __ROCM))
   /// GPU implementation of PW basis update
-  void update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve);
+  void update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update = false);
 #endif
 
   void calculate_delta_hcc(std::complex<double>* h_tmp,
 		  const std::complex<double>* becp_k,
 		  const ModuleBase::Vector3<double>* delta_lambda,
-		  const int nbands, const int nkb, const int* nh_iat, const int ik);
+		  const int nbands, const int nkb, const int* nh_iat, const int ik,
+		  bool full_update = false);
 
 #ifdef __LCAO
   /// @brief convert orbital matrix to nested vector format
@@ -342,6 +347,7 @@ public:
     TK* sub_h_save = nullptr;
     TK* sub_s_save = nullptr;
     TK* becp_save = nullptr;
+    std::vector<ModuleBase::Vector3<double>> lambda_in_sub_;
 };
 
 

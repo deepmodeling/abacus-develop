@@ -206,18 +206,55 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * bfgs: BFGS quasi-Newton method
 * linear_response: linear response (Scheme B)
 * augmented_lagrangian: augmented Lagrangian (Scheme C)
-* hybrid_delayed: hybrid delayed update (Scheme D))";
+* hybrid_delayed: hybrid delayed update (Scheme D)
+* linear_scan: linear sweep of lambda for testing magnetic moment response)";
         item.default_value = "bfgs";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_string(input.sc_lambda_strategy);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> valid = {"bfgs", "linear_response", "augmented_lagrangian", "hybrid_delayed"};
+            const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
             if (std::find(valid.begin(), valid.end(), para.input.sc_lambda_strategy) == valid.end())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, linear_response, augmented_lagrangian, or hybrid_delayed");
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, or linear_scan");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_lambda_start");
+        item.annotation = "start value for linear lambda scan (eV/uB)";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Float";
+        item.description = "Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "0.0";
+        item.unit = "eV/uB";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_double(input.sc_scan_lambda_start);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_lambda_end");
+        item.annotation = "end value for linear lambda scan (eV/uB)";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Float";
+        item.description = "Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "1.0";
+        item.unit = "eV/uB";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_double(input.sc_scan_lambda_end);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_steps");
+        item.annotation = "number of steps for linear lambda scan";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Integer";
+        item.description = "Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "20";
+        item.unit = "";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_int(input.sc_scan_steps);
         this->add_item(item);
     }
 

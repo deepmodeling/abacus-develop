@@ -402,7 +402,17 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-        if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
+        if (PARAM.inp.sc_lambda_strategy == "linear_scan")
+        {
+            sc.run_lambda_linear_scan(iter - 1);
+            skip_solve = true;
+        }
+        else if (PARAM.inp.sc_lambda_strategy == "bfgs2")
+        {
+            sc.run_lambda_bfgs_v2(iter - 1);
+            skip_solve = true;
+        }
+        else if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
         {
             sc.run_lambda_loop(iter - 1);
             sc.set_mag_converged(true);

@@ -20,10 +20,23 @@
 #endif
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat, const int ik)
+void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat, const int ik, bool full_update)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "calculate_delta_hcc");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "calculate_delta_hcc");
+    
+    std::vector<ModuleBase::Vector3<double>> actual_delta;
+    const ModuleBase::Vector3<double>* effective_lambda = delta_lambda;
+    if (full_update)
+    {
+        int nat = this->get_nat();
+        actual_delta.resize(nat);
+        for (int iat = 0; iat < nat; iat++)
+        {
+            actual_delta[iat] = delta_lambda[iat] - this->lambda_in_sub_[iat];
+        }
+        effective_lambda = actual_delta.data();
+    }
     
     int sum = 0;
     int size_ps = nkb * this->npol_ * nbands;
@@ -48,10 +61,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
         for (int iat = 0; iat < this->Mi_.size(); iat++)
         {
             const int nproj = nh_iat[iat];
-            const std::complex<double> coefficients0(delta_lambda[iat][2], 0.0);
-            const std::complex<double> coefficients1(delta_lambda[iat][0] , delta_lambda[iat][1]);
-            const std::complex<double> coefficients2(delta_lambda[iat][0] , -1 * delta_lambda[iat][1]);
-            const std::complex<double> coefficients3(-1 * delta_lambda[iat][2], 0.0);
+            const std::complex<double> coefficients0(effective_lambda[iat][2], 0.0);
+            const std::complex<double> coefficients1(effective_lambda[iat][0] , effective_lambda[iat][1]);
+            const std::complex<double> coefficients2(effective_lambda[iat][0] , -1 * effective_lambda[iat][1]);
+            const std::complex<double> coefficients3(-1 * effective_lambda[iat][2], 0.0);
             for (int ib = 0; ib < nbands * this->npol_; ib += this->npol_)
             {
                 for (int ip = 0; ip < nproj; ip++)
@@ -74,7 +87,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
         for (int iat = 0; iat < this->Mi_.size(); iat++)
         {
             const int nproj = nh_iat[iat];
-            double coefficients0 = delta_lambda[iat][2] * this->get_spin_sign(ik);
+            double coefficients0 = effective_lambda[iat][2] * this->get_spin_sign(ik);
             for (int ib = 0; ib < nbands; ib++)
             {
                 for (int ip = 0; ip < nproj; ip++)
@@ -150,7 +163,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
 }
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve)
+void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge_pw_cpu");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge_pw_cpu");
@@ -172,6 +185,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
     assert(this->sub_s_save != nullptr);
     assert(this->becp_save != nullptr);
     
+    const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
+    std::vector<ModuleBase::Vector3<double>> computed_delta;
+    if (full_update)
+    {
+        lambda_for_hcc = this->lambda_.data();
+    }
+    
     for (int ik = 0; ik < nk; ++ik)
     {
         std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
@@ -183,8 +203,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
         memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
         memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
         
-        // Apply DeltaSpin correction: H' = H_k + delta_H(lambda)
-        this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, ik);
+        this->calculate_delta_hcc(h_tmp.data(), becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik, full_update);
         
         // Diagonalize in subspace to update wavefunction
         hsolver::DiagoIterAssist<std::complex<double>>::diag_subspace_psi(h_tmp.data(),
@@ -240,7 +259,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
 
 #if ((defined __CUDA) || (defined __ROCM))
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve)
+void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gpu(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
@@ -265,6 +284,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
     assert(this->sub_s_save != nullptr);
     assert(this->becp_save != nullptr);
     
+    const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
+    std::vector<ModuleBase::Vector3<double>> computed_delta;
+    if (full_update)
+    {
+        lambda_for_hcc = this->lambda_.data();
+    }
+    
     for (int ik = 0; ik < nk; ++ik)
     {
         std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
@@ -276,8 +302,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
         
-        // Apply DeltaSpin correction: H' = H_k + delta_H(lambda)
-        this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, ik);
+        this->calculate_delta_hcc(h_tmp, becp_k, lambda_for_hcc, nbands, nkb, nh_iat, ik, full_update);
         
         // Diagonalize in subspace to update wavefunction
         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
@@ -399,6 +424,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     this->sub_h_save = new std::complex<double>[nbands * nbands * nk];
                     this->sub_s_save = new std::complex<double>[nbands * nbands * nk];
                     this->becp_save = new std::complex<double>[size_becp * nk];
+                    this->lambda_in_sub_ = this->lambda_;
                 }
                 for (int ik = 0; ik < nk; ++ik)
                 {
@@ -417,8 +443,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     }
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
-                    // update h_tmp by delta_lambda
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, ik);
+                    if (i_step != -1) this->calculate_delta_hcc(h_tmp.data(), becp_k, this->lambda_.data(), nbands, nkb, nh_iat, ik, true);
 
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
                                                                                   s_tmp.data(),
@@ -453,6 +478,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(this->sub_h_save, nbands * nbands * nk);
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(this->sub_s_save, nbands * nbands * nk);
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(this->becp_save, size_becp * nk);
+                    this->lambda_in_sub_ = this->lambda_;
                 }
                 std::complex<double>* becp_pointer = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer, size_becp);
@@ -471,7 +497,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     }
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, ik);
+                    if (i_step != -1) this->calculate_delta_hcc(h_tmp, becp_k, this->lambda_.data(), nbands, nkb, nh_iat, ik, true);
 
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(h_tmp,
                                                                                   s_tmp,
@@ -512,7 +538,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
 }
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve)
+void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve, bool full_update)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "update_psi_charge");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "update_psi_charge");
@@ -527,12 +553,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
     {
         if (PARAM.inp.device == "cpu")
         {
-            this->update_psi_charge_pw_cpu(delta_lambda, pw_solve);
+            this->update_psi_charge_pw_cpu(delta_lambda, pw_solve, full_update);
         }
 #if ((defined __CUDA) || (defined __ROCM))
         else
         {
-            this->update_psi_charge_pw_gpu(delta_lambda, pw_solve);
+            this->update_psi_charge_pw_gpu(delta_lambda, pw_solve, full_update);
         }
 #endif
     }

@@ -71,6 +71,7 @@ double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
     const double alpha_trial)
 {
     int nat = this->get_nat();
+    const bool print = false;
     const double zero = 0.0;
     std::vector<ModuleBase::Vector3<double>> spin_mask(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> target_spin_mask(nat, 0.0);
@@ -92,14 +93,18 @@ double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
     }
     double sum_k = sum_2d(temp_1);
     double sum_k2 = sum_2d(temp_2);
-    printf("[ALPHA-OPT] nat=%d sum_k=%.6e sum_k2=%.6e alpha_trial=%.6e\n", nat, sum_k, sum_k2, alpha_trial);
     for(int ia=0; ia<std::min(2,(int)nat); ++ia) {
+        if (print) {
+        printf("[ALPHA-OPT] nat=%d sum_k=%.6e sum_k2=%.6e alpha_trial=%.6e\n", nat, sum_k, sum_k2, alpha_trial);
         printf("[ALPHA-OPT] spin[%d]=(%.4f,%.4f,%.4f) spin_plus[%d]=(%.4f,%.4f,%.4f)\n",
-               ia, spin[ia].x, spin[ia].y, spin[ia].z,
-               ia, spin_plus[ia].x, spin_plus[ia].y, spin_plus[ia].z);
+                ia, spin[ia].x, spin[ia].y, spin[ia].z,
+                ia, spin_plus[ia].x, spin_plus[ia].y, spin_plus[ia].z);
+        }
     }
     if (std::abs(sum_k2) < 1e-30) {
+        if (print) {
         printf("[ALPHA-OPT] WARNING: sum_k2 too small, returning alpha_trial\n");
+        }
         fflush(stdout);
         return alpha_trial;
     }

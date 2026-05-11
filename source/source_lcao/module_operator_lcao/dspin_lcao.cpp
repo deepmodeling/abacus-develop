@@ -69,16 +69,17 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // if lambda has not changed, calculate the HR^I = lambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}>
     // if lambda has changed, calculate the dHR^I = dlambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}> 
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-    // there are three case for contributeHR 
-    // 1. HR has not been calculated, reset lambda_save and calculate HR = lambda * pre_hr
-    // 2. HR has been calculated, but lambda has changed, calculate dHR = dlambda * pre_hr
-    // 3. HR has been calculated, and lambda has not changed, do nothing
+    // there are three case for contributeHR
+    // 1. HR is being rebuilt from scratch (hr_done=false): reset lambda_save and add full lambda
+    // 2. HR exists but lambda has changed (hr_done=true, sc_hr_done=false or update_lambda_=true):
+    //    compute incremental delta = lambda - lambda_save and add to existing HR
+    // 3. HR exists and lambda has not changed: do nothing
     if(!this->hr_done)
     {
-        // set the lambda_save to zero if lambda loop is started
+        // HR is being rebuilt from scratch, so the old DS contribution is gone
         this->lambda_save.assign(this->ucell->nat * 3, 0.0);
     }
-    else if(this->hr_done && !this->update_lambda_[this->current_spin])
+    else if(this->sc_hr_done && !this->update_lambda_[this->current_spin])
     {
         return;
     }
@@ -168,6 +169,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             }
         }
     }
+    this->sc_hr_done = true;
     return;
 }
 

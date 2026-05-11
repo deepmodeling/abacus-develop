@@ -524,6 +524,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
             }
         }
         this->current_spin = this->kv->isk[ik];
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_current_spin(this->kv->isk[ik]);
     }
     this->getOperator()->init(ik);
     ModuleBase::timer::end("HamiltLCAO", "updateHk");

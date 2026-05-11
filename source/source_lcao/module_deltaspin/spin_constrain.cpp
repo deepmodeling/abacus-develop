@@ -417,7 +417,7 @@ void SpinConstrain<TK>::set_target_mag(const std::vector<ModuleBase::Vector3<dou
         for (int iat = 0; iat < nat; iat++)
         {
             this->target_mag_[iat].z
-                = target_mag_in[iat].x; /// this is wired because the UnitCell class set in x direction
+                = target_mag_in[iat].z;
         }
     }
     else if (this->nspin_ == 4)

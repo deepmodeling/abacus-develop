@@ -49,6 +49,12 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     */
     std::vector<double> cal_moment(const HContainer<double>* dmR, const std::vector<ModuleBase::Vector3<int>>& constrain);
 
+    /// @brief Reset initialization state to allow re-constraint with new constrain array
+    void reset_initialized()
+    {
+        this->initialized = false;
+    }
+
     /**
      * @brief set the update_lambda_ to true, which means the lambda will be updated in the next contributeHR()
     */
@@ -58,6 +64,24 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         {
             this->update_lambda_[is] = true;
         }
+        // Reset sc_hr_done so contributeHR() recalculates DeltaSpin HR
+        // in the next k-point loop (avoids accumulation across k-points)
+        this->sc_hr_done = false;
+    }
+
+    /**
+     * @brief Shadow set_current_spin to reset sc_hr_done on spin switch (nspin=2).
+     * In the lambda loop, refresh_times=0 so the shared hr_done is NOT reset on
+     * spin switch. sc_hr_done must be reset here so each spin's HR is computed
+     * independently.
+     */
+    void set_current_spin(const int current_spin_in)
+    {
+        if (this->current_spin != current_spin_in)
+        {
+            this->sc_hr_done = false;
+        }
+        OperatorLCAO<TK, TR>::set_current_spin(current_spin_in);
     }
 
     /// calculate force and stress for DFT+U
@@ -167,6 +191,9 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     bool initialized = false;
     int spin_num = 1;
     std::vector<bool> update_lambda_;
+    /// Independent HR completion flag for DeltaSpin, decoupled from
+    /// the shared OperatorLCAO::hr_done to avoid cross-k-point accumulation.
+    bool sc_hr_done = false;
 
     /// @brief Saved B_I overlap data for subspace projection optimization
     /// For each constrained atom I, stores the overlaps <phi_mu|alpha_I_lm> organized by adjacent atoms
