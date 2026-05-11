@@ -9,7 +9,6 @@ list(APPEND objects
     template_helpers.cpp
     deltaspin_lcao.cpp
     sc_parse_json.cpp
-    cal_h_lambda.cpp
     cal_mw_helper.cpp
 )
 

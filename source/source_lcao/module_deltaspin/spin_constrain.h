@@ -119,11 +119,6 @@ public:
 		  const int nbands, const int nkb, const int* nh_iat, const int ik);
 
 #ifdef __LCAO
-  /// @brief calculate Hamiltonian contribution from lambda for LCAO nspin=4
-  void cal_h_lambda(std::complex<double>* h_lambda,
-                    const std::complex<double>* Sloc2,
-                    bool column_major,
-                    int isk);
   /// @brief convert orbital matrix to nested vector format
   std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix& orbMulP);
   /// @brief calculate magnetic moment from orbital matrix

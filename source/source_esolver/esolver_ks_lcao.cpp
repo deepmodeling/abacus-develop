@@ -422,6 +422,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }
+    else
+    {
+        // Lambda loop updated the density matrix (DM) but not the real-space charge density.
+        // HSolver was skipped, so we need to sync rho from DM manually.
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+    }
 
     // 4) EXX
 #ifdef __EXX

@@ -1,5 +1,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_base/global_variable.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "spin_constrain.h"
@@ -201,11 +202,39 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
     this->sub_s_save = nullptr;
     this->becp_save = nullptr;
 
-    // Subspace diagonalization already includes DeltaSpin correction via calculate_delta_hcc.
-    // For the PW case, the full-space HSolverPW does NOT include the DeltaSpin correction
-    // (it only exists in the subspace), so calling HSolverPW::solve would overwrite the
-    // corrected psi with an uncorrected one, causing density explosion. Always use psiToRho.
-    reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>*>(this->pelec)->psiToRho(*psi_t);
+    if (pw_solve)
+    {
+        // Full PW diagonalization: subspace rotation above provides a good initial guess,
+        // then HSolverPW iteratively refines psi in the full plane-wave space and calls psiToRho.
+        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hsolver_pw_obj(
+            this->pw_wfc_,
+            PARAM.inp.calculation,
+            PARAM.inp.basis_type,
+            PARAM.inp.ks_solver,
+            PARAM.globalv.use_uspp,
+            PARAM.inp.nspin,
+            hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+            PARAM.inp.use_k_continuity);
+
+        hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
+            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, this->tpiba, this->get_nat());
+    }
+    else
+    {
+        // No full solver: update weights from new ekb, then build rho from current psi
+        elecstate::calculate_weights(this->pelec->ekb,
+                                     this->pelec->wg,
+                                     this->pelec->klist,
+                                     this->pelec->eferm,
+                                     this->pelec->f_en,
+                                     this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
+        elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+        reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>*>(this->pelec)->psiToRho(*psi_t);
+    }
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "update_psi_charge_pw_cpu");
 }
 
@@ -266,10 +295,36 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
     this->sub_s_save = nullptr;
     this->becp_save = nullptr;
 
-    // Subspace diagonalization already includes DeltaSpin correction via calculate_delta_hcc.
-    // For the PW case, the full-space HSolverPW does NOT include the DeltaSpin correction,
-    // so calling HSolverPW::solve would overwrite the corrected psi. Always use psiToRho.
-    reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>*>(this->pelec)->psiToRho(*psi_t);
+    if (pw_solve)
+    {
+        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU> hsolver_pw_obj(
+            this->pw_wfc_,
+            PARAM.inp.calculation,
+            PARAM.inp.basis_type,
+            PARAM.inp.ks_solver,
+            PARAM.globalv.use_uspp,
+            PARAM.inp.nspin,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace,
+            PARAM.inp.use_k_continuity);
+
+        hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
+            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, this->tpiba, this->get_nat());
+    }
+    else
+    {
+        elecstate::calculate_weights(this->pelec->ekb,
+                                     this->pelec->wg,
+                                     this->pelec->klist,
+                                     this->pelec->eferm,
+                                     this->pelec->f_en,
+                                     this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
+        elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+        reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>*>(this->pelec)->psiToRho(*psi_t);
+    }
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "update_psi_charge_pw_gpu");
 }
 #endif
@@ -309,10 +364,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                      this->pelec->nelec_spin,
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
-
-        elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
-
-        this->dm_->cal_DMR();
 
         this->cal_mi_lcao(i_step);
     }
