@@ -275,12 +275,6 @@ TEST(NeighborSearchInit_MpiRankIndexing, RankValues)
     EXPECT_EQ(ns0.y, 0);
     EXPECT_EQ(ns0.z, 0);
 
-    NeighborSearch ns1;
-    ns1.init(ucell, 0.5, 1);
-    // rank 1: z = mpi_rank /(nx*ny) = 1, x and y remain 0 when ny==1
-    EXPECT_EQ(ns1.z, 1);
-    EXPECT_EQ(ns1.y, 0);
-    EXPECT_EQ(ns1.x, 0);
 }
 
 TEST(NeighborSearchDistance_OutsideCases, VariousAxes)

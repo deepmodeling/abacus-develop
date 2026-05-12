@@ -148,7 +148,7 @@ void BinManager::build_atom_neighbors(
 
                     int nidx = jx * nbiny * nbinz + jy * nbinz + jz;
 
-                    for (auto natom : bins[nidx].atoms)
+                    for (const NeighborAtom& natom : bins[nidx].atoms)
                     {
                         double dx = atoms[i].position_x - natom.position_x;
                         double dy = atoms[i].position_y - natom.position_y;
@@ -169,6 +169,7 @@ void BinManager::build_atom_neighbors(
         //std::cout<<n<<std::endl;
 
         int* ptr = neighbor_list.allocator.allocate(n);
+        assert(ptr != nullptr);
 
         for (int k = 0; k < n; k++)
         {

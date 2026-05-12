@@ -7,7 +7,7 @@
 #include "source_estate/magnetism.h"
 #include "source_io/module_output/output.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/module_neighbor_search/unitcell_interface.h"
+#include "source_cell/module_neighlist/unitcell_interface.h"
 
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"

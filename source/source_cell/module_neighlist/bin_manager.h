@@ -2,8 +2,8 @@
 #define BIN_MANAGER_H
 
 #include <vector>
-#include "source_cell/module_neighbor_search/neighbor_atom.h"
-#include "source_cell/module_neighbor_search/neighbor_list.h"
+#include "source_cell/module_neighlist/neighbor_atom.h"
+#include "source_cell/module_neighlist/neighbor_list.h"
 
 
 

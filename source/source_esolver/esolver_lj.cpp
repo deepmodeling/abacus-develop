@@ -4,14 +4,14 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
-#include "source_cell/module_neighbor_search/neighbor_search.h"
+#include "source_cell/module_neighlist/neighbor_search.h"
 
 
 
 namespace ModuleESolver
 {
 
-    UnitCellPlus ESolver_LJ::change_from_ucell_to_ucell_plus(UnitCell& ucell)
+    UnitCellPlus ESolver_LJ::change_from_ucell_to_ucell_plus(const UnitCell& ucell)
     {
         UnitCellPlus ucell_plus;
         ucell_plus.lat0 = ucell.lat0;
@@ -30,6 +30,7 @@ namespace ModuleESolver
                 ucell_plus.tau.push_back(ucell.atoms[i].tau[j]);
             }
         }
+        ucell_plus.compute_naa();
         return ucell_plus;
     }
 
