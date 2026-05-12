@@ -112,18 +112,18 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                     {
                         // get the extended biggrid idx of the affected biggrid
                         const Vec3i ext_bgrid_idx(bgrid_x, bgrid_y, bgrid_z);
-                        const Vec3i normal_bgrid_idx = unitcell_info_->map_ext_idx_to_ucell(ext_bgrid_idx);
-                        if(localcell_info_->is_bgrid_in_lcell(normal_bgrid_idx) == false)
+                        const Vec3i norm_bgrid_idx = unitcell_info_->map_ext_idx_to_ucell(ext_bgrid_idx);
+                        if(localcell_info_->is_bgrid_in_lcell(norm_bgrid_idx) == false)
                         {
                             continue;
                         }
-                        const int bgrid_local_idx = localcell_info_->get_bgrid_local_idx_1D(normal_bgrid_idx);
+                        const int bgrid_local_idx = localcell_info_->get_bgrid_local_idx_1D(norm_bgrid_idx);
                         // get the unitcell idx of the big grid
                         const Vec3i ucell_idx_bgrid = unitcell_info_->get_unitcell_idx(ext_bgrid_idx);
 
                         // The index of the unitcell containing the biggrid relative to the unitcell containing the atom.
-                        const Vec3i ucell_idx_relative = ucell_idx_bgrid - ucell_idx_atom;
-                        auto it = r_to_atom.find(ucell_idx_relative);
+                        const Vec3i ucell_idx_rel = ucell_idx_bgrid - ucell_idx_atom;
+                        auto it = r_to_atom.find(ucell_idx_rel);
                         // if the gint_atom is not in the map,
                         // it means this is the first time we find this atom may affect some biggrids,
                         // add it to the r_to_atom map
@@ -132,12 +132,12 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                             Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
                                                      atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
                                                      atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
-                            r_to_atom.insert(std::make_pair(ucell_idx_relative, 
-                                GintAtom(&atom, i, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb, ucell_)));
+                            r_to_atom.insert(std::make_pair(ucell_idx_rel, 
+                                GintAtom(&atom, i, j, iat, ext_atom_bgrid_idx, ucell_idx_rel, tau_in_biggrid, orb, ucell_)));
                         }
-                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_relative)))
+                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_rel)))
                         {
-                            biggrids_[bgrid_local_idx]->add_atom(&r_to_atom.at(ucell_idx_relative));
+                            biggrids_[bgrid_local_idx]->add_atom(&r_to_atom.at(ucell_idx_rel));
                             is_atom_in_proc_[iat] = true;
                         }
                     }

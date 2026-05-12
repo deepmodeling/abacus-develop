@@ -43,10 +43,10 @@ class Gint_dvlocal : public Gint
         const int cspin,
         const int dim,
         const int nlocal,
-        const double sparse_threshold,
+        const double sparse_thr,
         const std::map<Abfs::Vector3_Order<int>,
                        std::map<size_t, std::map<size_t, double>>>&
-            pvdpR_sparseMatrix,
+            pvdpR_sparse,
         const Parallel_Orbitals& pv,
         LCAO_HS_Arrays& HS_Arrays);
 

@@ -23,10 +23,10 @@ __global__ void set_phi_kernel(
     const double* __restrict__ dpsi_u,
     const double3* __restrict__ mgrids_pos,
     const int* __restrict__ atoms_iat,
-    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ atom_rcoords,
     const int2* __restrict__ atoms_num_info,
-    const int* __restrict__ atoms_phi_start,
-    const int* __restrict__ bgrids_phi_len,
+    const int* __restrict__ atom_phi_start,
+    const int* __restrict__ bgrid_phi_len,
     Real* __restrict__ phi)
 {
     const int bgrid_id = blockIdx.y;
@@ -38,7 +38,7 @@ __global__ void set_phi_kernel(
     for (int atom_id = threadIdx.x; atom_id < atoms_num; atom_id += blockDim.x)
     {
         const int atom_type = iat2it[atoms_iat[atom_id + pre_atoms_num]];
-        const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
+        const double3 rcoord = atom_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
         const double3 coord = make_double3(mgrid_pos.x-rcoord.x,                    // coord is the relative coordinate of an atom and a meshgrid
                                            mgrid_pos.y-rcoord.y,
                                            mgrid_pos.z-rcoord.z);
@@ -66,8 +66,8 @@ __global__ void set_phi_kernel(
             double psi = 0;
             const int it_nw = atom_type * nwmax;
             int iw_nr = it_nw * nrmax + ip;
-            int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
-                          bgrids_phi_len[bgrid_id] * mgrid_id;
+            int phi_idx = atom_phi_start[atom_id + pre_atoms_num] +
+                          bgrid_phi_len[bgrid_id] * mgrid_id;
 
             for (int iw = 0; iw < atom_nw[atom_type]; iw++, iw_nr += nrmax)
             {
@@ -81,8 +81,8 @@ __global__ void set_phi_kernel(
         }
         else
         {
-            int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
-                          bgrids_phi_len[bgrid_id] * mgrid_id;
+            int phi_idx = atom_phi_start[atom_id + pre_atoms_num] +
+                          bgrid_phi_len[bgrid_id] * mgrid_id;
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
             {
                 phi[phi_idx + iw] = Real(0.0);
@@ -121,10 +121,10 @@ __global__ void set_phi_dphi_kernel(
     const double* __restrict__ dpsi_u,
     const double3* __restrict__ mgrids_pos,
     const int* __restrict__ atoms_iat,
-    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ atom_rcoords,
     const int2* __restrict__ atoms_num_info,
-    const int* __restrict__ atoms_phi_start,
-    const int* __restrict__ bgrids_phi_len,
+    const int* __restrict__ atom_phi_start,
+    const int* __restrict__ bgrid_phi_len,
     double* __restrict__ phi,
     double* __restrict__ dphi_x,
     double* __restrict__ dphi_y,
@@ -139,7 +139,7 @@ __global__ void set_phi_dphi_kernel(
     for (int atom_id = threadIdx.x; atom_id < atoms_num; atom_id += blockDim.x)
     {
         const int atom_type = iat2it[atoms_iat[atom_id + pre_atoms_num]];
-        const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];
+        const double3 rcoord = atom_rcoords[atom_id + pre_atoms_num];
         const double3 coord = make_double3(mgrid_pos.x-rcoord.x,
                                            mgrid_pos.y-rcoord.y,
                                            mgrid_pos.z-rcoord.z);
@@ -168,8 +168,8 @@ __global__ void set_phi_dphi_kernel(
             double dtmp = 0;
             const int it_nw = atom_type * nwmax;
             int iw_nr = it_nw * nrmax + ip;
-            int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
-                          bgrids_phi_len[bgrid_id] * mgrid_id;
+            int phi_idx = atom_phi_start[atom_id + pre_atoms_num] +
+                          bgrid_phi_len[bgrid_id] * mgrid_id;
             for (int iw = 0; iw < atom_nw[atom_type]; iw++, iw_nr += nrmax)
             {
                 if (atom_iw2_new[it_nw + iw])
@@ -199,8 +199,8 @@ __global__ void set_phi_dphi_kernel(
         }
         else
         {
-            int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
-                          bgrids_phi_len[bgrid_id] * mgrid_id;
+            int phi_idx = atom_phi_start[atom_id + pre_atoms_num] +
+                          bgrid_phi_len[bgrid_id] * mgrid_id;
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
             {
                 if(phi != nullptr)
@@ -233,10 +233,10 @@ __global__ void set_ddphi_kernel(
     const double* __restrict__ dpsi_u,
     const double3* __restrict__ mgrids_pos,
     const int* __restrict__ atoms_iat,
-    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ atom_rcoords,
     const int2* __restrict__ atoms_num_info,
-    const int* __restrict__ atoms_phi_start,
-    const int* __restrict__ bgrids_phi_len,
+    const int* __restrict__ atom_phi_start,
+    const int* __restrict__ bgrid_phi_len,
     double* __restrict__ ddphi_xx,
     double* __restrict__ ddphi_xy,
     double* __restrict__ ddphi_xz,
@@ -253,15 +253,15 @@ __global__ void set_ddphi_kernel(
     for (int atom_id = threadIdx.x; atom_id < atoms_num; atom_id += blockDim.x)
     {
         const int atom_type = iat2it[atoms_iat[atom_id + pre_atoms_num]];
-        const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];
+        const double3 rcoord = atom_rcoords[atom_id + pre_atoms_num];
         double coord[3]{mgrid_pos.x-rcoord.x,
                         mgrid_pos.y-rcoord.y,
                         mgrid_pos.z-rcoord.z};
         double dist = norm3d(coord[0], coord[1], coord[2]);
         if (dist < rcut[atom_type])
         {
-            int phi_idx = atoms_phi_start[atom_id + pre_atoms_num] +
-                          bgrids_phi_len[bgrid_id] * mgrid_id;
+            int phi_idx = atom_phi_start[atom_id + pre_atoms_num] +
+                          bgrid_phi_len[bgrid_id] * mgrid_id;
             for(int i = 0; i < 6; i++)
             {
                 coord[i/2] += std::pow(-1, i%2) * 0.0001;
@@ -362,17 +362,17 @@ __global__ void phi_mul_vldr3_kernel(
     const Real dr3,
     const Real* __restrict__ phi,
     const int mgrids_per_bgrid,
-    const int* __restrict__ mgrids_local_idx,
-    const int* __restrict__ bgrids_phi_len,
-    const int* __restrict__ bgrids_phi_start,
+    const int* __restrict__ mgrid_lidx,
+    const int* __restrict__ bgrid_phi_len,
+    const int* __restrict__ bgrid_phi_start,
     Real* __restrict__ result)
 {
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
-    const int phi_len = bgrids_phi_len[bgrid_id];
-    const int phi_start = bgrids_phi_start[bgrid_id] + mgrid_id * phi_len;
-    const int mgrid_id_in_batch = bgrid_id * mgrids_per_bgrid + mgrid_id;
-    const Real vldr3 =  vl[mgrids_local_idx[mgrid_id_in_batch]] * dr3;
+    const int phi_len = bgrid_phi_len[bgrid_id];
+    const int phi_start = bgrid_phi_start[bgrid_id] + mgrid_id * phi_len;
+    const int batch_mgrid_id = bgrid_id * mgrids_per_bgrid + mgrid_id;
+    const Real vldr3 =  vl[mgrid_lidx[batch_mgrid_id]] * dr3;
     for(int i = threadIdx.x; i < phi_len; i += blockDim.x)
     {
         result[phi_start + i] = phi[phi_start + i] * vldr3;
@@ -394,20 +394,20 @@ __global__ void phi_dot_phi_kernel(
     const Real* __restrict__ phi_i,
     const Real* __restrict__ phi_j,
     const int mgrids_per_bgrid,
-    const int* __restrict__ mgrids_local_idx,
-    const int* __restrict__ bgrids_phi_len,
-    const int* __restrict__ bgrids_phi_start,
+    const int* __restrict__ mgrid_lidx,
+    const int* __restrict__ bgrid_phi_len,
+    const int* __restrict__ bgrid_phi_start,
     Real* __restrict__ rho)
 {
     __shared__ Real s_data[32];    // the length of s_data equals the max warp num of a block
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
-    const int phi_len = bgrids_phi_len[bgrid_id];
-    const int phi_start = bgrids_phi_start[bgrid_id] + mgrid_id * phi_len;
+    const int phi_len = bgrid_phi_len[bgrid_id];
+    const int phi_start = bgrid_phi_start[bgrid_id] + mgrid_id * phi_len;
     const Real* phi_i_mgrid = phi_i + phi_start;
     const Real* phi_j_mgrid = phi_j + phi_start;
-    const int mgrid_id_in_batch = bgrid_id * mgrids_per_bgrid + mgrid_id;
-    const int mgrid_local_idx = mgrids_local_idx[mgrid_id_in_batch];
+    const int batch_mgrid_id = bgrid_id * mgrids_per_bgrid + mgrid_id;
+    const int mgrid_local_idx = mgrid_lidx[batch_mgrid_id];
     const int tid = threadIdx.x;
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
@@ -452,9 +452,9 @@ __global__ void phi_dot_dphi_kernel(
     const double* __restrict__ dphi_y,
     const double* __restrict__ dphi_z,
     const int mgrids_per_bgrid,
-    const int* __restrict__ bgrids_phi_len,
+    const int* __restrict__ bgrid_phi_len,
     const int2* __restrict__ atoms_num_info,
-    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atom_phi_start,
     const int* __restrict__ atoms_iat,
     const int* __restrict__ iat2it,
     const int* __restrict__ atom_nw,
@@ -464,20 +464,20 @@ __global__ void phi_dot_dphi_kernel(
     const int bgrid_id = blockIdx.y;
     const int atoms_num = atoms_num_info[bgrid_id].x;
     const int pre_atoms_num = atoms_num_info[bgrid_id].y;
-    const int bgrid_phi_len = bgrids_phi_len[bgrid_id];
+    const int b_phi_len = bgrid_phi_len[bgrid_id];
     const int tid = threadIdx.x;
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
 
     for (int atom_id = blockIdx.x; atom_id < atoms_num; atom_id += gridDim.x)
     {
-        const int atom_phi_start = atoms_phi_start[atom_id + pre_atoms_num];
+        const int a_phi_start = atom_phi_start[atom_id + pre_atoms_num];
         const int iat = atoms_iat[atom_id + pre_atoms_num];
         const int nw = atom_nw[iat2it[iat]];
         double f[3] = {0.0, 0.0, 0.0};
         for (int mgrid_id = 0; mgrid_id < mgrids_per_bgrid; mgrid_id++)
         {
-            const int phi_start = atom_phi_start + mgrid_id * bgrid_phi_len;
+            const int phi_start = a_phi_start + mgrid_id * b_phi_len;
             for (int iw = tid; iw < nw; iw += blockDim.x)
             {
                 int phi_idx = phi_start + iw;
@@ -529,11 +529,11 @@ __global__ void phi_dot_dphi_r_kernel(
     const double* __restrict__ dphi_y,
     const double* __restrict__ dphi_z,
     const int mgrids_per_bgrid,
-    const int* __restrict__ bgrids_phi_len,
+    const int* __restrict__ bgrid_phi_len,
     const int2* __restrict__ atoms_num_info,
-    const int* __restrict__ atoms_phi_start,
+    const int* __restrict__ atom_phi_start,
     const int* __restrict__ atoms_iat,
-    const double3* __restrict__ atoms_bgrids_rcoords,
+    const double3* __restrict__ atom_rcoords,
     const double3* __restrict__ mgrids_pos,
     const int* __restrict__ iat2it,
     const int* __restrict__ atom_nw,
@@ -544,26 +544,26 @@ __global__ void phi_dot_dphi_r_kernel(
     const int bgrid_id = blockIdx.y;
     const int atoms_num = atoms_num_info[bgrid_id].x;
     const int pre_atoms_num = atoms_num_info[bgrid_id].y;
-    const int bgrid_phi_len = bgrids_phi_len[bgrid_id];
+    const int b_phi_len = bgrid_phi_len[bgrid_id];
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
-    
+
     double stress[6]{0.0};
     for (int mgrid_id = blockIdx.x; mgrid_id < mgrids_per_bgrid; mgrid_id += gridDim.x)
     {
         const double3 mgrid_pos = mgrids_pos[mgrid_id];
         for (int atom_id = 0; atom_id < atoms_num; atom_id++)
         {
-            const int atom_phi_start = atoms_phi_start[atom_id + pre_atoms_num] + mgrid_id * bgrid_phi_len;
+            const int phi_start = atom_phi_start[atom_id + pre_atoms_num] + mgrid_id * b_phi_len;
             const int iat = atoms_iat[atom_id + pre_atoms_num];
             const int nw = atom_nw[iat2it[iat]];
-            const double3 rcoord = atoms_bgrids_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
+            const double3 rcoord = atom_rcoords[atom_id + pre_atoms_num];       // rcoord is the ralative coordinate of an atom and a biggrid
             const double3 coord = make_double3(mgrid_pos.x-rcoord.x,                    // coord is the relative coordinate of an atom and a meshgrid
                                                mgrid_pos.y-rcoord.y,
                                                mgrid_pos.z-rcoord.z);
             for (int iw = tid; iw < nw; iw += blockDim.x)
             {
-                int phi_idx = atom_phi_start + iw;
+                int phi_idx = phi_start + iw;
                 stress[0] += phi[phi_idx] * dphi_x[phi_idx] * coord.x;
                 stress[1] += phi[phi_idx] * dphi_x[phi_idx] * coord.y;
                 stress[2] += phi[phi_idx] * dphi_x[phi_idx] * coord.z;
