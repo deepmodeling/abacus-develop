@@ -251,6 +251,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
     return;
 }
 
+
+#ifdef __LCAO
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_bfgs_v2(int outer_step)
 {
@@ -696,3 +698,4 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
 
     return;
 }
+#endif // __LCAO
