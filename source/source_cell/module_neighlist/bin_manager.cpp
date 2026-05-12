@@ -169,10 +169,10 @@ void BinManager::build_atom_neighbors(
         //std::cout<<n<<std::endl;
 
         int* ptr = neighbor_list.allocator.allocate(n);
-        assert(ptr != nullptr);
-
+    
         for (int k = 0; k < n; k++)
         {
+            assert(ptr != nullptr);
             ptr[k] = neigh_tmp[k];
         }
 
