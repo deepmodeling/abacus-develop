@@ -20,6 +20,15 @@ bool run_deltaspin_lambda_loop(const int iter,
     spinconstrain::SpinConstrain<std::complex<double>>& sc
         = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
 
+    /// Case 0: linear_scan strategy - sweep lambda values for energy landscape mapping
+    /// This is a diagnostic/debugging mode that does NOT optimize lambda,
+    /// only records Mi vs lambda to lambda_scan_results.dat.
+    if (inp.sc_lambda_strategy == "linear_scan")
+    {
+        sc.run_lambda_linear_scan(iter);
+        return true;
+    }
+
     /// Case 1: Magnetic moments not yet converged and SCF is close to convergence.
     /// This is the first time we enter the lambda loop after SCF is nearly converged.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
