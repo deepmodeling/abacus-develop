@@ -87,7 +87,7 @@ TEST(NeighborSearchUnit, UCellToInputAtoms)
         {0.0, 0.0, 0.0},
         {0.5, 0.0, 0.0}
     };
-
+    ucell.compute_naa();
     NeighborSearch ns;
     auto inputs = ns.ucell_to_input_atoms(ucell);
 

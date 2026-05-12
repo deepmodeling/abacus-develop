@@ -37,6 +37,7 @@ public:
     ModuleBase::Vector3<double> get_tauu(int i, int j) const override {
         assert(i >= 0 && i < ntype);
         assert(j >= 0 && j < na[i]);
+        //assert(naa.size() > 0);
         if(i==0)
         {
             return tau[j];
