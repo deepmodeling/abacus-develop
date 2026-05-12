@@ -707,6 +707,33 @@ void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
     }
 }
 
+template <typename TK>
+void SpinConstrain<TK>::reset_dspin_operator()
+{
+#ifdef __LCAO
+    if (this->p_operator == nullptr)
+    {
+        return;
+    }
+    if (this->nspin_ == 4)
+    {
+        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator);
+        if (dspin)
+        {
+            dspin->reset_initialized();
+        }
+    }
+    else if (this->nspin_ == 2)
+    {
+        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator);
+        if (dspin)
+        {
+            dspin->reset_initialized();
+        }
+    }
+#endif
+}
+
 template class SpinConstrain<std::complex<double>>;
 template class SpinConstrain<double>;
 
