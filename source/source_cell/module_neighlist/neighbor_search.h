@@ -2,10 +2,10 @@
 #define NEIGHBOR_SEARCH_H
 
 
-#include "source_cell/module_neighbor_search/neighbor_atom.h"
-#include "source_cell/module_neighbor_search/bin_manager.h"
-#include "source_cell/module_neighbor_search/neighbor_list.h"
-#include "source_cell/module_neighbor_search/unitcell_interface.h"
+#include "source_cell/module_neighlist/neighbor_atom.h"
+#include "source_cell/module_neighlist/bin_manager.h"
+#include "source_cell/module_neighlist/neighbor_list.h"
+#include "source_cell/module_neighlist/unitcell_interface.h"
 
 class NeighborSearch
 {

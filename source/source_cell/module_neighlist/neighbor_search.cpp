@@ -1,4 +1,4 @@
-#include "source_cell/module_neighbor_search/neighbor_search.h"
+#include "source_cell/module_neighlist/neighbor_search.h"
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -43,6 +43,13 @@ InputAtoms NeighborSearch::ucell_to_input_atoms(const IAtomProvider& ucell)
 
 void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
 {
+    // clear possible residual data from previous runs
+    inside_atoms.clear();
+    ghost_atoms.clear();
+    all_atoms.clear();
+    // clear any existing bin manager state
+    bin_manager.clear();
+
     search_radius = sr / ucell.get_lat0();
     Check_Expand_Condition(ucell);
     setMemberVariables(ucell);
@@ -53,20 +60,23 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
     decompose(mpi_size, nx, ny, nz);
 
     z = mpi_rank / (nx * ny);
-    y = (mpi_rank % (nx * ny)) / ny;
-    x = mpi_rank % (nx * ny) % ny;
+    y = (mpi_rank % (nx * ny)) / nx;
+    x = mpi_rank % (nx * ny) % nx;
 
     wide_x = (atoms.x_high - atoms.x_low) / nx;
     wide_y = (atoms.y_high - atoms.y_low) / ny;
     wide_z = (atoms.z_high - atoms.z_low) / nz;
+    assert(wide_x>=0);
+    assert(wide_y>=0);
+    assert(wide_z>=0);
 
     int in_x, in_y, in_z;
 
     for (int i = 0; i < all_atoms.size(); i++)
     {
-        if(wide_x==0)
+        if(wide_x<1e-8)
         {
-            if(all_atoms[i].position_x==atoms.x_low)
+            if(std::abs(all_atoms[i].position_x-atoms.x_low)<1e-8)
             {
                 in_x = x;
             }
@@ -82,9 +92,9 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
                 nx - 1
             );
         }
-        if(wide_y==0)
+        if(wide_y<1e-8)
         {
-            if(all_atoms[i].position_y==atoms.y_low)
+            if(std::abs(all_atoms[i].position_y-atoms.y_low)<1e-8)
             {
                 in_y = y;
             }
@@ -100,9 +110,9 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
                 ny - 1
             );
         }
-        if(wide_z==0)
+        if(wide_z<1e-8)
         {
-            if(all_atoms[i].position_z==atoms.z_low)
+            if(std::abs(all_atoms[i].position_z-atoms.z_low)<1e-8)
             {
                 in_z = z;
             }
@@ -138,7 +148,7 @@ void NeighborSearch::init(const IAtomProvider& ucell, double sr, int mpi_rank)
         }
     }
 
-    neighbor_list.initialize(inside_atoms.size(), 100000000);
+    neighbor_list.initialize(inside_atoms.size(), all_atoms.size()*2);
 }
 
 void NeighborSearch::build_neighbors()

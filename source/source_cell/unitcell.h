@@ -5,7 +5,7 @@
 #include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/module_neighbor_search/unitcell_interface.h"
+#include "source_cell/module_neighlist/unitcell_interface.h"
 
 #ifdef __LCAO
 #include "setup_nonlocal.h"
