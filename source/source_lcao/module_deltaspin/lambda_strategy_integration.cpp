@@ -2,9 +2,37 @@
 
 #include "lambda_update_strategies.h"
 
+/**
+ * @file lambda_strategy_integration.cpp
+ * @brief Integration of alternative lambda strategies into SpinConstrain.
+ *
+ * @par Status: INCOMPLETE
+ * This file references members (strategy_type_, strategy_) that are NOT
+ * declared in spin_constrain.h. The code will not compile as-is.
+ * To enable, add the following to spin_constrain.h private section:
+ *
+ *   enum class LambdaStrategyType { BFGS, LinearResponse, AugmentedLagrangian, HybridDelayed };
+ *   LambdaStrategyType strategy_type_ = LambdaStrategyType::BFGS;
+ *   std::unique_ptr<LambdaUpdateStrategy> strategy_;
+ *
+ * And add the file to CMakeLists.txt.
+ *
+ * @par Purpose
+ * Bridges the alternative strategy implementations (lambda_update_strategies.h)
+ * to the SpinConstrain class. Allows runtime selection of lambda update algorithm.
+ */
+
 namespace spinconstrain
 {
 
+/**
+ * @brief Set the lambda update strategy type.
+ *
+ * @details Creates the appropriate strategy object based on the enum value.
+ * For BFGS (default), sets strategy_ = nullptr (uses hard-coded lambda_loop.cpp).
+ *
+ * @param type Strategy type to use
+ */
 template <typename TK>
 void SpinConstrain<TK>::set_strategy_type(LambdaStrategyType type)
 {
@@ -12,7 +40,7 @@ void SpinConstrain<TK>::set_strategy_type(LambdaStrategyType type)
     switch(type)
     {
         case LambdaStrategyType::BFGS:
-            strategy_ = nullptr;
+            strategy_ = nullptr; // Use hard-coded BFGS in lambda_loop.cpp
             break;
         case LambdaStrategyType::LinearResponse:
             strategy_ = std::unique_ptr<LambdaUpdateStrategy>(
@@ -33,12 +61,21 @@ void SpinConstrain<TK>::set_strategy_type(LambdaStrategyType type)
     }
 }
 
+/**
+ * @brief Configure parameters for the active strategy.
+ *
+ * @param mu_init Initial penalty parameter (AugmentedLagrangian, HybridDelayed)
+ * @param mu_max Maximum penalty parameter
+ * @param mu_growth Penalty growth factor
+ * @param mix_beta Mixing parameter (LinearResponse)
+ * @param sc_scf_thr SCF charge convergence threshold (HybridDelayed)
+ */
 template <typename TK>
 void SpinConstrain<TK>::set_strategy_params(double mu_init, double mu_max,
                                              double mu_growth, double mix_beta,
                                              double sc_scf_thr)
 {
-    if (!strategy_) return;
+    if (!strategy_) return; // BFGS uses hard-coded parameters
 
     if (strategy_type_ == LambdaStrategyType::LinearResponse)
     {

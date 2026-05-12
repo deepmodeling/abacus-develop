@@ -2,6 +2,15 @@
 #include <sstream>
 #include <cstring>
 
+/**
+ * @file lambda_update_strategies.cpp
+ * @brief Implementation of alternative lambda update strategies.
+ *
+ * @par Note
+ * These strategies are NOT compiled into the library (not in CMakeLists.txt).
+ * They are provided for future development.
+ */
+
 namespace spinconstrain
 {
 
@@ -9,6 +18,9 @@ namespace spinconstrain
 // Helper functions
 // ===================================================================
 
+/**
+ * @brief Compute RMS error of |Mi - M_target| over constrained components.
+ */
 double compute_rms_error(const std::vector<ModuleBase::Vector3<double>>& Mi,
                          const std::vector<ModuleBase::Vector3<double>>& target_mag,
                          const std::vector<ModuleBase::Vector3<int>>& constrain,
@@ -32,6 +44,9 @@ double compute_rms_error(const std::vector<ModuleBase::Vector3<double>>& Mi,
     return std::sqrt(sum / n_count);
 }
 
+/**
+ * @brief Count number of constrained components within convergence threshold.
+ */
 int count_converged(const std::vector<ModuleBase::Vector3<double>>& Mi,
                     const std::vector<ModuleBase::Vector3<double>>& target_mag,
                     const std::vector<ModuleBase::Vector3<int>>& constrain,
@@ -56,6 +71,9 @@ int count_converged(const std::vector<ModuleBase::Vector3<double>>& Mi,
     return count;
 }
 
+/**
+ * @brief Clip lambda values to [-lambda_max, +lambda_max] for constrained components.
+ */
 void cap_lambda(std::vector<ModuleBase::Vector3<double>>& lambda,
                 const std::vector<ModuleBase::Vector3<int>>& constrain,
                 double lambda_max,
@@ -99,13 +117,13 @@ LambdaUpdateResult LinearResponseUpdate::update_lambda(
     LambdaUpdateResult result;
     result.n_atoms = nat;
 
-    // Ensure response matrix is properly sized
+    // Initialize response matrix if needed
     if (static_cast<int>(chi_.size()) != nat)
     {
         chi_.assign(nat, ModuleBase::Vector3<double>(1.0, 1.0, 1.0));
     }
 
-    // Estimate chi from history if we have enough iterations
+    // Estimate chi = dM/dlambda from history (finite difference)
     if (iter >= 2 && static_cast<int>(Mi_history_.size()) >= 2)
     {
         const std::vector<ModuleBase::Vector3<double>>& Mi_old = Mi_history_[Mi_history_.size() - 2];
@@ -120,6 +138,7 @@ LambdaUpdateResult LinearResponseUpdate::update_lambda(
                 if (std::abs(dlambda) > 1e-8)
                 {
                     double chi_new = dM / dlambda;
+                    // Clamp chi to valid range
                     if (chi_new > chi_min_ && chi_new < chi_max_)
                     {
                         chi_[ia][ic] = chi_new;
@@ -141,17 +160,16 @@ LambdaUpdateResult LinearResponseUpdate::update_lambda(
         }
     }
 
-    // Cap lambda
+    // Cap lambda to prevent divergence
     cap_lambda(lambda, constrain, lambda_max_, nat);
 
-    // Save history
+    // Save history (keep last 5 entries)
     Mi_history_.push_back(Mi);
     lambda_history_.push_back(lambda);
-    // Keep only last 5 entries
     if (static_cast<int>(Mi_history_.size()) > 5)
     {
         Mi_history_.erase(Mi_history_.begin());
-        lambda_history_.erase(lambda_history_.begin());
+        lambda_history_.erase(Mi_history_.begin());
     }
 
     // Compute result
@@ -219,7 +237,7 @@ LambdaUpdateResult AugmentedLagrangianUpdate::update_lambda(
     // Cap lambda
     cap_lambda(lambda, constrain, lambda_max_, nat);
 
-    // Grow mu periodically
+    // Grow mu periodically to enforce constraint more strongly
     if (iter > 0 && iter % mu_update_interval_ == 0)
     {
         mu_ = std::min(mu_max_, mu_ * mu_growth_);
@@ -279,10 +297,12 @@ LambdaUpdateResult HybridDelayedUpdate::update_lambda(
     LambdaUpdateResult result;
     result.n_atoms = nat;
 
-    // Phase decision
+    // =============================================================
+    // PHASE DECISION based on charge density convergence (drho_)
+    // =============================================================
     if (drho_ > sc_scf_thr_ * 100)
     {
-        // Early phase: skip lambda update
+        // Early phase: charge density changing rapidly, skip lambda update
         phase_ = "early";
         result.rms_error = compute_rms_error(Mi, target_mag, constrain, nat);
         result.n_converged = 0;
@@ -303,7 +323,7 @@ LambdaUpdateResult HybridDelayedUpdate::update_lambda(
     }
     else if (drho_ > sc_scf_thr_)
     {
-        // Mid phase: Augmented Lagrangian lightweight update
+        // Mid phase: charge density stabilizing, lightweight augmented Lagrangian
         phase_ = "mid";
         for (int ia = 0; ia < nat; ++ia)
         {
@@ -323,7 +343,7 @@ LambdaUpdateResult HybridDelayedUpdate::update_lambda(
     }
     else
     {
-        // Late phase: Augmented Lagrangian + inner loop fallback
+        // Late phase: charge density converged, full augmented Lagrangian
         phase_ = "late";
         for (int ia = 0; ia < nat; ++ia)
         {
@@ -341,7 +361,7 @@ LambdaUpdateResult HybridDelayedUpdate::update_lambda(
             mu_ = std::min(mu_max_, mu_ * mu_growth_);
         }
 
-        // Check if fallback to inner loop is needed
+        // Check if fallback to inner loop is needed (RMS still too large)
         double rms = compute_rms_error(Mi, target_mag, constrain, nat);
         if (rms > sc_thr * 10 && inner_steps_ < max_inner_steps_)
         {

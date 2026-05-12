@@ -1,6 +1,34 @@
 #ifdef __LCAO
 #include "spin_constrain.h"
 
+/**
+ * @file cal_mw_helper.cpp
+ * @brief LCAO-specific helper functions for magnetic moment calculation from orbital matrices.
+ *
+ * @par Purpose
+ * Provides alternative paths for computing magnetic moments from the orbital
+ * multiplication matrix (orbMulP) and the mu*density matrix (mud). These are
+ * used when the DeltaSpin operator path is not available or for debugging.
+ *
+ * @par Data flow
+ * 1. convert(): Flatten orbMulP into nested vector [nspin][iat][iw]
+ * 2. calculate_MW(): Sum orbital contributions per atom, compute Mi
+ * 3. collect_MW(): Accumulate mu*dm contributions into MecMulP matrix
+ */
+
+/**
+ * @brief Convert flat orbital matrix to nested vector format.
+ *
+ * @details The orbMulP matrix stores orbital contributions in a flat layout:
+ *   orbMulP(is, num) where num runs through all orbitals of all atoms.
+ * This function reorganizes it into a nested structure:
+ *   AorbMulP[is][iat][iw] = orbMulP(is, num)
+ *
+ * Values below 1e-10 are set to 0.0 to avoid floating-point noise.
+ *
+ * @param orbMulP Flat matrix of orbital contributions [nspin x ntotal_orbitals]
+ * @return Nested vector [nspin][iat][iw]
+ */
 template <>
 std::vector<std::vector<std::vector<double>>> spinconstrain::SpinConstrain<std::complex<double>>::convert(
     const ModuleBase::matrix& orbMulP)
@@ -32,6 +60,23 @@ std::vector<std::vector<std::vector<double>>> spinconstrain::SpinConstrain<std::
     return AorbMulP;
 }
 
+/**
+ * @brief Calculate magnetic moments from converted orbital matrix.
+ *
+ * @par Algorithm (nspin=2):
+ *   atom_mag = sum(orbMulP[0][iat]) - sum(orbMulP[1][iat])
+ *   Mi[iat].z = atom_mag (z-component only)
+ *
+ * @par Algorithm (nspin=4):
+ * The 4 spinor components are mapped to magnetic moments:
+ *   total_charge_soc[0] = Tr(rho * I) / 2      (charge)
+ *   total_charge_soc[1] = Tr(rho * sigma_x)    (Mx)
+ *   total_charge_soc[2] = Tr(rho * sigma_y)    (My)
+ *   total_charge_soc[3] = Tr(rho * sigma_z)    (Mz)
+ * Components below sc_thr_ are set to 0.0 to avoid noise.
+ *
+ * @param AorbMulP Nested vector [nspin][iat][iw] from convert()
+ */
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::calculate_MW(
     const std::vector<std::vector<std::vector<double>>>& AorbMulP)
@@ -101,6 +146,28 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_MW(
     }
 }
 
+/**
+ * @brief Accumulate magnetic moment contributions from mu*density matrix.
+ *
+ * @details For distributed matrices (ScaLAPACK), only the local processor's
+ * elements are accumulated. The ParaV mapping converts global indices to
+ * local row/column indices.
+ *
+ * @par nspin=4 spinor decomposition
+ * The mud matrix stores the 2x2 spinor blocks interleaved:
+ *   Global index 2j -> spin-up component
+ *   Global index 2j+1 -> spin-down component
+ * The Pauli matrix traces are:
+ *   M0 (charge): mud(k1,k1).real + mud(k2,k2).real
+ *   M3 (Mz):     mud(k1,k1).real - mud(k2,k2).real
+ *   M1 (Mx):     mud(k1,k2).real + mud(k2,k1).real
+ *   M2 (My):    -mud(k1,k2).imag + mud(k2,k1).imag
+ *
+ * @param MecMulP Output matrix [4 x nw/2]: MecMulP[0]=charge, [1]=Mx, [2]=My, [3]=Mz
+ * @param mud Input mu*density matrix (column-major)
+ * @param nw Total number of orbitals
+ * @param isk Spin index (0 or 1 for nspin=2)
+ */
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::collect_MW(ModuleBase::matrix& MecMulP,
                                                       const ModuleBase::ComplexMatrix& mud,
