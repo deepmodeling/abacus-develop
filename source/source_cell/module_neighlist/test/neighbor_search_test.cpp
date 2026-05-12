@@ -23,6 +23,7 @@ TEST(NeighborSearchTest, TwoAtomsNeighbor)
         {0.0, 0.0, 0.0},
         {0.5, 0.0, 0.0}
     };
+    ucell.compute_naa();
 
     NeighborSearch ns;
 
@@ -58,6 +59,7 @@ TEST(NeighborSearchTest, NoNeighbor)
         {0.0, 0.0, 0.0},
         {5.0, 0.0, 0.0}
     };
+    ucell.compute_naa();
 
     NeighborSearch ns;
 
@@ -115,7 +117,7 @@ TEST(NeighborSearchUnit, CheckExpandAndSetMembers)
         {0.0, 0.0, 0.0},
         {0.5, 0.0, 0.0}
     };
-
+    ucell.compute_naa();
     NeighborSearch ns;
     ns.search_radius = 1.0; // use search radius = 1 for Check_Expand_Condition
     ns.Check_Expand_Condition(ucell);
@@ -186,7 +188,7 @@ TEST(NeighborSearchUnit, UCellToInputAtomsMultipleTypes)
         {0.5, 0.0, 0.0},
         {0.0, 0.5, 0.0}
     };
-
+    ucell.compute_naa();
     NeighborSearch ns;
     auto inputs = ns.ucell_to_input_atoms(ucell);
 
@@ -220,6 +222,7 @@ TEST(NeighborSearchUnit, NonOrthogonalLatticeExpand)
     ucell.na = {1};
     ucell.nat = 1;
     ucell.tau = {{0.0, 0.0, 0.0}};
+    ucell.compute_naa();
 
     NeighborSearch ns;
     ns.search_radius = 2.5;
@@ -245,6 +248,7 @@ TEST(NeighborSearchInit_WideZero_CentralInside, SingleAtomCell)
     ucell.na = {1};
     ucell.nat = 1;
     ucell.tau = {{0.0, 0.0, 0.0}};
+    ucell.compute_naa();
 
     NeighborSearch ns;
     // choose sr small enough; with mpi_size fixed to 1 in init, wide_* become 0
@@ -267,6 +271,7 @@ TEST(NeighborSearchInit_MpiRankIndexing, RankValues)
     ucell.na = {1};
     ucell.nat = 1;
     ucell.tau = {{0.0, 0.0, 0.0}};
+    ucell.compute_naa();
 
     NeighborSearch ns0;
     ns0.init(ucell, 0.5, 0);
