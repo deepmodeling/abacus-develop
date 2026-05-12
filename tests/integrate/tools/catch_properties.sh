@@ -113,6 +113,7 @@ word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
 nspin=$(get_input_key_value "nspin" "INPUT")
+has_ds=$(get_input_key_value "sc_mag_switch" "INPUT")
 test -e $1 && rm $1
 
 #------------------------------------------------------------
@@ -790,6 +791,64 @@ if ! test -z "$out_alllog" && [ $out_alllog -eq 1 ]; then
         echo "Error: Some log filenames do not contain 'running_${calculation}_'"
         echo "log_filename_validation 0" >>$1
         exit 1
+    fi
+fi
+
+#--------------------------------------------
+# DeltaSpin: atomic magnetic moments and lambda
+# Extract final after-optimization values from log
+#--------------------------------------------
+if ! test -z "$has_ds" && [ "$has_ds" == 1 ]; then
+    # Extract the last "after-optimization spin" block (final converged values)
+    # The block starts with "after-optimization spin" header and contains ATOM lines
+    # We need to find the last occurrence before "Inner optimization for lambda ends"
+    
+    # Get the line number of the last "after-optimization spin" header
+    last_spin_line=$(grep -n "after-optimization spin (uB)" "$running_path" | tail -1 | cut -d: -f1)
+    last_lambda_line=$(grep -n "after-optimization lambda (eV/uB)" "$running_path" | tail -1 | cut -d: -f1)
+    
+    if [ ! -z "$last_spin_line" ]; then
+        # Extract ATOM lines after the last "after-optimization spin" header
+        # Read until we hit a non-ATOM line (typically "Inner optimization")
+        spin_values=$(sed -n "$((last_spin_line + 1)),\$p" "$running_path" | awk '/^ATOM/{print; next} /^[^A]/{exit}')
+        
+        # Sum up x, y, z components for each atom and compute RMS deviation from target
+        if [ "$nspin" == 2 ]; then
+            # nspin=2: only z component
+            echo "$spin_values" | awk 'BEGIN{sum=0; n=0} /^ATOM/{sum+=$3*$3; n++} END{if(n>0) printf "%.10f\n", sqrt(sum/n)}' > magmom_rms.txt
+            magmom_rms=$(cat magmom_rms.txt)
+            if [ ! -z "$magmom_rms" ]; then
+                echo "ds_magmom_rmsref $magmom_rms" >>$1
+            fi
+            rm -f magmom_rms.txt
+        elif [ "$nspin" == 4 ]; then
+            # nspin=4: x, y, z components
+            echo "$spin_values" | awk 'BEGIN{sum=0; n=0} /^ATOM/{sum+=($3*$3+$4*$4+$5*$5); n++} END{if(n>0) printf "%.10f\n", sqrt(sum/n)}' > magmom_rms.txt
+            magmom_rms=$(cat magmom_rms.txt)
+            if [ ! -z "$magmom_rms" ]; then
+                echo "ds_magmom_rmsref $magmom_rms" >>$1
+            fi
+            rm -f magmom_rms.txt
+        fi
+        
+        # Extract individual atom magnetic moment magnitudes
+        echo "$spin_values" | awk '/^ATOM/{
+            if(NF>=5) {mag=sqrt($3*$3+$4*$4+$5*$5)}
+            else {mag=$3}
+            printf "ds_magmom_atom%dref %.10f\n", $2, mag
+        }' >>$1
+    fi
+    
+    if [ ! -z "$last_lambda_line" ]; then
+        # Extract ATOM lines after the last "after-optimization lambda" header
+        lambda_values=$(sed -n "$((last_lambda_line + 1)),\$p" "$running_path" | awk '/^ATOM/{print; next} /^[^A]/{exit}')
+        
+        # Extract individual atom lambda magnitudes
+        echo "$lambda_values" | awk '/^ATOM/{
+            if(NF>=5) {lam=sqrt($3*$3+$4*$4+$5*$5)}
+            else {lam=$3}
+            printf "ds_lambda_atom%dref %.10f\n", $2, lam
+        }' >>$1
     fi
 fi
 

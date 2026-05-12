@@ -3,7 +3,7 @@
 This directory contains all integration test cases for **DeltaSpin (spin-constrained DFT)** and **DFT+U** functionality in ABACUS,
 covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, and their combinations.
 
-## Test List (52 cases)
+## Test List (60 cases)
 
 ### I. LCAO Spin (01-02)
 
@@ -121,6 +121,29 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | # | Test Case | Description |
 |---|------|------|
 | 52 | PW_DFTU_SO | Verify compatibility when DFT+U and spin-orbit coupling (SOC) are enabled simultaneously, ensures DFT+U onsite projection correctly couples with SOC spin mixing |
+
+### XIV. Magnetic Moment & Lambda Verification (53-54)
+
+| # | Test Case | Description |
+|---|------|------|
+| 53 | PW_DS_S4_XY_MagMomCheck | Verify atomic magnetic moments converge to target values and lambda values are within expected range for PW DeltaSpin |
+| 54 | PW_DFTU_DS_S4_XY_MagMomCheck | Verify atomic magnetic moments and lambda values for PW DFT+U+DeltaSpin combined, ensures both corrections coexist correctly |
+
+### XV. NSCF Mode (55, 60)
+
+| # | Test Case | Description |
+|---|------|------|
+| 55 | PW_DS_NSCF_S4_XY | Verify DeltaSpin functionality in non-self-consistent (nscf) calculation mode, ensures lambda constraint is applied correctly without charge update |
+| 60 | PW_DFTU_NSCF_Band_XY | Verify DFT+U+DeltaSpin in NSCF band structure calculation, tests band output with spin constraints on high-symmetry k-point path |
+
+### XVI. sc_direction_only Constraint (56-59)
+
+| # | Test Case | Description |
+|---|------|------|
+| 56 | PW_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` mode: only magnetization direction is constrained while magnitude is free to relax, projects lambda perpendicular to target direction |
+| 57 | PW_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U, tests direction-only constraint superposition with Hubbard U correction |
+| 58 | LCAO_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` in LCAO basis, ensures direction-only constraint works correctly in LCAO density matrix path |
+| 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U in LCAO basis, tests full direction-only constraint in LCAO path |
 
 ## Running Tests
 

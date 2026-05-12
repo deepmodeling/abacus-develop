@@ -34,3 +34,8 @@
 45_PW_DFTU_DS_S4_Thr10_XY
 50_FeO_O_first_Fe_second
 51_FeO_Fe_first_O_second
+53_PW_DS_S4_XY_MagMomCheck
+55_PW_DS_NSCF_S4_XY
+56_PW_DS_S4_DirectionOnly_XY
+57_PW_DFTU_DS_S4_DirectionOnly_XY
+58_LCAO_DS_S4_DirectionOnly_XY
