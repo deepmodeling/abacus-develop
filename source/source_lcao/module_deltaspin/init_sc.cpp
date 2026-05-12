@@ -30,6 +30,14 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     this->set_target_mag(ucell.get_target_mag());
     this->lambda_ = ucell.get_lambda();
     this->constrain_ = ucell.get_constrain();
+    if (nspin_in == 2)
+    {
+        for (int iat = 0; iat < static_cast<int>(this->constrain_.size()); iat++)
+        {
+            this->constrain_[iat].x = 0;
+            this->constrain_[iat].y = 0;
+        }
+    }
     this->atomLabels_ = ucell.get_atomLabels();
     this->direction_only_ = direction_only_in;
     this->tpiba = ucell.tpiba;

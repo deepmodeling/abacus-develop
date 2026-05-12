@@ -146,12 +146,27 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
 
     // prepare array of nh_iat and lambda_array to pass to the onsite_ps_op operator
     std::vector<std::complex<double>> tmp_lambda_coeff(this->ucell->nat * 4);
-    for(int iat=0;iat<this->ucell->nat;iat++)
+    if (npol == 1)
     {
-        tmp_lambda_coeff[iat * 4] = std::complex<double>(lambda[iat][2], 0.0);
-        tmp_lambda_coeff[iat * 4 + 1] = std::complex<double>(lambda[iat][0], lambda[iat][1]);
-        tmp_lambda_coeff[iat * 4 + 2] = std::complex<double>(lambda[iat][0], -1 * lambda[iat][1]);
-        tmp_lambda_coeff[iat * 4 + 3] = std::complex<double>(-1 * lambda[iat][2], 0.0);
+        int spin_sign = 1;
+        if (PARAM.inp.nspin == 2)
+        {
+            spin_sign = (this->isk[this->ik] == 0) ? 1 : -1;
+        }
+        for(int iat=0;iat<this->ucell->nat;iat++)
+        {
+            tmp_lambda_coeff[iat] = std::complex<double>(lambda[iat][2] * spin_sign, 0.0);
+        }
+    }
+    else
+    {
+        for(int iat=0;iat<this->ucell->nat;iat++)
+        {
+            tmp_lambda_coeff[iat * 4] = std::complex<double>(lambda[iat][2], 0.0);
+            tmp_lambda_coeff[iat * 4 + 1] = std::complex<double>(lambda[iat][0], lambda[iat][1]);
+            tmp_lambda_coeff[iat * 4 + 2] = std::complex<double>(lambda[iat][0], -1 * lambda[iat][1]);
+            tmp_lambda_coeff[iat * 4 + 3] = std::complex<double>(-1 * lambda[iat][2], 0.0);
+        }
     }
     syncmem_complex_h2d_op()(this->lambda_coeff, tmp_lambda_coeff.data(), this->ucell->nat * 4);
     // TODO: code block above should be moved to the init function
