@@ -425,7 +425,7 @@ void PhiOperatorGpu<Real>::phi_dot_dphi(
     const double* dphi_z_d,
     double* fvl_d) const
 {
-    dim3 grid_dim(bgrid_batch_->get_max_atoms_num_per_bgrid(),
+    dim3 grid_dim(bgrid_batch_->get_max_atoms_per_bgrid(),
                   bgrid_batch_->get_batch_size());
     dim3 threads_per_block(32);
     phi_dot_dphi_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 3, stream_>>>(

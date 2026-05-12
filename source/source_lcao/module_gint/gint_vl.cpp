@@ -60,7 +60,7 @@ const Real* get_vr_eff_data_(const double* vr_eff, int local_mgrid_num,
 inline void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
 {
     compose_hr_gint(hr_gint);
-    transfer_hr_gint_to_hR(hr_gint, *hR);
+    hr_gint_to_hR(hr_gint, *hR);
 }
 
 template<typename Real>
@@ -68,7 +68,7 @@ void finalize_hr_gint_(HContainer<Real>& hr_gint, HContainer<double>* hR)
 {
     HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
     compose_hr_gint(hr_gint_dp);
-    transfer_hr_gint_to_hR(hr_gint_dp, *hR);
+    hr_gint_to_hR(hr_gint_dp, *hR);
 }
 
 template<typename Real>

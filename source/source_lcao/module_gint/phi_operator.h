@@ -112,7 +112,7 @@ class PhiOperator
         double* rho) const;
 
     private:
-    void init_atom_pair_start_end_idx_();
+    void init_atom_pair_idx_();
 
     // get the index of the first and the last meshgrid that both atom a and atom b affect
     // Note that atom_pair_start_end_idx_ only stores the cases where a <= b, so this function is needed to retrieve the value

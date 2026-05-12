@@ -16,7 +16,7 @@ class BatchBigGrid
     int get_batch_size() const { return biggrids_.size(); }
     int get_atoms_num() const { return atoms_num_; }
     int get_phi_len() const { return phi_len_;}
-    int get_max_atoms_num_per_bgrid() const { return max_atoms_num_per_bgrid_; }
+    int get_max_atoms_per_bgrid() const { return max_atoms_num_per_bgrid_; }
     bool empty() {return atoms_num_ == 0; }
     static int get_max_batch_size() { return max_batch_size_; }
     static int get_max_atoms_num() { return max_atoms_num_; }

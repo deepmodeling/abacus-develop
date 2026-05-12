@@ -56,7 +56,7 @@ void Gint_dvlocal::cal_hr_gint_()
     }
 }
 
-void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
+void Gint_dvlocal::cal_dvlocal_R_sparse(
     const int nspin,
     const int cspin,
     const int nlocal,
@@ -66,8 +66,8 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     const Grid_Driver& gdriver,
     LCAO_HS_Arrays& hs_arrays)
 {
-    ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparseMatrix");
-    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparseMatrix");
+    ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparse");
+    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparse");
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRz_sparseMatrix;
@@ -123,14 +123,14 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
             }
         }
     }
-    distribute_pvdpR_sparseMatrix(cspin, 0, nlocal, sparse_thr, pvdpRx_sparseMatrix, pv, hs_arrays);
-    distribute_pvdpR_sparseMatrix(cspin, 1, nlocal, sparse_thr, pvdpRy_sparseMatrix, pv, hs_arrays);
-    distribute_pvdpR_sparseMatrix(cspin, 2, nlocal, sparse_thr, pvdpRz_sparseMatrix, pv, hs_arrays);
-    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparseMatrix");
+    distribute_pvdpR_sparse(cspin, 0, nlocal, sparse_thr, pvdpRx_sparseMatrix, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 1, nlocal, sparse_thr, pvdpRy_sparseMatrix, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 2, nlocal, sparse_thr, pvdpRz_sparseMatrix, pv, hs_arrays);
+    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparse");
 }
 
 
-void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
+void Gint_dvlocal::distribute_pvdpR_sparse(
     const int cspin,
     const int dim,
     const int nlocal,

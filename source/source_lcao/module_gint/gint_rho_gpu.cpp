@@ -38,7 +38,7 @@ void Gint_rho_gpu::cal_gint_impl_()
     }
 
     // 2. Transfer dm from 2D parallel distribution to gint serial distribution
-    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
+    dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
 
     // 3. Transfer dm to GPU
     std::vector<CudaMemWrapper<Real>> dm_gint_d_vec(nspin_);

@@ -29,7 +29,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     }
 
     // init atom_pair_start_end_idx_
-    init_atom_pair_start_end_idx_();
+    init_atom_pair_idx_();
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
@@ -214,7 +214,7 @@ void PhiOperator::cal_env_k(
 //===============================
 // private methods
 //===============================
-void PhiOperator::init_atom_pair_start_end_idx_()
+void PhiOperator::init_atom_pair_idx_()
 {
     int atoms_num = biggrid_->get_atoms_num();
     atom_pair_start_end_idx_.resize(atoms_num * (atoms_num + 1) / 2);
