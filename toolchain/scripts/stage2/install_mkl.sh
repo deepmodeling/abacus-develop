@@ -136,7 +136,7 @@ export FFTW_LDFLAGS="${MKL_LDFLAGS}"
 export FFTW_LIBS="${MKL_LIBS}"
 EOF
     fi
-    cat "${BUILDDIR}/setup_mkl" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_mkl" ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_mkl"
