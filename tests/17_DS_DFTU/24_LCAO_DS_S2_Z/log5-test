@@ -1,0 +1,214 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 3a1928035 (Mon May 11 10:54:21 2026 +0800)
+
+ Mon May 11 20:44:12 2026
+ MAKE THE DIR         : OUT.autotest/
+[DS-DIAG] STRU parse: lambda[0]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+[DS-DIAG] STRU parse: lambda[1]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+                        GPU / NVIDIA GeForce RTX 3070 Ti (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 10 * 10 * 10
+ DONE(2.6637e-05 SEC) : SETUP UNITCELL
+ DONE(0.000213038 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 4       4               1           1             1             108         
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00205542 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0553036  SEC) : CHARGE
+ DONE(0.057266   SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0977199  SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -2.72e+00  -2.71e+00  -2.66e+00   5.43e+00  -6.78294614e+03   0.00000000e+00   3.4369e-01   0.38
+ GE2     -2.96e+00  -2.95e+00  -2.12e+00   4.78e+00  -6.76291295e+03   2.00331924e+01   3.7400e-01   0.19
+ GE3     -1.04e+00  -1.04e+00  -1.33e+00   2.05e+00  -6.76316189e+03  -2.48935617e-01   4.3719e-01   0.19
+ GE4     -2.25e+00  -2.25e+00  -1.62e+00   3.67e+00  -6.77446603e+03  -1.13041428e+01   1.9114e-01   0.20
+ GE5     -2.71e+00  -2.70e+00  -2.55e+00   4.73e+00  -6.77739862e+03  -2.93259176e+00   1.2989e-01   0.19
+ GE6     -2.87e+00  -2.86e+00  -2.72e+00   5.02e+00  -6.77761099e+03  -2.12370980e-01   9.2439e-02   0.18
+ GE7     -2.89e+00  -2.88e+00  -2.70e+00   5.03e+00  -6.77770059e+03  -8.95962897e-02   6.4209e-02   0.19
+ GE8     -2.90e+00  -2.89e+00  -2.69e+00   5.02e+00  -6.77778944e+03  -8.88498803e-02   6.2865e-02   0.18
+ GE9     -2.93e+00  -2.92e+00  -2.66e+00   5.01e+00  -6.77795943e+03  -1.69988754e-01   6.5474e-02   0.19
+ GE10    -2.96e+00  -2.95e+00  -2.66e+00   5.03e+00  -6.77801140e+03  -5.19789875e-02   5.6270e-02   0.19
+ GE11    -2.97e+00  -2.96e+00  -2.65e+00   5.03e+00  -6.77795130e+03   6.01061109e-02   4.9486e-02   0.18
+ GE12    -3.03e+00  -3.01e+00  -2.54e+00   5.05e+00  -6.77792110e+03   3.01957638e-02   3.9413e-02   0.19
+ GE13    -3.05e+00  -3.02e+00  -2.53e+00   5.04e+00  -6.77781466e+03   1.06438361e-01   2.8881e-02   0.19
+ GE14    -3.10e+00  -3.08e+00  -2.41e+00   5.04e+00  -6.77788092e+03  -6.62588468e-02   1.5671e-02   0.18
+ GE15    -3.09e+00  -3.07e+00  -2.44e+00   5.03e+00  -6.77787882e+03   2.10007160e-03   1.4550e-02   0.20
+ GE16    -3.07e+00  -3.06e+00  -2.47e+00   5.03e+00  -6.77788232e+03  -3.49547509e-03   7.5254e-03   0.19
+ GE17    -3.08e+00  -3.06e+00  -2.47e+00   5.03e+00  -6.77788254e+03  -2.21007700e-04   8.0443e-03   0.18
+ GE18    -3.07e+00  -3.05e+00  -2.48e+00   5.03e+00  -6.77788246e+03   7.74483446e-05   7.5644e-03   0.18
+ GE19    -3.07e+00  -3.04e+00  -2.49e+00   5.02e+00  -6.77788033e+03   2.12860113e-03   5.3484e-03   0.18
+ GE20    -3.06e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77788205e+03  -1.71991211e-03   3.2095e-03   0.18
+ GE21    -3.05e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77788277e+03  -7.17700003e-04   1.7675e-03   0.18
+ GE22    -3.06e+00  -3.03e+00  -2.52e+00   5.03e+00  -6.77788223e+03   5.43330524e-04   1.7610e-03   0.18
+ SCF restart after this step!
+ GE23    -3.06e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77787339e+03   8.84191627e-03   9.4132e-04   0.17
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000         1.0000000000         1.0000000000
+ATOM      2         1.0000000000         1.0000000000         1.0000000000
+initial spin (uB): 
+ATOM      1        -1.8905793503        -1.8878213085        -1.6358166092
+ATOM      2        -1.9137939843        -1.9058520609        -1.8732053401
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.0000000000
+ATOM      2         0.0000000000         0.0000000000        -2.0000000000
+Step (Outer -- Inner) =  23 -- 1           RMS = 3.71943     TIME(s) = 0.0928781  
+Step (Outer -- Inner) =  23 -- 2           RMS = 4.50496     TIME(s) = 0.0521477  
+Step (Outer -- Inner) =  23 -- 3           RMS = 5.09766     TIME(s) = 0.0525451  
+alpha after restrict = -0.292878
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 4           RMS = 5.5361     TIME(s) = 0.0525699  
+alpha after restrict = -0.17293
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 5           RMS = 6.00183     TIME(s) = 0.0524412  
+alpha after restrict = -0.114364
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 6           RMS = 10.1811     TIME(s) = 0.0529778  
+alpha after restrict = 0.0348325
+boundary after = 3
+alpha after restrict = -0.0348325
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 7           RMS = 12.6429     TIME(s) = 0.0539316  
+alpha after restrict = 0.0207552
+boundary after = 3
+alpha after restrict = -0.0207552
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 8           RMS = 13.5689     TIME(s) = 0.0525599  
+alpha after restrict = 0.0168026
+boundary after = 3
+alpha after restrict = -0.0168026
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 9           RMS = 13.9112     TIME(s) = 0.053454   
+alpha after restrict = 0.0150021
+boundary after = 3
+alpha after restrict = -0.0150021
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 10          RMS = 14.3689     TIME(s) = 0.053465   
+alpha after restrict = 0.0132849
+boundary after = 3
+alpha after restrict = -0.0132849
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 11          RMS = 14.4238     TIME(s) = 0.0567691  
+alpha after restrict = 0.0124944
+boundary after = 3
+alpha after restrict = -0.0124944
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 12          RMS = 14.4634     TIME(s) = 0.0531005  
+alpha after restrict = 0.0118087
+boundary after = 3
+alpha after restrict = -0.0118087
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 13          RMS = 14.4932     TIME(s) = 0.0536681  
+alpha after restrict = 0.0112038
+boundary after = 3
+alpha after restrict = -0.0112038
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 14          RMS = 14.5161     TIME(s) = 0.0549213  
+alpha after restrict = 0.0106638
+boundary after = 3
+alpha after restrict = -0.0106638
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 15          RMS = 14.5342     TIME(s) = 0.053639   
+alpha after restrict = 0.0101772
+boundary after = 3
+alpha after restrict = -0.0101772
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 16          RMS = 14.5489     TIME(s) = 0.0549133  
+alpha after restrict = 0.00973569
+boundary after = 3
+alpha after restrict = -0.00973569
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 17          RMS = 14.5609     TIME(s) = 0.0546678  
+alpha after restrict = 0.00933258
+boundary after = 3
+alpha after restrict = -0.00933258
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 18          RMS = 14.5711     TIME(s) = 0.0515462  
+alpha after restrict = 0.00896268
+boundary after = 3
+alpha after restrict = -0.00896268
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 19          RMS = 14.5797     TIME(s) = 0.0541284  
+alpha after restrict = 0.0086218
+boundary after = 3
+alpha after restrict = -0.0086218
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 20          RMS = 14.5871     TIME(s) = 0.0548308  
+alpha after restrict = 0.00830646
+boundary after = 3
+alpha after restrict = -0.00830646
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 21          RMS = 14.5936     TIME(s) = 0.0538855  
+alpha after restrict = 0.00801376
+boundary after = 3
+alpha after restrict = -0.00801376
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 22          RMS = 14.5993     TIME(s) = 0.0527016  
+alpha after restrict = 0.00774125
+boundary after = 3
+alpha after restrict = -0.00774125
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 23          RMS = 14.6044     TIME(s) = 0.051967   
+alpha after restrict = 0.00748685
+boundary after = 3
+alpha after restrict = -0.00748685
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 24          RMS = 14.609     TIME(s) = 0.0531103  
+alpha after restrict = 0.00724877
+boundary after = 3
+alpha after restrict = -0.00724877
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 25          RMS = 14.6132     TIME(s) = 0.053295   
+alpha after restrict = 0.00702544
+boundary after = 3
+alpha after restrict = -0.00702544
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 26          RMS = 14.617     TIME(s) = 0.0526861  
+alpha after restrict = 0.00681552
+boundary after = 3
+alpha after restrict = -0.00681552
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 27          RMS = 14.6205     TIME(s) = 0.052931   
+alpha after restrict = 0.0066178
+boundary after = 3
+alpha after restrict = -0.0066178
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 28          RMS = 14.6238     TIME(s) = 0.0520654  
+alpha after restrict = 0.00643124
+boundary after = 3
+alpha after restrict = -0.00643124
+boundary after = 3

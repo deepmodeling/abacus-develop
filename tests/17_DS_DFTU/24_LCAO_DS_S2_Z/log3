@@ -1,0 +1,1747 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 3a1928035 (Mon May 11 10:54:21 2026 +0800)
+
+ Mon May 11 20:40:05 2026
+ MAKE THE DIR         : OUT.autotest/
+[DS-DIAG] STRU parse: lambda[0]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+[DS-DIAG] STRU parse: lambda[1]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+                        GPU / NVIDIA GeForce RTX 3070 Ti (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 10 * 10 * 10
+ DONE(2.5235e-05 SEC) : SETUP UNITCELL
+ DONE(0.000418952 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 4       4               1           1             1             108         
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00228942 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0549362  SEC) : CHARGE
+ DONE(0.0568778  SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.101007   SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -2.72e+00  -2.71e+00  -2.66e+00   5.43e+00  -6.78294614e+03   0.00000000e+00   3.4369e-01   0.38
+ GE2     -2.96e+00  -2.95e+00  -2.12e+00   4.78e+00  -6.76291295e+03   2.00331924e+01   3.7400e-01   0.19
+ GE3     -1.04e+00  -1.04e+00  -1.33e+00   2.05e+00  -6.76316189e+03  -2.48935617e-01   4.3719e-01   0.18
+ GE4     -2.25e+00  -2.25e+00  -1.62e+00   3.67e+00  -6.77446603e+03  -1.13041428e+01   1.9114e-01   0.18
+ GE5     -2.71e+00  -2.70e+00  -2.55e+00   4.73e+00  -6.77739862e+03  -2.93259176e+00   1.2989e-01   0.18
+ GE6     -2.87e+00  -2.86e+00  -2.72e+00   5.02e+00  -6.77761099e+03  -2.12370980e-01   9.2439e-02   0.18
+ GE7     -2.89e+00  -2.88e+00  -2.70e+00   5.03e+00  -6.77770059e+03  -8.95962897e-02   6.4209e-02   0.18
+ GE8     -2.90e+00  -2.89e+00  -2.69e+00   5.02e+00  -6.77778944e+03  -8.88498803e-02   6.2865e-02   0.18
+ GE9     -2.93e+00  -2.92e+00  -2.66e+00   5.01e+00  -6.77795943e+03  -1.69988754e-01   6.5474e-02   0.18
+ GE10    -2.96e+00  -2.95e+00  -2.66e+00   5.03e+00  -6.77801140e+03  -5.19789875e-02   5.6270e-02   0.18
+ GE11    -2.97e+00  -2.96e+00  -2.65e+00   5.03e+00  -6.77795130e+03   6.01061109e-02   4.9486e-02   0.18
+ GE12    -3.03e+00  -3.01e+00  -2.54e+00   5.05e+00  -6.77792110e+03   3.01957619e-02   3.9413e-02   0.18
+ GE13    -3.05e+00  -3.02e+00  -2.53e+00   5.04e+00  -6.77781466e+03   1.06438362e-01   2.8881e-02   0.18
+ GE14    -3.10e+00  -3.08e+00  -2.41e+00   5.04e+00  -6.77788092e+03  -6.62588460e-02   1.5671e-02   0.19
+ GE15    -3.09e+00  -3.07e+00  -2.44e+00   5.03e+00  -6.77787882e+03   2.10007256e-03   1.4550e-02   0.18
+ GE16    -3.07e+00  -3.06e+00  -2.47e+00   5.03e+00  -6.77788232e+03  -3.49547682e-03   7.5254e-03   0.18
+ GE17    -3.08e+00  -3.06e+00  -2.47e+00   5.03e+00  -6.77788254e+03  -2.21006794e-04   8.0443e-03   0.18
+ GE18    -3.07e+00  -3.05e+00  -2.48e+00   5.03e+00  -6.77788246e+03   7.74484505e-05   7.5644e-03   0.18
+ GE19    -3.07e+00  -3.04e+00  -2.49e+00   5.02e+00  -6.77788033e+03   2.12860221e-03   5.3484e-03   0.18
+ GE20    -3.06e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77788205e+03  -1.71991243e-03   3.2095e-03   0.18
+ GE21    -3.05e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77788277e+03  -7.17699043e-04   1.7675e-03   0.18
+ GE22    -3.06e+00  -3.03e+00  -2.52e+00   5.03e+00  -6.77788223e+03   5.43328230e-04   1.7610e-03   0.18
+ SCF restart after this step!
+ GE23    -3.06e+00  -3.03e+00  -2.52e+00   5.02e+00  -6.77787339e+03   8.84190956e-03   9.4132e-04   0.17
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000         1.0000000000         1.0000000000
+ATOM      2         1.0000000000         1.0000000000         1.0000000000
+initial spin (uB): 
+ATOM      1        -1.8905793502        -1.8878213084        -1.6358166091
+ATOM      2        -1.9137939843        -1.9058520610        -1.8732053402
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.0000000000
+ATOM      2         0.0000000000         0.0000000000        -2.0000000000
+Step (Outer -- Inner) =  23 -- 1           RMS = 3.71943     TIME(s) = 0.0929162  
+Step (Outer -- Inner) =  23 -- 2           RMS = 4.50496     TIME(s) = 0.0520049  
+Step (Outer -- Inner) =  23 -- 3           RMS = 5.09766     TIME(s) = 0.0526958  
+alpha after restrict = -0.292878
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 4           RMS = 5.5361     TIME(s) = 0.0525529  
+alpha after restrict = -0.17293
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 5           RMS = 6.00183     TIME(s) = 0.0523677  
+alpha after restrict = -0.114364
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 6           RMS = 10.1811     TIME(s) = 0.0528217  
+alpha after restrict = 0.0348325
+boundary after = 3
+alpha after restrict = -0.0348325
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 7           RMS = 12.6429     TIME(s) = 0.0526299  
+alpha after restrict = 0.0207552
+boundary after = 3
+alpha after restrict = -0.0207552
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 8           RMS = 13.5689     TIME(s) = 0.0531648  
+alpha after restrict = 0.0168026
+boundary after = 3
+alpha after restrict = -0.0168026
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 9           RMS = 13.9112     TIME(s) = 0.0532531  
+alpha after restrict = 0.0150021
+boundary after = 3
+alpha after restrict = -0.0150021
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 10          RMS = 14.3689     TIME(s) = 0.0515219  
+alpha after restrict = 0.0132849
+boundary after = 3
+alpha after restrict = -0.0132849
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 11          RMS = 14.4238     TIME(s) = 0.053337   
+alpha after restrict = 0.0124944
+boundary after = 3
+alpha after restrict = -0.0124944
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 12          RMS = 14.4634     TIME(s) = 0.0540606  
+alpha after restrict = 0.0118087
+boundary after = 3
+alpha after restrict = -0.0118087
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 13          RMS = 14.4932     TIME(s) = 0.056437   
+alpha after restrict = 0.0112038
+boundary after = 3
+alpha after restrict = -0.0112038
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 14          RMS = 14.5161     TIME(s) = 0.0545238  
+alpha after restrict = 0.0106638
+boundary after = 3
+alpha after restrict = -0.0106638
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 15          RMS = 14.5342     TIME(s) = 0.054479   
+alpha after restrict = 0.0101772
+boundary after = 3
+alpha after restrict = -0.0101772
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 16          RMS = 14.5489     TIME(s) = 0.053405   
+alpha after restrict = 0.00973569
+boundary after = 3
+alpha after restrict = -0.00973569
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 17          RMS = 14.5609     TIME(s) = 0.0545664  
+alpha after restrict = 0.00933258
+boundary after = 3
+alpha after restrict = -0.00933258
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 18          RMS = 14.5711     TIME(s) = 0.0540614  
+alpha after restrict = 0.00896268
+boundary after = 3
+alpha after restrict = -0.00896268
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 19          RMS = 14.5797     TIME(s) = 0.0544127  
+alpha after restrict = 0.0086218
+boundary after = 3
+alpha after restrict = -0.0086218
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 20          RMS = 14.5871     TIME(s) = 0.057316   
+alpha after restrict = 0.00830646
+boundary after = 3
+alpha after restrict = -0.00830646
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 21          RMS = 14.5936     TIME(s) = 0.0534248  
+alpha after restrict = 0.00801376
+boundary after = 3
+alpha after restrict = -0.00801376
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 22          RMS = 14.5993     TIME(s) = 0.0549561  
+alpha after restrict = 0.00774125
+boundary after = 3
+alpha after restrict = -0.00774125
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 23          RMS = 14.6044     TIME(s) = 0.0517504  
+alpha after restrict = 0.00748685
+boundary after = 3
+alpha after restrict = -0.00748685
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 24          RMS = 14.609     TIME(s) = 0.0526811  
+alpha after restrict = 0.00724877
+boundary after = 3
+alpha after restrict = -0.00724877
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 25          RMS = 14.6132     TIME(s) = 0.0535187  
+alpha after restrict = 0.00702544
+boundary after = 3
+alpha after restrict = -0.00702544
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 26          RMS = 14.617     TIME(s) = 0.0521707  
+alpha after restrict = 0.00681552
+boundary after = 3
+alpha after restrict = -0.00681552
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 27          RMS = 14.6205     TIME(s) = 0.0518571  
+alpha after restrict = 0.0066178
+boundary after = 3
+alpha after restrict = -0.0066178
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 28          RMS = 14.6238     TIME(s) = 0.0538457  
+alpha after restrict = 0.00643124
+boundary after = 3
+alpha after restrict = -0.00643124
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 29          RMS = 14.6268     TIME(s) = 0.0519208  
+alpha after restrict = 0.00625491
+boundary after = 3
+alpha after restrict = -0.00625491
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 30          RMS = 14.6297     TIME(s) = 0.05311    
+alpha after restrict = 0.00608798
+boundary after = 3
+alpha after restrict = -0.00608798
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 31          RMS = 14.6324     TIME(s) = 0.0561176  
+alpha after restrict = 0.00592971
+boundary after = 3
+alpha after restrict = -0.00592971
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 32          RMS = 14.6349     TIME(s) = 0.0543512  
+alpha after restrict = 0.00577944
+boundary after = 3
+alpha after restrict = -0.00577944
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 33          RMS = 14.6373     TIME(s) = 0.0554296  
+alpha after restrict = 0.00563658
+boundary after = 3
+alpha after restrict = -0.00563658
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 34          RMS = 14.6396     TIME(s) = 0.0535728  
+alpha after restrict = 0.00550058
+boundary after = 3
+alpha after restrict = -0.00550058
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 35          RMS = 14.6417     TIME(s) = 0.0528732  
+alpha after restrict = 0.00537097
+boundary after = 3
+alpha after restrict = -0.00537097
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 36          RMS = 14.6438     TIME(s) = 0.0508266  
+alpha after restrict = 0.00524729
+boundary after = 3
+alpha after restrict = -0.00524729
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 37          RMS = 14.6458     TIME(s) = 0.0524715  
+alpha after restrict = 0.00512916
+boundary after = 3
+alpha after restrict = -0.00512916
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 38          RMS = 14.6477     TIME(s) = 0.0518588  
+alpha after restrict = 0.0050162
+boundary after = 3
+alpha after restrict = -0.0050162
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 39          RMS = 14.6496     TIME(s) = 0.0522273  
+alpha after restrict = 0.00490809
+boundary after = 3
+alpha after restrict = -0.00490809
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 40          RMS = 14.6513     TIME(s) = 0.0516913  
+alpha after restrict = 0.00480451
+boundary after = 3
+alpha after restrict = -0.00480451
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 41          RMS = 14.6531     TIME(s) = 0.0534305  
+alpha after restrict = 0.00470518
+boundary after = 3
+alpha after restrict = -0.00470518
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 42          RMS = 14.6547     TIME(s) = 0.0523305  
+alpha after restrict = 0.00460986
+boundary after = 3
+alpha after restrict = -0.00460986
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 43          RMS = 14.6563     TIME(s) = 0.0533244  
+alpha after restrict = 0.0045183
+boundary after = 3
+alpha after restrict = -0.0045183
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 44          RMS = 14.6579     TIME(s) = 0.0520037  
+alpha after restrict = 0.00443028
+boundary after = 3
+alpha after restrict = -0.00443028
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 45          RMS = 14.6594     TIME(s) = 0.0528198  
+alpha after restrict = 0.00434561
+boundary after = 3
+alpha after restrict = -0.00434561
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 46          RMS = 14.6609     TIME(s) = 0.0523358  
+alpha after restrict = 0.00426409
+boundary after = 3
+alpha after restrict = -0.00426409
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 47          RMS = 14.6623     TIME(s) = 0.0516237  
+alpha after restrict = 0.00418555
+boundary after = 3
+alpha after restrict = -0.00418555
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 48          RMS = 14.6637     TIME(s) = 0.0535394  
+alpha after restrict = 0.00410983
+boundary after = 3
+alpha after restrict = -0.00410983
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 49          RMS = 14.6651     TIME(s) = 0.0522741  
+alpha after restrict = 0.00403679
+boundary after = 3
+alpha after restrict = -0.00403679
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 50          RMS = 14.6664     TIME(s) = 0.0534097  
+alpha after restrict = 0.00396628
+boundary after = 3
+alpha after restrict = -0.00396628
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 51          RMS = 14.6677     TIME(s) = 0.054079   
+alpha after restrict = 0.00389817
+boundary after = 3
+alpha after restrict = -0.00389817
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 52          RMS = 14.669     TIME(s) = 0.0523941  
+alpha after restrict = 0.00383234
+boundary after = 3
+alpha after restrict = -0.00383234
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 53          RMS = 14.6702     TIME(s) = 0.0539416  
+alpha after restrict = 0.00376869
+boundary after = 3
+alpha after restrict = -0.00376869
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 54          RMS = 14.6714     TIME(s) = 0.0526582  
+alpha after restrict = 0.0037071
+boundary after = 3
+alpha after restrict = -0.0037071
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 55          RMS = 14.6726     TIME(s) = 0.051233   
+alpha after restrict = 0.00364748
+boundary after = 3
+alpha after restrict = -0.00364748
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 56          RMS = 14.6738     TIME(s) = 0.0538239  
+alpha after restrict = 0.00358973
+boundary after = 3
+alpha after restrict = -0.00358973
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 57          RMS = 14.6749     TIME(s) = 0.0509255  
+alpha after restrict = 0.00353377
+boundary after = 3
+alpha after restrict = -0.00353377
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 58          RMS = 14.6761     TIME(s) = 0.0547168  
+alpha after restrict = 0.00347951
+boundary after = 3
+alpha after restrict = -0.00347951
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 59          RMS = 14.6772     TIME(s) = 0.054341   
+alpha after restrict = 0.00342688
+boundary after = 3
+alpha after restrict = -0.00342688
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 60          RMS = 14.6782     TIME(s) = 0.052679   
+alpha after restrict = 0.00337581
+boundary after = 3
+alpha after restrict = -0.00337581
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 61          RMS = 14.6793     TIME(s) = 0.0518855  
+alpha after restrict = 0.00332623
+boundary after = 3
+alpha after restrict = -0.00332623
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 62          RMS = 14.6803     TIME(s) = 0.0526193  
+alpha after restrict = 0.00327807
+boundary after = 3
+alpha after restrict = -0.00327807
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 63          RMS = 14.6814     TIME(s) = 0.0511334  
+alpha after restrict = 0.00323128
+boundary after = 3
+alpha after restrict = -0.00323128
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 64          RMS = 14.6824     TIME(s) = 0.0510581  
+alpha after restrict = 0.00318579
+boundary after = 3
+alpha after restrict = -0.00318579
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 65          RMS = 14.6834     TIME(s) = 0.0515098  
+alpha after restrict = 0.00314156
+boundary after = 3
+alpha after restrict = -0.00314156
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 66          RMS = 14.6843     TIME(s) = 0.0523728  
+alpha after restrict = 0.00309853
+boundary after = 3
+alpha after restrict = -0.00309853
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 67          RMS = 14.6853     TIME(s) = 0.0517774  
+alpha after restrict = 0.00305665
+boundary after = 3
+alpha after restrict = -0.00305665
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 68          RMS = 14.6862     TIME(s) = 0.051496   
+alpha after restrict = 0.00301588
+boundary after = 3
+alpha after restrict = -0.00301588
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 69          RMS = 14.6872     TIME(s) = 0.0522197  
+alpha after restrict = 0.00297618
+boundary after = 3
+alpha after restrict = -0.00297618
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 70          RMS = 14.6881     TIME(s) = 0.0546988  
+alpha after restrict = 0.0029375
+boundary after = 3
+alpha after restrict = -0.0029375
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 71          RMS = 14.689     TIME(s) = 0.0525265  
+alpha after restrict = 0.00289981
+boundary after = 3
+alpha after restrict = -0.00289981
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 72          RMS = 14.6899     TIME(s) = 0.0539512  
+alpha after restrict = 0.00286306
+boundary after = 3
+alpha after restrict = -0.00286306
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 73          RMS = 14.6907     TIME(s) = 0.0531425  
+alpha after restrict = 0.00282723
+boundary after = 3
+alpha after restrict = -0.00282723
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 74          RMS = 14.6916     TIME(s) = 0.0558552  
+alpha after restrict = 0.00279227
+boundary after = 3
+alpha after restrict = -0.00279227
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 75          RMS = 14.6925     TIME(s) = 0.0538306  
+alpha after restrict = 0.00275816
+boundary after = 3
+alpha after restrict = -0.00275816
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 76          RMS = 14.6933     TIME(s) = 0.0526005  
+alpha after restrict = 0.00272487
+boundary after = 3
+alpha after restrict = -0.00272487
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 77          RMS = 14.6941     TIME(s) = 0.0529548  
+alpha after restrict = 0.00269237
+boundary after = 3
+alpha after restrict = -0.00269237
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 78          RMS = 14.6949     TIME(s) = 0.0515201  
+alpha after restrict = 0.00266063
+boundary after = 3
+alpha after restrict = -0.00266063
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 79          RMS = 14.6958     TIME(s) = 0.0544011  
+alpha after restrict = 0.00262962
+boundary after = 3
+alpha after restrict = -0.00262962
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 80          RMS = 14.6966     TIME(s) = 0.051915   
+alpha after restrict = 0.00259932
+boundary after = 3
+alpha after restrict = -0.00259932
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 81          RMS = 14.6973     TIME(s) = 0.0517269  
+alpha after restrict = 0.0025697
+boundary after = 3
+alpha after restrict = -0.0025697
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 82          RMS = 14.6981     TIME(s) = 0.0521219  
+alpha after restrict = 0.00254075
+boundary after = 3
+alpha after restrict = -0.00254075
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 83          RMS = 14.6989     TIME(s) = 0.0514755  
+alpha after restrict = 0.00251244
+boundary after = 3
+alpha after restrict = -0.00251244
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 84          RMS = 14.6996     TIME(s) = 0.0515311  
+alpha after restrict = 0.00248474
+boundary after = 3
+alpha after restrict = -0.00248474
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 85          RMS = 14.7004     TIME(s) = 0.0530273  
+alpha after restrict = 0.00245765
+boundary after = 3
+alpha after restrict = -0.00245765
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 86          RMS = 14.7011     TIME(s) = 0.05104    
+alpha after restrict = 0.00243114
+boundary after = 3
+alpha after restrict = -0.00243114
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 87          RMS = 14.7019     TIME(s) = 0.0507149  
+alpha after restrict = 0.00240518
+boundary after = 3
+alpha after restrict = -0.00240518
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 88          RMS = 14.7026     TIME(s) = 0.0541905  
+alpha after restrict = 0.00237978
+boundary after = 3
+alpha after restrict = -0.00237978
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 89          RMS = 14.7033     TIME(s) = 0.0539686  
+alpha after restrict = 0.00235489
+boundary after = 3
+alpha after restrict = -0.00235489
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 90          RMS = 14.704     TIME(s) = 0.0518272  
+alpha after restrict = 0.00233052
+boundary after = 3
+alpha after restrict = -0.00233052
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 91          RMS = 14.7047     TIME(s) = 0.0536745  
+alpha after restrict = 0.00230665
+boundary after = 3
+alpha after restrict = -0.00230665
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 92          RMS = 14.7054     TIME(s) = 0.0525863  
+alpha after restrict = 0.00228325
+boundary after = 3
+alpha after restrict = -0.00228325
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 93          RMS = 14.7061     TIME(s) = 0.0534659  
+alpha after restrict = 0.00226033
+boundary after = 3
+alpha after restrict = -0.00226033
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 94          RMS = 14.7067     TIME(s) = 0.0529143  
+alpha after restrict = 0.00223785
+boundary after = 3
+alpha after restrict = -0.00223785
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 95          RMS = 14.7074     TIME(s) = 0.0526829  
+alpha after restrict = 0.00221581
+boundary after = 3
+alpha after restrict = -0.00221581
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 96          RMS = 14.7081     TIME(s) = 0.0518274  
+alpha after restrict = 0.0021942
+boundary after = 3
+alpha after restrict = -0.0021942
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 97          RMS = 14.7087     TIME(s) = 0.0554223  
+alpha after restrict = 0.00217301
+boundary after = 3
+alpha after restrict = -0.00217301
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 98          RMS = 14.7094     TIME(s) = 0.0549559  
+alpha after restrict = 0.00215221
+boundary after = 3
+alpha after restrict = -0.00215221
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 99          RMS = 14.71     TIME(s) = 0.0520531  
+alpha after restrict = 0.00213181
+boundary after = 3
+alpha after restrict = -0.00213181
+boundary after = 3
+Step (Outer -- Inner) =  23 -- 100         RMS = 14.7106     TIME(s) = 0.0533911  
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 5.33913
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.6940761303        -5.6907993526       -11.2212469832
+ATOM      2        -9.7624945199        -9.7494277307        -0.3148779059
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1       143.2311566499       143.1495551435       292.9943204326
+ATOM      2       198.9032843315       198.6365370621        -2.5612716906
+Inner optimization for lambda ends.
+===============================================================================
+ GE24    -1.79e+01  -1.79e+01  -1.33e+01   3.15e+01  -8.39577272e+05  -8.32799398e+05   1.8151e+00   5.57
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1       143.2311566499       143.1495551435       292.9943204326
+ATOM      2       198.9032843315       198.6365370621        -2.5612716906
+initial spin (uB): 
+ATOM      1        -5.5650910963        -5.5619157066       -11.2734431658
+ATOM      2        -9.7049417486        -9.6921086791         0.0424654868
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.0000000000
+ATOM      2         0.0000000000         0.0000000000        -2.0000000000
+Step (Outer -- Inner) =  24 -- 1           RMS = 14.6694     TIME(s) = 0.0997107  
+alpha after restrict = -0.226015
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 2           RMS = 14.7269     TIME(s) = 0.0530497  
+alpha after restrict = -0.225315
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 3           RMS = 14.7358     TIME(s) = 0.0549428  
+alpha after restrict = -0.112556
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 4           RMS = 14.7393     TIME(s) = 0.0523275  
+alpha after restrict = -0.0750132
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 5           RMS = 14.7413     TIME(s) = 0.0542276  
+alpha after restrict = 0.0562495
+boundary after = 3
+alpha after restrict = -0.0562495
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 6           RMS = 14.7427     TIME(s) = 0.0525416  
+alpha after restrict = 0.0449933
+boundary after = 3
+alpha after restrict = -0.0449933
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 7           RMS = 14.7439     TIME(s) = 0.0533484  
+alpha after restrict = 0.0374896
+boundary after = 3
+alpha after restrict = -0.0374896
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 8           RMS = 14.7449     TIME(s) = 0.0543813  
+alpha after restrict = 0.0321299
+boundary after = 3
+alpha after restrict = -0.0321299
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 9           RMS = 14.7458     TIME(s) = 0.0542935  
+alpha after restrict = 0.0281102
+boundary after = 3
+alpha after restrict = -0.0281102
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 10          RMS = 14.7467     TIME(s) = 0.0532601  
+alpha after restrict = 0.0249837
+boundary after = 3
+alpha after restrict = -0.0249837
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 11          RMS = 14.7476     TIME(s) = 0.0526398  
+alpha after restrict = 0.0224824
+boundary after = 3
+alpha after restrict = -0.0224824
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 12          RMS = 14.7484     TIME(s) = 0.0530104  
+alpha after restrict = 0.020436
+boundary after = 3
+alpha after restrict = -0.020436
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 13          RMS = 14.7492     TIME(s) = 0.0542077  
+alpha after restrict = 0.0187306
+boundary after = 3
+alpha after restrict = -0.0187306
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 14          RMS = 14.7501     TIME(s) = 0.0526043  
+alpha after restrict = 0.0172876
+boundary after = 3
+alpha after restrict = -0.0172876
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 15          RMS = 14.7508     TIME(s) = 0.0536597  
+alpha after restrict = 0.0160507
+boundary after = 3
+alpha after restrict = -0.0160507
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 16          RMS = 14.7516     TIME(s) = 0.0535036  
+alpha after restrict = 0.0149787
+boundary after = 3
+alpha after restrict = -0.0149787
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 17          RMS = 14.7524     TIME(s) = 0.0527083  
+alpha after restrict = 0.0140407
+boundary after = 3
+alpha after restrict = -0.0140407
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 18          RMS = 14.7531     TIME(s) = 0.0540456  
+alpha after restrict = 0.0132131
+boundary after = 3
+alpha after restrict = -0.0132131
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 19          RMS = 14.7539     TIME(s) = 0.0519047  
+alpha after restrict = 0.0124774
+boundary after = 3
+alpha after restrict = -0.0124774
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 20          RMS = 14.7546     TIME(s) = 0.0532805  
+alpha after restrict = 0.0118192
+boundary after = 3
+alpha after restrict = -0.0118192
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 21          RMS = 14.7554     TIME(s) = 0.05412    
+alpha after restrict = 0.0112268
+boundary after = 3
+alpha after restrict = -0.0112268
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 22          RMS = 14.7561     TIME(s) = 0.0523147  
+alpha after restrict = 0.0106909
+boundary after = 3
+alpha after restrict = -0.0106909
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 23          RMS = 14.7568     TIME(s) = 0.0522844  
+alpha after restrict = 0.0102036
+boundary after = 3
+alpha after restrict = -0.0102036
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 24          RMS = 14.7575     TIME(s) = 0.0522309  
+alpha after restrict = 0.00975876
+boundary after = 3
+alpha after restrict = -0.00975876
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 25          RMS = 14.7582     TIME(s) = 0.0536357  
+alpha after restrict = 0.00935097
+boundary after = 3
+alpha after restrict = -0.00935097
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 26          RMS = 14.7589     TIME(s) = 0.0527018  
+alpha after restrict = 0.00897582
+boundary after = 3
+alpha after restrict = -0.00897582
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 27          RMS = 14.7596     TIME(s) = 0.051932   
+alpha after restrict = 0.00862952
+boundary after = 3
+alpha after restrict = -0.00862952
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 28          RMS = 14.7603     TIME(s) = 0.0513649  
+alpha after restrict = 0.00830889
+boundary after = 3
+alpha after restrict = -0.00830889
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 29          RMS = 14.761     TIME(s) = 0.0534014  
+alpha after restrict = 0.00801116
+boundary after = 3
+alpha after restrict = -0.00801116
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 30          RMS = 14.7617     TIME(s) = 0.0549839  
+alpha after restrict = 0.00773397
+boundary after = 3
+alpha after restrict = -0.00773397
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 31          RMS = 14.7624     TIME(s) = 0.0551361  
+alpha after restrict = 0.00747526
+boundary after = 3
+alpha after restrict = -0.00747526
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 32          RMS = 14.763     TIME(s) = 0.0519007  
+alpha after restrict = 0.00723325
+boundary after = 3
+alpha after restrict = -0.00723325
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 33          RMS = 14.7637     TIME(s) = 0.0524487  
+alpha after restrict = 0.00700637
+boundary after = 3
+alpha after restrict = -0.00700637
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 34          RMS = 14.7644     TIME(s) = 0.0523886  
+alpha after restrict = 0.00679325
+boundary after = 3
+alpha after restrict = -0.00679325
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 35          RMS = 14.765     TIME(s) = 0.0521536  
+alpha after restrict = 0.00659266
+boundary after = 3
+alpha after restrict = -0.00659266
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 36          RMS = 14.7657     TIME(s) = 0.0522971  
+alpha after restrict = 0.00640355
+boundary after = 3
+alpha after restrict = -0.00640355
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 37          RMS = 14.7663     TIME(s) = 0.0532084  
+alpha after restrict = 0.00622494
+boundary after = 3
+alpha after restrict = -0.00622494
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 38          RMS = 14.7669     TIME(s) = 0.0546994  
+alpha after restrict = 0.00605599
+boundary after = 3
+alpha after restrict = -0.00605599
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 39          RMS = 14.7676     TIME(s) = 0.0546845  
+alpha after restrict = 0.00589594
+boundary after = 3
+alpha after restrict = -0.00589594
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 40          RMS = 14.7682     TIME(s) = 0.0566071  
+alpha after restrict = 0.0057441
+boundary after = 3
+alpha after restrict = -0.0057441
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 41          RMS = 14.7688     TIME(s) = 0.0531886  
+alpha after restrict = 0.00559986
+boundary after = 3
+alpha after restrict = -0.00559986
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 42          RMS = 14.7694     TIME(s) = 0.0519161  
+alpha after restrict = 0.00546266
+boundary after = 3
+alpha after restrict = -0.00546266
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 43          RMS = 14.77     TIME(s) = 0.0546673  
+alpha after restrict = 0.00533199
+boundary after = 3
+alpha after restrict = -0.00533199
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 44          RMS = 14.7706     TIME(s) = 0.0512198  
+alpha after restrict = 0.00520741
+boundary after = 3
+alpha after restrict = -0.00520741
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 45          RMS = 14.7713     TIME(s) = 0.0513669  
+alpha after restrict = 0.00508849
+boundary after = 3
+alpha after restrict = -0.00508849
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 46          RMS = 14.7719     TIME(s) = 0.0511504  
+alpha after restrict = 0.00497486
+boundary after = 3
+alpha after restrict = -0.00497486
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 47          RMS = 14.7724     TIME(s) = 0.0524091  
+alpha after restrict = 0.00486617
+boundary after = 3
+alpha after restrict = -0.00486617
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 48          RMS = 14.773     TIME(s) = 0.0719529  
+alpha after restrict = 0.00476211
+boundary after = 3
+alpha after restrict = -0.00476211
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 49          RMS = 14.7736     TIME(s) = 0.0526638  
+alpha after restrict = 0.0046624
+boundary after = 3
+alpha after restrict = -0.0046624
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 50          RMS = 14.7742     TIME(s) = 0.0524526  
+alpha after restrict = 0.00456675
+boundary after = 3
+alpha after restrict = -0.00456675
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 51          RMS = 14.7748     TIME(s) = 0.0550424  
+alpha after restrict = 0.00447493
+boundary after = 3
+alpha after restrict = -0.00447493
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 52          RMS = 14.7754     TIME(s) = 0.0555102  
+alpha after restrict = 0.00438672
+boundary after = 3
+alpha after restrict = -0.00438672
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 53          RMS = 14.7759     TIME(s) = 0.0532805  
+alpha after restrict = 0.0043019
+boundary after = 3
+alpha after restrict = -0.0043019
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 54          RMS = 14.7765     TIME(s) = 0.0519094  
+alpha after restrict = 0.00422029
+boundary after = 3
+alpha after restrict = -0.00422029
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 55          RMS = 14.7771     TIME(s) = 0.0521245  
+alpha after restrict = 0.0041417
+boundary after = 3
+alpha after restrict = -0.0041417
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 56          RMS = 14.7776     TIME(s) = 0.0524521  
+alpha after restrict = 0.00406597
+boundary after = 3
+alpha after restrict = -0.00406597
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 57          RMS = 14.7782     TIME(s) = 0.0519928  
+alpha after restrict = 0.00399295
+boundary after = 3
+alpha after restrict = -0.00399295
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 58          RMS = 14.7787     TIME(s) = 0.0523223  
+alpha after restrict = 0.00392249
+boundary after = 3
+alpha after restrict = -0.00392249
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 59          RMS = 14.7793     TIME(s) = 0.0572841  
+alpha after restrict = 0.00385447
+boundary after = 3
+alpha after restrict = -0.00385447
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 60          RMS = 14.7798     TIME(s) = 0.0523867  
+alpha after restrict = 0.00378875
+boundary after = 3
+alpha after restrict = -0.00378875
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 61          RMS = 14.7803     TIME(s) = 0.0530823  
+alpha after restrict = 0.00372523
+boundary after = 3
+alpha after restrict = -0.00372523
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 62          RMS = 14.7809     TIME(s) = 0.0548354  
+alpha after restrict = 0.00366379
+boundary after = 3
+alpha after restrict = -0.00366379
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 63          RMS = 14.7814     TIME(s) = 0.0549593  
+alpha after restrict = 0.00360434
+boundary after = 3
+alpha after restrict = -0.00360434
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 64          RMS = 14.7819     TIME(s) = 0.0543462  
+alpha after restrict = 0.00354677
+boundary after = 3
+alpha after restrict = -0.00354677
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 65          RMS = 14.7825     TIME(s) = 0.0537591  
+alpha after restrict = 0.00349101
+boundary after = 3
+alpha after restrict = -0.00349101
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 66          RMS = 14.783     TIME(s) = 0.0520641  
+alpha after restrict = 0.00343696
+boundary after = 3
+alpha after restrict = -0.00343696
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 67          RMS = 14.7835     TIME(s) = 0.0521083  
+alpha after restrict = 0.00338455
+boundary after = 3
+alpha after restrict = -0.00338455
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 68          RMS = 14.784     TIME(s) = 0.0526564  
+alpha after restrict = 0.00333371
+boundary after = 3
+alpha after restrict = -0.00333371
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 69          RMS = 14.7845     TIME(s) = 0.0559201  
+alpha after restrict = 0.00328437
+boundary after = 3
+alpha after restrict = -0.00328437
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 70          RMS = 14.785     TIME(s) = 0.0520887  
+alpha after restrict = 0.00323646
+boundary after = 3
+alpha after restrict = -0.00323646
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 71          RMS = 14.7855     TIME(s) = 0.0521523  
+alpha after restrict = 0.00318992
+boundary after = 3
+alpha after restrict = -0.00318992
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 72          RMS = 14.786     TIME(s) = 0.0522514  
+alpha after restrict = 0.00314469
+boundary after = 3
+alpha after restrict = -0.00314469
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 73          RMS = 14.7865     TIME(s) = 0.0519691  
+alpha after restrict = 0.00310072
+boundary after = 3
+alpha after restrict = -0.00310072
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 74          RMS = 14.787     TIME(s) = 0.0519463  
+alpha after restrict = 0.00305796
+boundary after = 3
+alpha after restrict = -0.00305796
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 75          RMS = 14.7875     TIME(s) = 0.0532973  
+alpha after restrict = 0.00301635
+boundary after = 3
+alpha after restrict = -0.00301635
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 76          RMS = 14.788     TIME(s) = 0.0514738  
+alpha after restrict = 0.00297586
+boundary after = 3
+alpha after restrict = -0.00297586
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 77          RMS = 14.7885     TIME(s) = 0.0517863  
+alpha after restrict = 0.00293643
+boundary after = 3
+alpha after restrict = -0.00293643
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 78          RMS = 14.789     TIME(s) = 0.0544233  
+alpha after restrict = 0.00289803
+boundary after = 3
+alpha after restrict = -0.00289803
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 79          RMS = 14.7895     TIME(s) = 0.0516851  
+alpha after restrict = 0.00286061
+boundary after = 3
+alpha after restrict = -0.00286061
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 80          RMS = 14.7899     TIME(s) = 0.0524931  
+alpha after restrict = 0.00282415
+boundary after = 3
+alpha after restrict = -0.00282415
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 81          RMS = 14.7904     TIME(s) = 0.0514495  
+alpha after restrict = 0.00278859
+boundary after = 3
+alpha after restrict = -0.00278859
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 82          RMS = 14.7909     TIME(s) = 0.0545721  
+alpha after restrict = 0.00275392
+boundary after = 3
+alpha after restrict = -0.00275392
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 83          RMS = 14.7914     TIME(s) = 0.0535458  
+alpha after restrict = 0.00272009
+boundary after = 3
+alpha after restrict = -0.00272009
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 84          RMS = 14.7918     TIME(s) = 0.0520527  
+alpha after restrict = 0.00268708
+boundary after = 3
+alpha after restrict = -0.00268708
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 85          RMS = 14.7923     TIME(s) = 0.0516408  
+alpha after restrict = 0.00265485
+boundary after = 3
+alpha after restrict = -0.00265485
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 86          RMS = 14.7927     TIME(s) = 0.053875   
+alpha after restrict = 0.00262339
+boundary after = 3
+alpha after restrict = -0.00262339
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 87          RMS = 14.7932     TIME(s) = 0.0527988  
+alpha after restrict = 0.00259266
+boundary after = 3
+alpha after restrict = -0.00259266
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 88          RMS = 14.7937     TIME(s) = 0.0525809  
+alpha after restrict = 0.00256263
+boundary after = 3
+alpha after restrict = -0.00256263
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 89          RMS = 14.7941     TIME(s) = 0.0522833  
+alpha after restrict = 0.00253329
+boundary after = 3
+alpha after restrict = -0.00253329
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 90          RMS = 14.7946     TIME(s) = 0.05308    
+alpha after restrict = 0.00250461
+boundary after = 3
+alpha after restrict = -0.00250461
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 91          RMS = 14.795     TIME(s) = 0.051416   
+alpha after restrict = 0.00247657
+boundary after = 3
+alpha after restrict = -0.00247657
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 92          RMS = 14.7954     TIME(s) = 0.052444   
+alpha after restrict = 0.00244915
+boundary after = 3
+alpha after restrict = -0.00244915
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 93          RMS = 14.7959     TIME(s) = 0.0543202  
+alpha after restrict = 0.00242232
+boundary after = 3
+alpha after restrict = -0.00242232
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 94          RMS = 14.7963     TIME(s) = 0.0529499  
+alpha after restrict = 0.00239607
+boundary after = 3
+alpha after restrict = -0.00239607
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 95          RMS = 14.7968     TIME(s) = 0.0538284  
+alpha after restrict = 0.00237038
+boundary after = 3
+alpha after restrict = -0.00237038
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 96          RMS = 14.7972     TIME(s) = 0.0535671  
+alpha after restrict = 0.00234524
+boundary after = 3
+alpha after restrict = -0.00234524
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 97          RMS = 14.7976     TIME(s) = 0.055759   
+alpha after restrict = 0.00232062
+boundary after = 3
+alpha after restrict = -0.00232062
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 98          RMS = 14.7981     TIME(s) = 0.0531539  
+alpha after restrict = 0.0022965
+boundary after = 3
+alpha after restrict = -0.0022965
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 99          RMS = 14.7985     TIME(s) = 0.0535944  
+alpha after restrict = 0.00227288
+boundary after = 3
+alpha after restrict = -0.00227288
+boundary after = 3
+Step (Outer -- Inner) =  24 -- 100         RMS = 14.7989     TIME(s) = 0.0539469  
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 5.37759
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.4005754819        -5.3974442327       -11.5019799889
+ATOM      2        -9.7477381437        -9.7347124776         0.7622504053
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1       266.1409080460       265.9883325282       589.9943204326
+ATOM      2       415.6375212706       415.0811673786       -52.6583627990
+Inner optimization for lambda ends.
+===============================================================================
+ GE25    -1.76e+01  -1.75e+01  -1.24e+01   3.14e+01  -2.62031236e+06  -1.78073508e+06   1.1226e+00   5.60
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1       266.1409080460       265.9883325282       589.9943204326
+ATOM      2       415.6375212706       415.0811673786       -52.6583627990
+initial spin (uB): 
+ATOM      1        -5.2867251986        -5.2836402869       -11.5770130389
+ATOM      2        -9.7068708916        -9.6938936364         1.1369727908
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.0000000000
+ATOM      2         0.0000000000         0.0000000000        -2.0000000000
+Step (Outer -- Inner) =  25 -- 1           RMS = 14.8027     TIME(s) = 0.0960065  
+alpha after restrict = -0.220962
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 2           RMS = 14.8255     TIME(s) = 0.0532321  
+alpha after restrict = -0.220649
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 3           RMS = 14.8287     TIME(s) = 0.0540819  
+alpha after restrict = -0.110287
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 4           RMS = 14.8299     TIME(s) = 0.0525021  
+alpha after restrict = -0.0735151
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 5           RMS = 14.8307     TIME(s) = 0.051647   
+alpha after restrict = 0.0551318
+boundary after = 3
+alpha after restrict = -0.0551318
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 6           RMS = 14.8312     TIME(s) = 0.0529838  
+alpha after restrict = 0.0441027
+boundary after = 3
+alpha after restrict = -0.0441027
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 7           RMS = 14.8317     TIME(s) = 0.0514255  
+alpha after restrict = 0.03675
+boundary after = 3
+alpha after restrict = -0.03675
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 8           RMS = 14.8321     TIME(s) = 0.0519829  
+alpha after restrict = 0.0314981
+boundary after = 3
+alpha after restrict = -0.0314981
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 9           RMS = 14.8325     TIME(s) = 0.0525136  
+alpha after restrict = 0.0275592
+boundary after = 3
+alpha after restrict = -0.0275592
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 10          RMS = 14.8329     TIME(s) = 0.0516789  
+alpha after restrict = 0.0244955
+boundary after = 3
+alpha after restrict = -0.0244955
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 11          RMS = 14.8333     TIME(s) = 0.0539436  
+alpha after restrict = 0.0220447
+boundary after = 3
+alpha after restrict = -0.0220447
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 12          RMS = 14.8337     TIME(s) = 0.0523619  
+alpha after restrict = 0.0200394
+boundary after = 3
+alpha after restrict = -0.0200394
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 13          RMS = 14.8341     TIME(s) = 0.0517719  
+alpha after restrict = 0.0183683
+boundary after = 3
+alpha after restrict = -0.0183683
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 14          RMS = 14.8344     TIME(s) = 0.0526304  
+alpha after restrict = 0.0169543
+boundary after = 3
+alpha after restrict = -0.0169543
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 15          RMS = 14.8348     TIME(s) = 0.0516597  
+alpha after restrict = 0.0157423
+boundary after = 3
+alpha after restrict = -0.0157423
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 16          RMS = 14.8352     TIME(s) = 0.0524577  
+alpha after restrict = 0.0146919
+boundary after = 3
+alpha after restrict = -0.0146919
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 17          RMS = 14.8356     TIME(s) = 0.0522906  
+alpha after restrict = 0.0137728
+boundary after = 3
+alpha after restrict = -0.0137728
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 18          RMS = 14.8359     TIME(s) = 0.0509635  
+alpha after restrict = 0.0129619
+boundary after = 3
+alpha after restrict = -0.0129619
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 19          RMS = 14.8363     TIME(s) = 0.0550898  
+alpha after restrict = 0.012241
+boundary after = 3
+alpha after restrict = -0.012241
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 20          RMS = 14.8366     TIME(s) = 0.0512798  
+alpha after restrict = 0.011596
+boundary after = 3
+alpha after restrict = -0.011596
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 21          RMS = 14.837     TIME(s) = 0.0514957  
+alpha after restrict = 0.0110155
+boundary after = 3
+alpha after restrict = -0.0110155
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 22          RMS = 14.8374     TIME(s) = 0.0520896  
+alpha after restrict = 0.0104903
+boundary after = 3
+alpha after restrict = -0.0104903
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 23          RMS = 14.8377     TIME(s) = 0.0529549  
+alpha after restrict = 0.0100129
+boundary after = 3
+alpha after restrict = -0.0100129
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 24          RMS = 14.8381     TIME(s) = 0.0515318  
+alpha after restrict = 0.00957696
+boundary after = 3
+alpha after restrict = -0.00957696
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 25          RMS = 14.8384     TIME(s) = 0.0524802  
+alpha after restrict = 0.00917736
+boundary after = 3
+alpha after restrict = -0.00917736
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 26          RMS = 14.8388     TIME(s) = 0.0529163  
+alpha after restrict = 0.00880973
+boundary after = 3
+alpha after restrict = -0.00880973
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 27          RMS = 14.8391     TIME(s) = 0.052573   
+alpha after restrict = 0.00847038
+boundary after = 3
+alpha after restrict = -0.00847038
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 28          RMS = 14.8395     TIME(s) = 0.05115    
+alpha after restrict = 0.00815616
+boundary after = 3
+alpha after restrict = -0.00815616
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 29          RMS = 14.8398     TIME(s) = 0.0517172  
+alpha after restrict = 0.00786439
+boundary after = 3
+alpha after restrict = -0.00786439
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 30          RMS = 14.8402     TIME(s) = 0.0552199  
+alpha after restrict = 0.00759275
+boundary after = 3
+alpha after restrict = -0.00759275
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 31          RMS = 14.8405     TIME(s) = 0.0514899  
+alpha after restrict = 0.00733922
+boundary after = 3
+alpha after restrict = -0.00733922
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 32          RMS = 14.8409     TIME(s) = 0.0517093  
+alpha after restrict = 0.00710204
+boundary after = 3
+alpha after restrict = -0.00710204
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 33          RMS = 14.8412     TIME(s) = 0.0515603  
+alpha after restrict = 0.00687969
+boundary after = 3
+alpha after restrict = -0.00687969
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 34          RMS = 14.8415     TIME(s) = 0.0546612  
+alpha after restrict = 0.00667082
+boundary after = 3
+alpha after restrict = -0.00667082
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 35          RMS = 14.8419     TIME(s) = 0.0558945  
+alpha after restrict = 0.00647423
+boundary after = 3
+alpha after restrict = -0.00647423
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 36          RMS = 14.8422     TIME(s) = 0.0516179  
+alpha after restrict = 0.00628888
+boundary after = 3
+alpha after restrict = -0.00628888
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 37          RMS = 14.8426     TIME(s) = 0.0514694  
+alpha after restrict = 0.00611383
+boundary after = 3
+alpha after restrict = -0.00611383
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 38          RMS = 14.8429     TIME(s) = 0.0537316  
+alpha after restrict = 0.00594824
+boundary after = 3
+alpha after restrict = -0.00594824
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 39          RMS = 14.8432     TIME(s) = 0.0516932  
+alpha after restrict = 0.00579136
+boundary after = 3
+alpha after restrict = -0.00579136
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 40          RMS = 14.8436     TIME(s) = 0.0509076  
+alpha after restrict = 0.00564254
+boundary after = 3
+alpha after restrict = -0.00564254
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 41          RMS = 14.8439     TIME(s) = 0.0536608  
+alpha after restrict = 0.00550115
+boundary after = 3
+alpha after restrict = -0.00550115
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 42          RMS = 14.8442     TIME(s) = 0.0546379  
+alpha after restrict = 0.00536667
+boundary after = 3
+alpha after restrict = -0.00536667
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 43          RMS = 14.8445     TIME(s) = 0.0524457  
+alpha after restrict = 0.00523858
+boundary after = 3
+alpha after restrict = -0.00523858
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 44          RMS = 14.8449     TIME(s) = 0.0522209  
+alpha after restrict = 0.00511646
+boundary after = 3
+alpha after restrict = -0.00511646
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 45          RMS = 14.8452     TIME(s) = 0.0510609  
+alpha after restrict = 0.00499989
+boundary after = 3
+alpha after restrict = -0.00499989
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 46          RMS = 14.8455     TIME(s) = 0.0517299  
+alpha after restrict = 0.0048885
+boundary after = 3
+alpha after restrict = -0.0048885
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 47          RMS = 14.8458     TIME(s) = 0.0513688  
+alpha after restrict = 0.00478196
+boundary after = 3
+alpha after restrict = -0.00478196
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 48          RMS = 14.8462     TIME(s) = 0.0527152  
+alpha after restrict = 0.00467995
+boundary after = 3
+alpha after restrict = -0.00467995
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 49          RMS = 14.8465     TIME(s) = 0.053197   
+alpha after restrict = 0.00458219
+boundary after = 3
+alpha after restrict = -0.00458219
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 50          RMS = 14.8468     TIME(s) = 0.0532169  
+alpha after restrict = 0.00448842
+boundary after = 3
+alpha after restrict = -0.00448842
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 51          RMS = 14.8471     TIME(s) = 0.0547515  
+alpha after restrict = 0.0043984
+boundary after = 3
+alpha after restrict = -0.0043984
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 52          RMS = 14.8474     TIME(s) = 0.0552066  
+alpha after restrict = 0.00431192
+boundary after = 3
+alpha after restrict = -0.00431192
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 53          RMS = 14.8477     TIME(s) = 0.0539382  
+alpha after restrict = 0.00422876
+boundary after = 3
+alpha after restrict = -0.00422876
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 54          RMS = 14.8481     TIME(s) = 0.0519684  
+alpha after restrict = 0.00414874
+boundary after = 3
+alpha after restrict = -0.00414874
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 55          RMS = 14.8484     TIME(s) = 0.0524195  
+alpha after restrict = 0.00407168
+boundary after = 3
+alpha after restrict = -0.00407168
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 56          RMS = 14.8487     TIME(s) = 0.0533869  
+alpha after restrict = 0.00399743
+boundary after = 3
+alpha after restrict = -0.00399743
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 57          RMS = 14.849     TIME(s) = 0.0530824  
+alpha after restrict = 0.00392583
+boundary after = 3
+alpha after restrict = -0.00392583
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 58          RMS = 14.8493     TIME(s) = 0.052104   
+alpha after restrict = 0.00385674
+boundary after = 3
+alpha after restrict = -0.00385674
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 59          RMS = 14.8496     TIME(s) = 0.0515643  
+alpha after restrict = 0.00379004
+boundary after = 3
+alpha after restrict = -0.00379004
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 60          RMS = 14.8499     TIME(s) = 0.052622   
+alpha after restrict = 0.0037256
+boundary after = 3
+alpha after restrict = -0.0037256
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 61          RMS = 14.8502     TIME(s) = 0.0522954  
+alpha after restrict = 0.0036633
+boundary after = 3
+alpha after restrict = -0.0036633
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 62          RMS = 14.8505     TIME(s) = 0.0532245  
+alpha after restrict = 0.00360305
+boundary after = 3
+alpha after restrict = -0.00360305
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 63          RMS = 14.8508     TIME(s) = 0.0518036  
+alpha after restrict = 0.00354475
+boundary after = 3
+alpha after restrict = -0.00354475
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 64          RMS = 14.8511     TIME(s) = 0.0520385  
+alpha after restrict = 0.00348829
+boundary after = 3
+alpha after restrict = -0.00348829
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 65          RMS = 14.8514     TIME(s) = 0.051435   
+alpha after restrict = 0.0034336
+boundary after = 3
+alpha after restrict = -0.0034336
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 66          RMS = 14.8517     TIME(s) = 0.0527049  
+alpha after restrict = 0.0033806
+boundary after = 3
+alpha after restrict = -0.0033806
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 67          RMS = 14.852     TIME(s) = 0.0517931  
+alpha after restrict = 0.0033292
+boundary after = 3
+alpha after restrict = -0.0033292
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 68          RMS = 14.8523     TIME(s) = 0.0548829  
+alpha after restrict = 0.00327933
+boundary after = 3
+alpha after restrict = -0.00327933
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 69          RMS = 14.8526     TIME(s) = 0.0527782  
+alpha after restrict = 0.00323094
+boundary after = 3
+alpha after restrict = -0.00323094
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 70          RMS = 14.8529     TIME(s) = 0.0529672  
+alpha after restrict = 0.00318394
+boundary after = 3
+alpha after restrict = -0.00318394
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 71          RMS = 14.8532     TIME(s) = 0.0530768  
+alpha after restrict = 0.00313829
+boundary after = 3
+alpha after restrict = -0.00313829
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 72          RMS = 14.8535     TIME(s) = 0.052353   
+alpha after restrict = 0.00309393
+boundary after = 3
+alpha after restrict = -0.00309393
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 73          RMS = 14.8538     TIME(s) = 0.0528658  
+alpha after restrict = 0.0030508
+boundary after = 3
+alpha after restrict = -0.0030508
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 74          RMS = 14.8541     TIME(s) = 0.0522591  
+alpha after restrict = 0.00300885
+boundary after = 3
+alpha after restrict = -0.00300885
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 75          RMS = 14.8544     TIME(s) = 0.0524152  
+alpha after restrict = 0.00296803
+boundary after = 3
+alpha after restrict = -0.00296803
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 76          RMS = 14.8547     TIME(s) = 0.0546872  
+alpha after restrict = 0.00292831
+boundary after = 3
+alpha after restrict = -0.00292831
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 77          RMS = 14.855     TIME(s) = 0.0516184  
+alpha after restrict = 0.00288963
+boundary after = 3
+alpha after restrict = -0.00288963
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 78          RMS = 14.8552     TIME(s) = 0.0527406  
+alpha after restrict = 0.00285195
+boundary after = 3
+alpha after restrict = -0.00285195
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 79          RMS = 14.8555     TIME(s) = 0.0525739  
+alpha after restrict = 0.00281525
+boundary after = 3
+alpha after restrict = -0.00281525
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 80          RMS = 14.8558     TIME(s) = 0.0557171  
+alpha after restrict = 0.00277947
+boundary after = 3
+alpha after restrict = -0.00277947
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 81          RMS = 14.8561     TIME(s) = 0.0526066  
+alpha after restrict = 0.00274458
+boundary after = 3
+alpha after restrict = -0.00274458
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 82          RMS = 14.8564     TIME(s) = 0.0531344  
+alpha after restrict = 0.00271056
+boundary after = 3
+alpha after restrict = -0.00271056
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 83          RMS = 14.8567     TIME(s) = 0.0515245  
+alpha after restrict = 0.00267737
+boundary after = 3
+alpha after restrict = -0.00267737
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 84          RMS = 14.8569     TIME(s) = 0.0523144  
+alpha after restrict = 0.00264498
+boundary after = 3
+alpha after restrict = -0.00264498
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 85          RMS = 14.8572     TIME(s) = 0.0533862  
+alpha after restrict = 0.00261336
+boundary after = 3
+alpha after restrict = -0.00261336
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 86          RMS = 14.8575     TIME(s) = 0.0514355  
+alpha after restrict = 0.00258249
+boundary after = 3
+alpha after restrict = -0.00258249
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 87          RMS = 14.8578     TIME(s) = 0.0537615  
+alpha after restrict = 0.00255233
+boundary after = 3
+alpha after restrict = -0.00255233
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 88          RMS = 14.8581     TIME(s) = 0.052802   
+alpha after restrict = 0.00252287
+boundary after = 3
+alpha after restrict = -0.00252287
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 89          RMS = 14.8583     TIME(s) = 0.0528572  
+alpha after restrict = 0.00249407
+boundary after = 3
+alpha after restrict = -0.00249407
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 90          RMS = 14.8586     TIME(s) = 0.051723   
+alpha after restrict = 0.00246593
+boundary after = 3
+alpha after restrict = -0.00246593
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 91          RMS = 14.8589     TIME(s) = 0.0513308  
+alpha after restrict = 0.00243841
+boundary after = 3
+alpha after restrict = -0.00243841
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 92          RMS = 14.8592     TIME(s) = 0.0513331  
+alpha after restrict = 0.00241149
+boundary after = 3
+alpha after restrict = -0.00241149
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 93          RMS = 14.8594     TIME(s) = 0.051965   
+alpha after restrict = 0.00238516
+boundary after = 3
+alpha after restrict = -0.00238516
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 94          RMS = 14.8597     TIME(s) = 0.0516176  
+alpha after restrict = 0.0023594
+boundary after = 3
+alpha after restrict = -0.0023594
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 95          RMS = 14.86     TIME(s) = 0.0527533  
+alpha after restrict = 0.00233419
+boundary after = 3
+alpha after restrict = -0.00233419
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 96          RMS = 14.8602     TIME(s) = 0.0509718  
+alpha after restrict = 0.00230951
+boundary after = 3
+alpha after restrict = -0.00230951
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 97          RMS = 14.8605     TIME(s) = 0.0515837  
+alpha after restrict = 0.00228534
+boundary after = 3
+alpha after restrict = -0.00228534
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 98          RMS = 14.8608     TIME(s) = 0.051755   
+alpha after restrict = 0.00226167
+boundary after = 3
+alpha after restrict = -0.00226167
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 99          RMS = 14.861     TIME(s) = 0.0526037  
+alpha after restrict = 0.00223848
+boundary after = 3
+alpha after restrict = -0.00223848
+boundary after = 3
+Step (Outer -- Inner) =  25 -- 100         RMS = 14.8613     TIME(s) = 0.0531364  
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 5.29949
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1872084013        -5.1841834104       -11.6925779442
+ATOM      2        -9.6995479317        -9.6865969569         1.5405409982
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1       380.8940807287       380.6747166013       886.9943204326
+ATOM      2       627.5311140974       626.6917468269      -123.5808777949
+Inner optimization for lambda ends.
+===============================================================================
+ GE26    -1.73e+01  -1.72e+01  -1.17e+01   3.13e+01  -4.38986796e+06  -1.76955561e+06   3.2243e-01   5.59
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1       380.8940807287       380.6747166013       886.9943204326
+ATOM      2       627.5311140974       626.6917468269      -123.5808777949
+initial spin (uB): 
+ATOM      1        -5.1041164099        -5.1011287971       -11.7467505034
+ATOM      2        -9.6605721874        -9.6476745553         1.8265184882
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.0000000000
+ATOM      2         0.0000000000         0.0000000000        -2.0000000000
+Step (Outer -- Inner) =  26 -- 1           RMS = 14.8676     TIME(s) = 0.100258   
+alpha after restrict = -0.218233
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 2           RMS = 14.8811     TIME(s) = 0.053436   
+alpha after restrict = -0.218071
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 3           RMS = 14.8828     TIME(s) = 0.0511416  
+alpha after restrict = -0.109017
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 4           RMS = 14.8835     TIME(s) = 0.0518132  
+alpha after restrict = -0.0726732
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 5           RMS = 14.8839     TIME(s) = 0.0527742  
+alpha after restrict = 0.0545027
+boundary after = 3
+alpha after restrict = -0.0545027
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 6           RMS = 14.8842     TIME(s) = 0.0518614  
+alpha after restrict = 0.0436006
+boundary after = 3
+alpha after restrict = -0.0436006
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 7           RMS = 14.8844     TIME(s) = 0.0524807  
+alpha after restrict = 0.0363326
+boundary after = 3
+alpha after restrict = -0.0363326
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 8           RMS = 14.8847     TIME(s) = 0.0535137  
+alpha after restrict = 0.0311411
+boundary after = 3
+alpha after restrict = -0.0311411
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 9           RMS = 14.8849     TIME(s) = 0.052906   
+alpha after restrict = 0.0272475
+boundary after = 3
+alpha after restrict = -0.0272475
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 10          RMS = 14.8852     TIME(s) = 0.0517528  
+alpha after restrict = 0.0242191
+boundary after = 3
+alpha after restrict = -0.0242191
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 11          RMS = 14.8854     TIME(s) = 0.0526203  
+alpha after restrict = 0.0217964
+boundary after = 3
+alpha after restrict = -0.0217964
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 12          RMS = 14.8856     TIME(s) = 0.0534062  
+alpha after restrict = 0.0198142
+boundary after = 3
+alpha after restrict = -0.0198142
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 13          RMS = 14.8859     TIME(s) = 0.0549675  
+alpha after restrict = 0.0181623
+boundary after = 3
+alpha after restrict = -0.0181623
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 14          RMS = 14.8861     TIME(s) = 0.0527206  
+alpha after restrict = 0.0167646
+boundary after = 3
+alpha after restrict = -0.0167646
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 15          RMS = 14.8864     TIME(s) = 0.0512304  
+alpha after restrict = 0.0155665
+boundary after = 3
+alpha after restrict = -0.0155665
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 16          RMS = 14.8866     TIME(s) = 0.0518129  
+alpha after restrict = 0.0145282
+boundary after = 3
+alpha after restrict = -0.0145282
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 17          RMS = 14.8868     TIME(s) = 0.0513214  
+alpha after restrict = 0.0136196
+boundary after = 3
+alpha after restrict = -0.0136196
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 18          RMS = 14.8871     TIME(s) = 0.0514014  
+alpha after restrict = 0.012818
+boundary after = 3
+alpha after restrict = -0.012818
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 19          RMS = 14.8873     TIME(s) = 0.0525915  
+alpha after restrict = 0.0121054
+boundary after = 3
+alpha after restrict = -0.0121054
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 20          RMS = 14.8875     TIME(s) = 0.0527738  
+alpha after restrict = 0.0114678
+boundary after = 3
+alpha after restrict = -0.0114678
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 21          RMS = 14.8878     TIME(s) = 0.0521422  
+alpha after restrict = 0.010894
+boundary after = 3
+alpha after restrict = -0.010894
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 22          RMS = 14.888     TIME(s) = 0.0529832  
+alpha after restrict = 0.0103748
+boundary after = 3
+alpha after restrict = -0.0103748
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 23          RMS = 14.8882     TIME(s) = 0.052269   
+alpha after restrict = 0.00990288
+boundary after = 3
+alpha after restrict = -0.00990288
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 24          RMS = 14.8885     TIME(s) = 0.0519428  
+alpha after restrict = 0.00947195
+boundary after = 3
+alpha after restrict = -0.00947195
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 25          RMS = 14.8887     TIME(s) = 0.0510293  
+alpha after restrict = 0.00907693
+boundary after = 3
+alpha after restrict = -0.00907693
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 26          RMS = 14.8889     TIME(s) = 0.0518623  
+alpha after restrict = 0.00871352
+boundary after = 3
+alpha after restrict = -0.00871352
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 27          RMS = 14.8891     TIME(s) = 0.0529572  
+alpha after restrict = 0.00837806
+boundary after = 3
+alpha after restrict = -0.00837806
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 28          RMS = 14.8894     TIME(s) = 0.0524241  
+alpha after restrict = 0.00806744
+boundary after = 3
+alpha after restrict = -0.00806744
+boundary after = 3
+Step (Outer -- Inner) =  26 -- 29          RMS = 14.8896     TIME(s) = 0.0519285  
+alpha after restrict = 0.00777902
+boundary after = 3

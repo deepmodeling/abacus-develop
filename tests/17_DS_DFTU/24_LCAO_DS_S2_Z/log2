@@ -1,0 +1,460 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 3a1928035 (Mon May 11 10:54:21 2026 +0800)
+
+ Mon May 11 17:46:27 2026
+ MAKE THE DIR         : OUT.autotest/
+[DS-DIAG] STRU parse: lambda[0]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+[DS-DIAG] STRU parse: lambda[1]=(0.0734986, 0.0734986, 0.0734986) Ry/uB (converted from eV/uB)
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+                        GPU / NVIDIA GeForce RTX 3070 Ti (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 10 * 10 * 10
+ DONE(3.6634e-05 SEC) : SETUP UNITCELL
+ DONE(0.000576392 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 2       8               1           1             1             54          
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00197999 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0512946  SEC) : CHARGE
+ DONE(0.0526739  SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0806914  SEC) : INIT SCF
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -0.2025616357
+ATOM      2        -3.3507017475
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 3.33784, RMS = 1.0548
+[DS-DIAG] BFGS v2 line search: F=3.33784 F_trial=7.38327 gp=-0.00490653 armijo_rhs=3.33784
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -4.9804403977
+ATOM      2        -5.0049521503
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -1.05e+01   1.06e+01  -6.95690756e+03   0.00000000e+00   3.6672e-01   0.48
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -4.4728831368
+ATOM      2        -2.9563150853
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 21.4064, RMS = 2.67123
+[DS-DIAG] BFGS v2 line search: F=21.4064 F_trial=21.7203 gp=-0.0314668 armijo_rhs=21.4064
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1174699792
+ATOM      2        -5.1032755012
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE2     -1.15e+01   1.15e+01  -6.96217469e+03  -5.26712823e+00   2.0318e-01   0.31
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -3.0069161325
+ATOM      2        -3.1507840178
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 13.1968, RMS = 2.09736
+[DS-DIAG] BFGS v2 line search: F=13.1968 F_trial=13.581 gp=-0.0193989 armijo_rhs=13.1968
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.0963107436
+ATOM      2        -5.0964862626
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE3     -1.15e+01   1.15e+01  -6.96110776e+03   1.06692551e+00   4.8145e-02   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5231463486
+ATOM      2        -2.5268663523
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3682, RMS = 1.85905
+[DS-DIAG] BFGS v2 line search: F=10.3682 F_trial=11.9443 gp=-0.015241 armijo_rhs=10.3682
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.0980314184
+ATOM      2        -5.1021231581
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE4     -1.15e+01   1.15e+01  -6.96137549e+03  -2.67729210e-01   8.9840e-03   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5380934458
+ATOM      2        -2.5007544540
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.4225, RMS = 1.86391
+[DS-DIAG] BFGS v2 line search: F=10.4225 F_trial=11.2062 gp=-0.0153208 armijo_rhs=10.4225
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1020096796
+ATOM      2        -5.1026107833
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE5     -1.15e+01   1.15e+01  -6.96137854e+03  -3.04272748e-03   3.9843e-03   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5184462370
+ATOM      2        -2.5155291884
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3411, RMS = 1.85662
+[DS-DIAG] BFGS v2 line search: F=10.3411 F_trial=11.007 gp=-0.0152011 armijo_rhs=10.3411
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1009520262
+ATOM      2        -5.1023497701
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE6     -1.15e+01   1.15e+01  -6.96138028e+03  -1.74408785e-03   1.5578e-03   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5139787258
+ATOM      2        -2.5204973410
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3235, RMS = 1.85503
+[DS-DIAG] BFGS v2 line search: F=10.3235 F_trial=10.9799 gp=-0.0151752 armijo_rhs=10.3235
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008656872
+ATOM      2        -5.1023627042
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ SCF restart after this step!
+ GE7     -1.15e+01   1.15e+01  -6.96140301e+03  -2.27256185e-02   3.9269e-04   0.29
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5154880468
+ATOM      2        -2.5189196316
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3295, RMS = 1.85557
+[DS-DIAG] BFGS v2 line search: F=10.3295 F_trial=10.9873 gp=-0.015184 armijo_rhs=10.3295
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008597354
+ATOM      2        -5.1022836991
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE8     -1.15e+01   1.15e+01  -6.96138030e+03   2.27020789e-02   1.9865e-04   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5147910705
+ATOM      2        -2.5195905630
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3267, RMS = 1.85532
+[DS-DIAG] BFGS v2 line search: F=10.3267 F_trial=10.9865 gp=-0.0151799 armijo_rhs=10.3267
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008799311
+ATOM      2        -5.1022703402
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE9     -1.15e+01   1.15e+01  -6.96138029e+03   8.14946087e-06   8.2839e-05   0.31
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5144402322
+ATOM      2        -2.5199416586
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3253, RMS = 1.8552
+[DS-DIAG] BFGS v2 line search: F=10.3253 F_trial=10.9858 gp=-0.0151778 armijo_rhs=10.3253
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008835176
+ATOM      2        -5.1022747159
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE10    -1.15e+01   1.15e+01  -6.96138030e+03  -1.79319997e-07   3.2561e-05   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5141406574
+ATOM      2        -2.5202366833
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3241, RMS = 1.85509
+[DS-DIAG] BFGS v2 line search: F=10.3241 F_trial=10.9851 gp=-0.0151761 armijo_rhs=10.3241
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008861590
+ATOM      2        -5.1022732842
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE11    -1.15e+01   1.15e+01  -6.96138029e+03   3.64271078e-07   8.1211e-06   0.29
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5140447733
+ATOM      2        -2.5203314895
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3237, RMS = 1.85505
+[DS-DIAG] BFGS v2 line search: F=10.3237 F_trial=10.9848 gp=-0.0151755 armijo_rhs=10.3237
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008876703
+ATOM      2        -5.1022725750
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE12    -1.15e+01   1.15e+01  -6.96138029e+03   1.99600718e-07   3.8787e-06   0.31
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+[DS-DIAG] n_dof = 6, nsc = 100
+[DS-DIAG] alpha_init = 0.01 eV/uB^2
+[DS-DIAG] current_sc_thr = 0.0010548
+initial lambda (eV/uB): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+initial spin (uB): 
+ATOM      1        -2.5139805869
+ATOM      2        -2.5203950711
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+[DS-DIAG] Initial F = 10.3234, RMS = 1.85503
+[DS-DIAG] BFGS v2 line search: F=10.3234 F_trial=10.9846 gp=-0.0151751 armijo_rhs=10.3234
+[DS-DIAG] BFGS v2: line search failed at step 0
+Reach maximum number of steps ( 100 ), exit.              Total TIME(s) = 0
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -5.1008876905
+ATOM      2        -5.1022724891
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         1.0000000000
+ATOM      2         1.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE13    -1.15e+01   1.15e+01  -6.96138029e+03  -1.25256635e-07   7.7406e-07   0.32
+
+ TIME STATISTICS
+-------------------------------------------------------------------------------
+          CLASS_NAME                 NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------------------
+ Driver                       atomic_world       4.41   1        4.41   100.00 
+ Driver                       reading            0.14   1        0.14   3.15   
+ ESolver_KS_LCAO              before_all_runners 0.10   1        0.10   2.16   
+                              total              4.21   12       0.35   95.42  
+ PW_Basis_Sup                 recip2real         0.06   154      0.00   1.31   
+ Relax_Driver                 relax_driver       4.16   1        4.16   94.15  
+ ESolver_KS                   runner             4.16   1        4.16   94.15  
+ Potential                    cal_veff           0.22   14       0.02   4.97   
+ PW_Basis_Sup                 real2recip         0.06   164      0.00   1.37   
+ PotXC                        cal_veff           0.21   14       0.01   4.67   
+ XC_Functional                v_xc               0.21   14       0.01   4.65   
+ spinconstrain::SpinConstrain run_lambda_bfgs_v2 3.33   13       0.26   75.51  
+ spinconstrain::SpinConstrain cal_mw_from_lambda 3.33   273      0.01   75.40  
+ HSolverLCAO                  solve              3.27   273      0.01   74.11  
+ HamiltLCAO                   updateHk           1.13   2184     0.00   25.64  
+ OperatorLCAO                 init               1.13   15288    0.00   25.55  
+ Veff                         contributeHR       0.73   26       0.03   16.64  
+ Gint                         cal_gint_vl        0.73   26       0.03   16.64  
+ Overlap                      calculate_SR       0.06   1        0.06   1.46   
+ Overlap                      contributeHk       0.08   2184     0.00   1.90   
+ EKinetic                     contributeHR       0.06   26       0.00   1.44   
+ EKinetic                     calculate_HR       0.06   1        0.06   1.44   
+ OperatorLCAO                 contributeHk       0.09   2184     0.00   1.96   
+ HSolverLCAO                  hamiltSolvePsiK    1.97   2184     0.00   44.56  
+ DiagoElpa                    elpa_solve         1.74   2184     0.00   39.42  
+ elecstate                    cal_dm_psi         0.08   273      0.00   1.74   
+ psiMulPsiMpi                 pdgemm             0.07   2184     0.00   1.62   
+ DensityMatrix                cal_DMR            0.08   273      0.00   1.87   
+ spinconstrain::SpinConstrain cal_mi_lcao        0.05   287      0.00   1.15   
+ LCAO_domain                  dm2rho             0.54   13       0.04   12.20  
+ Gint                         cal_gint_rho       0.54   13       0.04   12.14  
+-------------------------------------------------------------------------------
+
+
+ START  Time  : Mon May 11 17:46:27 2026
+ FINISH Time  : Mon May 11 17:46:31 2026
+ TOTAL  Time  : 4
+ SEE INFORMATION IN : OUT.autotest/

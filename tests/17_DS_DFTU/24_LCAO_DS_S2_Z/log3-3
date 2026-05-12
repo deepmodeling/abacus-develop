@@ -1,0 +1,72 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: ab1863479 (Fri May 8 16:23:26 2026 +0800)
+
+ Fri May  8 17:53:27 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 15 * 15 * 15
+ DONE(1.1269e-05 SEC) : SETUP UNITCELL
+ DONE(0.000220166 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 2       8               4           1             4             54          
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.0010279  SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0542671  SEC) : CHARGE
+ DONE(0.0553182  SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0671202  SEC) : INIT SCF
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -5.07e-02   4.40e+00  -6.77688990e+03   0.00000000e+00   8.4227e-02   0.25
+ GV2      2.45e-02   4.88e+00  -6.77772378e+03  -8.33883048e-01   5.0309e-02   0.17
+ GV3     -4.76e-02   4.76e+00  -6.77779694e+03  -7.31630813e-02   3.2890e-02   0.18
+ GV4     -9.68e-03   4.70e+00  -6.77780456e+03  -7.61297483e-03   1.5658e-02   0.19
+ GV5     -1.20e-01   4.75e+00  -6.77781083e+03  -6.27841791e-03   9.1100e-03   0.17
+ GV6     -6.32e-02   4.76e+00  -6.77782601e+03  -1.51713940e-02   3.2817e-03   0.17
+ GV7     -1.26e-01   4.77e+00  -6.77782830e+03  -2.29947291e-03   1.6515e-03   0.17
+ GV8     -1.62e-01   4.77e+00  -6.77782826e+03   4.59772029e-05   1.6354e-03   0.19
+ GV9     -1.35e-01   4.77e+00  -6.77782577e+03   2.48425375e-03   1.4094e-03   0.18
+ SCF restart after this step!
+ GV10     4.42e-03   4.77e+00  -6.77788005e+03  -5.42750883e-02   5.0241e-04   0.18
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000
+ATOM      2         0.0000000000
+initial spin (uB): 
+ATOM      1         2.2970164202
+ATOM      2        -2.3493542192
+target spin (uB): 
+ATOM      1         0.0000000000
+ATOM      2         0.0000000000

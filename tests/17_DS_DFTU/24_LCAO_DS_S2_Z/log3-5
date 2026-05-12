@@ -1,0 +1,180 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: ab1863479 (Fri May 8 16:23:26 2026 +0800)
+
+ Fri May  8 19:38:43 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 10 * 10 * 10
+ DONE(2.4699e-05 SEC) : SETUP UNITCELL
+ DONE(0.000236533 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 2       8               1           1             1             54          
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00164729 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0527159  SEC) : CHARGE
+ DONE(0.0541903  SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0819071  SEC) : INIT SCF
+[DS-DIAG] iter=1 drho=0 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -6.78e-03   4.01e+00  -6.74910539e+03   0.00000000e+00   8.9467e-02   0.54
+[DS-DIAG] iter=2 drho=0.089467 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE2      2.05e-02   4.72e+00  -6.75027192e+03  -1.16652943e+00   5.2848e-02   0.37
+[DS-DIAG] iter=3 drho=0.0528483 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE3      5.21e-03   4.75e+00  -6.75033376e+03  -6.18453893e-02   3.2718e-02   0.37
+[DS-DIAG] iter=4 drho=0.032718 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE4      2.12e-02   4.76e+00  -6.75034733e+03  -1.35651887e-02   1.6478e-02   0.37
+[DS-DIAG] iter=5 drho=0.0164783 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE5     -1.59e-02   4.80e+00  -6.75034828e+03  -9.45946161e-04   5.2039e-03   0.39
+[DS-DIAG] iter=6 drho=0.00520389 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE6      6.38e-02   4.82e+00  -6.75035180e+03  -3.52702282e-03   3.5902e-03   0.38
+[DS-DIAG] iter=7 drho=0.00359017 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE7      3.39e-02   4.82e+00  -6.75035399e+03  -2.19013879e-03   1.1913e-03   0.36
+[DS-DIAG] iter=8 drho=0.00119132 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE8      6.45e-02   4.82e+00  -6.75035427e+03  -2.81797416e-04   9.3457e-04   0.36
+[DS-DIAG] iter=9 drho=0.000934565 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE9      9.75e-02   4.82e+00  -6.75035350e+03   7.73756955e-04   1.1826e-03   0.37
+[DS-DIAG] iter=10 drho=0.00118262 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE10     2.23e-02   4.81e+00  -6.75035392e+03  -4.21214537e-04   7.1764e-04   0.37
+[DS-DIAG] iter=11 drho=0.000717644 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE11    -9.12e-03   4.81e+00  -6.75035382e+03   1.01908319e-04   2.2025e-04   0.37
+[DS-DIAG] iter=12 drho=0.000220255 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE12    -1.15e-02   4.82e+00  -6.75035410e+03  -2.76149752e-04   1.1314e-04   0.36
+[DS-DIAG] iter=13 drho=0.000113136 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE13    -1.33e-02   4.82e+00  -6.75035381e+03   2.82702284e-04   4.7343e-05   0.37
+[DS-DIAG] iter=14 drho=4.73435e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE14    -1.01e-02   4.82e+00  -6.75035409e+03  -2.78500273e-04   4.0137e-05   0.38
+[DS-DIAG] iter=15 drho=4.01374e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE15    -1.32e-02   4.82e+00  -6.75035409e+03   5.85666050e-07   4.3165e-05   0.36
+[DS-DIAG] iter=16 drho=4.3165e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE16    -1.20e-02   4.82e+00  -6.75035409e+03   3.11920785e-07   2.6942e-05   0.37
+[DS-DIAG] iter=17 drho=2.69416e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE17    -1.09e-02   4.82e+00  -6.75035409e+03   4.32066057e-07   1.4390e-05   0.36
+[DS-DIAG] iter=18 drho=1.43897e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE18    -1.02e-02   4.82e+00  -6.75035381e+03   2.77454474e-04   4.8678e-06   0.36
+[DS-DIAG] iter=19 drho=4.86779e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE19    -6.54e-03   4.82e+00  -6.75035409e+03  -2.73576947e-04   1.0565e-04   0.36
+[DS-DIAG] iter=20 drho=0.000105653 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE20    -1.03e-02   4.82e+00  -6.75035409e+03  -3.34536693e-06   5.9578e-06   0.37
+[DS-DIAG] iter=21 drho=5.95782e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE21    -1.02e-02   4.82e+00  -6.75035409e+03  -8.13734642e-08   4.6643e-06   0.36
+[DS-DIAG] iter=22 drho=4.66435e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE22    -1.02e-02   4.82e+00  -6.75035409e+03   4.61894332e-08   4.6491e-06   0.38
+[DS-DIAG] iter=23 drho=4.64906e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE23    -1.02e-02   4.82e+00  -6.75035409e+03  -2.26589088e-08   4.5746e-06   0.36
+[DS-DIAG] iter=24 drho=4.57463e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE24    -1.02e-02   4.82e+00  -6.75035409e+03  -3.43928485e-09   4.4675e-06   0.37
+[DS-DIAG] iter=25 drho=4.46748e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE25    -1.02e-02   4.82e+00  -6.75035409e+03  -1.33866835e-08   4.1770e-06   0.38
+[DS-DIAG] iter=26 drho=4.17695e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE26    -1.02e-02   4.82e+00  -6.75035409e+03  -5.26604240e-09   3.8441e-06   0.37
+[DS-DIAG] iter=27 drho=3.84407e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE27    -1.01e-02   4.82e+00  -6.75035409e+03  -1.76287517e-08   3.6101e-06   0.36
+[DS-DIAG] iter=28 drho=3.61008e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE28    -1.01e-02   4.82e+00  -6.75035381e+03   2.77275296e-04   3.0344e-06   0.38
+[DS-DIAG] iter=29 drho=3.03437e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE29    -6.75e-03   4.82e+00  -6.75035409e+03  -2.74163068e-04   9.9457e-05   0.39
+[DS-DIAG] iter=30 drho=9.94569e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE30    -1.01e-02   4.82e+00  -6.75035409e+03  -3.10330918e-06   3.4148e-06   0.38
+[DS-DIAG] iter=31 drho=3.41479e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE31    -1.01e-02   4.82e+00  -6.75035409e+03  -1.12606223e-09   3.3567e-06   0.38
+[DS-DIAG] iter=32 drho=3.35666e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE32    -1.01e-02   4.82e+00  -6.75035409e+03  -4.09280311e-09   3.2832e-06   0.39
+[DS-DIAG] iter=33 drho=3.28318e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE33    -1.01e-02   4.82e+00  -6.75035409e+03  -9.14152169e-10   3.1815e-06   0.39
+[DS-DIAG] iter=34 drho=3.18147e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE34    -1.01e-02   4.82e+00  -6.75035409e+03  -1.18406681e-09   3.1188e-06   0.38
+[DS-DIAG] iter=35 drho=3.11877e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE35    -1.01e-02   4.82e+00  -6.75035409e+03  -1.25057873e-09   3.0383e-06   0.38
+[DS-DIAG] iter=36 drho=3.03832e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE36    -1.01e-02   4.82e+00  -6.75035409e+03  -1.78499425e-09   3.0133e-06   0.38
+[DS-DIAG] iter=37 drho=3.0133e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE37    -1.01e-02   4.82e+00  -6.75035409e+03  -8.44546674e-10   2.9783e-06   0.39
+[DS-DIAG] iter=38 drho=2.97827e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE38    -1.01e-02   4.82e+00  -6.75035381e+03   2.77274146e-04   2.9723e-06   0.37
+[DS-DIAG] iter=39 drho=2.97226e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE39    -6.75e-03   4.82e+00  -6.75035409e+03  -2.74195977e-04   9.9353e-05   0.37
+[DS-DIAG] iter=40 drho=9.93533e-05 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE40    -1.01e-02   4.82e+00  -6.75035409e+03  -3.07937031e-06   2.9783e-06   0.38
+[DS-DIAG] iter=41 drho=2.97832e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE41    -1.01e-02   4.82e+00  -6.75035409e+03  -3.13379407e-09   2.9100e-06   0.36
+[DS-DIAG] iter=42 drho=2.90996e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE42    -1.01e-02   4.82e+00  -6.75035409e+03   5.80819187e-10   2.8304e-06   0.36
+[DS-DIAG] iter=43 drho=2.83043e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE43    -1.01e-02   4.82e+00  -6.75035409e+03  -7.88088884e-10   2.7731e-06   0.37
+[DS-DIAG] iter=44 drho=2.77314e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE44    -1.01e-02   4.82e+00  -6.75035381e+03   2.77431493e-04   2.7507e-06   0.37
+[DS-DIAG] iter=45 drho=2.75066e-06 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE45    -4.08e-03   4.82e+00  -6.75035382e+03  -9.79122480e-06   1.8923e-04   0.37
+[DS-DIAG] iter=46 drho=0.000189225 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE46    -4.29e-03   4.82e+00  -6.75035382e+03   1.31260496e-08   1.8242e-04   0.37
+[DS-DIAG] iter=47 drho=0.000182422 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE47    -4.30e-03   4.82e+00  -6.75035382e+03   1.07762454e-07   1.8211e-04   0.36
+[DS-DIAG] iter=48 drho=0.000182112 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE48    -4.33e-03   4.82e+00  -6.75035381e+03   7.99163582e-06   1.8109e-04   0.37
+[DS-DIAG] iter=49 drho=0.000181088 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE49    -6.61e-03   4.82e+00  -6.75035382e+03  -7.86496387e-06   1.0531e-04   0.39
+[DS-DIAG] iter=50 drho=0.000105308 sc_scf_thr=1e-10 mag_converged=0 cond=0
+ GE50    -3.56e-03   4.82e+00  -6.75035408e+03  -2.55104396e-04   2.0602e-04   0.38
+ !!SCF IS NOT CONVERGED!!
+
+ TIME STATISTICS
+-------------------------------------------------------------
+  CLASS_NAME        NAME       TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------
+ Driver        atomic_world    18.91  1        18.91  100.00 
+               total           18.87  12       1.57   99.75  
+ PW_Basis_Sup  recip2real      0.22   565      0.00   1.16   
+ Relax_Driver  relax_driver    18.81  1        18.81  99.46  
+ ESolver_KS    runner          18.81  1        18.81  99.46  
+ Potential     cal_veff        0.85   51       0.02   4.48   
+ PW_Basis_Sup  real2recip      0.23   612      0.00   1.23   
+ PotXC         cal_veff        0.80   51       0.02   4.21   
+ XC_Functional v_xc            0.79   51       0.02   4.20   
+ HSolverLCAO   solve           17.75  50       0.35   93.83  
+ HamiltLCAO    updateHk        10.58  400      0.03   55.93  
+ OperatorLCAO  init            10.58  2800     0.00   55.93  
+ Veff          contributeHR    10.33  100      0.10   54.61  
+ Gint          cal_gint_vl     10.33  100      0.10   54.61  
+ HSolverLCAO   hamiltSolvePsiK 0.41   400      0.00   2.15   
+ DiagoElpa     elpa_solve      0.35   400      0.00   1.83   
+ LCAO_domain   dm2rho          6.73   50       0.13   35.56  
+ Gint          cal_gint_rho    6.72   50       0.13   35.50  
+-------------------------------------------------------------
+
+
+ START  Time  : Fri May  8 19:38:43 2026
+ FINISH Time  : Fri May  8 19:39:02 2026
+ TOTAL  Time  : 19
+ SEE INFORMATION IN : OUT.autotest/

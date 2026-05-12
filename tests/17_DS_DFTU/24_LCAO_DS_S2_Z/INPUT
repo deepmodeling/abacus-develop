@@ -5,7 +5,8 @@ basis_type    lcao
 ecutwfc    20
 gamma_only    0
 
-nspin    2
+nspin    4
+noncolin 1
 #nbands    28
 scf_thr    1.0e-6
 scf_nmax    50
@@ -26,6 +27,7 @@ nsc_min    2
 alpha_trial    0.01
 sccut    3.0
 sc_scf_thr    1e-3
+#sc_lambda_strategy    linear_scan
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB

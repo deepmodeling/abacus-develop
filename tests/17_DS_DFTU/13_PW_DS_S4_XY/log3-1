@@ -1,0 +1,181 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: e3f10f54b (Fri May 8 11:06:34 2026 +0800)
+
+ Fri May  8 16:34:48 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 30 * 30 * 30
+ DONE(4.0806e-05 SEC) : SETUP UNITCELL
+ DONE(0.000303558 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 4       4               4           1             4             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00134193 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.00528745 SEC) : LOCAL POTENTIAL
+ DONE(0.00977111 SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 0.66333
+ DONE(0.0336762  SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0712282  SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -9.91e-07  -3.84e-06   1.68e-06   7.87e-01  -6.35866605e+03   0.00000000e+00   2.6857e+01   0.47
+ DS2      1.49e-04  -4.31e-05  -8.68e-05   7.45e-01  -6.36279540e+03  -4.12934554e+00   3.4209e+00   0.38
+ DS3     -5.00e-04  -5.64e-04  -7.87e-04   3.47e+00  -6.36863682e+03  -5.84142224e+00   8.3700e-01   0.30
+ DS4      4.07e-03  -1.20e-03  -1.73e-03   6.85e+00  -6.36785915e+03   7.77672910e-01   2.2142e-01   0.24
+ DS5     -2.24e-01  -1.22e-03  -1.74e-03   8.82e+00  -6.37049481e+03  -2.63566272e+00   7.0159e-02   0.31
+ DS6      8.75e-02  -1.20e-03  -1.92e-03   8.40e+00  -6.37057871e+03  -8.38987582e-02   1.6906e-02   0.29
+ DS7     -1.42e-01  -1.15e-03  -2.00e-03   8.25e+00  -6.37060386e+03  -2.51486859e-02   1.0690e-02   0.28
+ DS8      3.71e-02  -1.26e-03  -1.84e-03   8.23e+00  -6.37062546e+03  -2.16048533e-02   1.6774e-03   0.25
+ SCF restart after this step!
+ DS9     -4.90e-02  -1.23e-03  -1.92e-03   8.31e+00  -6.37232067e+03  -1.69520738e+00   4.1273e-04   0.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1        -3.1304866511         0.0002208874        -0.0028984906
+ATOM      2         3.3620131575        -0.0013331927         0.0015831396
+target spin (uB): 
+ATOM      1         2.0000000000         0.0000000000         0.0000000000
+ATOM      2        -2.0000000000         0.0000000000         0.0000000000
+Step (Outer -- Inner) =  9 -- 1           RMS = 5.24753     TIME(s) = 0.0859989  
+[ALPHA-OPT] nat=2 sum_k=1.197127e-01 sum_k2=2.607151e-04 alpha_trial=7.349862e-04
+[ALPHA-OPT] spin[0]=(-3.1305,0.0002,-0.0029) spin_plus[0]=(-3.1198,0.0002,-0.0029)
+[ALPHA-OPT] spin[1]=(3.3620,-0.0013,0.0016) spin_plus[1]=(3.3499,-0.0013,0.0016)
+alpha after restrict = 0.559491
+boundary after = 3
+[ALPHA-OPT] nat=2 sum_k=1.197127e-01 sum_k2=2.607151e-04 alpha_trial=7.349862e-04
+[ALPHA-OPT] spin[0]=(-3.1305,0.0002,-0.0029) spin_plus[0]=(-3.1198,0.0002,-0.0029)
+[ALPHA-OPT] spin[1]=(3.3620,-0.0013,0.0016) spin_plus[1]=(3.3499,-0.0013,0.0016)
+[ALPHA-OPT] nat=2 sum_k=1.197127e-01 sum_k2=2.607151e-04 alpha_trial=7.349862e-04
+[ALPHA-OPT] spin[0]=(-3.1305,0.0002,-0.0029) spin_plus[0]=(-3.1198,0.0002,-0.0029)
+[ALPHA-OPT] spin[1]=(3.3620,-0.0013,0.0016) spin_plus[1]=(3.3499,-0.0013,0.0016)
+[ALPHA-OPT] nat=2 sum_k=1.197127e-01 sum_k2=2.607151e-04 alpha_trial=7.349862e-04
+[ALPHA-OPT] spin[0]=(-3.1305,0.0002,-0.0029) spin_plus[0]=(-3.1198,0.0002,-0.0029)
+[ALPHA-OPT] spin[1]=(3.3620,-0.0013,0.0016) spin_plus[1]=(3.3499,-0.0013,0.0016)
+Step (Outer -- Inner) =  9 -- 2           RMS = 1.01044     TIME(s) = 0.00209496 
+[ALPHA-OPT] nat=2 sum_k=7.339416e-02 sum_k2=2.638178e-03 alpha_trial=1.193989e-03
+[ALPHA-OPT] spin[0]=(0.9715,0.0003,-0.0020) spin_plus[0]=(1.0081,0.0003,-0.0019)
+[ALPHA-OPT] spin[1]=(-1.0080,-0.0005,0.0012) spin_plus[1]=(-1.0439,-0.0005,0.0011)
+[ALPHA-OPT] nat=2 sum_k=7.339416e-02 sum_k2=2.638178e-03 alpha_trial=1.193989e-03
+[ALPHA-OPT] spin[0]=(0.9715,0.0003,-0.0020) spin_plus[0]=(1.0081,0.0003,-0.0019)
+[ALPHA-OPT] spin[1]=(-1.0080,-0.0005,0.0012) spin_plus[1]=(-1.0439,-0.0005,0.0011)
+[ALPHA-OPT] nat=2 sum_k=7.339416e-02 sum_k2=2.638178e-03 alpha_trial=1.193989e-03
+[ALPHA-OPT] spin[0]=(0.9715,0.0003,-0.0020) spin_plus[0]=(1.0081,0.0003,-0.0019)
+[ALPHA-OPT] spin[1]=(-1.0080,-0.0005,0.0012) spin_plus[1]=(-1.0439,-0.0005,0.0011)
+[ALPHA-OPT] nat=2 sum_k=7.339416e-02 sum_k2=2.638178e-03 alpha_trial=1.193989e-03
+[ALPHA-OPT] spin[0]=(0.9715,0.0003,-0.0020) spin_plus[0]=(1.0081,0.0003,-0.0019)
+[ALPHA-OPT] spin[1]=(-1.0080,-0.0005,0.0012) spin_plus[1]=(-1.0439,-0.0005,0.0011)
+Step (Outer -- Inner) =  9 -- 3           RMS = 0.316889     TIME(s) = 0.00193936 
+[ALPHA-OPT] nat=2 sum_k=8.279543e-03 sum_k2=3.413367e-04 alpha_trial=1.939640e-03
+[ALPHA-OPT] spin[0]=(1.6742,-0.0002,0.0003) spin_plus[0]=(1.6875,-0.0002,0.0003)
+[ALPHA-OPT] spin[1]=(-1.6923,-0.0000,-0.0004) spin_plus[1]=(-1.7051,-0.0000,-0.0004)
+[ALPHA-OPT] nat=2 sum_k=8.279543e-03 sum_k2=3.413367e-04 alpha_trial=1.939640e-03
+[ALPHA-OPT] spin[0]=(1.6742,-0.0002,0.0003) spin_plus[0]=(1.6875,-0.0002,0.0003)
+[ALPHA-OPT] spin[1]=(-1.6923,-0.0000,-0.0004) spin_plus[1]=(-1.7051,-0.0000,-0.0004)
+[ALPHA-OPT] nat=2 sum_k=8.279543e-03 sum_k2=3.413367e-04 alpha_trial=1.939640e-03
+[ALPHA-OPT] spin[0]=(1.6742,-0.0002,0.0003) spin_plus[0]=(1.6875,-0.0002,0.0003)
+[ALPHA-OPT] spin[1]=(-1.6923,-0.0000,-0.0004) spin_plus[1]=(-1.7051,-0.0000,-0.0004)
+[ALPHA-OPT] nat=2 sum_k=8.279543e-03 sum_k2=3.413367e-04 alpha_trial=1.939640e-03
+[ALPHA-OPT] spin[0]=(1.6742,-0.0002,0.0003) spin_plus[0]=(1.6875,-0.0002,0.0003)
+[ALPHA-OPT] spin[1]=(-1.6923,-0.0000,-0.0004) spin_plus[1]=(-1.7051,-0.0000,-0.0004)
+Step (Outer -- Inner) =  9 -- 4           RMS = 0.0129247     TIME(s) = 0.00224909 
+[ALPHA-OPT] nat=2 sum_k=1.044816e-05 sum_k2=3.267820e-07 alpha_trial=3.150955e-03
+[ALPHA-OPT] spin[0]=(2.0117,0.0000,0.0001) spin_plus[0]=(2.0114,0.0000,0.0001)
+[ALPHA-OPT] spin[1]=(-1.9860,0.0000,-0.0001) spin_plus[1]=(-1.9864,0.0000,-0.0001)
+[ALPHA-OPT] nat=2 sum_k=1.044816e-05 sum_k2=3.267820e-07 alpha_trial=3.150955e-03
+[ALPHA-OPT] spin[0]=(2.0117,0.0000,0.0001) spin_plus[0]=(2.0114,0.0000,0.0001)
+[ALPHA-OPT] spin[1]=(-1.9860,0.0000,-0.0001) spin_plus[1]=(-1.9864,0.0000,-0.0001)
+[ALPHA-OPT] nat=2 sum_k=1.044816e-05 sum_k2=3.267820e-07 alpha_trial=3.150955e-03
+[ALPHA-OPT] spin[0]=(2.0117,0.0000,0.0001) spin_plus[0]=(2.0114,0.0000,0.0001)
+[ALPHA-OPT] spin[1]=(-1.9860,0.0000,-0.0001) spin_plus[1]=(-1.9864,0.0000,-0.0001)
+[ALPHA-OPT] nat=2 sum_k=1.044816e-05 sum_k2=3.267820e-07 alpha_trial=3.150955e-03
+[ALPHA-OPT] spin[0]=(2.0117,0.0000,0.0001) spin_plus[0]=(2.0114,0.0000,0.0001)
+[ALPHA-OPT] spin[1]=(-1.9860,0.0000,-0.0001) spin_plus[1]=(-1.9864,0.0000,-0.0001)
+Step (Outer -- Inner) =  9 -- 5           RMS = 0.000533527     TIME(s) = 0.00249391 
+Meet convergence criterion ( < 0.00524753 ), exit.       Total TIME(s) = 0.0947762
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0002554095        -0.0000086865        -0.0001465378
+ATOM      2        -2.0006870852        -0.0000449066         0.0000917441
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.5935016955         0.0001892040        -0.0023835060
+ATOM      2         3.7279057247        -0.0009867027         0.0011576334
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00325409
+ DS10     2.13e-02   8.66e-06   8.06e-06   5.12e+00  -5.34877865e+03   1.02354202e+03   1.0822e+00   0.17
+ DS11     6.35e-02   7.53e-04   1.16e-03   1.32e+01  -5.31565026e+03   3.31283894e+01   0.0000e+00   0.01
+
+ TIME STATISTICS
+-------------------------------------------------------------------------------------
+          CLASS_NAME                    NAME           TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------------------------
+ Driver                       atomic_world             3.12   1        3.12   100.00 
+                              total                    3.07   14       0.22   98.42  
+ PW_Basis_Sup                 recip2real               0.04   190      0.00   1.37   
+ Relax_Driver                 relax_driver             3.04   1        3.04   97.33  
+ ESolver_KS                   runner                   3.04   1        3.04   97.33  
+ ESolver_KS_PW                before_scf               0.04   1        0.04   1.20   
+ Potential                    cal_veff                 0.13   12       0.01   4.24   
+ PW_Basis_Sup                 real2recip               0.05   224      0.00   1.67   
+ PotXC                        cal_veff                 0.12   12       0.01   3.99   
+ XC_Functional                v_xc                     0.12   12       0.01   3.97   
+ ESolver_KS_PW                hamilt2rho_single        2.83   11       0.26   90.81  
+ HSolverPW                    solve                    2.68   9        0.30   85.84  
+ HSolverPW                    solve_psik               2.11   18       0.12   67.59  
+ Diago_DavSubspace            diag_once                2.07   18       0.12   66.40  
+ Diago_DavSubspace            first                    0.68   18       0.04   21.89  
+ Operator                     hPsi                     1.78   67       0.03   57.03  
+ Operator                     veff_pw                  1.72   67       0.03   55.00  
+ PW_Basis_K                   recip2real               1.10   7102     0.00   35.37  
+ PW_Basis_K                   real2recip               0.79   5022     0.00   25.30  
+ Operator                     nonlocal_pw              0.04   67       0.00   1.36   
+ Diago_DavSubspace            cal_elem                 0.08   65       0.00   2.70   
+ Diago_DavSubspace            diag_zhegvx              0.22   65       0.00   7.06   
+ Diago_DavSubspace            cal_grad                 1.10   47       0.02   35.14  
+ ElecStatePW                  psiToRho                 0.59   10       0.06   18.99  
+ Charge                       rho_mpi                  0.04   10       0.00   1.20   
+ Charge                       reduce_diff_pools        0.04   40       0.00   1.20   
+ spinconstrain::SpinConstrain cal_mw_from_lambda       0.09   9        0.01   3.03   
+ spinconstrain::SpinConstrain update_psi_charge        0.06   1        0.06   1.90   
+ spinconstrain::SpinConstrain update_psi_charge_pw_cpu 0.06   1        0.06   1.90   
+-------------------------------------------------------------------------------------
+
+
+ START  Time  : Fri May  8 16:34:48 2026
+ FINISH Time  : Fri May  8 16:34:51 2026
+ TOTAL  Time  : 3
+ SEE INFORMATION IN : OUT.autotest/
