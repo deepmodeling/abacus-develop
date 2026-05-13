@@ -41,7 +41,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
 		{
 			for (int i = 0; i < ucell.ntype; i++) 
 			{
-				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label);
+				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, PARAM.globalv.global_out_dir);
             }
 			for (int it = 0; it < ucell.ntype; it++) 
 			{

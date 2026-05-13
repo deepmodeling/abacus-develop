@@ -36,7 +36,16 @@ void make_dir_out(const std::string& suffix,
                   const bool& out_wfc_dir,
                   const int rank,
                   const bool& restart,
-                  const bool out_alllog)
+                  const bool out_alllog,
+                  const std::string& global_out_dir,
+                  const std::string& global_stru_dir,
+                  const std::string& global_matrix_dir,
+                  const std::string& global_wfc_dir,
+                  const std::string& global_mlkedf_descriptor_dir,
+                  const std::string& global_deepks_label_elec_dir,
+                  const std::string& log_file,
+                  const bool of_ml_gene_data,
+                  const bool deepks_out_freq_elec)
 {
 }
 } // namespace Global_File
