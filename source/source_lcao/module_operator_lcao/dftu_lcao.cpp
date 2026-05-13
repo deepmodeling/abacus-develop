@@ -257,12 +257,30 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         }
         else // use readin locale to calculate occupation matrix
         {
-            for (int i = 0; i < static_cast<int>(occ.size()); i++)
+            if (this->nspin == 4)
             {
-                occ[i] = this->dftu->get_locale(iat0, target_L, 0, this->current_spin,
-                                                  i / (2 * target_L + 1), i % (2 * target_L + 1));
+                const int tlp1_local = 2 * target_L + 1;
+                const int m_size2_local = tlp1_local * tlp1_local;
+                for (int i = 0; i < static_cast<int>(occ.size()); i++)
+                {
+                    const int ib = i / m_size2_local;
+                    const int m = (i % m_size2_local) / tlp1_local;
+                    const int m2_val = (i % m_size2_local) % tlp1_local;
+                    const int ipol0 = ib / npol;
+                    const int ipol1 = ib % npol;
+                    const int m0_all = m + ipol0 * tlp1_local;
+                    const int m1_all = m2_val + ipol1 * tlp1_local;
+                    occ[i] = this->dftu->get_locale(iat0, target_L, 0, 0, m0_all, m1_all);
+                }
             }
-            // set initialed_locale to false to avoid using readin locale in next iteration
+            else
+            {
+                for (int i = 0; i < static_cast<int>(occ.size()); i++)
+                {
+                    occ[i] = this->dftu->get_locale(iat0, target_L, 0, this->current_spin,
+                                                      i / (2 * target_L + 1), i % (2 * target_L + 1));
+                }
+            }
         }
         ModuleBase::timer::end("DFTU", "cal_occ");
 
