@@ -2,7 +2,9 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
+#include "makov_payne.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
@@ -339,6 +341,34 @@ void ElecState::cal_energies(const int type)
     }
 
     this->f_en.e_local_pp = get_local_pp_energy();
+
+    if (PARAM.inp.assume_isolated == "makov-payne")
+    {
+        const UnitCell* ucell = this->pot->get_ucell();
+        if (ucell == nullptr || this->charge == nullptr || this->charge->rhopw == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("ElecState::cal_energies",
+                                     "Makov-Payne correction requires an initialized unit cell and charge density.");
+        }
+        std::vector<double> v_elecstat;
+        const double* v_elecstat_ptr = nullptr;
+        {
+            ModuleBase::matrix vh(PARAM.inp.nspin, this->charge->rhopw->nrxx);
+            vh = elecstate::H_Hartree_pw::v_hartree(*ucell, this->charge->rhopw, PARAM.inp.nspin, this->charge->rho);
+            v_elecstat.assign(this->charge->rhopw->nrxx, 0.0);
+            const double* v_fixed = this->pot->get_fixed_v();
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ++ir)
+            {
+                v_elecstat[ir] = vh(0, ir) + v_fixed[ir];
+            }
+            v_elecstat_ptr = v_elecstat.data();
+        }
+        this->f_en.correction_el = makov_payne_correction(*ucell, *this->charge, v_elecstat_ptr).total;
+    }
+    else
+    {
+        this->f_en.correction_el = 0.0;
+    }
 
 #ifdef __MLALGO
     this->f_en.ml_exx = this->pot->get_ml_exx_energy();
