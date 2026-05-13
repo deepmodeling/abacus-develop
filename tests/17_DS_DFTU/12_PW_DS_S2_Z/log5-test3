@@ -1,0 +1,329 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 795454a1b (Tue May 12 13:08:51 2026 +0800)
+
+ Tue May 12 17:10:50 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+                        GPU / NVIDIA GeForce RTX 3070 Ti (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 30 * 30 * 30
+ DONE(2.7496e-05 SEC) : SETUP UNITCELL
+ DONE(0.000228007 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 4       4               1           1             1             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00555518 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0112015  SEC) : LOCAL POTENTIAL
+ DONE(0.0158638  SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 2.65967
+ DONE(0.0419741  SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.0950928  SEC) : INIT SCF
+
+================================================================================
+[DS-DIAG] === LINEAR LAMBDA SCAN START ===
+[DS-DIAG] Scan range: 0 -> 1 eV/uB
+[DS-DIAG] Number of steps: 20
+[DS-DIAG] Lambda step size: 0.0526316 eV/uB
+[DS-DIAG] nat = 2, ntype = 1
+[DS-DIAG] nspin_ = 4, npol_ = 2
+[DS-DIAG] p_operator = NULL
+[DS-DIAG] constrain_ size = 2
+[DS-DIAG]   Atom 0 constrain = (1, 1, 1) target_mag = (0, 0, 2)
+[DS-DIAG]   Atom 1 constrain = (1, 1, 1) target_mag = (0, 0, -2)
+================================================================================
+
+[DS-DIAG] === Scan step 0/20 lambda = 0 eV/uB ===
+[DS-DIAG]   lambda = 0 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.0120992, 0.0576433, 1.40051) uB
+[DS-DIAG]   Atom 1 Mi = (0.0161927, 0.0914942, -1.4095) uB
+
+[DS-DIAG] === Scan step 1/20 lambda = 0.0526316 eV/uB ===
+[DS-DIAG]   lambda = 0.0526316 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.0830697, -0.00945409, 1.29959) uB
+[DS-DIAG]   Atom 1 Mi = (-0.0532144, 0.0204696, -1.51809) uB
+
+[DS-DIAG] === Scan step 2/20 lambda = 0.105263 eV/uB ===
+[DS-DIAG]   lambda = 0.105263 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.150868, -0.0754901, 1.19595) uB
+[DS-DIAG]   Atom 1 Mi = (-0.128633, -0.0565132, -1.63017) uB
+
+[DS-DIAG] === Scan step 3/20 lambda = 0.157895 eV/uB ===
+[DS-DIAG]   lambda = 0.157895 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.213329, -0.139045, 1.09252) uB
+[DS-DIAG]   Atom 1 Mi = (-0.208893, -0.138999, -1.7408) uB
+
+[DS-DIAG] === Scan step 4/20 lambda = 0.210526 eV/uB ===
+[DS-DIAG]   lambda = 0.210526 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.269685, -0.199288, 0.999359) uB
+[DS-DIAG]   Atom 1 Mi = (-0.29036, -0.223237, -1.84014) uB
+
+[DS-DIAG] === Scan step 5/20 lambda = 0.263158 eV/uB ===
+[DS-DIAG]   lambda = 0.263158 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.32356, -0.25875, 0.926492) uB
+[DS-DIAG]   Atom 1 Mi = (-0.368839, -0.304723, -1.92164) uB
+
+[DS-DIAG] === Scan step 6/20 lambda = 0.315789 eV/uB ===
+[DS-DIAG]   lambda = 0.315789 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.381686, -0.322885, 0.876713) uB
+[DS-DIAG]   Atom 1 Mi = (-0.441773, -0.381123, -1.98627) uB
+
+[DS-DIAG] === Scan step 7/20 lambda = 0.368421 eV/uB ===
+[DS-DIAG]   lambda = 0.368421 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.450065, -0.396574, 0.844955) uB
+[DS-DIAG]   Atom 1 Mi = (-0.507976, -0.451436, -2.03705) uB
+
+[DS-DIAG] === Scan step 8/20 lambda = 0.421053 eV/uB ===
+[DS-DIAG]   lambda = 0.421053 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.532919, -0.48297, 0.821064) uB
+[DS-DIAG]   Atom 1 Mi = (-0.569089, -0.517139, -2.07958) uB
+
+[DS-DIAG] === Scan step 9/20 lambda = 0.473684 eV/uB ===
+[DS-DIAG]   lambda = 0.473684 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.632396, -0.584469, 0.793319) uB
+[DS-DIAG]   Atom 1 Mi = (-0.629687, -0.583451, -2.12335) uB
+
+[DS-DIAG] === Scan step 10/20 lambda = 0.526316 eV/uB ===
+[DS-DIAG]   lambda = 0.526316 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.746709, -0.700352, 0.75271) uB
+[DS-DIAG]   Atom 1 Mi = (-0.692713, -0.653849, -2.17245) uB
+
+[DS-DIAG] === Scan step 11/20 lambda = 0.578947 eV/uB ===
+[DS-DIAG]   lambda = 0.578947 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.869214, -0.824671, 0.69548) uB
+[DS-DIAG]   Atom 1 Mi = (-0.757459, -0.727085, -2.22429) uB
+
+[DS-DIAG] === Scan step 12/20 lambda = 0.631579 eV/uB ===
+[DS-DIAG]   lambda = 0.631579 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.991908, -0.949244, 0.624252) uB
+[DS-DIAG]   Atom 1 Mi = (-0.820701, -0.798573, -2.27437) uB
+
+[DS-DIAG] === Scan step 13/20 lambda = 0.684211 eV/uB ===
+[DS-DIAG]   lambda = 0.684211 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.11279, -1.07163, 0.544838) uB
+[DS-DIAG]   Atom 1 Mi = (-0.880682, -0.865648, -2.32214) uB
+
+[DS-DIAG] === Scan step 14/20 lambda = 0.736842 eV/uB ===
+[DS-DIAG]   lambda = 0.736842 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.23339, -1.1932, 0.460339) uB
+[DS-DIAG]   Atom 1 Mi = (-0.938196, -0.929009, -2.36904) uB
+
+[DS-DIAG] === Scan step 15/20 lambda = 0.789474 eV/uB ===
+[DS-DIAG]   lambda = 0.789474 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.35074, -1.31075, 0.370736) uB
+[DS-DIAG]   Atom 1 Mi = (-0.993864, -0.989112, -2.4134) uB
+
+[DS-DIAG] === Scan step 16/20 lambda = 0.842105 eV/uB ===
+[DS-DIAG]   lambda = 0.842105 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.45947, -1.41858, 0.275092) uB
+[DS-DIAG]   Atom 1 Mi = (-1.04847, -1.04667, -2.45311) uB
+
+[DS-DIAG] === Scan step 17/20 lambda = 0.894737 eV/uB ===
+[DS-DIAG]   lambda = 0.894737 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.55718, -1.51387, 0.172897) uB
+[DS-DIAG]   Atom 1 Mi = (-1.10368, -1.10406, -2.48875) uB
+
+[DS-DIAG] === Scan step 18/20 lambda = 0.947368 eV/uB ===
+[DS-DIAG]   lambda = 0.947368 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.65077, -1.60247, 0.0654396) uB
+[DS-DIAG]   Atom 1 Mi = (-1.1612, -1.16458, -2.52468) uB
+
+[DS-DIAG] === Scan step 19/20 lambda = 1 eV/uB ===
+[DS-DIAG]   lambda = 1 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.75128, -1.69609, -0.0449016) uB
+[DS-DIAG]   Atom 1 Mi = (-1.22149, -1.2296, -2.56558) uB
+
+================================================================================
+[DS-DIAG] === LINEAR LAMBDA SCAN COMPLETE ===
+[DS-DIAG] Results written to: lambda_scan_results.dat
+================================================================================
+
+
+================================================================================
+[DS-DIAG] === LINEAR LAMBDA SCAN START ===
+[DS-DIAG] Scan range: 0 -> 1 eV/uB
+[DS-DIAG] Number of steps: 20
+[DS-DIAG] Lambda step size: 0.0526316 eV/uB
+[DS-DIAG] nat = 2, ntype = 1
+[DS-DIAG] nspin_ = 4, npol_ = 2
+[DS-DIAG] p_operator = NULL
+[DS-DIAG] constrain_ size = 2
+[DS-DIAG]   Atom 0 constrain = (1, 1, 1) target_mag = (0, 0, 2)
+[DS-DIAG]   Atom 1 constrain = (1, 1, 1) target_mag = (0, 0, -2)
+================================================================================
+
+[DS-DIAG] === Scan step 0/20 lambda = 0 eV/uB ===
+[DS-DIAG]   lambda = 0 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.0120992, 0.0576433, 1.40051) uB
+[DS-DIAG]   Atom 1 Mi = (0.0161927, 0.0914942, -1.4095) uB
+
+[DS-DIAG] === Scan step 1/20 lambda = 0.0526316 eV/uB ===
+[DS-DIAG]   lambda = 0.0526316 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.0830697, -0.00945409, 1.29959) uB
+[DS-DIAG]   Atom 1 Mi = (-0.0532144, 0.0204696, -1.51809) uB
+
+[DS-DIAG] === Scan step 2/20 lambda = 0.105263 eV/uB ===
+[DS-DIAG]   lambda = 0.105263 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.150868, -0.0754901, 1.19595) uB
+[DS-DIAG]   Atom 1 Mi = (-0.128633, -0.0565132, -1.63017) uB
+
+[DS-DIAG] === Scan step 3/20 lambda = 0.157895 eV/uB ===
+[DS-DIAG]   lambda = 0.157895 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.213329, -0.139045, 1.09252) uB
+[DS-DIAG]   Atom 1 Mi = (-0.208893, -0.138999, -1.7408) uB
+
+[DS-DIAG] === Scan step 4/20 lambda = 0.210526 eV/uB ===
+[DS-DIAG]   lambda = 0.210526 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.269685, -0.199288, 0.999359) uB
+[DS-DIAG]   Atom 1 Mi = (-0.29036, -0.223237, -1.84014) uB
+
+[DS-DIAG] === Scan step 5/20 lambda = 0.263158 eV/uB ===
+[DS-DIAG]   lambda = 0.263158 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.32356, -0.25875, 0.926492) uB
+[DS-DIAG]   Atom 1 Mi = (-0.368839, -0.304723, -1.92164) uB
+
+[DS-DIAG] === Scan step 6/20 lambda = 0.315789 eV/uB ===
+[DS-DIAG]   lambda = 0.315789 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.381686, -0.322885, 0.876713) uB
+[DS-DIAG]   Atom 1 Mi = (-0.441773, -0.381123, -1.98627) uB
+
+[DS-DIAG] === Scan step 7/20 lambda = 0.368421 eV/uB ===
+[DS-DIAG]   lambda = 0.368421 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.450065, -0.396574, 0.844955) uB
+[DS-DIAG]   Atom 1 Mi = (-0.507976, -0.451436, -2.03705) uB
+
+[DS-DIAG] === Scan step 8/20 lambda = 0.421053 eV/uB ===
+[DS-DIAG]   lambda = 0.421053 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.532919, -0.48297, 0.821064) uB
+[DS-DIAG]   Atom 1 Mi = (-0.569089, -0.517139, -2.07958) uB
+
+[DS-DIAG] === Scan step 9/20 lambda = 0.473684 eV/uB ===
+[DS-DIAG]   lambda = 0.473684 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.632396, -0.584469, 0.793319) uB
+[DS-DIAG]   Atom 1 Mi = (-0.629687, -0.583451, -2.12335) uB
+
+[DS-DIAG] === Scan step 10/20 lambda = 0.526316 eV/uB ===
+[DS-DIAG]   lambda = 0.526316 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.746709, -0.700352, 0.75271) uB
+[DS-DIAG]   Atom 1 Mi = (-0.692713, -0.653849, -2.17245) uB
+
+[DS-DIAG] === Scan step 11/20 lambda = 0.578947 eV/uB ===
+[DS-DIAG]   lambda = 0.578947 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.869214, -0.824671, 0.69548) uB
+[DS-DIAG]   Atom 1 Mi = (-0.757459, -0.727085, -2.22429) uB
+
+[DS-DIAG] === Scan step 12/20 lambda = 0.631579 eV/uB ===
+[DS-DIAG]   lambda = 0.631579 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-0.991908, -0.949244, 0.624252) uB
+[DS-DIAG]   Atom 1 Mi = (-0.820701, -0.798573, -2.27437) uB
+
+[DS-DIAG] === Scan step 13/20 lambda = 0.684211 eV/uB ===
+[DS-DIAG]   lambda = 0.684211 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.11279, -1.07163, 0.544838) uB
+[DS-DIAG]   Atom 1 Mi = (-0.880682, -0.865648, -2.32214) uB
+
+[DS-DIAG] === Scan step 14/20 lambda = 0.736842 eV/uB ===
+[DS-DIAG]   lambda = 0.736842 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.23339, -1.1932, 0.460339) uB
+[DS-DIAG]   Atom 1 Mi = (-0.938196, -0.929009, -2.36904) uB
+
+[DS-DIAG] === Scan step 15/20 lambda = 0.789474 eV/uB ===
+[DS-DIAG]   lambda = 0.789474 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.35074, -1.31075, 0.370736) uB
+[DS-DIAG]   Atom 1 Mi = (-0.993864, -0.989112, -2.4134) uB
+
+[DS-DIAG] === Scan step 16/20 lambda = 0.842105 eV/uB ===
+[DS-DIAG]   lambda = 0.842105 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.45947, -1.41858, 0.275092) uB
+[DS-DIAG]   Atom 1 Mi = (-1.04847, -1.04667, -2.45311) uB
+
+[DS-DIAG] === Scan step 17/20 lambda = 0.894737 eV/uB ===
+[DS-DIAG]   lambda = 0.894737 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.55718, -1.51387, 0.172897) uB
+[DS-DIAG]   Atom 1 Mi = (-1.10368, -1.10406, -2.48875) uB
+
+[DS-DIAG] === Scan step 18/20 lambda = 0.947368 eV/uB ===
+[DS-DIAG]   lambda = 0.947368 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.65077, -1.60247, 0.0654396) uB
+[DS-DIAG]   Atom 1 Mi = (-1.1612, -1.16458, -2.52468) uB
+
+[DS-DIAG] === Scan step 19/20 lambda = 1 eV/uB ===
+[DS-DIAG]   lambda = 1 eV/uB
+[DS-DIAG]   Atom 0 Mi = (-1.75128, -1.69609, -0.0449016) uB
+[DS-DIAG]   Atom 1 Mi = (-1.22149, -1.2296, -2.56558) uB
+
+================================================================================
+[DS-DIAG] === LINEAR LAMBDA SCAN COMPLETE ===
+[DS-DIAG] Results written to: lambda_scan_results.dat
+================================================================================
+
+ SCF restart after this step!
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      0.00e+00   0.00e+00  -8.67e-15   3.80e+00  -6.08930036e+03   0.00000000e+00   0.0000e+00   1.01
+
+ TIME STATISTICS
+--------------------------------------------------------------------------------
+          CLASS_NAME                 NAME         TIME/s  CALLS   AVG/s  PER/%  
+--------------------------------------------------------------------------------
+ Driver                       atomic_world        1.35   1        1.35   100.00 
+ Driver                       reading             0.17   1        0.17   12.66  
+                              total               1.12   14       0.08   82.84  
+ PSIPrepare                   prepare_init        0.02   1        0.02   1.74   
+ psi_init_atomic              tabulate            0.02   1        0.02   1.73   
+ Relax_Driver                 relax_driver        1.07   1        1.07   79.54  
+ ESolver_KS                   runner              1.07   1        1.07   79.54  
+ ESolver_KS_PW                before_scf          0.05   1        0.05   3.92   
+ Potential                    init_pot            0.02   1        0.02   1.53   
+ Potential                    cal_veff            0.04   2        0.02   2.99   
+ PW_Basis_Sup                 real2recip          0.02   42       0.00   1.21   
+ PotXC                        cal_veff            0.04   2        0.02   2.79   
+ XC_Functional                v_xc                0.04   2        0.02   2.78   
+ PSIPrepare                   initialize_psi      0.02   1        0.02   1.32   
+ ESolver_KS_PW                hamilt2rho_single   0.98   2        0.49   72.67  
+ spinconstrain::SpinConstrain cal_mw_from_lambda  0.98   40       0.02   72.32  
+ Operator                     hPsi                0.10   4        0.03   7.77   
+ Operator                     veff_pw             0.02   4        0.01   1.66   
+ Operator                     nonlocal_pw         0.05   4        0.01   3.70   
+ Operator                     OnsiteProjPW        0.03   4        0.01   2.38   
+ OnsiteProj                   overlap             0.04   12       0.00   2.61   
+ Onsite_Proj_tools            cal_becp            0.03   12       0.00   2.57   
+ spinconstrain::SpinConstrain calculate_delta_hcc 0.02   160      0.00   1.77   
+ DiagoIterAssist              diag_responce       0.83   160      0.01   61.45  
+ DiagoIterAssist              diag_hegvd          0.81   160      0.01   60.04  
+--------------------------------------------------------------------------------
+
+
+ START  Time  : Tue May 12 17:10:50 2026
+ FINISH Time  : Tue May 12 17:10:51 2026
+ TOTAL  Time  : 1
+ SEE INFORMATION IN : OUT.autotest/

@@ -1,0 +1,1109 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 795454a1b (Tue May 12 13:08:51 2026 +0800)
+
+ Tue May 12 14:51:49 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / 12th Gen Intel(R) Core(TM) i7-12700KF (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 30 * 30 * 30
+ DONE(2.0615e-05 SEC) : SETUP UNITCELL
+ DONE(0.00071603 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 2       8               4           5             20            
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.0134763  SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.0251913  SEC) : LOCAL POTENTIAL
+ DONE(0.0347559  SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 0.342773
+ DONE(0.0585779  SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.115395   SEC) : INIT SCF
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -8.57e-13   7.86e-01  -6.35866846e+03   0.00000000e+00   2.6857e+01   0.64
+ DS2      4.25e-05   7.47e-01  -6.36279499e+03  -4.12652878e+00   3.4209e+00   0.52
+ DS3     -3.83e-04   3.48e+00  -6.36864063e+03  -5.84563822e+00   8.3689e-01   0.33
+ DS4     -4.14e-03   6.86e+00  -6.36786526e+03   7.75371154e-01   2.2093e-01   0.31
+ DS5     -4.81e-02   8.82e+00  -6.37049898e+03  -2.63371862e+00   6.3278e-02   0.35
+ DS6      4.06e-03   8.39e+00  -6.37056556e+03  -6.65797927e-02   1.0895e-02   1.00
+ DS7     -6.35e-02   8.20e+00  -6.37061612e+03  -5.05643860e-02   3.0911e-03   0.34
+ DS8      1.05e-02   8.24e+00  -6.37062649e+03  -1.03675101e-02   1.3529e-03   0.26
+ SCF restart after this step!
+ DS9     -3.00e-02   8.31e+00  -6.37222378e+03  -1.59729551e+00   1.8894e-04   0.36
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000
+ATOM      2         0.0000000000
+initial spin (uB): 
+ATOM      1        -3.1846855519
+ATOM      2         3.3110535783
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  8 -- 1           RMS = 5.24825     TIME(s) = 0.120269   
+alpha after restrict = 0.56486
+boundary after = 3
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  8 -- 2           RMS = 0.847776     TIME(s) = 0.00558976 
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.152495e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.204959e-01) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+Step (Outer -- Inner) =  8 -- 3           RMS = 0.252441     TIME(s) = 0.00817773 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.505381e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.152495e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.550421e-01) dnu_last=(0.000000e+00,0.000000e+00,2.204959e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.680260e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.505381e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.717971e-01) dnu_last=(0.000000e+00,0.000000e+00,2.550421e-01)
+Step (Outer -- Inner) =  8 -- 4           RMS = 0.0189427     TIME(s) = 0.00507833 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.665216e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.680260e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.714938e-01) dnu_last=(0.000000e+00,0.000000e+00,2.717971e-01)
+Step (Outer -- Inner) =  8 -- 5           RMS = 0.000810173     TIME(s) = 0.00724173 
+Meet convergence criterion ( < 0.00524825 ), exit.       Total TIME(s) = 0.146357
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0000124886
+ATOM      2        -2.0011456899
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.6262130539
+ATOM      2         3.6938619998
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 4.79647
+ DS10     1.06e+00   7.15e+00  -6.40749464e+03  -3.52708583e+01   1.1898e+00   0.75
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.6262130539
+ATOM      2         3.6938619998
+initial spin (uB): 
+ATOM      1        -1.6767377928
+ATOM      2         1.4224219917
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  9 -- 1           RMS = 3.55186     TIME(s) = 0.139895   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  9 -- 2           RMS = 1.28074     TIME(s) = 0.00411022 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.594187e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.345581e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+Step (Outer -- Inner) =  9 -- 3           RMS = 0.731661     TIME(s) = 0.00566717 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.924185e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.594187e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.520162e-01) dnu_last=(0.000000e+00,0.000000e+00,3.345581e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,7.064974e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.924185e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.751897e-01) dnu_last=(0.000000e+00,0.000000e+00,1.520162e-01)
+Step (Outer -- Inner) =  9 -- 4           RMS = 0.201909     TIME(s) = 0.00436191 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+Step (Outer -- Inner) =  9 -- 5           RMS = 0.0594275     TIME(s) = 0.00465967 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.289444e-02) dnu_last=(0.000000e+00,0.000000e+00,7.064974e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.740599e-01) dnu_last=(0.000000e+00,0.000000e+00,1.751897e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+Step (Outer -- Inner) =  9 -- 6           RMS = 0.0294984     TIME(s) = 0.00692889 
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978984e-02) dnu_last=(0.000000e+00,0.000000e+00,6.289444e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.684258e-01) dnu_last=(0.000000e+00,0.000000e+00,1.740599e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+Step (Outer -- Inner) =  9 -- 7           RMS = 0.00564965     TIME(s) = 0.00581821 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.017769e-02) dnu_last=(0.000000e+00,0.000000e+00,5.978984e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.661845e-01) dnu_last=(0.000000e+00,0.000000e+00,1.684258e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+Step (Outer -- Inner) =  9 -- 8           RMS = 0.00151363     TIME(s) = 0.00809276 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+Meet convergence criterion ( < 0.00355186 ), exit.       Total TIME(s) = 0.179534
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0007043630
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+ATOM      2        -2.0020213945
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -2.8127720936
+ATOM      2         5.9490244798
+Inner optimization for lambda ends.
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.978679e-02) dnu_last=(0.000000e+00,0.000000e+00,6.017769e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.657513e-01) dnu_last=(0.000000e+00,0.000000e+00,1.661845e-01)
+Current RMS: 2.92945
+ DS11    -5.00e-01   2.59e+00  -6.39061520e+03   1.68794460e+01   1.3664e+01   0.70
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -2.8127720936
+ATOM      2         5.9490244798
+initial spin (uB): 
+ATOM      1        -2.3633499619
+ATOM      2         2.8302313455
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  10 -- 1           RMS = 4.60271     TIME(s) = 0.0711387  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.589035e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.866064e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  10 -- 2           RMS = 1.15943     TIME(s) = 0.00758203 
+alpha after restrict = 1.92161
+boundary after = 3
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.819890e-02) dnu_last=(0.000000e+00,0.000000e+00,-2.589035e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.176298e-01) dnu_last=(0.000000e+00,0.000000e+00,2.866064e-03)
+Step (Outer -- Inner) =  10 -- 3           RMS = 0.570761     TIME(s) = 0.008042   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+Step (Outer -- Inner) =  10 -- 4           RMS = 0.236199     TIME(s) = 0.00701808 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.298911e-02) dnu_last=(0.000000e+00,0.000000e+00,6.819890e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.360779e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.176298e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+Step (Outer -- Inner) =  10 -- 5           RMS = 0.0437353     TIME(s) = 0.00444159 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.737242e-02) dnu_last=(0.000000e+00,0.000000e+00,4.298911e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.356943e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.360779e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.563763e-02) dnu_last=(0.000000e+00,0.000000e+00,2.737242e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.329299e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.356943e-01)
+Step (Outer -- Inner) =  10 -- 6           RMS = 0.00906061     TIME(s) = 0.0124289  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+Step (Outer -- Inner) =  10 -- 7           RMS = 0.00254086     TIME(s) = 0.00603885 
+Meet convergence criterion ( < 0.00460271 ), exit.       Total TIME(s) = 0.11669
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0029647637
+ATOM      2        -2.0020302954
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -2.4572079870
+ATOM      2         2.7889934128
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.613347e-02) dnu_last=(0.000000e+00,0.000000e+00,2.563763e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.322579e-01) dnu_last=(0.000000e+00,0.000000e+00,-2.329299e-01)
+Current RMS: 4.64538
+ DS12     5.07e-01   6.68e+00  -6.39842616e+03  -7.81096267e+00   2.4094e-01   0.67
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -2.4572079870
+ATOM      2         2.7889934128
+initial spin (uB): 
+ATOM      1        -2.8079146536
+ATOM      2         3.1657493599
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  11 -- 1           RMS = 4.99004     TIME(s) = 0.107221   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  11 -- 2           RMS = 0.337096     TIME(s) = 0.00454375 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.792542e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.074806e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+Step (Outer -- Inner) =  11 -- 3           RMS = 0.057681     TIME(s) = 0.00686227 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.675084e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.792542e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.154099e-02) dnu_last=(0.000000e+00,0.000000e+00,4.074806e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.557707e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.675084e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.603014e-02) dnu_last=(0.000000e+00,0.000000e+00,2.154099e-02)
+Step (Outer -- Inner) =  11 -- 4           RMS = 0.01606     TIME(s) = 0.00883889 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+Step (Outer -- Inner) =  11 -- 5           RMS = 0.00248625     TIME(s) = 0.00753998 
+Meet convergence criterion ( < 0.00499004 ), exit.       Total TIME(s) = 0.135006
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         1.9995448593
+ATOM      2        -2.0034865028
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -2.6510807862
+ATOM      2         3.1440412083
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.424938e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.557707e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.609552e-02) dnu_last=(0.000000e+00,0.000000e+00,2.603014e-02)
+Current RMS: 4.98413
+ DS13     5.00e-01   7.59e+00  -6.40114025e+03  -2.71409273e+00   2.9252e-02   0.76
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -2.6510807862
+ATOM      2         3.1440412083
+initial spin (uB): 
+ATOM      1        -2.8879807666
+ATOM      2         3.2521736951
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  12 -- 1           RMS = 5.07335     TIME(s) = 0.0841319  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  12 -- 2           RMS = 0.288759     TIME(s) = 0.00538137 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.813175e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.097287e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+Step (Outer -- Inner) =  12 -- 3           RMS = 0.0485913     TIME(s) = 0.00610193 
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.634548e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.813175e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.640791e-02) dnu_last=(0.000000e+00,0.000000e+00,4.097287e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+Step (Outer -- Inner) =  12 -- 4           RMS = 0.018014     TIME(s) = 0.00420916 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.706633e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.634548e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.050342e-02) dnu_last=(0.000000e+00,0.000000e+00,1.640791e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+Step (Outer -- Inner) =  12 -- 5           RMS = 0.00596213     TIME(s) = 0.013279   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.534872e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.706633e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.220921e-02) dnu_last=(0.000000e+00,0.000000e+00,2.050342e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.495835e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.534872e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.199946e-02) dnu_last=(0.000000e+00,0.000000e+00,2.220921e-02)
+Step (Outer -- Inner) =  12 -- 6           RMS = 0.00152418     TIME(s) = 0.00490826 
+Meet convergence criterion ( < 0.00507335 ), exit.       Total TIME(s) = 0.118012
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         1.9987272847
+ATOM      2        -2.0017396594
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -2.8545995932
+ATOM      2         3.4433591970
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 5.06319
+ DS14     5.01e-01   7.80e+00  -6.40360395e+03  -2.46370188e+00   2.6590e-02   0.56
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -2.8545995932
+ATOM      2         3.4433591970
+initial spin (uB): 
+ATOM      1        -2.9525965534
+ATOM      2         3.3053164254
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  13 -- 1           RMS = 5.13199     TIME(s) = 0.0740879  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.806962e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,4.078091e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  13 -- 2           RMS = 0.227784     TIME(s) = 0.00838349 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+Step (Outer -- Inner) =  13 -- 3           RMS = 0.0339586     TIME(s) = 0.00821983 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.529910e-02) dnu_last=(0.000000e+00,0.000000e+00,-3.806962e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.178628e-02) dnu_last=(0.000000e+00,0.000000e+00,4.078091e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+Step (Outer -- Inner) =  13 -- 4           RMS = 0.00840537     TIME(s) = 0.00900673 
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.776005e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.529910e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.304149e-02) dnu_last=(0.000000e+00,0.000000e+00,1.178628e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+Step (Outer -- Inner) =  13 -- 5           RMS = 0.0034705     TIME(s) = 0.00545995 
+Meet convergence criterion ( < 0.00513199 ), exit.       Total TIME(s) = 0.105158
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0019014386
+ATOM      2        -2.0045247337
+after-optimization lambda (eV/uB): (print in the inner loop): 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+ATOM      1        -3.1130844982
+ATOM      2         3.6099450802
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.899828e-02) dnu_last=(0.000000e+00,0.000000e+00,-1.776005e-02)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,1.224383e-02) dnu_last=(0.000000e+00,0.000000e+00,1.304149e-02)
+Current RMS: 5.12158
+ DS15     5.00e-01   7.96e+00  -6.40665828e+03  -3.05432986e+00   1.7098e-02   0.57
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.1130844982
+ATOM      2         3.6099450802
+initial spin (uB): 
+ATOM      1        -2.9684907873
+ATOM      2         3.3251410955
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  14 -- 1           RMS = 5.1499     TIME(s) = 0.100146   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  14 -- 2           RMS = 0.0374764     TIME(s) = 0.00556    
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.678722e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.942789e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+Step (Outer -- Inner) =  14 -- 3           RMS = 0.00289779     TIME(s) = 0.0100822  
+Meet convergence criterion ( < 0.0051499 ), exit.       Total TIME(s) = 0.115788
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0029040769
+ATOM      2        -1.9971085191
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.1886556843
+ATOM      2         3.6977010135
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.554378e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.678722e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,6.449940e-03) dnu_last=(0.000000e+00,0.000000e+00,3.942789e-03)
+Current RMS: 5.1479
+ DS16     5.00e-01   8.03e+00  -6.40755204e+03  -8.93760669e-01   5.5754e-03   0.55
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.1886556843
+ATOM      2         3.6977010135
+initial spin (uB): 
+ATOM      1        -2.9853297804
+ATOM      2         3.3425651871
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  15 -- 1           RMS = 5.16704     TIME(s) = 0.102377   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  15 -- 2           RMS = 0.027486     TIME(s) = 0.00806143 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.683752e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.947720e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+Step (Outer -- Inner) =  15 -- 3           RMS = 0.00260142     TIME(s) = 0.00422425 
+Meet convergence criterion ( < 0.00516704 ), exit.       Total TIME(s) = 0.114662
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0028385079
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+ATOM      2        -1.9976595584
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.2569298709
+ATOM      2         3.7780736401
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-5.018058e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.683752e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,5.907277e-03) dnu_last=(0.000000e+00,0.000000e+00,3.947720e-03)
+Current RMS: 5.16578
+ DS17     5.00e-01   8.08e+00  -6.40835444e+03  -8.02393516e-01   1.9352e-03   0.62
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.2569298709
+ATOM      2         3.7780736401
+initial spin (uB): 
+ATOM      1        -2.9955651279
+ATOM      2         3.3516355472
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  16 -- 1           RMS = 5.17666     TIME(s) = 0.0964828  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  16 -- 2           RMS = 0.0115578     TIME(s) = 0.00835119 
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.663524e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.924650e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+Step (Outer -- Inner) =  16 -- 3           RMS = 0.000784384     TIME(s) = 0.0128303  
+Meet convergence criterion ( < 0.00517666 ), exit.       Total TIME(s) = 0.117664
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         1.9991333592
+ATOM      2        -2.0006924241
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.2994781786
+ATOM      2         3.8201226495
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.127242e-03) dnu_last=(0.000000e+00,0.000000e+00,-3.663524e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.090544e-03) dnu_last=(0.000000e+00,0.000000e+00,3.924650e-03)
+Current RMS: 5.17617
+ DS18     5.00e-01   8.11e+00  -6.40885471e+03  -5.00268815e-01   3.4001e-04   0.47
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.2994781786
+ATOM      2         3.8201226495
+initial spin (uB): 
+ATOM      1        -2.9976883781
+ATOM      2         3.3533572874
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  17 -- 1           RMS = 5.17858     TIME(s) = 0.116659   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.634850e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.893530e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  17 -- 2           RMS = 0.0543926     TIME(s) = 0.00459017 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+Step (Outer -- Inner) =  17 -- 3           RMS = 0.000943918     TIME(s) = 0.00550879 
+Meet convergence criterion ( < 0.00517858 ), exit.       Total TIME(s) = 0.126758
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         1.9998733633
+ATOM      2        -2.0013288807
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.3124971073
+ATOM      2         3.8233006939
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-9.568733e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.634850e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,2.335819e-04) dnu_last=(0.000000e+00,0.000000e+00,3.893530e-03)
+Current RMS: 5.1784
+ DS19     5.00e-01   8.11e+00  -6.40900789e+03  -1.53186272e-01   9.6536e-06   0.49
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.3124971073
+ATOM      2         3.8233006939
+initial spin (uB): 
+ATOM      1        -2.9965947718
+ATOM      2         3.3535940136
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  18 -- 1           RMS = 5.17817     TIME(s) = 0.591104   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626366e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885465e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  18 -- 2           RMS = 0.0651454     TIME(s) = 0.013028   
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+Step (Outer -- Inner) =  18 -- 3           RMS = 0.000925992     TIME(s) = 0.00334994 
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+Meet convergence criterion ( < 0.00517817 ), exit.       Total TIME(s) = 0.607481
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.0011567330
+ATOM      2        -2.0006139139
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.3154680680
+ATOM      2         3.8184165209
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-2.183615e-04) dnu_last=(0.000000e+00,0.000000e+00,-3.626366e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.589800e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885465e-03)
+Current RMS: 5.17802
+ DS20     5.00e-01   8.11e+00  -6.40904276e+03  -3.48686737e-02   6.2685e-06   0.90
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1        -3.3154680680
+ATOM      2         3.8184165209
+initial spin (uB): 
+ATOM      1        -2.9965140274
+ATOM      2         3.3532044646
+target spin (uB): 
+ATOM      1         2.0000000000
+ATOM      2        -2.0000000000
+Step (Outer -- Inner) =  19 -- 1           RMS = 5.17793     TIME(s) = 0.0932696  
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+Step (Outer -- Inner) =  19 -- 2           RMS = 0.0649505     TIME(s) = 0.00428325 
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-3.626334e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,3.885210e-03) dnu_last=(0.000000e+00,0.000000e+00,0.000000e+00)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[0][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+Step (Outer -- Inner) =  19 -- 3           RMS = 0.00166988     TIME(s) = 0.00363101 
+Meet convergence criterion ( < 0.00517793 ), exit.       Total TIME(s) = 0.101184
+after-optimization spin (uB): (print in the inner loop): 
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+ATOM      1         2.0022840816
+ATOM      2        -1.9994000228
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -3.3157159301
+ATOM      2         3.8158538789
+Inner optimization for lambda ends.
+===============================================================================
+[GRAD-DECAY] WARNING: nu_change[0][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.821752e-05) dnu_last=(0.000000e+00,0.000000e+00,-3.626334e-03)
+[GRAD-DECAY] WARNING: nu_change[1][0] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+[GRAD-DECAY] WARNING: nu_change[1][1] too small! delta_lambda=(0.000000e+00,0.000000e+00,-1.883506e-04) dnu_last=(0.000000e+00,0.000000e+00,3.885210e-03)
+Current RMS: 5.17788
+ DS21     5.00e-01   8.11e+00  -6.40904568e+03  -2.92240839e-03   1.7227e-07   0.41
+
+ TIME STATISTICS
+-------------------------------------------------------------------------------------
+          CLASS_NAME                    NAME           TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------------------------
+ Driver                       atomic_world             11.75  1        11.75  100.00 
+                              total                    11.70  14       0.84   99.57  
+ Relax_Driver                 relax_driver             11.64  1        11.64  99.07  
+ ESolver_KS                   runner                   11.64  1        11.64  99.07  
+ Potential                    cal_veff                 0.22   22       0.01   1.84   
+ PW_Basis_Sup                 real2recip               0.12   306      0.00   1.02   
+ PotXC                        cal_veff                 0.20   22       0.01   1.68   
+ XC_Functional                v_xc                     0.20   22       0.01   1.68   
+ ESolver_KS_PW                hamilt2rho_single        11.30  21       0.54   96.17  
+ HSolverPW                    solve                    9.24   21       0.44   78.69  
+ HSolverPW                    solve_psik               7.79   168      0.05   66.28  
+ Diago_DavSubspace            diag_once                7.65   168      0.05   65.11  
+ Diago_DavSubspace            first                    2.43   168      0.01   20.68  
+ Operator                     hPsi                     7.37   847      0.01   62.74  
+ Operator                     veff_pw                  6.82   847      0.01   58.02  
+ PW_Basis_K                   recip2real               4.46   20109    0.00   38.00  
+ PW_Basis_K                   real2recip               3.65   15573    0.00   31.10  
+ Operator                     nonlocal_pw              0.25   847      0.00   2.16   
+ Operator                     OnsiteProjPW             0.29   847      0.00   2.50   
+ OnsiteProj                   overlap                  0.29   959      0.00   2.46   
+ Onsite_Proj_tools            cal_becp                 0.29   959      0.00   2.45   
+ Diago_DavSubspace            cal_elem                 0.31   751      0.00   2.65   
+ Diago_DavSubspace            diag_zhegvx              0.97   751      0.00   8.27   
+ Diago_DavSubspace            cal_grad                 4.07   583      0.01   34.67  
+ ElecStatePW                  psiToRho                 1.43   21       0.07   12.14  
+ spinconstrain::SpinConstrain cal_mw_from_lambda       1.98   96       0.02   16.82  
+ DiagoIterAssist              diag_responce            0.17   768      0.00   1.43   
+ DiagoIterAssist              diag_hegvd               0.17   864      0.00   1.47   
+ spinconstrain::SpinConstrain update_psi_charge        5.25   12       0.44   44.71  
+ spinconstrain::SpinConstrain update_psi_charge_pw_cpu 5.25   12       0.44   44.71  
+-------------------------------------------------------------------------------------
+
+
+ START  Time  : Tue May 12 14:51:49 2026
+ FINISH Time  : Tue May 12 14:52:00 2026
+ TOTAL  Time  : 11
+ SEE INFORMATION IN : OUT.autotest/
