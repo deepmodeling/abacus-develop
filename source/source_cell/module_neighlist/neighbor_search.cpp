@@ -8,6 +8,7 @@ InputAtoms NeighborSearch::ucell_to_input_atoms(const IAtomProvider& ucell)
 {
     InputAtoms input_atoms;
     int atom_count = 0;
+    assert(ucell.get_natom() > 0);
 
     input_atoms.x_low = input_atoms.y_low = input_atoms.z_low = std::numeric_limits<double>::max();
     input_atoms.x_high = input_atoms.y_high = input_atoms.z_high = std::numeric_limits<double>::lowest();

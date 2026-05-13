@@ -12,10 +12,20 @@ void BinManager::init_bins(
 )
 {
     sradius = sr;
+    if(inside_atoms.empty() && ghost_atoms.empty())
+    {
+        x_min=y_min=z_min=0;
+        x_max=y_max=z_max=0;
+        nbinx=nbiny=nbinz=1;
+        bins.clear();
+        bins.resize(1);
+        return;
+    }
 
     x_min = y_min = z_min = std::numeric_limits<double>::max();
 
     x_max = y_max = z_max = std::numeric_limits<double>::lowest();
+    
 
     auto update_bounds = [&](const std::vector<NeighborAtom>& atoms)
     {
