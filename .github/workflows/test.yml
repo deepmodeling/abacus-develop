@@ -209,13 +209,6 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 06_SDFT
           
-      - name: 17_DS_DFTU Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
-          
       - name: 07_OFDFT Test
         env:
           GTEST_COLOR: 'yes'
@@ -243,6 +236,13 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R 10_others
+          
+      - name: 17_DS_DFTU Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
           
       - name: Other Unittests
         env:

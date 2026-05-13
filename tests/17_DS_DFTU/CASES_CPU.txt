@@ -19,7 +19,12 @@
 36_PW_DS_S2_ReadLam_Z
 37_PW_DS_S4_ReadLam_XY
 51_FeO_Fe_first_O_second
-# 55_PW_DS_NSCF_S4_XY
 56_PW_DS_S4_DirectionOnly_XY
 57_PW_DFTU_DS_S4_DirectionOnly_XY
 58_LCAO_DS_S4_DirectionOnly_XY
+# threshold variants (disabled by default)
+# 38_PW_DS_S2_Thr1e10_Z
+# 39_PW_DS_S4_Thr1e10_XY
+# 41_PW_DS_S4_Thr10_XY
+# 43_PW_DFTU_DS_S4_Thr1e10_XY
+# 45_PW_DFTU_DS_S4_Thr10_XY
