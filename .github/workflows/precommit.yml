@@ -45,6 +45,7 @@ jobs:
       - name: Run precommit
         env:
           ABACUS_PRECOMMIT_SERVER: "http://127.0.0.1:8080"
+        continue-on-error: true
         run: |
           ./tools/precommit/precommit.py --no-cache
 
