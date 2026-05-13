@@ -41,16 +41,13 @@ public:
     int x, y, z;
     double wide_x, wide_y, wide_z;
 
-    // 扩展层
     int glayerX, glayerY, glayerZ;
     int glayerX_minus, glayerY_minus, glayerZ_minus;
 
-    // 原子集合
     std::vector<NeighborAtom> all_atoms;
     std::vector<NeighborAtom> inside_atoms;
     std::vector<NeighborAtom> ghost_atoms;
 
-    // 近邻表 & bin 管理
     NeighborList neighbor_list;
     BinManager bin_manager;
 };

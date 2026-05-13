@@ -6,7 +6,6 @@ TEST(NeighborSearchTest, TwoAtomsNeighbor)
 {
     UnitCellPlus ucell;
 
-    // ===== 基本晶胞信息 =====
     ucell.lat0 = 1.0;
     ucell.omega = 1.0;
 
@@ -14,7 +13,6 @@ TEST(NeighborSearchTest, TwoAtomsNeighbor)
     ucell.latvec.e21 = 0; ucell.latvec.e22 = 1; ucell.latvec.e23 = 0;
     ucell.latvec.e31 = 0; ucell.latvec.e32 = 0; ucell.latvec.e33 = 1;
 
-    // ===== 原子信息 =====
     ucell.ntype = 1;
     ucell.na = {2};
     ucell.nat = 2;
