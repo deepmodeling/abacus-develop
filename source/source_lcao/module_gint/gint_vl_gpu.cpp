@@ -32,7 +32,7 @@ void Gint_vl_gpu::cal_gint()
 inline void finalize_hr_gint_gpu_(HContainer<double>& hr_gint, HContainer<double>* hR)
 {
     compose_hr_gint(hr_gint);
-    transfer_hr_gint_to_hR(hr_gint, *hR);
+    hr_gint_to_hR(hr_gint, *hR);
 }
 
 // Helper: finalize hr_gint (non-double path — cast to double first)
@@ -41,7 +41,7 @@ void finalize_hr_gint_gpu_(HContainer<Real>& hr_gint, HContainer<double>* hR)
 {
     HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
     compose_hr_gint(hr_gint_dp);
-    transfer_hr_gint_to_hR(hr_gint_dp, *hR);
+    hr_gint_to_hR(hr_gint_dp, *hR);
 }
 
 template<typename Real>

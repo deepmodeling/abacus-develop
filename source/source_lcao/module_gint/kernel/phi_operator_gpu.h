@@ -89,13 +89,13 @@ private:
     CudaMemWrapper<double3> atoms_bgrids_rcoords_;
 
     // the start index of the phi array for each atom
-    CudaMemWrapper<int> atoms_phi_start_;
+    CudaMemWrapper<int> atom_phi_start_;
     // The length of phi for a single meshgrid on each big grid.
-    CudaMemWrapper<int> bgrids_phi_len_;
+    CudaMemWrapper<int> bgrid_phi_len_;
     // The start index of the phi array for each big grid.
-    CudaMemWrapper<int> bgrids_phi_start_;
+    CudaMemWrapper<int> bgrid_phi_start_;
     // Mapping of the index of meshgrid in the batch of biggrids to the index of meshgrid in the local cell
-    CudaMemWrapper<int> mgrids_local_idx_batch_;
+    CudaMemWrapper<int> batch_mgrid_lidx_;
 
     mutable CudaMemWrapper<int> gemm_m_;
     mutable CudaMemWrapper<int> gemm_n_;

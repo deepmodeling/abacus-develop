@@ -105,7 +105,7 @@ TEST_F(GintCommonTest, TransferDm2dToGintSupportsDoubleToFloat)
     std::vector<hamilt::HContainer<float>> dm_gint;
     dm_gint.push_back(gint_info_->get_hr<float>());
 
-    ModuleGint::transfer_dm_2d_to_gint(*gint_info_, dm_vec, dm_gint);
+    ModuleGint::dm_2d_to_gint(*gint_info_, dm_vec, dm_gint);
 
     ASSERT_EQ(dm_gint.size(), 1);
     EXPECT_EQ(dm.get_ijr_info(), dm_gint[0].get_ijr_info());

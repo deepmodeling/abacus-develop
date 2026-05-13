@@ -16,21 +16,21 @@ BigGridInfo::BigGridInfo(
       biggrid_vec3_(biggrid_vec3),
       nmx_(nmx), nmy_(nmy), nmz_(nmz), nmxyz_(nmx*nmy*nmz)
     {
-        // initialize the biggrid_latvec0_
-        biggrid_latvec0_.e11 = biggrid_vec1_.x;
-        biggrid_latvec0_.e12 = biggrid_vec1_.y;
-        biggrid_latvec0_.e13 = biggrid_vec1_.z;
+        // initialize the bgrid_latvec0_
+        bgrid_latvec0_.e11 = biggrid_vec1_.x;
+        bgrid_latvec0_.e12 = biggrid_vec1_.y;
+        bgrid_latvec0_.e13 = biggrid_vec1_.z;
 
-        biggrid_latvec0_.e21 = biggrid_vec2_.x;
-        biggrid_latvec0_.e22 = biggrid_vec2_.y;
-        biggrid_latvec0_.e23 = biggrid_vec2_.z;
+        bgrid_latvec0_.e21 = biggrid_vec2_.x;
+        bgrid_latvec0_.e22 = biggrid_vec2_.y;
+        bgrid_latvec0_.e23 = biggrid_vec2_.z;
 
-        biggrid_latvec0_.e31 = biggrid_vec3_.x;
-        biggrid_latvec0_.e32 = biggrid_vec3_.y;
-        biggrid_latvec0_.e33 = biggrid_vec3_.z;
+        bgrid_latvec0_.e31 = biggrid_vec3_.x;
+        bgrid_latvec0_.e32 = biggrid_vec3_.y;
+        bgrid_latvec0_.e33 = biggrid_vec3_.z;
 
         // initialize the GT matrix
-        biggrid_GT_ = biggrid_latvec0_.Inverse();
+        biggrid_GT_ = bgrid_latvec0_.Inverse();
 
         // initialize the meshgrid_info_
         meshgrid_info_ = std::make_shared<MeshGridInfo>(
@@ -38,11 +38,11 @@ BigGridInfo::BigGridInfo(
             biggrid_vec2_ / static_cast<double>(nmy),
             biggrid_vec3_ / static_cast<double>(nmz));
         
-        // initialize the meshgrid_coords_
-        meshgrid_coords_.resize(nmxyz_);
+        // initialize the mgrid_coords_
+        mgrid_coords_.resize(nmxyz_);
         for(int index_1d = 0; index_1d < nmxyz_; index_1d++)
         {
-            meshgrid_coords_[index_1d] = 
+            mgrid_coords_[index_1d] = 
                 meshgrid_info_->get_cartesian_coord(mgrid_idx_1Dto3D(index_1d));
         }
         ModuleBase::Memory::record("BigGridInfo::meshgrid_coords", (long long)nmxyz_ * sizeof(Vec3d), true);
