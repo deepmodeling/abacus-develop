@@ -46,6 +46,8 @@
 50_FeO_O_first_Fe_second
 51_FeO_Fe_first_O_second
 # NSCF (non-self-consistent) tests
+# Note: DFT+U NSCF requires both charge density and onsite.dm files
+# DFT+U NSCF cases are disabled due to matrix assertion bug in NSCF mode
 55_PW_DS_NSCF_S4_XY
 61_LCAO_DS_NSCF_S4_XY
 # DirectionOnly mode (constrain direction, not magnitude)
