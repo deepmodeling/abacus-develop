@@ -502,6 +502,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
 
     double original_sc_thr = this->sc_thr_;
 
+    // Save step 0 Mi for consistency check later
+    std::vector<ModuleBase::Vector3<double>> mi_step0;
+
     // =============================================================
     // SCAN LOOP: sweep lambda from start to end
     // =============================================================
@@ -526,6 +529,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
         // Compute magnetic moments at current lambda
         this->cal_mw_from_lambda(istep);
 
+        // Save step 0 Mi for consistency verification
+        if (istep == 0) {
+            mi_step0 = this->Mi_;
+        }
+
         // Write results
         ofs_scan << std::scientific << std::setprecision(6);
         ofs_scan << istep << "  " << lambda_val_ev;
@@ -546,9 +554,55 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
         std::cout << std::endl;
     }
 
+    // =============================================================
+    // CONSISTENCY CHECK: restore initial lambda and recompute Mi
+    // to verify that the lambda->Mi mapping is numerically stable
+    // after multiple lambda updates in the scan loop
+    // =============================================================
+    std::cout << "[DS-DIAG] === Consistency check: restoring initial lambda ===" << std::endl;
+    this->lambda_ = initial_lambda;
+    this->cal_mw_from_lambda(nsteps);
+
+    // Write consistency check result
+    ofs_scan << std::scientific << std::setprecision(6);
+    ofs_scan << "init_recheck  " << lambda_start;
+    for (int ia = 0; ia < nat; ia++) {
+        ofs_scan << "  " << this->Mi_[ia].x
+                 << "  " << this->Mi_[ia].y
+                 << "  " << this->Mi_[ia].z;
+    }
+    ofs_scan << std::endl;
+
+    std::cout << "[DS-DIAG]   lambda = " << lambda_start << " eV/uB (restored)" << std::endl;
+    for (int ia = 0; ia < nat; ia++) {
+        std::cout << "[DS-DIAG]   Atom " << ia << " Mi = ("
+                  << this->Mi_[ia].x << ", "
+                  << this->Mi_[ia].y << ", "
+                  << this->Mi_[ia].z << ") uB" << std::endl;
+    }
+
+    // Compare restored Mi with step 0 Mi to check consistency
+    ofs_scan << "# [consistency] step 0 vs init_recheck Mi difference:" << std::endl;
+    double max_mi_diff = 0.0;
+    for (int ia = 0; ia < nat; ia++) {
+        double dx = std::abs(this->Mi_[ia].x - mi_step0[ia].x);
+        double dy = std::abs(this->Mi_[ia].y - mi_step0[ia].y);
+        double dz = std::abs(this->Mi_[ia].z - mi_step0[ia].z);
+        double diff = std::max({dx, dy, dz});
+        if (diff > max_mi_diff) max_mi_diff = diff;
+        ofs_scan << "#   Atom " << ia << " dM = (" << dx << ", " << dy << ", " << dz << ") uB" << std::endl;
+    }
+    std::cout << "[DS-DIAG] Max Mi difference between step 0 and init_recheck: " << max_mi_diff << " uB" << std::endl;
+    if (max_mi_diff > 1e-8) {
+        std::cout << "[DS-DIAG] WARNING: Mi mapping may be inconsistent after multiple lambda updates!" << std::endl;
+    } else {
+        std::cout << "[DS-DIAG] OK: Mi mapping is consistent." << std::endl;
+    }
+    ofs_scan << "#   Max Mi difference: " << max_mi_diff << " uB" << std::endl;
+
     ofs_scan.close();
 
-    // Restore original lambda values
+    // Restore original lambda values (already restored above, but explicit for clarity)
     this->lambda_ = initial_lambda;
 
     std::cout << std::string(80, '=') << std::endl;
