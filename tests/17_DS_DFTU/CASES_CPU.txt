@@ -50,8 +50,8 @@
 55_PW_DS_NSCF_S4_XY
 60_PW_DFTU_DS_NSCF_Band_XY
 61_LCAO_DS_NSCF_S4_XY
-62_LCAO_DFTU_NSCF_Band_XY
-63_LCAO_DFTU_DS_NSCF_Band_XY
+# 62_LCAO_DFTU_NSCF_Band_XY
+# 63_LCAO_DFTU_DS_NSCF_Band_XY
 64_PW_DFTU_NSCF_Band_XY
 # DirectionOnly mode (constrain direction, not magnitude)
 56_PW_DS_S4_DirectionOnly_XY

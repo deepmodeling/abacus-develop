@@ -254,7 +254,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // 1. Calculate <psi|alpha> two-center integrals for all atom pairs
     //    This is reused in both occ and HR calculations
     this->cal_nlm_all(paraV);
-    
+
     // 2. Loop over all Hubbard-projector center atoms (iat0)
     int atom_index = 0;
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
