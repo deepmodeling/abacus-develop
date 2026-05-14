@@ -37,6 +37,4 @@ extern "C"
 #endif
 }
 
-#include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
-
 #endif

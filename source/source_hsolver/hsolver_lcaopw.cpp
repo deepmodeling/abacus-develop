@@ -1,7 +1,6 @@
 #include "hsolver_lcaopw.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/parallel_global.h" // for MPI
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"

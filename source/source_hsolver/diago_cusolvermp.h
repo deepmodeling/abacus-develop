@@ -4,8 +4,6 @@
 #ifdef __CUSOLVERMP
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_hsolver/kernels/cuda/diag_cusolvermp.cuh"
 namespace hsolver
 {
 // DiagoCusolverMP class, for diagonalization using CUSOLVERMP

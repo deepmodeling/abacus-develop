@@ -7,6 +7,7 @@
 #include <mpi.h>
 
 #include "elpa_new.h"
+#include "elpa_generic.hpp"
 #include "elpa_solver.h"
 
 #include "source_base/module_external/scalapack_connector.h"

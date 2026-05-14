@@ -5,7 +5,6 @@ extern "C"
 {
 #include "Cblacs.h"
 }
-#include "utils.h"
 #include <cfloat>
 #include <complex>
 #include <cstring>

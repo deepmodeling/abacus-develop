@@ -3,7 +3,6 @@
 
 #include "source_base/macros.h"   // GetRealType
 #include "source_hamilt/hamilt.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 
 namespace hsolver

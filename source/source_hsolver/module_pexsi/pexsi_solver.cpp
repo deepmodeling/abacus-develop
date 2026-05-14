@@ -1,4 +1,3 @@
-#include "source_base/parallel_global.h"
 #ifdef __PEXSI
 #include "source_io/module_parameter/parameter.h"
 #include "pexsi_solver.h"

@@ -5,7 +5,6 @@
 
 #include "hsolver_supplementary_mock.h"
 #include "source_hamilt/hamilt.h"
-#include "source_hsolver/hsolver.h"
 
 #include <source_base/macros.h>
 
