@@ -7,6 +7,8 @@
 #ifndef MODULE_HSOLVER_HEGVD_H
 #define MODULE_HSOLVER_HEGVD_H
 
+#include "source_base/module_device/types.h"
+
 #include <cassert>
 
 // Note:

@@ -4,6 +4,7 @@
 #include "diago_cusolvermp.h"
 
 #include "source_base/timer.h"
+#include "source_hsolver/kernels/cuda/diag_cusolvermp.cuh"
 
 using complex = std::complex<double>;
 

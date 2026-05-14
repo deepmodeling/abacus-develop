@@ -5,6 +5,7 @@
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/kernels/dsp/dsp_connector.h"
 // #include "source_base/module_container/ATen/kernels/lapack.h"

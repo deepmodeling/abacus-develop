@@ -7,6 +7,7 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 
 
 using namespace hsolver;
