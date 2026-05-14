@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
 #include "source_hsolver/hsolver_lcao.h"
 
 #include "source_io/module_parameter/parameter.h"
@@ -15,12 +14,6 @@
 
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/td_folding.h"
-
-#include <fstream>
-#include <iomanip>
-
-// Define to enable debug output for DFT+U HR/HK comparison
-// #define __DFTU_DEBUG_OUTPUT
 
 namespace hamilt {
 
@@ -272,33 +265,6 @@ void OperatorLCAO<double, double>::contributeHk(int ik) {
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
 
-#ifdef __DFTU_DEBUG_OUTPUT
-    // Dump HK matrix after folding for comparison
-    {
-        std::string rank_str = "0";
-#ifdef __MPI
-        rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
-#endif
-        static int hk_dump_counter = 0;
-        std::string fname = "dftu_hk_dump_gamma_rank" + rank_str + "_" + std::to_string(hk_dump_counter++) + ".dat";
-        std::ofstream ofs(fname);
-        ofs << "# HK matrix dump (gamma-only) after folding" << std::endl;
-        ofs << "# ik=" << ik << ", kvec=(" << this->kvec_d[ik].x << ", " << this->kvec_d[ik].y << ", " << this->kvec_d[ik].z << ")" << std::endl;
-        ofs << "# Format: row col value" << std::endl;
-        const int nrow = this->hsk->get_pv()->get_row_size();
-        const int ncol = this->hsk->get_pv()->get_col_size();
-        const double* hk = this->hsk->get_hk();
-        for (int i = 0; i < nrow; i++)
-        {
-            for (int j = 0; j < ncol; j++)
-            {
-                ofs << i << " " << j << " " << std::setprecision(15) << hk[i + j * nrow] << std::endl;
-            }
-        }
-        ofs.close();
-    }
-#endif
-
     ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }
 // contributeHk()
@@ -330,33 +296,6 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
             hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
     }
-
-#ifdef __DFTU_DEBUG_OUTPUT
-    // Dump HK matrix after folding for comparison
-    {
-        std::string rank_str = "0";
-#ifdef __MPI
-        rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
-#endif
-        static int hk_dump_counter = 0;
-        std::string fname = "dftu_hk_dump_ik" + rank_str + "_" + std::to_string(ik) + "_" + std::to_string(hk_dump_counter++) + ".dat";
-        std::ofstream ofs(fname);
-        ofs << "# HK matrix dump (multi-k) after folding" << std::endl;
-        ofs << "# ik=" << ik << ", kvec=(" << this->kvec_d[ik].x << ", " << this->kvec_d[ik].y << ", " << this->kvec_d[ik].z << ")" << std::endl;
-        ofs << "# Format: row col real imag" << std::endl;
-        const int nrow = this->hsk->get_pv()->get_row_size();
-        const int ncol = this->hsk->get_pv()->get_col_size();
-        const std::complex<double>* hk = this->hsk->get_hk();
-        for (int i = 0; i < nrow; i++)
-        {
-            for (int j = 0; j < ncol; j++)
-            {
-                ofs << i << " " << j << " " << std::setprecision(15) << hk[i + j * nrow].real() << " " << hk[i + j * nrow].imag() << std::endl;
-            }
-        }
-        ofs.close();
-    }
-#endif
 
     ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }

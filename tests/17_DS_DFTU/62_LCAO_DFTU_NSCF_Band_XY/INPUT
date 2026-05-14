@@ -20,7 +20,7 @@ ks_solver    genelpa
 symmetry    0
 
 # DFT+U parameters
-dft_plus_u    1
+dft_plus_u    0
 orbital_corr    2
 hubbard_u    5.0
 onsite_radius   3.0
