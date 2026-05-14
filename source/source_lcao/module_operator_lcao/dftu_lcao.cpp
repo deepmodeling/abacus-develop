@@ -5,11 +5,17 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_lcao/module_hcontainer/output_hcontainer.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
 #include "source_base/parallel_reduce.h"
+#include <iomanip>
+#include <fstream>
+
+// Define to enable debug output for DFT+U HR/HK comparison
+// #define __DFTU_DEBUG_OUTPUT
 
 template <typename TK, typename TR>
 hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
@@ -230,7 +236,30 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // - get_dmr(0) == nullptr: DMR not available (typical in first iteration without file input)
     // - !is_locale_initialized(): locale not read from file AND not yet computed from DMR
     // When both true, skip DFT+U contribution entirely (first iteration, no file input)
-    if (this->dftu->get_dmr(0) == nullptr && !this->dftu->is_locale_initialized())
+    const bool dmr_null = (this->dftu->get_dmr(0) == nullptr);
+    const bool locale_not_init = !this->dftu->is_locale_initialized();
+    
+#ifdef __DFTU_DEBUG_OUTPUT
+    {
+        static int debug_counter = 0;
+        std::string rank_str = "0";
+#ifdef __MPI
+        rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
+#endif
+        std::string fname = "dftu_debug_rank" + rank_str + "_step" + std::to_string(debug_counter++) + ".log";
+        std::ofstream ofs(fname, std::ios::app);
+        ofs << "=== contributeHR entry ===" << std::endl;
+        ofs << "  current_spin = " << this->current_spin << std::endl;
+        ofs << "  nspin = " << this->nspin << std::endl;
+        ofs << "  dmr_null = " << dmr_null << std::endl;
+        ofs << "  locale_not_init = " << locale_not_init << std::endl;
+        ofs << "  is_locale_initialized = " << this->dftu->is_locale_initialized() << std::endl;
+        ofs << "  will_skip = " << (dmr_null && locale_not_init) << std::endl;
+        ofs.close();
+    }
+#endif
+
+    if (dmr_null && locale_not_init)
     {
         return;
     }
@@ -375,6 +404,26 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         }
         ModuleBase::timer::end("DFTU", "cal_occ");
 
+#ifdef __DFTU_DEBUG_OUTPUT
+        {
+            std::string rank_str = "0";
+#ifdef __MPI
+            rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
+#endif
+            std::string fname = "dftu_debug_rank" + rank_str + ".log";
+            std::ofstream ofs(fname, std::ios::app);
+            ofs << "=== iat0=" << iat0 << " (T0=" << T0 << "), current_spin=" << this->current_spin << " ===" << std::endl;
+            ofs << "  locale_initialized = " << this->dftu->is_locale_initialized() << std::endl;
+            ofs << "  occ (size=" << occ.size() << "):";
+            for (size_t i = 0; i < occ.size(); i++)
+            {
+                ofs << " " << std::setprecision(15) << occ[i];
+            }
+            ofs << std::endl;
+            ofs.close();
+        }
+#endif
+
         // 3. Calculate Hubbard potential VU from occupation matrix
         // VU = U * (1/2 * delta(m,m') - occ(m,m')) for each spin channel
         // Energy: EU = U * 1/2 * occ(m,m') * occ(m',m)
@@ -393,6 +442,24 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // For nspin=4 with complex Hamiltonian, VU needs Pauli matrix transformation
         std::vector<TR> VU(occ.size());
         this->transfer_vu(VU_tmp, VU);
+
+#ifdef __DFTU_DEBUG_OUTPUT
+        {
+            std::string rank_str = "0";
+#ifdef __MPI
+            rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
+#endif
+            std::string fname = "dftu_debug_rank" + rank_str + ".log";
+            std::ofstream ofs(fname, std::ios::app);
+            ofs << "  VU_tmp (size=" << VU_tmp.size() << "):";
+            for (size_t i = 0; i < VU_tmp.size(); i++)
+            {
+                ofs << " " << std::setprecision(15) << VU_tmp[i];
+            }
+            ofs << std::endl;
+            ofs.close();
+        }
+#endif
 
         // 5. Second iteration: Calculate Hamiltonian matrix contribution
         // HR += <psi_I|beta_m> * VU(m,m') * <beta_m'|psi_{J,R}>
@@ -473,6 +540,48 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 	{
 		this->current_spin = 1 - this->current_spin;
 	}
+
+#ifdef __DFTU_DEBUG_OUTPUT
+    // Dump full HR matrix for comparison between single/multi-thread runs
+    {
+        std::string rank_str = "0";
+#ifdef __MPI
+        rank_str = std::to_string(ModuleBase::GlobalV::MY_RANK);
+#endif
+        static int hr_dump_counter = 0;
+        std::string fname = "dftu_hr_dump_rank" + rank_str + "_" + std::to_string(hr_dump_counter++) + ".dat";
+        std::ofstream ofs(fname);
+        ofs << "# HR matrix dump after DFT+U contributeHR" << std::endl;
+        ofs << "# current_spin=" << this->current_spin << std::endl;
+        ofs << "# Format: iat1 iat2 Rx Ry Rz size value1 value2 ..." << std::endl;
+        if (this->hR != nullptr)
+        {
+            for (size_t iap = 0; iap < this->hR->size_atom_pairs(); ++iap)
+            {
+                const auto& ap = this->hR->get_atom_pair(iap);
+                for (int iR = 0; iR < ap.size_R(); iR++)
+                {
+                    const ModuleBase::Vector3<int> r_index = ap.get_R_index(iR);
+                    auto* mat = this->hR->find_matrix(ap.get_atom_i(), ap.get_atom_j(),
+                                                       r_index.x, r_index.y, r_index.z);
+                    if (mat != nullptr)
+                    {
+                        ofs << ap.get_atom_i() << " " << ap.get_atom_j() << " "
+                            << r_index.x << " " << r_index.y << " " << r_index.z
+                            << " " << mat->get_size();
+                        const TR* ptr = mat->get_pointer();
+                        for (size_t i = 0; i < mat->get_size(); i++)
+                        {
+                            ofs << " " << std::setprecision(15) << ptr[i];
+                        }
+                        ofs << std::endl;
+                    }
+                }
+            }
+        }
+        ofs.close();
+    }
+#endif
 
     ModuleBase::timer::end("DFTU", "contributeHR");
 }
