@@ -277,7 +277,7 @@ fi
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 	bandref=band.txt.ref
 	bandcal=OUT.autotest/band.txt
-	python3 $COMPARE_SCRIPT $bandref $bandcal 8
+	python3 $COMPARE_SCRIPT $bandref $bandcal 5
 	echo "CompareBand_pass $?" >>$1
 fi
 

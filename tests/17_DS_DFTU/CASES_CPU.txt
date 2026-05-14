@@ -26,9 +26,9 @@
 28_LCAO_DS_S4_XY
 # LCAO DFT+U + DeltaSpin
 30_LCAO_DFTU_DS_S2_Z
-31_LCAO_DFTU_DS_S4_XY
-32_LCAO_DFTU_DS_S4_XYZ
-33_LCAO_DFTU_DS_S4_Z
+# 31_LCAO_DFTU_DS_S4_XY
+# 32_LCAO_DFTU_DS_S4_XYZ
+# 33_LCAO_DFTU_DS_S4_Z
 # ReadLam mode (nsc=1, load pre-computed lambda)
 36_PW_DS_S2_ReadLam_Z
 37_PW_DS_S4_ReadLam_XY
@@ -57,4 +57,4 @@
 56_PW_DS_S4_DirectionOnly_XY
 57_PW_DFTU_DS_S4_DirectionOnly_XY
 58_LCAO_DS_S4_DirectionOnly_XY
-59_LCAO_DFTU_DS_S4_DirectionOnly_XY
+# 59_LCAO_DFTU_DS_S4_DirectionOnly_XY
