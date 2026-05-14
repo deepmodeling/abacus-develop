@@ -96,9 +96,8 @@ void print_parameters(
         }
         else
         {
-            const int nspin = kv.get_nspin();
             const int nkstot = kv.get_nkstot();
-            const int nkpoints_real = (nspin > 0) ? (nkstot / nspin) : nkstot;
+            const int nkpoints_real = (inp.nspin == 2) ? (nkstot / 2) : nkstot;
             std::cout << std::setw(16) << nkpoints_real;
         }
 
