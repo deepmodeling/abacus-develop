@@ -3,7 +3,6 @@
 // DATE : 2008-11-10
 //==========================================================
 
-#include <unistd.h>
 #include "source_main/driver.h"
 #include "source_base/parallel_global.h"
 #include "source_io/parse_args.h"
@@ -44,15 +43,15 @@ int main(int argc, char** argv)
     DD.init();
 
     /*
-    Skip MPI_Finalize to avoid OpenMPI 4.0.3 hwloc segfault.
-    OS will reclaim all resources on _exit.
-    For non-MPI builds, clean up FFTW threads normally.
+    Clean up FFTW threads before MPI_Finalize to avoid OpenMPI 4.0.3
+    hwloc segfault: FFTW must release its hwloc resources before MPI
+    finalizes and frees the shared hwloc topology.
     */
-#ifdef __MPI
-    _exit(0);
-#endif
 #ifdef _OPENMP
     fftw_cleanup_threads();
+#endif
+#ifdef __MPI
+    Parallel_Global::finalize_mpi();
 #endif
 
     return 0;
