@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 suffix    autotest
-calculation    nscf
+calculation    scf
 basis_type    lcao
 ecutwfc    20
 gamma_only    0
@@ -9,7 +9,7 @@ read_file_dir    ./
 noncolin    1
 #nbands    28
 scf_thr    1.0e-6
-scf_nmax    1
+scf_nmax    100
 out_chg    0
 out_band    1
 smearing_method    gaussian
