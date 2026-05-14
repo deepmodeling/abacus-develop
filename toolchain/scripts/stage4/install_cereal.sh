@@ -112,12 +112,9 @@ EOF
     fi
     cat << EOF >> "${BUILDDIR}/setup_cereal"
 export CEREAL_ROOT="${pkg_install_dir}"
-export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
-export CP_DFLAGS="\${CP_DFLAGS} -D__CEREAL"
-export CP_CFLAGS="\${CP_CFLAGS} ${CEREAL_CFLAGS}"
 export CEREAL_VERSION="${cereal_ver}"
 EOF
-    cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_cereal" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_cereal"

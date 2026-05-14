@@ -45,6 +45,8 @@ list(APPEND depend_files
   ../../source_cell/module_neighbor/sltk_atom.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp
   ../../source_cell/module_neighbor/sltk_grid_driver.cpp
+  ../../source_cell/module_neighlist/neighbor_search.cpp
+  ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_io/module_output/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp

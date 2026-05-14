@@ -24,7 +24,7 @@ class Gint_dvlocal : public Gint
     
     void cal_dvlocal();
 
-    void cal_dvlocal_R_sparseMatrix(
+    void cal_dvlocal_R_sparse(
         const int nspin,
         const int cspin,
         const int nlocal,
@@ -39,14 +39,14 @@ class Gint_dvlocal : public Gint
 
     void cal_hr_gint_();
 
-    void distribute_pvdpR_sparseMatrix(
+    void distribute_pvdpR_sparse(
         const int cspin,
         const int dim,
         const int nlocal,
-        const double sparse_threshold,
+        const double sparse_thr,
         const std::map<Abfs::Vector3_Order<int>,
                        std::map<size_t, std::map<size_t, double>>>&
-            pvdpR_sparseMatrix,
+            pvdpR_sparse,
         const Parallel_Orbitals& pv,
         LCAO_HS_Arrays& HS_Arrays);
 

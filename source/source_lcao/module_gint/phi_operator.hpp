@@ -13,7 +13,7 @@ void PhiOperator::set_phi(T* phi) const
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
-        atom->set_phi(atoms_relative_coords_[i], cols_, phi);
+        atom->set_phi(atom_rcoords_[i], cols_, phi);
         phi += atom->get_nw();
     }
 }
@@ -94,7 +94,7 @@ void PhiOperator::phi_mul_vldr3(
     int idx = 0;
     for(int i = 0; i < biggrid_->get_mgrids_num(); i++)
     {
-        T vldr3_mgrid = vl[meshgrids_local_idx_[i]] * dr3;
+        T vldr3_mgrid = vl[mgrid_lidx_[i]] * dr3;
         for(int j = 0; j < cols_; j++)
         {
             result[idx] = phi[idx] * vldr3_mgrid;
@@ -110,7 +110,7 @@ void PhiOperator::phi_mul_phi(
     const T*const phi_i,                // phi_i(ir,iwt)
     const T*const phi_j,                // phi_j(ir,iwt)
     HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
-    const Triangular_Matrix triangular_matrix) const
+    const TriPart part) const
 {
     std::vector<T> tmp_hr;
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
@@ -128,12 +128,12 @@ void PhiOperator::phi_mul_phi(
             const int n_j = atoms_phi_len_[j];
 
             // only calculate the upper triangle matrix
-            if(triangular_matrix==Triangular_Matrix::Upper && iat_i>iat_j)
+            if(part==TriPart::Upper && iat_i>iat_j)
             {
                 continue;
             }
             // only calculate the upper triangle matrix
-            else if(triangular_matrix==Triangular_Matrix::Lower && iat_i<iat_j)
+            else if(part==TriPart::Lower && iat_i<iat_j)
             {
                 continue;
             }
@@ -181,7 +181,7 @@ void PhiOperator::phi_dot_phi(
     constexpr int inc = 1;
     for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
     {
-        rho[meshgrids_local_idx_[i]] += static_cast<Tout>(
+        rho[mgrid_lidx_[i]] += static_cast<Tout>(
             BlasConnector::dotc(cols_, phi_j + i * cols_, inc, phi_i + i * cols_, inc));
     }
 }

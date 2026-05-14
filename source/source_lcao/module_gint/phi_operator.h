@@ -19,7 +19,7 @@ namespace ModuleGint
 class PhiOperator
 {
     public:
-    enum class Triangular_Matrix{Upper, Lower, Full};
+    enum class TriPart{Upper, Lower, Full};
 
     // constructor
     PhiOperator()=default;
@@ -70,7 +70,7 @@ class PhiOperator
         const T*const phi_i,                // phi_i(ir,iwt)
         const T*const phi_j,                // phi_j(ir,iwt)
         HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
-        const Triangular_Matrix triangular_matrix) const;
+        const TriPart part) const;
 
     // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
     template<typename Tin, typename Tout = Tin>
@@ -112,15 +112,15 @@ class PhiOperator
         double* rho) const;
 
     private:
-    void init_atom_pair_start_end_idx_();
+    void init_atom_pair_idx_();
 
     // get the index of the first and the last meshgrid that both atom a and atom b affect
-    // Note that atom_pair_start_end_idx_ only stores the cases where a <= b, so this function is needed to retrieve the value
+    // Note that atom_pair_range_ only stores the cases where a <= b, so this function is needed to retrieve the value
     const std::pair<int, int>& get_atom_pair_start_end_idx_(int a, int b) const
     {
         int x = std::min(a, b);
         int y = std::abs(a - b);
-        return atom_pair_start_end_idx_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
+        return atom_pair_range_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
     }
 
     bool is_atom_on_mgrid(int atom_idx, int mgrid_idx) const
@@ -137,14 +137,14 @@ class PhiOperator
     int cols_;
 
     // the local index of the meshgrids
-    std::vector<int> meshgrids_local_idx_;
+    std::vector<int> mgrid_lidx_;
 
     // the big grid that the phi matrix is associated with
     std::shared_ptr<const BigGrid> biggrid_;
 
     // the relative coordinates of the atoms and the meshgrids
-    // atoms_relative_coords_[i][j] is the relative coordinate of the jth meshgrid and the ith atom
-    std::vector<std::vector<Vec3d>> atoms_relative_coords_;
+    // atom_rcoords_[i][j] is the relative coordinate of the jth meshgrid and the ith atom
+    std::vector<std::vector<Vec3d>> atom_rcoords_;
 
     // record whether the atom affects the meshgrid
     // is_atom_on_mgrid_[i * rows_ + j] = true if the ith atom affects jhe ith meshgrid, otherwise false
@@ -159,7 +159,7 @@ class PhiOperator
     std::vector<int> atoms_phi_len_;
 
     // This data structure is used to store the index of the first and last meshgrid affected by each atom pair
-    std::vector<std::pair<int, int>> atom_pair_start_end_idx_;
+    std::vector<std::pair<int, int>> atom_pair_range_;
 };
 
 }
