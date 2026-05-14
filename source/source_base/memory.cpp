@@ -154,7 +154,7 @@ double Memory::record
 
 	if(consume[find] > memory_warning_threshold_mb)
 	{
-		print(find);
+		print(name[find], consume[find]);
 	}
 	return consume[find];
 }
@@ -216,7 +216,7 @@ void Memory::record
 			consume[find] = size_mb;
 			if(consume[find] > memory_warning_threshold_mb)
 			{
-				print(find);
+				print(name[find], consume[find]);
 			}
 		}
 	}
@@ -273,7 +273,7 @@ double Memory::record_gpu
 
 	if(consume_gpu[find] > memory_warning_threshold_mb)
 	{
-		print(find);
+		print(name_gpu[find], consume_gpu[find]);
 	}
 	return consume_gpu[find];
 }
@@ -335,7 +335,7 @@ void Memory::record_gpu
 			consume_gpu[find] = size_mb;
 			if(consume_gpu[find] > memory_warning_threshold_mb)
 			{
-				print(find);
+				print(name_gpu[find], consume_gpu[find]);
 			}
 		}
 	}
@@ -344,10 +344,10 @@ void Memory::record_gpu
 
 #endif
 
-void Memory::print(const int find)
+void Memory::print(const std::string& mem_name, double size_mb)
 {
 	GlobalV::ofs_running <<"\n *** Memory Allocation Warning *** "
-	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
+	<<" "<< mem_name <<" "<< size_mb <<" MB" << std::endl;
 	return;
 }
 
