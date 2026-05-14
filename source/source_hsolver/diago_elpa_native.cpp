@@ -7,6 +7,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
+#include "source_hsolver/module_genelpa/elpa_generic.hpp"
 #include "omp.h"
 
 namespace hsolver

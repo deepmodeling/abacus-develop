@@ -1,5 +1,6 @@
 #include "elpa_new.h"
 
+#include "elpa_generic.hpp"
 #include "elpa_solver.h"
 extern "C"
 {
