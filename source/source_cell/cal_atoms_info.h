@@ -28,7 +28,7 @@ class CalAtomsInfo
                     para.input.nupdown  += atoms[it].mag[ia];
                 }
             }
-	    GlobalV::ofs_running << std::endl;
+            GlobalV::ofs_running << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The readin total magnetization", para.inp.nupdown);
         }
 
