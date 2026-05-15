@@ -342,7 +342,9 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHk");
     // Peize Lin add 2016-12-03
-    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+    // In RT-TDDFT, contributeHk is used, but two_level_step is reset to 0 at each ionic step.
+    // In order to add EXX correctly in RT-TDDFT for istep > 0, this->istep == 0 is needed to avoid skipping EXX calculation.
+    if (this->istep == 0 && PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
 
     if (this->add_hexx_type == Add_Hexx_Type::R) { throw std::invalid_argument("Set Add_Hexx_Type::k sto call OperatorEXX::contributeHk()."); }
 
