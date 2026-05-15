@@ -51,6 +51,7 @@ class Charge_Mixing
 
     void close_kerker_gg0() { mixing_gg0 = 0.0; mixing_gg0_mag = 0.0; }
     void conserve_setting() { mixing_beta = 0.01; mixing_beta_mag = 0.04; }
+    void set_mixing_beta(double beta) { mixing_beta = beta; }
     /**
      * @brief initialize mixing, including constructing mixing and allocating memory for mixing data
      * @brief this function should be called at eachiterinit()

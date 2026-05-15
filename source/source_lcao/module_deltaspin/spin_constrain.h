@@ -439,10 +439,14 @@ public:
     void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
+    /// get Mi (current magnetic moments)
+    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const { return Mi_; }
     /// get target_mag
     const std::vector<ModuleBase::Vector3<double>>& get_target_mag() const;
     /// get constrain
     const std::vector<ModuleBase::Vector3<int>>& get_constrain() const;
+    /// set lambda directly
+    void set_lambda(const std::vector<ModuleBase::Vector3<double>>& v) { lambda_ = v; }
     /// get nat
     int get_nat();
     /// get ntype
