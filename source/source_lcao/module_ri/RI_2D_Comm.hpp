@@ -33,15 +33,91 @@ inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::comple
 }
 template<typename Tdata, typename Tmatrix>
 auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
-                                const K_Vectors & kv, 
-                                const std::vector<const Tmatrix*>&mks_2D, 
-                                const Parallel_2D & pv, 
-                                const int nspin, 
+                                const K_Vectors & kv,
+                                const std::vector<const Tmatrix*>&mks_2D,
+                                const Parallel_2D & pv,
+                                const int nspin,
                                 const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
 	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR");
+	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D
+        = (period == TC{1, 1, 1})
+              ? RI_2D_Comm::split_m2D_ktoR_gamma<Tdata, Tmatrix>(ucell, mks_2D, pv, nspin)
+              : RI_2D_Comm::split_m2D_ktoR_general<Tdata, Tmatrix>(ucell, kv, mks_2D, pv, nspin, spgsym);
+	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR");
+	return mRs_a2D;
+}
+
+template<typename Tdata, typename Tmatrix>
+auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
+                                        const std::vector<const Tmatrix*>& mks_2D,
+                                        const Parallel_2D& pv,
+                                        const int nspin)
+-> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+{
+	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_gamma");
+	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_gamma");
+
+	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
+    const double SPIN_multiple = std::map<int, double>{ {1,0.5}, {2,1}, {4,1} }.at(nspin);							// why?
+    const TC cell = {0, 0, 0};
+
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D(nspin);
+    for (int is_k = 0; is_k < nspin_k.at(nspin); ++is_k)
+    {
+        using Tdata_m = typename Tmatrix::value_type;
+        RI::Tensor<Tdata_m> mk_2D
+            = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[is_k], pv.get_col_size(), pv.get_row_size());
+        const Tdata_m frac = RI::Global_Func::convert<Tdata_m>(SPIN_multiple);
+        RI::Tensor<Tdata> mR_2D = RI::Global_Func::convert<Tdata>(mk_2D * frac);
+
+        for (int iwt0_2D = 0; iwt0_2D != mR_2D.shape[0]; ++iwt0_2D)
+        {
+            const int iwt0 = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
+                ? pv.local2global_col(iwt0_2D)
+                : pv.local2global_row(iwt0_2D);
+            int iat0, iw0_b, is0_b;
+            std::tie(iat0, iw0_b, is0_b) = RI_2D_Comm::get_iat_iw_is_block(ucell, iwt0);
+            const int it0 = ucell.iat2it[iat0];
+            for (int iwt1_2D = 0; iwt1_2D != mR_2D.shape[1]; ++iwt1_2D)
+            {
+                const int iwt1 = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
+                    ? pv.local2global_row(iwt1_2D)
+                    : pv.local2global_col(iwt1_2D);
+                int iat1, iw1_b, is1_b;
+                std::tie(iat1, iw1_b, is1_b) = RI_2D_Comm::get_iat_iw_is_block(ucell, iwt1);
+                const int it1 = ucell.iat2it[iat1];
+
+                const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
+                RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
+                if (mR_a2D.empty())
+                {
+                    mR_a2D = RI::Tensor<Tdata>(
+                        {static_cast<size_t>(ucell.atoms[it0].nw),
+                         static_cast<size_t>(ucell.atoms[it1].nw)});
+                }
+                mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
+            }
+        }
+    }
+	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_gamma");
+	return mRs_a2D;
+}
+
+template<typename Tdata, typename Tmatrix>
+auto RI_2D_Comm::split_m2D_ktoR_general(const UnitCell& ucell,
+                                        const K_Vectors& kv,
+                                        const std::vector<const Tmatrix*>& mks_2D,
+                                        const Parallel_2D& pv,
+                                        const int nspin,
+                                        const bool spgsym)
+-> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+{
+	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_general");
+	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_general");
 
 	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
 	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
@@ -119,7 +195,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
 			}
         }
     }
-	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR");
+	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_general");
 	return mRs_a2D;
 }
 
