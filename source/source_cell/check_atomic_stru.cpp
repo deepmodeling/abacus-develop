@@ -9,10 +9,6 @@ namespace unitcell
 void check_atomic_stru(UnitCell& ucell, const double& factor)
 {
     ModuleBase::timer::start("unitcell", "check_atomic_stru");
-    // First we calculate all bond length in the structure,
-    // and compare with the covalent_bond_length,
-    // if there has bond length is shorter than covalent_bond_length * factor,
-    // we think this structure is unreasonable.
     assert(ucell.ntype > 0);
     bool all_pass = true;
     bool no_warning = true;
@@ -86,6 +82,15 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
         }
 
         const double bohr_to_a = ModuleBase::BOHR_TO_A;
+        // Data race fix: cache shared read-only data to local const references before OpenMP parallel region
+        // TSan detected race condition when accessing std::vector<std::string> elements (cell, label)
+        // and other shared vectors (A, latvec, symbol_covalent_radiuss) in parallel loop.
+        // Using local const references ensures the compiler treats these as immutable within the parallel region
+        const std::vector<std::string>& cell_ = cell;
+        const std::vector<std::string>& label_ = label;
+        const std::vector<double>& A_ = A;
+        const std::vector<double>& lat_ = latvec;
+        const std::vector<double>& rad_ = symbol_covalent_radiuss;
 #pragma omp parallel
         {
             std::vector<double> delta_lat(3);
@@ -94,13 +99,13 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
             {
                 const int it1 = ucell.iat2it[iat];
                 const int ia1 = ucell.iat2ia[iat];
-                const double symbol1_covalent_radius = symbol_covalent_radiuss[it1];
+                const double symbol1_covalent_radius = rad_[it1];
                 double x1 = ucell.atoms[it1].taud[ia1].x;
                 double y1 = ucell.atoms[it1].taud[ia1].y;
                 double z1 = ucell.atoms[it1].taud[ia1].z;
                 for (int it2 = it1; it2 < ntype; it2++)
                 {
-                    double symbol2_covalent_radius = symbol_covalent_radiuss[it2];
+                    double symbol2_covalent_radius = rad_[it2];
                     double covalent_length = (symbol1_covalent_radius + symbol2_covalent_radius) / bohr_to_a;
                     const double max_error = covalent_length * max_factor_coef / ucell.lat0;
                     const double max_error_2 = max_error * max_error;
@@ -111,17 +116,17 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
                         double delta_x = ucell.atoms[it2].taud[ia2].x - x1;
                         double delta_y = ucell.atoms[it2].taud[ia2].y - y1;
                         double delta_z = ucell.atoms[it2].taud[ia2].z - z1;
-                        delta_lat[0] = delta_x * latvec[0] + delta_y * latvec[1] + delta_z * latvec[2];
-                        delta_lat[1] = delta_x * latvec[3] + delta_y * latvec[4] + delta_z * latvec[5];
-                        delta_lat[2] = delta_x * latvec[6] + delta_y * latvec[7] + delta_z * latvec[8];
+                        delta_lat[0] = delta_x * lat_[0] + delta_y * lat_[1] + delta_z * lat_[2];
+                        delta_lat[1] = delta_x * lat_[3] + delta_y * lat_[4] + delta_z * lat_[5];
+                        delta_lat[2] = delta_x * lat_[6] + delta_y * lat_[7] + delta_z * lat_[8];
                         for (int i = 0; i < 27; i++)
                         {
                             if ((is_same_atom) && (i == 13))
                                 continue;
                             const int offset = i * 3;
-                            const double part1 = delta_lat[0] + A[offset];
-                            const double part2 = delta_lat[1] + A[offset + 1];
-                            const double part3 = delta_lat[2] + A[offset + 2];
+                            const double part1 = delta_lat[0] + A_[offset];
+                            const double part2 = delta_lat[1] + A_[offset + 1];
+                            const double part3 = delta_lat[2] + A_[offset + 2];
                             const double bond_length = part1 * part1 + part2 * part2 + part3 * part3;
                             const bool flag = bond_length < max_error_2 ? true : false;
                             if (flag)
@@ -131,15 +136,15 @@ void check_atomic_stru(UnitCell& ucell, const double& factor)
                                 {
                                     no_warning = false;
                                     all_pass = all_pass && (sqrt_bon < factor_error ? false : true);
-                                    errorlog << std::setw(3) << ia1 + 1 << "-th " << label[it1] << ", " << std::setw(3)
-                                             << ia2 + 1 << "-th " << label[it2] << cell[i] << std::setprecision(3)
+                                    errorlog << std::setw(3) << ia1 + 1 << "-th " << label_[it1] << ", " << std::setw(3)
+                                             << ia2 + 1 << "-th " << label_[it2] << cell_[i] << std::setprecision(3)
                                              << sqrt_bon << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
                                 }
                             }
-                        } 
-                    } // ia2
-                } // it2
-            } // iat
+                        }
+                    }
+                }
+            }
         }
     }
     if (!all_pass || !no_warning)
