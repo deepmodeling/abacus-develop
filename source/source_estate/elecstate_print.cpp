@@ -58,6 +58,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"scalapack_gvx", "GV"},
            {"cusolver", "CU"},
            {"bpcg", "BP"},
+           {"ppcg", "PP"},
            {"pexsi", "PE"},
            {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
     // ITER column

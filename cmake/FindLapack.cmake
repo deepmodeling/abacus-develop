@@ -7,7 +7,7 @@ if(DEFINED LAPACK_LIBRARY)
 endif()
 
 find_package(Blas REQUIRED)
-find_package(LAPACK REQUIRED)
+include("${CMAKE_ROOT}/Modules/FindLAPACK.cmake")
 
 if(NOT TARGET LAPACK::LAPACK)
     add_library(LAPACK::LAPACK UNKNOWN IMPORTED)

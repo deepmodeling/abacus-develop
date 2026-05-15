@@ -5,7 +5,7 @@ if(DEFINED BLAS_LIBRARY)
     set(BLAS_LIBRARIES ${BLAS_LIBRARY})
 endif()
 
-find_package(BLAS REQUIRED)
+include("${CMAKE_ROOT}/Modules/FindBLAS.cmake")
 
 if(NOT TARGET BLAS::BLAS)
     add_library(BLAS::BLAS UNKNOWN IMPORTED)
