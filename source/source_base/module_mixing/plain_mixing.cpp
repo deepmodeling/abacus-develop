@@ -1,6 +1,6 @@
 #include "plain_mixing.h"
 
-#include "source_base/memory.h"
+#include "source_base/record_memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 namespace Base_Mixing

@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "gint_info.h"
 #include "gint_type.h"
-#include "source_base/memory.h"
+#include "source_base/record_memory.h"
 
 namespace ModuleGint
 {

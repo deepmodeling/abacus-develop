@@ -4,7 +4,7 @@
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_polyint.h"
-#include "source_base/memory.h"
+#include "source_base/record_memory.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
 #include "vnl_tools.hpp"
 

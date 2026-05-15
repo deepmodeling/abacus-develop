@@ -1,6 +1,6 @@
 #include "psi_initializer.h"
 
-#include "source_base/memory.h"
+#include "source_base/record_memory.h"
 #include "source_base/parallel_global.h"
 // basic functions support
 #include "source_base/timer.h"

@@ -1,5 +1,5 @@
 #include "hcontainer.h"
-#include "source_base/memory.h"
+#include "source_base/record_memory.h"
 
 namespace hamilt
 {
