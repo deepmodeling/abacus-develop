@@ -1,7 +1,8 @@
 #include "pw_basis.h"
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
-#include "typeinfo"
+#include <typeinfo>
+
 namespace ModulePW
 {
 /**
@@ -18,16 +19,18 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     
     if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
     {
+        const int nst = this->nst;
+        const int nz = this->nz;
+        const int* istot2ixy = this->istot2ixy;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(int is = 0 ; is < this->nst ; ++is)
+        for(int is = 0 ; is < nst ; ++is)
         {
-            int ixy = this->istot2ixy[is];
-            //int ixy = (ixy / fftny)*ny + ixy % fftny;
+            int ixy = istot2ixy[is];
             std::complex<T> *outp = &out[is*nz];
             std::complex<T> *inp = &in[ixy*nz];
-            for(int iz = 0 ; iz < this->nz ; ++iz)
+            for(int iz = 0 ; iz < nz ; ++iz)
             {
                 outp[iz] = inp[iz];
             }
@@ -38,51 +41,59 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 #ifdef __MPI
     //change (nplane fftnxy) to (nplane,nstot)
     // Hence, we can send them at one time.
+    const int nstot_gps = this->nstot;
+    const int nplane_gps = this->nplane;
+    const int* istot2ixy_gps = this->istot2ixy;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int istot = 0;istot < nstot; ++istot)
-	{
-		int ixy = this->istot2ixy[istot];
-        //int ixy = (ixy / fftny)*ny + ixy % fftny;
-        std::complex<T> *outp = &out[istot*nplane];
-        std::complex<T> *inp = &in[ixy*nplane];
-		for (int iz = 0; iz < nplane; ++iz)
-		{
-			outp[iz] = inp[iz];
-		}
-	}
+    for (int istot = 0; istot < nstot_gps; ++istot)
+    {
+        int ixy = istot2ixy_gps[istot];
+        std::complex<T> *outp = &out[istot * nplane_gps];
+        std::complex<T> *inp = &in[ixy * nplane_gps];
+        for (int iz = 0; iz < nplane_gps; ++iz)
+        {
+            outp[iz] = inp[iz];
+        }
+    }
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
-	if(typeid(T) == typeid(double))
-	{
-		MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
-	}
-	else if(typeid(T) == typeid(float))
-	{
-		MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
-	}
+    if(typeid(T) == typeid(double))
+    {
+        MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
+    }
+    else if(typeid(T) == typeid(float))
+    {
+        MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
+    }
 
     // change (nz,ns) to (numz[ip],ns, poolnproc)
+    const int poolnproc_gps = this->poolnproc;
+    const int nst_gps = this->nst;
+    const int nz_gps = this->nz;
+    const int* numz_gps = this->numz;
+    const int* startg_gps = this->startg;
+    const int* startz_gps = this->startz;
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-    for (int ip = 0; ip < this->poolnproc ;++ip)
-	{
-		for (int is = 0; is < this->nst; ++is)
-		{
-            int nzip = this->numz[ip];
-            std::complex<T> *outp0 = &out[startz[ip]];
-            std::complex<T> *inp0 = &in[startg[ip]];
-            std::complex<T> *outp = &outp0[is * nz];
+    for (int ip = 0; ip < poolnproc_gps ;++ip)
+    {
+        for (int is = 0; is < nst_gps; ++is)
+        {
+            int nzip = numz_gps[ip];
+            std::complex<T> *outp0 = &out[startz_gps[ip]];
+            std::complex<T> *inp0 = &in[startg_gps[ip]];
+            std::complex<T> *outp = &outp0[is * nz_gps];
             std::complex<T> *inp = &inp0[is * nzip ];
-			for (int izip = 0; izip < nzip; ++izip)
-			{
-				outp[izip] = inp[izip];
-			}
-		}
-	}
+            for (int izip = 0; izip < nzip; ++izip)
+            {
+                outp[izip] = inp[izip];
+            }
+        }
+    }
 #endif
     //ModuleBase::timer::start(this->classname, "gatherp_scatters");
     return;
@@ -101,10 +112,14 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     // ModuleBase::timer::start(this->classname, "gathers_scatterp");
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
+        const int nrxx = this->nrxx;
+        const int nst = this->nst;
+        const int nz = this->nz;
+        const int* istot2ixy = this->istot2ixy;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-        for(int i = 0; i < this->nrxx; ++i)
+        for(int i = 0; i < nrxx; ++i)
         {
             out[i] = std::complex<T>(0, 0);
         }
@@ -112,13 +127,12 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(int is = 0 ; is < this->nst ; ++is)
+        for(int is = 0 ; is < nst ; ++is)
         {
             int ixy = istot2ixy[is];
-            //int ixy = (ixy / fftny)*ny + ixy % fftny;
             std::complex<T> *outp = &out[ixy*nz];
             std::complex<T> *inp = &in[is*nz];
-            for(int iz = 0 ; iz < this->nz ; ++iz)
+            for(int iz = 0 ; iz < nz ; ++iz)
             {
                 outp[iz] = inp[iz];
             }
@@ -129,57 +143,67 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 #ifdef __MPI
     // change (nz,ns) to (numz[ip],ns, poolnproc)
     // Hence, we can send them at one time. 
+    const int poolnproc = this->poolnproc;
+    const int nst = this->nst;
+    const int nz = this->nz;
+    const int* numz = this->numz;
+    const int* startg = this->startg;
+    const int* startz = this->startz;
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-    for (int ip = 0; ip < this->poolnproc ;++ip)
-	{
-		for (int is = 0; is < this->nst; ++is)
-		{
-            int nzip = this->numz[ip];
+    for (int ip = 0; ip < poolnproc ;++ip)
+    {
+        for (int is = 0; is < nst; ++is)
+        {
+            int nzip = numz[ip];
             std::complex<T> *outp0 = &out[startg[ip]];
             std::complex<T> *inp0 = &in[startz[ip]];
             std::complex<T> *outp = &outp0[is * nzip];
             std::complex<T> *inp = &inp0[is * nz ];
-			for (int izip = 0; izip < nzip; ++izip)
-			{
-				outp[izip] = inp[izip];
-			}
-		}
-	}
+            for (int izip = 0; izip < nzip; ++izip)
+            {
+                outp[izip] = inp[izip];
+            }
+        }
+    }
 
-	//exchange data
+    //exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
-	if(typeid(T) == typeid(double))
-	{
-		MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
-	}
-	else if(typeid(T) == typeid(float))
-	{
-		MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
-	}
+    if(typeid(T) == typeid(double))
+    {
+        MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
+    }
+    else if(typeid(T) == typeid(float))
+    {
+        MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
+    }
 
+    const int nrxx_gsp = this->nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for(int i = 0; i < this->nrxx; ++i)
+    for(int i = 0; i < nrxx_gsp; ++i)
     {
         out[i] = std::complex<T>(0, 0);
     }
     //change (nplane,nstot) to (nplane fftnxy)
+    const int nstot = this->nstot;
+    const int nplane = this->nplane;
+    const int* istot2ixy = this->istot2ixy;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int istot = 0;istot < nstot; ++istot)
-	{
-		int ixy = this->istot2ixy[istot];
+    for (int istot = 0;istot < nstot; ++istot)
+    {
+        int ixy = istot2ixy[istot];
         //int ixy = (ixy / fftny)*ny + ixy % fftny;
         std::complex<T> *outp = &out[ixy * nplane];
         std::complex<T> *inp = &in[istot * nplane];
-		for (int iz = 0; iz < nplane; ++iz)
-		{
-			outp[iz] = inp[iz];
-		}
+        for (int iz = 0; iz < nplane; ++iz)
+        {
+            outp[iz] = inp[iz];
+        }
     }
 #endif
     // ModuleBase::timer::start(this->classname, "gathers_scatterp");
