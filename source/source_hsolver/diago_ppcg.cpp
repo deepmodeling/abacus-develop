@@ -54,7 +54,7 @@ T DiagoPPCG<T, Device>::inner_product(const T* lhs, const T* rhs) const
     {
         result += std::conj(lhs[ig]) * rhs[ig];
     }
-    Parallel_Reduce::reduce_pool(result);
+    Parallel_Reduce::reduce_pool(&result, 1);
     return result;
 }
 
