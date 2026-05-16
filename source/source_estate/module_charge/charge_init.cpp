@@ -8,7 +8,6 @@
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_sphbes.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"

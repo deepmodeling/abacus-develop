@@ -2,7 +2,6 @@
 
 #include "k_vector_utils.h"
 #include "source_base/formatter.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
