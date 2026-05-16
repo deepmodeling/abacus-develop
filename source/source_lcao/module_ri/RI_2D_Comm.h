@@ -46,7 +46,7 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
     const int nspin);
 
 template <typename Tdata, typename Tmatrix>
-extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_general(
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_k(
     const UnitCell& ucell,
     const K_Vectors& kv,
     const std::vector<const Tmatrix*>& mks_2D,
