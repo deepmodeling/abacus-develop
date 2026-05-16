@@ -22,6 +22,10 @@
 #include <string>
 #include <stdexcept>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 inline RI::Tensor<double> tensor_conj(const RI::Tensor<double>& t) { return t; }
 inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::complex<double>>& t)
 {
@@ -66,6 +70,18 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
     const TC cell = {0, 0, 0};
 
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D(nspin);
+
+    #ifdef _OPENMP
+        // pre-init all outer maps mRs_a2D[is_b][iat] to avoid concurrent std::map rebalancing
+        for (int is_b = 0; is_b < nspin; ++is_b)
+            for (int iat0 = 0; iat0 < ucell.nat; ++iat0)
+                mRs_a2D[is_b][iat0];
+
+        std::vector<omp_lock_t> locks(ucell.nat);
+        for (auto& l : locks)
+            omp_init_lock(&l);
+    #endif
+
     for (int is_k = 0; is_k < nspin_k.at(nspin); ++is_k)
     {
         using Tdata_m = typename Tmatrix::value_type;
@@ -95,22 +111,39 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                 const int it1 = ucell.iat2it[iat1];
 
                 const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
-                #ifdef _OPENMP
-                #pragma omp critical(RI_split_m2D_ktoR_gamma)
-                #endif
+              #ifdef _OPENMP
+                omp_set_lock(&locks[iat0]);
+              #endif
+                RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
+                if (mR_a2D.empty())
                 {
-                    RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
-                    if (mR_a2D.empty())
-                    {
-                        mR_a2D = RI::Tensor<Tdata>(
-                            {static_cast<size_t>(ucell.atoms[it0].nw),
-                             static_cast<size_t>(ucell.atoms[it1].nw)});
-                    }
-                    mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
+                    mR_a2D = RI::Tensor<Tdata>(
+                        {static_cast<size_t>(ucell.atoms[it0].nw),
+                         static_cast<size_t>(ucell.atoms[it1].nw)});
                 }
+                mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
+              #ifdef _OPENMP
+                omp_unset_lock(&locks[iat0]);
+              #endif
             }
         }
     }
+
+    #ifdef _OPENMP
+        for (auto& l : locks)
+            omp_destroy_lock(&l);
+
+        // prune empty inner maps created by pre-init
+        for (int is_b = 0; is_b < nspin; ++is_b)
+            for (auto it = mRs_a2D[is_b].begin(); it != mRs_a2D[is_b].end();)
+            {
+                if (it->second.empty())
+                    it = mRs_a2D[is_b].erase(it);
+                else
+                    ++it;
+            }
+    #endif
+
 	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_gamma");
 	return mRs_a2D;
 }
@@ -201,11 +234,11 @@ auto RI_2D_Comm::split_m2D_ktoR_general(const UnitCell& ucell,
                     #endif
                     {
                         RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
-                        if (mR_a2D.empty()) {
+                        if (mR_a2D.empty())
+                        {
                             mR_a2D = RI::Tensor<Tdata>(
                                 {static_cast<size_t>(ucell.atoms[it0].nw),
-                                 static_cast<size_t>(
-                                     ucell.atoms[it1].nw)});
+                                 static_cast<size_t>(ucell.atoms[it1].nw)});
                         }
                         mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
                     }
