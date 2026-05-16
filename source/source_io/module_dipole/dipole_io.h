@@ -2,6 +2,7 @@
 #define DIPOLE_IO_H
 
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_cell/unitcell.h"
 
 #include <fstream>
 #include <string>
