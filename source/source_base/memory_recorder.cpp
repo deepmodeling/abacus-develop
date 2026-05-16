@@ -1,5 +1,5 @@
 #include <cassert>
-#include "record_memory.h"
+#include "memory_recorder.h"
 #include "global_variable.h"
 #include "source_base/parallel_reduce.h"
 

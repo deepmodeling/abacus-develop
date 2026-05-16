@@ -5,7 +5,7 @@
 #include "ATen/ops/einsum_op.h"
 #include "ATen/ops/linalg_op.h"
 #include "source_base/constants.h"
-#include "source_base/record_memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"             // ModuleBase::TITLE
