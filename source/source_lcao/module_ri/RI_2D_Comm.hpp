@@ -74,6 +74,9 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
         const Tdata_m frac = RI::Global_Func::convert<Tdata_m>(SPIN_multiple);
         RI::Tensor<Tdata> mR_2D = RI::Global_Func::convert<Tdata>(mk_2D * frac);
 
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
         for (int iwt0_2D = 0; iwt0_2D != mR_2D.shape[0]; ++iwt0_2D)
         {
             const int iwt0 = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
@@ -92,14 +95,19 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                 const int it1 = ucell.iat2it[iat1];
 
                 const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
-                RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
-                if (mR_a2D.empty())
+                #ifdef _OPENMP
+                #pragma omp critical(RI_split_m2D_ktoR_gamma)
+                #endif
                 {
-                    mR_a2D = RI::Tensor<Tdata>(
-                        {static_cast<size_t>(ucell.atoms[it0].nw),
-                         static_cast<size_t>(ucell.atoms[it1].nw)});
+                    RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
+                    if (mR_a2D.empty())
+                    {
+                        mR_a2D = RI::Tensor<Tdata>(
+                            {static_cast<size_t>(ucell.atoms[it0].nw),
+                             static_cast<size_t>(ucell.atoms[it1].nw)});
+                    }
+                    mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
                 }
-                mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
             }
         }
     }
@@ -127,19 +135,23 @@ auto RI_2D_Comm::split_m2D_ktoR_general(const UnitCell& ucell,
     for (int is_k = 0; is_k < nspin_k.at(nspin); ++is_k)
 	{
 		const std::vector<int> ik_list = RI_2D_Comm::get_ik_list(kv, is_k);
-		for(const TC &cell : RI_Util::get_Born_von_Karmen_cells(period))
-		{
+        const auto cells = RI_Util::get_Born_von_Karmen_cells(period);
+        #ifdef _OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
+        for (size_t icell = 0; icell < cells.size(); ++icell)
+        {
+            const TC& cell = cells[icell];
             RI::Tensor<Tdata> mR_2D;
             int ik_full = 0;
             for (const int ik : ik_list)
             {
-                auto set_mR_2D = [&mR_2D](auto&& mk_frac) {
-                    if (mR_2D.empty()) {
-                        mR_2D = RI::Global_Func::convert<Tdata>(mk_frac);
-                    } else {
-                        mR_2D
-                            = mR_2D + RI::Global_Func::convert<Tdata>(mk_frac);
-                    }
+                auto set_mR_2D = [&mR_2D](auto&& mk_frac)
+                {
+                    if (mR_2D.empty())
+                        { mR_2D = RI::Global_Func::convert<Tdata>(mk_frac); }
+                    else
+                        { mR_2D = mR_2D + RI::Global_Func::convert<Tdata>(mk_frac); }
                 };
                 using Tdata_m = typename Tmatrix::value_type;
                 if (!spgsym)
@@ -150,7 +162,8 @@ auto RI_2D_Comm::split_m2D_ktoR_general(const UnitCell& ucell,
                             -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
                     if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_full())) == 2)
                         { set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5))); }
-                    else { set_mR_2D(mk_2D * frac); }
+                    else
+                        { set_mR_2D(mk_2D * frac); }
                 }
                 else
                 { // traverse kstar, ik means ik_ibz
@@ -183,14 +196,19 @@ auto RI_2D_Comm::split_m2D_ktoR_general(const UnitCell& ucell,
 					const int it1 = ucell.iat2it[iat1];
 
 					const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
-					RI::Tensor<Tdata> &mR_a2D = mRs_a2D[is_b][iat0][{iat1,cell}];
-                    if (mR_a2D.empty()) {
-                        mR_a2D = RI::Tensor<Tdata>(
-                            {static_cast<size_t>(ucell.atoms[it0].nw),
-                             static_cast<size_t>(
-                                 ucell.atoms[it1].nw)});
+                    #ifdef _OPENMP
+                    #pragma omp critical(RI_split_m2D_ktoR_general)
+                    #endif
+                    {
+                        RI::Tensor<Tdata>& mR_a2D = mRs_a2D[is_b][iat0][{iat1, cell}];
+                        if (mR_a2D.empty()) {
+                            mR_a2D = RI::Tensor<Tdata>(
+                                {static_cast<size_t>(ucell.atoms[it0].nw),
+                                 static_cast<size_t>(
+                                     ucell.atoms[it1].nw)});
+                        }
+                        mR_a2D(iw0_b, iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
                     }
-                    mR_a2D(iw0_b,iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
 				}
 			}
         }
