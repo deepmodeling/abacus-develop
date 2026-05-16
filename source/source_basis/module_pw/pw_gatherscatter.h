@@ -60,6 +60,12 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
+    // OMP barrier: Ensure all OMP threads have finished writing to buffers
+    // before MPI communication reads from them. This prevents data race
+    // between OMP parallel write (e.g., FFT calculation) and MPI read.
+#ifdef _OPENMP
+#pragma omp barrier
+#endif
     if(typeid(T) == typeid(double))
     {
         MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
@@ -170,6 +176,12 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 
     //exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
+    // OMP barrier: Ensure all OMP threads have finished writing to buffers
+    // before MPI communication reads from them. This prevents data race
+    // between OMP parallel write (e.g., FFT calculation) and MPI read.
+#ifdef _OPENMP
+#pragma omp barrier
+#endif
     if(typeid(T) == typeid(double))
     {
         MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
