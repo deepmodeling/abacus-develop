@@ -29,7 +29,6 @@ void ctrl_output_td(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
-#ifdef __LCAO
     // (1) Write dipole information
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -82,7 +81,6 @@ void ctrl_output_td(const UnitCell& ucell,
             }
         }
     }
-#endif // __LCAO
 }
 
 template void ctrl_output_td<double>(const UnitCell&,
