@@ -7,7 +7,7 @@ namespace ModuleIO
 // Helper function to print dipole moment components
 // name: descriptive name for the dipole moment type
 // px, py, pz: dipole moment components in x, y, z directions
-void printDipoleMoment(std::ofstream& ofs_running, const std::string& name,
+void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
                        double px, double py, double pz)
 {
     ofs_running << " " << name << std::endl;
@@ -141,7 +141,7 @@ void write_dipole(const UnitCell& ucell,
     }
 
     // Output electronic dipole moment
-    printDipoleMoment(ofs_running, "Electronic dipole moment",
+    print_dipole_moment(ofs_running, "Electronic dipole moment",
                       dipole_elec[0], dipole_elec[1], dipole_elec[2]);
 
     // Write to file: step index and three dipole components
@@ -170,7 +170,7 @@ void write_dipole(const UnitCell& ucell,
     }
 
     // Output ionic dipole moment
-    printDipoleMoment(ofs_running, "Ionic dipole moment",
+    print_dipole_moment(ofs_running, "Ionic dipole moment",
                       dipole_ion[0], dipole_ion[1], dipole_ion[2]);
 
     // Calculate total dipole moment
@@ -182,7 +182,7 @@ void write_dipole(const UnitCell& ucell,
     }
 
     // Output total dipole moment
-    printDipoleMoment(ofs_running, "Total dipole moment",
+    print_dipole_moment(ofs_running, "Total dipole moment",
                       dipole[0], dipole[1], dipole[2]);
 
     // Calculate and output total dipole moment norm
