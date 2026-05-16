@@ -37,7 +37,7 @@ void ctrl_output_td(const UnitCell& ucell,
         {
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, rho_save[is], rhopw, is, istep, ss_dipole.str());
+            ModuleIO::write_dipole(ucell, rho_save[is], rhopw, is, istep, ss_dipole.str(), GlobalV::ofs_running);
         }
     }
 

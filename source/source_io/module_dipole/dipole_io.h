@@ -3,6 +3,7 @@
 
 #include "source_basis/module_pw/pw_basis.h"
 
+#include <fstream>
 #include <string>
 
 namespace ModuleIO
@@ -13,6 +14,7 @@ void write_dipole(const UnitCell& ucell,
                   const int& is,
                   const int& istep,
                   const std::string& fn,
+                  std::ofstream& ofs_running,
                   const int& precision = 11);
 
 double prepare(const UnitCell& cell, int& dir);
