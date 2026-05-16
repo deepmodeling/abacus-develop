@@ -12,7 +12,6 @@ namespace ModuleIO
 void write_dipole(const UnitCell& ucell,
                   const double* rho_save,
                   const ModulePW::PW_Basis* rhopw,
-                  const int& is,
                   const int& istep,
                   const std::string& fn,
                   std::ofstream& ofs_running,

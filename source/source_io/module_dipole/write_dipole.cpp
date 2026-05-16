@@ -38,7 +38,6 @@ void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
 // - ucell: unit cell containing atomic structure and lattice information
 // - rho_save: electron density on real-space grid
 // - rhopw: plane wave basis information including grid dimensions
-// - is: spin channel index
 // - istep: current time step
 // - fn: output file name
 // - ofs_running: output stream for logging
@@ -46,7 +45,6 @@ void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
 void write_dipole(const UnitCell& ucell,
                   const double* rho_save,
                   const ModulePW::PW_Basis* rhopw,
-                  const int& is,
                   const int& istep,
                   const std::string& fn,
                   std::ofstream& ofs_running,

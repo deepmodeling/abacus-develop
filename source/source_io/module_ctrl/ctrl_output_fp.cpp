@@ -206,7 +206,7 @@ void ctrl_output_fp(UnitCell& ucell,
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, chr.rho_save[is], pw_rhod, is, istep, ss_dipole.str(), GlobalV::ofs_running);
+            ModuleIO::write_dipole(ucell, chr.rho_save[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
         }
     }
 
