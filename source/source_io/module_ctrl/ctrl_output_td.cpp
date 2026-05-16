@@ -28,6 +28,7 @@ void ctrl_output_td(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
+#ifdef __LCAO
     // (1) Write current information
     const elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec);
@@ -52,6 +53,7 @@ void ctrl_output_td(const UnitCell& ucell,
     {
         ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
     }
+#endif // __LCAO
 
     // (3) Output file for restart
     if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
