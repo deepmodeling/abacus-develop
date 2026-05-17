@@ -1683,6 +1683,16 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // sc_scf_thr_mode
+        auto it = find_label("sc_scf_thr_mode", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sc_scf_thr_mode, "threshold");
+    }
+    { // sc_dir_phase1_steps
+        auto it = find_label("sc_dir_phase1_steps", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sc_dir_phase1_steps, 5);
+    }
     { // qo_thr
         auto it = find_label("qo_thr", readinput.input_lists);
         param.input.qo_thr = 1e-5;
