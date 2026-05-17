@@ -601,7 +601,7 @@ struct Input_para
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
-    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs or linear_scan
     bool sc_direction_only = false; ///< only optimize the direction of magnetization
     // linear_scan parameters
     double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)

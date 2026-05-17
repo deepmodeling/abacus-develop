@@ -204,19 +204,15 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.type = "String";
         item.description = R"(Lambda update strategy for spin-constrained DFT:
 * bfgs: BFGS quasi-Newton method
-* linear_response: linear response (Scheme B)
-* augmented_lagrangian: augmented Lagrangian (Scheme C)
-* hybrid_delayed: hybrid delayed update (Scheme D)
 * linear_scan: linear sweep of lambda for testing magnetic moment response)";
         item.default_value = "bfgs";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_string(input.sc_lambda_strategy);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
-            if (std::find(valid.begin(), valid.end(), para.input.sc_lambda_strategy) == valid.end())
+            if (para.input.sc_lambda_strategy != "bfgs" && para.input.sc_lambda_strategy != "linear_scan")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, or linear_scan");
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs or linear_scan");
             }
         };
         this->add_item(item);
