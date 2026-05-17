@@ -52,15 +52,15 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
 // simple functions to calculate the coefficients from lambda
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<double>& coefficients)
 {
-    coefficients[0] = current_lambda[0];
-    coefficients[1] = -current_lambda[0];
+    coefficients[0] = -current_lambda[0];
+    coefficients[1] = current_lambda[0];
 }
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
-    coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , -1 * current_lambda[1]);
-    coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
+{// {-\lambda^{I,3}, -\lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,1}+i\lambda^{I,2}, +\lambda^{I,3}}
+    coefficients[0] = std::complex<double>(-current_lambda[2], 0.0);
+    coefficients[1] = std::complex<double>(-current_lambda[0] , -current_lambda[1]);
+    coefficients[2] = std::complex<double>(-current_lambda[0] , current_lambda[1]);
+    coefficients[3] = std::complex<double>(current_lambda[2], 0.0);
 }
 
 template <typename TK, typename TR>

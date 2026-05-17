@@ -447,6 +447,8 @@ public:
     const std::vector<ModuleBase::Vector3<int>>& get_constrain() const;
     /// set lambda directly
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& v) { lambda_ = v; }
+    /// set direction_only mode
+    void set_direction_only(bool v) { direction_only_ = v; }
     /// get nat
     int get_nat();
     /// get ntype

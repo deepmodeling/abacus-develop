@@ -409,8 +409,42 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         }
         else if (PARAM.inp.sc_direction_only)
         {
-            // direction_only mode: skip the inner BFGS lambda loop.
-            // Lambda projection is handled by the DeltaSpin operator.
+            // direction_only mode: two-phase strategy
+            // Phase 1 (iter 1-5): BFGS constrains moment MAGNITUDE to target,
+            //   establishing correct AFM order with physically reasonable lambda.
+            // Phase 2 (iter > 5): normal SCF with gradual lambda decay.
+            //   System naturally relaxes to the correct magnetic ground state.
+            if (iter <= 5)
+            {
+                sc.set_direction_only(false);
+                sc.run_lambda_loop(iter - 1);
+                sc.set_direction_only(true);
+                skip_solve = true;
+            }
+            else
+            {
+                // Phase 2: gradual lambda decay, normal SCF with charge mixing
+                if (iter == 6)
+                {
+                    // Reset mixing history at Phase 1→2 transition.
+                    // BFGS inner loop uses subspace diagonalization which produces
+                    // a DM state incompatible with outer SCF charge mixing history.
+                    // Resetting avoids propagating irrelevant history.
+                    this->p_chgmix->mix_reset();
+                }
+
+                int nat = sc.get_nat();
+                auto lambda = sc.get_sc_lambda();
+                // Lambda halves every 3 steps (smooth decay)
+                const double DECAY = std::pow(0.5, 1.0 / 3.0);
+                for (int ia = 0; ia < nat; ++ia)
+                    for (int ic = 0; ic < 3; ++ic)
+                        lambda[ia][ic] *= DECAY;
+                sc.set_lambda(lambda);
+
+                // Normal SCF: HSolver runs with decayed lambda, charge mixing converges
+                // skip_solve = false
+            }
         }
         else if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
         {
@@ -485,9 +519,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // 3) for delta spin
     cal_mi_lcao_wrapper<TK>(iter, PARAM.inp);
 
-    // 3b) direction_only: constraint SCF annealing
-    // Phase 1 (iter 1-5): strong lambda + tiny mixing_beta to lock spin direction
-    // Phase 2 (iter 6+): decay lambda once aligned, restore mixing_beta
+    // 3b) direction_only: report magnetic moment status
     if (PARAM.inp.sc_direction_only && PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
@@ -497,73 +529,18 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         const auto& constrain = sc.get_constrain();
         auto lambda = sc.get_sc_lambda();
 
-        const double LAMBDA_STRONG_EV = 500.0;   // strong constraint in eV/uB
-        const double BETA_MIN = 0.02;             // tiny mixing during guidance
-        const int GUIDANCE_ITERS = 10;            // guidance phase length
-        const double DECAY = 0.5;                 // per-step decay after guidance
-
-        // Check if all atoms have correct spin direction
-        bool all_aligned = true;
-        for (int ia = 0; ia < nat; ++ia)
-            for (int ic = 0; ic < 3; ++ic)
-                if (constrain[ia][ic] != 0 && Mi[ia][ic] * target[ia][ic] < 0)
-                    all_aligned = false;
-
-        if (iter <= GUIDANCE_ITERS)
-        {
-            // Phase 1: strong constraint, minimal mixing
-            for (int ia = 0; ia < nat; ++ia)
-                for (int ic = 0; ic < 3; ++ic)
-                    if (constrain[ia][ic] != 0)
-                        lambda[ia][ic] = (target[ia][ic] > 0 ? LAMBDA_STRONG_EV : -LAMBDA_STRONG_EV) / ModuleBase::Ry_to_eV;
-            this->p_chgmix->set_mixing_beta(BETA_MIN);
-            GlobalV::ofs_running << " [DS-dir] iter " << iter << "  PHASE 1: guidance (lambda=" << LAMBDA_STRONG_EV
-                                 << " eV/uB, beta=" << BETA_MIN << ")" << std::endl;
-            std::cerr << " [DS-dir] iter " << iter << "  PHASE 1: guidance (lambda=" << LAMBDA_STRONG_EV
-                      << " eV/uB, beta=" << BETA_MIN << ")" << std::endl;
-        }
-        else
-        {
-            // Phase 2: decay lambda, restore mixing_beta
-            if (all_aligned)
-            {
-                for (int ia = 0; ia < nat; ++ia)
-                    for (int ic = 0; ic < 3; ++ic)
-                        if (constrain[ia][ic] != 0)
-                            lambda[ia][ic] *= DECAY;
-                GlobalV::ofs_running << " [DS-dir] iter " << iter << "  PHASE 2: decay (aligned)" << std::endl;
-                std::cerr << " [DS-dir] iter " << iter << "  PHASE 2: decay (aligned)" << std::endl;
-            }
-            else
-            {
-                GlobalV::ofs_running << " [DS-dir] iter " << iter << "  PHASE 1: still guiding (MISMATCH)" << std::endl;
-                std::cerr << " [DS-dir] iter " << iter << "  PHASE 1: still guiding (MISMATCH)" << std::endl;
-                // Keep strong constraint if not aligned yet
-                for (int ia = 0; ia < nat; ++ia)
-                    for (int ic = 0; ic < 3; ++ic)
-                        if (constrain[ia][ic] != 0)
-                            lambda[ia][ic] = (target[ia][ic] > 0 ? LAMBDA_STRONG_EV : -LAMBDA_STRONG_EV) / ModuleBase::Ry_to_eV;
-            }
-            // Linearly restore mixing_beta to input value
-            double beta_restore = std::min(1.0, (iter - GUIDANCE_ITERS) / (double)GUIDANCE_ITERS);
-            this->p_chgmix->set_mixing_beta(BETA_MIN + (PARAM.inp.mixing_beta - BETA_MIN) * beta_restore);
-        }
-        sc.set_lambda(lambda);
-        // Print per-atom Mi/Target
+        double lambda_abs = 0;
         for (int ia = 0; ia < nat; ++ia)
             for (int ic = 0; ic < 3; ++ic)
                 if (constrain[ia][ic] != 0)
-                {
-                    std::string status = (Mi[ia][ic] * target[ia][ic] < 0) ? "MISMATCH" : "OK";
+                    lambda_abs += std::abs(lambda[ia][ic] * ModuleBase::Ry_to_eV);
+
+        GlobalV::ofs_running << " [DS-dir] iter " << iter << "  |lambda|=" << lambda_abs << " eV/uB" << std::endl;
+        for (int ia = 0; ia < nat; ++ia)
+            for (int ic = 0; ic < 3; ++ic)
+                if (constrain[ia][ic] != 0)
                     GlobalV::ofs_running << "   Atom " << ia << " comp " << ic << ": Mi=" << Mi[ia][ic]
-                                         << "  T=" << target[ia][ic] << " [" << status
-                                         << "] lambda=" << lambda[ia][ic] * ModuleBase::Ry_to_eV << " eV/uB"
-                                         << "  beta=" << this->p_chgmix->get_mixing_beta() << std::endl;
-                    std::cerr << "   Atom " << ia << " comp " << ic << ": Mi=" << Mi[ia][ic]
-                              << "  T=" << target[ia][ic] << " [" << status
-                              << "] lambda=" << lambda[ia][ic] * ModuleBase::Ry_to_eV << " eV/uB"
-                              << "  beta=" << this->p_chgmix->get_mixing_beta() << std::endl;
-                }
+                                         << "  T=" << target[ia][ic] << std::endl;
     }
 
     // call iter_finish() of ESolver_KS, where band gap is printed,

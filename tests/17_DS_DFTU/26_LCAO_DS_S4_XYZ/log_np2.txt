@@ -1,0 +1,143 @@
+Info: Local MPI proc number: 2,OpenMP thread number: 6,Total thread number: 12,Local thread limit: 14
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 68fb5fa45 (Tue May 5 16:37:10 2026 +0800)
+
+ Tue May  5 17:41:03 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Core(TM) Ultra 5 225H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 30 * 30 * 30
+ UNIFORM GRID DIM(BIG): 10 * 10 * 10
+ DONE(1.2671e-05 SEC) : SETUP UNITCELL
+ DONE(0.000218138 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL NBASE       
+ 4       4               2           6             12            108         
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-6au    27          2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00423077 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.143734   SEC) : CHARGE
+ DONE(0.145775   SEC) : POTENTIALS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.211154   SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -2.93e-02  -2.93e-02  -2.93e-02   4.40e+00  -6.77689024e+03   0.00000000e+00   1.4467e-01   1.07
+ GE2      1.43e-02   1.43e-02   1.43e-02   4.88e+00  -6.77772364e+03  -8.33401873e-01   8.5435e-02   0.61
+ GE3     -2.76e-02  -2.76e-02  -2.76e-02   4.76e+00  -6.77779679e+03  -7.31513304e-02   4.3114e-02   0.83
+ GE4     -5.35e-03  -5.35e-03  -5.35e-03   4.70e+00  -6.77780434e+03  -7.54512178e-03   2.4690e-02   0.91
+ GE5     -6.94e-02  -6.94e-02  -6.94e-02   4.75e+00  -6.77781075e+03  -6.41000139e-03   1.8029e-02   0.75
+ GE6     -3.63e-02  -3.63e-02  -3.63e-02   4.76e+00  -6.77782601e+03  -1.52625186e-02   5.8938e-03   0.83
+ GE7     -7.28e-02  -7.28e-02  -7.28e-02   4.77e+00  -6.77782830e+03  -2.29281530e-03   3.4095e-03   0.84
+ GE8     -9.30e-02  -9.30e-02  -9.30e-02   4.77e+00  -6.77782826e+03   3.91992487e-05   3.4303e-03   0.88
+ GE9     -7.80e-02  -7.80e-02  -7.80e-02   4.77e+00  -6.77782578e+03   2.48354689e-03   2.8457e-03   0.94
+ GE10     2.56e-03   2.47e-03   2.49e-03   4.77e+00  -6.77782768e+03  -1.89765625e-03   1.0860e-03   0.73
+ SCF restart after this step!
+ GE11    -4.22e-03  -4.68e-03  -4.46e-03   4.77e+00  -6.77783884e+03  -1.11626274e-02   2.3630e-04   0.95
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+target spin (uB): 
+ATOM      1         1.1550000000         1.1550000000         1.1550000000
+ATOM      2        -1.1550000000        -1.1550000000        -1.1550000000
+Step (Outer -- Inner) =  11 -- 1           RMS = 0     TIME(s) = 0.757955   
+Meet convergence criterion ( < 0.0001 ), exit.       Total TIME(s) = 0.757955
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE12    -4.22e-03  -4.68e-03  -4.46e-03   4.77e+00  -6.77782776e+03   1.10827930e-02   0.0000e+00   0.80
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 0.0001
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+target spin (uB): 
+ATOM      1         1.1550000000         1.1550000000         1.1550000000
+ATOM      2        -1.1550000000        -1.1550000000        -1.1550000000
+Step (Outer -- Inner) =  12 -- 1           RMS = 0     TIME(s) = 0.780198   
+Meet convergence criterion ( < 0.0001 ), exit.       Total TIME(s) = 0.780198
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+Inner optimization for lambda ends.
+===============================================================================
+ GE13    -4.22e-03  -4.68e-03  -4.46e-03   4.77e+00  -6.77782776e+03   3.86697195e-12   0.0000e+00   0.81
+
+ TIME STATISTICS
+-------------------------------------------------------------------------------
+          CLASS_NAME                 NAME        TIME/s  CALLS   AVG/s  PER/%  
+-------------------------------------------------------------------------------
+ Driver                       atomic_world       11.21  1        11.21  100.00 
+ ESolver_KS_LCAO              before_all_runners 0.17   1        0.17   1.55   
+                              total              11.17  12       0.93   99.67  
+ PW_Basis_Sup                 recip2real         0.17   222      0.00   1.48   
+ Relax_Driver                 relax_driver       11.03  1        11.03  98.36  
+ ESolver_KS                   runner             11.03  1        11.03  98.36  
+ Potential                    cal_veff           0.32   14       0.02   2.82   
+ PW_Basis_Sup                 real2recip         0.13   202      0.00   1.20   
+ PotXC                        cal_veff           0.30   14       0.02   2.66   
+ XC_Functional                v_xc               0.30   14       0.02   2.65   
+ HSolverLCAO                  solve              10.40  13       0.80   92.80  
+ HamiltLCAO                   updateHk           2.37   52       0.05   21.14  
+ OperatorLCAO                 init               2.37   364      0.01   21.14  
+ Veff                         contributeHR       2.20   13       0.17   19.63  
+ Gint                         cal_gint_vl        2.20   13       0.17   19.63  
+ Gint_k                       transfer_pvpR      0.20   13       0.02   1.74   
+ HSolverLCAO                  hamiltSolvePsiK    5.57   52       0.11   49.69  
+ DiagoElpa                    elpa_solve         5.28   52       0.10   47.11  
+ elecstate                    cal_dm_psi         1.05   15       0.07   9.33   
+ psiMulPsiMpi                 pdgemm             1.04   60       0.02   9.30   
+ LCAO_domain                  dm2rho             1.38   11       0.13   12.33  
+ Gint                         cal_gint_rho       1.26   11       0.11   11.22  
+ spinconstrain::SpinConstrain cal_mw_from_lambda 1.54   2        0.77   13.72  
+-------------------------------------------------------------------------------
+
+
+ START  Time  : Tue May  5 17:41:03 2026
+ FINISH Time  : Tue May  5 17:41:15 2026
+ TOTAL  Time  : 12
+ SEE INFORMATION IN : OUT.autotest/

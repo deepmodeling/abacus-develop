@@ -52,7 +52,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // Reset Mi before calculation
     this->zero_Mi();
-    const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
     std::vector<double> moments;
     if(this->nspin_==2)
     {
@@ -60,6 +59,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
         this->dm_->switch_dmr(2);
 
         // Compute moments via DeltaSpin operator
+        const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
 
         // Switch back to total density matrix
@@ -76,6 +76,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
     else if(this->nspin_==4)
     {
         // For nspin=4, moments array contains interleaved [Mx, My, Mz] per atom
+        const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
         for(int iat=0;iat<this->Mi_.size();iat++)
         {
