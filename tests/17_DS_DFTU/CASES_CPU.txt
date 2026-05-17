@@ -58,3 +58,4 @@
 57_PW_DFTU_DS_S4_DirectionOnly_XY
 # 58_LCAO_DS_S4_DirectionOnly_XY
 # 59_LCAO_DFTU_DS_S4_DirectionOnly_XY
+# 65_LCAO_DS_S2_DirectionOnly_Z
