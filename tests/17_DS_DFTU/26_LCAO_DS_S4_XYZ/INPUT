@@ -29,4 +29,4 @@ sc_scf_thr    1e-2
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB
-sc_lambda_strategy    linear_response
+sc_lambda_strategy    bfgs
