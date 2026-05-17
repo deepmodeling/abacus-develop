@@ -80,10 +80,11 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // drive Mx and My to their (usually non-zero) target values, which
     // is physically meaningless for collinear calculations.
     //
-    // IMPORTANT: This masking is the root cause of why direction_only projection
-    // zeroes lambda for nspin=2. Since only constrain.z is non-zero, the
-    // direction_only projection (which removes the component parallel to target)
-    // removes the entire lambda.z component, leaving lambda = 0.
+    // This masking causes direction_only projection to zero lambda for nspin=2:
+    // since only constrain.z is non-zero, the direction_only projection (which
+    // removes the component parallel to target direction z) removes lambda.z entirely.
+    // The two-phase strategy in esolver_ks_lcao.cpp handles this by temporarily
+    // disabling direction_only during Phase 1 for collinear calculations.
     if (nspin_in == 2)
     {
         for (int iat = 0; iat < static_cast<int>(this->constrain_.size()); iat++)
@@ -96,9 +97,10 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // Step 6: Set auxiliary parameters
     this->atomLabels_ = ucell.get_atomLabels();      // "Fe_0", "Fe_1", etc.
     this->direction_only_ = direction_only_in;        // Only optimize spin direction
-    // NOTE: direction_only_ is designed for non-collinear (nspin=4) mode.
-    // For nspin=2, it MUST be temporarily disabled during Phase 1 BFGS
-    // (see esolver_ks_lcao.cpp) to allow magnitude constraint.
+    // For nspin=2 with direction_only, the two-phase strategy in
+    // esolver_ks_lcao.cpp temporarily disables direction_only during Phase 1
+    // (controlled by sc_dir_phase1_steps). For nspin=4, direction_only
+    // works correctly without two-phase.
     this->tpiba = ucell.tpiba;                        // 2*pi/a lattice scaling
     this->pw_wfc_ = pw_wfc_in;                        // PW basis (PW mode only)
     this->set_decay_grad();                           // Initialize gradient decay thresholds

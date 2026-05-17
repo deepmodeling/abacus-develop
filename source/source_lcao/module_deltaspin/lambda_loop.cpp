@@ -174,8 +174,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             //   RESULT: lambda becomes ZERO for all components, and the constraint
             //   is completely disabled!
             //
-            // Therefore: direction_only MUST be disabled during Phase 1 BFGS for
-            // collinear calculations. See esolver_ks_lcao.cpp for details.
+            // Therefore: direction_only is temporarily disabled during Phase 1
+            // (sc_dir_phase1_steps iterations) for collinear calculations.
+            // See esolver_ks_lcao.cpp for details.
             // =================================================================
             if(this->direction_only_)
             for (int ia = 0; ia < nat; ia++)
@@ -255,8 +256,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         //   - |delta_spin_perp|^2 = |delta_spin|^2 - parallel^2 = 0
         //   - target_mag is adjusted to include the current Mz
         //   RESULT: RMS error = 0, optimizer thinks it's converged immediately!
-        //   This is another reason why direction_only must be disabled for
-        //   collinear Phase 1 BFGS.
+            //   This is another reason why direction_only is disabled during
+            //   Phase 1 for collinear calculations.
         // =================================================================
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++)
@@ -387,7 +388,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // many inner steps, eventually affecting the magnitude.
         //
         // For nspin=2 (collinear): this zeroes dnu.z (the only non-zero component),
-        // making dnu = 0. This is why direction_only must be disabled for Phase 1.
+        // making dnu = 0. This is why direction_only is disabled during Phase 1 for collinear calculations.
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
             const auto& target = this->target_mag_[ia];
@@ -426,7 +427,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // [direction_only] Project out parallel component from corrected dnu.
         // Same as above: after the optimal step correction, remove any parallel
         // component that may have been introduced.
-        // For nspin=2: again zeroes the only non-zero component.
+        // For nspin=2 collinear: this zeroes the only non-zero component (dnu.z).
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
             const auto& target = this->target_mag_[ia];

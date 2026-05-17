@@ -30,14 +30,16 @@
  * - nspin=4 (non-collinear): Full xyz components constrained, npol=2, full Pauli matrices
  *   H_delta = lambda . sigma (2x2 block with spin-flip terms)
  *
- * @par direction_only Mode and Two-Phase Strategy (for collinear mode)
+ * @par direction_only Mode and Two-Phase Strategy (collinear only)
  * The direction_only flag was designed for non-collinear calculations to constrain
- * only the spin DIRECTION (not magnitude). However, for collinear (nspin=2) mode,
+ * only the spin DIRECTION (not magnitude). For collinear (nspin=2) mode,
  * the direction_only projection mathematically zeroes lambda (see lambda_loop.cpp).
  *
- * The two-phase strategy in esolver_ks_lcao.cpp solves this:
- *   Phase 1 (iter 1-5): BFGS with direction_only=FALSE constrains magnitude to target
- *   Phase 2 (iter 6+): Lambda decays to zero, system relaxes naturally
+ * The two-phase strategy in esolver_ks_lcao.cpp solves this for nspin=2:
+ *   Phase 1 (iter 1..sc_dir_phase1_steps): BFGS with direction_only=FALSE constrains magnitude
+ *   Phase 2 (iter > sc_dir_phase1_steps): Lambda decays to zero, system relaxes naturally
+ *
+ * For nspin=4, direction_only works correctly and uses the standard sc_scf_thr_mode gate.
  *
  * @par Convergence Criteria
  * - RMS error: sqrt(mean(delta_spin^2)) < sc_thr (adaptive threshold)
@@ -45,13 +47,13 @@
  * - Maximum steps: nsc (default 50), minimum steps: nsc_min
  *
  * @par Parameter Recommendations
- * - sc_scf_thr: Threshold for starting lambda loop. Recommended: 1e-4 to 1e-3.
- *   Should be 10-100x larger than scf_thr so lambda loop starts when charge
- *   density is "reasonably stable" but not fully converged.
- * - mixing_restart: Auto-set to sc_scf_thr for DeltaSpin calculations.
- *   Ensures clean Broyden mixing history before lambda loop starts.
- * - sc_direction_only: Set to 1 for direction-only constraint. For collinear
- *   mode, the two-phase strategy in esolver_ks_lcao.cpp handles the incompatibility.
+ * - sc_scf_thr: Density error threshold for activating lambda loop. Default: 1e-3.
+ *   Should be 10-100x larger than scf_thr.
+ * - sc_scf_thr_mode: "threshold" (default, activate when drho<sc_scf_thr) or
+ *   "immediate" (activate from iter>=2, for PW basis).
+ * - mixing_restart: Auto-set based on sc_scf_thr_mode. See read_input_item_elec_stru.cpp.
+ * - sc_dir_phase1_steps: Phase 1 duration for collinear direction_only. Default: 5.
+ * - sc_direction_only: Set to true for direction-only constraint.
  */
 #ifndef SPIN_CONSTRAIN_H
 #define SPIN_CONSTRAIN_H
