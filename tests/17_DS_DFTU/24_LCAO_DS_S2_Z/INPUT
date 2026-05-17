@@ -26,7 +26,8 @@ nsc    5
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    10
+sc_scf_thr    1e-3
+sc_scf_thr_mode    immediate
 #sc_lambda_strategy    linear_scan
 sc_direction_only 1
 
