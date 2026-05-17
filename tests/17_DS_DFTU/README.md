@@ -108,7 +108,7 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 63 | LCAO_DFTU_DS_NSCF_Band_XY | Verify LCAO DFT+U+DeltaSpin in NSCF band structure calculation, tests band output with spin constraints |
 | 64 | PW_DFTU_NSCF_Band_XY | Verify DFT+U (without DeltaSpin) in NSCF band structure calculation, tests band output with Hubbard U correction |
 
-### XIII. sc_direction_only Constraint (56-59, 65)
+### XIII. sc_direction_only Constraint (56-59)
 
 | # | Test Case | Description |
 |---|------|------|
@@ -116,7 +116,6 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 57 | PW_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U, tests direction-only constraint superposition with Hubbard U correction |
 | 58 | LCAO_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` in LCAO basis, ensures direction-only constraint works correctly in LCAO density matrix path |
 | 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U in LCAO basis, tests full direction-only constraint in LCAO path |
-| 65 | PW_DS_S2_DirectionOnly_Z | Verify `sc_direction_only=1` in PW basis with collinear spin (nspin=2). Tests the two-phase BFGS strategy: Phase 1 (iter 1-5) constrains moment magnitude, Phase 2 (iter 6+) gradually decays lambda for natural relaxation |
 
 ## Running Tests
 
@@ -139,6 +138,7 @@ The following test cases are disabled in `CASES_CPU.txt` (commented out with `#`
 | 02 | LCAO_SPIN_S4_XYZ | Convergence / numerical stability |
 | 04 | LCAO_DFTU_S4_XY | Convergence / numerical stability |
 | 05 | LCAO_DFTU_S4_XYZ | Convergence / numerical stability |
+| 24 | LCAO_DS_S2_Z | Convergence / numerical stability |
 | 26 | LCAO_DS_S4_XYZ | Convergence / numerical stability |
 | 27 | LCAO_DS_S4_Z | Convergence / numerical stability |
 | 28 | LCAO_DS_S4_XY | Convergence / numerical stability |
