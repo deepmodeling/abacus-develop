@@ -38,9 +38,28 @@
  * @brief Calculate atomic magnetic moments using real-space projection (LCAO basis).
  *
  * @details The DeltaSpin operator computes magnetic moments by projecting the
- * density matrix onto atomic orbitals. For each constrained atom:
- *   M_i = Tr[P_at * (rho_up - rho_dn)]  (nspin=2)
- *   M_i = Tr[P_at * rho_spinor]          (nspin=4, decomposed via Pauli matrices)
+ * density matrix onto atomic orbitals: M_i = Tr[P_at * rho].
+ *
+ * Code paths by spin type:
+ * ---------------------------------------------------------------
+ * nspin=2 (collinear):
+ *   - Only z-component of magnetization exists (spins aligned along z-axis)
+ *   - Uses switch_dmr(2) to extract spin-difference density matrix:
+ *       dmr = rho_up - rho_dn  (difference between spin-up and spin-down DM)
+ *   - cal_moment() computes M_z = Tr[P_at * (rho_up - rho_dn)] per atom
+ *   - After computation, switch_dmr(0) restores the total density matrix
+ *   - Mi_[iat].x and Mi_[iat].y are set to 0 (physically meaningless for collinear)
+ *
+ * nspin=4 (non-collinear):
+ *   - Full 3D magnetization vector (Mx, My, Mz per atom)
+ *   - Uses the spinor density matrix directly (no switch_dmr call):
+ *       dmr = | rho_upup    rho_updn   |   (2x2 block interleaved in memory)
+ *             | rho_dnup    rho_dndn   |
+ *   - cal_moment() extracts all 3 components via Pauli matrix traces:
+ *       Mx = Tr(rho * sigma_x) = rho_updn + rho_dnup  (real part)
+ *       My = Tr(rho * sigma_y) = Im(rho_updn - rho_dnup)
+ *       Mz = Tr(rho * sigma_z) = rho_upup - rho_dndn
+ *   - Output: moments array is interleaved [Mx, My, Mz, Mx, My, Mz, ...]
  *
  * @param step Current SCF iteration number (for logging)
  * @param print Whether to print moments (unused in this implementation)
@@ -55,17 +74,26 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
     std::vector<double> moments;
     if(this->nspin_==2)
     {
-        // Switch to spin-difference density matrix (rho_up - rho_dn)
+        // ============================================================
+        // nspin=2 (collinear): extract z-component of magnetization
+        // ============================================================
+        // switch_dmr(2) creates a temporary density matrix:
+        //   dmr_tmp[i] = dmr_origin[i] - _DMR[1][i]  (rho_up - rho_dn)
+        // The _DMR[0] pointer is then redirected to dmr_tmp.
+        // This gives the spin-difference density needed for M_z calculation.
         this->dm_->switch_dmr(2);
 
-        // Compute moments via DeltaSpin operator
+        // CRITICAL: get_DMR_pointer(1) must be called AFTER switch_dmr(2).
+        // For nspin=2, _DMR[0] now points to the spin-difference density.
+        // Getting the pointer before switch_dmr would return stale data.
         const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
 
-        // Switch back to total density matrix
+        // Restore _DMR[0] to point to the total density matrix (rho_up + rho_dn).
+        // This must be done before any subsequent code uses the density matrix.
         this->dm_->switch_dmr(0);
 
-        // For nspin=2, only z-component is meaningful
+        // For nspin=2, only z-component is meaningful (collinear = spins along z)
         for(int iat=0;iat<this->Mi_.size();iat++)
         {
             this->Mi_[iat].x = 0.0;
@@ -75,9 +103,15 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
     }
     else if(this->nspin_==4)
     {
-        // For nspin=4, moments array contains interleaved [Mx, My, Mz] per atom
+        // ============================================================
+        // nspin=4 (non-collinear): extract full 3D magnetization vector
+        // ============================================================
+        // No switch_dmr call: the spinor density matrix already contains
+        // all magnetization information in its 2x2 block structure.
+        // _DMR[0] (index 1 in get_DMR_pointer) is the full spinor DMR.
         const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator)->cal_moment(dmr, this->get_constrain());
+        // moments array layout: [Mx_0, My_0, Mz_0, Mx_1, My_1, Mz_1, ...]
         for(int iat=0;iat<this->Mi_.size();iat++)
         {
             this->Mi_[iat].x = moments[iat*3];

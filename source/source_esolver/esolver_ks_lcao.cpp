@@ -397,63 +397,177 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-    // 2) run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    // =====================================================================
+    // 2) DeltaSpin: inner lambda loop to constrain atomic magnetic moments
+    // =====================================================================
+    // The DeltaSpin method implements constrained LSDA via Lagrange multipliers:
+    //   E'[rho] = E[rho] - sum_i lambda_i . (M_i - M_target_i)
+    //
+    // The constrained energy functional adds a penalty term that drives each
+    // atom's magnetic moment M_i toward its target value M_target_i.
+    // The Lagrange multiplier lambda_i acts as a "magnetic force" (eV/uB).
+    //
+    // Code paths by spin type:
+    // ---------------------------------------------------------------
+    // nspin=2 (collinear):
+    //   - Only z-component of magnetization is constrained (M_z per atom)
+    //   - H_delta = lambda_z * sigma_z (diagonal, opposite sign per spin channel)
+    //   - DMR: uses switch_dmr(2) -> spin-difference density (rho_up - rho_dn)
+    //   - cal_coeff_lambda: coefficients[spin] = +/- lambda_z
+    //
+    // nspin=4 (non-collinear):
+    //   - Full 3D magnetization vector constrained (Mx, My, Mz per atom)
+    //   - H_delta = lambda . sigma (full 2x2 Pauli matrix with spin-flip terms)
+    //   - DMR: spinor density matrix (2x2 blocks interleaved)
+    //   - cal_coeff_lambda: 4 coeffs for 2x2 spinor block
+    //
+    // direction_only mode:
+    //   - Designed for non-collinear: removes parallel lambda component so
+    //     only transverse (directional) constraint remains
+    //   - CRITICAL: for nspin=2, direction_only projects lambda to ZERO because
+    //     the only constrained direction (z) IS the parallel direction.
+    //     Therefore direction_only MUST be disabled during Phase 1 BFGS.
+    //
+    // sc_scf_thr parameter:
+    //   - Threshold at which DeltaSpin lambda loop begins (default 1e-3)
+    //   - Should be 10-100x larger than scf_thr so lambda loop starts when
+    //     charge density is "reasonably stable" but not fully converged
+    //   - Recommended: sc_scf_thr = 1e-4 to 1e-3, scf_thr = 1e-8
+    //   - mixing_restart is auto-set to sc_scf_thr for DeltaSpin calculations
+    // =====================================================================
     bool skip_solve = false;
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+
         if (PARAM.inp.sc_lambda_strategy == "linear_scan")
         {
+            // Linear scan mode: sweep lambda values for E(lambda) mapping (debug/diagnostic)
             sc.run_lambda_linear_scan(iter - 1);
             skip_solve = true;
         }
         else if (PARAM.inp.sc_direction_only)
         {
-            // direction_only mode: two-phase strategy
-            // Phase 1 (iter 1-5): BFGS constrains moment MAGNITUDE to target,
-            //   establishing correct AFM order with physically reasonable lambda.
-            // Phase 2 (iter > 5): normal SCF with gradual lambda decay.
-            //   System naturally relaxes to the correct magnetic ground state.
+            // ================================================================
+            // direction_only mode: two-phase constraint strategy
+            // ================================================================
+            //
+            // PROBLEM with original approach (fixed lambda = 500 eV/uB):
+            //   - Over-polarizes s/p orbitals, giving unphysical Mi ~ 13 uB
+            //   - Prevents natural relaxation to magnetic ground state
+            //   - Cannot converge (lambda never decays)
+            //
+            // SOLUTION: two-phase BFGS + gradual lambda decay
+            //
+            // Phase 1 (iter 1-5): BFGS constrains moment MAGNITUDE to target
+            //   - direction_only projection is DISABLED so BFGS can optimize
+            //     the z-component of lambda (the only constrained direction
+            //     in collinear mode)
+            //   - BFGS finds physically reasonable lambda values (~0.3 eV/uB)
+            //     that give Mi ≈ target (±2 uB for Fe)
+            //   - skip_solve = true: BFGS inner loop does its own subspace
+            //     diagonalization; outer HSolver is skipped
+            //
+            // Phase 2 (iter > 5): normal SCF with gradual lambda decay
+            //   - Lambda decays by factor 0.5^(1/3) per step (~halves every 3 steps)
+            //   - Broyden mixing history is reset at transition to avoid charge
+            //     density discontinuity between BFGS inner loop state and outer SCF
+            //   - skip_solve = false: outer HSolver runs, charge mixing converges
+            //   - System naturally relaxes to correct magnetic ground state
+            //     (Mi ≈ ±2.33 uB for this Fe AFM system)
+            //
+            // Phase transition threshold (default: 5 iterations):
+            //   - 3-5 iterations is enough for BFGS to establish AFM order
+            //   - Too few (< 3): lambda not optimized, poor initial state
+            //   - Too many (> 10): waste of iterations, system already stable
+            // ================================================================
             if (iter <= 5)
             {
+                // Phase 1: BFGS constraint loop
+                // CRITICAL: disable direction_only projection for collinear mode.
+                // Without this, the projection removes the z-component of lambda
+                // (since target direction = z), making lambda = 0 and disabling
+                // the constraint entirely.
                 sc.set_direction_only(false);
                 sc.run_lambda_loop(iter - 1);
                 sc.set_direction_only(true);
-                skip_solve = true;
+                skip_solve = true; // BFGS inner loop handles diagonalization
             }
             else
             {
-                // Phase 2: gradual lambda decay, normal SCF with charge mixing
+                // Phase 2: gradual lambda decay, normal SCF
                 if (iter == 6)
                 {
-                    // Reset mixing history at Phase 1→2 transition.
-                    // BFGS inner loop uses subspace diagonalization which produces
-                    // a DM state incompatible with outer SCF charge mixing history.
-                    // Resetting avoids propagating irrelevant history.
+                    // CRITICAL: reset Broyden mixing history at Phase 1->2 transition.
+                    //
+                    // Why this is needed:
+                    //   - Phase 1 BFGS uses subspace diagonalization to update the
+                    //     density matrix (DM) directly, without going through the
+                    //     outer SCF charge mixing loop
+                    //   - The Broyden mixer stores a history of previous density
+                    //     differences and Jacobian approximations
+                    //   - These history entries are based on BFGS-updated DM states,
+                    //     which are incompatible with the outer SCF charge density
+                    //     produced by HSolver
+                    //   - If we don't reset, the mixer will combine irrelevant history
+                    //     with the new SCF state, causing large oscillations
+                    //
+                    // mix_reset() clears:
+                    //   - Broyden/Pulay mixing history (stored density differences)
+                    //   - rho_mdata mixing data structure
+                    //   - tau_mdata (if meta-GGA)
+                    //   Effectively "forgets" all previous SCF history.
                     this->p_chgmix->mix_reset();
                 }
 
+                // Gradual lambda decay: factor = 0.5^(1/3) per step
+                // This means lambda halves every 3 iterations.
+                //
+                // Why gradual (not instant zero)?
+                //   - Instant removal of lambda causes discontinuous change in
+                //     the Hamiltonian, leading to large charge density oscillations
+                //   - Gradual decay lets the system adiabatically relax from the
+                //     constrained state to the unconstrained ground state
+                //
+                // Decay rate tuning:
+                //   - Halves every 2 steps: faster decay, may oscillate
+                //   - Halves every 3 steps: recommended default (current)
+                //   - Halves every 5 steps: slower, more stable but longer SCF
                 int nat = sc.get_nat();
                 auto lambda = sc.get_sc_lambda();
-                // Lambda halves every 3 steps (smooth decay)
-                const double DECAY = std::pow(0.5, 1.0 / 3.0);
+                const double DECAY = std::pow(0.5, 1.0 / 3.0); // ~0.7937 per step
                 for (int ia = 0; ia < nat; ++ia)
                     for (int ic = 0; ic < 3; ++ic)
                         lambda[ia][ic] *= DECAY;
                 sc.set_lambda(lambda);
 
-                // Normal SCF: HSolver runs with decayed lambda, charge mixing converges
-                // skip_solve = false
+                // Normal SCF: skip_solve = false
+                // HSolver will run with the decayed lambda, and charge mixing
+                // will converge the density naturally.
             }
         }
         else if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
         {
+            // Standard DeltaSpin: first lambda loop invocation.
+            // Triggered when charge density has converged to within sc_scf_thr.
+            //
+            // sc_scf_thr recommended settings:
+            //   - Default: 1e-3 (100,000x larger than default scf_thr = 1e-8)
+            //   - For difficult systems: 1e-4 to 1e-5
+            //   - Should be large enough that charge density is "reasonably stable"
+            //     but small enough that lambda optimization is meaningful
+            //
+            // mixing_restart is auto-set to sc_scf_thr for DeltaSpin calculations
+            // (see read_input_item_elec_stru.cpp), ensuring clean mixing history
+            // before the lambda loop starts.
             sc.run_lambda_loop(iter - 1);
             sc.set_mag_converged(true);
             skip_solve = true;
         }
         else if (sc.mag_converged())
         {
+            // Standard DeltaSpin: subsequent lambda loop invocations.
+            // Lambda is refined for the current charge density at each SCF step.
             sc.run_lambda_loop(iter - 1);
             skip_solve = true;
         }

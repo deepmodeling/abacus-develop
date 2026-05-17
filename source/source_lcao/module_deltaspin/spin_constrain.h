@@ -26,12 +26,32 @@
  *
  * @par Spin Types
  * - nspin=2 (collinear): Only z-component constrained, npol=1, uses spin_sign (+1/-1)
+ *   H_delta = lambda_z * sigma_z (diagonal, opposite sign per spin channel)
  * - nspin=4 (non-collinear): Full xyz components constrained, npol=2, full Pauli matrices
+ *   H_delta = lambda . sigma (2x2 block with spin-flip terms)
+ *
+ * @par direction_only Mode and Two-Phase Strategy (for collinear mode)
+ * The direction_only flag was designed for non-collinear calculations to constrain
+ * only the spin DIRECTION (not magnitude). However, for collinear (nspin=2) mode,
+ * the direction_only projection mathematically zeroes lambda (see lambda_loop.cpp).
+ *
+ * The two-phase strategy in esolver_ks_lcao.cpp solves this:
+ *   Phase 1 (iter 1-5): BFGS with direction_only=FALSE constrains magnitude to target
+ *   Phase 2 (iter 6+): Lambda decays to zero, system relaxes naturally
  *
  * @par Convergence Criteria
  * - RMS error: sqrt(mean(delta_spin^2)) < sc_thr (adaptive threshold)
  * - Gradient decay: max(dM/dlambda) per atom type < decay_grad[itype]
  * - Maximum steps: nsc (default 50), minimum steps: nsc_min
+ *
+ * @par Parameter Recommendations
+ * - sc_scf_thr: Threshold for starting lambda loop. Recommended: 1e-4 to 1e-3.
+ *   Should be 10-100x larger than scf_thr so lambda loop starts when charge
+ *   density is "reasonably stable" but not fully converged.
+ * - mixing_restart: Auto-set to sc_scf_thr for DeltaSpin calculations.
+ *   Ensures clean Broyden mixing history before lambda loop starts.
+ * - sc_direction_only: Set to 1 for direction-only constraint. For collinear
+ *   mode, the two-phase strategy in esolver_ks_lcao.cpp handles the incompatibility.
  */
 #ifndef SPIN_CONSTRAIN_H
 #define SPIN_CONSTRAIN_H
@@ -448,6 +468,24 @@ public:
     /// set lambda directly
     void set_lambda(const std::vector<ModuleBase::Vector3<double>>& v) { lambda_ = v; }
     /// set direction_only mode
+    ///
+    /// direction_only controls whether the BFGS optimizer constrains only the
+    /// spin DIRECTION (not magnitude) of atomic magnetic moments:
+    ///
+    /// - direction_only = true:  Projects out the parallel component of lambda
+    ///   (along the target magnetization direction). Only transverse lambda
+    ///   components remain, which rotate spin direction without changing magnitude.
+    ///   Designed for non-collinear (nspin=4) calculations.
+    ///   WARNING: For nspin=2 (collinear), this zeroes lambda entirely because
+    ///   the only constrained direction (z-axis) IS the parallel direction.
+    ///
+    /// - direction_only = false: Full BFGS optimization of lambda, constraining
+    ///   both magnitude AND direction of magnetic moments to target values.
+    ///   Required for Phase 1 of the two-phase strategy in collinear mode.
+    ///
+    /// Usage pattern (esolver_ks_lcao.cpp):
+    ///   Phase 1: sc.set_direction_only(false); sc.run_lambda_loop(); // magnitude constraint
+    ///   Phase 2: sc.set_direction_only(true);  // restore for reporting
     void set_direction_only(bool v) { direction_only_ = v; }
     /// get nat
     int get_nat();

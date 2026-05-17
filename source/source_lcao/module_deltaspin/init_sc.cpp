@@ -79,6 +79,11 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // Without this fix, the optimizer would waste iterations trying to
     // drive Mx and My to their (usually non-zero) target values, which
     // is physically meaningless for collinear calculations.
+    //
+    // IMPORTANT: This masking is the root cause of why direction_only projection
+    // zeroes lambda for nspin=2. Since only constrain.z is non-zero, the
+    // direction_only projection (which removes the component parallel to target)
+    // removes the entire lambda.z component, leaving lambda = 0.
     if (nspin_in == 2)
     {
         for (int iat = 0; iat < static_cast<int>(this->constrain_.size()); iat++)
@@ -91,6 +96,9 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // Step 6: Set auxiliary parameters
     this->atomLabels_ = ucell.get_atomLabels();      // "Fe_0", "Fe_1", etc.
     this->direction_only_ = direction_only_in;        // Only optimize spin direction
+    // NOTE: direction_only_ is designed for non-collinear (nspin=4) mode.
+    // For nspin=2, it MUST be temporarily disabled during Phase 1 BFGS
+    // (see esolver_ks_lcao.cpp) to allow magnitude constraint.
     this->tpiba = ucell.tpiba;                        // 2*pi/a lattice scaling
     this->pw_wfc_ = pw_wfc_in;                        // PW basis (PW mode only)
     this->set_decay_grad();                           // Initialize gradient decay thresholds

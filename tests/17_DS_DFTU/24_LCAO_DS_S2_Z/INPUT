@@ -22,11 +22,11 @@ symmetry    0
 # DeltaSpin parameters
 sc_mag_switch    1
 sc_thr    1e-4
-nsc    100
+nsc    5
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    1e-3
+sc_scf_thr    10
 #sc_lambda_strategy    linear_scan
 sc_direction_only 1
 

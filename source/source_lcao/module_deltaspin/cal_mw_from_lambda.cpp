@@ -58,12 +58,20 @@
  * @details Adds the constraint term to H in the projector subspace:
  *   H += becp^† * ps, where ps = delta_lambda * becp
  *
- * For non-collinear (npol=2), this implements the full 2x2 Pauli matrix:
- *   H_delta = | lambda_z     lambda_x + i*lambda_y |
- *             | lambda_x - i*lambda_y   -lambda_z  |
+ * Code paths by spin type:
+ * ---------------------------------------------------------------
+ * nspin=4 (npol=2, non-collinear): full Pauli matrix treatment
+ *   H_delta = | lambda_z      lambda_x + i*lambda_y |
+ *             | lambda_x - i*lambda_y   -lambda_z   |
+ *   The 2x2 Pauli matrix couples spin-up and spin-down channels,
+ *   allowing rotation of the magnetization direction in 3D space.
+ *   projector coefficients are mixed: ps_up = c0*becp_up + c2*becp_dn
  *
- * For collinear (npol=1), only the diagonal z-component with spin_sign:
+ * nspin=2 (npol=1, collinear): diagonal z-component only
  *   H_delta = lambda_z * spin_sign
+ *   where spin_sign = +1 for spin-up k-points, -1 for spin-down k-points.
+ *   This is a simple scalar correction: different sign per spin channel.
+ *   No spin-flip terms exist in collinear mode.
  *
  * @param h_tmp Subspace Hamiltonian (nbands x nbands, modified in place)
  * @param becp_k Projector coefficients for k-point ik
@@ -124,6 +132,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
         //   | lambda_x - i*lambda_y   -lambda_z   |
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
+        //
+        // The spin-flip terms (coeff1, coeff2) couple spin-up and spin-down
+        // projector coefficients, enabling rotation of the magnetization
+        // direction in the full 3D space.
         for (int iat = 0; iat < this->Mi_.size(); iat++)
         {
             const int nproj = nh_iat[iat];
@@ -152,8 +164,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
         // =============================================================
         // nspin=2 (collinear): only z-component with spin_sign
         // =============================================================
-        // ps = lambda_z * spin_sign * becp
-        // spin_sign = +1 for spin-up k-points, -1 for spin-down
+        // In collinear mode, spins are constrained along the z-axis only.
+        // The DeltaSpin correction is a simple scalar:
+        //   H_delta = lambda_z * spin_sign
+        // where spin_sign = +1 for spin-up k-points, -1 for spin-down.
+        //
+        // This means:
+        //   - For spin-up bands:   H += +lambda_z (lowers energy)
+        //   - For spin-down bands: H += -lambda_z (raises energy)
+        //
+        // The sign difference creates an energy splitting between spin-up
+        // and spin-down states, which drives the magnetization toward
+        // the target value. Positive lambda_z increases M_z (more spin-up
+        // occupation, less spin-down).
+        //
+        // Note: effective_lambda[iat][0] (lambda_x) and [1] (lambda_y)
+        // are zero for collinear mode (constrained by init_sc.cpp).
         for (int iat = 0; iat < this->Mi_.size(); iat++)
         {
             const int nproj = nh_iat[iat];

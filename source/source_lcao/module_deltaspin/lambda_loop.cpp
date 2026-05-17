@@ -140,14 +140,43 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             // Update lambda, compute new Mi, check convergence
             // =============================================================
 
-            // Mask unconstrained components of delta_lambda to 0
+            // Mask unconstrained components of delta_lambda to 0.
+            // For nspin=2 (collinear), constrain_[ia].x and constrain_[ia].y are
+            // forced to 0 in init_sc.cpp, so only delta_lambda.z survives.
             where_fill_scalar_2d(this->constrain_, 0, zero, delta_lambda);
 
             // lambda = initial_lambda + delta_lambda
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
 
+            // =================================================================
             // [direction_only mode] Project out parallel component of lambda
-            // This keeps |lambda| -> 0, only constraining spin direction
+            // =================================================================
+            //
+            // Physics motivation:
+            //   The constraint energy is E_scon = -sum_i lambda_i . (M_i - M_target_i).
+            //   The lambda vector can be decomposed into:
+            //     lambda_parallel = (lambda . dir) * dir  (along target direction)
+            //     lambda_perp = lambda - lambda_parallel   (perpendicular to target)
+            //   - lambda_parallel controls the MAGNITUDE of M_i
+            //   - lambda_perp controls the DIRECTION of M_i (rotation)
+            //
+            //   In direction_only mode, we want to constrain only the spin DIRECTION,
+            //   not the magnitude. So we remove lambda_parallel, leaving only
+            //   lambda_perp to rotate the spin toward the target direction.
+            //
+            // CRITICAL: This projection has a devastating effect for nspin=2 (collinear):
+            //   - In collinear mode, constrain_[ia].x = constrain_[ia].y = 0 (set in
+            //     init_sc.cpp), so only lambda_z is non-zero.
+            //   - The target magnetization for collinear mode is also purely along z:
+            //     dir = (0, 0, 1).
+            //   - The parallel component is: lambda . dir = lambda_z.
+            //   - After projection: lambda_z -= lambda_z * 1 = 0.
+            //   RESULT: lambda becomes ZERO for all components, and the constraint
+            //   is completely disabled!
+            //
+            // Therefore: direction_only MUST be disabled during Phase 1 BFGS for
+            // collinear calculations. See esolver_ks_lcao.cpp for details.
+            // =================================================================
             if(this->direction_only_)
             for (int ia = 0; ia < nat; ia++)
             {
@@ -203,8 +232,32 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // Search direction starts as the residual (steepest descent)
         search = delta_spin;
 
-        // [direction_only mode] Modify residual to exclude parallel component
-        // and adjust target_mag to maintain direction constraint
+        // =================================================================
+        // [direction_only mode] Modify residual and adjust target magnitude
+        // =================================================================
+        //
+        // In direction_only mode, we don't care about the MAGNITUDE error
+        // (|M_i| - |M_target|), only about the DIRECTION error (angle between
+        // M_i and M_target). This block:
+        //
+        // 1. Computes the perpendicular component of delta_spin:
+        //      |delta_spin_perp|^2 = |delta_spin|^2 - (delta_spin . dir)^2
+        //    This is the error that direction_only actually tries to minimize.
+        //
+        // 2. Adjusts target_mag by adding the parallel component:
+        //      target_mag_new = target_mag + (delta_spin . dir) * dir
+        //    This makes the residual parallel component zero by definition,
+        //    so the BFGS optimizer doesn't try to correct the magnitude error.
+        //
+        // For nspin=2 (collinear):
+        //   - target direction = (0, 0, 1), delta_spin = (0, 0, Mz - Mz_target)
+        //   - parallel = Mz - Mz_target (the entire residual)
+        //   - |delta_spin_perp|^2 = |delta_spin|^2 - parallel^2 = 0
+        //   - target_mag is adjusted to include the current Mz
+        //   RESULT: RMS error = 0, optimizer thinks it's converged immediately!
+        //   This is another reason why direction_only must be disabled for
+        //   collinear Phase 1 BFGS.
+        // =================================================================
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++)
         {
@@ -317,11 +370,24 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // =============================================================
         // CUMULATIVE STEP UPDATE
         // =============================================================
+        // dnu is the cumulative search path integral: the total lambda change
+        // accumulated over all inner BFGS steps. It starts at 0 and grows as:
+        //   dnu += alpha_trial * search  (at each inner step)
+        //
+        // dnu is what gets applied to lambda at the end of the loop:
+        //   lambda = initial_lambda + dnu
         dnu_last_step = dnu;
         // dnu = dnu + alpha_trial * search
         add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
 
-        // [direction_only] Project out parallel component from dnu
+        // [direction_only] Project out parallel component from dnu.
+        // This prevents any accumulation of the parallel (magnitude-controlling)
+        // component in the cumulative step. Without this projection, small
+        // numerical errors in the parallel component could accumulate over
+        // many inner steps, eventually affecting the magnitude.
+        //
+        // For nspin=2 (collinear): this zeroes dnu.z (the only non-zero component),
+        // making dnu = 0. This is why direction_only must be disabled for Phase 1.
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
             const auto& target = this->target_mag_[ia];
@@ -357,7 +423,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         scalar_multiply_2d(search, alpha_plus, temp_1);
         add_scalar_multiply_2d(dnu, temp_1, one, dnu);
 
-        // [direction_only] Project out parallel component from corrected dnu
+        // [direction_only] Project out parallel component from corrected dnu.
+        // Same as above: after the optimal step correction, remove any parallel
+        // component that may have been introduced.
+        // For nspin=2: again zeroes the only non-zero component.
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
             const auto& target = this->target_mag_[ia];
