@@ -38,7 +38,7 @@
 42_PW_DFTU_DS_S2_Thr1e10_Z
 43_PW_DFTU_DS_S4_Thr1e10_XY
 # Lambda loop behavior: thr10 = immediate lambda loop
-# 40_PW_DS_S2_Thr10_Z
+40_PW_DS_S2_Thr10_Z
 41_PW_DS_S4_Thr10_XY
 # 44_PW_DFTU_DS_S2_Thr10_Z
 45_PW_DFTU_DS_S4_Thr10_XY

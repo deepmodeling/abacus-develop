@@ -23,8 +23,7 @@ nsc    100
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    1e-3
-sc_scf_thr_mode    immediate
+sc_scf_thr    10
 
 kpar    2
 pseudo_dir    ../../PP_ORB
