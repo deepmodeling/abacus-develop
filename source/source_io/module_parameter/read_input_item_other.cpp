@@ -170,8 +170,8 @@ void ReadInput::item_others()
         item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
-        item.description = "Density error threshold for inner loop of spin-constrained SCF";
-        item.default_value = "1.0e-4";
+        item.description = "When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. For immediate activation (PW basis), use sc_scf_thr_mode=\"immediate\" instead of setting sc_scf_thr to a large value.";
+        item.default_value = "1.0e-3";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.sc_scf_thr);
