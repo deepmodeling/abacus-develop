@@ -238,6 +238,24 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         this->add_item(item);
     }
     {
+        Input_Item item("sc_dir_phase1_steps");
+        item.annotation = "Phase 1 iterations for direction_only collinear strategy";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Integer";
+        item.description = R"(Number of SCF iterations for Phase 1 (magnitude constraint) in the direction_only two-phase strategy for collinear (nspin=2) calculations. During Phase 1, direction_only projection is temporarily disabled so BFGS can constrain the magnetic moment magnitude. After Phase 1, lambda decays and the system relaxes naturally. Minimum: 2.)";
+        item.default_value = "5";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true and sc_direction_only is true and nspin=2";
+        read_sync_int(input.sc_dir_phase1_steps);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sc_dir_phase1_steps < 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_dir_phase1_steps must >= 2");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("sc_scan_lambda_start");
         item.annotation = "start value for linear lambda scan (eV/uB)";
         item.category = "Spin-Constrained DFT";
