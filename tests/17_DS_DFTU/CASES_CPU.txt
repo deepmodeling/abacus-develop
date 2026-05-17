@@ -20,7 +20,7 @@
 19_PW_DFTU_DS_S4_XY
 21_PW_DFTU_DS_S4_Z
 # LCAO pure DeltaSpin
-# 24_LCAO_DS_S2_Z
+24_LCAO_DS_S2_Z
 # 26_LCAO_DS_S4_XYZ
 # 27_LCAO_DS_S4_Z
 # 28_LCAO_DS_S4_XY
@@ -58,3 +58,4 @@
 57_PW_DFTU_DS_S4_DirectionOnly_XY
 # 58_LCAO_DS_S4_DirectionOnly_XY
 # 59_LCAO_DFTU_DS_S4_DirectionOnly_XY
+65_PW_DS_S2_DirectionOnly_Z
