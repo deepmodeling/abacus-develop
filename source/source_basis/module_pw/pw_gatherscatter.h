@@ -45,24 +45,18 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     const int nplane_gps = this->nplane;
     const int* istot2ixy_gps = this->istot2ixy;
 #ifdef _OPENMP
-    #pragma omp parallel
+    #pragma omp parallel for
+#endif
+    for (int istot = 0; istot < nstot_gps; ++istot)
     {
-        #pragma omp for
-#endif
-        for (int istot = 0; istot < nstot_gps; ++istot)
+        int ixy = istot2ixy_gps[istot];
+        std::complex<T> *outp = &out[istot * nplane_gps];
+        std::complex<T> *inp = &in[ixy * nplane_gps];
+        for (int iz = 0; iz < nplane_gps; ++iz)
         {
-            int ixy = istot2ixy_gps[istot];
-            std::complex<T> *outp = &out[istot * nplane_gps];
-            std::complex<T> *inp = &in[ixy * nplane_gps];
-            for (int iz = 0; iz < nplane_gps; ++iz)
-            {
-                outp[iz] = inp[iz];
-            }
+            outp[iz] = inp[iz];
         }
-#ifdef _OPENMP
-        #pragma omp barrier
     }
-#endif
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
@@ -176,7 +170,6 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
             }
         }
 #ifdef _OPENMP
-        #pragma omp barrier
     }
 #endif
 
