@@ -45,27 +45,30 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     const int nplane_gps = this->nplane;
     const int* istot2ixy_gps = this->istot2ixy;
 #ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int istot = 0; istot < nstot_gps; ++istot)
+    #pragma omp parallel
     {
-        int ixy = istot2ixy_gps[istot];
-        std::complex<T> *outp = &out[istot * nplane_gps];
-        std::complex<T> *inp = &in[ixy * nplane_gps];
-        for (int iz = 0; iz < nplane_gps; ++iz)
+        #pragma omp for
+#endif
+        for (int istot = 0; istot < nstot_gps; ++istot)
         {
-            outp[iz] = inp[iz];
+            int ixy = istot2ixy_gps[istot];
+            std::complex<T> *outp = &out[istot * nplane_gps];
+            std::complex<T> *inp = &in[ixy * nplane_gps];
+            for (int iz = 0; iz < nplane_gps; ++iz)
+            {
+                outp[iz] = inp[iz];
+            }
         }
+#ifdef _OPENMP
+        #pragma omp barrier
     }
+#endif
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
     // OMP barrier: Ensure all OMP threads have finished writing to buffers
     // before MPI communication reads from them. This prevents data race
     // between OMP parallel write (e.g., FFT calculation) and MPI read.
-#ifdef _OPENMP
-#pragma omp barrier
-#endif
     if(typeid(T) == typeid(double))
     {
         MPI_Alltoallv(out, numr, startr, MPI_DOUBLE_COMPLEX, in, numg, startg, MPI_DOUBLE_COMPLEX, this->pool_world);
@@ -83,7 +86,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     const int* startg_gps = this->startg;
     const int* startz_gps = this->startz;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
 #endif
     for (int ip = 0; ip < poolnproc_gps ;++ip)
     {
@@ -156,32 +159,35 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     const int* startg = this->startg;
     const int* startz = this->startz;
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2)
-#endif
-    for (int ip = 0; ip < poolnproc ;++ip)
+    #pragma omp parallel
     {
-        for (int is = 0; is < nst; ++is)
+        #pragma omp for collapse(2)
+#endif
+        for (int ip = 0; ip < poolnproc ;++ip)
         {
-            int nzip = numz[ip];
-            std::complex<T> *outp0 = &out[startg[ip]];
-            std::complex<T> *inp0 = &in[startz[ip]];
-            std::complex<T> *outp = &outp0[is * nzip];
-            std::complex<T> *inp = &inp0[is * nz ];
-            for (int izip = 0; izip < nzip; ++izip)
+            for (int is = 0; is < nst; ++is)
             {
-                outp[izip] = inp[izip];
+                int nzip = numz[ip];
+                std::complex<T> *outp0 = &out[startg[ip]];
+                std::complex<T> *inp0 = &in[startz[ip]];
+                std::complex<T> *outp = &outp0[is * nzip];
+                std::complex<T> *inp = &inp0[is * nz ];
+                for (int izip = 0; izip < nzip; ++izip)
+                {
+                    outp[izip] = inp[izip];
+                }
             }
         }
+#ifdef _OPENMP
+        #pragma omp barrier
     }
+#endif
 
     //exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
     // OMP barrier: Ensure all OMP threads have finished writing to buffers
     // before MPI communication reads from them. This prevents data race
     // between OMP parallel write (e.g., FFT calculation) and MPI read.
-#ifdef _OPENMP
-#pragma omp barrier
-#endif
     if(typeid(T) == typeid(double))
     {
         MPI_Alltoallv(out, numg, startg, MPI_DOUBLE_COMPLEX, in, numr, startr, MPI_DOUBLE_COMPLEX, this->pool_world);
@@ -193,7 +199,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 
     const int nrxx_gsp = this->nrxx;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static)
+    #pragma omp parallel for schedule(static)
 #endif
     for(int i = 0; i < nrxx_gsp; ++i)
     {
