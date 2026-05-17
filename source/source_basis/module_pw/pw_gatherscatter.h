@@ -15,7 +15,6 @@ namespace ModulePW
 template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
-    //ModuleBase::timer::start(this->classname, "gatherp_scatters");
     
     if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
     {
@@ -35,9 +34,10 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        //ModuleBase::timer::end(this->classname, "gatherp_scatters");
         return;
     }
+
+
 #ifdef __MPI
     //change (nplane fftnxy) to (nplane,nstot)
     // Hence, we can send them at one time.
@@ -68,6 +68,10 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     {
         MPI_Alltoallv(out, numr, startr, MPI_COMPLEX, in, numg, startg, MPI_COMPLEX, this->pool_world);
     }
+    else
+    {
+        ModuleBase::WARNING_QUIT("PW_Basis::gatherp_scatters", "Unsupported data type for MPI_Alltoallv");
+    }
 
     // change (nz,ns) to (numz[ip],ns, poolnproc)
     const int poolnproc_gps = this->poolnproc;
@@ -95,7 +99,6 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         }
     }
 #endif
-    //ModuleBase::timer::start(this->classname, "gatherp_scatters");
     return;
 }
 
@@ -109,7 +112,6 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    // ModuleBase::timer::start(this->classname, "gathers_scatterp");
     if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
     {
         const int nrxx_ = this->nrxx;
@@ -137,9 +139,10 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
-        // ModuleBase::timer::end(this->classname, "gathers_scatterp");
         return;
     }
+
+
 #ifdef __MPI
     // change (nz,ns) to (numz[ip],ns, poolnproc)
     // Hence, we can send them at one time. 
@@ -150,28 +153,23 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     const int* startg_ = this->startg;
     const int* startz_ = this->startz;
 #ifdef _OPENMP
-    #pragma omp parallel
-    {
-        #pragma omp for collapse(2)
+    #pragma omp parallel for collapse(2)
 #endif
-        for (int ip = 0; ip < poolnproc_ ;++ip)
+    for (int ip = 0; ip < poolnproc_ ;++ip)
+    {
+        for (int is = 0; is < nst_; ++is)
         {
-            for (int is = 0; is < nst_; ++is)
+            int nzip = numz_[ip];
+            std::complex<T> *outp0 = &out[startg_[ip]];
+            std::complex<T> *inp0 = &in[startz_[ip]];
+            std::complex<T> *outp = &outp0[is * nzip];
+            std::complex<T> *inp = &inp0[is * nz_ ];
+            for (int izip = 0; izip < nzip; ++izip)
             {
-                int nzip = numz_[ip];
-                std::complex<T> *outp0 = &out[startg_[ip]];
-                std::complex<T> *inp0 = &in[startz_[ip]];
-                std::complex<T> *outp = &outp0[is * nzip];
-                std::complex<T> *inp = &inp0[is * nz_ ];
-                for (int izip = 0; izip < nzip; ++izip)
-                {
-                    outp[izip] = inp[izip];
-                }
+                outp[izip] = inp[izip];
             }
         }
-#ifdef _OPENMP
     }
-#endif
 
     //exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
@@ -182,6 +180,10 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     else if(typeid(T) == typeid(float))
     {
         MPI_Alltoallv(out, numg, startg, MPI_COMPLEX, in, numr, startr, MPI_COMPLEX, this->pool_world);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("PW_Basis::gathers_scatterp", "Unsupported data type for MPI_Alltoallv");
     }
 
     const int nrxx_gsp = this->nrxx;
@@ -211,7 +213,6 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         }
     }
 #endif
-    // ModuleBase::timer::start(this->classname, "gathers_scatterp");
     return;
 }
 
