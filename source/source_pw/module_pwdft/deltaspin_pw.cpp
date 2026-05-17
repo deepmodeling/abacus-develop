@@ -26,11 +26,12 @@ bool run_deltaspin_lambda_loop(const int iter,
 
     if (inp.sc_scf_thr_mode == "immediate")
     {
-        // "immediate" mode: activate from iter>=2.
-        // iter=0/1 is skipped (no valid wavefunctions for initial Mi).
+        // "immediate" mode: activate lambda loop from second SCF iteration.
+        // First iteration (iter=0) is skipped because initial wavefunctions
+        // are not available to compute initial magnetic moments.
         if (iter >= 1)
         {
-            sc.run_lambda_loop(iter);
+            sc.run_lambda_loop(iter - 1);
             if (!sc.mag_converged()) { sc.set_mag_converged(true); }
             return true;
         }
@@ -41,13 +42,13 @@ bool run_deltaspin_lambda_loop(const int iter,
     // drho > 0 excludes iterations where drho has not been computed.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
-        sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter - 1);
         sc.set_mag_converged(true);
         return true;
     }
     else if (sc.mag_converged())
     {
-        sc.run_lambda_loop(iter);
+        sc.run_lambda_loop(iter - 1);
         return true;
     }
 
