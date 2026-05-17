@@ -659,14 +659,18 @@ For systems that are difficult to converge, one could try increasing the value o
         item.availability = "";
         read_sync_double(input.mixing_restart);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.sc_mag_switch == 1)
-            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
-                if(para.input.sc_scf_thr != 10.0)
+            if (para.input.sc_mag_switch)
+            {
+                if (para.input.sc_direction_only)
+                {
+                    para.input.mixing_restart = 0.0;
+                }
+                else if (para.input.sc_scf_thr_mode == "threshold")
                 {
                     para.input.mixing_restart = para.input.sc_scf_thr;
                 }
-                else
-                {// no mixing_restart until oscillation happen in PW base
+                else // "immediate"
+                {
                     para.input.mixing_restart = para.input.scf_thr / 10.0;
                 }
             }
