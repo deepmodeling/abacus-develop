@@ -26,7 +26,7 @@ list(APPEND depend_files
   ../../source_base/module_external/blas_connector_base.cpp
   ../../source_base/module_external/blas_connector_matrix.cpp
   ../../source_base/module_external/blas_connector_vector.cpp
-  ../../source_base/memory.cpp
+  ../../source_base/memory_recorder.cpp
   ../../source_base/global_variable.cpp
   ../../source_base/global_function.cpp
   ../../source_base/global_file.cpp

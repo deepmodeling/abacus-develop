@@ -2,7 +2,7 @@
 #include <cassert>
 #include "ORB_gaunt_table.h"
 #include "source_base/timer.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/mathzone.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"

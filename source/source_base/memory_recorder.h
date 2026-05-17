@@ -1,5 +1,5 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef RECORD_MEMORY_H 
+#define RECORD_MEMORY_H
 
 #include <fstream>
 #include <string>
