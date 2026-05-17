@@ -184,6 +184,26 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
+        Input_Item item("sc_scf_thr_mode");
+        item.annotation = "controls when the DeltaSpin lambda loop is activated";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Controls when the DeltaSpin lambda loop is activated.
+* threshold (default): activate when drho < sc_scf_thr. The lambda loop starts once the charge density is reasonably stable.
+* immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments. Replaces the old convention of setting sc_scf_thr=10.0.)";
+        item.default_value = "threshold";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_string(input.sc_scf_thr_mode);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sc_scf_thr_mode != "threshold" && para.input.sc_scf_thr_mode != "immediate")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr_mode must be threshold or immediate");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("sc_direction_only");
         item.annotation = "only optimize the direction of magnetization";
         item.category = "Spin-Constrained DFT";

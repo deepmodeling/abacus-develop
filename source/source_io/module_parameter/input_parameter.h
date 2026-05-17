@@ -600,6 +600,7 @@ struct Input_para
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< density error threshold for activating the lambda loop in spin-constrained DFT
+    std::string sc_scf_thr_mode = "threshold"; ///< controls when the lambda loop activates: "threshold" (drho<sc_scf_thr) or "immediate" (from iter>=2)
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
     std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs or linear_scan
     bool sc_direction_only = false; ///< only optimize the direction of magnetization
