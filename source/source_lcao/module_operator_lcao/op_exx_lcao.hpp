@@ -143,9 +143,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(
             return true;
         };
 
-        std::cout << " Attention: The number of MPI processes must be strictly identical between SCF and NSCF when "
-                     "computing exact-exchange."
-                  << std::endl;
+        std::cout << " Attention: The number of MPI processes must be strictly identical between SCF and NSCF when computing exact-exchange." << std::endl;
         if (check_exist(file_name_list_csr()))
         {
             const std::string file_name_exx_csr
