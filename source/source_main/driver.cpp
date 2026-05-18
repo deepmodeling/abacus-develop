@@ -13,7 +13,6 @@
 #include "source_main/version.h"
 #include "source_base/parallel_global.h"
 #ifdef __DSP
-#include <cassert>
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_external/blas_connector.h"
 #endif
@@ -131,7 +130,10 @@ void Driver::reading()
 #endif
 
 #ifdef __DSP
-    assert(PARAM.inp.dsp_count > 0);
+    if (PARAM.inp.dsp_count <= 0)
+    {
+        ModuleBase::WARNING_QUIT("driver", "dsp_count must be > 0");
+    }
     base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
     BlasConnector::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
