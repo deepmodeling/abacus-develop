@@ -32,7 +32,7 @@
 # ReadLam mode (nsc=1, load pre-computed lambda)
 36_PW_DS_S2_ReadLam_Z
 37_PW_DS_S4_ReadLam_XY
-# Lambda loop behavior: thr1e-10 = no lambda loop, load from STRU
+# Lambda loop behavior: sc_scf_thr_mode=off (lambda loop disabled, constant from STRU)
 38_PW_DS_S2_Thr1e10_Z
 39_PW_DS_S4_Thr1e10_XY
 42_PW_DFTU_DS_S2_Thr1e10_Z

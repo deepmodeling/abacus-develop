@@ -48,9 +48,10 @@
  *
  * @par Parameter Recommendations
  * - sc_scf_thr: Density error threshold for activating lambda loop. Default: 1e-3.
- *   Should be 10-100x larger than scf_thr.
- * - sc_scf_thr_mode: "threshold" (default, activate when drho<sc_scf_thr) or
- *   "immediate" (activate from iter>=2, for PW basis).
+ *   Should be 10-100x larger than scf_thr. Only used when sc_scf_thr_mode="threshold".
+ * - sc_scf_thr_mode: "threshold" (default, activate when drho<sc_scf_thr),
+ *   "immediate" (activate from iter>=2, for PW basis), or
+ *   "off" (never activate, lambda used as constant constraint).
  * - mixing_restart: Auto-set based on sc_scf_thr_mode. See read_input_item_elec_stru.cpp.
  * - sc_dir_phase1_steps: Phase 1 duration for collinear direction_only. Default: 5.
  * - sc_direction_only: Set to true for direction-only constraint.

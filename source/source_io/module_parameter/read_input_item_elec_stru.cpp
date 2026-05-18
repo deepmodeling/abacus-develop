@@ -669,9 +669,13 @@ For systems that are difficult to converge, one could try increasing the value o
                 {
                     para.input.mixing_restart = para.input.sc_scf_thr;
                 }
-                else // "immediate"
+                else if (para.input.sc_scf_thr_mode == "immediate")
                 {
                     para.input.mixing_restart = para.input.scf_thr / 10.0;
+                }
+                else // "off"
+                {
+                    para.input.mixing_restart = 0.0;
                 }
             }
         };

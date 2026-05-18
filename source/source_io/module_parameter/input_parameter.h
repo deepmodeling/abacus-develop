@@ -600,7 +600,7 @@ struct Input_para
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< density error threshold for activating the lambda loop in spin-constrained DFT
-    std::string sc_scf_thr_mode = "threshold"; ///< controls when the lambda loop activates: "threshold" (drho<sc_scf_thr) or "immediate" (from iter>=2)
+    std::string sc_scf_thr_mode = "threshold"; ///< controls when the lambda loop activates: "threshold" (drho<sc_scf_thr), "immediate" (from iter>=2), or "off" (never activate)
     int sc_dir_phase1_steps = 5;    ///< number of Phase 1 iterations in direction_only two-phase strategy for collinear (nspin=2)
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
     std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs or linear_scan

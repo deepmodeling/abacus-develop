@@ -4254,7 +4254,7 @@ parameters:
     category: Spin-Constrained DFT
     type: Real
     description: |
-      When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. For immediate activation (PW basis), use sc_scf_thr_mode="immediate" instead of setting sc_scf_thr to a large value.
+      When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. Only used when sc_scf_thr_mode="threshold". For other activation modes, use sc_scf_thr_mode="immediate" or sc_scf_thr_mode="off".
     default_value: "1.0e-3"
     unit: ""
     availability: sc_mag_switch is true
@@ -4264,7 +4264,8 @@ parameters:
     description: |
       Controls when the DeltaSpin lambda loop is activated.
       * threshold (default): activate when drho < sc_scf_thr. The lambda loop starts once the charge density is reasonably stable.
-      * immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments.
+      * immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments. Replaces the old convention of setting sc_scf_thr=10.0.
+      * off: never activate the lambda loop. Lambda values are loaded from the STRU file and used as constant constraints without optimization. Replaces the old convention of setting sc_scf_thr=1e-10.
     default_value: "threshold"
     unit: ""
     availability: sc_mag_switch is true

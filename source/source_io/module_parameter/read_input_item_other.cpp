@@ -170,7 +170,7 @@ void ReadInput::item_others()
         item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
-        item.description = "When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. For immediate activation (PW basis), use sc_scf_thr_mode=\"immediate\" instead of setting sc_scf_thr to a large value.";
+        item.description = "When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. Only used when sc_scf_thr_mode=\"threshold\". For other activation modes, use sc_scf_thr_mode=\"immediate\" or sc_scf_thr_mode=\"off\" instead.";
         item.default_value = "1.0e-3";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
@@ -190,15 +190,16 @@ void ReadInput::item_others()
         item.type = "String";
         item.description = R"(Controls when the DeltaSpin lambda loop is activated.
 * threshold (default): activate when drho < sc_scf_thr. The lambda loop starts once the charge density is reasonably stable.
-* immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments. Replaces the old convention of setting sc_scf_thr=10.0.)";
+* immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments. Replaces the old convention of setting sc_scf_thr=10.0.
+* off: never activate the lambda loop. Lambda values are loaded from the STRU file and used as constant constraints without optimization. Replaces the old convention of setting sc_scf_thr=1e-10.)";
         item.default_value = "threshold";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_string(input.sc_scf_thr_mode);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_thr_mode != "threshold" && para.input.sc_scf_thr_mode != "immediate")
+            if (para.input.sc_scf_thr_mode != "threshold" && para.input.sc_scf_thr_mode != "immediate" && para.input.sc_scf_thr_mode != "off")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr_mode must be threshold or immediate");
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr_mode must be threshold, immediate, or off");
             }
         };
         this->add_item(item);

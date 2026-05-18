@@ -431,6 +431,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     // sc_scf_thr_mode parameter:
     //   - "threshold" (default): lambda loop activates when drho < sc_scf_thr
     //   - "immediate": lambda loop activates from iter>=2 (for PW basis)
+    //   - "off": lambda loop never activates (lambda used as constant constraint)
     //   - For "threshold" mode, sc_scf_thr should be 10-100x larger than scf_thr
     //   - mixing_restart is auto-set based on sc_scf_thr_mode
     // =====================================================================
@@ -443,6 +444,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         {
             sc.run_lambda_linear_scan(iter - 1);
             skip_solve = true;
+        }
+        else if (PARAM.inp.sc_scf_thr_mode == "off")
+        {
+            // "off" mode: never activate the lambda loop.
+            // Lambda values are loaded from STRU and used as constant constraints.
+            // Replaces the old convention of setting sc_scf_thr=1e-10.
         }
         else if (PARAM.inp.sc_direction_only && PARAM.inp.nspin == 2)
         {
@@ -506,7 +513,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                     skip_solve = true;
                 }
             }
-            else
+            else // "threshold"
             {
                 if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
                 {
@@ -536,7 +543,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                     skip_solve = true;
                 }
             }
-            else
+            else // "threshold"
             {
                 // "threshold" mode: activate when drho < sc_scf_thr.
                 // drho > 0 excludes iter=1 where drho has not been computed yet.

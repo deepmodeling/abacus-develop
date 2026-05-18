@@ -38,6 +38,14 @@ bool run_deltaspin_lambda_loop(const int iter,
         return false;
     }
 
+    if (inp.sc_scf_thr_mode == "off")
+    {
+        // "off" mode: never activate the lambda loop.
+        // Lambda values are loaded from STRU and used as constant constraints.
+        // Replaces the old convention of setting sc_scf_thr=1e-10.
+        return false;
+    }
+
     // "threshold" mode: activate when drho < sc_scf_thr
     // drho > 0 excludes iterations where drho has not been computed.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
