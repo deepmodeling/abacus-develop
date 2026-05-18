@@ -28,6 +28,7 @@ nsc    5
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
+sc_scf_thr    10
 sc_direction_only    1
 sc_dir_phase1_steps    5
 

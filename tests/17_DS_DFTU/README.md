@@ -3,7 +3,7 @@
 This directory contains integration test cases for **DeltaSpin (spin-constrained DFT)** and **DFT+U** functionality in ABACUS,
 covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, and their combinations.
 
-## Test List (47 cases)
+## Test List (48 cases)
 
 ### I. LCAO Spin (01-02)
 
@@ -108,7 +108,7 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 63 | LCAO_DFTU_DS_NSCF_Band_XY | Verify LCAO DFT+U+DeltaSpin in NSCF band structure calculation, tests band output with spin constraints |
 | 64 | PW_DFTU_NSCF_Band_XY | Verify DFT+U (without DeltaSpin) in NSCF band structure calculation, tests band output with Hubbard U correction |
 
-### XIII. sc_direction_only Constraint (56-59)
+### XIII. sc_direction_only Constraint (56-59, 65)
 
 | # | Test Case | Description |
 |---|------|------|
@@ -116,6 +116,7 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 57 | PW_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U, tests direction-only constraint superposition with Hubbard U correction |
 | 58 | LCAO_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` in LCAO basis, ensures direction-only constraint works correctly in LCAO density matrix path |
 | 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U in LCAO basis, tests full direction-only constraint in LCAO path |
+| 65 | LCAO_DS_S2_DirectionOnly_Z | Verify `sc_direction_only=1` in LCAO basis with collinear spin (nspin=2). Tests the two-phase BFGS strategy: Phase 1 (iter 1-5) constrains moment magnitude, Phase 2 (iter 6+) gradually decays lambda for natural relaxation |
 
 ## Running Tests
 

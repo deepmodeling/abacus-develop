@@ -30,7 +30,7 @@ nsc    100
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    0.1
+sc_scf_thr    10
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB

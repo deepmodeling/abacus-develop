@@ -1,0 +1,9 @@
+# Runtime logs and output files
+log
+log[0-9]
+log_*.txt
+result_*.out
+# Backup files
+INPUT_orig
+INPUT_orig_backup
+INPUT_no_dspin
