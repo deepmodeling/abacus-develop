@@ -215,7 +215,7 @@ void NeighborSearch::setMemberVariables(const IAtomProvider& ucell)
                         double y = ucell.get_tauu(i,j).y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
                         double z = ucell.get_tauu(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
-                        NeighborAtom atom(x, y, z, i, j, atom_count);
+                        NeighborAtom atom(x, y, z, i, j, atom_count, ix, iy, iz);
                         if(ix==0&&iy==0&&iz==0)
                         {
                             atom.is_inside = true;

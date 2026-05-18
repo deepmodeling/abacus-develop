@@ -23,3 +23,11 @@ AddTest(
   ../sltk_atom.cpp
   ../../../source_io/module_output/output.cpp
 )
+
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_neighlist_adapter
+  LIBS parameter ${math_libs} base device cell_info
+  SOURCES neighlist_adapter_test.cpp ../neighlist_adapter.cpp ../sltk_grid_driver.cpp ../sltk_grid.cpp
+  ../sltk_atom.cpp ../../module_neighlist/neighbor_search.cpp ../../module_neighlist/bin_manager.cpp
+  ../../../source_io/module_output/output.cpp
+)

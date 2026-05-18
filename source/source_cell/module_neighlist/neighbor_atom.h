@@ -12,12 +12,16 @@ public:
     int atom_type;
     int atom_index;
     int atom_id;
+    int cell_x;
+    int cell_y;
+    int cell_z;
     //bool isghost;
     bool is_inside;
 
-    NeighborAtom(double x, double y, double z, int type, int index, int id)
+    NeighborAtom(double x, double y, double z, int type, int index, int id, int cx = 0, int cy = 0, int cz = 0)
         : position_x(x), position_y(y), position_z(z),
-          atom_type(type), atom_index(index), atom_id(id) {}
+          atom_type(type), atom_index(index), atom_id(id),
+          cell_x(cx), cell_y(cy), cell_z(cz), is_inside(false) {}
 };
 
 class InputAtoms

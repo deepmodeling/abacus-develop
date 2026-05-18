@@ -5,6 +5,7 @@ add_library(
     sltk_atom_arrange.cpp
     sltk_grid.cpp
     sltk_grid_driver.cpp
+    neighlist_adapter.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -135,6 +135,49 @@ TEST(NeighborSearchUnit, CheckExpandAndSetMembers)
     EXPECT_EQ(static_cast<int>(ns.all_atoms.size()), expected);
 }
 
+TEST(NeighborSearchUnit, PeriodicImageMetadata)
+{
+    UnitCellPlus ucell;
+    ucell.lat0 = 1.0;
+    ucell.omega = 1.0;
+    ucell.latvec.e11 = 1; ucell.latvec.e12 = 0; ucell.latvec.e13 = 0;
+    ucell.latvec.e21 = 0; ucell.latvec.e22 = 1; ucell.latvec.e23 = 0;
+    ucell.latvec.e31 = 0; ucell.latvec.e32 = 0; ucell.latvec.e33 = 1;
+
+    ucell.ntype = 1;
+    ucell.na = {1};
+    ucell.nat = 1;
+    ucell.tau = {{0.25, 0.25, 0.25}};
+    ucell.compute_naa();
+
+    NeighborSearch ns;
+    ns.search_radius = 1.0;
+    ns.Check_Expand_Condition(ucell);
+    ns.setMemberVariables(ucell);
+
+    bool found_central = false;
+    bool found_image = false;
+    for (const NeighborAtom& atom : ns.all_atoms)
+    {
+        if (atom.cell_x == 0 && atom.cell_y == 0 && atom.cell_z == 0)
+        {
+            found_central = true;
+            EXPECT_TRUE(atom.is_inside);
+            EXPECT_DOUBLE_EQ(atom.position_x, 0.25);
+        }
+        if (atom.cell_x == 1 && atom.cell_y == -1 && atom.cell_z == 0)
+        {
+            found_image = true;
+            EXPECT_FALSE(atom.is_inside);
+            EXPECT_DOUBLE_EQ(atom.position_x, 1.25);
+            EXPECT_DOUBLE_EQ(atom.position_y, -0.75);
+            EXPECT_DOUBLE_EQ(atom.position_z, 0.25);
+        }
+    }
+    EXPECT_TRUE(found_central);
+    EXPECT_TRUE(found_image);
+}
+
 TEST(NeighborSearchUnit, DistanceBox)
 {
     NeighborSearch ns;

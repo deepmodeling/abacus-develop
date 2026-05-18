@@ -411,6 +411,7 @@ OBJS_NEIGHBOR=sltk_atom.o\
     sltk_atom_arrange.o\
     sltk_grid.o\
     sltk_grid_driver.o\
+    neighlist_adapter.o\
 
 OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
