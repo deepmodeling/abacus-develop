@@ -43,7 +43,7 @@ void timer::finish(std::ofstream &ofs, const bool print_flag, const bool check_e
 //----------------------------------------------------------
 void timer::start()
 {
-    // first init ,then we can use tick
+    // first init, then we can use start/end
     if(timer_pool[""]["total"].start_flag)
         { timer::start("","total"); }
 }
