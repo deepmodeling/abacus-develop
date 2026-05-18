@@ -29,6 +29,7 @@ decay_grad_switch  1      # switch to control gradient break condition
 sc_thr             1e-7   # Convergence criterion of spin-constrained iteration (RMS) in uB
 nsc                150    # Maximal number of spin-constrained iteration
 nsc_min            2      # Minimum number of spin-constrained iteration 
+sc_scf_nmin        2      # Minimum number of outer scf loop before initializing lambda loop
 alpha_trial        0.01   # Initial trial step size for lambda in eV/uB^2
 sccut              3      # Maximal step size for lambda in eV/uB
 sc_drop_thr        1.0e-2 # Convergence criterion ratio of lambda iteration in Spin-constrained DFT
