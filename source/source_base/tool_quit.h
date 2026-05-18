@@ -29,6 +29,15 @@ namespace ModuleBase
 void WARNING(const std::string &file, const std::string &description);
 
 /**
+ * @brief Inject the global output directory used by QUIT/WARNING_QUIT/CHECK_WARNING_QUIT
+ *        for log path resolution and user-facing messages.
+ *
+ * Caller-injected (typically once after input parameters are read).
+ * If never set, paths fall back to CWD.
+ */
+void set_quit_out_dir(const std::string& dir);
+
+/**
  * @brief Close .log files and exit
  *
  */

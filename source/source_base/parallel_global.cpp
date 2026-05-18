@@ -16,7 +16,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
-#include "source_main/version.h"
 
 #include <iostream>
 #include <thread>
@@ -174,40 +173,6 @@ void Parallel_Global::read_pal_param(int argc,
     }
 
     NTHREAD_PER_PROC = current_thread_num;
-
-    if (MY_RANK == 0)
-    {
-#ifdef VERSION
-        const char* version = VERSION;
-#else
-        const char* version = "unknown";
-#endif
-#ifdef COMMIT_INFO
-#include "commit.h"
-        const char* commit = COMMIT;
-#else
-        const char* commit = "unknown";
-#endif
-        std::cout << "                                                                                     "
-                  << std::endl
-                  << "                              ABACUS " << version << std::endl
-                  << std::endl
-                  << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
-                  << std::endl
-                  << std::endl
-                  << "                     Website: http://abacus.ustc.edu.cn/                             "
-                  << std::endl
-                  << "               Documentation: https://abacus.deepmodeling.com/                       "
-                  << std::endl
-                  << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
-                  << std::endl
-                  << "                              https://github.com/deepmodeling/abacus-develop         "
-                  << std::endl
-                  << "                      Commit: " << commit << std::endl
-                  << std::endl;
-        time_t time_now = time(nullptr);
-        std::cout << " " << ctime(&time_now);
-    }
 
     // for test
     /*

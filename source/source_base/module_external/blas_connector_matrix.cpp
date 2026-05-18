@@ -3,8 +3,13 @@
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
-#include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
+
+int BlasConnector::dsp_cluster_id_ = 0;
+
+void BlasConnector::set_dsp_cluster_id(int id)
+{
+    dsp_cluster_id_ = id;
+}
 #endif
 
 #ifdef __CUDA
@@ -31,7 +36,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		mtfunc::sgemm_mth_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+		&beta, c, &ldc, BlasConnector::dsp_cluster_id_);
 	}
 #endif
 #ifdef __CUDA
@@ -68,7 +73,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::dgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::dgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
     }
 #endif
     else if (device_type == base_device::AbacusDevice_t::GpuDevice)
@@ -107,7 +112,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::cgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
         // cgemm_mth_ for raw dsp mth;
         // cgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
@@ -160,7 +165,7 @@ void BlasConnector::gemm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::zgemm_pack_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
         // zgemm_mth_ for raw dsp mth;
         // zgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
@@ -205,7 +210,7 @@ void BlasConnector::gemm_cm(const char transa, const char transb, const int m, c
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		mtfunc::sgemm_mth_(&transb, &transa, &m, &n, &k,
 		&alpha, a, &lda, b, &ldb,
-		&beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+		&beta, c, &ldc, BlasConnector::dsp_cluster_id_);
 	}
 #endif
 #ifdef __CUDA
@@ -242,7 +247,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
     }
 #endif
 #ifdef __CUDA
@@ -281,7 +286,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::cgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::cgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
         // cgemm_mth_ for raw dsp mth;
         // cgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
@@ -334,7 +339,7 @@ void BlasConnector::gemm_cm(const char transa,
 #ifdef __DSP
     else if (device_type == base_device::AbacusDevice_t::DspDevice)
     {
-        mtfunc::zgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK % PARAM.inp.dsp_count);
+        mtfunc::zgemm_pack_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, BlasConnector::dsp_cluster_id_);
         // zgemm_mth_ for raw dsp mth;
         // zgemm_pack_mth_ for dsp mth with memcpy to DSP buffer
     }
@@ -527,7 +532,7 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
                           &beta,
                           Y,
                           &incy,
-                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+                          BlasConnector::dsp_cluster_id_);
     }
 #endif
 #ifdef __CUDA
@@ -561,7 +566,7 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
                           &beta,
                           Y,
                           &incy,
-                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+                          BlasConnector::dsp_cluster_id_);
     }
 #endif
 #ifdef __CUDA
@@ -595,7 +600,7 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
                           &beta,
                           Y,
                           &incy,
-                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+                          BlasConnector::dsp_cluster_id_);
     }
 #endif
 #ifdef __CUDA
@@ -631,7 +636,7 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
                           &beta,
                           Y,
                           &incy,
-                          GlobalV::MY_RANK % PARAM.inp.dsp_count);
+                          BlasConnector::dsp_cluster_id_);
     }
 #endif
 #ifdef __CUDA

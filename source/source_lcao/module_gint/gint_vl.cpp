@@ -60,7 +60,7 @@ const Real* get_vr_eff_data_(const double* vr_eff, int local_mgrid_num,
 inline void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
 {
     compose_hr_gint(hr_gint);
-    transfer_hr_gint_to_hR(hr_gint, *hR);
+    hr_gint_to_hR(hr_gint, *hR);
 }
 
 template<typename Real>
@@ -68,7 +68,7 @@ void finalize_hr_gint_(HContainer<Real>& hr_gint, HContainer<double>* hR)
 {
     HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
     compose_hr_gint(hr_gint_dp);
-    transfer_hr_gint_to_hR(hr_gint_dp, *hR);
+    hr_gint_to_hR(hr_gint_dp, *hR);
 }
 
 template<typename Real>
@@ -98,7 +98,7 @@ void Gint_vl::cal_gint_impl_()
             phi_vldr3.resize(phi_len);
             phi_op.set_phi(phi.data());
             phi_op.phi_mul_vldr3(vr_eff, static_cast<Real>(dr3_), phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint, PhiOperator::TriPart::Upper);
         }
     }
 

@@ -36,7 +36,7 @@ void Gint_rho::cal_gint_impl_()
     {
         rho_data[is] = get_rho_data_<Real>(is, rho_cache);
     }
-    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
+    dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
     cal_rho_(dm_gint_vec, rho_data);
     transfer_rho_cache_<Real>(rho_cache);
 }

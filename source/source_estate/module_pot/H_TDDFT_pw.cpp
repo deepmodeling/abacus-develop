@@ -16,7 +16,7 @@ bool H_TDDFT_pw::is_initialized = false;
 double H_TDDFT_pw::amp;
 
 // Used for calculating electric field force on ions, summing over directions
-vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
+std::vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
 
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 

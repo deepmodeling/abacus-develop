@@ -178,7 +178,7 @@ void cal_gint_fvl_meta(
     }
 }
 
-void cal_dvlocal_R_sparseMatrix(
+void cal_dvlocal_R_sparse(
     const int nspin,
     const int npol,
     const int current_spin,
@@ -192,7 +192,7 @@ void cal_dvlocal_R_sparseMatrix(
 {
     Gint_dvlocal gint_dvlocal(vr_eff, nspin, npol);
     gint_dvlocal.cal_dvlocal();
-    gint_dvlocal.cal_dvlocal_R_sparseMatrix(
+    gint_dvlocal.cal_dvlocal_R_sparse(
         nspin, current_spin, nlocal, sparse_thr,
         pv, ucell, gdriver, hs_arrays);
 }

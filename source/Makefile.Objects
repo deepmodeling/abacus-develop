@@ -16,6 +16,7 @@ VPATH=./src_global:\
 ./source_basis/module_ao:\
 ./source_basis/module_nao:\
 ./source_cell/module_neighbor:\
+./source_cell/module_neighlist:\
 ./source_cell/module_symmetry:\
 ./source_cell:\
 ./source_base:\
@@ -86,6 +87,7 @@ ${OBJS_HAMILT}\
 ${OBJS_HSOLVER}\
 ${OBJS_MD}\
 ${OBJS_NEIGHBOR}\
+${OBJS_NEIGHBOR_SEARCH}\
 ${OBJS_PSI}\
 ${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
@@ -409,6 +411,10 @@ OBJS_NEIGHBOR=sltk_atom.o\
     sltk_atom_arrange.o\
     sltk_grid.o\
     sltk_grid_driver.o\
+
+OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
+    bin_manager.o\
+
 
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\

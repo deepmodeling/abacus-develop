@@ -150,6 +150,6 @@ void Driver::finalize_hardware()
 
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
+    mtfunc::dspDestoryHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 }

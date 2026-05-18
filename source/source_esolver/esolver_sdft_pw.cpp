@@ -1,7 +1,7 @@
 #include "esolver_sdft_pw.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"

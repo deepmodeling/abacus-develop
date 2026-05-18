@@ -2,7 +2,6 @@
 
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
