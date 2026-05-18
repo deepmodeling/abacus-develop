@@ -26,23 +26,8 @@ class ElecStateLCAO : public ElecState
         this->classname = "ElecStateLCAO";
     }
 
-    virtual ~ElecStateLCAO()
-    {
-        if (this->DM != nullptr)
-        {
-            delete this->DM;
-        }
-    }
+    virtual ~ElecStateLCAO() = default;
 
-    // update charge density for next scf step
-    // void getNewRho() override;
-
-    // initial density matrix
-    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
-    DensityMatrix<TK, double>* get_DM() const
-    {
-        return const_cast<DensityMatrix<TK, double>*>(this->DM);
-    }
     static int out_wfc_lcao;
     static bool need_psi_grid;
 
@@ -60,9 +45,6 @@ class ElecStateLCAO : public ElecState
 			std::vector<TK*> pexsi_EDM, 
 			DensityMatrix<TK, double>* dm);
 
-  private:
-    DensityMatrix<TK, double>* DM = nullptr;
-
 };
 
 template <typename TK>
@@ -70,17 +52,6 @@ int ElecStateLCAO<TK>::out_wfc_lcao = 0;
 
 template <typename TK>
 bool ElecStateLCAO<TK>::need_psi_grid = true;
-
-// init_DM implementation
-template <typename TK>
-void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
-{
-    if (this->DM != nullptr)
-    {
-        delete this->DM;
-    }
-    this->DM = new DensityMatrix<TK, double>(paraV, nspin);
-}
 
 } // namespace elecstate
 
