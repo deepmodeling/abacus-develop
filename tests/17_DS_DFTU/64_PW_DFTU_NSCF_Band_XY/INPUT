@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 suffix    autotest
 calculation    nscf
 basis_type    pw
-ecutwfc    20
+ecutwfc    10
 gamma_only    0
 init_chg    file
 read_file_dir    ./
