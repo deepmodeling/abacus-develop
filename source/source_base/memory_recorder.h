@@ -1,5 +1,5 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef RECORD_MEMORY_H 
+#define RECORD_MEMORY_H
 
 #include <fstream>
 #include <string>
@@ -96,7 +96,7 @@ class Memory
      */
     static void print_all(std::ofstream &ofs);
 
-    static void print(const int find_in);
+    static void print(const std::string& name, double size_mb);
 
     /**
      * @brief Calculate memory requirements for various

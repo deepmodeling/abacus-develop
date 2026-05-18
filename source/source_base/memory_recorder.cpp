@@ -1,9 +1,5 @@
-//==========================================================
-// AUTHOR : mohan
-// DATE : 2008-11-18
-//==========================================================
 #include <cassert>
-#include "memory.h"
+#include "memory_recorder.h"
 #include "global_variable.h"
 #include "source_base/parallel_reduce.h"
 
@@ -13,6 +9,9 @@ namespace ModuleBase
 // 1024 Byte = 1 KB
 // 1024 KB   = 1 MB
 // 1024 MB   = 1 GB
+
+const double memory_warning_threshold_mb = 20.0;
+
 double Memory::total = 0.0;
 int Memory::complex_matrix_memory = 2*sizeof(double); // 16 byte
 int Memory::double_memory = sizeof(double); // 8 byte
@@ -149,9 +148,9 @@ double Memory::record
 
 	consume[find] = Memory::calculate_mem(n_in,type);
 
-	if(consume[find] > 5)
+	if(consume[find] > memory_warning_threshold_mb)
 	{
-		print(find);
+		print(name[find], consume[find]);
 	}
 	return consume[find];
 }
@@ -211,9 +210,9 @@ void Memory::record
 		{
 			Memory::total += size_mb - consume[find];
 			consume[find] = size_mb;
-			if(consume[find] > 5)
+			if(consume[find] > memory_warning_threshold_mb)
 			{
-				print(find);
+				print(name[find], consume[find]);
 			}
 		}
 	}
@@ -268,9 +267,9 @@ double Memory::record_gpu
 
 	consume_gpu[find] = Memory::calculate_mem(n_in,type);
 
-	if(consume_gpu[find] > 5)
+	if(consume_gpu[find] > memory_warning_threshold_mb)
 	{
-		print(find);
+		print(name_gpu[find], consume_gpu[find]);
 	}
 	return consume_gpu[find];
 }
@@ -330,9 +329,9 @@ void Memory::record_gpu
 		{
 			Memory::total_gpu += size_mb - consume_gpu[find];
 			consume_gpu[find] = size_mb;
-			if(consume_gpu[find] > 5)
+			if(consume_gpu[find] > memory_warning_threshold_mb)
 			{
-				print(find);
+				print(name_gpu[find], consume_gpu[find]);
 			}
 		}
 	}
@@ -341,10 +340,10 @@ void Memory::record_gpu
 
 #endif
 
-void Memory::print(const int find)
+void Memory::print(const std::string& mem_name, double size_mb)
 {
-	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
-	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
+	GlobalV::ofs_running <<"\n *** Memory Allocation Warning *** "
+	<<" "<< mem_name <<" "<< size_mb <<" MB" << std::endl;
 	return;
 }
 

@@ -344,60 +344,86 @@ void FFT_CPU<double>::clear()
 template <>
 void FFT_CPU<double>::fftxyfor(std::complex<double>* in, std::complex<double>* out) const
 {
-    int npy = this->nplane * this->ny;
+    const int npy_ = this->nplane * this->ny;
+    const int nx_ = this->nx;
+    const int lixy_ = this->lixy;
+    const int rixy_ = this->rixy;
+    const int nplane_ = this->nplane;
+    const fftw_plan planyfor_ = this->planyfor;
+    const fftw_plan planxfor1_ = this->planxfor1;
+    const fftw_plan planxfor2_ = this->planxfor2;
     if (this->xprime)
     {
         
-        fftw_execute_dft(this->planxfor1, (fftw_complex*)in, (fftw_complex*)out);
+        fftw_execute_dft(planxfor1_, (fftw_complex*)in, (fftw_complex*)out);
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->lixy + 1; ++i)
+#endif
+        for (int i = 0; i < lixy_ + 1; ++i)
         {
-            fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planyfor_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = rixy; i < this->nx; ++i)
+#endif
+        for (int i = rixy_; i < nx_; ++i)
         {
-            fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planyfor_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
     }
     else
     {
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->nx; ++i)
+#endif
+        for (int i = 0; i < nx_; ++i)
         {
-            fftw_execute_dft(this->planyfor, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planyfor_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
-        fftw_execute_dft(this->planxfor1, (fftw_complex*)in, (fftw_complex*)out);
-        fftw_execute_dft(this->planxfor2, (fftw_complex*)&in[rixy * nplane], (fftw_complex*)&out[rixy * nplane]);
+        fftw_execute_dft(planxfor1_, (fftw_complex*)in, (fftw_complex*)out);
+        fftw_execute_dft(planxfor2_, (fftw_complex*)&in[rixy_ * nplane_], (fftw_complex*)&out[rixy_ * nplane_]);
     }
 }
 
 template <>
 void FFT_CPU<double>::fftxybac(std::complex<double>* in,std::complex<double>* out) const
 {
-    int npy = this->nplane * this->ny;
+    const int npy_ = this->nplane * this->ny;
+    const int nx_ = this->nx;
+    const int lixy_ = this->lixy;
+    const int rixy_ = this->rixy;
+    const int nplane_ = this->nplane;
+    const fftw_plan planybac_ = this->planybac;
+    const fftw_plan planxbac1_ = this->planxbac1;
+    const fftw_plan planxbac2_ = this->planxbac2;
     if (this->xprime)
     {
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->lixy + 1; ++i)
+#endif
+        for (int i = 0; i < lixy_ + 1; ++i)
         {
-            fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planybac_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = rixy; i < this->nx; ++i)
+#endif
+        for (int i = rixy_; i < nx_; ++i)
         {
-            fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planybac_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
-        fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)out);
+        fftw_execute_dft(planxbac1_, (fftw_complex*)in, (fftw_complex*)out);
     }
     else
     {
-        fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)out);
-        fftw_execute_dft(this->planxbac2, (fftw_complex*)&in[rixy * nplane], (fftw_complex*)&out[rixy * nplane]);
+        fftw_execute_dft(planxbac1_, (fftw_complex*)in, (fftw_complex*)out);
+        fftw_execute_dft(planxbac2_, (fftw_complex*)&in[rixy_ * nplane_], (fftw_complex*)&out[rixy_ * nplane_]);
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->nx; ++i)
+#endif
+        for (int i = 0; i < nx_; ++i)
         {
-            fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planybac_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
     }
 }
@@ -417,47 +443,67 @@ void FFT_CPU<double>::fftzbac(std::complex<double>* in, std::complex<double>* ou
 template <>
 void FFT_CPU<double>::fftxyr2c(double* in, std::complex<double>* out) const
 {
-    int npy = this->nplane * this->ny;
+    const int npy_ = this->nplane * this->ny;
+    const int nx_ = this->nx;
+    const int lixy_ = this->lixy;
+    const fftw_plan planxr2c_ = this->planxr2c;
+    const fftw_plan planyfor_ = this->planyfor;
+    const fftw_plan planyr2c_ = this->planyr2c;
+    const fftw_plan planxfor1_ = this->planxfor1;
     if (this->xprime)
     {
-        fftw_execute_dft_r2c(this->planxr2c, in, (fftw_complex*)out);
+        fftw_execute_dft_r2c(planxr2c_, in, (fftw_complex*)out);
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->lixy + 1; ++i)
+#endif
+        for (int i = 0; i < lixy_ + 1; ++i)
         {
-            fftw_execute_dft(this->planyfor, (fftw_complex*)&out[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft(planyfor_, (fftw_complex*)&out[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
     }
     else
     {
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->nx; ++i)
+#endif
+        for (int i = 0; i < nx_; ++i)
         {
-            fftw_execute_dft_r2c(this->planyr2c, &in[i * npy], (fftw_complex*)&out[i * npy]);
+            fftw_execute_dft_r2c(planyr2c_, &in[i * npy_], (fftw_complex*)&out[i * npy_]);
         }
-        fftw_execute_dft(this->planxfor1, (fftw_complex*)out, (fftw_complex*)out);
+        fftw_execute_dft(planxfor1_, (fftw_complex*)out, (fftw_complex*)out);
     }
 }
 
 template <>
 void FFT_CPU<double>::fftxyc2r(std::complex<double> *in,double *out) const
 {
-    int npy = this->nplane * this->ny;
+    const int npy_ = this->nplane * this->ny;
+    const int nx_ = this->nx;
+    const int lixy_ = this->lixy;
+    const fftw_plan planybac_ = this->planybac;
+    const fftw_plan planxc2r_ = this->planxc2r;
+    const fftw_plan planxbac1_ = this->planxbac1;
+    const fftw_plan planyc2r_ = this->planyc2r;
     if (this->xprime)
     {
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->lixy + 1; ++i)
+#endif
+        for (int i = 0; i < lixy_ + 1; ++i)
         {
-            fftw_execute_dft(this->planybac, (fftw_complex*)&in[i * npy], (fftw_complex*)&in[i * npy]);
+            fftw_execute_dft(planybac_, (fftw_complex*)&in[i * npy_], (fftw_complex*)&in[i * npy_]);
         }
-        fftw_execute_dft_c2r(this->planxc2r, (fftw_complex*)in, out);
+        fftw_execute_dft_c2r(planxc2r_, (fftw_complex*)in, out);
     }
     else
     {
-        fftw_execute_dft(this->planxbac1, (fftw_complex*)in, (fftw_complex*)in);
+        fftw_execute_dft(planxbac1_, (fftw_complex*)in, (fftw_complex*)in);
+#ifdef _OPENMP
         #pragma omp parallel for
-        for (int i = 0; i < this->nx; ++i)
+#endif
+        for (int i = 0; i < nx_; ++i)
         {
-            fftw_execute_dft_c2r(this->planyc2r, (fftw_complex*)&in[i * npy], &out[i * npy]);
+            fftw_execute_dft_c2r(planyc2r_, (fftw_complex*)&in[i * npy_], &out[i * npy_]);
         }
     }
 }
