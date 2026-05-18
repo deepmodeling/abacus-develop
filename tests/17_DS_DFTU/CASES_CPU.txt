@@ -37,7 +37,7 @@
 39_PW_DS_S4_Thr1e10_XY
 42_PW_DFTU_DS_S2_Thr1e10_Z
 43_PW_DFTU_DS_S4_Thr1e10_XY
-# Lambda loop behavior: thr10 = immediate lambda loop
+# Lambda loop behavior: sc_scf_thr_mode=immediate (lambda loop starts from iter>=2)
 40_PW_DS_S2_Thr10_Z
 41_PW_DS_S4_Thr10_XY
 # 44_PW_DFTU_DS_S2_Thr10_Z

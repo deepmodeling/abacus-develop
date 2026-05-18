@@ -428,12 +428,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     //     the only constrained direction (z) IS the parallel direction.
     //     Therefore direction_only MUST be disabled during Phase 1 BFGS.
     //
-    // sc_scf_thr parameter:
-    //   - Threshold at which DeltaSpin lambda loop begins (default 1e-3)
-    //   - Should be 10-100x larger than scf_thr so lambda loop starts when
-    //     charge density is "reasonably stable" but not fully converged
-    //   - Recommended: sc_scf_thr = 1e-4 to 1e-3, scf_thr = 1e-8
-    //   - mixing_restart is auto-set to sc_scf_thr for DeltaSpin calculations
+    // sc_scf_thr_mode parameter:
+    //   - "threshold" (default): lambda loop activates when drho < sc_scf_thr
+    //   - "immediate": lambda loop activates from iter>=2 (for PW basis)
+    //   - For "threshold" mode, sc_scf_thr should be 10-100x larger than scf_thr
+    //   - mixing_restart is auto-set based on sc_scf_thr_mode
     // =====================================================================
     bool skip_solve = false;
     if (PARAM.inp.sc_mag_switch)

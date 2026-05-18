@@ -78,8 +78,8 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 37 | PW_DS_S4_ReadLam_XY | Verify `nsc=1` mode for noncollinear DeltaSpin, covers non-self-consistent lambda path under XY magnetization constraint |
 | 38 | PW_DS_S2_Thr1e10_Z | Verify stability of DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), ensures iterative optimization converges to high-precision solution |
 | 39 | PW_DS_S4_Thr1e10_XY | Verify stability of noncollinear DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), covers XY magnetization constraint scenario |
-| 40 | PW_DS_S2_Thr10_Z | Verify behavior of DeltaSpin under loose convergence threshold (sc_scf_thr=10), tests algorithm robustness and out_alllog log output under low precision requirements |
-| 41 | PW_DS_S4_Thr10_XY | Verify behavior of noncollinear DeltaSpin under loose convergence threshold (sc_scf_thr=10), covers low precision scenario with XY magnetization constraint |
+| 40 | PW_DS_S2_Thr10_Z | Verify behavior of DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), tests algorithm robustness when lambda loop starts from the second SCF iteration |
+| 41 | PW_DS_S4_Thr10_XY | Verify behavior of noncollinear DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), covers immediate activation under XY magnetization constraint |
 
 ### X. PW DFT+U + DeltaSpin Special Parameters (42-45)
 
@@ -87,8 +87,8 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 |---|------|------|
 | 42 | PW_DFTU_DS_S2_Thr1e10_Z | Verify iterative stability of DFT+U with DeltaSpin combined under strict convergence threshold (sc_scf_thr=1e-10), ensures convergence when both methods are coupled |
 | 43 | PW_DFTU_DS_S4_Thr1e10_XY | Verify coupling stability of noncollinear DFT+U+DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), covers XY magnetization constraint |
-| 44 | PW_DFTU_DS_S2_Thr10_Z | Verify behavior of DFT+U with DeltaSpin combined under loose convergence threshold (sc_scf_thr=10), tests coupled algorithm robustness under low precision requirements |
-| 45 | PW_DFTU_DS_S4_Thr10_XY | Verify behavior of noncollinear DFT+U+DeltaSpin under loose convergence threshold (sc_scf_thr=10), covers low precision scenario with XY magnetization constraint |
+| 44 | PW_DFTU_DS_S2_Thr10_Z | Verify behavior of DFT+U with DeltaSpin combined with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), tests coupled algorithm robustness when lambda loop starts immediately |
+| 45 | PW_DFTU_DS_S4_Thr10_XY | Verify behavior of noncollinear DFT+U+DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), covers immediate activation under XY magnetization constraint |
 
 ### XI. FeO Atom Ordering (50-51)
 
