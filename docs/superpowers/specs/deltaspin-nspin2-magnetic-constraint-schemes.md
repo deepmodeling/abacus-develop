@@ -1,195 +1,96 @@
-# DeltaSpin nspin=2 (Collinear) 磁约束方案
+# DeltaSpin nspin=2 磁约束方案评估
 
-## 概述
+## 三种方案对比
 
-在 nspin=2（共线磁）模式下，DeltaSpin 的磁约束能力与其他参数组合有根本性差异。核心原因是：**共线磁只有 z 分量**，`constrain_` 向量被强制为 `(0, 0, Mz)`，导致 `sc_direction_only` 投影将 lambda 归零。本文档总结所有 nspin=2 磁约束方案的参数组合、行为和适用场景。
+### 方案 A：标准约束（约束磁矩大小 + 方向）
+
+BFGS 优化 lambda_z，使磁矩 Mz 收敛到目标值。
+
+**优势：**
+- 物理意义明确：约束力始终存在，磁矩在收敛过程中持续逼近目标
+- 数值稳定：BFGS 有完整的梯度和 Hessian 信息，收敛行为可预测
+- 适用于所有 nspin=2 场景
+
+**劣势：**
+- 约束的是 **磁矩大小**，不能单独控制方向——如果你只想约束自旋指向（方向不变但大小自由变化），此方案无法实现
+- 对于反铁磁（AFM）体系，BFGS 可能需要较多迭代步数才能找到正确的 lambda
+
+**生产建议：** nspin=2 下的默认选择。只要目标约束包含磁矩大小信息，就应该使用此方案。
 
 ---
 
-## 参数速查表
+### 方案 B：仅约束方向（direction_only）两阶段策略
 
-| 参数 | 默认值 | 选项 | 说明 |
+适用于目标：只约束自旋指向，磁矩大小由电子结构自洽决定。
+
+**算法：**
+
+| 阶段 | 步骤 | 机制 | skip_solve |
 |---|---|---|---|
-| `sc_mag_switch` | 0 | 1 | 开启 DeltaSpin |
-| `sc_scf_thr_mode` | `"threshold"` | `"threshold"` / `"immediate"` / `"off"` | 控制何时激活 lambda 循环 |
-| `sc_scf_thr` | 1e-3 | 正实数 | 仅 `threshold` 模式下有效：drho 低于此值时激活 lambda 循环 |
-| `sc_direction_only` | false | true/false | 仅约束磁矩方向，不约束大小 |
-| `sc_dir_phase1_steps` | 5 | ≥2 整数 | `direction_only + nspin=2` 两阶段策略的 Phase 1 迭代步数 |
-| `mixing_restart` | 0 (自动设置) | 实数 | 根据 `sc_scf_thr_mode` 自动设置（见下表） |
+| Phase 1 | iter 1 ~ `sc_dir_phase1_steps` | 临时禁用 direction_only，BFGS 约束磁矩大小到目标值 | true（BFGS 内循环处理对角化） |
+| 过渡 | iter = phase1 + 1 | 重置 Broyden 混合历史（Phase 1 的 DM 更新方式与 SCF 不兼容） | — |
+| Phase 2 | iter > phase1 | lambda 每步乘以 0.5^(1/3) ≈ 0.794 衰减（约每 3 步减半） | false（正常 SCF） |
 
-### mixing_restart 自动设置
+**为什么需要两阶段？** nspin=2 共线磁的约束方向只能沿 z 轴。`direction_only` 投影移除 lambda 的平行分量，在 nspin=2 下这会把 lambda_z 归零（因为 z 就是全部的约束方向），导致约束力完全消失。两阶段策略通过 Phase 1 先用标准约束建立 AFM 序和合理的 lambda 分布，Phase 2 再逐渐释放约束让系统弛豫。
 
-| 条件 | mixing_restart 值 | 说明 |
-|---|---|---|
-| `direction_only=true` | 0（禁用） | 两阶段策略在 Phase 1→2 过渡时自行管理 mixing reset |
-| `sc_scf_thr_mode="threshold"` | `= sc_scf_thr` | 在 lambda 循环激活时重启混合 |
-| `sc_scf_thr_mode="immediate"` | `= scf_thr / 10` | 早期激活，轻微提前重启混合 |
-| `sc_scf_thr_mode="off"` | 0（禁用） | 无 lambda 优化，无需重启混合 |
+**优势：**
+- 计算速度快：Phase 2 每步只做一次标量乘法 `λ *= 0.794`，无需 BFGS 内循环
+- 可以研究磁各向异性和磁矩大小由自洽决定的体系
 
----
+**劣势：**
+- **Phase 2 中磁矩方向不保证保持不变。** lambda 衰减使得约束力逐渐减弱，自旋可能翻转到其他方向。这在磁矩较小（< 1.0 μB）的原子上尤其容易发生。这不是 bug 而是算法本质：方向不受约束力保护，完全依赖系统的稳定性
+- Phase 1 结果依赖 `sc_dir_phase1_steps` 的选择：步数太少则 AFM 序不充分，步数太多则 lambda 过大导致 Phase 2 起始偏差大
+- Phase 1→2 过渡需要重置混合历史，可能引入瞬态振荡
+- PW 基组不支持此方案（PW 路径未实现两阶段逻辑，direction_only 投影会直接归零 lambda）
 
-## 方案一：标准约束（约束磁矩大小和方向）
-
-**参数组合：** `sc_direction_only=false` + `sc_scf_thr_mode` 选一种
-
-### 1a. threshold 模式（默认，推荐）
-
-```
-sc_mag_switch    1
-sc_scf_thr_mode  threshold
-sc_scf_thr       1e-3        # 建议 10-100x scf_thr
-```
-
-**行为：**
-- SCF 迭代中，当电荷密度误差 `drho < sc_scf_thr` 时激活 lambda 优化循环
-- lambda 循环通过 BFGS 优化 lambda_z，使磁矩 Mz 逼近目标值
-- 一旦激活（`mag_converged=true`），后续每步都继续运行 lambda 循环
-- `mixing_restart` 自动设为 `sc_scf_thr`，在 lambda 循环激活时重启混合
-
-**适用场景：** 一般用途，lambda 在 SCF 收敛后逐步优化磁矩
-
-### 1b. immediate 模式（立即激活）
-
-```
-sc_mag_switch    1
-sc_scf_thr_mode  immediate
-# sc_scf_thr 不再需要设置，immediate 模式不检查 drho
-```
-
-**行为：**
-- 从第 2 步 SCF 迭代起立即激活 lambda 循环（第 1 步无波函数，无法计算磁矩）
-- 等效于旧版 `sc_scf_thr=10`（而 `drho < 10` 几乎总成立）
-- `mixing_restart` 自动设为 `scf_thr / 10`
-
-**适用场景：** PW 基组（第 1 步无法计算磁矩）、希望尽早引入约束的场景
-
-### 1c. off 模式（关闭 lambda 优化）
-
-```
-sc_mag_switch    1
-sc_scf_thr_mode  off
-# sc_scf_thr 不再需要设置，off 模式不运行 lambda 循环
-```
-
-**行为：**
-- 永不激活 lambda 循环
-- lambda 值从 STRU 文件读入，作为常量约束加到哈密顿量中
-- 正常 SCF 收敛即可，磁约束力固定不变
-- `mixing_restart` 自动设为 0（禁用）
-
-**适用场景：** 已知 lambda 值，只需求解固定约束下的电子结构；等效于旧版 `sc_scf_thr=1e-10`
+**生产建议：**
+- **适合：** 简单 AFM 体系（每个原子磁矩 > 1 μB）、需要快速获得大致磁结构的场景、对磁矩精确值不敏感的筛选计算
+- **不适合：** 复杂磁结构（磁性原子多、磁矩小、 orientations 多样）、需要精确磁矩方向的定量计算、PW 基组
+- **使用前应先验证：** 用方案 A 得到参考磁矩分布，比较 Phase 2 弛豫后方向是否稳定。如果不稳定，说明该体系不适合此方案
 
 ---
 
-## 方案二：仅约束方向（direction_only）+ nspin=2
+### 方案 C：常量 lambda（off 模式）
 
-**参数组合：** `sc_direction_only=true` + `nspin=2` + `sc_dir_phase1_steps ≥ 2`
+lambda 从 STRU 文件读入，作为常量约束加到哈密顿量中，从不优化。
 
-```
-sc_mag_switch         1
-sc_direction_only     1
-sc_dir_phase1_steps   5          # Phase 1 迭代步数，默认 5
-# sc_scf_thr 和 sc_scf_thr_mode 在两阶段策略中不被检查
-```
+**优势：**
+- 完全确定性：lambda 不变，结果可复现
+- 无额外计算开销：不运行 BFGS，迭代步数与普通 SCF 相同
+- 适合已知 lambda 的情景（如从 nspin=4 计算提取 lambda 值后做 nspin=2 重算）
 
-### 核心问题
+**劣势：**
+- 需要事先知道合理的 lambda 值——如果 lambda 偏差较大，磁矩会偏离目标
+- 无法收敛到自洽的 lambda——得到的是约束下的电子基态，不是约束优化的基态
 
-对于 nspin=2，`direction_only` 投影会将 lambda **完全归零**：
+**生产建议：** 适用于已知 lambda 的重算场景，或只需要固定约束下做带隙/能量比较的计算。不适合探索性计算。
 
-- 目标方向 `dir = target / |target| = (0, 0, 1)`（共线只有 z 分量）
-- 投影移除 lambda 的平行分量：`lambda_z -= lambda_z × 1 = 0`
-- 结果：lambda = 0，约束力为零，BFGS 优化器无法工作
+---
 
-### 两阶段策略
+## 方案选择要点
 
-Phase 1 + Phase 2 解决方案：
-
-| 阶段 | 步骤 | 行为 | 效果 |
+| 决策因素 | 方案 A（标准） | 方案 B（direction_only） | 方案 C（off） |
 |---|---|---|---|
-| **Phase 1** | iter ≤ `sc_dir_phase1_steps` | 临时禁用 `direction_only`，运行 BFGS 约束磁矩大小 Mz 逼近目标值 | 建立正确的反铁磁序和合理范围的 lambda (~0.3 eV/μB) |
-| **Phase 1→2 过渡** | iter = `sc_dir_phase1_steps + 1` | 重置混合历史（`mix_reset()`），清除 Broyden 缓冲 | Phase 1 的 BFGS DM 更新与 Phase 2 的 SCF 电荷混合不兼容 |
-| **Phase 2** | iter > `sc_dir_phase1_steps` | lambda 每步衰减 `λ *= 0.5^(1/3) ≈ 0.794`（约每 3 步减半） | 约束力逐渐释放，系统自然弛豫到磁基态 |
+| 约束目标 | 大小 + 方向 | 仅方向（大小自由弛豫） | 大小 + 方向（固定 lambda） |
+| 计算速度 | 中（每步运行 BFGS） | 快（Phase 2 无 BFGS） | 快（无 BFGS） |
+| 方向保真度 | ✓ 严格约束 | ⚠ 不保证，依赖体系 | ✓ 严格约束 |
+| 数值稳定性 | ✓ 高 | ⚠ Phase 1→2 过渡可能振荡 | ✓ 高 |
+| PW 基组支持 | ✓ | ✗ | ✓ |
+| 对 lambda 初值的依赖 | 低（BFGS 自优化） | 低（Phase 1 自建立） | 高（需要已知值） |
 
-### ⚠️ 风险提示
+### 何时用方案 B 而非方案 A？
 
-> **`direction_only + nspin=2` 方案在复杂磁结构体系中可能无法保持磁矩方向不变，特别是磁矩大小 < 1.0 μB 的原子。**
+唯一合理的场景：**你需要的是磁矩方向而非大小。** 也就是说，物理问题本身决定了磁矩大小应由自洽计算得出，而非被约束到预设值。
+
+如果最终需要磁矩大小也准确，方案 B 只能作为初步探索——先用 B 快速判断磁结构取向，再用 A 精确约束大小。
+
+### 方案 B 的磁矩方向风险
+
+> **关键风险：Phase 2 弛豫过程中，磁矩方向没有约束力保护。**
 >
-> 原因：
-> 1. Phase 2 中 lambda 衰减 → 约束力减弱 → 自旋可能翻转到其他方向
-> 2. 磁矩小的原子，交换劈裂弱，更容易受微扰影响
-> 3. 该方案本质上是一种近似：先锁定方向，再逐渐松开，希望系统自然选择正确方向
+> Phase 2 的 lambda 衰减机制保证的是"约束力平滑消失"而非"方向保持不变"。系统在约束力减弱后能否维持方向，完全取决于交换劈裂的强度：
+> - 磁矩 > 1 μB 的 3d 过渡金属原子：交换劈裂强，方向一般稳定 ✅
+> - 磁矩 < 1 μB 的原子（如界面原子、近简并态）：交换劈裂弱，方向容易翻转 ❌
+> - 非共线磁矩的初始猜测偏离较大时：可能弛豫到不同磁构型 ❌
 >
-> **优势是计算速度快**——Phase 2 无需运行 BFGS 内循环，仅做简单标量乘法。
-
-### PW 基组的限制
-
-> **⚠️ PW 基组 + nspin=2 + `direction_only` 目前不支持两阶段策略。**
->
-> PW 路径 `deltaspin_pw.cpp` 中没有 Phase 1/2 Logic，`direction_only` 投影会将 lambda 归零，约束完全失效。
-> 如需在 PW 基组中使用 `direction_only`，请使用 **nspin=4**。
-
-### 参数注意事项
-
-| 参数 | 注意 |
-|---|---|
-| `sc_scf_thr` | 两阶段策略不检查此参数，设置与否均无影响 |
-| `sc_scf_thr_mode` | 两阶段策略不检查此参数，设置与否均无影响 |
-| `mixing_restart` | 被强制设为 0（禁用），Phase 1→2 过渡时代码自行 reset |
-| `nsc` | Phase 1 步数由 `sc_dir_phase1_steps` 控制，不是 `nsc`；`nsc` 控制 BFGS 内循环最大迭代 |
-| `sc_dir_phase1_steps` | 必须 ≥ 2；值越大 Phase 1 越充分，但 Phase 2 起始 lambda 也可能过大 |
-
----
-
-## 方案三：线性扫描（lambda_strategy = linear_scan）
-
-```
-sc_mag_switch        1
-sc_lambda_strategy   linear_scan
-```
-
-**行为：** lambda 从初始值开始按固定步长递增，每步扫描一个 lambda 值。
-
-> 注意：此策略代码尚未完成（已被删除），仅供参考。
-
----
-
-## nspin=2 参数组合决策树
-
-```
-是否需要 DeltaSpin？
-├─ 否 → sc_mag_switch = 0
-└─ 是 → 是否需要优化 lambda？
-    ├─ 否（使用已知 lambda）→ sc_scf_thr_mode = "off"
-    └─ 是 → 是否仅约束方向？
-        ├─ 是 → sc_direction_only = 1
-        │    └─ nspin = 2 → 两阶段策略（见方案二）
-        │    └─ nspin = 4 → sc_scf_thr_mode = "immediate" 或 "threshold"
-        └─ 否 → 约束大小和方向
-             ├─ PW 基组 → sc_scf_thr_mode = "immediate"
-             ├─ LCAO 基组 → sc_scf_thr_mode = "threshold"（默认）
-             └─ 两者均可使用 "immediate"
-```
-
----
-
-## 测试覆盖
-
-| 测试 | nspin | 基组 | 方案 | sc_scf_thr_mode |
-|---|---|---|---|---|
-| 12_PW_DS_S2_Z | 2 | PW | 标准约束 | immediate |
-| 24_LCAO_DS_S2_Z | 2 | LCAO | direction_only | — (两阶段) |
-| 36_PW_DS_S2_ReadLam_Z | 2 | PW | off (ReadLam) | immediate |
-| 38_PW_DS_S2_Thr1e10_Z | 2 | PW | off (常量 lambda) | off |
-| 40_PW_DS_S2_Thr10_Z | 2 | PW | 标准约束 | immediate |
-| 44_PW_DFTU_DS_S2_Thr10_Z | 2 | PW | 标准+DFT+U | immediate |
-| 65_LCAO_DS_S2_DirectionOnly_Z | 2 | LCAO | direction_only | — (两阶段) |
-
----
-
-## 参数迁移对照表（旧 → 新）
-
-| 旧参数 | 含义 | 新参数 |
-|---|---|---|
-| `sc_scf_thr = 10` | 立即激活 lambda 循环（magic number） | `sc_scf_thr_mode = "immediate"` |
-| `sc_scf_thr = 1e-10` | 永不激活 lambda 循环（magic number） | `sc_scf_thr_mode = "off"` |
-| `sc_scf_thr = 1e-3` | threshold 模式正常阈值 | `sc_scf_thr = 1e-3` + `sc_scf_thr_mode = "threshold"`（默认） |
+> 方案 B 的输出结果中磁矩方向是否稳定，**必须事后检查**。如果 Phase 2 末期磁矩方向偏离目标方向超过可接受范围，应改用方案 A。
