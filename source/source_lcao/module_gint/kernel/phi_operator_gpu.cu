@@ -2,6 +2,7 @@
 #include "phi_operator_kernel.cuh"
 #include "dgemm_vbatch.h"
 #include <cuda_runtime.h>
+#include <type_traits>
 #include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
@@ -124,30 +125,41 @@ void PhiOperatorGpu<Real>::set_phi_dphi(double* phi_d, double* dphi_x_d, double*
 {
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
-    set_phi_dphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
-        gint_gpu_vars_->nwmax,
-        mgrids_num_,
-        gint_gpu_vars_->nr_max,
-        gint_gpu_vars_->dr_uniform,
-        gint_gpu_vars_->ucell_atom_nwl_d,
-        gint_gpu_vars_->atom_iw2_new_d,
-        gint_gpu_vars_->atom_iw2_ylm_d,
-        gint_gpu_vars_->atom_iw2_l_d,
-        gint_gpu_vars_->atom_nw_d,
-        gint_gpu_vars_->iat2it_d,
-        gint_gpu_vars_->rcut_d,
-        gint_gpu_vars_->psi_u_d,
-        gint_gpu_vars_->dpsi_u_d,
-        gint_gpu_vars_->mgrids_pos_d,
-        atoms_iat_.get_device_ptr(),
-        atoms_bgrids_rcoords_.get_device_ptr(),
-        atoms_num_info_.get_device_ptr(),
-        atom_phi_start_.get_device_ptr(),
-        bgrid_phi_len_.get_device_ptr(),
-        phi_d,
-        dphi_x_d,
-        dphi_y_d,
-        dphi_z_d);
+    // Dispatch the WantPhi template based on whether phi is requested.
+    // Lets the compiler drop the phi[] stores entirely in the dphi-only case
+    // (gint_tau) without paying a per-iw `phi != nullptr` branch in the loop.
+    auto launch = [&](auto want_phi) {
+        constexpr bool WantPhi = decltype(want_phi)::value;
+        set_phi_dphi_kernel<WantPhi><<<grid_dim, threads_per_block, 0, stream_>>>(
+            gint_gpu_vars_->nwmax,
+            mgrids_num_,
+            gint_gpu_vars_->nr_max,
+            gint_gpu_vars_->dr_uniform,
+            gint_gpu_vars_->ucell_atom_nwl_d,
+            gint_gpu_vars_->atom_iw2_new_d,
+            gint_gpu_vars_->atom_iw2_ylm_d,
+            gint_gpu_vars_->atom_iw2_l_d,
+            gint_gpu_vars_->atom_nw_d,
+            gint_gpu_vars_->iat2it_d,
+            gint_gpu_vars_->rcut_d,
+            gint_gpu_vars_->psi_u_d,
+            gint_gpu_vars_->dpsi_u_d,
+            gint_gpu_vars_->mgrids_pos_d,
+            atoms_iat_.get_device_ptr(),
+            atoms_bgrids_rcoords_.get_device_ptr(),
+            atoms_num_info_.get_device_ptr(),
+            atom_phi_start_.get_device_ptr(),
+            bgrid_phi_len_.get_device_ptr(),
+            phi_d,
+            dphi_x_d,
+            dphi_y_d,
+            dphi_z_d);
+    };
+    if (phi_d != nullptr) {
+        launch(std::true_type{});
+    } else {
+        launch(std::false_type{});
+    }
     CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
@@ -427,8 +439,9 @@ void PhiOperatorGpu<Real>::phi_dot_dphi(
 {
     dim3 grid_dim(bgrid_batch_->get_max_atoms_per_bgrid(),
                   bgrid_batch_->get_batch_size());
+    // Kernel reduce is single-warp; blockDim.x MUST stay 32.
     dim3 threads_per_block(32);
-    phi_dot_dphi_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 3, stream_>>>(
+    phi_dot_dphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
         phi_d,
         dphi_x_d,
         dphi_y_d,
@@ -454,8 +467,9 @@ void PhiOperatorGpu<Real>::phi_dot_dphi_r(
 {
     dim3 grid_dim(mgrids_num_,
                   bgrid_batch_->get_batch_size());
+    // Kernel reduce is single-warp; blockDim.x MUST stay 32.
     dim3 threads_per_block(32);
-    phi_dot_dphi_r_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 6, stream_>>>(
+    phi_dot_dphi_r_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
         phi_d,
         dphi_x_d,
         dphi_y_d,

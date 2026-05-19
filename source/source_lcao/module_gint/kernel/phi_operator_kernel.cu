@@ -105,6 +105,7 @@ template __global__ void set_phi_kernel<float>(
     const int*, const double3*, const int2*, const int*, const int*,
     float*);
 
+template<bool WantPhi>
 __global__ void set_phi_dphi_kernel(
     const int nwmax,
     const int mgrids_num,
@@ -156,6 +157,7 @@ __global__ void set_phi_dphi_kernel(
             grad_rl_sph_harm(nwl, coord.x, coord.y, coord.z, rly, grly);
 
             // interpolation
+            const double inv_dist = 1.0 / dist;  // hoisted: re-used by every iw below
             const double pos = dist / dr_uniform;
             const int ip = static_cast<int>(pos);
             const double x0 = pos - ip;
@@ -182,15 +184,17 @@ __global__ void set_phi_dphi_kernel(
                 const int iw_l = atom_iw2_l[it_nw + iw];
                 const int idx_ylm = atom_iw2_ylm [it_nw + iw];
                 const double rl = pow_int(dist, iw_l);
-                const double tmprl = tmp / rl;
+                const double inv_rl = 1.0 / rl;
+                const double tmprl = tmp * inv_rl;
 
-                // if phi == nullptr, it means that we only need dphi.
-                if(phi != nullptr)
+                if (WantPhi)
                 {
                     phi[phi_idx + iw] = tmprl * rly[idx_ylm];
                 }
                 // derivative of wave functions with respect to atom positions.
-                const double tmpdphi_rly = (dtmp - tmp * iw_l / dist) / rl * rly[idx_ylm] / dist;
+                // (dtmp - tmp*iw_l/dist) / rl * rly / dist  ==  (dtmp*inv_dist - tmp*iw_l*inv_dist^2) * inv_rl * rly
+                const double tmpdphi_rly = (dtmp * inv_dist - tmp * iw_l * inv_dist * inv_dist)
+                                           * inv_rl * rly[idx_ylm];
 
                 dphi_x[phi_idx + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_ylm * 3 + 0];
                 dphi_y[phi_idx + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_ylm * 3 + 1];
@@ -203,7 +207,7 @@ __global__ void set_phi_dphi_kernel(
                           bgrid_phi_len[bgrid_id] * mgrid_id;
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
             {
-                if(phi != nullptr)
+                if (WantPhi)
                 {
                     phi[phi_idx + iw] = 0.0;
                 }
@@ -214,6 +218,20 @@ __global__ void set_phi_dphi_kernel(
         }
     }
 }
+
+// Explicit instantiations for set_phi_dphi_kernel
+template __global__ void set_phi_dphi_kernel<true>(
+    const int, const int, const int, const double,
+    const int*, const bool*, const int*, const int*, const int*, const int*,
+    const double*, const double*, const double*, const double3*,
+    const int*, const double3*, const int2*, const int*, const int*,
+    double*, double*, double*, double*);
+template __global__ void set_phi_dphi_kernel<false>(
+    const int, const int, const int, const double,
+    const int*, const bool*, const int*, const int*, const int*, const int*,
+    const double*, const double*, const double*, const double3*,
+    const int*, const double3*, const int2*, const int*, const int*,
+    double*, double*, double*, double*);
 
 // The code for `set_ddphi_kernel` is quite difficult to understand.
 // To grasp it, you better refer to the CPU function `set_ddphi`
@@ -264,7 +282,8 @@ __global__ void set_ddphi_kernel(
                           bgrid_phi_len[bgrid_id] * mgrid_id;
             for(int i = 0; i < 6; i++)
             {
-                coord[i/2] += std::pow(-1, i%2) * 0.0001;
+                const double eps = (i & 1) ? -0.0001 : 0.0001;
+                coord[i/2] += eps;
                 double dist = norm3d(coord[0], coord[1], coord[2]);
                 if (dist < 1.0E-9)
                 { dist += 1.0E-9; }
@@ -276,6 +295,7 @@ __global__ void set_ddphi_kernel(
                 grad_rl_sph_harm(nwl, coord[0], coord[1], coord[2], rly, grly);
 
                 // interpolation
+                const double inv_dist = 1.0 / dist;  // hoisted: re-used by every iw
                 const double pos = dist / dr_uniform;
                 const int ip = static_cast<int>(pos);
                 const double x0 = pos - ip;
@@ -300,8 +320,10 @@ __global__ void set_ddphi_kernel(
                     const int iw_l = atom_iw2_l[it_nw + iw];
                     const int idx_ylm = atom_iw2_ylm [it_nw + iw];
                     const double rl = pow_int(dist, iw_l);
-                    const double tmprl = tmp / rl;
-                    const double tmpdphi_rly = (dtmp - tmp * iw_l / dist) / rl * rly[idx_ylm] / dist;
+                    const double inv_rl = 1.0 / rl;
+                    const double tmprl = tmp * inv_rl;
+                    const double tmpdphi_rly = (dtmp * inv_dist - tmp * iw_l * inv_dist * inv_dist)
+                                               * inv_rl * rly[idx_ylm];
                     
                     double dphi[3];
                     dphi[0] = tmpdphi_rly * coord[0] + tmprl * grly[idx_ylm * 3 + 0];
@@ -340,7 +362,7 @@ __global__ void set_ddphi_kernel(
                         ddphi_zz[phi_idx + iw] -= dphi[2];
                     }
                 }
-                coord[i/2] -= std::pow(-1, i%2) * 0.0001;  // recover coord
+                coord[i/2] -= eps;  // recover coord
             }
 
             for (int iw = 0; iw < atom_nw[atom_type]; iw++)
@@ -460,14 +482,14 @@ __global__ void phi_dot_dphi_kernel(
     const int* __restrict__ atom_nw,
     double* force)
 {
-    __shared__ double s_data[32 * 3];    // the length of s_data equals the max warp num of a block times 3
+    // NOTE: this kernel assumes blockDim.x == 32 (a single warp). If the launch
+    // configuration is ever changed, the reduce below needs a shared-memory stage.
     const int bgrid_id = blockIdx.y;
     const int atoms_num = atoms_num_info[bgrid_id].x;
     const int pre_atoms_num = atoms_num_info[bgrid_id].y;
     const int b_phi_len = bgrid_phi_len[bgrid_id];
     const int tid = threadIdx.x;
-    const int warp_id = tid / 32;
-    const int lane_id = tid % 32;
+    const int lane_id = tid;  // blockDim.x == 32
 
     for (int atom_id = blockIdx.x; atom_id < atoms_num; atom_id += gridDim.x)
     {
@@ -481,44 +503,23 @@ __global__ void phi_dot_dphi_kernel(
             for (int iw = tid; iw < nw; iw += blockDim.x)
             {
                 int phi_idx = phi_start + iw;
-                f[0] += phi[phi_idx] * dphi_x[phi_idx];
-                f[1] += phi[phi_idx] * dphi_y[phi_idx];
-                f[2] += phi[phi_idx] * dphi_z[phi_idx];
+                const double p = phi[phi_idx];
+                f[0] += p * dphi_x[phi_idx];
+                f[1] += p * dphi_y[phi_idx];
+                f[2] += p * dphi_z[phi_idx];
             }
         }
 
-        // reduce the force in each block
-        for (int i = 0; i < 3; i++)
-        {
-            f[i] = warpReduceSum(f[i]);
-        }
+        // single-warp reduce
+        f[0] = warpReduceSum(f[0]);
+        f[1] = warpReduceSum(f[1]);
+        f[2] = warpReduceSum(f[2]);
 
         if (lane_id == 0)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                s_data[warp_id * 3 + i] = f[i];
-            }
-        }
-        __syncthreads();
-        
-        for (int i = 0; i < 3; i++)
-        {
-            f[i] = (tid < blockDim.x / 32) ? s_data[tid * 3 + i] : 0;
-        }
-        if (warp_id == 0)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                f[i] = warpReduceSum(f[i]);
-            }
-        }
-        if (tid == 0)
-        {
-            for (int i = 0; i < 3; i++)
-            {
-                atomicAdd(&force[iat * 3 + i], f[i] * 2);
-            }
+            atomicAdd(&force[iat * 3 + 0], f[0] * 2);
+            atomicAdd(&force[iat * 3 + 1], f[1] * 2);
+            atomicAdd(&force[iat * 3 + 2], f[2] * 2);
         }
     }
 }
@@ -539,14 +540,14 @@ __global__ void phi_dot_dphi_r_kernel(
     const int* __restrict__ atom_nw,
     double* __restrict__ svl)
 {
-    __shared__ double s_data[32 * 6];  // the length of s_data equals the max warp num of a block times 6
+    // NOTE: this kernel assumes blockDim.x == 32 (a single warp). If the launch
+    // configuration is ever changed, the reduce below needs a shared-memory stage.
     const int tid = threadIdx.x;
     const int bgrid_id = blockIdx.y;
     const int atoms_num = atoms_num_info[bgrid_id].x;
     const int pre_atoms_num = atoms_num_info[bgrid_id].y;
     const int b_phi_len = bgrid_phi_len[bgrid_id];
-    const int warp_id = tid / 32;
-    const int lane_id = tid % 32;
+    const int lane_id = tid;  // blockDim.x == 32
 
     double stress[6]{0.0};
     for (int mgrid_id = blockIdx.x; mgrid_id < mgrids_per_bgrid; mgrid_id += gridDim.x)
@@ -564,44 +565,29 @@ __global__ void phi_dot_dphi_r_kernel(
             for (int iw = tid; iw < nw; iw += blockDim.x)
             {
                 int phi_idx = phi_start + iw;
-                stress[0] += phi[phi_idx] * dphi_x[phi_idx] * coord.x;
-                stress[1] += phi[phi_idx] * dphi_x[phi_idx] * coord.y;
-                stress[2] += phi[phi_idx] * dphi_x[phi_idx] * coord.z;
-                stress[3] += phi[phi_idx] * dphi_y[phi_idx] * coord.y;
-                stress[4] += phi[phi_idx] * dphi_y[phi_idx] * coord.z;
-                stress[5] += phi[phi_idx] * dphi_z[phi_idx] * coord.z;
+                const double p   = phi[phi_idx];
+                const double pdx = p * dphi_x[phi_idx];
+                const double pdy = p * dphi_y[phi_idx];
+                const double pdz = p * dphi_z[phi_idx];
+                stress[0] += pdx * coord.x;
+                stress[1] += pdx * coord.y;
+                stress[2] += pdx * coord.z;
+                stress[3] += pdy * coord.y;
+                stress[4] += pdy * coord.z;
+                stress[5] += pdz * coord.z;
             }
         }
     }
     
-    // reduce the stress in each block
+    // single-warp reduce
+    #pragma unroll
     for (int i = 0; i < 6; i++)
     {
         stress[i] = warpReduceSum(stress[i]);
     }
-
     if (lane_id == 0)
     {
-        for (int i = 0; i < 6; i++)
-        {
-            s_data[warp_id * 6 + i] = stress[i];
-        }
-    }
-    __syncthreads();
-
-    for (int i = 0; i < 6; i++)
-    {
-        stress[i] = (tid < blockDim.x / 32) ? s_data[tid * 6 + i] : 0;
-    }
-    if (warp_id == 0)
-    {
-        for (int i = 0; i < 6; i++)
-        {
-            stress[i] = warpReduceSum(stress[i]);
-        }
-    }
-    if (tid == 0)
-    {
+        #pragma unroll
         for (int i = 0; i < 6; i++)
         {
             atomicAdd(&svl[i], stress[i] * 2);

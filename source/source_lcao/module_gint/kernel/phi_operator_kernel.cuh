@@ -28,6 +28,8 @@ __global__ void set_phi_kernel(
     const int* __restrict__ bgrid_phi_len,
     Real* __restrict__ phi);
 
+// WantPhi == false: skip phi[] writes entirely (callers like gint_tau pass nullptr).
+template<bool WantPhi>
 __global__ void set_phi_dphi_kernel(
     const int nwmax,
     const int mgrids_num,
