@@ -37,7 +37,9 @@ class TwoCenterBundle
                           const double lcao_ecut,
                           const double lcao_dk,
                           const double lcao_dr,
-                          const double lcao_rmax) const;
+                          const double lcao_rmax,
+                          const bool out_element_info,
+                          const bool cal_force) const;
 
     std::unique_ptr<TwoCenterIntegrator> kinetic_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;
