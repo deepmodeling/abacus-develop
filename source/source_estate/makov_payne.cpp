@@ -235,6 +235,11 @@ MakovPayneResult makov_payne_correction(const UnitCell& ucell,
             x0_frac += ucell.atoms[it].taud[ia] * zv;
         }
     }
+    if (zion <= 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Makov-Payne",
+                                 "total ionic valence must be positive to compute the Makov-Payne correction.");
+    }
     x0_frac = x0_frac / zion;
 
     ModuleBase::Vector3<double> dipole_ion(0.0, 0.0, 0.0);
