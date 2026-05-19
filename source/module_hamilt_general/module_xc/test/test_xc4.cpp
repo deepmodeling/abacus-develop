@@ -14,6 +14,8 @@
 namespace ModuleBase
 {
     void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
+    void TITLE(const std::string &class_function_name,bool disable){};
+    void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
 }
 
 namespace GlobalV
