@@ -8,3 +8,9 @@ AddTest(
     force_op_test.cpp stress_op_test.cpp wf_op_test.cpp vnl_op_test.cpp
     stress_op_mgga_test.cpp
 )
+
+AddTest(
+    TARGET onsite_op_test
+    LIBS parameter ${math_libs} device base container
+    SOURCES onsite_op_test.cpp
+)
