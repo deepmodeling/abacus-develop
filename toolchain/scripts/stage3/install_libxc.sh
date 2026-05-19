@@ -47,17 +47,12 @@ case "$with_libxc" in
         echo "==================== Installing LIBXC ===================="
         pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
         #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "libxc-${libxc_ver} is already installed, skipping it."
         else
-            if [ -f ${libxc_pkg} ]; then
-                echo "${libxc_pkg} is found"
-            else
-                #download_pkg_from_ABACUS_org "${libxc_sha256}" "${libxc_pkg}"
-                libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
-                download_pkg_from_url  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
-            fi
+            libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
+            retrieve_package  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -77,6 +72,7 @@ case "$with_libxc" in
                 -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DENABLE_FORTRAN=ON \
                 -DENABLE_PYTHON=OFF \
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
                 -DBUILD_TESTING=OFF .. \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -113,20 +109,13 @@ if [ "$with_libxc" != "__DONTUSE__" ]; then
     LIBXC_LIBS="-lxcf03 -lxc"
     if [ "$with_libxc" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libxc"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include":\${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-        cat "${BUILDDIR}/setup_libxc" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libxc"
 export LIBXC_CFLAGS="${LIBXC_CFLAGS}"
@@ -136,8 +125,9 @@ export CP_DFLAGS="\${CP_DFLAGS} -D__LIBXC"
 export CP_CFLAGS="\${CP_CFLAGS} ${LIBXC_CFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBXC_LDFLAGS}"
 export CP_LIBS="${LIBXC_LIBS} \${CP_LIBS}"
-export LIBXC_ROOT="$pkg_install_dir"
+export LIBXC_ROOT="${pkg_install_dir}"
 EOF
+    filter_setup "${BUILDDIR}/setup_libxc" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libxc"

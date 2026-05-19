@@ -1,0 +1,57 @@
+name: Toolchain Smoke Test
+on:
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - cmake/**
+      - toolchain/**
+      - .github/workflows/toolchain_*.yaml
+  workflow_dispatch:
+jobs:
+  smoke-build-gnu:
+    runs-on: X64
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install requirements
+        run: |
+          set -euo pipefail
+          cd toolchain/root_requirements
+          sudo ./install_requirements_ubuntu.sh
+      - name: Build toolchain
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./toolchain_gnu.sh
+      - name: Check setup
+        run: |
+          set -euo pipefail
+          cd toolchain
+          bash -n install/setup
+          source install/setup
+      - name: Build ABACUS
+        run: |
+          set -euo pipefail
+          cd toolchain
+          ./build_abacus_gnu.sh
+          cd ..
+          . ./toolchain/abacus_env.sh
+          ./bin/abacus --version
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: toolchain-smoke-gnu
+          path: |
+            toolchain/compile.log
+            toolchain/compile.err
+            toolchain/install/setup
+            toolchain/build/**/make.log
+            toolchain/build/**/configure.log
+            toolchain/build/**/cmake.log
+          if-no-files-found: ignore

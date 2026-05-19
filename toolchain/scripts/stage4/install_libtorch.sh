@@ -96,10 +96,7 @@ case "${with_libtorch}" in
 
         check_dir "${LIBTORCH_LIBDIR}"
         LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
-        if [ "$ENABLE_CUDA" = "__TRUE__" ]; then
-            LIBTORCH_LDFLAGS="-Wl,--no-as-needed,-L'${LIBTORCH_LIBDIR}' -Wl,--no-as-needed,-rpath='${LIBTORCH_LIBDIR}'"
-            LIBTORCH_LDFLAGS="-L'${LIBTORCH_LIBDIR}' -Wl,-rpath='${LIBTORCH_LIBDIR}'"
-        fi
+        LIBTORCH_LDFLAGS="-L'${LIBTORCH_LIBDIR}' -Wl,-rpath='${LIBTORCH_LIBDIR}'"
         ;;
 esac
 
@@ -111,6 +108,7 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
+prepend_path CPATH "${pkg_install_dir}/include"
 export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
 export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
 export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
@@ -119,22 +117,21 @@ export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":\${PKG_CONFIG_PATH}
 export CMAKE_PREFIX_PATH="${pkg_install_dir}":\${CMAKE_PREFIX_PATH}
 EOF
     fi
+    cat << EOF >> "${BUILDDIR}/setup_libtorch"
+export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
+export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
+export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
+EOF
     if [ "$ENABLE_CUDA" = "__TRUE__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_libtorch"
-export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
-export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
-export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
 export CP_LIBS="\${CP_LIBS} -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch"
 EOF
-        cat "${BUILDDIR}/setup_libtorch" >> "${SETUPFILE}"
+    else
         cat << EOF >> "${BUILDDIR}/setup_libtorch"
-export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
-export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
-export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
 export CP_LIBS="\${CP_LIBS} -lc10 -ltorch_cpu -ltorch"
 EOF
-        cat "${BUILDDIR}/setup_libtorch" >> "${SETUPFILE}"
     fi
+    filter_setup "${BUILDDIR}/setup_libtorch" "${SETUPFILE}"
 fi
 
 load "${BUILDDIR}/setup_libtorch"

@@ -49,7 +49,7 @@ case "${with_gcc}" in
         repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
         repkg_install_dir="${INSTALLDIR}/${repack_filename}"
         #pkg_install_dir="${HOME}/apps/gcc/${gcc_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "gcc-${gcc_ver} is already installed, skipping it."
         else
@@ -59,13 +59,8 @@ case "${with_gcc}" in
                 tar -xzf "${repack_filename}"
                 echo "Successfully extracted ${repack_filename}"
             else
-                if [ -f gcc-${gcc_ver}.tar.gz ]; then
-                    echo "gcc-${gcc_ver}.tar.gz is found"
-                else
-                    #download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
-                    url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
-                    download_pkg_from_url "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
-                fi
+                url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
+                retrieve_package "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
             fi
             [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
             tar -xzf gcc-${gcc_ver}.tar.gz
@@ -229,13 +224,6 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib64"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib64"
 prepend_path CPATH "${pkg_install_dir}/include"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib64":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib64":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib64":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
     fi
     cat << EOF >> "${BUILDDIR}/setup_gcc"
@@ -243,7 +231,7 @@ export GCC_CFLAGS="${GCC_CFLAGS}"
 export GCC_LDFLAGS="${GCC_LDFLAGS}"
 export TSANFLAGS="${TSANFLAGS}"
 EOF
-    cat "${BUILDDIR}/setup_gcc" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_gcc" ${SETUPFILE}
 fi
 
 # ----------------------------------------------------------------------

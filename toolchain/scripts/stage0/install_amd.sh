@@ -85,21 +85,12 @@ export FC="${FC}"
 export F90="${F90}"
 export F77="${F77}"
 EOF
-    if [ "${with_amd}" != "__SYSTEM__" ]; then
-        cat << EOF >> "${BUILDDIR}/setup_amd"
-prepend_path PATH "${pkg_install_dir}/bin"
-prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
-prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path CPATH "${pkg_install_dir}/include"
-EOF
-    fi
     cat << EOF >> "${BUILDDIR}/setup_amd"
 export AMD_CFLAGS="${AMD_CFLAGS}"
 export AMD_LDFLAGS="${AMD_LDFLAGS}"
 export AMD_LIBS="${AMD_LIBS}"
 EOF
-    cat "${BUILDDIR}/setup_amd" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_amd" ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_amd"

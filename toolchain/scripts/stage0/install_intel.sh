@@ -89,21 +89,12 @@ export FC="${FC}"
 export F90="${F90}"
 export F77="${F77}"
 EOF
-    if [ "${with_intel}" != "__SYSTEM__" ]; then
-        cat << EOF >> "${BUILDDIR}/setup_intel"
-prepend_path PATH "${pkg_install_dir}/bin"
-prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
-prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path CPATH "${pkg_install_dir}/include"
-EOF
-    fi
     cat << EOF >> "${BUILDDIR}/setup_intel"
 export INTEL_CFLAGS="${INTEL_CFLAGS}"
 export INTEL_LDFLAGS="${INTEL_LDFLAGS}"
 export INTEL_LIBS="${INTEL_LIBS}"
 EOF
-    cat "${BUILDDIR}/setup_intel" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_intel" ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_intel"

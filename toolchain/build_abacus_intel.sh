@@ -22,13 +22,12 @@ BUILD_DIR=build_abacus_intel
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
-# ELPA=$INSTALL_DIR/elpa-2024.05.001/nvidia # for gpu-lcao
-CEREAL=$INSTALL_DIR/cereal-master/include
-LIBXC=$INSTALL_DIR/libxc-7.0.0
-RAPIDJSON=$INSTALL_DIR/rapidjson-master
-LIBRI=$INSTALL_DIR/LibRI-master
-LIBCOMM=$INSTALL_DIR/LibComm-master
+ELPA=${ELPA_ROOT}
+CEREAL=${CEREAL_ROOT}/include
+LIBXC=${LIBXC_ROOT}
+RAPIDJSON=${RAPIDJSON_ROOT}
+LIBRI=${LIBRI_ROOT}
+LIBCOMM=${LIBCOMM_ROOT}
 USE_CUDA=OFF  # set ON to enable gpu-abacus
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
@@ -39,6 +38,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CXX_COMPILER=icpx \
         -DMPI_CXX_COMPILER=mpiicpx \
         -DMKLROOT=$MKLROOT \
+        -DENABLE_FLOAT_FFTW=ON \
         -DELPA_DIR=$ELPA \
         -DCEREAL_INCLUDE_DIR=$CEREAL \
         -DLibxc_DIR=$LIBXC \

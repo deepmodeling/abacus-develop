@@ -128,6 +128,7 @@ You can manually install requirements packages via:
 1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
 2. Download from github.com (especially for CEREAL, RapidJSON, libnpy, LibRI and other stage4 packages)
 3. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager or visit their official website
+4. For users in China, you can try Gitee mirror: git clone https://gitee.com/jamesmisaka/abacus_toolchain_build.git
 EOF
 }
 
@@ -743,7 +744,7 @@ remove_path() {
   __path=${__path//:$__directory:/:}
   __path=${__path#$__directory:}
   __path=${__path%:$__directory}
-  __path=$(echo "$__path" | sed "s:^$__directory\$::g")
+  __path=$(echo "$__path" | sed "s#^$__directory\$##g")
   eval $__path_name=\"$__path\"
   export $__path_name
 }
@@ -870,13 +871,7 @@ checksum() {
   # sha256sum, but has an equivalent with shasum -a 256
   command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
-  if echo "$__sha256  $__filename" | ${__shasum_command} --check; then
-    echo "Checksum of $__filename Ok"
-  else
-    rm -v ${__filename}
-    report_error "Checksum of $__filename could not be verified, abort."
-    return 1
-  fi
+  echo "$__sha256  $__filename" | ${__shasum_command} --check
 }
 
 # Enhanced checksum verification with multiple hash algorithms
@@ -922,29 +917,6 @@ verify_file_integrity() {
   fi
 }
 
-# downloader for the package tars, includes checksum
-# backup and deprecated
-download_pkg_from_org() {
-  # usage: download_pkg_from_org sha256 filename
-  echo "use cp2k mirror to download $__filename"
-  local __sha256="$1"
-  local __filename="$2"
-  local __url="https://www.cp2k.org/static/downloads/$__filename"
-  # download
-  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
-  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url"
-  if ! wget ${DOWNLOADER_FLAGS} $__url; then
-    report_error "failed to download $__url"
-    recommend_offline_installation $__filename $__url
-    if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-    fi
-  fi
-  # checksum
-  checksum "$__filename" "$__sha256"
-}
-
 download_pkg_from_url() {
   # usage: download_pkg_from_url sha256 filename url
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
@@ -955,7 +927,7 @@ download_pkg_from_url() {
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
     "strict")
       echo "Downloading with strict certificate validation: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         rm -f "$__filename"
         report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
@@ -966,7 +938,7 @@ download_pkg_from_url() {
       ;;
     "skip")
       echo "Downloading with certificate validation disabled: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
         rm -f "$__filename"
         report_error "failed to download $__url"
         recommend_offline_installation "$__filename" "$__url"
@@ -978,7 +950,7 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
@@ -996,9 +968,34 @@ download_pkg_from_url() {
       ;;
   esac
   
-  # checksum validation (unchanged)
-  if [ "$__sha256" != "--no-checksum" ]; then
-    checksum "$__filename" "$__sha256"
+  # checksum
+  if checksum "$__filename" "$__sha256"; then
+    echo "Checksum of $__filename OK"
+  else
+    rm -vf "${__filename}"
+    report_error "Checksum of $__filename could not be verified, abort."
+    return 1
+  fi
+}
+
+# retrieve package under current directory with filename and checksum verification
+# if file exists and checksum is correct, print the success message
+# if file exists but checksum is incorrect, delete and re-download
+# if file does not exist, download from corresponding websites
+retrieve_package() {
+  local __sha256="$1"
+  local __filename="$2"
+  local __url="$3"
+  if ! [ -f "${__filename}" ]; then
+    download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+  else
+    if ! checksum "$__filename" "$__sha256"; then
+      echo "$__filename is found but checksum is wrong; delete and re-download"
+      rm -vf "${__filename}"
+      download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+    else
+      echo "$__filename is found and checksum is right"
+    fi
   fi
 }
 
@@ -1051,4 +1048,54 @@ write_toolchain_env() {
 
     export -p
   ) > "${__installdir}/toolchain.env"
+}
+
+# Append a setup fragment to the public setup file, keeping runtime search paths
+# and package roots while dropping build-only flag variables.
+filter_setup() {
+  local source_file="$1"
+  local target_file="$2"
+
+  if [[ ! -f "$source_file" ]]; then
+    report_error "File '$source_file' does not exist."
+    return 1
+  fi
+
+  local filename
+  filename=$(basename "$source_file")
+  echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
+  awk '
+    function skip(line) {
+      return line ~ /^[[:space:]]*(export[[:space:]]+)?([A-Za-z0-9_]+_)?(CFLAGS|CXXFLAGS|FCFLAGS|LDFLAGS|LIBS|INCLUDES)="/ ||
+             line ~ /^[[:space:]]*export[[:space:]]+CP_(DFLAGS|CFLAGS|LDFLAGS|LIBS)="/ ||
+             line ~ /^[[:space:]]*# (For|Other)/
+    }
+    function reset_block() {
+      block_count = 0
+      block_has_body = 0
+      in_block = 0
+    }
+    /^[[:space:]]*if[[:space:]].*;[[:space:]]*then[[:space:]]*$/ {
+      reset_block()
+      in_block = 1
+      block[++block_count] = $0
+      next
+    }
+    in_block {
+      if ($0 ~ /^[[:space:]]*fi[[:space:]]*$/) {
+        if (block_has_body) {
+          for (i = 1; i <= block_count; i++) print block[i]
+          print $0
+        }
+        reset_block()
+        next
+      }
+      if (!skip($0)) {
+        block[++block_count] = $0
+        block_has_body = 1
+      }
+      next
+    }
+    !skip($0) { print }
+  ' "$source_file" >> "$target_file"
 }

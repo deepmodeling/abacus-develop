@@ -5,10 +5,11 @@
 #SBATCH -o install.log
 #SBATCH -e install.err
 
-# Build ABACUS by gcc-aocl toolchain
+# Build ABACUS by gcc-mkl toolchain
 
 # load system env modules at first
-# module load openmpi aocc aocl
+# module load mkl compiler mpi
+# source path/to/setvars.sh
 
 ABACUS_DIR=..
 TOOL=$(pwd)
@@ -16,9 +17,8 @@ INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
 ABACUS_DIR=$(pwd)
-#AOCLhome=/opt/aocl-linux-aocc-5.0.0/5.0.0/aocl/  # user should specify this parameter to the aocl installation path
 
-BUILD_DIR=build_abacus_gcc_aocl
+BUILD_DIR=build_abacus_gcc_mkl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
@@ -26,9 +26,6 @@ ELPA=${ELPA_ROOT}
 CEREAL=${CEREAL_ROOT}/include
 LIBXC=${LIBXC_ROOT}
 RAPIDJSON=${RAPIDJSON_ROOT}
-LAPACK=$AOCLhome/lib
-SCALAPACK=$AOCLhome/lib
-FFTW3=$AOCLhome
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
 USE_CUDA=OFF  # set ON to enable gpu-abacus
@@ -39,9 +36,8 @@ USE_CUDA=OFF  # set ON to enable gpu-abacus
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CXX_COMPILER=g++ \
         -DMPI_CXX_COMPILER=mpicxx \
-        -DLAPACK_DIR=$LAPACK \
-        -DSCALAPACK_DIR=$SCALAPACK \
-        -DFFTW3_DIR=$FFTW3 \
+        -DMKLROOT=$MKLROOT \
+        -DENABLE_FLOAT_FFTW=ON \
         -DELPA_DIR=$ELPA \
         -DCEREAL_INCLUDE_DIR=$CEREAL \
         -DLibxc_DIR=$LIBXC \
@@ -56,14 +52,13 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLIBCOMM_DIR=$LIBCOMM \
         -DUSE_CUDA=$USE_CUDA \
 #         -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
-#          -DENABLE_DEEPKS=1 \
+#         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
 #         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
 # 	      -DDeePMD_DIR=$DEEPMD \
 #         -DENABLE_CUSOLVERMP=ON \
-#         -D CAL_CUSOLVERMP_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/2x.xx/math_libs/1x.x/targets/x86_64-linux/lib
 
-cmake --build $BUILD_DIR -j `nproc` 
+cmake --build $BUILD_DIR -j `nproc`
 cmake --install $BUILD_DIR 2>/dev/null
 
 # generate abacus_env.sh

@@ -49,6 +49,14 @@ if(FFTW3_FOUND)
 
     set(FFTW3_INCLUDE_DIRS ${FFTW3_INCLUDE_DIR})
 
+    # Try to extract FFTW version from header
+    if(FFTW3_INCLUDE_DIR AND EXISTS "${FFTW3_INCLUDE_DIR}/fftw3.h")
+        file(STRINGS "${FFTW3_INCLUDE_DIR}/fftw3.h" _fftw_ver_line REGEX "^#define[\t ]+FFTW_VERSION[\t ]+\"[^\"]+\"")
+        if(_fftw_ver_line)
+            string(REGEX REPLACE "^#define[\t ]+FFTW_VERSION[\t ]+\"([^\"]+)\"" "\\1" FFTW3_VERSION "${_fftw_ver_line}")
+        endif()
+    endif()
+
     if(NOT TARGET FFTW3::FFTW3)
         add_library(FFTW3::FFTW3 UNKNOWN IMPORTED)
         set_target_properties(FFTW3::FFTW3 PROPERTIES

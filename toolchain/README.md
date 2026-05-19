@@ -1,6 +1,6 @@
 # ABACUS Toolchain (for LTS)
 
-[![Version](https://img.shields.io/badge/version-2025.3-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
+[![Version](https://img.shields.io/badge/version-2026.1-blue.svg)](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 [![License](https://img.shields.io/badge/license-GPL--compatible-green.svg)](#license)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)]()
 
@@ -57,8 +57,9 @@ For new users, start with one of these pre-configured toolchains:
 # GNU toolchain (GCC + OpenMPI + OpenBLAS)
 ./toolchain_gnu.sh
 
-# Intel toolchain (Intel compilers + Intel MPI + MKL)
-./toolchain_intel.sh
+# Intel toolchain
+./toolchain_gcc-mkl.sh # GCC + OpenMPI + MKL
+./toolchain_intel.sh # Intel compilers + Intel MPI + MKL
 
 # AMD toolchain options
 ./toolchain_gcc-aocl.sh    # GCC + AMD AOCL
@@ -138,10 +139,21 @@ For air-gapped systems or unreliable internet:
 # 1. Create build directory and download packages
 mkdir build
 # Download required packages to build/ directory with proper naming
-# e.g., fftw-3.3.10.tar.gz, openmpi-5.0.8.tar.bz2
+# e.g., fftw-3.3.11.tar.gz, openmpi-5.0.10.tar.bz2
 
 # 2. Run toolchain (will detect local packages)
 ./toolchain_gnu.sh
+```
+
+The downloading process can be facilitated via `./toolchain_gnu.sh --pack-run`.
+
+Also, for users in China, we provide a Gitee mirror repository with pre-downloaded packages:
+```bash
+# Clone the Gitee repository in toolchain directory
+git clone https://gitee.com/jamesmisaka/abacus_toolchain_build.git
+# Move packages to build directory
+mv abacus_toolchain_build/* build/
+# Then run toolchain normally
 ```
 
 ### Hybrid Installation
@@ -177,20 +189,20 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | CMake | 3.31.7 / 3.30.5 | Build system | BSD-3-Clause | Install |
 | GCC | 13.2.0 / 11.4.0 | C/C++ compiler | GPL-3.0-or-later WITH GCC-exception-3.1 | Install |
 | **MPI Libraries** |||||
-| OpenMPI | 5.0.8 / 4.1.6 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
-| MPICH | 4.3.1 / 4.1.0 | Alternative MPI | mpich2 (BSD-like) | Alternative |
+| OpenMPI | 5.0.10 / 4.1.8 | MPI implementation | BSD-3-Clause-Open-MPI | Install |
+| MPICH | 5.0.1 / 4.3.2 | Alternative MPI | mpich2 (BSD-like) | Alternative |
 | **Math Libraries** |||||
-| OpenBLAS | 0.3.30 / 0.3.27 | Linear algebra | BSD-3-Clause | Install |
-| ScaLAPACK | 2.2.2 / 2.2.1 | Parallel linear algebra | BSD-3-Clause | Install |
+| OpenBLAS | 0.3.33 / 0.3.30 | Linear algebra | BSD-3-Clause | Install |
+| ScaLAPACK | 2.2.3 / 2.2.1 | Parallel linear algebra | BSD-3-Clause | Install |
 | **Scientific Libraries** |||||
-| FFTW | 3.3.10 / 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
+| FFTW | 3.3.11 / 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
 | LibXC | 7.0.0 / 6.2.2 | Exchange-correlation | MPL-2.0 | Install |
-| ELPA | 2025.06.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
+| ELPA | 2026.02.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
 | **Advanced Features** |||||
-| Cereal | master | C++ Serialization | BSD | Install |
-| RapidJSON | master | JSON parsing | MIT | Install |
-| LibRI | master | EXX calculations | GPL-3.0 | Install |
-| LibComm | master | EXX calculations | GPL-3.0 | Install |
+| Cereal | pinned commit | C++ Serialization | BSD | Install |
+| RapidJSON | pinned commit | JSON parsing | MIT | Install |
+| LibRI | pinned commit | EXX calculations | GPL-3.0 | Install |
+| LibComm | pinned commit | EXX calculations | GPL-3.0 | Install |
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |
 | LibNPY | 1.0.1 / 1.0.1 | NumPy I/O | MIT | Optional |
 | NEP | main | Neuroevolution potential | MIT | Not Supported |
@@ -225,11 +237,11 @@ One can also manually edit the `toolchain_gnu.sh` for selecting specific version
 # Refer to scripts/package_versions.sh for specific version numbers
 
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
-OPENBLAS_VERSION="main"     # main=0.3.30, alt=0.3.27
-ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
+OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
+OPENBLAS_VERSION="main"     # main=0.3.33, alt=0.3.30
+ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
-SCALAPACK_VERSION="main"    # main=2.2.2, alt=2.2.1
+SCALAPACK_VERSION="main"    # main=2.2.3, alt=2.2.1
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 ```
@@ -343,10 +355,6 @@ Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/i
 ```
 
 Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI are not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
-
-#### Gcc-MKL Issues
-
-You cannot use gcc as compiler while using MKL as math library for compile ABACUS, there will be lots of error in the lask linking step. See [#3198](https://github.com/deepmodeling/abacus-develop/issues/3198)
 
 #### AMD AOCC-AOCL problem
 
@@ -472,19 +480,6 @@ NPROCS_OVERWRITE=4 ./toolchain_gnu.sh --with-gcc --with-openmpi
 - **CI/CD environments**: Match container resource limits
 - **Debugging**: Use single-core compilation for clearer error messages
 
-### Legacy Script Options
-
-The deprecated `install_abacus_toolchain.sh` supports additional options:
-
-| Option | Description | Availability |
-|--------|-------------|--------------|
-| `--dry-run` | Test configuration without installation | ✅ New & Legacy |
-| `--pack-run` | Download packages without building | ✅ New & Legacy |
-| `--no-check-certificate` | Skip SSL certificate verification | ⚠️ Legacy only (use `DOWNLOAD_CERT_POLICY=skip`) |
-| `-j N` | Limit parallel compilation processes | ⚠️ Legacy only (use `NPROCS_OVERWRITE=N`) |
-
-> **Migration Note**: The new toolchain system (`toolchain_*.sh` scripts) is recommended over the legacy `install_abacus_toolchain.sh`. Legacy options like `--no-check-certificate` and `-j N` are replaced by environment variables `DOWNLOAD_CERT_POLICY` and `NPROCS_OVERWRITE` respectively.
-
 ### Environment Management
 
 The toolchain generates several setup files:
@@ -514,7 +509,6 @@ scripts/
 | File | Purpose |
 |------|---------|
 | `install_abacus_toolchain_new.sh` | Main orchestration script (new version) |
-| `install_abacus_toolchain.sh` | Legacy main script (deprecated) |
 | `toolchain_*.sh` | Frontend scripts for specific toolchains |
 | `scripts/lib/config_manager.sh` | Configuration management |
 | `scripts/lib/package_manager.sh` | Package installation logic |
@@ -522,7 +516,7 @@ scripts/
 | `scripts/common_vars.sh` | Shared variables and defaults |
 | `scripts/tool_kit.sh` | Utility functions and macros |
 | `scripts/parse_if.py` | Parser for IF_XYZ constructs |
-| `checksums.sha256` | Pre-calculated SHA256 checksums for packages |
+| `install/<pkg>/install_successful` | Per-package install lock/checksum file generated by `write_checksums` |
 
 ### Script Structure Details
 

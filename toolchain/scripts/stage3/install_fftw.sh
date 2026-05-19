@@ -45,16 +45,12 @@ case "$with_fftw" in
         require_env MPI_LIBS
         echo "==================== Installing FFTW ===================="
         pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         if verify_checksums "${install_lock_file}"; then
             echo "fftw-${fftw_ver} is already installed, skipping it."
         else
-            if [ -f ${fftw_pkg} ]; then
-                echo "${fftw_pkg} is found"
-            else
-                url="http://www.fftw.org/${fftw_pkg}"
-                download_pkg_from_url "${fftw_sha256}" "${fftw_pkg}" "${url}"
-            fi
+            url="http://www.fftw.org/${fftw_pkg}"
+            retrieve_package "${fftw_sha256}" "${fftw_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -128,18 +124,12 @@ if [ "$with_fftw" != "__DONTUSE__" ]; then
     FFTW_LIBS+="-lfftw3 -lfftw3_omp"
     if [ "$with_fftw" != "__SYSTEM__" ]; then
        cat << EOF > "${BUILDDIR}/setup_fftw"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include":\${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     fi
     # we may also want to cover FFT_SG
@@ -156,7 +146,7 @@ export CP_LIBS="${FFTW_LIBS} \${CP_LIBS}"
 export FFTW_ROOT=${FFTW_ROOT:-${pkg_install_dir}}
 export FFTW3_ROOT=${pkg_install_dir}
 EOF
-    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_fftw" $SETUPFILE
 fi
 cd "${ROOTDIR}"
 
