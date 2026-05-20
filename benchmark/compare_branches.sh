@@ -9,7 +9,7 @@
 
 set -e
 
-BASE_BRANCH="${1:-master}"
+BASE_BRANCH="${1:-feat/sq_ppcg}"
 TARGET_BRANCH="${2:-HEAD}"
 QUICK=""
 if [[ "$3" == "--quick" ]] || [[ "$1" == "--quick" ]]; then
