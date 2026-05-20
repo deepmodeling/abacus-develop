@@ -1,3 +1,5 @@
+remove_definitions(-D__CUDA)
+
 if(ENABLE_LCAO)
 
 AddTest(

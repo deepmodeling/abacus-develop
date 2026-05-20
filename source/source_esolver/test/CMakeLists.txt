@@ -1,5 +1,6 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
+remove_definitions(-D__CUDA)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 

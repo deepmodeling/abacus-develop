@@ -1,5 +1,6 @@
 remove_definitions(-D__LCAO)
 remove_definitions(-D__MLALGO)
+remove_definitions(-D__CUDA)
 
 AddTest(
     TARGET MODULE_PW_Hamilt_Kernels_UTs
