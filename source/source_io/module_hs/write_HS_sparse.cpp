@@ -444,9 +444,10 @@ void ModuleIO::save_sparse(
             } else {
                 ofs.open(sss.str().c_str(), std::ios::binary);
             }
-            ofs.write(reinterpret_cast<char*>(0), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
+            int step = std::max(istep, 0);
+            ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
         } else {
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
