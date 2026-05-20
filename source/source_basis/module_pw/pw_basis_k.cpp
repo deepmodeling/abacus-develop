@@ -157,7 +157,6 @@ void PW_Basis_K::setupIndGk()
         }
         ModuleBase::CHECK_WARNING_QUIT((ng == 0),
                                        "pw_basis_k.cpp",
-                                       PARAM.inp.calculation,
                                        no_pw_message);
         if (this->npwk_max < ng)
         {
