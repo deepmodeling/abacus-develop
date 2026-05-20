@@ -34,6 +34,8 @@ class DiagoPPCG
     int n_band_l = 0;
     int n_basis = 0;
     int n_dim = 0;
+    int n_extra = 0;
+    int n_work = 0;
 
     const Real* precondition = nullptr;
 
@@ -49,6 +51,22 @@ class DiagoPPCG
     std::vector<Real> eigen;
     std::vector<Real> err;
 
+    std::vector<bool> is_locked;
+    std::vector<int> converge_count;
+
+    std::vector<int> block_sizes;
+
+  public:
+    void set_block_sizes(const std::vector<int>& sizes)
+    {
+        this->block_sizes = sizes;
+    }
+    void set_n_extra(const int n)
+    {
+        this->n_extra = n;
+    }
+
+  private:
     T inner_product(const T* lhs, const T* rhs) const;
     Real vector_norm(const T* vec) const;
     void scale_vector(T* vec, const Real alpha) const;
@@ -59,12 +77,15 @@ class DiagoPPCG
     bool test_error(const std::vector<double>& ethr_band) const;
     void calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, std::vector<T>& hpsi_out) const;
     void modified_gram_schmidt(T* psi_in, std::vector<T>& hpsi_in) const;
+    void orth_cholesky(T* psi_in, std::vector<T>& hpsi_in);
+    bool check_orthonormality(T* psi_in) const;
     void rotate_block(T* block, const std::vector<T>& coeff, std::vector<T>& workspace) const;
     void rayleigh_ritz(T* psi_in, std::vector<T>& hpsi_in);
     void calc_preconditioned_residual(T* psi_in);
     void project_to_orthogonal_complement(T* psi_in, std::vector<T>& block) const;
     bool solve_small_problem(const int active_dim, T* hsmall, T* ssmall, T* coeff, Real* eval) const;
     void update_vectors_from_ppcg_subspace(T* psi_in);
+    void update_vectors_blocked(T* psi_in);
 };
 
 } // namespace hsolver
