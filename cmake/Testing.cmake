@@ -66,7 +66,8 @@ if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
   include(CTest)
   enable_testing()
-  find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
+  # Force FetchContent to avoid system/conda GTest version conflicts
+  set(GTest_FOUND FALSE)
   if(NOT ${GTest_FOUND})
     include(FetchContent)
     FetchContent_Declare(

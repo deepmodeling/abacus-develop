@@ -169,7 +169,7 @@ LambdaUpdateResult LinearResponseUpdate::update_lambda(
     if (static_cast<int>(Mi_history_.size()) > 5)
     {
         Mi_history_.erase(Mi_history_.begin());
-        lambda_history_.erase(Mi_history_.begin());
+        lambda_history_.erase(lambda_history_.begin());
     }
 
     // Compute result

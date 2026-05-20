@@ -33,8 +33,8 @@
  * And set_strategy_type()/set_strategy_params() need to be called from
  * init_sc() or the ESolver layer.
  */
-
 namespace spinconstrain
+{
 
 /**
  * @brief Result struct for lambda update operations.
