@@ -7,6 +7,7 @@
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/spar_st.h"
 #include "write_HS_sparse.h"
+#include "source_io/module_output/sparse_matrix.h"
 
 namespace {
 // Helper: Convert sparse map to HContainer
