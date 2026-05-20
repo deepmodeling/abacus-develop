@@ -9,7 +9,7 @@
 #include "source_io/module_output/output.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"

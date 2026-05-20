@@ -1,9 +1,5 @@
-//==========================================================
-// AUTHOR : mohan
-// DATE : 2008-11-18
-//==========================================================
 #include <cassert>
-#include "memory.h"
+#include "memory_recorder.h"
 #include "global_variable.h"
 #include "source_base/parallel_reduce.h"
 

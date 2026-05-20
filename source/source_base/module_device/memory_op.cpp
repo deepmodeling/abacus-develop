@@ -1,6 +1,6 @@
 #include "memory_op.h"
 
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/tool_threading.h"
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"

@@ -1,7 +1,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_common.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_nao/real_gaunt_table.h"

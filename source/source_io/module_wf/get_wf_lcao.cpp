@@ -3,7 +3,6 @@
 #include "source_base/module_external/blacs_connector.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_wf/write_wfc_pw.h"
-#include "source_base/memory.h"
 
 #include "source_lcao/module_gint/gint_env_gamma.h"
 #include "source_lcao/module_gint/gint_env_k.h"

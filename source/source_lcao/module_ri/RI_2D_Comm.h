@@ -32,10 +32,26 @@ using TAC = std::pair<TA, TC>;
 template <typename Tdata, typename Tmatrix>
 extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR(
     const UnitCell& ucell,
-	const K_Vectors& kv, 
-    const std::vector<const Tmatrix*>& mks_2D, 
-    const Parallel_2D& pv, 
-    const int nspin, 
+    const K_Vectors& kv,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin,
+    const bool spgsym = false);
+
+template <typename Tdata, typename Tmatrix>
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_gamma(
+    const UnitCell& ucell,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin);
+
+template <typename Tdata, typename Tmatrix>
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_k(
+    const UnitCell& ucell,
+    const K_Vectors& kv,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin,
     const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
