@@ -99,6 +99,15 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 
 ### XII. NSCF Mode (55, 60-64)
 
+**Note:** These test cases have been converted to use a **SCF+NSCF workflow**.
+The pre-converged charge density files have been removed. To run these tests:
+
+```bash
+# Use the workflow script (runs SCF first, then NSCF)
+cd tests/17_DS_DFTU/55_PW_DS_NSCF_S4_XY
+bash ../run_scf_nscf.sh <abacus_path> 4
+```
+
 | # | Test Case | Description |
 |---|------|------|
 | 55 | PW_DS_NSCF_S4_XY | Verify DeltaSpin functionality in non-self-consistent (nscf) calculation mode, ensures lambda constraint is applied correctly without charge update |
@@ -107,6 +116,12 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 | 62 | LCAO_DFTU_NSCF_Band_XY | Verify LCAO DFT+U (without DeltaSpin) in NSCF band structure calculation; note: runs as `calculation = scf` with `scf_nmax = 1` using pre-converged charge density |
 | 63 | LCAO_DFTU_DS_NSCF_Band_XY | Verify LCAO DFT+U+DeltaSpin in NSCF band structure calculation, tests band output with spin constraints |
 | 64 | PW_DFTU_NSCF_Band_XY | Verify DFT+U (without DeltaSpin) in NSCF band structure calculation, tests band output with Hubbard U correction |
+
+**SCF+NSCF Workflow:**
+1. `scf/INPUT` — SCF input (calculation=scf, init_chg=atomic, out_chg=1)
+2. `scf/STRU`, `scf/KPT` — SCF structure and k-points
+3. `run_scf_nscf.sh` — Script that runs SCF, copies charge density, then runs NSCF
+4. CI tests are **disabled** for these cases (see CASES_CPU.txt)
 
 ### XIII. sc_direction_only Constraint (56-59)
 
@@ -149,13 +164,21 @@ The following test cases are disabled in `CASES_CPU.txt` (commented out with `#`
 | 44 | PW_DFTU_DS_S2_Thr10_Z | Convergence / numerical stability |
 | 58 | LCAO_DS_S4_DirectionOnly_XY | Convergence / numerical stability |
 | 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Convergence / numerical stability |
-| 62 | LCAO_DFTU_NSCF_Band_XY | Convergence / numerical stability; genelpa eigenvalue inconsistency across thread counts (scalapack_gvx consistent) |
-| 63 | LCAO_DFTU_DS_NSCF_Band_XY | Convergence / numerical stability |
+| 62 | LCAO_DFTU_NSCF_Band_XY | Convergence / numerical stability; genelpa eigenvalue inconsistency across thread counts (scalapack_gvx consistent); **also disabled for SCF+NSCF workflow conversion** |
+| 63 | LCAO_DFTU_DS_NSCF_Band_XY | Convergence / numerical stability; **also disabled for SCF+NSCF workflow conversion** |
+| 55 | PW_DS_NSCF_S4_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
+| 60 | PW_DFTU_DS_NSCF_Band_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
+| 61 | LCAO_DS_NSCF_S4_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
+| 64 | PW_DFTU_NSCF_Band_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
 
 ## Test Condition Notes
 
 - 09 (PW DFT+U + noncollinear): Only supports **2-process MPI** execution, `result.ref` reference files provided
 - The following test cases set `kpar=2` in INPUT and require at least **2 MPI processes** to run: 11, 12, 14, 15, 16, 18, 19, 21, 37, 39, 41, 43, 45
 - 62 (LCAO_DFTU_NSCF_Band_XY): Single-thread and multi-thread results are inconsistent; investigation shows HR, HK, and SK are consistent across threads, but eigenvalues from genelpa differ; switching to scalapack_gvx produces consistent results across thread counts. Note: this test is named "NSCF" but actually runs with `calculation = scf` (`scf_nmax = 1`), using pre-shipped charge density and onsite.dm files as initial guess
-- All NSCF tests (55, 60, 61, 63, 64) and test 62 ship pre-converged `autotest-CHARGE-DENSITY.restart` files; DFT+U NSCF tests (60, 63, 64) and test 62 additionally ship pre-converged `onsite.dm` files. These files are self-contained in each test directory — no runtime dependency on other tests
+- All NSCF tests (55, 60, 61, 62, 63, 64) have been **converted to SCF+NSCF workflow**:
+  - Pre-converged `autotest-CHARGE-DENSITY.restart` and `onsite.dm` files have been removed
+  - Each test directory contains a `scf/` subdirectory with SCF input files
+  - Run with: `bash ../run_scf_nscf.sh <abacus_path> [mpi_np]`
+  - These tests are **disabled in CI** (commented out in CASES_CPU.txt)
 - All LCAO basis tests use `ks_solver = genelpa`. The genelpa eigenvalue inconsistency across thread counts observed in test 62 may potentially affect other LCAO tests as well

@@ -46,13 +46,15 @@
 50_FeO_O_first_Fe_second
 51_FeO_Fe_first_O_second
 # NSCF (non-self-consistent) tests
-# Note: DFT+U NSCF requires both charge density and onsite.dm files from prior SCF
-55_PW_DS_NSCF_S4_XY
-60_PW_DFTU_DS_NSCF_Band_XY
-61_LCAO_DS_NSCF_S4_XY
-# 62_LCAO_DFTU_NSCF_Band_XY
-# 63_LCAO_DFTU_DS_NSCF_Band_XY
-64_PW_DFTU_NSCF_Band_XY
+# DISABLED: These tests now use SCF+NSCF workflow (run_scf_nscf.sh)
+# and require running SCF first to generate charge density files.
+# Run manually with: bash run_scf_nscf.sh <abacus_path> [mpi_np]
+# # 55_PW_DS_NSCF_S4_XY
+# # 60_PW_DFTU_DS_NSCF_Band_XY
+# # 61_LCAO_DS_NSCF_S4_XY
+# # 62_LCAO_DFTU_NSCF_Band_XY
+# # 63_LCAO_DFTU_DS_NSCF_Band_XY
+# # 64_PW_DFTU_NSCF_Band_XY
 # DirectionOnly mode (constrain direction, not magnitude)
 56_PW_DS_S4_DirectionOnly_XY
 57_PW_DFTU_DS_S4_DirectionOnly_XY
