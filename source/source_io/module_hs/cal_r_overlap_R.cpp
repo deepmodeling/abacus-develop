@@ -595,7 +595,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
 }
 
 
-void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
+void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const bool& reduce)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR");
@@ -631,10 +631,14 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
     std::stringstream tem1;
     tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
+    if (!reduce && GlobalV::NPROC > 1)
+    {
+        tem1 << "." << GlobalV::DRANK;
+    }
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -754,26 +758,32 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
             }
         }
 
-        Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
+        if (reduce)
+        {
+            Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
+        }
 
         if (rR_nonzero_num[0] || rR_nonzero_num[1] || rR_nonzero_num[2])
         {
             output_R_number++;
 
-            if (binary)
+            if (!reduce || GlobalV::DRANK == 0)
             {
-                ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-            }
-            else
-            {
-                ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                if (binary)
+                {
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+                }
+                else
+                {
+                    ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                }
             }
 
             for (int direction = 0; direction < 3; ++direction)
             {
-                if (GlobalV::DRANK == 0)
+                if (!reduce || GlobalV::DRANK == 0)
                 {
                     if (binary)
                     {
@@ -791,7 +801,8 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
                                               psi_r_psi_sparse[direction],
                                               sparse_threshold,
                                               binary,
-                                              *(this->ParaV));
+                                              *(this->ParaV),
+                                              reduce);
                 }
                 else
                 {
@@ -801,7 +812,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         }
     }
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         std::ofstream out_r;
         std::stringstream ssr;
@@ -813,6 +824,10 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         else
         {
             ssr << PARAM.globalv.global_out_dir << "rr.csr";
+        }
+        if (!reduce && GlobalV::NPROC > 1)
+        {
+            ssr << "." << GlobalV::DRANK;
         }
 
         if (binary) // .dat
@@ -864,7 +879,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     return;
 }
 
-void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
+void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor, const bool& reduce)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR_other");
@@ -887,8 +902,12 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     {
         ssr << PARAM.globalv.global_out_dir << "rr.csr";
     }
+    if (!reduce && GlobalV::NPROC > 1)
+    {
+        ssr << "." << GlobalV::DRANK;
+    }
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -1030,22 +1049,28 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
             }
         }
 
-        Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
-
-        if (binary) // .dat
+        if (reduce)
         {
-            out_r.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
         }
-        else // .txt
+
+        if (!reduce || GlobalV::DRANK == 0)
         {
-            out_r << dRx << " " << dRy << " " << dRz << std::endl;
+            if (binary) // .dat
+            {
+                out_r.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                out_r.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                out_r.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            }
+            else // .txt
+            {
+                out_r << dRx << " " << dRy << " " << dRz << std::endl;
+            }
         }
 
         for (int direction = 0; direction < 3; ++direction)
         {
-            if (GlobalV::DRANK == 0)
+            if (!reduce || GlobalV::DRANK == 0)
             {
                 if (binary)
                 {
@@ -1059,7 +1084,7 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
             if (rR_nonzero_num[direction])
             {
-                ModuleIO::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
+                ModuleIO::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV), reduce);
             }
             else
             {
@@ -1068,7 +1093,7 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
         }
     }
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         out_r.close();
     }

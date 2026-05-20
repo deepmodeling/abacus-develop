@@ -2,6 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "source_base/formatter.h"
 namespace ModuleIO
 {
 void ReadInput::item_output()
@@ -504,6 +505,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
         item.description = "Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md."
+                          "\n0: disabled\n1: single-file text CSR format\n2: single-file binary CSR format\n3: multi-file CSR text format\n4: multi-file binary CSR format"
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.";
         item.default_value = "False [8]";
         item.unit = "Ry";
@@ -511,7 +513,18 @@ Also controled by out_freq_ion and out_app_flag.
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs2 needs at least 1 value");
-            para.input.out_mat_hs2[0] = assume_as_boolean(item.str_values[0]);
+            std::string val_str = FmtCore::lower(item.str_values[0]);
+            if (val_str == "true" || val_str == "yes" || val_str == "y" || val_str == "on" || val_str == "t") {
+                para.input.out_mat_hs2[0] = 1;
+            } else if (val_str == "false" || val_str == "no" || val_str == "n" || val_str == "off" || val_str == "f") {
+                para.input.out_mat_hs2[0] = 0;
+            } else {
+                try {
+                    para.input.out_mat_hs2[0] = std::stoi(item.str_values[0]);
+                } catch (...) {
+                    para.input.out_mat_hs2[0] = 0;
+                }
+            }
             para.input.out_mat_hs2[1] = 8;
             if (count >= 2) try { para.input.out_mat_hs2[1] = std::stoi(item.str_values[1]); }
             catch (const std::invalid_argument&) { /* do nothing */ }

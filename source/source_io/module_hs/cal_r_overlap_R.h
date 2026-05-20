@@ -56,8 +56,8 @@ class cal_r_overlap_R
       const ModuleBase::Vector3<double>& R2,
       const int& T2
     );
-    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep);
-    void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
+    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const bool& reduce = true);
+    void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor, const bool& reduce = true);
 
   private:
     void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);

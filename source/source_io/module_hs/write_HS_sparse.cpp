@@ -12,7 +12,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               LCAO_HS_Arrays& HS_Arrays,
                               const double& sparse_thr,
                               const bool& binary,
-                              const std::string& fileflag) {
+                              const std::string& fileflag,
+                              const bool& reduce) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
 
@@ -83,10 +84,12 @@ void ModuleIO::save_dH_sparse(const int& istep,
         count++;
     }
 
-    for (int ispin = 0; ispin < spin_loop; ++ispin) {
-        Parallel_Reduce::reduce_all(dHx_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_all(dHy_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_all(dHz_nonzero_num[ispin], total_R_num);
+    if (reduce) {
+        for (int ispin = 0; ispin < spin_loop; ++ispin) {
+            Parallel_Reduce::reduce_all(dHx_nonzero_num[ispin], total_R_num);
+            Parallel_Reduce::reduce_all(dHy_nonzero_num[ispin], total_R_num);
+            Parallel_Reduce::reduce_all(dHz_nonzero_num[ispin], total_R_num);
+        }
     }
 
 	if (PARAM.inp.nspin == 2) 
@@ -142,11 +145,18 @@ void ModuleIO::save_dH_sparse(const int& istep,
         sshz[0] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs1_nao.csr";
         sshz[1] << PARAM.globalv.global_out_dir << "d"<<fileflag<<"rzs2_nao.csr";
     }
+    if (!reduce && GlobalV::NPROC > 1) {
+        for (int ispin = 0; ispin < spin_loop; ++ispin) {
+            sshx[ispin] << "." << GlobalV::DRANK;
+            sshy[ispin] << "." << GlobalV::DRANK;
+            sshz[ispin] << "." << GlobalV::DRANK;
+        }
+    }
     std::ofstream g1x[2];
     std::ofstream g1y[2];
     std::ofstream g1z[2];
 
-	if (GlobalV::DRANK == 0) 
+	if (!reduce || GlobalV::DRANK == 0) 
 	{
 		if (binary) // binary format 
 		{
@@ -257,7 +267,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
         output_R_coor_ptr.insert(R_coor);
 
-        if (GlobalV::DRANK == 0) {
+        if (!reduce || GlobalV::DRANK == 0) {
             if (binary) {
                 for (int ispin = 0; ispin < spin_loop; ++ispin) {
                     g1x[ispin].write(reinterpret_cast<char*>(&dRx),
@@ -309,13 +319,15 @@ void ModuleIO::save_dH_sparse(const int& istep,
                                     dHRx_sparse_ptr[ispin][R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 } else {
                     output_single_R(g1x[ispin],
                                     dHRx_soc_sparse_ptr[R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 }
             }
             if (dHy_nonzero_num[ispin][count] > 0) {
@@ -324,13 +336,15 @@ void ModuleIO::save_dH_sparse(const int& istep,
                                     dHRy_sparse_ptr[ispin][R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 } else {
                     output_single_R(g1y[ispin],
                                     dHRy_soc_sparse_ptr[R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 }
             }
             if (dHz_nonzero_num[ispin][count] > 0) {
@@ -339,13 +353,15 @@ void ModuleIO::save_dH_sparse(const int& istep,
                                     dHRz_sparse_ptr[ispin][R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 } else {
                     output_single_R(g1z[ispin],
                                     dHRz_soc_sparse_ptr[R_coor],
                                     sparse_thr,
                                     binary,
-                                    pv);
+                                    pv,
+                                    reduce);
                 }
             }
         }
@@ -353,7 +369,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
         count++;
     }
 
-    if (GlobalV::DRANK == 0) {
+    if (!reduce || GlobalV::DRANK == 0) {
         for (int ispin = 0; ispin < spin_loop; ++ispin) {
             g1x[ispin].close();
         }

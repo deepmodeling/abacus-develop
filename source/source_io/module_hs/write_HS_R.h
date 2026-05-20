@@ -14,6 +14,7 @@
 
 namespace ModuleIO
 {
+
 void output_dHR(const int& istep,
                 const ModuleBase::matrix& v_eff,
                 const UnitCell& ucell,
@@ -24,7 +25,8 @@ void output_dHR(const int& istep,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
                 const bool& binary = false,
-                const double& sparse_threshold = 1e-10);
+                const double& sparse_threshold = 1e-10,
+                const bool& reduce = true);
 
 void output_dSR(const int& istep,
                 const UnitCell& ucell,
@@ -35,7 +37,8 @@ void output_dSR(const int& istep,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
                 const bool& binary = false,
-                const double& sparse_thr = 1e-10);
+                const double& sparse_thr = 1e-10,
+                const bool& reduce = true);
 
 void output_TR(const int istep,
                const UnitCell& ucell,
@@ -46,7 +49,8 @@ void output_TR(const int istep,
                const LCAO_Orbitals& orb,
                const std::string& TR_filename = "trs1_nao.csr",
                const bool& binary = false,
-               const double& sparse_threshold = 1e-10);
+               const double& sparse_threshold = 1e-10,
+               const bool& reduce = true);
 
 template <typename TK>
 void output_SR(Parallel_Orbitals& pv,
@@ -54,7 +58,8 @@ void output_SR(Parallel_Orbitals& pv,
                hamilt::Hamilt<TK>* p_ham,
                const std::string& SR_filename = "srs1_nao.csr",
                const bool& binary = false,
-               const double& sparse_threshold = 1e-10);
+               const double& sparse_threshold = 1e-10,
+               const bool& reduce = true);
 
 /// Generate filename for HR/SR CSR output.
 std::string hsr_gen_fname(const std::string& prefix,
@@ -77,7 +82,8 @@ void write_hcontainer_csr(const std::string& fname,
                           const int istep,
                           const int ispin,
                           const int nspin,
-                          const std::string& label);
+                          const std::string& label,
+                          const bool& binary = false);
 
 /// Write H(R) and S(R) in CSR format, unified with write_dmr interface.
 template <typename TR>
@@ -103,7 +109,6 @@ void write_matrix_r(const std::string& matrix_label,
                     const int* iat2iwt,
                     const int nat,
                     const int istep);
-
 } // namespace ModuleIO
 
 #endif

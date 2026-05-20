@@ -41,6 +41,7 @@ hamilt::HContainer<T>* sparse_map_to_hcontainer(
 // If the absolute value of the matrix element is less than or equal to the
 // 'sparse_thr', it will be ignored.
 
+
 void ModuleIO::output_dSR(const int& istep,
                           const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
@@ -50,7 +51,8 @@ void ModuleIO::output_dSR(const int& istep,
                           const LCAO_Orbitals& orb,
                           const K_Vectors& kv,
                           const bool& binary,
-                          const double& sparse_thr)
+                          const double& sparse_thr,
+                          const bool& reduce)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
@@ -58,7 +60,7 @@ void ModuleIO::output_dSR(const int& istep,
     sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
 
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s");
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s", reduce);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -76,7 +78,8 @@ void ModuleIO::output_dHR(const int& istep,
                           const LCAO_Orbitals& orb,
                           const K_Vectors& kv,
                           const bool& binary,
-                          const double& sparse_thr)
+                          const double& sparse_thr,
+                          const bool& reduce)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::start("ModuleIO", "output_dHR");
@@ -104,7 +107,7 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "h", reduce);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -118,7 +121,8 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          hamilt::Hamilt<TK>* p_ham,
                          const std::string& SR_filename,
                          const bool& binary,
-                         const double& sparse_thr)
+                         const double& sparse_thr,
+                         const bool& reduce)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
@@ -153,7 +157,8 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                               SR_filename,
                               pv,
                               "S",
-                              istep);
+                              istep,
+                              reduce);
     }
     else
     {
@@ -164,7 +169,8 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                               SR_filename,
                               pv,
                               "S",
-                              istep);
+                              istep,
+                              reduce);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -182,7 +188,8 @@ void ModuleIO::output_TR(const int istep,
                          const LCAO_Orbitals& orb,
                          const std::string& TR_filename,
                          const bool& binary,
-                         const double& sparse_thr)
+                         const double& sparse_thr,
+                         const bool& reduce)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::start("ModuleIO", "output_TR");
@@ -214,7 +221,8 @@ void ModuleIO::output_TR(const int istep,
                           sst.str().c_str(),
                           pv,
                           "T",
-                          istep);
+                          istep,
+                          reduce);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 
@@ -222,18 +230,21 @@ void ModuleIO::output_TR(const int istep,
     return;
 }
 
+
 template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const Grid_Driver& grid,
                                           hamilt::Hamilt<double>* p_ham,
                                           const std::string& SR_filename,
                                           const bool& binary,
-                                          const double& sparse_thr);
+                                          const double& sparse_thr,
+                                          const bool& reduce);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,
                                                         const bool& binary,
-                                                        const double& sparse_thr);
+                                                        const double& sparse_thr,
+                                                        const bool& reduce);
 
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
@@ -276,17 +287,20 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const int istep,
                                      const int ispin,
                                      const int nspin,
-                                     const std::string& label)
+                                     const std::string& label,
+                                     const bool& binary)
 {
     std::ofstream ofs;
-    if (istep <= 0)
+    std::ios::openmode mode = std::ios::out;
+    if (istep > 0)
     {
-        ofs.open(fname);
+        mode |= std::ios::app;
     }
-    else
+    if (binary)
     {
-        ofs.open(fname, std::ios::app);
+        mode |= std::ios::binary;
     }
+    ofs.open(fname, mode);
 
     ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;
     ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
@@ -300,8 +314,94 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     ofs << std::endl;
 
     const double sparse_threshold = 1e-10;
-    hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
-    out.write();
+    if (!binary)
+    {
+        hamilt::Output_HContainer<TR> out(mat_serial, ofs, sparse_threshold, precision);
+        out.write();
+    }
+    else
+    {
+        int size_for_loop_R = mat_serial->size_R_loop();
+        int rx = 0;
+        int ry = 0;
+        int rz = 0;
+        int R_range[2] = {0, 0};
+        
+        for (int iR = 0; iR < size_for_loop_R; iR++)
+        {
+            mat_serial->loop_R(iR, rx, ry, rz);
+            int max_R = std::max({rx, ry, rz});
+            int min_R = std::min({rx, ry, rz});
+            if (max_R > R_range[1]) R_range[1] = max_R;
+            if (min_R < R_range[0]) R_range[0] = min_R;
+        }
+
+        for (int ix = R_range[0]; ix <= R_range[1]; ix++)
+        {
+            for (int iy = R_range[0]; iy <= R_range[1]; iy++)
+            {
+                for (int iz = R_range[0]; iz <= R_range[1]; iz++)
+                {
+                    if (mat_serial->find_R(ix, iy, iz) != -1)
+                    {
+                        mat_serial->fix_R(ix, iy, iz);
+                        ModuleIO::SparseMatrix<TR> sparse_matrix(mat_serial->get_nbasis(), mat_serial->get_nbasis());
+                        sparse_matrix.setSparseThreshold(sparse_threshold);
+
+                        for (int iap = 0; iap < mat_serial->size_atom_pairs(); ++iap)
+                        {
+                            auto atom_pair = mat_serial->get_atom_pair(iap);
+                            auto tmp_matrix_info = atom_pair.get_matrix_values();
+                            int* tmp_index = std::get<0>(tmp_matrix_info).data();
+                            TR* tmp_data = std::get<1>(tmp_matrix_info);
+                            for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
+                            {
+                                for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
+                                {
+                                    sparse_matrix.insert(irow, icol, *tmp_data);
+                                    tmp_data++;
+                                }
+                            }
+                        }
+
+                        ofs.write(reinterpret_cast<const char*>(&ix), sizeof(int));
+                        ofs.write(reinterpret_cast<const char*>(&iy), sizeof(int));
+                        ofs.write(reinterpret_cast<const char*>(&iz), sizeof(int));
+                        int nnz = sparse_matrix.getNNZ();
+                        ofs.write(reinterpret_cast<const char*>(&nnz), sizeof(int));
+
+                        std::vector<int> col_indices;
+                        std::vector<TR> values;
+                        std::vector<long long> indptr(mat_serial->get_nbasis() + 1, 0);
+
+                        for (const auto& elem : sparse_matrix.getElements())
+                        {
+                            int r = elem.first.first;
+                            int c = elem.first.second;
+                            TR val = elem.second;
+                            values.push_back(val);
+                            col_indices.push_back(c);
+                            indptr[r + 1]++;
+                        }
+
+                        for (int i = 0; i < mat_serial->get_nbasis(); ++i)
+                        {
+                            indptr[i + 1] += indptr[i];
+                        }
+
+                        if (nnz != 0)
+                        {
+                            ofs.write(reinterpret_cast<const char*>(values.data()), values.size() * sizeof(TR));
+                            ofs.write(reinterpret_cast<const char*>(col_indices.data()), col_indices.size() * sizeof(int));
+                        }
+                        ofs.write(reinterpret_cast<const char*>(indptr.data()), indptr.size() * sizeof(long long));
+
+                        mat_serial->unfix_R();
+                    }
+                }
+            }
+        }
+    }
     ofs.close();
 }
 
@@ -319,27 +419,44 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
     const int nspin = hr_vec.size();
     assert(nspin > 0);
 
+    const int format = PARAM.inp.out_mat_hs2[0];
+    const bool reduce = (format != 3 && format != 4);
+    const bool binary = (format == 2 || format == 4);
+
     // Output HR (one file per spin)
     for (int ispin = 0; ispin < nspin; ispin++)
     {
         const int nbasis = hr_vec[ispin]->get_nbasis();
 
+        if (reduce)
+        {
 #ifdef __MPI
-        Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
-        serialV.set_serial(nbasis, nbasis);
-        serialV.set_atomic_trace(iat2iwt, nat, nbasis);
-        hamilt::HContainer<TR> hr_serial(&serialV);
-        hamilt::gatherParallels(*hr_vec[ispin], &hr_serial, 0);
+            Parallel_Orbitals serialV;
+            serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+            serialV.set_serial(nbasis, nbasis);
+            serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+            hamilt::HContainer<TR> hr_serial(&serialV);
+            hamilt::gatherParallels(*hr_vec[ispin], &hr_serial, 0);
 #else
-        hamilt::HContainer<TR> hr_serial(*hr_vec[ispin]);
+            hamilt::HContainer<TR> hr_serial(*hr_vec[ispin]);
 #endif
 
-        if (GlobalV::MY_RANK == 0)
+            if (GlobalV::MY_RANK == 0)
+            {
+                std::string fname = PARAM.globalv.global_out_dir
+                                    + hsr_gen_fname("hrs", ispin, append, istep);
+                write_hcontainer_csr(fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", binary);
+            }
+        }
+        else
         {
             std::string fname = PARAM.globalv.global_out_dir
                                 + hsr_gen_fname("hrs", ispin, append, istep);
-            write_hcontainer_csr(fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H");
+            if (GlobalV::NPROC > 1)
+            {
+                fname += "." + std::to_string(GlobalV::MY_RANK);
+            }
+            write_hcontainer_csr(fname, ucell, precision, hr_vec[ispin], istep, ispin, nspin, "H", binary);
         }
     }
 
@@ -347,22 +464,35 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
     {
         const int nbasis = sr->get_nbasis();
 
+        if (reduce)
+        {
 #ifdef __MPI
-        Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
-        serialV.set_serial(nbasis, nbasis);
-        serialV.set_atomic_trace(iat2iwt, nat, nbasis);
-        hamilt::HContainer<TR> sr_serial(&serialV);
-        hamilt::gatherParallels(*sr, &sr_serial, 0);
+            Parallel_Orbitals serialV;
+            serialV.init(nbasis, nbasis, nbasis, paraV.comm());
+            serialV.set_serial(nbasis, nbasis);
+            serialV.set_atomic_trace(iat2iwt, nat, nbasis);
+            hamilt::HContainer<TR> sr_serial(&serialV);
+            hamilt::gatherParallels(*sr, &sr_serial, 0);
 #else
-        hamilt::HContainer<TR> sr_serial(*sr);
+            hamilt::HContainer<TR> sr_serial(*sr);
 #endif
 
-        if (GlobalV::MY_RANK == 0)
+            if (GlobalV::MY_RANK == 0)
+            {
+                std::string fname = PARAM.globalv.global_out_dir
+                                    + hsr_gen_fname("srs", 0, append, istep);
+                write_hcontainer_csr(fname, ucell, precision, &sr_serial, istep, 0, 1, "S", binary);
+            }
+        }
+        else
         {
             std::string fname = PARAM.globalv.global_out_dir
                                 + hsr_gen_fname("srs", 0, append, istep);
-            write_hcontainer_csr(fname, ucell, precision, &sr_serial, istep, 0, 1, "S");
+            if (GlobalV::NPROC > 1)
+            {
+                fname += "." + std::to_string(GlobalV::MY_RANK);
+            }
+            write_hcontainer_csr(fname, ucell, precision, const_cast<hamilt::HContainer<TR>*>(sr), istep, 0, 1, "S", binary);
         }
     }
 }
@@ -370,10 +500,10 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 // Explicit instantiations
 template void ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<double>*, const int, const int, const int, const std::string&);
+    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const bool&);
 template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&);
+    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const bool&);
 
 template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,

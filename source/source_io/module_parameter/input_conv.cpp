@@ -61,7 +61,7 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2[0] == 1)
+    if (PARAM.inp.out_mat_hs2[0] != 0)
     {
         TD_info::out_mat_R = true;
     } else {
