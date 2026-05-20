@@ -219,8 +219,8 @@ template<typename Real>
 void PhiOperatorGpu<Real>::phi_mul_phi(
     const Real* phi_d,
     const Real* phi_vldr3_d,
-    HContainer<Real>& hRGint,
-    Real* hr_d) const
+    HContainer<double>& hRGint,
+    double* hr_d) const
 {
     // ap_num means number of atom pairs
     int ap_num = 0;
@@ -285,7 +285,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     gemm_n_.copy_host_to_device_async(ap_num);
     gemm_k_.copy_host_to_device_async(ap_num);
     CHECK_CUDA(cudaEventRecord(event_, stream_));
-    
+
     gemm_tn_vbatch<Real>(max_m,
                     max_n,
                     max_k,
@@ -309,9 +309,9 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     const Real* dm_d,
     const HContainer<Real>& dm,
     const bool is_symm,
-    Real* phi_dm_d)
+    double* phi_dm_d)
 {
-    CHECK_CUDA(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(Real), stream_));
+    CHECK_CUDA(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(double), stream_));
     // ap_num means number of atom pairs
     int ap_num = 0;
     int max_m = mgrids_num_;
@@ -401,12 +401,12 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
 template<typename Real>
 void PhiOperatorGpu<Real>::phi_dot_phi(
     const Real* phi_i_d,
-    const Real* phi_j_d,
-    Real* rho_d) const
+    const double* phi_j_d,
+    double* rho_d) const
 {
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
-    phi_dot_phi_kernel<Real><<<grid_dim, threads_per_block, sizeof(Real) * 32, stream_>>>(
+    phi_dot_phi_kernel<Real, double><<<grid_dim, threads_per_block, sizeof(double) * 32, stream_>>>(
         phi_i_d,
         phi_j_d,
         mgrids_num_,

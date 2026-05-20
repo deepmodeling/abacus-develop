@@ -92,16 +92,19 @@ __global__ void phi_mul_vldr3_kernel(
     Real* __restrict__ result);
 
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
-// each block calculate the dot product of phi_i and phi_j of a meshgrid
-template<typename Real>
+// each block calculate the dot product of phi_i and phi_j of a meshgrid.
+// Inputs phi_i and phi_j can have different element types: in the rho path
+// phi_i is fp32 (Real) while phi_j (phi_dm) is fp64; in the tau path both are
+// fp64. The per-block reduction and atomicAdd to rho run in fp64 regardless.
+template<typename Tin_a, typename Tin_b>
 __global__ void phi_dot_phi_kernel(
-    const Real* __restrict__ phi_i,           // phi_i(ir,iwt)
-    const Real* __restrict__ phi_j,           // phi_j(ir,iwt)
+    const Tin_a* __restrict__ phi_i,          // phi_i(ir,iwt)
+    const Tin_b* __restrict__ phi_j,          // phi_j(ir,iwt)
     const int mgrids_per_bgrid,                 // the number of mgrids of each biggrid
     const int* __restrict__ mgrid_lidx,   // the idx of mgrid in local cell
     const int* __restrict__ bgrid_phi_len,     // the length of phi on a mgrid of a biggrid
     const int* __restrict__ bgrid_phi_start,   // the start idx in phi of each biggrid
-    Real* __restrict__ rho);                  // rho(ir)
+    double* __restrict__ rho);                // rho(ir)
 
 __global__ void phi_dot_dphi_kernel(
     const double* __restrict__ phi,

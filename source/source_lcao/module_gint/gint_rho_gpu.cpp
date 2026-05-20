@@ -5,8 +5,6 @@
 #include "kernel/phi_operator_gpu.h"
 #include "source_base/module_device/device_check.h"
 
-#include <algorithm>
-
 namespace ModuleGint
 {
 
@@ -40,13 +38,14 @@ void Gint_rho_gpu::cal_gint_impl_()
     // 2. Transfer dm from 2D parallel distribution to gint serial distribution
     dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec);
 
-    // 3. Transfer dm to GPU
+    // 3. Transfer dm to GPU. rho_d is always double — the kernel accumulates
+    //    in fp64 regardless of the input precision.
     std::vector<CudaMemWrapper<Real>> dm_gint_d_vec(nspin_);
-    std::vector<CudaMemWrapper<Real>> rho_d_vec(nspin_);
+    std::vector<CudaMemWrapper<double>> rho_d_vec(nspin_);
     for (int is = 0; is < nspin_; is++)
     {
         dm_gint_d_vec[is] = CudaMemWrapper<Real>(dm_gint_vec[is].get_nnr(), 0, false);
-        rho_d_vec[is] = CudaMemWrapper<Real>(gint_info_->get_local_mgrid_num(), 0, false);
+        rho_d_vec[is] = CudaMemWrapper<double>(gint_info_->get_local_mgrid_num(), 0, false);
         CHECK_CUDA(cudaMemcpy(dm_gint_d_vec[is].get_device_ptr(), dm_gint_vec[is].get_wrapper(),
             dm_gint_vec[is].get_nnr() * sizeof(Real), cudaMemcpyHostToDevice));
     }
@@ -61,7 +60,9 @@ void Gint_rho_gpu::cal_gint_impl_()
         CHECK_CUDA(cudaStreamCreate(&stream));
         PhiOperatorGpu<Real> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<Real> phi(BatchBigGrid::get_max_phi_len(), stream, false);
-        CudaMemWrapper<Real> phi_dm(BatchBigGrid::get_max_phi_len(), stream, false);
+        // phi_dm is always double: the gemm_nn_vbatch kernel accumulates fp32
+        // multiplies into a fp64 register, then atomicAdd's into phi_dm.
+        CudaMemWrapper<double> phi_dm(BatchBigGrid::get_max_phi_len(), stream, false);
         #pragma omp for schedule(dynamic)
         for (int i = 0; i < gint_info_->get_bgrid_batches_num(); ++i)
         {
@@ -83,17 +84,12 @@ void Gint_rho_gpu::cal_gint_impl_()
        CHECK_CUDA(cudaStreamDestroy(stream));
     }
 
-    // 5. Transfer rho back to CPU and convert to double if needed
+    // 5. Transfer rho back to CPU (already double — copy straight into rho_[is])
     const int local_mgrid_num = gint_info_->get_local_mgrid_num();
     for (int is = 0; is < nspin_; is++)
     {
-        std::vector<Real> rho_tmp(local_mgrid_num);
-        CHECK_CUDA(cudaMemcpy(rho_tmp.data(), rho_d_vec[is].get_device_ptr(),
-            local_mgrid_num * sizeof(Real), cudaMemcpyDeviceToHost));
-        for (int ir = 0; ir < local_mgrid_num; ++ir)
-        {
-            rho_[is][ir] = static_cast<double>(rho_tmp[ir]);
-        }
+        CHECK_CUDA(cudaMemcpy(rho_[is], rho_d_vec[is].get_device_ptr(),
+            local_mgrid_num * sizeof(double), cudaMemcpyDeviceToHost));
     }
 }
 

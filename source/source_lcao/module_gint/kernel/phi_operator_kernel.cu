@@ -388,30 +388,32 @@ template __global__ void phi_mul_vldr3_kernel<float>(
     const int*, const int*, const int*, float*);
 
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
-// each block calculate the dot product of phi_i and phi_j of a meshgrid
-template<typename Real>
+// each block calculate the dot product of phi_i and phi_j of a meshgrid.
+// The per-thread/warp/block reduction is in double regardless of input types
+// so that fp32 inputs are summed without catastrophic precision loss.
+template<typename Tin_a, typename Tin_b>
 __global__ void phi_dot_phi_kernel(
-    const Real* __restrict__ phi_i,
-    const Real* __restrict__ phi_j,
+    const Tin_a* __restrict__ phi_i,
+    const Tin_b* __restrict__ phi_j,
     const int mgrids_per_bgrid,
     const int* __restrict__ mgrid_lidx,
     const int* __restrict__ bgrid_phi_len,
     const int* __restrict__ bgrid_phi_start,
-    Real* __restrict__ rho)
+    double* __restrict__ rho)
 {
-    __shared__ Real s_data[32];    // the length of s_data equals the max warp num of a block
+    __shared__ double s_data[32];  // the length of s_data equals the max warp num of a block
     const int bgrid_id = blockIdx.y;
     const int mgrid_id = blockIdx.x;
     const int phi_len = bgrid_phi_len[bgrid_id];
     const int phi_start = bgrid_phi_start[bgrid_id] + mgrid_id * phi_len;
-    const Real* phi_i_mgrid = phi_i + phi_start;
-    const Real* phi_j_mgrid = phi_j + phi_start;
+    const Tin_a* phi_i_mgrid = phi_i + phi_start;
+    const Tin_b* phi_j_mgrid = phi_j + phi_start;
     const int batch_mgrid_id = bgrid_id * mgrids_per_bgrid + mgrid_id;
     const int mgrid_local_idx = mgrid_lidx[batch_mgrid_id];
     const int tid = threadIdx.x;
     const int warp_id = tid / 32;
     const int lane_id = tid % 32;
-    Real tmp_sum = Real(0.0);
+    double tmp_sum = 0.0;
 
     for (int i = tid; i < phi_len; i += blockDim.x)
     {
@@ -426,7 +428,7 @@ __global__ void phi_dot_phi_kernel(
     }
     __syncthreads();
 
-    tmp_sum = (tid < blockDim.x / 32) ? s_data[tid] : Real(0.0);
+    tmp_sum = (tid < blockDim.x / 32) ? s_data[tid] : 0.0;
     if(warp_id == 0)
     {
         tmp_sum = warpReduceSum(tmp_sum);
@@ -439,12 +441,12 @@ __global__ void phi_dot_phi_kernel(
 }
 
 // Explicit instantiations for phi_dot_phi_kernel
-template __global__ void phi_dot_phi_kernel<double>(
+template __global__ void phi_dot_phi_kernel<double, double>(
     const double*, const double*, const int,
     const int*, const int*, const int*, double*);
-template __global__ void phi_dot_phi_kernel<float>(
-    const float*, const float*, const int,
-    const int*, const int*, const int*, float*);
+template __global__ void phi_dot_phi_kernel<float, double>(
+    const float*, const double*, const int,
+    const int*, const int*, const int*, double*);
 
 __global__ void phi_dot_dphi_kernel(
     const double* __restrict__ phi,
