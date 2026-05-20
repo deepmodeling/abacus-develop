@@ -593,7 +593,7 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0] || para.inp.out_mat_dh[0]
+            if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0]
                  || para.inp.out_hr_npz || para.inp.out_hsr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
@@ -665,6 +665,256 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         sync_intvec(input.out_mat_dh, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_t");
+        item.annotation = "output kinetic energy dH/dR (dT/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the kinetic energy matrix dT/dR. The first value controls output (0/1), and optional subsequent values specify which atoms to compute derivatives for."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_t[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_t enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_t[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_t is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_t, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vl");
+        item.annotation = "output local pseudopotential dH/dR (dV^L/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the local pseudopotential matrix dV^L/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vnl");
+        item.annotation = "output nonlocal pseudopotential dH/dR (dV^NL/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the nonlocal pseudopotential matrix dV^NL/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vnl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vnl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vnl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vnl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vnl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vh");
+        item.annotation = "output Hartree dH/dR (dV^H/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the Hartree matrix dV^H/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vh[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vh enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vh[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vh is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vh, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vxc");
+        item.annotation = "output exchange-correlation dH/dR (dV^XC/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the XC matrix dV^XC/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vxc[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vxc enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vxc[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vxc is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vxc, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_t");
+        item.annotation = "output kinetic energy T(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the kinetic energy matrix T(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_t[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_t enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_t[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_t is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_t, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vnl");
+        item.annotation = "output nonlocal pseudopotential Vnl(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vnl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vnl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vnl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vnl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vnl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vl");
+        item.annotation = "output local pseudopotential Vl(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vh");
+        item.annotation = "output Hartree Vh(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the Hartree matrix Vh(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vh[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vh enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vh[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vh is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vh, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vxc");
+        item.annotation = "output exchange-correlation Vxc(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the XC matrix Vxc(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vxc[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vxc enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vxc[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vxc is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vxc, 2, 0);
         this->add_item(item);
     }
     {

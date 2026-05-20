@@ -75,6 +75,10 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 
+    void cal_dH(hamilt::HContainer<double>* dhR_x,
+                      hamilt::HContainer<double>* dhR_y,
+                      hamilt::HContainer<double>* dhR_z);
+
   private:
     const UnitCell* ucell = nullptr;
     std::vector<double> orb_cutoff_;

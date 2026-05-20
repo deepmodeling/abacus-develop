@@ -11,7 +11,12 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+<<<<<<< HEAD
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
+=======
+#include "source_io/module_dhs/write_dH.h"                    // use ModuleIO::write_dH_components()
+#include "source_io/module_hs/write_H_terms.h"         // use ModuleIO::write_h_*
+>>>>>>> 4a0c28784 (initial version of writing H and dH terms (except exx))
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
@@ -286,6 +291,62 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 p_ham_tk,
                                 &dftu);
 
+    //------------------------------------------------------------------
+    //! 7c) Output dH components (dT/dR, dV^NL/dR, dV^L/dR, dV^H/dR, dV^XC/dR)
+    //------------------------------------------------------------------
+    {
+        WriteDHParams dh_params;
+        dh_params.ucell = &ucell;
+        dh_params.gd = &gd;
+        dh_params.pv = &pv;
+        dh_params.two_center_bundle = &two_center_bundle;
+        dh_params.orb = &orb;
+        dh_params.kv = &kv;
+        dh_params.v_eff = &pelec->pot->get_eff_v();
+        dh_params.iat2iwt = ucell.get_iat2iwt();
+        dh_params.nat = ucell.nat;
+        dh_params.nspin = inp.nspin;
+        dh_params.istep = istep;
+        dh_params.gamma_only = gamma_only;
+        dh_params.append = out_app_flag;
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+        {
+            dh_params.dmR = dm->get_DMR_pointer(1);
+        }
+        ModuleIO::write_dH_components(dh_params);
+    }
+
+
+    //------------------------------------------------------------------
+    //! 7d) Output H components (T, Vnl, Vl, Vh, Vxc)
+    //------------------------------------------------------------------
+    {
+        if (inp.out_mat_h_t[0])
+        {
+            ModuleIO::write_h_t(ucell, gd, pv, two_center_bundle, orb, kv, nspin, istep, out_app_flag,
+                                ucell.get_iat2iwt(), ucell.nat);
+        }
+        if (inp.out_mat_h_vnl[0])
+        {
+            ModuleIO::write_h_vnl(ucell, gd, pv, two_center_bundle, orb, kv, nspin, istep, out_app_flag,
+                                  ucell.get_iat2iwt(), ucell.nat);
+        }
+        if (inp.out_mat_h_vl[0])
+        {
+            ModuleIO::write_h_vl(ucell, gd, pv, orb, pelec->pot, nspin, istep, out_app_flag,
+                                 ucell.get_iat2iwt(), ucell.nat, kv);
+        }
+        if (inp.out_mat_h_vh[0])
+        {
+            ModuleIO::write_h_vh(ucell, gd, pv, orb, pelec->charge, pw_rho, nspin, istep, out_app_flag,
+                                 ucell.get_iat2iwt(), ucell.nat, kv);
+        }
+        if (inp.out_mat_h_vxc[0])
+        {
+            ModuleIO::write_h_vxc(ucell, gd, pv, orb, pelec->charge, pw_rho->nrxx, nspin, istep,
+                                  out_app_flag, ucell.get_iat2iwt(), ucell.nat, kv);
+        }
+    }
     //------------------------------------------------------------------
     //! 8) Output kinetic matrix
     //------------------------------------------------------------------

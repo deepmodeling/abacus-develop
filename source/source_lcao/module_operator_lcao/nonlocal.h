@@ -60,6 +60,10 @@ class Nonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 
+    void cal_dH(hamilt::HContainer<double>* dhR_x,
+                      hamilt::HContainer<double>* dhR_y,
+                      hamilt::HContainer<double>* dhR_z);
+
     virtual void set_HR_fixed(void*) override;
 
   private:
