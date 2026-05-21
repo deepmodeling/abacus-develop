@@ -18,15 +18,46 @@ void PhiOperator::set_phi(T* phi) const
     }
 }
 
-// phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
-template<typename T>
-void PhiOperator::phi_mul_dm(
-    const T*const phi,                  // phi(ir,iwt)
-    const HContainer<T>& dm,            // dm(iwt_1,iwt_2)
-    const bool is_symm,
-    T*const phi_dm) const               // phi_dm(ir,iwt)
+// Helpers to dispatch a Tin-typed BLAS-GEMM target buffer:
+//  - For Tin=double, write the GEMM result directly into the caller's
+//    double* phi_dm (no scratch, no cast).
+//  - For Tin=float, allocate a fp32 scratch buffer and cast the result into
+//    phi_dm at the end. K of each individual GEMM is small (~atom nw) so
+//    accumulating in fp32 inside the scratch is fine.
+inline double* phi_mul_dm_scratch_(double* phi_dm, std::vector<double>& /*scratch*/, int /*size*/)
 {
-    ModuleBase::GlobalFunc::ZEROS(phi_dm, rows_ * cols_);
+    return phi_dm;
+}
+
+template<typename Tin>
+inline Tin* phi_mul_dm_scratch_(double* /*phi_dm*/, std::vector<Tin>& scratch, int size)
+{
+    scratch.assign(size, Tin(0));
+    return scratch.data();
+}
+
+inline void phi_mul_dm_finalize_(double* /*phi_dm*/, const std::vector<double>& /*scratch*/, int /*size*/) {}
+
+template<typename Tin>
+inline void phi_mul_dm_finalize_(double* phi_dm, const std::vector<Tin>& scratch, int size)
+{
+    for (int k = 0; k < size; ++k)
+    {
+        phi_dm[k] = static_cast<double>(scratch[k]);
+    }
+}
+
+// phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
+template<typename Tin>
+void PhiOperator::phi_mul_dm(
+    const Tin*const phi,                // phi(ir,iwt)
+    const HContainer<Tin>& dm,          // dm(iwt_1,iwt_2)
+    const bool is_symm,
+    double*const phi_dm) const          // phi_dm(ir,iwt)
+{
+    std::vector<Tin> scratch;
+    Tin* target = phi_mul_dm_scratch_(phi_dm, scratch, rows_ * cols_);
+    ModuleBase::GlobalFunc::ZEROS(target, rows_ * cols_);
 
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
@@ -36,14 +67,14 @@ void PhiOperator::phi_mul_dm(
         if(is_symm)
         {
             const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
-            constexpr T alpha = 1.0;
-            constexpr T beta = 1.0;
+            constexpr Tin alpha = 1.0;
+            constexpr Tin beta = 1.0;
             BlasConnector::symm_cm(
                 'L', 'U',
                 atoms_phi_len_[i], rows_,
                 alpha, dm_mat->get_pointer(), atoms_phi_len_[i],
                        &phi[0 * cols_ + atoms_startidx_[i]], cols_,
-                beta, &phi_dm[0 * cols_ + atoms_startidx_[i]], cols_);
+                beta, &target[0 * cols_ + atoms_startidx_[i]], cols_);
         }
 
         const int start = is_symm ? i + 1 : 0;
@@ -71,16 +102,18 @@ void PhiOperator::phi_mul_dm(
                 continue;
             }
 
-            const T alpha = is_symm ? 2.0 : 1.0;
-            constexpr T beta = 1.0;
+            const Tin alpha = is_symm ? 2.0 : 1.0;
+            constexpr Tin beta = 1.0;
             BlasConnector::gemm(
                 'N', 'N',
                 len, atoms_phi_len_[j], atoms_phi_len_[i],
                 alpha, &phi[start_idx * cols_ + atoms_startidx_[i]], cols_,
                        dm_mat->get_pointer(), atoms_phi_len_[j],
-                beta, &phi_dm[start_idx * cols_ + atoms_startidx_[j]], cols_);
+                beta, &target[start_idx * cols_ + atoms_startidx_[j]], cols_);
         }
     }
+
+    phi_mul_dm_finalize_(phi_dm, scratch, rows_ * cols_);
 }
 
 // result(ir) = phi(ir) * vl(ir)
@@ -104,15 +137,17 @@ void PhiOperator::phi_mul_vldr3(
 }
 
 // hr(iwt_i,iwt_j) += \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
-// this is a thread-safe function
-template<typename T>
+// this is a thread-safe function.
+// The per-biggrid GEMM accumulator tmp_hr stays in Tin (small K, no significant
+// precision loss); only the global add into HContainer<double> is widened.
+template<typename Tin>
 void PhiOperator::phi_mul_phi(
-    const T*const phi_i,                // phi_i(ir,iwt)
-    const T*const phi_j,                // phi_j(ir,iwt)
-    HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
+    const Tin*const phi_i,              // phi_i(ir,iwt)
+    const Tin*const phi_j,              // phi_j(ir,iwt)
+    HContainer<double>& hr,             // hr(iwt_i,iwt_j)
     const TriPart part) const
 {
-    std::vector<T> tmp_hr;
+    std::vector<Tin> tmp_hr;
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
@@ -158,7 +193,7 @@ void PhiOperator::phi_mul_phi(
             tmp_hr.resize(n_i * n_j);
             ModuleBase::GlobalFunc::ZEROS(tmp_hr.data(), n_i*n_j);
 
-            constexpr T alpha=1, beta=1;
+            constexpr Tin alpha=1, beta=1;
             BlasConnector::gemm(
                 'T', 'N', n_i, n_j, len,
 		        alpha, phi_i + start_idx * cols_ + atoms_startidx_[i], cols_,
@@ -171,18 +206,38 @@ void PhiOperator::phi_mul_phi(
     }
 }
 
+// Mixed-precision dotc wrapper. Accepts (double, double) or (double, float);
+// when y is fp32 it is upcast into the caller-provided fp64 scratch buffer
+// before dispatching to BlasConnector::dotc (which requires uniform types).
+// The buffer is grown on demand and meant to be reused across many calls.
+inline double dotc_mixed(int n, const double* x, const double* y,
+                         std::vector<double>& /*buf*/)
+{
+    return BlasConnector::dotc(n, x, 1, y, 1);
+}
+
+inline double dotc_mixed(int n, const double* x, const float* y,
+                         std::vector<double>& buf)
+{
+    if (static_cast<int>(buf.size()) < n) { buf.resize(n); }
+    for (int k = 0; k < n; ++k) { buf[k] = static_cast<double>(y[k]); }
+    return BlasConnector::dotc(n, x, 1, buf.data(), 1);
+}
+
 // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j^*(ir,iwt)
-template<typename Tin, typename Tout>
+// phi_j is always double (output of phi_mul_dm); phi_i may be fp32. dotc_mixed
+// keeps the inner product in fp64 in either case.
+template<typename Tin>
 void PhiOperator::phi_dot_phi(
     const Tin*const phi_i,         // phi_i(ir,iwt)
-    const Tin*const phi_j,         // phi_j(ir,iwt)
-    Tout*const rho) const          // rho(ir)
+    const double*const phi_j,      // phi_j(ir,iwt)
+    double*const rho) const        // rho(ir)
 {
-    constexpr int inc = 1;
+    std::vector<double> buf;
     for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
     {
-        rho[mgrid_lidx_[i]] += static_cast<Tout>(
-            BlasConnector::dotc(cols_, phi_j + i * cols_, inc, phi_i + i * cols_, inc));
+        rho[mgrid_lidx_[i]] += dotc_mixed(
+            cols_, phi_j + i * cols_, phi_i + i * cols_, buf);
     }
 }
 

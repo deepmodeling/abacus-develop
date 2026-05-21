@@ -48,12 +48,17 @@ class PhiOperator
         double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
     // phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
-    template<typename T>
+    // The phi_dm output is always double regardless of Tin: this keeps the
+    // downstream phi_dot_phi reading a uniform fp64 right-hand side. When
+    // Tin=float the GEMM still runs in fp32 (K is small ~10, so per-call
+    // accumulation in fp32 is fine); only the final write into phi_dm casts
+    // to double.
+    template<typename Tin>
     void phi_mul_dm(
-        const T*const phi,                  // phi(ir,iwt)
-        const HContainer<T>& dm,            // dm(iwt_1,iwt_2)
+        const Tin*const phi,                // phi(ir,iwt)
+        const HContainer<Tin>& dm,          // dm(iwt_1,iwt_2)
         const bool is_symm,
-        T*const phi_dm) const;              // phi_dm(ir,iwt)
+        double*const phi_dm) const;         // phi_dm(ir,iwt)
 
     // result(ir,iwt) = phi(ir,iwt) * vl(ir)
     template<typename T>
@@ -64,20 +69,25 @@ class PhiOperator
         T*const result) const;              // result(ir,iwt)
 
     // hr(iwt_i,iwt_j) = \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
-    // this is a thread-safe function
-    template<typename T>
+    // this is a thread-safe function.
+    // The accumulator hr is always double: when Tin=float we want fp32 multiplies
+    // but fp64 accumulation across many biggrids to avoid catastrophic precision loss.
+    template<typename Tin>
     void phi_mul_phi(
-        const T*const phi_i,                // phi_i(ir,iwt)
-        const T*const phi_j,                // phi_j(ir,iwt)
-        HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
+        const Tin*const phi_i,              // phi_i(ir,iwt)
+        const Tin*const phi_j,              // phi_j(ir,iwt)
+        HContainer<double>& hr,             // hr(iwt_i,iwt_j)
         const TriPart part) const;
 
     // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
-    template<typename Tin, typename Tout = Tin>
+    // phi_j is always double-typed (it is the output of phi_mul_dm, which now
+    // accumulates into a double buffer regardless of Tin). The inner dot
+    // product is accumulated in double too: fp32 phi_i + fp64 phi_j → fp64.
+    template<typename Tin>
     void phi_dot_phi(
         const Tin*const phi_i,              // phi_i(ir,iwt)
-        const Tin*const phi_j,              // phi_j(ir,iwt)
-        Tout*const rho) const;              // rho(ir)
+        const double*const phi_j,           // phi_j(ir,iwt)
+        double*const rho) const;            // rho(ir)
 
     void phi_dot_dphi(
         const double* phi,

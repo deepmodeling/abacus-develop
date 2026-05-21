@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <type_traits>
 
 #include "gint_common.h"
 #include "gint_vl.h"
@@ -30,12 +29,6 @@ void Gint_vl::cal_gint()
 // Private functions
 //========================
 
-template<typename Real>
-HContainer<Real> Gint_vl::init_hr_gint_() const
-{
-    return gint_info_->get_hr<Real>();
-}
-
 // Overloaded helpers (C++11-compatible alternative to if constexpr).
 // The double overload is preferred by overload resolution when Real=double;
 // the template overload handles all other types (e.g. float).
@@ -57,24 +50,13 @@ const Real* get_vr_eff_data_(const double* vr_eff, int local_mgrid_num,
     return vr_eff_buffer.data();
 }
 
-inline void finalize_hr_gint_(HContainer<double>& hr_gint, HContainer<double>* hR)
-{
-    compose_hr_gint(hr_gint);
-    hr_gint_to_hR(hr_gint, *hR);
-}
-
-template<typename Real>
-void finalize_hr_gint_(HContainer<Real>& hr_gint, HContainer<double>* hR)
-{
-    HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
-    compose_hr_gint(hr_gint_dp);
-    hr_gint_to_hR(hr_gint_dp, *hR);
-}
-
 template<typename Real>
 void Gint_vl::cal_gint_impl_()
 {
-    HContainer<Real> hr_gint = init_hr_gint_<Real>();
+    // hr_gint is always allocated as HContainer<double>: when Real=float, the
+    // fp32 multiplies feed into a fp64 accumulator inside phi_mul_phi to avoid
+    // catastrophic precision loss in the global reduction.
+    HContainer<double> hr_gint = gint_info_->get_hr<double>();
     std::vector<Real> vr_eff_buffer;
     const Real* vr_eff = get_vr_eff_data_(
         vr_eff_, gint_info_->get_local_mgrid_num(), vr_eff_buffer);
@@ -102,8 +84,8 @@ void Gint_vl::cal_gint_impl_()
         }
     }
 
-    finalize_hr_gint_(hr_gint, hR_);
+    compose_hr_gint(hr_gint);
+    hr_gint_to_hR(hr_gint, *hR_);
 }
 
 } // namespace ModuleGint
-
