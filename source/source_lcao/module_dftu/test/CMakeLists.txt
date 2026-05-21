@@ -80,7 +80,7 @@ AddTest(
 
 AddTest(
   TARGET dftu_core_test
-  LIBS ${math_libs} base
+  LIBS ${math_libs} base device
   SOURCES dftu_core_test.cpp
 )
 
