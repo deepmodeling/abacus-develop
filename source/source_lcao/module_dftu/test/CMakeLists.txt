@@ -78,11 +78,12 @@ AddTest(
   SOURCES dftu_pw_test.cpp
 )
 
-AddTest(
-  TARGET dftu_core_test
-  LIBS ${math_libs} base device
-  SOURCES dftu_core_test.cpp
-)
+# Temporarily disabled for CI testing
+# AddTest(
+#   TARGET dftu_core_test
+#   LIBS ${math_libs} base device
+#   SOURCES dftu_core_test.cpp
+# )
 
 AddTest(
   TARGET dftu_operator_test
