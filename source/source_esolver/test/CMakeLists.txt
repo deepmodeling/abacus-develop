@@ -12,6 +12,6 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESOLVER_nscf_utils_test
-  LIBS parameter ${math_libs} base
+  LIBS parameter ${math_libs} base device
   SOURCES nscf_utils_test.cpp
 )

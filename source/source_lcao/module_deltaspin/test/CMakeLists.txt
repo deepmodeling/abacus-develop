@@ -33,7 +33,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_core_test
-  LIBS ${math_libs} base
+  LIBS ${math_libs} base device
   SOURCES deltaspin_core_test.cpp
 )
 
