@@ -33,23 +33,28 @@ public:
         const Real* phi_d,
         Real* result_d) const;
     
+    // All GEMM accumulators (hr in phi_mul_phi, phi_dm in phi_mul_dm) are
+    // double-typed regardless of Real: when Real=float the multiplies stay in
+    // fp32 (cheap) but per-block reductions and device-side atomicAdd run in
+    // fp64 so the global reductions don't drift.
     void phi_mul_phi(
         const Real* phi_d,
         const Real* phi_vldr3_d,
-        HContainer<Real>& hRGint,
-        Real* hr_d) const;
-    
+        HContainer<double>& hRGint,
+        double* hr_d) const;
+
     void phi_mul_dm(
         const Real* phi_d,
         const Real* dm_d,
         const HContainer<Real>& dm,
         const bool is_symm,
-        Real* phi_dm_d);
+        double* phi_dm_d);
 
+    // phi_j_d is the output of phi_mul_dm and therefore always double.
     void phi_dot_phi(
         const Real* phi_i_d,
-        const Real* phi_j_d,
-        Real* rho_d) const;
+        const double* phi_j_d,
+        double* rho_d) const;
     
     // These remain double-only (for force/stress paths)
     void phi_dot_dphi(
@@ -105,7 +110,10 @@ private:
     mutable CudaMemWrapper<int> gemm_ldc_;
     mutable CudaMemWrapper<const Real*> gemm_A_;
     mutable CudaMemWrapper<const Real*> gemm_B_;
-    mutable CudaMemWrapper<Real*> gemm_C_; 
+    // Single C-pointer buffer: both phi_mul_phi (output hr) and phi_mul_dm
+    // (output phi_dm) write into double* accumulators, so a single shared
+    // gemm_C_ device buffer can serve both call sites.
+    mutable CudaMemWrapper<double*> gemm_C_;
     mutable CudaMemWrapper<Real> gemm_alpha_;
 };
 
