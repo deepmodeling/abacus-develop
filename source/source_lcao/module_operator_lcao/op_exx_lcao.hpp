@@ -417,6 +417,12 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     // 2. For the first ionic step:
     else if (this->istep == 0)
     {
+        // If EXX is once turned on (two_level_step > 0), let OperatorEXX remember this
+        if (this->two_level_step != nullptr && *this->two_level_step > 0)
+        {
+            this->initial_gga_done = true;
+        }
+
         // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
         bool in_gga_pre_loop = (this->two_level_step != nullptr && *this->two_level_step == 0);
 
@@ -424,7 +430,9 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         bool lacks_good_guess = (!this->restart);
 
         // If in the pre-convergence loop and lacking a good initial guess, skip adding the EXX contribution
-        if (in_gga_pre_loop && lacks_good_guess)
+        // Taoni Bao add 2026-05-18, only skip EXX if initial GGA loop is not done
+        // Fix RT-TDDFT EXX missing problem in the evolution
+        if (in_gga_pre_loop && lacks_good_guess && !this->initial_gga_done)
         {
             return; // In the non-EXX loop, skip adding EXX contribution
         }

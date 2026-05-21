@@ -35,7 +35,7 @@ static __device__ void vbatched_gemm_nt_device(int M,
                                                int LDA,
                                                const T* __restrict__ B,
                                                int LDB,
-                                               T* __restrict__ C,
+                                               double* __restrict__ C,
                                                int LDC,
                                                T*  sA,
                                                int slda,
@@ -57,7 +57,8 @@ static __device__ void vbatched_gemm_nt_device(int M,
     int blx = blockIdx.x; // block's m dimension
     int bly = blockIdx.y; // block's n dimension
 
-    // Registers for the innermost loop
+    // Registers for the innermost loop. rC accumulates in T; the widening to
+    // double happens only at the final atomicAdd into C.
     T rC[THR_N][THR_M];
     T rA[THR_M];
     T rB[THR_N];
@@ -85,7 +86,7 @@ static __device__ void vbatched_gemm_nt_device(int M,
 #pragma unroll
         for (m = 0; m < THR_M; m++)
         {
-            rC[n][m] = 0.0;
+            rC[n][m] = T(0);
         }
     }
 
@@ -245,7 +246,7 @@ static __device__ void vbatched_gemm_nt_device(int M,
             {
                 int offsC = coord_dCn * LDC + coord_dCm;
 
-                atomicAdd(C + offsC, rC[n][m] * alpha);
+                atomicAdd(C + offsC, static_cast<double>(rC[n][m] * alpha));
             }
         }
     }
@@ -269,7 +270,7 @@ static __global__ void vbatched_gemm_nt_kernel(const int* M,
                                               const int* global_lda,
                                               const T* const* global_B_array,
                                               const int* global_ldb,
-                                              T** global_C_array,
+                                              double** global_C_array,
                                               const int* global_ldc,
                                               const T* alpha)
 {
@@ -403,7 +404,7 @@ void vbatched_gemm_tn_impl(int max_m,
                            const int* global_lda,
                            const T* const* global_B_array,
                            const int* global_ldb,
-                           T** global_C_array,
+                           double** global_C_array,
                            const int* global_ldc,
                            int batchCount,
                            cudaStream_t stream,
