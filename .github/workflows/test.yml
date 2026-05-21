@@ -31,6 +31,7 @@ jobs:
 
       - name: Configure
         run: |
+          git config --global --add safe.directory /__w/abacus-develop/abacus-develop
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
 # Temporarily removed because no one maintains this now.
