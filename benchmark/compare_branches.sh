@@ -17,7 +17,7 @@ if [[ "$3" == "--quick" ]] || [[ "$1" == "--quick" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/../abacus-develop" && pwd)"
 MPIRUN=/opt/intel/oneapi/mpi/2021.13/bin/mpirun
 
 echo "=== PPCG Cross-Branch Benchmark ==="
@@ -32,7 +32,7 @@ cleanup() {
     echo ""
     echo "=== Restoring original state ==="
     cd "$REPO_DIR"
-    if git branch --show-current != "$ORIG_BRANCH" 2>/dev/null; then
+    if [ "$(git branch --show-current 2>/dev/null)" != "$ORIG_BRANCH" ]; then
         git checkout "$ORIG_BRANCH" 2>/dev/null || true
     fi
     if [ $STASHED -eq 1 ]; then
@@ -53,8 +53,8 @@ echo "=== Benchmarking base branch: $BASE_BRANCH ==="
 git checkout "$BASE_BRANCH" 2>/dev/null
 CC=/opt/intel/oneapi/mpi/2021.13/bin/mpicc \
 CXX=/opt/intel/oneapi/mpi/2021.13/bin/mpicxx \
-cmake -B build -DBUILD_TESTING=ON -DENABLE_MPI=ON -DENABLE_LCAO=ON > /dev/null 2>&1
-cmake --build build -j$(nproc) --target MODULE_HSOLVER_ppcg_bench > /dev/null 2>&1
+cmake -B build -DBUILD_TESTING=ON -DENABLE_MPI=ON -DENABLE_LCAO=ON
+cmake --build build -j$(nproc) --target MODULE_HSOLVER_ppcg_bench
 bash "$SCRIPT_DIR/bench_ppcg.sh" $QUICK before.csv
 
 # Build and benchmark on target branch
@@ -63,8 +63,8 @@ echo "=== Benchmarking target branch: $TARGET_BRANCH ==="
 git checkout "$TARGET_BRANCH" 2>/dev/null
 CC=/opt/intel/oneapi/mpi/2021.13/bin/mpicc \
 CXX=/opt/intel/oneapi/mpi/2021.13/bin/mpicxx \
-cmake -B build -DBUILD_TESTING=ON -DENABLE_MPI=ON -DENABLE_LCAO=ON > /dev/null 2>&1
-cmake --build build -j$(nproc) --target MODULE_HSOLVER_ppcg_bench > /dev/null 2>&1
+cmake -B build -DBUILD_TESTING=ON -DENABLE_MPI=ON -DENABLE_LCAO=ON
+cmake --build build -j$(nproc) --target MODULE_HSOLVER_ppcg_bench
 bash "$SCRIPT_DIR/bench_ppcg.sh" $QUICK after.csv
 
 # Generate comparison report
