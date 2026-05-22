@@ -15,8 +15,9 @@ namespace ModulePW
 template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
-    
-    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
+    ModuleBase::timer::start(this->classname, "gatherp_scatters");
+
+    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane,
     {
         const int nst_ = this->nst;
         const int nz_ = this->nz;
@@ -34,6 +35,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
+        ModuleBase::timer::end(this->classname, "gatherp_scatters");
         return;
     }
 
@@ -99,6 +101,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         }
     }
 #endif
+    ModuleBase::timer::end(this->classname, "gatherp_scatters");
     return;
 }
 
@@ -112,7 +115,9 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
-    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
+    ModuleBase::timer::start(this->classname, "gathers_scatterp");
+
+    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot,
     {
         const int nrxx_ = this->nrxx;
         const int nst_ = this->nst;
@@ -139,6 +144,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
                 outp[iz] = inp[iz];
             }
         }
+        ModuleBase::timer::end(this->classname, "gathers_scatterp");
         return;
     }
 
@@ -213,6 +219,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         }
     }
 #endif
+    ModuleBase::timer::end(this->classname, "gathers_scatterp");
     return;
 }
 

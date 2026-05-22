@@ -134,8 +134,10 @@ void PW_Basis::getstartgr()
 /// 
 void PW_Basis::collect_local_pw()
 {
+    ModuleBase::timer::start(this->classname, "collect_local_pw");
     if(this->npw <= 0)
     {
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     this->ig_gge0 = -1;
@@ -182,6 +184,7 @@ void PW_Basis::collect_local_pw()
             }
         }
     }
+    ModuleBase::timer::end(this->classname, "collect_local_pw");
     return;
 }
 
@@ -192,8 +195,10 @@ void PW_Basis::collect_local_pw()
 /// 
 void PW_Basis::collect_uniqgg()
 {
+    ModuleBase::timer::start(this->classname, "collect_uniqgg");
     if(this->npw <= 0)
     {
+        ModuleBase::timer::end(this->classname, "collect_uniqgg");
         return;
     }
     this->ig_gge0 = -1;
@@ -269,6 +274,7 @@ void PW_Basis::collect_uniqgg()
     delete[] sortindex;
     delete[] tmpgg;
     delete[] tmpgg2;
+    ModuleBase::timer::end(this->classname, "collect_uniqgg");
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const

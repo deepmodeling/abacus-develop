@@ -130,6 +130,7 @@ void PW_Basis_K::initparameters(const bool gamma_only_in,
 
 void PW_Basis_K::setupIndGk()
 {
+    ModuleBase::timer::start(this->classname, "setupIndGk");
     // count npwk
     this->npwk_max = 0;
     delete[] this->npwk;
@@ -168,6 +169,7 @@ void PW_Basis_K::setupIndGk()
     // get igl2isz_k and igl2ig_k
     if (this->npwk_max <= 0)
     {
+        ModuleBase::timer::end(this->classname, "setupIndGk");
         return;
     }
 
@@ -197,6 +199,7 @@ void PW_Basis_K::setupIndGk()
     }
 #endif
     this->get_ig2ixyz_k();
+    ModuleBase::timer::end(this->classname, "setupIndGk");
     return;
 }
 
@@ -251,11 +254,13 @@ void PW_Basis_K::setuptransform()
 
 void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)
 {
+    ModuleBase::timer::start(this->classname, "collect_local_pw");
     this->erf_ecut = erf_ecut_in;
     this->erf_height = erf_height_in;
     this->erf_sigma = erf_sigma_in;
     if (this->npwk_max <= 0)
     {
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     delete[] gk2;
@@ -349,6 +354,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
 #if defined(__CUDA) || defined(__ROCM)
     }
 #endif
+    ModuleBase::timer::end(this->classname, "collect_local_pw");
 }
 
 ModuleBase::Vector3<double> PW_Basis_K::cal_GplusK_cartesian(const int ik, const int ig) const
