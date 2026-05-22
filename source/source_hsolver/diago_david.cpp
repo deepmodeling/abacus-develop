@@ -140,6 +140,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     this->notconv = nband; // the number of unconverged eigenvalues
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nband > 16)
+#endif
     for (int m = 0; m < nband; m++) {
         unconv[m] = m;
     }
@@ -189,6 +192,9 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nband > 16)
+#endif
     for (int m = 0; m < nband; m++)
     {
         eigenvalue_in[m] = this->eigenvalue[m];
@@ -221,15 +227,21 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         ModuleBase::timer::start("DiagoDavid", "check_update");
 
         this->notconv = 0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nband > 16)
+#endif
         for (int m = 0; m < nband; m++)
         {
             convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < ethr_band[m]);
+            eigenvalue_in[m] = this->eigenvalue[m];
+        }
+        for (int m = 0; m < nband; m++)
+        {
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
                 this->notconv++;
             }
-            eigenvalue_in[m] = this->eigenvalue[m];
         }
 
         ModuleBase::timer::end("DiagoDavid", "check_update");
@@ -397,6 +409,9 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // e_temp_cpu = {-lambda}
     // vc_ev_vector[nbase] = vc_ev_vector[nbase] * e_temp_cpu
     // now vc_ev_vector[nbase] = - lambda * ev = -lambda * vcc
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(notconv > 4)
+#endif
     for (int m = 0; m < notconv; m++)
     {
         std::vector<Real> e_temp_cpu(nbase, (-1.0 * this->eigenvalue[unconv[m]]));
@@ -467,6 +482,9 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // where T, the preconditioner, is an approximate inverse of H
     //          T is a diagonal stored in array `precondition`
     // to do preconditioning, divide each column of basis by the corresponding element of precondition
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(notconv > 4)
+#endif
     for (int m = 0; m < notconv; m++)
     {
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -797,6 +815,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     }
     else
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nbase > 64)
+#endif
         for (int i = 0; i < nbase; i++)
         {
             hcc[i * nbase_x + i] = eigenvalue_in[i];

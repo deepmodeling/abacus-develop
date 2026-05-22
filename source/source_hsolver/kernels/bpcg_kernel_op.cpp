@@ -26,6 +26,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:epsilo_0, epsilo_1, epsilo_2) schedule(static) if(n_basis > 512)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -41,6 +44,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
             cos_theta = std::cos(theta);
             sin_theta = std::sin(theta);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(n_basis > 512)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -77,6 +83,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:epsilo) schedule(static) if(n_basis > 512)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -85,6 +94,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
             Parallel_Reduce::reduce_pool(epsilo);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:err, beta) schedule(static) if(n_basis > 512)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -95,6 +107,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             }
             Parallel_Reduce::reduce_pool(err);
             Parallel_Reduce::reduce_pool(beta);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(n_basis > 512)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -113,6 +128,9 @@ struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if(notconv * nbase > 1024)
+#endif
         for (int m = 0; m < notconv; m++)
         {
             for (int idx = 0; idx < nbase; idx++)
@@ -133,9 +151,12 @@ struct precondition_op<T, base_device::DEVICE_CPU> {
                    const Real* precondition,
                    const Real* eigenvalues)
     {
-        std::vector<Real> pre(dim, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(notconv > 4)
+#endif
         for (int m = 0; m < notconv; m++)
         {
+            std::vector<Real> pre(dim, 0.0);
             for (size_t i = 0; i < dim; i++)
             {
                 Real x = std::abs(precondition[i] - eigenvalues[m]);
@@ -196,7 +217,7 @@ struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>
                   const T &one)
     {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(1) schedule(static)
+#pragma omp parallel for collapse(1) schedule(static) if(n > 64)
 #endif
         for (int i = 0; i < n; i++)
         {
