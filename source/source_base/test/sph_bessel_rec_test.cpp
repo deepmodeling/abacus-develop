@@ -82,3 +82,18 @@ TEST(SphBessel,D2)
     EXPECT_NEAR( mean(jlx[6])/0.0188550846449362, 1.0, threshold);
     EXPECT_NEAR( mean(jlx[7])/0.0163891245775448, 1.0, threshold);
 }
+
+TEST(SphBessel, D2RefreshesExistingRowsWhenKmeshGrows)
+{
+    ModuleBase::Sph_Bessel_Recursive::D2 sphbesseld2;
+    sphbesseld2.set_dx(0.0001);
+
+    sphbesseld2.cal_jlx(1, 4021, 1001);
+    sphbesseld2.cal_jlx(1, 4005, 4021);
+
+    const auto& jlx = sphbesseld2.get_jlx();
+    ASSERT_GE(jlx.size(), static_cast<size_t>(2));
+    ASSERT_GT(jlx[0].size(), static_cast<size_t>(4005));
+    EXPECT_GE(jlx[0][4005].size(), static_cast<size_t>(4021));
+    EXPECT_GE(jlx[1][4005].size(), static_cast<size_t>(4021));
+}

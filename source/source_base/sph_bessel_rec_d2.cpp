@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "source_base/memory_recorder.h"
 
+#include <algorithm>
 #include<cmath>
 #include<stdexcept>
 
@@ -30,10 +31,17 @@ const std::vector<std::vector<std::vector<double>>> & Sph_Bessel_Recursive::D2::
 {
 	if(lmax<0)
 		throw std::invalid_argument("Sph_Bessel_Recursive::jlx l<0");
-	cal_jlx_0( lmax+1, ix1_size, ix2_size );
-	cal_jlx_smallx( lmax+1, ix1_size, ix2_size );
-	cal_jlx_recursive( lmax+1, ix1_size, ix2_size );
-	ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (lmax+1) * ix1_size * ix2_size);
+
+	size_t ix1_size_all = ix1_size;
+	for (const auto& jlx_l : jlx)
+	{
+		ix1_size_all = std::max(ix1_size_all, jlx_l.size());
+	}
+
+	cal_jlx_0( lmax+1, ix1_size_all, ix2_size );
+	cal_jlx_smallx( lmax+1, ix1_size_all, ix2_size );
+	cal_jlx_recursive( lmax+1, ix1_size_all, ix2_size );
+	ModuleBase::Memory::record("ORB::Jl(x)", sizeof(double) * (lmax+1) * ix1_size_all * ix2_size);
 	return jlx;
 }
 
