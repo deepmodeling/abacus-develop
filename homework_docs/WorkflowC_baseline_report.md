@@ -43,8 +43,8 @@
 | 最大热点 | **diag_once (CG 对角化)** 占 SCF 73~85% | Workflow D 范畴 |
 | Gather/Scatter 占比 | FFT 的 **35~52%**, SCF 的 **5~13%** (MPI 稳态) | 6 处连续拷贝循环在 `pw_gatherscatter.h` |
 | SIMD 状态 | **GCC 13 -O3 已自动向量化** (gather/scatter 3.3~3.6× 加速) | 手动 `#pragma omp simd` 边际增益 ~0-3% SCF |
-| 缓存机会 | 数据 **~4.7 MB** (可常驻 L3), setupIndGk **~62K 冗余调用** | 见 [6.2.5 节](#625-setupindgk-双重计算量化评估) |
-| Debug→Release | serial **1.40×**, np2_omp2 **2.64×** 整体加速 | 见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug) |
+| 缓存机会 | 数据 **~0.9 MB** (可常驻 L2), setupIndGk **~18K 冗余调用** | 见 [6.2.5 节](#625-setupindgk-双重计算量化评估) |
+| Debug→Release | serial **1.44×**, np2_omp2 **2.71×** 整体加速 | 见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug) |
 | 关键噪声 | WSL2 冷启动 (r1 慢 2.5~10×), np4 Release 异常 | 分析使用 r2/r3 稳态数据 |
 
 ---
@@ -53,7 +53,7 @@
 
 ### 2.1 设计原则
 
-为适应本机 7.6 GB 内存限制，同时保证测试可复现，采用**同一材料 (GaAs) 在不同 FFT 网格规模下对比测试**的策略。同一材料保证了相同的电子结构（能带数、k 点密度一致），只改变 FFT 网格大小，从而分离出 gather/scatter 数据搬运量对性能的影响。
+为适应 7.6 GB 内存限制并保证可复现，采用**同一 GaAs 体系在三种 FFT 网格下对比**的策略。相同材料保证了电子结构一致（能带数、k 点密度），仅改变 FFT 网格大小，分离出数据搬运量对性能的影响。
 
 ### 2.2 测试用例参数
 
@@ -64,7 +64,7 @@
 | FFT 网格 | 24×24×24 | 32×32×32 | 48×48×48 |
 | 截断能 ecutwfc | 20 Ry | 40 Ry | 40 Ry |
 | 能带数 nbands | 70 | 70 | 70 |
-| K 点网格 | 3×3×3 (27 kpts) | 3×3×3 (27 kpts) | 3×3×3 (27 kpts) |
+| K 点网格 | 3×3×3 (约化为 4 个不可约 k 点) | 3×3×3 (约化为 4 个不可约 k 点) | 3×3×3 (约化为 4 个不可约 k 点) |
 | SCF 迭代上限 | 10 | 10 | 10 |
 | 求解器 | CG | CG | CG |
 | 赝势 | pseudo-dojo v0.5 | pseudo-dojo v0.5 | pseudo-dojo v0.5 |
@@ -139,6 +139,8 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 
 ### 4.3 墙钟时间概览
 
+> **通用说明**：MPI 配置下首轮运行（rep1）的墙钟时间显著高于后续重复（冷启动效应，详见 [4.4 节](#44-首轮迭代初始化开销分析)）。gaas_tiny 的 SCF 在 10 次迭代内**未收敛**（所有配置均显示 `!!SCF IS NOT CONVERGED!!`），但迭代次数一致，性能数据可比。
+
 **gaas_tiny (24³)**:
 
 | 配置 | rep1 | rep2 | rep3 |
@@ -149,8 +151,6 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 | mix_np2_omp2 | 53s | 5s | 5s |
 | mix_np2_omp4 | 46s | 29s | 46s |
 | mix_np4_omp2 | 5s | 5s | 6s |
-
-> 注：MPI 配置下首轮运行（rep1）的墙钟时间显著高于后续重复。详细分析见 [4.4 节](#44-首轮迭代初始化开销分析)。
 
 **gaas_small (32³)**:
 
@@ -163,8 +163,6 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 | mix_np2_omp4 | 33s | 34s | 47s |
 | mix_np4_omp2 | 11s | 13s | 11s |
 
-> 注：MPI 配置下首轮运行（rep1）的墙钟时间显著高于后续重复。详细分析见 [4.4 节](#44-首轮迭代初始化开销分析)。
-
 **gaas_medium (48³)**:
 
 | 配置 | rep1 | rep2 | rep3 |
@@ -175,8 +173,6 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 | mix_np2_omp2 | 136s | 35s | 40s |
 | mix_np2_omp4 | 22s | 21s | 23s |
 | mix_np4_omp2 | 11s | 11s | 10s |
-
-> 注：MPI 配置下首轮运行（rep1）的墙钟时间显著高于后续重复。详细分析见 [4.4 节](#44-首轮迭代初始化开销分析)。
 
 ### 4.4 首轮迭代初始化开销分析
 
@@ -237,7 +233,7 @@ Linux 内核采用惰性物理页分配（lazy page allocation）：`malloc`/`ne
 - **共享内存段建立**：同节点 MPI 进程间使用共享内存进行通信。首次调用时分配和注册共享内存段（`shm_open` / `mmap`）
 - **内部缓冲区 pinning**：高性能网络路径要求发送/接收缓冲区被 pin 到物理内存
 
-这些操作在首次调用时完成，后续调用复用已建立的上下文。由于 gather/scatter 每个 SCF 迭代调用约 3,000~12,000 次 `MPI_Alltoallv`（总调用量 = kpt_per_process × SCF_iterations），冷启动的固定成本被分摊到每次调用中。但对于 gaas_tiny，稳态下每次 gatherp_scatters 仅需 28µs，冷启动使单次调用升至 670µs——增加了 24×。
+这些操作在首次调用时完成，后续调用复用已建立的上下文。gather/scatter 每次运行累计调用 20,000~27,000 次 `MPI_Alltoallv`（总调用量 = kpt_per_process × SCF_iterations），冷启动的固定成本被分摊到每次调用中。但对于 gaas_tiny，稳态下每次 gatherp_scatters 仅需 28µs，冷启动使单次调用升至 670µs——增加了 24×。
 
 ##### 因素 3：CPU 缓存/TLB 冷启动
 
@@ -286,13 +282,13 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 对于 tiny，每次 gatherp_scatters 调用在稳态仅需 28µs。冷启动引入的每调用约 640µs 额外开销（page fault 均摊 + MPI 缓冲区准备 + TLB miss）使总时间膨胀 24 倍。对于 medium，稳态每次调用 503µs，额外开销 1985µs 使其膨胀 5 倍。
 
-此外，tiny 用例的 SCF 收敛在 9~10 次迭代，调用量更多（12,037 次 vs 9,167 次），进一步放大了按调用均摊的冷启动开销。
+此外，tiny 用例运行完整的 10 次 SCF 迭代（未收敛），调用量更多（12,037 次 vs 9,167 次），进一步放大了按调用均摊的冷启动开销。
 
 #### 4.4.4 为什么 np4 不受此影响
 
 `np4_omp2` 配置的首轮开销远低于 `np2_omp2`（gaas_tiny: 5s vs 5s，几乎无差异）：
 
-- 4 个进程时，每个进程处理的数据量减半（k 点从 14 个降至 7 个，FFT 平面从 12 层降至 6 层），首次触达的页数也减半
+- 4 个进程时，每个进程处理的数据量减半（k 点从 2 个降至 1 个，FFT 平面从 12 层降至 6 层），首次触达的页数也减半
 - 单个 MPI_Alltoallv 的消息大小减半，通信协议的冷启动成本更低
 - 绝对开销按进程数分摊，使 r1/r2 比值接近于 1
 
@@ -320,6 +316,8 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 | mix_np2_omp2 | 0.36 | 0.42 | 0.97 | 1.23 | 37.6% | 34.4% | 7.8% |
 | mix_np2_omp4 | 3.90 | 4.92 | 8.64 | 11.05 | 45.1% | 44.5% | 10.7% |
 | mix_np4_omp2 | 0.52 | 0.56 | 1.00 | 1.21 | 51.5% | 46.7% | 11.2% |
+
+> ⚠️ `mix_np2_omp4` 在 gaas_tiny 中方差极大（r2=29s, r3=46s, 1.6×差异），该数据点可靠性较低。原因可能是 WSL2 宿主机在 r3 期间负载不同，详见 [4.4.2 节因素4](#因素-4wsl2-虚拟化放大效应)。
 
 #### gaas_small (32³)
 
@@ -373,14 +371,14 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 | 配置 | 总核 | wall | gatherp (s) | real2recip (s) | hPsi (s) | diag (s) | before_scf (s) |
 |------|------|------|-------------|-----------------|----------|----------|-----------------|
-| serial (np1_omp1) | 1 | 39s | — | 6.63 | 30.43 | 29.66 | 0.81 |
-| mix_np2_omp2 | 4 | 35s | 4.39 | 9.03 | 25.46 | 26.75 | 1.78 |
+| serial (np1_omp1) | 1 | 36s | — | 6.63 | 30.43 | 29.66 | 0.81 |
+| mix_np2_omp2 | 4 | 38s | 4.39 | 9.03 | 25.46 | 26.75 | 1.78 |
 | mix_np4_omp2 | 8 | 11s | 0.89 | 2.40 | 7.35 | 7.93 | 0.22 |
 
 **关键发现**：
 
-1. **np4_omp2 比 np2_omp2 快 3.2×**（35s→11s），远超核数增长（2×）。原因：
-   - 每个进程处理的 k 点数从 14 降至 7（约减半），对角化工作量减半
+1. **np4_omp2 比 np2_omp2 快 ~3.5×**（38s→11s），远超核数增长（2×）。原因：
+   - 每个进程处理的 k 点数从 2 降至 1（约减半），对角化工作量减半
    - 每个进程的 FFT 平面数从 24 降至 12，单次 gather/scatter 的数据量减半
    - MPI_Alltoallv 的消息大小减半但进程数翻倍——总通信量相近但并行度更高
 
@@ -402,23 +400,21 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 ### 5.3 SIMD 向量化机会分析
 
-`pw_gatherscatter.h` 中共有 **6 处内层拷贝循环**适合 SIMD 向量化：
+`pw_gatherscatter.h` 中共有 **6 处内层拷贝循环**，全部为 `outp[i] = inp[i]` 形式的连续拷贝，数据完全连续、指针不重叠，非常适合 SIMD 向量化：
 
-| 函数 | 循环变量 | 循环体 | 数据连续性 | SIMD 适用性 |
-|------|----------|--------|------------|-------------|
-| gatherp_scatters (poolnproc=1) | `iz` 0→nz | `outp[iz] = inp[iz]` | 完全连续 | **最佳** |
-| gatherp_scatters (MPI pre-copy) | `iz` 0→nplane | `outp[iz] = inp[iz]` | 完全连续 | **最佳** |
-| gatherp_scatters (MPI post-copy) | `izip` 0→nzip | `outp[izip] = inp[izip]` | 完全连续 | **最佳** |
-| gathers_scatterp (poolnproc=1) | `iz` 0→nz | `outp[iz] = inp[iz]` | 完全连续 | **最佳** |
-| gathers_scatterp (MPI pre-copy) | `izip` 0→nzip | `outp[izip] = inp[izip]` | 完全连续 | **最佳** |
-| gathers_scatterp (MPI post-copy) | `iz` 0→nplane | `outp[iz] = inp[iz]` | 完全连续 | **最佳** |
+| 函数 | 循环变量 | 循环体 |
+|------|----------|--------|
+| gatherp_scatters (poolnproc=1) | `iz` 0→nz | `outp[iz] = inp[iz]` |
+| gatherp_scatters (MPI pre-copy) | `iz` 0→nplane | `outp[iz] = inp[iz]` |
+| gatherp_scatters (MPI post-copy) | `izip` 0→nzip | `outp[izip] = inp[izip]` |
+| gathers_scatterp (poolnproc=1) | `iz` 0→nz | `outp[iz] = inp[iz]` |
+| gathers_scatterp (MPI pre-copy) | `izip` 0→nzip | `outp[izip] = inp[izip]` |
+| gathers_scatterp (MPI post-copy) | `iz` 0→nplane | `outp[iz] = inp[iz]` |
 
 特点：
-- 所有循环体均为 `outp[i] = inp[i]` 形式的简单拷贝
-- 输入输出指针不重叠
-- 数据类型为 `std::complex<double>` (16 字节对齐潜在需求)
-- 循环边界是运行时变量（nplane, nz, nzip），典型值 24~48（poolnproc=1 时 nz = nplane × poolnproc）
-- AVX2 可一次处理 4 个 double（即 2 个 complex），预期局部 2×~4× 加速
+- 数据类型为 `std::complex<double>`（16 字节，32 字节对齐时 AVX2 最优）
+- 循环边界为运行时变量（nplane, nz, nzip），典型值 24~48（poolnproc=1 时 nz = nplane × poolnproc）
+- AVX2 一次处理 4 个 double（2 个 complex），理论加速 2×~4×
 
 > **预期收益**：Debug 数据下预估手动 SIMD 可带来 2~10% SCF 加速。**但 Release 对照实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明 GCC 13 已自动向量化这些循环，手动 SIMD 边际增益缩水至 ~0-3%。** 以下为对照实验详情。
 
@@ -426,11 +422,13 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 为判断 GCC 13 是否已对拷贝循环自动向量化，使用 gaas_medium 用例在 3 种关键配置下跑了 9 次 Release 对照实验（每配置 3 次重复）。以下为 r2/r3 稳态均值与 Debug 的对比：
 
+> **范围说明**：Release 对照实验仅覆盖 gaas_medium（48³），未包含 gaas_tiny 和 gaas_small。不过自动向量化的结论主要基于 gather/scatter 与 FFT 的**相对加速比差异**（3.3-3.6× vs 2.7-2.8×），该差异在不同网格规模下应保持稳定。
+
 | 配置 | Debug wall | Release wall | 整体加速比 | gatherp 加速比 | gathers 加速比 | before_scf 加速比 |
 |------|-----------|-------------|-----------|---------------|---------------|-------------------|
-| serial (np1_omp1) | 35s | 25s | **1.40×** | — | 1.32× | 1.46× |
-| mix_np2_omp2 | 37s | 14s | **2.64×** | **3.33×** | **3.58×** | **6.37×** |
-| mix_np4_omp2 | 10s | 14s | 0.71× (↓) | 0.57× (↓) | 0.62× (↓) | 0.70× (↓) |
+| serial (np1_omp1) | 36s | 25s | **1.44×** | — | 1.32× | 1.46× |
+| mix_np2_omp2 | 38s | 14s | **2.71×** | **3.33×** | **3.58×** | **6.37×** |
+| mix_np4_omp2 | 11s | 14s | 0.79× (↓) | 0.57× (↓) | 0.62× (↓) | 0.70× (↓) |
 
 > `mix_np4_omp2` 的 Release 比 Debug 慢属于 WSL2 虚拟化噪音——4 进程 MPI 在轻量 VM 中的调度抖动不可控，不代表代码层面的退化。后续分析以 serial 和 np2_omp2 为准。
 
@@ -460,7 +458,7 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 #### np4_omp2 Release 异常说明
 
-np4_omp2 在 Release 下反而慢于 Debug（0.71×），所有组件等比例退化，属于 WSL2 环境问题而非代码问题。可能原因：4 个 MPI 进程在 `-O3` 下生成的代码路径不同（如更激进的内联改变了指令缓存行为），在 WSL2 的 Hyper-V 调度中触发了不同的争抢模式。**此数据点不能作为优化决策依据，需在物理机上复测**。
+np4_omp2 在 Release 下反而慢于 Debug（0.79×），所有组件等比例退化，属于 WSL2 环境问题而非代码问题。可能原因：4 个 MPI 进程在 `-O3` 下生成的代码路径不同（如更激进的内联改变了指令缓存行为），在 WSL2 的 Hyper-V 调度中触发了不同的争抢模式。**此数据点不能作为优化决策依据，需在物理机上复测**。
 
 ---
 
@@ -516,7 +514,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 }
 ```
 
-每对 `(ik, ig)` 调用 `cal_GplusK_cartesian` **两次**，每次内部做坐标反推和矩阵乘法。对于 27 k 点 × 数千平面波，这是个明显的浪费。
+每对 `(ik, ig)` 调用 `cal_GplusK_cartesian` **两次**，每次内部做坐标反推和矩阵乘法。对于 4 个不可约 k 点 × 数千平面波，这是个明显的浪费。
 
 #### 6.2.4 `PW_Basis_K::collect_local_pw` (pw_basis_k.cpp:257)
 
@@ -530,32 +528,35 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 #### 6.2.5 `setupIndGk` 双重计算量化评估
 
-以 gaas_medium (27 kpt, ~4,600 npw) 为例，量化双重计算的实际开销：
+以 gaas_medium (4 个不可约 k 点, ~4,600 npw, serial 模式) 为例，量化双重计算的实际开销：
 
 | 项目 | 数值 |
 |------|------|
-| 双重计算调用量 | 27 kpt × 4,600 npw = 124,200 次 `cal_GplusK_cartesian` 调用 |
-| 其中冗余部分 | ~62,100 次（第二遍完全重复第一遍） |
+| 双重计算调用量 | 4 kpt × 4,600 npw × 2 遍 = 36,800 次 `cal_GplusK_cartesian` 调用 |
+| 其中冗余部分 | ~18,400 次（第二遍完全重复第一遍） |
 | 单次 `cal_GplusK_cartesian` 操作 | 坐标反推 (ix,iy,iz 从 ig2isz) + vec3 坐标计算 + `norm2()` → ~30 flop |
-| 冗余浮点运算总量 | 62,100 × 30 ≈ **1.86 × 10⁶ flop** |
-| 冗余内存访问 | 62,100 × (1 read ig2isz + 1 write gk2) ≈ **1 MB** |
-| 估算冗余耗时 | **~50-200 ms**（取决于缓存状态和编译优化级别） |
+| 冗余浮点运算总量 | 18,400 × 30 ≈ **5.5 × 10⁵ flop** |
+| 冗余内存访问 | 18,400 × ~12 bytes (读 ig2isz + 写 gk2) ≈ **220 KB** |
+| 估算冗余耗时 | **~10-50 ms**（Debug，取决于缓存状态）；Release 下内联后 **< 5 ms** |
 
-虽然绝对值不大（< 0.2s），但占总 `before_scf`（0.22~0.81s）的 10~25%，且有明显浪费。优化方案：第一遍将 gk2 存入临时 std::vector，第二遍直接读取。
+> 注：MPI 模式下每个进程处理的 k 点数更少（np2 时每进程 2 个 k 点），冗余耗时相应减半。
+
+虽然绝对值不大（< 0.05s Debug，< 0.005s Release），占 `before_scf`（0.22~0.81s）的 2~6%（Debug）或 < 1%（Release），但修复成本极低——第一遍将 gk2 存入临时 `std::vector<double>`，第二遍直接读取，约 5 行改动即可消除此浪费。
 
 ### 6.3 缓存数据规模估算
 
-以 gaas_medium (48³, 27 kpt)：
+以 gaas_medium (48³, 4 个不可约 k 点) 为例：
 
-| 数据 | 每元素大小 | 估算元素数 | 估算总量 |
-|------|-----------|------------|----------|
-| `gg` / `gk2` | 8 B | ~5,000 × 27 | ~1.1 MB |
-| `gcar` | 24 B | ~5,000 × 27 | ~3.2 MB |
-| `gdirect` | 24 B | ~5,000 | ~120 KB |
-| `igl2isz_k` / `igl2ig_k` | 4 B | ~5,000 × 27 | ~270 KB |
-| **总计** | | | **~4.7 MB** |
+| 数据 | 每元素大小 | 元素数 (serial / np2 每进程) | serial 总量 | np2 每进程 |
+|------|-----------|------------------------------|-------------|------------|
+| `gg` | 8 B | ~4,600 (k 无关) | ~37 KB | ~37 KB |
+| `gk2` | 8 B | ~4,600 × nkpt_per_proc | ~147 KB | ~74 KB |
+| `gcar` (多 k) | 24 B | ~4,600 × nkpt_per_proc | ~442 KB | ~221 KB |
+| `gdirect` | 24 B | ~4,600 (k 无关) | ~110 KB | ~110 KB |
+| `igl2isz_k` / `igl2ig_k` | 4 B × 2 | ~4,600 × nkpt_per_proc | ~148 KB | ~74 KB |
+| **总计** | | | **~0.9 MB** | **~0.5 MB** |
 
-约 4.7 MB 的缓存数据量远小于 L3 缓存 (18 MB)，全部可常驻 L3。加上 L2 缓存 10 MB 也可覆盖最常用数据。
+约 0.5~0.9 MB 的缓存数据量远小于 L2 缓存 (10 MB)，全部可常驻 L2——甚至不需要依赖 L3 (18 MB)。
 
 ### 6.4 缓存失效条件
 
@@ -584,17 +585,17 @@ for (int ig = 0; ig < this->npw; ig++) {
 | | | | |
 | *计算类* | | | |
 | hPsi | 3.80s (82%) | 3.18s (76%) | 哈密顿量作用 |
-| ├ veff_pw | 2.29s (49%) | 1.79s (43%) | 有效势 |
-| ├ nonlocal_pw | 1.50s (32%) | 1.39s (33%) | 非局域赝势 |
-| └ EkineticPW | 0.06s (1%) | 0.10s (2%) | 动能 |
+| ├ veff_pw | 2.29s (49%) | 2.18s (52%) | 有效势 |
+| ├ nonlocal_pw | 1.50s (32%) | 0.98s (23%) | 非局域赝势 |
+| └ EkineticPW | ~0.02s (<1%) | ~0.03s (<1%) | 动能（低于 timer 阈值，按 hPsi 残差估算） |
 | solve (CG) | 4.63s (100%)* | 4.17s (100%)* | 对角化，与 hamilt2rho 几乎重合 |
 | ├ diag_once | 3.71s (80%) | 3.34s (80%) | CG 对角化主体 |
-| └ diag_subspace | 0.61s (13%) | 0.58s (14%) | 子空间对角化 |
+| └ diag_subspace | 0.61s (13%) | 0.56s (13%) | 子空间对角化 |
 | psiToRho | 0.28s (6%) | 0.25s (6%) | 波函数→电荷密度 |
 | | | | |
 | *数据搬运类* | | | |
 | real2recip | 0.91s (20%) | 1.11s (27%) | 实→倒 FFT (含 gatherp) |
-| ├ gatherp_scatters | — (<0.1s) | 0.55s (13%) | **SIMD 目标 (mpi)** |
+| ├ gatherp_scatters | — (<0.1s) | 0.58s (14%) | **SIMD 目标 (mpi)** |
 | recip2real | 1.42s (31%) | 1.22s (29%) | 倒→实 FFT (含 gathers) |
 | ├ gathers_scatterp | 0.20s (4%) | 0.51s (12%) | **SIMD 目标** |
 
@@ -602,7 +603,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 **关键对比**：
 
-- **MPI 模式引入额外 gather/scatter 开销**：np2_omp2 的 gatherp_scatters 从零（serial 中 <0.1s）跃升至 0.55s（13% SCF），因为 MPI 路径增加了 pre/post communication copy 段和 `MPI_Alltoallv`。
+- **MPI 模式引入额外 gather/scatter 开销**：np2_omp2 的 gatherp_scatters 从零（serial 中 <0.1s）跃升至 0.58s（14% SCF），因为 MPI 路径增加了 pre/post communication copy 段和 `MPI_Alltoallv`。
 - **对角化 (diag_once) 是绝对最大热点**，占 SCF 时间的 **~80%**（两种模式一致）。这是 Workflow D 的关注范围。
 - **real2recip + recip2real 合计占 SCF 的 51%（serial）/ 56%（MPI）**，其中 gather/scatter 占 FFT 的比例从 serial 的 14% 升至 MPI 的 40~49%。
 
@@ -612,20 +613,20 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 | 配置 | total wall | 加速比 vs serial | 加速比 vs 前级 | gather/scatter 加速比 | 备注 |
 |------|-----------|-------------------|----------------|----------------------|------|
-| serial (np1_omp1) | 39s | 1.0× | — | 1.0× | 基线 |
-| omp4 (np1_omp4) | 17s | 2.3× | 2.3× | ~2.8× | 4 线程有效加速 |
-| omp8 (np1_omp8) | 17s | 2.3× | 1.0× | ~2.4× | 8 线程饱和/退化 |
-| mix_np2_omp2 | 35s | 1.1× | — | — | 4 核但性能不及 serial |
-| mix_np2_omp4 | 21s | 1.9× | — | — | 8 核 |
-| mix_np4_omp2 | 11s | 3.5× | — | — | 8 核，最佳 |
+| serial (np1_omp1) | 36s | 1.0× | — | 1.0× | 基线 |
+| omp4 (np1_omp4) | 17s | 2.1× | 2.1× | ~2.8× | 4 线程有效加速 |
+| omp8 (np1_omp8) | 17s | 2.1× | 1.0× | ~2.4× | 8 线程饱和/退化 |
+| mix_np2_omp2 | 38s | 0.9× | — | — | 4 核但性能不及 serial |
+| mix_np2_omp4 | 22s | 1.6× | — | — | 8 核 |
+| mix_np4_omp2 | 11s | 3.3× | — | — | 8 核，最佳 |
 
 **分析**：
 
-1. **Pure OpenMP 扩展性有限**：4 线程达 2.3× 加速（效率 58%），8 线程零增益。原因：gather/scatter 内层循环极短（nplane ≤ 48），OMP fork/join 开销抵消了并行收益。`omp8` 配置下 8 个线程被限制在单个 MPI 进程内（仅能使用单进程内存带宽），实际物理核心利用率不足。
+1. **Pure OpenMP 扩展性有限**：4 线程达 2.1× 加速（效率 53%），8 线程零增益。原因：gather/scatter 内层循环极短（nplane ≤ 48），OMP fork/join 开销抵消了并行收益。`omp8` 配置下 8 个线程被限制在单个 MPI 进程内（仅能使用单进程内存带宽），实际物理核心利用率不足。
 
-2. **混合并行优于纯 OpenMP**：`mix_np4_omp2`（8 核，3.5× 加速）远优于 `omp8`（8 核，2.3× 加速）。MPI 提供了进程级并行——不同进程处理不同 k 点和 FFT 平面，避免了 OpenMP 在小循环上的线程开销。
+2. **混合并行优于纯 OpenMP**：`mix_np4_omp2`（8 核，3.3× 加速）远优于 `omp8`（8 核，2.1× 加速）。MPI 提供了进程级并行——不同进程处理不同 k 点和 FFT 平面，避免了 OpenMP 在小循环上的线程开销。
 
-3. **gather/scatter 的 OMP 加速比优于整体**：omp4 下 gather/scatter 加速 ~2.8× 优于整体 2.3×，说明拷贝循环的并行度好于对角化等复杂操作。但 omp8 下退化同样明显。
+3. **gather/scatter 的 OMP 加速比优于整体**：omp4 下 gather/scatter 加速 ~2.8× 优于整体 2.1×，说明拷贝循环的并行度好于对角化等复杂操作。但 omp8 下退化同样明显。
 
 4. **基本结论**：混合并行（MPI + OpenMP）是本机环境下 gather/scatter 密集型工作负载的最优策略。Release 实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明编译器自动向量化已能显著提升单线程效率（3.3-3.6×），进一步缩小了手动 SIMD 的优化空间。
 
@@ -646,8 +647,8 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 | 项目 | 评估 |
 |------|------|
-| 目标 | 缓存 `gg`, `gcar`, `gdirect`, `gk2`, `igl2isz_k`, `igl2ig_k` (~4.7 MB) |
-| 最大单项收益 | 消除 `setupIndGk` 双重 `cal_GplusK_cartesian` 调用（~62K 次冗余，~50-200ms） |
+| 目标 | 缓存 `gg`, `gcar`, `gdirect`, `gk2`, `igl2isz_k`, `igl2ig_k` (~0.9 MB serial, ~0.5 MB np2) |
+| 最大单项收益 | 消除 `setupIndGk` 双重 `cal_GplusK_cartesian` 调用（~18K 次冗余，~10-50ms Debug, <5ms Release） |
 | 当前开销 | < 0.3s（含在 `before_scf`），Release 下可降至 < 0.1s |
 | 第 13 周计划 | 懒加载 + 失效标志 + 优先修复 setupIndGk 双重计算（50~80 行改动） |
 | 风险/优先级 | 中风险 / **高优先级** — SIMD 收益缩水后，缓存成为 Workflow C 主攻方向 |
@@ -677,11 +678,11 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 1. **全部 54 次运行通过** (100% 通过率)，测试体系稳定可靠。
 
-2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **35~52%**（稳态），占 SCF 迭代的 **5~13%**。其中本地 copy 段（SIMD 目标）占 gather/scatter 的 30~50%。6 处内层连续拷贝循环非常适合 SIMD 向量化，但实际增益需在 Release (`-O2`) 构建下验证。
+2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **35~52%**（稳态），占 SCF 迭代的 **5~13%**。其中本地 copy 段（SIMD 目标）占 gather/scatter 的 30~50%。6 处内层连续拷贝循环非常适合 SIMD 向量化，但实际增益需在 Release（`-O3`）构建下验证。
 
-3. **缓存复用函数当前开销较小**（<0.3s，含在 `before_scf` 中），但其收益在于消除 `setupIndGk` 的 |G+K|² 双重计算（~62,000 次冗余调用）和减少反复内存分配。缓存数据量约 4.7 MB，可完全放入 L3 缓存。
+3. **缓存复用函数当前开销较小**（<0.3s，含在 `before_scf` 中），但其收益在于消除 `setupIndGk` 的 |G+K|² 双重计算（~18,000 次冗余调用）和减少反复内存分配。缓存数据量约 0.5~0.9 MB，可完全放入 L2 缓存。
 
-4. **线程扩展性趋于饱和**：4 线程达 2.3~2.6× 加速，8 线程不再提升甚至退化。**混合并行（`mix_np4_omp2`）是本机最优策略**（3.5× 加速），MPI 进程级并行有效规避了 OpenMP 小循环线程开销。Release 下编译器自动向量化已显著提升单线程效率。
+4. **线程扩展性趋于饱和**：4 线程达 2.1~2.6× 加速，8 线程不再提升甚至退化。**混合并行（`mix_np4_omp2`）是本机最优策略**（3.3× 加速），MPI 进程级并行有效规避了 OpenMP 小循环线程开销。Release 下编译器自动向量化已显著提升单线程效率。
 
 ### 10.2 第 13 周工作建议
 
@@ -694,7 +695,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 2. **缓存复用作为主攻方向**（题目8）：
    - 在 `PW_Basis` 和 `PW_Basis_K` 中添加缓存有效性标志位
    - 改造 `collect_local_pw` 和 `collect_uniqgg` 检查缓存
-   - **优先消除 `setupIndGk` 中的双重 `cal_GplusK_cartesian` 调用**（见效最快，~50-200ms 节省）
+   - **优先消除 `setupIndGk` 中的双重 `cal_GplusK_cartesian` 调用**（见效最快，~10-50ms Debug / <5ms Release）
    - 预期代码改动 50~80 行
 
 3. **与 Workflow B 协调**：
@@ -703,7 +704,7 @@ for (int ig = 0; ig < this->npw; ig++) {
    - 两个工作流的优化效果可能叠加
 
 4. **WSL2 局限性说明**：
-   - `mix_np4_omp2` Release 下出现 0.71× 的反常退化，属于 WSL2 虚拟化噪音
+   - `mix_np4_omp2` Release 下出现 0.79× 的反常退化，属于 WSL2 虚拟化噪音
    - 所有基于 np2_omp2 和 serial 的结论可靠，但 np4 配置需在物理机 Linux 上复测
 
 ---
