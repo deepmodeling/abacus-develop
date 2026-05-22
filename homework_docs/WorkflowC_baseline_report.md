@@ -22,16 +22,12 @@
 | 数学库 | FFTW 3 + OpenBLAS + ScaLAPACK |
 | SIMD 指令集 | AVX2, AVX-VNNI |
 | 缓存 | L1d: 384KB, L2: 10MB, L3: 18MB |
-| ABACUS 版本 | v3.11.0-beta.2 (commit 65acba3c6) |
+| ABACUS 版本 | v3.11.0-beta.2 (commit fae9fe94b) |
 | 构建类型 | Debug (`-O0 -g`，未优化) |
 
 **ABACUS 二进制**: `build/abacus_basic_para`，链接 FFTW3、OpenBLAS、ScaLAPACK-openmpi。
 
-> **重要提示：Debug vs Release 构建的影响**  
-> 本报告主要数据来自 `-O0`（Debug）构建。在此基础上，我们已完成了一轮 **Release（`-O3 -march=native -DNDEBUG`）对照实验**（详见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）。关键发现：
-> 1. GCC 13 在 `-O3` 下**已对 gather/scatter 拷贝循环自动向量化**（加速 3.3-3.6×）
-> 2. 手动 `#pragma omp simd` 的边际增益因此大幅缩水（预估 ~0-3% SCF），策略已相应调整（见 [10.2 节](#102-第-13-周工作建议)）
-> 3. Debug 测得的**百分比占比仍然有效**，但 **SIMD 的预期加速倍数不能直接用 Debug 数据估算**
+> **注意**：本报告主要数据来自 `-O0`（Debug）构建。Release（`-O3 -march=native -DNDEBUG`）对照实验见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)。Debug 测得的百分比占比仍然有效，但 **SIMD 的预期加速倍数不能直接用 Debug 数据估算**——GCC 13 在 `-O3` 下已对拷贝循环自动向量化。
 
 ---
 
@@ -304,7 +300,7 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 ### 5.1 计时数据总表（稳态 r2/r3 均值）
 
-以下数据为 r2 和 r3 的算术平均，代表排除冷启动效应后的系统稳态性能。`gatherp_scatters` 在 `poolnproc=1`（单进程）时因走简化代码路径（无 MPI pre/post copy），耗时低于 0.1s 阈值不显示。冷启动场景（r1）数据见 [4.4.1 节](#441-r1r2-计时对比)。
+以下数据为 r2 和 r3 的算术平均，代表排除冷启动效应后的系统稳态性能。`gatherp_scatters` 在 `poolnproc=1`（单进程）时因走简化代码路径（无 MPI pre/post copy），耗时低于 0.1s 阈值不显示。冷启动场景（r1）数据见 [4.4.1 节](#441-r1r2-计时对比)。每个 SCF 迭代中 `gatherp_scatters` 和 `gathers_scatterp` 分别调用约 nkpt × nbands 次，全运行累计 7,000~12,000 次，调用量随网格和 k 点数增长。
 
 #### gaas_tiny (24³)
 
@@ -385,18 +381,6 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 2. **np2_omp2 的 gather/scatter 占比（48.7%）高于 np4_omp2（36.9%）**：更多进程时，每个进程处理的数据更少，拷贝和通信开销也更小
 
 3. **before_scf 初始化开销不随 MPI 进程数单调变化**：np2_omp2 (1.78s) > serial (0.81s) > np4_omp2 (0.22s)，说明 MPI 模式下初始化的额外开销（分布式数据结构建立）在 2 进程时达到峰值
-
-### 5.2 关键发现
-
-1. **MPI 模式下 gather/scatter 占比较高**：在 `poolnproc > 1` 时，稳态 gather/scatter 占 FFT 变换时间的 **35%~52%**（gp/r2c），占 SCF 迭代时间的 **5~13%**（gp/ham）。这是 MPI 通信（Alltoallv）+ 额外拷贝段（pre/post communication copy）的共同结果。
-
-2. **单进程模式下 gather/scatter 占比较低**：`poolnproc == 1` 时，gather/scatter 的拷贝量小（无 MPI 阶段的额外两段拷贝），占 FFT 的 **11~21%**。此模式下仅有一次一维拷贝循环。
-
-3. **调用频率极高**：每个 SCF 迭代中，`gatherp_scatters` 每个 k 点至少调用 1 次，稳态总计调用量级为 7,000~12,000 次（与 k 点数 × SCF 迭代数 × band 数成正比）。
-
-4. **网格规模影响超线性**：从 24³ 到 48³，serial 模式下 gathers 绝对耗时从 0.15s 增长到 1.60s（**10.7×**），远超 nplane 线性增长（2×）。原因是调用次数随 npw 增长。
-
-5. **MPI 进程数增加可降低 gather/scatter 占比**：np4_omp2 的 gp/r2c 占比（36.9%）低于 np2_omp2（48.7%），因更多进程分摊了通信负载。
 
 ### 5.3 SIMD 向量化机会分析
 
@@ -655,7 +639,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 ### 8.3 额外发现：MPI 通信优化机会
 
-从基线数据观察到 `poolnproc > 1` 时 gather/scatter 占比较高（稳态 **35~52%** 的 FFT 时间，冷启动可达 60~70%），其中 MPI_Alltoallv 是主要瓶颈。这属于 Workflow B 的范畴，但 SIMD 向量化 (Workflow C) 可部分缓解问题（加速 copy 段）。
+从基线数据观察到 `poolnproc > 1` 时 gather/scatter 占比较高（稳态 **35~52%** 的 FFT 时间，冷启动可达 60~70%）。gather/scatter 内部包含本地 copy 段和 `MPI_Alltoallv` 通信两部分（当前未分别计时），其中通信部分推测为主要开销（尤其在小网格下，copy 量小而通信延迟占比高）。MPI 通信优化属于 Workflow B 的范畴，但 SIMD 向量化 (Workflow C) 可加速本地 copy 段。
 
 ---
 
@@ -678,7 +662,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 1. **全部 54 次运行通过** (100% 通过率)，测试体系稳定可靠。
 
-2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **35~52%**（稳态），占 SCF 迭代的 **5~13%**。其中本地 copy 段（SIMD 目标）占 gather/scatter 的 30~50%。6 处内层连续拷贝循环非常适合 SIMD 向量化，但实际增益需在 Release（`-O3`）构建下验证。
+2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **35~52%**（稳态），占 SCF 迭代的 **5~13%**。MPI 路径的 gather/scatter 由本地 copy 段 + `MPI_Alltoallv` 组成，其中 copy 段是 SIMD 的直接作用目标，Release 实测 gather/scatter 加速 3.3~3.6×（vs Debug）证实了向量化对拷贝段的有效性。6 处内层连续拷贝循环非常适合 SIMD 向量化，但实际增益需在 Release（`-O3`）构建下验证。
 
 3. **缓存复用函数当前开销较小**（<0.3s，含在 `before_scf` 中），但其收益在于消除 `setupIndGk` 的 |G+K|² 双重计算（~18,000 次冗余调用）和减少反复内存分配。缓存数据量约 0.5~0.9 MB，可完全放入 L2 缓存。
 
