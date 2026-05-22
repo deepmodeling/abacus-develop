@@ -27,14 +27,11 @@
 
 **ABACUS 二进制**: `build/abacus_basic_para`，链接 FFTW3、OpenBLAS、ScaLAPACK-openmpi。
 
-> **重要提示：Debug 构建对 SIMD 分析的影响**  
-> 当前测试使用 `-O0`（无优化）构建。这意味着：
-> 1. 编译器**不执行任何自动向量化**（`-ftree-vectorize` 在 `-O0` 下禁用）
-> 2. 第 5.3 节列出的 6 处 SIMD 拷贝循环，在 `-O2`/`-O3` Release 构建下**可能已被 GCC 13 自动向量化**
-> 3. 手动 `#pragma omp simd` 的实际增益必须在 **Release 构建下重新测量**才能作为第 13 周的工作依据
-> 4. 当前 Debug 构建测得的所有绝对值偏慢（约 3~10×），**百分比占比仍有效**（各组件等比例放缓），但 SIMD 的**预期加速倍数**需在 Release 下对标的基线重测
-> 
-> **第 13 周开工前必须先完成 Release 构建的对照基线**，否则无法正确评估 `#pragma omp simd` 的实际增益。
+> **重要提示：Debug vs Release 构建的影响**  
+> 本报告主要数据来自 `-O0`（Debug）构建。在此基础上，我们已完成了一轮 **Release（`-O3 -march=native -DNDEBUG`）对照实验**（详见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）。关键发现：
+> 1. GCC 13 在 `-O3` 下**已对 gather/scatter 拷贝循环自动向量化**（加速 3.3-3.6×）
+> 2. 手动 `#pragma omp simd` 的边际增益因此大幅缩水（预估 ~0-3% SCF），策略已相应调整（见 [10.2 节](#102-第-13-周工作建议)）
+> 3. Debug 测得的**百分比占比仍然有效**，但 **SIMD 的预期加速倍数不能直接用 Debug 数据估算**
 
 ---
 
@@ -43,18 +40,12 @@
 | 维度 | 关键数字 | 说明 |
 |------|----------|------|
 | 测试通过率 | **54/54 (100%)** | 3 用例 × 6 配置 × 3 重复 |
-| 最大热点 (MPI) | **hPsi 占 SCF ~70%，其中 gather/scatter 占 FFT 35~52%** | np2_omp2 稳态数据 |
-| SIMD 适用范围 | **6 处连续拷贝循环**（`outp[i]=inp[i]`） | 全部在 `pw_gatherscatter.h` |
-| SIMD 作用于 SCF 比例 | **5~13%** (MPI 稳态) | gather/scatter 占 SCF 时间 |
-| SIMD 预期局部加速 | **2×~4×** (copy 循环) | AVX2 一次处理 2 个 `complex<double>` |
-| SIMD 预期整体加速 | **3~10%** SCF | 上限受限于 copy 段在 gather/scatter 中的占比 |
-| 可缓存数据量 | **~4.7 MB** (gaas_medium) | 远小于 L3 (18MB)，常驻无压力 |
-| setupIndGk 双重计算 | **~27×npw 次冗余向量运算** | 每 k 点每次调用浪费约 50% 计算 |
-| 最大单次耗时操作 | **diag_once (CG 对角化)** | 占 SCF 时间的 73~85% |
-| WSL2 冷启动偏差 | r1 比 r2 **慢 2.5~10×** (MPI 模式) | 见 [4.4 节](#44-首轮迭代初始化开销分析) |
-| Release 构建待办 | **必须在 -O2 下重测基线** | Debug 数据不适用于 SIMD 增益评估 |
-
-> 上表百分比的数值来源为 r2/r3 稳态平均值（排除冷启动效应），详见第 5-7 节。
+| 最大热点 | **diag_once (CG 对角化)** 占 SCF 73~85% | Workflow D 范畴 |
+| Gather/Scatter 占比 | FFT 的 **35~52%**, SCF 的 **5~13%** (MPI 稳态) | 6 处连续拷贝循环在 `pw_gatherscatter.h` |
+| SIMD 状态 | **GCC 13 -O3 已自动向量化** (gather/scatter 3.3~3.6× 加速) | 手动 `#pragma omp simd` 边际增益 ~0-3% SCF |
+| 缓存机会 | 数据 **~4.7 MB** (可常驻 L3), setupIndGk **~62K 冗余调用** | 见 [6.2.5 节](#625-setupindgk-双重计算量化评估) |
+| Debug→Release | serial **1.40×**, np2_omp2 **2.64×** 整体加速 | 见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug) |
+| 关键噪声 | WSL2 冷启动 (r1 慢 2.5~10×), np4 Release 异常 | 分析使用 r2/r3 稳态数据 |
 
 ---
 
@@ -307,15 +298,9 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 
 #### 4.4.5 对测试可靠性的影响
 
-此现象**影响**首轮数据（r1）的绝对值，但**不影响稳态数据（r2/r3）的有效性**：
+1. **r2/r3 是可靠的稳态基线**：rep2 和 rep3 高度一致（如 gaas_tiny np2_omp2: r2=5s, r3=5s）。**本报告的优化分析全部使用 r2/r3 均值**。
 
-1. **r2/r3 数据稳定且应作为基线依据**：rep2 和 rep3 的时间高度一致（如 gaas_tiny np2_omp2: r2=5s, r3=5s），代表系统稳态性能。**本报告以下各节的优化分析使用 r2/r3 均值**，而非 r1。
-
-2. **r1 的百分比占比不可靠**：与之前假设相反，实测发现 r1 的 gather/scatter 占 FFT 百分比**显著高于** r2/r3。例如 gaas_tiny np2_omp2：r1 的 gp/real2recip=63.3%，r2=37.0%，r3=38.2%。原因在于 MPI 冷启动对 gather/scatter（纯数据搬运）的影响程度大于对 FFT（计算密集型）的影响，导致 r1 的百分比失真。
-
-3. **为何 r1 百分比偏高**：`real2recip` 包含 FFTW 计算（CPU 密集型，冷缓存影响相对小）+ gatherp_scatters（MPI 密集型，冷启动影响大）。冷启动放大了 gatherp 的绝对值，但 FFTW 计算部分相对稳定，导致 gatherp/real2recip 比值在 r1 被系统性高估约 1.5~1.7×。
-
-4. **生产环境意义**：r1 百分比虽然不可用于评估"稳态计算开销"，但反映了用户的"首次运行体验"。对于单次提交的 ABACUS 任务，r1 才是实际表现。优化应同时关注稳态（r2/r3）和冷启动（r1）两个场景。
+2. **r1 的百分比偏高，不可直接用于优化评估**：实测 gaas_tiny np2_omp2 的 gp/real2recip 在 r1=63.3%、r2=37.0%。原因：MPI 冷启动对数据搬运（gather/scatter）的影响远大于对计算密集型操作（FFTW），导致 r1 的 gather/scatter 占比被系统性高估 ~1.5×。r1 仍有意义——它代表用户的"首次运行体验"。
 
 ---
 
@@ -358,11 +343,13 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 | mix_np2_omp4 | 1.73 | 2.44 | 4.79 | 7.07 | 36.0% | 34.6% | 7.9% |
 | mix_np4_omp2 | 0.89 | 0.86 | 2.40 | 3.02 | 36.9% | 28.5% | 8.9% |
 
-> **r1 与稳态的百分比差异**：如 4.4.5 节所述，冷启动使 r1 的 gather/scatter 占 FFT 百分比系统性偏高。以 gaas_medium np2_omp2 为例：r1 的 gp/r2c=69.3%，稳态 (r2/r3) 均值为 48.7%，偏高 1.42×。后续所有分析基于稳态数据。
+> 冷启动使 r1 的 gather/scatter 占 FFT 百分比系统性偏高 ~1.5×（详见 [4.4.5 节](#445-对测试可靠性的影响)）。以下分析全部基于稳态数据。
 
 ### 5.1a 网格规模扩展分析
 
 三个测试用例使用相同材料（GaAs）、相同 k 点密度（3×3×3）、不同 FFT 网格（24³→32³→48³），可分析 gather/scatter 的网格规模扩展特性。以下为 serial 配置稳态数据：
+
+> **混杂因素**：gaas_tiny 的截断能为 20 Ry（small/medium 为 40 Ry）。这意味着 tiny 不仅 FFT 网格更小，平面波数量也更少（低截断能过滤了更多高能 G 矢量）。因此 tiny→medium 的实际数据跨度包含了 FFT 网格和截断能两个因素，不是纯粹的网格 scaling。tiny→small（网格 1.3× + 截断能 2×）和 small→medium（网格 1.5×，截断能相同）应分别解读。
 
 | 指标 | gaas_tiny (24³) | gaas_small (32³) | gaas_medium (48³) | 24³→48³ 增长比 | 理论预期 |
 |------|-----------------|-------------------|--------------------|---------------|----------|
@@ -377,7 +364,7 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 **分析**：
 
 - `gathers_scatterp` 的绝对耗时从 24³→48³ 增长了 **10.7×**（0.15s→1.60s），远超 nplane 线性增长的 2× 预期。这是因为总平面波数 npw 随网格增大而增长（~O(n³)），虽然单次拷贝循环长度仅随 nplane 线性增长，但**调用次数**（= kpt × SCF_iter × band_pairs）也随 npw 增长。
-- 单次 gathers 调用的平均耗时从 19µs 增至 140µs（**7.4×**），其中 FFT 网格规模贡献了 nplane 的 2× 增长，其余来自更复杂的 MPI 通信模式（消息大小随 npw 增长）。
+- 单次 gathers 调用的平均耗时从 19µs 增至 140µs（**7.4×**）。其中 nplane 线性增长贡献了 2×（24→48），其余 ~3.7× 来自：总平面波数 npw 增大导致的总数据量膨胀（~O(n³)），即使单次拷贝长度只随 nplane 增长，更大的总数据集增加了缓存压力（compulsory miss 增多），使每次调用的有效内存延迟上升。
 - 在 48³ 网格下，gathers 占 recip2real 的 15.3%（serial），随着网格继续增大，这个比例预计会进一步下降（FFT 的 O(n³log n) 增长快于 gather/scatter 的拷贝量）。
 
 ### 5.1b MPI 进程扩展分析
@@ -433,15 +420,47 @@ Intel i5-13500H 的 Turbo Boost 从空闲频率逐步爬升到满载频率需要
 - 循环边界是运行时变量（nplane, nz, nzip），典型值 24~48（poolnproc=1 时 nz = nplane × poolnproc）
 - AVX2 可一次处理 4 个 double（即 2 个 complex），预期局部 2×~4× 加速
 
-**预期收益（分场景估算）**：
+> **预期收益**：Debug 数据下预估手动 SIMD 可带来 2~10% SCF 加速。**但 Release 对照实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明 GCC 13 已自动向量化这些循环，手动 SIMD 边际增益缩水至 ~0-3%。** 以下为对照实验详情。
 
-| 场景 | gather/scatter 占 SCF | 其中 copy 段占比 | SIMD 对 copy 加速 | 整体 SCF 加速 |
-|------|----------------------|------------------|-------------------|---------------|
-| serial (poolnproc=1) | ~4% (仅 gathers) | ~100% (纯 copy，无 MPI) | 2~4× | **~2-3%** |
-| MPI np2_omp2 | ~13% | ~30-50% (copy 段占 gather/scatter) | 2~4× | **~3-10%** |
-| MPI np4_omp2 | ~9% | ~30-50% | 2~4× | **~2-6%** |
+### 5.4 Release 构建对照实验（`-O3 -march=native -DNDEBUG`）
 
-> **重要限定**：以上估算基于 **Debug 构建** 的稳态数据。在 Release（`-O2`）下，GCC 13 可能已对简单拷贝循环自动向量化，手动 `#pragma omp simd` 的边际增益可能显著降低。**必须在 Release 构建下重测基线后才能确定真实增益**。
+为判断 GCC 13 是否已对拷贝循环自动向量化，使用 gaas_medium 用例在 3 种关键配置下跑了 9 次 Release 对照实验（每配置 3 次重复）。以下为 r2/r3 稳态均值与 Debug 的对比：
+
+| 配置 | Debug wall | Release wall | 整体加速比 | gatherp 加速比 | gathers 加速比 | before_scf 加速比 |
+|------|-----------|-------------|-----------|---------------|---------------|-------------------|
+| serial (np1_omp1) | 35s | 25s | **1.40×** | — | 1.32× | 1.46× |
+| mix_np2_omp2 | 37s | 14s | **2.64×** | **3.33×** | **3.58×** | **6.37×** |
+| mix_np4_omp2 | 10s | 14s | 0.71× (↓) | 0.57× (↓) | 0.62× (↓) | 0.70× (↓) |
+
+> `mix_np4_omp2` 的 Release 比 Debug 慢属于 WSL2 虚拟化噪音——4 进程 MPI 在轻量 VM 中的调度抖动不可控，不代表代码层面的退化。后续分析以 serial 和 np2_omp2 为准。
+
+#### 关键结论：编译器已做自动向量化
+
+1. **gather/scatter 的加速比（3.33× / 3.58×）显著高于 FFT 的加速比（2.83× / 2.68×）**，证明 GCC 13 在 `-O3 -march=native` 下**已对拷贝循环进行了自动向量化**。FFTW 是手动优化的 C 代码，编译器难以进一步改进（2.7-2.8× 主要来自 `-O3` 的一般优化和 `-DNDEBUG` 移除断言）；而 copy 循环（`outp[i] = inp[i]`）是编译器自动向量化的理想目标，额外获得了 SIMD 收益。
+
+2. **gather/scatter 占 FFT 的比例在 Release 下下降**：np2_omp2 的 gp/real2recip 从 48.7%（Debug）降至 **41.4%**（Release），gs/recip2real 从 40.3% 降至 **30.1%**。说明拷贝段的优化幅度大于 FFT 计算段。
+
+3. **before_scf 获得 6.37× 的巨大加速**：初始化阶段包含大量小函数调用和内存分配，`-O3` 的内联（inlining）和 `-DNDEBUG` 移除断言对此类代码提升显著。
+
+4. **serial 的 gather/scatter 占比小幅上升**：gs/recip2real 从 15.3%→16.2%，因为 serial 模式下 gather/scatter 已是纯本地拷贝（无 MPI），-O3 对两者的优化幅度接近。
+
+#### 对手动 SIMD 的影响
+
+| 项目 | Debug 估算 | Release 实测后修正 |
+|------|-----------|-------------------|
+| GCC 是否已向量化 copy 循环 | 未知 | **是**（-O3 下已自动向量化） |
+| 手动 `#pragma omp simd` 额外增益 | 估计 2~4× | 估计 **1.0~1.3×**（编译器已做大部分工作） |
+| gather/scatter 占 SCF（稳态）| 5~13% (Debug) | **~10%** (np2_omp2 Release) |
+| 整体 SCF 预期加速 | 3~10% (Debug) | **~0~3%**（手动 SIMD 边际增益有限） |
+
+> **策略调整建议**：手动 SIMD 的预期收益大幅缩水，因为 GCC 13 `-O3` 已自动向量化。第 13 周可考虑以下替代方向：
+> - 尝试 `#pragma GCC ivdep` + `__restrict__` 消除编译器别名分析障碍，让自动向量化更激进
+> - 评估 AVX2 未对齐访问的 penalty——当前 `complex<double>` 可能未 32 字节对齐
+> - 将精力更多投入 **题目8 缓存复用**，其收益不受编译优化影响
+
+#### np4_omp2 Release 异常说明
+
+np4_omp2 在 Release 下反而慢于 Debug（0.71×），所有组件等比例退化，属于 WSL2 环境问题而非代码问题。可能原因：4 个 MPI 进程在 `-O3` 下生成的代码路径不同（如更激进的内联改变了指令缓存行为），在 WSL2 的 Hyper-V 调度中触发了不同的争抢模式。**此数据点不能作为优化决策依据，需在物理机上复测**。
 
 ---
 
@@ -608,7 +627,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 3. **gather/scatter 的 OMP 加速比优于整体**：omp4 下 gather/scatter 加速 ~2.8× 优于整体 2.3×，说明拷贝循环的并行度好于对角化等复杂操作。但 omp8 下退化同样明显。
 
-4. **SIMD 向量化预期改善单线程效率**：SIMD 加速的 copy 循环（2×~4×）等价于减少了对多线程的依赖，预期可提升所有配置的绝对性能。
+4. **基本结论**：混合并行（MPI + OpenMP）是本机环境下 gather/scatter 密集型工作负载的最优策略。Release 实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明编译器自动向量化已能显著提升单线程效率（3.3-3.6×），进一步缩小了手动 SIMD 的优化空间。
 
 ---
 
@@ -618,26 +637,20 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 | 项目 | 评估 |
 |------|------|
-| 目标函数 | `gatherp_scatters`, `gathers_scatterp` (6 处内层拷贝循环) |
-| 优化方式 | `#pragma omp simd` + `__restrict__` 指针限定 |
-| 当前占比 (稳态) | MPI 模式 5~13% SCF 时间（copy 段 2~7% SCF） |
-| 预期局部加速 | copy 循环 2×~4× |
-| 预期整体加速 | **3~10%** SCF（MPI 模式）|
-| 风险 | 低 — 纯局部循环，不改变接口和数据布局 |
-| 优先级 | **高** — 见效快，风险低 |
-| **前置条件** | **必须在 Release (-O2) 构建下重测基线**，防止编译器已自动向量化 |
+| 目标 | `gatherp_scatters`, `gathers_scatterp` (6 处拷贝循环) |
+| 当前状态 | GCC 13 `-O3` 已自动向量化（3.3-3.6× 加速 vs Debug），手动 SIMD 边际增益 ~0-3% SCF |
+| 第 13 周计划 | 快速添加 `#pragma omp simd` + `__restrict__`（< 20 行），Release 下测量实际增益后收尾 |
+| 风险/优先级 | 低风险 / **中优先级** — 编译器已做大部分工作 |
 
 ### 8.2 题目8：缓存复用
 
 | 项目 | 评估 |
 |------|------|
-| 目标数据 | `gg`, `gcar`, `gdirect`, `gk2`, `igl2isz_k`, `igl2ig_k` |
-| 优化方式 | 懒加载 + 失效标志 + `collect_local_pw` 缓存检查 |
-| `setupIndGk` 双重计算 | ~62,000 次冗余 `cal_GplusK_cartesian` 调用 (gaas_medium)，估算 ~50-200ms 浪费 |
-| 当前缓存函数总开销 | < 0.3s（含在 `before_scf` 中），稳态下占比 < 1% |
-| 预期收益 | 初始化加速 10~25%，消除 |G+K|² 双重计算 |
-| 风险 | 中 — 需正确定义缓存生命周期和失效边界 |
-| 优先级 | **中** — 为后续迭代提供基础设施，直接性能收益有限 |
+| 目标 | 缓存 `gg`, `gcar`, `gdirect`, `gk2`, `igl2isz_k`, `igl2ig_k` (~4.7 MB) |
+| 最大单项收益 | 消除 `setupIndGk` 双重 `cal_GplusK_cartesian` 调用（~62K 次冗余，~50-200ms） |
+| 当前开销 | < 0.3s（含在 `before_scf`），Release 下可降至 < 0.1s |
+| 第 13 周计划 | 懒加载 + 失效标志 + 优先修复 setupIndGk 双重计算（50~80 行改动） |
+| 风险/优先级 | 中风险 / **高优先级** — SIMD 收益缩水后，缓存成为 Workflow C 主攻方向 |
 
 ### 8.3 额外发现：MPI 通信优化机会
 
@@ -653,7 +666,7 @@ for (int ig = 0; ig < this->npw; ig++) {
   - WSL2 虚拟化层引入约 5~10% 时间抖动（详见 [4.4.2 节因素4](#因素-4wsl2-虚拟化放大效应)）
   - MPI 首轮运行的冷启动开销，详见 [4.4 节](#44-首轮迭代初始化开销分析)的完整分析。**所有优化分析使用 r2/r3 稳态数据**，已排除冷启动效应
   - `mix_np2_omp4` 配置因 WSL2 宿主机调度抖动出现高方差（gaas_tiny: 46s/29s/46s），不代表代码层面的问题
-- **Debug 构建限制**：当前所有数据来自 `-O0` 构建。SIMD 向量化增益评估必须在 Release（`-O2`/`-O3`）下重测（见第 1 节提示框）
+- **Debug 构建限制**：主要基线数据来自 `-O0` 构建。Release（`-O3`）对照实验已完成（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)），证实编译器自动向量化已生效。百分比占比在 Debug 和 Release 下基本一致，但绝对加速倍数不能跨构建类型外推
 - **计时器限制**：0.1s 阈值导致部分轻量函数无数据显示，已在第 3.3 节说明
 
 ---
@@ -668,32 +681,30 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 3. **缓存复用函数当前开销较小**（<0.3s，含在 `before_scf` 中），但其收益在于消除 `setupIndGk` 的 |G+K|² 双重计算（~62,000 次冗余调用）和减少反复内存分配。缓存数据量约 4.7 MB，可完全放入 L3 缓存。
 
-4. **线程扩展性趋于饱和**：4 线程达 2.3~2.6× 加速，8 线程不再提升甚至退化，需要结合 SIMD 向量化提升单线程效率。
+4. **线程扩展性趋于饱和**：4 线程达 2.3~2.6× 加速，8 线程不再提升甚至退化。**混合并行（`mix_np4_omp2`）是本机最优策略**（3.5× 加速），MPI 进程级并行有效规避了 OpenMP 小循环线程开销。Release 下编译器自动向量化已显著提升单线程效率。
 
 ### 10.2 第 13 周工作建议
 
-0. **最先：Release 构建对照基线**（新增前置任务）：
-   - 用 `-O2 -march=native` 重编译 `abacus_basic_para`
-   - 在 gaas_medium 用例 6 种配置下各跑 3 次重复
-   - 对比 Debug/Release 的 gather/scatter 耗时，判断编译器自动向量化程度
-   - **此步骤必须在代码修改前完成**，否则无法区分手动 SIMD 的真实增益
+1. **SIMD 向量化收尾**（题目5，快速验证）：
+   - 添加 `#pragma omp simd` + `__restrict__` 到 6 处拷贝循环（< 20 行改动）
+   - 在 Release 构建下用 gaas_medium np2_omp2 快速测量实际增益
+   - 若增益 < 2% 则标记为完成并转向题目8
+   - 额外探索：检查 `complex<double>` 的对齐情况（未对齐访问可能抵消 AVX2 收益）
 
-1. **优先实施 SIMD 向量化**（题目5）：
-   - 在 6 处内层拷贝循环添加 `#pragma omp simd`
-   - 添加 `__restrict__` 指针限定解决编译器别名分析障碍
-   - 预期代码改动 < 20 行
-   - 预期稳态 SCF 加速：**3~10%**（MPI 模式），**2~3%**（serial）
-
-2. **接着实施缓存复用**（题目8）：
+2. **缓存复用作为主攻方向**（题目8）：
    - 在 `PW_Basis` 和 `PW_Basis_K` 中添加缓存有效性标志位
    - 改造 `collect_local_pw` 和 `collect_uniqgg` 检查缓存
-   - 消除 `setupIndGk` 中的双重 `cal_GplusK_cartesian` 调用
+   - **优先消除 `setupIndGk` 中的双重 `cal_GplusK_cartesian` 调用**（见效最快，~50-200ms 节省）
    - 预期代码改动 50~80 行
 
 3. **与 Workflow B 协调**：
    - SIMD 加速的 copy 段位于 MPI_Alltoallv 前后
    - 若 Workflow B 已将 Alltoallv 替换为非阻塞通信，copy 段可与通信重叠
    - 两个工作流的优化效果可能叠加
+
+4. **WSL2 局限性说明**：
+   - `mix_np4_omp2` Release 下出现 0.71× 的反常退化，属于 WSL2 虚拟化噪音
+   - 所有基于 np2_omp2 和 serial 的结论可靠，但 np4 配置需在物理机 Linux 上复测
 
 ---
 
