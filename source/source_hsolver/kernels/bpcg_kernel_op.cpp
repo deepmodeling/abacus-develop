@@ -18,40 +18,92 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
-        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        std::vector<Real> norms(n_band, 0.0);
+        std::vector<Real> epsilo_0s(n_band, 0.0);
+        std::vector<Real> epsilo_1s(n_band, 0.0);
+        std::vector<Real> epsilo_2s(n_band, 0.0);
+
+#ifdef _OPENMP
+#pragma omp parallel if(n_band > 4)
+#endif
         {
-            Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-            Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-            auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            // Step 1: compute norms for all bands
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:epsilo_0, epsilo_1, epsilo_2) schedule(static) if(n_basis > 512)
+#pragma omp for schedule(static)
 #endif
-            for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
             {
-                auto item = band_idx * n_basis_max + basis_idx;
-                grad_out[item] *= norm;
-                hgrad_out[item] *= norm;
-                epsilo_0 += std::real(hpsi_out[item] * std::conj(psi_out[item]));
-                epsilo_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
-                epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
+                Real norm = 0.0;
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    norm += std::norm(grad_out[item]);
+                }
+                norms[band_idx] = norm;
             }
-            Parallel_Reduce::reduce_pool(epsilo_0);
-            Parallel_Reduce::reduce_pool(epsilo_1);
-            Parallel_Reduce::reduce_pool(epsilo_2);
-            theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
-            cos_theta = std::cos(theta);
-            sin_theta = std::sin(theta);
+
+            // Step 2: reduce norms serially
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if(n_basis > 512)
+#pragma omp single
 #endif
-            for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
-                auto item = band_idx * n_basis_max + basis_idx;
-                psi_out[item] = psi_out[item] * cos_theta + grad_out[item] * sin_theta;
-                hpsi_out[item] = hpsi_out[item] * cos_theta + hgrad_out[item] * sin_theta;
+                for (int band_idx = 0; band_idx < n_band; band_idx++)
+                {
+                    Parallel_Reduce::reduce_pool(norms[band_idx]);
+                    norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
+                }
+            }
+
+            // Step 3: normalize and compute epsilo for all bands
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
+            {
+                Real norm = norms[band_idx];
+                Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    grad_out[item] *= norm;
+                    hgrad_out[item] *= norm;
+                    epsilo_0 += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                    epsilo_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
+                    epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
+                }
+                epsilo_0s[band_idx] = epsilo_0;
+                epsilo_1s[band_idx] = epsilo_1;
+                epsilo_2s[band_idx] = epsilo_2;
+            }
+
+            // Step 4: reduce epsilos serially
+#ifdef _OPENMP
+#pragma omp single
+#endif
+            {
+                for (int band_idx = 0; band_idx < n_band; band_idx++)
+                {
+                    Parallel_Reduce::reduce_pool(epsilo_0s[band_idx]);
+                    Parallel_Reduce::reduce_pool(epsilo_1s[band_idx]);
+                    Parallel_Reduce::reduce_pool(epsilo_2s[band_idx]);
+                }
+            }
+
+            // Step 5: update psi and hpsi for all bands
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
+            {
+                Real theta = 0.5 * std::abs(std::atan(2 * epsilo_1s[band_idx] / (epsilo_0s[band_idx] - epsilo_2s[band_idx])));
+                Real cos_theta = std::cos(theta);
+                Real sin_theta = std::sin(theta);
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    psi_out[item] = psi_out[item] * cos_theta + grad_out[item] * sin_theta;
+                    hpsi_out[item] = hpsi_out[item] * cos_theta + hgrad_out[item] * sin_theta;
+                }
             }
         }
     }
@@ -72,52 +124,121 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
-        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        std::vector<Real> norms(n_band, 0.0);
+        std::vector<Real> epsilos(n_band, 0.0);
+        std::vector<Real> errs(n_band, 0.0);
+        std::vector<Real> betas(n_band, 0.0);
+
+#ifdef _OPENMP
+#pragma omp parallel if(n_band > 4)
+#endif
         {
-            Real err = 0.0;
-            Real beta = 0.0;
-            Real epsilo = 0.0;
-            Real grad_2 = {0.0};
-            T grad_1 = {0.0, 0.0};
-            auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            // Step 1: compute norms for all bands
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:epsilo) schedule(static) if(n_basis > 512)
+#pragma omp for schedule(static)
 #endif
-            for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
             {
-                auto item = band_idx * n_basis_max + basis_idx;
-                psi_out[item] *= norm;
-                hpsi_out[item] *= norm;
-                epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                Real norm = 0.0;
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    norm += std::norm(psi_out[item]);
+                }
+                norms[band_idx] = norm;
             }
-            Parallel_Reduce::reduce_pool(epsilo);
+
+            // Step 2: reduce norms serially
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:err, beta) schedule(static) if(n_basis > 512)
+#pragma omp single
 #endif
-            for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
-                auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_2 = std::norm(grad_1);
-                err += grad_2;
-                beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
+                for (int band_idx = 0; band_idx < n_band; band_idx++)
+                {
+                    Parallel_Reduce::reduce_pool(norms[band_idx]);
+                    norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
+                }
             }
-            Parallel_Reduce::reduce_pool(err);
-            Parallel_Reduce::reduce_pool(beta);
+
+            // Step 3: normalize and compute epsilo for all bands
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if(n_basis > 512)
+#pragma omp for schedule(static)
 #endif
-            for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
             {
-                auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_out[band_idx] * grad_old_out[item];
+                Real norm = norms[band_idx];
+                Real epsilo = 0.0;
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    psi_out[item] *= norm;
+                    hpsi_out[item] *= norm;
+                    epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                }
+                epsilos[band_idx] = epsilo;
             }
-            beta_out[band_idx] = beta;
-            err_out[band_idx] = sqrt(err);
+
+            // Step 4: reduce epsilos serially
+#ifdef _OPENMP
+#pragma omp single
+#endif
+            {
+                for (int band_idx = 0; band_idx < n_band; band_idx++)
+                {
+                    Parallel_Reduce::reduce_pool(epsilos[band_idx]);
+                }
+            }
+
+            // Step 5: compute err and beta for all bands
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
+            {
+                Real epsilo = epsilos[band_idx];
+                Real err = 0.0;
+                Real beta = 0.0;
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                    Real grad_2 = std::norm(grad_1);
+                    err += grad_2;
+                    beta += grad_2 / prec_in[basis_idx];
+                }
+                errs[band_idx] = err;
+                betas[band_idx] = beta;
+            }
+
+            // Step 6: reduce errs and betas serially
+#ifdef _OPENMP
+#pragma omp single
+#endif
+            {
+                for (int band_idx = 0; band_idx < n_band; band_idx++)
+                {
+                    Parallel_Reduce::reduce_pool(errs[band_idx]);
+                    Parallel_Reduce::reduce_pool(betas[band_idx]);
+                }
+            }
+
+            // Step 7: update grad and output err/beta for all bands
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int band_idx = 0; band_idx < n_band; band_idx++)
+            {
+                Real epsilo = epsilos[band_idx];
+                Real beta = betas[band_idx];
+                for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
+                {
+                    auto item = band_idx * n_basis_max + basis_idx;
+                    T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                    grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_out[band_idx] * grad_old_out[item];
+                }
+                beta_out[band_idx] = beta;
+                err_out[band_idx] = sqrt(errs[band_idx]);
+            }
         }
     }
 };
