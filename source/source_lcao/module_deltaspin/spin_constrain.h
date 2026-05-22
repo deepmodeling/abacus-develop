@@ -180,24 +180,26 @@ public:
      * @param pelec_in Pointer to electronic state (for charge, weights, ekb)
      * @param pw_wfc_in PW basis for wavefunction storage (PW only)
      */
-  void init_sc(double sc_thr_in,
-               int nsc_in,
-               int nsc_min_in,
-               double alpha_trial_in,
-               double sccut_in,
-               double sc_drop_thr_in,
-               const UnitCell& ucell,
-               bool direction_only_in,
-               Parallel_Orbitals* ParaV_in,
-               int nspin_in,
-               const K_Vectors& kv_in,
-               void* p_hamilt_in,
-               void* psi_in,
-#ifdef __LCAO
+   void init_sc(double sc_thr_in,
+                int nsc_in,
+                int nsc_min_in,
+                double alpha_trial_in,
+                double sccut_in,
+                double sc_drop_thr_in,
+                const std::string& sc_acceleration_mode_in,
+                double sc_acceleration_rms_thr_in,
+                const UnitCell& ucell,
+                bool direction_only_in,
+                Parallel_Orbitals* ParaV_in,
+                int nspin_in,
+                const K_Vectors& kv_in,
+                void* p_hamilt_in,
+                void* psi_in,
+ #ifdef __LCAO
 			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
-#endif
+ #endif
 			   elecstate::ElecState* pelec_in,
-               ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
+                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /**
    * @brief Calculate atomic magnetic moments using real-space projection (LCAO basis).
@@ -287,7 +289,25 @@ public:
    *
    * @param outer_step Current SCF outer iteration number
    */
-  void run_lambda_linear_scan(int outer_step);
+   void run_lambda_linear_scan(int outer_step);
+
+   /**
+    * @brief Diagnostic scan: compare subspace Mi vs full diagonalization Mi.
+    * @details For nspin=2 LCAO. At each lambda point, computes both subspace Mi
+    * (trace formula) and full Mi (full diagonalization), outputs comparison.
+    * @param outer_step Current SCF outer iteration number
+    */
+   void run_lambda_scan_diagnostic(int outer_step);
+
+   /**
+    * @brief Local diagnostic: compare methods near a reference lambda value.
+    * @details Builds subspace at lambda_ref, then scans lambda_ref ± 0.5 eV/uB.
+    * Tests hypothesis: small perturbations near converged lambda are well-approximated.
+    * @param outer_step Current SCF outer iteration number
+    * @param lambda_ref_ry Reference lambda in Ry/uB (where subspace is built)
+    * @param label Label for output file
+    */
+   void run_lambda_local_diagnostic(int outer_step, double lambda_ref_ry, const std::string& label);
 
   /// @brief Reset DeltaSpin operator initialization state when constraints change
   void reset_dspin_operator();
@@ -344,6 +364,101 @@ public:
 		  const ModuleBase::Vector3<double>* delta_lambda,
 		  const int nbands, const int nkb, const int* nh_iat, const int ik,
 		  bool full_update = false);
+
+#ifdef __LCAO
+    /**
+     * @brief Compute H_sub = C†·H·C and S_sub = C†·S·C for LCAO subspace.
+     *
+     * @details Uses ScaLAPACK pzgemm to compute the nbands×nbands subspace
+     * Hamiltonian and overlap matrices from the 2D-block distributed H(k), S(k)
+     * and C(k). The result is gathered to all processes in the pool via reduce.
+     *
+     * @param hamilt Pointer to HamiltLCAO (type-erased, will be cast)
+     * @param psi Wavefunction container with 2D-block distributed C(k)
+     * @param ParaV Parallel orbitals distribution info
+     * @param h_sub Output: H_sub(k) [nbands × nbands], column-major
+     * @param s_sub Output: S_sub(k) [nbands × nbands], column-major
+     * @param ik K-point index
+     * @param nbands Number of bands
+     * @param nlocal Global basis size (NLOCAL)
+     */
+    void calculate_lcao_sub_hs(void* hamilt,
+                                psi::Psi<std::complex<double>>& psi,
+                                const Parallel_Orbitals* ParaV,
+                                std::complex<double>* h_sub,
+                                std::complex<double>* s_sub,
+                                int ik, int nbands, int nlocal);
+
+    /**
+     * @brief Apply DeltaSpin correction to LCAO subspace Hamiltonian.
+     *
+     * @details H_sub += Σ_I lambda_I · P_I_sub(k) for each constrained atom I.
+     * The P_I_sub matrices are pre-computed by cal_PI_sub().
+     * For nspin=4 (npol=2), uses Pauli matrix coefficients.
+     * For nspin=2 (npol=1), uses spin_sign scaling.
+     *
+     * @param h_sub Subspace Hamiltonian [nbands × nbands] (modified in place)
+     * @param PI_sub Per-atom projector overlap matrices
+     * @param lambda Lambda values per atom
+     * @param nbands Number of bands
+     * @param ik K-point index (for spin_sign in nspin=2)
+     * @param full_update If true, compute delta = lambda - lcao_lambda_in_sub_
+     */
+    void calculate_delta_hcc_lcao(std::complex<double>* h_sub,
+                                   const std::vector<std::vector<std::complex<double>>>& PI_sub,
+                                   const ModuleBase::Vector3<double>* lambda,
+                                   int nbands, int ik, bool full_update);
+
+    /**
+     * @brief Compute magnetic moments from LCAO subspace matrices.
+     *
+     * @details For each constrained atom I:
+     *   M_I = Σ_k w_k · Tr[P_I_sub(k) · ρ_sub(k)]
+     * where ρ_sub(k) = V†(k) · f(k) · V(k) is the Fermi-weighted density
+     * matrix in the subspace basis, and P_I_sub(k) = D_I†(k) · D_I(k).
+     *
+     * For nspin=2: Mz = spin_sign · Σ_k w_k · Re(Tr[P_I_sub · ρ_sub])
+     * For nspin=4: Full Pauli decomposition gives (Mx, My, Mz)
+     *
+     * @param PI_sub Per-atom, per-k-point projector matrices
+     * @param vcc Subspace eigenvectors [nbands × nbands] (column-major)
+     * @param ekb Eigenvalues [nbands]
+     * @param wg Band weights [nbands]
+     * @param nbands Number of bands
+     * @param nk Number of k-points
+     * @param npol Number of spinor components
+     * @param kv K-point vector list (for weights)
+     */
+    void cal_mi_lcao_subspace(
+        const std::vector<std::vector<std::vector<std::complex<double>>>>& PI_sub,
+        const std::vector<std::vector<std::complex<double>>>& vcc_all,
+        const std::vector<std::vector<double>>& ekb_all,
+        int nbands, int nk, int npol);
+
+    /**
+     * @brief Free LCAO subspace cache data.
+     * Called at the end of a lambda loop or when starting a new SCF iteration.
+     */
+    void free_lcao_subspace_cache();
+
+    /**
+     * @brief Rotate wavefunctions in LCAO subspace: C_new = C_old · V
+     *
+     * @details Uses ScaLAPACK pzgemm to apply the subspace rotation
+     * V(k) to the distributed wavefunction C(k).
+     *
+     * @param psi Wavefunction container (modified in place)
+     * @param ParaV Parallel orbitals distribution info
+     * @param vcc_all Per-k-point eigenvector matrices [nk][nbands²]
+     * @param nbands Number of bands
+     * @param nlocal Global basis size
+     * @param nk Number of k-points
+     */
+    void rotate_psi_subspace_lcao(psi::Psi<std::complex<double>>& psi,
+                                   const Parallel_Orbitals* ParaV,
+                                   const std::vector<std::vector<std::complex<double>>>& vcc_all,
+                                   int nbands, int nlocal, int nk);
+#endif
 
 #ifdef __LCAO
   /// @brief Convert orbital matrix to nested vector format [nspin][iat][iw]
@@ -520,7 +635,9 @@ public:
                               int nsc_min_in,
                               double alpha_trial_in,
                               double sccut_in,
-                              double sc_drop_thr_in);
+                              double sc_drop_thr_in,
+                              const std::string& sc_acceleration_mode_in,
+                              double sc_acceleration_rms_thr_in);
     /// get sc_thr
     double get_sc_thr() const;
     /// get nsc
@@ -568,6 +685,10 @@ public:
         sub_h_save = nullptr;
         sub_s_save = nullptr;
         becp_save = nullptr;
+        delete[] lcao_sub_h_save;
+        delete[] lcao_sub_s_save;
+        lcao_sub_h_save = nullptr;
+        lcao_sub_s_save = nullptr;
     };
     SpinConstrain& operator=(SpinConstrain const&) = delete;  ///< Copy assignment deleted
     SpinConstrain& operator=(SpinConstrain &&) = delete;      ///< Move assignment deleted
@@ -599,6 +720,7 @@ public:
     double alpha_trial_; ///< Initial trial step size (Ry/uB^2), adaptively adjusted during loop
     double restrict_current_; ///< Maximum allowed lambda change per step (Ry/uB), prevents overshooting
     bool direction_only_ = false; ///< If true, only optimize spin direction (project out parallel lambda component)
+    double last_drho_ = -1.0; ///< Last observed SCF charge density error (for convergence-dependent diagnostics)
 
   public:
     /// @brief Set DeltaSpin operator pointer for magnetic moment calculation (LCAO)
@@ -608,6 +730,10 @@ public:
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief Get magnetic moment convergence flag
     bool mag_converged() const {return this->is_Mi_converged;}
+    /// @brief Set the last observed SCF charge density error (drho)
+    void set_drho(double drho_in) { this->last_drho_ = drho_in; }
+    /// @brief Get the last observed SCF charge density error
+    double get_drho() const { return this->last_drho_; }
     void set_npol(int npol);
     int get_npol() const;
     int get_nw() const; ///< Total number of orbitals across all constrained atoms
@@ -671,7 +797,52 @@ public:
     TK* sub_s_save = nullptr;       ///< Cached subspace overlap matrix for all k-points
     TK* becp_save = nullptr;        ///< Cached becp coefficients for all k-points
     std::vector<ModuleBase::Vector3<double>> lambda_in_sub_; ///< Lambda values when subspace was saved
-};
+
+    /**
+     * =============================================================
+     * LCAO SUBSPACE DATA CACHING
+     * =============================================================
+     *
+     * @par Purpose
+     * In the LCAO basis, subspace diagonalization avoids full O(N³)
+     * diagonalization at each lambda step. H₀_sub(k) and S_sub(k)
+     * (both nbands×nbands) are computed once per SCF iteration and reused.
+     * P_I_sub(k) (projector overlaps) are computed via cal_PI_sub().
+     *
+     * @par Layout
+     * - lcao_sub_h_save: H₀_sub(k) for each k-point, stored as
+     *   [ik * nbands * nbands + i * nbands + j] (column-major)
+     * - lcao_sub_s_save: S_sub(k), same layout
+     * - lcao_PI_sub_save: P_I_sub(k) for each constrained atom and k-point
+     *   lcao_PI_sub_save[ik][iat] = nbands×nbands Hermitian matrix
+     *   Only filled for constrained atoms; empty for unconstrained.
+     * - lcao_ekb_save: eigenvalues from full diagonalization (for Fermi weights)
+     *
+     * @par Memory management
+     * Allocated on first cal_mw_from_lambda() LCAO subspace call,
+     * freed when subspace data is no longer needed (end of lambda loop or
+     * when a full rediagonalization is performed).
+     */
+    bool lcao_subspace_initialized_ = false;
+    int lcao_nbands_ = 0;           ///< Number of bands in subspace
+    int lcao_nk_ = 0;                ///< Number of k-points
+    int lcao_nlocal_ = 0;            ///< Global basis size (NLOCAL)
+    TK* lcao_sub_h_save = nullptr;   ///< Cached H₀_sub(k) for all k-points [nk * nbands²]
+    TK* lcao_sub_s_save = nullptr;   ///< Cached S_sub(k) for all k-points [nk * nbands²]
+    /// Per-k-point, per-atom projector overlap in subspace: PI_sub[ik][iat] = nbands²
+    /// Empty vector for unconstrained atoms
+    std::vector<std::vector<std::vector<std::complex<double>>>> lcao_PI_sub_save_;
+    std::vector<double> lcao_ekb_save_; ///< Cached eigenvalues [nk * nbands]
+    /// Lambda values when subspace data was saved (for incremental H correction)
+     std::vector<ModuleBase::Vector3<double>> lcao_lambda_in_sub_;
+     bool local_diag_run_ = false; ///< Flag: has local diagnostic been run?
+     /// Acceleration mode parameters
+     std::string sc_acceleration_mode_ = "off"; ///< "off", "first_order", "subspace"
+     double sc_acceleration_rms_thr_ = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
+     bool acceleration_active_ = false;          ///< Has acceleration been activated this SCF iteration?
+     bool acceleration_subspace_built_ = false;  ///< Has subspace been built at activation lambda?
+     std::vector<ModuleBase::Vector3<double>> lambda_at_acceleration_; ///< Lambda when acceleration was activated
+  };
 
 
 /**

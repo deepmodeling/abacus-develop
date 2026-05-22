@@ -442,7 +442,15 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 
         if (PARAM.inp.sc_lambda_strategy == "linear_scan")
         {
+            sc.set_drho(this->drho);
             sc.run_lambda_linear_scan(iter - 1);
+
+            // Run subspace vs full diagnostic scan for nspin=2 LCAO
+            if (PARAM.inp.nspin == 2 && PARAM.inp.sc_scan_steps > 0 && iter == 1)
+            {
+                sc.run_lambda_scan_diagnostic(iter - 1);
+            }
+
             skip_solve = true;
         }
         else if (PARAM.inp.sc_scf_thr_mode == "off")
@@ -468,6 +476,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             // ================================================================
             if (iter <= PARAM.inp.sc_dir_phase1_steps)
             {
+                sc.set_drho(this->drho);
                 sc.set_direction_only(false);
                 sc.run_lambda_loop(iter - 1);
                 sc.set_direction_only(true);
@@ -508,6 +517,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             {
                 if (iter > 1)
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     if (!sc.mag_converged()) { sc.set_mag_converged(true); }
                     skip_solve = true;
@@ -517,12 +527,14 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             {
                 if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     sc.set_mag_converged(true);
                     skip_solve = true;
                 }
                 else if (sc.mag_converged())
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     skip_solve = true;
                 }
@@ -538,6 +550,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                 // available to compute initial magnetic moments.
                 if (iter > 1)
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     if (!sc.mag_converged()) { sc.set_mag_converged(true); }
                     skip_solve = true;
@@ -549,12 +562,14 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                 // drho > 0 excludes iter=1 where drho has not been computed yet.
                 if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     sc.set_mag_converged(true);
                     skip_solve = true;
                 }
                 else if (sc.mag_converged())
                 {
+                    sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
                     skip_solve = true;
                 }

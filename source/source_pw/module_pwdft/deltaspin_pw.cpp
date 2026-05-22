@@ -20,6 +20,7 @@ bool run_deltaspin_lambda_loop(const int iter,
 
     if (inp.sc_lambda_strategy == "linear_scan")
     {
+        sc.set_drho(drho);
         sc.run_lambda_linear_scan(iter);
         return true;
     }
@@ -31,6 +32,7 @@ bool run_deltaspin_lambda_loop(const int iter,
         // are not available to compute initial magnetic moments.
         if (iter >= 1)
         {
+            sc.set_drho(drho);
             sc.run_lambda_loop(iter - 1);
             if (!sc.mag_converged()) { sc.set_mag_converged(true); }
             return true;
@@ -50,12 +52,14 @@ bool run_deltaspin_lambda_loop(const int iter,
     // drho > 0 excludes iterations where drho has not been computed.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
+        sc.set_drho(drho);
         sc.run_lambda_loop(iter - 1);
         sc.set_mag_converged(true);
         return true;
     }
     else if (sc.mag_converged())
     {
+        sc.set_drho(drho);
         sc.run_lambda_loop(iter - 1);
         return true;
     }

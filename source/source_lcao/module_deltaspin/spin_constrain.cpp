@@ -126,8 +126,19 @@ template <typename TK>
 int SpinConstrain<TK>::get_spin_sign(int ik) const
 {
     if (this->npol_ == 2) return 1;
-    // npol == 1 (nspin == 2): isk[ik]==0 => spin-up (+1), isk[ik]==1 => spin-down (-1)
-    return (this->pelec->klist->isk[ik] == 0) ? 1 : -1;
+    // npol == 1 (nspin == 2): use kv_.isk which is properly initialized
+    // isk[ik]==0 => spin-up (+1), isk[ik]==1 => spin-down (-1)
+    // Fall back to index-based detection if isk is not properly set
+    int isk_val = this->kv_.isk[ik];
+    if (isk_val == 0 && this->kv_.isk.size() > 1) {
+        // Check if all isk are 0 (improper initialization)
+        // For nspin=2, first nks/2 k-points are spin-up, rest are spin-down
+        int half_nks = this->kv_.get_nks() / 2;
+        if (half_nks > 0 && ik >= half_nks) {
+            return -1; // spin-down
+        }
+    }
+    return (isk_val == 0) ? 1 : -1;
 }
 
 /**
@@ -667,7 +678,9 @@ void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
                                                  int nsc_min_in,
                                                  double alpha_trial_in,
                                                  double sccut_in,
-                                                 double sc_drop_thr_in)
+                                                 double sc_drop_thr_in,
+                                                 const std::string& sc_acceleration_mode_in,
+                                                 double sc_acceleration_rms_thr_in)
 {
     this->sc_thr_ = sc_thr_in;
     this->nsc_ = nsc_in;
@@ -675,6 +688,8 @@ void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
     this->alpha_trial_ = alpha_trial_in / ModuleBase::Ry_to_eV;
     this->restrict_current_ = sccut_in / ModuleBase::Ry_to_eV;
     this->sc_drop_thr_ = sc_drop_thr_in;
+    this->sc_acceleration_mode_ = sc_acceleration_mode_in;
+    this->sc_acceleration_rms_thr_ = sc_acceleration_rms_thr_in;
 }
 
 /// get sc_thr

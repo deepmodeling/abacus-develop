@@ -155,6 +155,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    PARAM.inp.alpha_trial,
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
+                   PARAM.inp.sc_acceleration_mode,
+                   PARAM.inp.sc_acceleration_rms_thr,
                    ucell,
                    PARAM.inp.sc_direction_only,
                    &(this->pv),

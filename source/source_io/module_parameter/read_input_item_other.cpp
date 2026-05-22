@@ -292,6 +292,41 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         read_sync_int(input.sc_scan_steps);
         this->add_item(item);
     }
+    {
+        Input_Item item("sc_acceleration_mode");
+        item.annotation = "acceleration mode for spin-constrained DFT";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Acceleration mode for converged lambda loop:
+* off: no acceleration, always use full HSolverLCAO diagonalization (default)
+* first_order: use first-order eigenvalue response (fastest, requires RMS < sc_acceleration_rms_thr)
+* subspace: use subspace diagonalization with wavefunction rotation (faster, requires RMS < sc_acceleration_rms_thr)
+
+When enabled, the acceleration activates once RMS drops below sc_acceleration_rms_thr. The subspace is built using the wavefunctions at the current lambda when the threshold is first crossed.)";
+        item.default_value = "off";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true and basis_type=lcao";
+        read_sync_string(input.sc_acceleration_mode);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& mode = para.input.sc_acceleration_mode;
+            if (mode != "off" && mode != "first_order" && mode != "subspace") {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_acceleration_mode must be off, first_order, or subspace");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_acceleration_rms_thr");
+        item.annotation = "RMS threshold for acceleration activation";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Real";
+        item.description = "RMS threshold (uB) to activate acceleration mode. Must be > 0 to enable. The acceleration activates once RMS < sc_acceleration_rms_thr. Typical value: 10 * sc_thr.";
+        item.default_value = "-1.0";
+        item.unit = "uB";
+        item.availability = "sc_mag_switch is true and sc_acceleration_mode is not off";
+        read_sync_double(input.sc_acceleration_rms_thr);
+        this->add_item(item);
+    }
 
     // Quasiatomic Orbital analysis
     {

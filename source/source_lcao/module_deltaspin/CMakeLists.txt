@@ -10,6 +10,7 @@ list(APPEND objects
     deltaspin_lcao.cpp
     sc_parse_json.cpp
     cal_mw_helper.cpp
+    lcao_subspace.cpp
 )
 
 add_library(

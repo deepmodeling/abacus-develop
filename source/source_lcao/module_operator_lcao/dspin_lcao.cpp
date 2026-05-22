@@ -594,6 +594,18 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
     const int ncol_local = this->paraV->ncol_bands;        // local band columns of C_k
     const int lda = nrow_local;  // leading dimension (column-major for ScaLAPACK)
 
+    // Debug: check B_I_data
+    static bool pi_sub_debug_printed = false;
+    if (!pi_sub_debug_printed) {
+        std::cout << "[DS-DEBUG] cal_PI_sub: nat=" << nat << " nbands_global=" << nbands_global << std::endl;
+        std::cout << "[DS-DEBUG] cal_PI_sub: B_I_data size=" << this->B_I_data.size() << std::endl;
+        for (int iat = 0; iat < nat; iat++) {
+            std::cout << "[DS-DEBUG] cal_PI_sub: B_I_data[" << iat << "].size()=" << this->B_I_data[iat].size()
+                      << " B_I_nproj[" << iat << "]=" << this->B_I_nproj[iat] << std::endl;
+        }
+        pi_sub_debug_printed = true;
+    }
+
     for (int iat = 0; iat < nat; iat++)
     {
         if (!this->constraint_atom_list[iat])
@@ -649,13 +661,14 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
         PI_sub[iat].resize(nbands_global * nbands_global, {0.0, 0.0});
         const std::complex<double> one = {1.0, 0.0};
         const std::complex<double> zero_c = {0.0, 0.0};
-        // zgemm: P = D^H * D, where D is r × nbands (row-major: D[lm][jb])
-        // In column-major (Fortran) convention for BLAS:
-        // D stored as nbands_global × r (transposed view)
-        // We want P = D^H * D = (r×nb)^H * (r×nb) = nb×nb
-        zgemm_("C", "N", &nbands_global, &nbands_global, &r,
-               &one, D_I.data(), &r,
-               D_I.data(), &r,
+        // D_I is stored in row-major layout: D_I[lm * nbands_global + jb]
+        // In column-major BLAS convention, this looks like a (nbands × r) matrix.
+        // To compute P = D^H * D (nbands × nbands), we use:
+        // P = (D^T) * (D^T)^H = D_memory * D_memory^H
+        // where D_memory is the column-major view of row-major D_I.
+        zgemm_("N", "C", &nbands_global, &nbands_global, &r,
+               &one, D_I.data(), &nbands_global,
+               D_I.data(), &nbands_global,
                &zero_c, PI_sub[iat].data(), &nbands_global);
     }
 }

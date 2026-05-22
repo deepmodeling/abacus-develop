@@ -62,6 +62,18 @@ bool run_deltaspin_lambda_loop_lcao(const int iter,
                                      const double drho,
                                      const Input_para& inp);
 
+/**
+ * @brief Run diagnostic lambda scan for LCAO DeltaSpin (nspin=2 only)
+ *
+ * Compares subspace Mi vs full diagonalization Mi at various lambda values.
+ * Results written to subspace_vs_full_scan.dat.
+ *
+ * @param iter Current iteration number
+ * @param inp Input parameters
+ */
+template <typename TK>
+void run_deltaspin_scan_diagnostic_lcao(const int iter, const Input_para& inp);
+
 } // namespace ModuleESolver
 
 #endif // DELTASPIN_LCAO_H
