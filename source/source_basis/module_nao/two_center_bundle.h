@@ -15,7 +15,7 @@ class TwoCenterBundle
     TwoCenterBundle& operator=(TwoCenterBundle&&) = default;
 
     // NOTE: some variables might be set only on RANK-0
-    void build_orb(int ntype, const std::string* file_orb0);
+    void build_orb(int ntype, const std::string* file_orb0, const std::string& orbital_dir);
     void build_beta(int ntype, Numerical_Nonlocal* nl);
     void build_alpha(int ndesc = 0, std::string* file_desc0 = nullptr);
     void build_orb_onsite(const double& radius);
