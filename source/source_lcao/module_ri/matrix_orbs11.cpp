@@ -40,8 +40,7 @@ void Matrix_Orbs11::init(
     const double rmax
         = Exx_Abfs::Construct_Orbs::get_Rmax(orb_A)
         + Exx_Abfs::Construct_Orbs::get_Rmax(orb_B);
-    int Rmesh = static_cast<int>(rmax / dr) + 4;                            // extend Rcut, keep dR
-    Rmesh += 1 - Rmesh % 2;
+    const int Rmesh = Center2_Orb::get_rmesh(rmax, 0.0, dr);
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
