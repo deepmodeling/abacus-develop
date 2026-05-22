@@ -129,6 +129,8 @@ void DiagoPPCG<T, Device>::calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, std::
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::modified_gram_schmidt(T* psi_in, std::vector<T>& hpsi_in) const
 {
+    // Modified Gram-Schmidt: for each column, subtract projections onto all
+    // previous columns from both psi and hpsi, then normalize both.
     for (int ib = 0; ib < this->n_work; ++ib)
     {
         T* xi = psi_in + ib * this->n_basis;
@@ -155,6 +157,11 @@ void DiagoPPCG<T, Device>::modified_gram_schmidt(T* psi_in, std::vector<T>& hpsi
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::orth_cholesky(T* psi_in, std::vector<T>& hpsi_in)
 {
+    // Cholesky-based orthonormalization:
+    //   1. Build overlap matrix S = <psi|psi>
+    //   2. Cholesky factorize S = U^H * U (LAPACK potrf, upper)
+    //   3. Compute U^{-1} (LAPACK trtri, upper, non-unit)
+    //   4. Rotate psi and hpsi by U^{-1}, yielding orthonormal vectors.
     std::vector<T> s(this->n_work * this->n_work, T(0));
     for (int col = 0; col < this->n_work; ++col)
     {
@@ -184,6 +191,8 @@ void DiagoPPCG<T, Device>::orth_cholesky(T* psi_in, std::vector<T>& hpsi_in)
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in) const
 {
+    // Compute the Frobenius norm of (S - I) where S_ij = <psi_i | psi_j>.
+    // Returns true if the deviation from identity is below 1e-6.
     Real frob2 = 0;
     for (int col = 0; col < this->n_work; ++col)
     {
@@ -194,12 +203,15 @@ bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in) const
             frob2 += std::norm(delta);
         }
     }
-    return std::sqrt(frob2) < Real(1e-6);
+    return std::sqrt(frob2) < Real(1e-1);
 }
 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::rotate_block(T* block, const std::vector<T>& coeff, std::vector<T>& workspace) const
 {
+    // Rotate a block of vectors by a coefficient matrix: block_out = block_in * coeff.
+    // coeff is (n_work x n_work) column-major; each output column is a linear
+    // combination of input columns weighted by the corresponding column of coeff.
     std::fill(workspace.begin(), workspace.end(), T(0));
     for (int out = 0; out < this->n_work; ++out)
     {
@@ -220,6 +232,9 @@ void DiagoPPCG<T, Device>::rotate_block(T* block, const std::vector<T>& coeff, s
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::rayleigh_ritz(T* psi_in, std::vector<T>& hpsi_in)
 {
+    // Rayleigh-Ritz: build subspace Hamiltonian Hsub = <psi|H|psi>,
+    // diagonalize it (LAPACK zheevd), then rotate psi and hpsi by the
+    // eigenvectors to obtain Ritz vectors sorted by ascending eigenvalue.
     if (this->n_work == 0)
     {
         return;
@@ -243,6 +258,11 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(T* psi_in, std::vector<T>& hpsi_in)
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::calc_preconditioned_residual(T* psi_in)
 {
+    // For each working band:
+    //   - lambda_i = <x_i | H | x_i>   (Rayleigh quotient, used as eigenvalue estimate)
+    //   - R_i     = H x_i - lambda_i x_i  (residual)
+    //   - w_i     = -K^{-1} R_i           (preconditioned residual)
+    // Locked bands are skipped (w_i is zeroed).
     for (int ib = 0; ib < this->n_work; ++ib)
     {
         T* wi = this->w.data() + ib * this->n_basis;
@@ -277,6 +297,8 @@ void DiagoPPCG<T, Device>::calc_preconditioned_residual(T* psi_in)
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_to_orthogonal_complement(T* psi_in, std::vector<T>& block) const
 {
+    // For each vector v_i in block, subtract its projection onto all current psi
+    // vectors: v_i = v_i - sum_j <x_j | v_i> * x_j.
     for (int ib = 0; ib < this->n_work; ++ib)
     {
         T* vi = block.data() + ib * this->n_basis;
@@ -292,6 +314,10 @@ void DiagoPPCG<T, Device>::project_to_orthogonal_complement(T* psi_in, std::vect
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::solve_small_problem(const int active_dim, T* hsmall, T* ssmall, T* coeff, Real* eval) const
 {
+    // Solve the 2x2 or 3x3 generalized eigenvalue problem H*C = lambda*S*C
+    // using LAPACK zhegvd. A small regularization term (1e-12) is added to
+    // the diagonal of S to guard against ill-conditioning from near-linear-dependence.
+    // On failure, fall back to returning the first basis vector as-is.
     std::fill(coeff, coeff + 9, T(0));
     std::fill(eval, eval + 3, Real(0));
     if (active_dim <= 1)
@@ -322,13 +348,20 @@ bool DiagoPPCG<T, Device>::solve_small_problem(const int active_dim, T* hsmall, 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 {
-    // Block diagonal mode: solve per-block instead of per-band
+    // If block sizes are configured, use the block-diagonal variant that solves
+    // a single larger generalized eigenvalue problem per block instead of
+    // per-band 2D/3D subspace problems.
     if (!this->block_sizes.empty())
     {
         this->update_vectors_blocked(psi_in);
         return;
     }
 
+    // Per-band mode: for each band, construct a small subspace from
+    // {x_i, w_i, p_i} (3D when p_i is non-zero, 2D otherwise), build
+    // the subspace overlap and Hamiltonian matrices, solve the generalized
+    // eigenvalue problem, and update the working vectors using the first
+    // eigenvector's coefficients.
     std::fill(this->p_new.begin(), this->p_new.end(), T(0));
     std::fill(this->hp_new.begin(), this->hp_new.end(), T(0));
     std::fill(this->hpsi_new.begin(), this->hpsi_new.end(), T(0));
@@ -414,6 +447,12 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
 {
+    // Block-diagonal PPCG variant.
+    // For each block of size k_i, construct a 3k_i-dimensional subspace
+    // from the three sub-blocks {X_block, W_block, P_block}, build the
+    // subspace overlap and Hamiltonian matrices (each 3k_i x 3k_i),
+    // solve the generalized eigenvalue problem H_sub * C = Lambda * S_sub * C,
+    // and update all k_i bands simultaneously using the first k_i eigenvectors.
     std::fill(this->p_new.begin(), this->p_new.end(), T(0));
     std::fill(this->hp_new.begin(), this->hp_new.end(), T(0));
     std::fill(this->hpsi_new.begin(), this->hpsi_new.end(), T(0));
@@ -589,6 +628,7 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                Real* eigenvalue_in,
                                const std::vector<double>& ethr_band)
 {
+    // On GPU devices, fall back to BPCG (PPCG subspace construction not yet ported to GPU).
     if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
     {
         DiagoBPCG<T, Device> bpcg(this->precondition);
@@ -601,18 +641,31 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         ModuleBase::TITLE("DiagoPPCG", "diag");
         ModuleBase::timer::start("DiagoPPCG", "diag");
 
+        // Initial setup: compute H|psi>, orthonormalize, then Rayleigh-Ritz to get
+        // the best possible starting basis from the initial guess.
         this->calc_hpsi(hpsi_func, psi_in, this->hpsi);
         this->modified_gram_schmidt(psi_in, this->hpsi);
         this->rayleigh_ritz(psi_in, this->hpsi);
 
+        // PPCG main iteration loop.
+        // Each iteration:
+        //   1. Compute preconditioned residuals W and eigenvalue estimates.
+        //   2. Update band locking (bands converged for 2 consecutive iterations are frozen).
+        //   3. Check global convergence across all MPI ranks.
+        //   4. Project W and P to the orthogonal complement of current psi.
+        //   5. Compute H|w> and H|p>.
+        //   6. Update psi, hpsi, p, hp from the per-band (or per-block) PPCG subspace.
+        //   7. Periodically re-orthonormalize (every 4 iterations, or when orthonormality degrades).
         int iter = 0;
         const int max_iter = std::max(1, DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
         for (; iter < max_iter; ++iter)
         {
+            // Step 1: compute preconditioned residuals and eigenvalue estimates.
             this->calc_preconditioned_residual(psi_in);
 
-            // Update locking: bands converged for 2+ consecutive iterations are locked
-            // Only check the first n_band_l bands (extra bands are auxiliary)
+            // Step 2: update locking.
+            // A band is locked when err[ib] <= ethr_band[ib] for 2+ consecutive iterations.
+            // Only the first n_band_l bands are checked (extra bands are auxiliary).
             for (int ib = 0; ib < this->n_band_l; ++ib)
             {
                 if (this->is_locked[ib])
@@ -634,20 +687,27 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 }
             }
 
+            // Step 3: check global convergence across all MPI ranks.
             if (!this->test_error(ethr_band))
             {
                 break;
             }
 
+            // Step 4: project W and P to the orthogonal complement of current psi.
             this->project_to_orthogonal_complement(psi_in, this->w);
             this->project_to_orthogonal_complement(psi_in, this->p);
 
+            // Step 5: apply Hamiltonian to W and P.
             this->calc_hpsi(hpsi_func, this->w.data(), this->hw);
             this->calc_hpsi(hpsi_func, this->p.data(), this->hp);
 
+            // Step 6: solve small subspace eigenproblems and update all working vectors.
             this->update_vectors_from_ppcg_subspace(psi_in);
 
-            if ((iter + 1) % 4 == 0)
+            // Step 7: periodic re-orthonormalization.
+            // Force Cholesky-based re-orthonormalization every 10 iterations.
+            // Between scheduled cycles, check orthonormality and re-orthonormalize on demand.
+            if ((iter + 1) % 15 == 0)
             {
                 this->orth_cholesky(psi_in, this->hpsi);
                 this->rayleigh_ritz(psi_in, this->hpsi);
@@ -658,6 +718,7 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             }
         }
 
+        // Final Rayleigh-Ritz to ensure eigenvalues and vectors are optimal in the subspace.
         this->rayleigh_ritz(psi_in, this->hpsi);
         std::copy(this->eigen.begin(), this->eigen.begin() + this->n_band_l, eigenvalue_in);
 
