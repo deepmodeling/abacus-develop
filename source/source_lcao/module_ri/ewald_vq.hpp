@@ -47,6 +47,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
                            const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
                            std::shared_ptr<ORB_gaunt_table> MGT_in,
                            const double &ccp_rmesh_times_in,
+                           const double &ewald_lambda_in,
                            const double &kmesh_times_in,
                            const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new)
 {
@@ -58,7 +59,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->nks0 = this->p_kv->get_nkstot_nospin();
     this->kvec_c.resize(this->nks0);
     this->ccp_rmesh_times = ccp_rmesh_times_in;
-    this->abfs_Lmax = abfs_Lmax_in;
+    this->ewald_lambda = ewald_lambda_in;
     this->coulomb_param = coulomb_param_in;
 
     this->g_lcaos = this->init_gauss(lcaos_in);

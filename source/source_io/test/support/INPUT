@@ -290,6 +290,7 @@ exx_c_grad_r_threshold         0 #
 exx_v_grad_r_threshold         0 #
 exx_v_threshold_long           0.123 #
 exx_ccp_rmesh_times            default #
+exx_ewald_lambda               0.25 #
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #

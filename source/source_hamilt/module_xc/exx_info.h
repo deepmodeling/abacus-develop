@@ -34,6 +34,7 @@ struct Exx_Info
         double C_grad_R_threshold = 0;
         double V_grad_R_threshold = 0;
         double ccp_rmesh_times = 10;
+        double ewald_lambda = 1.0;
         bool exx_symmetry_realspace = true;
         double kmesh_times = 4;
         double Cs_inv_thr = -1;

@@ -307,6 +307,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.exx_v_grad_r_threshold, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_v_threshold_long, 0.123);
     EXPECT_EQ(param.inp.exx_ccp_rmesh_times, "1.5");
+    EXPECT_DOUBLE_EQ(param.inp.exx_ewald_lambda, 0.25);
     EXPECT_DOUBLE_EQ(param.inp.rpa_ccp_rmesh_times, 10.0);
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_ecut, 0.0);

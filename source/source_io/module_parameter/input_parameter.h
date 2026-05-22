@@ -634,6 +634,7 @@ struct Input_para
     double exx_v_grad_r_threshold = 0.1;         ///< threshold to screen nabla V * R matrix in exx
     std::string exx_ccp_rmesh_times = "default"; ///< how many times larger the radial mesh required for
                                                  ///< calculating Columb potential is to that of atomic orbitals
+    double exx_ewald_lambda = 1.0;               ///< Gaussian decay coefficient for Ewald full Coulomb in RI-EXX
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel

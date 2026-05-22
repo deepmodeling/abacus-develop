@@ -56,6 +56,7 @@ class Ewald_Vq
               const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
               std::shared_ptr<ORB_gaunt_table> MGT_in,
               const double &ccp_rmesh_times_in,
+              const double &ewald_lambda_in,
               const double &kmesh_times_in,
               const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
 
@@ -112,7 +113,7 @@ class Ewald_Vq
     MPI_Comm mpi_comm;
     ModuleBase::realArray gaunt;
     std::array<Tcell, Ndim> nmp;
-    const double ewald_lambda = 1.0;
+    double ewald_lambda = 1.0;
 
     std::vector<std::vector<std::vector<double>>> multipole;
     ModuleBase::Element_Basis_Index::IndexLNM index_abfs;

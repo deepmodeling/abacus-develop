@@ -456,6 +456,24 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_ewald_lambda");
+        item.annotation = "Gaussian decay coefficient for Ewald full Coulomb in RI-EXX";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "This parameter controls the Gaussian auxiliary functions used in the Ewald split of the full Coulomb matrix in RI-EXX. The real-space Gaussian cutoff is proportional to sqrt(35/exx_ewald_lambda).";
+        item.default_value = "1.0";
+        item.unit = "";
+        item.availability = "";
+        read_sync_double(input.exx_ewald_lambda);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_lambda <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_lambda must > 0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_opt_orb_lmax");
         item.annotation = "the maximum l of the spherical Bessel functions for opt ABFs";
         item.category = "Exact Exchange (LCAO)";
