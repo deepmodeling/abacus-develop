@@ -538,8 +538,9 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
         }
         catch (const std::exception&)
         {
-            // Fallback on failure: keep current vectors for this block
-            band_offset += k_i;
+            // Fallback on failure: keep current vectors for this block.
+            // Copy the original psi and hpsi for bands in the current block
+            // (band_offset through band_offset + k_i - 1), then advance offset.
             for (int ib = band_offset; ib < band_offset + k_i && ib < this->n_work; ++ib)
             {
                 T* xnew = this->work.data() + ib * this->n_basis;
@@ -547,6 +548,7 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
                 this->copy_vector(xnew, psi_in + ib * this->n_basis);
                 this->copy_vector(hxnew, this->hpsi.data() + ib * this->n_basis);
             }
+            band_offset += k_i;
             continue;
         }
 
@@ -616,6 +618,17 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
         band_offset += k_i;
     }
 
+    // Preserve extra bands (beyond n_band_l) from current psi_in / hpsi / p / hp.
+    // These bands are not covered by any block and should not be zeroed.
+    for (int ib = this->n_band_l; ib < this->n_work; ++ib)
+    {
+        this->copy_vector(this->work.data() + ib * this->n_basis, psi_in + ib * this->n_basis);
+        this->copy_vector(this->hpsi_new.data() + ib * this->n_basis,
+                          this->hpsi.data() + ib * this->n_basis);
+        this->zero_vector(this->p_new.data() + ib * this->n_basis);
+        this->zero_vector(this->hp_new.data() + ib * this->n_basis);
+    }
+
     std::copy(this->work.begin(), this->work.end(), psi_in);
     std::copy(this->hpsi_new.begin(), this->hpsi_new.end(), this->hpsi.begin());
     std::copy(this->p_new.begin(), this->p_new.end(), this->p.begin());
@@ -662,6 +675,26 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             // Step 1: compute preconditioned residuals and eigenvalue estimates.
             this->calc_preconditioned_residual(psi_in);
+
+            // Diagnostic: print convergence status every 10 iterations or on first/last.
+            if (iter % 10 == 0 || iter == max_iter - 1)
+            {
+                int n_locked = 0;
+                for (int ib = 0; ib < this->n_band_l; ++ib)
+                {
+                    if (this->is_locked[ib])
+                    {
+                        n_locked++;
+                    }
+                }
+                std::cerr << "[PPCG] iter=" << iter
+                          << " err[0]=" << this->err[0]
+                          << " err[end]=" << this->err[this->n_band_l - 1]
+                          << " ethr=" << ethr_band[0]
+                          << " locked=" << n_locked << "/" << this->n_band_l
+                          << " blocked=" << (!this->block_sizes.empty() ? "yes" : "no")
+                          << std::endl;
+            }
 
             // Step 2: update locking.
             // A band is locked when err[ib] <= ethr_band[ib] for 2+ consecutive iterations.
@@ -723,6 +756,13 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         std::copy(this->eigen.begin(), this->eigen.begin() + this->n_band_l, eigenvalue_in);
 
         ModuleBase::timer::end("DiagoPPCG", "diag");
+
+        std::cerr << "[PPCG] done: niter=" << std::min(iter + 1, max_iter)
+                  << " final_err[0]=" << this->err[0]
+                  << " final_err[end]=" << this->err[this->n_band_l - 1]
+                  << " eigen[0]=" << eigenvalue_in[0]
+                  << std::endl;
+
         return std::min(iter + 1, max_iter);
     }
 }

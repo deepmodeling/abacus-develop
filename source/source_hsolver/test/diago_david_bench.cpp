@@ -1,11 +1,10 @@
 /**
- * PPCG benchmark: measures iteration count and runtime for configurable test cases.
+ * Davidson benchmark: measures runtime and iterations for configurable test cases.
  * Outputs CSV lines: npw,nband,sparsity,mpi_procs,omp_threads,iterations,time_ms,max_error
  */
-#include "gtest/gtest.h"
-
+#include "../diag_comm_info.h"
+#include "../diago_david.h"
 #include "../diago_iter_assist.h"
-#include "../diago_ppcg.h"
 #include "diago_mock.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_basis/module_pw/test/test_tool.h"
@@ -56,13 +55,10 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
 #endif
 
-    // Parse args: npw nband sparsity ethr n_extra block_size
     int npw = (argc > 1) ? std::atoi(argv[1]) : 100;
     int nband = (argc > 2) ? std::atoi(argv[2]) : 10;
     int sparsity = (argc > 3) ? std::atoi(argv[3]) : 6;
     double ethr = (argc > 4) ? std::atof(argv[4]) : 1e-7;
-    int n_extra = (argc > 5) ? std::atoi(argv[5]) : 0;
-    int block_size = (argc > 6) ? std::atoi(argv[6]) : 0;
 
     int omp_threads = 1;
     const char* omp_env = std::getenv("OMP_NUM_THREADS");
@@ -86,10 +82,9 @@ int main(int argc, char** argv)
     MPI_Bcast(e_lapack.data(), npw, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
-    // Initial psi with perturbation (include extra bands)
-    const int n_band_total = nband + n_extra;
+    // Initial psi with perturbation
     psi::Psi<std::complex<double>> psi;
-    psi.resize(1, n_band_total, npw);
+    psi.resize(1, nband, npw);
     std::default_random_engine engine(7);
     std::uniform_real_distribution<double> dist(0.2, 1.0);
     for (int ib = 0; ib < nband; ++ib)
@@ -97,20 +92,6 @@ int main(int argc, char** argv)
         for (int ig = 0; ig < npw; ++ig)
         {
             psi(ib, ig) = h_lapack[ig + ib * npw] * dist(engine);
-        }
-    }
-    // Initialize extra bands with independent random vectors (different seed).
-    // These need to be linearly independent from the physical bands to avoid
-    // triggering WARNING_QUIT in modified_gram_schmidt.
-    {
-        std::default_random_engine engine_extra(42);
-        std::uniform_real_distribution<double> dist_extra(-1.0, 1.0);
-        for (int ib = nband; ib < n_band_total; ++ib)
-        {
-            for (int ig = 0; ig < npw; ++ig)
-            {
-                psi(ib, ig) = std::complex<double>(dist_extra(engine_extra), dist_extra(engine_extra));
-            }
         }
     }
 
@@ -151,33 +132,29 @@ int main(int argc, char** argv)
             hpsi_out, ld_psi);
     };
 
-    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = 200;
-    hsolver::DiagoPPCG<std::complex<double>> ppcg(precondition_local);
+    // S = I (identity), so spsi is just a copy of psi_in
+    auto spsi_func = [](T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+        std::copy(psi_in, psi_in + static_cast<size_t>(ld_psi) * nvec, spsi_out);
+    };
 
-    if (n_extra > 0)
-    {
-        ppcg.set_n_extra(n_extra);
-    }
-    if (block_size > 0)
-    {
-        std::vector<int> block_sizes;
-        int remaining = nband;
-        while (remaining > 0)
-        {
-            int sz = std::min(block_size, remaining);
-            block_sizes.push_back(sz);
-            remaining -= sz;
-        }
-        ppcg.set_block_sizes(block_sizes);
-    }
+    const int ld_psi = psi_local.get_current_ngk();
+    const int david_ndim = 4;
+    const int david_maxiter = 200;
 
-    ppcg.init_iter(nband, nband, npw, psi_local.get_current_ngk());
+#ifdef __MPI
+    hsolver::diag_comm_info diag_comm(MPI_COMM_WORLD, myrank, nproc);
+#else
+    hsolver::diag_comm_info diag_comm(myrank, nproc);
+#endif
+
+    hsolver::DiagoDavid<T> david(precondition_local, nband, npw, david_ndim, diag_comm);
 
     std::vector<double> eigen(nband, 0.0);
     std::vector<double> ethr_band(nband, ethr);
 
     auto t_start = std::chrono::high_resolution_clock::now();
-    int niter = ppcg.diag(hpsi_func, psi_local.get_pointer(), eigen.data(), ethr_band);
+    int niter = david.diag(hpsi_func, spsi_func, ld_psi, psi_local.get_pointer(),
+                           eigen.data(), ethr_band, david_maxiter);
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
@@ -194,16 +171,7 @@ int main(int argc, char** argv)
     {
         std::cout << npw << "," << nband << "," << sparsity << ","
                   << nproc << "," << omp_threads << "," << niter << ","
-                  << elapsed_ms << "," << max_error;
-        if (n_extra > 0)
-        {
-            std::cout << "," << n_extra;
-        }
-        if (block_size > 0)
-        {
-            std::cout << "," << block_size;
-        }
-        std::cout << std::endl;
+                  << elapsed_ms << "," << max_error << std::endl;
     }
 
     delete[] DIAGOTEST::npw_local;
