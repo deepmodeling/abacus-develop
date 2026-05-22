@@ -301,25 +301,54 @@ struct normalize_op<T, base_device::DEVICE_CPU> {
                    typename GetTypeReal<T>::type* psi_norm)
     {
         using Real = typename GetTypeReal<T>::type;
-        for (int m = 0; m < notconv; m++)
-        {
-            // Calculate norm using dot_real_op
-            Real psi_m_norm = ModuleBase::dot_real_op<T, base_device::DEVICE_CPU>()(
-                                                                dim,
-                                                                psi_iter + (nbase + m) * dim,
-                                                                psi_iter + (nbase + m) * dim,
-                                                                true);
-            assert(psi_m_norm > 0.0);
-            psi_m_norm = sqrt(psi_m_norm);
+        std::vector<Real> norms(notconv, 0.0);
 
-            // Normalize using vector_div_constant_op
-            ModuleBase::vector_div_constant_op<T, base_device::DEVICE_CPU>()(
-                                                              dim,
-                                                              psi_iter + (nbase + m) * dim,
-                                                              psi_iter + (nbase + m) * dim,
-                                                              psi_m_norm);
-            if (psi_norm) {
-                psi_norm[m] = psi_m_norm;
+#ifdef _OPENMP
+#pragma omp parallel if(notconv > 4)
+#endif
+        {
+            // Step 1: compute norms for all bands in parallel
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int m = 0; m < notconv; m++)
+            {
+                Real norm = 0.0;
+                T* psi_m = psi_iter + (nbase + m) * dim;
+                for (int i = 0; i < dim; i++)
+                {
+                    norm += std::norm(psi_m[i]);
+                }
+                norms[m] = norm;
+            }
+
+            // Step 2: reduce norms serially (MPI calls inside OpenMP must be serial)
+#ifdef _OPENMP
+#pragma omp single
+#endif
+            {
+                for (int m = 0; m < notconv; m++)
+                {
+                    Parallel_Reduce::reduce_pool(norms[m]);
+                    norms[m] = sqrt(norms[m]);
+                }
+            }
+
+            // Step 3: normalize all bands in parallel
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+            for (int m = 0; m < notconv; m++)
+            {
+                Real psi_m_norm = norms[m];
+                T* psi_m = psi_iter + (nbase + m) * dim;
+                for (int i = 0; i < dim; i++)
+                {
+                    psi_m[i] /= psi_m_norm;
+                }
+                if (psi_norm) {
+                    psi_norm[m] = psi_m_norm;
+                }
             }
         }
     }
