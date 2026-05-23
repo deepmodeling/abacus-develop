@@ -80,6 +80,10 @@ inline std::map<TkeyA, std::map<TkeyB, std::array<Tvalue, N>>> minus(
 template <typename TkeyA, typename TkeyB, typename Tvalue>
 extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
                                                       std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
+template <typename TkeyA, typename TkeyB, typename Tvalue>
+extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus_intersection(
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
 
 template <typename T, std::size_t N>
 extern std::vector<std::array<T, N>> add(const std::vector<std::array<T, N>>& v1,

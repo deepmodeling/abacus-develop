@@ -334,8 +334,11 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const UnitCell& ucell,
         }
     }
 
-    std::map<TA, std::map<TAC, Tresult>> Vs_dVs_minus_gauss = LRI_CV_Tools::minus(Vs_dVs_in, pVs_dVs_gauss);
-    ModuleBase::timer::end("Ewald_Vq", "set_Vs_dVs_minus_gauss");
+    // Eq. (6.26) subtracts the Gaussian Ewald term only on the common
+    // real-space support of the auxiliary and Gaussian cutoffs.
+    std::map<TA, std::map<TAC, Tresult>> Vs_dVs_minus_gauss
+        = LRI_CV_Tools::minus_intersection(Vs_dVs_in, pVs_dVs_gauss);
+    ModuleBase::timer::tick("Ewald_Vq", "set_Vs_dVs_minus_gauss");
     return Vs_dVs_minus_gauss;
 }
 

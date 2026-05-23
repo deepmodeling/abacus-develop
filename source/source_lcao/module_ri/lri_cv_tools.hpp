@@ -217,6 +217,36 @@ std::map<TkeyA, std::map<TkeyB, Tvalue>>
     return dv;
 }
 
+template <typename TkeyA, typename TkeyB, typename Tvalue>
+std::map<TkeyA, std::map<TkeyB, Tvalue>> LRI_CV_Tools::minus_intersection(
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
+    const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2) {
+    using namespace RI::Array_Operator;
+
+    std::map<TkeyA, std::map<TkeyB, Tvalue>> dv;
+    for (typename std::map<TkeyA, std::map<TkeyB, Tvalue>>::const_iterator it_map1 = v1.begin();
+         it_map1 != v1.end();
+         ++it_map1) {
+        const TkeyA& keyA = it_map1->first;
+        const auto it_map2 = v2.find(keyA);
+        if (it_map2 == v2.end()) {
+            continue;
+        }
+        const std::map<TkeyB, Tvalue>& map1 = it_map1->second;
+        for (typename std::map<TkeyB, Tvalue>::const_iterator it_value1 = map1.begin();
+             it_value1 != map1.end();
+             ++it_value1) {
+            const TkeyB& keyB = it_value1->first;
+            const auto it_value2 = it_map2->second.find(keyB);
+            if (it_value2 == it_map2->second.end()) {
+                continue;
+            }
+            dv[keyA][keyB] = it_value1->second - it_value2->second;
+        }
+    }
+    return dv;
+}
+
 template <typename T, std::size_t N>
 std::vector<std::array<T, N>>
     LRI_CV_Tools::add(const std::vector<std::array<T, N>>& v1,
