@@ -334,10 +334,11 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const UnitCell& ucell,
         }
     }
 
-    // Eq. (6.26) subtracts the Gaussian Ewald term only on the common
-    // real-space support of the auxiliary and Gaussian cutoffs.
+    // Eq. (6.26) subtracts the Gaussian Ewald term only where both real-space
+    // maps have a block. Keep bare blocks outside the Gaussian support: they
+    // still contribute to the short-range Fourier sum.
     std::map<TA, std::map<TAC, Tresult>> Vs_dVs_minus_gauss
-        = LRI_CV_Tools::minus_intersection(Vs_dVs_in, pVs_dVs_gauss);
+        = LRI_CV_Tools::minus_common_keys(Vs_dVs_in, pVs_dVs_gauss);
     ModuleBase::timer::tick("Ewald_Vq", "set_Vs_dVs_minus_gauss");
     return Vs_dVs_minus_gauss;
 }

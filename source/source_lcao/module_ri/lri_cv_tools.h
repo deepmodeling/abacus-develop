@@ -81,7 +81,7 @@ template <typename TkeyA, typename TkeyB, typename Tvalue>
 extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus(std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
                                                       std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
 template <typename TkeyA, typename TkeyB, typename Tvalue>
-extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus_intersection(
+extern std::map<TkeyA, std::map<TkeyB, Tvalue>> minus_common_keys(
     const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v1,
     const std::map<TkeyA, std::map<TkeyB, Tvalue>>& v2);
 

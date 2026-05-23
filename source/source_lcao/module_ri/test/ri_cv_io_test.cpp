@@ -34,7 +34,7 @@ TEST(LRI_CV_Tools, ReadCs)
 
 }
 
-TEST(LRI_CV_Tools, MinusIntersectionKeepsOnlyCommonKeys)
+TEST(LRI_CV_Tools, MinusCommonKeysKeepsLeftOnlyBlocks)
 {
     std::map<int, std::map<TAC, int>> lhs;
     std::map<int, std::map<TAC, int>> rhs;
@@ -46,12 +46,12 @@ TEST(LRI_CV_Tools, MinusIntersectionKeepsOnlyCommonKeys)
     rhs[0][{0, {0, 0, 0}}] = 3;
     rhs[2][{0, {0, 0, 0}}] = 40;
 
-    const auto diff = LRI_CV_Tools::minus_intersection(lhs, rhs);
+    const auto diff = LRI_CV_Tools::minus_common_keys(lhs, rhs);
 
-    ASSERT_EQ(diff.size(), 1);
-    ASSERT_EQ(diff.at(0).size(), 1);
+    ASSERT_EQ(diff.size(), 2);
+    ASSERT_EQ(diff.at(0).size(), 2);
     EXPECT_EQ(diff.at(0).at({0, {0, 0, 0}}), 7);
-    EXPECT_EQ(diff.at(0).count({1, {0, 0, 0}}), 0);
-    EXPECT_EQ(diff.count(1), 0);
+    EXPECT_EQ(diff.at(0).at({1, {0, 0, 0}}), 20);
+    EXPECT_EQ(diff.at(1).at({0, {0, 0, 0}}), 30);
     EXPECT_EQ(diff.count(2), 0);
 }
