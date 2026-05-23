@@ -17,11 +17,17 @@ namespace ModuleBase
 namespace
 {
 std::string g_quit_out_dir;
+std::string g_quit_calculation;
 }
 
 void set_quit_out_dir(const std::string& dir)
 {
     g_quit_out_dir = dir;
+}
+
+void set_quit_calculation(const std::string& calculation)
+{
+    g_quit_calculation = calculation;
 }
 
 //==========================================================
@@ -139,7 +145,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 
 //Check and print warning information for all cores.
 //Maybe in the future warning.log should be replaced by error.log.
-void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::string &calculation,const std::string &description)
+void CHECK_WARNING_QUIT(const bool error_in, const std::string &file, const std::string &description)
 {
 #ifdef __NORMAL
     if(error_in) std::cout << description << std::endl;
@@ -150,7 +156,7 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		std::cout.clear();
 		if(!GlobalV::ofs_running.is_open())
 		{
-			std::string logfile = g_quit_out_dir + "running_" + calculation + ".log";
+			std::string logfile = g_quit_out_dir + "running_" + g_quit_calculation + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
 		if(!GlobalV::ofs_warning.is_open())
