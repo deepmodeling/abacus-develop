@@ -10,6 +10,8 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
+#include <utility>
+
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
@@ -19,28 +21,34 @@ template <typename T>
 std::vector<double> DiagoPexsi<T>::mu_buffer;
 
 template <typename T>
-DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
+DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in, std::unique_ptr<pexsi::IPexsiSolver> solver_in)
 {
+    this->ParaV = ParaV_in;
+    this->ps = std::move(solver_in);
+    if (this->ps == nullptr)
+    {
+        this->ps = std::make_unique<pexsi::PEXSI_Solver>();
+    }
+
     int nspin = PARAM.inp.nspin;
     if (PARAM.inp.nspin == 4)
     {
         nspin = 1;
     }
-    mu_buffer.resize(nspin);
-    for (int i = 0; i < nspin; i++)
-    {
-        mu_buffer[i] = this->ps->pexsi_mu;
-    }
+    mu_buffer.assign(nspin, pexsi::PEXSI_Solver::pexsi_mu);
 
-    this->ParaV = ParaV_in;
-    this->ps = std::make_unique<pexsi::PEXSI_Solver>();
+    const int local_size = ParaV->nrow * ParaV->ncol;
 
     this->DM.resize(nspin);
     this->EDM.resize(nspin);
+    this->dm_buffer_.resize(nspin);
+    this->edm_buffer_.resize(nspin);
     for (int i = 0; i < nspin; i++)
     {
-        this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
-        this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
+        this->dm_buffer_[i].assign(local_size, T{});
+        this->edm_buffer_[i].assign(local_size, T{});
+        this->DM[i] = this->dm_buffer_[i].data();
+        this->EDM[i] = this->edm_buffer_[i].data();
     }
 
 }
@@ -48,17 +56,6 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
 template <typename T>
 DiagoPexsi<T>::~DiagoPexsi()
 {
-    int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.nspin == 4)
-    {
-        nspin = 1;
-    }
-    for (int i = 0; i < nspin; i++)
-    {
-        delete[] this->DM[i];
-        delete[] this->EDM[i];
-    }
-
 }
 
 template <>
@@ -69,6 +66,12 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     phm_in->matrix(h_mat, s_mat);
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     int ik = psi.get_current_k();
+    if (ik < 0 || ik >= static_cast<int>(this->DM.size()))
+    {
+        ModuleBase::WARNING_QUIT("DiagoPEXSI",
+                                 "PEXSI real path only has density buffers for Gamma/spin channels; multi-k requires "
+                                 "the complex expert-routine path");
+    }
     this->ps->prepare(this->ParaV->blacs_ctxt,
                       this->ParaV->nb,
                       this->ParaV->nrow,

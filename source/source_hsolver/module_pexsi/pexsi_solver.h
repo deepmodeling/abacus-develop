@@ -1,11 +1,13 @@
 #ifndef PEXSI_Solver_H
 #define PEXSI_Solver_H
 
+#include "pexsi_solver_interface.h"
+
 #include <vector>
 
 namespace pexsi
 {
-class PEXSI_Solver
+class PEXSI_Solver : public IPexsiSolver
 {
   public:
     void prepare(const int blacs_text,
@@ -15,12 +17,12 @@ class PEXSI_Solver
                  const double* h,
                  const double* s,
                  double*& DM,
-                 double*& EDM);
-    int solve(double mu0);
-    const double get_totalFreeEnergy() const;
-    const double get_totalEnergyH() const;
-    const double get_totalEnergyS() const;
-    const double get_mu() const;
+                 double*& EDM) override;
+    int solve(double mu0) override;
+    double get_totalFreeEnergy() const override;
+    double get_totalEnergyH() const override;
+    double get_totalEnergyS() const override;
+    double get_mu() const override;
 
     //==========================================================
     // PEXSI related variables

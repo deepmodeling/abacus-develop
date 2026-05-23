@@ -21,7 +21,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"
-#include "source_hsolver/diago_pexsi.h"
+#include "pexsi_solver.h"
 
 namespace pexsi
 {
@@ -271,7 +271,9 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     double* FDMnzvalLocal = nullptr;
     // transform H and S from 2D block cyclic distribution to compressed column sparse matrix
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT2CCS");
     DistMatrixTransformer::transformBCDtoCCS(SRC_Matrix, H, S, ZERO_Limit, DST_Matrix, HnzvalLocal, SnzvalLocal);
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT2CCS");
     // MPI_Barrier(MPI_COMM_WORLD);
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     if (comm_PEXSI != MPI_COMM_NULL)

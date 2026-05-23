@@ -16,6 +16,8 @@
 #include <iostream>
 #include <mpi.h>
 #include <string>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #define PASSTHRESHOLD 5e-4
@@ -381,6 +383,124 @@ class PexsiPrepare
 class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiPrepare<double>>
 {
 };
+
+class FakePexsiSolver : public pexsi::IPexsiSolver
+{
+  public:
+    void prepare(const int blacs_text_in,
+                 const int nb_in,
+                 const int nrow_in,
+                 const int ncol_in,
+                 const double* h_in,
+                 const double* s_in,
+                 double*& dm_in,
+                 double*& edm_in) override
+    {
+        prepared = true;
+        blacs_text = blacs_text_in;
+        nb = nb_in;
+        nrow = nrow_in;
+        ncol = ncol_in;
+        h = h_in;
+        s = s_in;
+        dm = dm_in;
+        edm = edm_in;
+        for (int i = 0; i < nrow * ncol; ++i)
+        {
+            dm[i] = 10.0 + i;
+            edm[i] = 20.0 + i;
+        }
+    }
+
+    int solve(double mu0_in) override
+    {
+        solved = true;
+        mu0 = mu0_in;
+        return 0;
+    }
+
+    double get_totalFreeEnergy() const override
+    {
+        return total_free_energy;
+    }
+
+    double get_totalEnergyH() const override
+    {
+        return total_energy_h;
+    }
+
+    double get_totalEnergyS() const override
+    {
+        return total_energy_s;
+    }
+
+    double get_mu() const override
+    {
+        return mu;
+    }
+
+    bool prepared = false;
+    bool solved = false;
+    int blacs_text = -1;
+    int nb = -1;
+    int nrow = -1;
+    int ncol = -1;
+    double mu0 = 0.0;
+    const double* h = nullptr;
+    const double* s = nullptr;
+    double* dm = nullptr;
+    double* edm = nullptr;
+    double total_free_energy = -1.5;
+    double total_energy_h = -2.5;
+    double total_energy_s = 3.5;
+    double mu = 0.125;
+};
+
+TEST(DiagoPexsiRefactorTest, UsesInjectedSolverAndOwnedDensityBuffers)
+{
+    PARAM.input.nspin = 1;
+    PARAM.inp.nspin = 1;
+    pexsi::PEXSI_Solver::pexsi_mu = -0.25;
+
+    Parallel_Orbitals po;
+    po.blacs_ctxt = 11;
+    po.nb = 2;
+    po.nrow = 2;
+    po.ncol = 2;
+
+    HamiltTEST<double> hmtest;
+    hmtest.nrow = po.nrow;
+    hmtest.ncol = po.ncol;
+    hmtest.h_local = {1.0, 0.0, 0.0, 2.0};
+    hmtest.s_local = {1.0, 0.0, 0.0, 1.0};
+
+    psi::Psi<double> psi;
+
+    auto fake_solver = std::make_unique<FakePexsiSolver>();
+    FakePexsiSolver* fake_solver_ptr = fake_solver.get();
+    hsolver::DiagoPexsi<double> diago(&po, std::move(fake_solver));
+
+    ASSERT_NE(diago.DM[0], nullptr);
+    ASSERT_NE(diago.EDM[0], nullptr);
+    diago.diag(&hmtest, psi, nullptr);
+
+    EXPECT_TRUE(fake_solver_ptr->prepared);
+    EXPECT_TRUE(fake_solver_ptr->solved);
+    EXPECT_EQ(fake_solver_ptr->blacs_text, po.blacs_ctxt);
+    EXPECT_EQ(fake_solver_ptr->nb, po.nb);
+    EXPECT_EQ(fake_solver_ptr->nrow, po.nrow);
+    EXPECT_EQ(fake_solver_ptr->ncol, po.ncol);
+    EXPECT_EQ(fake_solver_ptr->h, hmtest.h_local.data());
+    EXPECT_EQ(fake_solver_ptr->s, hmtest.s_local.data());
+    EXPECT_EQ(fake_solver_ptr->dm, diago.DM[0]);
+    EXPECT_EQ(fake_solver_ptr->edm, diago.EDM[0]);
+    EXPECT_DOUBLE_EQ(fake_solver_ptr->mu0, -0.25);
+    EXPECT_DOUBLE_EQ(diago.DM[0][3], 13.0);
+    EXPECT_DOUBLE_EQ(diago.EDM[0][3], 23.0);
+    EXPECT_DOUBLE_EQ(diago.totalFreeEnergy, fake_solver_ptr->total_free_energy);
+    EXPECT_DOUBLE_EQ(diago.totalEnergyH, fake_solver_ptr->total_energy_h);
+    EXPECT_DOUBLE_EQ(diago.totalEnergyS, fake_solver_ptr->total_energy_s);
+}
 
 TEST_P(PexsiGammaOnlyTest, LCAO)
 {

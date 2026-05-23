@@ -147,7 +147,7 @@ inline void DistMatrixTransformer::countMatrixDistribution(int N, double* A, std
     for (int i = 0; i < N; ++i)
     {
         int key = 0;
-        if (fabs(A[i] < 1e-31))
+        if (fabs(A[i]) < 1e-31)
             key = -100;
         else
             key = floor(log10(fabs(A[i])));
@@ -292,13 +292,13 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
 
     // transfer index to receiver
     std::vector<int> receiver_index(receiver_size);
-    MPI_Alltoallv(&sender_index[0],
-                  &sender_size_process[0],
-                  &sender_displacement_process[0],
+    MPI_Alltoallv(sender_index.data(),
+                  sender_size_process.data(),
+                  sender_displacement_process.data(),
                   MPI_INT,
-                  &receiver_index[0],
-                  &receiver_size_process[0],
-                  &receiver_displacement_process[0],
+                  receiver_index.data(),
+                  receiver_size_process.data(),
+                  receiver_displacement_process.data(),
                   MPI_INT,
                   COMM_TRANS);
 
@@ -309,9 +309,9 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
                       NPROC_TRANS,
                       receiver_size_process,
                       receiver_displacement_process,
-                      &receiver_index[0],
+                      receiver_index.data(),
                       DST_Matrix,
-                      &buffer2ccsIndex[0]);
+                      buffer2ccsIndex.data());
     return 0;
 }
 
@@ -337,10 +337,8 @@ int DistMatrixTransformer::deleteGroupCommTrans(MPI_Group& GROUP_TRANS, MPI_Comm
     return 0;
 }
 
-// transform two sparse matrices from block cyclic distribution (BCD) to Compressed Column Storage (CCS) distribution
-// two destination matrices share the same non-zero elements positions
-// if either of two elements in source matrices is non-zeros, the elements in the destination matrices are non-zero,
-// even if one of them is acturely zero All matrices must have same MPI communicator
+// Transform two sparse matrices from BCD to CCS with a shared sparse pattern.  H and S are packed together so that the
+// value redistribution needs one MPI_Alltoallv instead of one collective per matrix.
 int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                                              double* H_2d,
                                              double* S_2d,
@@ -397,68 +395,59 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                                 receiver_size_process,
                                 receiver_displacement_process,
                                 buffer2ccsIndex);
-// Do transformation
-        std::vector<double> sender_buffer(sender_size);
-        std::vector<double> receiver_buffer(receiver_size);
-        // put H to sender buffer
+        std::vector<double> sender_buffer(2 * sender_size);
         if (SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
         {
             for (int i = 0; i < sender_size; ++i)
             {
-                sender_buffer[i] = H_2d[rowidx[i] * SRC_Matrix.get_ncol() + colidx[i]];
+                const int idx = rowidx[i] * SRC_Matrix.get_ncol() + colidx[i];
+                sender_buffer[2 * i] = H_2d[idx];
+                sender_buffer[2 * i + 1] = S_2d[idx];
             }
         }
         else
         {
             for (int i = 0; i < sender_size; ++i)
             {
-                sender_buffer[i] = H_2d[colidx[i] * SRC_Matrix.get_nrow() + rowidx[i]];
+                const int idx = colidx[i] * SRC_Matrix.get_nrow() + rowidx[i];
+                sender_buffer[2 * i] = H_2d[idx];
+                sender_buffer[2 * i + 1] = S_2d[idx];
             }
         }
-        // do all2all transformation
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
+
+        std::vector<int> sender_value_size_process(sender_size_process);
+        std::vector<int> sender_value_displacement_process(sender_displacement_process);
+        std::vector<int> receiver_value_size_process(receiver_size_process);
+        std::vector<int> receiver_value_displacement_process(receiver_displacement_process);
+        for (int i = 0; i < NPROC_TRANS; ++i)
+        {
+            sender_value_size_process[i] *= 2;
+            sender_value_displacement_process[i] *= 2;
+            receiver_value_size_process[i] *= 2;
+            receiver_value_displacement_process[i] *= 2;
+        }
+
+        std::vector<double> receiver_buffer(2 * receiver_size);
+        MPI_Alltoallv(sender_buffer.data(),
+                      sender_value_size_process.data(),
+                      sender_value_displacement_process.data(),
                       MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
+                      receiver_buffer.data(),
+                      receiver_value_size_process.data(),
+                      receiver_value_displacement_process.data(),
                       MPI_DOUBLE,
                       COMM_TRANS);
-// collect H from receiver buffer
+
         delete[] H_ccs;
         H_ccs = new double[receiver_size];
-        buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], H_ccs);
-
-        // put S to sender buffer
-        if (SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
-        {
-            for (int i = 0; i < sender_size; ++i)
-            {
-                sender_buffer[i] = S_2d[rowidx[i] * SRC_Matrix.get_ncol() + colidx[i]];
-            }
-        }
-        else
-        {
-            for (int i = 0; i < sender_size; ++i)
-            {
-                sender_buffer[i] = S_2d[colidx[i] * SRC_Matrix.get_nrow() + rowidx[i]];
-            }
-        }
-        // do all2all transformation
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_DOUBLE,
-                      COMM_TRANS);
-// collect S from receiver buffer
         delete[] S_ccs;
         S_ccs = new double[receiver_size];
-        buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], S_ccs);
+        for (int i = 0; i < receiver_size; ++i)
+        {
+            const int buffer_index = buffer2ccsIndex[i];
+            H_ccs[i] = receiver_buffer[2 * buffer_index];
+            S_ccs[i] = receiver_buffer[2 * buffer_index + 1];
+        }
     }
     // clear and return
     deleteGroupCommTrans(GROUP_TRANS, COMM_TRANS);

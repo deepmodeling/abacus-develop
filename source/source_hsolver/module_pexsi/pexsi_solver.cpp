@@ -98,22 +98,22 @@ int PEXSI_Solver::solve(double mu0)
     return 0;
 }
 
-const double PEXSI_Solver::get_totalFreeEnergy() const
+double PEXSI_Solver::get_totalFreeEnergy() const
 {
     return totalFreeEnergy;
 }
 
-const double PEXSI_Solver::get_totalEnergyH() const
+double PEXSI_Solver::get_totalEnergyH() const
 {
     return totalEnergyH;
 }
 
-const double PEXSI_Solver::get_totalEnergyS() const
+double PEXSI_Solver::get_totalEnergyS() const
 {
     return totalEnergyS;
 }
 
-const double PEXSI_Solver::get_mu() const
+double PEXSI_Solver::get_mu() const
 {
     return mu;
 }
