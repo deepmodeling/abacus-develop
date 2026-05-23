@@ -124,3 +124,16 @@ AddTest(
   ../langevin.cpp
   ${depend_files}
 )
+
+AddTest(
+  TARGET MODULE_MD_nep_omp
+  LIBS parameter ${math_libs} psi device
+  SOURCES nep_omp_test.cpp
+  ../potential/ml/nep/nep_cpu.cpp
+  ../potential/ml/nep/neighbor_nep.cpp
+  ../potential/ml/nep/ewald_nep.cpp
+)
+target_compile_definitions(
+  MODULE_MD_nep_omp
+  PRIVATE NEP_TEST_MODEL_FILE="${CMAKE_SOURCE_DIR}/tests/PP_ORB/nep_hfo2.txt"
+)

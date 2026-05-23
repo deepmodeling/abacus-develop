@@ -1,0 +1,262 @@
+--- a/run_md.cpp
++++ b/run_md.cpp
+@@ -12,6 +12,9 @@
+ #include "verlet.h"
+ #include "source_cell/update_cell.h"
+ #include "source_cell/print_cell.h"
++
++#include <cstdlib>
++#include <string>
+ namespace Run_MD
+ {
+ 
+@@ -47,6 +50,23 @@
+         ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
+     }
+ 
++    // Optional ML potential backend.
++    //
++    // This keeps INPUT parsing untouched at the first framework-building stage.
++    // Usage example:
++    //   export ABACUS_MD_ML_POTENTIAL=nep
++    //   export ABACUS_MD_ML_MODEL=/path/to/nep.txt
++    //
++    // Later, these two values can be replaced by formal INPUT keywords, e.g.
++    // md_potential_type / md_model_file.
++    const char* ml_potential_type_env = std::getenv("ABACUS_MD_ML_POTENTIAL");
++    const char* ml_model_file_env = std::getenv("ABACUS_MD_ML_MODEL");
++    if (ml_potential_type_env != nullptr && ml_model_file_env != nullptr)
++    {
++        mdrun->init_ml_potential(std::string(ml_potential_type_env),
++                                 std::string(ml_model_file_env));
++    }
++
+     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
+     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
+     {
+@@ -64,13 +84,9 @@
+             mdrun->first_half(GlobalV::ofs_running);
+ 
+             /// update force and virial due to the update of atom positions
+-            MD_func::force_virial(p_esolver,
+-                                  mdrun->step_,
+-                                  unit_in,
+-                                  mdrun->potential,
+-                                  mdrun->force,
+-                                  param_in.inp.cal_stress,
+-                                  mdrun->virial);
++            /// If an ML potential is initialized, this call uses the ML backend;
++            /// otherwise it falls back to the original ESolver path.
++            mdrun->update_force_virial(p_esolver);
+ 
+             mdrun->second_half();
+ 
+
+--- a/md_base.cpp
++++ b/md_base.cpp
+@@ -5,6 +5,12 @@
+ #endif
+ #include "source_io/module_output/print_info.h"
+ #include "source_cell/update_cell.h"
++#include "potential/potential_factory.h"
++
++#include <array>
++#include <stdexcept>
++#include <string>
++#include <vector>
+ MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) 
+ : mdp(param_in.mdp), ucell(unit_in)
+ {
+@@ -67,12 +73,123 @@
+ 
+ 	ModuleIO::print_screen(stress_step, force_step, istep_print);
+ 
+-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
++    update_force_virial(p_esolver);
+     MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
+     ucell.ionic_position_updated = true;
+ 
+     return;
+ }
++
++
++void MD_base::init_ml_potential(const std::string& potential_type,
++                                const std::string& model_file)
++{
++    ml_potential_ = ModuleMD::PotentialFactory::create(potential_type, model_file);
++    use_ml_potential_ = (ml_potential_ != nullptr);
++
++    if (my_rank == 0 && use_ml_potential_)
++    {
++        std::cout << "MD uses machine-learning potential backend: "
++                  << ml_potential_->name() << std::endl;
++        std::cout << "ML potential model file: " << model_file << std::endl;
++    }
++}
++
++
++void MD_base::update_force_virial(ModuleESolver::ESolver* p_esolver)
++{
++    if (use_ml_potential_)
++    {
++        update_force_virial_ml();
++        return;
++    }
++
++    // Original ABACUS force/virial path.
++    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
++}
++
++
++void MD_base::update_force_virial_ml()
++{
++    if (!use_ml_potential_ || ml_potential_ == nullptr)
++    {
++        throw std::runtime_error("ML potential requested but not initialized.");
++    }
++
++    const std::vector<std::array<double, 3>> positions = pack_positions_for_ml();
++    const std::vector<int> atom_types = pack_atom_types_for_ml();
++    const std::array<double, 9> cell = pack_cell_for_ml();
++
++    // ABACUS MD generally uses periodic crystal cells.
++    // If you later support non-periodic systems, replace this by an INPUT flag.
++    const bool pbc = true;
++
++    ModuleMD::PotentialResult result = ml_potential_->compute(positions, atom_types, cell, pbc);
++
++    potential = result.energy;
++
++    for (int iat = 0; iat < ucell.nat; ++iat)
++    {
++        force[iat][0] = result.force[iat][0];
++        force[iat][1] = result.force[iat][1];
++        force[iat][2] = result.force[iat][2];
++    }
++
++    if (cal_stress)
++    {
++        for (int i = 0; i < 3; ++i)
++        {
++            for (int j = 0; j < 3; ++j)
++            {
++                virial(i, j) = result.virial[3 * i + j];
++            }
++        }
++    }
++}
++
++
++std::vector<std::array<double, 3>> MD_base::pack_positions_for_ml() const
++{
++    std::vector<std::array<double, 3>> positions(ucell.nat);
++
++    for (int iat = 0; iat < ucell.nat; ++iat)
++    {
++        const ModuleBase::Vector3<double>& tau = ucell.get_tau(iat);
++
++        // ABACUS stores lattice vectors and internal coordinates in Bohr-scaled
++        // units. The adapter should decide whether to keep Bohr or convert to
++        // Angstrom according to the model convention.
++        positions[iat] = {tau[0] * ucell.lat0,
++                          tau[1] * ucell.lat0,
++                          tau[2] * ucell.lat0};
++    }
++
++    return positions;
++}
++
++
++std::vector<int> MD_base::pack_atom_types_for_ml() const
++{
++    std::vector<int> atom_types(ucell.nat);
++
++    for (int iat = 0; iat < ucell.nat; ++iat)
++    {
++        atom_types[iat] = ucell.iat2it[iat];
++    }
++
++    return atom_types;
++}
++
++
++std::array<double, 9> MD_base::pack_cell_for_ml() const
++{
++    // Row-major 3x3 cell matrix.
++    // The a1/a2/a3 vectors are scaled by lat0 to obtain Bohr.
++    return {ucell.a1[0] * ucell.lat0, ucell.a1[1] * ucell.lat0, ucell.a1[2] * ucell.lat0,
++            ucell.a2[0] * ucell.lat0, ucell.a2[1] * ucell.lat0, ucell.a2[2] * ucell.lat0,
++            ucell.a3[0] * ucell.lat0, ucell.a3[1] * ucell.lat0, ucell.a3[2] * ucell.lat0};
++}
++
+ 
+ 
+ void MD_base::first_half(std::ofstream& ofs)
+
+--- a/md_base.h
++++ b/md_base.h
+@@ -3,6 +3,13 @@
+ 
+ #include "source_esolver/esolver.h"
+ #include "source_io/module_parameter/parameter.h"
++
++#include <array>
++#include <memory>
++#include <string>
++#include <vector>
++
++#include "potential/potential_base.h"
+ 
+ /**
+  * @brief base class of md
+@@ -17,6 +24,26 @@
+   public:
+     MD_base(const Parameter& param_in, UnitCell& unit_in);
+     virtual ~MD_base();
++
++    /**
++     * @brief initialize an optional machine-learning potential.
++     *
++     * If this function is not called, MD keeps using the original ESolver
++     * force/virial calculation path.
++     *
++     * @param potential_type backend name, e.g. "nep", "dpmd", or "deepmd"
++     * @param model_file path to the model file, e.g. nep.txt or frozen_model.pb
++     */
++    void init_ml_potential(const std::string& potential_type,
++                           const std::string& model_file);
++
++    /**
++     * @brief update potential energy, force, and virial.
++     *
++     * This is the single force-evaluation entrance used by both setup()
++     * and the production MD loop.
++     */
++    void update_force_virial(ModuleESolver::ESolver* p_esolver);
+ 
+     /**
+      * @brief init before running md, calculate energy, force, and stress of the
+@@ -86,6 +113,22 @@
+     double kinetic;                     ///< kinetic energy
+ 
+   protected:
++    /**
++     * @brief evaluate the optional ML potential.
++     *
++     * The ML potential adapter should return all quantities in ABACUS internal
++     * MD units: energy in Hartree, force in Hartree/Bohr, and virial in Hartree.
++     */
++    void update_force_virial_ml();
++
++    std::vector<std::array<double, 3>> pack_positions_for_ml() const;
++    std::vector<int> pack_atom_types_for_ml() const;
++    std::array<double, 9> pack_cell_for_ml() const;
++
++    bool use_ml_potential_ = false;
++    std::unique_ptr<ModuleMD::PotentialBase> ml_potential_;
++
++  protected:
+     const MD_para& mdp; ///< input parameters used in md
+     UnitCell& ucell;    ///< unitcell information
+     double energy_=0.0; ///< total energy of the system
+

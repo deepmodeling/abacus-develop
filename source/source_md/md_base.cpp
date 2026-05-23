@@ -5,6 +5,12 @@
 #endif
 #include "source_io/module_output/print_info.h"
 #include "source_cell/update_cell.h"
+#include "potential/potential_factory.h"
+
+#include <array>
+#include <stdexcept>
+#include <string>
+#include <vector>
 MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) 
 : mdp(param_in.mdp), ucell(unit_in)
 {
@@ -67,12 +73,123 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
+    update_force_virial(p_esolver);
     MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
     ucell.ionic_position_updated = true;
 
     return;
 }
+
+
+void MD_base::init_ml_potential(const std::string& potential_type,
+                                const std::string& model_file)
+{
+    ml_potential_ = ModuleMD::PotentialFactory::create(potential_type, model_file);
+    use_ml_potential_ = (ml_potential_ != nullptr);
+
+    if (my_rank == 0 && use_ml_potential_)
+    {
+        std::cout << "MD uses machine-learning potential backend: "
+                  << ml_potential_->name() << std::endl;
+        std::cout << "ML potential model file: " << model_file << std::endl;
+    }
+}
+
+
+void MD_base::update_force_virial(ModuleESolver::ESolver* p_esolver)
+{
+    if (use_ml_potential_)
+    {
+        update_force_virial_ml();
+        return;
+    }
+
+    // Original ABACUS force/virial path.
+    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
+}
+
+
+void MD_base::update_force_virial_ml()
+{
+    if (!use_ml_potential_ || ml_potential_ == nullptr)
+    {
+        throw std::runtime_error("ML potential requested but not initialized.");
+    }
+
+    const std::vector<std::array<double, 3>> positions = pack_positions_for_ml();
+    const std::vector<int> atom_types = pack_atom_types_for_ml();
+    const std::array<double, 9> cell = pack_cell_for_ml();
+
+    // ABACUS MD generally uses periodic crystal cells.
+    // If you later support non-periodic systems, replace this by an INPUT flag.
+    const bool pbc = true;
+
+    ModuleMD::PotentialResult result = ml_potential_->compute(positions, atom_types, cell, pbc);
+
+    potential = result.energy;
+
+    for (int iat = 0; iat < ucell.nat; ++iat)
+    {
+        force[iat][0] = result.force[iat][0];
+        force[iat][1] = result.force[iat][1];
+        force[iat][2] = result.force[iat][2];
+    }
+
+    if (cal_stress)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                virial(i, j) = result.virial[3 * i + j];
+            }
+        }
+    }
+}
+
+
+std::vector<std::array<double, 3>> MD_base::pack_positions_for_ml() const
+{
+    std::vector<std::array<double, 3>> positions(ucell.nat);
+
+    for (int iat = 0; iat < ucell.nat; ++iat)
+    {
+        const ModuleBase::Vector3<double>& tau = ucell.get_tau(iat);
+
+        // ABACUS stores lattice vectors and internal coordinates in Bohr-scaled
+        // units. The adapter should decide whether to keep Bohr or convert to
+        // Angstrom according to the model convention.
+        positions[iat] = {tau[0] * ucell.lat0,
+                          tau[1] * ucell.lat0,
+                          tau[2] * ucell.lat0};
+    }
+
+    return positions;
+}
+
+
+std::vector<int> MD_base::pack_atom_types_for_ml() const
+{
+    std::vector<int> atom_types(ucell.nat);
+
+    for (int iat = 0; iat < ucell.nat; ++iat)
+    {
+        atom_types[iat] = ucell.iat2it[iat];
+    }
+
+    return atom_types;
+}
+
+
+std::array<double, 9> MD_base::pack_cell_for_ml() const
+{
+    // Row-major 3x3 cell matrix.
+    // The a1/a2/a3 vectors are scaled by lat0 to obtain Bohr.
+    return {ucell.a1[0] * ucell.lat0, ucell.a1[1] * ucell.lat0, ucell.a1[2] * ucell.lat0,
+            ucell.a2[0] * ucell.lat0, ucell.a2[1] * ucell.lat0, ucell.a2[2] * ucell.lat0,
+            ucell.a3[0] * ucell.lat0, ucell.a3[1] * ucell.lat0, ucell.a3[2] * ucell.lat0};
+}
+
 
 
 void MD_base::first_half(std::ofstream& ofs)

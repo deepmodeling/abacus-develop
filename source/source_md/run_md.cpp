@@ -12,6 +12,9 @@
 #include "verlet.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
+
+#include <cstdlib>
+#include <string>
 namespace Run_MD
 {
 
@@ -47,6 +50,23 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
     }
 
+    // Optional ML potential backend.
+    //
+    // This keeps INPUT parsing untouched at the first framework-building stage.
+    // Usage example:
+    //   export ABACUS_MD_ML_POTENTIAL=nep
+    //   export ABACUS_MD_ML_MODEL=/path/to/nep.txt
+    //
+    // Later, these two values can be replaced by formal INPUT keywords, e.g.
+    // md_potential_type / md_model_file.
+    const char* ml_potential_type_env = std::getenv("ABACUS_MD_ML_POTENTIAL");
+    const char* ml_model_file_env = std::getenv("ABACUS_MD_ML_MODEL");
+    if (ml_potential_type_env != nullptr && ml_model_file_env != nullptr)
+    {
+        mdrun->init_ml_potential(std::string(ml_potential_type_env),
+                                 std::string(ml_model_file_env));
+    }
+
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
@@ -64,13 +84,9 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver,
-                                  mdrun->step_,
-                                  unit_in,
-                                  mdrun->potential,
-                                  mdrun->force,
-                                  param_in.inp.cal_stress,
-                                  mdrun->virial);
+            /// If an ML potential is initialized, this call uses the ML backend;
+            /// otherwise it falls back to the original ESolver path.
+            mdrun->update_force_virial(p_esolver);
 
             mdrun->second_half();
 

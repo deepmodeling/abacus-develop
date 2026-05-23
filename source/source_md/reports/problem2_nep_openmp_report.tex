@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{siunitx}
+\usepackage{hyperref}
+
+\title{Problem 2: OpenMP Acceleration and Correctness Test for the NEP Force Path}
+\author{}
+\date{May 23, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Goal}
+
+Problem 2 requires OpenMP acceleration for molecular-dynamics potential
+calculation, with special attention to data dependencies, reductions, and
+correctness under different thread counts.  In this work, the target is the NEP
+CPU implementation under \texttt{source/source\_md/potential/ml/nep}.
+
+\section{Implementation}
+
+The descriptor and neighbor-list construction paths already contained OpenMP
+parallel loops.  The remaining risky hotspot was the force path:
+\begin{itemize}
+  \item \texttt{find\_force\_radial\_small\_box}
+  \item \texttt{find\_force\_angular\_small\_box}
+  \item \texttt{find\_force\_ZBL\_small\_box}
+\end{itemize}
+
+These loops cannot be parallelized safely with a plain
+\texttt{\#pragma omp parallel for}, because each neighbor contribution updates
+both atoms in a pair:
+\[
+  F_{n1} \mathrel{+}= f_{12}, \qquad F_{n2} \mathrel{-}= f_{12}.
+\]
+Different OpenMP threads can therefore write to the same force and virial
+entries at the same time.
+
+The implemented solution uses thread-local accumulation buffers:
+\begin{enumerate}
+  \item Each OpenMP thread allocates private force and virial arrays.
+  \item The outer atom loop is parallelized with \texttt{\#pragma omp for}.
+  \item Pair contributions are accumulated only into the calling thread's
+        private arrays.
+  \item After the parallel loop, private arrays are reduced into the shared
+        output arrays inside a short critical section.
+\end{enumerate}
+
+This keeps the force calculation race-free while preserving the original
+pairwise force and virial formulas.
+
+\section{Correctness Test}
+
+A small standalone NEP checker was added:
+\begin{itemize}
+  \item Source: \texttt{source/source\_md/tools/nep\_omp\_check.cpp}
+  \item Runner: \texttt{source/source\_md/tools/run\_nep\_omp\_check.sh}
+  \item Model: \texttt{tests/PP\_ORB/nep\_hfo2.txt}
+\end{itemize}
+
+The checker computes the same six-atom Hf/O configuration using one OpenMP
+thread as the reference, then repeats the calculation with multiple thread
+counts.  It reports average runtime and maximum absolute differences for
+potential, force, and virial arrays.
+
+\section{Initial Run Results}
+
+The following command was used on the local machine:
+
+\begin{lstlisting}[language=bash]
+tools/run_nep_omp_check.sh ../../tests/PP_ORB/nep_hfo2.txt 1,2,4 100
+\end{lstlisting}
+
+The compiler selected by the script was \texttt{g++-15} with
+\texttt{-O2 -fopenmp}.  The results were:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+Threads & Avg. time (ms) & Speedup & Max $\Delta E$ & Max $\Delta F$ & Max $\Delta V$ \\
+\midrule
+1 & 0.96246 & 1.00 & 0 & 0 & 0 \\
+2 & 0.78283 & 1.23 & 0 & $2.22045\times10^{-16}$ & $8.88178\times10^{-16}$ \\
+4 & 0.80320 & 1.20 & 0 & $4.44089\times10^{-16}$ & $1.33227\times10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\caption{Initial NEP OpenMP correctness and runtime check.}
+\end{table}
+
+\section{Analysis}
+
+The force and virial differences are at floating-point roundoff level, so the
+OpenMP force path is numerically consistent with the single-thread reference.
+The two-thread and four-thread runs show modest speedups of about $1.23\times$
+and $1.20\times$ for this small test case.  The four-thread result is slightly
+slower than the two-thread result, which is reasonable for such a small system
+because thread startup, private buffer allocation, and final reduction overhead
+can dominate the actual NEP work.
+
+For larger systems, the per-atom NEP descriptor and force work should become
+large enough for the OpenMP parallel region to amortize its overhead more
+effectively.  Therefore, the current result should be interpreted mainly as a
+correctness and initial-performance validation, not as the final scalability
+limit.
+
+\section{How to Reproduce}
+
+\begin{lstlisting}[language=bash]
+cd source/source_md
+tools/run_nep_omp_check.sh
+\end{lstlisting}
+
+Optional arguments are:
+
+\begin{lstlisting}[language=bash]
+tools/run_nep_omp_check.sh MODEL_FILE THREAD_LIST REPEATS
+tools/run_nep_omp_check.sh /path/to/nep.txt 1,2,4,8 50
+\end{lstlisting}
+
+\end{document}
