@@ -2,7 +2,11 @@
 #define DIAGO_PPCG_H_
 
 #include "source_base/macros.h"
+#include "source_base/module_device/device.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
+
+#include <ATen/core/tensor_types.h>
 
 #include <complex>
 #include <functional>
@@ -28,10 +32,8 @@ template <typename T = std::complex<double>, typename Device = base_device::DEVI
 class DiagoPPCG
 {
   private:
-    // Note GetTypeReal<T>::type will
-    // return T if T is real type(float, double),
-    // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
 
   public:
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
@@ -42,6 +44,11 @@ class DiagoPPCG
      * @param precondition_in Pointer to the preconditioner array with [dim: n_basis].
      */
     explicit DiagoPPCG(const Real* precondition_in);
+
+    /**
+     * @brief Destructor — frees all device and host allocations.
+     */
+    ~DiagoPPCG();
 
     /**
      * @brief Initialize the class before diagonalization.
@@ -58,11 +65,6 @@ class DiagoPPCG
 
     /**
      * @brief Diagonalize the Hamiltonian using the PPCG method.
-     *
-     * On GPU devices, falls back to DiagoBPCG. On CPU, runs the PPCG iteration:
-     * each step computes the preconditioned residual, updates band locking,
-     * constructs a per-band (or per-block) subspace, solves a small generalized
-     * eigenvalue problem, and periodically re-orthonormalizes via Cholesky.
      *
      * @param hpsi_func A function computing the product of the Hamiltonian matrix H
      * and a wavefunction blockvector X.
@@ -91,39 +93,37 @@ class DiagoPPCG
     int n_work = 0;
 
     /// Pointer to the preconditioner array (does not own memory).
-    /// @note prec[dim: n_basis]
     const Real* precondition = nullptr;
+    /// Device-side copy of the preconditioner (GPU only).
+    Real* d_precondition = nullptr;
 
-    /// H|psi> matrix [dim: n_basis x n_work, column major]
-    std::vector<T> hpsi;
-    /// Preconditioned residual vectors W = -K * R [dim: n_basis x n_work, column major]
-    std::vector<T> w;
-    /// H|w> matrix [dim: n_basis x n_work, column major]
-    std::vector<T> hw;
-    /// Conjugate direction vectors P [dim: n_basis x n_work, column major]
-    std::vector<T> p;
-    /// H|p> matrix [dim: n_basis x n_work, column major]
-    std::vector<T> hp;
-    /// Updated conjugate direction vectors for next iteration
-    std::vector<T> p_new;
-    /// H|p_new> matrix for next iteration
-    std::vector<T> hp_new;
-    /// Updated H|psi> matrix for next iteration
-    std::vector<T> hpsi_new;
-    /// Workspace buffer for vector rotations and intermediate results
-    std::vector<T> work;
-    /// Computed eigenvalues [dim: n_work]
-    std::vector<Real> eigen;
-    /// Residual norm for each band [dim: n_work]
-    std::vector<Real> err;
+    /// Device context
+    Device* ctx = {};
+    base_device::AbacusDevice_t device = {};
 
-    /// Convergence lock flag for each band [dim: n_work]
-    std::vector<bool> is_locked;
-    /// Consecutive convergence counter for each band [dim: n_work]
-    std::vector<int> converge_count;
+    // ---- device-side working arrays (n_work × n_basis) ----
+    T* hpsi = nullptr;      ///< H|psi>
+    T* w = nullptr;         ///< preconditioned residual W = -K^{-1} R
+    T* hw = nullptr;        ///< H|w>
+    T* p = nullptr;         ///< conjugate directions
+    T* hp = nullptr;        ///< H|p>
+    T* p_new = nullptr;     ///< updated p for next iteration
+    T* hp_new = nullptr;    ///< H|p_new>
+    T* hpsi_new = nullptr;  ///< updated H|psi>
+    T* work = nullptr;      ///< workspace for rotations / intermediates
 
-    /// Block sizes for the blocked PPCG variant; empty means per-band mode
-    std::vector<int> block_sizes;
+    /// device-side eigenvalues / errors [dim: n_work]
+    Real* d_eigen = nullptr;
+    Real* d_err = nullptr;
+
+    /// host-side mirrors (for MPI reduce, convergence check, output)
+    Real* h_eigen = nullptr;
+    Real* h_err = nullptr;
+
+    // ---- control state (host only, small) ----
+    std::vector<char> is_locked;       ///< convergence lock flags
+    std::vector<int> converge_count;   ///< consecutive convergence counters
+    std::vector<int> block_sizes;      ///< block sizes for blocked variant
 
   public:
     /**
@@ -154,142 +154,69 @@ class DiagoPPCG
     }
 
   private:
-    /// @name Basic vector operations (operate on n_dim elements)
-    /// @{
+    // ------------------------------------------------------------------
+    //  memory-operation aliases
+    // ------------------------------------------------------------------
+    using resmem_op   = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_op   = base_device::memory::delete_memory_op<T, Device>;
+    using setmem_op   = base_device::memory::set_memory_op<T, Device>;
+    using syncmem_op  = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_d2h = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using syncmem_h2d = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
-    /**
-     * @brief Compute the inner product of two vectors: sum conj(lhs[i]) * rhs[i].
-     * @note Includes MPI reduction across pool processes.
-     */
+    using resmem_real_op    = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_real_op    = base_device::memory::delete_memory_op<Real, Device>;
+    using setmem_real_op    = base_device::memory::set_memory_op<Real, Device>;
+    using syncmem_real_h2d  = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_real_d2h  = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+
+    using resmem_real_h = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
+    using delmem_real_h = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
+
+    // ------------------------------------------------------------------
+    //  basic vector operations (operate on n_dim elements)
+    // ------------------------------------------------------------------
+
+    /// lhs^H * rhs  with MPI reduction.
     T inner_product(const T* lhs, const T* rhs) const;
-    /// Compute the L2 norm of a vector.
+    /// L2 norm.
     Real vector_norm(const T* vec) const;
-    /// In-place scale a vector by a real scalar: vec *= alpha.
+    /// vec *= alpha, pad region zeroed.
     void scale_vector(T* vec, const Real alpha) const;
-    /// Compute y += alpha * x.
+    /// y += alpha * x.
     void axpy_vector(T* y, const T* x, const T alpha) const;
-    /// Copy n_basis elements from src to dst.
+    /// Copy n_basis elements.
     void copy_vector(T* dst, const T* src) const;
-    /// Zero-fill n_basis elements of vec.
+    /// Zero-fill n_basis elements.
     void zero_vector(T* vec) const;
 
-    /// @}
+    // ------------------------------------------------------------------
+    //  higher-level operations
+    // ------------------------------------------------------------------
 
-    /**
-     * @brief Check whether all bands satisfy the convergence threshold.
-     *
-     * @param ethr_band Convergence threshold for each band [dim: n_band].
-     * @return true if any band (across all MPI ranks) is not converged, false if all converged.
-     */
+    /// MPI-parallel convergence check.
     bool test_error(const std::vector<double>& ethr_band) const;
-
-    /**
-     * @brief Apply the H operator to psi and obtain the hpsi matrix.
-     *
-     * @note hpsi_out = H|psi_in>
-     *
-     * @param hpsi_func A function computing the product of the Hamiltonian matrix H
-     * and a wavefunction blockvector X.
-     * @param psi_in Input wavefunction [dim: n_basis x n_work, column major].
-     * @param hpsi_out Output H|psi> matrix [dim: n_basis x n_work, column major].
-     */
-    void calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, std::vector<T>& hpsi_out) const;
-
-    /**
-     * @brief Orthonormalize psi and hpsi using Modified Gram-Schmidt.
-     *
-     * @note psi_in and hpsi_in are modified in-place, column by column.
-     * Aborts if linear dependence is detected (norm <= 1e-14).
-     */
-    void modified_gram_schmidt(T* psi_in, std::vector<T>& hpsi_in) const;
-
-    /**
-     * @brief Orthonormalize psi and hpsi using Cholesky decomposition of the overlap matrix.
-     *
-     * Computes S = <psi|psi>, factorizes S = L * L^H, then rotates vectors by L^{-1}.
-     * More numerically robust than Gram-Schmidt for large block sizes or near-linear-dependence.
-     */
-    void orth_cholesky(T* psi_in, std::vector<T>& hpsi_in);
-
-    /**
-     * @brief Verify orthonormality of the working vectors.
-     *
-     * @return true if the Frobenius norm of (S - I) < 1e-6, false otherwise.
-     */
+    /// hpsi_out = H |psi_in>
+    void calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, T* hpsi_out) const;
+    /// Modified Gram-Schmidt orthonormalization.
+    void modified_gram_schmidt(T* psi_in, T* hpsi_in) const;
+    /// Cholesky-based orthonormalization (more robust).
+    void orth_cholesky(T* psi_in, T* hpsi_in);
+    /// Check || <psi|psi> - I ||_F < 1e-1.
     bool check_orthonormality(T* psi_in) const;
-
-    /**
-     * @brief Rotate a block of vectors by a coefficient matrix: block_out = block * coeff.
-     *
-     * @param block Input/output block of vectors [dim: n_basis x n_work, column major].
-     * @param coeff Rotation coefficient matrix [dim: n_work x n_work, column major].
-     * @param workspace Workspace buffer [dim: n_basis x n_work, column major].
-     */
-    void rotate_block(T* block, const std::vector<T>& coeff, std::vector<T>& workspace) const;
-
-    /**
-     * @brief Perform the Rayleigh-Ritz procedure.
-     *
-     * Builds the subspace Hamiltonian Hsub = <psi|H|psi>, diagonalizes it
-     * via LAPACK zheevd, and rotates psi and hpsi by the eigenvectors.
-     * On exit, eigenvalues are sorted ascending.
-     */
-    void rayleigh_ritz(T* psi_in, std::vector<T>& hpsi_in);
-
-    /**
-     * @brief Compute the preconditioned residual and eigenvalue for each band.
-     *
-     * For each non-locked band, computes:
-     *   1. lambda_i = <x_i | H | x_i> (Rayleigh quotient as eigenvalue estimate)
-     *   2. R_i = H x_i - lambda_i x_i (residual)
-     *   3. w_i = -K^{-1} R_i (preconditioned residual)
-     *
-     * The residual norm is stored in err[ib] and reduced across MPI processes.
-     * Locked bands have their w vector zeroed.
-     */
+    /// block_out = block * coeff  (gemm).
+    void rotate_block(T* block, const T* coeff, T* workspace) const;
+    /// Rayleigh-Ritz: Hsub = psi^H hpsi, diagonalize, rotate.
+    void rayleigh_ritz(T* psi_in, T* hpsi_in);
+    /// Compute preconditioned residuals and Rayleigh quotients.
     void calc_preconditioned_residual(T* psi_in);
-
-    /**
-     * @brief Project block vectors onto the orthogonal complement of the current subspace.
-     *
-     * For each vector v in block, subtracts its projection onto all current psi vectors:
-     * v_i = v_i - sum_j <x_j | v_i> * x_j
-     */
-    void project_to_orthogonal_complement(T* psi_in, std::vector<T>& block) const;
-
-    /**
-     * @brief Solve a small generalized eigenvalue problem H * C = lambda * S * C.
-     *
-     * Uses LAPACK zhegvd. Falls back to the first basis vector on failure.
-     *
-     * @param active_dim Dimension of the small problem (2 or 3).
-     * @param hsmall Subspace Hamiltonian matrix [dim: active_dim x active_dim, column major].
-     * @param ssmall Subspace overlap matrix [dim: active_dim x active_dim, column major].
-     * @param coeff Output eigenvector coefficients [dim: active_dim x active_dim, column major].
-     * @param eval Output eigenvalues [dim: active_dim].
-     * @return true on success, false if the generalized eigenproblem failed.
-     */
+    /// v_i -= sum_j <x_j|v_i> x_j  for each v in block.
+    void project_to_orthogonal_complement(T* psi_in, T* block) const;
+    /// Solve 2×2 / 3×3 generalized eigenproblem.
     bool solve_small_problem(const int active_dim, T* hsmall, T* ssmall, T* coeff, Real* eval) const;
-
-    /**
-     * @brief Update psi, hpsi, p, hp from the per-band PPCG subspace.
-     *
-     * For each non-locked band, constructs a 2D or 3D subspace from {x_i, w_i, p_i},
-     * solves a small generalized eigenvalue problem, and updates the working vectors
-     * using the lowest eigenvector's coefficients.
-     *
-     * If block_sizes is set, delegates to update_vectors_blocked instead.
-     */
+    /// Per-band PPCG subspace update.
     void update_vectors_from_ppcg_subspace(T* psi_in);
-
-    /**
-     * @brief Block-diagonal variant of the PPCG subspace update.
-     *
-     * Groups bands into blocks. For each block of size k_i, constructs a
-     * 3k_i-dimensional subspace from {X_block, W_block, P_block}, solves
-     * the generalized eigenvalue problem, and updates all bands in the block
-     * simultaneously using the first k_i eigenvectors.
-     */
+    /// Block-diagonal PPCG subspace update.
     void update_vectors_blocked(T* psi_in);
 };
 
