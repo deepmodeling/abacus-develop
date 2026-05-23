@@ -452,6 +452,11 @@ void set_dsp_cluster_id(int id)
     g_dsp_cluster_id = id;
 }
 
+int get_dsp_cluster_id()
+{
+    return g_dsp_cluster_id;
+}
+
 template <typename FPTYPE>
 struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 {

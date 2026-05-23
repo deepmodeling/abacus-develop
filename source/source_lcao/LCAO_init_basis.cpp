@@ -49,7 +49,8 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     // TODO Due to the omnipresence of LCAO_Orbitals, we still have to rely
     // on the old interface for now.
-    two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
+    two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax,
+                                       PARAM.inp.out_element_info, PARAM.inp.cal_force);
 
     if (PARAM.inp.vnl_in_h)
     {

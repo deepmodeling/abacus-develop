@@ -38,6 +38,16 @@ void WARNING(const std::string &file, const std::string &description);
 void set_quit_out_dir(const std::string& dir);
 
 /**
+ * @brief Inject the calculation tag used by CHECK_WARNING_QUIT to compose the
+ *        fallback log filename ("running_<calculation>.log") when ofs_running
+ *        is not already open.
+ *
+ * Caller-injected (typically once after input parameters are read).
+ * If never set, the fallback filename uses an empty tag.
+ */
+void set_quit_calculation(const std::string& calculation);
+
+/**
  * @brief Close .log files and exit
  *
  */
@@ -71,7 +81,7 @@ void set_quit_out_dir(const std::string& dir);
  * @param file The file where warning happens
  * @param description The warning information
  */
-void CHECK_WARNING_QUIT(const bool error, const std::string &file,const std::string &calculation,const std::string &description);
+void CHECK_WARNING_QUIT(const bool error, const std::string &file, const std::string &description);
 
 } // namespace ModuleBase
 

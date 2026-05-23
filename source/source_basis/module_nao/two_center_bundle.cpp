@@ -208,7 +208,9 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
                                        const double lcao_ecut,
                                        const double lcao_dk,
                                        const double lcao_dr,
-                                       const double lcao_rmax) const
+                                       const double lcao_rmax,
+                                       const bool out_element_info,
+                                       const bool cal_force) const
 {
     ORB.ntype = orb_->ntype();
     ORB.lmax = orb_->lmax();
@@ -240,7 +242,7 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
     ORB.Phi = new Numerical_Orbital[orb_->ntype()];
     for (int itype = 0; itype < orb_->ntype(); ++itype)
     {
-        (*orb_)(itype).to_numerical_orbital(ORB.Phi[itype], ORB.kmesh, ORB.dk);
+        (*orb_)(itype).to_numerical_orbital(ORB.Phi[itype], ORB.kmesh, ORB.dk, out_element_info, cal_force);
     }
 
     if (PARAM.globalv.deepks_setorb)
@@ -252,7 +254,7 @@ void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB,
         ORB.Alpha = new Numerical_Orbital[alpha_->ntype()];
         for (int itype = 0; itype < alpha_->ntype(); ++itype)
         {
-            (*alpha_)(itype).to_numerical_orbital(ORB.Alpha[itype], ORB.kmesh, ORB.dk);
+            (*alpha_)(itype).to_numerical_orbital(ORB.Alpha[itype], ORB.kmesh, ORB.dk, out_element_info, cal_force);
         }
     }
 }
