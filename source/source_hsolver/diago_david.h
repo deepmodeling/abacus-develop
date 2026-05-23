@@ -9,12 +9,15 @@
 
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_hsolver/precision_mode.h"
 
 #include <vector>
 #include <functional>
+#include <type_traits>
 
 namespace hsolver
 {
+
 /**
  * @class DiagoDavid
  * @brief A class that implements the block-Davidson algorithm for solving generalized eigenvalue problems.
@@ -58,7 +61,8 @@ class DiagoDavid
                const int dim_in,
                const int david_ndim_in,
                const bool use_paw_in,
-               const diag_comm_info& diag_comm_in);
+               const diag_comm_info& diag_comm_in,
+               const PrecisionMode precision_mode_in = PrecisionMode::kDouble);
 
     /**
      * @brief Destructor for the DiagoDavid class.
@@ -141,11 +145,33 @@ class DiagoDavid
       const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
       const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
+    /**
+     * @brief Mixed precision diagonalization using float iteration + double refinement.
+     *
+     * Converts wavefunctions to float/complex<float>, performs Davidson iteration
+     * in single precision, then refines the result with one double-precision iteration.
+     *
+     * @return Total number of iterations (float iterations + refinement iterations).
+     */
+    int diag_mixed_precision(
+      const HPsiFunc& hpsi_func,
+      const SPsiFunc& spsi_func,
+      const int ld_psi,
+      T *psi_in,
+      Real* eigenvalue_in,
+      const std::vector<double>& ethr_band,
+      const int david_maxiter,
+      const int ntry_max,
+      const int notconv_max);
+
   private:
     bool use_paw = false;
     int test_david = 0;
 
     diag_comm_info diag_comm;
+
+    /// Precision mode: kDouble (default), kFloat, or kMixed
+    PrecisionMode precision_mode_ = PrecisionMode::kDouble;
 
     /// number of required eigenpairs
     const int nband;

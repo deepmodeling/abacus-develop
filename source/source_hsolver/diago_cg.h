@@ -10,6 +10,8 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
+#include "source_hsolver/precision_mode.h"
+
 namespace hsolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
@@ -25,6 +27,7 @@ class DiagoCG final
         using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
         using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
         using SubspaceFunc = std::function<void(T*, T*, const int, const int, const bool)>;
+
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
@@ -36,7 +39,8 @@ class DiagoCG final
         const SubspaceFunc& subspace_func,
         const Real& pw_diag_thr,
         const int& pw_diag_nmax,
-        const int& nproc_in_pool);
+        const int& nproc_in_pool,
+        const PrecisionMode& precision_mode = PrecisionMode::kDouble);
 
     ~DiagoCG();
 
@@ -80,6 +84,7 @@ class DiagoCG final
     std::string calculation_ = {};
 
     bool need_subspace_ = false;
+    PrecisionMode precision_mode_ = PrecisionMode::kDouble;
     /// A function object that performs the hPsi calculation.
     HPsiFunc hpsi_func_ = nullptr;
     /// A function object that performs the sPsi calculation.
@@ -132,6 +137,16 @@ class DiagoCG final
                    ct::Tensor& psi,
                    ct::Tensor& eigen,
                    const std::vector<double>& ethr_band);
+
+    double diag_mixed_precision(const HPsiFunc& hpsi_func,
+                                const SPsiFunc& spsi_func,
+                                const int ld_psi,
+                                const int nband,
+                                const int dim,
+                                T* psi_in,
+                                Real* eigenvalue_in,
+                                const std::vector<double>& ethr_band,
+                                const Real* prec);
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 

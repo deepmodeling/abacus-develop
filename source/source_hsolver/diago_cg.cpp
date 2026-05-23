@@ -11,6 +11,7 @@
 #include <source_base/tool_title.h>             // ModuleBase::TITLE
 #include <source_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
 #include <source_hsolver/diago_cg.h>
+#include <type_traits>
 
 using namespace hsolver;
 
@@ -31,7 +32,8 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
-                            const int& nproc_in_pool)
+                            const int& nproc_in_pool,
+                            const PrecisionMode& precision_mode)
 {
     basis_type_ = basis_type;
     calculation_ = calculation;
@@ -40,6 +42,7 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
     pw_diag_thr_ = pw_diag_thr;
     pw_diag_nmax_ = pw_diag_nmax;
     nproc_in_pool_ = nproc_in_pool;
+    precision_mode_ = precision_mode;
     this->one_ = new T(static_cast<T>(1.0));
     this->zero_ = new T(static_cast<T>(0.0));
     this->neg_one_ = new T(static_cast<T>(-1.0));
@@ -576,6 +579,165 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
 }
 
 template <typename T, typename Device>
+double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
+                                const SPsiFunc& spsi_func,
+                                const int ld_psi,
+                                const int nband,
+                                const int dim,
+                                T* psi_in,
+                                Real* eigenvalue_in,
+                                const std::vector<double>& ethr_band,
+                                const Real* prec)
+{
+    // Mixed precision is intended for double-based solvers, but the conversion
+    // code can also compile for float/complex<float> if instantiated.
+
+    using MixedT = typename std::conditional<std::is_same<T, double>::value,
+                                      float,
+                                      std::complex<float>>::type;
+    using MixedReal = typename GetTypeReal<MixedT>::type;
+
+    auto psi = ct::TensorMap(psi_in,
+                             ct::DataTypeToEnum<T>::value,
+                             ct::DeviceTypeToEnum<ct_Device>::value,
+                             ct::TensorShape({nband, ld_psi}));
+    auto psi_temp = psi.slice({0, 0}, {nband, dim});
+    auto psi_mixed = psi_temp.cast<MixedT>();
+
+    ct::Tensor prec_mixed;
+    if (prec != nullptr)
+    {
+        auto prec_map = ct::TensorMap(const_cast<Real*>(prec),
+                                      ct::DataTypeToEnum<Real>::value,
+                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                      ct::TensorShape({dim}));
+        prec_mixed = prec_map.template cast<MixedReal>().template to_device<ct_Device>();
+    }
+
+    std::vector<MixedReal> eigen_mixed(nband, static_cast<MixedReal>(0.0));
+
+    auto hpsi_func_mixed = [hpsi_func](MixedT* psi_in_mixed,
+                                       MixedT* hpsi_out_mixed,
+                                       const int ld_psi_mixed,
+                                       const int nvec) {
+        auto psi_in_map = ct::TensorMap(psi_in_mixed,
+                                        ct::DataTypeToEnum<MixedT>::value,
+                                        ct::DeviceTypeToEnum<ct_Device>::value,
+                                        ct::TensorShape({nvec, ld_psi_mixed}));
+        auto psi_in_double = psi_in_map.cast<T>();
+        auto hpsi_double = ct::Tensor(ct::DataTypeToEnum<T>::value,
+                                      ct::DeviceTypeToEnum<ct_Device>::value,
+                                      ct::TensorShape({nvec, ld_psi_mixed}));
+        hpsi_func(psi_in_double.template data<T>(), hpsi_double.template data<T>(), ld_psi_mixed, nvec);
+        auto hpsi_mixed_out = hpsi_double.cast<MixedT>();
+        ct::TensorMap hpsi_out_tensor(hpsi_out_mixed,
+                                      ct::DataTypeToEnum<MixedT>::value,
+                                      ct::DeviceTypeToEnum<ct_Device>::value,
+                                      ct::TensorShape({nvec, ld_psi_mixed}));
+        hpsi_out_tensor.CopyFrom(hpsi_mixed_out);
+    };
+
+    auto spsi_func_mixed = [spsi_func](MixedT* psi_in_mixed,
+                                       MixedT* spsi_out_mixed,
+                                       const int ld_psi_mixed,
+                                       const int nvec) {
+        auto psi_in_map = ct::TensorMap(psi_in_mixed,
+                                        ct::DataTypeToEnum<MixedT>::value,
+                                        ct::DeviceTypeToEnum<ct_Device>::value,
+                                        ct::TensorShape({nvec, ld_psi_mixed}));
+        auto psi_in_double = psi_in_map.cast<T>();
+        auto spsi_double = ct::Tensor(ct::DataTypeToEnum<T>::value,
+                                      ct::DeviceTypeToEnum<ct_Device>::value,
+                                      ct::TensorShape({nvec, ld_psi_mixed}));
+        spsi_func(psi_in_double.template data<T>(), spsi_double.template data<T>(), ld_psi_mixed, nvec);
+        auto spsi_mixed_out = spsi_double.cast<MixedT>();
+        ct::TensorMap spsi_out_tensor(spsi_out_mixed,
+                                      ct::DataTypeToEnum<MixedT>::value,
+                                      ct::DeviceTypeToEnum<ct_Device>::value,
+                                      ct::TensorShape({nvec, ld_psi_mixed}));
+        spsi_out_tensor.CopyFrom(spsi_mixed_out);
+    };
+
+    auto double_subspace = subspace_func_;
+    auto subspace_func_mixed = [double_subspace](MixedT* psi_in_mixed,
+                                                 MixedT* psi_out_mixed,
+                                                 const int ld_psi_mixed,
+                                                 const int nband_mixed,
+                                                 const bool S_orth) {
+        if (!double_subspace)
+        {
+            return;
+        }
+        auto psi_in_map = ct::TensorMap(psi_in_mixed,
+                                        ct::DataTypeToEnum<MixedT>::value,
+                                        ct::DeviceTypeToEnum<ct_Device>::value,
+                                        ct::TensorShape({nband_mixed, ld_psi_mixed}));
+        auto psi_in_double = psi_in_map.cast<T>();
+        auto psi_out_double = ct::Tensor(ct::DataTypeToEnum<T>::value,
+                                         ct::DeviceTypeToEnum<ct_Device>::value,
+                                         ct::TensorShape({nband_mixed, ld_psi_mixed}));
+        double_subspace(psi_in_double.template data<T>(), psi_out_double.template data<T>(), ld_psi_mixed, nband_mixed, S_orth);
+        auto psi_out_mixed_tensor = psi_out_double.cast<MixedT>();
+        ct::TensorMap psi_out_tensor(psi_out_mixed,
+                                     ct::DataTypeToEnum<MixedT>::value,
+                                     ct::DeviceTypeToEnum<ct_Device>::value,
+                                     ct::TensorShape({nband_mixed, ld_psi_mixed}));
+        psi_out_tensor.CopyFrom(psi_out_mixed_tensor);
+    };
+
+    hsolver::DiagoCG<MixedT, Device> mixed_solver(
+        basis_type_,
+        calculation_,
+        need_subspace_,
+        subspace_func_mixed,
+        pw_diag_thr_,
+        pw_diag_nmax_,
+        nproc_in_pool_,
+        hsolver::PrecisionMode::kFloat);
+
+    mixed_solver.diag(hpsi_func_mixed,
+                      spsi_func_mixed,
+                      ld_psi,
+                      nband,
+                      dim,
+                      psi_mixed.template data<MixedT>(),
+                      eigen_mixed.data(),
+                      ethr_band,
+                      prec != nullptr ? prec_mixed.template data<MixedReal>() : nullptr);
+
+    auto psi_refined = psi_mixed.template cast<T>();
+    psi_temp.CopyFrom(psi_refined);
+
+    ct::Tensor eigen = ct::TensorMap(eigenvalue_in,
+                                     ct::DataTypeToEnum<Real>::value,
+                                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                     ct::TensorShape({nband}));
+
+    ct::Tensor prec_tensor;
+    if (prec != nullptr)
+    {
+        prec_tensor = ct::TensorMap(const_cast<Real*>(prec),
+                                    ct::DataTypeToEnum<Real>::value,
+                                    ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                    ct::TensorShape({dim}))
+                          .template to_device<ct_Device>();
+    }
+
+    ++avg_iter_;
+    this->diag_once(prec_tensor, psi_temp, eigen, ethr_band);
+
+    if (this->notconv_ > std::max(5, this->n_band_ / 4))
+    {
+        std::cout << "\n notconv = " << this->notconv_;
+        std::cout << "\n DiagoCG::diag_mixed_precision', too many bands are not converged! \n";
+    }
+
+    psi.zero();
+    psi.sync(psi_temp);
+    return avg_iter_;
+}
+
+template <typename T, typename Device>
 double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const SPsiFunc& spsi_func,
                                 const int ld_psi,
@@ -589,6 +751,19 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     REQUIRES_OK(ld_psi >= dim, "DiagoCG::diag: ld_psi must be >= dim");
     REQUIRES_OK(static_cast<int>(ethr_band.size()) >= nband,
                 "DiagoCG::diag: ethr_band size must be >= nband");
+
+    if (precision_mode_ == PrecisionMode::kMixed)
+    {
+        return diag_mixed_precision(hpsi_func,
+                                    spsi_func,
+                                    ld_psi,
+                                    nband,
+                                    dim,
+                                    psi_in,
+                                    eigenvalue_in,
+                                    ethr_band,
+                                    prec);
+    }
 
     auto psi = ct::TensorMap(psi_in,
                              ct::DataTypeToEnum<T>::value,

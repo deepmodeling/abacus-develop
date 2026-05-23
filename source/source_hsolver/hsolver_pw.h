@@ -5,6 +5,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_hsolver/precision_mode.h"
 #include <unordered_map>
 #include "source_base/memory.h"
 
@@ -40,6 +41,13 @@ class HSolverPW
           use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
           use_k_continuity(use_k_continuity_in) {};
+
+    /// @brief Set the precision mode for diagonalization solvers
+    /// @param mode "double", "float", or "mixed"
+    void set_diago_precision_mode(const PrecisionMode mode) { diago_precision_mode_ = mode; }
+
+    /// @brief Get the current precision mode
+    PrecisionMode get_diago_precision_mode() const { return diago_precision_mode_; }
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -87,6 +95,9 @@ class HSolverPW
     const bool need_subspace; // for cg or dav_subspace
 
     const bool use_k_continuity;
+
+    /// Precision mode for diagonalization: kDouble (default), kFloat, or kMixed
+    PrecisionMode diago_precision_mode_ = PrecisionMode::kDouble;
 
   protected:
     Device* ctx = {};

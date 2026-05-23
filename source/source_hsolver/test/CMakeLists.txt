@@ -33,6 +33,22 @@ if (ENABLE_MPI)
             ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
+    TARGET MODULE_HSOLVER_cg_mixed
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_cg_mixed_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_mixed_precision_benchmark
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_mixed_precision_benchmark.cpp ../diago_cg.cpp ../diago_david.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+  AddTest(
     TARGET MODULE_HSOLVER_dav
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
@@ -121,6 +137,18 @@ if (ENABLE_MPI)
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
+
+if (NOT ENABLE_MPI)
+  AddTest(
+    TARGET MODULE_HSOLVER_cg_mixed
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_cg_mixed_test.cpp ../diago_cg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+endif()
+
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -146,33 +174,33 @@ install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DI
 install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
-if (USE_ELPA)
-  AddTest(
-    TARGET MODULE_HSOLVER_diago_hs_parallel
-    LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
-    SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
-  )
-else()
-  AddTest(
-      TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
-      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
-    )
-endif()
-
-AddTest(
-  TARGET MODULE_HSOLVER_linear_trans
-  LIBS parameter  ${math_libs} base device MPI::MPI_CXX
-  SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
-)
-
-add_test(NAME MODULE_HSOLVER_para_linear_trans
-  COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-find_program(BASH bash)
 if (ENABLE_MPI)
+  if (USE_ELPA)
+    AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
+    )
+  else()
+    AddTest(
+        TARGET MODULE_HSOLVER_diago_hs_parallel
+        LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+        SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
+      )
+  endif()
+
+  AddTest(
+    TARGET MODULE_HSOLVER_linear_trans
+    LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+    SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
+  )
+
+  add_test(NAME MODULE_HSOLVER_para_linear_trans
+    COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+  find_program(BASH bash)
   add_test(NAME MODULE_HSOLVER_cg_parallel
         COMMAND ${BASH} diago_cg_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
