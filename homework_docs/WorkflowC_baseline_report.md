@@ -38,9 +38,9 @@
 | 测试通过率 | **54/54 (100%)** | 3 用例 × 6 配置 × 3 重复 |
 | 最大热点 | **diag_once (CG 对角化)** 占 SCF 73~77% | Workflow D 范畴 |
 | Gather/Scatter 占比 | FFT 的 **30~55%**, SCF 的 **6~10%** (MPI 稳态) | 6 处连续拷贝循环在 `pw_gatherscatter.h` |
-| SIMD 状态 | **GCC 13 -O3 有中等优化效果** (gathers 1.64×, gatherp 无显著加速) | 需 `-fopt-info-vec` 进一步确认自动向量化状态 |
+| SIMD 状态 | **GCC 13 -O3 未自动向量化** gather/scatter 拷贝循环（别名屏障），清零循环已 AVX2 向量化 | 手动 SIMD 有 ~1.5~3× 单循环加速空间 |
 | 缓存机会 | 数据 **~0.9 MB** (可常驻 L2), setupIndGk **~18K 冗余调用** | 见 [6.2.5 节](#625-setupindgk-双重计算量化评估) |
-| Debug→Release | serial **1.44×**, np2_omp2 **1.14×** 整体加速 | 见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug) |
+| Debug→Release | serial **1.40×**, np2_omp2 **1.23×** 整体加速 | 见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug) |
 
 ---
 
@@ -210,7 +210,7 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 | mix_np2_omp4 | 2.44 | 3.83 | 6.63 | 9.91 | 36.8% | 38.7% | 11.2% |
 | mix_np4_omp2 | 0.97 | 1.63 | 2.82 | 4.23 | 34.6% | 38.5% | 9.7% |
 
-### 5.1a 网格规模扩展分析
+#### 5.1a 网格规模扩展分析
 
 三个测试用例使用相同材料（GaAs）、相同 k 点密度（3×3×3），在 40 Ry 下拥有完整的 24³→32³→48³ 纯净扩展链：
 
@@ -229,7 +229,7 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 - 单次 gathers 调用的平均耗时从 52µs 增至 308µs（**5.9×**）。在 Release 构建下（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)），编译器优化可缓解此类膨胀。
 - 在 48³ 网格下，gathers 占 recip2real 的 31.5%（serial），随着网格继续增大，此比例预计进一步下降（FFT 的 O(n³log n) 增长快于 gather/scatter 的拷贝量）。
 
-### 5.1b MPI 进程扩展分析
+#### 5.1b MPI 进程扩展分析
 
 以 gaas_medium 稳态（3 次重复均值）为例，固定每个进程的 OMP 线程数，比较不同 MPI 进程数：
 
@@ -250,7 +250,7 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 
 3. **before_scf 初始化开销在 MPI 模式下更低**：serial (0.87s) > np2_omp2 (0.40s) > np4_omp2 (0.36s)。MPI 模式下每个进程只处理部分 k 点，初始化工作量按进程数分摊。
 
-### 5.3 SIMD 向量化机会分析
+### 5.2 SIMD 向量化机会分析
 
 `pw_gatherscatter.h` 中共有 **6 处内层拷贝循环**，全部为 `outp[i] = inp[i]` 形式的连续拷贝，数据完全连续、指针不重叠，非常适合 SIMD 向量化：
 
@@ -268,11 +268,48 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 - 循环边界为运行时变量（nplane, nz, nzip），典型值 24~48（poolnproc=1 时 nz = nplane × poolnproc）
 - AVX2 一次处理 4 个 double（2 个 complex），理论加速 2×~4×
 
-> **预期收益**：Debug 数据下预估手动 SIMD 可带来 2~10% SCF 加速。**但 Release 对照实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明，GCC 13 的实际优化效果中等（gathers 1.64×, gatherp 无显著加速），编译器自动向量化状态需用 `-fopt-info-vec-optimized` 进一步确认。** 以下为对照实验详情。
+#### GCC 13 自动向量化实际状态
 
-### 5.4 Release 构建对照实验（`-O3 -march=native -DNDEBUG`）
+使用 `-fopt-info-vec-optimized` 和 `-fopt-info-vec-missed` 编译目标文件，逐循环检查 GCC 13.3.0 (`-O3 -march=native`) 的自动向量化决策：
 
-为判断 GCC 13 是否已对拷贝循环自动向量化，使用 gaas_medium 用例在 3 种关键配置下跑了 9 次 Release 对照实验（每配置 3 次重复）。以下为 3 次重复均值与 Debug 的对比：
+| 函数 | 循环位置 | 行号 | 向量化状态 | 向量宽度 | 失败原因 |
+|------|---------|------|-----------|----------|----------|
+| **`gatherp_scatters`** | `poolnproc==1` 外层 `is` | L28 | ❌ 未向量化 | — | 指针别名：`outp[iz]=inp[iz]` 中 GCC 无法证明无重叠 |
+| | `poolnproc==1` 内层 `iz` | L33 | ❌ 未向量化 | — | `"more than one data ref in stmt"` |
+| | MPI pre-copy 内层 `iz` | L57 | ❌ 未向量化 | — | 同上 |
+| | MPI post-copy 3 层嵌套 | L88-100 | ❌ 未向量化 | — | 同上 |
+| **`gathers_scatterp`** | **清零循环** `out[i]=0` | L129 | ✅ **已向量化** | **AVX2 32B** | 连续 memset 模式 |
+| | `poolnproc==1` 外层 `is` | L137 | ❌ 未向量化 | — | 指针别名 |
+| | `poolnproc==1` 内层 `iz` | L142 | ❌ 未向量化 | — | `"more than one data ref"` |
+| | MPI 3 层嵌套 | L164-174 | ❌ 未向量化 | — | 指针别名 |
+| **`collect_local_pw`** | 主计算循环 `ig` | L150 | ❌ 未向量化 | — | 分支控制流 (ix/iy/iz 调整 + WARNING_QUIT) |
+| **`collect_uniqgg`** | 主计算循环 `ig` | L211 | ❌ 未向量化 | — | 同上 |
+| **`setupIndGk`** | 计数循环 `ig` | L137-148 | ❌ 未向量化 | — | 调用 `cal_GplusK_cartesian()`（函数调用阻止向量化） |
+| | 建索引循环 `ig` | L178-190 | ❌ 未向量化 | — | 同上 |
+
+**根因诊断——指针别名是 gather/scatter 向量化的核心障碍**：
+
+```cpp
+// pw_gatherscatter.h:33-35 (所有 6 处拷贝循环的共同模式)
+std::complex<T> *outp = &out[is*nz_];   // 从 out 计算
+std::complex<T> *inp = &in[ixy*nz_];     // 从 in 计算（不同索引数组）
+for(int iz = 0 ; iz < nz_ ; ++iz)
+    outp[iz] = inp[iz];  // ← GCC: "more than one data ref"
+```
+
+内层 `iz` 循环本质上是 `std::complex<double>` 的**连续拷贝**（典型 `nz` ≈ 24~48），数据布局完全连续且不存在真实重叠。但由于 `outp` 和 `inp` 来自不同基指针，通过 `istot2ixy` 索引数组间接寻址，GCC 13 的别名分析器无法推断无重叠，拒绝向量化。同一问题也导致 MPI 路径（3 层嵌套循环）的 4 处拷贝均未向量化。
+
+相比之下，清零循环（L129 `for(int i = 0; i < nrxx_; ++i) out[i]=0`）是纯粹的连续 memset 模式，路径唯一、无别名歧义，编译器成功使用 256-bit AVX2 向量化。
+
+`collect_local_pw` 和 `collect_uniqgg` 则因含多个条件分支（ix/iy/iz 边界修正 + `WARNING_QUIT` 调用）而未被向量化，但此类函数的计算密度远高于 gather/scatter 拷贝循环。
+
+**结论**：GCC 13 对 gather/scatter 的核心拷贝循环**未能自动向量化**，主要障碍为**指针别名分析失败**。这恰好是手动优化的机会——通过添加 `__restrict__` 或 `#pragma GCC ivdep` 打破别名壁垒，即可使 AVX2 256-bit 向量化生效。以下为 Release 对照实验的具体数据。
+
+> **预期收益**：Debug 数据下预估手动 SIMD 可带来 2~10% SCF 加速。**但 Release 对照实验（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)）表明，`-O3` 的整体效果 medium（gathers 1.64×, gatherp 无显著加速），且自动向量化报告确认核心拷贝循环未向量化，手动 SIMD 仍有约 1.5~3× 的单循环加速空间。** 以下为对照实验详情。
+
+### 5.3 Release 构建对照实验（`-O3 -march=native -DNDEBUG`）
+
+使用 gaas_medium 用例在 3 种关键配置下跑了 9 次 Release 对照实验（每配置 3 次重复），结合 [5.3.1 节](#531-gcc-13-自动向量化实际状态) 的编译器自动向量化报告，验证 GCC 13 的优化效果。以下为 3 次重复均值与 Debug 的对比：
 
 | 配置 | Debug wall | Release wall | 整体加速比 | gatherp 加速比 | gathers 加速比 | before_scf 加速比 |
 |------|-----------|-------------|-----------|---------------|---------------|-------------------|
@@ -284,28 +321,30 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 
 #### 关键结论：编译器优化效果中等
 
-1. **gathers 显示 1.64× 加速**，表明 GCC 13 对 `gathers_scatterp` 中的拷贝循环有优化效果（可能包含自动向量化）。
+1. **gathers 显示 1.64× 加速**（serial 下 2.89×），但[自动向量化报告](#531-gcc-13-自动向量化实际状态)确认 GCC 对 gather/scatter 的内层拷贝循环**未做显式向量化**（`"more than one data ref"` 别名障碍）。1.64× 的加速主要来自 `-O3` 的其他优化（函数内联、循环展开、指令调度），而非 SIMD 向量化。
 
-2. **gatherp 在 Debug 和 Release 间无显著差异**（1.04s vs 1.21s，约 0.17s 噪声）。这可能是由于 `gatherp_scatters` 的 MPI pre/post copy 路径数据结构不同，编译器优化效果不一致。
+2. **gatherp 在 Debug 和 Release 间无显著差异**（1.04s vs 1.21s，约 0.17s 噪声）。这与向量化报告吻合——所有 gatherp 拷贝循环均未向量化，`-O3` 对该路径的收益有限。
 
-3. **serial 模式下的 gathers 加速比 2.89×**：serial 路径的拷贝循环更简单（无 MPI 包装），编译器优化更充分。
+3. **serial 模式下的 gathers 加速比 2.89×**：serial 路径的拷贝循环更简单（无 MPI 包装），编译器优化更充分。但加速仍来自非 SIMD 优化——报告显示 serial 路径同样因别名问题未向量化。
 
-4. **`-O3` 的整体效果由多因素叠加**：自动向量化、函数内联、循环展开、断言移除等共同贡献 1.00~1.40× 的总体加速。
+4. **`-O3` 的整体效果由多因素叠加**：自动向量化、函数内联、循环展开、断言移除等共同贡献 1.00~1.40× 的总体加速。其中自动向量化主要贡献在清零循环（AVX2 已确认）和 FFTW 接口，而非 gather/scatter 核心拷贝。
 
 #### 对手动 SIMD 的影响
 
 | 项目 | 评估 |
 |------|------|
-| GCC 是否已向量化 copy 循环 | **部分可能**（gathers 1.64×, gatherp 无显著效果），需 `-fopt-info-vec` 确认 |
-| 手动 SIMD 可能收益 | 需用 `-fopt-info-vec` 确认编译器现状后判断 |
+| GCC 是否已向量化 copy 循环 | **❌ 未向量化**（别名障碍 `"more than one data ref"`），见 [5.3.1 节](#531-gcc-13-自动向量化实际状态) |
+| 1.64× gathers 加速来源 | 函数内联/循环展开/指令调度等非 SIMD 优化 |
+| 手动 SIMD 可能收益 | **高**：打破别名壁垒后 AVX2 可覆盖 6 处拷贝循环（nz≈24~48），单循环预期 1.5~3× |
 | gather/scatter 占 SCF（稳态 Release）| **6~12%** (np2_omp2) |
-| 整体 SCF 预期加速 | 待 `-fopt-info-vec` 确认后重新评估 |
+| 整体 SCF 预期加速 | **加 `__restrict__`/`ivdep` + 对齐** 预估 ~3~8% SCF；若进一步手动 AVX2 intrinsic，~5~12% SCF |
 
-> **策略调整建议**：
-> - **必须首先用 `-fopt-info-vec-optimized` 确认自动向量化状态**。GCC 将逐行输出哪些循环成功向量化、使用多少位向量寄存器。若日志确认 `pw_gatherscatter.h` 的 6 处拷贝循环均已执行 256 位 AVX2 向量化，则手动 SIMD 收益有限（~0~3% SCF）；若有遗漏，手动 SIMD 的收益空间更大
-> - 尝试 `#pragma GCC ivdep` + `__restrict__` 消除编译器别名分析障碍，让自动向量化更激进
-> - **对齐诊断**：在拷贝前加入 `__builtin_assume_aligned(ptr, 32)` 或 `reinterpret_cast<uintptr_t>(outp) % 32 == 0` 断言。若对齐后无额外收益，可在报告中标注"未对齐访问已被硬件缓冲完全掩盖"；若有 1~2% 提升，则白赚
-> - 同步投入 **题目8 缓存复用**，其收益不受编译优化影响
+> **优化策略（已确认）**：
+> - **自动向量化状态已确认**：GCC 13 因指针别名障碍未能向量化 gather/scatter 拷贝循环。**手动 SIMD 有明确的优化空间**
+> - **第一步（最低成本）**：在拷贝循环前添加 `#pragma GCC ivdep` + 指针 `__restrict__`，消除别名障碍，让 GCC 的自动向量化生效。预估 2~5% SCF 提升
+> - **第二步（中等成本）**：加 `__builtin_assume_aligned(ptr, 32)` 断言确保 32 字节对齐，使 AVX2 256-bit 加载/存储生效。预估额外 1~3% SCF
+> - **第三步（最高成本）**：若自动向量化效果仍不满足，手写 AVX2 intrinsic 替代 6 处拷贝循环。预估额外 3~5% 但维护成本高，建议仅在测试后确实有必要时采用
+> - **同步投入 题目8 缓存复用**，其收益不受编译优化影响
 
 ---
 
@@ -488,9 +527,10 @@ for (int ig = 0; ig < this->npw; ig++) {
 | 项目 | 评估 |
 |------|------|
 | 目标 | `gatherp_scatters`, `gathers_scatterp` (6 处拷贝循环) |
-| 当前状态 | Debug→Release 加速效果中等（gathers 1.64×，gatherp 无显著加速），编译器向量化状态需用 `-fopt-info-vec` 确认 |
-| 第 13 周计划 | **先用 `-fopt-info-vec-optimized` 确认自动向量化状态**，然后根据结果决定优化策略 |
-| 风险/优先级 | 低风险 / **中优先级** — 编译器可能有部分自动向量化，但实际效果不如最初预期 |
+| 当前状态 | **GCC 13.3 自动向量化状态已确认**：清零循环已 AVX2 向量化 ✅；6 处核心拷贝循环均**未向量化** ❌，根因为指针别名分析失败（`"more than one data ref"`）。Release 下 1.64× gathers 加速来自非 SIMD 优化（函数内联/循环展开）。见 [5.3.1](#531-gcc-13-自动向量化实际状态) |
+| 第 13 周计划 | **不再需要诊断步骤**。直接执行三阶段优化：(1) `#pragma GCC ivdep` + `__restrict__` 打破别名；(2) 对齐断言 `__builtin_assume_aligned`；(3) 若不足再手写 AVX2 intrinsic |
+| 预估收益 | 加 `restrict`/`ivdep` 预估 ~3~8% SCF 提升；进一步 intrinsic 可达 ~5~12% |
+| 风险/优先级 | 低风险 / **中优先级** — 别名修复是安全操作，不会改变数值结果 |
 
 ### 8.2 题目8：缓存复用
 
@@ -516,7 +556,7 @@ for (int ig = 0; ig < this->npw; ig++) {
   - WSL2 虚拟化层引入约 5~10% 时间抖动，MPI 多进程场景（≥4 进程）下不可控
   - `mix_np2_omp4` 配置因 MPI 通信开销较大，在某些用例下呈现中等方差（gaas_medium: 29s/31s/35s）
 - **WSL2 局限性**：本报告所有数据来自 WSL2 (Hyper-V 轻量级 VM)。Windows 宿主的后台抢占与 EPT 内存转换会严重污染硬件计数器，尤其影响 MPI 多进程的通信延迟和共享内存性能。第 13 周的终期优化验收必须迁移到物理机 Linux 或 HPC 集群上进行，WSL2 仅应作为开发与功能验证环境
-- **Debug 构建限制**：主要基线数据来自 `-O0` 构建。Release（`-O3`）对照实验已完成（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)），编译器对 gather/scatter 有中等优化效果（gathers 1.64×）。百分比占比在 Debug 和 Release 下基本一致，但绝对加速倍数不能跨构建类型外推
+- **Debug 构建限制**：主要基线数据来自 `-O0` 构建。Release（`-O3`）对照实验已完成（[5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)），自动向量化状态已确认（[5.3.1 节](#531-gcc-13-自动向量化实际状态)）：gather/scatter 核心拷贝循环未向量化，1.64× gathers 加速来自非 SIMD 优化。百分比占比在 Debug 和 Release 下基本一致，但绝对加速倍数不能跨构建类型外推
 - **计时器限制**：0.1s 阈值导致部分轻量函数无数据显示，已在第 3.3 节说明
 
 ---
@@ -527,7 +567,7 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 1. **全部 54 次运行通过** (100% 通过率)，测试体系稳定可靠。
 
-2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **30~55%**（稳态），占 SCF 迭代的 **6~10%**。MPI 路径的 gather/scatter 由本地 copy 段 + `MPI_Alltoallv` 组成，其中 copy 段是 SIMD 的直接作用目标。6 处内层连续拷贝循环非常适合 SIMD 向量化。Release 对照实验显示 gathers 有 1.64× 加速，但 gatherp 无显著加速（见 [5.4 节](#54-release-构建对照实验-o3--marchnative--dndebug)），编译器自动向量化的实际效果需通过 `-fopt-info-vec-optimized` 进一步确认。
+2. **Gather/Scatter 是 MPI 模式下的重要优化目标**，占 FFT 变换的 **30~55%**（稳态），占 SCF 迭代的 **6~10%**。MPI 路径的 gather/scatter 由本地 copy 段 + `MPI_Alltoallv` 组成，其中 copy 段是 SIMD 的直接作用目标。6 处内层连续拷贝循环非常适合 SIMD 向量化。**自动向量化状态已确认**（[5.3.1 节](#531-gcc-13-自动向量化实际状态)）：GCC 13.3 因指针别名障碍未能向量化核心拷贝循环，清零循环已使用 AVX2 256-bit 向量化。Release 的 1.64× gathers 加速来自非 SIMD 优化（函数内联/循环展开），手动 SIMD 有 ~1.5~3× 的单循环加速空间，预期加 `restrict`/`ivdep` 后可实现 ~3~8% SCF 整体提升。
 
 3. **缓存复用函数当前开销较小**（<0.4s，含在 `before_scf` 中），但其收益在于消除 `setupIndGk` 的 |G+K|² 双重计算（~18,000 次冗余调用）和减少反复内存分配。缓存数据量约 0.5~0.9 MB，可完全放入 L2 缓存。
 
@@ -535,11 +575,10 @@ for (int ig = 0; ig < this->npw; ig++) {
 
 ### 10.2 第 13 周工作建议
 
-1. **SIMD 向量化调查**（题目5，先诊断后优化）：
-   - **先用 `-fopt-info-vec-optimized` 确认自动向量化状态**：在 Release 构建中追加此编译选项，获取 GCC 对 `pw_gatherscatter.h` 中 6 处拷贝循环的向量化报告。这是决定后续方案的关键输入
-   - 若确认 GCC 已成功向量化所有 6 处循环（输出显示 `vectorized`），则手动 SIMD 边际收益有限（~0~3% SCF），可快速收尾
-   - 若有遗漏：添加 `#pragma omp simd` + `__restrict__` + `__builtin_assume_aligned` 到遗漏的循环
-   - 在 Release 构建下用 gaas_medium np2_omp2 测量实际增益
+1. **SIMD 向量化**（题目5）：
+   - **第一阶段（最低成本）**：在 `pw_gatherscatter.h` 的 6 处拷贝循环前添加 `#pragma GCC ivdep` + 指针 `__restrict__` 消除别名障碍，让 GCC 自动向量化生效。预估 ~3~5% SCF 提升。在 Release 构建下用 gaas_medium np2_omp2 验证
+   - **第二阶段（对齐优化）**：加 `__builtin_assume_aligned(ptr, 32)` 断言确保 32 字节对齐。预估额外 ~1~3% SCF
+   - **第三阶段（按需 intrinsic）**：若前两阶段收益不足，手写 AVX2 intrinsic 替代 6 处拷贝循环。预估额外 ~3~5% 但维护成本高，仅当测试后确实有必要时采用
 
 2. **缓存复用作为主攻方向**（题目8）：
    - 在 `PW_Basis` 和 `PW_Basis_K` 中添加缓存有效性标志位

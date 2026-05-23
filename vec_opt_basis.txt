@@ -1,0 +1,49 @@
+source/source_base/module_fft/fft_base.h:11:16: optimized: basic block part vectorized using 32 byte vectors
+source/source_base/module_fft/fft_base.h:11:16: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:107:21: optimized: loop vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:107:21: optimized:  loop versioned for vectorization because of possible aliasing
+source/source_basis/module_pw/pw_basis.cpp:107:21: optimized: loop vectorized using 16 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:146:80: optimized: loop vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:146:80: optimized: loop vectorized using 16 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:145:86: optimized: loop vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:145:86: optimized: loop vectorized using 16 byte vectors
+source/source_base/vector3.h:100:11: optimized: basic block part vectorized using 32 byte vectors
+source/source_base/vector3.h:100:11: optimized: basic block part vectorized using 32 byte vectors
+source/source_base/vector3.h:100:11: optimized: basic block part vectorized using 32 byte vectors
+source/source_base/vector3.h:100:11: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:254:25: optimized: basic block part vectorized using 32 byte vectors
+/usr/include/c++/13/bits/shared_ptr_base.h:343:37: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:16:126: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
+source/source_basis/module_pw/pw_basis.cpp:11:20: optimized: basic block part vectorized using 32 byte vectors
