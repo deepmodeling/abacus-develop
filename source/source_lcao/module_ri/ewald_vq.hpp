@@ -20,12 +20,14 @@
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/element_basis_index.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "singular_value.h"
 
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <sstream>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -334,11 +336,100 @@ auto Ewald_Vq<Tdata>::set_Vs_dVs_minus_gauss(const UnitCell& ucell,
         }
     }
 
-    // Eq. (6.26) subtracts the Gaussian Ewald term only where both real-space
-    // maps have a block. Keep bare blocks outside the Gaussian support: they
-    // still contribute to the short-range Fourier sum.
-    std::map<TA, std::map<TAC, Tresult>> Vs_dVs_minus_gauss
-        = LRI_CV_Tools::minus_common_keys(Vs_dVs_in, pVs_dVs_gauss);
+    int mpi_rank = 0;
+    MPI_Comm_rank(this->mpi_comm, &mpi_rank);
+
+    const auto pair_cutoff_metric = [&](const TA iat0, const TAC& iat1_cell) {
+        const int it0 = ucell.iat2it[iat0];
+        const int ia0 = ucell.iat2ia[iat0];
+        const TA iat1 = iat1_cell.first;
+        const int it1 = ucell.iat2it[iat1];
+        const int ia1 = ucell.iat2ia[iat1];
+        const TC& cell1 = iat1_cell.second;
+
+        const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+        const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+        const double Rcut = std::min(this->cal_V_Rcut(it0, it1), this->cal_V_Rcut(it1, it0));
+        const Abfs::Vector3_Order<double> R_delta
+            = -tau0 + tau1 + (RI_Util::array3_to_Vector3(cell1) * ucell.latvec);
+        const double distance = R_delta.norm() * ucell.lat0;
+        return std::make_pair(distance, Rcut);
+    };
+
+    const auto is_inside_common_cutoff = [&](const TA iat0, const TAC& iat1_cell, double& distance, double& Rcut) {
+        const std::pair<double, double> metric = pair_cutoff_metric(iat0, iat1_cell);
+        distance = metric.first;
+        Rcut = metric.second;
+        const double tol = 1e-10 * std::max(1.0, Rcut);
+        return distance < Rcut - tol;
+    };
+
+    const auto quit_missing_common_pair
+        = [&](const char* missing_map, const TA iat0, const TAC& iat1_cell, const double distance, const double Rcut) {
+              std::ostringstream oss;
+              oss << missing_map << " is missing a Gaussian Ewald subtraction key inside the common cutoff. "
+                  << "rank=" << mpi_rank << ", iat0=" << iat0 << ", iat1=" << iat1_cell.first << ", cell=("
+                  << iat1_cell.second[0] << "," << iat1_cell.second[1] << "," << iat1_cell.second[2] << ")"
+                  << ", distance=" << distance << ", Rcut=" << Rcut
+                  << ", ccp_rmesh_times=" << this->ccp_rmesh_times;
+              ModuleBase::WARNING_QUIT("Ewald_Vq::set_Vs_dVs_minus_gauss", oss.str());
+          };
+
+    // Eq. (6.26) only subtracts in the shared real-space support. A missing
+    // Gaussian key is acceptable only outside that common cutoff; a missing key
+    // inside it means the two maps are inconsistent and would hide a real bug.
+    std::map<TA, std::map<TAC, Tresult>> Vs_dVs_minus_gauss;
+    using namespace RI::Array_Operator;
+    for (const auto& vs_outer: Vs_dVs_in)
+    {
+        const TA iat0 = vs_outer.first;
+        const auto gauss_outer = pVs_dVs_gauss.find(iat0);
+        for (const auto& vs_inner: vs_outer.second)
+        {
+            const TAC& iat1_cell = vs_inner.first;
+            if (gauss_outer != pVs_dVs_gauss.end())
+            {
+                const auto gauss_inner = gauss_outer->second.find(iat1_cell);
+                if (gauss_inner != gauss_outer->second.end())
+                {
+                    Vs_dVs_minus_gauss[iat0][iat1_cell] = vs_inner.second - gauss_inner->second;
+                    continue;
+                }
+            }
+
+            double distance = 0.0;
+            double Rcut = 0.0;
+            if (is_inside_common_cutoff(iat0, iat1_cell, distance, Rcut))
+            {
+                quit_missing_common_pair("pVs_dVs_gauss", iat0, iat1_cell, distance, Rcut);
+            }
+            Vs_dVs_minus_gauss[iat0][iat1_cell] = vs_inner.second;
+        }
+    }
+
+    for (const auto& gauss_outer: pVs_dVs_gauss)
+    {
+        const TA iat0 = gauss_outer.first;
+        const auto vs_outer = Vs_dVs_in.find(iat0);
+        for (const auto& gauss_inner: gauss_outer.second)
+        {
+            const TAC& iat1_cell = gauss_inner.first;
+            const bool exists_in_vs
+                = vs_outer != Vs_dVs_in.end() && vs_outer->second.find(iat1_cell) != vs_outer->second.end();
+            if (exists_in_vs)
+            {
+                continue;
+            }
+
+            double distance = 0.0;
+            double Rcut = 0.0;
+            if (is_inside_common_cutoff(iat0, iat1_cell, distance, Rcut))
+            {
+                quit_missing_common_pair("Vs_dVs_in", iat0, iat1_cell, distance, Rcut);
+            }
+        }
+    }
+
     ModuleBase::timer::tick("Ewald_Vq", "set_Vs_dVs_minus_gauss");
     return Vs_dVs_minus_gauss;
 }
