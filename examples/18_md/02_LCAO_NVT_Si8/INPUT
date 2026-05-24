@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                 Si_nve
+suffix                 Si_nhc_nvt
 calculation            md
 nbands                 20
 symmetry               0
@@ -15,7 +15,7 @@ scf_nmax               100
 #Parameters (3.Basis)
 basis_type             lcao
 ks_solver              genelpa
-gamma_only             1
+gamma_only             0 
 
 #Parameters (4.Smearing)
 smearing_method        gaussian
@@ -27,7 +27,13 @@ mixing_beta            0.3
 chg_extrap             second-order
 
 #Parameters (6.MD)
-md_type                nve
-md_nstep               10
+md_type                nvt
+md_nstep               5
 md_dt                  1
 md_tfirst              300
+md_tfreq               1
+md_tchain              1
+
+# output initial charge density
+out_chg                2
+out_freq_ion           2

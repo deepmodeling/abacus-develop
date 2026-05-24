@@ -13,51 +13,58 @@ void ModuleIO::write_chg_init(
     const Input_para& inp)
 {
     const int nspin = inp.nspin;
-    assert(nspin == 1 || nspin ==2 || nspin == 4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
     if (inp.out_chg[0] == 2)
     {
-        for (int is = 0; is < nspin; is++)
+        bool should_output = (istep == 0) ||
+                             (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
+
+        if (should_output)
         {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "chg";
+            int geom_step = istep + 1;
 
-            if(nspin==1)
+            for (int is = 0; is < nspin; is++)
             {
-                ss << "ini.cube";
-            }
-            else if(nspin==2 || nspin==4)
-            {
-                ss << "s" << is + 1 << "ini.cube";
-            }
+                std::stringstream ss;
+                ss << PARAM.globalv.global_out_dir << "chg";
 
-            // mohan add 2025-10-18
-            double fermi_energy = 0.0;
-            if(nspin == 1 || nspin ==4)
-			{
-				fermi_energy = efermi.ef;
-			}
-			else if(nspin == 2)
-			{
-				if(is==0) 
-				{
-					fermi_energy = efermi.ef_up;
-				}
-				else if(is==1)
-				{
-					fermi_energy = efermi.ef_dw;
-				}
-			}
+                if (nspin == 1)
+                {
+                    ss << "g" << geom_step << "_ini.cube";
+                }
+                else if (nspin == 2 || nspin == 4)
+                {
+                    ss << "s" << is + 1 << "g" << geom_step << "_ini.cube";
+                }
 
-            ModuleIO::write_vdata_palgrid(para_grid,
-                                          chr.rho[is],
-                                          is,
-                                          nspin,
-                                          istep,
-                                          ss.str(),
-                                          fermi_energy,
-                                          &(ucell),
-					  inp.out_chg[1]);
+                double fermi_energy = 0.0;
+                if (nspin == 1 || nspin == 4)
+                {
+                    fermi_energy = efermi.ef;
+                }
+                else if (nspin == 2)
+                {
+                    if (is == 0)
+                    {
+                        fermi_energy = efermi.ef_up;
+                    }
+                    else if (is == 1)
+                    {
+                        fermi_energy = efermi.ef_dw;
+                    }
+                }
+
+                ModuleIO::write_vdata_palgrid(para_grid,
+                                              chr.rho[is],
+                                              is,
+                                              nspin,
+                                              istep,
+                                              ss.str(),
+                                              fermi_energy,
+                                              &(ucell),
+                                              inp.out_chg[1]);
+            }
         }
     }
     return;
@@ -71,9 +78,8 @@ void ModuleIO::write_pot_init(
     const int istep,
     const Input_para& inp)
 {
-    //! output total local potential of the initial charge density
     const int nspin = inp.nspin;
-    assert(nspin == 1 || nspin ==2 || nspin == 4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
     if (inp.out_pot[0] == 3)
     {
@@ -82,11 +88,11 @@ void ModuleIO::write_pot_init(
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "pot";
 
-            if(nspin==1)
+            if (nspin == 1)
             {
                 ss << "ini.cube";
             }
-            else if(nspin==2 || nspin==4)
+            else if (nspin == 2 || nspin == 4)
             {
                 ss << "s" << is + 1 << "ini.cube";
             }
@@ -97,11 +103,10 @@ void ModuleIO::write_pot_init(
                                           nspin,
                                           istep,
                                           ss.str(),
-                                          0.0, // efermi
+                                          0.0,
                                           &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
+                                          11,
+                                          0);
         }
     }
-
 }

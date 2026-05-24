@@ -49,11 +49,13 @@ All output file naming conventions can be found in the online documentation (wit
 | `s12` | Non-collinear spin calculation |
 | `k#` | k-point index (e.g., `k1`, `k2`) |
 | `g#` | Ionic step index for relax/md (e.g., `g1`, `g2`) |
+| `ini` | Initial state (before electronic iteration), used before or after `g#` |
 
 **Important:**
 - All index numbers start from 1 (not 0)
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
+- For initial charge density output (`out_chg = 2`), the naming convention is: `chgg{#}_ini.cube` (nspin=1) or `chgs{#}g{#}_ini.cube` (nspin=2/4)
 
 ### 2.2 Examples
 
@@ -62,6 +64,8 @@ All output file naming conventions can be found in the online documentation (wit
 | `chgs1.cube` | Charge density, spin 1 |
 | `chgs2.cube` | Charge density, spin 2 |
 | `chgs3.cube` | Charge density, spin 3 (non-collinear with SOC) |
+| `chgg1_ini.cube` | Initial charge density, geometry step 1 (nspin=1) |
+| `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
@@ -79,6 +83,8 @@ All output file naming conventions can be found in the online documentation (wit
 | `band.txt` | Band structure |
 | `chgs1.cube`, `chgs2.cube` | Charge density (spin 1, spin 2) |
 | `chg.cube` | Total charge density |
+| `chgg{#}_ini.cube` | Initial charge density, geometry step {#} (nspin=1) |
+| `chgs{#}g{#}_ini.cube` | Initial charge density, spin {#}, geometry step {#} (nspin=2/4) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
 
