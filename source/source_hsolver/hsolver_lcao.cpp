@@ -22,6 +22,7 @@
 
 #ifdef __PEXSI
 #include "diago_pexsi.h"
+#include "module_pexsi/pexsi_solver.h"
 #endif
 
 #include "source_base/global_variable.h"
@@ -36,6 +37,9 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+
+#include <algorithm>
+#include <type_traits>
 
 namespace hsolver
 {
@@ -114,13 +118,30 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     {
 #ifdef __PEXSI // other purification methods should follow this routine
         DiagoPexsi<TK> pe(ParaV);
-        for (int ik = 0; ik < psi.get_nk(); ++ik)
+        const int pexsi_mu_loops = std::is_same<TK, std::complex<double>>::value
+                                       ? std::min(40, std::max(1, pexsi::PEXSI_Solver::pexsi_nmax))
+                                       : 1;
+        pe.begin_mu_search();
+        for (int imu = 0; imu < pexsi_mu_loops; ++imu)
         {
-            /// update H(k) for each k point
-            pHamilt->updateHk(ik);
-            psi.fix_k(ik);
-            // solve eigenvector and eigenvalue for H(k)
-            pe.diag(pHamilt, psi, nullptr);
+            pe.begin_k_loop();
+            for (int ik = 0; ik < psi.get_nk(); ++ik)
+            {
+                const double k_weight = (pes->klist != nullptr && ik < static_cast<int>(pes->klist->wk.size()))
+                                            ? pes->klist->wk[ik]
+                                            : 1.0;
+                const double pexsi_spin_weight = PARAM.inp.nspin == 1 ? 0.5 : 1.0;
+                pe.set_k_weight(ik, k_weight * pexsi_spin_weight);
+                /// update H(k) for each k point
+                pHamilt->updateHk(ik);
+                psi.fix_k(ik);
+                // solve eigenvector and eigenvalue for H(k)
+                pe.diag(pHamilt, psi, nullptr);
+            }
+            if (pe.finish_k_loop(PARAM.inp.nelec))
+            {
+                break;
+            }
         }
         auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;

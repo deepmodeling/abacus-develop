@@ -2,6 +2,7 @@
 #define DISTMATRIXTRANSFORMER_H
 
 #include <mpi.h>
+#include <complex>
 #include <map>
 #include <vector>
 // transform a sparse matrix from block cyclic distribution (BCD) to Compressed Column Storage (CCS) distribution
@@ -49,6 +50,16 @@ int getNonZeroIndex(char layout,
                     std::vector<int>& rowidx,
                     std::vector<int>& colidx);
 
+int getNonZeroIndex(char layout,
+                    const int nrow,
+                    const int ncol,
+                    std::complex<double>* H_2d,
+                    std::complex<double>* S_2d,
+                    const double ZERO_Limit,
+                    int& nnz,
+                    std::vector<int>& rowidx,
+                    std::vector<int>& colidx);
+
 int buildTransformParameter(DistBCDMatrix& SRC_Matrix,
                             DistCCSMatrix& DST_Matrix,
                             const int NPROC_TRANS,
@@ -80,12 +91,27 @@ int transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                       double*& H_ccs,
                       double*& S_ccs);
 
+int transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
+                      std::complex<double>* H_2d,
+                      std::complex<double>* S_2d,
+                      const double ZERO_Limit,
+                      DistCCSMatrix& DST_Matrix,
+                      std::complex<double>*& H_ccs,
+                      std::complex<double>*& S_ccs);
+
 int transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
                       double* DMnzvalLocal,
                       double* ENDnzvalLocal,
                       DistBCDMatrix& DST_Matrix,
                       double* DM_2d,
                       double* ED_2d);
+
+int transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
+                      std::complex<double>* DMnzvalLocal,
+                      std::complex<double>* EDMnzvalLocal,
+                      DistBCDMatrix& DST_Matrix,
+                      std::complex<double>* DM_2d,
+                      std::complex<double>* ED_2d);
 }; // namespace DistMatrixTransformer
 } // namespace pexsi
 #endif // DISTMATRIXTRANSFORMER_H

@@ -29,11 +29,23 @@ class DiagoPexsi
     double totalEnergyS = 0.0;
     double totalFreeEnergy = 0.0;
     std::unique_ptr<pexsi::IPexsiSolver> ps;
+    void begin_mu_search();
+    void begin_k_loop();
+    void set_k_weight(const int ik, const double weight);
+    bool finish_k_loop(const double target_nelec);
     ~DiagoPexsi();
 
   private:
     std::vector<std::vector<T>> dm_buffer_;
     std::vector<std::vector<T>> edm_buffer_;
+    std::vector<double> k_weights_;
+    double num_electron_sum_ = 0.0;
+    double num_electron_derivative_sum_ = 0.0;
+    bool has_mu_lower_ = false;
+    bool has_mu_upper_ = false;
+    double mu_lower_ = 0.0;
+    double mu_upper_ = 0.0;
+    void resize_density_buffers(const int count);
 };
 } // namespace hsolver
 

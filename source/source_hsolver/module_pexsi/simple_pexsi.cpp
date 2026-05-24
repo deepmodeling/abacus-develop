@@ -6,8 +6,10 @@
 #ifdef __PEXSI
 #include <mpi.h>
 
+#include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <complex>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -115,7 +117,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = 2;//PARAM.inp.nspin; // pexsi::PEXSI_Solver::pexsi_spin;
+    double_para[0] = PARAM.inp.nspin == 1 ? 2.0 : 1.0;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;
@@ -127,6 +129,21 @@ int loadPEXSIOption(MPI_Comm comm,
     double_para[9] = pexsi::PEXSI_Solver::pexsi_mu_guard;
     double_para[10] = pexsi::PEXSI_Solver::pexsi_elec_thr;
     double_para[11] = pexsi::PEXSI_Solver::pexsi_zero_thr;
+
+    const bool default_pexsi_temperature = std::abs(double_para[1] - 0.015) < 1.0e-14;
+    const bool fermi_dirac_smearing = PARAM.inp.smearing_method == "fd"
+                                      || PARAM.inp.smearing_method == "fermi-dirac";
+    if (default_pexsi_temperature && !fermi_dirac_smearing)
+    {
+        const double derived_temperature = PARAM.inp.smearing_method == "fixed"
+                                               ? 2.0e-5
+                                               : std::max(2.0e-5, 0.01 * PARAM.inp.smearing_sigma);
+        double_para[1] = std::min(double_para[1], derived_temperature);
+    }
+    if (int_para[0] == 40 && double_para[1] <= 1.0e-4)
+    {
+        int_para[0] = 120;
+    }
 
     options.numPole = int_para[0];
     options.isInertiaCount = int_para[1];
@@ -353,6 +370,154 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     DistMatrixTransformer::transformCCStoBCD(DST_Matrix, DMnzvalLocal, EDMnzvalLocal, SRC_Matrix, DM, EDM);
     ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT22D");
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    delete[] DMnzvalLocal;
+    delete[] EDMnzvalLocal;
+    delete[] FDMnzvalLocal;
+    delete[] HnzvalLocal;
+    delete[] SnzvalLocal;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return 0;
+}
+
+int simplePEXSIComplex(MPI_Comm comm_PEXSI,
+                       MPI_Comm comm_2D,
+                       MPI_Group group_2D,
+                       const int blacs_ctxt,
+                       const int size,
+                       const int nblk,
+                       const int nrow,
+                       const int ncol,
+                       char layout,
+                       std::complex<double>* H,
+                       std::complex<double>* S,
+                       const double numElectronExact,
+                       const std::string PexsiOptionFile,
+                       std::complex<double>*& DM,
+                       std::complex<double>*& EDM,
+                       double& totalEnergyH,
+                       double& totalEnergyS,
+                       double& totalFreeEnergy,
+                       double& mu,
+                       double mu0,
+                       double* numElectronPEXSI,
+                       double* numElectronDrvMuPEXSI)
+{
+    if (comm_2D == MPI_COMM_NULL && comm_PEXSI == MPI_COMM_NULL)
+    {
+        return 0;
+    }
+
+    int myid = 0;
+    if (comm_PEXSI != MPI_COMM_NULL)
+    {
+        MPI_Comm_rank(comm_PEXSI, &myid);
+    }
+
+    PPEXSIOptions options;
+    PPEXSISetDefaultOptions(&options);
+    int numProcessPerPole = 0;
+    double ZERO_Limit = 0.0;
+    loadPEXSIOption(comm_PEXSI, PexsiOptionFile, options, numProcessPerPole, ZERO_Limit);
+    options.symmetric = 1;
+    options.symmetricStorage = 0;
+    options.rowOrdering = 0;
+    options.mu0 = mu0;
+
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "setup_PEXSI_plan");
+    PPEXSIPlan plan;
+    int info = 0;
+    int outputFileIndex = -1;
+    int pexsi_prow = 0;
+    int pexsi_pcol = 0;
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
+    splitNProc2NProwNPcol(numProcessPerPole, pexsi_prow, pexsi_pcol);
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
+
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIPlanInit");
+    if (comm_PEXSI != MPI_COMM_NULL)
+    {
+        plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
+    }
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIPlanInit");
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "setup_PEXSI_plan");
+
+    DistCCSMatrix DST_Matrix(comm_PEXSI, numProcessPerPole, size);
+    DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, layout);
+
+    std::complex<double>* HnzvalLocal = nullptr;
+    std::complex<double>* SnzvalLocal = nullptr;
+    std::complex<double>* DMnzvalLocal = nullptr;
+    std::complex<double>* EDMnzvalLocal = nullptr;
+    std::complex<double>* FDMnzvalLocal = nullptr;
+
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT2CCS");
+    DistMatrixTransformer::transformBCDtoCCS(SRC_Matrix, H, S, ZERO_Limit, DST_Matrix, HnzvalLocal, SnzvalLocal);
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT2CCS");
+
+    if (comm_PEXSI != MPI_COMM_NULL)
+    {
+        int isSIdentity = 0;
+        PPEXSILoadComplexHSMatrix(plan,
+                                  options,
+                                  size,
+                                  DST_Matrix.get_nnz(),
+                                  DST_Matrix.get_nnzlocal(),
+                                  DST_Matrix.get_numcol_local(),
+                                  DST_Matrix.get_colptr_local(),
+                                  DST_Matrix.get_rowind_local(),
+                                  reinterpret_cast<double*>(HnzvalLocal),
+                                  isSIdentity,
+                                  reinterpret_cast<double*>(SnzvalLocal),
+                                  &info);
+        PPEXSISymbolicFactorizeComplexUnsymmetricMatrix(plan,
+                                                        options,
+                                                        reinterpret_cast<double*>(HnzvalLocal),
+                                                        &info);
+
+        double nelec = 0.0;
+        double d_nelec_d_mu = 0.0;
+        mu = mu0;
+        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIDFT");
+        PPEXSICalculateFermiOperatorComplex(plan,
+                                            options,
+                                            mu,
+                                            numElectronExact,
+                                            &nelec,
+                                            &d_nelec_d_mu,
+                                            &info);
+        if (numElectronPEXSI != nullptr)
+        {
+            *numElectronPEXSI = nelec;
+        }
+        if (numElectronDrvMuPEXSI != nullptr)
+        {
+            *numElectronDrvMuPEXSI = d_nelec_d_mu;
+        }
+        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIDFT");
+
+        DMnzvalLocal = new std::complex<double>[DST_Matrix.get_nnzlocal()];
+        EDMnzvalLocal = new std::complex<double>[DST_Matrix.get_nnzlocal()];
+        FDMnzvalLocal = new std::complex<double>[DST_Matrix.get_nnzlocal()];
+        if (myid < numProcessPerPole)
+        {
+            PPEXSIRetrieveComplexDFTMatrix(plan,
+                                           reinterpret_cast<double*>(DMnzvalLocal),
+                                           reinterpret_cast<double*>(EDMnzvalLocal),
+                                           reinterpret_cast<double*>(FDMnzvalLocal),
+                                           &totalEnergyH,
+                                           &totalEnergyS,
+                                           &totalFreeEnergy,
+                                           &info);
+        }
+        PPEXSIPlanFinalize(plan, &info);
+    }
+
+    ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT22D");
+    DistMatrixTransformer::transformCCStoBCD(DST_Matrix, DMnzvalLocal, EDMnzvalLocal, SRC_Matrix, DM, EDM);
+    ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT22D");
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);

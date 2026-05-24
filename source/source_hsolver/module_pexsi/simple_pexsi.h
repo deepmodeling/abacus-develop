@@ -2,6 +2,8 @@
 #define SIMPLE_PEXSI_H
 
 #include <mpi.h>
+#include <complex>
+#include <string>
 // a simple interface for calling pexsi with 2D block cyclic distributed matrix
 namespace pexsi
 {
@@ -25,5 +27,28 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                 double& totalFreeEnergy,
                 double& mu,
                 double mu0);
+
+int simplePEXSIComplex(MPI_Comm comm_PEXSI,
+                       MPI_Comm comm_2D,
+                       MPI_Group group_2D,
+                       const int blacs_ctxt,
+                       const int size,
+                       const int nblk,
+                       const int nrow,
+                       const int ncol,
+                       char layout,
+                       std::complex<double>* H,
+                       std::complex<double>* S,
+                       const double nElectronExact,
+                       const std::string PexsiOptionFile,
+                       std::complex<double>*& DM,
+                       std::complex<double>*& EDM,
+                       double& totalEnergyH,
+                       double& totalEnergyS,
+                       double& totalFreeEnergy,
+                       double& mu,
+                       double mu0,
+                       double* numElectronPEXSI = nullptr,
+                       double* numElectronDrvMuPEXSI = nullptr);
 }
 #endif // SIMPLE_PEXSI_H
