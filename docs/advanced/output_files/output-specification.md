@@ -78,6 +78,13 @@ All output file naming conventions can be found in the online documentation (wit
 | `potg1_ini.cube` | Initial potential, geometry step 1 (nspin=1) |
 | `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube` | ELF, spin 1 (nspin=2) |
+| `elfs2.cube` | ELF, spin 2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=1/4) |
+| `elfs1g1.cube` | ELF, spin 1, geometry step 1 (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=2) |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
 | `wf_pw.dat` | Wavefunction, plane wave basis |
@@ -106,6 +113,13 @@ All output file naming conventions can be found in the online documentation (wit
 | `pots{#}g{#}_ini.cube` | Initial potential (out_freq_ion>0, spin {#}, geometry step {#}, nspin=2/4) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
+| ELF (out_elf) | |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube`, `elfs2.cube` | ELF, spin 1/2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=1/4) |
+| `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#} (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=2) |
 
 ## 3. File Format Standards
 

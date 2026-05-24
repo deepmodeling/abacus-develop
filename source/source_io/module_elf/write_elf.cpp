@@ -154,7 +154,7 @@ void write_elf(
 
     if (nspin == 1 || nspin == 4)
     {
-        std::string fn = out_dir + "/elf" + geom_block + ".cube";
+        std::string fn = out_dir + "/elftot" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
@@ -172,7 +172,7 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/elf"
+            std::string fn_temp = out_dir + "/elf" + "s"
                 + std::to_string(is + 1) + geom_block + ".cube";
 
             const int ispin = is + 1;
@@ -208,7 +208,7 @@ void write_elf(
                 elf_tot[ir] = 0.0;
             }
         }
-        std::string fn = out_dir + "/elf" + geom_block + ".cube";
+        std::string fn = out_dir + "/elftot" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
