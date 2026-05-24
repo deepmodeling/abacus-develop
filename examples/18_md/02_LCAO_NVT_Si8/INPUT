@@ -3,6 +3,7 @@ INPUT_PARAMETERS
 suffix                 Si_nhc_nvt
 calculation            md
 nbands                 20
+nspin                  2
 symmetry               0
 pseudo_dir             ../../../tests/PP_ORB
 orbital_dir            ../../../tests/PP_ORB
