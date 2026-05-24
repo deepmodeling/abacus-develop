@@ -48,107 +48,93 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 
     std::string geom_block;
-    if (istep_in == -1)
-    {
-        // do nothing
-    }
-    else if (istep_in >= 0)
+    bool should_output = (PARAM.inp.out_freq_ion == 0);
+    if (istep_in >= 0)
     {
         geom_block = "g" + std::to_string(istep + 1);
+        should_output = true;
     }
 
     // 4) write charge density
-    if (PARAM.inp.out_chg[0] > 0)
+    if (PARAM.inp.out_chg[0] > 0 && should_output)
     {
-        // Only output when:
-        // - out_freq_ion == 0: output at every step (no g# in filename) but only one file
-        // - out_freq_ion > 0: output only when istep % out_freq_ion == 0 (with g# in filename), many files
-        if (PARAM.inp.out_freq_ion == 0 || istep % PARAM.inp.out_freq_ion == 0)
+        for (int is = 0; is < nspin; ++is)
         {
-            for (int is = 0; is < nspin; ++is)
-            {
-                std::string fn = PARAM.globalv.global_out_dir + "chg";
+            std::string fn = PARAM.globalv.global_out_dir + "chg";
 
-                std::string spin_block;
-                if (nspin == 2 || nspin == 4)
-                {
-                    spin_block = "s" + std::to_string(is + 1);
-                }
-                else if (nspin == 1)
-                {
-                    // do nothing
-                }
+            std::string spin_block;
+            if (nspin == 2 || nspin == 4)
+            {
+                spin_block = "s" + std::to_string(is + 1);
+            }
+            else if (nspin == 1)
+            {
+                // do nothing
+            }
+
+            fn += spin_block + geom_block + ".cube";
+
+            ModuleIO::write_vdata_palgrid(para_grid,
+                                          chr.rho_save[is],
+                                          is,
+                                          nspin,
+                                          istep, // change istep_in to istep, mohan 20260222
+                                          fn,
+                                          pelec->eferm.get_efval(is),
+                                          &(ucell),
+                                          PARAM.inp.out_chg[1],
+                                          1);
+
+            if (XC_Functional::get_ked_flag())
+            {
+                fn = PARAM.globalv.global_out_dir + "tau";
 
                 fn += spin_block + geom_block + ".cube";
 
                 ModuleIO::write_vdata_palgrid(para_grid,
-                                              chr.rho_save[is],
+                                              chr.kin_r_save[is],
                                               is,
                                               nspin,
-                                              istep, // change istep_in to istep, mohan 20260222
+                                              istep,
                                               fn,
                                               pelec->eferm.get_efval(is),
-                                              &(ucell),
-                                              PARAM.inp.out_chg[1],
-                                              1);
-
-                if (XC_Functional::get_ked_flag())
-                {
-                    fn = PARAM.globalv.global_out_dir + "tau";
-
-                    fn += spin_block + geom_block + ".cube";
-
-                    ModuleIO::write_vdata_palgrid(para_grid,
-                                                  chr.kin_r_save[is],
-                                                  is,
-                                                  nspin,
-                                                  istep,
-                                                  fn,
-                                                  pelec->eferm.get_efval(is),
-                                                  &(ucell));
-                }
+                                              &(ucell));
             }
         }
     }
 
     // 5) write potential
-    if (PARAM.inp.out_pot[0] == 1 || PARAM.inp.out_pot[0] == 3)
+    if ((PARAM.inp.out_pot[0] == 1 || PARAM.inp.out_pot[0] == 3) && should_output)
     {
-        // Only output when:
-        // - out_freq_ion == 0: output at every step (no g# in filename) but only one file
-        // - out_freq_ion > 0: output only when istep % out_freq_ion == 0 (with g# in filename) but many files
-        if (PARAM.inp.out_freq_ion == 0 || istep % PARAM.inp.out_freq_ion == 0)
+        for (int is = 0; is < nspin; is++)
         {
-            for (int is = 0; is < nspin; is++)
+            std::string fn = PARAM.globalv.global_out_dir + "pot";
+
+            std::string spin_block;
+            if (nspin == 2 || nspin == 4)
             {
-                std::string fn = PARAM.globalv.global_out_dir + "pot";
-
-                std::string spin_block;
-                if (nspin == 2 || nspin == 4)
-                {
-                    spin_block = "s" + std::to_string(is + 1);
-                }
-                else if (nspin == 1)
-                {
-                    // do nothing
-                }
-
-                fn += spin_block + geom_block + ".cube";
-
-                ModuleIO::write_vdata_palgrid(para_grid,
-                                              pelec->pot->get_eff_v(is),
-                                              is,
-                                              nspin,
-                                              istep,
-                                              fn,
-                                              0.0, // efermi
-                                              &(ucell),
-                                              PARAM.inp.out_pot[1],  // precision
-                                              0); // out_fermi
+                spin_block = "s" + std::to_string(is + 1);
             }
+            else if (nspin == 1)
+            {
+                // do nothing
+            }
+
+            fn += spin_block + geom_block + ".cube";
+
+            ModuleIO::write_vdata_palgrid(para_grid,
+                                          pelec->pot->get_eff_v(is),
+                                          is,
+                                          nspin,
+                                          istep,
+                                          fn,
+                                          0.0, // efermi
+                                          &(ucell),
+                                          PARAM.inp.out_pot[1],  // precision
+                                          0); // out_fermi
         }
     }
-    else if (PARAM.inp.out_pot[0] == 2)
+    else if (PARAM.inp.out_pot[0] == 2 && should_output)
     {
         std::string fn = PARAM.globalv.global_out_dir + "potes";
         fn += geom_block + ".cube";
@@ -169,7 +155,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 
     // 6) write ELF
-    if (PARAM.inp.out_elf[0] > 0)
+    if (PARAM.inp.out_elf[0] > 0 && should_output)
     {
         chr.cal_elf = true;
         Symmetry_rho srho;
@@ -179,12 +165,7 @@ void ctrl_output_fp(UnitCell& ucell,
         }
 
         std::string out_dir = PARAM.globalv.global_out_dir;
-        ModuleIO::write_elf(
-#ifdef __MPI
-            pw_big->bz,
-            pw_big->nbz,
-#endif
-            out_dir,
+        ModuleIO::write_elf(out_dir,
             istep,
             nspin,
             chr.rho,
@@ -192,12 +173,13 @@ void ctrl_output_fp(UnitCell& ucell,
             pw_rhod,
             para_grid,
             &(ucell),
-            PARAM.inp.out_elf[1]);
+            PARAM.inp.out_elf[1],
+            geom_block);
     }
 
 #ifdef USE_LIBXC
     // 7) write xc(r)
-    if (PARAM.inp.out_xc_r[0] >= 0)
+    if (PARAM.inp.out_xc_r[0] >= 0 && should_output)
     {
         ModuleIO::write_libxc_r(PARAM.inp.out_xc_r[0],
                                 XC_Functional::get_func_id(),
@@ -211,7 +193,7 @@ void ctrl_output_fp(UnitCell& ucell,
 #endif
 
     // 8) write dipole moment
-    if (PARAM.inp.out_dipole == 1)
+    if (PARAM.inp.out_dipole == 1 && should_output)
     {
         for (int is = 0; is < nspin; ++is)
         {

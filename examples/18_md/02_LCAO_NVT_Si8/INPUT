@@ -35,5 +35,9 @@ md_tfreq               1
 md_tchain              1
 
 # output initial charge density
-out_chg                2
+out_chg                2  4
+out_pot                3  4
+out_elf                1  4
+out_dipole             1
 out_freq_ion           2
+

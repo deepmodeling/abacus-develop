@@ -4,19 +4,16 @@
 namespace ModuleIO
 {
 void write_elf(
-#ifdef __MPI
-    const int& bz,
-    const int& nbz,
-#endif
     const std::string& out_dir,
     const int& istep_in,
     const int& nspin,
     const double* const* rho,
     const double* const* tau,
-    ModulePW::PW_Basis* rho_basis,
+    ModulePW::PW_Basis* const rho_basis,
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
-    const int& precision)
+    const int& precision,
+    const std::string& geom_block)
 {
     // For nspin = 4, we only calculate the total ELF using the rho_total and tau_total,
     // containing in the first channel of rho and tau.
@@ -24,7 +21,7 @@ void write_elf(
     // proposed by Desmarais J K, Vignale G, Bencheikh K, et al. Physical Review Letters, 2024, 133(13): 136401,
     // where the current density is also included in the ELF calculation.
 
-    int nspin_eff = (nspin == 4) ? 1 : nspin;
+    const int nspin_eff = (nspin == 4) ? 1 : nspin;
 
     std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(rho_basis->nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
@@ -100,7 +97,7 @@ void write_elf(
     }
 
     // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
-    double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
+    const double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
     for (int is = 0; is < nspin_eff; ++is)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
@@ -118,12 +115,12 @@ void write_elf(
     }
 
     // 4) output the ELF = 1 / (1 + F^2) to cube file
-    double ef_tmp = 0.0;
-    int out_fermi = 0;
+    const double ef_tmp = 0.0;
+    const int out_fermi = 0;
 
     if (nspin == 1 || nspin == 4)
     {
-        std::string fn = out_dir + "/elf.cube";
+        std::string fn = out_dir + "/elf" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
@@ -141,11 +138,9 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/elf";
+            std::string fn_temp = out_dir + "/elf" + std::to_string(is + 1) + geom_block + ".cube";
 
-            fn_temp += std::to_string(is + 1) + ".cube";
-
-            int ispin = is + 1;
+            const int ispin = is + 1;
 
             ModuleIO::write_vdata_palgrid(pgrid,
                 elf[is].data(),
@@ -165,7 +160,7 @@ void write_elf(
             elf_tot[ir] = (tau[0][ir] + tau[1][ir] - tau_vw[0][ir] - tau_vw[1][ir]) / (tau_TF[0][ir] + tau_TF[1][ir]);
             elf_tot[ir] = 1. / (1. + elf_tot[ir] * elf_tot[ir]);
         }
-        std::string fn = out_dir + "/elf.cube";
+        std::string fn = out_dir + "/elf" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
