@@ -1012,9 +1012,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft" && para.input.esolver_type != "tddft")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only available for ksdft, ofdft and tddft");
             }
         };
         sync_intvec(input.out_elf, 2, 0);
