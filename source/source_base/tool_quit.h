@@ -41,7 +41,7 @@ void set_quit_out_dir(const std::string& dir);
  * @brief Read back the injected global output directory.
  *        Returns an empty string if set_quit_out_dir was never called.
  */
-const std::string& get_quit_out_dir();
+const std::string& get_global_out_dir();
 
 /**
  * @brief Inject the calculation tag used by CHECK_WARNING_QUIT to compose the

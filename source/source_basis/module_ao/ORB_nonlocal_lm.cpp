@@ -237,13 +237,13 @@ void Numerical_Nonlocal_Lm::plot(const int &my_rank)const
 	if(my_rank==0)
 	{
 		std::stringstream ssr, ssk, ssru;
-		ssr << ModuleBase::get_quit_out_dir() << this->label << "/"
+		ssr << ModuleBase::get_global_out_dir() << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-r.dat";
 
-		ssk << ModuleBase::get_quit_out_dir() << this->label << "/"
+		ssk << ModuleBase::get_global_out_dir() << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-k.dat";
 
-		ssru << ModuleBase::get_quit_out_dir() << this->label << "/"
+		ssru << ModuleBase::get_global_out_dir() << this->label << "/"
 			<< this->label << "-" << orbital_type << "-proj-ru.dat";
 
 		std::ofstream ofsr(ssr.str().c_str());
