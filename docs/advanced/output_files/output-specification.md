@@ -56,6 +56,7 @@ All output file naming conventions can be found in the online documentation (wit
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
 - For initial charge density output (`out_chg = 2`), the naming convention is: `chgg{#}_ini.cube` (nspin=1) or `chgs{#}g{#}_ini.cube` (nspin=2/4)
+- For initial potential output (`out_pot = 3`), the naming convention is: `potg{#}_ini.cube` (nspin=1) or `pots{#}g{#}_ini.cube` (nspin=2/4)
 
 ### 2.2 Examples
 
@@ -66,6 +67,8 @@ All output file naming conventions can be found in the online documentation (wit
 | `chgs3.cube` | Charge density, spin 3 (non-collinear with SOC) |
 | `chgg1_ini.cube` | Initial charge density, geometry step 1 (nspin=1) |
 | `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1 (nspin=2/4) |
+| `potg1_ini.cube` | Initial potential, geometry step 1 (nspin=1) |
+| `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
@@ -85,6 +88,8 @@ All output file naming conventions can be found in the online documentation (wit
 | `chg.cube` | Total charge density |
 | `chgg{#}_ini.cube` | Initial charge density, geometry step {#} (nspin=1) |
 | `chgs{#}g{#}_ini.cube` | Initial charge density, spin {#}, geometry step {#} (nspin=2/4) |
+| `potg{#}_ini.cube` | Initial potential, geometry step {#} (nspin=1) |
+| `pots{#}g{#}_ini.cube` | Initial potential, spin {#}, geometry step {#} (nspin=2/4) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
 
