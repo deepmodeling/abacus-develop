@@ -1,5 +1,8 @@
 #include "write_elf.h"
 #include "source_io/module_output/cube_io.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace ModuleIO
 {
@@ -30,6 +33,7 @@ void write_elf(
 
     for (int is = 0; is < nspin_eff; ++is)
     {
+#pragma omp parallel for schedule(static) default(none) shared(phi, rho, rho_basis, is)
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
             phi[ir] = std::sqrt(std::abs(rho[is][ir]));
@@ -44,6 +48,7 @@ void write_elf(
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
         {
+#pragma omp parallel for schedule(static) default(none) shared(recip_gradient_phi, img, rho_basis, recip_phi, j)
             for (int ip = 0; ip < rho_basis->npw; ++ip)
             {
                 recip_gradient_phi[ip] = img * rho_basis->gcar[ip][j] * recip_phi[ip] * rho_basis->tpiba;
@@ -51,6 +56,7 @@ void write_elf(
 
             rho_basis->recip2real(recip_gradient_phi.data(), gradient_phi[j].data());
 
+#pragma omp parallel for schedule(static) default(none) shared(tau_vw, gradient_phi, is, j, rho_basis)
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
                 tau_vw[is][ir] += gradient_phi[j][ir] * gradient_phi[j][ir] / 2. * 2.; // convert Ha to Ry.
@@ -65,6 +71,7 @@ void write_elf(
           * 2.0; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     if (nspin == 1 || nspin == 4)
     {
+#pragma omp parallel for schedule(static) default(none) shared(rho, tau_TF, c_tf, rho_basis)
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
             if (rho[0][ir] > 0.0)
@@ -82,6 +89,7 @@ void write_elf(
         // the spin-scaling law: tau_TF[rho_up, rho_dn] = 1/2 * (tau_TF[2*rho_up] + tau_TF[2*rho_dn])
         for (int is = 0; is < nspin; ++is)
         {
+#pragma omp parallel for schedule(static) default(none) shared(rho, tau_TF, c_tf, is, rho_basis)
             for (int ir = 0; ir < rho_basis->nrxx; ++ir)
             {
                 if (rho[is][ir] > 0.0)
@@ -100,6 +108,7 @@ void write_elf(
     const double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
     for (int is = 0; is < nspin_eff; ++is)
     {
+#pragma omp parallel for schedule(static) default(none) shared(elf, tau, tau_vw, tau_TF, eps, is, rho_basis)
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
             if (tau_TF[is][ir] > 1.0e-12)
@@ -155,6 +164,7 @@ void write_elf(
         }
 
         std::vector<double> elf_tot(rho_basis->nrxx, 0.0);
+#pragma omp parallel for schedule(static) default(none) shared(elf_tot, tau, tau_vw, tau_TF, rho_basis)
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
         {
             elf_tot[ir] = (tau[0][ir] + tau[1][ir] - tau_vw[0][ir] - tau_vw[1][ir]) / (tau_TF[0][ir] + tau_TF[1][ir]);
