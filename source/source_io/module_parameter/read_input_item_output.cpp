@@ -85,12 +85,13 @@ void ReadInput::item_output()
             - nspin = 1: `chg_ini.cube`;
             - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
             - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+            - output at every step (overwrite same file)
         - out_freq_ion > 0:
             - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
             - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
             - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+            - output every out_freq_ion steps
         Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
-        The output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
 The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -134,12 +135,13 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
    * nspin = 1: `pot_ini.cube`;
    * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
    * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+   * output at every step (overwrite same file)
  * out_freq_ion > 0:
    * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
    * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
    * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+   * output every out_freq_ion steps
  Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
- The output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.
 

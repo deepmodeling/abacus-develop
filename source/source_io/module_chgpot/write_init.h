@@ -38,7 +38,9 @@ std::string gen_ini_filename(
 
 // Write initial charge density to cube file in real space.
 // Triggered when inp.out_chg[0] == 2.
-// Output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
+// Output frequency is controlled by out_freq_ion:
+//   out_freq_ion = 0: every step output (overwrite same file)
+//   out_freq_ion > 0: output every out_freq_ion steps
 // Output file naming convention:
 //   out_freq_ion = 0: chg_ini.cube (nspin=1), chgs1_ini.cube/chgs2_ini.cube (nspin=2/4)
 //   out_freq_ion > 0: chgg{geom_step}_ini.cube (nspin=1), chgs{spin}g{geom_step}_ini.cube (nspin=2/4)
@@ -54,7 +56,9 @@ void write_chg_init(
 
 // Write initial effective potential to cube file in real space.
 // Triggered when inp.out_pot[0] == 3.
-// Output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
+// Output frequency is controlled by out_freq_ion:
+//   out_freq_ion = 0: every step output (overwrite same file)
+//   out_freq_ion > 0: output every out_freq_ion steps
 // Output file naming convention:
 //   out_freq_ion = 0: pot_ini.cube (nspin=1), pots1_ini.cube/pots2_ini.cube (nspin=2/4)
 //   out_freq_ion > 0: potg{geom_step}_ini.cube (nspin=1), pots{spin}g{geom_step}_ini.cube (nspin=2/4)

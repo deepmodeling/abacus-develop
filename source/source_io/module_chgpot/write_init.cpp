@@ -75,7 +75,7 @@ void ModuleIO::write_chg_init(
 
     if (inp.out_chg[0] == 2)
     {
-        bool should_output = (istep == 0) ||
+        bool should_output = (inp.out_freq_ion == 0) ||
                              (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
 
         if (should_output)
@@ -137,7 +137,7 @@ void ModuleIO::write_pot_init(
 
     if (inp.out_pot[0] == 3)
     {
-        bool should_output = (istep == 0) ||
+        bool should_output = (inp.out_freq_ion == 0) ||
                              (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
 
         if (should_output)
