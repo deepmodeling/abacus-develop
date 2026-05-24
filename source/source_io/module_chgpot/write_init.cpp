@@ -156,7 +156,7 @@ void ModuleIO::write_pot_init(
                                               filename,
                                               0.0,
                                               &(ucell),
-                                              11,
+                                              inp.out_pot[1],
                                               0);
             }
         }

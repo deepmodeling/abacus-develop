@@ -1,10 +1,9 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
-
-#include "../module_output/cube_io.h"                                  // use write_vdata_palgrid
-#include "../module_dipole/dipole_io.h"                                // use write_dipole
+#include "../module_output/cube_io.h" // use write_vdata_palgrid
+#include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
-#include "source_io/module_chgpot/write_elecstat_pot.h"             // use write_elecstat_pot
+#include "source_io/module_chgpot/write_elecstat_pot.h" // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
 
 #ifdef USE_LIBXC
@@ -61,47 +60,53 @@ void ctrl_output_fp(UnitCell& ucell,
     // 4) write charge density
     if (PARAM.inp.out_chg[0] > 0)
     {
-        for (int is = 0; is < nspin; ++is)
+        // Only output when:
+        // - out_freq_ion == 0: output at every step (no g# in filename) but only one file
+        // - out_freq_ion > 0: output only when istep % out_freq_ion == 0 (with g# in filename), many files
+        if (PARAM.inp.out_freq_ion == 0 || istep % PARAM.inp.out_freq_ion == 0)
         {
-            std::string fn = PARAM.globalv.global_out_dir + "chg";
-
-            std::string spin_block;
-            if (nspin == 2 || nspin == 4)
+            for (int is = 0; is < nspin; ++is)
             {
-                spin_block = "s" + std::to_string(is + 1);
-            }
-            else if (nspin == 1)
-            {
-                // do nothing
-            }
+                std::string fn = PARAM.globalv.global_out_dir + "chg";
 
-            fn += spin_block + geom_block + ".cube";
-
-            ModuleIO::write_vdata_palgrid(para_grid,
-                                          chr.rho_save[is],
-                                          is,
-                                          nspin,
-                                          istep, // change istep_in to istep, mohan 20260222
-                                          fn,
-                                          pelec->eferm.get_efval(is),
-                                          &(ucell),
-                                          PARAM.inp.out_chg[1],
-                                          1);
-
-            if (XC_Functional::get_ked_flag())
-            {
-                fn = PARAM.globalv.global_out_dir + "tau";
+                std::string spin_block;
+                if (nspin == 2 || nspin == 4)
+                {
+                    spin_block = "s" + std::to_string(is + 1);
+                }
+                else if (nspin == 1)
+                {
+                    // do nothing
+                }
 
                 fn += spin_block + geom_block + ".cube";
 
                 ModuleIO::write_vdata_palgrid(para_grid,
-                                              chr.kin_r_save[is],
+                                              chr.rho_save[is],
                                               is,
                                               nspin,
-                                              istep,
+                                              istep, // change istep_in to istep, mohan 20260222
                                               fn,
                                               pelec->eferm.get_efval(is),
-                                              &(ucell));
+                                              &(ucell),
+                                              PARAM.inp.out_chg[1],
+                                              1);
+
+                if (XC_Functional::get_ked_flag())
+                {
+                    fn = PARAM.globalv.global_out_dir + "tau";
+
+                    fn += spin_block + geom_block + ".cube";
+
+                    ModuleIO::write_vdata_palgrid(para_grid,
+                                                  chr.kin_r_save[is],
+                                                  is,
+                                                  nspin,
+                                                  istep,
+                                                  fn,
+                                                  pelec->eferm.get_efval(is),
+                                                  &(ucell));
+                }
             }
         }
     }
@@ -109,32 +114,38 @@ void ctrl_output_fp(UnitCell& ucell,
     // 5) write potential
     if (PARAM.inp.out_pot[0] == 1 || PARAM.inp.out_pot[0] == 3)
     {
-        for (int is = 0; is < nspin; is++)
+        // Only output when:
+        // - out_freq_ion == 0: output at every step (no g# in filename) but only one file
+        // - out_freq_ion > 0: output only when istep % out_freq_ion == 0 (with g# in filename) but many files
+        if (PARAM.inp.out_freq_ion == 0 || istep % PARAM.inp.out_freq_ion == 0)
         {
-            std::string fn = PARAM.globalv.global_out_dir + "pot";
-
-            std::string spin_block;
-            if (nspin == 2 || nspin == 4)
+            for (int is = 0; is < nspin; is++)
             {
-                spin_block = "s" + std::to_string(is + 1);
-            }
-            else if (nspin == 1)
-            {
-                // do nothing
-            }
+                std::string fn = PARAM.globalv.global_out_dir + "pot";
 
-            fn += spin_block + geom_block + ".cube";
+                std::string spin_block;
+                if (nspin == 2 || nspin == 4)
+                {
+                    spin_block = "s" + std::to_string(is + 1);
+                }
+                else if (nspin == 1)
+                {
+                    // do nothing
+                }
 
-            ModuleIO::write_vdata_palgrid(para_grid,
-                                          pelec->pot->get_eff_v(is),
-                                          is,
-                                          nspin,
-                                          istep,
-                                          fn,
-                                          0.0, // efermi
-                                          &(ucell),
-                                          PARAM.inp.out_pot[1],  // precision
-                                          0); // out_fermi
+                fn += spin_block + geom_block + ".cube";
+
+                ModuleIO::write_vdata_palgrid(para_grid,
+                                              pelec->pot->get_eff_v(is),
+                                              is,
+                                              nspin,
+                                              istep,
+                                              fn,
+                                              0.0, // efermi
+                                              &(ucell),
+                                              PARAM.inp.out_pot[1],  // precision
+                                              0); // out_fermi
+            }
         }
     }
     else if (PARAM.inp.out_pot[0] == 2)
@@ -154,7 +165,7 @@ void ctrl_output_fp(UnitCell& ucell,
             &(ucell),
             pelec->pot->get_fixed_v(),
             solvent,
-	    PARAM.inp.out_pot[1]);
+            PARAM.inp.out_pot[1]);
     }
 
     // 6) write ELF
