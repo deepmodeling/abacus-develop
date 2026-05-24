@@ -129,7 +129,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                           pelec->pot->get_eff_v(is),
                                           is,
                                           nspin,
-                                          istep_in,
+                                          istep,
                                           fn,
                                           0.0, // efermi
                                           &(ucell),
