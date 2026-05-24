@@ -81,9 +81,14 @@ void ReadInput::item_output()
             - nspin = 2: `taus1.cube`, and `taus2.cube`;
             - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
     - 2: On top of 1, also output the initial charge density files. The files are named as:
-        - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
-        - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
-        - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+        - out_freq_ion = 0:
+            - nspin = 1: `chg_ini.cube`;
+            - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+            - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+        - out_freq_ion > 0:
+            - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+            - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+            - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
         Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
         The output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
@@ -125,9 +130,16 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
  * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
 * 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
 * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
- * nspin = 1: pots1_ini.cube;
- * nspin = 2: pots1_ini.cube and pots2_ini.cube;
- * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+ * out_freq_ion = 0:
+   * nspin = 1: `pot_ini.cube`;
+   * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+   * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+ * out_freq_ion > 0:
+   * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+   * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+   * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+ Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
+ The output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.
 

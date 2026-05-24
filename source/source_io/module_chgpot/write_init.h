@@ -3,8 +3,8 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - Initial charge density (out_chg = 2): chgg{#}_ini.cube or chgs{#}g{#}_ini.cube
-//   - Initial potential (out_pot = 3): potg{#}_ini.cube or pots{#}g{#}_ini.cube
+//   - out_freq_ion = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
+//   - out_freq_ion > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
 //   - Geometry step index starts from 1 (geom_step = istep + 1)
 //
 // Usage:
@@ -26,12 +26,22 @@
 namespace ModuleIO
 {
 
+// Generate initial data file name.
+// prefix: "chg" or "pot"
+std::string gen_ini_filename(
+    const std::string& prefix,
+    const std::string& out_dir,
+    const int nspin,
+    const int is,
+    const int istep,
+    const bool include_geom_step);
+
 // Write initial charge density to cube file in real space.
 // Triggered when inp.out_chg[0] == 2.
 // Output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
 // Output file naming convention:
-//   nspin=1: chgg{geom_step}_ini.cube (e.g., chgg1_ini.cube)
-//   nspin=2/4: chgs{spin}g{geom_step}_ini.cube (e.g., chgs1g1_ini.cube, chgs2g1_ini.cube)
+//   out_freq_ion = 0: chg_ini.cube (nspin=1), chgs1_ini.cube/chgs2_ini.cube (nspin=2/4)
+//   out_freq_ion > 0: chgg{geom_step}_ini.cube (nspin=1), chgs{spin}g{geom_step}_ini.cube (nspin=2/4)
 // Note: geom_step starts from 1 (geom_step = istep + 1).
 void write_chg_init(
     const UnitCell& ucell,
@@ -46,8 +56,8 @@ void write_chg_init(
 // Triggered when inp.out_pot[0] == 3.
 // Output frequency is controlled by out_freq_ion (output at step 0 or every out_freq_ion steps).
 // Output file naming convention:
-//   nspin=1: potg{geom_step}_ini.cube (e.g., potg1_ini.cube)
-//   nspin=2/4: pots{spin}g{geom_step}_ini.cube (e.g., pots1g1_ini.cube, pots2g1_ini.cube)
+//   out_freq_ion = 0: pot_ini.cube (nspin=1), pots1_ini.cube/pots2_ini.cube (nspin=2/4)
+//   out_freq_ion > 0: potg{geom_step}_ini.cube (nspin=1), pots{spin}g{geom_step}_ini.cube (nspin=2/4)
 // Note: geom_step starts from 1 (geom_step = istep + 1).
 void write_pot_init(
     const UnitCell& ucell,

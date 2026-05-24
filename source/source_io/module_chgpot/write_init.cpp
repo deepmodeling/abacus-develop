@@ -3,8 +3,8 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - Initial charge density (out_chg = 2): chgg{#}_ini.cube or chgs{#}g{#}_ini.cube
-//   - Initial potential (out_pot = 3): potg{#}_ini.cube or pots{#}g{#}_ini.cube
+//   - out_freq_ion = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
+//   - out_freq_ion > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
 //   - Geometry step index starts from 1 (geom_step = istep + 1)
 //
 // Usage:
@@ -20,6 +20,41 @@
 
 #include <sstream>
 #include <cassert>
+
+std::string ModuleIO::gen_ini_filename(
+    const std::string& prefix,
+    const std::string& out_dir,
+    const int nspin,
+    const int is,
+    const int istep,
+    const bool include_geom_step)
+{
+    std::stringstream ss;
+    ss << out_dir << prefix;
+
+    if (nspin == 1)
+    {
+        if (include_geom_step)
+        {
+            ss << "g" << (istep + 1) << "_ini.cube";
+        }
+        else
+        {
+            ss << "_ini.cube";
+        }
+    }
+    else if (nspin == 2 || nspin == 4)
+    {
+        ss << "s" << (is + 1);
+        if (include_geom_step)
+        {
+            ss << "g" << (istep + 1);
+        }
+        ss << "_ini.cube";
+    }
+
+    return ss.str();
+}
 
 void ModuleIO::write_chg_init(
     const UnitCell& ucell,
@@ -45,21 +80,11 @@ void ModuleIO::write_chg_init(
 
         if (should_output)
         {
-            int geom_step = istep + 1;
+            bool include_geom_step = (inp.out_freq_ion > 0);
 
             for (int is = 0; is < nspin; is++)
             {
-                std::stringstream ss;
-                ss << out_dir << "chg";
-
-                if (nspin == 1)
-                {
-                    ss << "g" << geom_step << "_ini.cube";
-                }
-                else if (nspin == 2 || nspin == 4)
-                {
-                    ss << "s" << is + 1 << "g" << geom_step << "_ini.cube";
-                }
+                std::string filename = gen_ini_filename("chg", out_dir, nspin, is, istep, include_geom_step);
 
                 double fermi_energy = 0.0;
                 if (nspin == 1 || nspin == 4)
@@ -83,7 +108,7 @@ void ModuleIO::write_chg_init(
                                               is,
                                               nspin,
                                               istep,
-                                              ss.str(),
+                                              filename,
                                               fermi_energy,
                                               &(ucell),
                                               inp.out_chg[1]);
@@ -117,28 +142,18 @@ void ModuleIO::write_pot_init(
 
         if (should_output)
         {
-            int geom_step = istep + 1;
+            bool include_geom_step = (inp.out_freq_ion > 0);
 
             for (int is = 0; is < nspin; is++)
             {
-                std::stringstream ss;
-                ss << out_dir << "pot";
-
-                if (nspin == 1)
-                {
-                    ss << "g" << geom_step << "_ini.cube";
-                }
-                else if (nspin == 2 || nspin == 4)
-                {
-                    ss << "s" << is + 1 << "g" << geom_step << "_ini.cube";
-                }
+                std::string filename = gen_ini_filename("pot", out_dir, nspin, is, istep, include_geom_step);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               pelec->pot->get_eff_v(is),
                                               is,
                                               nspin,
                                               istep,
-                                              ss.str(),
+                                              filename,
                                               0.0,
                                               &(ucell),
                                               11,
