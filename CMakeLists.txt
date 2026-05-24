@@ -34,6 +34,7 @@ option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(ENABLE_LIBCOMM "Enable LibComm" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
+option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -236,6 +237,18 @@ if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
 
+if(ENABLE_DFTD4)
+  # DFTD4 requires enabling C and Fortran to work
+  enable_language(C)
+  enable_language(Fortran)
+  # Avoid custom-lapack fallback when resolving DFT-D4 dependencies
+  find_package(BLAS REQUIRED)
+  find_package(LAPACK REQUIRED)
+  find_package(dftd4 4.2.0 REQUIRED)
+  if(NOT TARGET dftd4::dftd4)
+    message(FATAL_ERROR "DFT-D4 was found, but target dftd4::dftd4 is missing.")
+  endif()
+endif()
 
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
