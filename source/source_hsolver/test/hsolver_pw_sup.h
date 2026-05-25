@@ -71,7 +71,8 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
-                            const int& nproc_in_pool) {
+                            const int& nproc_in_pool,
+                            const PrecisionMode& precision_mode) {
     basis_type_ = basis_type;
     calculation_ = calculation;
     need_subspace_ = need_subspace;
@@ -123,8 +124,9 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
-                                  const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in) {
+                                  const diag_comm_info& diag_comm_in,
+                                  const PrecisionMode precision_mode_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in), precision_mode_(precision_mode_in) {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
