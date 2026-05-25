@@ -590,6 +590,7 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
                                 const std::vector<double>& ethr_band,
                                 const Real* prec)
 {
+#ifdef ENABLE_MIXED_PRECISION
     using MixedT = typename std::conditional<std::is_same<T, double>::value,
                                       float,
                                       std::complex<float>>::type;
@@ -733,6 +734,9 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
     psi.zero();
     psi.sync(psi_temp);
     return avg_iter_;
+#else
+    return 0.0;
+#endif
 }
 
 template <typename T, typename Device>
@@ -752,6 +756,7 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     if (precision_mode_ == PrecisionMode::kMixed)
     {
+#ifdef ENABLE_MIXED_PRECISION
         return diag_mixed_precision(hpsi_func,
                                     spsi_func,
                                     ld_psi,
@@ -761,6 +766,7 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                     eigenvalue_in,
                                     ethr_band,
                                     prec);
+#endif
     }
 
     auto psi = ct::TensorMap(psi_in,

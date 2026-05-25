@@ -1018,6 +1018,7 @@ int DiagoDavid<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
                                                  const int ntry_max,
                                                  const int notconv_max)
 {
+#ifdef ENABLE_MIXED_PRECISION
     // Mixed precision: convert to float, run Davidson, then refine in double
     using MixedT = typename std::conditional<std::is_same<T, double>::value,
                                               float,
@@ -1138,6 +1139,9 @@ int DiagoDavid<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
     }
 
     return mixed_iter + refine_iter;
+#else
+    return 0;
+#endif
 }
 
 
@@ -1155,10 +1159,12 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     // Dispatch to mixed precision if requested
     if (precision_mode_ == PrecisionMode::kMixed)
     {
+#ifdef ENABLE_MIXED_PRECISION
         return diag_mixed_precision(hpsi_func, spsi_func,
                                      ld_psi, psi_in, eigenvalue_in,
                                      ethr_band, david_maxiter,
                                      ntry_max, notconv_max);
+#endif
     }
 
     /// record the times of trying iterative diagonalization
