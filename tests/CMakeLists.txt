@@ -9,6 +9,7 @@ add_subdirectory(07_OFDFT)
 add_subdirectory(08_EXX)
 add_subdirectory(10_others)
 add_subdirectory(11_PW_GPU)
+add_subdirectory(17_DS_DFTU)
 
 if(ENABLE_MLALGO)
 	add_subdirectory(09_DeePKS)
