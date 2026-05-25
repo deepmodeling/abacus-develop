@@ -10,9 +10,9 @@
  */
 
 #include "gtest/gtest.h"
-#include "source_hsolver/diago_cg.h"
-#include "source_hsolver/diago_david.h"
 #include "source_base/module_external/lapack_connector.h"
+#include "../diago_cg.h"
+#include "../diago_david.h"
 #include <complex>
 #include <random>
 #include <vector>

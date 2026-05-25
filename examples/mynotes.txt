@@ -1,1 +1,0 @@
-ABACUS is a DFT software
