@@ -1102,7 +1102,7 @@ int DiagoDavid<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
     diag_comm_info comm_info_mixed = this->diag_comm;
     DiagoDavid<MixedT, Device> david_mixed(
         prec_mixed.NumElements() > 0 ? prec_mixed.template data<MixedReal>() : nullptr,
-        nband, dim, david_ndim, use_paw, comm_info_mixed,
+        nband, dim, david_ndim, comm_info_mixed,
         PrecisionMode::kFloat);
 
     int mixed_iter = david_mixed.diag(
