@@ -26,7 +26,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
+    ModuleBase::timer::start("DeePKS_domain", "cal_f_delta");
     f_delta.zero_out();
 
     const int lmaxd = orb.get_lmax_d();
@@ -259,7 +259,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
             }
         }
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
+    ModuleBase::timer::end("DeePKS_domain", "cal_f_delta");
     return;
 }
 

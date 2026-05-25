@@ -1,7 +1,7 @@
 #ifndef CAL_R_OVERLAP_R_H
 #define CAL_R_OVERLAP_R_H
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
@@ -14,7 +14,6 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "single_R_io.h"
 
 #include <map>
 #include <set>
@@ -98,6 +97,6 @@ class cal_r_overlap_R
         std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, Center2_Orb::Orb21>>>>>
         center2_orb21_r_nonlocal;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 };
 #endif

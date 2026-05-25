@@ -1,8 +1,10 @@
 #include "diago_cusolver.h"
 
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -38,7 +40,7 @@ void DiagoCusolver<T>::diag(
     Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCusolver", "diag");
-    ModuleBase::timer::tick("DiagoCusolver", "cusolver");
+    ModuleBase::timer::start("DiagoCusolver", "cusolver");
     // Allocate memory for eigenvalues
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);
@@ -47,7 +49,7 @@ void DiagoCusolver<T>::diag(
     BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::timer::tick("DiagoCusolver", "cusolver");
+    ModuleBase::timer::end("DiagoCusolver", "cusolver");
 }
 
 // Explicit instantiation of the DiagoCusolver class for real and complex numbers

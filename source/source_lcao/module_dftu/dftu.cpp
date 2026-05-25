@@ -4,7 +4,7 @@
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_estate/magnetism.h"
 #include "source_estate/module_charge/charge.h"
@@ -239,10 +239,10 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                  const int istep)
 {
     ModuleBase::TITLE("Plus_U", "cal_energy_correction");
-    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+    ModuleBase::timer::start("Plus_U", "cal_energy_correction");
     if (!initialed_locale)
     {
-        ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+        ModuleBase::timer::end("Plus_U", "cal_energy_correction");
         return;
     }
 
@@ -385,7 +385,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
     // substract the double counting energy_dc included in band energy eband
     Plus_U::energy_u -= energy_dc;
 
-    ModuleBase::timer::tick("Plus_U", "cal_energy_correction");
+    ModuleBase::timer::end("Plus_U", "cal_energy_correction");
     return;
 }
 
@@ -393,6 +393,10 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
 
 void Plus_U::uramping_update()
 {
+    // Yukawa calculates U directly every iteration, no need for ramping
+    if (Yukawa) {
+        return;
+    }
     // if uramping < 0.1, use the original U
     if (this->uramping < 0.01) {
         return;
@@ -413,6 +417,10 @@ void Plus_U::uramping_update()
 
 bool Plus_U::u_converged()
 {
+    // Yukawa calculates U directly every iteration, always considered converged
+    if (Yukawa) {
+        return true;
+    }
     for (int i = 0; i < this->U0.size(); i++)
     {
         if (this->U[i] != this->U0[i])

@@ -23,7 +23,7 @@ template<>
 void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<double> eff_pot(this->hsk->get_pv()->nloc);
 
@@ -36,14 +36,14 @@ void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
         hk[irc] += eff_pot[irc];
     }
 
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
 }
 
 template<>
 void OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
 
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<std::complex<double>> eff_pot(this->hsk->get_pv()->nloc);
@@ -57,14 +57,14 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk(int 
         hk[irc] += eff_pot[irc];
     }
 
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
 }
 
 template<>
 void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorDFTU", "contributeHk");
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::start("OperatorDFTU", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<std::complex<double>> eff_pot(this->hsk->get_pv()->nloc);
 
@@ -76,7 +76,7 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::con
         hk[irc] += eff_pot[irc];
     }
 
-    ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
+    ModuleBase::timer::end("OperatorDFTU", "contributeHk");
 }
 
 }

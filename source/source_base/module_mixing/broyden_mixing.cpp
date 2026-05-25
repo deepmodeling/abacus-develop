@@ -1,7 +1,6 @@
 #include "broyden_mixing.h"
 
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/memory.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -105,7 +104,7 @@ template <class FPTYPE>
 void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
 {
     ModuleBase::TITLE("Broyden_Mixing", "Simplified_Broyden_mixing");
-    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
+    ModuleBase::timer::start("Broyden_Mixing", "tem_cal_coef");
 
 	if (address != &mdata && address != nullptr)
 	{
@@ -198,6 +197,6 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     {
         dFnext[i] = FP_F[i];
     }
-    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
+    ModuleBase::timer::end("Broyden_Mixing", "tem_cal_coef");
 };
 } // namespace Base_Mixing

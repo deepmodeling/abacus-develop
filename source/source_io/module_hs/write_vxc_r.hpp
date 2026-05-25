@@ -100,6 +100,7 @@ void write_Vxc_R(const int nspin,
                                                                         orb_cutoff,
                                                                         &gd,
                                                                         nspin);
+        vxcs_op_ao[is]->set_current_spin(is);
         vxcs_op_ao[is]->contributeHR();
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)

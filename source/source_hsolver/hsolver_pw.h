@@ -7,7 +7,6 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_hsolver/precision_mode.h"
 #include <unordered_map>
-#include "source_base/memory.h"
 
 namespace hsolver
 {
@@ -29,7 +28,6 @@ class HSolverPW
               const std::string calculation_type_in,
               const std::string basis_type_in,
               const std::string method_in,
-              const bool use_paw_in,
               const bool use_uspp_in,
               const int nspin_in,
               const int scf_iter_in,
@@ -38,7 +36,7 @@ class HSolverPW
               const bool need_subspace_in,
               const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
-          use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
+          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
           use_k_continuity(use_k_continuity_in) {};
 
@@ -79,12 +77,11 @@ class HSolverPW
 
     void output_iterInfo();
 
-    ModulePW::PW_Basis_K* wfc_basis;
+    ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
     const std::string calculation_type;
     const std::string basis_type;
     const std::string method;
-    const bool use_paw;
     const bool use_uspp;
     const int nspin;
 
@@ -111,14 +108,7 @@ class HSolverPW
     /// @brief calculate the threshold for iterative-diagonalization for each band
     void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
-#ifdef USE_PAW
-    void paw_func_in_kloop(const int ik,
-                           const double tpiba);
 
-    void call_paw_cell_set_currentk(const int ik);
-
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
-#endif
 
     // K-point continuity related members
     std::vector<int> k_order;

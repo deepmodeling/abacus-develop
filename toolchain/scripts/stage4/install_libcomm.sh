@@ -41,7 +41,6 @@ source "${INSTALLDIR}"/toolchain.env
 
 [ -f "${BUILDDIR}/setup_libcomm" ] && rm "${BUILDDIR}/setup_libcomm"
 
-libcomm_CFLAGS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -50,12 +49,12 @@ case "$with_libcomm" in
         echo "==================== Installing LIBCOMM ===================="
         pkg_install_dir="${INSTALLDIR}/$dirname"
         #pkg_install_dir="${HOME}/lib/libcomm/${libcomm_ver}"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         # url="https://github.com/abacusmodeling/LibComm/archive/refs/tags/v${libcomm_ver}.tar.gz"
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${libcomm_ver}" =~ ^(master|main|develop)$ ]]; then
+        if [[ "${libcomm_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/${libcomm_ver}"
         else
             url="https://codeload.github.com/abacusmodeling/LibComm/tar.gz/v${libcomm_ver}"
@@ -63,13 +62,7 @@ case "$with_libcomm" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                echo "===> Notice: This version of LibComm is downloaded in GitHub master repository  <==="
-                download_pkg_from_url "${libcomm_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${libcomm_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -81,7 +74,7 @@ case "$with_libcomm" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBCOMM from system paths ===================="
@@ -96,7 +89,7 @@ case "$with_libcomm" in
             # Comm/Comm_Tools.h -> remove /Comm/Comm_Tools.h -> get include dir -> get parent dir
             libcomm_include_dir="$(dirname "$(dirname "$libcomm_header_path")")"
             pkg_install_dir="$(dirname "$libcomm_include_dir")"
-            echo "Found libcomm at: $pkg_install_dir"
+            echo "Found libcomm at: ${pkg_install_dir}"
             LIBCOMM_CFLAGS="-I'${libcomm_include_dir}'"
         else
             report_error "Cannot find Comm/Comm_Tools.h in system paths"
@@ -109,21 +102,19 @@ case "$with_libcomm" in
         echo "==================== Linking LIBCOMM to user paths ===================="
         pkg_install_dir="${with_libcomm}"
         check_dir "${pkg_install_dir}"
-        LIBCOMM_CFLAGS="-I'${pkg_install_dir}'"
+        LIBCOMM_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_libcomm" != "__DONTUSE__" ]; then
     if [ "$with_libcomm" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libcomm"
-prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libcomm" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libcomm"
-export LIBCOMM_CFLAGS="${libcomm_CFLAGS}"
-export LIBCOMM_ROOT="$pkg_install_dir"
+export LIBCOMM_ROOT="${pkg_install_dir}"
 EOF
+    filter_setup "${BUILDDIR}/setup_libcomm" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libcomm"

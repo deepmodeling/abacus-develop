@@ -1,4 +1,5 @@
 #include "source_base/libm/libm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
@@ -16,7 +17,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                                           const UnitCell& ucell)
 {
     ModuleBase::TITLE("Stress", "stress_us");
-    ModuleBase::timer::tick("Stress", "stress_us");
+    ModuleBase::timer::start("Stress", "stress_us");
 
     const int npw = rho_basis->npw;
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
@@ -184,7 +185,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     }
     sigma += stressus;
 
-    ModuleBase::timer::tick("Stress", "stress_us");
+    ModuleBase::timer::end("Stress", "stress_us");
     return;
 }
 

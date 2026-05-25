@@ -1,7 +1,11 @@
 /**
- * calculate the <phi_i|Lx/Ly/Lz|phi_j> matrix elements, in which the Lx/Ly/Lz
- * are the angular momentum operators, |phi_i> and |phi_j> are the numerical
- * atomic orbitals (NAOs).
+ * calculate the <phi_i|Lx/Ly/Lz|phi_j> matrix elements with the ACA (atom-centered 
+ * approximation), in which the Lx/Ly/Lz are the angular momentum operators, 
+ * |phi_i> and |phi_j> are the numerical atomic orbitals (NAOs).
+ * 
+ * Note: this module is the most suitable for the case of SOC (spin-orbit coupling) 
+ * calculation. A strict implmentation requires the evaluation on the position operator
+ * and the momentum operator, is beyond the scope of present implementation.
  * 
  * Formulation
  * -----------
@@ -13,8 +17,8 @@
  *                                  Lx = (L+ + L-) / 2
  *                                  Ly = (L+ - L-) / 2i
  * 
- * With L+, the spherical harmonic function Ylm (denoted as |l, m> in the following)
- * can be raised:
+ * With L+, the COMPLEX spherical harmonic function Ylm (denoted as |l, m> in 
+ * the following) can be raised:
  * 
  *                          L+|l, m> = sqrt((l-m)(l+m+1))|l, m+1>
  * 
@@ -22,21 +26,42 @@
  * 
  *                          L-|l, m> = sqrt((l+m)(l-m+1))|l, m-1>
  * 
- * Therefore the Lx matrix element can be calculated as:
+ * Therefore, for the case where there is only one atom, the Lx matrix element 
+ * can be calculated as:
  * 
  *                <l, m|Lx|l, m'> =   sqrt((l-m)(l+m+1)) * delta(m, m'+1) / 2
  *                                  + sqrt((l+m)(l-m+1)) * delta(m, m'-1) / 2
  * 
- * The Ly matrix element can be calculated as:
+ * Likewise the Ly matrix element can be calculated as:
  * 
  *                <l, m|Ly|l, m'> =   sqrt((l-m)(l+m+1)) * delta(m, m'+1) / 2i
  *                                  - sqrt((l+m)(l-m+1)) * delta(m, m'-1) / 2i
  * 
- * The Lz matrix element can be calculated as:
+ * and the Lz matrix element can be calculated as:
  * 
  *                          <l, m|Lz|l, m'> = m * delta(m, m')
  * 
- * However, things will change when there are more than one centers.
+ * ABACUS employs the REAL spherical harmonics, the transformation between the
+ * REAL and COMPLEX spherical harmonics can be found from:
+ * https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html
+ * 
+ * For the case where there are multiple atoms, present calculation is based on
+ * the Atom-Centered-Approximation (ACA), in which the global angular momentum
+ * operator is decomposed to the sum of the local opeartor that only considers 
+ * one atom. Therefore, the matrix element can be calculated by combining the
+ * ladder operators with the two-center-integral technique:
+ * 
+ *               <phi_i|Lx/Ly/Lz|phi_j> = <phi_i| (Lx/Ly/Lz |phi_j>)
+ * 
+ * the two-center-integral will be performed after the application of the L
+ * operator. For example after the application of Lz, the equation above yields
+ * 
+ *               <phi_i|Lz|phi_j> = mj <phi_i|phi_j>
+ * 
+ * For Lx = 1/2 * (L+ + L-):
+ * 
+ *               <phi_i|Lx|phi_j> = sqrt((lj-mj)(lj+mj+1)) * <phi_i|phi_j' > / 2
+ *                                + sqrt((lj+mj)(lj-mj+1)) * <phi_i|phi_j''> / 2
  * 
  * Technical Details
  * -----------------

@@ -24,6 +24,8 @@ void evolve_psi(const int nband,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
+                std::complex<double>* P_k,
+                const bool use_td_moving_gauge,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
@@ -86,7 +88,14 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
+        if (use_td_moving_gauge)
+        {
+            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, P_k, psi_k_laststep, psi_k);
+        }
+        else
+        {
         solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+        }
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -129,7 +138,8 @@ void evolve_psi_tensor(const int nband,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
-                       const bool use_lapack)
+                       const bool use_lapack,
+                       CublasMpResources& cublas_res)
 {
     ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
     time_t time_start = time(nullptr);
@@ -198,9 +208,9 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
@@ -210,9 +220,9 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
@@ -221,7 +231,16 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack)
         {
-            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
+            half_Hmatrix_tensor(pv,
+                                nband,
+                                nlocal,
+                                Htmp,
+                                Stmp,
+                                H_laststep,
+                                S_laststep,
+                                ofs_running,
+                                print_matrix,
+                                cublas_res);
         }
         else if (myid == root_proc)
         {
@@ -249,12 +268,13 @@ void evolve_psi_tensor(const int nband,
                                            U_operator,
                                            ofs_running,
                                            print_matrix,
-                                           use_lapack);
+                                           use_lapack,
+                                           cublas_res);
 
     // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)
     {
-        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -264,7 +284,7 @@ void evolve_psi_tensor(const int nband,
     // (4) Normalize psi_k
     if (!use_lapack)
     {
-        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -279,15 +299,15 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack || myid == root_proc)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
     if (!use_lapack)
     {
-        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
+        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, cublas_res);
     }
     else if (myid == root_proc)
     {
@@ -323,7 +343,8 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
@@ -338,7 +359,8 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 #endif // __CUDA
 
 } // namespace module_rt

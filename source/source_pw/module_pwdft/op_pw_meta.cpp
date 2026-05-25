@@ -51,7 +51,7 @@ void Meta<OperatorPW<T, Device>>::act(
         return;
     }
 
-    ModuleBase::timer::tick("Operator", "MetaPW");
+    ModuleBase::timer::start("Operator", "MetaPW");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
@@ -79,7 +79,7 @@ void Meta<OperatorPW<T, Device>>::act(
         tmhpsi += max_npw;
         tmpsi_in += max_npw;
     }
-    ModuleBase::timer::tick("Operator", "MetaPW");
+    ModuleBase::timer::end("Operator", "MetaPW");
 }
 
 template<typename T, typename Device>

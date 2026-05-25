@@ -2,8 +2,9 @@
 #define H_TDDFT_PW_H
 
 #include "pot_base.h"
-#include "source_io/module_parameter/input_conv.h"
-#include "source_io/module_parameter/parameter.h" // PARAM.globalv.global_readin_dir, PARAM.inp.mdp.md_restart
+#include "source_io/module_parameter/parameter.h"
+
+#include <vector>
 
 namespace elecstate
 {
@@ -121,7 +122,7 @@ class H_TDDFT_pw : public PotBase
     static bool is_initialized; // static flag variable, used to ensure initialization only once
 
     static double amp;
-    static vector<double> global_vext_time;
+    static std::vector<double> global_vext_time;
 
     const UnitCell* ucell_ = nullptr;
 

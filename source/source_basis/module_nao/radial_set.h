@@ -143,7 +143,9 @@ class RadialSet
      */
     virtual void to_numerical_orbital(Numerical_Orbital&,
                                       const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
-                                      const double lcao_dk = 0.01
+                                      const double lcao_dk = 0.01,
+                                      const bool out_element_info = false,
+                                      const bool cal_force = false
                                       ) const;
 
     /**
@@ -159,7 +161,7 @@ class RadialSet
     int nzeta_max() const { return nzeta_max_; }
     int nchi() const { return nchi_; }
 
-    const NumericalRadial& chi(const int l, const int izeta);
+    const NumericalRadial& chi(const int l, const int izeta) const;
     const NumericalRadial* cbegin() const { return chi_; }
     const NumericalRadial* cend() const { return chi_ + nchi_; }
     ///@}

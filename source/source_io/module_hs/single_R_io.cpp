@@ -6,7 +6,7 @@
 
 inline void write_data(std::ofstream& ofs, const double& data)
 {
-    ofs << " " << data;
+    ofs << " " << std::fixed << std::scientific << std::setprecision(16) << data;
 }
 inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
 {
@@ -68,7 +68,6 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         if (!reduce || GlobalV::DRANK == 0)
         {
             long long nonzeros_count = 0;
-            ofs << std::fixed << std::scientific << std::setprecision(8);
             for (int col = 0; col < PARAM.globalv.nlocal; ++col)
             {
                 if (std::abs(line[col]) > sparse_threshold)

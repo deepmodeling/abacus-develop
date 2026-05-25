@@ -1,5 +1,4 @@
 #include "esolver_ks_pw.h"
-#include "source_base/memory.h"
 #include "source_base/module_device/device.h"
 #include "source_io/module_bessel/numerical_basis.h"
 #include "source_io/module_bessel/numerical_descriptor.h"
@@ -32,7 +31,7 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
     {
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
-                             this->psi[0],
+                             *(this->stp.psi_cpu),
                              PARAM.inp.bessel_descriptor_lmax,
                              PARAM.inp.bessel_descriptor_rcut,
                              PARAM.inp.bessel_descriptor_tolerence,

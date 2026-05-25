@@ -189,7 +189,7 @@ void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<doub
                                           const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_info", "initialize_current_term");
-    ModuleBase::timer::tick("TD_info", "initialize_current_term");
+    ModuleBase::timer::start("TD_info", "initialize_current_term");
 
     for (int dir = 0; dir < 3; dir++)
     {
@@ -218,7 +218,7 @@ void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<doub
         this->current_term[dir]->allocate(nullptr, true);
     }
 
-    ModuleBase::timer::tick("TD_info", "initialize_current_term");
+    ModuleBase::timer::end("TD_info", "initialize_current_term");
 }
 
 void TD_info::destroy_HS_R_td_sparse(void)

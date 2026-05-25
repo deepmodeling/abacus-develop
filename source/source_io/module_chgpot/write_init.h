@@ -2,7 +2,6 @@
 #define WRITE_INIT_H
 
 #include "source_io/module_parameter/input_parameter.h" // use inp
-#include "source_cell/parallel_kpoints.h" // use para_grid
 #include "source_estate/module_charge/charge.h" // use chg
 #include "source_estate/fp_energy.h" // use efermi
 #include "source_estate/elecstate.h" // use pelec

@@ -2,8 +2,6 @@
 #define INFONONLOCAL_H
 
 #include "atom_spec.h"
-#include "../source_base/global_function.h"
-#include "../source_base/global_variable.h"
 #include "../source_basis/module_ao/ORB_nonlocal.h"
 #include "../source_basis/module_ao/ORB_read.h"
 class InfoNonlocal
@@ -14,8 +12,8 @@ class InfoNonlocal
 		///
 		///NON-LOCAL part for LCAO
 		///
-		Numerical_Nonlocal* Beta;/// nonlocal projectors (1-dimension array)
-		int *nproj; //mohan add 2010-12-19
+		Numerical_Nonlocal* Beta = nullptr;/// nonlocal projectors (1-dimension array)
+		int * nproj = nullptr; //mohan add 2010-12-19
 		int nprojmax; // mohan add 2010-03-07
 		double rcutmax_Beta;	//caoyu add 2021-05-24
 		const double& get_rcutmax_Beta(void) const { return rcutmax_Beta; }

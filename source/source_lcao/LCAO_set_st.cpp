@@ -322,7 +322,7 @@ void build_ST_new(ForceStressArrays& fsr,
                   double dmax)
 {
     ModuleBase::TITLE("LCAO_domain", "build_ST_new");
-    ModuleBase::timer::tick("LCAO_domain", "build_ST_new");
+    ModuleBase::timer::start("LCAO_domain", "build_ST_new");
 
     const int nspin = PARAM.inp.nspin;
     const int npol = PARAM.globalv.npol;
@@ -547,7 +547,7 @@ void build_ST_new(ForceStressArrays& fsr,
         }
     }
 
-    ModuleBase::timer::tick("LCAO_domain", "build_ST_new");
+    ModuleBase::timer::end("LCAO_domain", "build_ST_new");
     return;
 }
 

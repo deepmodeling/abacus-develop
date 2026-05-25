@@ -46,7 +46,7 @@ class Stochastic_Iter
 
     /**
      * @brief sum demet and eband energies for each k point and each band
-     * 
+     *
      * @param stowf stochastic wave function
      * @param pes elecstate
      * @param pHamilt hamiltonian
@@ -59,7 +59,7 @@ class Stochastic_Iter
 
     /**
      * @brief calculate the density
-     * 
+     *
      * @param ucell reference to unit cell
      * @param stowf stochastic wave function
      * @param pes elecstate
@@ -72,15 +72,15 @@ class Stochastic_Iter
 
     /**
      * @brief calculate total number of electrons
-     * 
+     *
      * @param pes elecstate
-     * @return double 
+     * @return double
      */
     double calne(elecstate::ElecState* pes);
 
     /**
      * @brief solve ne(mu) = ne_target and get chemical potential mu
-     * 
+     *
      * @param iter scf iteration index
      * @param pes elecstate
      */
@@ -88,7 +88,7 @@ class Stochastic_Iter
 
     /**
      * @brief orthogonalize stochastic wave functions with KS wave functions
-     * 
+     *
      * @param ik k point index
      * @param psi KS wave functions
      * @param stowf stochastic wave functions
@@ -97,7 +97,7 @@ class Stochastic_Iter
 
     /**
      * @brief check emax and emin
-     * 
+     *
      * @param ik k point index
      * @param istep ion step index
      * @param iter scf iteration index
@@ -107,7 +107,7 @@ class Stochastic_Iter
 
     /**
      * @brief check precision of Chebyshev expansion
-     * 
+     *
      * @param ref reference value
      * @param thr threshold
      * @param info information
@@ -153,14 +153,22 @@ class Stochastic_Iter
     const Device* ctx = {};
     const base_device::DEVICE_CPU* cpu_ctx = {};
     using ct_Device = typename container::PsiToContainer<Device>::type;
+#ifdef __DSP
+    using setmem_var_op = base_device::memory::set_memory_op_mt<Real, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op_mt<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op_mt<Real, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op_mt<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op_mt<T, Device>;
+#else
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
-    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
-    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
-    using cpymem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+#endif
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using cpymem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using castmem_d2z_op = base_device::memory::cast_memory_op<T, Real, Device, Device>;
     using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
     using gemv_op = ModuleBase::gemv_op<T, Device>;

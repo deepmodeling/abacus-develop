@@ -108,7 +108,7 @@ void ModuleIO::save_mat(const int istep,
     const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
-    ModuleBase::timer::tick("ModuleIO", "save_mat");
+    ModuleBase::timer::start("ModuleIO", "save_mat");
 
     const bool gamma_only = std::is_same<T, double>::value;
 
@@ -300,6 +300,6 @@ void ModuleIO::save_mat(const int istep,
         out_matrix.close();
 #endif
     }
-    ModuleBase::timer::tick("ModuleIO", "save_mat");
+    ModuleBase::timer::end("ModuleIO", "save_mat");
     return;
 }

@@ -34,7 +34,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         surchem &solvent)             // solvent model
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_runner_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_runner_lcao");
 
     // 1) write projected band structure
     if (inp.out_proj_band)
@@ -76,7 +76,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         );
     }
 
-    if (inp.out_mat_xc2)
+    if (inp.out_mat_xc2[0])
     {
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
@@ -127,6 +127,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
        );
     }
 
+    ModuleBase::timer::end("ModuleIO", "ctrl_runner_lcao");
 }
 
 

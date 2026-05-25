@@ -2,7 +2,6 @@
 #define CAL_MLKEDF_DESCRIPTORS_H
 
 #include <vector>
-#include "source_base/global_function.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"

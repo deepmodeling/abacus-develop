@@ -16,7 +16,7 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     ModuleBase::TITLE("DeltaSpin", "cal_force_stress");
 
     // begin the calculation of force and stress
-    ModuleBase::timer::tick("DeltaSpin", "cal_force_stress");
+    ModuleBase::timer::start("DeltaSpin", "cal_force_stress");
 
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
     auto& constrain = sc.get_constrain();
@@ -241,7 +241,7 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         stress.c[3] = stress.c[1]; // stress(1,0)
     }
 
-    ModuleBase::timer::tick("DeltaSpin", "cal_force_stress");
+    ModuleBase::timer::end("DeltaSpin", "cal_force_stress");
 }
 
 template <typename TK, typename TR>

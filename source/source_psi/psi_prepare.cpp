@@ -1,8 +1,9 @@
 #include "psi_prepare.h"
 
 #include "source_base/macros.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_global.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -39,7 +40,7 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
 
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
-    ModuleBase::timer::tick("PSIPrepare", "prepare_init");
+    ModuleBase::timer::start("PSIPrepare", "prepare_init");
     this->psi_initer.reset();
     if (this->init_wfc == "random")
     {
@@ -107,7 +108,7 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank);
     this->psi_initer->tabulate();
 
-    ModuleBase::timer::tick("PSIPrepare", "prepare_init");
+    ModuleBase::timer::end("PSIPrepare", "prepare_init");
 }
 
 template <typename T, typename Device>
@@ -124,7 +125,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     {
         return;
     }
-    ModuleBase::timer::tick("PSIPrepare", "initialize_psi");
+    ModuleBase::timer::start("PSIPrepare", "initialize_psi");
 
     const int nbands_start = this->psi_initer->nbands_start();
     const int nbands_l = psi->get_nbands();
@@ -256,7 +257,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     }
 
-    ModuleBase::timer::tick("PSIPrepare", "initialize_psi");
+    ModuleBase::timer::end("PSIPrepare", "initialize_psi");
 }
 
 template <typename T, typename Device>

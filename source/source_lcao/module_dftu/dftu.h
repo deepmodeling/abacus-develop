@@ -5,7 +5,6 @@
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #ifdef __LCAO
-#include "source_estate/module_charge/charge_mixing.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"

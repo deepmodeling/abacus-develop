@@ -7,7 +7,7 @@ using namespace ModuleSymmetry;
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
-    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+    ModuleBase::timer::start("Symmetry","rho_symmetry");
 
     assert(nr1>0);
     assert(nr2>0);
@@ -60,14 +60,14 @@ void Symmetry::rho_symmetry( double *rho,
     delete[] ri;
     delete[] rj;
     delete[] rk;
-    ModuleBase::timer::tick("Symmetry","rho_symmetry");
+    ModuleBase::timer::end("Symmetry","rho_symmetry");
 }
 
 void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
-	ModuleBase::timer::tick("Symmetry","rhog_symmetry");
+	ModuleBase::timer::start("Symmetry","rhog_symmetry");
 	// ----------------------------------------------------------------------
 	// the current way is to cluster the FFT grid points into groups in advance.
 	// and use OpenMP to realize parallel calculation, one thread works in one group.
@@ -144,7 +144,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     // by using int* symflag.
 	// ------------------------------------------------------------------------
 
-    ModuleBase::timer::tick("Symmetry","group_fft_grids");
+    ModuleBase::timer::start("Symmetry","group_fft_grids");
     for (int i = 0; i< fftnx; ++i)
     {
         //tmp variable
@@ -200,7 +200,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             }
         }
     }
-    ModuleBase::timer::tick("Symmetry","group_fft_grids");
+    ModuleBase::timer::end("Symmetry","group_fft_grids");
 
 	// -------------------------------------------------------------------
 	//  This code performs symmetry operations on the reciprocal space 
@@ -305,5 +305,5 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 	delete[] isymflag;
 	delete[] table_xyz;
 	delete[] count_xyz;
-	ModuleBase::timer::tick("Symmetry","rhog_symmetry");
+	ModuleBase::timer::end("Symmetry","rhog_symmetry");
 }

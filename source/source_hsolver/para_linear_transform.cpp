@@ -1,5 +1,8 @@
 #include "para_linear_transform.h"
 
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 
 #include <algorithm>
@@ -77,7 +80,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
-    ModuleBase::timer::tick("PLinearTransform", "act");
+    ModuleBase::timer::start("PLinearTransform", "act");
 #ifdef __MPI
     if (nproc_col > 1)
     {
@@ -166,7 +169,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                          B,
                                          LDA);
     }
-    ModuleBase::timer::tick("PLinearTransform", "act");
+    ModuleBase::timer::end("PLinearTransform", "act");
 };
 
 template struct PLinearTransform<double, base_device::DEVICE_CPU>;

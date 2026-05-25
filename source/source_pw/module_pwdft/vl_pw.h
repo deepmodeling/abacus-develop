@@ -2,7 +2,6 @@
 #define VL_IN_PW_H 
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
@@ -24,11 +23,11 @@ public:
                    const ModulePW::PW_Basis* rho_basis);
 
     ModuleBase::matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
-	bool *numeric; //[ntype], =true
+	bool * numeric = nullptr; //[ntype], =true
 
 private:
 
-	double *zp;   // (npsx),the charge of the pseudopotential
+	double * zp = nullptr;   // (npsx),the charge of the pseudopotential
 
 	void allocate(const UnitCell& ucell,
                   const int ngg);

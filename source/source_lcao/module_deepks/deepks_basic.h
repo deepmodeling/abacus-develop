@@ -2,10 +2,7 @@
 #define DEEPKS_BASIC_H
 
 #ifdef __MLALGO
-#include "LCAO_deepks_io.h"
 #include "deepks_param.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/tool_title.h"
 #include "source_cell/unitcell.h"
 
 #include <torch/script.h>
@@ -49,6 +46,7 @@ void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
 void cal_edelta_gedm_equiv(const int nat,
                            const DeePKS_Param& deepks_param,
                            const std::vector<torch::Tensor>& descriptor,
+                           torch::jit::script::Module& model_deepks,
                            double** gedm,
                            double& E_delta,
                            const int rank);

@@ -122,7 +122,9 @@ After the key parameter `out_mat_hs2` is turned on, the Hamiltonian matrix $H(R)
 suffix                         Fe
 ```
 
-specifies the suffix of the output, in this calculation, we set the path to the directory of the DFT calculation, which is the current directory (".") and the suffix to Fe. 
+specifies the suffix of the output, in this calculation, we set the path to the directory of the DFT calculation, which is the current directory (".") and the suffix to Fe.
+
+> **Note (ABACUS v3.9.0.25+):** Starting from ABACUS v3.9.0.25, the output format has changed to standard CSR format with filenames `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `srs1_nao.csr`. The parameter `out_mat_hs2` now supports optional precision control: `out_mat_hs2 1 8` (default 8 digits). TB2J v0.9.0+ is required to read the new format. For older TB2J versions, please use ABACUS v3.8.x or earlier. 
 
 #### 2. Perform TB2J calculation:
 
@@ -130,7 +132,7 @@ specifies the suffix of the output, in this calculation, we set the path to the 
 abacus2J.py --path . --suffix Fe --elements Fe  --kmesh 7 7 7
 ```
 
-This first read the atomic structures from th `STRU` file,  then read the Hamiltonian and the overlap matrices stored in the files named starting from `data-HR-*` and `data-SR-*` files.  It also read the fermi energy from the `OUT.Fe/running_scf.log` file.  
+This first reads the atomic structures from the `STRU` file, then reads the Hamiltonian and overlap matrices. For ABACUS v3.9.0.25+, the matrices are stored in `hrs1_nao.csr`, `hrs2_nao.csr` (nspin=2), and `srs1_nao.csr` files. For older versions, they are in `data-HR-*` and `data-SR-*` files. It also reads the fermi energy from the `OUT.Fe/running_scf.log` file.  
 
 With the command above, we can calculate the $J$ with a $7 \times 7 \times 7$ k-point grid. This allows for the calculation of exchange between spin pairs between $7 \times 7 \times 7$  supercell.  Note: the kmesh is not dense enough for a practical calculation. For a very dense k-mesh, the `--rcut` option can be used to set the maximum distance of the magnetic interactions and thus reduce the computation cost. But be sure that the cutoff is not too small. 
 

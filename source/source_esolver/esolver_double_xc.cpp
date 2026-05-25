@@ -5,6 +5,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/LCAO_deepks_io.h"
 #endif
 #include "source_lcao/FORCE_STRESS.h"
 
@@ -39,7 +40,7 @@ template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "before_all_runners");
-    ModuleBase::timer::tick("ESolver_DoubleXC", "before_all_runners");
+    ModuleBase::timer::start("ESolver_DoubleXC", "before_all_runners");
 
     ESolver_KS_LCAO<TK, TR>::before_all_runners(ucell, inp);
 
@@ -105,14 +106,14 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &(this->pelec_base->f_en.vtxc));
     }
 
-    ModuleBase::timer::tick("ESolver_DoubleXC", "before_all_runners");
+    ModuleBase::timer::end("ESolver_DoubleXC", "before_all_runners");
 }
 
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "before_scf");
-    ModuleBase::timer::tick("ESolver_DoubleXC", "before_scf");
+    ModuleBase::timer::start("ESolver_DoubleXC", "before_scf");
 
     ESolver_KS_LCAO<TK,TR>::before_scf(ucell, istep);
 
@@ -168,7 +169,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->dmat_base.dm->cal_DMR();
     }
 
-    ModuleBase::timer::tick("ESolver_DoubleXC", "before_scf");
+    ModuleBase::timer::end("ESolver_DoubleXC", "before_scf");
     return;    
 }
 
@@ -176,7 +177,7 @@ template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "iter_finish");
-    ModuleBase::timer::tick("ESolver_DoubleXC", "iter_finish");
+    ModuleBase::timer::start("ESolver_DoubleXC", "iter_finish");
 
     bool output_iter = PARAM.inp.deepks_out_labels >0 && PARAM.inp.deepks_out_freq_elec && 
                   (iter % PARAM.inp.deepks_out_freq_elec == 0);
@@ -362,14 +363,14 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             _pes_lcao_base->wg = _pes_lcao->wg;          
         }        
     }
-    ModuleBase::timer::tick("ESolver_DoubleXC", "iter_finish");
+    ModuleBase::timer::end("ESolver_DoubleXC", "iter_finish");
 }
 
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "cal_force");
-    ModuleBase::timer::tick("ESolver_DoubleXC", "cal_force");
+    ModuleBase::timer::start("ESolver_DoubleXC", "cal_force");
 
     ModuleBase::matrix force_base;
     ModuleBase::matrix stress_base;
@@ -411,7 +412,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
     // this will delete RA, so call it later
     ESolver_KS_LCAO<TK, TR>::cal_force(ucell, force);
 
-    ModuleBase::timer::tick("ESolver_DoubleXC", "cal_force");
+    ModuleBase::timer::end("ESolver_DoubleXC", "cal_force");
 }
 
 template class ESolver_DoubleXC<double, double>;

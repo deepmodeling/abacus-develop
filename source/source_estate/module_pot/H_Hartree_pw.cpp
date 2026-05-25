@@ -19,7 +19,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
                                            const double *const *const rho)
 {
     ModuleBase::TITLE("H_Hartree_pw", "v_hartree");
-    ModuleBase::timer::tick("H_Hartree_pw", "v_hartree");
+    ModuleBase::timer::start("H_Hartree_pw", "v_hartree");
 
     //  Hartree potential VH(r) from n(r)
     std::vector<std::complex<double>> Porter(rho_basis->nmaxgr);
@@ -92,7 +92,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
                 v(is, ir) = Porter[ir].real();
     }
 
-    ModuleBase::timer::tick("H_Hartree_pw", "v_hartree");
+    ModuleBase::timer::end("H_Hartree_pw", "v_hartree");
     return v;
 } // end subroutine v_h
 

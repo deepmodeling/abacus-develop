@@ -2,7 +2,9 @@
 #define SOC_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
+
+#include <complex>
+#include <iostream>
 
 class Fcoef
 {
@@ -50,9 +52,9 @@ class Soc
     Soc(){};
     ~Soc();
 
-    double spinor(const int l, const double j, const int m, const int spin);
+    double spinor(const int l, const double j, const int m, const int spin) const;
 
-    int sph_ind(const int l, const double j, const int m, const int spin);
+    int sph_ind(const int l, const double j, const int m, const int spin) const;
 
     void rot_ylm(const int lmax);
     // std::complex<double> **rotylm;

@@ -31,7 +31,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                                         torch::Tensor& orbital_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_orbital_precalc");
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::start("DeePKS_domain", "calc_orbital_precalc");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -289,7 +289,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);
-    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
+    ModuleBase::timer::end("DeePKS_domain", "calc_orbital_precalc");
     return;
 }
 

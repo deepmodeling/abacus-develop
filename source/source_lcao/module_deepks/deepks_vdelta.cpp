@@ -27,7 +27,7 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
                                      double& e_delta_band)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_e_delta_band");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_e_delta_band");
+    ModuleBase::timer::start("DeePKS_domain", "cal_e_delta_band");
     TK e_delta_band_tmp = TK(0);
     for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
@@ -62,7 +62,7 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
 #ifdef __MPI
     Parallel_Reduce::reduce_all(e_delta_band);
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_e_delta_band");
+    ModuleBase::timer::end("DeePKS_domain", "cal_e_delta_band");
     return;
 }
 

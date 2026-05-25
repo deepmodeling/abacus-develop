@@ -16,7 +16,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const ModuleBase::matrix &ekb)
 {
 	ModuleBase::TITLE("ModuleIO","nscf_fermi_surface");
-	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
+	ModuleBase::timer::start("ModuleIO", "nscf_fermi_surface");
 #ifdef __MPI
 
 	const int start = 1;
@@ -88,6 +88,6 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 
 #endif
-	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
+	ModuleBase::timer::end("ModuleIO", "nscf_fermi_surface");
 	return;
 }

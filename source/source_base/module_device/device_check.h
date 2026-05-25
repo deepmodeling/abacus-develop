@@ -219,6 +219,23 @@ static const char* _cufftGetErrorString(cufftResult_t error)
 #define CHECK_CUDA_SYNC() do {} while (0)
 #endif
 
+// NCCL check macro: shared by cuSOLVER MP (non-CAL path) and parallel device
+#if (defined(__CUSOLVERMP) && !defined(__USE_CAL)) || defined(__NCCL_PARALLEL_DEVICE)
+#include <nccl.h>
+
+#define CHECK_NCCL(func)                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        ncclResult_t status = (func);                                                                                  \
+        if (status != ncclSuccess)                                                                                     \
+        {                                                                                                              \
+            fprintf(stderr, "In File %s : NCCL API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,       \
+                    ncclGetErrorString(status), status);                                                               \
+            exit(EXIT_FAILURE);                                                                                        \
+        }                                                                                                              \
+    } while (0)
+#endif
+
 // cuSOLVER MP support
 #ifdef __CUSOLVERMP
 #include <cusolverMp.h>
@@ -259,20 +276,6 @@ static const char* _calGetErrorString(calError_t error)
         {                                                                                                              \
             fprintf(stderr, "In File %s : CAL API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,        \
                     _calGetErrorString(status), status);                                                               \
-            exit(EXIT_FAILURE);                                                                                        \
-        }                                                                                                              \
-    } while (0)
-#else // !__USE_CAL (use NCCL)
-#include <nccl.h>
-
-#define CHECK_NCCL(func)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        ncclResult_t status = (func);                                                                                  \
-        if (status != ncclSuccess)                                                                                     \
-        {                                                                                                              \
-            fprintf(stderr, "In File %s : NCCL API failed at line %d with error: %s (%d)\n", __FILE__, __LINE__,       \
-                    ncclGetErrorString(status), status);                                                               \
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     } while (0)

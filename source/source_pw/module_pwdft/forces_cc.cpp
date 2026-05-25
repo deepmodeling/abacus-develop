@@ -1,5 +1,6 @@
 #include "forces.h"
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/output_log.h"
 // new
@@ -36,7 +37,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 {
     ModuleBase::TITLE("Forces", "cal_force_cc");
     // recalculate the exchange-correlation potential.
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
+    ModuleBase::timer::start("Forces", "cal_force_cc");
 
     int total_works = 0;
     // cal total works for skipping preprocess
@@ -49,7 +50,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     if (total_works == 0)
     {
-        ModuleBase::timer::tick("Forces", "cal_force_cc");
+        ModuleBase::timer::end("Forces", "cal_force_cc");
         return;
     }
 
@@ -116,7 +117,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     double *force_d = nullptr;
     double *rhocgigg_vec_d = nullptr;
     std::complex<FPTYPE>* psiv_d = nullptr;
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
 
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
@@ -234,7 +235,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     delete[] psiv;                                                           // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
-    ModuleBase::timer::tick("Forces", "cal_force_cc");
+    ModuleBase::timer::end("Forces", "cal_force_cc");
     return;
 }
 
@@ -258,7 +259,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 	double gx = 0, rhocg1 = 0;
 	//double *aux = new double[mesh];
 	std::vector<double> aux(mesh);
-	this->device = base_device::get_device_type<Device>(this->ctx);
+	this->device = base_device::get_device_type(this->ctx);
 	// the modulus of g for a given shell
 	// the fourier transform
 	// auxiliary memory for integration

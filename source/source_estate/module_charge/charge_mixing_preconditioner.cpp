@@ -12,7 +12,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 		return;
 	}
 
-    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_recip");
+    ModuleBase::timer::start("Charge_Mixing", "Kerker_screen_recip");
 
     const int nspin = PARAM.inp.nspin;
 
@@ -70,7 +70,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         }
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_recip");
+    ModuleBase::timer::end("Charge_Mixing", "Kerker_screen_recip");
     return;
 }
 
@@ -83,7 +83,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 		return;
 	}
 
-    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_real");
+    ModuleBase::timer::start("Charge_Mixing", "Kerker_screen_real");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
@@ -171,6 +171,6 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         drhor[ir] -= drhor_filter[ir];
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "Kerker_screen_real");
+    ModuleBase::timer::end("Charge_Mixing", "Kerker_screen_real");
     return;
 }

@@ -1,4 +1,5 @@
 #include "source_base/timer.h"
+#include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
@@ -173,7 +174,7 @@ void surchem::cal_vcav(const UnitCell& ucell,
                        ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vcav");
-    ModuleBase::timer::tick("surchem", "cal_vcav");
+    ModuleBase::timer::start("surchem", "cal_vcav");
 
     double *tmp_Vcav = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(tmp_Vcav, rho_basis->nrxx);
@@ -201,6 +202,6 @@ void surchem::cal_vcav(const UnitCell& ucell,
     }
 
     delete[] tmp_Vcav;
-    ModuleBase::timer::tick("surchem", "cal_vcav");
+    ModuleBase::timer::end("surchem", "cal_vcav");
     return;
 }

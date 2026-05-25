@@ -6,7 +6,6 @@
 #define RDMFT_TOOLS_H
 
 #include "source_cell/klist.h"
-#include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -16,7 +15,6 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_base/parallel_reduce.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
@@ -26,7 +24,6 @@
 
 
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
 // there are some operator reload to print data in different formats
 #endif
@@ -293,9 +290,9 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
      */
     virtual void contributeHR() override;
 
-    const UnitCell* ucell;
+    const UnitCell* ucell = nullptr;
 
-    const Grid_Driver* gd;
+    const Grid_Driver* gd = nullptr;
 
   private:
 
@@ -317,19 +314,19 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     // added by jghan
 
-    const Charge* charge_;
+    const Charge* charge_ = nullptr;
 
     std::string potential_;
 
-    const ModulePW::PW_Basis* rho_basis_;
+    const ModulePW::PW_Basis* rho_basis_ = nullptr;
 
     const ModuleBase::matrix* vloc_;
 
-    const ModuleBase::ComplexMatrix* sf_;
+    const ModuleBase::ComplexMatrix* sf_ = nullptr;
 
-    double* etxc;
+    double* etxc = nullptr;
 
-    double* vtxc;
+    double* vtxc = nullptr;
 
 };
 

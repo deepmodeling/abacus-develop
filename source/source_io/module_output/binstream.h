@@ -19,7 +19,7 @@ class Binstream
 		};
 		Binstream(const std::string,const char*);
 		~Binstream();
-		FILE* fileptr;
+		FILE* fileptr = nullptr;
 		void close();
 		void open(const std::string,const char*);
 		bool operator!() const;

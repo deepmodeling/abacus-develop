@@ -1,8 +1,7 @@
 #ifndef PARALLEL_GRID_H
 #define PARALLEL_GRID_H
 
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
+#include <cassert>
 
 class Parallel_Grid
 {

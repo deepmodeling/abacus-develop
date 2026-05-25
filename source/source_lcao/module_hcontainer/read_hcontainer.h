@@ -39,7 +39,7 @@ class Read_HContainer
     hamilt::HContainer<T>* _hcontainer;
     std::string _filename;
     int _nlocal;
-    const UnitCell* _ucell;
+    const UnitCell* _ucell = nullptr;
 };
 
 } // namespace hamilt

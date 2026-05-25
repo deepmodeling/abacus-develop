@@ -6,7 +6,6 @@
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
 #include "source_hamilt/hamilt.h"
-#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/para_linear_transform.h"
 

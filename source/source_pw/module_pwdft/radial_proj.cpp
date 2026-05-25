@@ -82,7 +82,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
                                                        const int nq,
                                                        const double& dq)
 {
-    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
+    ModuleBase::timer::start("RadialProjection", "cubspl_tabulate_vq_each_radial");
     l_ = l;
     const int nrad = radials.size();
     assert(nrad == l.size());
@@ -106,7 +106,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
         std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
         cubspl_->add(_temp.data());
     }
-    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
+    ModuleBase::timer::end("RadialProjection", "cubspl_tabulate_vq_each_radial");
 }
 
 void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>& r,
@@ -115,13 +115,13 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>
                                                        const int nq,
                                                        const double& dq)
 {
-    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
+    ModuleBase::timer::start("RadialProjection", "cubspl_tabulate_vq_each_radial");
     const int nr = r.size();
     const int nrad = radials.size();
     for(int i = 0; i < nrad; i++) { assert(radials[i].size() == nr); }
     std::vector<double*> radptrs(radials.size());
     for(int i = 0; i < radials.size(); i++) { radptrs[i] = const_cast<double*>(radials[i].data()); }
-    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
+    ModuleBase::timer::end("RadialProjection", "cubspl_tabulate_vq_each_radial");
     _build_sbt_tab(nr, r.data(), radptrs, l, nq, dq);
 }
 
@@ -198,7 +198,7 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
                                               const double& omega,
                                               const double& tpiba)
 {
-    ModuleBase::timer::tick("RadialProjection", "interp_sphbes_ft_flzYlm");
+    ModuleBase::timer::start("RadialProjection", "interp_sphbes_ft_flzYlm");
     assert(type == 'r' || type == 'l'); // type must be one of 'r' or 'l'
     // first cache the Ylm values
     const int lmax_ = *std::max_element(l_.begin(), l_.end());
@@ -237,7 +237,7 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
         }
     }
     assert(iproj == nchannel); // should write to inflate each radial to 2l+1 channels
-    ModuleBase::timer::tick("RadialProjection", "interp_sphbes_ft_flzYlm");
+    ModuleBase::timer::end("RadialProjection", "interp_sphbes_ft_flzYlm");
 }
 
 void RadialProjection::_mask_func(std::vector<double>& mask)

@@ -47,7 +47,7 @@ void Veff<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "veff_pw");
+    ModuleBase::timer::start("Operator", "veff_pw");
     if(is_first_node)
     {
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
@@ -129,7 +129,7 @@ void Veff<OperatorPW<T, Device>>::act(
         ModuleBase::WARNING_QUIT("VeffPW", "npol should be 1 or 2 or veff_col equal to 0\n");
     }
 #endif
-    ModuleBase::timer::tick("Operator", "veff_pw");
+    ModuleBase::timer::end("Operator", "veff_pw");
 }
 
 template<typename T, typename Device>

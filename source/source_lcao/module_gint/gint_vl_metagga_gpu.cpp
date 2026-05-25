@@ -11,12 +11,12 @@ namespace ModuleGint
 void Gint_vl_metagga_gpu::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
     compose_hr_gint(hr_gint_);
-    transfer_hr_gint_to_hR(hr_gint_, *hR_);
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    hr_gint_to_hR(hr_gint_, *hR_);
+    ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
 //========================
@@ -55,7 +55,7 @@ void Gint_vl_metagga_gpu::cal_hr_gint_()
         CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
         CHECK_CUDA(cudaStreamCreate(&stream));
-        PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
+        PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> dphi_x(BatchBigGrid::get_max_phi_len(), stream, false);

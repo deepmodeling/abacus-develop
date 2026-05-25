@@ -17,14 +17,23 @@ class Gint_rho : public Gint
         const int nspin,
         double **rho,
         bool is_dm_symm = true)
-        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho), is_dm_symm_(is_dm_symm) {}
+        : dm_vec_(dm_vec), nspin_(nspin), is_dm_symm_(is_dm_symm), rho_(rho) {}
     
     void cal_gint();
 
     private:
-    void init_dm_gint_();
+    template<typename Real>
+    void cal_gint_impl_();
 
-    void cal_rho_();
+    template<typename Real>
+    std::vector<HContainer<Real>> init_dm_gint_() const;
+
+    // rho is always accumulated in double (see phi_dot_phi). When Real=float,
+    // only phi and phi_dm are fp32; the per-meshgrid reduction is fp64.
+    template<typename Real>
+    void cal_rho_(
+        const std::vector<HContainer<Real>>& dm_gint_vec,
+        const std::vector<double*>& rho_data) const;
 
     // input
     const std::vector<HContainer<double>*> dm_vec_;
@@ -35,10 +44,7 @@ class Gint_rho : public Gint
     const bool is_dm_symm_;
 
     // output
-    double **rho_;
-
-    // Intermediate variables
-    std::vector<HContainer<double>> dm_gint_vec_;
+    double ** rho_ = nullptr;
 };
 
 }

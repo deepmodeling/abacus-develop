@@ -65,13 +65,13 @@ namespace ModuleIO
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
         ModuleBase::TITLE("ModuleIO", "read_Hexxs_cereal");
-        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+        ModuleBase::timer::start("Exx_LRI", "read_Hexxs_cereal");
         std::ifstream ifs(file_name, std::ios::binary);
         if(!ifs.is_open())
             { ModuleBase::WARNING_QUIT("read_Hexxs_cereal", file_name+" not found."); }
         cereal::BinaryInputArchive iar(ifs);
         iar(Hexxs);
-        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+        ModuleBase::timer::end("Exx_LRI", "read_Hexxs_cereal");
     }
 
     template<typename Tdata>

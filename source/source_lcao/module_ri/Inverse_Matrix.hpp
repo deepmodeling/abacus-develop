@@ -8,9 +8,13 @@
 
 #include "Inverse_Matrix.h"
 #include "source_base/module_external/lapack_connector.h"
-#include "source_hamilt/module_xc/exx_info.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <complex>
+#include <numeric>
+#include <stdexcept>
 
 template <typename Tdata>
 void Inverse_Matrix<Tdata>::cal_inverse(const Method& method, const double& threshold_condition_number)

@@ -23,7 +23,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       std::vector<hamilt::HContainer<double>*>& phialpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "allocate_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "allocate_phialpha");
 
     phialpha.resize(cal_deri ? 4 : 1);
 
@@ -75,7 +75,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             phialpha[i] = new hamilt::HContainer<double>(*phialpha[0], nullptr); // copy constructor
         }
     }
-    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "allocate_phialpha");
     return;
 }
 
@@ -88,7 +88,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
                                    std::vector<hamilt::HContainer<double>*>& phialpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "build_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "build_phialpha");
 
     // Total number of atomic basis of projected orbitals
     // nw_alpha will be used frequently, better to add a function in Numerical Orbital to get it
@@ -180,7 +180,7 @@ void DeePKS_domain::build_phialpha(const bool& cal_deri,
         }
     );
 
-    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "build_phialpha");
     return;
 }
 
@@ -193,7 +193,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                                    const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "check_phialpha");
-    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
+    ModuleBase::timer::start("DeePKS_domain", "check_phialpha");
 
     if (rank != 0)
     {
@@ -334,7 +334,7 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
         }         // end I0
     }             // end T0
 
-    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
+    ModuleBase::timer::end("DeePKS_domain", "check_phialpha");
     return;
 }
 

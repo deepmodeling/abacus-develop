@@ -17,7 +17,7 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 
 	// (2) reduce all rho from the first pool.
 	std::complex<double>* rhogtot;
-	int* ig2isztot;
+	int* ig2isztot = nullptr;
 	if(GlobalV::RANK_IN_POOL == 0)
 	{
 		rhogtot = new std::complex<double>[rho_basis->npwtot];

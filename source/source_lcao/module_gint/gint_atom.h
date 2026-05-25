@@ -10,6 +10,18 @@ namespace ModuleGint
 class GintAtom
 {
     public:
+
+        // Atom::set_index() stores orbitals in contiguous (L, N, m) blocks,
+        // so the spherical-harmonic index increases monotonically inside a block.
+        struct RadialBlock
+        {
+            int begin_iw = 0;
+            int size = 0;
+            int ylm_begin = 0;
+            const double* psi_uniform = nullptr;
+            const double* dpsi_uniform = nullptr;
+        };
+
         // constructor
         GintAtom(
             const Atom* atom,
@@ -88,7 +100,7 @@ class GintAtom
 
     private:
         // the atom object
-        const Atom* atom_;
+        const Atom* atom_ = nullptr;
         
         // the global index of the atom type
         int it_;
@@ -110,13 +122,14 @@ class GintAtom
         Vec3d tau_in_biggrid_;
 
         // the numerical orbitals of this atom
-        const Numerical_Orbital* orb_;
+        const Numerical_Orbital* orb_ = nullptr;
 
-        const UnitCell* ucell_;
+        const UnitCell* ucell_ = nullptr;
         
         std::vector<const double*> p_psi_uniform_;
         std::vector<const double*> p_dpsi_uniform_;
         std::vector<const double*> p_ddpsi_uniform_;
+        std::vector<RadialBlock> radial_blocks_;
 };
 
 } // namespace ModuleGint

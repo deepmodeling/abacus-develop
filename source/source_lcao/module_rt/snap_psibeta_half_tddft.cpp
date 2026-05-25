@@ -71,7 +71,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const ModuleBase::Vector3<double>& A,
                              const bool& calc_r)
 {
-    ModuleBase::timer::tick("module_rt", "snap_psibeta_half_tddft");
+    ModuleBase::timer::start("module_rt", "snap_psibeta_half_tddft");
 
     // 1. Initialization and Early Exits
     const int nproj = infoNL_.nproj[T0];
@@ -114,7 +114,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
 
     if (!any_active)
     {
-        ModuleBase::timer::tick("module_rt", "snap_psibeta_half_tddft");
+        ModuleBase::timer::end("module_rt", "snap_psibeta_half_tddft");
         return;
     }
 
@@ -345,7 +345,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     }
 
     assert(index_offset == natomwfc);
-    ModuleBase::timer::tick("module_rt", "snap_psibeta_half_tddft");
+    ModuleBase::timer::end("module_rt", "snap_psibeta_half_tddft");
 }
 
 } // namespace module_rt

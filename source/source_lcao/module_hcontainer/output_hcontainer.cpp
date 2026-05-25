@@ -143,6 +143,23 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
         _ofs << " " << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
         sparse_matrix.printToCSR(_ofs, _precision);
     }
+    else
+    {
+        // Write R-block header with 0 nonzero elements and empty CSR data
+        // to keep nR in file header consistent with actual R-block count
+        _ofs << " " << rx << " " << ry << " " << rz << " 0" << std::endl;
+        _ofs << " # CSR values" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR column indices" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR row pointers" << std::endl;
+        int nbasis = _hcontainer->get_nbasis();
+        for (int i = 0; i < nbasis + 1; i++)
+        {
+            _ofs << " 0";
+        }
+        _ofs << std::endl;
+    }
     this->_hcontainer->unfix_R();
 }
 

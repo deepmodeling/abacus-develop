@@ -45,10 +45,10 @@ void BigGrid::set_atoms_phi_len(std::vector<int>& phi_len) const
 void BigGrid::set_mgrids_coord(std::vector<Vec3d>& coord) const
 {
     coord.resize(biggrid_info_->get_mgrids_num());
-    Vec3d this_bgrid_coord = localcell_info_->get_bgrid_global_coord_3D(idx_);
+    Vec3d bgrid_coord = localcell_info_->get_bgrid_global_coord_3D(idx_);
     for(int im = 0; im < biggrid_info_->get_mgrids_num(); ++im)
     {
-        coord[im] = biggrid_info_->get_mgrid_coord(im) + this_bgrid_coord;
+        coord[im] = biggrid_info_->get_mgrid_coord(im) + bgrid_coord;
     }
 }
 
@@ -83,14 +83,14 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
     Vec3i this_bgrid_idx = localcell_info_->get_bgrid_global_idx_3D(idx_);
     
     // the relative coordinates of this big grid and the atom
-    Vec3d bgrid_relative_coord 
+    Vec3d bgrid_rcoord 
         = unitcell_info_->get_relative_coord(bgrid_idx, this_bgrid_idx) + tau_in_bgrid;
 
     atom_coord.resize(biggrid_info_->get_mgrids_num());
     for(int im = 0; im < biggrid_info_->get_mgrids_num(); ++im)
     {
         const Vec3d& mgrid_coord = biggrid_info_->get_mgrid_coord(im);
-        atom_coord[im] = mgrid_coord - bgrid_relative_coord;
+        atom_coord[im] = mgrid_coord - bgrid_rcoord;
     }
 }
 

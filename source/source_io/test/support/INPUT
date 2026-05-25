@@ -30,14 +30,14 @@ lspinorb                       0 #consider the spin-orbit interaction
 kpar                           1 #devide all processors into kpar groups and k points will be distributed among each group
 bndpar                         1 #devide all processors into bndpar groups and bands will be distributed among each group
 out_freq_elec                  0 #the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
-out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
 dft_plus_dmft                  0 #true:DFT+DMFT; false: standard DFT calcullation(default)
 rpa                            0 #true:generate output files used in rpa calculation; false:(default)
 mem_saver                      0 #Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.
 diago_proc                     4 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
-soc_lambda                     1 #The fraction of SOC based on scalar relativity (SR) of the pseudopotential
+soc_lambda                     1 #The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)
 cal_force                      0 #if calculate the force at the end of the electronic iteration
+out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
 device                         cpu #the computing device for ABACUS
 
 #Parameters (2.PW)
@@ -278,7 +278,7 @@ exx_hybrid_step                100 #
 exx_mixing_beta                1.0 #
 exx_fock_lambda              0.3 #
 exx_real_number                default #0 or 1
-exx_singularity_correction     default #spencer or revised_spencer
+exx_singularity_correction     default #spencer, revised_spencer, massidda, limits, carrier
 exx_pca_threshold              0 #
 exx_c_threshold                0 #
 exx_v_threshold                0 #
@@ -290,7 +290,12 @@ exx_v_grad_r_threshold         0 #
 exx_ccp_rmesh_times            default #
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
-exx_opt_orb_tolerence          1E-12 #
+exx_opt_orb_tolerence          0 #
+shrink_abfs_pca_thr            0.02 #
+shrink_lu_inv_thr              1e-5 #
+exx_coul_moment                1 #
+exx_rotate_abfs                1 #
+exx_multip_moments_threshold   1e-12 #
 
 #Parameters (16.tddft)
 td_vext                        0 #add extern potential or not
@@ -387,7 +392,3 @@ nsc_min                        4 #Minimum number of spin-constrained iteration
 sc_scf_nmin                    4 #Minimum number of outer scf loop before initializing lambda loop
 alpha_trial                    0.02 #Initial trial step size for lambda in eV/uB^2
 sccut                          4 #Maximal step size for lambda in eV/uB
-
-#Parameters (23. Time-dependent orbital-free DFT)
-of_cd                    0 #0: no CD potential; 1: add CD potential
-of_mCD_alpha                   1.0 # parameter of modified CD potential

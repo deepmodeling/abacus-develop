@@ -2,6 +2,7 @@
 #define CAL_ATOMS_INFO_H
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_nelec_nband.h"
+#include "source_base/global_function.h"
 class CalAtomsInfo
 {
   public:
@@ -27,7 +28,8 @@ class CalAtomsInfo
                     para.input.nupdown  += atoms[it].mag[ia];
                 }
             }
-            GlobalV::ofs_running << " The readin total magnetization is " << para.inp.nupdown  << std::endl;
+            GlobalV::ofs_running << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The readin total magnetization", para.inp.nupdown);
         }
 
 

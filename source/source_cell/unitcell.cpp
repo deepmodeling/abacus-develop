@@ -7,6 +7,7 @@
 #include "unitcell.h"
 #include "bcast_cell.h"
 #include "source_base/tool_quit.h"
+#include "source_io/module_output/output.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/read_stru.h"
 #include "source_base/atom_in.h"
@@ -469,7 +470,7 @@ void UnitCell::setup(const std::string& latname_in,
 }
 
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2)
+void UnitCell::compare_atom_labels(const std::string& label1, const std::string& label2) const
 {
     if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {

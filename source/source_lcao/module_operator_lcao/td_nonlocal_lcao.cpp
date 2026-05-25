@@ -3,9 +3,11 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
 #ifdef __CUDA
 #include "source_base/module_device/device.h"
@@ -60,7 +62,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
         return;
     }
     ModuleBase::TITLE("TDNonlocal", "initialize_HR");
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR");
+    ModuleBase::timer::start("TDNonlocal", "initialize_HR");
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
@@ -93,7 +95,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
         this->adjs_all.push_back(adjs);
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR");
+    ModuleBase::timer::end("TDNonlocal", "initialize_HR");
 }
 
 // initialize_HR_tmp()
@@ -105,7 +107,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const P
         return;
     }
     ModuleBase::TITLE("TDNonlocal", "initialize_HR_tmp");
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
+    ModuleBase::timer::start("TDNonlocal", "initialize_HR_tmp");
 
     for (int i = 0; i < this->hR->size_atom_pairs(); ++i)
     {
@@ -122,14 +124,14 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const P
     }
     this->hR_tmp->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("TDNonlocal", "initialize_HR_tmp");
+    ModuleBase::timer::end("TDNonlocal", "initialize_HR_tmp");
 }
 
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("TDNonlocal", "calculate_HR");
-    ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
+    ModuleBase::timer::start("TDNonlocal", "calculate_HR");
 
     // Determine whether to use GPU path:
     // GPU is only used when both __CUDA is defined AND device is set to "gpu"
@@ -169,7 +171,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
         if (use_gpu)
         {
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::start("TD_Efficiency", "snap_psibeta");
 #ifdef __CUDA
             // GPU path: Atom-level GPU batch processing
             module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
@@ -184,11 +186,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                         nlm_dim,
                                                         nlm_tot);
 #endif
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::end("TD_Efficiency", "snap_psibeta");
         }
         else
         {
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::start("TD_Efficiency", "snap_psibeta");
             // CPU path: OpenMP parallel over neighbors to compute nlm_tot
 #pragma omp parallel for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -227,7 +229,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                 }
             }
-            ModuleBase::timer::tick("TD_Efficiency", "snap_psibeta");
+            ModuleBase::timer::end("TD_Efficiency", "snap_psibeta");
         }
 
         // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
@@ -322,7 +324,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         } // end omp parallel for matrix assembly
     }     // end for iat0
-    ModuleBase::timer::tick("TDNonlocal", "calculate_HR");
+    ModuleBase::timer::end("TDNonlocal", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -451,7 +453,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         return;
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+    ModuleBase::timer::start("TDNonlocal", "contributeHR");
 
     if (!this->hR_tmp_done || TD_info::evolve_once)
     {
@@ -475,7 +477,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         TD_info::evolve_once = false;
     }
 
-    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+    ModuleBase::timer::end("TDNonlocal", "contributeHR");
     return;
 }
 

@@ -24,8 +24,8 @@ class BigGridInfo
 
         ~BigGridInfo();
         
-        Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; }
-        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; }
+        Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * bgrid_latvec0_; }
+        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * bgrid_latvec0_; }
         Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; }
 
         // Return the maximum number of big grids that can fit inside a sphere of radius r,
@@ -38,8 +38,8 @@ class BigGridInfo
         int get_nmz() const { return nmz_; }
         int get_mgrids_num() const { return nmxyz_; }
 
-        const std::vector<Vec3d>& get_mgrids_coord() const { return meshgrid_coords_; }
-        const Vec3d& get_mgrid_coord(int index_1d) const { return meshgrid_coords_[index_1d]; }
+        const std::vector<Vec3d>& get_mgrids_coord() const { return mgrid_coords_; }
+        const Vec3d& get_mgrid_coord(int index_1d) const { return mgrid_coords_[index_1d]; }
 
         std::shared_ptr<const MeshGridInfo> get_mgrid_info() const { return meshgrid_info_; }
 
@@ -63,12 +63,12 @@ class BigGridInfo
 
         // used to convert the (i, j, k) index of the big grid to the Cartesian coordinate
         // if biggrid_vec1_ is row vector,
-        // then biggrid_latvec0_ = [biggrid_vec1_; biggrid_vec2_; biggrid_vec3_],
-        // (i, j, k) * biggrid_latvec0_ = (x, y, z)
-        Matrix3 biggrid_latvec0_;
+        // then bgrid_latvec0_ = [biggrid_vec1_; biggrid_vec2_; biggrid_vec3_],
+        // (i, j, k) * bgrid_latvec0_ = (x, y, z)
+        Matrix3 bgrid_latvec0_;
 
         // used to convert the Cartesian coordinate to the (i, j, k) index of the big grid
-        // biggrid_GT_ = biggrid_latvec0_.Inverse()
+        // biggrid_GT_ = bgrid_latvec0_.Inverse()
         // (x, y, z) * biggrid_GT_ = (i, j, k)
         Matrix3 biggrid_GT_;
 
@@ -95,7 +95,7 @@ class BigGridInfo
 
         // store the relative Cartesian coordinates of all meshgrids in the biggrid
         // the size of vector is nbxyz_
-        std::vector<Vec3d> meshgrid_coords_;
+        std::vector<Vec3d> mgrid_coords_;
 };
 
 } // namespace ModuleGint

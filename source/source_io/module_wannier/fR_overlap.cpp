@@ -71,7 +71,7 @@ template <typename T>
 void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("FR_overlap", "initialize_FR");
-    ModuleBase::timer::tick("FR_overlap", "initialize_FR");
+    ModuleBase::timer::start("FR_overlap", "initialize_FR");
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -104,14 +104,14 @@ void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbit
     }
     // allocate the memory of BaseMatrix in FR_container, and set the new values to zero
     FR_container->allocate(nullptr, true);
-    ModuleBase::timer::tick("FR_overlap", "initialize_FR");
+    ModuleBase::timer::end("FR_overlap", "initialize_FR");
 }
 
 template <typename T>
 void FR_overlap<T>::calculate_FR()
 {
     ModuleBase::TITLE("FR_overlap", "calculate_FR");
-    ModuleBase::timer::tick("FR_overlap", "calculate_FR");
+    ModuleBase::timer::start("FR_overlap", "calculate_FR");
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -133,7 +133,7 @@ void FR_overlap<T>::calculate_FR()
         }
     }
 
-    ModuleBase::timer::tick("FR_overlap", "calculate_FR");
+    ModuleBase::timer::end("FR_overlap", "calculate_FR");
 }
 
 template <typename T>

@@ -4,7 +4,7 @@
 #include "structure_factor.h"
 #include "source_base/constants.h"
 #include "source_base/math_bspline.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
 
@@ -56,7 +56,7 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("Structure_Factor","setup");
-    ModuleBase::timer::tick("Structure_Factor","setup");
+    ModuleBase::timer::start("Structure_Factor","setup");
 
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
     this->ucell = Ucell;
@@ -85,18 +85,22 @@ void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, 
     {
         for (int it=0; it<Ucell->ntype; it++)
         {
-	    	const int na = Ucell->atoms[it].na;
-	    	const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau.data();
+            const int na = Ucell->atoms[it].na;
+            const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau.data();
+            // Data race fix: cache shared data to local const variables before OpenMP parallel region
+            // TSan detected race condition when accessing rho_basis->npw and rho_basis->gcar directly
+            // in parallel loop, even though they are logically read-only
+            const int npw = rho_basis->npw;
+            const ModuleBase::Vector3<double> * const gcar = rho_basis->gcar;
 #ifdef _OPENMP
-		    #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-            for (int ig=0; ig<rho_basis->npw; ig++)
+            for (int ig=0; ig<npw; ig++)
             {
-		    	const ModuleBase::Vector3<double> gcar_ig = rho_basis->gcar[ig];
+                const ModuleBase::Vector3<double> gcar_ig = gcar[ig];
                 std::complex<double> sum_phase = ModuleBase::ZERO;
                 for (int ia=0; ia<na; ia++)
                 {
-                    // e^{-i G*tau}
                     sum_phase += ModuleBase::libm::exp( ci_tpi * (gcar_ig * tau[ia]) );
                 }
                 this->strucFac(it,ig) = sum_phase;
@@ -186,7 +190,7 @@ void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, 
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("Structure_Factor","setup");
+    ModuleBase::timer::end("Structure_Factor","setup");
     return;
 }
 

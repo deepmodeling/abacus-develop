@@ -6,6 +6,7 @@
 #ifdef USE_LIBXC
 
 #include "write_libxc_r.h"
+#include "source_base/parallel_comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/xc_functional_libxc.h"
 #include "source_estate/module_charge/charge.h"
@@ -34,7 +35,7 @@ void ModuleIO::write_libxc_r(
 	const ModulePW::PW_Basis &pw_rhod)
 {
 	ModuleBase::TITLE("ModuleIO","write_libxc_r");
-	ModuleBase::timer::tick("ModuleIO","write_libxc_r");
+	ModuleBase::timer::start("ModuleIO","write_libxc_r");
 
 	const int nspin =
 		(PARAM.inp.nspin == 1 || (
@@ -325,7 +326,7 @@ void ModuleIO::write_libxc_r(
 
 	XC_Functional_Libxc::finish_func(funcs);
 
-	ModuleBase::timer::tick("ModuleIO","write_libxc_r");
+	ModuleBase::timer::end("ModuleIO","write_libxc_r");
 }
 
 

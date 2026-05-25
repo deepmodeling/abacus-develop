@@ -1,4 +1,5 @@
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
@@ -12,7 +13,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 											 const Charge* const chr)
 {
     ModuleBase::TITLE("Stress","stress_har");
-	ModuleBase::timer::tick("Stress","stress_har");
+	ModuleBase::timer::start("Stress","stress_har");
 
     assert(rho_basis->nmaxgr>0);
 
@@ -149,7 +150,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(const UnitCell& ucell,
 	}
 
 	delete[] aux;
-	ModuleBase::timer::tick("Stress","stress_har");
+	ModuleBase::timer::end("Stress","stress_har");
 	return;
 }
 

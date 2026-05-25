@@ -32,7 +32,7 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, psi::Psi<T, Device>* psi, const Input_para& inp)
+void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp)
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
@@ -56,7 +56,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, psi::Psi<T, Device>* psi,
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, psi::Psi<T, Device>* psi,
+bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* psi,
                                         UnitCell& ucell, const Input_para& inp,
                                         bool& conv_esolver, int& iter)
 {
@@ -118,9 +118,9 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, psi::Psi
 }
 
 template <typename T, typename Device>
-double Exx_Helper<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_)
+double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 {
-    return op_exx->cal_exx_energy(psi_);
+    return op_exx->cal_exx_energy(static_cast<psi::Psi<T, Device>*>(psi_));
 
 }
 
@@ -156,11 +156,13 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::set_psi(psi::Psi<T, Device> *psi_)
+void Exx_Helper<T, Device>::set_psi(void* psi_)
 {
-    if (psi_ == nullptr)
+    auto* psi = static_cast<psi::Psi<T, Device>*>(psi_);
+    if (psi == nullptr)
         return;
-    op_exx->set_psi(*psi_);
+    this->psi = psi;
+    op_exx->set_psi(*psi);
     if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
     {
         op_exx->construct_ace();

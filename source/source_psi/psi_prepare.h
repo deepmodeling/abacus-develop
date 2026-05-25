@@ -2,13 +2,14 @@
 #define PSI_PREPARE_H
 #include "source_hamilt/hamilt.h"
 #include "source_psi/psi_initializer.h"
+#include "source_psi/psi_prepare_base.h"
 
 namespace psi
 {
 
 // This class is used to prepare the wavefunction
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class PSIPrepare
+class PSIPrepare : public PSIPrepareBase
 {
   public:
     PSIPrepare(const std::string& init_wfc_in,

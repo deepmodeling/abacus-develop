@@ -2,6 +2,7 @@ list(APPEND hamilt_ofdft_srcs
     kedf_tf.cpp
     kedf_vw.cpp
     kedf_wt.cpp
+    kedf_extwt.cpp
     kedf_xwm.cpp
     kedf_lkt.cpp
     kedf_manager.cpp
@@ -26,7 +27,7 @@ if(ENABLE_MLALGO)
       kedf_ml_label.cpp
       ml_base.cpp
       ml_base_pot.cpp
-      ml_tools/nn_of.cpp
+      nn_of.cpp
   )
 
   add_library(

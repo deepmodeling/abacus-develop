@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 
 #include "op_pw_veff.h"
 #include "op_pw_ekin.h"
@@ -272,7 +273,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           psi_in,
                           inc,
                           &zero,
@@ -288,7 +289,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           npw,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           psi_in,
                           nrow,
                           &zero,
@@ -360,7 +361,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           ps,
                           inc,
                           &one,
@@ -376,7 +377,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           ps,
                           this->ppcell->nkb,
                           &one,

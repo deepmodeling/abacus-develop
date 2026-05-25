@@ -4,38 +4,76 @@
 
 #include "op_exx_lcao.h"
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_restart/restart_exx_csr.h"
-#include "source_lcao/module_rt/td_info.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
+#include "source_io/module_restart/restart_exx_csr.h"
+#include "source_lcao/module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_rt/td_info.h"
 
 namespace hamilt
 {
-    using TAC = std::pair<int, std::array<int, 3>>;
+using TAC = std::pair<int, std::array<int, 3>>;
 
-    // allocate according to the read-in HexxR, used in nscf
-    template <typename Tdata, typename TR>
-    void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
-        HContainer<TR>* hR,
-        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
+// allocate according to the read-in HexxR, used in nscf
+template <typename Tdata, typename TR>
+void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+                           HContainer<TR>* hR,
+                           const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
+{
+    auto* pv = hR->get_paraV();
+    bool need_allocate = false;
+    for (auto& Htmp1: Hexxs[0])
     {
-        auto* pv = hR->get_paraV();
-        bool need_allocate = false;
-        for (auto& Htmp1 : Hexxs[0])
+        const int& iat0 = Htmp1.first;
+        for (auto& Htmp2: Htmp1.second)
         {
-            const int& iat0 = Htmp1.first;
-            for (auto& Htmp2 : Htmp1.second)
+            const int& iat1 = Htmp2.first.first;
+            if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
             {
-                const int& iat1 = Htmp2.first.first;
-                if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
+                const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
+                    (cell_nearest ? cell_nearest->get_cell_nearest_discrete(iat0, iat1, Htmp2.first.second)
+                                  : Htmp2.first.second));
+                BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
+                if (HlocR == nullptr)
+                { // add R to HContainer
+                    need_allocate = true;
+                    AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, pv);
+                    hR->insert_pair(tmp);
+                }
+            }
+        }
+    }
+    if (need_allocate)
+    {
+        hR->allocate(nullptr, true);
+    }
+}
+
+/// allocate according to BvK cells, used in scf
+template <typename TR>
+void reallocate_hcontainer(const int nat,
+                           HContainer<TR>* hR,
+                           const std::array<int, 3>& Rs_period,
+                           const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
+{
+    auto* pv = hR->get_paraV();
+    auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
+    bool need_allocate = false;
+    for (int iat0 = 0; iat0 < nat; ++iat0)
+    {
+        for (int iat1 = 0; iat1 < nat; ++iat1)
+        {
+            // complete the atom pairs that has orbitals in this processor but not in hR due to the adj_list
+            // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal
+            if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
+            {
+                for (auto& cell: Rs)
                 {
                     const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
-                        (cell_nearest ?
-                            cell_nearest->get_cell_nearest_discrete(iat0, iat1, Htmp2.first.second)
-                            : Htmp2.first.second));
+                        (cell_nearest ? cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell) : cell));
                     BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
+
                     if (HlocR == nullptr)
                     { // add R to HContainer
                         need_allocate = true;
@@ -45,50 +83,17 @@ namespace hamilt
                 }
             }
         }
-        if (need_allocate) { hR->allocate(nullptr, true); }
     }
-
-    /// allocate according to BvK cells, used in scf
-    template <typename TR>
-    void reallocate_hcontainer(const int nat, HContainer<TR>* hR,
-        const std::array<int, 3>& Rs_period,
-        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest)
+    if (need_allocate)
     {
-        auto* pv = hR->get_paraV();
-        auto Rs = RI_Util::get_Born_von_Karmen_cells(Rs_period);
-        bool need_allocate = false;
-        for (int iat0 = 0;iat0 < nat;++iat0)
-        {
-            for (int iat1 = 0;iat1 < nat;++iat1)
-            {
-                // complete the atom pairs that has orbitals in this processor but not in hR due to the adj_list 
-                // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal 
-                if(pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
-                {
-                    for (auto& cell : Rs)
-                    {
-                        const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
-                            (cell_nearest ?
-                                cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
-                                : cell));
-                        BaseMatrix<TR>* HlocR = hR->find_matrix(iat0, iat1, R.x, R.y, R.z);
-
-                        if (HlocR == nullptr)
-                        { // add R to HContainer
-                            need_allocate = true;
-                            AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, pv);
-                            hR->insert_pair(tmp);
-                        }
-                    }
-                }
-            }
-        }
-        if (need_allocate) { hR->allocate(nullptr, true);}
+        hR->allocate(nullptr, true);
     }
+}
 
 template <typename TK, typename TR>
-OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
-    HContainer<TR>*hR_in,
+OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(
+    HS_Matrix_K<TK>* hsk_in,
+    HContainer<TR>* hR_in,
     const UnitCell& ucell_in,
     const K_Vectors& kv_in,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
@@ -97,85 +102,95 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     const int istep,
     int* two_level_step_in,
     const bool restart_in)
-    : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
-    ucell(ucell_in),
-    kv(kv_in),
-    Hexxd(Hexxd_in),
-    Hexxc(Hexxc_in),
-    add_hexx_type(add_hexx_type_in),
-    istep(istep),
-    two_level_step(two_level_step_in),
-    restart(restart_in)
+    : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in), ucell(ucell_in), kv(kv_in), Hexxd(Hexxd_in), Hexxc(Hexxc_in),
+      add_hexx_type(add_hexx_type_in), istep(istep), two_level_step(two_level_step_in), restart(restart_in)
 {
     ModuleBase::TITLE("OperatorEXX", "OperatorEXX");
     this->cal_type = calculation_type::lcao_exx;
     const Parallel_Orbitals* const pv = hR_in->get_paraV();
 
     if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
-    {    // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
-        auto file_name_list_csr = []() -> std::vector<std::string>
-        {
+    { // if nscf, read HexxR first and reallocate hR according to the read-in HexxR
+        auto file_name_list_csr = []() -> std::vector<std::string> {
             std::vector<std::string> file_name_list;
-            for (int irank=0; irank<PARAM.globalv.nproc; ++irank) {
-                for (int is=0;is<PARAM.inp.nspin;++is) {
-                    file_name_list.push_back( PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(irank) + "_" + std::to_string(is) + ".csr" );
-            } }
+            for (int irank = 0; irank < PARAM.globalv.nproc; ++irank)
+            {
+                for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    file_name_list.push_back(PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(irank) + "_"
+                                             + std::to_string(is) + ".csr");
+                }
+            }
             return file_name_list;
         };
-        auto file_name_list_cereal = []() -> std::vector<std::string>
-        {
+        auto file_name_list_cereal = []() -> std::vector<std::string> {
             std::vector<std::string> file_name_list;
-            for (int irank=0; irank<PARAM.globalv.nproc; ++irank)
-                { file_name_list.push_back( "HexxR_" + std::to_string(irank) ); }
+            for (int irank = 0; irank < PARAM.globalv.nproc; ++irank)
+            {
+                file_name_list.push_back("HexxR_" + std::to_string(irank));
+            }
             return file_name_list;
         };
-        auto check_exist = [](const std::vector<std::string> &file_name_list) -> bool
-        {
-            for (const std::string &file_name : file_name_list)
+        auto check_exist = [](const std::vector<std::string>& file_name_list) -> bool {
+            for (const std::string& file_name: file_name_list)
             {
                 std::ifstream ifs(file_name);
                 if (!ifs.is_open())
-                    { return false; }
+                {
+                    return false;
+                }
             }
             return true;
         };
 
-        std::cout<<" Attention: The number of MPI processes must be strictly identical between SCF and NSCF when computing exact-exchange."<<std::endl;
+        std::cout << " Attention: The number of MPI processes must be strictly identical between SCF and NSCF when computing exact-exchange." << std::endl;
         if (check_exist(file_name_list_csr()))
         {
-            const std::string file_name_exx_csr = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
+            const std::string file_name_exx_csr
+                = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
             // Read HexxR in CSR format
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
                 if (this->add_hexx_type == Add_Hexx_Type::R)
-                    { reallocate_hcontainer(*Hexxd, this->hR); }
+                {
+                    reallocate_hcontainer(*Hexxd, this->hR);
+                }
             }
             else
             {
                 ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
                 if (this->add_hexx_type == Add_Hexx_Type::R)
-                    { reallocate_hcontainer(*Hexxc, this->hR); }
+                {
+                    reallocate_hcontainer(*Hexxc, this->hR);
+                }
             }
         }
         else if (check_exist(file_name_list_cereal()))
         {
             // Read HexxR in binary format (old version)
-            const std::string file_name_exx_cereal = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(PARAM.globalv.myrank);
+            const std::string file_name_exx_cereal
+                = PARAM.globalv.global_readin_dir + "HexxR_" + std::to_string(PARAM.globalv.myrank);
             std::ifstream ifs(file_name_exx_cereal, std::ios::binary);
             if (!ifs)
-                { ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >."); }
+            {
+                ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
+            }
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
                 if (this->add_hexx_type == Add_Hexx_Type::R)
-                    { reallocate_hcontainer(*Hexxd, this->hR); }
+                {
+                    reallocate_hcontainer(*Hexxd, this->hR);
+                }
             }
             else
-            {   
+            {
                 ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxc);
                 if (this->add_hexx_type == Add_Hexx_Type::R)
-                    { reallocate_hcontainer(*Hexxc, this->hR); }
+                {
+                    reallocate_hcontainer(*Hexxc, this->hR);
+                }
             }
         }
         else
@@ -185,25 +200,32 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         this->use_cell_nearest = false;
     }
     else
-    {   // if scf and Add_Hexx_Type::R, init cell_nearest and reallocate hR according to BvK cells
+    { // if scf and Add_Hexx_Type::R, init cell_nearest and reallocate hR according to BvK cells
         if (this->add_hexx_type == Add_Hexx_Type::R)
         {
             // if k points has no shift, use cell_nearest to reduce the memory cost
             this->use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
-                std::fmod(this->kv.get_koffset(1), 1.0), std::fmod(this->kv.get_koffset(2), 1.0)).norm() < 1e-10);
+                                                                  std::fmod(this->kv.get_koffset(1), 1.0),
+                                                                  std::fmod(this->kv.get_koffset(2), 1.0))
+                                          .norm()
+                                      < 1e-10);
 
-            const std::array<int, 3> Rs_period = { this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2] };
+            const std::array<int, 3> Rs_period = {this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2]};
             if (this->use_cell_nearest)
             {
                 this->cell_nearest = init_cell_nearest(ucell, Rs_period);
                 reallocate_hcontainer(ucell.nat, this->hR, Rs_period, &this->cell_nearest);
             }
-            else { reallocate_hcontainer(ucell.nat, this->hR, Rs_period); }
+            else
+            {
+                reallocate_hcontainer(ucell.nat, this->hR, Rs_period);
+            }
         }
 
         if (this->restart)
-        {///  Now only Hexx depends on DM, so we can directly read Hexx to reduce the computational cost.
-        /// If other operators depends on DM, we can also read DM and then calculate the operators to save the memory to store operator terms.
+        { ///  Now only Hexx depends on DM, so we can directly read Hexx to reduce the computational cost.
+            /// If other operators depends on DM, we can also read DM and then calculate the operators to save the
+            /// memory to store operator terms.
             assert(this->two_level_step != nullptr);
 
             if (this->add_hexx_type == Add_Hexx_Type::k)
@@ -215,10 +237,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
                         this->Hexxd_k_load[ik].resize(pv->get_local_size(), 0.0);
-                        this->restart = GlobalC::restart.load_disk(
-                            "Hexx", ik,
-                            pv->get_local_size(), this->Hexxd_k_load[ik].data(), false);
-                        if (!this->restart) { break; }
+                        this->restart = GlobalC::restart.load_disk("Hexx",
+                                                                   ik,
+                                                                   pv->get_local_size(),
+                                                                   this->Hexxd_k_load[ik].data(),
+                                                                   false);
+                        if (!this->restart)
+                        {
+                            break;
+                        }
                     }
                 }
                 else
@@ -227,124 +254,195 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
                         this->Hexxc_k_load[ik].resize(pv->get_local_size(), 0.0);
-                        this->restart = GlobalC::restart.load_disk(
-                            "Hexx", ik,
-                            pv->get_local_size(), this->Hexxc_k_load[ik].data(), false);
-                        if (!this->restart) { break; }
+                        this->restart = GlobalC::restart.load_disk("Hexx",
+                                                                   ik,
+                                                                   pv->get_local_size(),
+                                                                   this->Hexxc_k_load[ik].data(),
+                                                                   false);
+                        if (!this->restart)
+                        {
+                            break;
+                        }
                     }
                 }
             }
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
                 // read in Hexx(R)
-                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(PARAM.globalv.myrank);
+                const std::string restart_HR_path
+                    = GlobalC::restart.folder + "HexxR" + std::to_string(PARAM.globalv.myrank);
                 int all_exist = 1;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {
                     std::ifstream ifs(restart_HR_path + "_" + std::to_string(is) + ".csr");
-                    if (!ifs) { all_exist = 0; break; }
+                    if (!ifs)
+                    {
+                        all_exist = 0;
+                        break;
+                    }
                 }
-// Add MPI communication to synchronize all_exist across processes
-                #ifdef __MPI
+                // Add MPI communication to synchronize all_exist across processes
+#ifdef __MPI
                 Parallel_Reduce::reduce_min(all_exist);
-                #endif
+#endif
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
-                    if (GlobalC::exx_info.info_ri.real_number) {
+                    if (GlobalC::exx_info.info_ri.real_number)
+                    {
                         ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
                     }
-                    else {
+                    else
+                    {
                         ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
                     }
                 }
                 else
                 {
                     // Read HexxR in binary format (old version)
-                    const std::string restart_HR_path_cereal = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
+                    const std::string restart_HR_path_cereal
+                        = GlobalC::restart.folder + "HexxR_" + std::to_string(PARAM.globalv.myrank);
                     std::ifstream ifs(restart_HR_path_cereal, std::ios::binary);
                     int all_exist_cereal = ifs ? 1 : 0;
-                    #ifdef __MPI
+#ifdef __MPI
                     Parallel_Reduce::reduce_min(all_exist_cereal);
-                    #endif
+#endif
                     if (!all_exist_cereal)
                     {
-                        //no HexxR file in CSR or binary format
+                        // no HexxR file in CSR or binary format
                         this->restart = false;
                     }
                     else
                     {
-                        if (GlobalC::exx_info.info_ri.real_number) {
+                        if (GlobalC::exx_info.info_ri.real_number)
+                        {
                             ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
                         }
-                        else {
+                        else
+                        {
                             ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxc);
                         }
                     }
                 }
             }
 
-            if (!this->restart) {
+            if (!this->restart)
+            {
                 std::cout << "WARNING: Hexx not found, restart from the non-exx loop." << std::endl
-                    << "If the loaded charge density is EXX-solved, this may lead to poor convergence." << std::endl;
+                          << "If the loaded charge density is EXX-solved, this may lead to poor convergence."
+                          << std::endl;
             }
             GlobalC::restart.info_load.load_H_finish = this->restart;
         }
     }
 }
 
-template<typename TK, typename TR>
+template <typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (this->istep == 0
-        && PARAM.inp.calculation != "nscf"
-        && this->two_level_step != nullptr && *this->two_level_step == 0
-        && PARAM.inp.init_wfc != "file"
-        && !this->restart)
+
+    // 1. For NSCF
+    if (PARAM.inp.calculation == "nscf")
+    {
+        // Do nothing here, allow the code to proceed and calculate EXX.
+    }
+    // 2. For the first ionic step of SCF, relaxation, or MD:
+    else if (this->istep == 0)
+    {
+        // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
+        bool in_gga_pre_loop = (this->two_level_step != nullptr && *this->two_level_step == 0);
+
+        // Check if a high-quality initial guess is missing (neither reading wavefunctions from a file nor restarting)
+        bool lacks_good_guess = (PARAM.inp.init_wfc != "file" && !this->restart);
+
+        // If in the pre-convergence loop and lacking a good initial guess, skip adding the EXX contribution
+        if (in_gga_pre_loop && lacks_good_guess)
+        {
+            return; // In the non-EXX loop, skip adding EXX contribution
+        }
+    }
+    // 3. For subsequent ionic steps (istep > 0), add EXX normally
+
+    if (this->add_hexx_type == Add_Hexx_Type::k)
     {
         return;
-    }  //in the non-exx loop, do nothing 
-    if (this->add_hexx_type == Add_Hexx_Type::k) { return; }
+    }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         // add H(R) normally
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            RI_2D_Comm::add_HexxR(
-                this->current_spin,
-                GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxd,
-                *this->hR->get_paraV(),
-                PARAM.globalv.npol,
-                *this->hR,
-                this->use_cell_nearest ? &this->cell_nearest : nullptr);
+            RI_2D_Comm::add_HexxR(this->current_spin,
+                                  GlobalC::exx_info.info_global.hybrid_alpha,
+                                  *this->Hexxd,
+                                  *this->hR->get_paraV(),
+                                  PARAM.globalv.npol,
+                                  *this->hR,
+                                  this->use_cell_nearest ? &this->cell_nearest : nullptr);
         }
         else
         {
-            RI_2D_Comm::add_HexxR(
-                this->current_spin,
-                GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxc,
-                *this->hR->get_paraV(),
-                PARAM.globalv.npol,
-                *this->hR,
-                this->use_cell_nearest ? &this->cell_nearest : nullptr);
+            RI_2D_Comm::add_HexxR(this->current_spin,
+                                  GlobalC::exx_info.info_global.hybrid_alpha,
+                                  *this->Hexxc,
+                                  *this->hR->get_paraV(),
+                                  PARAM.globalv.npol,
+                                  *this->hR,
+                                  this->use_cell_nearest ? &this->cell_nearest : nullptr);
         }
     }
-    if (PARAM.inp.nspin == 2) { this->current_spin = 1 - this->current_spin; }
+    if (PARAM.inp.nspin == 2)
+    {
+        this->current_spin = 1 - this->current_spin;
+    }
 }
 
-template<typename TK, typename TR>
+template <typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHk");
     // Peize Lin add 2016-12-03
-    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
 
-    if (this->add_hexx_type == Add_Hexx_Type::R) { throw std::invalid_argument("Set Add_Hexx_Type::k sto call OperatorEXX::contributeHk()."); }
+    // Taoni Bao add 2026-05-15
+    // In RT-TDDFT, contributeHk is used, but two_level_step is reset to 0 at each ionic step.
+    // In order to add EXX correctly in for istep > 0, this->istep == 0 is needed to avoid skipping EXX calculation.
+    // 1. For NSCF
+    if (PARAM.inp.calculation == "nscf")
+    {
+        // Do nothing here, allow the code to proceed and calculate EXX.
+    }
+    // 2. For the first ionic step:
+    else if (this->istep == 0)
+    {
+        // If EXX is once turned on (two_level_step > 0), let OperatorEXX remember this
+        if (this->two_level_step != nullptr && *this->two_level_step > 0)
+        {
+            this->initial_gga_done = true;
+        }
+
+        // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
+        bool in_gga_pre_loop = (this->two_level_step != nullptr && *this->two_level_step == 0);
+
+        // Check if a high-quality initial guess is missing
+        bool lacks_good_guess = (!this->restart);
+
+        // If in the pre-convergence loop and lacking a good initial guess, skip adding the EXX contribution
+        // Taoni Bao add 2026-05-18, only skip EXX if initial GGA loop is not done
+        // Fix RT-TDDFT EXX missing problem in the evolution
+        if (in_gga_pre_loop && lacks_good_guess && !this->initial_gga_done)
+        {
+            return; // In the non-EXX loop, skip adding EXX contribution
+        }
+    }
+    // 3. For subsequent ionic steps (istep > 0), add EXX normally
+
+    if (this->add_hexx_type == Add_Hexx_Type::R)
+    {
+        throw std::invalid_argument("Set Add_Hexx_Type::k to call OperatorEXX::contributeHk().");
+    }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
@@ -370,38 +468,38 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             }
         }
         // cal H(k) from H(R) normally
-        if(PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
         {
-            RI_2D_Comm::add_Hexx_td(
-                ucell,
-                this->kv,
-                ik,
-                GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxc,
-                *this->hR->get_paraV(),
-                TD_info::td_vel_op->cart_At,
-                this->hsk->get_hk());
+            RI_2D_Comm::add_Hexx_td(ucell,
+                                    this->kv,
+                                    ik,
+                                    GlobalC::exx_info.info_global.hybrid_alpha,
+                                    *this->Hexxc,
+                                    *this->hR->get_paraV(),
+                                    TD_info::td_vel_op->cart_At,
+                                    this->hsk->get_hk());
         }
         else
         {
-            if (GlobalC::exx_info.info_ri.real_number) {
-                RI_2D_Comm::add_Hexx(
-                    ucell,
-                    this->kv,
-                    ik,
-                    GlobalC::exx_info.info_global.hybrid_alpha,
-                    *this->Hexxd,
-                    *this->hR->get_paraV(),
-                    this->hsk->get_hk());
-            } else {
-                RI_2D_Comm::add_Hexx(
-                    ucell,
-                    this->kv,
-                    ik,
-                    GlobalC::exx_info.info_global.hybrid_alpha,
-                    *this->Hexxc,
-                    *this->hR->get_paraV(),
-                    this->hsk->get_hk());
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                RI_2D_Comm::add_Hexx(ucell,
+                                     this->kv,
+                                     ik,
+                                     GlobalC::exx_info.info_global.hybrid_alpha,
+                                     *this->Hexxd,
+                                     *this->hR->get_paraV(),
+                                     this->hsk->get_hk());
+            }
+            else
+            {
+                RI_2D_Comm::add_Hexx(ucell,
+                                     this->kv,
+                                     ik,
+                                     GlobalC::exx_info.info_global.hybrid_alpha,
+                                     *this->Hexxc,
+                                     *this->hR->get_paraV(),
+                                     this->hsk->get_hk());
             }
         }
     }

@@ -6,7 +6,7 @@
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_recip");
-    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_recip");
+    ModuleBase::timer::start("Charge_Mixing", "mix_rho_recip");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
@@ -306,14 +306,14 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_recip");
+    ModuleBase::timer::end("Charge_Mixing", "mix_rho_recip");
     return;
 }
 
 void Charge_Mixing::mix_rho_real(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho_real");
-    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real");
+    ModuleBase::timer::start("Charge_Mixing", "mix_rho_real");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
@@ -514,7 +514,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->mix_data(this->tau_mdata, taur_out);
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "mix_rho_real");
+    ModuleBase::timer::end("Charge_Mixing", "mix_rho_real");
     return;
 }
 
@@ -522,7 +522,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 void Charge_Mixing::mix_rho(Charge* chr)
 {
     ModuleBase::TITLE("Charge_Mixing", "mix_rho");
-    ModuleBase::timer::tick("Charge_Mixing", "mix_rho");
+    ModuleBase::timer::start("Charge_Mixing", "mix_rho");
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
@@ -608,6 +608,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
 		new_e_iteration = false;
 	}
 
-	ModuleBase::timer::tick("Charge_Mixing", "mix_rho");
+	ModuleBase::timer::end("Charge_Mixing", "mix_rho");
     return;
 }

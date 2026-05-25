@@ -4,6 +4,10 @@
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
 
+#ifdef __CUBLASMP
+#include "kernels/cuda/band_energy_kernel.cuh"
+#endif
+
 #include <complex>
 #include <iostream>
 
@@ -165,140 +169,226 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const ct::Tensor& Htmp,
                         const ct::Tensor& psi_k,
                         ct::Tensor& ekb,
-                        std::ofstream& ofs_running)
+                        std::ofstream& ofs_running,
+                        CublasMpResources& cublas_res)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
-
-    // Create Tensor objects for temporary data
-    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc_wfc}));
-    tmp1.zero();
-
-    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc}));
-    eij.zero();
-
-    // Perform matrix multiplication: tmp1 = Htmp * psi_k
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nband,
-                             nlocal,
-                             1.0,
-                             Htmp.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc,
-                             psi_k.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             tmp1.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc);
-
-    // Perform matrix multiplication: eij = psi_k^dagger * tmp1
-    ScalapackConnector::gemm('C',
-                             'N',
-                             nband,
-                             nband,
-                             nlocal,
-                             1.0,
-                             psi_k.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             tmp1.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             eij.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_Eij);
-
-    if (PARAM.inp.td_print_eij >= 0.0)
+#ifdef __CUBLASMP
+    // 1. Resource validation
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr)
     {
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
-        ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < pv->nrow_bands; i++)
-        {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol_bands; j++)
-            {
-                double aa = eij.data<std::complex<double>>()[in + j].real();
-                double bb = eij.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < PARAM.inp.td_print_eij)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < PARAM.inp.td_print_eij)
-                {
-                    bb = 0.0;
-                }
-                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
-                {
-                    std::streamsize original_precision = ofs_running.precision();
-                    ofs_running << std::fixed << std::setprecision(8);
-                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
-                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
-                                << std::endl;
-                    ofs_running.unsetf(std::ios_base::fixed);
-                    ofs_running.precision(original_precision);
-                }
-            }
-        }
-        ofs_running << std::endl;
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
+        return;
     }
 
-    int info = 0;
-    int naroc[2] = {0, 0};
+    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
+    assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
+    assert(ekb.device_type() == ct::DeviceType::GpuDevice);
 
-    // Create a Tensor for eii
-    assert(nband > 0);
-    ct::Tensor eii(ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({nband}));
-    eii.zero();
+    // 2. Data Pointers
+    void* d_H = static_cast<void*>(const_cast<std::complex<double>*>(Htmp.data<std::complex<double>>()));
+    void* d_Psi = static_cast<void*>(const_cast<std::complex<double>*>(psi_k.data<std::complex<double>>()));
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
-    {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
-        {
-            if (iprow == pv->coord[0] && ipcol == pv->coord[1])
-            {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
-                for (int j = 0; j < naroc[1]; ++j)
-                {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
-                    if (igcol >= nband)
-                    {
-                        continue;
-                    }
-                    for (int i = 0; i < naroc[0]; ++i)
-                    {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
-                        if (igrow >= nband)
-                        {
-                            continue;
-                        }
-                        if (igcol == igrow)
-                        {
-                            eii.data<double>()[igcol] = eij.data<std::complex<double>>()[j * naroc[0] + i].real();
-                        }
-                    }
-                }
-            }
-        } // loop ipcol
-    } // loop iprow
+    int64_t psi_elems = psi_k.NumElements();
+    ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
+    void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    // Perform MPI reduction to compute ekb
-    info = MPI_Allreduce(eii.data<double>(), ekb.data<double>(), nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    int64_t eij_elems = pv->nloc;
+    ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({eij_elems}));
+    void* d_Eij = static_cast<void*>(Eij_gpu.data<std::complex<double>>());
+
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta = {0.0, 0.0};
+
+    // 3. Matrix Descriptors Creation
+    cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_Eij;
+
+    // H descriptor: nlocal x nlocal
+    cublasMpMatrixDescriptorCreate(pv->desc[2],
+                                   pv->desc[3],
+                                   pv->desc[4],
+                                   pv->desc[5],
+                                   0,
+                                   0,
+                                   pv->desc[8],
+                                   CUDA_C_64F,
+                                   cublas_res.cublasmp_grid,
+                                   &desc_H);
+
+    // Psi descriptor: nlocal x nband
+    cublasMpMatrixDescriptorCreate(pv->desc_wfc[2],
+                                   pv->desc_wfc[3],
+                                   pv->desc_wfc[4],
+                                   pv->desc_wfc[5],
+                                   0,
+                                   0,
+                                   pv->desc_wfc[8],
+                                   CUDA_C_64F,
+                                   cublas_res.cublasmp_grid,
+                                   &desc_Psi);
+
+    // Eij descriptor: MUST use nband x nband physically, to match pv->desc_Eij expectations
+    cublasMpMatrixDescriptorCreate(nband,
+                                   nband,
+                                   pv->desc_Eij[4],
+                                   pv->desc_Eij[5],
+                                   0,
+                                   0,
+                                   pv->desc_Eij[8],
+                                   CUDA_C_64F,
+                                   cublas_res.cublasmp_grid,
+                                   &desc_Eij);
+
+    size_t ws_dev = 0, ws_host = 0;
+    void *d_work = nullptr, *h_work = nullptr;
+
+    // 4. GEMM 1: Tmp1 = H * Psi
+    cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
+                            CUBLAS_OP_N,
+                            CUBLAS_OP_N,
+                            pv->desc[2],
+                            pv->desc_wfc[3],
+                            pv->desc[3],
+                            &alpha,
+                            d_H,
+                            1,
+                            1,
+                            desc_H,
+                            d_Psi,
+                            1,
+                            1,
+                            desc_Psi,
+                            &beta,
+                            d_Tmp1,
+                            1,
+                            1,
+                            desc_Psi,
+                            CUBLAS_COMPUTE_64F,
+                            &ws_dev,
+                            &ws_host);
+
+    cudaMallocAsync(&d_work, ws_dev, cublas_res.stream);
+    h_work = malloc(ws_host);
+
+    cublasMpGemm(cublas_res.cublasmp_handle,
+                 CUBLAS_OP_N,
+                 CUBLAS_OP_N,
+                 pv->desc[2],
+                 pv->desc_wfc[3],
+                 pv->desc[3],
+                 &alpha,
+                 d_H,
+                 1,
+                 1,
+                 desc_H,
+                 d_Psi,
+                 1,
+                 1,
+                 desc_Psi,
+                 &beta,
+                 d_Tmp1,
+                 1,
+                 1,
+                 desc_Psi,
+                 CUBLAS_COMPUTE_64F,
+                 d_work,
+                 ws_dev,
+                 h_work,
+                 ws_host);
+
+    cudaFreeAsync(d_work, cublas_res.stream);
+    free(h_work);
+
+    // 5. GEMM 2: Eij = Psi^H * Tmp1
+    cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
+                            CUBLAS_OP_C,
+                            CUBLAS_OP_N,
+                            pv->desc_wfc[3],
+                            pv->desc_wfc[3],
+                            pv->desc_wfc[2],
+                            &alpha,
+                            d_Psi,
+                            1,
+                            1,
+                            desc_Psi,
+                            d_Tmp1,
+                            1,
+                            1,
+                            desc_Psi,
+                            &beta,
+                            d_Eij,
+                            1,
+                            1,
+                            desc_Eij,
+                            CUBLAS_COMPUTE_64F,
+                            &ws_dev,
+                            &ws_host);
+
+    cudaMallocAsync(&d_work, ws_dev, cublas_res.stream);
+    h_work = malloc(ws_host);
+
+    cublasMpGemm(cublas_res.cublasmp_handle,
+                 CUBLAS_OP_C,
+                 CUBLAS_OP_N,
+                 pv->desc_wfc[3],
+                 pv->desc_wfc[3],
+                 pv->desc_wfc[2],
+                 &alpha,
+                 d_Psi,
+                 1,
+                 1,
+                 desc_Psi,
+                 d_Tmp1,
+                 1,
+                 1,
+                 desc_Psi,
+                 &beta,
+                 d_Eij,
+                 1,
+                 1,
+                 desc_Eij,
+                 CUBLAS_COMPUTE_64F,
+                 d_work,
+                 ws_dev,
+                 h_work,
+                 ws_host);
+
+    cudaFreeAsync(d_work, cublas_res.stream);
+    free(h_work);
+
+    // 6. Extract Diagonal directly on GPU
+    // Prepare a zero-initialized buffer on GPU to store the local parts of the diagonal
+    ct::Tensor eii_gpu(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({nband}));
+    double* d_eii = static_cast<double*>(eii_gpu.data<double>());
+    cudaMemsetAsync(d_eii, 0, nband * sizeof(double), cublas_res.stream);
+
+    // Launch the extraction kernel
+    module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_Eij),
+                                              d_eii,
+                                              pv->desc_Eij[8],
+                                              pv->nloc,
+                                              pv->desc_Eij[4],
+                                              pv->dim0,
+                                              pv->dim1,
+                                              pv->coord[0],
+                                              pv->coord[1],
+                                              nband,
+                                              cublas_res.stream);
+
+    // 7. CUDA-aware MPI Reduction
+    // VERY IMPORTANT: We must synchronize the stream before passing the GPU pointer
+    // to MPI, because MPI operations are generally synchronous to the CPU thread.
+    cudaStreamSynchronize(cublas_res.stream);
+
+    double* d_ekb = static_cast<double*>(ekb.data<double>());
+
+    // Direct GPU-to-GPU reduction using CUDA-aware MPI
+    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+
+    // 8. Cleanup
+    cublasMpMatrixDescriptorDestroy(desc_H);
+    cublasMpMatrixDescriptorDestroy(desc_Psi);
+    cublasMpMatrixDescriptorDestroy(desc_Eij);
+#endif // __CUBLASMP
 }
 
 template <typename Device>

@@ -74,7 +74,7 @@ int SepPot::read_sep(std::ifstream& ifs)
     return 0;
 }
 
-void SepPot::print_sep_info(std::ofstream& ofs)
+void SepPot::print_sep_info(std::ofstream& ofs) const
 {
     ofs << "\n sep_vl:";
     ofs << "\n sep_info:";
@@ -84,7 +84,7 @@ void SepPot::print_sep_info(std::ofstream& ofs)
     ofs << "\n strip electron" << strip_elec;
 }
 
-void SepPot::print_sep_vsep(std::ofstream& ofs)
+void SepPot::print_sep_vsep(std::ofstream& ofs) const
 {
     ofs << "\n mesh  " << mesh;
     output::printr1_d(ofs, " r : ", r, mesh);

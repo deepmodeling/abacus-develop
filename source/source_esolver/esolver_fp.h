@@ -6,7 +6,6 @@
 #include "source_base/timer_wrapper.h"
 
 #include "source_basis/module_pw/pw_basis.h" // plane wave basis
-#include "source_cell/module_symmetry/symmetry.h" // symmetry analysis
 #include "source_estate/elecstate.h" // electronic states
 #include "source_estate/module_charge/charge_extra.h" // charge extrapolation
 #include "source_hamilt/module_surchem/surchem.h" // solvation model
@@ -59,9 +58,9 @@ class ESolver_FP: public ESolver
     //!          dense grid for for uspp, used for ultrasoft augmented charge density.
     //!          charge density and potential are defined on dense grids,
     //!          but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
-    ModulePW::PW_Basis* pw_rho;
-    ModulePW::PW_Basis* pw_rhod;    //! dense grid for USPP
-    ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
+    ModulePW::PW_Basis* pw_rho = nullptr;
+    ModulePW::PW_Basis* pw_rhod = nullptr;    //! dense grid for USPP
+    ModulePW::PW_Basis_Big* pw_big = nullptr; ///< [temp] pw_basis_big class
 
     //! parallel for rho grid
     Parallel_Grid Pgrid;

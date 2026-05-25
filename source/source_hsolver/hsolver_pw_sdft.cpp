@@ -24,7 +24,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
-    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::start("HSolverPW_SDFT", "solve");
 
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
@@ -45,7 +45,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)
     {
-        ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
+        ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
         if (nbands > 0 && PARAM.globalv.ks_run)
         {
@@ -61,11 +61,11 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 #ifdef __MPI
         if (nbands > 0 && !PARAM.globalv.all_ks_run)
         {
-            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, &psi_cpu(ik, 0, 0));
+            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif
-        ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
+        ModuleBase::timer::end("HSolverPW_SDFT", "solve_KS");
         stoiter.orthog(ik, psi, stowf);
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
@@ -102,7 +102,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // for nscf, skip charge
     if (skip_charge)
     {
-        ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
+        ModuleBase::timer::end("HSolverPW_SDFT", "solve");
         return;
     }
 
@@ -117,7 +117,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     stoiter.cal_storho(ucell, stowf, pes_pw,wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::end("HSolverPW_SDFT", "solve");
     return;
 }
 

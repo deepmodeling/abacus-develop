@@ -35,7 +35,7 @@ class HSolverLCAO
                              psi::Psi<TK>& psi,
                              elecstate::ElecState* pes);
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     
     const std::string method;
 };

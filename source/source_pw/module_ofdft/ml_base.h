@@ -8,7 +8,7 @@
 #include <cmath>
 
 #ifdef __MLALGO
-#include "source_pw/module_ofdft/ml_tools/nn_of.h"
+#include "source_pw/module_ofdft/nn_of.h"
 #include "source_io/module_ml/cal_mlkedf_descriptors.h"
 
 // The ML_Base class encapsulates common functionality for Machine Learning based
@@ -29,7 +29,7 @@ public:
     void dumpMatrix(std::string filename, const ModuleBase::matrix &data);
 
     int nx_tot = 0; // equal to nx (called by NN)
-    torch::Tensor get_data(std::string parameter, const int ikernel);
+    torch::Tensor get_data(std::string parameter, const int ikernel) const;
 
 protected:
     void updateInput(const double * const * prho, const ModulePW::PW_Basis *pw_rho);

@@ -1,8 +1,5 @@
 #include "elecstate.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "occupy.h"

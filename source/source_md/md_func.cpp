@@ -2,6 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 
 
 namespace MD_func
@@ -253,7 +254,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
-    ModuleBase::timer::tick("MD_func", "force_virial");
+    ModuleBase::timer::start("MD_func", "force_virial");
 
     p_esolver->runner(unit_in, istep);
 
@@ -280,7 +281,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         }
     }
 
-    ModuleBase::timer::tick("MD_func", "force_virial");
+    ModuleBase::timer::end("MD_func", "force_virial");
 
     return;
 }

@@ -15,7 +15,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               K_Vectors* p_kv)
 {
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
+    ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
 
     // total stress
     sigmatot.create(3, 3);
@@ -116,7 +116,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, screen, ry, GlobalV::ofs_running);
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
-    ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
+    ModuleBase::timer::end("OF_Stress_PW", "cal_stress");
     return;
 }
 

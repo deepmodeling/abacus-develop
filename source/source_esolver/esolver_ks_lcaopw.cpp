@@ -16,7 +16,6 @@
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
-#include "source_base/memory.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -56,7 +55,11 @@ namespace ModuleESolver
         //****************************************************
         delete this->psi_local;
         // delete Hamilt
-        this->deallocate_hamilt();
+        if (this->p_hamilt != nullptr)
+        {
+            delete this->p_hamilt;
+            this->p_hamilt = nullptr;
+        }
     }
 
     template <typename T>
@@ -68,29 +71,23 @@ namespace ModuleESolver
 #endif
         );
     }
-    template <typename T>
-    void ESolver_KS_LIP<T>::deallocate_hamilt()
-    {
-        if (this->p_hamilt != nullptr)
-        {
-            delete reinterpret_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt);
-            this->p_hamilt = nullptr;
-        }
-    }
+
     template <typename T>
     void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
     {
         ESolver_KS_PW<T>::before_scf(ucell, istep);
-        this->stp.p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
+        auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
+        p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
     }
 
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(UnitCell& ucell, const Input_para& inp)
     {
         ESolver_KS_PW<T>::before_all_runners(ucell, inp);
+        auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
         delete this->psi_local;
         this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
-                                          this->stp.p_psi_init->psi_initer->nbands_start(),
+                                          p_psi_init->psi_initer->nbands_start(),
                                           this->stp.psi_cpu->get_nbasis(),
                                           this->kv.ngk,
                                           true);
@@ -105,7 +102,7 @@ namespace ModuleESolver
                                                                            ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
-                                                                           this->stp.psi_t,
+                                                                           this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
@@ -131,7 +128,7 @@ namespace ModuleESolver
     void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
     {
         ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2rho_single");
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2rho_single");
+        ModuleBase::timer::start("ESolver_KS_LIP", "hamilt2rho_single");
 
         // reset energy
         this->pelec->f_en.eband = 0.0;
@@ -146,7 +143,7 @@ namespace ModuleESolver
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->stp.psi_t[0], this->pelec, 
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
@@ -157,18 +154,14 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2rho_single");
+        ModuleBase::timer::end("ESolver_KS_LIP", "hamilt2rho_single");
     }
 
     template <typename T>
@@ -244,7 +237,7 @@ namespace ModuleESolver
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
-                                *this->stp.psi_t,
+                                *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                 ucell,
                                 this->sf,
                                 this->solvent,

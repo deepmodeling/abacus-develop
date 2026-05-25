@@ -2,6 +2,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_reduce.h"
@@ -28,7 +29,7 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_subspace");
 
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -166,7 +167,7 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
     }
     delmem_complex_op()(vcc);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_subspace");
 }
 
 template <typename T, typename Device>
@@ -180,7 +181,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     const std::function<void(const T* const, const int, const int)>& export_vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace_init");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace_init");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_subspace_init");
 
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -205,6 +206,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
             }
             en[iband] = 0.0;
         }
+        ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_init");
         return;
     }
 
@@ -378,7 +380,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     delmem_complex_op()(hcc);
     delmem_complex_op()(scc);
     delmem_complex_op()(vcc);
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace_init");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_init");
 }
 
 template <typename T, typename Device>
@@ -390,7 +392,7 @@ void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
                                                        T *v)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_heevx");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_heevx");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_heevx");
 
     Real *eigenvalues = nullptr;
     // device memory for eigenvalues
@@ -400,14 +402,14 @@ void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
     // (const Device *d, const int matrix_size, const int lda, const T *A, const int num_eigenpairs, Real *eigenvalues, T *eigenvectors);
     heevx_op<T, Device>()(ctx, matrix_size, ldh, h, num_eigenpairs, eigenvalues, v);
 
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
 #if ((defined __CUDA) || (defined __ROCM))
         // eigenvalues to e, from device to host
         syncmem_var_d2h_op()(e, eigenvalues, num_eigenpairs);
 #endif
     }
-    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         // eigenvalues to e
         syncmem_var_op()(e, eigenvalues, num_eigenpairs);
@@ -415,7 +417,7 @@ void DiagoIterAssist<T, Device>::diag_heevx(const int matrix_size,
 
     delmem_var_op()(eigenvalues);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_heevx");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_heevx");
 }
 
 template <typename T, typename Device>
@@ -428,7 +430,7 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
                                               T *vcc)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_hegvd");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_hegvd");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_hegvd");
 
     Real *eigenvalues = nullptr;
     resmem_var_op()(eigenvalues, nstart);
@@ -436,14 +438,14 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
 
     hegvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
 #if ((defined __CUDA) || (defined __ROCM))
         // set eigenvalues in GPU to e in CPU
         syncmem_var_d2h_op()(e, eigenvalues, nbands);
 #endif
     }
-    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         // set eigenvalues in CPU to e in CPU
         syncmem_var_op()(e, eigenvalues, nbands);
@@ -466,7 +468,7 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
     //     dngvx_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
     // }
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_hegvd");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_hegvd");
 }
 
 template <typename T, typename Device>
@@ -549,7 +551,7 @@ void DiagoIterAssist<T, Device>::diag_responce( const T* hcc,
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_responce");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_responce");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_responce");
 
     const int nstart = nbands;
 
@@ -578,7 +580,7 @@ void DiagoIterAssist<T, Device>::diag_responce( const T* hcc,
 
     delmem_complex_op()(vcc);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_responce");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_responce");
 }
 
 template <typename T, typename Device>
@@ -590,7 +592,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace_psi");
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace_psi");
+    ModuleBase::timer::start("DiagoIterAssist", "diag_subspace_psi");
 
     const int nstart = dim_subspace;
     const int n_band = evc.get_nbands();
@@ -627,7 +629,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
 
     delmem_complex_op()(vcc);
 
-    ModuleBase::timer::tick("DiagoIterAssist", "diag_subspace_psi");
+    ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_psi");
 }
 
 template <typename T, typename Device>

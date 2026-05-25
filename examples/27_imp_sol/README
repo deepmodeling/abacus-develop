@@ -1,0 +1,96 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+# Implicit Solvation Model Examples
+
+This directory contains examples for performing calculations with implicit solvation model in ABACUS. The implicit solvation model is used to simulate the effects of a solvent environment without explicitly including solvent molecules.
+
+## What is Implicit Solvation Model?
+
+Implicit solvation models are computational methods that account for the solvent effect on a solute without explicitly including solvent molecules in the simulation. Instead, they use a continuum representation of the solvent, which significantly reduces computational cost compared to explicit solvation models.
+
+### Key Features:
+- Reduces computational cost compared to explicit solvent models
+- Captures the essential solvent effects on electronic structure
+- Suitable for studying solvation energies, reaction mechanisms, and spectroscopic properties in solution
+- Can be combined with various DFT functionals
+
+## Implicit Solvation Model in ABACUS
+
+ABACUS implements the implicit solvation model following the methodology developed by Mathew, Sundararaman, Letchworth-Weaver, Arias, and Hennig in 2014 [1]. This model calculates the solvation energy by considering the electrostatic interactions between the solute and the solvent continuum.
+
+### Key Parameters in INPUT
+
+To enable implicit solvation model in ABACUS, set the following parameters in the INPUT file:
+
+```
+INPUT_PARAMETERS
+imp_sol                 1    # Enable implicit solvation model
+eb_k                    80   # Relative permittivity of the solvent
+tau                     0.000010798  # Screening parameter
+sigma_k                 0.6  # Solvent probe radius (Å)
+nc_k                    0.00037  # Bulk solvent number density (1/Å³)
+```
+
+- `imp_sol`: Set to 1 to enable implicit solvation model
+- `eb_k`: Relative permittivity of the solvent (e.g., 80 for water)
+- `tau`: Screening parameter (default: 0.000010798)
+- `sigma_k`: Solvent probe radius in Å (default: 0.6)
+- `nc_k`: Bulk solvent number density in 1/Å³ (default: 0.00037)
+
+Both plane wave (PW) and LCAO basis sets are supported for implicit solvation model calculations.
+
+## Examples Included
+
+### 1. 01_pw_Pt_slab
+- **System**: Platinum slab in solvent environment
+- **Basis**: Plane wave (PW)
+- **Purpose**: Demonstrates implicit solvation model calculation for a solid-liquid interface
+- **Input Files**:
+  - `INPUT`: Contains the implicit solvation model parameters
+  - `STRU`: Describes the platinum slab structure
+  - `run.sh`: Script to run the calculation
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/examples/27_imp_sol/01_pw_Pt_slab
+   ```
+
+2. Run the calculation using the provided script:
+   ```bash
+   bash run.sh
+   ```
+
+3. Check the output files in the `OUT.ABACUS` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.ABACUS` directory:
+
+- `running_scf.log`: Log file for the SCF calculation
+
+## Calculating Solvation Energy
+
+The solvation energy is calculated by taking the difference between:
+1. Total energy with implicit solvation model enabled (`imp_sol == 1`)
+2. Total energy with implicit solvation model disabled (`imp_sol == 0`)
+
+A negative solvation energy indicates that the system is stabilized by the solvent.
+
+## Notes
+
+- The choice of `eb_k` (relative permittivity) determines the solvent type (e.g., 80 for water, 36.6 for methanol, 2.2 for hexane)
+- The accuracy of the implicit solvation model depends on the choice of parameters, especially `sigma_k` and `nc_k`
+- Implicit solvation models are most accurate for systems where solvent-solute interactions are primarily electrostatic
+- For systems with strong specific solvent-solute interactions, consider using explicit solvent models
+- The computational cost of implicit solvation model calculations is slightly higher than standard DFT calculations
+- The examples provided are for demonstration purposes; for production calculations, you should carefully test the convergence of results with respect to basis set, k-point sampling, and solvation model parameters
+
+## References
+
+[1] Mathew, N., Sundararaman, R., Letchworth-Weaver, K., Arias, T. A., & Hennig, R. G. (2014). Efficient implicit solvation model for density functional theory calculations. The Journal of Chemical Physics, 140(8), 084106.

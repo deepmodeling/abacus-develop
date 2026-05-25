@@ -1,7 +1,7 @@
 #include "dspin_lcao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_base/timer.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
@@ -219,7 +219,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
         return;
     }
     this->paraV = this->hR->get_paraV();
-    ModuleBase::timer::tick("DeltaSpin", "cal_pre_HR");
+    ModuleBase::timer::start("DeltaSpin", "cal_pre_HR");
     this->pre_hr.clear();
     this->pre_hr.resize(this->ucell->nat, nullptr);
 
@@ -375,7 +375,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
         memory_cost += this->pre_hr[iat]->get_memory_size();
     }
     ModuleBase::Memory::record("DeltaSpin:pre_HR", memory_cost);
-    ModuleBase::timer::tick("DeltaSpin", "cal_pre_HR");
+    ModuleBase::timer::end("DeltaSpin", "cal_pre_HR");
 }
 
 // cal_HR_IJR()

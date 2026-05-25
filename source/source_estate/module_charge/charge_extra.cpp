@@ -83,7 +83,7 @@ void Charge_Extra::extrapolate_charge(
     std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
-    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
+    ModuleBase::timer::start("Charge_Extra", "extrapolate_charge");
     //-------------------------------------------------------
     // Charge density extrapolation:
     //
@@ -109,6 +109,7 @@ void Charge_Extra::extrapolate_charge(
     {
         sf->setup(&ucell, *Pgrid, chr->rhopw);
         ofs_running << " charge density from previous step !" << std::endl;
+        ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
         return;
     }
 
@@ -193,7 +194,7 @@ void Charge_Extra::extrapolate_charge(
         delete[] rho_atom[is];
     }
     delete[] rho_atom;
-    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
+    ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
     return;
 }
 

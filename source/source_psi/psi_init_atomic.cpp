@@ -55,7 +55,7 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
                                            const pseudopot_cell_vnl* p_pspot_nl,
                                            const int& rank)
 {
-    ModuleBase::timer::tick("psi_init_atomic", "initialize");
+    ModuleBase::timer::start("psi_init_atomic", "initialize");
 
     if(p_pspot_nl == nullptr)
     {
@@ -73,13 +73,13 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 
-    ModuleBase::timer::tick("psi_init_atomic", "initialize");
+    ModuleBase::timer::end("psi_init_atomic", "initialize");
 }
 
 template <typename T>
 void psi_init_atomic<T>::tabulate()
 {
-    ModuleBase::timer::tick("psi_init_atomic", "tabulate");
+    ModuleBase::timer::start("psi_init_atomic", "tabulate");
     
     GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
     ModuleIO::print_PAOs(*this->p_ucell_);
@@ -217,7 +217,7 @@ void psi_init_atomic<T>::tabulate()
             }
         }
     }
-    ModuleBase::timer::tick("psi_init_atomic", "tabulate");
+    ModuleBase::timer::end("psi_init_atomic", "tabulate");
 }
 
 std::complex<double> phase_factor(double arg, int mode)
@@ -231,7 +231,7 @@ std::complex<double> phase_factor(double arg, int mode)
 template <typename T>
 void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
 {
-    ModuleBase::timer::tick("psi_init_atomic", "init_psig");
+    ModuleBase::timer::start("psi_init_atomic", "init_psig");
     const int npw = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
     int lmax = this->p_ucell_->lmax_ppwf;
@@ -482,7 +482,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
 	{
 		this->random_t(psig, index, this->nbands_start_, ik);
 	}
-    ModuleBase::timer::tick("psi_init_atomic", "init_psig");
+    ModuleBase::timer::end("psi_init_atomic", "init_psig");
 }
 
 template class psi_init_atomic<std::complex<double>>;

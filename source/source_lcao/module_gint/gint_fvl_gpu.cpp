@@ -11,11 +11,11 @@ namespace ModuleGint
 void Gint_fvl_gpu::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_fvl");
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::start("Gint", "cal_gint_fvl");
     init_dm_gint_();
-    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
+    dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
-    ModuleBase::timer::tick("Gint", "cal_gint_fvl");
+    ModuleBase::timer::end("Gint", "cal_gint_fvl");
 }
 
 void Gint_fvl_gpu::init_dm_gint_()
@@ -85,7 +85,7 @@ void Gint_fvl_gpu::cal_fvl_svl_()
         CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
         CHECK_CUDA(cudaStreamCreate(&stream));
-        PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
+        PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3_dm(BatchBigGrid::get_max_phi_len(), stream, false);

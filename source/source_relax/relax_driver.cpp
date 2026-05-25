@@ -15,7 +15,7 @@ void Relax_Driver::relax_driver(
 		const Input_para& inp)
 { 
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
     if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
     {
@@ -205,6 +205,6 @@ void Relax_Driver::relax_driver(
 		// do nothing 
 	}
 
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
 }

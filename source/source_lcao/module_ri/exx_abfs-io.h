@@ -6,8 +6,6 @@
 #include <map>
 #include <vector>
 #include "../../source_basis/module_ao/ORB_atomic_lm.h"
-#include "../../source_base/matrix.h"
-#include "../../source_base/element_basis_index.h"
 #include "source_cell/klist.h"
 #ifdef __MPI
 #include "mpi.h"

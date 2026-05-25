@@ -1,15 +1,13 @@
 #ifndef TOWannier90_LCAO_H
 #define TOWannier90_LCAO_H
 
-#include "source_base/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
@@ -21,9 +19,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "source_lcao/wavefunc_in_pw.h"
 #include "source_psi/psi.h"
-#include "../module_hs/single_R_io.h"
 #include "to_wannier90.h"
 
 #include <algorithm>
@@ -36,9 +32,7 @@
 
 #ifdef __LCAO
 #include "fR_overlap.h"
-#include "source_base/abfs-vector3_order.h"
 #include "source_base/math_lebedev_laikov.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
 
 class Coordinate_3D
 {
@@ -90,7 +84,10 @@ class toWannier90_LCAO : public toWannier90
                    const psi::Psi<double>& psi,
                    const Parallel_Orbitals* pv)
     {
-        throw std::logic_error("The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
+        ModuleBase::WARNING_QUIT("toWannier90_LCAO::calculate", 
+                                 "The wave function is real (double type), indicating 'gamma_only = 1'. "
+                                 "The Wannier90 interface does not support Gamma-only calculations. "
+                                 "Please set 'gamma_only 0' in your INPUT file.");
     }
 
     void cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
@@ -126,7 +123,7 @@ class toWannier90_LCAO : public toWannier90
     std::vector<int> iw2im;
     std::vector<int> iw2iorb;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 
     void initialize_orb_table(const UnitCell& ucell);
     void produce_basis_orb();

@@ -1,5 +1,6 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 
+#include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
@@ -10,6 +11,7 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
 #include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
@@ -58,7 +60,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
 
     //*****
     // if istep_in = -1, istep will not appear in file name
@@ -89,6 +91,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if (!out_flag)
     {
+        ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
         return;
     }
 
@@ -213,16 +216,27 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #endif
 
     //------------------------------------------------------------------
-    //! 7) Output <phi_i|O|phi_j> matrices, where O can be chosen as
-    //!    H, S, dH, dS, T, r. The format is CSR format.
+    //! 7a) Output H(R) and S(R) matrices in CSR format
+    //------------------------------------------------------------------
+    if (inp.out_mat_hs2[0])
+    {
+        const int precision = inp.out_mat_hs2[1];
+        std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
+        const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
+
+        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
+                            out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+    }
+
+    //------------------------------------------------------------------
+    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S)
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
-    ModuleIO::output_mat_sparse(inp.out_mat_hs2,
-                                inp.out_mat_dh,
-                                inp.out_mat_ds,
-                                inp.out_mat_t,
-                                inp.out_mat_r,
+    ModuleIO::output_mat_sparse(inp.out_mat_dh[0],
+                                inp.out_mat_ds[0],
+                                inp.out_mat_t[0],
+                                inp.out_mat_r[0],
                                 istep,
                                 pelec->pot->get_eff_v(),
                                 pv,
@@ -411,9 +425,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (inp.rpa)
     {
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
-        rpa_lri_double.cal_postSCF_exx(*dm, MPI_COMM_WORLD, ucell, kv, orb);
-        rpa_lri_double.init(MPI_COMM_WORLD, kv, orb.cutoffs());
-        rpa_lri_double.out_for_RPA(ucell, pv, *psi, pelec);
+        rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
     }
 #endif
 
@@ -464,10 +476,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 18) Calculate and output asynchronous overlap matrix for Hefei-NAMD
     //------------------------------------------------------------------
-    if (inp.cal_syns && (istep > 0 || inp.init_vel))
+    if (inp.cal_syns[0] > 0 && (istep > 0 || inp.init_vel))
     {
         ModuleBase::TITLE("ModuleIO", "output_namd_async_overlap");
-        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
+        ModuleBase::timer::start("ModuleIO", "output_namd_async_overlap");
 
         // Create a new Overlap instance specifically for SR_async calculation
         // This allows SR_async to be initialized with velocity-shifted dtau
@@ -482,8 +494,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 &gd,
                 two_center_bundle.overlap_orb.get());
 
-        // Use same precision as DMR output (default 8 if not specified)
-        const int precision = inp.out_dmr[0] > 0 ? inp.out_dmr[1] : 8;
+        // Use precision from cal_syns[1] (default 8 if not specified)
+        const int precision = inp.cal_syns[1];
         const Parallel_Orbitals* paraV = p_hamilt->getSR()->get_paraV();
         hamilt::HContainer<TR>* SR_async = overlap_async->calculate_SR_async(ucell, PARAM.mdp.md_dt, paraV);
         overlap_async->output_SR_async_csr(istep, SR_async, precision);
@@ -492,10 +504,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         delete SR_async;
         delete overlap_async;
 
-        ModuleBase::timer::tick("ModuleIO", "output_namd_async_overlap");
+        ModuleBase::timer::end("ModuleIO", "output_namd_async_overlap");
     }
 
-    ModuleBase::timer::tick("ModuleIO", "ctrl_scf_lcao");
+    ModuleBase::timer::end("ModuleIO", "ctrl_scf_lcao");
 }
 
 // For gamma only

@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
 #include "source_io/module_ctrl/ctrl_output_td.h"
@@ -30,7 +31,10 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         use_tensor = true;
-        use_lapack = true;
+        if (PARAM.inp.ks_solver != "cusolvermp")
+        {
+            use_lapack = true;
+        }
     }
 }
 
@@ -40,13 +44,23 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
     //*************************************************
     // Do not add any code in this destructor function
     //*************************************************
-    delete psi_laststep;
+    if (psi_laststep != nullptr)
+    {
+        delete psi_laststep;
+        psi_laststep = nullptr;
+    }
 
     if (td_p != nullptr)
     {
         delete td_p;
     }
     TD_info::td_vel_op = nullptr;
+
+    if (td_mg_ != nullptr)
+    {
+        delete td_mg_;
+        td_mg_ = nullptr;
+    }
 }
 
 template <typename TR, typename Device>
@@ -81,12 +95,30 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "runner");
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::start(this->classname, "runner");
 
     //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
+
+    // Initialize the moving spatial gauge
+    if (use_td_moving_gauge && this->td_mg_ == nullptr)
+    {
+        this->td_mg_ = new module_rt::TD_MovingGauge();
+        auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
+        const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
+        this->td_mg_->init_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+    }
+
+    if (PARAM.inp.td_stype == 2)
+    {
+        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+    }
+    else
+    {
+        this->dmat.dm->cal_DMR();
+    }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // Initialize velocity operator for current calculation
@@ -144,7 +176,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                         &this->sf,
                                         GlobalV::ofs_running,
                                         GlobalV::ofs_warning);
-            // need to test if correct when estep>0
+            this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp);
             this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
             if (totstep <= PARAM.inp.td_tend + 1)
@@ -208,7 +240,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         delete velocity_mat;
     }
 
-    ModuleBase::timer::tick(this->classname, "runner");
+    ModuleBase::timer::end(this->classname, "runner");
     return;
 }
 
@@ -217,7 +249,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 {
     std::cout << " -------------------------------------------" << std::endl;
-    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
+    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep)+1 << std::endl;
     std::cout << " -------------------------------------------" << std::endl;
 }
 
@@ -227,25 +259,38 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                           const int iter,
                                                           const double ethr)
 {
+    // Update the moving spatial gauge
+    if (use_td_moving_gauge)
+    {
+        auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
+        const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
+        this->td_mg_->update_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+    }
+
     if (PARAM.inp.init_wfc == "file")
     {
         if (istep >= TD_info::estep_shift + 1)
         {
-            module_rt::Evolve_elec<Device>::solve_psi(istep,
-                                                      PARAM.inp.nbands,
-                                                      PARAM.globalv.nlocal,
-                                                      this->kv.get_nks(),
-                                                      this->p_hamilt,
-                                                      this->pv,
-                                                      this->psi,
-                                                      this->psi_laststep,
-                                                      this->Hk_laststep,
-                                                      this->Sk_laststep,
-                                                      this->pelec->ekb,
-                                                      GlobalV::ofs_running,
-                                                      PARAM.inp.propagator,
-                                                      use_tensor,
-                                                      use_lapack);
+            module_rt::Evolve_elec<Device>::solve_psi(
+                istep,
+                PARAM.inp.nbands,
+                PARAM.globalv.nlocal,
+                this->kv.get_nks(),
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+                this->pv,
+                this->psi,
+                this->psi_laststep,
+                this->Hk_laststep,
+                this->Sk_laststep,
+                this->pelec->ekb,
+                GlobalV::ofs_running,
+                PARAM.inp.propagator,
+                use_tensor,
+                use_lapack,
+                this->td_mg_,
+                &ucell,
+                this->kv.kvec_d,
+                use_td_moving_gauge);
         }
         this->weight_dm_rho(ucell);
     }
@@ -255,7 +300,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   PARAM.inp.nbands,
                                                   PARAM.globalv.nlocal,
                                                   this->kv.get_nks(),
-                                                  this->p_hamilt,
+                                                  static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                                   this->pv,
                                                   this->psi,
                                                   this->psi_laststep,
@@ -265,7 +310,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   GlobalV::ofs_running,
                                                   PARAM.inp.propagator,
                                                   use_tensor,
-                                                  use_lapack);
+                                                  use_lapack,
+                                                  this->td_mg_,
+                                                  &ucell,
+                                                  this->kv.kvec_d,
+                                                  use_td_moving_gauge);
         this->weight_dm_rho(ucell);
     }
     else
@@ -277,7 +326,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt,
+            hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                    this->psi[0],
                                    this->pelec,
                                    *this->dmat.dm,
@@ -290,11 +339,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
     // Symmetrize the charge density only for ground state
     if (istep <= 1)
     {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
-        }
+        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
@@ -346,11 +391,18 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
     {
         if (use_tensor && use_lapack)
         {
-            elecstate::cal_edm_tddft_tensor_lapack<Device>(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft_tensor_lapack<Device>(
+                this->pv,
+                this->dmat,
+                this->kv,
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
         else
         {
-            elecstate::cal_edm_tddft(this->pv, this->dmat, this->kv, this->p_hamilt);
+            elecstate::cal_edm_tddft(this->pv,
+                                     this->dmat,
+                                     this->kv,
+                                     static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
         }
     }
 }
@@ -420,7 +472,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
             this->p_hamilt->updateHk(ik);
             hamilt::MatrixBlock<std::complex<double>> h_mat;
             hamilt::MatrixBlock<std::complex<double>> s_mat;
-            this->p_hamilt->matrix(h_mat, s_mat);
+            static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt)->matrix(h_mat, s_mat);
 
             // Store H and S matrices to Hk_laststep and Sk_laststep
             if (use_tensor && use_lapack)
@@ -493,7 +545,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_LCAO_TDDFT", "after_scf");
-    ModuleBase::timer::tick(this->classname, "after_scf");
+    ModuleBase::timer::start(this->classname, "after_scf");
 
     ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
 
@@ -519,7 +571,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  this->td_p,
                                  this->exx_nao);
 
-    ModuleBase::timer::tick(this->classname, "after_scf");
+    ModuleBase::timer::end(this->classname, "after_scf");
 }
 
 template <typename TR, typename Device>

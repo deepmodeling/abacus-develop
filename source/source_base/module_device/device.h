@@ -31,8 +31,10 @@ int get_device_num(std::string device_flag);
 /**
  * @brief Output the device information
  * for source_esolver
+ * @param output  output stream.
+ * @param device  device flag, "cpu" / "gpu" / "dsp".
  */
-void output_device_info(std::ostream& output);
+void output_device_info(std::ostream& output, const std::string& device);
 
 /**
  * @brief Safely probes for GPU availability without exiting on error.
@@ -116,18 +118,6 @@ public:
     void init();
 
     /**
-     * @brief Check if the DeviceContext has been initialized
-     * @return true if init() has been called successfully
-     */
-    bool is_initialized() const { return initialized_; }
-
-    /**
-     * @brief Check if GPU is enabled and available
-     * @return true if GPU device is bound and usable
-     */
-    bool is_gpu_enabled() const { return gpu_enabled_; }
-
-    /**
      * @brief Get the bound GPU device ID
      * @return Device ID (0-based), or -1 if not initialized
      */
@@ -158,7 +148,6 @@ private:
     int device_id_ = -1;
     int device_count_ = 0;
     int local_rank_ = 0;
-
     std::mutex init_mutex_;
 };
 

@@ -13,11 +13,10 @@
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_rt/evolve_elec.h"
-#include "source_lcao/module_rt/td_velocity.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "source_io/berryphase.h"
+#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_restart/restart.h"
 #include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
@@ -29,11 +28,6 @@
 #endif
 #undef private
 bool berryphase::berry_phase_flag = false;
-
-int TD_Velocity::out_current;
-bool TD_Velocity::out_current_k;
-bool TD_Velocity::out_vecpot;
-bool TD_Velocity::init_vecpot_file;
 double elecstate::Gatefield::zgate = 0.5;
 bool elecstate::Gatefield::relax = false;
 bool elecstate::Gatefield::block = false;
@@ -58,9 +52,6 @@ double elecstate::H_TDDFT_pw::dt_int;
 
 double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
-
-bool TD_Velocity::tddft_velocity;
-bool TD_Velocity::out_mat_R;
 
 // Gaussian
 int elecstate::H_TDDFT_pw::gauss_count;

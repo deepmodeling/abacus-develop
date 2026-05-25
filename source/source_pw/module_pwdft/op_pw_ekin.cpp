@@ -18,7 +18,7 @@ Ekinetic<OperatorPW<T, Device>>::Ekinetic(
   this->gk2 = gk2_in;
   this->gk2_row = gk2_row;
   this->gk2_col = gk2_col;
-  this->device = base_device::get_device_type<Device>(this->ctx);
+  this->device = base_device::get_device_type(this->ctx);
   if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) 
   {
       ModuleBase::WARNING_QUIT("EkineticPW", "Constuctor of Operator::EkineticPW is failed, please check your code!");
@@ -38,7 +38,7 @@ void Ekinetic<OperatorPW<T, Device>>::act(
     const int ngk_ik,
     const bool is_first_node)const
 {
-    ModuleBase::timer::tick("Operator", "EkineticPW");
+    ModuleBase::timer::start("Operator", "EkineticPW");
     int max_npw = nbasis / npol;
 
   const Real *gk2_ik = &(this->gk2[this->ik * this->gk2_col]);
@@ -53,7 +53,7 @@ void Ekinetic<OperatorPW<T, Device>>::act(
   //     tmhpsi += max_npw;
   //     tmpsi_in += max_npw;
   // }
-  ModuleBase::timer::tick("Operator", "EkineticPW");
+  ModuleBase::timer::end("Operator", "EkineticPW");
 }
 
 // copy construct added by denghui at 20221105
@@ -67,7 +67,7 @@ hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in
     this->gk2 = ekinetic->get_gk2();
     this->gk2_row = ekinetic->get_gk2_row();
     this->gk2_col = ekinetic->get_gk2_col();
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
         ModuleBase::WARNING_QUIT("EkineticPW", "Copy Constuctor of Operator::EkineticPW is failed, please check your code!");
     }

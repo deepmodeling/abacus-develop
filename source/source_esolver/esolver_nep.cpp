@@ -16,6 +16,7 @@
  * @date 2025-10-10
  */
 #include "esolver_nep.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
@@ -51,7 +52,7 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_NEP", "runner");
-    ModuleBase::timer::tick("ESolver_NEP", "runner");
+    ModuleBase::timer::start("ESolver_NEP", "runner");
 
     // note that NEP are column major, thus a transpose is needed
     // cell
@@ -130,7 +131,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 #else
     ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
 #endif
-    ModuleBase::timer::tick("ESolver_NEP", "runner");
+    ModuleBase::timer::end("ESolver_NEP", "runner");
 }
 
 double ESolver_NEP::cal_energy()

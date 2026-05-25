@@ -16,7 +16,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                        elecstate::DensityMatrix<double, double>& DM)
 {
     ModuleBase::TITLE("elecstate", "cal_dm_psi");
-    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
+    ModuleBase::timer::start("elecstate", "cal_dm_psi");
 
     // dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -66,7 +66,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         psiMulPsi(wg_wfc, wfc, dmk_pointer);
 #endif
     }
-    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
+    ModuleBase::timer::end("elecstate", "cal_dm_psi");
 
     return;
 }
@@ -77,7 +77,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                        elecstate::DensityMatrix<std::complex<double>, double>& DM)
 {
     ModuleBase::TITLE("elecstate", "cal_dm_psi");
-    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
+    ModuleBase::timer::start("elecstate", "cal_dm_psi");
 
     // dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -146,7 +146,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 #endif
     }
 
-    ModuleBase::timer::tick("elecstate", "cal_dm_psi");
+    ModuleBase::timer::end("elecstate", "cal_dm_psi");
     return;
 }
 
@@ -157,7 +157,7 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
                          const int* desc_psi,
                          const int* desc_dm)
 {
-    ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
+    ModuleBase::timer::start("psiMulPsiMpi", "pdgemm");
     const double one_float = 1.0, zero_float = 0.0;
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -183,7 +183,7 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
             one_int,
             one_int,
             desc_dm);
-    ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
+    ModuleBase::timer::end("psiMulPsiMpi", "pdgemm");
 }
 
 void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
@@ -192,7 +192,7 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
                          const int* desc_psi,
                          const int* desc_dm)
 {
-    ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
+    ModuleBase::timer::start("psiMulPsiMpi", "pdgemm");
     const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -217,7 +217,7 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
             one_int,
             one_int,
             desc_dm);
-    ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
+    ModuleBase::timer::end("psiMulPsiMpi", "pdgemm");
 }
 
 #endif

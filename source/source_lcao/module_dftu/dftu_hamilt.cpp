@@ -16,7 +16,7 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
         return;
     }
 
-	ModuleBase::timer::tick("Plus_U", "cal_eff_pot_c");
+	ModuleBase::timer::start("Plus_U", "cal_eff_pot_c");
 
     int spin = isk[ik];
 
@@ -50,14 +50,14 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 	}
 
 #ifdef __MPI
-  	pztranc_(&PARAM.globalv.nlocal, &PARAM.globalv.nlocal, 
-            &one, 
-            &VU[0], &one_int, &one_int, this->paraV->desc, 
-            &one, 
-            eff_pot, &one_int, &one_int, this->paraV->desc);
+   	ScalapackConnector::tranu(PARAM.globalv.nlocal, PARAM.globalv.nlocal, 
+            one, 
+            &VU[0], one_int, one_int, this->paraV->desc, 
+            one, 
+            eff_pot, one_int, one_int, this->paraV->desc);
 #endif
 
-	ModuleBase::timer::tick("Plus_U", "cal_eff_pot_c");
+	ModuleBase::timer::end("Plus_U", "cal_eff_pot_c");
     return;
 }
 
@@ -68,7 +68,7 @@ void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vect
     {
         return;
     }
-    ModuleBase::timer::tick("Plus_U", "cal_eff_pot_r");
+    ModuleBase::timer::start("Plus_U", "cal_eff_pot_r");
 
     int spin = isk[ik];
 
@@ -105,7 +105,7 @@ void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vect
             eff_pot, &one_int, &one_int, const_cast<int*>(this->paraV->desc));
 #endif
 
-    ModuleBase::timer::tick("Plus_U", "cal_eff_pot_r");
+    ModuleBase::timer::end("Plus_U", "cal_eff_pot_r");
     return;
 }
 

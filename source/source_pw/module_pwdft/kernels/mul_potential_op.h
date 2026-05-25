@@ -1,6 +1,5 @@
 #ifndef MUL_POTENTIAL_OP_H
 #define MUL_POTENTIAL_OP_H
-#include "source_psi/psi.h"
 #include "source_base/macros.h"
 
 namespace hamilt {

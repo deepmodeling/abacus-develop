@@ -1,4 +1,5 @@
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/math_integral.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_threading.h"
@@ -16,7 +17,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		const Charge* const chr)
 {
 	ModuleBase::TITLE("Stress","stress_loc");
-	ModuleBase::timer::tick("Stress","stress_loc");
+	ModuleBase::timer::start("Stress","stress_loc");
 
 	std::vector<FPTYPE> dvloc(rho_basis->npw);
 	FPTYPE evloc=0.0;
@@ -159,7 +160,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		}
 	}
 
-	ModuleBase::timer::tick("Stress","stress_loc");
+	ModuleBase::timer::end("Stress","stress_loc");
 	return;
 }
 
@@ -189,7 +190,7 @@ const UnitCell& ucell_in
 	
 
 	int igl0 = 0;
-	this->device = base_device::get_device_type<Device>(this->ctx);
+	this->device = base_device::get_device_type(this->ctx);
 
 	std::vector<double> gx_arr(rho_basis->ngg+1);
     double* gx_arr_d = nullptr;

@@ -54,6 +54,34 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_EQ(bfgs.largest_grad,0.0);
 }
 
+// Test that relax_step will auto-initialize if not already initialized
+TEST_F(BFGSTest, RelaxStepAutoInitialize)
+{
+    bfgs.is_initialized = false;
+
+    UnitCell ucell;
+    ucell.nat = 2;
+    ucell.ntype = 1;
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
+    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.lat0 = 1.0;
+
+    ModuleBase::matrix force(2, 3);
+    force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
+    force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
+
+    // Before relax_step, is_initialized should be false
+    EXPECT_FALSE(bfgs.is_initialized);
+    bfgs.relax_step(force, ucell);
+    // After relax_step, is_initialized should be true
+    EXPECT_TRUE(bfgs.is_initialized);
+}
+
 // Test if a dimension less than or equal to 0 results in an assertion error
 TEST_F(BFGSTest, TestAllocateWithZeroDimension)
 {
@@ -103,10 +131,8 @@ TEST_F(BFGSTest, GetPosAndPostaud)
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
 
     // set coordinates
-    ucell.atoms[0].tau[0].x = 1.0; ucell.atoms[0].tau[0].y = 2.0; ucell.atoms[0].tau[0].z = 3.0;
-    ucell.atoms[0].tau[1].x = 2.0; ucell.atoms[0].tau[1].y = 3.0; ucell.atoms[0].tau[1].z = 4.0;
-    ucell.atoms[0].taud[0].x = 0.1; ucell.atoms[0].taud[0].y = 0.2; ucell.atoms[0].taud[0].z = 0.3;
-    ucell.atoms[0].taud[1].x = 0.4; ucell.atoms[0].taud[1].y = 0.5; ucell.atoms[0].taud[1].z = 0.6;
+    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
 
     // allocate mapping arrays 
     ucell.iat2it = new int[ucell.nat];

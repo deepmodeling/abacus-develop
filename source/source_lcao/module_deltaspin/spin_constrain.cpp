@@ -34,7 +34,7 @@ double SpinConstrain<TK>::cal_escon()
 }
 
 template <typename TK>
-double SpinConstrain<TK>::get_escon()
+double SpinConstrain<TK>::get_escon() const
 {
     return this->escon_;
 }
@@ -67,7 +67,7 @@ void SpinConstrain<TK>::set_nspin(int nspin_in)
 
 /// get nspin
 template <typename TK>
-int SpinConstrain<TK>::get_nspin()
+int SpinConstrain<TK>::get_nspin() const
 {
     return this->nspin_;
 }
@@ -439,35 +439,35 @@ void SpinConstrain<TK>::set_input_parameters(double sc_thr_in,
 
 /// get sc_thr
 template <typename TK>
-double SpinConstrain<TK>::get_sc_thr()
+double SpinConstrain<TK>::get_sc_thr() const
 {
     return this->sc_thr_;
 }
 
 /// get nsc
 template <typename TK>
-int SpinConstrain<TK>::get_nsc()
+int SpinConstrain<TK>::get_nsc() const
 {
     return this->nsc_;
 }
 
 /// get nsc_min
 template <typename TK>
-int SpinConstrain<TK>::get_nsc_min()
+int SpinConstrain<TK>::get_nsc_min() const
 {
     return this->nsc_min_;
 }
 
 /// get alpha_trial
 template <typename TK>
-double SpinConstrain<TK>::get_alpha_trial()
+double SpinConstrain<TK>::get_alpha_trial() const
 {
     return this->alpha_trial_;
 }
 
 /// get sccut
 template <typename TK>
-double SpinConstrain<TK>::get_sccut()
+double SpinConstrain<TK>::get_sccut() const
 {
     return this->restrict_current_;
 }
@@ -481,7 +481,7 @@ void SpinConstrain<TK>::set_sc_drop_thr(double sc_drop_thr_in)
 
 /// get sc_drop_thr
 template <typename TK>
-double SpinConstrain<TK>::get_sc_drop_thr()
+double SpinConstrain<TK>::get_sc_drop_thr() const
 {
     return this->sc_drop_thr_;
 }

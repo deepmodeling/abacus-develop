@@ -32,6 +32,18 @@ namespace Conv_Coulomb_Pot_K
 		return rmesh_proportion;
 	}
 
+	template< typename T >
+	std::vector<T> cal_orbs_ccp_spencer(
+		const std::vector<T> & orbs,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const double rmesh_times)
+	{
+		std::vector<T> orbs_ccp(orbs.size());
+		for( size_t i=0; i!=orbs.size(); ++i )
+			orbs_ccp[i] = cal_orbs_ccp_spencer(orbs[i], coulomb_param, rmesh_times);
+		return orbs_ccp;
+	}
+
 	// for cal_orbs_ccp()
 	template<typename T>
 	std::vector<T> operator*(const T &s, const std::vector<T> &v_in)

@@ -39,7 +39,7 @@ MSST::~MSST()
 void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("MSST", "setup");
-    ModuleBase::timer::tick("MSST", "setup");
+    ModuleBase::timer::start("MSST", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
     ucell.cell_parameter_updated = true;
@@ -71,7 +71,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
         t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
     }
 
-    ModuleBase::timer::tick("MSST", "setup");
+    ModuleBase::timer::end("MSST", "setup");
 
     return;
 }
@@ -79,7 +79,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 void MSST::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("MSST", "first_half");
-    ModuleBase::timer::tick("MSST", "first_half");
+    ModuleBase::timer::start("MSST", "first_half");
 
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
@@ -126,7 +126,7 @@ void MSST::first_half(std::ofstream& ofs)
     /// rescale positions and change box size
     rescale(ofs, vol);
 
-    ModuleBase::timer::tick("MSST", "first_half");
+    ModuleBase::timer::end("MSST", "first_half");
 
     return;
 }
@@ -134,7 +134,7 @@ void MSST::first_half(std::ofstream& ofs)
 void MSST::second_half()
 {
     ModuleBase::TITLE("MSST", "second_half");
-    ModuleBase::timer::tick("MSST", "second_half");
+    ModuleBase::timer::start("MSST", "second_half");
 
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
@@ -153,7 +153,7 @@ void MSST::second_half()
     /// calculate Lagrangian position
     lag_pos -= msst_vel * ucell.omega / v0 * md_dt;
 
-    ModuleBase::timer::tick("MSST", "second_half");
+    ModuleBase::timer::end("MSST", "second_half");
 
     return;
 }
@@ -236,7 +236,7 @@ void MSST::restart(const std::string& global_readin_dir)
     return;
 }
 
-double MSST::vel_sum()
+double MSST::vel_sum() const
 {
     double vsum = 0;
 

@@ -1,5 +1,7 @@
 #include "op_pw_exx.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h"
 
@@ -14,7 +16,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                                           const int ngk_ik,
                                           const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op_ace");
     //    std::cout << "act_op_ace" << std::endl;
     // hpsi += -Xi^\dagger * Xi * psi
     T* Xi_ace = Xi_ace_k[this->ik];
@@ -45,7 +47,9 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbands_tot
     );
 
-    Parallel_Reduce::reduce_pool(Xi_psi, nbands_tot * nbands);
+#ifdef __MPI
+    Parallel_Common::reduce_dev<T, Device>(Xi_psi, nbands_tot * nbands, POOL_WORLD);
+#endif
 
     // Xi^\dagger * (Xi * psi)
     gemm_complex_op()(trans_C,
@@ -64,7 +68,7 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
     );
 
     delmem_complex_op()(Xi_psi);
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_ace");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op_ace");
 
 }
 
@@ -112,7 +116,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     }
 
     if (first_iter) return;
-    ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
+    ModuleBase::timer::start("OperatorEXXPW", "construct_ace");
 
     int nk_max = kv->para_k.get_max_nks_pool();
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -178,32 +182,9 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                         {
                             const T* psi_mq = get_pw(m_iband, iq_loc);
                             wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
-                            // send
                         }
-                        // if (iq == 0)
-                        //     std::cout << "Bcast psi_mq_real" << std::endl;
 #ifdef __MPI
-#ifdef __CUDA_MPI
-                        MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-#else
-                        if (PARAM.inp.device == "cpu")
-                        {
-                            MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-                        }
-                        else if (PARAM.inp.device == "gpu")
-                        {
-                            // need to copy to cpu first
-                            T* psi_mq_real_cpu = new T[wfcpw->nrxx];
-                            syncmem_complex_d2c_op()(psi_mq_real_cpu, psi_mq_real, wfcpw->nrxx);
-                            MPI_Bcast(psi_mq_real_cpu, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-                            syncmem_complex_c2d_op()(psi_mq_real, psi_mq_real_cpu, wfcpw->nrxx);
-                            delete[] psi_mq_real_cpu;
-                        }
-                        else
-                        {
-                            ModuleBase::WARNING_QUIT("OperatorEXXPW", "construct_ace: unknown device");
-                        }
-#endif
+                        Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
 #endif
 
                     } // end of iq
@@ -231,7 +212,9 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                                   nbands);
 
                 // reduction of psi_h_psi_ace, due to distributed memory
-                Parallel_Reduce::reduce_pool(psi_h_psi_ace, nbands * nbands);
+#ifdef __MPI
+                Parallel_Common::reduce_dev<T, Device>(psi_h_psi_ace, nbands * nbands, POOL_WORLD);
+#endif
 
                 T intermediate_minus_one = -1.0;
                 axpy_complex_op()(nbands * nbands,
@@ -300,7 +283,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
 
     *ik_ = ik_save;
 
-    ModuleBase::timer::tick("OperatorEXXPW", "construct_ace");
+    ModuleBase::timer::end("OperatorEXXPW", "construct_ace");
 
 }
 

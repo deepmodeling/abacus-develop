@@ -56,9 +56,9 @@ class Get_wf_lcao
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
 
-    int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+    int globalIndex(int localindex, int nblk, int nprocs, int myproc) const;
 
-    int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
+    int localIndex(int globalindex, int nblk, int nprocs, int& myproc) const;
 
 #ifdef __MPI
     template <typename T>

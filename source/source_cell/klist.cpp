@@ -2,7 +2,6 @@
 
 #include "k_vector_utils.h"
 #include "source_base/formatter.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
@@ -86,6 +85,18 @@ void K_Vectors::set(const UnitCell& ucell,
     // output kpoints file
     std::string skpt1;
     std::string skpt2;
+
+    if (!this->kc_done && this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_d[ik] * reciprocal_vec;
+    }
+    else if (this->kc_done && !this->kd_done)
+    {
+        for (size_t ik = 0; ik != this->nkstot_full; ++ik)
+            this->kvec_c_full[ik] = this->kvec_c[ik];
+    }
+
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -182,6 +193,7 @@ void K_Vectors::renew(const int& kpoint_number)
 {
     kvec_c.resize(kpoint_number);
     kvec_d.resize(kpoint_number);
+    kvec_c_full.resize(kpoint_number);
     wk.resize(kpoint_number);
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);
@@ -234,8 +246,16 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         std::ofstream ofs(fn.c_str());
         ofs << "K_POINTS" << std::endl;
         ofs << "0" << std::endl;
-        ofs << "Gamma" << std::endl;
-        ofs << nk1 << " " << nk2 << " " << nk3 << " 0 0 0" << std::endl;
+        if (PARAM.inp.kmesh_type == "mp")
+        {
+            ofs << "Monkhorst-Pack" << std::endl;
+        }
+        else
+        {
+            ofs << "Gamma" << std::endl;
+        }
+        ofs << nk1 << " " << nk2 << " " << nk3 << " " << PARAM.inp.koffset[0] << " " << PARAM.inp.koffset[1] << " "
+            << PARAM.inp.koffset[2] << std::endl;
         ofs.close();
     }
 

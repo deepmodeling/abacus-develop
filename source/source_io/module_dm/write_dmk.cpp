@@ -71,7 +71,7 @@ bool ModuleIO::read_dmk(const int nspin,
 		std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_dmk");
-    ModuleBase::timer::tick("ModuleIO", "read_dmk");
+    ModuleBase::timer::start("ModuleIO", "read_dmk");
 
     int my_rank = 0;
 #ifdef __MPI
@@ -175,7 +175,7 @@ bool ModuleIO::read_dmk(const int nspin,
         dmk = dmk_global;
 #endif
     }
-    ModuleBase::timer::tick("ModuleIO", "read_dmk");
+    ModuleBase::timer::end("ModuleIO", "read_dmk");
     return read_success;
 }
 
@@ -189,7 +189,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
-    ModuleBase::timer::tick("ModuleIO", "write_dmk");
+    ModuleBase::timer::start("ModuleIO", "write_dmk");
 
     int my_rank = 0;
 #ifdef __MPI
@@ -317,7 +317,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         }     // ik
     }         // ispin
 
-    ModuleBase::timer::tick("ModuleIO", "write_dmk");
+    ModuleBase::timer::end("ModuleIO", "write_dmk");
 }
 
 template bool ModuleIO::read_dmk<double>(const int nspin,

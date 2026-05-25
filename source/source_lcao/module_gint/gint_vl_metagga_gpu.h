@@ -34,8 +34,8 @@ class Gint_vl_metagga_gpu : public Gint
     void cal_hr_gint_();
 
     // input
-    const double* vr_eff_;
-    const double* vofk_;
+    const double* vr_eff_ = nullptr;
+    const double* vofk_ = nullptr;
 
     // output
     HContainer<double>* hR_;

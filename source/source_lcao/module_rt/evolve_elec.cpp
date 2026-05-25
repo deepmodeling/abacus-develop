@@ -33,24 +33,41 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                     std::ofstream& ofs_running,
                                     const int propagator,
                                     const bool use_tensor,
-                                    const bool use_lapack)
+                                    const bool use_lapack,
+                                    module_rt::TD_MovingGauge* td_mg,
+                                    const UnitCell* ucell,
+                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                    const bool use_td_moving_gauge)
 {
     ModuleBase::TITLE("Evolve_elec", "solve_psi");
-    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
+    ModuleBase::timer::start("Evolve_elec", "solve_psi");
 
     // Control the print of matrix to running_md.log
     const int print_matrix = 0;
+
+    // Multi-GPU support
+    CublasMpResources cublas_res;
+#ifdef __CUBLASMP
+    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
+#endif
 
     for (int ik = 0; ik < nks; ik++)
     {
         phm->updateHk(ik);
 
-        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
+        ModuleBase::timer::start("TD_Efficiency", "evolve_k");
         psi->fix_k(ik);
         psi_laststep->fix_k(ik);
 
         if (!use_tensor)
         {
+            // Construct the local P_k matrix for moving spatial gauge, CPU only for now
+            std::vector<std::complex<double>> P_k_local(para_orb.nloc, {0.0, 0.0});
+            if (use_td_moving_gauge && td_mg != nullptr)
+            {
+                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.nloc, para_orb.ncol);
+            }
+
             const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
             evolve_psi(nband,
                        nlocal,
@@ -60,6 +77,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                        psi_laststep[0].get_pointer(),
                        Hk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
                        Sk_laststep.data<std::complex<double>>() + ik * len_HS_laststep,
+                       P_k_local.data(),
+                       use_td_moving_gauge,
                        &(ekb(ik, 0)),
                        propagator,
                        ofs_running,
@@ -69,7 +88,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
         }
         else
         {
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
 
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
             const int len_psi_k_2 = use_lapack ? nlocal : psi->get_nbasis();
@@ -157,7 +176,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                      len_HS_laststep);
             syncmem_double_h2d_op()(ekb_tensor.data<double>(), &(ekb(ik, 0)), nband);
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
 
             evolve_psi_tensor<Device>(nband,
                                       nlocal,
@@ -171,9 +190,10 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                       propagator,
                                       ofs_running,
                                       print_matrix,
-                                      use_lapack);
+                                      use_lapack,
+                                      cublas_res);
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
             if (use_lapack)
             {
@@ -228,16 +248,20 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             }
 #endif
 
-            ModuleBase::timer::tick("TD_Efficiency", "host_device_comm");
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
 
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
         }
 
-        ModuleBase::timer::tick("TD_Efficiency", "evolve_k");
+        ModuleBase::timer::end("TD_Efficiency", "evolve_k");
     } // end k
 
-    ModuleBase::timer::tick("Evolve_elec", "solve_psi");
+#ifdef __CUBLASMP
+    finalize_cublasmp_resources(cublas_res);
+#endif
+
+    ModuleBase::timer::end("Evolve_elec", "solve_psi");
     return;
 }
 

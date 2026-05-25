@@ -33,7 +33,7 @@ void Plus_U::force_stress(const UnitCell& ucell,
                         const K_Vectors& kv)
 {
     ModuleBase::TITLE("Plus_U", "force_stress");
-    ModuleBase::timer::tick("Plus_U", "force_stress");
+    ModuleBase::timer::start("Plus_U", "force_stress");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -159,7 +159,7 @@ void Plus_U::force_stress(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("Plus_U", "force_stress");
+    ModuleBase::timer::end("Plus_U", "force_stress");
 
     return;
 }
@@ -174,7 +174,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
                        const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "cal_force_k");
-    ModuleBase::timer::tick("Plus_U", "cal_force_k");
+    ModuleBase::timer::start("Plus_U", "cal_force_k");
 
     const char transN = 'N';
     const char transC = 'C';
@@ -289,7 +289,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
             }             // ia
         }                 // it
     }                     // end dim
-    ModuleBase::timer::tick("Plus_U", "cal_force_k");
+    ModuleBase::timer::end("Plus_U", "cal_force_k");
 
     return;
 }
@@ -304,7 +304,7 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
                         const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "cal_stress_k");
-    ModuleBase::timer::tick("Plus_U", "cal_stress_k");
+    ModuleBase::timer::start("Plus_U", "cal_stress_k");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -360,7 +360,7 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("Plus_U", "cal_stress_k");
+    ModuleBase::timer::end("Plus_U", "cal_stress_k");
 
     return;
 }
@@ -374,7 +374,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                            ModuleBase::matrix& force_dftu)
 {
     ModuleBase::TITLE("Plus_U", "cal_force_gamma");
-    ModuleBase::timer::tick("Plus_U", "cal_force_gamma");
+    ModuleBase::timer::start("Plus_U", "cal_force_gamma");
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double one = 1.0, zero = 0.0, minus_one = -1.0;
@@ -383,7 +383,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
 
     for (int dim = 0; dim < 3; dim++)
     {
-        double* tmp_ptr;
+        double* tmp_ptr = nullptr;
         if (dim == 0)
         {
             tmp_ptr = dsloc_x;
@@ -500,7 +500,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
         }                 // it
 
     } // end dim
-    ModuleBase::timer::tick("Plus_U", "cal_force_gamma");
+    ModuleBase::timer::end("Plus_U", "cal_force_gamma");
 
     return;
 }
@@ -516,7 +516,7 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
                             ModuleBase::matrix& stress_dftu)
 {
     ModuleBase::TITLE("Plus_U", "cal_stress_gamma");
-    ModuleBase::timer::tick("Plus_U", "cal_stress_gamma");
+    ModuleBase::timer::start("Plus_U", "cal_stress_gamma");
 
     const char transN = 'N';
     const int one_int = 1;
@@ -573,7 +573,7 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("Plus_U", "cal_stress_gamma");
+    ModuleBase::timer::end("Plus_U", "cal_stress_gamma");
     return;
 }
 #endif

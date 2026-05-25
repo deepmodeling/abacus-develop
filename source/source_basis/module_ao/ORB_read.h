@@ -3,7 +3,6 @@
 
 #include "ORB_atomic.h"
 #include "ORB_atomic_lm.h"
-#include "ORB_nonlocal.h"
 
 ////////////////////////////////////////////////////////////
 /// advices for reconstructions:
@@ -35,6 +34,7 @@ class LCAO_Orbitals
         const double& lcao_rmax_in,
         const bool& deepks_setorb,
         const int& out_mat_r,
+        const bool& out_element_info,
         const bool& force_flag,
         const int& my_rank
     );
@@ -45,12 +45,14 @@ class LCAO_Orbitals
 		const int &lmax_in,
 		const bool &deepks_setorb, //  mohan add 2021-04-25
 		const int &out_mat_r, // mohan add 2021-04-26
+		const bool &out_element_info,
 		const bool &force_flag, // mohan add 2021-05-07
 		const int &my_rank); // mohan add 2021-04-26
 
 	void Read_PAO(
 		std::ofstream &ofs_in,
 		const int& it,
+		const bool &out_element_info,
 		const bool &force_flag, // mohan add 2021-05-07
 		const int& my_rank); // mohan add 2021-04-26
 
@@ -58,6 +60,7 @@ class LCAO_Orbitals
 
 	void Read_Descriptor(
 		std::ofstream &ofs_in,
+		const bool &out_element_info,
 		const bool &force_flag, // mohan add 2021-05-07
 		const int &my_rank);	//caoyu add 2020-3-16
 
@@ -83,12 +86,12 @@ class LCAO_Orbitals
     std::vector<double> cutoffs() const;
 
 	/// numerical atomic orbitals
-	Numerical_Orbital* Phi;
+	Numerical_Orbital* Phi = nullptr;
 	
 	
 	//caoyu add 2021-3-10
 	/// descriptor bases, saved as one-type atom orbital
-	Numerical_Orbital* Alpha;
+	Numerical_Orbital* Alpha = nullptr;
 
 	// initialized in input.cpp
 	double ecutwfc;
@@ -120,11 +123,12 @@ private:
 
 	void read_orb_file(
 		std::ofstream &ofs_in,
-		std::ifstream &ifs, 
-		const int &it, 
-		int &lmax, 
-		int &nchimax, 
+		std::ifstream &ifs,
+		const int &it,
+		int &lmax,
+		int &nchimax,
 		Numerical_Orbital* ao,
+		const bool &out_element_info,
 		const bool &force_flag, // mohan add 2021-05-07
 		const int &my_rank);	//caoyu add 2021-04-26
 

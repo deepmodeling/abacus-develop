@@ -12,7 +12,7 @@ inline void psiMulPsiMpi(const psi::Psi<double>& psi1,
                          const int* desc_psi,
                          const int* desc_dm)
 {
-    ModuleBase::timer::tick("psiMulPsiMpi","pdgemm");
+    ModuleBase::timer::start("psiMulPsiMpi","pdgemm");
     const double one_float = 1.0, zero_float = 0.0;
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -37,7 +37,7 @@ inline void psiMulPsiMpi(const psi::Psi<double>& psi1,
             &one_int,
             &one_int,
             desc_dm);
-    ModuleBase::timer::tick("psiMulPsiMpi","pdgemm");
+    ModuleBase::timer::end("psiMulPsiMpi","pdgemm");
 }
 
 inline void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
@@ -46,7 +46,7 @@ inline void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
                          const int* desc_psi,
                          const int* desc_dm)
 {
-    ModuleBase::timer::tick("psiMulPsiMpi","pdgemm");
+    ModuleBase::timer::start("psiMulPsiMpi","pdgemm");
     const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -71,7 +71,7 @@ inline void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
             &one_int,
             &one_int,
             desc_dm);
-    ModuleBase::timer::tick("psiMulPsiMpi","pdgemm");
+    ModuleBase::timer::end("psiMulPsiMpi","pdgemm");
 }
 
 #else

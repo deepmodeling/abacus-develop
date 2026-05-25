@@ -6,15 +6,16 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
+#include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/lattice_change_basic.h"
 
 #include <algorithm>
 
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 #endif
@@ -43,10 +44,6 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_md/md_func.h"
-
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
-
-#include "source_io/module_restart/restart.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_cg.h"
 
@@ -64,7 +61,7 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2 == 1)
+    if (PARAM.inp.out_mat_hs2[0] == 1)
     {
         TD_info::out_mat_R = true;
     } else {
@@ -82,7 +79,6 @@ void Input_Conv::read_td_efield()
     {
         elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / PARAM.inp.estep_per_md / ModuleBase::AU_to_FS;
     }
-
     elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
 
     // space domain parameters
@@ -170,7 +166,7 @@ void Input_Conv::read_td_efield()
 void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
-    ModuleBase::timer::tick("Input_Conv", "Convert");
+    ModuleBase::timer::start("Input_Conv", "Convert");
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 10/16 )
     //----------------------------------------------------------
@@ -181,7 +177,7 @@ void Input_Conv::Convert()
 
 
     GlobalV::KPAR = PARAM.inp.kpar;
-    
+
 
 
 #ifdef __LCAO
@@ -262,7 +258,7 @@ void Input_Conv::Convert()
     read_td_efield();
 #endif // __LCAO
 
-   
+
 
     //----------------------------------------------------------
     // about restart, // Peize Lin add 2020-04-04
@@ -278,12 +274,13 @@ void Input_Conv::Convert()
         ModuleBase::GlobalFunc::MAKE_DIR(GlobalC::restart.folder);
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
         }
-        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
-            || dft_functional_lower == "wp22" 
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power"
+            || dft_functional_lower == "wp22"
             || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
         {
             GlobalC::restart.info_save.save_charge = true;
@@ -303,22 +300,23 @@ void Input_Conv::Convert()
         GlobalC::restart.folder = PARAM.globalv.global_readin_dir + "restart/";
         if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0"
             || dft_functional_lower == "hse"
+            || dft_functional_lower == "opt_orb"
             || dft_functional_lower == "scan0"
             || dft_functional_lower == "lc_pbe"
-            || dft_functional_lower == "lc_wpbe" 
+            || dft_functional_lower == "lc_wpbe"
             || dft_functional_lower == "lrc_wpbe"
             || dft_functional_lower == "lrc_wpbeh"
             || dft_functional_lower == "cam_pbeh") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
         }
-        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
-            || dft_functional_lower == "wp22" 
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power"
+            || dft_functional_lower == "wp22"
             || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
         {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
-        } 
+        }
         else {
             GlobalC::restart.info_load.load_charge = true;
         }
@@ -332,13 +330,14 @@ void Input_Conv::Convert()
                    PARAM.inp.dft_functional.end(),
                    dft_functional_lower.begin(),
                    tolower);
+    bool generate_opt_orb = false;
     if (dft_functional_lower == "hf"
     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp" || dft_functional_lower == "hse"
     || dft_functional_lower == "scan0"
     || dft_functional_lower == "muller" || dft_functional_lower == "power"
-    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22" 
+    || dft_functional_lower == "cwp22" || dft_functional_lower == "wp22"
     || dft_functional_lower == "lc_pbe"
-    || dft_functional_lower == "lc_wpbe" 
+    || dft_functional_lower == "lc_wpbe"
     || dft_functional_lower == "lrc_wpbe"
     || dft_functional_lower == "lrc_wpbeh"
     || dft_functional_lower == "cam_pbeh")
@@ -362,7 +361,7 @@ void Input_Conv::Convert()
         for(std::size_t i=0; i<fock_alpha.size(); ++i)
             { fock_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }
         for(std::size_t i=0; i<erfc_alpha.size(); ++i)
-            { erfc_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }        
+            { erfc_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }
 
         if(!fock_alpha.empty())
         {
@@ -415,7 +414,7 @@ void Input_Conv::Convert()
                         {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
             }
-            else if(PARAM.inp.basis_type == "pw")
+            else if(PARAM.inp.basis_type == "pw" || PARAM.inp.basis_type == "lcao_in_pw")
             {
                 GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
                 for(std::size_t i=0; i<erfc_alpha.size(); ++i)
@@ -427,9 +426,30 @@ void Input_Conv::Convert()
             }
         }
     }
+#ifdef __EXX
+    else if (dft_functional_lower == "opt_orb")
+    {
+        GlobalC::exx_info.info_global.cal_exx = false;
+        generate_opt_orb = true;
+    }
+#endif
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
+    }
+
+    if (PARAM.inp.rpa && GlobalC::exx_info.info_global.coulomb_param.empty())
+    {
+        if (PARAM.inp.basis_type != "lcao")
+        {
+            throw std::invalid_argument("RPA currently expects basis_type=lcao when initializing RI Coulomb parameters.");
+        }
+        GlobalC::exx_info.info_global.hybrid_alpha = 1.0;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+            {"alpha", "1"},
+            {"singularity_correction", PARAM.inp.exx_singularity_correction}
+        }};
     }
 
     // info_global.ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
@@ -454,6 +474,7 @@ void Input_Conv::Convert()
 
     if (GlobalC::exx_info.info_global.cal_exx
 #ifdef __EXX
+        || generate_opt_orb
         || PARAM.inp.rpa
 #endif
         )
@@ -480,9 +501,13 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
         GlobalC::exx_info.info_ri.Cs_inv_thr = PARAM.inp.exx_cs_inv_thr;
-
+        GlobalC::exx_info.info_ri.shrink_abfs_pca_thr = PARAM.inp.shrink_abfs_pca_thr;
+        GlobalC::exx_info.info_ri.shrink_LU_inv_thr = PARAM.inp.shrink_LU_inv_thr;
+        GlobalC::exx_info.info_ri.coul_moment = PARAM.inp.exx_coul_moment;
+        GlobalC::exx_info.info_ri.rotate_abfs = PARAM.inp.exx_rotate_abfs;
+        GlobalC::exx_info.info_ri.multip_moments_threshold = PARAM.inp.exx_multip_moments_threshold;
         GlobalC::exx_info.info_opt_abfs.pca_threshold = PARAM.inp.exx_pca_threshold;
-        GlobalC::exx_info.info_opt_abfs.abfs_Lmax  = PARAM.inp.exx_opt_orb_lmax;
+        GlobalC::exx_info.info_opt_abfs.abfs_Lmax = PARAM.inp.exx_opt_orb_lmax;
         GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
         GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
@@ -497,15 +522,14 @@ void Input_Conv::Convert()
     {
         if (ModuleSymmetry::Symmetry::symm_flag != -1)
         {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with symmetry=-1");
-            // ModuleSymmetry::Symmetry::symm_flag = -1;
+            ModuleBase::WARNING("Input_Conv", "EXX PW works only with symmetry=-1");
+            ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
         if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
         {
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
-
     }
 
     //----------------------------------------------------------
@@ -642,6 +666,6 @@ void Input_Conv::Convert()
     hsolver::DiagoElpaNative<double>::elpa_num_thread = PARAM.inp.elpa_num_thread;
     ;
 #endif
-    ModuleBase::timer::tick("Input_Conv", "Convert");
+    ModuleBase::timer::end("Input_Conv", "Convert");
     return;
 }

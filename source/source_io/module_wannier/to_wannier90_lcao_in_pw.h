@@ -1,23 +1,15 @@
 #ifndef TO_WANNIER90_LCAO_IN_PW_H
 #define TO_WANNIER90_LCAO_IN_PW_H
 
-#include "source_base/abfs-vector3_order.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
-#include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_psi/psi.h"
-#include "../module_hs/single_R_io.h"
 #include "to_wannier90.h"
 #include "to_wannier90_pw.h"
 
@@ -65,7 +57,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     }
 
   protected:
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     /// @brief psi initializer for expanding nao in planewave basis
     psi_initializer<std::complex<double>>* psi_initer_ = nullptr;
 

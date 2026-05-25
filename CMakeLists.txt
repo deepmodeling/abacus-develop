@@ -17,6 +17,7 @@ option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
@@ -51,6 +52,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
+option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
@@ -69,10 +71,8 @@ if(ENABLE_RAPIDJSON)
     include(FetchContent)
     FetchContent_Declare(
       rapidjson
-      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-      GIT_TAG "origin/master"
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
+      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a
+    )
     set(RAPIDJSON_BUILD_TESTS
         OFF
         CACHE INTERNAL "")
@@ -137,36 +137,36 @@ if(ENABLE_LCAO)
   if(USE_CUDA)
     if(ENABLE_MPI)
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2g)
+        set(ABACUS_BIN_NAME abacus_basic_gpu)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3g)
+        set(ABACUS_BIN_NAME abacus_std_gpu)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4g)
+        set(ABACUS_BIN_NAME abacus_ml_gpu)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5g)
+        set(ABACUS_BIN_NAME abacus_max_gpu)
       endif()
     endif()
   # Case: CPU is enabled (suffix with 'p' for parallel) 
   else()
     if(ENABLE_MPI)
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2p)
+        set(ABACUS_BIN_NAME abacus_basic_para)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3p)
+        set(ABACUS_BIN_NAME abacus_std_para)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4p)
+        set(ABACUS_BIN_NAME abacus_ml_para)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5p)
+        set(ABACUS_BIN_NAME abacus_max_para)
       endif()
     else()
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2s)
+        set(ABACUS_BIN_NAME abacus_basic_ser)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3s)
+        set(ABACUS_BIN_NAME abacus_std_ser)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4s)
+        set(ABACUS_BIN_NAME abacus_ml_ser)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5s)
+        set(ABACUS_BIN_NAME abacus_max_ser)
       endif()
     endif()
   endif()
@@ -174,13 +174,13 @@ if(ENABLE_LCAO)
 else()
   if(USE_CUDA)
     if(ENABLE_MPI)
-      set(ABACUS_BIN_NAME abacus_1g)
+      set(ABACUS_BIN_NAME abacus_pw_gpu)
     endif()
   else()
     if(ENABLE_MPI)
-      set(ABACUS_BIN_NAME abacus_1p)
+      set(ABACUS_BIN_NAME abacus_pw_para)
     else()
-      set(ABACUS_BIN_NAME abacus_1s)
+      set(ABACUS_BIN_NAME abacus_pw_ser)
     endif()
   endif()
 endif()
@@ -189,7 +189,6 @@ endif()
 # Use DSP hardware
 if (USE_DSP)
   set(USE_ELPA OFF)
-  set(ENABLE_LCAO OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -323,7 +322,7 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS CXX REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_PATH})
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)
@@ -339,6 +338,50 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+
+
+if(USE_KML)
+    add_compile_definitions(__KML)
+    message(STATUS "Huawei KML support enabled. Defining __KML.")
+#    TODO: Create FindKML.cmake
+#    if(NOT DEFINED KML_ROOT)
+#        if(DEFINED ENV{KML_ROOT})
+#            set(KML_ROOT $ENV{KML_ROOT})
+#        else()
+#            message(WARNING "KML_ROOT is not set. Trying default system paths for KML.")
+#        endif()
+#    endif()
+#
+#    find_library(KML_BLAS_LIB NAMES kblas PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_LAPACK_LIB NAMES klapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_SCALAPACK_LIB NAMES kscalapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_FFTW_LIB NAMES fftw3 PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#
+#    set(KML_LIBS_FOUND TRUE)
+#    foreach(LIB_VAR KML_BLAS_LIB KML_LAPACK_LIB KML_SCALAPACK_LIB KML_FFTW_LIB)
+#        if(NOT ${LIB_VAR})
+#            message(WARNING "${LIB_VAR} not found in KML_ROOT! Please check your KML installation.")
+#            set(KML_LIBS_FOUND FALSE)
+#        endif()
+#    endforeach()
+#
+#    if(KML_LIBS_FOUND)
+#        target_link_libraries(abacus PUBLIC
+#            ${KML_BLAS_LIB}
+#            ${KML_LAPACK_LIB}
+#            ${KML_SCALAPACK_LIB}
+#            ${KML_FFTW_LIB}
+#        )
+#        message(STATUS "Huawei KML libraries found and linked successfully.")
+#    else()
+#        message(FATAL_ERROR "Failed to find all required KML libraries. Aborting.")
+#    endif()
+#
+#    set(BLAS_libraries ${KML_BLAS_LIB})
+#    set(LAPACK_libraries ${KML_LAPACK_LIB})
+endif(USE_KML)
+
+
 if (USE_SW)
   add_compile_definitions(__SW)
   set(SW ON)
@@ -439,6 +482,11 @@ if(USE_CUDA)
     target_link_libraries(${ABACUS_BIN_NAME} cudart nvToolsExt)
   endif ()
   include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 13.0)
+    if(EXISTS "${CUDAToolkit_ROOT}/include/cccl")
+      include_directories("${CUDAToolkit_ROOT}/include/cccl")
+    endif()
+  endif()
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
@@ -449,10 +497,37 @@ if(USE_CUDA)
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
+    if (ENABLE_NCCL_PARALLEL_DEVICE)
+      if (NOT ENABLE_MPI)
+        message(FATAL_ERROR
+          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
+      endif()
+      add_compile_definitions(__NCCL_PARALLEL_DEVICE)
+      include(cmake/SetupNccl.cmake)
+      abacus_setup_nccl(${ABACUS_BIN_NAME})
+    endif()
     if (ENABLE_CUSOLVERMP)
-      # Keep cuSolverMp discovery/linking logic in a dedicated module.
+      # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
       include(cmake/SetupCuSolverMp.cmake)
       abacus_setup_cusolvermp(${ABACUS_BIN_NAME})
+    endif()
+    if (ENABLE_CUBLASMP)
+      # Enforcement 1: cuBLASMp requires cuSOLVERMp to be enabled
+      if (NOT ENABLE_CUSOLVERMP)
+        message(FATAL_ERROR 
+          "ENABLE_CUBLASMP is set to ON, but ENABLE_CUSOLVERMP is OFF."
+          "In ABACUS, cuBLASMp support requires cuSOLVERMp to be enabled simultaneously."
+          "Please set -DENABLE_CUSOLVERMP=ON.")
+      endif()
+      # Enforcement 2: cuBLASMp 0.8.0+ is incompatible with CAL backend
+      # Note: _use_cal is defined inside abacus_setup_cusolvermp
+      if (_use_cal)
+        message(FATAL_ERROR 
+          "cuBLASMp 0.8.0+ requires NCCL Symmetric Memory, but cuSOLVERMp is using CAL backend."
+          "Please upgrade cuSOLVERMp to >= 0.7.0 to use NCCL for both.")
+      endif()
+      include(cmake/SetupCuBlasMp.cmake)
+      abacus_setup_cublasmp(${ABACUS_BIN_NAME})
     endif()
   endif()
 endif()
@@ -535,12 +610,8 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  if(USE_DSP)
-    target_link_libraries(${ABACUS_BIN_NAME} ${SCALAPACK_LIBRARY_DIR})
-  else()
-    find_package(ScaLAPACK REQUIRED)
-    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-  endif()
+  find_package(ScaLAPACK REQUIRED)
+  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -746,6 +817,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  neighbor_search
   io_input
   io_basic
   io_advanced

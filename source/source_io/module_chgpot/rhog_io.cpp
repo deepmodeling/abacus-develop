@@ -12,7 +12,7 @@
 bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog)
 {
     ModuleBase::TITLE("ModuleIO", "read_rhog");
-    ModuleBase::timer::tick("ModuleIO", "read_rhog");
+    ModuleBase::timer::start("ModuleIO", "read_rhog");
 
     const int nx = pw_rhod->nx;
     const int ny = pw_rhod->ny;
@@ -42,6 +42,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     if (error)
     {
         ModuleBase::WARNING("ModuleIO::read_rhog", "Can't open file " + filename);
+        ModuleBase::timer::end("ModuleIO", "read_rhog");
         return false;
     }
 
@@ -77,6 +78,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     if (error)
     {
         ModuleBase::WARNING("ModuleIO::read_rhog", "gamma_only read from file is inconsistent with INPUT");
+        ModuleBase::timer::end("ModuleIO", "read_rhog");
         return false;
     }
 
@@ -194,7 +196,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
     //     }
     //     ofs.close();
     // }
-    ModuleBase::timer::tick("ModuleIO", "read_rhog");
+    ModuleBase::timer::end("ModuleIO", "read_rhog");
     return true;
 }
 
@@ -209,8 +211,11 @@ bool ModuleIO::write_rhog(const std::string& fchg,
                           const int nrank)
 {
     ModuleBase::TITLE("ModuleIO", "write_rhog");
-    ModuleBase::timer::tick("ModuleIO", "write_rhog");
-    if (ipool != 0) { return true; }
+    ModuleBase::timer::start("ModuleIO", "write_rhog");
+    if (ipool != 0) { 
+        ModuleBase::timer::end("ModuleIO", "write_rhog");
+        return true; 
+    }
     // only one pool writes the rhog, because rhog in all pools are identical.
 
     // for large-scale data, it is not wise to collect all distributed components to the
@@ -245,6 +250,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     if (!ofs)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_rhog", "File I/O failure: cannot open file " + fchg);
+        ModuleBase::timer::end("ModuleIO", "write_rhog");
         return false;
     }
     ofs.write(reinterpret_cast<char*>(&size), sizeof(size));
@@ -390,7 +396,7 @@ bool ModuleIO::write_rhog(const std::string& fchg,
     //     }
     //     ofs.close();
     // }
-    ModuleBase::timer::tick("ModuleIO", "write_rhog");
+    ModuleBase::timer::end("ModuleIO", "write_rhog");
     return true;
 }
 

@@ -6,7 +6,6 @@
 #include "constants.h"
 #include "timer.h"
 #include "tool_quit.h"
-#include "array_pool.h"
 #include "ylmcoef.h"
 
 namespace ModuleBase
@@ -17,7 +16,7 @@ int Ylm::nlm = 0;
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
 {
-	//ModuleBase::timer::tick ("Ylm","get_ylm_real");
+	//ModuleBase::timer::start("Ylm","get_ylm_real");
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
@@ -128,7 +127,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		}
 	}// end do
 
-	//ModuleBase::timer::tick ("Ylm", "get_ylm_real");
+	//ModuleBase::timer::end("Ylm", "get_ylm_real");
 	return;
 }
 
@@ -295,7 +294,7 @@ void Ylm::rlylm
 )
 {
 //	ModuleBase::TITLE("Ylm","rlylm");
-//	ModuleBase::timer::tick("Ylm","rlylm");
+//	ModuleBase::timer::start("Ylm","rlylm");
 
 	int MaxL = Lmax - 1;
 
@@ -485,7 +484,7 @@ void Ylm::rlylm
 		}
 	}
 
-//	ModuleBase::timer::tick("Ylm", "rlylm");
+//	ModuleBase::timer::end("Ylm", "rlylm");
 	return;
 }
 
@@ -775,9 +774,13 @@ void Ylm::grad_rl_sph_harm
 	const double y,
 	const double z,
 	double* rly,
-	double** grly
+	double* grly_flat
 )
 {
+	// Alias the flat buffer as a pointer-to-array-of-3-doubles so the body
+	// below can continue to use the natural grly[lm][xyz] indexing without
+	// any performance penalty — the memory layout is unchanged.
+	double (*grly)[3] = reinterpret_cast<double(*)[3]>(grly_flat);
 	double radius2 = x*x+y*y+z*z;
 	double tx = 2.0*x;
 	double ty = 2.0*y;

@@ -29,8 +29,8 @@ class SepPot
     double* rv = nullptr;   /**< sep potential, but rV, unit: Ry */
 
     int read_sep(std::ifstream& is);
-    void print_sep_info(std::ofstream& ofs);
-    void print_sep_vsep(std::ofstream& ofs);
+    void print_sep_info(std::ofstream& ofs) const;
+    void print_sep_vsep(std::ofstream& ofs) const;
 #ifdef __MPI
     void bcast_sep();
 #endif /* ifdef __MPI */

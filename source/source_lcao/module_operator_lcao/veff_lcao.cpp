@@ -14,7 +14,7 @@ template <typename TK, typename TR>
 void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
@@ -53,14 +53,14 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::end("Veff", "initialize_HR");
 }
 
 template<>
 void Veff<OperatorLCAO<double, double>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
     //-----------------------------------------
     //(1) prepare data for this k point.
     // copy the local potential from array.
@@ -82,7 +82,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
@@ -90,7 +90,7 @@ template<>
 void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
     //-----------------------------------------
     //(1) prepare data for this k point.
     // copy the local potential from array.
@@ -112,7 +112,7 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
@@ -120,7 +120,7 @@ template<>
 void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
     std::vector<const double*> vr_eff(4, nullptr);
     std::vector<const double*> vofk_eff(4, nullptr);
@@ -141,7 +141,7 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
         ModuleGint::cal_gint_vl(vr_eff, this->hR);
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 

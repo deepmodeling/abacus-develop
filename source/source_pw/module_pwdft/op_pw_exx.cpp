@@ -3,6 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
+#include "source_base/parallel_device.h"
 #include "source_base/parallel_comm.h" // use KP_WORLD
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_external/lapack_connector.h"
@@ -204,7 +205,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                                    const int ngk_ik,
                                    const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
@@ -288,7 +289,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
     }
 
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op");
 
 }
 
@@ -301,7 +302,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                                    const int ngk_ik,
                                    const bool is_first_node) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_kpar");
+    ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
@@ -350,27 +351,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 // send
             }
 #ifdef __MPI
-#ifdef __CUDA_MPI
-            MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-#else
-            if (PARAM.inp.device == "cpu")
-            {
-                MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-            }
-            else if (PARAM.inp.device == "gpu")
-            {
-                // need to copy to cpu first
-                T* psi_mq_real_cpu = new T[wfcpw->nrxx];
-                syncmem_complex_d2c_op()(psi_mq_real_cpu, psi_mq_real, wfcpw->nrxx);
-                MPI_Bcast(psi_mq_real_cpu, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-                syncmem_complex_c2d_op()(psi_mq_real, psi_mq_real_cpu, wfcpw->nrxx);
-                delete[] psi_mq_real_cpu;
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("OperatorEXXPW", "construct_ace: unknown device");
-            }
-#endif
+            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
 #endif
             for (int n_iband = 0; n_iband < nbands; n_iband++)
             {
@@ -416,7 +397,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
     }
 
-    ModuleBase::timer::tick("OperatorEXXPW", "act_op_kpar");
+    ModuleBase::timer::end("OperatorEXXPW", "act_op_kpar");
 
 }
 
@@ -469,7 +450,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int iq) const
 {
-    ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
+    ModuleBase::timer::start("OperatorEXXPW", "multiply_potential");
     int npw = rhopw_dev->npw;
     int nks = wfcpw->nks;
     int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -477,7 +458,7 @@ void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int 
 
     mul_potential_op<T, Device>()(pot, density_recip, npw, nks, ik, iq);
 
-    ModuleBase::timer::tick("OperatorEXXPW", "multiply_potential");
+    ModuleBase::timer::end("OperatorEXXPW", "multiply_potential");
 }
 
 template <typename T, typename Device>

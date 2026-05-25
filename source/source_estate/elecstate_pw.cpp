@@ -8,6 +8,7 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate {
 
@@ -110,7 +111,7 @@ template<typename T, typename Device>
 void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::start("ElecStatePW", "psiToRho");
 
     this->init_rho_data();
 
@@ -150,7 +151,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
     }
     this->parallelK();
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::end("ElecStatePW", "psiToRho");
 }
 
 template<typename T, typename Device>

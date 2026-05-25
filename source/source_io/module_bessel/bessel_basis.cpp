@@ -131,7 +131,7 @@ void Bessel_Basis::init_Faln(
 	const UnitCell& ucell)
 {
 	ModuleBase::TITLE("Bessel_Basis","init_Faln");
-	ModuleBase::timer::tick("Spillage","init_Faln");
+	ModuleBase::timer::start("Spillage","init_Faln");
 	assert( this->kmesh > 0);
 
 	this->Faln.create(ntype, lmax+1, nmax, this->kmesh);
@@ -156,7 +156,7 @@ void Bessel_Basis::init_Faln(
 	}
 	ModuleBase::GlobalFunc::OUT("nwfc = ",nwfc);
 
-	ModuleBase::timer::tick("Spillage","init_Faln");
+	ModuleBase::timer::end("Spillage","init_Faln");
 	return;
 }
 
@@ -173,7 +173,7 @@ void Bessel_Basis::init_TableOne(
 	const double &tolerence)
 {
 	ModuleBase::TITLE("Bessel_Basis","init_TableOne");
-	ModuleBase::timer::tick("Spillage","TableONe");
+	ModuleBase::timer::start("Spillage","TableONe");
 	// check
 	assert(ecutwfc > 0.0);
 	assert(dr > 0.0);
@@ -342,7 +342,7 @@ void Bessel_Basis::init_TableOne(
 	// delete[] g;
 	// delete[] r;
 	// delete[] function;
-	ModuleBase::timer::tick("Spillage","TableONe");
+	ModuleBase::timer::end("Spillage","TableONe");
 	return;
 }
 

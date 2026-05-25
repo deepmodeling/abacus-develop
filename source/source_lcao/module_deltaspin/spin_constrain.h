@@ -66,7 +66,7 @@ public:
    */
   double cal_escon();
 
-  double get_escon();
+  double get_escon() const;
 
   void run_lambda_loop(int outer_step, 
 		  bool rerun = true);
@@ -181,7 +181,7 @@ public:
     /// set nspin
     void set_nspin(int nspin);
     /// get nspin
-    int get_nspin();
+    int get_nspin() const;
     /// zero atomic magnetic moment
     void zero_Mi();
     /// get decay_grad
@@ -202,17 +202,17 @@ public:
                               double sccut_in,
                               double sc_drop_thr_in);
     /// get sc_thr
-    double get_sc_thr();
+    double get_sc_thr() const;
     /// get nsc
-    int get_nsc();
+    int get_nsc() const;
     /// get nsc_min
-    int get_nsc_min();
+    int get_nsc_min() const;
     /// get alpha_trial
-    double get_alpha_trial();
+    double get_alpha_trial() const;
     /// get sccut
-    double get_sccut();
+    double get_sccut() const;
     /// get sc_drop_thr
-    double get_sc_drop_thr();
+    double get_sc_drop_thr() const;
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
@@ -266,9 +266,9 @@ public:
     /// @brief if atomic magnetic moment is converged
     bool is_Mi_converged = false;
 
-    TK* sub_h_save;
-    TK* sub_s_save;
-    TK* becp_save;
+    TK* sub_h_save = nullptr;
+    TK* sub_s_save = nullptr;
+    TK* becp_save = nullptr;
 };
 
 

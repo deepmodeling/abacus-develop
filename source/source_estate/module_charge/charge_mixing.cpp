@@ -109,7 +109,7 @@ void Charge_Mixing::init_mixing()
     // this init should be called at the 1-st iteration of each scf loop
 
     ModuleBase::TITLE("Charge_Mixing", "init_mixing");
-    ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
+    ModuleBase::timer::start("Charge_Mixing", "init_mixing");
 
     // (re)construct mixing object
     if (this->mixing_mode == "broyden")
@@ -184,7 +184,7 @@ void Charge_Mixing::init_mixing()
         }
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
+    ModuleBase::timer::end("Charge_Mixing", "init_mixing");
 
     return;
 }

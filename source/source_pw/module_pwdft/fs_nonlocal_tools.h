@@ -144,11 +144,11 @@ class FS_Nonlocal_tools
 
   private:
     /// pointers to access the data without memory arrangement
-    const Structure_Factor* sf_;
-    const pseudopot_cell_vnl* nlpp_;
-    const UnitCell* ucell_;
-    const K_Vectors* kv_;
-    const ModulePW::PW_Basis_K* wfc_basis_;
+    const Structure_Factor* sf_ = nullptr;
+    const pseudopot_cell_vnl* nlpp_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
+    const K_Vectors* kv_ = nullptr;
+    const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
 
     /// the following variables are used for the calculation
     Device* ctx = {};

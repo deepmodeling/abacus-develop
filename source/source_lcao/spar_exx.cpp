@@ -10,7 +10,7 @@
 #include <RI/ri/Cell_Nearest.h>
 #include <stdexcept>
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h"
@@ -39,7 +39,7 @@ void cal_HR_exx(
     const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs)
 {
     ModuleBase::TITLE("sparse_format", "cal_HR_exx");
-    ModuleBase::timer::tick("sparse_format", "cal_HR_exx");
+    ModuleBase::timer::start("sparse_format", "cal_HR_exx");
 
     const Tdata frac = GlobalC::exx_info.info_global.hybrid_alpha;
 
@@ -143,7 +143,7 @@ void cal_HR_exx(
         }
     }
 
-    ModuleBase::timer::tick("sparse_format", "cal_HR_exx");
+    ModuleBase::timer::end("sparse_format", "cal_HR_exx");
 }
 
 // --------------------------------------------------------

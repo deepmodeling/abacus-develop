@@ -29,7 +29,7 @@ class Gint_tau : public Gint
     const int nspin_;
 
     // output
-    double **kin_;
+    double ** kin_ = nullptr;
 
     // Intermediate variables
     std::vector<HContainer<double>> dm_gint_vec_;

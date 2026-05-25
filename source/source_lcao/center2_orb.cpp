@@ -66,7 +66,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  std::vector<double> &drs,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
-    ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
+    ModuleBase::timer::start("Center2_Orb", "cal_ST_Phi12_R");
 
     assert(rmesh <= rs.size());
     assert(rmesh <= drs.size());
@@ -194,7 +194,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * temp;
     }
 
-    ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
+    ModuleBase::timer::end("Center2_Orb", "cal_ST_Phi12_R");
 }
 
 #include "source_base/constants.h"
@@ -210,7 +210,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
                                  const ModuleBase::Sph_Bessel_Recursive::D2* psb)
 {
     //	ModuleBase::TITLE("Center2_Orb","cal_ST_Phi12_R");
-    ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
+    ModuleBase::timer::start("Center2_Orb", "cal_ST_Phi12_R");
 
     const int kmesh = n1.getNk();
     const double* kpoint = n1.getKpoint();
@@ -331,7 +331,5 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
         }
     }
 
-    ModuleBase::timer::tick("Center2_Orb", "cal_ST_Phi12_R");
-
-    return;
+    ModuleBase::timer::end("Center2_Orb", "cal_ST_Phi12_R");
 }

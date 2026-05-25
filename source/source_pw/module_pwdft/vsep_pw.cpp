@@ -53,7 +53,7 @@ VSep::~VSep() = default;
 void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_cell)
 {
     ModuleBase::TITLE("VSep", "init_vsep");
-    ModuleBase::timer::tick("VSep", "init_vsep");
+    ModuleBase::timer::start("VSep", "init_vsep");
 
     int ntype = sep_cell.get_ntype();
 
@@ -119,7 +119,7 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
         }
     }
 
-    ModuleBase::timer::tick("VSep", "init_vsep");
+    ModuleBase::timer::end("VSep", "init_vsep");
 }
 
 void VSep::generate_vsep_r(const ModulePW::PW_Basis& rho_basis,
@@ -127,7 +127,7 @@ void VSep::generate_vsep_r(const ModulePW::PW_Basis& rho_basis,
                            const Sep_Cell& sep_cell)
 {
     ModuleBase::TITLE("VSep", "generate_vsep_r");
-    ModuleBase::timer::tick("VSep", "generate_vsep_r");
+    ModuleBase::timer::start("VSep", "generate_vsep_r");
 
     this->nrxx = rho_basis.nrxx;
     this->vsep_r.assign(rho_basis.nrxx, 0.0);
@@ -150,5 +150,5 @@ void VSep::generate_vsep_r(const ModulePW::PW_Basis& rho_basis,
 
     rho_basis.recip2real(vg.get(), this->vsep_r.data());
 
-    ModuleBase::timer::tick("VSep", "generate_vsep_r");
+    ModuleBase::timer::end("VSep", "generate_vsep_r");
 }

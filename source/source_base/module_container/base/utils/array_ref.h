@@ -12,7 +12,7 @@ template <typename T>
 class array_ref final {
 
   private:
-    T* data_;
+    T* data_ = nullptr;
     size_t length_;
 
   public:

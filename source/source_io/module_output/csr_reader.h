@@ -57,7 +57,7 @@ class csrFileReader : public FileReader
     int getNumberOfR() const;
 
     // get sparse matrix of a specific R coordinate
-    SparseMatrix<T> getMatrix(int Rx, int Ry, int Rz);
+    SparseMatrix<T> getMatrix(int Rx, int Ry, int Rz) const;
 
     // get matrix by using index
     SparseMatrix<T> getMatrix(int index) const;

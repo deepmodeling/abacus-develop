@@ -19,7 +19,7 @@ namespace hamilt {
 
 template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
-    ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
+    ModuleBase::timer::start("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->hsk->get_hk();
     if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_mat_hs[0])
     {
@@ -38,7 +38,7 @@ void OperatorLCAO<double, double>::get_hs_pointers() {
 #endif
         this->new_e_iteration = false;
     }
-    ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
+    ModuleBase::timer::end("OperatorLCAO", "get_hs_pointers");
 }
 
 template<>
@@ -84,7 +84,7 @@ void OperatorLCAO<TK, TR>::set_current_spin(const int current_spin_in)
 template <typename TK, typename TR>
 void OperatorLCAO<TK, TR>::init(const int ik_in) {
     ModuleBase::TITLE("OperatorLCAO", "init");
-    ModuleBase::timer::tick("OperatorLCAO", "init");
+    ModuleBase::timer::start("OperatorLCAO", "init");
     if (this->is_first_node) {
         // refresh HK
         this->refresh_h();
@@ -94,84 +94,84 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
         }
     }
     switch (this->cal_type) {
-    case calculation_type::lcao_overlap: {
-        // cal_type=lcao_overlap refer to overlap matrix operators, which are
-        // only rely on stucture, and not changed during SCF
+        case calculation_type::lcao_overlap: {
+            // cal_type=lcao_overlap refer to overlap matrix operators, which are
+            // only rely on stucture, and not changed during SCF
 
-        {
-            // update SR first
-            // in cal_type=lcao_overlap, SR should be updated by each sub-chain
-            // nodes
-            OperatorLCAO<TK, TR>* last = this;
-            while (last != nullptr) {
-                last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+            {
+                // update SR first
+                // in cal_type=lcao_overlap, SR should be updated by each sub-chain
+                // nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while (last != nullptr) {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
+
+            // update SK next
+            // in cal_type=lcao_overlap, SK should be update here
+            this->contributeHk(ik_in);
+
+            break;
         }
+        case calculation_type::lcao_fixed: {
+            // cal_type=lcao_fixed refer to fixed matrix operators, which are only
+            // rely on stucture, and not changed during SCF
 
-        // update SK next
-        // in cal_type=lcao_overlap, SK should be update here
-        this->contributeHk(ik_in);
-
-        break;
-    }
-    case calculation_type::lcao_fixed: {
-        // cal_type=lcao_fixed refer to fixed matrix operators, which are only
-        // rely on stucture, and not changed during SCF
-
-        // update HR first
-        if (!this->hr_done) {
-            // in cal_type=lcao_fixed, HR should be updated by each sub-chain
-            // nodes
-            OperatorLCAO<TK, TR>* last = this;
-            while (last != nullptr) {
-                last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+            // update HR first
+            if (!this->hr_done) {
+                // in cal_type=lcao_fixed, HR should be updated by each sub-chain
+                // nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while (last != nullptr) {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
+
+            // update HK next
+            // in cal_type=lcao_fixed, HK will update in the last node with
+            // OperatorLCAO::contributeHk()
+
+            break;
         }
+        case calculation_type::lcao_gint: {
+            // cal_type=lcao_gint refer to grid integral operators, which are relied
+            // on stucture and potential based on real space grids and should be
+            // updated each SCF steps
 
-        // update HK next
-        // in cal_type=lcao_fixed, HK will update in the last node with
-        // OperatorLCAO::contributeHk()
+            if (!this->hr_done) {
+                OperatorLCAO<TK, TR>* last = this;
+                while (last != nullptr) {
+                    // update HR first
+                    // in cal_type=lcao_gint, HR should be updated by every
+                    // sub-node.
+                    last->contributeHR();
 
-        break;
-    }
-    case calculation_type::lcao_gint: {
-        // cal_type=lcao_gint refer to grid integral operators, which are relied
-        // on stucture and potential based on real space grids and should be
-        // updated each SCF steps
-
-        if (!this->hr_done) {
-            OperatorLCAO<TK, TR>* last = this;
-            while (last != nullptr) {
-                // update HR first
-                // in cal_type=lcao_gint, HR should be updated by every
-                // sub-node.
-                last->contributeHR();
-
-                // update HK next
-                // in cal_type=lcao_gint, HK will update in the last node with
-                // OperatorLCAO::contributeHk()
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                    // update HK next
+                    // in cal_type=lcao_gint, HK will update in the last node with
+                    // OperatorLCAO::contributeHk()
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
+
+            break;
         }
+        #ifdef __MLALGO
+        case calculation_type::lcao_deepks: {
+            // update HR first
+            if (!this->hr_done) {
+                // in cal_type=lcao_deepks, HR should be updated
+                this->contributeHR();
+            }
 
-        break;
-    }
-#ifdef __MLALGO
-    case calculation_type::lcao_deepks: {
-        // update HR first
-        if (!this->hr_done) {
-            // in cal_type=lcao_deepks, HR should be updated
-            this->contributeHR();
+            // update V_delta in k space next
+            this->contributeHk(ik_in);
+
+            break;
         }
-
-        // update V_delta in k space next
-        this->contributeHk(ik_in);
-
-        break;
-    }
-#endif
+        #endif
         case calculation_type::lcao_dftu:
         {
             //only HK should be updated when cal_type=lcao_dftu
@@ -207,29 +207,28 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             //in cal_type=lcao_exx, HK only need to update from one node
             // this->contributeHk(ik_in);
 
-        break;
-    }
-    case calculation_type::lcao_tddft_periodic: {
-        if (!this->hr_done) {
-            // in cal_type=lcao_fixed, HR should be updated by each sub-chain
-            // nodes
-            OperatorLCAO<TK, TR>* last = this;
-            while (last != nullptr) {
-                last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
-            }
+            break;
         }
-        this->contributeHk(ik_in);
+        case calculation_type::lcao_tddft_periodic: {
+            if (!this->hr_done) {
+                // in cal_type=lcao_fixed, HR should be updated by each sub-chain
+                // nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while (last != nullptr) {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
+            }
+            this->contributeHk(ik_in);
 
-        break;
+            break;
+        }
+        default: {
+            ModuleBase::WARNING_QUIT("OperatorLCAO::init", "unknown cal_type");
+            break;
+        }
     }
-    default: {
-        ModuleBase::WARNING_QUIT("OperatorLCAO::init", "unknown cal_type");
-        break;
-    }
-    }
-    if (this->next_op
-        != nullptr) { // it is not the last node, loop next init() function
+    if (this->next_op != nullptr) { // it is not the last node, loop next init() function
         // pass HR status to next node and than set HR status of this node to
         // done
         {
@@ -237,7 +236,9 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
                 = this->hr_done;
         }
         // call init() function of next node
+        ModuleBase::timer::end("OperatorLCAO", "init");
         this->next_op->init(ik_in);
+        ModuleBase::timer::start("OperatorLCAO", "init");
     } else { // it is the last node, update HK with the current total HR
         OperatorLCAO<TK, TR>::contributeHk(ik_in);
     }
@@ -245,14 +246,14 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
     // set HR status of this node to done
     this->hr_done = true;
 
-    ModuleBase::timer::tick("OperatorLCAO", "init");
+    ModuleBase::timer::end("OperatorLCAO", "init");
 }
 
 // contributeHk()
 template <>
 void OperatorLCAO<double, double>::contributeHk(int ik) {
     ModuleBase::TITLE("OperatorLCAO", "contributeHk");
-    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::start("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
@@ -263,13 +264,13 @@ void OperatorLCAO<double, double>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
-    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }
 // contributeHk()
 template <typename TK, typename TR>
 void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     ModuleBase::TITLE("OperatorLCAO", "contributeHk");
-    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::start("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
@@ -294,7 +295,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
             hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
     }
-    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }
 
 template class OperatorLCAO<double, double>;

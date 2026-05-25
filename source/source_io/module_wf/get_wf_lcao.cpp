@@ -1,8 +1,8 @@
 #include "get_wf_lcao.h"
 
+#include "source_base/module_external/blacs_connector.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_wf/write_wfc_pw.h"
-#include "source_base/memory.h"
 
 #include "source_lcao/module_gint/gint_env_gamma.h"
 #include "source_lcao/module_gint/gint_env_k.h"
@@ -498,7 +498,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
                                  const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE("Get_wf_lcao", "wfc_2d_to_grid");
-    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
+    ModuleBase::timer::start("Get_wf_lcao", "wfc_2d_to_grid");
 
     // dimension related
     const int nlocal = pv.desc_wfc[2];
@@ -557,7 +557,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
             // this operation will let all processors have the same wfc_grid
         }
     }
-    ModuleBase::timer::tick("Get_wf_lcao", "wfc_2d_to_grid");
+    ModuleBase::timer::end("Get_wf_lcao", "wfc_2d_to_grid");
 }
 
 template void Get_wf_lcao::wfc_2d_to_grid(const double* lowf_2d,
@@ -589,14 +589,14 @@ void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)
     ofs_running << std::setprecision(6);
 }
 
-int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc)
+int Get_wf_lcao::globalIndex(int localindex, int nblk, int nprocs, int myproc) const
 {
     const int iblock = localindex / nblk;
     const int gIndex = (iblock * nprocs + myproc) * nblk + localindex % nblk;
     return gIndex;
 }
 
-int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc)
+int Get_wf_lcao::localIndex(int globalindex, int nblk, int nprocs, int& myproc) const
 {
     myproc = int((globalindex % (nblk * nprocs)) / nblk);
     return int(globalindex / (nblk * nprocs)) * nblk + globalindex % nblk;

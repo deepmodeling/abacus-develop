@@ -1,7 +1,8 @@
 #include "forces.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_dftu/dftu.h"
@@ -20,7 +21,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     {
         return;
     }
-    ModuleBase::timer::tick("Forces", "cal_force_onsite");
+    ModuleBase::timer::start("Forces", "cal_force_onsite");
 
     // allocate memory for the force
     FPTYPE* force = nullptr;
@@ -72,7 +73,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     // sum up force_onsite from all processors
     Parallel_Reduce::reduce_all(force_onsite.c, force_onsite.nr * force_onsite.nc);
 
-    ModuleBase::timer::tick("Forces", "cal_force_onsite");
+    ModuleBase::timer::end("Forces", "cal_force_onsite");
 }
 
 template class Forces<double, base_device::DEVICE_CPU>;

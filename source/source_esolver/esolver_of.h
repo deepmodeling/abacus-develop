@@ -99,7 +99,7 @@ class ESolver_OF : public ESolver_FP
     void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 
     // --------------------- interface to blas --------------------------
-    double inner_product(double* pa, double* pb, int length, double dV = 1)
+    double inner_product(double* pa, double* pb, int length, double dV = 1) const
     {
         double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
         innerproduct *= dV;

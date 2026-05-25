@@ -1,5 +1,7 @@
 #include "../para_linear_transform.h"
 
+#include "source_base/kernels/math_kernel_op.h"
+
 #include <gtest/gtest.h>
 #ifdef __MPI
 #include <mpi.h>

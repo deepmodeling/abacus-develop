@@ -2,6 +2,7 @@
 
 #ifdef __MLALGO
 #include "deepks_iterate.h"
+#include "source_io/module_parameter/parameter.h"
 
 void DeePKS_domain::iterate_ad1(const UnitCell& ucell,
                                 const Grid_Driver& GridD,

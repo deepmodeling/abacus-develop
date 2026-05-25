@@ -2,6 +2,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -22,7 +23,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
 		ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
 	}
 
-    ModuleBase::timer::tick("Stress", "stress_mgga");
+    ModuleBase::timer::start("Stress", "stress_mgga");
 
     int current_spin = 0;
     const int nrxx = wfc_basis->nrxx;
@@ -130,7 +131,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
             sigma(i, j) += sigma_mgga[i][j] / wfc_basis->nxyz;
         }
     }
-    ModuleBase::timer::tick("Stress", "stress_mgga");
+    ModuleBase::timer::end("Stress", "stress_mgga");
     return;
 }
 

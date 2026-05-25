@@ -25,7 +25,7 @@ void pseudopot_cell_vl::init_vloc(const UnitCell& ucell,
 
 	// This routine computes the fourier coefficient of the local
 	// potential vloc(ig,it) for each type of atom
-	ModuleBase::timer::tick("ppcell_vl","init_vloc");
+	ModuleBase::timer::start("ppcell_vl","init_vloc");
 
 	double *vloc1d = new double[rho_basis->ngg];
 	ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
@@ -72,7 +72,7 @@ void pseudopot_cell_vl::init_vloc(const UnitCell& ucell,
 
 	this->print_vloc(ucell,rho_basis);
 
-	ModuleBase::timer::tick("ppcell_vl","init_vloc");
+	ModuleBase::timer::end("ppcell_vl","init_vloc");
 	return;
 }
 

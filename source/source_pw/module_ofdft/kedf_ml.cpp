@@ -87,8 +87,10 @@ void KEDF_ML::set_para(
                 if (this->descriptor_type[i] == "gamma") feg_inpt[i] = 1.;
             }
 
-            if (PARAM.inp.of_ml_feg == 1) 
+            if (PARAM.inp.of_ml_feg == 1)
+            {
                 this->feg_net_F = torch::softplus(this->nn->forward(feg_inpt)).to(this->device_CPU).contiguous().data_ptr<double>()[0];
+            }
             else
             {
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
@@ -163,7 +165,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     this->get_potential_(prho, pw_rho, rpotential);
 
     // get energy
-    ModuleBase::timer::tick("KEDF_ML", "Pauli Energy");
+    ModuleBase::timer::start("KEDF_ML", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
@@ -172,7 +174,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     energy *= this->dV * this->energy_prefactor;
     this->ml_energy = energy;
     Parallel_Reduce::reduce_all(this->ml_energy);
-    ModuleBase::timer::tick("KEDF_ML", "Pauli Energy");
+    ModuleBase::timer::end("KEDF_ML", "Pauli Energy");
 }
 
 /**

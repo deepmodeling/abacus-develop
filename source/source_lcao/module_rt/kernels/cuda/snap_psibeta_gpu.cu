@@ -109,7 +109,7 @@ void snap_psibeta_atom_batch_gpu(
     const int nlm_dim,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)
 {
-    ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+    ModuleBase::timer::start("module_rt", "snap_psibeta_gpu");
 
     //=========================================================================
     // Early exit if no projectors on center atom
@@ -118,7 +118,7 @@ void snap_psibeta_atom_batch_gpu(
     const int nproj = infoNL_.nproj[T0];
     if (nproj == 0)
     {
-        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+        ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
         return;
     }
 
@@ -216,7 +216,7 @@ void snap_psibeta_atom_batch_gpu(
     int total_neighbor_orbitals = static_cast<int>(neighbor_orbitals_h.size());
     if (total_neighbor_orbitals == 0)
     {
-        ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+        ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
         return;
     }
 
@@ -368,7 +368,7 @@ void snap_psibeta_atom_batch_gpu(
     cudaFree(proj_m0_offset_d);
     cudaFree(nlm_out_d);
 
-    ModuleBase::timer::tick("module_rt", "snap_psibeta_gpu");
+    ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
 }
 
 } // namespace gpu

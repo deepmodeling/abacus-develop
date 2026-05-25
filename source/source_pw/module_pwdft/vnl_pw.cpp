@@ -6,9 +6,10 @@
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
+#include "source_io/module_output/output.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
@@ -64,6 +65,13 @@ void pseudopot_cell_vnl::release_memory()
         delmem_ch_op()(this->c_deeq_nc);
         delmem_ch_op()(this->c_vkb);
         delmem_ch_op()(this->c_qq_so);
+#ifdef __DSP
+        if (this->z_vkb != nullptr)
+        {
+            base_device::memory::delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(this->z_vkb);
+            this->z_vkb = nullptr;
+        }
+#endif
         // There's no need to delete double precision pointers while in a CPU environment.
     }
     memory_released = true;
@@ -80,7 +88,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
 {
     const int ntype = ucell.ntype;
     ModuleBase::TITLE("pseudopot_cell_vnl", "init");
-    ModuleBase::timer::tick("ppcell_vnl", "init");
+    ModuleBase::timer::start("ppcell_vnl", "init");
 
     GlobalV::ofs_running << "\n SETUP NONLOCAL PSEUDOPOTENTIALS IN PLANE WAVE BASIS" << std::endl;
 
@@ -207,10 +215,17 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     // dq+4)*cell_factor;
     this->lmaxq = 2 * this->lmaxkb + 1;
     int npwx = this->wfcpw->npwk_max;
+    this->vkbnc = npwx;
     if (nkb > 0 && allocate_vkb)
+    {
+        if (!this->use_gpu_)
     {
         vkb.create(nkb, npwx);
         ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
+        }
+        // GPU path: vkb ComplexMatrix is not allocated.
+        // Column dimension is stored in vkbnc for gemm/gemv leading dimension.
+        // Actual GPU buffers (c_vkb/z_vkb) are allocated below.
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90
@@ -273,18 +288,18 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
             resmem_sh_op()(s_tab, this->tab.getSize());
             resmem_ch_op()(c_vkb, nkb * npwx);
         }
-        #ifdef __DSP
+#ifdef __DSP
         base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()
-        (this->z_vkb, this->vkb.size, "Nonlocal<PW>::ps");
-        memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
-        #else
+        (this->z_vkb, this->vkb.size, "VNL::z_vkb");
+        // memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
+#else
         this->z_vkb = this->vkb.c;
-        #endif
+#endif
         this->d_tab = this->tab.ptr;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
 
-    ModuleBase::timer::tick("ppcell_vnl", "init");
+    ModuleBase::timer::end("ppcell_vnl", "init");
     return;
 }
 
@@ -293,16 +308,16 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
 // with structure factor, for all atoms, in reciprocal space
 //----------------------------------------------------------
 template <typename FPTYPE, typename Device>
-void pseudopot_cell_vnl::getvnl(Device* ctx, 
+void pseudopot_cell_vnl::getvnl(Device* ctx,
                                 const UnitCell& ucell,
-                                const int& ik, 
+                                const int& ik,
                                 std::complex<FPTYPE>* vkb_in) const
 {
-    if (PARAM.inp.test_pp) 
+    if (PARAM.inp.test_pp)
     {
         ModuleBase::TITLE("pseudopot_cell_vnl", "getvnl");
     }
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
+    ModuleBase::timer::start("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
@@ -422,13 +437,13 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         delmem_int_op()(atom_nb);
         delmem_int_op()(atom_na);
     }
-    ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
+    ModuleBase::timer::end("pp_cell_vnl", "getvnl");
 } // end subroutine getvnl
 
 void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
+    ModuleBase::timer::start("ppcell_vnl", "init_vnl");
 
     this->omega_old = cell.omega;
 
@@ -732,10 +747,10 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
             {
                 const double q = iq * PARAM.globalv.dq;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);  
+                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl);
                 for (int ir = 0; ir < kkbeta; ir++)
-                {   
-		            aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];   
+                {
+		            aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
                 }
                 double vqint=0.0;
                 ModuleBase::Integral::Simpson_Integral(kkbeta, aux, cell.atoms[it].ncpp.rab.data(), vqint);
@@ -782,7 +797,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
+    ModuleBase::timer::end("ppcell_vnl", "init_vnl");
     GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done." << std::endl;
     return;
 }
@@ -1057,7 +1072,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 // void pseudopot_cell_vnl::getvnl_alpha(const int &ik)           // pengfei Li  2018-3-23
 // {
 // 	if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl_alpha");
-// 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
+// 	ModuleBase::timer::start("pp_cell_vnl","getvnl_alpha");
 
 // 	if(lmaxkb < 0)
 // 	{
@@ -1170,7 +1185,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M) // p
 
 // 	delete [] gk;
 // 	delete [] vq;
-// 	ModuleBase::timer::tick("pp_cell_vnl","getvnl_alpha");
+// 	ModuleBase::timer::end("pp_cell_vnl","getvnl_alpha");
 // 	return;
 // }
 #endif
@@ -1180,7 +1195,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
     if (PARAM.inp.test_pp) {
         ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl_alpha");
 }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");
+    ModuleBase::timer::start("ppcell_vnl", "init_vnl_alpha");
 
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -1244,7 +1259,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(const UnitCell& ucell) // pengfei Li 201
         delete[] aux;
         delete[] jl;
     }
-    ModuleBase::timer::tick("ppcell_vnl", "init_vnl_alpha");
+    ModuleBase::timer::end("ppcell_vnl", "init_vnl_alpha");
     GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done(including L)." << std::endl;
     return;
 }
@@ -1723,7 +1738,7 @@ template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_de
                                                                          int const&,
                                                                          std::complex<float>*) const;
 template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
-                                                                          const UnitCell&, 
+                                                                          const UnitCell&,
                                                                           int const&,
                                                                           std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)

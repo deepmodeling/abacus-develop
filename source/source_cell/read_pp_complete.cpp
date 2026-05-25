@@ -140,7 +140,7 @@ void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
 	if (br)
 	{
 		// force msh to be odd for simpson integration
-		pp.msh = 2 * (int)((pp.msh + 1) / 2) - 1;	// 5
+		pp.msh = 2 * static_cast<int>((pp.msh + 1) / 2) - 1;	// Use static_cast instead of C-style cast for type safety
 	}
 	else
 	{

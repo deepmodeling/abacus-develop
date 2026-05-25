@@ -691,14 +691,28 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         Input_Item item("cal_syns");
         item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
         item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format."
-                          "\n\n[NOTE] Only works with LCAO basis and molecular dynamics calculations. "
-                          "Requires atomic velocities. Output starts from the second MD step (istep > 0).";
+        item.type = R"(Boolean [Integer](optional))";
+        item.description = R"(Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
+
+* 0 or false: disable
+* 1 or true: enable with default precision (8 digits)
+* 1 5: enable with custom precision (5 digits)
+
+[NOTE] Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep > 0).)";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
-        read_sync_bool(input.cal_syns);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "cal_syns needs at least 1 value");
+            para.input.cal_syns[0] = assume_as_boolean(item.str_values[0]);
+            para.input.cal_syns[1] = 8;
+            if (count >= 2) try { para.input.cal_syns[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
+
+        sync_intvec(input.cal_syns, 2, 0);
         this->add_item(item);
     }
     {

@@ -28,7 +28,7 @@ Pot_Cosikr::Pot_Cosikr(
 void Pot_Cosikr::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix &v_eff)
 {
 	ModuleBase::TITLE("Pot_Cosikr", "cal_v_eff");
-	ModuleBase::timer::tick("Pot_Cosikr", "cal_veff");
+	ModuleBase::timer::start("Pot_Cosikr", "cal_veff");
 	assert(v_eff.nr == this->phase.size());
 	assert(v_eff.nr == this->amplitude.size());
 	int ir = 0;
@@ -47,7 +47,7 @@ void Pot_Cosikr::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, M
 			}
 		}
 	}
-	ModuleBase::timer::tick("Pot_Cosikr", "cal_veff");
+	ModuleBase::timer::end("Pot_Cosikr", "cal_veff");
 }
 
 }

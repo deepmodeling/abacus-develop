@@ -5,7 +5,6 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_psi/psi.h"
 
 class Structure_Factor
 {
@@ -60,7 +59,7 @@ public:
                                   int it,
                                   int ia,
                                   const ModulePW::PW_Basis_K* wfc_basis,
-                                  ModuleBase::Vector3<double> q);
+                                  ModuleBase::Vector3<double> q) const;
 
   private:
 

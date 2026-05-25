@@ -3,7 +3,6 @@
 
 #include "source_cell/unitcell.h"
 #include "sltk_atom.h"
-#include "sltk_util.h"
 
 #include <functional>
 #include <stdexcept>

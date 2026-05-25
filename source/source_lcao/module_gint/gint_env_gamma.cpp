@@ -20,7 +20,7 @@ Gint_env_gamma::Gint_env_gamma(
 void Gint_env_gamma::cal_env_band(const int iband)
 {
     ModuleBase::TITLE("Gint", "cal_gint_env");
-    ModuleBase::timer::tick("Gint", "cal_gint_env");
+    ModuleBase::timer::start("Gint", "cal_gint_env");
     ModuleBase::GlobalFunc::ZEROS(rho_, gint_info_->get_local_mgrid_num());
     const double* wfc_gint_band = &wfc_gint_[iband * gint_info_->get_lgd()];
 #pragma omp parallel
@@ -42,7 +42,7 @@ void Gint_env_gamma::cal_env_band(const int iband)
             phi_op.cal_env_gamma(phi.data(), wfc_gint_band, gint_info_->get_trace_lo(), rho_);
         }
     }
-    ModuleBase::timer::tick("Gint", "cal_gint_env");
+    ModuleBase::timer::end("Gint", "cal_gint_env");
 }
 
 

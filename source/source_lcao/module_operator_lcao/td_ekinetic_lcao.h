@@ -5,7 +5,6 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_rt/td_info.h"
 #include "operator_lcao.h"
 #include <vector>
 
@@ -98,7 +97,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     const Grid_Driver* Grid = nullptr;
 
-    const K_Vectors* kv;
+    const K_Vectors* kv = nullptr;
 
     /// @brief correction term i A nabla
     void td_ekinetic_scalar(std::complex<double>* Hloc, const TR& Sloc, int nnr);

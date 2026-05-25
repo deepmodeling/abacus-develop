@@ -1,5 +1,5 @@
 #include "FORCE.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
@@ -18,6 +18,7 @@
 
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/deepks_force.h"
 #endif
 
 #ifdef _OPENMP
@@ -35,7 +36,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Forces", "allocate");
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::start("Forces", "allocate");
 
     const int nnr = pv.nnr;
 
@@ -132,7 +133,7 @@ void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
                               &gd,
                               nullptr); // delete lm.Hloc_fixedR
 
-    ModuleBase::timer::tick("Forces", "allocate");
+    ModuleBase::timer::end("Forces", "allocate");
     return;
 }
 
@@ -187,7 +188,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 		Record_adj* ra)
 {
     ModuleBase::TITLE("Forces", "ftable");
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::start("Forces", "ftable");
 
     this->allocate(ucell,
                    gd,
@@ -277,6 +278,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     }
 #endif
 
-    ModuleBase::timer::tick("Forces", "ftable");
+    ModuleBase::timer::end("Forces", "ftable");
     return;
 }

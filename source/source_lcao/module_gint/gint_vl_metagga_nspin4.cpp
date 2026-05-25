@@ -11,11 +11,11 @@ namespace ModuleGint
 void Gint_vl_metagga_nspin4::cal_gint()
 {
     ModuleBase::TITLE("Gint", "cal_gint_vl");
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    ModuleBase::timer::start("Gint", "cal_gint_vl");
     init_hr_gint_();
     cal_hr_gint_();
     merge_hr_part_to_hR(hr_gint_part_, hR_, *gint_info_);
-    ModuleBase::timer::tick("Gint", "cal_gint_vl");
+    ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
 void Gint_vl_metagga_nspin4::init_hr_gint_()
@@ -65,10 +65,10 @@ void Gint_vl_metagga_nspin4::cal_hr_gint_()
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.data(), dphi_x_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.data(), dphi_y_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.data(), dphi_z_vldr3.data());
-                phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_x.data(), dphi_x_vldr3.data(), hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_y.data(), dphi_y_vldr3.data(), hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
-                phi_op.phi_mul_phi(dphi_z.data(), dphi_z_vldr3.data(), hr_gint_part_[is], PhiOperator::Triangular_Matrix::Upper);
+                phi_op.phi_mul_phi(phi.data(), phi_vldr3.data(), hr_gint_part_[is], PhiOperator::TriPart::Upper);
+                phi_op.phi_mul_phi(dphi_x.data(), dphi_x_vldr3.data(), hr_gint_part_[is], PhiOperator::TriPart::Upper);
+                phi_op.phi_mul_phi(dphi_y.data(), dphi_y_vldr3.data(), hr_gint_part_[is], PhiOperator::TriPart::Upper);
+                phi_op.phi_mul_phi(dphi_z.data(), dphi_z_vldr3.data(), hr_gint_part_[is], PhiOperator::TriPart::Upper);
             }
         }
     }

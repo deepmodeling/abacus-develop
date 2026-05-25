@@ -41,7 +41,7 @@ namespace ModuleSymmetry
         hamilt::HContainer<TR>& HR_rotated)const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_HR");
         for (auto& apR_isym_irapR : this->irs_.full_map_to_irreducible_sector_)
         {
             const Tap& ap = apR_isym_irapR.first.first;
@@ -61,7 +61,7 @@ namespace ModuleSymmetry
             TR* ijR_ptr = ap_hc.get_pointer(R_hc);
             rotate_atompair_parallel(irijR_ptr, isym, atoms, st, irap, ap, mode, *irap_hc.get_paraV(), ijR_ptr);
         }
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR");
+        ModuleBase::timer::end("Symmetry_rotation", "restore_HR");
     }
 
     inline void set_block(const int starti, const int startj, const int nr, const ModuleBase::ComplexMatrix& block, double* obj)

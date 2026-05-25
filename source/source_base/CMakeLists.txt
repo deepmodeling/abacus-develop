@@ -36,7 +36,7 @@ add_library(
     mathzone_add1.cpp
     matrix.cpp
     matrix3.cpp
-    memory.cpp
+    memory_recorder.cpp
     mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
@@ -49,7 +49,6 @@ add_library(
     tool_quit.cpp
     tool_title.cpp
     ylm.cpp
-    abfs-vector3_order.cpp
     parallel_common.cpp
     parallel_global.cpp
     parallel_comm.cpp

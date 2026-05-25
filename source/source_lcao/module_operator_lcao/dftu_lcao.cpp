@@ -45,7 +45,7 @@ template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DFTU", "initialize_HR");
-    ModuleBase::timer::tick("DFTU", "initialize_HR");
+    ModuleBase::timer::start("DFTU", "initialize_HR");
 
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
@@ -85,7 +85,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
         this->adjs_all.push_back(adjs);
     }
 
-    ModuleBase::timer::tick("DFTU", "initialize_HR");
+    ModuleBase::timer::end("DFTU", "initialize_HR");
 }
 
 template <typename TK, typename TR>
@@ -97,7 +97,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
 		return;
 	}
 
-    ModuleBase::timer::tick("DFTU", "cal_nlm_all");
+    ModuleBase::timer::start("DFTU", "cal_nlm_all");
     nlm_tot.resize(this->ucell->nat);
     const int npol = this->ucell->get_npol();
     int atom_index = 0;
@@ -169,7 +169,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
         }
     }
     this->precal_nlm_done = true;
-    ModuleBase::timer::tick("DFTU", "cal_nlm_all");
+    ModuleBase::timer::end("DFTU", "cal_nlm_all");
 }
 
 // contributeHR()
@@ -189,7 +189,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             this->dftu->set_energy(0.0);
 		}
 	}
-    ModuleBase::timer::tick("DFTU", "contributeHR");
+    ModuleBase::timer::start("DFTU", "contributeHR");
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
@@ -211,7 +211,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
-        ModuleBase::timer::tick("DFTU", "cal_occ");
+        ModuleBase::timer::start("DFTU", "cal_occ");
         // first iteration to calculate occupation matrix
         const int spin_fold = (this->nspin == 4) ? 4 : 1;
         std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
@@ -266,10 +266,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             }
             // set initialed_locale to false to avoid using readin locale in next iteration
         }
-        ModuleBase::timer::tick("DFTU", "cal_occ");
+        ModuleBase::timer::end("DFTU", "cal_occ");
 
         // calculate VU
-        ModuleBase::timer::tick("DFTU", "cal_vu");
+        ModuleBase::timer::start("DFTU", "cal_vu");
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU_tmp(occ.size());
 
@@ -310,7 +310,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                 }
             }
         }
-        ModuleBase::timer::tick("DFTU", "cal_vu");
+        ModuleBase::timer::end("DFTU", "cal_vu");
     }
 
     // energy correction for NSPIN=1
@@ -332,7 +332,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 		this->current_spin = 1 - this->current_spin;
 	}
 
-    ModuleBase::timer::tick("DFTU", "contributeHR");
+    ModuleBase::timer::end("DFTU", "contributeHR");
 }
 
 // cal_HR_IJR()

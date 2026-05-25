@@ -20,7 +20,7 @@ void ModuleIO::cal_tmp_DM(const UnitCell& ucell,
                         int nspin_dm)
 {
     ModuleBase::TITLE("ModuleIO", "cal_tmp_DM");
-    ModuleBase::timer::tick("ModuleIO", "cal_tmp_DM");
+    ModuleBase::timer::start("ModuleIO", "cal_tmp_DM");
     for (int is = 1; is <= nspin_dm; ++is)
     {
         for (int ik = 0; ik < DM_real.get_DMK_nks() / nspin_dm; ++ik)
@@ -28,7 +28,7 @@ void ModuleIO::cal_tmp_DM(const UnitCell& ucell,
             cal_tmp_DM_k(ucell, DM_real, DM_imag, ik, nspin_dm, is, false);
         }
     }
-    ModuleBase::timer::tick("ModuleIO", "cal_tmp_DM");
+    ModuleBase::timer::end("ModuleIO", "cal_tmp_DM");
 }
 template <typename TR>
 void ModuleIO::write_current(const UnitCell& ucell,
@@ -44,7 +44,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::start("ModuleIO", "write_current");
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     if (PARAM.inp.td_stype!=1)
     {
@@ -190,7 +190,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
         fout.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::end("ModuleIO", "write_current");
     return;
 }
 void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
@@ -202,7 +202,7 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                           const bool reset)
 {
     ModuleBase::TITLE("ModuleIO", "cal_tmp_DM_k");
-    ModuleBase::timer::tick("ModuleIO", "cal_tmp_DM_k");
+    ModuleBase::timer::start("ModuleIO", "cal_tmp_DM_k");
     int ld_hk = DM_real.get_paraV_pointer()->nrow;
     int ld_hk2 = 2 * ld_hk;
     // tmp for is
@@ -396,7 +396,7 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("ModuleIO", "cal_tmp_DM_k");
+    ModuleBase::timer::end("ModuleIO", "cal_tmp_DM_k");
 }
 template <typename TR>
 void ModuleIO::write_current_eachk(const UnitCell& ucell,
@@ -412,7 +412,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::start("ModuleIO", "write_current");
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     if (PARAM.inp.td_stype != 1)
     {
@@ -587,7 +587,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
         fout.close();
     }
 
-    ModuleBase::timer::tick("ModuleIO", "write_current");
+    ModuleBase::timer::end("ModuleIO", "write_current");
     return;
 }
 template 

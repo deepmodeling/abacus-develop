@@ -21,22 +21,17 @@ class Gint_vl : public Gint
 
     private:
 
-    void init_hr_gint_();
-    
-    // note that only the upper triangle matrix of hR is calculated
-    // that's why we need compose_hr_gint() to fill the lower triangle matrix.
-    void cal_hr_gint_();
+    template<typename Real>
+    void cal_gint_impl_();
 
     // input
-    const double* vr_eff_;
+    const double* vr_eff_ = nullptr;
 
     // output
     HContainer<double>* hR_;
 
     // Intermediate variables
     double dr3_;
-
-    HContainer<double> hr_gint_;
 };
 
 }

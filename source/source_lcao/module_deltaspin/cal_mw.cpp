@@ -2,9 +2,10 @@
 
 #include "source_base/matrix.h"
 #include "source_base/name_angular.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "spin_constrain.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
@@ -16,7 +17,7 @@ template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_lcao");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // calculate MW from lambda in real space projection method
     this->zero_Mi();
     const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(1);
@@ -47,7 +48,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
         }
     }
 
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_lcao");
 }
 
 #endif
@@ -56,7 +57,7 @@ template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_pw");
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_pw");
 
     this->zero_Mi();
     if(PARAM.inp.device == "cpu")
@@ -154,7 +155,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
     // reduce mag from all k-pools
     Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
-    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }
 
 template <>

@@ -1,5 +1,6 @@
 #include "FORCE_STRESS.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
@@ -16,6 +17,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "source_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "source_lcao/module_deepks/deepks_force.h"
 #endif
 #include "source_lcao/module_operator_lcao/dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
@@ -86,11 +88,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
-    ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+    ModuleBase::timer::start("Force_Stress_LCAO", "getForceStress");
 
     if (!isforce && !isstress)
     {
-        ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+        ModuleBase::timer::end("Force_Stress_LCAO", "getForceStress");
         return;
     }
 
@@ -795,7 +797,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
     } // end of stress calculation
 
-    ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
+    ModuleBase::timer::end("Force_Stress_LCAO", "getForceStress");
     return;
 }
 
