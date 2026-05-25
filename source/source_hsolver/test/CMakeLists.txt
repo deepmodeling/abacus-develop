@@ -41,14 +41,6 @@ if (ENABLE_MPI)
             ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
-    TARGET MODULE_HSOLVER_mixed_precision_benchmark
-    LIBS parameter  ${math_libs} base psi device container
-    SOURCES diago_mixed_precision_benchmark.cpp ../diago_cg.cpp ../diago_david.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
-            ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
-  )
-  AddTest(
     TARGET MODULE_HSOLVER_dav
     LIBS parameter  ${math_libs} base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
