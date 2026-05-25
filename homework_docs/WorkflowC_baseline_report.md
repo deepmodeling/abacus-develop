@@ -97,16 +97,16 @@ ABACUS 使用 `ModuleBase::timer` 机制记录计算耗时，按 `CLASS_NAME::FU
 
 ### 3.2 新增临时计时桩点
 
-为获取 Workflow C 所需粒度数据，在以下函数中临时插入 `timer::start/end`（基线测试完成后将移除）：
+为获取 Workflow C 所需粒度数据，在以下函数中临时插入了 `timer::start/end`（基线数据收集完成后已移除，代码恢复到原始状态）：
 
-| 函数 | 文件:行号 | 所属题目 |
-|------|-----------|----------|
-| `PW_Basis::gatherp_scatters` | `pw_gatherscatter.h:18,104` | 题目5 SIMD |
-| `PW_Basis::gathers_scatterp` | `pw_gatherscatter.h:120,221` | 题目5 SIMD |
-| `PW_Basis::collect_local_pw` | `pw_basis.cpp:137,187` | 题目8 缓存 |
-| `PW_Basis::collect_uniqgg` | `pw_basis.cpp:195,277` | 题目8 缓存 |
-| `PW_Basis_K::setupIndGk` | `pw_basis_k.cpp:133,202` | 题目8 缓存 |
-| `PW_Basis_K::collect_local_pw` | `pw_basis_k.cpp:257,358` | 题目8 缓存 |
+| 函数 | 文件 | 所属题目 |
+|------|------|----------|
+| `PW_Basis::gatherp_scatters` | `pw_gatherscatter.h` | 题目5 SIMD |
+| `PW_Basis::gathers_scatterp` | `pw_gatherscatter.h` | 题目5 SIMD |
+| `PW_Basis::collect_local_pw` | `pw_basis.cpp` | 题目8 缓存 |
+| `PW_Basis::collect_uniqgg` | `pw_basis.cpp` | 题目8 缓存 |
+| `PW_Basis_K::setupIndGk` | `pw_basis_k.cpp` | 题目8 缓存 |
+| `PW_Basis_K::collect_local_pw` | `pw_basis_k.cpp` | 题目8 缓存 |
 
 ### 3.3 计时器限制
 
@@ -624,15 +624,13 @@ homework_docs/test_cases/
 
 ## 附录 B：临时计时桩点代码变更
 
-为获取基线测试所需的细粒度计时数据，在以下文件中临时插入了 `ModuleBase::timer::start/end`：
+为获取基线测试所需的细粒度计时数据，在以下文件中临时插入了 `ModuleBase::timer::start/end`（基线数据收集完成后已移除，代码恢复到原始状态）：
 
 ```
 source/source_basis/module_pw/pw_gatherscatter.h  (+6 行: 3 处 start/end 对)
 source/source_basis/module_pw/pw_basis.cpp          (+6 行: 2 处 start/end 对 + 2 处 early return end)
 source/source_basis/module_pw/pw_basis_k.cpp        (+6 行: 同上)
 ```
-
-这些桩点将在进入第 13 周代码修改前移除，以免影响后续的性能对比测试。
 
 ## AI使用心得
 
