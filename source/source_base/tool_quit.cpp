@@ -25,6 +25,11 @@ void set_quit_out_dir(const std::string& dir)
     g_quit_out_dir = dir;
 }
 
+const std::string& get_global_out_dir()
+{
+    return g_quit_out_dir;
+}
+
 void set_quit_calculation(const std::string& calculation)
 {
     g_quit_calculation = calculation;
