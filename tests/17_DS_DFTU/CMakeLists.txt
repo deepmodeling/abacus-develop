@@ -1,5 +1,10 @@
 enable_testing()
 
+# TODO: Enable all tests after DeltaSpin + DFT+U code is merged into develop.
+# These tests require the DeltaSpin module (source/module_hamilt_general/hamilt_deltaspin.h)
+# and associated DFT+U with spin constraint functionality.
+# Uncomment the add_test blocks below once the feature branch is merged.
+
 find_program(BASH bash)
 if(ENABLE_ASAN)
     add_test(
