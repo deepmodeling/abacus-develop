@@ -209,10 +209,21 @@ bool DiagoPexsi<std::complex<double>>::finish_k_loop(const double target_nelec)
     {
         if (this->has_mu_lower_ && this->has_mu_upper_)
         {
-            mu_buffer[0] = 0.5 * (this->mu_lower_ + this->mu_upper_);
+            const double old_mu = mu_buffer[0];
+            const double next_mu = 0.5 * (this->mu_lower_ + this->mu_upper_);
+            trace_pexsi_mu("mu.bisect",
+                           old_mu,
+                           target_nelec,
+                           this->num_electron_sum_,
+                           residual,
+                           this->num_electron_derivative_sum_,
+                           next_mu - old_mu);
+            mu_buffer[0] = next_mu;
             return false;
         }
-        const double fallback_step = std::max(pexsi::PEXSI_Solver::pexsi_mu_guard, 0.5);
+        const double fallback_step = pexsi::PEXSI_Solver::pexsi_mu_guard > 0.0
+                                         ? pexsi::PEXSI_Solver::pexsi_mu_guard
+                                         : 0.5;
         delta_mu = residual > 0.0 ? fallback_step : -fallback_step;
     }
     else
