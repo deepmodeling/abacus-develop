@@ -3,12 +3,12 @@
 
 /**
  * @file precision_strategy.h
- * @brief 精度选择策略 - 模板化的精度无关求解器包装
+ * @brief Precision selection strategy - template-based precision-agnostic solver wrapper
  *
- * 提供精度无关的求解器接口，支持运行时精度配置。
- * 通过策略模式分离精度选择逻辑和求解器实现。
+ * Provides precision-agnostic solver interfaces with runtime precision configuration.
+ * Separates precision selection logic from solver implementation via the strategy pattern.
  *
- * 使用方法:
+ * Usage:
  *   auto solver = make_precision_solver<DiagoCG>(PrecisionMode::kMixed, ...);
  *   solver.diag(...);
  */
@@ -23,11 +23,11 @@ namespace hsolver
 {
 
 /**
- * @brief 精度选择策略基类
+ * @brief Base class for precision selection strategy
  *
- * @tparam SolverT 求解器类型 (如 DiagoCG, DiagoDavid)
- * @tparam T 数据类型 (double, complex<double> 等)
- * @tparam Device 设备类型
+ * @tparam SolverT Solver type (e.g., DiagoCG, DiagoDavid)
+ * @tparam T Data type (e.g., double, complex<double>)
+ * @tparam Device Device type
  */
 template <template <typename, typename> class SolverT, typename T, typename Device = base_device::DEVICE_CPU>
 class PrecisionStrategy
@@ -38,12 +38,12 @@ class PrecisionStrategy
     virtual ~PrecisionStrategy() = default;
 
     /**
-     * @brief 获取当前精度模式
+     * @brief Get the current precision mode
      */
     virtual PrecisionMode get_mode() const = 0;
 
     /**
-     * @brief 获取精度模式对应的字符串描述
+     * @brief Get string description of the current precision mode
      */
     virtual std::string get_mode_string() const
     {
@@ -51,40 +51,40 @@ class PrecisionStrategy
     }
 
     /**
-     * @brief 检查是否适应当前问题规模
+     * @brief Check whether the strategy is suitable for the given problem size
      *
-     * 对于极小矩阵(dim < 50)，自动回退到双精度。
+     * For very small matrices (dim < 50), falls back to double precision.
      *
-     * @param dim 矩阵维度
-     * @return 推荐的精度模式
+     * @param dim Matrix dimension
+     * @return Recommended precision mode
      */
     static PrecisionMode recommend_mode(int dim)
     {
         if (dim < 50)
         {
-            // 小矩阵：双精度更稳定，且性能差异不大
+            // Small matrix: double precision is more stable, performance difference is negligible
             return PrecisionMode::kDouble;
         }
         else if (dim < 200)
         {
-            // 中等矩阵：混合精度平衡
+            // Medium matrix: balanced mixed precision
             return PrecisionMode::kMixed;
         }
         else
         {
-            // 大矩阵：混合精度收益明显
+            // Large matrix: mixed precision provides clear benefit
             return PrecisionMode::kMixed;
         }
     }
 
     /**
-     * @brief 自动选择精度模式
+     * @brief Auto-select the optimal precision mode
      *
-     * 根据矩阵维度和用户偏好自动选择最优精度模式。
+     * Selects the best precision mode based on matrix dimension and user preference.
      *
-     * @param mode_str 用户指定的精度模式 ("auto", "double", "float", "mixed")
-     * @param dim 矩阵维度
-     * @return 最终选择的精度模式
+     * @param mode_str User-specified precision mode ("auto", "double", "float", "mixed")
+     * @param dim Matrix dimension
+     * @return Final selected precision mode
      */
     static PrecisionMode auto_select_mode(const std::string& mode_str, int dim)
     {
@@ -97,7 +97,7 @@ class PrecisionStrategy
 };
 
 /**
- * @brief 双精度策略
+ * @brief Double precision strategy
  */
 template <template <typename, typename> class SolverT, typename T, typename Device = base_device::DEVICE_CPU>
 class DoublePrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
@@ -110,7 +110,7 @@ class DoublePrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
 };
 
 /**
- * @brief 混合精度策略
+ * @brief Mixed precision strategy
  */
 template <template <typename, typename> class SolverT, typename T, typename Device = base_device::DEVICE_CPU>
 class MixedPrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
@@ -123,7 +123,7 @@ class MixedPrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
 };
 
 /**
- * @brief 纯单精度策略 (用于快速原型和非关键计算)
+ * @brief Float precision strategy (for fast prototyping and non-critical calculations)
  */
 template <template <typename, typename> class SolverT, typename T, typename Device = base_device::DEVICE_CPU>
 class FloatPrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
@@ -136,9 +136,9 @@ class FloatPrecisionStrategy : public PrecisionStrategy<SolverT, T, Device>
 };
 
 /**
- * @brief 精度策略工厂
+ * @brief Precision strategy factory
  *
- * 根据 PrecisionMode 创建对应的策略对象。
+ * Creates the corresponding strategy object based on PrecisionMode.
  */
 template <template <typename, typename> class SolverT, typename T, typename Device = base_device::DEVICE_CPU>
 class PrecisionStrategyFactory
@@ -159,7 +159,7 @@ class PrecisionStrategyFactory
     }
 
     /**
-     * @brief 从字符串创建策略
+     * @brief Create strategy from string
      */
     static std::unique_ptr<PrecisionStrategy<SolverT, T, Device>> create_from_string(const std::string& mode_str)
     {

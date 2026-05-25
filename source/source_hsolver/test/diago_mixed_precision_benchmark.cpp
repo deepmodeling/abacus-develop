@@ -27,7 +27,7 @@ using Complex = std::complex<double>;
 using namespace hsolver;
 
 // ============================================================================
-// 辅助函数
+// Helper functions
 // ============================================================================
 
 /// Generate random Hermitian matrix
