@@ -166,33 +166,33 @@ install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DI
 install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
-if (ENABLE_MPI)
-  if (USE_ELPA)
-    AddTest(
-      TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
-      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
-    )
-  else()
-    AddTest(
-        TARGET MODULE_HSOLVER_diago_hs_parallel
-        LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
-        SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
-      )
-  endif()
-
+if (USE_ELPA)
   AddTest(
-    TARGET MODULE_HSOLVER_linear_trans
-    LIBS parameter  ${math_libs} base device MPI::MPI_CXX
-    SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
+    TARGET MODULE_HSOLVER_diago_hs_parallel
+    LIBS parameter  ${math_libs} ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+    SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
   )
+else()
+  AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
+    )
+endif()
 
-  add_test(NAME MODULE_HSOLVER_para_linear_trans
-    COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+AddTest(
+  TARGET MODULE_HSOLVER_linear_trans
+  LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+  SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
+)
 
-  find_program(BASH bash)
+add_test(NAME MODULE_HSOLVER_para_linear_trans
+  COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+find_program(BASH bash)
+if (ENABLE_MPI)
   add_test(NAME MODULE_HSOLVER_cg_parallel
         COMMAND ${BASH} diago_cg_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
