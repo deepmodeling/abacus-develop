@@ -9,7 +9,7 @@
 
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/kernels/hegvd_op.h"
-#include "source_hsolver/precision_mode.h"
+#include "source_hsolver/diago_cg.h"
 
 #include <vector>
 #include <functional>
@@ -59,8 +59,9 @@ class DiagoDavid
                const int nband_in,
                const int dim_in,
                const int david_ndim_in,
-               const diag_comm_info& diag_comm_in,
-               const PrecisionMode precision_mode_in = PrecisionMode::kDouble);
+               const diag_comm_info& diag_comm_in);
+
+    void set_precision_mode(const PrecisionMode mode) { precision_mode_ = mode; }
 
     /**
      * @brief Destructor for the DiagoDavid class.

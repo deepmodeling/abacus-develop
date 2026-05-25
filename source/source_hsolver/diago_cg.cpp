@@ -31,8 +31,7 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
-                            const int& nproc_in_pool,
-                            const PrecisionMode& precision_mode)
+                            const int& nproc_in_pool)
 {
     basis_type_ = basis_type;
     calculation_ = calculation;
@@ -41,7 +40,7 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
     pw_diag_thr_ = pw_diag_thr;
     pw_diag_nmax_ = pw_diag_nmax;
     nproc_in_pool_ = nproc_in_pool;
-    precision_mode_ = precision_mode;
+    precision_mode_ = PrecisionMode::kDouble;
     this->one_ = new T(static_cast<T>(1.0));
     this->zero_ = new T(static_cast<T>(0.0));
     this->neg_one_ = new T(static_cast<T>(-1.0));
@@ -591,10 +590,6 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
                                 const std::vector<double>& ethr_band,
                                 const Real* prec)
 {
-// Mixed precision requires float kernel symbols that are only available
-// in test builds; do not compile into the main library.
-#ifdef ENABLE_MIXED_PRECISION
-
     using MixedT = typename std::conditional<std::is_same<T, double>::value,
                                       float,
                                       std::complex<float>>::type;
@@ -695,8 +690,8 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
         subspace_func_mixed,
         pw_diag_thr_,
         pw_diag_nmax_,
-        nproc_in_pool_,
-        hsolver::PrecisionMode::kFloat);
+        nproc_in_pool_);
+    mixed_solver.set_precision_mode(hsolver::PrecisionMode::kFloat);
 
     double float_avg_iter = mixed_solver.diag(hpsi_func_mixed,
                       spsi_func_mixed,
@@ -738,10 +733,6 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
     psi.zero();
     psi.sync(psi_temp);
     return avg_iter_;
-#else
-    // Mixed precision not available in this build configuration; should not be reached.
-    return 0.0;
-#endif
 }
 
 template <typename T, typename Device>
@@ -761,7 +752,6 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     if (precision_mode_ == PrecisionMode::kMixed)
     {
-#ifdef ENABLE_MIXED_PRECISION
         return diag_mixed_precision(hpsi_func,
                                     spsi_func,
                                     ld_psi,
@@ -771,10 +761,6 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                     eigenvalue_in,
                                     ethr_band,
                                     prec);
-#else
-        // Fallback to double precision if mixed precision not compiled in
-        // (e.g., in main library builds where float kernels are unavailable)
-#endif
     }
 
     auto psi = ct::TensorMap(psi_in,

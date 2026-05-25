@@ -71,8 +71,7 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const SubspaceFunc& subspace_func,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax,
-                            const int& nproc_in_pool,
-                            const PrecisionMode& precision_mode) {
+                            const int& nproc_in_pool) {
     basis_type_ = basis_type;
     calculation_ = calculation;
     need_subspace_ = need_subspace;
@@ -80,6 +79,7 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
     pw_diag_thr_ = pw_diag_thr;
     pw_diag_nmax_ = pw_diag_nmax;
     nproc_in_pool_ = nproc_in_pool;
+    precision_mode_ = PrecisionMode::kDouble;
     this->one_ = new T(static_cast<T>(1.0));
     this->zero_ = new T(static_cast<T>(0.0));
     this->neg_one_ = new T(static_cast<T>(-1.0));

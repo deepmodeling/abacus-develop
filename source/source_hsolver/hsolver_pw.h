@@ -5,7 +5,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_hsolver/precision_mode.h"
+#include "source_hsolver/diago_cg.h"
 #include <unordered_map>
 
 namespace hsolver

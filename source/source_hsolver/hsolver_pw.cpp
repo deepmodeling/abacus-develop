@@ -298,8 +298,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               subspace_func,
                               this->diag_thr,
                               this->diag_iter_max,
-                              this->nproc_in_pool,
-                              this->diago_precision_mode_);
+                              this->nproc_in_pool);
+        cg.set_precision_mode(this->diago_precision_mode_);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             cg.diag(hpsi_func,
@@ -367,7 +367,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, comm_info, this->diago_precision_mode_);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, comm_info);
+        david.set_precision_mode(this->diago_precision_mode_);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
              david.diag(hpsi_func,

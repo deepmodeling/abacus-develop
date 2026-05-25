@@ -10,7 +10,41 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
-#include "source_hsolver/precision_mode.h"
+#include <string>
+
+namespace hsolver {
+
+/**
+ * @brief Precision mode for diagonalization solvers.
+ */
+enum class PrecisionMode
+{
+    kDouble = 0,  ///< Pure double precision (default)
+    kFloat  = 1,  ///< Pure single precision
+    kMixed  = 2   ///< Mixed precision (float iteration + double refinement)
+};
+
+} // namespace hsolver
+
+inline hsolver::PrecisionMode parse_precision_mode(const std::string& mode_str)
+{
+    if (mode_str == "float" || mode_str == "single")
+        return hsolver::PrecisionMode::kFloat;
+    if (mode_str == "mixed" || mode_str == "auto")
+        return hsolver::PrecisionMode::kMixed;
+    return hsolver::PrecisionMode::kDouble;
+}
+
+inline std::string precision_mode_to_string(hsolver::PrecisionMode mode)
+{
+    switch (mode)
+    {
+        case hsolver::PrecisionMode::kFloat:  return "float";
+        case hsolver::PrecisionMode::kMixed:  return "mixed";
+        case hsolver::PrecisionMode::kDouble:
+        default:                               return "double";
+    }
+}
 
 namespace hsolver {
 
@@ -39,8 +73,9 @@ class DiagoCG final
         const SubspaceFunc& subspace_func,
         const Real& pw_diag_thr,
         const int& pw_diag_nmax,
-        const int& nproc_in_pool,
-        const PrecisionMode& precision_mode = PrecisionMode::kDouble);
+        const int& nproc_in_pool);
+
+    void set_precision_mode(const PrecisionMode mode) { precision_mode_ = mode; }
 
     ~DiagoCG();
 
