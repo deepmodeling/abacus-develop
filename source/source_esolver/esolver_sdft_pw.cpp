@@ -165,6 +165,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
+    hsolver_pw_sdft_obj.set_diago_precision_mode(parse_precision_mode(PARAM.inp.diago_precision_mode));
+
     hsolver_pw_sdft_obj.solve(ucell,
                               static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
                               *this->stp.template get_psi_t<T, Device>(),
