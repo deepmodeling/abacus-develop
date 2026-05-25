@@ -17,7 +17,6 @@
 
 #if defined(__CUDA) && defined(__USE_NVTX)
 #include "source_base/module_device/cuda_compat.h"
-#include "source_io/module_parameter/parameter.h"
 #endif
 
 namespace ModuleBase
@@ -27,6 +26,7 @@ namespace ModuleBase
 // EXPLAIN :
 //----------------------------------------------------------
 bool timer::disabled = false;
+bool timer::enable_nvtx_ = false;
 size_t timer::n_now = 0;
 std::map<std::string,std::map<std::string,timer::Timer_One>> timer::timer_pool;
 
@@ -99,7 +99,7 @@ void timer::start(const std::string &class_name,const std::string &name)
     ++timer_one.calls;
     timer_one.start_flag = false;
     #if defined(__CUDA) && defined(__USE_NVTX)
-    if (PARAM.inp.timer_enable_nvtx){
+    if (enable_nvtx_){
         std::string label = class_name + ":" + name;
         nvtxRangePushA(label.data());
     }
@@ -143,7 +143,7 @@ void timer::end(const std::string &class_name,const std::string &name)
     #endif
     timer_one.start_flag = true;
     #if defined(__CUDA) && defined(__USE_NVTX)
-    if (PARAM.inp.timer_enable_nvtx)
+    if (enable_nvtx_)
         { nvtxRangePop(); }
     #endif
 }

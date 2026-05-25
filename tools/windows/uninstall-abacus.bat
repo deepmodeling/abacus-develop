@@ -1,5 +1,9 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
+REM Force UTF-8 so paths with non-ASCII (e.g. CJK) characters survive
+REM round-tripping through wsl.exe (see install-abacus.bat for details).
+chcp 65001 >nul
+set "WSL_UTF8=1"
 title ABACUS Uninstaller
 
 set "DISTRO=Ubuntu-22.04"

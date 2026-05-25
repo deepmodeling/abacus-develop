@@ -1,7 +1,6 @@
 #include "ctrl_output_td.h"
 
 #include "source_base/parallel_global.h"
-#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_current/td_current_io.h"
 
@@ -30,18 +29,7 @@ void ctrl_output_td(const UnitCell& ucell,
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
 #ifdef __LCAO
-    // (1) Write dipole information
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        if (PARAM.inp.out_dipole == 1)
-        {
-            std::stringstream ss_dipole;
-            ss_dipole << PARAM.globalv.global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, rho_save[is], rhopw, is, istep, ss_dipole.str());
-        }
-    }
-
-    // (2) Write current information
+    // (1) Write current information
     const elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec);
 
@@ -65,7 +53,6 @@ void ctrl_output_td(const UnitCell& ucell,
     {
         ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
     }
-
     // (3) Output file for restart
     if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
     {

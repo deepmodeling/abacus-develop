@@ -1,6 +1,7 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
 
 #include "../module_output/cube_io.h"                                  // use write_vdata_palgrid
+#include "../module_dipole/dipole_io.h"                                // use write_dipole
 #include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
 #include "source_io/module_chgpot/write_elecstat_pot.h"             // use write_elecstat_pot
@@ -197,6 +198,17 @@ void ctrl_output_fp(UnitCell& ucell,
                                 *pw_rhod);
     }
 #endif
+
+    // 8) write dipole moment
+    if (PARAM.inp.out_dipole == 1)
+    {
+        for (int is = 0; is < nspin; ++is)
+        {
+            std::stringstream ss_dipole;
+            ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
+            ModuleIO::write_dipole(ucell, chr.rho_save[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
+        }
+    }
 
     ModuleBase::timer::end("ModuleIO", "ctrl_output_fp");
 }

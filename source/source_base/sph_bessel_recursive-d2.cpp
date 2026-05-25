@@ -5,7 +5,7 @@
 
 #include "sph_bessel_recursive.h"
 #include "constants.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 
 #include<cmath>
 #include<stdexcept>

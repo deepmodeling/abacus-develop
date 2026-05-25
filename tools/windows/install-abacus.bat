@@ -1,5 +1,11 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
+REM Force UTF-8 so paths containing non-ASCII (e.g. CJK) characters survive
+REM round-tripping through wsl.exe. WSL_UTF8 makes wsl.exe emit UTF-8 when
+REM its stdout is piped (otherwise it emits UTF-16LE and `for /f` mangles
+REM the result); chcp 65001 lets cmd decode that UTF-8 cleanly.
+chcp 65001 >nul
+set "WSL_UTF8=1"
 title ABACUS for Windows (WSL2) Installer
 
 set "DISTRO=Ubuntu-22.04"
@@ -128,10 +134,14 @@ REM --- 6. Install Windows-side launchers ---
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
 > "%BIN_DIR%\abacus.cmd" echo @echo off
+>> "%BIN_DIR%\abacus.cmd" echo chcp 65001 ^>nul
+>> "%BIN_DIR%\abacus.cmd" echo set "WSL_UTF8=1"
 >> "%BIN_DIR%\abacus.cmd" echo set "WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:%%WSLENV%%"
 >> "%BIN_DIR%\abacus.cmd" echo wsl -d %DISTRO% --cd "%%CD%%" -- abacus %%*
 
 > "%BIN_DIR%\abacus-mpi.cmd" echo @echo off
+>> "%BIN_DIR%\abacus-mpi.cmd" echo chcp 65001 ^>nul
+>> "%BIN_DIR%\abacus-mpi.cmd" echo set "WSL_UTF8=1"
 >> "%BIN_DIR%\abacus-mpi.cmd" echo set "WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:%%WSLENV%%"
 >> "%BIN_DIR%\abacus-mpi.cmd" echo wsl -d %DISTRO% --cd "%%CD%%" -- abacus-mpi %%*
 
