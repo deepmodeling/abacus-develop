@@ -18,6 +18,7 @@ void write_elf(
     const int& precision,
     const std::string& geom_block)
 {
+    ModuleBase::timer::start("ModuleIO", "write_elf");
     // For nspin = 4, we only calculate the total ELF using the
     // rho_total and tau_total, containing in the first channel of
     // rho and tau.
@@ -31,6 +32,9 @@ void write_elf(
 
     const int nrxx = rho_basis->nrxx;
     const int npw = rho_basis->npw;
+
+    assert(nrxx>0);
+    assert(npw>0);
 
     std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
@@ -154,7 +158,7 @@ void write_elf(
 
     if (nspin == 1 || nspin == 4)
     {
-        std::string fn = out_dir + "/elftot" + geom_block + ".cube";
+        std::string fn = out_dir + "elftot" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
@@ -172,7 +176,7 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/elf" + "s"
+            std::string fn_temp = out_dir + "elf" + "s"
                 + std::to_string(is + 1) + geom_block + ".cube";
 
             const int ispin = is + 1;
@@ -208,7 +212,7 @@ void write_elf(
                 elf_tot[ir] = 0.0;
             }
         }
-        std::string fn = out_dir + "/elftot" + geom_block + ".cube";
+        std::string fn = out_dir + "elftot" + geom_block + ".cube";
 
         int is = -1;
         ModuleIO::write_vdata_palgrid(pgrid,
@@ -222,5 +226,6 @@ void write_elf(
             precision,
             out_fermi);
     }
-}
-}
+    ModuleBase::timer::end("ModuleIO", "write_elf");
+} // end write_elf
+} // end namespace ModuleIO
