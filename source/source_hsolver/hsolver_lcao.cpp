@@ -41,6 +41,8 @@
 
 #include <algorithm>
 #include <complex>
+#include <cstdlib>
+#include <iostream>
 #include <type_traits>
 
 namespace hsolver
@@ -49,6 +51,26 @@ namespace hsolver
 #ifdef __PEXSI
 namespace
 {
+bool pexsi_trace_enabled()
+{
+    static const bool enabled = std::getenv("ABACUS_PEXSI_TRACE") != nullptr;
+    return enabled;
+}
+
+#ifdef __MPI
+void pexsi_trace_kpoint(const int imu, const int ik_global, const int pool, const char* stage)
+{
+    if (!pexsi_trace_enabled())
+    {
+        return;
+    }
+    int world_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    std::cout << "PEXSI_TRACE world_rank=" << world_rank << " pool=" << pool << " imu=" << imu
+              << " ik=" << ik_global << " stage=" << stage << " time=" << MPI_Wtime() << std::endl;
+}
+#endif
+
 template <typename TK, typename Device>
 struct PexsiKParallelRunner
 {
@@ -188,6 +210,10 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
                     std::complex<double>* dm_pool_ptr = dm_pool.data();
                     std::complex<double>* edm_pool_ptr = edm_pool.data();
 
+                    if (rank_in_pool == 0)
+                    {
+                        pexsi_trace_kpoint(imu, ik_global, my_pool, "begin");
+                    }
                     pexsi::simplePEXSIComplex(k2d.POOL_WORLD_K2D,
                                               k2d.POOL_WORLD_K2D,
                                               pool_group,
@@ -210,6 +236,10 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
                                               pe.current_mu(),
                                               &num_electron,
                                               &num_electron_derivative);
+                    if (rank_in_pool == 0)
+                    {
+                        pexsi_trace_kpoint(imu, ik_global, my_pool, "end");
+                    }
 
                     if (rank_in_pool == 0)
                     {
