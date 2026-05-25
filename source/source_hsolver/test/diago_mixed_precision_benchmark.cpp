@@ -1,12 +1,12 @@
 /**
  * @file diago_mixed_precision_benchmark.cpp
- * @brief 混合精度特征值求解器的性能基准测试和正确性验证
+ * @brief Mixed-precision eigensolver performance benchmark and correctness validation
  *
- * 测试内容:
- *   1. 不同矩阵尺寸下的性能对比（单精度/双精度/混合精度）
- *   2. 混合精度 vs 双精度的精度验证（误差 < 1e-6）
- *   3. 不同精度组合的正确性测试
- *   4. 边界情况测试（小矩阵、病态矩阵、不同稀疏度）
+ * Test contents:
+ *   1. Performance comparison across matrix sizes (float/double/mixed)
+ *   2. Mixed vs double precision accuracy validation (error < 1e-6)
+ *   3. Correctness tests for different precision combinations
+ *   4. Edge case tests (small matrices, ill-conditioned, various sparsity)
  */
 
 #include "gtest/gtest.h"
@@ -28,7 +28,7 @@ using namespace hsolver;
 // 辅助函数
 // ============================================================================
 
-/// 生成随机 Hermitian 矩阵
+/// Generate random Hermitian matrix
 static void make_hermitian(int n, std::vector<Complex>& H, unsigned seed = 12345)
 {
     H.resize(static_cast<size_t>(n) * n);
@@ -46,14 +46,14 @@ static void make_hermitian(int n, std::vector<Complex>& H, unsigned seed = 12345
     }
 }
 
-/// 生成具有可调条件数的 Hermitian 矩阵
+/// Generate Hermitian matrix with tunable condition number
 static void make_hermitian_conditioned(int n, std::vector<Complex>& H, double cond_num, unsigned seed = 12345)
 {
     H.resize(static_cast<size_t>(n) * n);
     std::mt19937_64 rng(seed);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
-    // 生成随机对角占优矩阵
+    // Generate random diagonally dominant matrix
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j <= i; ++j)
@@ -65,7 +65,7 @@ static void make_hermitian_conditioned(int n, std::vector<Complex>& H, double co
         }
     }
 
-    // 调整对角元素以控制条件数
+    // Adjust diagonal elements to control condition number
     double diag_scale = cond_num / n;
     for (int i = 0; i < n; ++i)
     {
@@ -73,7 +73,7 @@ static void make_hermitian_conditioned(int n, std::vector<Complex>& H, double co
     }
 }
 
-/// 生成随机初始波函数
+/// Generate random initial wavefunctions
 static void make_random_psi(int nband, int dim, std::vector<Complex>& psi, unsigned seed = 54321)
 {
     psi.resize(static_cast<size_t>(nband) * dim);
@@ -85,7 +85,7 @@ static void make_random_psi(int nband, int dim, std::vector<Complex>& psi, unsig
     }
 }
 
-/// 应用 Hamiltonian 矩阵
+/// Apply Hamiltonian matrix
 static void apply_hamiltonian(const std::vector<Complex>& H, int n,
                                const Complex* psi_in, Complex* hpsi_out,
                                int ld, int nvec)
@@ -106,7 +106,7 @@ static void apply_hamiltonian(const std::vector<Complex>& H, int n,
     }
 }
 
-/// 恒等重叠矩阵
+/// Identity overlap matrix
 static void apply_overlap(const Complex* psi_in, Complex* spsi_out, int ld, int nvec)
 {
     for (int i = 0; i < static_cast<size_t>(nvec) * ld; ++i)
@@ -115,10 +115,10 @@ static void apply_overlap(const Complex* psi_in, Complex* spsi_out, int ld, int 
     }
 }
 
-/// 使用 LAPACK 计算参考特征值 (简化版: 仅用前 nband 个)
+/// Compute reference eigenvalues using LAPACK (simplified: first nband only)
 static std::vector<double> compute_reference_eigenvalues(const std::vector<Complex>& H, int n, int nband)
 {
-    // 复制 H 用于 LAPACK (zheev 会修改矩阵)
+    // Copy H for LAPACK (zheev modifies the matrix)
     std::vector<Complex> H_copy = H;
     std::vector<double> eigenvalues(n, 0.0);
 
@@ -126,7 +126,7 @@ static std::vector<double> compute_reference_eigenvalues(const std::vector<Compl
     std::vector<Complex> work(lwork);
     std::vector<double> rwork(3 * n - 2);
     int info = 0;
-    char jobz = 'N'; // 只需要特征值
+    char jobz = 'N'; // eigenvalues only
     char uplo = 'U';
 
     zheev_(&jobz, &uplo, &n, H_copy.data(), &n, eigenvalues.data(), work.data(), &lwork, rwork.data(), &info);
@@ -136,11 +136,11 @@ static std::vector<double> compute_reference_eigenvalues(const std::vector<Compl
         std::cerr << "LAPACK zheev failed with info=" << info << std::endl;
     }
 
-    // 返回前 nband 个特征值（zheev 返回升序排列）
+    // Return first nband eigenvalues (zheev returns ascending order)
     return std::vector<double>(eigenvalues.begin(), eigenvalues.begin() + nband);
 }
 
-/// 计时器辅助类
+/// Timer helper class
 class ScopedTimer
 {
   public:
@@ -158,7 +158,7 @@ class ScopedTimer
 };
 
 // ============================================================================
-// 测试 1: 混合精度正确性 — 不同矩阵尺寸
+// Test 1: Mixed precision correctness - various matrix sizes
 // ============================================================================
 
 class MixedPrecisionCorrectnessTest : public ::testing::TestWithParam<int>
@@ -191,17 +191,17 @@ TEST_P(MixedPrecisionCorrectnessTest, CGMixedPrecisionMatchesDouble)
 
     std::vector<double> ethr_band(nband, 1e-6);
 
-    // 双精度
+    // Double precision
     DiagoCG<Complex> cg_double("pw", "nscf", false, DiagoCG<Complex>::SubspaceFunc(), 1e-6, 200, 1, PrecisionMode::kDouble);
     cg_double.diag(hpsi_func, spsi_func, ld_psi, nband, dim,
                    psi_double.data(), eigen_double.data(), ethr_band, nullptr);
 
-    // 混合精度
+    // Mixed precision
     DiagoCG<Complex> cg_mixed("pw", "nscf", false, DiagoCG<Complex>::SubspaceFunc(), 1e-6, 200, 1, PrecisionMode::kMixed);
     cg_mixed.diag(hpsi_func, spsi_func, ld_psi, nband, dim,
                   psi_mixed.data(), eigen_mixed.data(), ethr_band, nullptr);
 
-    // 验证特征值一致性
+    // Verify eigenvalue consistency
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eigen_double[i], eigen_mixed[i], 1e-6)
@@ -215,7 +215,7 @@ INSTANTIATE_TEST_SUITE_P(VariousDimensions,
                          ::testing::Values(8, 16, 32, 64, 128));
 
 // ============================================================================
-// 测试 2: David 求解器混合精度正确性
+// Test 2: David solver mixed precision correctness
 // ============================================================================
 
 class DavidMixedPrecisionTest : public ::testing::TestWithParam<int>
@@ -252,17 +252,17 @@ TEST_P(DavidMixedPrecisionTest, DavidMixedPrecisionMatchesDouble)
 
     diag_comm_info comm_info = {0, 1};
 
-    // 双精度
+    // Double precision
     DiagoDavid<Complex> dav_double(precondition.data(), nband, dim, david_ndim, false, comm_info, PrecisionMode::kDouble);
     dav_double.diag(hpsi_func, spsi_func, ld_psi, psi_double.data(), eigen_double.data(),
                     ethr_band, 100, 5, 0);
 
-    // 混合精度
+    // Mixed precision
     DiagoDavid<Complex> dav_mixed(precondition.data(), nband, dim, david_ndim, false, comm_info, PrecisionMode::kMixed);
     dav_mixed.diag(hpsi_func, spsi_func, ld_psi, psi_mixed.data(), eigen_mixed.data(),
                    ethr_band, 100, 5, 0);
 
-    // 验证
+    // Verify
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eigen_double[i], eigen_mixed[i], 1e-5)
@@ -276,7 +276,7 @@ INSTANTIATE_TEST_SUITE_P(DavidVariousDimensions,
                          ::testing::Values(8, 16, 32, 64));
 
 // ============================================================================
-// 测试 3: 性能基准测试
+// Test 3: Performance benchmark
 // ============================================================================
 
 TEST(MixedPrecisionBenchmark, PerformanceComparison)
@@ -303,7 +303,7 @@ TEST(MixedPrecisionBenchmark, PerformanceComparison)
         eigen_results[i].resize(nband);
     }
 
-    // 双精度
+    // Double precision
     {
         std::vector<Complex> psi(nband * dim);
         make_random_psi(nband, dim, psi, 11111);
@@ -317,7 +317,7 @@ TEST(MixedPrecisionBenchmark, PerformanceComparison)
         std::cout << "[Benchmark] Double precision: " << elapsed << " s" << std::endl;
     }
 
-    // 单精度
+    // Single precision
     {
         std::vector<Complex> psi(nband * dim);
         make_random_psi(nband, dim, psi, 11111);
@@ -331,7 +331,7 @@ TEST(MixedPrecisionBenchmark, PerformanceComparison)
         std::cout << "[Benchmark] Float precision:  " << elapsed << " s" << std::endl;
     }
 
-    // 混合精度
+    // Mixed precision
     {
         std::vector<Complex> psi(nband * dim);
         make_random_psi(nband, dim, psi, 11111);
@@ -345,11 +345,11 @@ TEST(MixedPrecisionBenchmark, PerformanceComparison)
         std::cout << "[Benchmark] Mixed precision:  " << elapsed << " s" << std::endl;
     }
 
-    // 计算加速比
+    // Compute speedup
     std::cout << "[Benchmark] Speedup (mixed/double): " << times[0] / times[2] << "x" << std::endl;
     std::cout << "[Benchmark] Speedup (float/double): " << times[0] / times[1] << "x" << std::endl;
 
-    // 验证混合精度结果与双精度一致
+    // Verify mixed precision matches double precision
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eigen_results[0][i], eigen_results[2][i], 1e-6)
@@ -358,12 +358,12 @@ TEST(MixedPrecisionBenchmark, PerformanceComparison)
 }
 
 // ============================================================================
-// 测试 4: 精度切换边界情况
+// Test 4: Precision switching edge cases
 // ============================================================================
 
 TEST(MixedPrecisionEdgeCases, SmallMatrix)
 {
-    // 测试 2x2 极小矩阵
+    // Test 2x2 minimal matrix
     const int dim = 2;
     const int nband = 1;
     const int ld_psi = dim;
@@ -397,7 +397,7 @@ TEST(MixedPrecisionEdgeCases, SmallMatrix)
 
 TEST(MixedPrecisionEdgeCases, IllConditionedMatrix)
 {
-    // 测试条件数较大的矩阵
+    // Test matrix with large condition number
     const int dim = 32;
     const int nband = 4;
     const int ld_psi = dim;
@@ -437,7 +437,7 @@ TEST(MixedPrecisionEdgeCases, IllConditionedMatrix)
 }
 
 // ============================================================================
-// 测试 5: 不同精度模式组合
+// Test 5: Different precision mode combinations
 // ============================================================================
 
 TEST(MixedPrecisionCombinations, AllPrecisionModesCG)
@@ -483,14 +483,14 @@ TEST(MixedPrecisionCombinations, AllPrecisionModesCG)
         cg.diag(hpsi_func, spsi_func, ld_psi, nband, dim, psi.data(), eigen_mixed.data(), ethr_band, nullptr);
     }
 
-    // Mixed 应在误差范围内匹配 Double
+    // Mixed should match Double within tolerance
     for (int i = 0; i < nband; ++i)
     {
         EXPECT_NEAR(eigen_double[i], eigen_mixed[i], 1e-6)
             << "Mixed vs Double, band " << i;
     }
 
-    // Float 可能有较大误差，但仍应在合理范围内
+    // Float may have larger error but should still be reasonable
     for (int i = 0; i < nband; ++i)
     {
         double rel_err = std::abs(eigen_double[i] - eigen_float[i])
@@ -502,7 +502,7 @@ TEST(MixedPrecisionCombinations, AllPrecisionModesCG)
 }
 
 // ============================================================================
-// 测试 6: 收敛性验证
+// Test 6: Convergence verification
 // ============================================================================
 
 TEST(MixedPrecisionConvergence, ConvergenceTest)
@@ -523,7 +523,7 @@ TEST(MixedPrecisionConvergence, ConvergenceTest)
         apply_overlap(psi_in, spsi_out, ld, nvec);
     };
 
-    // 测试不同收敛阈值
+    // Test different convergence thresholds
     std::vector<double> thresholds = {1e-3, 1e-4, 1e-5, 1e-6};
 
     for (double thr : thresholds)
@@ -548,7 +548,7 @@ TEST(MixedPrecisionConvergence, ConvergenceTest)
 }
 
 // ============================================================================
-// 测试 7: 解析精度模式函数
+// Test 7: Parse precision mode strings
 // ============================================================================
 
 TEST(PrecisionModeParsing, ParsePrecisionModeString)
