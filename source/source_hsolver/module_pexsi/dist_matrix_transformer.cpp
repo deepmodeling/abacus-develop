@@ -12,6 +12,10 @@
 #include <map>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "dist_bcd_matrix.h"
 #include "dist_ccs_matrix.h"
 
@@ -139,6 +143,9 @@ inline void DistMatrixTransformer::buffer2CCSvalue(int nnzLocal,
                                                    double* buffer,
                                                    double* nzvalLocal)
 {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (nnzLocal >= 4096)
+#endif
     for (int i = 0; i < nnzLocal; ++i)
     {
         nzvalLocal[i] = buffer[buffer2ccsIndex[i]];
@@ -174,6 +181,43 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     rowidx.clear();
     if (layout == 'c')
     {
+#ifdef _OPENMP
+        const int total = nrow * ncol;
+        if (total >= 4096)
+        {
+            std::vector<unsigned char> nonzero(total, 0);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                const int i = linear / nrow;
+                const int j = linear - i * nrow;
+                const int idx_local = i * nrow + j;
+                nonzero[linear] = (fabs(H_2d[idx_local]) > ZERO_Limit || fabs(S_2d[idx_local]) > ZERO_Limit) ? 1 : 0;
+            }
+
+            std::vector<int> prefix(total + 1, 0);
+            for (int linear = 0; linear < total; ++linear)
+            {
+                prefix[linear + 1] = prefix[linear] + static_cast<int>(nonzero[linear]);
+            }
+            nnz = prefix[total];
+            colidx.resize(nnz);
+            rowidx.resize(nnz);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                if (nonzero[linear])
+                {
+                    const int i = linear / nrow;
+                    const int j = linear - i * nrow;
+                    const int pos = prefix[linear];
+                    colidx[pos] = i;
+                    rowidx[pos] = j;
+                }
+            }
+            return 0;
+        }
+#endif
         for (int i = 0; i < ncol; ++i)
         {
             for (int j = 0; j < nrow; ++j)
@@ -190,6 +234,43 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     }
     else if (layout == 'r')
     {
+#ifdef _OPENMP
+        const int total = nrow * ncol;
+        if (total >= 4096)
+        {
+            std::vector<unsigned char> nonzero(total, 0);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                const int i = linear / nrow;
+                const int j = linear - i * nrow;
+                const int idx_local = j * ncol + i;
+                nonzero[linear] = (fabs(H_2d[idx_local]) > ZERO_Limit || fabs(S_2d[idx_local]) > ZERO_Limit) ? 1 : 0;
+            }
+
+            std::vector<int> prefix(total + 1, 0);
+            for (int linear = 0; linear < total; ++linear)
+            {
+                prefix[linear + 1] = prefix[linear] + static_cast<int>(nonzero[linear]);
+            }
+            nnz = prefix[total];
+            colidx.resize(nnz);
+            rowidx.resize(nnz);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                if (nonzero[linear])
+                {
+                    const int i = linear / nrow;
+                    const int j = linear - i * nrow;
+                    const int pos = prefix[linear];
+                    colidx[pos] = i;
+                    rowidx[pos] = j;
+                }
+            }
+            return 0;
+        }
+#endif
         for (int i = 0; i < ncol; ++i)
         {
             for (int j = 0; j < nrow; ++j)
@@ -227,6 +308,44 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     rowidx.clear();
     if (layout == 'c' || layout == 'C')
     {
+#ifdef _OPENMP
+        const int total = nrow * ncol;
+        if (total >= 4096)
+        {
+            std::vector<unsigned char> nonzero(total, 0);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                const int i = linear / nrow;
+                const int j = linear - i * nrow;
+                const int idx_local = i * nrow + j;
+                nonzero[linear]
+                    = (std::abs(H_2d[idx_local]) > ZERO_Limit || std::abs(S_2d[idx_local]) > ZERO_Limit) ? 1 : 0;
+            }
+
+            std::vector<int> prefix(total + 1, 0);
+            for (int linear = 0; linear < total; ++linear)
+            {
+                prefix[linear + 1] = prefix[linear] + static_cast<int>(nonzero[linear]);
+            }
+            nnz = prefix[total];
+            colidx.resize(nnz);
+            rowidx.resize(nnz);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                if (nonzero[linear])
+                {
+                    const int i = linear / nrow;
+                    const int j = linear - i * nrow;
+                    const int pos = prefix[linear];
+                    colidx[pos] = i;
+                    rowidx[pos] = j;
+                }
+            }
+            return 0;
+        }
+#endif
         for (int i = 0; i < ncol; ++i)
         {
             for (int j = 0; j < nrow; ++j)
@@ -243,6 +362,44 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     }
     else if (layout == 'r' || layout == 'R')
     {
+#ifdef _OPENMP
+        const int total = nrow * ncol;
+        if (total >= 4096)
+        {
+            std::vector<unsigned char> nonzero(total, 0);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                const int i = linear / nrow;
+                const int j = linear - i * nrow;
+                const int idx_local = j * ncol + i;
+                nonzero[linear]
+                    = (std::abs(H_2d[idx_local]) > ZERO_Limit || std::abs(S_2d[idx_local]) > ZERO_Limit) ? 1 : 0;
+            }
+
+            std::vector<int> prefix(total + 1, 0);
+            for (int linear = 0; linear < total; ++linear)
+            {
+                prefix[linear + 1] = prefix[linear] + static_cast<int>(nonzero[linear]);
+            }
+            nnz = prefix[total];
+            colidx.resize(nnz);
+            rowidx.resize(nnz);
+#pragma omp parallel for schedule(static)
+            for (int linear = 0; linear < total; ++linear)
+            {
+                if (nonzero[linear])
+                {
+                    const int i = linear / nrow;
+                    const int j = linear - i * nrow;
+                    const int pos = prefix[linear];
+                    colidx[pos] = i;
+                    rowidx[pos] = j;
+                }
+            }
+            return 0;
+        }
+#endif
         for (int i = 0; i < ncol; ++i)
         {
             for (int j = 0; j < nrow; ++j)
@@ -280,14 +437,14 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
                                                    std::vector<int>& receiver_displacement_process,
                                                    std::vector<int>& buffer2ccsIndex)
 {
-    int myproc;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
+    int myproc_trans = 0;
+    MPI_Comm_rank(COMM_TRANS, &myproc_trans);
     sender_size = nnz;
     std::fill(sender_size_process.begin(), sender_size_process.end(), 0);
     // create process id map from group_data to group_trans
     int nproc_data;
     std::vector<int> proc_map_data_trans;
-    if (myproc == 0)
+    if (myproc_trans == 0)
     {
         MPI_Group_size(DST_Matrix.get_group_data(), &nproc_data);
         MPI_Bcast(&nproc_data, 1, MPI_INT, 0, COMM_TRANS);
@@ -305,6 +462,36 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
         MPI_Bcast(&proc_map_data_trans[0], nproc_data, MPI_INT, 0, COMM_TRANS);
     }
 
+#ifdef _OPENMP
+    if (nnz >= 4096 && NPROC_TRANS > 1)
+    {
+        const int max_threads = omp_get_max_threads();
+        std::vector<std::vector<int>> thread_sender_size(max_threads, std::vector<int>(NPROC_TRANS, 0));
+#pragma omp parallel
+        {
+            const int tid = omp_get_thread_num();
+            std::vector<int>& local_sender_size = thread_sender_size[tid];
+#pragma omp for schedule(static)
+            for (int i = 0; i < nnz; ++i)
+            {
+                const int l_col = colidx[i];
+                const int g_col = SRC_Matrix.globalCol(l_col);
+                int dst_process = 0;
+                DST_Matrix.localCol(g_col, dst_process);
+                const int dst_process_trans = proc_map_data_trans[dst_process];
+                ++local_sender_size[dst_process_trans];
+            }
+        }
+        for (int tid = 0; tid < max_threads; ++tid)
+        {
+            for (int iproc = 0; iproc < NPROC_TRANS; ++iproc)
+            {
+                sender_size_process[iproc] += thread_sender_size[tid][iproc];
+            }
+        }
+    }
+    else
+#endif
     for (int i = 0; i < nnz; ++i)
     {
         int l_col = colidx[i];
@@ -334,6 +521,9 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
     // setup receiver index
     // setup sender_index
     std::vector<int> sender_index(sender_size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (nnz >= 4096)
+#endif
     for (int i = 0; i < nnz; ++i)
     {
         int l_col = colidx[i];
@@ -378,7 +568,7 @@ int DistMatrixTransformer::newGroupCommTrans(DistBCDMatrix& SRC_Matrix,
     // build transfortram communicator which contains both processes of BCD processors and
     // CCS processors with nonzero elements
     MPI_Group_union(DST_Matrix.get_group_data(), SRC_Matrix.get_group(), &GROUP_TRANS);
-    MPI_Comm_create(MPI_COMM_WORLD, GROUP_TRANS, &COMM_TRANS);
+    MPI_Comm_create(SRC_Matrix.get_comm(), GROUP_TRANS, &COMM_TRANS);
     return 0;
 }
 
@@ -450,11 +640,11 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                                 receiver_size_process,
                                 receiver_displacement_process,
                                 buffer2ccsIndex);
-        int myproc;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
+        int myproc_trans = 0;
+        MPI_Comm_rank(COMM_TRANS, &myproc_trans);
         int nproc_data;
         std::vector<int> proc_map_data_trans;
-        if (myproc == 0)
+        if (myproc_trans == 0)
         {
             MPI_Group_size(DST_Matrix.get_group_data(), &nproc_data);
             MPI_Bcast(&nproc_data, 1, MPI_INT, 0, COMM_TRANS);
@@ -525,6 +715,9 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
         H_ccs = new double[receiver_size];
         delete[] S_ccs;
         S_ccs = new double[receiver_size];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
         for (int i = 0; i < receiver_size; ++i)
         {
             const int buffer_index = buffer2ccsIndex[i];
@@ -592,11 +785,11 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                                 receiver_displacement_process,
                                 buffer2ccsIndex);
 
-        int myproc;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
+        int myproc_trans = 0;
+        MPI_Comm_rank(COMM_TRANS, &myproc_trans);
         int nproc_data;
         std::vector<int> proc_map_data_trans;
-        if (myproc == 0)
+        if (myproc_trans == 0)
         {
             MPI_Group_size(DST_Matrix.get_group_data(), &nproc_data);
             MPI_Bcast(&nproc_data, 1, MPI_INT, 0, COMM_TRANS);
@@ -671,6 +864,9 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
         H_ccs = new std::complex<double>[receiver_size];
         delete[] S_ccs;
         S_ccs = new std::complex<double>[receiver_size];
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
         for (int i = 0; i < receiver_size; ++i)
         {
             const int buffer_index = buffer2ccsIndex[i];
@@ -693,14 +889,15 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
                                              double* DM,
                                              double* EDM)
 {
-    int myproc;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
     MPI_Group GROUP_TRANS;
     MPI_Comm COMM_TRANS = MPI_COMM_NULL;
     newGroupCommTrans(DST_Matrix, SRC_Matrix, GROUP_TRANS, COMM_TRANS);
     if (COMM_TRANS != MPI_COMM_NULL)
     {
         // init DM and EDM with 0
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (DST_Matrix.get_nrow() * DST_Matrix.get_ncol() >= 4096)
+#endif
         for (int i = 0; i < DST_Matrix.get_nrow() * DST_Matrix.get_ncol(); ++i)
         {
             DM[i] = 0;
@@ -888,6 +1085,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
 
         // transfer DM
         // set up DM sender buffer
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (sender_size >= 4096)
+#endif
         for (int i = 0; i < sender_size; ++i)
         {
             sender_buffer[i] = DMnzvalLocal[sender_index[i]];
@@ -908,6 +1108,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 int ix = receiver_index[2 * i];
@@ -919,6 +1122,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         else
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 int ix = receiver_index[2 * i];
@@ -929,6 +1135,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         }
 
         // setup up sender buffer of EDM
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (sender_size >= 4096)
+#endif
         for (int i = 0; i < sender_size; ++i)
         {
             sender_buffer[i] = EDMnzvalLocal[sender_index[i]];
@@ -949,6 +1158,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 int ix = receiver_index[2 * i];
@@ -960,6 +1172,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         else
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 int ix = receiver_index[2 * i];
@@ -993,6 +1208,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
     if (COMM_TRANS != MPI_COMM_NULL)
     {
         const int dst_size = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (dst_size >= 4096)
+#endif
         for (int i = 0; i < dst_size; ++i)
         {
             DM[i] = std::complex<double>(0.0, 0.0);
@@ -1113,6 +1331,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
                       COMM_TRANS);
 
         std::vector<double> sender_buffer(std::max(4 * sender_size, 1), 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (sender_size >= 4096)
+#endif
         for (int i = 0; i < sender_size; ++i)
         {
             const int src_index = sender_index[i];
@@ -1149,6 +1370,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
 
         if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
         {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 const int ix = receiver_index[2 * i];
@@ -1160,6 +1384,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         }
         else
         {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (receiver_size >= 4096)
+#endif
             for (int i = 0; i < receiver_size; ++i)
             {
                 const int ix = receiver_index[2 * i];

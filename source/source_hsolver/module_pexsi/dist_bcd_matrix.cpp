@@ -45,28 +45,35 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
         this->myproc = -1;
         this->myprow = -1;
         this->mypcol = -1;
+        this->nprocs = 0;
+        this->nprows = 0;
+        this->npcols = 0;
+        this->prowpcol2pnum = nullptr;
+        return;
     }
 
-    // synchronize matrix parameters to all processes, including those are not in bcd group
-    int myid_in_comm_world = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid_in_comm_world);
-    if (myid_in_comm_world == 0)
+    // Synchronize matrix parameters inside the BCD communicator.  Older code used
+    // MPI_COMM_WORLD here, which prevents multiple independent k-point pools from
+    // constructing BCD descriptors concurrently.
+    int myid_in_comm = 0;
+    MPI_Comm_rank(comm, &myid_in_comm);
+    if (myid_in_comm == 0)
     {
         MPI_Comm_size(comm, &this->nprocs);
         int PARA_BCAST[4] = {this->nblk, this->nprocs, this->nprows, this->npcols};
-        MPI_Bcast(&PARA_BCAST[0], 4, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&PARA_BCAST[0], 4, MPI_INT, 0, comm);
     }
     else
     {
         int PARA_BCAST[4];
-        MPI_Bcast(&PARA_BCAST[0], 4, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&PARA_BCAST[0], 4, MPI_INT, 0, comm);
         this->nblk = PARA_BCAST[0];
         this->nprocs = PARA_BCAST[1];
         this->nprows = PARA_BCAST[2];
         this->npcols = PARA_BCAST[3];
     }
     this->prowpcol2pnum = new int[this->nprocs];
-    if (myid_in_comm_world == 0)
+    if (myid_in_comm == 0)
     {
         for (int i = 0; i < this->nprows; ++i)
         {
@@ -76,7 +83,7 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
             }
         }
     }
-    MPI_Bcast(this->prowpcol2pnum, this->nprocs, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(this->prowpcol2pnum, this->nprocs, MPI_INT, 0, comm);
 }
 
 DistBCDMatrix::~DistBCDMatrix()

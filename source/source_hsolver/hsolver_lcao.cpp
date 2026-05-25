@@ -23,6 +23,7 @@
 #ifdef __PEXSI
 #include "diago_pexsi.h"
 #include "module_pexsi/pexsi_solver.h"
+#include "module_pexsi/simple_pexsi.h"
 #endif
 
 #include "source_base/global_variable.h"
@@ -39,10 +40,275 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 
 #include <algorithm>
+#include <complex>
 #include <type_traits>
 
 namespace hsolver
 {
+
+#ifdef __PEXSI
+namespace
+{
+template <typename TK, typename Device>
+struct PexsiKParallelRunner
+{
+    static bool run(const Parallel_Orbitals* ParaV,
+                    hamilt::Hamilt<TK>* pHamilt,
+                    psi::Psi<TK>& psi,
+                    elecstate::ElecState* pes,
+                    elecstate::DensityMatrix<TK, double>& dm,
+                    const int requested_kpar)
+    {
+        return false;
+    }
+};
+
+#ifdef __MPI
+template <typename Device>
+struct PexsiKParallelRunner<std::complex<double>, Device>
+{
+    static bool run(const Parallel_Orbitals* ParaV,
+                    hamilt::Hamilt<std::complex<double>>* pHamilt,
+                    psi::Psi<std::complex<double>>& psi,
+                    elecstate::ElecState* pes,
+                    elecstate::DensityMatrix<std::complex<double>, double>& dm,
+                    const int requested_kpar)
+    {
+        const int nks = psi.get_nk();
+        if (requested_kpar <= 1 || nks <= 1)
+        {
+            return false;
+        }
+
+        const int min_pool_size = std::max(1, pexsi::PEXSI_Solver::pexsi_nproc_pole);
+        int kpar = std::min(std::min(requested_kpar, nks), GlobalV::NPROC);
+        while (kpar > 1 && GlobalV::NPROC / kpar < min_pool_size)
+        {
+            --kpar;
+        }
+        if (kpar <= 1)
+        {
+            return false;
+        }
+        if (kpar != requested_kpar)
+        {
+            ModuleBase::WARNING("HSolverLCAO::pexsiKpar",
+                                "adjust kpar for PEXSI so each k pool has enough MPI ranks");
+        }
+
+        ModuleBase::timer::start("HSolverLCAO", "pexsiKparSolve");
+        DiagoPexsi<std::complex<double>> pe(ParaV);
+        pe.ensure_density_buffers(nks);
+
+        auto k2d = Parallel_K2D<std::complex<double>>();
+        k2d.set_kpar(kpar);
+        const int nrow = ParaV->get_global_row_size();
+        const int nb2d = ParaV->get_block_size();
+        k2d.set_para_env(nks, nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+
+        MPI_Group pool_group = MPI_GROUP_NULL;
+        MPI_Comm_group(k2d.POOL_WORLD_K2D, &pool_group);
+        int rank_in_pool = 0;
+        MPI_Comm_rank(k2d.POOL_WORLD_K2D, &rank_in_pool);
+
+        const int pool_local_size = k2d.get_p2D_pool()->get_local_size();
+        std::vector<std::complex<double>> dm_pool(pool_local_size);
+        std::vector<std::complex<double>> edm_pool(pool_local_size);
+        std::vector<std::vector<std::complex<double>>> hk_pool_cache(nks);
+        std::vector<std::vector<std::complex<double>>> sk_pool_cache(nks);
+        std::vector<std::vector<std::complex<double>>> dm_pool_cache(nks);
+        std::vector<std::vector<std::complex<double>>> edm_pool_cache(nks);
+        const int pexsi_mu_loops = std::min(40, std::max(1, pexsi::PEXSI_Solver::pexsi_nmax));
+
+        ModuleBase::timer::start("HSolverLCAO", "cache_pexsi_hs");
+        for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
+        {
+            std::vector<int> ik_kpar;
+            for (int ipool = 0; ipool < k2d.get_kpar(); ++ipool)
+            {
+                if (ik + k2d.get_pKpoints()->startk_pool[ipool] < nks
+                    && ik < k2d.get_pKpoints()->nks_pool[ipool])
+                {
+                    ik_kpar.push_back(ik + k2d.get_pKpoints()->startk_pool[ipool]);
+                }
+            }
+            if (ik_kpar.empty())
+            {
+                ModuleBase::WARNING_QUIT("HSolverLCAO::pexsiKparSolve", "ik_kpar is empty");
+            }
+            k2d.distribute_hsk(pHamilt, ik_kpar, nrow);
+
+            const int my_pool = k2d.get_my_pool();
+            const int ik_global = ik + k2d.get_pKpoints()->startk_pool[my_pool];
+            const bool has_local_k = ik_global < nks && ik < k2d.get_pKpoints()->nks_pool[my_pool];
+            if (has_local_k)
+            {
+                hk_pool_cache[ik_global] = k2d.hk_pool;
+                sk_pool_cache[ik_global] = k2d.sk_pool;
+            }
+        }
+        ModuleBase::timer::end("HSolverLCAO", "cache_pexsi_hs");
+
+        pe.begin_mu_search();
+        for (int imu = 0; imu < pexsi_mu_loops; ++imu)
+        {
+            pe.begin_k_loop();
+            double local_totals[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+
+            for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
+            {
+                std::vector<int> ik_kpar;
+                for (int ipool = 0; ipool < k2d.get_kpar(); ++ipool)
+                {
+                    if (ik + k2d.get_pKpoints()->startk_pool[ipool] < nks
+                        && ik < k2d.get_pKpoints()->nks_pool[ipool])
+                    {
+                        ik_kpar.push_back(ik + k2d.get_pKpoints()->startk_pool[ipool]);
+                    }
+                }
+                if (ik_kpar.empty())
+                {
+                    ModuleBase::WARNING_QUIT("HSolverLCAO::pexsiKparSolve", "ik_kpar is empty");
+                }
+
+                const int my_pool = k2d.get_my_pool();
+                const int ik_global = ik + k2d.get_pKpoints()->startk_pool[my_pool];
+                const bool has_local_k = ik_global < nks && ik < k2d.get_pKpoints()->nks_pool[my_pool];
+                std::fill(dm_pool.begin(), dm_pool.end(), std::complex<double>(0.0, 0.0));
+                std::fill(edm_pool.begin(), edm_pool.end(), std::complex<double>(0.0, 0.0));
+
+                if (has_local_k)
+                {
+                    double num_electron = 0.0;
+                    double num_electron_derivative = 0.0;
+                    double total_energy_h = 0.0;
+                    double total_energy_s = 0.0;
+                    double total_free_energy = 0.0;
+                    double mu = pe.current_mu();
+                    std::complex<double>* dm_pool_ptr = dm_pool.data();
+                    std::complex<double>* edm_pool_ptr = edm_pool.data();
+
+                    pexsi::simplePEXSIComplex(k2d.POOL_WORLD_K2D,
+                                              k2d.POOL_WORLD_K2D,
+                                              pool_group,
+                                              k2d.get_p2D_pool()->blacs_ctxt,
+                                              PARAM.globalv.nlocal,
+                                              nb2d,
+                                              k2d.get_p2D_pool()->get_row_size(),
+                                              k2d.get_p2D_pool()->get_col_size(),
+                                              'c',
+                                              hk_pool_cache[ik_global].data(),
+                                              sk_pool_cache[ik_global].data(),
+                                              PARAM.inp.nelec,
+                                              "PEXSIOPTION",
+                                              dm_pool_ptr,
+                                              edm_pool_ptr,
+                                              total_energy_h,
+                                              total_energy_s,
+                                              total_free_energy,
+                                              mu,
+                                              pe.current_mu(),
+                                              &num_electron,
+                                              &num_electron_derivative);
+
+                    if (rank_in_pool == 0)
+                    {
+                        const double k_weight = (pes->klist != nullptr
+                                                 && ik_global < static_cast<int>(pes->klist->wk.size()))
+                                                    ? pes->klist->wk[ik_global]
+                                                    : 1.0;
+                        const double pexsi_spin_weight = PARAM.inp.nspin == 1 ? 0.5 : 1.0;
+                        const double effective_weight = k_weight * pexsi_spin_weight;
+                        local_totals[0] += effective_weight * num_electron;
+                        local_totals[1] += effective_weight * num_electron_derivative;
+                        local_totals[2] += effective_weight * total_energy_h;
+                        local_totals[3] += effective_weight * total_energy_s;
+                        local_totals[4] += effective_weight * total_free_energy;
+                    }
+                    dm_pool_cache[ik_global] = dm_pool;
+                    edm_pool_cache[ik_global] = edm_pool;
+                }
+            }
+
+            double global_totals[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+            MPI_Allreduce(local_totals, global_totals, 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            pe.set_k_loop_totals(global_totals[0],
+                                 global_totals[1],
+                                 global_totals[2],
+                                 global_totals[3],
+                                 global_totals[4]);
+            if (pe.finish_k_loop(PARAM.inp.nelec))
+            {
+                ModuleBase::timer::start("HSolverLCAO", "collect_pexsi_dm");
+                const int my_pool = k2d.get_my_pool();
+                for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
+                {
+                    std::vector<int> ik_kpar;
+                    for (int ipool = 0; ipool < k2d.get_kpar(); ++ipool)
+                    {
+                        if (ik + k2d.get_pKpoints()->startk_pool[ipool] < nks
+                            && ik < k2d.get_pKpoints()->nks_pool[ipool])
+                        {
+                            ik_kpar.push_back(ik + k2d.get_pKpoints()->startk_pool[ipool]);
+                        }
+                    }
+                    for (const int ik_collect : ik_kpar)
+                    {
+                        const int source_pool = k2d.get_pKpoints()->whichpool[ik_collect];
+                        int desc_pool[9];
+                        std::copy(k2d.get_p2D_pool()->desc, k2d.get_p2D_pool()->desc + 9, desc_pool);
+                        if (my_pool != source_pool)
+                        {
+                            desc_pool[1] = -1;
+                        }
+                        std::complex<double>* dm_src = (my_pool == source_pool && !dm_pool_cache[ik_collect].empty())
+                                                           ? dm_pool_cache[ik_collect].data()
+                                                           : nullptr;
+                        std::complex<double>* edm_src = (my_pool == source_pool && !edm_pool_cache[ik_collect].empty())
+                                                            ? edm_pool_cache[ik_collect].data()
+                                                            : nullptr;
+                        Cpxgemr2d(nrow,
+                                  nrow,
+                                  dm_src,
+                                  1,
+                                  1,
+                                  desc_pool,
+                                  pe.DM[ik_collect],
+                                  1,
+                                  1,
+                                  k2d.get_p2D_global()->desc,
+                                  k2d.get_p2D_global()->blacs_ctxt);
+                        Cpxgemr2d(nrow,
+                                  nrow,
+                                  edm_src,
+                                  1,
+                                  1,
+                                  desc_pool,
+                                  pe.EDM[ik_collect],
+                                  1,
+                                  1,
+                                  k2d.get_p2D_global()->desc,
+                                  k2d.get_p2D_global()->blacs_ctxt);
+                    }
+                }
+                ModuleBase::timer::end("HSolverLCAO", "collect_pexsi_dm");
+                break;
+            }
+        }
+
+        MPI_Group_free(&pool_group);
+        k2d.unset_para_env();
+
+        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(pes);
+        pes->f_en.eband = pe.totalFreeEnergy;
+        _pes->dm2rho(pe.DM, pe.EDM, &dm);
+        ModuleBase::timer::end("HSolverLCAO", "pexsiKparSolve");
+        return true;
+    }
+};
+#endif
+} // namespace
+#endif
 
 template <typename TK, typename Device>
 void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
@@ -117,6 +383,11 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
+        if (PexsiKParallelRunner<TK, Device>::run(ParaV, pHamilt, psi, pes, dm, PARAM.globalv.kpar_lcao))
+        {
+            ModuleBase::timer::end("HSolverLCAO", "solve");
+            return;
+        }
         DiagoPexsi<TK> pe(ParaV);
         const int pexsi_mu_loops = std::is_same<TK, std::complex<double>>::value
                                        ? std::min(40, std::max(1, pexsi::PEXSI_Solver::pexsi_nmax))

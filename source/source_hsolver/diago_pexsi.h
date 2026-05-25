@@ -32,6 +32,13 @@ class DiagoPexsi
     void begin_mu_search();
     void begin_k_loop();
     void set_k_weight(const int ik, const double weight);
+    void ensure_density_buffers(const int count);
+    double current_mu() const;
+    void set_k_loop_totals(const double num_electron_sum,
+                           const double num_electron_derivative_sum,
+                           const double total_energy_h,
+                           const double total_energy_s,
+                           const double total_free_energy);
     bool finish_k_loop(const double target_nelec);
     ~DiagoPexsi();
 

@@ -83,6 +83,32 @@ void DiagoPexsi<T>::resize_density_buffers(const int count)
 }
 
 template <typename T>
+void DiagoPexsi<T>::ensure_density_buffers(const int count)
+{
+    this->resize_density_buffers(count);
+}
+
+template <typename T>
+double DiagoPexsi<T>::current_mu() const
+{
+    return mu_buffer.empty() ? pexsi::PEXSI_Solver::pexsi_mu : mu_buffer[0];
+}
+
+template <typename T>
+void DiagoPexsi<T>::set_k_loop_totals(const double num_electron_sum,
+                                      const double num_electron_derivative_sum,
+                                      const double total_energy_h,
+                                      const double total_energy_s,
+                                      const double total_free_energy)
+{
+    this->num_electron_sum_ = num_electron_sum;
+    this->num_electron_derivative_sum_ = num_electron_derivative_sum;
+    this->totalEnergyH = total_energy_h;
+    this->totalEnergyS = total_energy_s;
+    this->totalFreeEnergy = total_free_energy;
+}
+
+template <typename T>
 void DiagoPexsi<T>::begin_mu_search()
 {
     this->has_mu_lower_ = false;
