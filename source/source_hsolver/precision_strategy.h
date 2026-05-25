@@ -13,7 +13,7 @@
  *   solver.diag(...);
  */
 
-#include "source_hsolver/diago_david.h"  // for PrecisionMode
+#include "source_hsolver/precision_mode.h"
 #include "source_hsolver/diago_cg.h"
 #include <memory>
 #include <stdexcept>

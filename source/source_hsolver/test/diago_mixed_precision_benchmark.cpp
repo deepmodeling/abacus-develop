@@ -12,6 +12,7 @@
 #include "gtest/gtest.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_david.h"
+#include "source_base/module_external/lapack_connector.h"
 #include <complex>
 #include <random>
 #include <vector>
@@ -20,6 +21,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <iostream>
 
 using Complex = std::complex<double>;
 using namespace hsolver;
@@ -131,10 +133,7 @@ static std::vector<double> compute_reference_eigenvalues(const std::vector<Compl
 
     zheev_(&jobz, &uplo, &n, H_copy.data(), &n, eigenvalues.data(), work.data(), &lwork, rwork.data(), &info);
 
-    if (info != 0)
-    {
-        std::cerr << "LAPACK zheev failed with info=" << info << std::endl;
-    }
+    ASSERT_EQ(info, 0) << "LAPACK zheev failed with info=" << info;
 
     // Return first nband eigenvalues (zheev returns ascending order)
     return std::vector<double>(eigenvalues.begin(), eigenvalues.begin() + nband);

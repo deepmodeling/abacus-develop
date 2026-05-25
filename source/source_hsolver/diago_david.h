@@ -147,9 +147,12 @@ class DiagoDavid
      * @brief Mixed precision diagonalization using float iteration + double refinement.
      *
      * Converts wavefunctions to float/complex<float>, performs Davidson iteration
-     * in single precision, then refines the result with one double-precision iteration.
+     * in single precision, then refines the result in double precision.
+     * The refinement may perform multiple Davidson iterations up to the
+     * configured iteration limit, depending on convergence behavior.
      *
-     * @return Total number of iterations (float iterations + refinement iterations).
+     * @return Total number of iterations (single-precision iterations +
+     *         double-precision refinement iterations).
      */
     int diag_mixed_precision(
       const HPsiFunc& hpsi_func,

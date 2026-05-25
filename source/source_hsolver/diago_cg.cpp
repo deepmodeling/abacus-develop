@@ -697,7 +697,7 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
         nproc_in_pool_,
         hsolver::PrecisionMode::kFloat);
 
-    mixed_solver.diag(hpsi_func_mixed,
+    double float_avg_iter = mixed_solver.diag(hpsi_func_mixed,
                       spsi_func_mixed,
                       ld_psi,
                       nband,
@@ -725,7 +725,7 @@ double DiagoCG<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
                           .template to_device<ct_Device>();
     }
 
-    ++avg_iter_;
+    avg_iter_ += float_avg_iter;
     this->diag_once(prec_tensor, psi_temp, eigen, ethr_band);
 
     if (this->notconv_ > std::max(5, this->n_band_ / 4))

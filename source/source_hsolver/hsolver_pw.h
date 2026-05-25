@@ -41,7 +41,7 @@ class HSolverPW
           use_k_continuity(use_k_continuity_in) {};
 
     /// @brief Set the precision mode for diagonalization solvers
-    /// @param mode "double", "float", or "mixed"
+    /// @param mode PrecisionMode enum value (kDouble, kFloat, or kMixed)
     void set_diago_precision_mode(const PrecisionMode mode) { diago_precision_mode_ = mode; }
 
     /// @brief Get the current precision mode

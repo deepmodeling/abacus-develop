@@ -1025,6 +1025,14 @@ int DiagoDavid<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
                                               std::complex<float>>::type;
     using MixedReal = typename GetTypeReal<MixedT>::type;
 
+    // Mixed precision currently only supported on CPU; fallback to double on GPU
+    if (this->device == base_device::GpuDevice)
+    {
+        // Fallback: run standard double-precision diag
+        return this->diag(hpsi_func, spsi_func, ld_psi, psi_in, eigenvalue_in,
+                          ethr_band, david_maxiter, ntry_max, notconv_max);
+    }
+
     // Convert psi to mixed precision
     auto psi_tensor = ct::TensorMap(psi_in,
                                     ct::DataTypeToEnum<T>::value,
