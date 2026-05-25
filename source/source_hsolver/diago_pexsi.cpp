@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
 #include <utility>
 
 extern MPI_Comm DIAG_WORLD;
@@ -24,6 +26,33 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+namespace
+{
+bool pexsi_trace_enabled()
+{
+    static const bool enabled = std::getenv("ABACUS_PEXSI_TRACE") != nullptr;
+    return enabled;
+}
+
+void trace_pexsi_mu(const char* stage,
+                    const double mu,
+                    const double target_nelec,
+                    const double nelec,
+                    const double residual,
+                    const double derivative,
+                    const double delta_mu)
+{
+    if (!pexsi_trace_enabled() || GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+    std::cout << "PEXSI_TRACE world_rank=" << GlobalV::MY_RANK << " stage=" << stage << " mu=" << mu
+              << " target_nelec=" << target_nelec << " nelec=" << nelec << " residual=" << residual
+              << " dnelec_dmu=" << derivative << " delta_mu=" << delta_mu << " time=" << MPI_Wtime()
+              << std::endl;
+}
+} // namespace
+
 template <typename T>
 std::vector<double> DiagoPexsi<T>::mu_buffer;
 
@@ -149,6 +178,13 @@ bool DiagoPexsi<std::complex<double>>::finish_k_loop(const double target_nelec)
     const double residual = target_nelec - this->num_electron_sum_;
     if (std::abs(residual) <= pexsi::PEXSI_Solver::pexsi_elec_thr)
     {
+        trace_pexsi_mu("mu.converged",
+                       mu_buffer.empty() ? pexsi::PEXSI_Solver::pexsi_mu : mu_buffer[0],
+                       target_nelec,
+                       this->num_electron_sum_,
+                       residual,
+                       this->num_electron_derivative_sum_,
+                       0.0);
         return true;
     }
     if (residual > 0.0)
@@ -186,6 +222,13 @@ bool DiagoPexsi<std::complex<double>>::finish_k_loop(const double target_nelec)
     {
         mu_buffer.push_back(pexsi::PEXSI_Solver::pexsi_mu);
     }
+    trace_pexsi_mu("mu.update",
+                   mu_buffer[0],
+                   target_nelec,
+                   this->num_electron_sum_,
+                   residual,
+                   this->num_electron_derivative_sum_,
+                   delta_mu);
     mu_buffer[0] += delta_mu;
     return false;
 }
