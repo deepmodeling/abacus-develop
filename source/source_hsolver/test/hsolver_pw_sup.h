@@ -124,9 +124,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
-                                  const diag_comm_info& diag_comm_in,
-                                  const PrecisionMode precision_mode_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in), precision_mode_(precision_mode_in) {
+                                  const diag_comm_info& diag_comm_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in) {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
