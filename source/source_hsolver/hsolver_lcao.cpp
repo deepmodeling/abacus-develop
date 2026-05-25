@@ -43,6 +43,7 @@
 #include <complex>
 #include <cstdlib>
 #include <iostream>
+#include <string>
 #include <type_traits>
 
 namespace hsolver
@@ -51,16 +52,21 @@ namespace hsolver
 #ifdef __PEXSI
 namespace
 {
-bool pexsi_trace_enabled()
+bool pexsi_trace_enabled(const char* category)
 {
-    static const bool enabled = std::getenv("ABACUS_PEXSI_TRACE") != nullptr;
-    return enabled;
+    const char* trace_env = std::getenv("ABACUS_PEXSI_TRACE");
+    if (trace_env == nullptr)
+    {
+        return false;
+    }
+    const std::string trace_value(trace_env);
+    return trace_value == "1" || trace_value == "all" || trace_value.find(category) != std::string::npos;
 }
 
 #ifdef __MPI
 void pexsi_trace_kpoint(const int imu, const int ik_global, const int pool, const char* stage)
 {
-    if (!pexsi_trace_enabled())
+    if (!pexsi_trace_enabled("kpoint"))
     {
         return;
     }

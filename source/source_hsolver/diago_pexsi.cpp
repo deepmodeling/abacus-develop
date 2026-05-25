@@ -17,6 +17,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <string>
 #include <utility>
 
 extern MPI_Comm DIAG_WORLD;
@@ -28,10 +29,15 @@ namespace hsolver
 {
 namespace
 {
-bool pexsi_trace_enabled()
+bool pexsi_trace_enabled(const char* category)
 {
-    static const bool enabled = std::getenv("ABACUS_PEXSI_TRACE") != nullptr;
-    return enabled;
+    const char* trace_env = std::getenv("ABACUS_PEXSI_TRACE");
+    if (trace_env == nullptr)
+    {
+        return false;
+    }
+    const std::string trace_value(trace_env);
+    return trace_value == "1" || trace_value == "all" || trace_value.find(category) != std::string::npos;
 }
 
 void trace_pexsi_mu(const char* stage,
@@ -42,7 +48,7 @@ void trace_pexsi_mu(const char* stage,
                     const double derivative,
                     const double delta_mu)
 {
-    if (!pexsi_trace_enabled() || GlobalV::MY_RANK != 0)
+    if (!pexsi_trace_enabled("mu") || GlobalV::MY_RANK != 0)
     {
         return;
     }

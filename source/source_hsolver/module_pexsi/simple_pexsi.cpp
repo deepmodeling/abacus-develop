@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "c_pexsi_interface.h"
 #include "dist_bcd_matrix.h"
@@ -30,15 +31,20 @@ namespace pexsi
 {
 namespace
 {
-bool trace_pexsi_enabled()
+bool trace_pexsi_enabled(const char* category)
 {
-    static const bool enabled = std::getenv("ABACUS_PEXSI_TRACE") != nullptr;
-    return enabled;
+    const char* trace_env = std::getenv("ABACUS_PEXSI_TRACE");
+    if (trace_env == nullptr)
+    {
+        return false;
+    }
+    const std::string trace_value(trace_env);
+    return trace_value == "1" || trace_value == "all" || trace_value.find(category) != std::string::npos;
 }
 
 void trace_pexsi_stage(MPI_Comm comm, const char* path, const char* stage)
 {
-    if (!trace_pexsi_enabled() || comm == MPI_COMM_NULL)
+    if (!trace_pexsi_enabled("stage") || comm == MPI_COMM_NULL)
     {
         return;
     }
