@@ -67,6 +67,7 @@ CASES: dict[str, CaseSpec] = {
         ecutwfc=60,
         mixing_beta=0.4,
         nbands=200,
+        smearing_sigma=0.002,
     ),
     "al128_444": CaseSpec(
         name="al128_444",
@@ -88,6 +89,7 @@ CASES: dict[str, CaseSpec] = {
         kmesh=(2, 2, 2),
         generator="gen_tio2_192",
         mixing_beta=0.3,
+        smearing_sigma=0.002,
     ),
     "h2o_gamma": CaseSpec(
         name="h2o_gamma",
@@ -577,6 +579,16 @@ def main(argv: list[str] | None = None) -> int:
         "cases": cases,
         "solvers": solvers,
         "np_list": nps,
+        "case_options": {
+            name: {
+                "natom": CASES[name].natom,
+                "kmesh": "x".join(str(x) for x in CASES[name].kmesh),
+                "smearing_sigma": args.smearing_sigma
+                if args.smearing_sigma is not None
+                else CASES[name].smearing_sigma,
+            }
+            for name in cases
+        },
         "pexsi_npole": args.pexsi_npole,
         "pexsi_elec_thr": args.pexsi_elec_thr,
         "pexsi_mu_thr": args.pexsi_mu_thr,
