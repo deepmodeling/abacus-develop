@@ -472,6 +472,17 @@ def load_result(path: Path) -> dict[str, object] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def refresh_result_file(path: Path, case_dir: Path, suffix: str) -> None:
+    data = load_result(path)
+    if data is None:
+        return
+    parsed = parse_log(case_dir, suffix)
+    data.update(parsed)
+    timed_out = bool(data.get("timed_out", False))
+    data["status"] = "timeout" if timed_out else ("converged" if parsed["converged"] else "failed")
+    write_text(path, json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
 def write_summaries(run_root: Path, cases: list[str], nps: list[int], solvers: list[str]) -> None:
     rows: list[dict[str, object]] = []
     by_key: dict[tuple[str, str, int], dict[str, object]] = {}
@@ -584,6 +595,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cases", default=",".join(CASES.keys()))
     parser.add_argument("--force", action="store_true", help="rerun jobs with an existing result.json")
     parser.add_argument("--prepare-only", action="store_true", help="only generate input directories")
+    parser.add_argument("--summary-only", action="store_true", help="only refresh/write summaries without running missing jobs")
+    parser.add_argument("--reparse-existing", action="store_true", help="reparse existing logs before writing summaries")
     args = parser.parse_args(argv)
 
     cases = parse_csv_arg(args.cases, CASES.keys())
@@ -643,15 +656,19 @@ def main(argv: list[str] | None = None) -> int:
             for solver in solvers:
                 job_dir = run_root / case.name / solver / f"np{np}"
                 result_file = job_dir / "result.json"
+                suffix = f"p51_{case.name}_{solver}_np{np}"
                 if result_file.exists() and not args.force:
+                    if args.reparse_existing:
+                        refresh_result_file(result_file, job_dir, suffix)
                     print(f"skip existing {case.name} {solver} np={np}")
+                    continue
+                if args.summary_only:
                     continue
 
                 if job_dir.exists() and args.force:
                     shutil.rmtree(job_dir)
                 job_dir.mkdir(parents=True, exist_ok=True)
                 prepare_structure(repo, case, job_dir)
-                suffix = f"p51_{case.name}_{solver}_np{np}"
                 write_text(
                     job_dir / "INPUT",
                     input_text(
