@@ -283,6 +283,7 @@ def input_text(
     suffix: str,
     pexsi_npole: int,
     pexsi_elec_thr: float,
+    pexsi_mu_thr: float,
 ) -> str:
     gamma_only = 1 if case.kmesh == (1, 1, 1) else 0
     kpar = min(np, case.nks)
@@ -322,7 +323,7 @@ def input_text(
                 "pexsi_mu_lower      -10",
                 "pexsi_mu_upper      10",
                 "pexsi_mu            0",
-                "pexsi_mu_thr        0.05",
+                f"pexsi_mu_thr        {pexsi_mu_thr}",
                 "pexsi_mu_expand     0.3",
                 "pexsi_mu_guard      0.2",
                 f"pexsi_elec_thr      {pexsi_elec_thr}",
@@ -546,6 +547,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--timeout", type=int, default=3600)
     parser.add_argument("--pexsi-npole", type=int, default=120)
     parser.add_argument("--pexsi-elec-thr", type=float, default=0.001)
+    parser.add_argument("--pexsi-mu-thr", type=float, default=0.05)
     parser.add_argument("--np-list", default=",".join(str(x) for x in DEFAULT_NP))
     parser.add_argument("--solvers", default=",".join(DEFAULT_SOLVERS))
     parser.add_argument("--cases", default=",".join(CASES.keys()))
@@ -569,6 +571,7 @@ def main(argv: list[str] | None = None) -> int:
         "np_list": nps,
         "pexsi_npole": args.pexsi_npole,
         "pexsi_elec_thr": args.pexsi_elec_thr,
+        "pexsi_mu_thr": args.pexsi_mu_thr,
         "energy_tolerance_ry": ENERGY_TOL_RY,
         "force_tolerance_ev_per_angstrom": FORCE_TOL_EV_A,
         "stress_tolerance_gpa": STRESS_TOL_GPA,
@@ -605,7 +608,16 @@ def main(argv: list[str] | None = None) -> int:
                 suffix = f"p51_{case.name}_{solver}_np{np}"
                 write_text(
                     job_dir / "INPUT",
-                    input_text(repo, case, solver, np, suffix, args.pexsi_npole, args.pexsi_elec_thr),
+                    input_text(
+                        repo,
+                        case,
+                        solver,
+                        np,
+                        suffix,
+                        args.pexsi_npole,
+                        args.pexsi_elec_thr,
+                        args.pexsi_mu_thr,
+                    ),
                 )
                 if args.prepare_only:
                     continue
