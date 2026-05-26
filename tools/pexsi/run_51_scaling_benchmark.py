@@ -393,6 +393,24 @@ def parse_total_time_s(text: str) -> float | None:
     return total if total > 0.0 else None
 
 
+def max_abs_diff(lhs: object, rhs: object) -> float | None:
+    if not isinstance(lhs, list) or not isinstance(rhs, list):
+        return None
+    if len(lhs) != len(rhs):
+        return None
+    max_diff = 0.0
+    for left_row, right_row in zip(lhs, rhs):
+        if not isinstance(left_row, list) or not isinstance(right_row, list):
+            return None
+        if len(left_row) != len(right_row):
+            return None
+        for left, right in zip(left_row, right_row):
+            if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
+                return None
+            max_diff = max(max_diff, abs(float(left) - float(right)))
+    return max_diff
+
+
 def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
     log_path = case_dir / f"OUT.{suffix}" / "running_scf.log"
     result: dict[str, object] = {
@@ -419,9 +437,11 @@ def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
 
     forces = parse_block_vectors(lines, "TOTAL-FORCE", 3, None)
     if forces:
+        result["forces_ev_per_angstrom"] = forces
         result["max_force_abs"] = max(abs(v) for row in forces for v in row)
     stress = parse_block_vectors(lines, "TOTAL-STRESS", 3, 3)
     if stress:
+        result["stress_kbar"] = stress
         result["max_stress_abs"] = max(abs(v) for row in stress for v in row)
 
     for line in lines:
@@ -518,16 +538,22 @@ def write_summaries(run_root: Path, cases: list[str], nps: list[int], solvers: l
             data["delta_e_ev"] = delta_ev
             data["delta_e_ry"] = delta_ev / RY_TO_EV
             data["energy_pass"] = abs(delta_ev / RY_TO_EV) <= ENERGY_TOL_RY
-        force = data.get("max_force_abs")
-        ref_force = ref.get("max_force_abs")
-        if isinstance(force, (int, float)) and isinstance(ref_force, (int, float)):
-            delta_force = abs(float(force) - float(ref_force))
+        delta_force = max_abs_diff(data.get("forces_ev_per_angstrom"), ref.get("forces_ev_per_angstrom"))
+        if delta_force is None:
+            force = data.get("max_force_abs")
+            ref_force = ref.get("max_force_abs")
+            if isinstance(force, (int, float)) and isinstance(ref_force, (int, float)):
+                delta_force = abs(float(force) - float(ref_force))
+        if delta_force is not None:
             data["delta_force_max"] = delta_force
             data["force_pass"] = delta_force <= FORCE_TOL_EV_A
-        stress = data.get("max_stress_abs")
-        ref_stress = ref.get("max_stress_abs")
-        if isinstance(stress, (int, float)) and isinstance(ref_stress, (int, float)):
-            delta_stress = abs(float(stress) - float(ref_stress))
+        delta_stress = max_abs_diff(data.get("stress_kbar"), ref.get("stress_kbar"))
+        if delta_stress is None:
+            stress = data.get("max_stress_abs")
+            ref_stress = ref.get("max_stress_abs")
+            if isinstance(stress, (int, float)) and isinstance(ref_stress, (int, float)):
+                delta_stress = abs(float(stress) - float(ref_stress))
+        if delta_stress is not None:
             data["delta_stress_max"] = delta_stress
             data["stress_pass"] = delta_stress <= STRESS_TOL_KBAR
 
