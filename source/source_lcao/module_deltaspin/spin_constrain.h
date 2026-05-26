@@ -535,6 +535,30 @@ public:
                                 int ik, int nbands, int nlocal);
 
     /**
+     * @brief Compute P_I_sub(k) = C†(k) P_I(k) C(k) from real-space pre_hr.
+     *
+     * @details Uses folding_HR to assemble P_I(k) in ScaLAPACK 2D-block layout,
+     * then pzgemm to project into the subspace. This is consistent with how
+     * calculate_lcao_sub_hs computes H_sub = C†H(k)C, and ensures P_I_sub
+     * matches the DMR path's cal_moment exactly.
+     *
+     * @param pre_hr_iat Real-space HContainer for atom iat (from DeltaSpin::get_pre_hr)
+     * @param psi Wavefunction C(k) (2D-block distributed)
+     * @param ParaV Parallel orbitals distribution
+     * @param kvec_d k-point in direct coordinates
+     * @param PI_sub Output: nbands×nbands Hermitian matrix (gathered to all procs)
+     * @param nbands Number of bands
+     * @param nlocal Global basis size
+     */
+    void calculate_PI_sub_from_hr(
+        const hamilt::HContainer<double>* pre_hr_iat,
+        psi::Psi<std::complex<double>>& psi,
+        const Parallel_Orbitals* ParaV,
+        const ModuleBase::Vector3<double>& kvec_d,
+        std::complex<double>* PI_sub,
+        int nbands, int nlocal);
+
+    /**
      * @brief Apply DeltaSpin correction to LCAO subspace Hamiltonian.
      *
      * @details H_sub += Σ_I lambda_I · P_I_sub(k) for each constrained atom I.

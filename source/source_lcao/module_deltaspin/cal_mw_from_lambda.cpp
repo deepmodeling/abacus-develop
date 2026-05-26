@@ -629,23 +629,33 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 psi_t->fix_k(ik);
 
                 // Compute H₀_sub(k) = C†(k) · H(k) · C(k) and S_sub(k) = C†(k) · S(k) · C(k)
-                // where C(k) is the wavefunction matrix at current lambda
                 this->calculate_lcao_sub_hs(
                     this->p_hamilt, psi_t[0], this->ParaV,
                     this->lcao_sub_h_save + ik * nn,
                     this->lcao_sub_s_save + ik * nn,
                     ik, nbands, nlocal);
 
-                // Compute projector matrices P_I_sub(k) = C†(k) · D_I(k) · C(k)
-                // These are used to construct delta H for new lambda values:
-                //   H_sub(k, λ) = H₀_sub(k) + Σ_I (λ_I - λ_I_ref) · P_I_sub(k)
+                // Compute P_I_sub(k) = C†(k) · P_I(k) · C(k) from real-space pre_hr
+                // Uses folding_HR + pzgemm, consistent with how cal_moment computes Mi
                 auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
                     this->p_operator);
-                dspin_op->cal_PI_sub(
-                    this->kv_.kvec_d[ik],
-                    psi_t->get_pointer(),
-                    nbands,
-                    this->lcao_PI_sub_save_[ik]);
+                const int nat = this->get_nat();
+                this->lcao_PI_sub_save_[ik].resize(nat);
+                for (int iat = 0; iat < nat; iat++)
+                {
+                    if (!dspin_op->get_constraint_atom_list()[iat])
+                    {
+                        this->lcao_PI_sub_save_[ik][iat].clear();
+                        continue;
+                    }
+                    this->lcao_PI_sub_save_[ik][iat].resize(nn, {0.0, 0.0});
+                    this->calculate_PI_sub_from_hr(
+                        dspin_op->get_pre_hr(iat),
+                        psi_t[0], this->ParaV,
+                        this->kv_.kvec_d[ik],
+                        this->lcao_PI_sub_save_[ik][iat].data(),
+                        nbands, nlocal);
+                }
 
                 // Save eigenvalues for Fermi weight calculation
                 for (int ib = 0; ib < nbands; ib++)

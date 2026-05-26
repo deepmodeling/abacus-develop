@@ -38,6 +38,7 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 
 #ifdef __MPI
 #include "source_base/module_external/scalapack_connector.h"
@@ -231,6 +232,80 @@ void SpinConstrain<std::complex<double>>::calculate_lcao_sub_hs(
 #endif
 
     ModuleBase::timer::end("SpinConstrain", "calculate_lcao_sub_hs");
+}
+
+/**
+ * @brief Compute P_I_sub(k) = C†(k) P_I(k) C(k) from real-space pre_hr.
+ *
+ * This mirrors calculate_lcao_sub_hs exactly:
+ *   1. Fold pre_hr to k-space: P_I(k) = Σ_R pre_hr(R) exp(ik·R)
+ *   2. temp = P_I(k) × C(k)          [pzgemm or zgemm]
+ *   3. PI_sub = C†(k) × temp          [pzgemm or zgemm]
+ *   4. Gather to all processes
+ *
+ * Using pre_hr ensures P_I_sub is IDENTICAL to what cal_moment uses,
+ * eliminating the bias that cal_PI_sub (D_I†D_I) exhibited.
+ */
+template <>
+void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
+    const hamilt::HContainer<double>* pre_hr_iat,
+    psi::Psi<std::complex<double>>& psi,
+    const Parallel_Orbitals* ParaV,
+    const ModuleBase::Vector3<double>& kvec_d,
+    std::complex<double>* PI_sub,
+    int nbands, int nlocal)
+{
+    ModuleBase::TITLE("SpinConstrain", "calculate_PI_sub_from_hr");
+    ModuleBase::timer::start("SpinConstrain", "calculate_PI_sub_from_hr");
+
+    std::complex<double>* psi_ptr = psi.get_pointer();
+    const std::complex<double> one = {1.0, 0.0};
+    const std::complex<double> zero = {0.0, 0.0};
+
+#ifdef __MPI
+    // Step 1: Fold pre_hr to k-space in 2D-block layout (column-major, lld=nrow)
+    int nloc = ParaV->nloc;
+    std::vector<std::complex<double>> PI_k_local(nloc, {0.0, 0.0});
+
+    // Use folding_HR: hk_type=1 for column-major (lld=nrow)
+    hamilt::folding_HR(*pre_hr_iat, PI_k_local.data(), kvec_d, ParaV->nrow, 1);
+
+    // Step 2: temp = P_I(k) × C(k)
+    int nloc_wfc = ParaV->nloc_wfc;
+    std::vector<std::complex<double>> temp(nloc_wfc, {0.0, 0.0});
+
+    ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+        one, PI_k_local.data(), 1, 1, ParaV->desc,
+        psi_ptr, 1, 1, ParaV->desc_wfc,
+        zero, temp.data(), 1, 1, ParaV->desc_wfc);
+
+    // Step 3: PI_sub_local = C†(k) × temp
+    int lld_Eij = ParaV->nrow;
+    int ncol_bands = ParaV->ncol_bands;
+    int nloc_eij_local = lld_Eij * ncol_bands;
+    std::vector<std::complex<double>> PI_sub_local(nloc_eij_local, {0.0, 0.0});
+
+    ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+        one, psi_ptr, 1, 1, ParaV->desc_wfc,
+        temp.data(), 1, 1, ParaV->desc_wfc,
+        zero, PI_sub_local.data(), 1, 1, ParaV->desc_Eij);
+
+    // Step 4: Gather to all processes
+    gather_sub_matrix_to_all(PI_sub_local.data(), ParaV, PI_sub, nbands);
+#else
+    // Serial case: fold and multiply directly
+    std::vector<std::complex<double>> PI_k(nlocal * nlocal, {0.0, 0.0});
+    hamilt::folding_HR(*pre_hr_iat, PI_k.data(), kvec_d, nlocal, 1);
+
+    std::vector<std::complex<double>> temp(nlocal * nbands, {0.0, 0.0});
+    zgemm_("N", "N", &nlocal, &nbands, &nlocal,
+        &one, PI_k.data(), &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
+
+    zgemm_("C", "N", &nbands, &nbands, &nlocal,
+        &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub, &nbands);
+#endif
+
+    ModuleBase::timer::end("SpinConstrain", "calculate_PI_sub_from_hr");
 }
 
 template <>
