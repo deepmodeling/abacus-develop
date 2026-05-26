@@ -58,18 +58,18 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
                                                  const int nacols,
                                                  const int* desc)
 {
-    // 构造函数的实现
+    // Constructor implementation
     this->cblacs_ctxt = desc[1];
     this->nFull = desc[2];
 
     // 20240529 zhanghaochong
-    // set mb and nb is not nessary, but I keep it here for the code consistency.
-    // Because in ABACUS, mb always equals to nb
+    // Setting mb and nb is not necessary, but kept for code consistency.
+    // In ABACUS, mb always equals nb.
     const int mb = desc[4];
     const int nb = desc[5];
 
     // 20240529 zhanghaochong
-    // so far, cusolverMpSygvd only support rsrc == 0 and csrc == 0
+    // So far, cusolverMpSygvd only supports rsrc == 0 and csrc == 0
     const int rsrc = desc[6];
     const int csrc = desc[7];
 
@@ -106,7 +106,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     CHECK_CUSOLVER(cusolverMpCreate(&cusolverMpHandle, local_device_id, this->localStream));
 
     // 20240529 zhanghaochong
-    // so far, cusolvermp only support = 1
+    // So far, cusolverMp only supports matrix_i = 1
     this->matrix_i = 1;
     this->matrix_j = 1;
     this->m_local = narows;
@@ -125,11 +125,11 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     }
 
     // 20240529 zhanghaochong
-    // the cpu mpi process blacs grid and multi gpu process blacs grid is the SAME
-    // Setting them the same is not a natural result, but a result that I forced and artificially specified.
-    // This is because the current implementation of the cusolvermp library is ONE process ONE GPU.
-    // So, when we use cusolvermp, we must ensure that the number of processes is equal to the number of GPUs.
-    // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
+    // The CPU MPI process BLACS grid and multi-GPU process BLACS grid are the SAME.
+    // Setting them the same is not a natural result, but artificially enforced.
+    // This is because the current cusolverMp library implementation uses one process per GPU.
+    // Therefore, when using cusolverMp, the number of processes must equal the number of GPUs.
+    // The MPI usage strategy in ABACUS must conform to cusolverMp requirements.
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
     CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
                                                    &this->grid,
@@ -143,9 +143,9 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
                                                    CUSOLVERMP_GRID_MAPPING_ROW_MAJOR));
 
     // 20240529 zhanghaochong
-    // Actually, there should be three matrix descriptors, A matrix, B matrix, and output eigenvector matrix.
-    // But in ABACUS the three matrices descriptors are the same.
-    // So, I only create one matrix descriptor and use it for the three matrices.
+    // There should be three matrix descriptors: A matrix, B matrix, and output eigenvector matrix.
+    // However, in ABACUS all three matrix descriptors are identical.
+    // Therefore, only one matrix descriptor is created and reused for all three matrices.
     CHECK_CUSOLVER(cusolverMpCreateMatrixDesc(&this->desc_for_cusolvermp,
                                this->grid,
                                this->datatype,
@@ -282,12 +282,11 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
                                this->n_local * this->m_local * sizeof(inputT),
                                cudaMemcpyDeviceToHost));
     // 20240529 zhanghaochong
-    // I move the free operations from destructor to here.
-    // Because I think it is more reasonable to free the memory in the function where it is allocated.
-    // Destructor is used to release resources that allocated in the constructor.
-    // And currently, we construct and destruct the object in every SCF iteration. Maybe one day we
-    // will construct the object only once during the whole program life cycle.
-    // In that case, allocate and free memory in compute function is more reasonable.
+    // Memory deallocation moved from destructor to here for better resource management.
+    // The destructor should release resources allocated in the constructor.
+    // Currently, the object is constructed and destructed every SCF iteration.
+    // In the future, the object may be constructed once during the entire program lifecycle.
+    // Allocating and freeing memory in the compute function is more appropriate in that case.
     CHECK_CUDA(cudaFree(d_A));
     CHECK_CUDA(cudaFree(d_B));
     CHECK_CUDA(cudaFree(d_D));

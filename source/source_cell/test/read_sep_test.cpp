@@ -69,7 +69,7 @@ TEST_F(ReadSepTest, PrintSep)
     if (GlobalV::MY_RANK == 0)
     {
 #endif
-        // 设置测试数据
+        // Set up test data
         read_sep->label = "F";
         read_sep->xc_type = "pbe";
         read_sep->orbital = "p";
@@ -78,13 +78,13 @@ TEST_F(ReadSepTest, PrintSep)
         read_sep->r = new double[2]{0.1, 0.2};
         read_sep->rv = new double[2]{1.0, 2.0};
 
-        // 测试打印功能
+        // Test print functionality
         std::ofstream ofs("test_sep.out");
         read_sep->print_sep_info(ofs);
         read_sep->print_sep_vsep(ofs);
         ofs.close();
 
-        // 验证输出文件
+        // Verify output file
         std::ifstream ifs("test_sep.out");
         std::string line;
         std::vector<std::string> lines;

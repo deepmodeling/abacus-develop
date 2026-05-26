@@ -83,7 +83,7 @@ void solve_propagation(const Parallel_Orbitals* pv,
                        const double dt,
                        const std::complex<double>* Stmp,
                        const std::complex<double>* Htmp,
-                       const std::complex<double>* P_k, // <--- 接收 P_k
+                        const std::complex<double>* P_k, // <--- receives P_k
                        const std::complex<double>* psi_k_laststep,
                        std::complex<double>* psi_k)
 {

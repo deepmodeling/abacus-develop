@@ -52,6 +52,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     ModuleBase::matrix forcecc(nat, 3);
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
+    ModuleBase::matrix forcepaw(nat, 3);
     ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential

@@ -831,7 +831,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "charge density error";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If scf_ene_thr is set, the total-energy criterion (scf_ene_thr) is additionally checked only after the first SCF iteration and only when the charge-density criterion (scf_thr) has already been satisfied. For local-orbital calculations, 1e-6 is usually accurate enough.";
+        item.description = "It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.";
         item.default_value = "1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).";
         item.unit = "Ry if scf_thr_type=1, dimensionless if scf_thr_type=2";
         item.availability = "";
@@ -865,7 +865,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "total energy error threshold";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the Hpsi operation in one SCF step. It is not the same as the screen-output EDIFF, which is the energy difference before Hpsi and after charge mixing (i.e., across both Hpsi and charge-mixing operations).";
+        item.description = "It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.";
         item.default_value = "-1.0. If the user does not set this parameter, it will not take effect.";
         item.unit = "eV";
         item.availability = "";

@@ -1,7 +1,8 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
+#include "source_io/module_parameter/parameter.h"
 
-#include "source_base/module_device/types.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 
@@ -120,6 +121,7 @@ struct cal_force_nl_op
                     const int& nbands,
                     const int& ik,
                     const int& nkb,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE& tpiba,
@@ -138,6 +140,7 @@ struct cal_force_nl_op
                     const int& nbands,
                     const int& ik,
                     const int& nkb,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE& tpiba,
@@ -249,6 +252,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& nbands,
                     const int& ik,
                     const int& nkb,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE& tpiba,
@@ -267,6 +271,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& nbands,
                     const int& ik,
                     const int& nkb,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE& tpiba,

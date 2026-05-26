@@ -3,6 +3,8 @@
 
 #include "elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/klist.h"
 
 #include <vector>
 
@@ -24,12 +26,7 @@ class ElecStateLCAO : public ElecState
         this->classname = "ElecStateLCAO";
     }
 
-    virtual ~ElecStateLCAO()
-    {
-    }
-
-    // update charge density for next scf step
-    // void getNewRho() override;
+    virtual ~ElecStateLCAO() = default;
 
     static int out_wfc_lcao;
     static bool need_psi_grid;

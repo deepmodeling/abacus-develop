@@ -201,15 +201,30 @@ void Parallel_Global::read_pal_param(int argc,
 #ifdef __MPI
 void Parallel_Global::finalize_mpi()
 {
-    MPI_Comm_free(&POOL_WORLD);
-    if (KP_WORLD != MPI_COMM_NULL)
+    if (POOL_WORLD != MPI_COMM_NULL && POOL_WORLD != MPI_COMM_WORLD)
+    {
+        MPI_Comm_free(&POOL_WORLD);
+    }
+    if (KP_WORLD != MPI_COMM_NULL && KP_WORLD != MPI_COMM_WORLD)
     {
         MPI_Comm_free(&KP_WORLD);
     }
-    MPI_Comm_free(&INT_BGROUP);
-    MPI_Comm_free(&BP_WORLD);
-    MPI_Comm_free(&GRID_WORLD);
-    MPI_Comm_free(&DIAG_WORLD);
+    if (INT_BGROUP != MPI_COMM_NULL && INT_BGROUP != MPI_COMM_WORLD)
+    {
+        MPI_Comm_free(&INT_BGROUP);
+    }
+    if (BP_WORLD != MPI_COMM_NULL && BP_WORLD != MPI_COMM_WORLD)
+    {
+        MPI_Comm_free(&BP_WORLD);
+    }
+    if (GRID_WORLD != MPI_COMM_NULL && GRID_WORLD != MPI_COMM_WORLD)
+    {
+        MPI_Comm_free(&GRID_WORLD);
+    }
+    if (DIAG_WORLD != MPI_COMM_NULL && DIAG_WORLD != MPI_COMM_WORLD)
+    {
+        MPI_Comm_free(&DIAG_WORLD);
+    }
     MPI_Finalize();
 }
 #endif
