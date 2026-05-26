@@ -46,6 +46,22 @@ TOTAL_TIME_RE = re.compile(
     re.IGNORECASE,
 )
 TIMER_RE = re.compile(r"^\s*([A-Za-z0-9_./ -]+?)\s+([-+0-9.eE]+)\s+(?:s|sec|seconds)?\s*$")
+PEXSI_TRACE_RE = re.compile(
+    r"PEXSI_TRACE\s+.*?\sstage=(?P<stage>[A-Za-z0-9_]+)\.(?P<event>begin|end)\s+time=(?P<time>[-+0-9.eE]+)"
+)
+
+TRACE_STAGE_KEYS = {
+    "TransMAT2CCS": "trace_transmat2ccs_s",
+    "PPEXSILoadComplexHSMatrix": "trace_loadhs_s",
+    "PPEXSILoadRealHSMatrix": "trace_loadhs_s",
+    "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix": "trace_symbolic_s",
+    "PPEXSISymbolicFactorizeRealSymmetricMatrix": "trace_symbolic_s",
+    "PPEXSICalculateFermiOperatorComplex": "trace_fermiop_s",
+    "PPEXSICalculateFermiOperatorReal": "trace_fermiop_s",
+    "PPEXSIRetrieveComplexDFTMatrix": "trace_retrieve_s",
+    "PPEXSIRetrieveRealDFTMatrix": "trace_retrieve_s",
+    "TransMAT22D": "trace_transmat22d_s",
+}
 
 
 @dataclass(frozen=True)
@@ -411,6 +427,37 @@ def max_abs_diff(lhs: object, rhs: object) -> float | None:
     return max_diff
 
 
+def parse_pexsi_trace(case_dir: Path) -> dict[str, object]:
+    stdout_path = case_dir / "abacus_stdout.log"
+    result: dict[str, object] = {}
+    if not stdout_path.exists():
+        return result
+    active: dict[str, float] = {}
+    counts: dict[str, int] = {}
+    for line in stdout_path.read_text(errors="replace").splitlines():
+        match = PEXSI_TRACE_RE.search(line)
+        if not match:
+            continue
+        stage = match.group("stage")
+        event = match.group("event")
+        trace_time = float(match.group("time"))
+        key = TRACE_STAGE_KEYS.get(stage)
+        if key is None:
+            continue
+        if event == "begin":
+            active[stage] = trace_time
+            continue
+        begin = active.pop(stage, None)
+        if begin is None:
+            continue
+        duration = max(0.0, trace_time - begin)
+        result[key] = float(result.get(key, 0.0)) + duration
+        count_key = key.removesuffix("_s") + "_count"
+        counts[count_key] = counts.get(count_key, 0) + 1
+    result.update(counts)
+    return result
+
+
 def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
     log_path = case_dir / f"OUT.{suffix}" / "running_scf.log"
     result: dict[str, object] = {
@@ -425,6 +472,7 @@ def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
         "transmat2ccs_s": None,
         "stress_unit": "kbar",
     }
+    result.update(parse_pexsi_trace(case_dir))
     if not log_path.exists():
         return result
     text = log_path.read_text(errors="replace")
@@ -581,6 +629,13 @@ def write_summaries(run_root: Path, cases: list[str], nps: list[int], solvers: l
         "hsolver_s",
         "pexsidft_s",
         "transmat2ccs_s",
+        "trace_fermiop_s",
+        "trace_fermiop_count",
+        "trace_symbolic_s",
+        "trace_transmat2ccs_s",
+        "trace_transmat22d_s",
+        "trace_loadhs_s",
+        "trace_retrieve_s",
         "case_dir",
     ]
     lines = ["\t".join(headers)]
