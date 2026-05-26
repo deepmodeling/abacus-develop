@@ -75,6 +75,7 @@ CASES: dict[str, CaseSpec] = {
         kmesh=(4, 4, 4),
         generator="gen_al128",
         mixing_beta=0.3,
+        smearing_sigma=0.03,
     ),
     "cu256_222": CaseSpec(
         name="cu256_222",
@@ -82,6 +83,7 @@ CASES: dict[str, CaseSpec] = {
         kmesh=(2, 2, 2),
         generator="gen_cu256",
         mixing_beta=0.4,
+        smearing_sigma=0.03,
     ),
     "tio2_192_222": CaseSpec(
         name="tio2_192_222",
