@@ -655,8 +655,21 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             this->lcao_lambda_in_sub_ = this->lambda_;
             this->lcao_subspace_initialized_ = true;
 
-            // Compute Mi (same as default path for consistency)
-            this->cal_mi_lcao(i_step);
+            // Compute Mi via subspace method at lambda_ref (V=I).
+            // This ensures subsequent subspace Mi values are consistent with
+            // the reference, avoiding mixed full/subspace gradient artifacts.
+            {
+                std::vector<std::vector<std::complex<double>>> vcc_identity(nk,
+                    std::vector<std::complex<double>>(nn, {0.0, 0.0}));
+                for (int ik = 0; ik < nk; ik++)
+                    for (int ib = 0; ib < nbands; ib++)
+                        vcc_identity[ik][ib + ib * nbands] = {1.0, 0.0};
+
+                this->cal_mi_lcao_subspace(vcc_identity, nbands, nk, this->get_npol());
+            }
+
+            // Signal BFGS to reset history on next iteration
+            this->subspace_just_activated_ = true;
         }
         // =================================================================
         // BRANCH 2: Accelerated path (opt-in, only after RMS drops below threshold)
@@ -718,7 +731,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                             double dl = this->lambda_[iat].z - this->lcao_lambda_in_sub_[iat].z;
                             delta_epsilon += dl * p_diag;
                         }
-                        this->pelec->ekb(ik, ib) = this->lcao_ekb_save_[ik * nbands + ib] + spin_sign * delta_epsilon;
+                        this->pelec->ekb(ik, ib) = this->lcao_ekb_save_[ik * nbands + ib] - spin_sign * delta_epsilon;
                     }
                 }
 
@@ -743,37 +756,20 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 // ---------------------------------------------------------
                 // 1. Build H_sub(λ) = H₀_sub + (λ - λ_ref) · P_sub
                 // 2. Diagonalize H_sub · V = S_sub · V · ε in the subspace
-                // 3. Rotate wavefunctions: C_new = C_original · V
-                // 4. Build full-space DMR from rotated psi → compute Mi
-                // 5. Restore original psi (BFGS loop expects unmodified state)
+                // 3. Rotate psi, build DMR, compute Mi via cal_mi_lcao_subspace
+                // 4. Restore original psi
                 // ---------------------------------------------------------
                 std::vector<std::vector<std::complex<double>>> vcc_all(nk);
 
-                // Update lambda in DeltaSpin operator (needed for H_sub construction)
-                if (this->nspin_ == 2)
-                {
-                    dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
-                        ->update_lambda();
-                }
-                else if (this->nspin_ == 4)
-                {
-                    dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* >(
-                        this->p_operator)
-                        ->update_lambda();
-                }
-
                 for (int ik = 0; ik < nk; ik++)
                 {
-                    // Copy cached H₀_sub(k) and S_sub(k) into temporaries
                     std::vector<std::complex<double>> h_tmp(nn), s_tmp(nn);
                     std::memcpy(h_tmp.data(), this->lcao_sub_h_save + ik * nn, sizeof(std::complex<double>) * nn);
                     std::memcpy(s_tmp.data(), this->lcao_sub_s_save + ik * nn, sizeof(std::complex<double>) * nn);
 
-                    // Add delta lambda contribution: H_sub += Δλ · P_sub
                     this->calculate_delta_hcc_lcao(h_tmp.data(), this->lcao_PI_sub_save_[ik],
                                                    this->lambda_.data(), nbands, ik, true);
 
-                    // Diagonalize H_sub · V = S_sub · V · ε
                     std::vector<std::complex<double>> vcc(nn);
                     std::vector<double> eigenvalues(nbands, 0.0);
                     std::vector<std::complex<double>> s_copy(nn);
@@ -797,34 +793,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                              this->pelec->skip_weights);
                 elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
-                // Save original psi before rotation (will be restored after Mi computation)
-                // CRITICAL: The BFGS loop does NOT expect psi to be modified by cal_mw_from_lambda.
-                // The actual psi update happens later in update_psi_charge() upon convergence.
-                std::vector<std::vector<std::complex<double>>> psi_save(nk);
-                for (int ik = 0; ik < nk; ik++)
-                {
-                    psi_t->fix_k(ik);
-                    psi_save[ik].resize(nloc_wfc);
-                    std::memcpy(psi_save[ik].data(), psi_t->get_pointer(), sizeof(std::complex<double>) * nloc_wfc);
-                }
-
-                // Rotate psi to new subspace eigenstates: C_new = C_original · V
-                this->rotate_psi_subspace_lcao(*psi_t, this->ParaV, vcc_all, nbands, nrow, nk);
-
-                // Build full-space density matrix from rotated psi and compute Mi
-                // This is the KEY difference from the broken subspace-only approach:
-                // We use cal_mi_lcao (full-space trace) instead of cal_mi_lcao_subspace
-                // (subspace trace), which was found to give biased results.
-                elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
-                this->dm_->cal_DMR();
-                this->cal_mi_lcao(i_step);
-
-                // Restore original psi so BFGS loop state is unchanged
-                for (int ik = 0; ik < nk; ik++)
-                {
-                    psi_t->fix_k(ik);
-                    std::memcpy(psi_t->get_pointer(), psi_save[ik].data(), sizeof(std::complex<double>) * nloc_wfc);
-                }
+                // Rotate psi, build DMR, compute Mi, restore psi
+                this->cal_mi_lcao_subspace(vcc_all, nbands, nk, this->get_npol());
             }
         }
         // =================================================================
@@ -1048,6 +1018,27 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
     if (PARAM.inp.basis_type == "lcao")
     {
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
+
+        // If subspace acceleration was active, psi is still at the reference lambda,
+        // not at the converged lambda. Must do a final full diag to get correct psi
+        // for charge density construction.
+        if (this->acceleration_active_ && this->acceleration_subspace_built_
+            && this->nspin_ == 2)
+        {
+            hamilt::Hamilt<std::complex<double>>* hamilt_t
+                = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+            dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
+                this->p_operator)->update_lambda();
+            hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+            hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_,
+                            *this->pelec->charge, this->nspin_, true);
+            elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg,
+                                         this->pelec->klist, this->pelec->eferm,
+                                         this->pelec->f_en, this->pelec->nelec_spin,
+                                         this->pelec->skip_weights);
+            elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+        }
+
         this->pelec->psiToRho(*psi_t);
     }
     else

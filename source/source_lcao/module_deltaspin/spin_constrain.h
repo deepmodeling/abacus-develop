@@ -61,6 +61,8 @@
 
 #include <complex>
 #include <map>
+#include <memory>
+#include <type_traits>
 #include <vector>
 
 #include "source_base/constants.h"
@@ -77,7 +79,11 @@
 
 #ifdef __LCAO
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
+#include "source_lcao/module_operator_lcao/dspin_lcao.h" // For hamilt::DeltaSpin<OperatorLCAO>
 #endif
+
+// Always include diagonalization_engine for type definitions (needed by template)
+#include "source_lcao/module_deltaspin/diagonalization_engine.h"
 
 namespace spinconstrain
 {
@@ -108,6 +114,11 @@ inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> oc
 }
 
 struct ScAtomData;
+
+// Forward declarations for diagonalization engine classes
+class FullSpaceDiagonalizer;
+class SubspaceDiagonalizer;
+class FirstOrderResponseEngine;
 
 /**
  * @brief Singleton class implementing spin-constrained DFT (DeltaSpin).
@@ -145,6 +156,11 @@ struct ScAtomData;
 template <typename TK>
 class SpinConstrain
 {
+    // Diagonalization engine classes need access to private members
+    friend class FullSpaceDiagonalizer;
+    friend class SubspaceDiagonalizer;
+    friend class FirstOrderResponseEngine;
+
 public:
     /**
      * =============================================================
@@ -309,20 +325,149 @@ public:
     */
    void run_lambda_local_diagnostic(int outer_step, double lambda_ref_ry, const std::string& label);
 
-  /// @brief Reset DeltaSpin operator initialization state when constraints change
-  void reset_dspin_operator();
+   /**
+    * @brief Diagnostic: compare DMR-path Mi vs trace-formula Mi vs full diag.
+    * @details At lambda_ref, builds subspace. Scans delta_lambda values.
+    * For each: computes Mi via (A) full diag, (B) DMR path, (C) trace formula.
+    * Results written to trace_vs_dmr_diagnostic.dat.
+    * @param outer_step SCF iteration
+    * @param lambda_ref_ry Reference lambda in Ry/uB
+    */
+   void run_trace_vs_dmr_diagnostic(int outer_step, double lambda_ref_ry);
 
-  /**
-   * @brief Update wavefunctions and charge density after lambda optimization.
-   *
-   * @details Dispatcher to LCAO or PW (CPU/GPU) update paths.
-   * For PW: performs subspace diagonalization + optional full-space refinement.
-   *
-   * @param delta_lambda Lambda change for incremental H correction
-   * @param pw_solve If true, run full PW solver for refinement; if false, just update weights
-   * @param full_update If true, apply full lambda (not delta) to H correction
-   */
-  void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true, bool full_update = false);
+   // =================================================================
+   // DiagonalizationEngine management (Phase 2 refactoring)
+   // =================================================================
+
+   /// @brief Get the currently active diagonalization strategy type
+    DiagonalizationStrategy get_current_strategy() const { return current_strategy_; }
+
+    /// @brief Get the name of the currently active strategy
+    std::string get_current_strategy_name() const { return strategy_to_string(current_strategy_); }
+
+    /**
+     * @brief Evaluate whether acceleration should be activated or deactivated.
+     * Default: no change. Specialized for complex<double> in spin_constrain.cpp.
+     */
+
+    /// @brief Get or create the diagonalization engine.
+    template <typename U = TK>
+    typename std::enable_if<std::is_same_v<U, std::complex<double>>, DiagonalizationEngine&>::type
+    get_or_create_engine_impl(double rms_error)
+    {
+#ifdef __LCAO
+        if (PARAM.inp.basis_type != "lcao")
+        {
+            static std::unique_ptr<DiagonalizationEngine> dummy_fs;
+            if (!dummy_fs) dummy_fs = std::make_unique<FullSpaceDiagonalizer>(*this);
+            return *dummy_fs;
+        }
+
+        // =================================================================
+        // Evaluate acceleration switch directly (no separate method)
+        // =================================================================
+        const bool can_accelerate = (this->nspin_ == 2) &&
+                                    (sc_acceleration_mode_ != "off") &&
+                                    (sc_acceleration_rms_thr_ > 0.0);
+
+        int switch_decision = 0;
+        if (can_accelerate)
+        {
+            if (acceleration_active_ && acceleration_subspace_built_)
+            {
+                // Already active: check for fallback
+                double fallback_thr = sc_acceleration_rms_thr_ * 10.0;
+                accel_fallback_rms_thr_ = fallback_thr;
+                if (rms_error > fallback_thr) switch_decision = -1;
+            }
+            else if (!acceleration_active_ && rms_error < sc_acceleration_rms_thr_)
+            {
+                // Not yet active: check if should activate
+                switch_decision = 1;
+            }
+        }
+
+        if (switch_decision == 1)
+        {
+            if (sc_acceleration_mode_ == "first_order")
+            {
+                diagonalization_engine_ = std::make_unique<FirstOrderResponseEngine>(*this);
+                current_strategy_ = DiagonalizationStrategy::FirstOrder;
+            }
+            else if (sc_acceleration_mode_ == "subspace")
+            {
+                diagonalization_engine_ = std::make_unique<SubspaceDiagonalizer>(*this);
+                current_strategy_ = DiagonalizationStrategy::Subspace;
+            }
+
+            acceleration_active_ = true;
+            acceleration_subspace_built_ = false;
+        }
+        else if (switch_decision == -1)
+        {
+            throw std::runtime_error(
+                "DeltaSpin subspace acceleration produced catastrophically wrong Mi "
+                "(RMS jumped above fallback threshold). This should never happen "
+                "and indicates a bug. Please report this issue.");
+        }
+
+        if (!diagonalization_engine_)
+        {
+            diagonalization_engine_ = std::make_unique<FullSpaceDiagonalizer>(*this);
+            current_strategy_ = DiagonalizationStrategy::FullSpace;
+        }
+        return *diagonalization_engine_;
+#else
+        (void)rms_error;
+        static std::unique_ptr<DiagonalizationEngine> dummy;
+        if (!dummy) dummy = std::make_unique<FullSpaceDiagonalizer>(*this);
+        return *dummy;
+#endif
+    }
+
+    /// @brief Default stub for non-complex<double> specializations.
+    template <typename U = TK>
+    typename std::enable_if<!std::is_same_v<U, std::complex<double>>, DiagonalizationEngine&>::type
+    get_or_create_engine_impl(double rms_error)
+    {
+        (void)rms_error;
+        static std::unique_ptr<DiagonalizationEngine> dummy;
+        return *dummy;
+    }
+
+    /// @brief Get or create the diagonalization engine (dispatches to impl).
+    DiagonalizationEngine& get_or_create_engine(double rms_error)
+    {
+        return get_or_create_engine_impl(rms_error);
+    }
+
+    /// @brief Build subspace cache. Default: false.
+    bool build_engine_subspace() { return false; }
+
+    /// @brief Clear engine cache and reset to FullSpace.
+    void reset_engine()
+    {
+        diagonalization_engine_.reset();
+        current_strategy_ = DiagonalizationStrategy::FullSpace;
+        engine_lambda_ref_.clear();
+        acceleration_active_ = false;
+        acceleration_subspace_built_ = false;
+    }
+
+    /// @brief Reset DeltaSpin operator initialization state when constraints change
+    void reset_dspin_operator();
+
+   /**
+    * @brief Update wavefunctions and charge density after lambda optimization.
+    *
+    * @details Dispatcher to LCAO or PW (CPU/GPU) update paths.
+    * For PW: performs subspace diagonalization + optional full-space refinement.
+    *
+    * @param delta_lambda Lambda change for incremental H correction
+    * @param pw_solve If true, run full PW solver for refinement; if false, just update weights
+    * @param full_update If true, apply full lambda (not delta) to H correction
+    */
+   void update_psi_charge(const ModuleBase::Vector3<double>* delta_lambda, bool pw_solve = true, bool full_update = false);
 
   /**
    * @brief Wavefunction and charge density update implementation for PW basis.
@@ -430,9 +575,7 @@ public:
      * @param kv K-point vector list (for weights)
      */
     void cal_mi_lcao_subspace(
-        const std::vector<std::vector<std::vector<std::complex<double>>>>& PI_sub,
         const std::vector<std::vector<std::complex<double>>>& vcc_all,
-        const std::vector<std::vector<double>>& ekb_all,
         int nbands, int nk, int npol);
 
     /**
@@ -734,6 +877,8 @@ public:
     void set_drho(double drho_in) { this->last_drho_ = drho_in; }
     /// @brief Get the last observed SCF charge density error
     double get_drho() const { return this->last_drho_; }
+    /// @brief Flag: has trace vs DMR diagnostic been run this calculation?
+    bool local_diag_run_ = false;
     void set_npol(int npol);
     int get_npol() const;
     int get_nw() const; ///< Total number of orbitals across all constrained atoms
@@ -835,14 +980,22 @@ public:
     std::vector<double> lcao_ekb_save_; ///< Cached eigenvalues [nk * nbands]
     /// Lambda values when subspace data was saved (for incremental H correction)
      std::vector<ModuleBase::Vector3<double>> lcao_lambda_in_sub_;
-     bool local_diag_run_ = false; ///< Flag: has local diagnostic been run?
-     /// Acceleration mode parameters
-     std::string sc_acceleration_mode_ = "off"; ///< "off", "first_order", "subspace"
-     double sc_acceleration_rms_thr_ = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
-     bool acceleration_active_ = false;          ///< Has acceleration been activated this SCF iteration?
-     bool acceleration_subspace_built_ = false;  ///< Has subspace been built at activation lambda?
-     std::vector<ModuleBase::Vector3<double>> lambda_at_acceleration_; ///< Lambda when acceleration was activated
-  };
+      /// Acceleration mode parameters
+      std::string sc_acceleration_mode_ = "off"; ///< "off", "first_order", "subspace"
+      double sc_acceleration_rms_thr_ = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
+       bool acceleration_active_ = false;          ///< Has acceleration been activated this SCF iteration?
+       bool acceleration_subspace_built_ = false;  ///< Has subspace been built at activation lambda?
+       bool subspace_just_activated_ = false;      ///< Was subspace just activated? (signals BFGS to reset search direction)
+       std::vector<ModuleBase::Vector3<double>> lambda_at_acceleration_; ///< Lambda when acceleration was activated
+
+      // =================================================================
+      // DiagonalizationEngine integration (Phase 2 refactoring)
+      // =================================================================
+      std::unique_ptr<DiagonalizationEngine> diagonalization_engine_;
+      DiagonalizationStrategy current_strategy_ = DiagonalizationStrategy::FullSpace;
+      std::vector<ModuleBase::Vector3<double>> engine_lambda_ref_;
+       double accel_fallback_rms_thr_ = -1.0;
+    };
 
 
 /**

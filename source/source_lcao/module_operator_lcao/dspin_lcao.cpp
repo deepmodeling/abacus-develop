@@ -78,8 +78,10 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
 {
     // nspin=2 (collinear): coefficients for spin-up and spin-down channels.
     // current_lambda[0] contains lambda_z (the only constrained component).
-    // coefficients[0] -> spin-down channel (sign inverted)
-    // coefficients[1] -> spin-up channel (positive)
+    // current_spin=0 is spin-up (isk=0), current_spin=1 is spin-down (isk=1).
+    // From E' = E - λ·M: H_up += -λ_z × P, H_down += +λ_z × P
+    // coefficients[0] -> spin-up channel (current_spin=0): -lambda_z
+    // coefficients[1] -> spin-down channel (current_spin=1): +lambda_z
     coefficients[0] = -current_lambda[0];
     coefficients[1] = current_lambda[0];
 }
@@ -593,18 +595,6 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
     const int nrow_local = this->paraV->get_row_size();   // local rows of C_k
     const int ncol_local = this->paraV->ncol_bands;        // local band columns of C_k
     const int lda = nrow_local;  // leading dimension (column-major for ScaLAPACK)
-
-    // Debug: check B_I_data
-    static bool pi_sub_debug_printed = false;
-    if (!pi_sub_debug_printed) {
-        std::cout << "[DS-DEBUG] cal_PI_sub: nat=" << nat << " nbands_global=" << nbands_global << std::endl;
-        std::cout << "[DS-DEBUG] cal_PI_sub: B_I_data size=" << this->B_I_data.size() << std::endl;
-        for (int iat = 0; iat < nat; iat++) {
-            std::cout << "[DS-DEBUG] cal_PI_sub: B_I_data[" << iat << "].size()=" << this->B_I_data[iat].size()
-                      << " B_I_nproj[" << iat << "]=" << this->B_I_nproj[iat] << std::endl;
-        }
-        pi_sub_debug_printed = true;
-    }
 
     for (int iat = 0; iat < nat; iat++)
     {

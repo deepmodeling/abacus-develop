@@ -276,7 +276,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagno
                     double dl = this->lambda_[iat].z - this->lcao_lambda_in_sub_[iat].z;
                     delta_epsilon += dl * p_diag;
                 }
-                ekb_A[ik][ib] = this->lcao_ekb_save_[ik * nbands + ib] + spin_sign * delta_epsilon;
+                ekb_A[ik][ib] = this->lcao_ekb_save_[ik * nbands + ib] - spin_sign * delta_epsilon;
             }
         }
         // Update pelec ekb and recompute weights for method A
@@ -410,6 +410,23 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 {
     int nat = this->get_nat();
     int ntype = this->get_ntype();
+
+    // =============================================================
+    // RESET ACCELERATION STATE FOR THIS SCF ITERATION
+    // =============================================================
+    // The subspace cache (H₀_sub, S_sub, P_I_sub) is built from the
+    // wavefunctions and Hamiltonian at a specific lambda during a specific
+    // SCF iteration. When the charge density changes between SCF iterations,
+    // the Hamiltonian H(k) and wavefunctions C(k) change, making the cached
+    // subspace data STALE. Using stale data gives a frozen Mi that does not
+    // respond to lambda changes (zero gradient).
+    //
+    // Fix: reset the acceleration flags at the start of each lambda loop so
+    // the subspace is rebuilt fresh once RMS drops below the threshold.
+    this->acceleration_active_ = false;
+    this->acceleration_subspace_built_ = false;
+    this->subspace_just_activated_ = false;
+    this->free_lcao_subspace_cache();
 
     // =============================================================
     // STATE VECTORS (all sized [nat][3])
@@ -685,17 +702,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             this->acceleration_subspace_built_ = false;
             this->lambda_at_acceleration_ = this->lambda_;
 
-            std::cout << "\n[DS-ACCEL] RMS = " << rms_error << " uB < threshold " 
-                      << this->sc_acceleration_rms_thr_ << " uB" << std::endl;
-            std::cout << "[DS-ACCEL] Acceleration activated: mode = " << this->sc_acceleration_mode_ << std::endl;
-            std::cout << "[DS-ACCEL] Building subspace at current lambda...\n" << std::endl;
-
             // Free any cached subspace data from previous SCF iterations
             this->free_lcao_subspace_cache();
 
             // Build fresh subspace at current lambda using full diagonalization.
             // i_step=-2 triggers the special cache-build branch in cal_mw_from_lambda.
-            // This does NOT modify the BFGS loop state (psi, delta_lambda).
             this->cal_mw_from_lambda(-2, delta_lambda.data());
 
             this->acceleration_subspace_built_ = true;
@@ -722,36 +733,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         {
             // Converged or max steps reached: final update
             this->update_psi_charge(dnu_last_step.data(), rerun, true);
-
-            // [LCAO nspin=2] Run local diagnostic near converged lambda
-            // Trigger when RMS is small (lambda near converged), regardless of drho
-            // BFGS changes Hamiltonian each step, so drho may stay large
-#ifdef __LCAO
-            if (PARAM.inp.basis_type == "lcao" && this->nspin_ == 2
-                && rms_error < 5.0 && !this->local_diag_run_)
-            {
-                // Use the current converged lambda as reference
-                double lambda_ref_ry = 0.0;
-                for (int ia = 0; ia < nat; ia++) {
-                    if (this->constrain_[ia].z != 0) {
-                        lambda_ref_ry = this->lambda_[ia].z;
-                        break;
-                    }
-                }
-                std::cout << "\n[DS-DIAG] === LOCAL DIAGNOSTIC TRIGGERED (BFGS converged) ===" << std::endl;
-                std::cout << "[DS-DIAG] RMS = " << rms_error << " uB (< 0.5 threshold)" << std::endl;
-                std::cout << "[DS-DIAG] Converged lambda: " << lambda_ref_ry * ModuleBase::Ry_to_eV << " eV/uB" << std::endl;
-
-                // Test: Build subspace at converged lambda, scan +/-0.5 eV/uB
-                this->run_lambda_local_diagnostic(outer_step, lambda_ref_ry, "at_converged");
-
-                // Comparison: Build subspace at lambda=0, scan +/-0.5 eV/uB
-                this->run_lambda_local_diagnostic(outer_step, 0.0, "at_zero");
-
-                this->local_diag_run_ = true;
-                std::cout << "[DS-DIAG] Local diagnostic complete.\n" << std::endl;
-            }
-#endif
 
             // [PW basis] Extra verification: re-compute Mi from scratch
             if(PARAM.inp.basis_type == "pw")
@@ -795,10 +776,20 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // For i_step >= 2, compute conjugate direction
         if (i_step >= 2)
         {
-            // Polak-Ribiere beta = ||gradient_new||^2 / ||gradient_old||^2
-            beta = mean_error / mean_error_old;
-            // search = delta_spin + beta * search_old (conjugate direction)
-            add_scalar_multiply_2d(search, search_old, beta, search);
+            if (this->subspace_just_activated_)
+            {
+                this->subspace_just_activated_ = false;
+                // Subspace activation changes Mi computation from full-space to subspace.
+                // The reference Mi (at lambda_ref) was computed via subspace in cal_mw_from_lambda(-2).
+                // Reset BFGS history to avoid mixing full-space and subspace Mi values.
+                mean_error_old = mean_error;
+                search = delta_spin;
+            }
+            else
+            {
+                beta = mean_error / mean_error_old;
+                add_scalar_multiply_2d(search, search_old, beta, search);
+            }
         }
 
         // Cap step size to prevent overshooting
@@ -1294,7 +1285,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
                         double dl = this->lambda_[iat].z - this->lcao_lambda_in_sub_[iat].z;
                         delta_epsilon += dl * p_diag;
                     }
-                    ekb_A[ik][ib] = this->lcao_ekb_save_[ik * nbands + ib] + spin_sign * delta_epsilon;
+                    ekb_A[ik][ib] = this->lcao_ekb_save_[ik * nbands + ib] - spin_sign * delta_epsilon;
                 }
             }
             // Compute Mi_A using trace formula with identity V
@@ -1304,8 +1295,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
                 for (int ib = 0; ib < nbands; ib++)
                     vcc_identity[ik][ib + ib * nbands] = {1.0, 0.0};
             }
-            this->cal_mi_lcao_subspace(
-                this->lcao_PI_sub_save_, vcc_identity, ekb_A, nbands, nk, this->npol_);
+            this->cal_mi_lcao_subspace(vcc_identity, nbands, nk, this->npol_);
             std::vector<ModuleBase::Vector3<double>> Mi_A = this->Mi_;
 
             // ========================================================
@@ -1333,8 +1323,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
                 vcc_B[ik].assign(vcc.data(), vcc.data() + nn);
                 ekb_B[ik].assign(eigenvalues.data(), eigenvalues.data() + nbands);
             }
-            this->cal_mi_lcao_subspace(
-                this->lcao_PI_sub_save_, vcc_B, ekb_B, nbands, nk, this->npol_);
+            this->cal_mi_lcao_subspace(vcc_B, nbands, nk, this->npol_);
             std::vector<ModuleBase::Vector3<double>> Mi_B = this->Mi_;
 
             // ========================================================
@@ -1616,8 +1605,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
-        this->cal_mi_lcao_subspace(
-            this->lcao_PI_sub_save_, vcc_all, ekb_all, nbands, nk, this->npol_);
+        this->cal_mi_lcao_subspace(vcc_all, nbands, nk, this->npol_);
 
         std::vector<ModuleBase::Vector3<double>> Mi_subspace = this->Mi_;
 
@@ -1694,5 +1682,220 @@ template <>
 void spinconstrain::SpinConstrain<double>::run_lambda_local_diagnostic(
     int outer_step, double lambda_ref_ry, const std::string& label)
 {
-    std::cout << "[DS-LOCAL] local_diagnostic: only implemented for complex<double> (nspin=2)" << std::endl;
+}
+
+/**
+ * @brief Diagnostic: compare three Mi computation methods at varying delta_lambda.
+ *
+ * Methods:
+ *   A: Full HSolverLCAO diagonalization (ground truth)
+ *   B: Subspace DMR path (rotate psi → cal_dm_psi → cal_DMR → cal_moment)
+ *   C: Subspace trace formula (Mz = Σ_k sign × Σ_ib wg × [V†PV]_{ib,ib})
+ *
+ * A and B/C use different code paths. B and C should be mathematically equivalent
+ * but may differ numerically. This test quantifies the differences to determine
+ * whether the trace formula can replace the DMR path.
+ */
+template <>
+void spinconstrain::SpinConstrain<std::complex<double>>::run_trace_vs_dmr_diagnostic(
+    int outer_step, double lambda_ref_ry)
+{
+#ifdef __LCAO
+    if (PARAM.inp.basis_type != "lcao") return;
+    if (this->nspin_ != 2) return;
+
+    const int nat = this->get_nat();
+
+    // --- Step 1: Full diag at lambda_ref, build subspace cache ---
+    this->free_lcao_subspace_cache();
+    for (int ia = 0; ia < nat; ia++) {
+        for (int ic = 0; ic < 3; ic++) {
+            this->lambda_[ia][ic] = (this->constrain_[ia][ic] != 0) ? lambda_ref_ry : 0.0;
+        }
+    }
+
+    psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
+    hamilt::Hamilt<std::complex<double>>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+
+    dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
+        ->update_lambda();
+
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+    hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
+    elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
+                                 this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
+                                 this->pelec->skip_weights);
+    elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+
+    const int nk = psi_t->get_nk();
+    const int nbands = PARAM.inp.nbands;
+    const int nlocal = this->ParaV->nrow;
+    const int nn = nbands * nbands;
+    const int nloc_wfc = this->ParaV->nloc_wfc;
+    this->lcao_nbands_ = nbands;
+    this->lcao_nk_ = nk;
+    this->lcao_nlocal_ = nlocal;
+
+    delete[] this->lcao_sub_h_save;
+    delete[] this->lcao_sub_s_save;
+    this->lcao_sub_h_save = new std::complex<double>[nk * nn];
+    this->lcao_sub_s_save = new std::complex<double>[nk * nn];
+    this->lcao_PI_sub_save_.resize(nk);
+    this->lcao_ekb_save_.resize(nk * nbands);
+
+    for (int ik = 0; ik < nk; ik++) {
+        psi_t->fix_k(ik);
+        this->calculate_lcao_sub_hs(this->p_hamilt, psi_t[0], this->ParaV,
+            this->lcao_sub_h_save + ik * nn, this->lcao_sub_s_save + ik * nn,
+            ik, nbands, nlocal);
+        auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator);
+        dspin_op->cal_PI_sub(this->kv_.kvec_d[ik], psi_t->get_pointer(), nbands, this->lcao_PI_sub_save_[ik]);
+        for (int ib = 0; ib < nbands; ib++)
+            this->lcao_ekb_save_[ik * nbands + ib] = this->pelec->ekb(ik, ib);
+    }
+    this->lcao_lambda_in_sub_ = this->lambda_;
+    this->lcao_subspace_initialized_ = true;
+
+    // Save reference psi
+    std::vector<std::vector<std::complex<double>>> psi_ref(nk);
+    for (int ik = 0; ik < nk; ik++) {
+        psi_t->fix_k(ik);
+        psi_ref[ik].assign(psi_t->get_pointer(), psi_t->get_pointer() + nloc_wfc);
+    }
+
+    // --- Step 2: Scan delta_lambda values ---
+    std::vector<double> deltas_ev = {0.0, 1e-5, 1e-4, 1e-3, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0};
+
+    std::ofstream ofs("trace_vs_dmr_diagnostic.dat");
+    ofs << "# Trace vs DMR Mi Diagnostic" << std::endl;
+    ofs << "# lambda_ref = " << lambda_ref_ry * ModuleBase::Ry_to_eV << " eV/uB" << std::endl;
+    ofs << "# nbands = " << nbands << ", nk = " << nk << ", nat = " << nat << std::endl;
+    ofs << "# Methods: A=Full diag, B=Subspace DMR, C=Subspace Trace" << std::endl;
+    ofs << "#" << std::endl;
+    ofs << "# delta_eV";
+    for (int ia = 0; ia < nat; ia++)
+        ofs << "  Mi_A_" << ia << "  Mi_B_" << ia << "  Mi_C_" << ia
+            << "  |A-B|_" << ia << "  |A-C|_" << ia << "  |B-C|_" << ia;
+    ofs << std::endl;
+
+    for (double delta_ev : deltas_ev)
+    {
+        double delta_ry = delta_ev / ModuleBase::Ry_to_eV;
+
+        // Set lambda = lambda_ref + delta
+        for (int ia = 0; ia < nat; ia++) {
+            for (int ic = 0; ic < 3; ic++) {
+                this->lambda_[ia][ic] = (this->constrain_[ia][ic] != 0)
+                    ? (lambda_ref_ry + delta_ry) : 0.0;
+            }
+        }
+
+        // --- Method A: Full diagonalization ---
+        // Restore psi to reference state first
+        for (int ik = 0; ik < nk; ik++) {
+            psi_t->fix_k(ik);
+            std::memcpy(psi_t->get_pointer(), psi_ref[ik].data(), sizeof(std::complex<double>) * nloc_wfc);
+        }
+        dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
+            ->update_lambda();
+        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
+        elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
+                                     this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
+        this->cal_mi_lcao(0);
+        std::vector<ModuleBase::Vector3<double>> Mi_A = this->Mi_;
+
+        // --- Subspace: diagonalize H_sub(lambda) ---
+        std::vector<std::vector<std::complex<double>>> vcc_all(nk);
+        for (int ik = 0; ik < nk; ik++) {
+            std::vector<std::complex<double>> h_tmp(nn), s_tmp(nn);
+            std::memcpy(h_tmp.data(), this->lcao_sub_h_save + ik * nn, sizeof(std::complex<double>) * nn);
+            std::memcpy(s_tmp.data(), this->lcao_sub_s_save + ik * nn, sizeof(std::complex<double>) * nn);
+            this->calculate_delta_hcc_lcao(h_tmp.data(), this->lcao_PI_sub_save_[ik],
+                                           this->lambda_.data(), nbands, ik, true);
+            std::vector<std::complex<double>> vcc(nn);
+            std::vector<double> eigenvalues(nbands, 0.0);
+            std::vector<std::complex<double>> s_copy(nn);
+            std::memcpy(s_copy.data(), s_tmp.data(), sizeof(std::complex<double>) * nn);
+            hsolver::DiagoIterAssist<std::complex<double>>::diag_hegvd(
+                nbands, nbands, h_tmp.data(), s_copy.data(), nbands,
+                eigenvalues.data(), vcc.data());
+            vcc_all[ik].assign(vcc.data(), vcc.data() + nn);
+            for (int ib = 0; ib < nbands; ib++)
+                this->pelec->ekb(ik, ib) = eigenvalues[ib];
+        }
+        elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
+                                     this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
+
+        // --- Method B: DMR path ---
+        // Restore psi, rotate, build DMR, compute Mi, restore psi
+        for (int ik = 0; ik < nk; ik++) {
+            psi_t->fix_k(ik);
+            std::memcpy(psi_t->get_pointer(), psi_ref[ik].data(), sizeof(std::complex<double>) * nloc_wfc);
+        }
+        this->rotate_psi_subspace_lcao(*psi_t, this->ParaV, vcc_all, nbands, nlocal, nk);
+        elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+        this->dm_->cal_DMR();
+        this->cal_mi_lcao(0);
+        std::vector<ModuleBase::Vector3<double>> Mi_B = this->Mi_;
+        // Restore psi
+        for (int ik = 0; ik < nk; ik++) {
+            psi_t->fix_k(ik);
+            std::memcpy(psi_t->get_pointer(), psi_ref[ik].data(), sizeof(std::complex<double>) * nloc_wfc);
+        }
+
+        // --- Method C: Trace formula ---
+        this->zero_Mi();
+        for (int ik = 0; ik < nk; ik++) {
+            const int spin_sign = this->get_spin_sign(ik);
+            const std::complex<double>* V = vcc_all[ik].data();
+            for (int iat = 0; iat < nat; iat++) {
+                if (this->lcao_PI_sub_save_[ik][iat].empty()) continue;
+                const std::complex<double>* P = this->lcao_PI_sub_save_[ik][iat].data();
+                // Q = P * V
+                std::vector<std::complex<double>> Q(nn, {0.0, 0.0});
+                {
+                    const std::complex<double> one = {1.0, 0.0}, zero_c = {0.0, 0.0};
+                    int n = nbands;
+                    zgemm_("N", "N", &n, &n, &n, &one, P, &n, V, &n, &zero_c, Q.data(), &n);
+                }
+                double mz = 0.0;
+                for (int ib = 0; ib < nbands; ib++) {
+                    double p_expect = 0.0;
+                    for (int jb = 0; jb < nbands; jb++)
+                        p_expect += (std::conj(V[jb + ib * nbands]) * Q[jb + ib * nbands]).real();
+                    mz += this->pelec->wg(ik, ib) * p_expect;
+                }
+                this->Mi_[iat].z += spin_sign * mz;
+            }
+        }
+        std::vector<ModuleBase::Vector3<double>> Mi_C = this->Mi_;
+
+        // --- Output ---
+        ofs << std::scientific << std::setprecision(10);
+        ofs << delta_ev;
+        for (int ia = 0; ia < nat; ia++) {
+            double ab = std::abs(Mi_A[ia].z - Mi_B[ia].z);
+            double ac = std::abs(Mi_A[ia].z - Mi_C[ia].z);
+            double bc = std::abs(Mi_B[ia].z - Mi_C[ia].z);
+            ofs << "  " << Mi_A[ia].z << "  " << Mi_B[ia].z << "  " << Mi_C[ia].z
+                << "  " << ab << "  " << ac << "  " << bc;
+        }
+        ofs << std::endl;
+    }
+
+    ofs.close();
+    this->free_lcao_subspace_cache();
+    // Restore original psi
+    for (int ik = 0; ik < nk; ik++) {
+        psi_t->fix_k(ik);
+        std::memcpy(psi_t->get_pointer(), psi_ref[ik].data(), sizeof(std::complex<double>) * nloc_wfc);
+    }
+#endif
+}
+
+template <>
+void spinconstrain::SpinConstrain<double>::run_trace_vs_dmr_diagnostic(int outer_step, double lambda_ref_ry)
+{
 }

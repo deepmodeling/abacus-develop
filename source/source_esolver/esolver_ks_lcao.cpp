@@ -445,12 +445,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             sc.set_drho(this->drho);
             sc.run_lambda_linear_scan(iter - 1);
 
-            // Run subspace vs full diagnostic scan for nspin=2 LCAO
-            if (PARAM.inp.nspin == 2 && PARAM.inp.sc_scan_steps > 0 && iter == 1)
-            {
-                sc.run_lambda_scan_diagnostic(iter - 1);
-            }
-
             skip_solve = true;
         }
         else if (PARAM.inp.sc_scf_thr_mode == "off")
@@ -574,6 +568,23 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                     skip_solve = true;
                 }
             }
+        }
+
+        // Run trace vs DMR diagnostic once near SCF convergence
+        if (PARAM.inp.nspin == 2 && PARAM.inp.basis_type == "lcao"
+            && this->drho > 0 && this->drho < 1e-3
+            && PARAM.inp.sc_acceleration_mode != "off"
+            && !sc.local_diag_run_)
+        {
+            double lambda_ref_ry = 0.0;
+            for (int ia = 0; ia < sc.get_nat(); ia++) {
+                if (sc.get_constrain()[ia].z != 0) {
+                    lambda_ref_ry = sc.get_sc_lambda()[ia].z;
+                    break;
+                }
+            }
+            sc.run_trace_vs_dmr_diagnostic(iter - 1, lambda_ref_ry);
+            sc.local_diag_run_ = true;
         }
     }
 
