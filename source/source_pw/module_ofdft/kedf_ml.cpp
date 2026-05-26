@@ -38,14 +38,15 @@ void KEDF_ML::set_para(
     const std::vector<int> &of_ml_tanhp_nl,
     const std::vector<int> &of_ml_tanhq_nl,
     const std::string device_inpt,
-    ModulePW::PW_Basis *pw_rho
+    ModulePW::PW_Basis *pw_rho,
+    std::ostream& ofs_running
 )
 {
     torch::set_default_dtype(caffe2::TypeMeta::fromScalarType(torch::kDouble));
     auto output = torch::get_default_dtype();
-    std::cout << "Default type: " << output << std::endl;
+    ofs_running << " Default type: " << output << std::endl;
 
-    this->set_device(device_inpt);
+    this->set_device(device_inpt, ofs_running);
 
     this->nx = nx;
     this->nx_tot = nx;
@@ -68,17 +69,18 @@ void KEDF_ML::set_para(
         of_ml_tanh_pnl,
         of_ml_tanh_qnl,
         of_ml_tanhp_nl,
-        of_ml_tanhq_nl);
+        of_ml_tanhq_nl,
+        ofs_running);
 
-    std::cout << "ninput = " << ninput << std::endl;
+    ofs_running << "ninput = " << ninput << std::endl;
 
     if (PARAM.inp.of_kinetic == "ml")
     {
         int nnode = 100;
         int nlayer = 3;
-        this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device);
+        this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device, ofs_running);
         torch::load(this->nn, "net.pt", this->device_type);
-        std::cout << "load net done" << std::endl;
+        ofs_running << "load net done" << std::endl;
         if (PARAM.inp.of_ml_feg != 0)
         {
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
@@ -96,7 +98,7 @@ void KEDF_ML::set_para(
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
             }
 
-            std::cout << "feg_net_F = " << this->feg_net_F << std::endl;
+            ofs_running << "feg_net_F = " << this->feg_net_F << std::endl;
         }
     } 
     
@@ -111,7 +113,7 @@ void KEDF_ML::set_para(
         this->chi_qnl = chi_qnl;
 
         this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
-                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho);
+                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho, ofs_running);
     }
 }
 

@@ -109,12 +109,40 @@ void KEDF_Manager::init(
     {
         if (this->ml_ == nullptr)
             this->ml_ = new KEDF_ML();
-        this->ml_->set_para(pw_rho->nrxx, dV, nelec, inp.of_tf_weight, inp.of_vw_weight, 
-                        inp.of_ml_chi_p, inp.of_ml_chi_q, inp.of_ml_chi_xi, inp.of_ml_chi_pnl, inp.of_ml_chi_qnl,
-                        inp.of_ml_nkernel, inp.of_ml_kernel, inp.of_ml_kernel_scaling,
-                        inp.of_ml_yukawa_alpha, inp.of_ml_kernel_file, inp.of_ml_gamma, inp.of_ml_p, inp.of_ml_q, inp.of_ml_tanhp, inp.of_ml_tanhq,
-                        inp.of_ml_gammanl, inp.of_ml_pnl, inp.of_ml_qnl, inp.of_ml_xi, inp.of_ml_tanhxi,
-                        inp.of_ml_tanhxi_nl, inp.of_ml_tanh_pnl, inp.of_ml_tanh_qnl, inp.of_ml_tanhp_nl, inp.of_ml_tanhq_nl, inp.of_ml_device, pw_rho);
+        this->ml_->set_para(
+            pw_rho->nrxx,
+            dV,
+            nelec,
+            inp.of_tf_weight,
+            inp.of_vw_weight,
+            inp.of_ml_chi_p,
+            inp.of_ml_chi_q,
+            inp.of_ml_chi_xi,
+            inp.of_ml_chi_pnl,
+            inp.of_ml_chi_qnl,
+            inp.of_ml_nkernel,
+            inp.of_ml_kernel,
+            inp.of_ml_kernel_scaling,
+            inp.of_ml_yukawa_alpha,
+            inp.of_ml_kernel_file,
+            inp.of_ml_gamma,
+            inp.of_ml_p,
+            inp.of_ml_q,
+            inp.of_ml_tanhp,
+            inp.of_ml_tanhq,
+            inp.of_ml_gammanl,
+            inp.of_ml_pnl,
+            inp.of_ml_qnl,
+            inp.of_ml_xi,
+            inp.of_ml_tanhxi,
+            inp.of_ml_tanhxi_nl,
+            inp.of_ml_tanh_pnl,
+            inp.of_ml_tanh_qnl,
+            inp.of_ml_tanhp_nl,
+            inp.of_ml_tanhq_nl,
+            inp.of_ml_device,
+            pw_rho,
+            GlobalV::ofs_running);
     }
 #endif
 }

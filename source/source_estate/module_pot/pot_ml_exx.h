@@ -16,13 +16,13 @@ public:
     ML_EXX();
     virtual ~ML_EXX();
 
-    void set_para(const Input_para& inp, const UnitCell* ucell_in, const ModulePW::PW_Basis* rho_basis_in);
+    void set_para(const Input_para& inp, const UnitCell* ucell_in, const ModulePW::PW_Basis* rho_basis_in, std::ostream& ofs_running);
 
     void ml_potential(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
 
     // output all parameters
     void generateTrainData(const double * const *prho, const ModulePW::PW_Basis *pw_rho, const double *veff);
-    void localTest(const double * const *prho, const ModulePW::PW_Basis *pw_rho);
+    void localTest(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::ostream& ofs_running);
 
     void init_data(
         const int &nkernel,
@@ -40,7 +40,8 @@ public:
         const std::vector<int> &of_ml_tanh_pnl,
         const std::vector<int> &of_ml_tanh_qnl,
         const std::vector<int> &of_ml_tanhp_nl,
-        const std::vector<int> &of_ml_tanhq_nl
+        const std::vector<int> &of_ml_tanhq_nl,
+        std::ostream& ofs_running
     );
 
     double ml_exx_energy = 0.0;
@@ -56,13 +57,13 @@ class PotML_EXX : public PotBase
         this->dynamic_mode = true;
         this->fixed_mode = false;
 
-        this->ml_exx.set_para(PARAM.inp, ucell_in, rho_basis_in);
+        this->ml_exx.set_para(PARAM.inp, ucell_in, rho_basis_in, GlobalV::ofs_running);
     }
     ~PotML_EXX() {};
 
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
     {
-        if (PARAM.inp.of_ml_local_test) this->ml_exx.localTest(chg->rho, this->rho_basis_);
+        if (PARAM.inp.of_ml_local_test) this->ml_exx.localTest(chg->rho, this->rho_basis_, GlobalV::ofs_running);
         this->ml_exx.ml_potential(chg->rho, this->rho_basis_, v_eff);
     }
 

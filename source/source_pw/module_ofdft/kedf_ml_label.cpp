@@ -38,7 +38,8 @@ void KEDF_ML::init_data(
     const std::vector<int> &of_ml_tanh_pnl,
     const std::vector<int> &of_ml_tanh_qnl,
     const std::vector<int> &of_ml_tanhp_nl,
-    const std::vector<int> &of_ml_tanhq_nl
+    const std::vector<int> &of_ml_tanhq_nl,
+    std::ostream& ofs_running
 )
 {
 
@@ -152,8 +153,8 @@ void KEDF_ML::init_data(
         this->descriptor2kernel[descriptor_type[i]].push_back(kernel_index[i]);
         this->descriptor2index[descriptor_type[i]].push_back(i);
     }
-    std::cout << "descriptor2index    " << descriptor2index << std::endl;
-    std::cout << "descriptor2kernel    " << descriptor2kernel << std::endl;
+    ofs_running << "descriptor2index    " << descriptor2index << std::endl;
+    ofs_running << "descriptor2kernel    " << descriptor2kernel << std::endl;
 
     this->ml_gamma = this->descriptor2index["gamma"].size() > 0;
     this->ml_p = this->descriptor2index["p"].size() > 0;

@@ -20,7 +20,7 @@ public:
     ~ML_Base();
 
     // Common Interface
-    void set_device(std::string device_inpt);
+    void set_device(const std::string& device_inpt, std::ostream& ofs_running);
     
     // Tools
     void loadVector(std::string filename, std::vector<double> &data);

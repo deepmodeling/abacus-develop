@@ -10,24 +10,24 @@ ML_Base::~ML_Base()
     if (this->cal_tool) delete this->cal_tool;
 }
 
-void ML_Base::set_device(std::string device_inpt)
+void ML_Base::set_device(const std::string& device_inpt, std::ostream& ofs_running)
 {
     if (device_inpt == "cpu")
     {
-        std::cout << "------------------- Running NN on CPU -------------------" << std::endl;
+        ofs_running << "------------------- Running Neural Network on CPU -------------------" << std::endl;
         this->device_type = torch::kCPU;
     }
     else if (device_inpt == "gpu")
     {
         if (torch::cuda::cudnn_is_available())
         {
-            std::cout << "------------------- Running NN on GPU -------------------" << std::endl;
+            ofs_running << "------------------- Running Neural Network on GPU -------------------" << std::endl;
             this->device_type = torch::kCUDA;
         }
         else
         {
-            std::cout << "--------------- Warning: GPU is unaviable ---------------" << std::endl;
-            std::cout << "------------------- Running NN on CPU -------------------" << std::endl;
+            ofs_running << "--------------- Warning: GPU is unaviable ---------------" << std::endl;
+            ofs_running << "------------------- Running Neural Network on CPU -------------------" << std::endl;
             this->device_type = torch::kCPU;
         }
     }

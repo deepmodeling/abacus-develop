@@ -47,7 +47,8 @@ public:
         const std::vector<int> &of_ml_tanhp_nl,
         const std::vector<int> &of_ml_tanhq_nl,
         const std::string device_inpt,
-        ModulePW::PW_Basis *pw_rho);
+        ModulePW::PW_Basis *pw_rho,
+        std::ostream& ofs_running);
 
     double get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho);
     // double get_energy_density(const double * const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
@@ -78,7 +79,8 @@ public:
         const std::vector<int> &of_ml_tanh_pnl,
         const std::vector<int> &of_ml_tanh_qnl,
         const std::vector<int> &of_ml_tanhp_nl,
-        const std::vector<int> &of_ml_tanhq_nl
+        const std::vector<int> &of_ml_tanhq_nl,
+        std::ostream& ofs_running
     );
 };
 

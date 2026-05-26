@@ -17,13 +17,13 @@ ML_EXX::ML_EXX()
 
 ML_EXX::~ML_EXX(){}
 
-void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const ModulePW::PW_Basis* rho_basis_in)
+void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const ModulePW::PW_Basis* rho_basis_in, std::ostream& ofs_running)
 {
     torch::set_default_dtype(caffe2::TypeMeta::fromScalarType(torch::kDouble));
     auto output = torch::get_default_dtype();
-    std::cout << "Default type: " << output << std::endl;
+    ofs_running << " Default type: " << output << std::endl;
 
-    this->set_device(inp.of_ml_device);
+    this->set_device(inp.of_ml_device, ofs_running);
 
     this->nx = rho_basis_in->nrxx;
     this->nx_tot = rho_basis_in->nrxx;
@@ -46,17 +46,18 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
         inp.of_ml_tanh_pnl,
         inp.of_ml_tanh_qnl,
         inp.of_ml_tanhp_nl,
-        inp.of_ml_tanhq_nl);
+        inp.of_ml_tanhq_nl,
+        ofs_running);
 
-    std::cout << "ninput = " << this->ninput << std::endl;
+    ofs_running << "ninput = " << this->ninput << std::endl;
 
     if (PARAM.inp.ml_exx)
     {
         int nnode = 100;
         int nlayer = 3;
-        this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device);
+        this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device, ofs_running);
         torch::load(this->nn, "net.pt", this->device_type);
-        std::cout << "load net done" << std::endl;
+        ofs_running << "load net done" << std::endl;
         if (PARAM.inp.of_ml_feg != 0)
         {
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
@@ -74,7 +75,7 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
             }
 
-            std::cout << "feg_net_F = " << this->feg_net_F << std::endl;
+            ofs_running << "feg_net_F = " << this->feg_net_F << std::endl;
         }
     } 
     
@@ -88,8 +89,24 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
         this->chi_pnl = inp.of_ml_chi_pnl;
         this->chi_qnl = inp.of_ml_chi_qnl;
 
-        this->cal_tool->set_para(this->nx, inp.nelec, inp.of_tf_weight, inp.of_vw_weight, this->chi_p, this->chi_q,
-                                this->chi_xi, this->chi_pnl, this->chi_qnl, this->nkernel, inp.of_ml_kernel, inp.of_ml_kernel_scaling, inp.of_ml_yukawa_alpha, inp.of_ml_kernel_file, this->dV * rho_basis_in->nxyz, rho_basis_in);
+        this->cal_tool->set_para(
+            this->nx,
+            inp.nelec,
+            inp.of_tf_weight,
+            inp.of_vw_weight,
+            this->chi_p,
+            this->chi_q,
+            this->chi_xi,
+            this->chi_pnl,
+            this->chi_qnl,
+            this->nkernel,
+            inp.of_ml_kernel,
+            inp.of_ml_kernel_scaling,
+            inp.of_ml_yukawa_alpha,
+            inp.of_ml_kernel_file,
+            this->dV * rho_basis_in->nxyz,
+            rho_basis_in,
+            ofs_running);
     }
 }
 
@@ -177,7 +194,7 @@ void ML_EXX::generateTrainData(const double * const *prho, const ModulePW::PW_Ba
  * @param prho charge density
  * @param pw_rho PW_Basis
  */
-void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw_rho)
+void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw_rho, std::ostream& ofs_running)
 {
     // for test =====================
     std::vector<long unsigned int> cshape = {(long unsigned) this->nx};
@@ -192,7 +209,7 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
     for (int ir = 0; ir < this->nx; ++ir) 
     {
         if (prho[0][ir] == 0.){
-            std::cout << "WARNING: rho = 0" << std::endl;
+            ofs_running << "WARNING: rho = 0" << std::endl;
         }
     };
     // ==============================
