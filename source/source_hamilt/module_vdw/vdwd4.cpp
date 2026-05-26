@@ -273,10 +273,13 @@ void Vdwd4::cal_stress()
     if (!has_stress_cache_)
     {
         double energy_ha = 0.0;
+        std::vector<double> gradient(3 * ucell_.nat, 0.0);
         std::array<double, 9> sigma;
         sigma.fill(0.0);
 
-        compute(energy_ha, nullptr, &sigma);
+        // DFT-D4 may require a valid gradient buffer when sigma is requested.
+        compute(energy_ha, &gradient, &sigma);
+        set_force_from_gradient(gradient);
         set_stress_from_sigma(sigma);
     }
 
