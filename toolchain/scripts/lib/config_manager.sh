@@ -711,6 +711,16 @@ config_parse_arguments() {
                     return 1
                 fi
                 ;;
+            -j[0-9]*)
+                local nprocs_overwrite="${1#-j}"
+                if [[ -n "$nprocs_overwrite" && "$nprocs_overwrite" =~ ^[0-9]+$ ]]; then
+                    CONFIG_CACHE["NPROCS_OVERWRITE"]="$nprocs_overwrite"
+                    shift
+                else
+                    report_error $LINENO "-j requires a number argument"
+                    return 1
+                fi
+                ;;
             --dry-run)
                 CONFIG_CACHE["dry_run"]="__TRUE__"
                 shift

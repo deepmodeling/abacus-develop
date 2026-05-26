@@ -225,6 +225,9 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
 /// Defaults to 0 if never set.
 void set_dsp_cluster_id(int id);
 
+/// @brief Read back the injected DSP cluster id. Returns 0 if never set.
+int get_dsp_cluster_id();
+
 template <typename FPTYPE, typename Device>
 struct resize_memory_op_mt
 {

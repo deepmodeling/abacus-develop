@@ -17,6 +17,7 @@ option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
@@ -337,6 +338,50 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+
+
+if(USE_KML)
+    add_compile_definitions(__KML)
+    message(STATUS "Huawei KML support enabled. Defining __KML.")
+#    TODO: Create FindKML.cmake
+#    if(NOT DEFINED KML_ROOT)
+#        if(DEFINED ENV{KML_ROOT})
+#            set(KML_ROOT $ENV{KML_ROOT})
+#        else()
+#            message(WARNING "KML_ROOT is not set. Trying default system paths for KML.")
+#        endif()
+#    endif()
+#
+#    find_library(KML_BLAS_LIB NAMES kblas PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_LAPACK_LIB NAMES klapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_SCALAPACK_LIB NAMES kscalapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_FFTW_LIB NAMES fftw3 PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#
+#    set(KML_LIBS_FOUND TRUE)
+#    foreach(LIB_VAR KML_BLAS_LIB KML_LAPACK_LIB KML_SCALAPACK_LIB KML_FFTW_LIB)
+#        if(NOT ${LIB_VAR})
+#            message(WARNING "${LIB_VAR} not found in KML_ROOT! Please check your KML installation.")
+#            set(KML_LIBS_FOUND FALSE)
+#        endif()
+#    endforeach()
+#
+#    if(KML_LIBS_FOUND)
+#        target_link_libraries(abacus PUBLIC
+#            ${KML_BLAS_LIB}
+#            ${KML_LAPACK_LIB}
+#            ${KML_SCALAPACK_LIB}
+#            ${KML_FFTW_LIB}
+#        )
+#        message(STATUS "Huawei KML libraries found and linked successfully.")
+#    else()
+#        message(FATAL_ERROR "Failed to find all required KML libraries. Aborting.")
+#    endif()
+#
+#    set(BLAS_libraries ${KML_BLAS_LIB})
+#    set(LAPACK_libraries ${KML_LAPACK_LIB})
+endif(USE_KML)
+
+
 if (USE_SW)
   add_compile_definitions(__SW)
   set(SW ON)
