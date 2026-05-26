@@ -275,7 +275,15 @@ def prepare_structure(repo: Path, case: CaseSpec, case_dir: Path) -> None:
         raise ValueError(f"unknown generator: {case.generator}")
 
 
-def input_text(repo: Path, case: CaseSpec, solver: str, np: int, suffix: str) -> str:
+def input_text(
+    repo: Path,
+    case: CaseSpec,
+    solver: str,
+    np: int,
+    suffix: str,
+    pexsi_npole: int,
+    pexsi_elec_thr: float,
+) -> str:
     gamma_only = 1 if case.kmesh == (1, 1, 1) else 0
     kpar = min(np, case.nks)
     lines = [
@@ -306,7 +314,7 @@ def input_text(repo: Path, case: CaseSpec, solver: str, np: int, suffix: str) ->
     if solver == "pexsi":
         lines.extend(
             [
-                "pexsi_npole         40",
+                f"pexsi_npole         {pexsi_npole}",
                 "pexsi_nproc_pole    1",
                 f"pexsi_temp          {case.smearing_sigma}",
                 "pexsi_gap           0",
@@ -317,7 +325,7 @@ def input_text(repo: Path, case: CaseSpec, solver: str, np: int, suffix: str) ->
                 "pexsi_mu_thr        0.05",
                 "pexsi_mu_expand     0.3",
                 "pexsi_mu_guard      0.2",
-                "pexsi_elec_thr      0.001",
+                f"pexsi_elec_thr      {pexsi_elec_thr}",
                 "pexsi_zero_thr      1e-10",
             ]
         )
@@ -536,6 +544,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--abacus-bin", type=Path, default=repo / "build-pexsi-conda/abacus_basic_para")
     parser.add_argument("--mpirun", default="mpirun")
     parser.add_argument("--timeout", type=int, default=3600)
+    parser.add_argument("--pexsi-npole", type=int, default=120)
+    parser.add_argument("--pexsi-elec-thr", type=float, default=0.001)
     parser.add_argument("--np-list", default=",".join(str(x) for x in DEFAULT_NP))
     parser.add_argument("--solvers", default=",".join(DEFAULT_SOLVERS))
     parser.add_argument("--cases", default=",".join(CASES.keys()))
@@ -557,6 +567,8 @@ def main(argv: list[str] | None = None) -> int:
         "cases": cases,
         "solvers": solvers,
         "np_list": nps,
+        "pexsi_npole": args.pexsi_npole,
+        "pexsi_elec_thr": args.pexsi_elec_thr,
         "energy_tolerance_ry": ENERGY_TOL_RY,
         "force_tolerance_ev_per_angstrom": FORCE_TOL_EV_A,
         "stress_tolerance_gpa": STRESS_TOL_GPA,
@@ -591,7 +603,10 @@ def main(argv: list[str] | None = None) -> int:
                 job_dir.mkdir(parents=True, exist_ok=True)
                 prepare_structure(repo, case, job_dir)
                 suffix = f"p51_{case.name}_{solver}_np{np}"
-                write_text(job_dir / "INPUT", input_text(repo, case, solver, np, suffix))
+                write_text(
+                    job_dir / "INPUT",
+                    input_text(repo, case, solver, np, suffix, args.pexsi_npole, args.pexsi_elec_thr),
+                )
                 if args.prepare_only:
                     continue
 
