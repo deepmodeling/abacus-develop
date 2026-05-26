@@ -31,12 +31,20 @@ RY_TO_EV = 13.605693009
 ENERGY_TOL_RY = 1.0e-5
 FORCE_TOL_EV_A = 1.0e-4
 STRESS_TOL_GPA = 1.0e-3
+GPA_TO_KBAR = 10.0
+STRESS_TOL_KBAR = STRESS_TOL_GPA * GPA_TO_KBAR
 
 DEFAULT_NP = (1, 2, 4, 8, 16)
 DEFAULT_SOLVERS = ("scalapack_gvx", "pexsi")
 
 FINAL_ETOT_RE = re.compile(r"!\s*FINAL_ETOT_IS\s+([-+0-9.eE]+)\s+eV")
-TOTAL_TIME_RE = re.compile(r"Total\s+Time\s*:\s*([-+0-9.eE]+)")
+TOTAL_TIME_RE = re.compile(
+    r"Total\s+Time\s*:\s*"
+    r"(?:(?P<hours>[-+0-9.eE]+)\s*h)?\s*"
+    r"(?:(?P<minutes>[-+0-9.eE]+)\s*mins?)?\s*"
+    r"(?:(?P<seconds>[-+0-9.eE]+)\s*secs?)?",
+    re.IGNORECASE,
+)
 TIMER_RE = re.compile(r"^\s*([A-Za-z0-9_./ -]+?)\s+([-+0-9.eE]+)\s+(?:s|sec|seconds)?\s*$")
 
 
@@ -373,6 +381,18 @@ def parse_block_vectors(lines: list[str], marker: str, width: int, max_rows: int
     return vectors
 
 
+def parse_total_time_s(text: str) -> float | None:
+    matches = list(TOTAL_TIME_RE.finditer(text))
+    if not matches:
+        return None
+    match = matches[-1]
+    hours = float(match.group("hours") or 0.0)
+    minutes = float(match.group("minutes") or 0.0)
+    seconds = float(match.group("seconds") or 0.0)
+    total = hours * 3600.0 + minutes * 60.0 + seconds
+    return total if total > 0.0 else None
+
+
 def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
     log_path = case_dir / f"OUT.{suffix}" / "running_scf.log"
     result: dict[str, object] = {
@@ -385,6 +405,7 @@ def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
         "pexsidft_s": None,
         "hsolver_s": None,
         "transmat2ccs_s": None,
+        "stress_unit": "kbar",
     }
     if not log_path.exists():
         return result
@@ -394,9 +415,7 @@ def parse_log(case_dir: Path, suffix: str) -> dict[str, object]:
     energies = FINAL_ETOT_RE.findall(text)
     if energies:
         result["energy_ev"] = float(energies[-1])
-    total_times = TOTAL_TIME_RE.findall(text)
-    if total_times:
-        result["total_time_s"] = float(total_times[-1])
+    result["total_time_s"] = parse_total_time_s(text)
 
     forces = parse_block_vectors(lines, "TOTAL-FORCE", 3, None)
     if forces:
@@ -499,7 +518,7 @@ def write_summaries(run_root: Path, cases: list[str], nps: list[int], solvers: l
         if isinstance(stress, (int, float)) and isinstance(ref_stress, (int, float)):
             delta_stress = abs(float(stress) - float(ref_stress))
             data["delta_stress_max"] = delta_stress
-            data["stress_pass"] = delta_stress <= STRESS_TOL_GPA
+            data["stress_pass"] = delta_stress <= STRESS_TOL_KBAR
 
     summary_json = run_root / "summary.json"
     write_text(summary_json, json.dumps(rows, indent=2, sort_keys=True) + "\n")
@@ -598,6 +617,8 @@ def main(argv: list[str] | None = None) -> int:
         "energy_tolerance_ry": ENERGY_TOL_RY,
         "force_tolerance_ev_per_angstrom": FORCE_TOL_EV_A,
         "stress_tolerance_gpa": STRESS_TOL_GPA,
+        "stress_tolerance_kbar": STRESS_TOL_KBAR,
+        "stress_output_unit": "kbar",
     }
     write_text(run_root / "metadata.json", json.dumps(meta, indent=2, sort_keys=True) + "\n")
 
