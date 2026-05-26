@@ -22,7 +22,7 @@ import signal
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable
 
@@ -550,6 +550,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pexsi-elec-thr", type=float, default=0.001)
     parser.add_argument("--pexsi-mu-thr", type=float, default=0.05)
     parser.add_argument("--pexsi-zero-thr", type=float, default=1.0e-10)
+    parser.add_argument(
+        "--smearing-sigma",
+        type=float,
+        default=None,
+        help="override the default Fermi-Dirac smearing sigma and pexsi_temp for all selected cases",
+    )
     parser.add_argument("--np-list", default=",".join(str(x) for x in DEFAULT_NP))
     parser.add_argument("--solvers", default=",".join(DEFAULT_SOLVERS))
     parser.add_argument("--cases", default=",".join(CASES.keys()))
@@ -596,6 +602,8 @@ def main(argv: list[str] | None = None) -> int:
 
     for case_name in cases:
         case = CASES[case_name]
+        if args.smearing_sigma is not None:
+            case = replace(case, smearing_sigma=args.smearing_sigma)
         for np in nps:
             for solver in solvers:
                 job_dir = run_root / case.name / solver / f"np{np}"
