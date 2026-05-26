@@ -75,10 +75,15 @@ class CaseSpec:
     mixing_beta: float = 0.3
     nbands: int | None = None
     smearing_sigma: float = 0.015
+    parallel_kpoints: int | None = None
 
     @property
     def nks(self) -> int:
         return self.kmesh[0] * self.kmesh[1] * self.kmesh[2]
+
+    @property
+    def kpar_nks(self) -> int:
+        return self.parallel_kpoints or self.nks
 
 
 CASES: dict[str, CaseSpec] = {
@@ -100,6 +105,7 @@ CASES: dict[str, CaseSpec] = {
         generator="gen_al128",
         mixing_beta=0.3,
         smearing_sigma=0.03,
+        parallel_kpoints=36,
     ),
     "cu256_222": CaseSpec(
         name="cu256_222",
@@ -315,7 +321,11 @@ def input_text(
     pexsi_zero_thr: float,
 ) -> str:
     gamma_only = 1 if case.kmesh == (1, 1, 1) else 0
-    kpar = min(np, case.nks)
+    kpar = 1
+    for candidate in range(min(np, case.kpar_nks), 0, -1):
+        if np % candidate == 0 and case.kpar_nks % candidate == 0:
+            kpar = candidate
+            break
     lines = [
         "INPUT_PARAMETERS",
         f"suffix              {suffix}",
@@ -698,6 +708,7 @@ def main(argv: list[str] | None = None) -> int:
             name: {
                 "natom": CASES[name].natom,
                 "kmesh": "x".join(str(x) for x in CASES[name].kmesh),
+                "parallel_kpoints": CASES[name].kpar_nks,
                 "smearing_sigma": args.smearing_sigma
                 if args.smearing_sigma is not None
                 else CASES[name].smearing_sigma,
