@@ -267,8 +267,8 @@ double KEDF_Manager::get_energy() const
         kinetic_energy += this->ml_->ml_energy;
         if (this->ml_->ml_energy >= this->tf_->tf_energy)
         {
-            std::cout << "WARNING: ML >= TF" << std::endl;
-            std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+            GlobalV::ofs_running << "WARNING: ML >= TF" << std::endl;
+            GlobalV::ofs_running << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
         }
     }
 #endif
