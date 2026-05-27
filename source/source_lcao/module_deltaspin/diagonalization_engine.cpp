@@ -666,16 +666,28 @@ std::unique_ptr<DiagonalizationEngine> create_diagonalization_engine(
     switch (strategy)
     {
         case DiagonalizationStrategy::FullSpace:
-            return std::make_unique<FullSpaceDiagonalizer>(sc);
+        {
+            std::unique_ptr<DiagonalizationEngine> ptr(new FullSpaceDiagonalizer(sc));
+            return ptr;
+        }
 
         case DiagonalizationStrategy::Subspace:
-            return std::make_unique<SubspaceDiagonalizer>(sc);
+        {
+            std::unique_ptr<DiagonalizationEngine> ptr(new SubspaceDiagonalizer(sc));
+            return ptr;
+        }
 
         case DiagonalizationStrategy::FirstOrder:
-            return std::make_unique<FirstOrderResponseEngine>(sc);
+        {
+            std::unique_ptr<DiagonalizationEngine> ptr(new FirstOrderResponseEngine(sc));
+            return ptr;
+        }
 
         default:
-            return std::make_unique<FullSpaceDiagonalizer>(sc);
+        {
+            std::unique_ptr<DiagonalizationEngine> ptr(new FullSpaceDiagonalizer(sc));
+            return ptr;
+        }
     }
 }
 
