@@ -10,7 +10,6 @@
 #include <cctype>
 #include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -24,12 +23,12 @@ namespace vdw
 namespace
 {
 
-std::string normalize_xc_name(std::string xc)
+std::string to_lower(std::string value)
 {
-    std::transform(xc.begin(), xc.end(), xc.begin(), [](unsigned char c) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });
-    return xc;
+    return value;
 }
 
 void check_dftd4_error(dftd4_error error, const std::string& where)
@@ -82,7 +81,7 @@ double cutoff_to_bohr(const std::string& value, const std::string& unit)
 } // namespace
 
 Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input)
-    : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name))
+    : Vdw(unit_in), xc_name_(to_lower(xc_name)), model_name_(to_lower(input.vdw_d4_model))
 {
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
@@ -169,8 +168,21 @@ void Vdwd4::compute(double& energy_ha,
                                               periodic.data());
     check_dftd4_error(error, "dftd4_new_structure");
 
-    dftd4_model model = dftd4_new_d4_model(error, mol);
-    check_dftd4_error(error, "dftd4_new_d4_model");
+    dftd4_model model = nullptr;
+    if (model_name_ == "d4")
+    {
+        model = dftd4_new_d4_model(error, mol);
+        check_dftd4_error(error, "dftd4_new_d4_model");
+    }
+    else if (model_name_ == "d4s")
+    {
+        model = dftd4_new_d4s_model(error, mol);
+        check_dftd4_error(error, "dftd4_new_d4s_model");
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Vdwd4::compute", "Unsupported DFT-D4 model: " + model_name_);
+    }
 
     dftd4_set_model_realspace_cutoff(error, model, cutoff_disp2_, cutoff_disp3_, cutoff_cn_);
     check_dftd4_error(error, "dftd4_set_model_realspace_cutoff");

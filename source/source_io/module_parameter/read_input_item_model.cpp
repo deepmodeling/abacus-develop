@@ -284,6 +284,28 @@ If set to default, ABACUS infers the functional name from dft_functional or pseu
         this->add_item(item);
     }
     {
+        Input_Item item("vdw_d4_model");
+        item.annotation = "DFT-D4 dispersion model";
+        item.category = "vdW correction";
+        item.type = "String";
+        item.description = R"(DFT-D4 dispersion model used by the external DFT-D4 library.
+Available options are:
+* d4: standard D4 model
+* d4s: smooth D4S model)";
+        item.default_value = "d4";
+        item.unit = "";
+        item.availability = "vdw_method is set to d4";
+        read_sync_string(input.vdw_d4_model);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_d4_model != "d4" && para.input.vdw_d4_model != "d4s"
+                && para.input.vdw_d4_model != "D4" && para.input.vdw_d4_model != "D4S")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_d4_model must be d4 or d4s");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("vdw_s6");
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
         item.category = "vdW correction";

@@ -527,6 +527,7 @@ struct Input_para
     double vdw_cn_thr = 40.0;                               ///< radius cutoff for cn
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
     std::string vdw_d4_xc = "default";                     ///< functional name passed to DFT-D4
+    std::string vdw_d4_model = "d4";                       ///< DFT-D4 dispersion model (d4 or d4s)
     ModuleBase::Vector3<int> vdw_cutoff_period = {3, 3, 3}; ///< periods of periodic structure
 
     // ==============   #Parameters (15.exx) ====================

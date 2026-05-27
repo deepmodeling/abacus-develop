@@ -91,9 +91,10 @@ In the input file, enable DFT-D4 with:
 ```text
 vdw_method d4
 vdw_d4_xc pbe
+vdw_d4_model d4    # or d4s for the smooth D4S model
 ```
 
-If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library.
+If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
 ## Build Unit Tests
 

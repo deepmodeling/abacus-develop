@@ -11,6 +11,7 @@ smearing_sigma    0.02
 mixing_type       broyden
 mixing_beta       0.7
 vdw_method        d4
+vdw_d4_model      d4s
 fixed_axes        c
 force_thr_ev      0.005
 stress_thr        0.1

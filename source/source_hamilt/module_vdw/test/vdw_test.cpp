@@ -626,6 +626,7 @@ class vdwd4Test: public testing::Test
 
         input.vdw_method = "d4";
         input.vdw_d4_xc = "pbe";
+        input.vdw_d4_model = "d4";
         input.vdw_cutoff_type = "radius";
         input.vdw_radius_unit = "Bohr";
         input.vdw_cutoff_radius = "60";
@@ -670,6 +671,43 @@ TEST_F(vdwd4Test, D4GetStress)
     EXPECT_NEAR(stress.e31, 0.0, 1e-12);
     EXPECT_NEAR(stress.e32, -1.5500973166318808e-05, 1e-12);
     EXPECT_NEAR(stress.e33, 0.00016694998515968726, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4SGetEnergy)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    double ene = vdw_solver->get_energy();
+    EXPECT_NEAR(ene, -0.05638517144755526, 1E-10);
+}
+
+TEST_F(vdwd4Test, D4SGetForce)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    EXPECT_NEAR(force[0].x, -0.005448661796788402, 1e-12);
+    EXPECT_NEAR(force[0].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[0].z, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].x, 0.005448661796788397, 1e-12);
+    EXPECT_NEAR(force[1].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].z, 0.0, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4SGetStress)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    EXPECT_NEAR(stress.e11, 0.00013831119855416262, 1e-12);
+    EXPECT_NEAR(stress.e12, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e13, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e21, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e22, 0.00015770515797834415, 1e-12);
+    EXPECT_NEAR(stress.e23, -3.862972112000666e-05, 1e-12);
+    EXPECT_NEAR(stress.e31, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e32, -3.862972112000666e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, 0.00015770515797834423, 1e-12);
 }
 
 #endif // __DFTD4

@@ -396,6 +396,8 @@
     - [sc\_scf\_thr](#sc_scf_thr)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
+    - [vdw\_d4\_xc](#vdw_d4_xc)
+    - [vdw\_d4\_model](#vdw_d4_model)
     - [vdw\_s6](#vdw_s6)
     - [vdw\_s8](#vdw_s8)
     - [vdw\_a1](#vdw_a1)
@@ -3654,6 +3656,13 @@
 - **Availability**: *vdw_method is set to d4*
 - **Description**: Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
 - **Default**: default
+
+### vdw_d4_model
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
+- **Default**: d4
 
 ### vdw_s6
 

@@ -19,6 +19,7 @@ class Vdwd4 : public Vdw
 
   private:
     std::string xc_name_;
+    std::string model_name_;
     double cutoff_disp2_ = 0.0; // Bohr, two-body dispersion cutoff
     double cutoff_disp3_ = 0.0; // Bohr, three-body ATM cutoff
     double cutoff_cn_ = 0.0;    // Bohr, coordination-number cutoff
