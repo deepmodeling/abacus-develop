@@ -1,6 +1,7 @@
 #include "evolve_ofdft.h"
 
 #include "source_io/module_parameter/parameter.h"
+#include <complex>
 #include <iostream>
 
 #include "source_base/parallel_reduce.h"
@@ -29,7 +30,7 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            chr.rho[is][ir] = abs(psi_[is * nrxx + ir])*abs(psi_[is * nrxx + ir]);
+            chr.rho[is][ir] = std::norm(psi_[is * nrxx + ir]);
         }
     }
     this->renormalize_psi(chr, pw_rho, psi_);
