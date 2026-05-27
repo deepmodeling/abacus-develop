@@ -3,7 +3,6 @@
 #include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_base/tool_quit.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
 #include <complex>
@@ -157,6 +156,7 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
     this->nbasis = psi_in.get_nbasis();
+    this->npol = psi_in.get_npol();
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
@@ -181,6 +181,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
     this->nbasis = psi_in.get_nbasis();
+    this->npol = psi_in.get_npol();
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
@@ -233,6 +234,7 @@ Psi<T, Device>& Psi<T, Device>::operator=(const Psi<T, Device>& psi_in)
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
     this->nbasis = psi_in.get_nbasis();
+    this->npol = psi_in.get_npol();
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
@@ -321,14 +323,14 @@ const int& Psi<T, Device>::get_current_ngk() const
 template <typename T, typename Device>
 int Psi<T, Device>::get_npol() const
 {
-    if (PARAM.inp.nspin == 4)
-    {
-        return 2;
-    }
-    else
-    {
-        return 1;
-    }
+    return this->npol;
+}
+
+template <typename T, typename Device>
+void Psi<T, Device>::set_npol(const int npol_in)
+{
+    assert(npol_in == 1 || npol_in == 2);
+    this->npol = npol_in;
 }
 
 template <typename T, typename Device>

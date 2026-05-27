@@ -43,6 +43,7 @@ void Setup_Psi<T>::allocate_psi(
 #endif
         }
         psi = new psi::Psi<T>(nsk, ncol, para_orb.nrow, kv.ngk, true);
+        psi->set_npol(inp.nspin == 4 ? 2 : 1);
     }
 }
 
