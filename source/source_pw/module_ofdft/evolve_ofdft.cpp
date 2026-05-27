@@ -166,16 +166,14 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
     if (nspin <= 0) {
         ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
     }
-    std::complex<double>** recipPhi = new std::complex<double>*[nspin];
-    std::complex<double>** rPhi = new std::complex<double>*[nspin];
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int is = 0; is < nspin; ++is) {
-        rPhi[is] = new std::complex<double>[nrxx];
+    std::vector<std::vector<std::complex<double>>> recipPhi(nspin, std::vector<std::complex<double>>(npw));
+    std::vector<std::vector<std::complex<double>>> rPhi(nspin, std::vector<std::complex<double>>(nrxx));
+
+    for (int is = 0; is < nspin; ++is)
+    {
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            rPhi[is][ir]=psi_[is * nrxx + ir];
+            rPhi[is][ir] = psi_[is * nrxx + ir];
         }
     }
 
@@ -193,14 +191,13 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
         std::vector<std::complex<double>> rCurrent_z(nrxx);
         std::vector<std::complex<double>> kF_r(nrxx);
         std::vector<std::complex<double>> rCDPotential(nrxx);
-        recipPhi[is] = new std::complex<double>[npw];
 
         for (int ir = 0; ir < nrxx; ++ir)
         {
             kF_r[ir]=std::pow(3*std::pow(ModuleBase::PI*std::abs(rPhi[is][ir]),2),1.0/3.0);
         }
 
-        pw_rho->real2recip(rPhi[is], recipPhi[is]);
+        pw_rho->real2recip(rPhi[is].data(), recipPhi[is].data());
         for (int ik = 0; ik < npw; ++ik)
         {
             recipCurrent_x[ik]=imag*gcar[ik].x*recipPhi[is][ik]*tpiba;
@@ -243,17 +240,6 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
             }
         }
     }
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int is = 0; is < nspin; ++is)
-    {
-        delete[] recipPhi[is];
-        delete[] rPhi[is];
-    }
-    delete[] recipPhi;
-    delete[] rPhi;
 }
 
 void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec, 
