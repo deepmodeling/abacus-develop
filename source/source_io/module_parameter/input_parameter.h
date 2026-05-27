@@ -616,6 +616,7 @@ struct Input_para
     bool exx_separate_loop = true;               ///< if 1, a two-step method is employed, else it will start
                                                  ///< with a GGA-Loop, and then Hybrid-Loop
     std::string exx_singularity_correction = "default";    ///< set the scheme of Coulomb singularity correction
+    int exx_ewald_dimension = 3;                 ///< dimensionality used by Ewald Coulomb singularity correction
     int exx_hybrid_step = 100;                   ///< the maximal electronic iteration number in
                                                  ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                ///< mixing_beta for outer-loop when exx_separate_loop=1

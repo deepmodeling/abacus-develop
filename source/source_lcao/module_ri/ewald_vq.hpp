@@ -50,6 +50,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
                            const double &ccp_rmesh_times_in,
                            const double &ewald_lambda_in,
                            const double &kmesh_times_in,
+                           const int& ewald_dimension_in,
                            const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new)
 {
     ModuleBase::TITLE("Ewald_Vq", "init");
@@ -62,6 +63,11 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->ccp_rmesh_times = ccp_rmesh_times_in;
     this->ewald_lambda = ewald_lambda_in;
     this->coulomb_param = coulomb_param_in;
+    this->ewald_dimension = ewald_dimension_in;
+    if (this->ewald_dimension != 2 && this->ewald_dimension != 3)
+    {
+        ModuleBase::WARNING_QUIT("Ewald_Vq::init", "ewald_dimension must be 2 or 3");
+    }
 
     this->g_lcaos = this->init_gauss(lcaos_in);
     this->g_abfs = this->init_gauss(abfs_in);
@@ -94,6 +100,35 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->atoms_vec.resize(ucell.nat);
     std::iota(this->atoms_vec.begin(), this->atoms_vec.end(), 0);
     this->nmp = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
+    if (this->ewald_dimension == 2)
+    {
+        const double eps = 1e-10;
+        const ModuleBase::Vector3<double> a1 = ucell.a1;
+        const ModuleBase::Vector3<double> a2 = ucell.a2;
+        const ModuleBase::Vector3<double> a3 = ucell.a3;
+        const double a3_norm = a3.norm();
+        if (this->nmp[2] != 1)
+        {
+            ModuleBase::WARNING_QUIT("Ewald_Vq::init", "2D Ewald requires nkz = 1");
+        }
+        for (size_t ik = 0; ik != this->p_kv->kvec_c_full.size(); ++ik)
+        {
+            if (std::abs(this->p_kv->kvec_c_full[ik].z) > eps)
+            {
+                ModuleBase::WARNING_QUIT("Ewald_Vq::init", "2D Ewald requires zero k-point offset along z");
+            }
+        }
+        if (std::abs(a1.z) > eps || std::abs(a2.z) > eps || std::abs(a3.x) > eps || std::abs(a3.y) > eps
+            || std::abs(a1 * a3) > eps * a1.norm() * a3_norm
+            || std::abs(a2 * a3) > eps * a2.norm() * a3_norm)
+        {
+            ModuleBase::WARNING_QUIT("Ewald_Vq::init", "2D Ewald requires a slab cell with the non-periodic direction along z");
+        }
+        if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+        {
+            ModuleBase::WARNING_QUIT("Ewald_Vq::init", "2D Ewald force/stress derivatives are not implemented");
+        }
+    }
 
     ModuleBase::timer::end("Ewald_Vq", "init");
 }
@@ -160,11 +195,22 @@ double Ewald_Vq<Tdata>::get_singular_chi(const UnitCell& ucell, const std::vecto
 	{
         if(param.at("singularity_correction") == "carrier")
 		{
+            if (this->ewald_dimension == 2)
+            {
+                ModuleBase::WARNING_QUIT("Ewald_Vq::get_singular_chi", "2D Ewald supports massidda correction only");
+            }
             chi = Singular_Value::cal_carrier(ucell, this->kvec_c, qdiv, 100, 30, 1e-6, 3);
         }
         else if(param.at("singularity_correction") == "massidda")
 		{
-            chi = Singular_Value::cal_massidda(ucell, this->nmp, qdiv, 1, 5, 1e-4);
+            if (this->ewald_dimension == 2)
+            {
+                chi = Singular_Value::cal_massidda_2d(ucell, this->nmp, 1.0, 5, 1e-4);
+            }
+            else
+            {
+                chi = Singular_Value::cal_massidda(ucell, this->nmp, qdiv, 1, 5, 1e-4);
+            }
         }
         else
         {            
@@ -237,7 +283,8 @@ auto Ewald_Vq<Tdata>::cal_dVs_minus_gauss(const UnitCell& ucell,
     ModuleBase::TITLE("Ewald_Vq", "cal_dVs_minus_gauss");
     ModuleBase::timer::start("Ewald_Vq", "cal_dVs_minus_gauss");
 
-    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_gauss = this->cal_dVs_gauss(list_A0, list_A1);
+    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_gauss
+        = this->cal_dVs_gauss(ucell, list_A0, list_A1);
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs_minus_gauss
         = this->set_Vs_dVs_minus_gauss(ucell, list_A0, list_A1, dVs_in, dVs_gauss);
 
@@ -357,14 +404,29 @@ auto Ewald_Vq<Tdata>::cal_Vq_gauss(const UnitCell& ucell,
     ModuleBase::TITLE("Ewald_Vq", "cal_Vq_gauss");
     ModuleBase::timer::start("Ewald_Vq", "cal_Vq_gauss");
 
-    const T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq,
-                                                                                          &this->gaussian_abfs,
-                                                                                          std::placeholders::_1,
-                                                                                          std::placeholders::_2,
-                                                                                          std::placeholders::_3,
-                                                                                          chi,
-                                                                                          std::placeholders::_4,
-                                                                                          this->gaunt);
+    T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq;
+    if (this->ewald_dimension == 2)
+    {
+        func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq_2d,
+                                  &this->gaussian_abfs,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3,
+                                  chi,
+                                  std::placeholders::_4,
+                                  this->gaunt);
+    }
+    else
+    {
+        func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq,
+                                  &this->gaussian_abfs,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3,
+                                  chi,
+                                  std::placeholders::_4,
+                                  this->gaunt);
+    }
     auto Vq_gauss = this->set_Vq_dVq_gauss(ucell, list_A0_k, list_A1_k, shift_for_mpi, func_DPget_Vq);
 
     ModuleBase::timer::end("Ewald_Vq", "cal_Vq_gauss");
@@ -381,6 +443,11 @@ auto Ewald_Vq<Tdata>::cal_dVq_gauss(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Ewald_Vq", "cal_dVq_gauss");
     ModuleBase::timer::start("Ewald_Vq", "cal_dVq_gauss");
+
+    if (this->ewald_dimension == 2)
+    {
+        ModuleBase::WARNING_QUIT("Ewald_Vq::cal_dVq_gauss", "2D Ewald force/stress derivatives are not implemented");
+    }
 
     const T_func_DPget_Vq_dVq<std::array<RI::Tensor<std::complex<double>>, Ndim>> func_DPget_dVq
         = std::bind(&Gaussian_Abfs::get_dVq,
@@ -830,6 +897,147 @@ auto Ewald_Vq<Tdata>::cal_Vs(const UnitCell& ucell,
 }
 
 template <typename Tdata>
+auto Ewald_Vq<Tdata>::cal_Vs_split(const UnitCell& ucell,
+                                   const double& chi,
+                                   std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in)
+    -> std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
+                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+{
+    ModuleBase::TITLE("Ewald_Vq", "cal_Vs_split");
+    ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_split");
+
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss = this->cal_Vs_minus_gauss(ucell,
+                                                                                             this->list_A0,
+                                                                                             this->list_A1,
+                                                                                             Vs_in);
+    const int shift_for_mpi = std::floor(this->nks0 / 2.0);
+    std::set<TA> atoms00;
+    std::set<TA> atoms01;
+    for (const auto& I: this->list_A0_pair_R)
+    {
+        atoms00.insert(I);
+    }
+    for (const auto& JR: this->list_A1_pair_R)
+    {
+        atoms01.insert(JR.first);
+    }
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_minus_gauss_comm
+        = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_minus_gauss, atoms00, atoms01);
+    std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq_short_local
+        = this->cal_Vq_minus_gauss(ucell,
+                                   this->list_A0_pair_R,
+                                   this->list_A1_pair_R,
+                                   Vs_minus_gauss_comm);
+
+    std::set<TA> atoms10;
+    std::set<TA> atoms11;
+    for (const auto& I: this->list_A0_pair_k)
+    {
+        atoms10.insert(I);
+    }
+    for (const auto& JR: this->list_A1_pair_k)
+    {
+        atoms11.insert(JR.first);
+    }
+    auto Vq_short = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vq_short_local, atoms10, atoms11);
+    auto Vq_long_out = this->cal_Vq_gauss(ucell,
+                                          this->list_A0_k,
+                                          this->list_A1_k,
+                                          chi,
+                                          shift_for_mpi);
+    auto Vq_long_gauss = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vq_long_out, atoms10, atoms11);
+    std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq_long;
+    using Tin_convert = typename LRI_CV_Tools::TinType<RI::Tensor<std::complex<double>>>::type;
+
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (size_t i0 = 0; i0 < this->list_A0_pair_k.size(); ++i0)
+    {
+        for (size_t i1 = 0; i1 < this->list_A1_pair_k.size(); ++i1)
+        {
+            const TA iat0 = this->list_A0_pair_k[i0];
+            const int it0 = ucell.iat2it[iat0];
+            const TA iat1 = this->list_A1_pair_k[i1].first;
+            const int it1 = ucell.iat2it[iat1];
+            const int ik = this->list_A1_pair_k[i1].second[0] + shift_for_mpi;
+            const TAK re_index = std::make_pair(iat1, std::array<int, 1>{ik});
+
+            auto it_short_outer = Vq_short.find(iat0);
+            if (it_short_outer == Vq_short.end())
+            {
+                continue;
+            }
+            if (it_short_outer->second.find(re_index) == it_short_outer->second.end())
+            {
+                continue;
+            }
+            auto it_long_outer = Vq_long_gauss.find(iat0);
+            if (it_long_outer == Vq_long_gauss.end())
+            {
+                continue;
+            }
+            auto it_long_inner = it_long_outer->second.find(this->list_A1_pair_k[i1]);
+            if (it_long_inner == it_long_outer->second.end())
+            {
+                continue;
+            }
+
+            RI::Tensor<std::complex<double>> data;
+            LRI_CV_Tools::init_elem(data, this->index_abfs[it0].count_size, this->index_abfs[it1].count_size);
+            for (int l0 = 0; l0 != this->g_abfs_ccp.at(it0).size(); ++l0)
+            {
+                for (int l1 = 0; l1 != this->g_abfs.at(it1).size(); ++l1)
+                {
+                    for (size_t n0 = 0; n0 != this->g_abfs_ccp.at(it0).at(l0).size(); ++n0)
+                    {
+                        const double pA = this->multipole.at(it0).at(l0).at(n0);
+                        for (size_t n1 = 0; n1 != this->g_abfs.at(it1).at(l1).size(); ++n1)
+                        {
+                            const double pB = this->multipole.at(it1).at(l1).at(n1);
+                            Tin_convert frac = RI::Global_Func::convert<Tin_convert>(pA * pB);
+                            for (size_t m0 = 0; m0 != 2 * l0 + 1; ++m0)
+                            {
+                                const size_t index0 = this->index_abfs.at(it0).at(l0).at(n0).at(m0);
+                                const size_t lm0 = l0 * l0 + m0;
+                                for (size_t m1 = 0; m1 != 2 * l1 + 1; ++m1)
+                                {
+                                    const size_t index1 = this->index_abfs.at(it1).at(l1).at(n1).at(m1);
+                                    const size_t lm1 = l1 * l1 + m1;
+                                    LRI_CV_Tools::add_elem(data,
+                                                           index0,
+                                                           index1,
+                                                           it_long_inner->second,
+                                                           lm0,
+                                                           lm1,
+                                                           frac);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+#pragma omp critical(Ewald_Vq_cal_Vs_split)
+            if (LRI_CV_Tools::exist(data))
+            {
+                Vq_long[iat0][re_index] = std::move(data);
+            }
+        }
+    }
+
+    auto Vs_short = this->set_Vs_dVs<RI::Tensor<Tdata>>(ucell,
+                                                        this->list_A0_pair_R_period,
+                                                        this->list_A1_pair_R_period,
+                                                        Vq_short);
+    auto Vs_long = this->set_Vs_dVs<RI::Tensor<Tdata>>(ucell,
+                                                       this->list_A0_pair_R_period,
+                                                       this->list_A1_pair_R_period,
+                                                       Vq_long);
+
+    ModuleBase::timer::tick("Ewald_Vq", "cal_Vs_split");
+    return {Vs_short, Vs_long};
+}
+
+template <typename Tdata>
 auto Ewald_Vq<Tdata>::cal_Vs_serial_full(const UnitCell& ucell,
                                          const double& chi,
                                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,
@@ -982,15 +1190,29 @@ auto Ewald_Vq<Tdata>::cal_long_range_Vs_gauss(const UnitCell& ucell, const doubl
     ModuleBase::timer::tick("Ewald_Vq", "cal_long_range_Vs_gauss");
 
     const int shift_for_mpi = std::floor(this->nks0 / 2.0);
-    const T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq
-        = std::bind(&Gaussian_Abfs::get_Vq,
-                    &this->gaussian_abfs,
-                    std::placeholders::_1,
-                    std::placeholders::_2,
-                    std::placeholders::_3,
-                    chi,
-                    std::placeholders::_4,
-                    this->gaunt);
+    T_func_DPget_Vq_dVq<RI::Tensor<std::complex<double>>> func_DPget_Vq;
+    if (this->ewald_dimension == 2)
+    {
+        func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq_2d,
+                                  &this->gaussian_abfs,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3,
+                                  chi,
+                                  std::placeholders::_4,
+                                  this->gaunt);
+    }
+    else
+    {
+        func_DPget_Vq = std::bind(&Gaussian_Abfs::get_Vq,
+                                  &this->gaussian_abfs,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2,
+                                  std::placeholders::_3,
+                                  chi,
+                                  std::placeholders::_4,
+                                  this->gaunt);
+    }
     std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> Vq_gauss_out
         = this->set_Vq_dVq_gauss(ucell, this->list_A0_k, this->list_A1_k, shift_for_mpi, func_DPget_Vq);
 

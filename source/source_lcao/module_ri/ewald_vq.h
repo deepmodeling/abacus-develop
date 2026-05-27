@@ -15,8 +15,10 @@
 
 #include <RI/global/Tensor.h>
 #include <array>
+#include <functional>
 #include <map>
 #include <mpi.h>
+#include <utility>
 
 template <typename Tdata>
 class Ewald_Vq
@@ -58,6 +60,7 @@ class Ewald_Vq
               const double &ccp_rmesh_times_in,
               const double &ewald_lambda_in,
               const double &kmesh_times_in,
+              const int& ewald_dimension_in = 3,
               const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
 
     void init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO);
@@ -76,6 +79,11 @@ class Ewald_Vq
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs(const UnitCell& ucell,
                                                                  const double& chi,
                                                                  std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
+                     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+    cal_Vs_split(const UnitCell& ucell,
+                 const double& chi,
+                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs_serial_full(
         const UnitCell& ucell,
         const double& chi,
@@ -114,6 +122,7 @@ class Ewald_Vq
     ModuleBase::realArray gaunt;
     std::array<Tcell, Ndim> nmp;
     double ewald_lambda = 1.0;
+    int ewald_dimension = 3;
 
     std::vector<std::vector<std::vector<double>>> multipole;
     ModuleBase::Element_Basis_Index::IndexLNM index_abfs;

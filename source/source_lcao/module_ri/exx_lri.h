@@ -94,7 +94,9 @@ public:
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full_IJR,
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
 		const UnitCell& ucell,
-		const bool write_cv = false);
+		const bool write_cv = false,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR = nullptr,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR = nullptr);
 	void cal_exx_elec(
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
 		const UnitCell& ucell,

@@ -587,6 +587,24 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_ewald_dimension");
+        item.annotation = "dimensionality used by Ewald Coulomb singularity correction";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.description = "Set to 3 for the original 3D Ewald Coulomb correction, or 2 for the slab 2D Ewald Coulomb correction.";
+        item.default_value = "3";
+        item.unit = "";
+        item.availability = "exx_singularity_correction==massidda or carrier";
+        read_sync_int(input.exx_ewald_dimension);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_dimension != 2 && para.input.exx_ewald_dimension != 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_dimension must be 2 or 3");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("rpa_ccp_rmesh_times");
         item.annotation = "how many times larger the radial mesh required for "
                           "calculating Columb potential is to that "

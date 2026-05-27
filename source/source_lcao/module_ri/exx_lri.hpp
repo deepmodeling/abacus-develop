@@ -64,6 +64,11 @@ inline bool rotate_abfs_in_place_for_current_full_matrix(const Exx_Info::Exx_Inf
     return true;
 }
 
+inline bool should_rotate_abfs_for_init(const Exx_Info::Exx_Info_RI& info)
+{
+    return info.rotate_abfs && rotate_abfs_in_place_for_current_full_matrix(info);
+}
+
 inline bool allow_rt_tddft_ewald_force_stress_bypass()
 {
     return PARAM.inp.esolver_type == "tddft";
@@ -406,6 +411,33 @@ inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numeric
             }
         }
     }
+}
+
+inline std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> prepare_abfs(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos,
+    const Exx_Info::Exx_Info_RI& info,
+    const double pca_threshold,
+    const std::vector<std::string>& files_abfs)
+{
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs
+        = Exx_Abfs::Construct_Orbs::abfs_same_atom(
+            ucell,
+            orb,
+            lcaos,
+            info.kmesh_times,
+            pca_threshold);
+    if (!files_abfs.empty())
+    {
+        abfs = Exx_Abfs::IO::construct_abfs(abfs, orb, files_abfs, info.kmesh_times);
+    }
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(abfs);
+    if (should_rotate_abfs_for_init(info))
+    {
+        rotate_abfs_by_multipole(abfs, info.multip_moments_threshold);
+    }
+    return abfs;
 }
 
 struct AuxLongPrefixPermutation
@@ -805,17 +837,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
-	if(this->info.files_abfs.empty())
-		{ this->abfs = abfs_same_atom;}
-	else
-		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    if (this->info.rotate_abfs && ExxLriDetail::rotate_abfs_in_place_for_current_full_matrix(this->info))
-    {
-        ExxLriDetail::rotate_abfs_by_multipole(this->abfs, this->info.multip_moments_threshold);
-    }
+	this->abfs = ExxLriDetail::prepare_abfs(
+		ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -868,10 +891,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 				if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 				{
 						this->exx_objs[settings_list.first].evq.init(ucell, orb,
-																	this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-																	settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
-																	this->info.ewald_lambda, this->info.kmesh_times,
-																	this->abfs_old_to_new_per_type);
+																			this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
+																			settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+																			this->info.ewald_lambda, this->info.kmesh_times,
+																			this->info.ewald_dimension,
+																			this->abfs_old_to_new_per_type);
 				}
 			}
 
@@ -897,10 +921,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 
 	this->abfs = abfs_in;
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    if (this->info.rotate_abfs && ExxLriDetail::rotate_abfs_in_place_for_current_full_matrix(this->info))
-    {
-        ExxLriDetail::rotate_abfs_by_multipole(this->abfs, this->info.multip_moments_threshold);
-    }
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -955,10 +975,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 				if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 				{
 						this->exx_objs[settings_list.first].evq.init(ucell, orb,
-																	this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-																	settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
-																	this->info.ewald_lambda, this->info.kmesh_times,
-																	this->abfs_old_to_new_per_type);
+																			this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
+																			settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+																			this->info.ewald_lambda, this->info.kmesh_times,
+																			this->info.ewald_dimension,
+																			this->abfs_old_to_new_per_type);
 				}
 			}
 
@@ -983,25 +1004,8 @@ void Exx_LRI<Tdata>::init_spencer(
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
-        = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,
-                                                   orb,
-                                                   this->lcaos,
-                                                   this->info.kmesh_times,
-                                                   this->info.pca_threshold);
-    if (this->info.files_abfs.empty())
-    {
-        this->abfs = abfs_same_atom;
-    }
-    else
-    {
-        this->abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times);
-    }
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    if (this->info.rotate_abfs && ExxLriDetail::rotate_abfs_in_place_for_current_full_matrix(this->info))
-    {
-        ExxLriDetail::rotate_abfs_by_multipole(this->abfs, this->info.multip_moments_threshold);
-    }
+    this->abfs = ExxLriDetail::prepare_abfs(
+        ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
     Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
@@ -1062,10 +1066,6 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
 
     this->abfs = abfs_in;
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    if (this->info.rotate_abfs && ExxLriDetail::rotate_abfs_in_place_for_current_full_matrix(this->info))
-    {
-        ExxLriDetail::rotate_abfs_by_multipole(this->abfs, this->info.multip_moments_threshold);
-    }
     Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
     for (size_t T = 0; T != this->abfs.size(); ++T)
@@ -1811,11 +1811,12 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::cal_ewald_coulomb(
-	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
-	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-	const UnitCell& ucell,
-	const bool write_cv)
+void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+                                       const UnitCell& ucell,
+                                       const bool write_cv,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
 	ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
@@ -1869,6 +1870,8 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 		{
 			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
+			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_short;
+			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;
 			for (const auto& param_list : settings_list.second.second)
 			{
 				std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_temp;
@@ -1878,6 +1881,16 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 				{
 					double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
 					Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+					if (Vs_short_IJR != nullptr || Vs_long_IJR != nullptr)
+					{
+						auto Vs_split = this->exx_objs[settings_list.first].evq.cal_Vs_split(ucell, chi, Vs_temp);
+						auto& Vs_short_temp = Vs_split.first;
+						auto& Vs_long_temp = Vs_split.second;
+						Vs_ewald_short = Vs_ewald_short.empty() ? Vs_short_temp
+						                                        : LRI_CV_Tools::add(Vs_ewald_short, Vs_short_temp);
+						Vs_ewald_long = Vs_ewald_long.empty() ? Vs_long_temp
+						                                      : LRI_CV_Tools::add(Vs_ewald_long, Vs_long_temp);
+					}
 					break;
 				}
 				default:
@@ -1886,6 +1899,14 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 				}
 				}
 				Vs_ewald = Vs_ewald.empty() ? Vs_ewald_temp : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
+			}
+			if (Vs_short_IJR != nullptr)
+			{
+				*Vs_short_IJR = Vs_short_IJR->empty() ? Vs_ewald_short : LRI_CV_Tools::add(*Vs_short_IJR, Vs_ewald_short);
+			}
+			if (Vs_long_IJR != nullptr)
+			{
+				*Vs_long_IJR = Vs_long_IJR->empty() ? Vs_ewald_long : LRI_CV_Tools::add(*Vs_long_IJR, Vs_ewald_long);
 			}
 			Vs_temp = Vs_ewald;
 		}

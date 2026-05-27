@@ -169,6 +169,18 @@ inline double real_as_double(const std::complex<double>& value)
     return value.real();
 }
 
+inline bool debug_dump_ewald_split_enabled()
+{
+    const char* env = std::getenv("ABACUS_DUMP_EWALD_SPLIT_COULOMB");
+    if (env == nullptr)
+    {
+        return false;
+    }
+    const std::string value(env);
+    return !(value.empty() || value == "0" || value == "f" || value == "F"
+             || value == "false" || value == "FALSE");
+}
+
 inline std::vector<std::vector<int>>
 collect_abfs_l_nchi(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs)
 {
@@ -477,14 +489,6 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     this->p_kv = &kv_in;
     this->MGT = exx_cut_coulomb->MGT;
 
-    if (this->info.shrink_abfs_pca_thr >= 0.0)
-    {
-        this->abfs_shrink = exx_cut_coulomb->abfs;
-    }
-    else
-    {
-        this->abfs = exx_cut_coulomb->abfs;
-    }
     //	this->cv = std::move(exx_lri_rpa.cv);
     //    exx_lri_rpa.cv = exx_lri_rpa.cv;
     ModuleBase::timer::end("RPA_LRI", "init");
@@ -542,15 +546,20 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
-        // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
-        // This ensures consistency between the ABFs used for Lmax calculation and the ABFs
-        // used for actual EXX computation.
-        this->abfs_shrink = abfs_for_lmax;
-        Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs_shrink, GlobalV::ofs_running);
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
+        this->abfs_shrink = ExxLriDetail::prepare_abfs(
+            ucell, orb, this->lcaos, this->info, this->info.shrink_abfs_pca_thr, this->info.files_shrink_abfs);
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_shrink);
     }
     else
-        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb);
+    {
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
+        this->abfs = ExxLriDetail::prepare_abfs(
+            ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, this->abfs);
+    }
 
     if (this->use_spacegroup_symmetry_)
     {
@@ -703,9 +712,17 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     else
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_short_IJR;
+    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_long_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR, Cs, ucell, PARAM.inp.out_ri_cv);
+    const bool dump_split = RpaLriDetail::debug_dump_ewald_split_enabled();
+    exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR,
+                                         Cs,
+                                         ucell,
+                                         PARAM.inp.out_ri_cv,
+                                         dump_split ? &Vs_short_IJR : nullptr,
+                                         dump_split ? &Vs_long_IJR : nullptr);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -780,6 +797,24 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     }
     Vs_period.clear();
     Vs_period.swap(tmp);
+    if (dump_split)
+    {
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_short_IJ
+            = RI_2D_Comm::comm_map2_first(mpi_comm, Vs_short_IJR, atoms00, atoms01);
+        Vs_short_IJR.clear();
+        this->Vs_period = RI::RI_Tools::cal_period(Vs_short_IJ, period);
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_short_", exx_full_coulomb);
+        Vs_period.clear();
+        Vs_period.swap(tmp);
+
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_long_IJ
+            = RI_2D_Comm::comm_map2_first(mpi_comm, Vs_long_IJR, atoms00, atoms01);
+        Vs_long_IJR.clear();
+        this->Vs_period = RI::RI_Tools::cal_period(Vs_long_IJ, period);
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_long_", exx_full_coulomb);
+        Vs_period.clear();
+        Vs_period.swap(tmp);
+    }
     Cs.clear();
     Cs.swap(tmp);
 
@@ -795,10 +830,13 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb.reset(new Exx_LRI<double>(this->info));
-    exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
+        exx_cut_coulomb.reset(new Exx_LRI<double>(GlobalC::exx_info.info_ri));
+    this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
+    this->abfs = ExxLriDetail::prepare_abfs(
+        ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+    exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb, this->abfs);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
-    this->abfs = exx_cut_coulomb->abfs;
     this->MGT = exx_cut_coulomb->MGT;
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -821,7 +859,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     center2_obj_it->second.cv.set_orbitals(ucell,
                                            orb,
                                            this->lcaos,
-                                           exx_cut_coulomb->abfs,
+                                           this->abfs,
                                            center2_obj_it->second.abfs_ccp,
                                            this->info.kmesh_times,
                                            this->MGT, // get MGT from exx_cut_coulomb and used in `cal_abfs_overlap`

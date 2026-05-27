@@ -9,6 +9,8 @@
 #include "gaussian_abfs.h"
 
 #include <algorithm>
+#include <cmath>
+#include <numeric>
 // #include <chrono>
 
 #include "lri_cv_tools.h"
@@ -19,6 +21,29 @@
 //#include "source_pw/hamilt_pwdft/global.h"
 
 #include <RI/global/Global_Func-1.h>
+
+namespace
+{
+constexpr int GH_N32 = 32;
+constexpr double GH_X32[GH_N32] = {
+    -7.125813909830727, -6.409498149269660, -5.812225949515914, -5.275550986515880,
+    -4.777164503502596, -4.305547953351198, -3.853755485471445, -3.417167492818570,
+    -2.992490825002374, -2.577249537732317, -2.169499183606112, -1.767654109463202,
+    -1.370376410952871, -0.976500463589683, -0.584978765435932, -0.194840741569399,
+     0.194840741569399,  0.584978765435932,  0.976500463589683,  1.370376410952871,
+     1.767654109463202,  2.169499183606112,  2.577249537732317,  2.992490825002374,
+     3.417167492818570,  3.853755485471445,  4.305547953351198,  4.777164503502596,
+     5.275550986515880,  5.812225949515914,  6.409498149269660,  7.125813909830727};
+constexpr double GH_W32[GH_N32] = {
+    7.310676427384163e-23, 9.231736536518292e-19, 1.197344017092849e-15, 4.215010211326448e-13,
+    5.933291463396639e-11, 4.098832164770897e-09, 1.574167792545595e-07, 3.650585129562376e-06,
+    5.416584061819986e-05, 5.362683655279965e-04, 3.654890326654428e-03, 1.755342883157974e-02,
+    6.045813095591261e-02, 1.511269427958280e-01, 2.774581423025293e-01, 3.752383525928023e-01,
+    3.752383525928023e-01, 2.774581423025293e-01, 1.511269427958280e-01, 6.045813095591261e-02,
+    1.755342883157974e-02, 3.654890326654428e-03, 5.362683655279965e-04, 5.416584061819986e-05,
+    3.650585129562376e-06, 1.574167792545595e-07, 4.098832164770897e-09, 5.933291463396639e-11,
+    4.215010211326448e-13, 1.197344017092849e-15, 9.231736536518292e-19, 7.310676427384163e-23};
+}
 
 void Gaussian_Abfs::init(const UnitCell& ucell,
                          const int& Lmax,
@@ -36,6 +61,10 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     this->tpiba = ucell.tpiba;
     this->lat0 = ucell.lat0;
     this->omega = ucell.omega;
+    const ModuleBase::Vector3<double> a1_bohr = ucell.a1 * this->lat0;
+    const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * this->lat0;
+    this->area_parallel_bohr2 = (a1_bohr ^ a2_bohr).norm();
+    this->lz_bohr = this->omega / this->area_parallel_bohr2;
     const double eta = 35;
     std::vector<ModuleBase::Vector3<double>> Gvec;
     Gvec.resize(3);
@@ -50,8 +79,10 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     Gvec[2].x = G.e31;
     Gvec[2].y = G.e32;
     Gvec[2].z = G.e33;
+    this->gvecs_direct = Gvec;
 
     this->n_cells.resize(nks0);
+    this->n_supercells_2d.resize(nks0);
     this->qGvecs.resize(nks0);
     this->check_gamma.resize(nks0);
     this->ylm.resize(nks0);
@@ -89,6 +120,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
 #pragma omp critical(Gaussian_Abfs_init)
         {
             this->n_cells[ik] = total_cells;
+            this->n_supercells_2d[ik] = {n_supercells[0], n_supercells[1]};
             this->qGvecs[ik] = qGvec_ik;
             this->check_gamma[ik] = check_gamma_ik;
             this->ylm[ik] = ylm_ik;
@@ -128,6 +160,22 @@ auto Gaussian_Abfs::get_Vq(const int& lp_max,
                                                                     func_DPcal_lattice_sum);
 
     ModuleBase::timer::end("Gaussian_Abfs", "get_Vq");
+    return res;
+}
+
+auto Gaussian_Abfs::get_Vq_2d(const int& lp_max,
+                              const int& lq_max,
+                              const size_t& ik,
+                              const double& chi2d,
+                              const ModuleBase::Vector3<double>& tau,
+                              const ModuleBase::realArray& gaunt) -> RI::Tensor<std::complex<double>>
+{
+    ModuleBase::TITLE("Gaussian_Abfs", "get_Vq_2d");
+    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq_2d");
+
+    auto res = this->DPcal_Vq_2d(lp_max, lq_max, ik, chi2d, tau, gaunt);
+
+    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq_2d");
     return res;
 }
 
@@ -254,6 +302,76 @@ auto Gaussian_Abfs::DPcal_Vq_dVq(const double& omega,
     return Vq_dVq;
 }
 
+auto Gaussian_Abfs::DPcal_Vq_2d(const int& lp_max,
+                                const int& lq_max,
+                                const size_t& ik,
+                                const double& chi2d,
+                                const ModuleBase::Vector3<double>& tau,
+                                const ModuleBase::realArray& gaunt) -> RI::Tensor<std::complex<double>>
+{
+    const int Lmax = lp_max + lq_max;
+    const size_t vq_ndim0 = (lp_max + 1) * (lp_max + 1);
+    const size_t vq_ndim1 = (lq_max + 1) * (lq_max + 1);
+    RI::Tensor<std::complex<double>> Vq;
+    LRI_CV_Tools::init_elem(Vq, vq_ndim0, vq_ndim1);
+
+    const int n_add_ksq = std::min(lp_max, lq_max);
+    std::vector<std::vector<std::complex<double>>> lattice_sum(n_add_ksq + 1);
+    const double exponent = 1.0 / this->lambda;
+    const ModuleBase::Vector3<double> qvec = this->kvec_c[ik];
+
+    for (int i_add_ksq = 0; i_add_ksq != n_add_ksq + 1; ++i_add_ksq)
+    {
+        const double power = -2.0 + 2 * i_add_ksq;
+        const int this_Lmax = Lmax - 2 * i_add_ksq;
+        const bool exclude_Gamma = (qvec.norm() < 1e-10 && i_add_ksq == 0);
+        lattice_sum[i_add_ksq]
+            = this->get_lattice_sum_2d(this->tpiba, ik, power, exponent, exclude_Gamma, this_Lmax, tau);
+    }
+
+    if (qvec.norm() < 1e-10)
+    {
+        const double tau_z_cart = tau.z * this->lat0;
+        const double regular = this->C_reg_2d(tau_z_cart, exponent);
+        const std::complex<double> val = ModuleBase::PI * chi2d + regular;
+        const std::complex<double> frac = 1.0 / std::sqrt(ModuleBase::FOUR_PI);
+        LRI_CV_Tools::add_elem(lattice_sum[0][0], val, frac * this->lz_bohr / ModuleBase::TWO_PI);
+    }
+
+    for (int lp = 0; lp != lp_max + 1; ++lp)
+    {
+        const double norm_1 = double_factorial(2 * lp - 1) * std::sqrt(ModuleBase::PI * 0.5);
+        for (int lq = 0; lq != lq_max + 1; ++lq)
+        {
+            const double norm_2 = double_factorial(2 * lq - 1) * std::sqrt(ModuleBase::PI * 0.5);
+            const std::complex<double> phase = std::pow(ModuleBase::IMAG_UNIT, lp - lq);
+            const std::complex<double> cfac
+                = ModuleBase::FOUR_PI * phase * std::pow(ModuleBase::TWO_PI, 3) / (norm_1 * norm_2) / this->omega;
+            for (int L = std::abs(lp - lq); L <= lp + lq; L += 2)
+            {
+                const int i_add_ksq = (lp + lq - L) / 2;
+                for (int mp = 0; mp != 2 * lp + 1; ++mp)
+                {
+                    const int lmp = lp * lp + mp;
+                    for (int mq = 0; mq != 2 * lq + 1; ++mq)
+                    {
+                        const int lmq = lq * lq + mq;
+                        for (int m = 0; m != 2 * L + 1; ++m)
+                        {
+                            const int lm = L * L + m;
+                            const double triple_Y = gaunt(lmp, lmq, lm);
+                            const std::complex<double> fac = triple_Y * cfac;
+                            LRI_CV_Tools::add_elem(Vq, lmp, lmq, lattice_sum[i_add_ksq][lm], fac);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return Vq;
+}
+
 Numerical_Orbital_Lm Gaussian_Abfs::Gauss(const Numerical_Orbital_Lm& orb, const double& lambda)
 {
     Numerical_Orbital_Lm gaussian;
@@ -328,6 +446,132 @@ auto Gaussian_Abfs::get_lattice_sum(const double& tpiba,
 
     return this
         ->DPcal_lattice_sum<std::complex<double>>(tpiba, ik, power, exponent, exclude_Gamma, lmax, func_DPcal_phase);
+}
+
+auto Gaussian_Abfs::get_lattice_sum_2d(const double& tpiba,
+                                       const size_t& ik,
+                                       const double& power,
+                                       const double& exponent,
+                                       const bool& exclude_Gamma,
+                                       const int& lmax,
+                                       const ModuleBase::Vector3<double>& tau) -> std::vector<std::complex<double>>
+{
+    if (power < 0.0 && !exclude_Gamma && this->kvec_c[ik].norm() < 1e-10)
+    {
+        ModuleBase::WARNING_QUIT("Gaussian_Abfs::lattice_sum_2d", "Gamma point for power<0.0 cannot be evaluated!");
+    }
+
+    const int total_lm = (lmax + 1) * (lmax + 1);
+    std::vector<std::complex<double>> result(total_lm, std::complex<double>{});
+    const int n_super0 = this->n_supercells_2d[ik][0];
+    const int n_super1 = this->n_supercells_2d[ik][1];
+    const double conversion = this->lz_bohr / ModuleBase::TWO_PI;
+    const double tau_z_bohr = tau.z * this->lat0;
+
+    for (int i0 = -n_super0; i0 <= n_super0; ++i0)
+    {
+        for (int i1 = -n_super1; i1 <= n_super1; ++i1)
+        {
+            if (exclude_Gamma && i0 == 0 && i1 == 0)
+            {
+                continue;
+            }
+
+            const ModuleBase::Vector3<double> qg_direct
+                = -(this->kvec_c[ik] + this->gvecs_direct[0] * static_cast<double>(i0)
+                    + this->gvecs_direct[1] * static_cast<double>(i1));
+            const ModuleBase::Vector3<double> qg_cart = qg_direct * tpiba;
+            const double q_parallel_sq = qg_cart.x * qg_cart.x + qg_cart.y * qg_cart.y;
+            const std::complex<double> phase
+                = std::exp(ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (qg_direct * tau));
+            const double gaussian_parallel = std::exp(-exponent * q_parallel_sq);
+
+            for (int L = 0; L != lmax + 1; ++L)
+            {
+                for (int m = 0; m != 2 * L + 1; ++m)
+                {
+                    const int lm = L * L + m;
+                    const std::complex<double> k_lm = this->K_LM_2d(
+                        L,
+                        m,
+                        power,
+                        ModuleBase::Vector3<double>(qg_cart.x, qg_cart.y, 0.0),
+                        tau_z_bohr,
+                        exponent);
+                    result[lm] += conversion * gaussian_parallel * phase * k_lm;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+double Gaussian_Abfs::I2_2d(const double& q_parallel_abs, const double& tau_z, const double& beta) const
+{
+    if (q_parallel_abs < 1e-12)
+    {
+        return 0.0;
+    }
+    if (std::abs(tau_z) < 1e-14)
+    {
+        const double x = std::sqrt(beta) * q_parallel_abs;
+        return ModuleBase::PI / q_parallel_abs * std::exp(x * x) * std::erfc(x);
+    }
+
+    const double a = std::abs(tau_z);
+    const double q = q_parallel_abs;
+    const double sqrt_beta = std::sqrt(beta);
+    const double term_plus = std::exp(q * a) * std::erfc(sqrt_beta * q + a / (2.0 * sqrt_beta));
+    const double term_minus = std::exp(-q * a) * std::erfc(sqrt_beta * q - a / (2.0 * sqrt_beta));
+    return ModuleBase::PI / (2.0 * q) * std::exp(beta * q * q) * (term_plus + term_minus);
+}
+
+double Gaussian_Abfs::C_reg_2d(const double& tau_z, const double& beta) const
+{
+    const double a = std::abs(tau_z);
+    const double sqrt_beta = std::sqrt(beta);
+    return ModuleBase::PI * a * (std::erfc(a / (2.0 * sqrt_beta)) - 1.0)
+           - 2.0 * std::sqrt(ModuleBase::PI * beta) * std::exp(-a * a / (4.0 * beta));
+}
+
+std::complex<double> Gaussian_Abfs::K_LM_2d(const int& L,
+                                            const int& M,
+                                            const double& power,
+                                            const ModuleBase::Vector3<double>& q_parallel_cart,
+                                            const double& tau_z,
+                                            const double& beta) const
+{
+    const double q_parallel_abs
+        = std::sqrt(q_parallel_cart.x * q_parallel_cart.x + q_parallel_cart.y * q_parallel_cart.y);
+    if (L == 0 && M == 0 && std::abs(power + 2.0) < 1e-12)
+    {
+        return this->I2_2d(q_parallel_abs, tau_z, beta) / std::sqrt(ModuleBase::FOUR_PI);
+    }
+
+    const int total_lm = (L + 1) * (L + 1);
+    const int lm = L * L + M;
+    const double sqrt_beta = std::sqrt(beta);
+    const double inv_sqrt_beta = 1.0 / sqrt_beta;
+    std::complex<double> sum = 0.0;
+
+    for (int i = 0; i != GH_N32; ++i)
+    {
+        const double kz = GH_X32[i] * inv_sqrt_beta;
+        const double norm_sq = q_parallel_abs * q_parallel_abs + kz * kz;
+        if (norm_sq < 1e-24 && power < 0.0)
+        {
+            continue;
+        }
+        ModuleBase::Vector3<double> q3(q_parallel_cart.x, q_parallel_cart.y, kz);
+        ModuleBase::matrix ylm_here(total_lm, 1);
+        ModuleBase::YlmReal::Ylm_Real(total_lm, 1, &q3, ylm_here);
+        const double radial = std::pow(norm_sq, 0.5 * (power + L));
+        const std::complex<double> phase = std::exp(ModuleBase::IMAG_UNIT * kz * tau_z);
+        sum += GH_W32[i] * radial * ylm_here(lm, 0) * phase;
+    }
+
+    return inv_sqrt_beta * sum;
 }
 
 auto Gaussian_Abfs::get_d_lattice_sum(
