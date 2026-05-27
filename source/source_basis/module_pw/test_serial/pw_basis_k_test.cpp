@@ -184,6 +184,14 @@ TEST_F(PWBasisKTEST, CollectLocalPW)
 	basis_k.initparameters(gamma_only_in, gk_ecut_in, nks_in,kvec_d_in, distribution_type_in, xprime_in);	
 	EXPECT_NO_THROW(basis_k.setuptransform());
 	EXPECT_NO_THROW(basis_k.collect_local_pw());
+	ASSERT_GT(basis_k.npwk[0], 0);
+	auto* gk2_ptr = basis_k.get_gk2_data<double>();
+	auto* gcar_ptr = basis_k.get_gcar_data<double>();
+	const double gk2_sample = basis_k.getgk2(0,0);
+	EXPECT_NO_THROW(basis_k.collect_local_pw());
+	EXPECT_EQ(basis_k.get_gk2_data<double>(), gk2_ptr);
+	EXPECT_EQ(basis_k.get_gcar_data<double>(), gcar_ptr);
+	EXPECT_DOUBLE_EQ(basis_k.getgk2(0,0), gk2_sample);
 	EXPECT_EQ(basis_k.npw,3695);
 	EXPECT_EQ(basis_k.npwk_max,2721);
 }

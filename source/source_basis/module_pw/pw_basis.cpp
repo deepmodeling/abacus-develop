@@ -138,10 +138,15 @@ void PW_Basis::collect_local_pw()
     {
         return;
     }
+    if (this->local_pw_cache_valid)
+    {
+        return;
+    }
     this->ig_gge0 = -1;
     delete[] this->gg; this->gg = new double[this->npw];
     delete[] this->gdirect; this->gdirect = new ModuleBase::Vector3<double>[this->npw];
     delete[] this->gcar; this->gcar = new ModuleBase::Vector3<double>[this->npw];
+    this->uniqgg_cache_valid = false;
 
     ModuleBase::Vector3<double> f;
     int gamma_num = 0;
@@ -182,6 +187,7 @@ void PW_Basis::collect_local_pw()
             }
         }
     }
+    this->local_pw_cache_valid = true;
     return;
 }
 
@@ -196,40 +202,58 @@ void PW_Basis::collect_uniqgg()
     {
         return;
     }
+    if (this->uniqgg_cache_valid)
+    {
+        return;
+    }
     this->ig_gge0 = -1;
     delete[] this->ig2igg; this->ig2igg = new int [this->npw];
     
     int *sortindex = new int [this->npw];//Reconstruct the mapping of the plane wave index ig according to the energy size of the plane waves
     double *tmpgg = new double [this->npw];//Ranking the plane waves by energy size while ensuring that the same energy is preserved for each wave to correspond
     double *tmpgg2 = new double [this->npw];//ranking the plane waves by energy size and removing the duplicates
-    ModuleBase::Vector3<double> f;
-    for(int ig = 0 ; ig < this-> npw ; ++ig)
+    if (this->local_pw_cache_valid && this->gg != nullptr)
     {
-        int isz = this->ig2isz[ig];
-        int iz = isz % this->nz;
-        int is = isz / this->nz;
-        int ixy = this->is2fftixy[is];
-        int ix = ixy / this->fftny;
-        int iy = ixy % this->fftny;
-        if (ix >= int(this->nx/2) + 1)
+        for(int ig = 0 ; ig < this-> npw ; ++ig)
         {
-            ix -= this->nx;
+            tmpgg[ig] = this->gg[ig];
+            if(tmpgg[ig] < 1e-8)
+            {
+                this->ig_gge0 = ig;
+            }
         }
-        if (iy >= int(this->ny/2) + 1)
+    }
+    else
+    {
+        ModuleBase::Vector3<double> f;
+        for(int ig = 0 ; ig < this-> npw ; ++ig)
         {
-            iy -= this->ny;
-        }
-        if (iz >= int(this->nz/2) + 1)
-        {
-            iz -= this->nz;
-        }
-        f.x = ix;
-        f.y = iy;
-        f.z = iz;
-        tmpgg[ig] = f * (this->GGT * f);
-        if(tmpgg[ig] < 1e-8)
-        {
-            this->ig_gge0 = ig;
+            int isz = this->ig2isz[ig];
+            int iz = isz % this->nz;
+            int is = isz / this->nz;
+            int ixy = this->is2fftixy[is];
+            int ix = ixy / this->fftny;
+            int iy = ixy % this->fftny;
+            if (ix >= int(this->nx/2) + 1)
+            {
+                ix -= this->nx;
+            }
+            if (iy >= int(this->ny/2) + 1)
+            {
+                iy -= this->ny;
+            }
+            if (iz >= int(this->nz/2) + 1)
+            {
+                iz -= this->nz;
+            }
+            f.x = ix;
+            f.y = iy;
+            f.z = iz;
+            tmpgg[ig] = f * (this->GGT * f);
+            if(tmpgg[ig] < 1e-8)
+            {
+                this->ig_gge0 = ig;
+            }
         }
     }
 
@@ -269,6 +293,7 @@ void PW_Basis::collect_uniqgg()
     delete[] sortindex;
     delete[] tmpgg;
     delete[] tmpgg2;
+    this->uniqgg_cache_valid = true;
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const

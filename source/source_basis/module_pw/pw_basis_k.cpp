@@ -6,6 +6,7 @@
 #include "source_base/timer.h"
 
 #include <utility>
+#include <vector>
 namespace ModulePW
 {
 
@@ -101,6 +102,7 @@ void PW_Basis_K::initparameters(const bool gamma_only_in,
     this->fftnxy = this->fftnx * this->fftny;
     this->fftnxyz = this->fftnxy * this->fftnz;
     this->distribution_type = distribution_type_in;
+    this->invalidate_cache();
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu")
     {
@@ -129,16 +131,19 @@ void PW_Basis_K::initparameters(const bool gamma_only_in,
 
 void PW_Basis_K::setupIndGk()
 {
+    this->invalidate_cache();
     // count npwk
     this->npwk_max = 0;
     delete[] this->npwk;
     this->npwk = new int[this->nks];
+    std::vector<double> gk2_cache(this->nks * this->npw);
     for (int ik = 0; ik < this->nks; ik++)
     {
         int ng = 0;
         for (int ig = 0; ig < this->npw; ig++)
         {
             const double gk2 = this->cal_GplusK_cartesian(ik, ig).norm2();
+            gk2_cache[ik * this->npw + ig] = gk2;
             if (gk2 <= this->gk_ecut)
             {
                 ++ng;
@@ -178,7 +183,7 @@ void PW_Basis_K::setupIndGk()
         int igl = 0;
         for (int ig = 0; ig < this->npw; ig++)
         {
-            const double gk2 = this->cal_GplusK_cartesian(ik, ig).norm2();
+            const double gk2 = gk2_cache[ik * this->npw + ig];
             if (gk2 <= this->gk_ecut)
             {
                 this->igl2isz_k[ik * npwk_max + igl] = this->ig2isz[ig];
@@ -249,10 +254,18 @@ void PW_Basis_K::setuptransform()
 
 void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)
 {
+    const bool cache_hit = this->gk_cache_valid
+                           && this->erf_ecut == erf_ecut_in
+                           && this->erf_height == erf_height_in
+                           && this->erf_sigma == erf_sigma_in;
     this->erf_ecut = erf_ecut_in;
     this->erf_height = erf_height_in;
     this->erf_sigma = erf_sigma_in;
     if (this->npwk_max <= 0)
+    {
+        return;
+    }
+    if (cache_hit)
     {
         return;
     }
@@ -347,6 +360,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
 #if defined(__CUDA) || defined(__ROCM)
     }
 #endif
+    this->gk_cache_valid = true;
 }
 
 ModuleBase::Vector3<double> PW_Basis_K::cal_GplusK_cartesian(const int ik, const int ig) const

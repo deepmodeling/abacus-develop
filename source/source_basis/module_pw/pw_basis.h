@@ -140,6 +140,15 @@ public:
 protected:
     int *startnsz_per=nullptr;//useless intermediate variable// startnsz_per[ip]: starting is * nz stick in the ip^th proc.
 
+    virtual void invalidate_cache()
+    {
+        this->local_pw_cache_valid = false;
+        this->uniqgg_cache_valid = false;
+    }
+
+    bool local_pw_cache_valid = false;
+    bool uniqgg_cache_valid = false;
+
     //distribute plane waves to different processors
     void distribute_g();
 
