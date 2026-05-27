@@ -250,11 +250,11 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
 
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) 
+            rpot(is, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3)
                         / (2.0*std::pow(std::real(kF_r[ir]),2));
-            if (std::isnan(rpot(0, ir))) 
+            if (std::isnan(rpot(is, ir)))
             {
-                rpot(0, ir)=0.0;
+                rpot(is, ir)=0.0;
             }
         }
     }
