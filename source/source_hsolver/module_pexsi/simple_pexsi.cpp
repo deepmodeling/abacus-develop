@@ -383,7 +383,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = PARAM.inp.nspin == 1 ? 2.0 : 1.0;
+    double_para[0] = 2.0;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;
@@ -516,6 +516,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     loadPEXSIOption(comm_PEXSI, PexsiOptionFile, options, numProcessPerPole, ZERO_Limit);
     options.mu0 = mu0;
     print_effective_pexsi_options_once(options, numProcessPerPole, ZERO_Limit);
+    const bool detail_timing = std::getenv("ABACUS_PEXSI_REAL_DETAIL_TIMING") != nullptr;
 
     ModuleBase::timer::start("Diago_LCAO_Matrix", "setup_PEXSI_plan");
     PPEXSIPlan plan;
@@ -530,9 +531,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIPlanInit");
     if (comm_PEXSI != MPI_COMM_NULL)
     {
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIPlanInitialize.begin");
         plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIPlanInitialize.end");
     }
     ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIPlanInit");
     
@@ -557,11 +556,15 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     double* FDMnzvalLocal = nullptr;
     // transform H and S from 2D block cyclic distribution to compressed column sparse matrix
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT2CCS");
-    trace_pexsi_stage(comm_PEXSI, "real", "TransMAT2CCS.begin");
+    if (detail_timing)
+    {
+        ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT2CCS");
+    }
     DistMatrixTransformer::transformBCDtoCCS(SRC_Matrix, H, S, ZERO_Limit, DST_Matrix, HnzvalLocal, SnzvalLocal);
-    trace_pexsi_stage(comm_PEXSI, "real", "TransMAT2CCS.end");
-    ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT2CCS");
+    if (detail_timing)
+    {
+        ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT2CCS");
+    }
     // MPI_Barrier(MPI_COMM_WORLD);
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     if (comm_PEXSI != MPI_COMM_NULL)
@@ -569,8 +572,10 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
 
         // Load H and S to PEXSI
         int isSIdentity = 0;
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_LoadHS_R");
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSILoadRealHSMatrix.begin");
+        if (detail_timing)
+        {
+            ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_LoadHS_R");
+        }
         PPEXSILoadRealHSMatrix(plan,
                                options,
                                size,
@@ -583,8 +588,10 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                isSIdentity,
                                SnzvalLocal,
                                &info);
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSILoadRealHSMatrix.end");
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_LoadHS_R");
+        if (detail_timing)
+        {
+            ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_LoadHS_R");
+        }
 
         double nelec = 0.0;
         double muMinInertia = 0.0;
@@ -593,7 +600,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         int numTotalInertiaIter = 0; // Number of total inertia[out]
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIDFT");
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIDFTDriver2.begin");
         PPEXSIDFTDriver2(plan,                 // PEXSI plan[in]
                         &options,              // PEXSI Options[in]
                         numElectronExact,     // exact electron number[in]
@@ -604,7 +610,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                         &numTotalInertiaIter, // Number of total inertia[out]
                         // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
                         &info);               // 0: successful; otherwise: unsuccessful
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIDFTDriver2.end");
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIDFT");
 
@@ -620,8 +625,10 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         FDMnzvalLocal = new double[DST_Matrix.get_nnzlocal()];
         if (myid < numProcessPerPole)
         {
-            ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Retrieve_R");
-            trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIRetrieveRealDFTMatrix.begin");
+            if (detail_timing)
+            {
+                ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Retrieve_R");
+            }
             PPEXSIRetrieveRealDFTMatrix(plan,
                                         DMnzvalLocal,
                                         EDMnzvalLocal,
@@ -630,15 +637,21 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                         &totalEnergyS,
                                         &totalFreeEnergy,
                                         &info);
-            trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIRetrieveRealDFTMatrix.end");
-            ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Retrieve_R");
+            if (detail_timing)
+            {
+                ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Retrieve_R");
+            }
         }
         // clean PEXSI
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Finalize");
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIPlanFinalize.begin");
+        if (detail_timing)
+        {
+            ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Finalize");
+        }
         PPEXSIPlanFinalize(plan, &info);
-        trace_pexsi_stage(comm_PEXSI, "real", "PPEXSIPlanFinalize.end");
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Finalize");
+        if (detail_timing)
+        {
+            ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Finalize");
+        }
     }
 
     // transform Density Matrix and Energy Density Matrix from compressed column sparse matrix
@@ -653,18 +666,14 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
     const MPI_Comm barrier_comm = comm_2D != MPI_COMM_NULL ? comm_2D : comm_PEXSI;
     ModuleBase::timer::start("Diago_LCAO_Matrix", "TransMAT22D");
-    trace_pexsi_stage(barrier_comm, "real", "TransMAT22D.begin");
     DistMatrixTransformer::transformCCStoBCD(DST_Matrix, DMnzvalLocal, EDMnzvalLocal, SRC_Matrix, DM, EDM);
-    trace_pexsi_stage(barrier_comm, "real", "TransMAT22D.end");
     ModuleBase::timer::end("Diago_LCAO_Matrix", "TransMAT22D");
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
 
     if (barrier_comm != MPI_COMM_NULL)
     {
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Barrier");
         MPI_Barrier(barrier_comm);
         MPI_Barrier(barrier_comm);
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Barrier");
     }
     delete[] DMnzvalLocal;
     delete[] EDMnzvalLocal;
@@ -673,9 +682,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     delete[] SnzvalLocal;
     if (barrier_comm != MPI_COMM_NULL)
     {
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Barrier");
         MPI_Barrier(barrier_comm);
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Barrier");
     }
     return 0;
 }
@@ -723,6 +730,7 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
     options.symmetric = 1;
     options.symmetricStorage = 0;
     options.rowOrdering = 0;
+    options.spin = PARAM.inp.nspin == 1 ? 2.0 : 1.0;
     options.mu0 = mu0;
     print_effective_pexsi_options_once(options, numProcessPerPole, ZERO_Limit);
 

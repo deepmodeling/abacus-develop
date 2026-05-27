@@ -54,8 +54,8 @@
 课程名称： & 并行程序设计 / 并行程序课程\\
 报告类型： & 代码的修改和重构报告\\
 项目对象： & ABACUS LCAO-PEXSI 模块\\
-代码分支： & \code{pexsi-stage4-code-opt}\\
-代码提交： & \code{5978ae6a2 Enable complex multi-k PEXSI path}\\
+代码分支： & \code{pexsi-stage4-pattern-reuse-opt}\\
+代码提交： & \code{Keep Gamma PEXSI baseline performance}\\
 测试标准： & 官方用户指南 LCAO 10 个样例\\
 补充基线： & \code{origin/develop} Gamma-only PEXSI 对比测试\\
 \end{tabular}
@@ -104,9 +104,9 @@ ABACUS 的普通 LCAO 路径通常通过 ScaLAPACK 求解广义本征值问题�
 \textbf{项目} & \textbf{内容}\\
 \midrule
 \endhead
-当前分支 & \code{pexsi-stage4-code-opt}\\
-代码基础提交 & \code{8a3aea7fe Optimize PEXSI stage4 code path}\\
-代码修改提交 & \code{5978ae6a2 Enable complex multi-k PEXSI path}\\
+当前分支 & \code{pexsi-stage4-pattern-reuse-opt}\\
+代码基础提交 & \code{1d16a609c PEXSI pattern reuse optimization}\\
+代码修改提交 & \code{Keep Gamma PEXSI baseline performance}\\
 远端基线提交 & \code{b9669d375 Toolchain: Fix package installing issue (\#7315)}\\
 主要测试集 & 官方用户指南 \code{examples/lcao-gv} 中 10 个 LCAO 样例\\
 报告输出 & \code{pexsi\_stage4\_code\_refactor\_report.tex} 与对应 PDF\\
@@ -254,7 +254,7 @@ multi-k requires the complex expert-routine path
 
 \code{simplePEXSI} 和 \code{simplePEXSIComplex} 中已给 BCD 到 CCS 转换加入 \code{TransMAT2CCS} timer。此前 \code{transformCCStoBCD} 已有 \code{TransMAT22D} 计时，但 BCD 到 CCS 缺少独立计时，不利于区分 ABACUS 侧格式转换成本和 PEXSI 库内部求解成本。
 
-补齐该计时后，后续性能报告可以分别观察 \code{TransMAT2CCS}、\code{PEXSIDFT} 和 \code{TransMAT22D}，从而判断瓶颈是在 ABACUS 分布式矩阵转换、PEXSI 选择性求逆，还是 DM/EDM 回写阶段。
+反馈后的 Gamma-only 同输入性能复测显示，real Gamma 热路径中额外 trace 和细粒度 timer 本身也会进入被测时间。为避免性能对比被测量逻辑扰动，当前代码将 real Gamma 路径的 \code{TransMAT2CCS}、\code{PEXSI\_LoadHS\_R}、\code{PEXSI\_Retrieve\_R} 和 \code{PEXSI\_Finalize} 细粒度计时改为由环境变量 \code{ABACUS\_PEXSI\_REAL\_DETAIL\_TIMING} 显式打开；默认运行只保留旧路径已有的 \code{PEXSIDFT}、\code{TransMAT22D} 等必要计时。复数多 k 路径的细粒度计时保持开启，因为它仍是定位多 k 点瓶颈的主要依据。
 
 \subsection{OpenMP 本地循环优化}
 
@@ -494,29 +494,36 @@ PEXSI is not completed for multi-k case
 \end{longtable}
 }
 
-旧 \code{develop} Gamma PEXSI 的速度不能单独视为正确实现的性能上限。002、008、010 虽然能完成，但 008 与 010 的总能量分别比官方参考差约 9.44 eV 和 34.74 eV。这说明旧 Gamma 路径默认 PEXSI 参数更轻，收敛速度更快，但物理精度不足。当前 stage4 为了接近官方能量，修复了 fixed 占据、密度矩阵回写和 FD smearing/PEXSI temperature 对齐问题，并避免把错误的低 pole 结果作为默认配置，直接增加了 PEXSI 求解成本。
+旧 \code{develop} Gamma PEXSI 的速度不能单独视为正确实现的性能上限。为了避免不同输入参数造成不可比，本轮又以 \code{/tmp/abacus\_origin\_develop\_pexsi\_gamma\_20260525} 中的四个 Gamma 样例作为唯一输入源，分别复制到 \code{/tmp/abacus\_gamma\_same\_input\_20260527/origin} 和当前分支运行目录。复制后对每个样例执行 \code{diff -qr}，确认 \code{INPUT}、\code{KPT}、\code{STRU}、赝势和轨道文件完全一致。运行环境统一为：
 
-旧 Gamma PEXSI 与当前 stage4 PEXSI 的对比见表 \ref{tab:gamma-baseline-stage4-compare}。
+\begin{verbatim}
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  timeout 1800s mpirun -np 4 abacus_basic_para
+\end{verbatim}
+
+同输入 Gamma PEXSI 与当前分支的对比见表 \ref{tab:gamma-same-input-compare}。该表只比较代码实现变化带来的影响，不混入 smearing、\code{pexsi\_temp}、\code{pexsi\_npole} 或 \code{gamma\_only} 等输入差异。
 
 {\scriptsize
-\begin{longtable}{@{}p{0.15\linewidth}p{0.28\linewidth}p{0.28\linewidth}p{0.20\linewidth}@{}}
-\caption{旧 Gamma PEXSI 与当前 stage4 PEXSI 对比}
-\label{tab:gamma-baseline-stage4-compare}\\
+\begin{longtable}{@{}p{0.15\linewidth}p{0.27\linewidth}p{0.27\linewidth}p{0.21\linewidth}@{}}
+\caption{同输入 Gamma PEXSI：origin/develop 与当前分支对比}
+\label{tab:gamma-same-input-compare}\\
 \toprule
-\textbf{样例} & \textbf{远端 develop Gamma PEXSI} & \textbf{当前 stage4 PEXSI} & \textbf{结论}\\
+\textbf{样例} & \textbf{origin/develop Gamma PEXSI} & \textbf{当前分支 Gamma PEXSI} & \textbf{结论}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{样例} & \textbf{远端 develop Gamma PEXSI} & \textbf{当前 stage4 PEXSI} & \textbf{结论}\\
+\textbf{样例} & \textbf{origin/develop Gamma PEXSI} & \textbf{当前分支 Gamma PEXSI} & \textbf{结论}\\
 \midrule
 \endhead
-002\_C2H6O & 43.24 s，收敛，能量 -664.670823 eV & 43.94 s，收敛，能量 -665.555000 eV & 耗时接近，stage4 能量恢复到官方量级\\
-008\_32H2O & 68.32 s，收敛，能量 -14941.015276 eV & 131.58 s，收敛，能量 -14950.450841 eV & stage4 约 1.9 倍耗时，换来 fixed 占据能量修正\\
-009\_Battery108 & \(>1800\) s，到 PE44，\code{DRHO=4.14e-6} & \(>1800\) s，到 PE2，PE2 为 1336.27 s & stage4 单步更重；旧路径也未在 1800 s 内完成\\
-010\_216Si & 581.28 s，收敛，能量 -23088.956346 eV & \(>1800\) s，到 PE3 & 旧路径快但能量偏差约 34.74 eV；stage4 代价主要来自更重的 PEXSI 参数和路径\\
+002\_C2H6O & 收敛 PE28；Total 45 s；HS 4.70 s；能量 -664.670823 eV & 收敛 PE28；Total 45 s；HS 4.68 s；能量 -664.670823 eV & 结果一致，当前不慢\\
+008\_32H2O & 收敛 PE17；Total 69 s；HS 59.37 s；PEXSIDFT 30.80 s；能量 -14941.015276 eV & 收敛 PE17；Total 69 s；HS 59.62 s；PEXSIDFT 30.57 s；能量 -14941.015276 eV & 结果一致，总时间持平，PEXSIDFT 略快\\
+009\_Battery108 & 1800 s 超时；完整到 PE44，\code{DRHO=4.13755e-6}，随后进入 PE45 & 1800 s 超时；完整到 PE44，\code{DRHO=4.13755e-6}，随后进入 PE45 & 结果轨迹一致，超时进度持平\\
+010\_216Si & 收敛 PE12；Total 593 s；HS 546.30 s；PEXSIDFT 510.93 s；能量 -23088.956346 eV & 收敛 PE12；Total 591 s；HS 543.42 s；PEXSIDFT 508.26 s；能量 -23088.956346 eV & 结果一致，当前略快\\
 \bottomrule
 \end{longtable}
 }
+
+同输入测试还暴露了一个容易忽略的正确性边界：共享的 \code{loadPEXSIOption} 若把 \code{nspin=2} 的 \code{options.spin} 改为 1，会使 Gamma real 路径的 009 自旋电子数分配从 origin 的磁性轨迹变为两自旋各 427.5，导致能量和磁矩从第一步开始不可比。当前修复为：Gamma real 路径在 \code{loadPEXSIOption} 中保持 origin 行为，即 \code{options.spin=2.0}；复数多 k 路径在 \code{simplePEXSIComplex} 中单独覆盖 \code{options.spin = (nspin==1 ? 2.0 : 1.0)}，避免影响多 k 点全局化学势搜索。
 
 \section{超时原因与性能瓶颈分析}
 
