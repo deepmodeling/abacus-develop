@@ -54,6 +54,21 @@ const std::string& get_global_out_dir();
 void set_quit_calculation(const std::string& calculation);
 
 /**
+ * @brief Inject the spinor count (1 for collinear, 2 for non-collinear nspin==4).
+ *        Used by Psi::get_npol() and any code that needs the global npol
+ *        without taking a dependency on parameter.h.
+ *
+ * Caller-injected (typically once after input parameters are read).
+ * If never set, defaults to 1.
+ */
+void set_global_npol(const int npol);
+
+/**
+ * @brief Read back the injected global npol. Returns 1 if set_global_npol was never called.
+ */
+int get_global_npol();
+
+/**
  * @brief Close .log files and exit
  *
  */

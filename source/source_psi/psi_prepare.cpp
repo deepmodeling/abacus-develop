@@ -289,7 +289,6 @@ void allocate_psi(Psi<std::complex<double>>*& psi,
         nks2 = 1;
     }
     psi = new psi::Psi<std::complex<double>>(nks2, nbands, npwx * PARAM.globalv.npol, ngk, true);
-    psi->set_npol(PARAM.globalv.npol);
     const size_t memory_cost = sizeof(std::complex<double>) * nks2 * nbands * (PARAM.globalv.npol * npwx);
     std::cout << " MEMORY FOR PSI (MB)  : " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
     ModuleBase::Memory::record("Psi_PW", memory_cost);

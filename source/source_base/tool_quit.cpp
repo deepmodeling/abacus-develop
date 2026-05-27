@@ -18,6 +18,7 @@ namespace
 {
 std::string g_quit_out_dir;
 std::string g_quit_calculation;
+int g_global_npol = 1;
 }
 
 void set_quit_out_dir(const std::string& dir)
@@ -33,6 +34,16 @@ const std::string& get_global_out_dir()
 void set_quit_calculation(const std::string& calculation)
 {
     g_quit_calculation = calculation;
+}
+
+void set_global_npol(const int npol)
+{
+    g_global_npol = npol;
+}
+
+int get_global_npol()
+{
+    return g_global_npol;
 }
 
 //==========================================================

@@ -139,10 +139,6 @@ class Psi
 
     int get_npol() const;
 
-    /// @brief Inject the spinor count (1 for collinear, 2 for non-collinear nspin==4).
-    ///        Call once after construction. Defaults to 1.
-    void set_npol(const int npol_in);
-
   private:
     T* psi = nullptr; // avoid using C++ STL
 
@@ -167,8 +163,6 @@ class Psi
     bool k_first = true;
 
     bool allocate_inside = true; ///< whether allocate psi inside Psi class
-
-    int npol = 1; ///< spinor count (1 collinear, 2 non-collinear). Set via set_npol().
 
 #ifdef __DSP
     using delete_memory_op = base_device::memory::delete_memory_op_mt<T, Device>;
