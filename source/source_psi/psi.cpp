@@ -320,7 +320,7 @@ const int& Psi<T, Device>::get_current_ngk() const
 template <typename T, typename Device>
 int Psi<T, Device>::get_npol() const
 {
-    return ModuleBase::get_global_npol();
+    return GlobalV::npol;
 }
 
 template <typename T, typename Device>

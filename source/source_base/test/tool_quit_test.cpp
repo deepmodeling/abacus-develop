@@ -32,7 +32,7 @@ class ToolQuitTest : public testing::Test
 	{
 		GlobalV::ofs_warning.open("warning.log");
 		GlobalV::ofs_running.open("running.log");
-		ModuleBase::set_quit_out_dir("OUT/");
+		GlobalV::global_out_dir = "OUT/";
 	}
 	void TearDown()
 	{

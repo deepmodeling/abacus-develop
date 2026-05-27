@@ -40,4 +40,11 @@ std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
+//----------------------------------------------------------
+// EXPLAIN : base-layer injection points (see header)
+//----------------------------------------------------------
+std::string global_out_dir;
+std::string calculation;
+int npol = 1;
+
 } // namespace GlobalV

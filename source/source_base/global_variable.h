@@ -52,5 +52,21 @@ extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
 extern std::ofstream ofs_device;
+
+//==========================================================
+// Base-layer injection points: written once by the top-level
+// driver after PARAM is loaded, then read by lower modules
+// that must not depend on source_io/module_parameter/parameter.h.
+// NAME : global_out_dir ( mirrors PARAM.globalv.global_out_dir,
+//                         used by QUIT/WARNING_QUIT log paths and by
+//                         source_basis orbital-table writers )
+// NAME : calculation    ( mirrors PARAM.inp.calculation,
+//                         used by CHECK_WARNING_QUIT fallback log name )
+// NAME : npol           ( spinor count, 1 for collinear, 2 for nspin==4;
+//                         used by psi::Psi::get_npol() )
+//==========================================================
+extern std::string global_out_dir;
+extern std::string calculation;
+extern int npol;
 } // namespace GlobalV
 #endif

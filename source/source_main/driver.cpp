@@ -123,9 +123,9 @@ void Driver::reading()
     ModuleIO::ReadInput input(PARAM.globalv.myrank);
     input.read_parameters(PARAM, PARAM.globalv.global_in_card);
 
-    ModuleBase::set_quit_out_dir(PARAM.globalv.global_out_dir);
-    ModuleBase::set_quit_calculation(PARAM.inp.calculation);
-    ModuleBase::set_global_npol(PARAM.globalv.npol);
+    GlobalV::global_out_dir = PARAM.globalv.global_out_dir;
+    GlobalV::calculation = PARAM.inp.calculation;
+    GlobalV::npol = PARAM.globalv.npol;
 
 #if defined(__CUDA) && defined(__USE_NVTX)
     ModuleBase::timer::set_nvtx_enabled(PARAM.inp.timer_enable_nvtx);

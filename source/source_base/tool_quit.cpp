@@ -14,38 +14,6 @@
 
 namespace ModuleBase
 {
-namespace
-{
-std::string g_quit_out_dir;
-std::string g_quit_calculation;
-int g_global_npol = 1;
-}
-
-void set_quit_out_dir(const std::string& dir)
-{
-    g_quit_out_dir = dir;
-}
-
-const std::string& get_global_out_dir()
-{
-    return g_quit_out_dir;
-}
-
-void set_quit_calculation(const std::string& calculation)
-{
-    g_quit_calculation = calculation;
-}
-
-void set_global_npol(const int npol)
-{
-    g_global_npol = npol;
-}
-
-int get_global_npol()
-{
-    return g_global_npol;
-}
-
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : WARNING( write information into GlobalV::ofs_warning)
@@ -80,7 +48,7 @@ void QUIT(int ret)
 #else
     ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK, false);
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
-    std::cout<<" See output information in : "<<g_quit_out_dir<<std::endl;
+    std::cout<<" See output information in : "<<GlobalV::global_out_dir<<std::endl;
 #endif
 
     exit(ret);
@@ -125,7 +93,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	std::cout << " ---------------------------------------------------------" << std::endl;
 	std::cout << " " << std::endl;
 	std::cout << " " << description << std::endl;
-	std::cout << " CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
+	std::cout << " CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
 	std::cout << " " << std::endl;
 	std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
 	std::cout << " https://abacus.deepmodeling.com" << std::endl;
@@ -141,7 +109,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " " << description << std::endl;
-	GlobalV::ofs_running << " CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
+	GlobalV::ofs_running << " CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
 	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " For detailed manual of ABACUS, please see the website" << std::endl;
 	GlobalV::ofs_running << " https://abacus.deepmodeling.com" << std::endl;
@@ -152,7 +120,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 
 	WARNING(file,description);
-    GlobalV::ofs_running<<" Check in file : "<<g_quit_out_dir<<"warning.log"<<std::endl;
+    GlobalV::ofs_running<<" Check in file : "<<GlobalV::global_out_dir<<"warning.log"<<std::endl;
 
 #endif
 
@@ -172,21 +140,21 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file, const std:
 		std::cout.clear();
 		if(!GlobalV::ofs_running.is_open())
 		{
-			std::string logfile = g_quit_out_dir + "running_" + g_quit_calculation + ".log";
+			std::string logfile = GlobalV::global_out_dir + "running_" + GlobalV::calculation + ".log";
 			GlobalV::ofs_running.open( logfile.c_str(), std::ios::app );
 		}
 		if(!GlobalV::ofs_warning.is_open())
 		{
-			std::string warningfile = g_quit_out_dir + "warning.log";
+			std::string warningfile = GlobalV::global_out_dir + "warning.log";
 			GlobalV::ofs_warning.open( warningfile.c_str(), std::ios::app );
 		}
 
 		//print error information
 		std::cout << " ---------------------------------------------------------" << std::endl;
 		std::cout << " ERROR! " << description << std::endl;
-		std::cout << " CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
+		std::cout << " CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
 		std::cout << " ---------------------------------------------------------" << std::endl;
-		GlobalV::ofs_running << " ERROR! CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
+		GlobalV::ofs_running << " ERROR! CHECK IN FILE : " << GlobalV::global_out_dir << "warning.log" << std::endl;
 		GlobalV::ofs_warning << std::endl;
 		GlobalV::ofs_warning << " ERROR! " << file << ", core " << GlobalV::MY_RANK+1 << ": " << description << std::endl;
 		GlobalV::ofs_warning << std::endl;

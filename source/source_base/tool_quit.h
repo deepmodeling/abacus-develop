@@ -29,46 +29,6 @@ namespace ModuleBase
 void WARNING(const std::string &file, const std::string &description);
 
 /**
- * @brief Inject the global output directory used by QUIT/WARNING_QUIT/CHECK_WARNING_QUIT
- *        for log path resolution and user-facing messages.
- *
- * Caller-injected (typically once after input parameters are read).
- * If never set, paths fall back to CWD.
- */
-void set_quit_out_dir(const std::string& dir);
-
-/**
- * @brief Read back the injected global output directory.
- *        Returns an empty string if set_quit_out_dir was never called.
- */
-const std::string& get_global_out_dir();
-
-/**
- * @brief Inject the calculation tag used by CHECK_WARNING_QUIT to compose the
- *        fallback log filename ("running_<calculation>.log") when ofs_running
- *        is not already open.
- *
- * Caller-injected (typically once after input parameters are read).
- * If never set, the fallback filename uses an empty tag.
- */
-void set_quit_calculation(const std::string& calculation);
-
-/**
- * @brief Inject the spinor count (1 for collinear, 2 for non-collinear nspin==4).
- *        Used by Psi::get_npol() and any code that needs the global npol
- *        without taking a dependency on parameter.h.
- *
- * Caller-injected (typically once after input parameters are read).
- * If never set, defaults to 1.
- */
-void set_global_npol(const int npol);
-
-/**
- * @brief Read back the injected global npol. Returns 1 if set_global_npol was never called.
- */
-int get_global_npol();
-
-/**
  * @brief Close .log files and exit
  *
  */
