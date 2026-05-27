@@ -87,7 +87,7 @@ void ReadInput::item_others()
         item.category = "Spin-Constrained DFT";
         item.type = "Integer";
         item.description = "Maximal number of spin-constrained iteration";
-        item.default_value = "100";
+        item.default_value = "5";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_int(input.nsc);
@@ -293,16 +293,40 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         this->add_item(item);
     }
     {
+        Input_Item item("sc_strategy");
+        item.annotation = "DeltaSpin execution strategy for LCAO basis";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Execution strategy controlling how DeltaSpin solves the lambda loop:
+* normal (default): use full diagonalization initially, switch to subspace acceleration once RMS < sc_acceleration_rms_thr (default threshold: 1e-2 uB)
+* fast: use subspace diagonalization from the first lambda step (skips full diagonalization after initialization)
+* accuracy: always use full HSolverLCAO diagonalization (no acceleration)
+
+This parameter automatically sets sc_acceleration_mode and sc_acceleration_rms_thr. If you need fine-grained control, set sc_strategy=normal and override sc_acceleration_mode/sc_acceleration_rms_thr manually.)";
+        item.default_value = "normal";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_string(input.sc_strategy);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& strategy = para.input.sc_strategy;
+            if (strategy != "normal" && strategy != "fast" && strategy != "accuracy") {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_strategy must be normal, fast, or accuracy");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("sc_acceleration_mode");
         item.annotation = "acceleration mode for spin-constrained DFT";
         item.category = "Spin-Constrained DFT";
         item.type = "String";
-        item.description = R"(Acceleration mode for converged lambda loop:
-* off: no acceleration, always use full HSolverLCAO diagonalization (default)
+        item.description = R"(Acceleration mode for converged lambda loop (usually set automatically by sc_strategy):
+* off: no acceleration, always use full HSolverLCAO diagonalization
 * first_order: use first-order eigenvalue response (fastest, requires RMS < sc_acceleration_rms_thr)
 * subspace: use subspace diagonalization with wavefunction rotation (faster, requires RMS < sc_acceleration_rms_thr)
 
-When enabled, the acceleration activates once RMS drops below sc_acceleration_rms_thr. The subspace is built using the wavefunctions at the current lambda when the threshold is first crossed.)";
+When sc_strategy=normal, this is auto-set to subspace. When sc_strategy=fast, this is auto-set to subspace with a large threshold. When sc_strategy=accuracy, this is auto-set to off.
+Manual override is allowed: if sc_acceleration_mode is explicitly set, it takes precedence over sc_strategy.)";
         item.default_value = "off";
         item.unit = "";
         item.availability = "sc_mag_switch is true and basis_type=lcao";
@@ -320,7 +344,7 @@ When enabled, the acceleration activates once RMS drops below sc_acceleration_rm
         item.annotation = "RMS threshold for acceleration activation";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
-        item.description = "RMS threshold (uB) to activate acceleration mode. Must be > 0 to enable. The acceleration activates once RMS < sc_acceleration_rms_thr. Typical value: 10 * sc_thr.";
+        item.description = "RMS threshold (uB) to activate acceleration mode. Must be > 0 to enable. The acceleration activates once RMS < sc_acceleration_rms_thr. Default: 1e-2 uB for sc_strategy=normal, 1e10 for sc_strategy=fast. If explicitly set, overrides the sc_strategy default.";
         item.default_value = "-1.0";
         item.unit = "uB";
         item.availability = "sc_mag_switch is true and sc_acceleration_mode is not off";
