@@ -237,6 +237,28 @@ TEST_F(DMTest, DMConstructor_nspin2)
     delete kv;
 }
 
+#ifdef __PEXSI
+TEST_F(DMTest, PexsiEDMIsOwnedCopy)
+{
+    elecstate::DensityMatrix<double, double> DM(paraV, 1);
+    const int local_size = paraV->nrow * paraV->ncol;
+    std::vector<double> external_edm(local_size);
+    for (int i = 0; i < local_size; ++i)
+    {
+        external_edm[i] = static_cast<double>(i + 1);
+    }
+
+    DM.set_pexsi_EDM_pointer({external_edm.data()});
+    std::fill(external_edm.begin(), external_edm.end(), -1.0);
+
+    ASSERT_EQ(DM.pexsi_EDM.size(), 1);
+    for (int i = 0; i < local_size; ++i)
+    {
+        EXPECT_DOUBLE_EQ(DM.pexsi_EDM[0][i], static_cast<double>(i + 1));
+    }
+}
+#endif
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI

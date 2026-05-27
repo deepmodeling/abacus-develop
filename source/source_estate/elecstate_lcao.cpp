@@ -43,7 +43,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
     }
 
 #ifdef __PEXSI
-    dm->pexsi_EDM = pexsi_EDM;
+    dm->set_pexsi_EDM_pointer(pexsi_EDM);
 #endif
 
     for (int is = 0; is < nspin; is++)
@@ -105,7 +105,7 @@ void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double
     }
 
 #ifdef __PEXSI
-    dm->pexsi_EDM = pexsi_EDM;
+    dm->set_pexsi_EDM_pointer(pexsi_EDM);
 #endif
 
     dm->cal_DMR();

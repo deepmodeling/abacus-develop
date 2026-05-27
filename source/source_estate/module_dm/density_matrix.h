@@ -1,7 +1,10 @@
 #ifndef DENSITY_MATRIX_H
 #define DENSITY_MATRIX_H
 
+#include <algorithm>
+#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/record_adj.h"
@@ -267,6 +270,24 @@ class DensityMatrix
     std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
 #ifdef __PEXSI
+    void set_pexsi_EDM_pointer(const std::vector<TK*>& pexsi_EDM_in)
+    {
+        const int local_size = this->_paraV->nrow * this->_paraV->ncol;
+        this->pexsi_EDM_storage_.resize(pexsi_EDM_in.size());
+        this->pexsi_EDM.resize(pexsi_EDM_in.size());
+        for (std::size_t ik = 0; ik < pexsi_EDM_in.size(); ++ik)
+        {
+            this->pexsi_EDM_storage_[ik].resize(local_size);
+            if (local_size > 0)
+            {
+                std::copy(pexsi_EDM_in[ik],
+                          pexsi_EDM_in[ik] + local_size,
+                          this->pexsi_EDM_storage_[ik].begin());
+            }
+            this->pexsi_EDM[ik] = this->pexsi_EDM_storage_[ik].data();
+        }
+    }
+
     /**
      * @brief EDM storage for PEXSI
      * used in MD calculation
@@ -297,6 +318,10 @@ class DensityMatrix
      */
     // std::vector<ModuleBase::ComplexMatrix> _DMK;
     std::vector<std::vector<TK>> _DMK;
+
+#ifdef __PEXSI
+    std::vector<std::vector<TK>> pexsi_EDM_storage_;
+#endif
 
     /**
      * @brief K_Vectors object, which is used to get k-point information
