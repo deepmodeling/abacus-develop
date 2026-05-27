@@ -325,7 +325,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
         if (this->psi != nullptr)
         {
             bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+#ifdef __PEXSI
+            hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv,
+                                                                         PARAM.inp.ks_solver,
+                                                                         &this->pexsi_reuse_contexts_);
+#else
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
+#endif
             hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                    this->psi[0],
                                    this->pelec,

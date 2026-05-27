@@ -63,6 +63,17 @@ bool pexsi_trace_enabled(const char* category)
     return trace_value == "1" || trace_value == "all" || trace_value.find(category) != std::string::npos;
 }
 
+bool pexsi_reuse_setup_enabled()
+{
+    const char* reuse_env = std::getenv("ABACUS_PEXSI_REUSE_SETUP");
+    if (reuse_env == nullptr)
+    {
+        return true;
+    }
+    const std::string reuse_value(reuse_env);
+    return reuse_value != "0" && reuse_value != "false" && reuse_value != "off";
+}
+
 #ifdef __MPI
 void pexsi_trace_kpoint(const int imu, const int ik_global, const int pool, const char* stage)
 {
@@ -85,7 +96,8 @@ struct PexsiKParallelRunner
                     psi::Psi<TK>& psi,
                     elecstate::ElecState* pes,
                     elecstate::DensityMatrix<TK, double>& dm,
-                    const int requested_kpar)
+                    const int requested_kpar,
+                    std::vector<pexsi::PexsiComplexReuseContext>* pexsi_reuse_contexts)
     {
         return false;
     }
@@ -100,7 +112,8 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
                     psi::Psi<std::complex<double>>& psi,
                     elecstate::ElecState* pes,
                     elecstate::DensityMatrix<std::complex<double>, double>& dm,
-                    const int requested_kpar)
+                    const int requested_kpar,
+                    std::vector<pexsi::PexsiComplexReuseContext>* pexsi_reuse_contexts)
     {
         const int nks = psi.get_nk();
         if (requested_kpar <= 1 || nks <= 1)
@@ -146,6 +159,20 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
         std::vector<std::vector<std::complex<double>>> sk_pool_cache(nks);
         std::vector<std::vector<std::complex<double>>> dm_pool_cache(nks);
         std::vector<std::vector<std::complex<double>>> edm_pool_cache(nks);
+        const bool reuse_setup = pexsi_reuse_setup_enabled();
+        if (reuse_setup && pexsi_reuse_contexts == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("HSolverLCAO::pexsiKparSolve", "PEXSI reuse context storage is null");
+        }
+        if (reuse_setup && pexsi_reuse_contexts->size() != static_cast<std::size_t>(nks))
+        {
+            for (auto& pexsi_reuse_context : *pexsi_reuse_contexts)
+            {
+                pexsi_reuse_context.clear();
+            }
+            pexsi_reuse_contexts->clear();
+            pexsi_reuse_contexts->resize(nks);
+        }
         const int pexsi_mu_loops = std::min(40, std::max(1, pexsi::PEXSI_Solver::pexsi_nmax));
 
         ModuleBase::timer::start("HSolverLCAO", "cache_pexsi_hs");
@@ -241,7 +268,8 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
                                               mu,
                                               pe.current_mu(),
                                               &num_electron,
-                                              &num_electron_derivative);
+                                              &num_electron_derivative,
+                                              reuse_setup ? &(*pexsi_reuse_contexts)[ik_global] : nullptr);
                     if (rank_in_pool == 0)
                     {
                         pexsi_trace_kpoint(imu, ik_global, my_pool, "end");
@@ -331,7 +359,6 @@ struct PexsiKParallelRunner<std::complex<double>, Device>
                 break;
             }
         }
-
         MPI_Group_free(&pool_group);
         k2d.unset_para_env();
 
@@ -419,7 +446,13 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        if (PexsiKParallelRunner<TK, Device>::run(ParaV, pHamilt, psi, pes, dm, PARAM.globalv.kpar_lcao))
+        if (PexsiKParallelRunner<TK, Device>::run(ParaV,
+                                                  pHamilt,
+                                                  psi,
+                                                  pes,
+                                                  dm,
+                                                  PARAM.globalv.kpar_lcao,
+                                                  this->pexsi_reuse_contexts_ptr_))
         {
             ModuleBase::timer::end("HSolverLCAO", "solve");
             return;

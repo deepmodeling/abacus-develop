@@ -1,5 +1,6 @@
 // use PEXSI to solve a Kohn-Sham equation
 // the H and S matrices are given by 2D block cyclic distribution
+#include "simple_pexsi.h"
 #include "source_io/module_parameter/parameter.h"
 // the Density Matrix and Energy Density Matrix calculated by PEXSI are transformed to 2D block cyclic distribution
 // #include "mpi.h"
@@ -10,6 +11,7 @@
 #include <cfloat>
 #include <cmath>
 #include <complex>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -59,6 +61,36 @@ void trace_pexsi_stage(MPI_Comm comm, const char* path, const char* stage)
     }
 }
 
+std::uint64_t fnv1a_append_int(std::uint64_t hash, const int value)
+{
+    std::uint32_t data = static_cast<std::uint32_t>(value);
+    for (int byte = 0; byte < 4; ++byte)
+    {
+        hash ^= static_cast<unsigned char>((data >> (byte * 8)) & 0xffU);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+std::uint64_t local_pattern_hash(const int numColLocal,
+                                 const int nnzLocal,
+                                 const int* colptrLocal,
+                                 const int* rowindLocal)
+{
+    std::uint64_t hash = 1469598103934665603ULL;
+    hash = fnv1a_append_int(hash, numColLocal);
+    hash = fnv1a_append_int(hash, nnzLocal);
+    for (int i = 0; i < numColLocal + 1; ++i)
+    {
+        hash = fnv1a_append_int(hash, colptrLocal[i]);
+    }
+    for (int i = 0; i < nnzLocal; ++i)
+    {
+        hash = fnv1a_append_int(hash, rowindLocal[i]);
+    }
+    return hash;
+}
+
 void print_effective_pexsi_options_once(const PPEXSIOptions& options,
                                         const int numProcessPerPole,
                                         const double zeroLimit)
@@ -78,6 +110,188 @@ void print_effective_pexsi_options_once(const PPEXSIOptions& options,
                          << " zeroLimit=" << zeroLimit << std::endl;
 }
 } // namespace
+
+struct PexsiComplexReuseContextImpl
+{
+    struct Signature
+    {
+        int size = 0;
+        int numProcessPerPole = 0;
+        int pexsi_prow = 0;
+        int pexsi_pcol = 0;
+        int nnz = 0;
+        int nnzLocal = 0;
+        int numColLocal = 0;
+        int matrixType = 0;
+        int symmetric = 0;
+        int symmetricStorage = 0;
+        int ordering = 0;
+        int rowOrdering = 0;
+        int solver = 0;
+        int npSymbFact = 0;
+        int transpose = 0;
+        std::uint64_t localPatternHash = 0;
+        std::uint64_t globalPatternHash = 0;
+    };
+
+    PPEXSIPlan plan = 0;
+    MPI_Comm comm = MPI_COMM_NULL;
+    Signature signature;
+    bool has_plan = false;
+
+    ~PexsiComplexReuseContextImpl()
+    {
+        clear();
+    }
+
+    void clear()
+    {
+        int initialized = 0;
+        int finalized = 0;
+        MPI_Initialized(&initialized);
+        if (initialized)
+        {
+            MPI_Finalized(&finalized);
+        }
+        if (initialized && !finalized)
+        {
+            if (has_plan)
+            {
+                int info = 0;
+                trace_pexsi_stage(comm, "complex", "PPEXSIPlanFinalize.cached.begin");
+                PPEXSIPlanFinalize(plan, &info);
+                trace_pexsi_stage(comm, "complex", "PPEXSIPlanFinalize.cached.end");
+            }
+            if (comm != MPI_COMM_NULL)
+            {
+                MPI_Comm_free(&comm);
+            }
+        }
+        plan = 0;
+        comm = MPI_COMM_NULL;
+        signature = Signature();
+        has_plan = false;
+    }
+
+    static Signature make_signature(const PPEXSIOptions& options,
+                                    const int size,
+                                    const int numProcessPerPole,
+                                    const int pexsi_prow,
+                                    const int pexsi_pcol,
+                                    const DistCCSMatrix& matrix,
+                                    const std::uint64_t localPatternHash,
+                                    const std::uint64_t globalPatternHash)
+    {
+        Signature sig;
+        sig.size = size;
+        sig.numProcessPerPole = numProcessPerPole;
+        sig.pexsi_prow = pexsi_prow;
+        sig.pexsi_pcol = pexsi_pcol;
+        sig.nnz = matrix.get_nnz();
+        sig.nnzLocal = matrix.get_nnzlocal();
+        sig.numColLocal = matrix.get_numcol_local();
+        sig.matrixType = options.matrixType;
+        sig.symmetric = options.symmetric;
+        sig.symmetricStorage = options.symmetricStorage;
+        sig.ordering = options.ordering;
+        sig.rowOrdering = options.rowOrdering;
+        sig.solver = options.solver;
+        sig.npSymbFact = options.npSymbFact;
+        sig.transpose = options.transpose;
+        sig.localPatternHash = localPatternHash;
+        sig.globalPatternHash = globalPatternHash;
+        return sig;
+    }
+
+    static bool same_signature(const Signature& lhs, const Signature& rhs)
+    {
+        return lhs.size == rhs.size && lhs.numProcessPerPole == rhs.numProcessPerPole
+               && lhs.pexsi_prow == rhs.pexsi_prow && lhs.pexsi_pcol == rhs.pexsi_pcol
+               && lhs.nnz == rhs.nnz && lhs.nnzLocal == rhs.nnzLocal
+               && lhs.numColLocal == rhs.numColLocal && lhs.matrixType == rhs.matrixType
+               && lhs.symmetric == rhs.symmetric && lhs.symmetricStorage == rhs.symmetricStorage
+               && lhs.ordering == rhs.ordering && lhs.rowOrdering == rhs.rowOrdering
+               && lhs.solver == rhs.solver && lhs.npSymbFact == rhs.npSymbFact
+               && lhs.transpose == rhs.transpose && lhs.localPatternHash == rhs.localPatternHash
+               && lhs.globalPatternHash == rhs.globalPatternHash;
+    }
+
+    bool comm_matches(MPI_Comm new_comm) const
+    {
+        if (!has_plan || comm == MPI_COMM_NULL || new_comm == MPI_COMM_NULL)
+        {
+            return false;
+        }
+        int result = MPI_UNEQUAL;
+        MPI_Comm_compare(comm, new_comm, &result);
+        if (result == MPI_IDENT || result == MPI_CONGRUENT)
+        {
+            return true;
+        }
+        if (result == MPI_SIMILAR)
+        {
+            int old_rank = -1;
+            int new_rank = -2;
+            MPI_Comm_rank(comm, &old_rank);
+            MPI_Comm_rank(new_comm, &new_rank);
+            return old_rank == new_rank;
+        }
+        return false;
+    }
+
+    PPEXSIPlan get_or_create_plan(MPI_Comm comm_in,
+                                  const int pexsi_prow,
+                                  const int pexsi_pcol,
+                                  const int outputFileIndex,
+                                  const Signature& new_signature,
+                                  bool& reused)
+    {
+        reused = false;
+        if (comm_in == MPI_COMM_NULL)
+        {
+            return 0;
+        }
+
+        const bool local_match = has_plan && comm_matches(comm_in) && same_signature(signature, new_signature);
+        int local_reuse = local_match ? 1 : 0;
+        int global_reuse = 0;
+        MPI_Allreduce(&local_reuse, &global_reuse, 1, MPI_INT, MPI_MIN, comm_in);
+        reused = global_reuse == 1;
+        if (reused)
+        {
+            return plan;
+        }
+
+        clear();
+        MPI_Comm_dup(comm_in, &comm);
+        int info = 0;
+        trace_pexsi_stage(comm, "complex", "PPEXSIPlanInitialize.cached.begin");
+        plan = PPEXSIPlanInitialize(comm, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
+        trace_pexsi_stage(comm, "complex", "PPEXSIPlanInitialize.cached.end");
+        signature = new_signature;
+        has_plan = true;
+        return plan;
+    }
+};
+
+PexsiComplexReuseContext::PexsiComplexReuseContext()
+    : impl_(new PexsiComplexReuseContextImpl())
+{
+}
+
+PexsiComplexReuseContext::~PexsiComplexReuseContext() = default;
+
+PexsiComplexReuseContext::PexsiComplexReuseContext(PexsiComplexReuseContext&&) noexcept = default;
+
+PexsiComplexReuseContext& PexsiComplexReuseContext::operator=(PexsiComplexReuseContext&&) noexcept = default;
+
+void PexsiComplexReuseContext::clear()
+{
+    if (impl_)
+    {
+        impl_->clear();
+    }
+}
 
 inline void strtolower(char* sa, char* sb)
 {
@@ -487,7 +701,8 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
                        double& mu,
                        double mu0,
                        double* numElectronPEXSI,
-                       double* numElectronDrvMuPEXSI)
+                       double* numElectronDrvMuPEXSI,
+                       PexsiComplexReuseContext* reuse_context)
 {
     if (comm_2D == MPI_COMM_NULL && comm_PEXSI == MPI_COMM_NULL)
     {
@@ -512,7 +727,7 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
     print_effective_pexsi_options_once(options, numProcessPerPole, ZERO_Limit);
 
     ModuleBase::timer::start("Diago_LCAO_Matrix", "setup_PEXSI_plan");
-    PPEXSIPlan plan;
+    PPEXSIPlan plan = 0;
     int info = 0;
     int outputFileIndex = -1;
     int pexsi_prow = 0;
@@ -521,14 +736,6 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
     splitNProc2NProwNPcol(numProcessPerPole, pexsi_prow, pexsi_pcol);
     ModuleBase::timer::end("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
 
-    ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIPlanInit");
-    if (comm_PEXSI != MPI_COMM_NULL)
-    {
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanInitialize.begin");
-        plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanInitialize.end");
-    }
-    ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIPlanInit");
     ModuleBase::timer::end("Diago_LCAO_Matrix", "setup_PEXSI_plan");
 
     DistCCSMatrix DST_Matrix(comm_PEXSI, numProcessPerPole, size);
@@ -548,11 +755,59 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
 
     if (comm_PEXSI != MPI_COMM_NULL)
     {
+        bool reuse_plan = false;
+        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIPlanInit");
+        if (reuse_context != nullptr)
+        {
+            const std::uint64_t local_pattern_hash_value = local_pattern_hash(DST_Matrix.get_numcol_local(),
+                                                                               DST_Matrix.get_nnzlocal(),
+                                                                               DST_Matrix.get_colptr_local(),
+                                                                               DST_Matrix.get_rowind_local());
+            std::uint64_t global_pattern_hash_value = local_pattern_hash_value;
+            MPI_Allreduce(&local_pattern_hash_value,
+                          &global_pattern_hash_value,
+                          1,
+                          MPI_UINT64_T,
+                          MPI_BXOR,
+                          comm_PEXSI);
+            const auto signature = PexsiComplexReuseContextImpl::make_signature(options,
+                                                                                size,
+                                                                                numProcessPerPole,
+                                                                                pexsi_prow,
+                                                                                pexsi_pcol,
+                                                                                DST_Matrix,
+                                                                                local_pattern_hash_value,
+                                                                                global_pattern_hash_value);
+            plan = reuse_context->impl_->get_or_create_plan(comm_PEXSI,
+                                                            pexsi_prow,
+                                                            pexsi_pcol,
+                                                            outputFileIndex,
+                                                            signature,
+                                                            reuse_plan);
+            if (reuse_plan)
+            {
+                trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanInitialize.reuse");
+            }
+        }
+        else
+        {
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanInitialize.begin");
+            plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanInitialize.end");
+        }
+        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIPlanInit");
+
         int isSIdentity = 0;
+        PPEXSIOptions load_options = options;
+        if (reuse_plan)
+        {
+            load_options.isSymbolicFactorize = 0;
+            load_options.isConstructCommPattern = 0;
+        }
         ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_LoadHS_C");
         trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSILoadComplexHSMatrix.begin");
         PPEXSILoadComplexHSMatrix(plan,
-                                  options,
+                                  load_options,
                                   size,
                                   DST_Matrix.get_nnz(),
                                   DST_Matrix.get_nnzlocal(),
@@ -565,23 +820,36 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
                                   &info);
         trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSILoadComplexHSMatrix.end");
         ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_LoadHS_C");
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Symbolic_C");
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix.begin");
-        PPEXSISymbolicFactorizeComplexUnsymmetricMatrix(plan,
-                                                        options,
-                                                        reinterpret_cast<double*>(HnzvalLocal),
-                                                        &info);
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix.end");
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Symbolic_C");
+        if (!reuse_plan)
+        {
+            ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Symbolic_C");
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix.begin");
+            PPEXSISymbolicFactorizeComplexUnsymmetricMatrix(plan,
+                                                            options,
+                                                            reinterpret_cast<double*>(HnzvalLocal),
+                                                            &info);
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix.end");
+            ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Symbolic_C");
+        }
+        else
+        {
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSISymbolicFactorizeComplexUnsymmetricMatrix.reuse");
+        }
 
         double nelec = 0.0;
         double d_nelec_d_mu = 0.0;
         mu = mu0;
+        PPEXSIOptions fermi_options = options;
+        if (reuse_plan)
+        {
+            fermi_options.isSymbolicFactorize = 0;
+            fermi_options.isConstructCommPattern = 0;
+        }
         ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIDFT");
         ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_FermiOp_C");
         trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSICalculateFermiOperatorComplex.begin");
         PPEXSICalculateFermiOperatorComplex(plan,
-                                            options,
+                                            fermi_options,
                                             mu,
                                             numElectronExact,
                                             &nelec,
@@ -617,11 +885,14 @@ int simplePEXSIComplex(MPI_Comm comm_PEXSI,
             trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIRetrieveComplexDFTMatrix.end");
             ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Retrieve_C");
         }
-        ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Finalize");
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanFinalize.begin");
-        PPEXSIPlanFinalize(plan, &info);
-        trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanFinalize.end");
-        ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Finalize");
+        if (reuse_context == nullptr)
+        {
+            ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSI_Finalize");
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanFinalize.begin");
+            PPEXSIPlanFinalize(plan, &info);
+            trace_pexsi_stage(comm_PEXSI, "complex", "PPEXSIPlanFinalize.end");
+            ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSI_Finalize");
+        }
     }
 
     const MPI_Comm barrier_comm = comm_2D != MPI_COMM_NULL ? comm_2D : comm_PEXSI;

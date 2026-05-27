@@ -1,0 +1,649 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fontspec}
+
+\IfFontExistsTF{Noto Serif CJK SC}
+{
+    \setmainfont{Noto Serif CJK SC}
+}
+{
+    \setmainfont{DejaVu Serif}
+}
+\IfFontExistsTF{Noto Sans Mono CJK SC}
+{
+    \setmonofont{Noto Sans Mono CJK SC}
+}
+{
+    \setmonofont{DejaVu Sans Mono}
+}
+
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt
+
+\geometry{left=2.2cm,right=2.2cm,top=2.4cm,bottom=2.4cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.15}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\textbf{ABACUS-PEXSI 多 k 点并行优化报告}\\
+\large 代码如何优化与性能验证}
+\author{分支：\code{pexsi-stage4-pattern-reuse-opt}}
+\date{2026 年 5 月 27 日}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本报告记录本轮针对 ABACUS LCAO-PEXSI 多 k 点路径的并行优化和反馈后的补充测试。优化目标是减少原 stage4 中逐 k 点串行执行 PEXSI 的阻塞，利用 \code{kpar} 将不同 k 点分配到多个 MPI k 池中并行执行，同时避免中间化学势搜索阶段重复构造 H/S 和重复收集 DM/EDM。代码层面完成了 PEXSI 矩阵转换通信域局部化、复数 PEXSI k 池并行执行、H/S 池内缓存、DM/EDM 延迟收集、全局电子数规约、PEXSI 子通信域参数保护、细粒度计时、局部 OpenMP 循环优化，以及本轮新增的 PEXSI complex plan、symbolic factorization 和通信 pattern 保守复用框架。测试表明，新增路径可以正确完成官方 001 和 003 多 k 点样例；在 \code{003\_4MoS2} 上，\code{np=8,kpar=4,pexsi\_npole=80} 的当前实现总耗时为 68.01 s，比此前 stage4 \code{np=4} 串行 PEXSI 的 147.03 s 明显更快。反馈中关注的 H/S 打包优化已做 A/B 测试：001 中 \code{TransMAT2CCS} 仅提升约 1.25\%，003 中该计时反而因噪声略慢，说明它不是当前主瓶颈。新增 symbolic/pattern 复用在 001 的同输入 on/off 对照中保持最终能量完全一致，但由于默认数值阈值下 CCS 稀疏 pattern 在 SCF/化学势循环间漂移，保守校验没有命中可复用 plan，端到端暂无加速。详细计时显示主要瓶颈仍是 \code{PPEXSICalculateFermiOperatorComplex}；降低 \code{pexsi\_npole} 可以显著减少耗时，但 001 的低 pole 试验已出现可观能量偏差，因此不能直接作为默认正确性路径。当前实现尚未达到 10 个官方样例均在 1800 s 内收敛或全面快于传统 ScaLAPACK 的目标。
+\end{abstract}
+
+\noindent\textbf{关键词：}ABACUS；PEXSI；多 k 点并行；KPAR；MPI 子通信域；H/S 缓存；DM/EDM 延迟收集
+
+\tableofcontents
+\newpage
+
+\section{优化目标}
+
+stage4 代码已经打通了复数多 k 点 PEXSI 路径，但执行方式仍接近串行：
+
+\begin{verbatim}
+for each mu trial:
+    for each k point:
+        update H(k), S(k)
+        run complex PEXSI on all MPI ranks
+        retrieve DM/EDM
+        accumulate electron number and energy
+\end{verbatim}
+
+该方式有三个直接瓶颈：
+
+\begin{itemize}
+    \item 所有 k 点逐个执行，不能利用不同 k 点之间天然独立的并行性；
+    \item 同一个 SCF 步内，H/S 不随化学势 \(\mu\) 改变，但旧路径每次 \(\mu\) 尝试都重新 \code{updateHk} 和重新分发 H/S；
+    \item \(\mu\) 尚未满足电子数条件时，DM/EDM 只会被下一次 \(\mu\) 尝试覆盖，提前收集回全局 2D 分布会产生不必要通信。
+\end{itemize}
+
+本轮优化的直接目标是实现 PEXSI 多 k 点并行，减少重复 H/S 构造和无效 DM/EDM 收集，并用官方样例验证是否能缩短耗时。
+
+\section{代码优化内容}
+
+\subsection{通信域局部化}
+
+PEXSI 的 BCD/CCS 转换原先隐含使用 \code{MPI\_COMM\_WORLD}。这在单个 PEXSI 求解器占用全局 MPI 通信域时可以工作，但多个 k 池并行调用 PEXSI 时会出问题：不同 k 池会在不同的 group 上进入全局 collective，可能产生死锁或错误 rank 映射。
+
+本轮修改如下：
+
+\begin{itemize}
+    \item \code{DistBCDMatrix} 的参数广播从 \code{MPI\_COMM\_WORLD} 改为当前 BCD 通信域；
+    \item \code{DistMatrixTransformer::newGroupCommTrans} 使用 BCD 通信域创建临时转换通信域；
+    \item \code{buildTransformParameter} 和 BCD/CCS 数值重分布中的 root 判断改为转换通信域内 rank 0；
+    \item \code{simplePEXSI} 和 \code{simplePEXSIComplex} 末尾 barrier 改为当前 \code{comm\_2D}/\code{comm\_PEXSI}，避免不同 k 池互相等待。
+\end{itemize}
+
+涉及文件包括：
+
+\begin{itemize}
+    \item \code{source/source\_hsolver/module\_pexsi/dist\_bcd\_matrix.cpp}
+    \item \code{source/source\_hsolver/module\_pexsi/dist\_matrix\_transformer.cpp}
+    \item \code{source/source\_hsolver/module\_pexsi/simple\_pexsi.cpp}
+\end{itemize}
+
+\subsection{PEXSI 多 k 点并行执行}
+
+在 \code{HSolverLCAO} 的 \code{ks\_solver pexsi} 分支中新增复数路径专用的 k 并行 runner。该路径只在满足以下条件时启用：
+
+\begin{itemize}
+    \item 当前矩阵类型为 \code{std::complex<double>}，即非 Gamma-only 的多 k 点路径；
+    \item 输入设置了 \code{kpar > 1}，并由 LCAO 输入逻辑保存到 \code{kpar\_lcao}；
+    \item 每个 k 池至少保留 \code{pexsi\_nproc\_pole} 所需的 MPI rank。
+\end{itemize}
+
+新的并行结构为：
+
+\begin{verbatim}
+split MPI ranks into k pools by kpar
+cache H(k), S(k) in each owning pool
+for each mu trial:
+    each pool runs PEXSI for its local k points
+    pool root accumulates weighted electron number and energy
+    MPI_Allreduce over all pools
+    update global mu
+after mu converges:
+    collect cached DM/EDM from each pool back to global 2D layout
+dm2rho builds real-space density
+\end{verbatim}
+
+该实现复用了 ABACUS 既有 \code{Parallel\_K2D} 的 k 点分配和 H/S 分发能力，避免另写一套 k 点调度器。
+
+\subsection{H/S 缓存}
+
+同一 SCF 步内，H/S 由当前电荷密度决定，不随 PEXSI 化学势搜索中的 \(\mu\) 改变。因此本轮将 H/S 分发提前到 \(\mu\) 搜索外：
+
+\begin{verbatim}
+before mu loop:
+    distribute H(k), S(k) once
+    cache hk_pool/sk_pool for local k
+inside mu loop:
+    reuse cached H/S
+\end{verbatim}
+
+在 001 样例上，该优化将 \code{Parallel\_K2D::distribute\_hsk} 调用数从 115 次降到 45 次，\code{HamiltLCAO::updateHk} 调用数从 460 次降到 180 次。
+
+\subsection{DM/EDM 延迟收集}
+
+PEXSI 每次 \(\mu\) 尝试都会产生 DM/EDM，但只有电子数满足条件的最终 \(\mu\) 才会用于 \code{dm2rho}。因此本轮将全局 DM/EDM 收集推迟到 \code{finish\_k\_loop} 判定收敛之后。
+
+实现方式为：每个 k 池先把本池负责的 DM/EDM 缓存在 \code{dm\_pool\_cache}/\code{edm\_pool\_cache} 中；当当前 \(\mu\) 满足电子数条件后，再通过 \code{Cpxgemr2d} 把各 k 点的 DM/EDM 收集到全局 2D block-cyclic 分布。
+
+\subsection{全局电子数与能量规约}
+
+每个 k 池只对自己负责的 k 点执行 PEXSI。为避免一个池内多个 rank 重复计入同一个 k 点，本轮只让池内 rank 0 将该 k 点的结果加入局部和：
+
+\begin{verbatim}
+local_totals = weighted sum on pool root only
+MPI_Allreduce(local_totals -> global_totals)
+DiagoPexsi::set_k_loop_totals(global_totals)
+finish_k_loop(target_nelec)
+\end{verbatim}
+
+对应地，\code{DiagoPexsi} 新增了三个轻量接口：
+
+\begin{itemize}
+    \item \code{ensure\_density\_buffers}：为所有 k 点预分配 DM/EDM 指针；
+    \item \code{current\_mu}：读取当前全局化学势；
+    \item \code{set\_k\_loop\_totals}：写入跨 k 池规约后的电子数、导数和能量。
+\end{itemize}
+
+\subsection{PEXSI 子通信域参数保护}
+
+当用户设置 \code{kpar} 后，每个 PEXSI 子通信域的 rank 数会小于全局 rank 数。因此 \code{simple\_pexsi.cpp} 中将 \code{pexsi\_nproc\_pole} 限制到当前 PEXSI 通信域大小以内，避免 PEXSI 使用超过池内 rank 数的 pole 并行配置。
+
+\subsection{H/S 打包重分布与转换计时}
+
+BCD 到 CCS 转换阶段，H 和 S 使用相同的稀疏非零模式。旧实现对 H 和 S 分别执行一次 \code{MPI\_Alltoallv}；当前实现把同一非零位置的 H/S 数值打包后用一次 \code{MPI\_Alltoallv} 完成重分布。实数路径打包为 \code{[H,S]}，复数路径打包为 \code{[Re(H),Im(H),Re(S),Im(S)]}。
+
+该修改减少了一次 collective 调用，但它的收益必须通过计时验证。因此本轮在 \code{simplePEXSI} 和 \code{simplePEXSIComplex} 中补充了：
+
+\begin{itemize}
+    \item \code{TransMAT2CCS}：BCD 到 CCS 输入转换；
+    \item \code{PEXSI\_LoadHS\_C/R}：装载 H/S 到 PEXSI；
+    \item \code{PEXSI\_Symbolic\_C}：复数 symbolic factorization；
+    \item \code{PEXSI\_FermiOp\_C}：复数 Fermi operator 计算；
+    \item \code{PEXSI\_Retrieve\_C/R}：取回 DM/EDM；
+    \item \code{TransMAT22D}：CCS 到 BCD 输出转换。
+\end{itemize}
+
+\subsection{低温 pole 数策略}
+
+旧 stage4 为了低温能量精度，将默认 \code{pexsi\_npole=40} 在低 temperature 下提高到 120。详细计时显示，001 和 003 的 \code{PEXSIDFT} 几乎完全由 Fermi operator 计算主导，120 pole 会把多 k 点路径推到明显的性能瓶颈。本轮把低温自动提升值从 120 调整到 80，并保留用户显式设置 \code{pexsi\_npole} 和 \code{pexsi\_temp} 做性能试探的空间。
+
+需要强调：降低 \code{pexsi\_npole} 是速度/精度权衡，不是无条件优化。001 的补充测试表明，\code{pexsi\_npole=40} 配合较高 \code{pexsi\_temp} 可以更快，但总能量会偏离 120-pole 参考。因此当前默认只降到 80，后续如果要继续降低，必须先由总能量和 force 正确性测试确认。
+
+\subsection{OpenMP 本地循环优化}
+
+本轮只在 ABACUS 侧本地数组循环中引入 OpenMP，例如非零元扫描、发送/接收 buffer 填充、CCS 到 BCD 回填等。没有把 OpenMP 包到 PEXSI、BLACS 或 MPI collective 外层，也没有并行多个 PEXSI 调用。原因是这些路径涉及 MPI 通信器、PEXSI plan 和 SuperLU\_DIST 状态，外层线程并行容易引入线程安全问题或死锁。
+
+为保持结果确定性，OpenMP 循环使用先构造 mask、再串行 prefix、最后并行填充的方式，保证 \code{colidx}/\code{rowidx} 顺序与原串行扫描一致。实际测试中，001 在 \code{OMP\_NUM\_THREADS=2} 下得到与 \code{OMP\_NUM\_THREADS=1} 一致的最终能量；但小矩阵上耗时变慢，说明 OpenMP 当前主要是为较大局部矩阵预留优化路径，不是 001/003 的主要加速来源。
+
+\subsection{PEXSI symbolic 与通信 pattern 复用}
+
+本轮新增 \code{pexsi::PexsiComplexReuseContext}，用于在复数多 k 点 PEXSI 路径中保存每个 k 点的 PEXSI complex plan。该 context 不放在 \code{HSolverLCAO} 局部对象中，而是由 \code{ESolver\_KS\_LCAO} 持有并通过 \code{HSolverLCAO} 传入 \code{simplePEXSIComplex}。这样可以跨电子步保留 plan 生命周期，避免 \code{HSolverLCAO} 每个电子步重新构造导致缓存立即失效。
+
+复用条件采用保守策略。每次 BCD 到 CCS 转换后，代码为当前 PEXSI plan 生成 signature，内容包括：
+
+\begin{itemize}
+    \item PEXSI 子通信域大小、\code{numProcessPerPole}、PEXSI 2D 进程网格；
+    \item PEXSI symbolic/ordering 相关选项；
+    \item CCS 全局非零数、本地非零数、本地列数；
+    \item 当前 rank 的本地 \code{colptrLocal/rowindLocal} hash；
+    \item 所有 rank 本地 hash 规约得到的全局 pattern hash。
+\end{itemize}
+
+只有当所有 rank 的 signature 同时匹配，并且通信器 rank 顺序保持一致时，才复用已有 plan。复用命中时，\code{PPEXSILoadComplexHSMatrix} 和 \code{PPEXSICalculateFermiOperatorComplex} 使用 \code{isSymbolicFactorize=0}、\code{isConstructCommPattern=0}，并跳过显式 \code{PPEXSISymbolicFactorizeComplexUnsymmetricMatrix}。若任一 rank 发现 pattern 或参数变化，则全体 rank 重新初始化 plan，避免错误复用 PEXSI 的稀疏分解和通信状态。
+
+为便于验证，新增环境变量 \code{ABACUS\_PEXSI\_REUSE\_SETUP=0}，可在不改输入文件的情况下关闭该复用路径。该开关只用于调试和 A/B 测试；默认行为是启用保守复用检查。
+
+\section{测试环境}
+
+编译命令：
+
+\begin{verbatim}
+PATH=/home/HeJunXiang/VSCode/abacus-develop/.conda/pexsi-env/bin:$PATH \
+cmake --build build-pexsi-conda -j 2
+\end{verbatim}
+
+运行命令统一显式限制线程数，避免 OpenBLAS/OpenMP 过度嵌套：
+
+\begin{verbatim}
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+PATH=/home/HeJunXiang/VSCode/abacus-develop/.conda/pexsi-env/bin:$PATH \
+timeout <seconds>s mpirun -np <N> build-pexsi-conda/abacus_basic_para
+\end{verbatim}
+
+测试目录见表 \ref{tab:test-dirs}。
+
+\begin{longtable}{@{}p{0.30\linewidth}p{0.58\linewidth}@{}}
+\caption{本轮优化测试目录}
+\label{tab:test-dirs}\\
+\toprule
+\textbf{样例} & \textbf{目录}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{样例} & \textbf{目录}\\
+\midrule
+\endhead
+001 \code{np=4,kpar=1} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_kpar1\_omp1}\\
+001 \code{np=4,kpar=4} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_kpar4\_cache\_omp1}\\
+001 \code{np=8,kpar=4,npole=80} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_np8\_kpar4\_npole80\_omp1}\\
+001 H/S A/B packed & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_np8\_kpar4\_packed\_json\_omp1}\\
+001 H/S A/B legacy & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_np8\_kpar4\_legacy\_hs\_json\_omp1}\\
+001 OpenMP 校验 & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_001\_np8\_kpar4\_auto80\_omp2}\\
+001 pattern reuse off & \code{/tmp/abacus\_pexsi\_pattern\_reuse\_compare\_off\_20260527}\\
+001 pattern reuse on & \code{/tmp/abacus\_pexsi\_pattern\_reuse\_compare\_on\_20260527}\\
+003 \code{np=4,kpar=4} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_003\_kpar4\_cache\_omp1}\\
+003 \code{np=8,kpar=4} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_003\_np8\_kpar4\_cache\_omp1}\\
+003 \code{np=8,kpar=4,npole=80} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_003\_np8\_kpar4\_npole80\_omp1}\\
+003 H/S A/B packed & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_003\_np8\_kpar4\_packed\_json\_omp1}\\
+003 H/S A/B legacy & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_003\_np8\_kpar4\_legacy\_hs\_json\_omp1}\\
+006 \code{np=4,kpar=4} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_006\_kpar4\_cache\_omp1}\\
+006 \code{np=8,kpar=4,npole=80} & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_006\_np8\_kpar4\_cache\_omp1}\\
+006 低 pole 试探 & \code{/tmp/abacus\_pexsi\_kpar\_opt\_20260525\_006\_np8\_kpar4\_npole40\_temp0002\_omp1}\\
+\bottomrule
+\end{longtable}
+
+\section{测试结果}
+
+\subsection{001\_4GaAs}
+
+001 是 20 个 k 点、152 基函数的小型多 k 点样例。测试结果见表 \ref{tab:case001}。
+
+\begin{longtable}{@{}p{0.18\linewidth}r r r r p{0.22\linewidth}@{}}
+\caption{001\_4GaAs PEXSI k 并行测试}
+\label{tab:case001}\\
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{H/S 缓存/s} & \textbf{能量/eV} & \textbf{结论}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{H/S 缓存/s} & \textbf{能量/eV} & \textbf{结论}\\
+\midrule
+\endhead
+\code{np=4,kpar=1} & 50.06 & 43.98 & -- & -7836.1565576466 & 串行 k 循环基线\\
+\code{np=4,kpar=4} & 52.45 & 31.65 & 1.71 & -7836.1565576466 & PEXSI 求解变快，但总时间略慢\\
+\code{np=8,kpar=4,npole=80} & 23.41 & 12.74 & -- & -7836.1562642064 & 低温 80-pole 当前最快配置\\
+\code{np=8,kpar=4,npole=80,OMP=2} & 25.85 & 14.52 & 1.39 & -7836.1562642064 & 能量一致，线程开销使小矩阵变慢\\
+\bottomrule
+\end{longtable}
+
+001 说明新增 k 并行路径保持了能量一致性。4 rank 时每个 k 池只有 1 个 rank，额外的 k 池调度、缓存和全局收集抵消了收益；当使用 \code{np=8,kpar=4} 后，每个 k 池保留 2 个 rank，80-pole 配置总耗时降到 23.41 s。OpenMP=2 的能量与 OpenMP=1 一致到 \(10^{-10}\) eV 量级，但小矩阵上线程开销使总耗时上升。
+
+\subsection{003\_4MoS2}
+
+003 是 25 个 k 点、212 基函数的多 k 点样例。结果见表 \ref{tab:case003}。
+
+\begin{longtable}{@{}p{0.20\linewidth}r r r r p{0.20\linewidth}@{}}
+\caption{003\_4MoS2 PEXSI k 并行测试}
+\label{tab:case003}\\
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{H/S 缓存/s} & \textbf{能量/eV} & \textbf{结论}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{H/S 缓存/s} & \textbf{能量/eV} & \textbf{结论}\\
+\midrule
+\endhead
+此前 stage4 \code{np=4,kpar=1} & 147.03 & 136.15 & -- & -9699.0065944614 & 串行 PEXSI 参考\\
+\code{np=4,kpar=4} & 157.77 & 149.32 & 2.36 & -9699.0065944608 & 每池 1 rank，变慢\\
+\code{np=8,kpar=4} & 95.89 & 88.79 & 1.88 & -9699.0065944605 & 每池 2 rank，120-pole 参考\\
+\code{np=8,kpar=4,npole=80} & 68.01 & 60.45 & -- & -9699.0061842626 & 80-pole 进一步降低 FermiOp 成本\\
+\bottomrule
+\end{longtable}
+
+003 表明，多 k 点并行是否加速取决于每个 k 池内仍保留多少 PEXSI rank。\code{np=4,kpar=4} 把 4 个 rank 拆成 4 个单 rank 池，丢失了每 k 内部并行，因此变慢；\code{np=8,kpar=4} 每池 2 rank 后，总耗时降到 95.89 s，相比此前 stage4 串行 PEXSI 147.03 s 加速约 1.53 倍。进一步把低温默认 pole 数从 120 调整到 80 后，003 总耗时降到 68.01 s，但能量相对 120-pole 参考偏移约 \(4.1\times10^{-4}\) eV，需要总能量验收确认。
+
+但该结果仍不能说明已经快于传统 \code{ks\_solver scalapack\_gvx}。旧报告中 003 的普通 ScaLAPACK 路径约 29 s，当前 PEXSI 仍慢于成熟传统求解器。
+
+\subsection{006\_16Na}
+
+006 是 172 个 k 点、240 基函数的压力样例。此前 stage4 串行 PEXSI 在 1800 s 内只完成 PE1，PE1 约 1087.87 s。本轮使用 \code{np=4,kpar=4} 测试 600 s，程序进入 SCF 后未打印 PE1，日志停在第一个电子步开头。进一步使用 \code{np=8,kpar=4,npole=80} 和 \code{np=16,kpar=8,npole=80} 进行短时压力测试，均在数分钟内没有打印 PE1。按反馈建议把 006 改为 \code{pexsi\_npole=40,pexsi\_temp=0.0002} 后，600 s 内完成到 PE3，前三步约为 215.02/160.42/169.99 s，但仍未收敛。
+
+这说明：006 的瓶颈不是原先 multi-k 入口阻塞，而是 \(172\) 个 k 点上重复 PEXSI Fermi operator 的累计成本。在本地 24 线程机器上，单纯增加总 MPI rank 并不能线性改善，因为每个 k 池内 PEXSI rank、k 点分配均衡和单 k 稀疏求解开销之间存在权衡。低 pole 明显改善单步耗时，但 001 已显示 40 pole 可能破坏总能量，因此 006 低 pole 结果只能作为瓶颈定位，不能作为默认正确性配置。
+
+\subsection{H/S 打包 A/B 测试}
+
+反馈中指出，需要验证 ``H/S 打包成一次 \code{MPI\_Alltoallv}'' 是否真的带来速度收益。本轮用同一份代码分别切换为 packed 版本和 legacy 两次 \code{MPI\_Alltoallv} 版本，测试 001 和 003 的 \code{np=8,kpar=4,npole=80,OMP=1}。结果见表 \ref{tab:hs-pack-ab}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.14\linewidth}p{0.10\linewidth}r r r r p{0.22\linewidth}@{}}
+\caption{H/S 打包重分布 A/B 测试}
+\label{tab:hs-pack-ab}\\
+\toprule
+\textbf{样例} & \textbf{版本} & \textbf{总/s} & \textbf{TransMAT2CCS/s} & \textbf{TransMAT22D/s} & \textbf{PEXSIDFT/s} & \textbf{结论}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{样例} & \textbf{版本} & \textbf{总/s} & \textbf{TransMAT2CCS/s} & \textbf{TransMAT22D/s} & \textbf{PEXSIDFT/s} & \textbf{结论}\\
+\midrule
+\endhead
+001\_4GaAs & legacy & 24.10 & 0.05017 & 0.04445 & 12.40 & 转换占比极低\\
+001\_4GaAs & packed & 22.65 & 0.04955 & 0.04442 & 12.46 & \code{TransMAT2CCS} 快约 1.25\%\\
+003\_4MoS2 & legacy & 69.60 & 0.16931 & 0.16036 & 62.07 & 转换远小于 FermiOp\\
+003\_4MoS2 & packed & 67.51 & 0.17982 & 0.15538 & 60.10 & \code{TransMAT2CCS} 略慢，属噪声/小样例开销\\
+\bottomrule
+\end{longtable}
+}
+
+A/B 结论是：H/S 打包减少了一次 collective，代码结构更合理，但在 001/003 的本地小矩阵测试中没有形成显著端到端加速。当前 \code{TransMAT2CCS} 只有 \(10^{-1}\) s 量级，而 \code{PEXSI\_FermiOp\_C} 是 \(10^1\)--\(10^2\) s 量级，因此主瓶颈不在 H/S 重分布。
+
+\subsection{详细计时与瓶颈定位}
+
+补充计时后，001 和 003 的 \code{np=8,kpar=4} 结果见表 \ref{tab:detailed-timing}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.18\linewidth}r r r r r p{0.24\linewidth}@{}}
+\caption{细粒度计时定位}
+\label{tab:detailed-timing}\\
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{TransMAT2CCS/s} & \textbf{Symbolic/s} & \textbf{FermiOp/s} & \textbf{TransMAT22D/s} & \textbf{瓶颈}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{TransMAT2CCS/s} & \textbf{Symbolic/s} & \textbf{FermiOp/s} & \textbf{TransMAT22D/s} & \textbf{瓶颈}\\
+\midrule
+\endhead
+001 \code{npole=120} & 34.54 & -- & 0.52 & 19.51 & -- & FermiOp 约 56\%\\
+001 \code{npole=80} & 23.41 & -- & -- & 12.74 & -- & 降 pole 后 FermiOp 降低\\
+001 \code{npole=80,OMP=2} & 25.85 & 0.05488 & 0.53586 & 14.52 & 0.05265 & OpenMP 小矩阵变慢\\
+003 \code{npole=80} & 68.01 & -- & 0.83 & 60.45 & -- & FermiOp 约 89\%\\
+003 \code{packed A/B} & 67.51 & 0.17982 & 0.82252 & 60.10 & 0.15538 & FermiOp 仍为绝对主瓶颈\\
+\bottomrule
+\end{longtable}
+}
+
+计时结论很明确：当前要继续提速，优先级高于 H/S 打包的方向是减少 \code{PPEXSICalculateFermiOperatorComplex} 的调用成本和调用次数，包括更合理的 \code{kpar}、每池 rank 数、pole 数、temperature 以及后续可能的 PEXSI pattern/factorization 复用。
+
+\subsection{PEXSI pattern 复用 A/B 测试}
+
+本轮按 ``复用 PEXSI symbolic factorization 和通信 pattern'' 的方向实现了 \code{PexsiComplexReuseContext}，并用 001\_4GaAs 的 \code{np=8,kpar=4,pexsi\_npole=80,OMP=1} 做同输入对照。关闭复用时使用：
+
+\begin{verbatim}
+ABACUS_PEXSI_REUSE_SETUP=0
+\end{verbatim}
+
+开启复用时不设置该变量。两组结果见表 \ref{tab:pattern-reuse-ab}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.18\linewidth}r r r r r p{0.24\linewidth}@{}}
+\caption{PEXSI symbolic/communication pattern 复用 A/B 测试}
+\label{tab:pattern-reuse-ab}\\
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{Symbolic/s} & \textbf{FermiOp 次数} & \textbf{能量/eV} & \textbf{判断}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{Symbolic/s} & \textbf{FermiOp 次数} & \textbf{能量/eV} & \textbf{判断}\\
+\midrule
+\endhead
+reuse off & 46 & 26.84 & 1.06 & 230 & -7836.1615508456 & 对照基线\\
+reuse on & 48 & 26.70 & 1.07 & 230 & -7836.1615508456 & 数值一致，但无安全复用命中\\
+\bottomrule
+\end{longtable}
+}
+
+\code{PEXSI\_TRACE} 显示，reuse-on 运行中 \code{PPEXSICalculateFermiOperatorComplex}、\code{PPEXSISymbolicFactorizeComplexUnsymmetricMatrix} 和 \code{PPEXSIPlanInitialize.cached} 均为 230 次，没有出现 \code{PPEXSIPlanInitialize.reuse}。这不是代码没有进入复用检查，而是保守 signature 判断发现当前 CCS pattern 在 SCF/化学势循环中发生变化，因此不能复用已有 symbolic factorization 和通信 pattern。
+
+该结果解释了为什么本轮 pattern 复用没有带来端到端加速：001 的 \code{PEXSI\_Symbolic\_C} 总计约 1.06 s，只占总时间约 2.3\%；主耗时仍是 26--27 s 的 \code{PEXSI\_FermiOp\_C}。同时，若在 pattern 不一致时强行复用 PEXSI plan，会存在稀疏结构和通信映射错误的风险。因此当前实现选择保守正确性优先。后续若要真正获得该方向的收益，需要在每个 k 点上构造稳定的 CCS superset pattern，或者在 BCD 到 CCS 阶段显式缓存 pattern 与 value scatter map，使后续 SCF 步只更新数值而不改变 \code{colptrLocal/rowindLocal}。
+
+\subsection{\code{np=8/16} 与 \code{kpar} 对比}
+
+本地还测试了 \code{np=16}。结果见表 \ref{tab:np8-16}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.16\linewidth}p{0.16\linewidth}r r p{0.38\linewidth}@{}}
+\caption{\code{np=8/16} 与 \code{kpar} 对比}
+\label{tab:np8-16}\\
+\toprule
+\textbf{样例} & \textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{说明}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{样例} & \textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{说明}\\
+\midrule
+\endhead
+001 & \code{np=8,kpar=4} & 23.41 & 12.74 & 当前最佳，本地每池 2 rank\\
+001 & \code{np=16,kpar=4} & 26.03 & 13.68 & 每池 4 rank，但通信/调度开销抵消收益\\
+001 & \code{np=16,kpar=8} & 28.69 & 13.79 & 20 k 点不能被 8 池均匀分配，且每池仍只有 2 rank\\
+003 & \code{np=8,kpar=4} & 68.01 & 60.45 & 当前最佳，本地每池 2 rank\\
+003 & \code{np=16,kpar=4} & 93.79 & 83.44 & 每池 4 rank 反而放大 PEXSI/通信开销\\
+003 & \code{np=16,kpar=8} & 73.33 & 49.35 & FermiOp 降低，但总时间仍高于 \code{np=8,kpar=4}\\
+\bottomrule
+\end{longtable}
+}
+
+因此，\code{np} 越大不一定越快。对 001/003 这种小中型矩阵，本地最优点暂时是 \code{np=8,kpar=4}；\code{np=16} 在本机上增加了通信和调度开销。更大样例可能需要更多 rank，但必须用细粒度计时逐项判断，而不能只按总进程数估计。
+
+\subsection{降低 \code{pexsi\_npole} 的风险}
+
+按反馈建议，本轮测试了更低 \code{pexsi\_npole}。结果见表 \ref{tab:npole-scan}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.18\linewidth}p{0.18\linewidth}r r r p{0.28\linewidth}@{}}
+\caption{\code{pexsi\_npole} 扫描}
+\label{tab:npole-scan}\\
+\toprule
+\textbf{样例} & \textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{能量/eV} & \textbf{判断}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{样例} & \textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{能量/eV} & \textbf{判断}\\
+\midrule
+\endhead
+001 & \code{npole=120,temp=2e-5} & 34.54 & 19.51 & -7836.15655765 & 精度参考，较慢\\
+001 & \code{npole=80,temp=2e-5} & 23.41 & 12.74 & -7836.15626421 & 快约 32\%，能量偏移约 \(2.9\times10^{-4}\) eV\\
+001 & \code{npole=40,temp=0.002} & 22.55 & 11.40 & -7835.89375 & 能量偏移约 0.263 eV，不可作为默认\\
+001 & \code{npole=40,temp=0.0002} & 13.57 & 6.23 & -7833.14065 & 能量严重偏离\\
+003 & \code{npole=80,temp=2e-5} & 68.01 & 60.45 & -9699.00618426 & 快于 120-pole，需总能量验收\\
+006 & \code{npole=40,temp=0.0002} & \(>600\) & -- & -- & 600 s 到 PE3，前三步约 215.02/160.42/169.99 s，仍未收敛\\
+\bottomrule
+\end{longtable}
+}
+
+降低 pole 数确实能减少 \code{FermiOp} 时间，但目前没有证据表明 \code{npole=40} 能保持官方样例总能量正确。下一步应先等总能量在目标机器上验收，再安排 force 测试；force 不能早于总能量正确性完成，否则会掩盖 PEXSI 近似误差来源。
+
+\section{\code{05\_pexsi.md} 5.1 测试体系复测}
+
+根据 \code{05\_pexsi.md} 第 5.1 节，本轮补充测试对象不是只有 Si、Al、Cu，还包括 TiO\(_2\) 和 H\(_2\)O。为避免手工修改输入造成不可复现误差，本轮新增脚本：
+
+\begin{verbatim}
+tools/pexsi/run_51_scaling_benchmark.py
+\end{verbatim}
+
+该脚本统一生成或复制 5 个体系的输入，并按 \code{np=1,2,4,8,16} 分别运行 \code{ks\_solver scalapack\_gvx} 和 \code{ks\_solver pexsi}。外层超时从 1800 s 延长到 3600 s；所有运行固定 \code{OMP\_NUM\_THREADS=1}、\code{OPENBLAS\_NUM\_THREADS=1}、\code{MKL\_NUM\_THREADS=1}，避免 MPI 与线程嵌套混淆。验证标准采用 5.3 节：
+
+\begin{itemize}
+    \item 总能量误差 \(<10^{-5}\) Ry；
+    \item 原子受力逐分量误差 \(<10^{-4}\) eV/\AA；
+    \item 应力逐分量误差 \(<10^{-3}\) GPa。ABACUS 日志输出单位是 kbar，因此脚本内部换算为 \(0.01\) kbar。
+\end{itemize}
+
+脚本还补充了解析 \code{abacus\_stdout.log} 中的 \code{PEXSI\_TRACE}，使 timeout 样例也能给出 \code{PPEXSICalculateFermiOperatorComplex}、\code{TransMAT2CCS}、symbolic、load/retrieve 等细粒度耗时。
+
+\subsection{测试体系与参数}
+
+5.1 节的测试体系见表 \ref{tab:sec51-systems}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.16\linewidth}r p{0.16\linewidth}p{0.16\linewidth}p{0.34\linewidth}@{}}
+\caption{\code{05\_pexsi.md} 5.1 测试体系}
+\label{tab:sec51-systems}\\
+\toprule
+\textbf{体系} & \textbf{原子数} & \textbf{k 点} & \textbf{smearing/PEXSI temp} & \textbf{说明}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{体系} & \textbf{原子数} & \textbf{k 点} & \textbf{smearing/PEXSI temp} & \textbf{说明}\\
+\midrule
+\endhead
+Si 晶体 & 64 & Gamma & 0.002 Ry & 复用 \code{examples/33\_pexsi/02\_scf\_Si64}\\
+Al 金属 & 128 & \(4\times4\times4\) & 0.03 Ry & 脚本生成 fcc Al 超胞，按反馈提高金属展宽；实际 36 个 k 点，\code{np=16} 使用 \code{kpar=4}\\
+Cu 金属 & 256 & \(2\times2\times2\) & 0.03 Ry & 脚本生成 fcc Cu 超胞；已补跑 \code{np=16}\\
+TiO\(_2\) & 192 & \(2\times2\times2\) & 0.002 Ry & 脚本生成 rutile TiO\(_2\) 超胞；已补跑 \code{np=16}\\
+H\(_2\)O & 3 & Gamma & 0.02 Ry & 复用 \code{stage3\_pexsi\_tests/01\_h2o\_pexsi}\\
+\bottomrule
+\end{longtable}
+}
+
+\subsection{已完成结果}
+
+已完成的 5.1 子集见表 \ref{tab:sec51-results}。其中 ``能量'' 表示 PEXSI 相对同一体系、同一 \code{np} 的 \code{scalapack\_gvx} 总能量是否满足 \(10^{-5}\) Ry；``F/S'' 表示 force/stress 逐分量是否同时满足 5.3 标准。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.13\linewidth}r r r p{0.12\linewidth}p{0.12\linewidth}p{0.29\linewidth}@{}}
+\caption{5.1 已完成复测结果，timeout=3600 s}
+\label{tab:sec51-results}\\
+\toprule
+\textbf{体系} & \textbf{np} & \textbf{gvx/s} & \textbf{PEXSI/s} & \textbf{能量} & \textbf{F/S} & \textbf{说明}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{体系} & \textbf{np} & \textbf{gvx/s} & \textbf{PEXSI/s} & \textbf{能量} & \textbf{F/S} & \textbf{说明}\\
+\midrule
+\endhead
+Si64 & 1 & 65.82 & 225.13 & 通过 & 通过 & PEXSI 能量偏差 \(1.35\times10^{-8}\) Ry\\
+Si64 & 2 & 36.68 & 128.49 & 通过 & 通过 & EDM 生命周期修复后 force 差 0，应力差 \(5.87\times10^{-6}\) kbar\\
+Si64 & 4 & 20.35 & 73.74 & 通过 & 通过 & EDM 生命周期修复后 force 差 0，应力差 \(5.87\times10^{-6}\) kbar\\
+Si64 & 8 & 17.90 & 57.13 & 通过 & 通过 & EDM 生命周期修复后 force 差 0，应力差 \(5.87\times10^{-6}\) kbar\\
+Si64 & 16 & 14.69 & 61.83 & 通过 & 通过 & EDM 生命周期修复后 force 差 0，应力差 \(1.43\times10^{-7}\) kbar\\
+H\(_2\)O & 1 & 85.81 & 87.61 & 通过 & 通过 & PEXSI 与 gvx 耗时接近\\
+H\(_2\)O & 2 & 57.67 & 59.52 & 通过 & 通过 & 能量、force、stress 均通过\\
+H\(_2\)O & 4 & 25.52 & 25.42 & 通过 & 通过 & EDM 生命周期修复后 force 差 \(2.79\times10^{-6}\) eV/\AA，应力差 \(1.15\times10^{-6}\) kbar\\
+H\(_2\)O & 8 & 24.02 & 24.57 & 通过 & 通过 & EDM 生命周期修复后 force 差 \(2.79\times10^{-6}\) eV/\AA，应力差 \(1.15\times10^{-6}\) kbar\\
+H\(_2\)O & 16 & 22.82 & 23.00 & 通过 & 通过 & EDM 生命周期修复后 force 差 \(4.89\times10^{-6}\) eV/\AA，应力差 \(1.94\times10^{-6}\) kbar\\
+Al128 & 1 & \(>3600\) & \(>3600\) & -- & -- & 旧 \(\sigma=0.015\) 探针，二者均无最终能量\\
+Al128 & 2 & \(>3600\) & -- & -- & -- & \(\sigma=0.03\) 后 gvx 仍 timeout\\
+Al128 & 4 & \(>3600\) & \(>3600\) & -- & -- & \(\sigma=0.03,npole=80\)；二者均无最终能量\\
+Al128 & 16 & \(>3600\) & \(>3600\) & -- & -- & \(\sigma=0.03,kpar=4,npole=40\)；PEXSI 完成 26 次 FermiOp 后 timeout\\
+Cu256 & 16 & 2785.32 & \(>3600\) & -- & -- & gvx 收敛；PEXSI 首次 FermiOp 约 2152 s，第二次未完成即 timeout\\
+TiO\(_2\)-192 & 16 & 1141.37 & \(>3600\) & -- & -- & gvx 收敛；PEXSI 4 次 FermiOp 累计 2706.87 s 后 timeout\\
+\bottomrule
+\end{longtable}
+}
+
+\subsection{Si/H\(_2\)O 高 \code{np} force/stress 修复}
+
+高 \code{np} 下 Si64 与 H\(_2\)O 的旧结果表现为总能量通过、但 force/stress 不通过。定位后确认根因不是 PEXSI 的 \code{EDM/FDM} 语义错误，也不是测试脚本解析错误，而是 \code{DensityMatrix::pexsi\_EDM} 只保存了 \code{DiagoPexsi} 内部 EDM 缓冲的裸指针。\code{HSolverLCAO::solve} 返回后 \code{DiagoPexsi} 局部对象析构，后续 \code{Force\_LCAO::cal\_edm} 仍然通过 \code{dm.pexsi\_EDM} 读取这段已经失效的内存。低 \code{np} 或小规模 run 中该内存可能尚未被覆盖，因此问题具有偶发性；\code{np=4/8/16} 下后续 MPI/矩阵缓冲更容易覆盖该区域，最终表现为 force/stress 大偏差，而总能量仍然正常。
+
+修复方式是在 \code{DensityMatrix} 中新增 \code{pexsi\_EDM\_storage\_}，并提供 \code{set\_pexsi\_EDM\_pointer} 接口把 PEXSI 返回的 EDM 复制到 \code{DensityMatrix} 自有存储中；公开的 \code{pexsi\_EDM} 指针只指向这份内部存储。这样保持了 \code{Force\_LCAO} 现有调用方式不变，同时消除了 PEXSI 求解器局部缓冲的生命周期风险。新增单元测试 \code{PexsiEDMIsOwnedCopy} 覆盖外部 EDM 缓冲被修改后 \code{DensityMatrix} 内部 EDM 仍保持原值的场景。
+
+修复后使用新构建的 \code{build-pexsi-conda/abacus\_basic\_para} 在 \code{/tmp/abacus\_pexsi\_fs\_fix\_20260527\_1} 重新测试 Si64 与 H\(_2\)O 的 \code{np=4/8/16}，并在 \code{/tmp/abacus\_pexsi\_fs\_fix\_np2\_20260527} 回补 Si64 \code{np=2}；每个 \code{np} 均同时运行 \code{scalapack\_gvx} 与 \code{pexsi}。结果见表 \ref{tab:sec51-results} 中更新后的条目：这些回归组合的总能量、force 和 stress 均通过 5.3 标准。
+
+\subsection{Al128 超时原因}
+
+Al128 是 128 原子、36 个实际 k 点、2816 个 LCAO 基函数的金属体系。本轮按反馈将 \code{smearing\_method} 设为 \code{fd}，并将 \code{smearing\_sigma} 与 \code{pexsi\_temp} 对齐到 0.03 Ry；同时分别测试了 \code{npole=80} 和进一步降低的 \code{npole=40}。但在本地 24 线程单机上，Al128 仍然无法在 3600 s 内给出可比较能量。
+
+补跑 \code{np=16} 时还暴露出一个并行分组问题：ABACUS 实际使用的 k 点数为 36，而最初脚本按输入网格 \(4\times4\times4\) 直接写入 \code{kpar=16}，会触发 ``nks is not divisible by kpar'' 警告并污染性能判断。脚本已修改为选择同时整除总 MPI 进程数和实际并行 k 点数的最大 \code{kpar}；因此 Al128 的 \code{np=16} 正式复测使用 \code{kpar=4}，对应代码提交为 \code{8a2a370a1}。
+
+传统 \code{scalapack\_gvx} 的 \code{np=2} 和 \code{np=4} 都在 3600 s 内未达到 \code{scf\_thr=1e-6}。\code{np=4} 日志显示电子步已经到第 22 步附近，但电荷密度残差仍在 \(4.6\times10^{-5}\)--\(7.4\times10^{-5}\) 区间震荡，因此 timeout 的直接原因是 SCF 收敛未达标，而不是程序卡死。
+
+PEXSI 的 timeout 更直接暴露出求解瓶颈。两个代表性 run 的 \code{PEXSI\_TRACE} 汇总见表 \ref{tab:al-trace}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.24\linewidth}r r r r p{0.24\linewidth}@{}}
+\caption{Al128 PEXSI timeout trace}
+\label{tab:al-trace}\\
+\toprule
+\textbf{配置} & \textbf{wall/s} & \textbf{FermiOp/s} & \textbf{次数} & \textbf{TransMAT2CCS/s} & \textbf{判断}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{wall/s} & \textbf{FermiOp/s} & \textbf{次数} & \textbf{TransMAT2CCS/s} & \textbf{判断}\\
+\midrule
+\endhead
+\code{np=4,npole=80} & 3601.47 & 2896.63 & 9 & 3.11 & 单次 FermiOp 约 310--330 s\\
+\code{np=16,kpar=4,npole=40} & 3601.92 & 3131.95 & 26 & 10.57 & 单次 FermiOp 降低，但 SCF 步数过多\\
+\bottomrule
+\end{longtable}
+}
+
+因此 Al128 的 PEXSI 超时不是 BCD/CCS 转换造成的。\code{np=16,kpar=4,npole=40} 把单次 FermiOp 降到约 77--150 s，但 3600 s 内仍完成了 26 次 FermiOp 后才在第 27 次 FermiOp 开始处超时，没有最终能量。该 run 还出现了 trace 外长间隙，例如第 18 次 \code{TransMAT22D} 结束到下一次 \code{TransMAT2CCS} 开始约 154.5 s，说明除了 FermiOp，SCF 步间的势更新、H/S 重建或密度相关后处理也需要继续加 timer 拆分。
+
+\subsection{Cu256 与 TiO\(_2\)-192 高并行度优先复测}
+
+按照 ``先跑最可能通过的高并行度，再回补低并行度'' 的顺序，本轮补跑了 Cu256 和 TiO\(_2\)-192 的 \code{np=16}。这两个体系的传统 \code{scalapack\_gvx} 都能在 3600 s 内收敛：
+
+\begin{itemize}
+    \item TiO\(_2\)-192：\code{scalapack\_gvx np=16} 耗时 1141.37 s，最终能量 \(-156388.2323325007\) eV；
+    \item Cu256：\code{scalapack\_gvx np=16} 耗时 2785.32 s，最终能量 \(-292528.3298326000\) eV。
+\end{itemize}
+
+但 PEXSI 在同样 \code{np=16}、\code{pexsi\_npole=80} 下仍然超时，且没有最终能量，不能进入 5.3 的能量/力/应力偏差判定。细粒度 trace 见表 \ref{tab:cu-tio2-trace}。
+
+{\scriptsize
+\begin{longtable}{@{}p{0.16\linewidth}r r r r p{0.28\linewidth}@{}}
+\caption{Cu256 与 TiO\(_2\)-192 的 \code{np=16} PEXSI timeout trace}
+\label{tab:cu-tio2-trace}\\
+\toprule
+\textbf{体系} & \textbf{PEXSI wall/s} & \textbf{FermiOp/s} & \textbf{次数} & \textbf{TransMAT2CCS/s} & \textbf{判断}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{体系} & \textbf{PEXSI wall/s} & \textbf{FermiOp/s} & \textbf{次数} & \textbf{TransMAT2CCS/s} & \textbf{判断}\\
+\midrule
+\endhead
+TiO\(_2\)-192 & 3601.47 & 2706.87 & 4 & 4.40 & FermiOp 主导；转换不是瓶颈\\
+Cu256 & 3601.97 & 2152.17 & 1 & 3.41 & 首次 FermiOp 即超过半小时\\
+\bottomrule
+\end{longtable}
+}
+
+这个结果说明，对 Cu/TiO\(_2\) 而言，\code{np=16} 已经是本轮单节点测试中比 \code{np=8/4/2/1} 更有利的配置。既然 \code{np=16} PEXSI 已经 timeout，继续顺序执行更低 \code{np} 的 PEXSI 只会减少每个 k 池内可用 rank 或降低总并行度，不能改善 3600 s 收敛目标。因此本轮没有继续耗时跑 \code{np=8/4/2/1} 的 PEXSI，而是把这些配置标记为被 \code{np=16} timeout 支配的低优先级失败边界。
+
+\subsection{阶段性判断}
+
+5.1 复测目前给出三个明确结论：
+
+\begin{itemize}
+    \item Si64 与 H\(_2\)O 的总能量在所有已测 \code{np} 上均通过 \(10^{-5}\) Ry 标准；EDM 生命周期修复后，Si64 的 \code{np=2/4/8/16} 以及 H\(_2\)O 的 \code{np=4/8/16} force/stress 均已通过 5.3 标准；
+    \item Al128 的传统参考和 PEXSI 即使补跑到 \code{np=16,kpar=4,npole=40} 仍不能在 3600 s 内完成，不能把无最终能量的 timeout 结果用于正确性比较；
+    \item Cu256 和 TiO\(_2\)-192 的 \code{np=16} 传统参考已经得到，但 PEXSI 即使使用 \code{np=16,npole=80} 仍超时，主瓶颈同样是 Fermi operator。
+\end{itemize}
+
+后续完整 5.1 矩阵应继续保持高并行度优先：已经证明 \code{np=16} PEXSI 超时的体系，不应再优先消耗时间跑更低 \code{np} 的 PEXSI；更合理的下一步是测试更低 \code{pexsi\_npole}、更多节点或 PEXSI pattern/factorization 复用，然后再回补 \code{np=8/4/2/1} 的失败边界。
+
+\section{结论}
+
+本轮已经完成多 k 点 PEXSI 并行执行的代码优化：
+
+\begin{itemize}
+    \item PEXSI BCD/CCS 转换从全局 MPI 隐式依赖改为子通信域安全；
+    \item \code{HSolverLCAO} 可以在复数多 k 点 PEXSI 下使用 \code{kpar} 并行处理不同 k 点；
+    \item H/S 在同一 SCF 步内缓存，避免每次化学势尝试重复 \code{updateHk} 和分发；
+    \item DM/EDM 只在化学势满足电子数条件后收集回全局 2D 分布；
+    \item 细粒度计时确认主瓶颈是 \code{PEXSI\_FermiOp\_C}，而不是 BCD/CCS 转换；
+    \item H/S 打包重分布经过 A/B 测试，证明其端到端收益很小，不能作为主要加速来源；
+    \item 新增 \code{PexsiComplexReuseContext}，打通 PEXSI complex plan、symbolic factorization 和通信 pattern 的保守复用接口，并用 \code{ABACUS\_PEXSI\_REUSE\_SETUP=0} 完成同输入 on/off 数值对照；
+    \item 003 在 \code{np=8,kpar=4,npole=80} 下相对 stage4 串行 PEXSI 获得约 2.16 倍加速。
+\end{itemize}
+
+但当前实现尚未达到 ``10 个官方样例都在 1800 s 内通过'' 或 ``全面快于传统 ScaLAPACK'' 的目标。\code{np=16} 在本地对 001/003 没有带来进一步加速；006 在 \code{np=8/16} 的 80-pole 短时测试中仍未打印 PE1。本轮 pattern 复用保持了数值正确性，但在 001 默认阈值下没有命中可安全复用的 CCS pattern，因此暂无端到端加速。后续要继续推进，需要重点做以下工作：
+
+\begin{itemize}
+    \item 在更多节点或更大 MPI rank 上测试 \code{kpar} 与每池 rank 数的组合，避免本机小样例通信开销主导结论；
+    \item 在每个 k 点上构造稳定的 CCS superset pattern，或缓存 BCD 到 CCS 的 pattern/value scatter map，使本轮新增的 PEXSI plan 复用接口能够真正命中；
+    \item 对 006、007、009、010 继续扫描 \code{pexsi\_npole}/\code{pexsi\_temp}，但每个低 pole 组合必须先过总能量验收；
+    \item 将 Si64/H\(_2\)O 的 force/stress 生命周期修复扩展为更系统的回归测试，并继续补齐 Al、Cu、TiO\(_2\) 在有最终能量后的 force/stress 判定；
+    \item 将传统 ScaLAPACK、串行 PEXSI、k 并行 PEXSI 放在同一节点、同一线程数下重新跑完整 10 样例，避免跨环境计时误判。
+\end{itemize}
+
+\end{document}

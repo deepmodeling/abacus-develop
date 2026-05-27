@@ -13,7 +13,11 @@
 #include "source_lcao/setup_dm.h" // mohan add 2025-10-30
 
 #include <memory>
+#include <vector>
 
+#ifdef __PEXSI
+#include "source_hsolver/module_pexsi/simple_pexsi.h"
+#endif
 
 // for Linear Response
 namespace LR
@@ -82,6 +86,9 @@ class ESolver_KS_LCAO : public ESolver_KS
     //! Add density matrix class, mohan add 2025-10-30
     LCAO_domain::Setup_DM<TK> dmat;
 
+#ifdef __PEXSI
+    std::vector<pexsi::PexsiComplexReuseContext> pexsi_reuse_contexts_;
+#endif
 
     // For deepks method, mohan add 2025-10-08
     Setup_DeePKS<TK> deepks;

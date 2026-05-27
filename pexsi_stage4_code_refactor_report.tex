@@ -657,6 +657,33 @@ PEXSI is not completed for multi-k case
 
 细粒度 trace 显示，007 的单次 \code{PPEXSICalculateFermiOperatorComplex} 约为 8--10 s，而 \code{TransMAT2CCS}、symbolic、load/retrieve 均远小于该值。因此 007 的主要瓶颈不是 H/S 转换，也不是 symbolic setup，而是 Fermi operator 调用次数和单次 Fermi operator 成本。010 属于 Gamma 大矩阵问题，\code{nproc\_pole} 可以改善 PE1，但降低 \code{npole} 会产生不可接受的能量错误。
 
+\section{增量优化：PEXSI symbolic 与通信 pattern 复用}
+
+在新分支 \code{pexsi-stage4-pattern-reuse-opt} 中，进一步实现了复数多 k 点 PEXSI 路径的 plan 复用框架。新增 \code{pexsi::PexsiComplexReuseContext} 保存每个 k 点的 PEXSI complex plan，并由 \code{ESolver\_KS\_LCAO} 持有 context vector，再通过 \code{HSolverLCAO} 传入 \code{simplePEXSIComplex}。这样 context 生命周期可以跨电子步保留，而不会随着每个电子步临时构造的 \code{HSolverLCAO} 对象销毁。
+
+复用采用保守 signature 判定：当前通信器 rank 顺序、PEXSI 进程网格、symbolic/ordering 选项、CCS 非零数、本地列数、本地 \code{colptrLocal/rowindLocal} hash 以及全局 pattern hash 全部一致时，才跳过 \code{PPEXSISymbolicFactorizeComplexUnsymmetricMatrix}，并在后续 \code{PPEXSILoadComplexHSMatrix} 与 \code{PPEXSICalculateFermiOperatorComplex} 中设置 \code{isSymbolicFactorize=0}、\code{isConstructCommPattern=0}。若任一 rank 发现 pattern 不一致，则所有 rank 重新初始化 plan，避免错误复用 PEXSI 的通信映射和稀疏分解结构。
+
+为验证该修改，增加调试开关 \code{ABACUS\_PEXSI\_REUSE\_SETUP=0}，可在同一输入下关闭复用路径。001\_4GaAs 的 \code{np=8,kpar=4,pexsi\_npole=80,OMP=1} 对照结果如下：
+
+{\scriptsize
+\begin{longtable}{@{}p{0.18\linewidth}r r r r p{0.26\linewidth}@{}}
+\caption{PEXSI symbolic/communication pattern 复用对照}\\
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{Symbolic/s} & \textbf{最终能量/eV} & \textbf{判断}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{配置} & \textbf{总/s} & \textbf{PEXSIDFT/s} & \textbf{Symbolic/s} & \textbf{最终能量/eV} & \textbf{判断}\\
+\midrule
+\endhead
+reuse off & 46 & 26.84 & 1.06 & -7836.1615508456 & 关闭复用的当前基线\\
+reuse on & 48 & 26.70 & 1.07 & -7836.1615508456 & 数值完全一致，但无安全复用命中\\
+\bottomrule
+\end{longtable}
+}
+
+该对照说明新增复用检查没有改变计算结果；但在当前默认 \code{pexsi\_zero\_thr} 下，001 的 CCS pattern 会随 SCF/化学势循环发生变化，保守 signature 判定无法命中可复用 plan。因此本轮增量属于代码结构和生命周期优化，尚未在默认样例上形成端到端加速。后续真正获得该方向收益，需要在每个 k 点上构造稳定的 CCS superset pattern，或者缓存 BCD 到 CCS 的 pattern 与 value scatter map，使后续 SCF 步只更新数值而不改变 \code{colptrLocal/rowindLocal}。
+
 \section{重构收益、限制与后续工作}
 
 \subsection{重构收益}
@@ -688,7 +715,7 @@ PEXSI is not completed for multi-k case
 
 \begin{enumerate}
     \item 继续调优 k 点级并行的 \code{kpar} 和每池 rank 数，并在更多节点上测试，而不是只依赖本地单节点 \code{np=8/16} 结果；
-    \item 缓存或复用 PEXSI symbolic factorization / communication pattern，减少每个 SCF 步、每个 k 点重复建图成本；
+    \item 在本轮保守复用框架基础上稳定 CCS pattern，例如构造 per-k superset pattern 或缓存 BCD 到 CCS 的 value scatter map，使 PEXSI plan 复用真正命中；
     \item 针对金属体系设计更合适的 PEXSI temperature/pole 策略，并将 \code{getPole error} 边界做成确定性参数检查；
     \item 对 001、003、005、008 建立 PEXSI 专用精度回归标准，或继续寻找不触发 \code{getPole error} 的 pole/temperature 组合；
     \item 补充 force/stress 和密度矩阵一致性验证，避免只以总能量判断 PEXSI 路径正确性。
@@ -698,6 +725,6 @@ PEXSI is not completed for multi-k case
 
 本报告完成了 ABACUS-PEXSI 多 k 点路径的一次代码修改与重构评估。通过补齐复数 PEXSI 调用、全局化学势搜索、k 点权重修正、复数密度矩阵回写和 PEXSI 温度/FD smearing 对齐，当前代码已经突破原先多 k 点 PEXSI 直接不可用的阻塞。按 2026-05-25 的 \code{np=8/16} 全量复测，官方 10 个样例中已有 7 个样例可以在 1800 s 内完成；007、009、010 仍超时。
 
-从并行程序角度看，本轮修改证明了 PEXSI 多 k 点路径的主要难点不只是接口打通，还包括 MPI 数据分布、稀疏矩阵格式转换、全局化学势搜索、k 点并行策略和 PEXSI 参数选择之间的综合权衡。当前实现已经具备 k 池并行能力，但性能尚不能全面超过成熟 ScaLAPACK 路径。后续若要将该路径推进到可长期使用的并行求解器，需要重点优化每池 rank 数、PEXSI plan 复用和更稳定的 pole/temperature 策略。
+从并行程序角度看，本轮修改证明了 PEXSI 多 k 点路径的主要难点不只是接口打通，还包括 MPI 数据分布、稀疏矩阵格式转换、全局化学势搜索、k 点并行策略和 PEXSI 参数选择之间的综合权衡。当前实现已经具备 k 池并行能力，并新增了 PEXSI plan/symbolic/communication pattern 的保守复用接口；但默认样例中 CCS pattern 仍会漂移，性能尚不能全面超过成熟 ScaLAPACK 路径。后续若要将该路径推进到可长期使用的并行求解器，需要重点优化每池 rank 数、稳定 CCS pattern 复用和更可靠的 pole/temperature 策略。
 
 \end{document}
