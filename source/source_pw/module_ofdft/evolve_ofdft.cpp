@@ -118,9 +118,6 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>>& pphi,
     const double* gg = pw_rho->gg;
     const double tpiba2 = pw_rho->tpiba2;
 
-    if (nspin <= 0) {
-        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
-    }
     std::vector<std::vector<std::complex<double>>> rLapPhi(nspin, std::vector<std::complex<double>>(nrxx));
     std::vector<std::vector<std::complex<double>>> recipPhi(nspin, std::vector<std::complex<double>>(npw));
 
@@ -163,9 +160,6 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
     const double* gg = pw_rho->gg;
     const ModuleBase::Vector3<double>* gcar = pw_rho->gcar;
 
-    if (nspin <= 0) {
-        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
-    }
     std::vector<std::vector<std::complex<double>>> recipPhi(nspin, std::vector<std::complex<double>>(npw));
     std::vector<std::vector<std::complex<double>>> rPhi(nspin, std::vector<std::complex<double>>(nrxx));
 
