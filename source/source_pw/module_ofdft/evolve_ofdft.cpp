@@ -2,7 +2,6 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include <complex>
-#include <iostream>
 
 #include "source_base/parallel_reduce.h"
 
