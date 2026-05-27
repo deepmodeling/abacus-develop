@@ -353,14 +353,14 @@ public:
 
     /// @brief Get or create the diagonalization engine.
     template <typename U = TK>
-    typename std::enable_if<std::is_same_v<U, std::complex<double>>, DiagonalizationEngine&>::type
+    typename std::enable_if<std::is_same<U, std::complex<double>>::value, DiagonalizationEngine&>::type
     get_or_create_engine_impl(double rms_error)
     {
 #ifdef __LCAO
         if (PARAM.inp.basis_type != "lcao")
         {
             static std::unique_ptr<DiagonalizationEngine> dummy_fs;
-            if (!dummy_fs) dummy_fs = std::make_unique<FullSpaceDiagonalizer>(*this);
+            if (!dummy_fs) dummy_fs.reset(new FullSpaceDiagonalizer(*this));
             return *dummy_fs;
         }
 
@@ -392,12 +392,12 @@ public:
         {
             if (sc_acceleration_mode_ == "first_order")
             {
-                diagonalization_engine_ = std::make_unique<FirstOrderResponseEngine>(*this);
+                diagonalization_engine_.reset(new FirstOrderResponseEngine(*this));
                 current_strategy_ = DiagonalizationStrategy::FirstOrder;
             }
             else if (sc_acceleration_mode_ == "subspace")
             {
-                diagonalization_engine_ = std::make_unique<SubspaceDiagonalizer>(*this);
+                diagonalization_engine_.reset(new SubspaceDiagonalizer(*this));
                 current_strategy_ = DiagonalizationStrategy::Subspace;
             }
 
@@ -414,21 +414,21 @@ public:
 
         if (!diagonalization_engine_)
         {
-            diagonalization_engine_ = std::make_unique<FullSpaceDiagonalizer>(*this);
+            diagonalization_engine_.reset(new FullSpaceDiagonalizer(*this));
             current_strategy_ = DiagonalizationStrategy::FullSpace;
         }
         return *diagonalization_engine_;
 #else
         (void)rms_error;
         static std::unique_ptr<DiagonalizationEngine> dummy;
-        if (!dummy) dummy = std::make_unique<FullSpaceDiagonalizer>(*this);
+        if (!dummy) dummy.reset(new FullSpaceDiagonalizer(*this));
         return *dummy;
 #endif
     }
 
     /// @brief Default stub for non-complex<double> specializations.
     template <typename U = TK>
-    typename std::enable_if<!std::is_same_v<U, std::complex<double>>, DiagonalizationEngine&>::type
+    typename std::enable_if<!std::is_same<U, std::complex<double>>::value, DiagonalizationEngine&>::type
     get_or_create_engine_impl(double rms_error)
     {
         (void)rms_error;
