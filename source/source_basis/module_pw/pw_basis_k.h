@@ -100,6 +100,13 @@ public:
                           const double& erf_sigma_in = 0.1);
 
   private:
+    void invalidate_cache() override
+    {
+      PW_Basis::invalidate_cache();
+      this->gk_cache_valid = false;
+    }
+
+    bool gk_cache_valid = false;
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft

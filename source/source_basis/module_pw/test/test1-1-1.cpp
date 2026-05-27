@@ -31,6 +31,18 @@ TEST_F(PWTEST,test1_1_1)
     pwtest.setuptransform();
     pwtest.collect_local_pw();
     pwtest.collect_uniqgg();
+    double* gg_ptr = pwtest.gg;
+    int* ig2igg_ptr = pwtest.ig2igg;
+    double* gguniq_ptr = pwtest.gg_uniq;
+    const int ngg_before = pwtest.ngg;
+    const double gg_sample = pwtest.gg[0];
+    pwtest.collect_local_pw();
+    pwtest.collect_uniqgg();
+    EXPECT_EQ(pwtest.gg, gg_ptr);
+    EXPECT_EQ(pwtest.ig2igg, ig2igg_ptr);
+    EXPECT_EQ(pwtest.gg_uniq, gguniq_ptr);
+    EXPECT_EQ(pwtest.ngg, ngg_before);
+    EXPECT_DOUBLE_EQ(pwtest.gg[0], gg_sample);
     ModuleBase::Matrix3 GT,G,GGT;
     GT = latvec.Inverse();
 	G  = GT.Transpose();

@@ -161,6 +161,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
     {
         delete[] this->ig2isz; this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
         delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
+        this->invalidate_cache();
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu") {
             delmem_int_op()(this->d_is2fftixy);
@@ -226,6 +227,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
         syncmem_int_h2d_op()(ig2ixyz_gpu, ig2ixyz.data(), this->npw);
     }
 #endif
+    this->invalidate_cache();
     return;
 }
 } // namespace ModulePW
