@@ -62,7 +62,7 @@ void Evolve_OFDFT::renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std:
     const int nspin = PARAM.inp.nspin;
     const int nrxx = pw_rho->nrxx;
 
-    std::cout<<"sr="<<sr<<" nelec="<<PARAM.inp.nelec<<" normalize_factor="<<normalize_factor<<std::endl;
+
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
