@@ -323,6 +323,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         }
         else if (PARAM.inp.gint_precision == "single")
         {
+            std::cout << " >> NOTICE: Gint grid-integration runs in fp32 (single-precision mode)" << std::endl;
+        }
+
+        if (PARAM.inp.sc_mag_switch)
+        {
+            spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+            sc.set_subspace_exec_precision(this->gint_precision_controller_.current_precision());
+        }
+        else if (PARAM.inp.gint_precision == "single")
+        {
             GlobalV::ofs_running << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
             std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)" << std::endl;
         }
@@ -684,6 +694,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = "
                              << this->drho << ")" << std::endl;
         std::cout << " >> NOTICE: Gint grid-integration precision switched from fp32 to fp64" << std::endl;
+    }
+
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.set_subspace_exec_precision(this->gint_precision_controller_.current_precision());
     }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first

@@ -76,6 +76,7 @@
 #include "source_cell/unitcell.h"
 #include "source_hamilt/operator.h"
 #include "source_estate/elecstate.h"
+#include "source_lcao/module_gint/gint_helper.h"
 
 #ifdef __LCAO
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
@@ -890,17 +891,20 @@ public:
     double last_drho_ = -1.0; ///< Last observed SCF charge density error (for convergence-dependent diagnostics)
 
   public:
-    /// @brief Set DeltaSpin operator pointer for magnetic moment calculation (LCAO)
-    /// @param op_in Base pointer, actual type is DeltaSpin<OperatorLCAO<TK, TR>>*
-    void set_operator(hamilt::Operator<TK>* op_in);
-    /// @brief Set magnetic moment convergence flag
-    void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
-    /// @brief Get magnetic moment convergence flag
-    bool mag_converged() const {return this->is_Mi_converged;}
-    /// @brief Set the last observed SCF charge density error (drho)
-    void set_drho(double drho_in) { this->last_drho_ = drho_in; }
-    /// @brief Get the last observed SCF charge density error
-    double get_drho() const { return this->last_drho_; }
+     /// @brief Set DeltaSpin operator pointer for magnetic moment calculation (LCAO)
+     /// @param op_in Base pointer, actual type is DeltaSpin<OperatorLCAO<TK, TR>>*
+     void set_operator(hamilt::Operator<TK>* op_in);
+     /// @brief Set magnetic moment convergence flag
+     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
+     /// @brief Get magnetic moment convergence flag
+     bool mag_converged() const {return this->is_Mi_converged;}
+     /// @brief Set the last observed SCF charge density error (drho)
+     void set_drho(double drho_in) { this->last_drho_ = drho_in; }
+     /// @brief Get the last observed SCF charge density error
+     double get_drho() const { return this->last_drho_; }
+
+     void set_subspace_exec_precision(ModuleGint::GintPrecision prec) { subspace_exec_precision_ = prec; }
+     ModuleGint::GintPrecision get_subspace_exec_precision() const { return subspace_exec_precision_; }
     /// @brief Flag: has trace vs DMR diagnostic been run this calculation?
     bool local_diag_run_ = false;
     void set_npol(int npol);
@@ -939,6 +943,8 @@ public:
     hamilt::Operator<TK>* p_operator = nullptr;
     /// @brief Flag: has the magnetic moment converged in the current SCF iteration?
     bool is_Mi_converged = false;
+    /// @brief Execution precision for DeltaSpin subspace operations
+    ModuleGint::GintPrecision subspace_exec_precision_ = ModuleGint::GintPrecision::fp64;
 
     /**
      * =============================================================

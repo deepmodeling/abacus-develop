@@ -4,24 +4,15 @@
  *
  * @par Purpose
  * Implements the subspace diagonalization strategy for LCAO basis in DeltaSpin,
- * mirroring the PW path. The key idea:
+ * with mixed-precision support: hot GEMM operations can run in fp32 while
+ * phase-sensitive operations (folding_HR) remain in fp64.
  *
- *   First call (i_step = -1): Full diagonalization -> cache H0_sub, S_sub, P_I_sub
- *   Subsequent calls (i_step >= 0): H_sub = H0_sub + Sum lambda_I P_I_sub -> subspace diag
- *
- * @par Parallel Strategy
- * - H_sub = Ct.H.C and S_sub = Ct.S.C are computed via ScaLAPACK pzgemm
- *   on the 2D-block distributed H(k), S(k), C(k).
- *   The result (nbands x nbands) is gathered to all processes in the pool.
- * - P_I_sub is computed by cal_PI_sub() which already does MPI_Allreduce.
- * - Subspace diagonalization (nbands x nbands) uses local LAPACK zhegvd.
- * - Psi rotation C_new = C_old . V uses ScaLAPACK pzgemm.
- *
- * @par Layout Conventions
- * - H_sub, S_sub, V: column-major nbands x nbands (LAPACK convention) after gathering
- * - desc_Eij local layout: nrow x ncol_bands (lld = nrow), NOT ncol_bands x ncol_bands
- * - C(k): 2D-block distributed (ScaLAPACK convention, ParaV->desc_wfc)
- * - P_I_sub[iat]: column-major nbands x nbands Hermitian
+ * @par Mixed Precision Strategy
+ * - Input/Output: always complex<double> (fp64)
+ * - Inner GEMM computations: complex<float> (fp32) when enabled
+ * - Cast-down before GEMM, Cast-up after GEMM
+ * - folding_HR always in fp64 (phase-sensitive)
+ * - Controlled by subspace_exec_precision_ from GintPrecisionController
  */
 
 #include "spin_constrain.h"
@@ -67,18 +58,6 @@ void SpinConstrain<std::complex<double>>::free_lcao_subspace_cache()
     lcao_subspace_initialized_ = false;
 }
 
-/**
- * @brief Gather a distributed nbands x nbands matrix to all processes in the pool.
- *
- * @details Each process holds its local portion of the ScaLAPACK-distributed matrix
- * (desc_Eij layout). The local storage has leading dimension = nrow (not ncol_bands).
- * Row indices map via local2global_row, column indices via local2global_col.
- *
- * @param local_data Local portion of the distributed matrix (lld = nrow)
- * @param ParaV Parallel orbitals distribution info
- * @param full_data Output: full nbands x nbands matrix on all processes (column-major)
- * @param nbands Number of bands
- */
 static void gather_sub_matrix_to_all(
     const std::complex<double>* local_data,
     const Parallel_Orbitals* ParaV,
@@ -109,14 +88,6 @@ static void gather_sub_matrix_to_all(
 #endif
 }
 
-/**
- * @brief Scatter a full nbands x nbands matrix to local desc_Eij storage.
- *
- * @param full_data Full nbands x nbands matrix (column-major)
- * @param ParaV Parallel orbitals distribution info
- * @param local_data Output: local portion in desc_Eij layout (lld = nrow)
- * @param nbands Number of bands
- */
 static void scatter_sub_matrix_to_local(
     const std::complex<double>* full_data,
     const Parallel_Orbitals* ParaV,
@@ -145,9 +116,59 @@ static void scatter_sub_matrix_to_local(
 #endif
 }
 
-/**
- * @brief Compute H_sub = Ct.H.C and S_sub = Ct.S.C for LCAO subspace.
- */
+static void cast_down_to_float(const std::complex<double>* src, std::complex<float>* dst, std::size_t n)
+{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        dst[i] = static_cast<std::complex<float>>(src[i]);
+    }
+}
+
+static void cast_up_to_double(const std::complex<float>* src, std::complex<double>* dst, std::size_t n)
+{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        dst[i] = static_cast<std::complex<double>>(src[i]);
+    }
+}
+
+static void gather_sub_matrix_to_all_float(
+    const std::complex<float>* local_data,
+    const Parallel_Orbitals* ParaV,
+    std::complex<double>* full_data,
+    int nbands)
+{
+    std::vector<std::complex<double>> local_db(ParaV->nrow * ParaV->ncol_bands);
+    cast_up_to_double(local_data, local_db.data(), local_db.size());
+    gather_sub_matrix_to_all(local_db.data(), ParaV, full_data, nbands);
+}
+
+static void scatter_sub_matrix_to_local_float(
+    const std::complex<double>* full_data,
+    const Parallel_Orbitals* ParaV,
+    std::complex<float>* local_data,
+    int nbands)
+{
+    int nrow = ParaV->nrow;
+    int ncol_bands = ParaV->ncol_bands;
+    int nloc_eij_local = nrow * ncol_bands;
+#ifdef __MPI
+    std::vector<std::complex<double>> local_db(nloc_eij_local, {0.0, 0.0});
+    scatter_sub_matrix_to_local(full_data, ParaV, local_db.data(), nbands);
+    cast_down_to_float(local_db.data(), local_data, nloc_eij_local);
+#else
+    std::vector<std::complex<double>> tmp(nbands * nbands);
+    scatter_sub_matrix_to_local(full_data, ParaV, tmp.data(), nbands);
+    cast_down_to_float(tmp.data(), local_data, nbands * nbands);
+#endif
+}
+
 template <>
 void SpinConstrain<std::complex<double>>::calculate_lcao_sub_hs(
     void* hamilt,
@@ -171,81 +192,147 @@ void SpinConstrain<std::complex<double>>::calculate_lcao_sub_hs(
     psi.fix_k(ik);
     std::complex<double>* psi_ptr = psi.get_pointer();
 
-    const std::complex<double> one = {1.0, 0.0};
-    const std::complex<double> zero = {0.0, 0.0};
+    const bool use_fp32 = (subspace_exec_precision_ == ModuleGint::GintPrecision::fp32);
+
+    if (use_fp32)
+    {
+        ModuleBase::timer::start("SpinConstrain", "calc_sub_hs_fp32");
+        const std::complex<float> one_f = {1.0f, 0.0f};
+        const std::complex<float> zero_f = {0.0f, 0.0f};
 
 #ifdef __MPI
-    int nloc_wfc = ParaV->nloc_wfc;
-    std::vector<std::complex<double>> temp(nloc_wfc, zero);
+        int nloc_wfc = ParaV->nloc_wfc;
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
 
-    ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
-        one, h_mat.p, 1, 1, ParaV->desc,
-        psi_ptr, 1, 1, ParaV->desc_wfc,
-        zero, temp.data(), 1, 1, ParaV->desc_wfc);
+        std::vector<std::complex<float>> h_f(ParaV->nloc, zero_f);
+        cast_down_to_float(h_mat.p, h_f.data(), ParaV->nloc);
+        std::vector<std::complex<float>> s_f(ParaV->nloc, zero_f);
+        cast_down_to_float(s_mat.p, s_f.data(), ParaV->nloc);
+        std::vector<std::complex<float>> psi_f(nloc_wfc, zero_f);
+        cast_down_to_float(psi_ptr, psi_f.data(), nloc_wfc);
 
-    // desc_Eij has lld = nrow, so local buffer must be nrow * ncol_bands
-    int lld_Eij = ParaV->nrow;
-    int ncol_bands = ParaV->ncol_bands;
-    int nloc_eij_local = lld_Eij * ncol_bands;
+        std::vector<std::complex<float>> temp_f(nloc_wfc, zero_f);
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one_f, h_f.data(), 1, 1, ParaV->desc,
+            psi_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, temp_f.data(), 1, 1, ParaV->desc_wfc);
 
-    std::vector<std::complex<double>> h_sub_local(nloc_eij_local, zero);
+        std::vector<std::complex<float>> h_sub_local_f(nloc_eij_local, zero_f);
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one_f, psi_f.data(), 1, 1, ParaV->desc_wfc,
+            temp_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, h_sub_local_f.data(), 1, 1, ParaV->desc_Eij);
 
-    ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
-        one, psi_ptr, 1, 1, ParaV->desc_wfc,
-        temp.data(), 1, 1, ParaV->desc_wfc,
-        zero, h_sub_local.data(), 1, 1, ParaV->desc_Eij);
+        gather_sub_matrix_to_all_float(h_sub_local_f.data(), ParaV, h_sub, nbands);
 
-    gather_sub_matrix_to_all(h_sub_local.data(), ParaV, h_sub, nbands);
+        std::vector<std::complex<float>> temp_s_f(nloc_wfc, zero_f);
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one_f, s_f.data(), 1, 1, ParaV->desc,
+            psi_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, temp_s_f.data(), 1, 1, ParaV->desc_wfc);
 
-    // Repeat for S_sub
-    std::vector<std::complex<double>> temp_s(nloc_wfc, zero);
+        std::vector<std::complex<float>> s_sub_local_f(nloc_eij_local, zero_f);
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one_f, psi_f.data(), 1, 1, ParaV->desc_wfc,
+            temp_s_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, s_sub_local_f.data(), 1, 1, ParaV->desc_Eij);
 
-    ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
-        one, s_mat.p, 1, 1, ParaV->desc,
-        psi_ptr, 1, 1, ParaV->desc_wfc,
-        zero, temp_s.data(), 1, 1, ParaV->desc_wfc);
-
-    std::vector<std::complex<double>> s_sub_local(nloc_eij_local, zero);
-
-    ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
-        one, psi_ptr, 1, 1, ParaV->desc_wfc,
-        temp_s.data(), 1, 1, ParaV->desc_wfc,
-        zero, s_sub_local.data(), 1, 1, ParaV->desc_Eij);
-
-    gather_sub_matrix_to_all(s_sub_local.data(), ParaV, s_sub, nbands);
+        gather_sub_matrix_to_all_float(s_sub_local_f.data(), ParaV, s_sub, nbands);
 #else
-    // Serial case: use zgemm directly
-    std::vector<std::complex<double>> temp(nlocal * nbands, zero);
-    zgemm_("N", "N", &nlocal, &nbands, &nlocal,
-        &one, h_mat.p, &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
+        const std::complex<double> one_d = {1.0, 0.0};
+        const std::complex<double> zero_d = {0.0, 0.0};
 
-    zgemm_("C", "N", &nbands, &nbands, &nlocal,
-        &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, h_sub, &nbands);
+        std::vector<std::complex<float>> h_f(nlocal * nlocal);
+        cast_down_to_float(h_mat.p, h_f.data(), nlocal * nlocal);
+        std::vector<std::complex<float>> s_f(nlocal * nlocal);
+        cast_down_to_float(s_mat.p, s_f.data(), nlocal * nlocal);
+        std::vector<std::complex<float>> psi_f(nlocal * nbands);
+        cast_down_to_float(psi_ptr, psi_f.data(), nlocal * nbands);
 
-    // S_sub
-    std::vector<std::complex<double>> temp_s(nlocal * nbands, zero);
-    zgemm_("N", "N", &nlocal, &nbands, &nlocal,
-        &one, s_mat.p, &nlocal, psi_ptr, &nlocal, &zero, temp_s.data(), &nlocal);
+        std::vector<std::complex<float>> temp_f(nlocal * nbands, zero_f);
+        cgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one_f, h_f.data(), &nlocal, psi_f.data(), &nlocal, &zero_f, temp_f.data(), &nlocal);
 
-    zgemm_("C", "N", &nbands, &nbands, &nlocal,
-        &one, psi_ptr, &nlocal, temp_s.data(), &nlocal, &zero, s_sub, &nbands);
+        std::vector<std::complex<float>> h_sub_f(nbands * nbands, zero_f);
+        cgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one_f, psi_f.data(), &nlocal, temp_f.data(), &nlocal, &zero_f, h_sub_f.data(), &nbands);
+        cast_up_to_double(h_sub_f.data(), h_sub, nbands * nbands);
+
+        std::vector<std::complex<float>> temp_s_f(nlocal * nbands, zero_f);
+        cgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one_f, s_f.data(), &nlocal, psi_f.data(), &nlocal, &zero_f, temp_s_f.data(), &nlocal);
+
+        std::vector<std::complex<float>> s_sub_f(nbands * nbands, zero_f);
+        cgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one_f, psi_f.data(), &nlocal, temp_s_f.data(), &nlocal, &zero_f, s_sub_f.data(), &nbands);
+        cast_up_to_double(s_sub_f.data(), s_sub, nbands * nbands);
 #endif
+        ModuleBase::timer::end("SpinConstrain", "calc_sub_hs_fp32");
+    }
+    else
+    {
+        const std::complex<double> one = {1.0, 0.0};
+        const std::complex<double> zero = {0.0, 0.0};
+
+#ifdef __MPI
+        int nloc_wfc = ParaV->nloc_wfc;
+        std::vector<std::complex<double>> temp(nloc_wfc, zero);
+
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one, h_mat.p, 1, 1, ParaV->desc,
+            psi_ptr, 1, 1, ParaV->desc_wfc,
+            zero, temp.data(), 1, 1, ParaV->desc_wfc);
+
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
+
+        std::vector<std::complex<double>> h_sub_local(nloc_eij_local, zero);
+
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one, psi_ptr, 1, 1, ParaV->desc_wfc,
+            temp.data(), 1, 1, ParaV->desc_wfc,
+            zero, h_sub_local.data(), 1, 1, ParaV->desc_Eij);
+
+        gather_sub_matrix_to_all(h_sub_local.data(), ParaV, h_sub, nbands);
+
+        std::vector<std::complex<double>> temp_s(nloc_wfc, zero);
+
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one, s_mat.p, 1, 1, ParaV->desc,
+            psi_ptr, 1, 1, ParaV->desc_wfc,
+            zero, temp_s.data(), 1, 1, ParaV->desc_wfc);
+
+        std::vector<std::complex<double>> s_sub_local(nloc_eij_local, zero);
+
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one, psi_ptr, 1, 1, ParaV->desc_wfc,
+            temp_s.data(), 1, 1, ParaV->desc_wfc,
+            zero, s_sub_local.data(), 1, 1, ParaV->desc_Eij);
+
+        gather_sub_matrix_to_all(s_sub_local.data(), ParaV, s_sub, nbands);
+#else
+        std::vector<std::complex<double>> temp(nlocal * nbands, zero);
+        zgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one, h_mat.p, &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
+
+        zgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, h_sub, &nbands);
+
+        std::vector<std::complex<double>> temp_s(nlocal * nbands, zero);
+        zgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one, s_mat.p, &nlocal, psi_ptr, &nlocal, &zero, temp_s.data(), &nlocal);
+
+        zgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one, psi_ptr, &nlocal, temp_s.data(), &nlocal, &zero, s_sub, &nbands);
+#endif
+    }
 
     ModuleBase::timer::end("SpinConstrain", "calculate_lcao_sub_hs");
 }
 
-/**
- * @brief Compute P_I_sub(k) = C†(k) P_I(k) C(k) from real-space pre_hr.
- *
- * This mirrors calculate_lcao_sub_hs exactly:
- *   1. Fold pre_hr to k-space: P_I(k) = Σ_R pre_hr(R) exp(ik·R)
- *   2. temp = P_I(k) × C(k)          [pzgemm or zgemm]
- *   3. PI_sub = C†(k) × temp          [pzgemm or zgemm]
- *   4. Gather to all processes
- *
- * Using pre_hr ensures P_I_sub is IDENTICAL to what cal_moment uses,
- * eliminating the bias that cal_PI_sub (D_I†D_I) exhibited.
- */
 template <>
 void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
     const hamilt::HContainer<double>* pre_hr_iat,
@@ -259,51 +346,82 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
     ModuleBase::timer::start("SpinConstrain", "calculate_PI_sub_from_hr");
 
     std::complex<double>* psi_ptr = psi.get_pointer();
-    const std::complex<double> one = {1.0, 0.0};
-    const std::complex<double> zero = {0.0, 0.0};
+
+    const bool use_fp32 = (subspace_exec_precision_ == ModuleGint::GintPrecision::fp32);
 
 #ifdef __MPI
-    // Step 1: Fold pre_hr to k-space in 2D-block layout (column-major, lld=nrow)
     int nloc = ParaV->nloc;
     std::vector<std::complex<double>> PI_k_local(nloc, {0.0, 0.0});
-
-    // Use folding_HR: hk_type=1 for column-major (lld=nrow)
     hamilt::folding_HR(*pre_hr_iat, PI_k_local.data(), kvec_d, ParaV->nrow, 1);
 
-    // Step 2: temp = P_I(k) × C(k)
-    int nloc_wfc = ParaV->nloc_wfc;
-    std::vector<std::complex<double>> temp(nloc_wfc, {0.0, 0.0});
+    if (use_fp32)
+    {
+        ModuleBase::timer::start("SpinConstrain", "calc_PI_sub_fp32");
+        const std::complex<float> one_f = {1.0f, 0.0f};
+        const std::complex<float> zero_f = {0.0f, 0.0f};
+        int nloc_wfc = ParaV->nloc_wfc;
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
 
-    ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
-        one, PI_k_local.data(), 1, 1, ParaV->desc,
-        psi_ptr, 1, 1, ParaV->desc_wfc,
-        zero, temp.data(), 1, 1, ParaV->desc_wfc);
+        std::vector<std::complex<float>> PI_k_f(nloc, zero_f);
+        cast_down_to_float(PI_k_local.data(), PI_k_f.data(), nloc);
+        std::vector<std::complex<float>> psi_f(nloc_wfc, zero_f);
+        cast_down_to_float(psi_ptr, psi_f.data(), nloc_wfc);
 
-    // Step 3: PI_sub_local = C†(k) × temp
-    int lld_Eij = ParaV->nrow;
-    int ncol_bands = ParaV->ncol_bands;
-    int nloc_eij_local = lld_Eij * ncol_bands;
-    std::vector<std::complex<double>> PI_sub_local(nloc_eij_local, {0.0, 0.0});
+        std::vector<std::complex<float>> temp_f(nloc_wfc, zero_f);
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one_f, PI_k_f.data(), 1, 1, ParaV->desc,
+            psi_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, temp_f.data(), 1, 1, ParaV->desc_wfc);
 
-    ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
-        one, psi_ptr, 1, 1, ParaV->desc_wfc,
-        temp.data(), 1, 1, ParaV->desc_wfc,
-        zero, PI_sub_local.data(), 1, 1, ParaV->desc_Eij);
+        std::vector<std::complex<float>> PI_sub_local_f(nloc_eij_local, zero_f);
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one_f, psi_f.data(), 1, 1, ParaV->desc_wfc,
+            temp_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, PI_sub_local_f.data(), 1, 1, ParaV->desc_Eij);
 
-    // Step 4: Gather to all processes
-    gather_sub_matrix_to_all(PI_sub_local.data(), ParaV, PI_sub, nbands);
-#else
-    // Serial case: fold and multiply directly
-    std::vector<std::complex<double>> PI_k(nlocal * nlocal, {0.0, 0.0});
-    hamilt::folding_HR(*pre_hr_iat, PI_k.data(), kvec_d, nlocal, 1);
-
-    std::vector<std::complex<double>> temp(nlocal * nbands, {0.0, 0.0});
-    zgemm_("N", "N", &nlocal, &nbands, &nlocal,
-        &one, PI_k.data(), &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
-
-    zgemm_("C", "N", &nbands, &nbands, &nlocal,
-        &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub, &nbands);
+        gather_sub_matrix_to_all_float(PI_sub_local_f.data(), ParaV, PI_sub, nbands);
+        ModuleBase::timer::end("SpinConstrain", "calc_PI_sub_fp32");
+    }
+    else
 #endif
+    {
+        const std::complex<double> one = {1.0, 0.0};
+        const std::complex<double> zero = {0.0, 0.0};
+
+#ifdef __MPI
+        int nloc_wfc = ParaV->nloc_wfc;
+        std::vector<std::complex<double>> temp(nloc_wfc, zero);
+
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one, PI_k_local.data(), 1, 1, ParaV->desc,
+            psi_ptr, 1, 1, ParaV->desc_wfc,
+            zero, temp.data(), 1, 1, ParaV->desc_wfc);
+
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
+        std::vector<std::complex<double>> PI_sub_local(nloc_eij_local, zero);
+
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one, psi_ptr, 1, 1, ParaV->desc_wfc,
+            temp.data(), 1, 1, ParaV->desc_wfc,
+            zero, PI_sub_local.data(), 1, 1, ParaV->desc_Eij);
+
+        gather_sub_matrix_to_all(PI_sub_local.data(), ParaV, PI_sub, nbands);
+#else
+        std::vector<std::complex<double>> PI_k(nlocal * nlocal, {0.0, 0.0});
+        hamilt::folding_HR(*pre_hr_iat, PI_k.data(), kvec_d, nlocal, 1);
+
+        std::vector<std::complex<double>> temp(nlocal * nbands, zero);
+        zgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one, PI_k.data(), &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
+
+        zgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub, &nbands);
+#endif
+    }
 
     ModuleBase::timer::end("SpinConstrain", "calculate_PI_sub_from_hr");
 }
@@ -334,18 +452,11 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
 
     if (this->npol_ == 2)
     {
-        // nspin=4 (non-collinear)
-        // Currently implemented: z-component (dominant term)
-        // Full Pauli treatment TODO: requires 2nbands x 2nbands subspace structure
         for (int iat = 0; iat < nat; iat++)
         {
             if (PI_sub[iat].empty()) continue;
 
             const std::complex<double> coeff0(effective_lambda[iat][2], 0.0);
-            const std::complex<double> coeff1(effective_lambda[iat][0], effective_lambda[iat][1]);
-            const std::complex<double> coeff2(effective_lambda[iat][0], -effective_lambda[iat][1]);
-            const std::complex<double> coeff3(-effective_lambda[iat][2], 0.0);
-
             const std::complex<double>* pi_ptr = PI_sub[iat].data();
             for (int ij = 0; ij < nbands * nbands; ij++)
             {
@@ -355,10 +466,6 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
     }
     else if (this->npol_ == 1)
     {
-        // nspin=2 (collinear): H_sub += -spin_sign * lambda_z * P_I_sub
-        // NOTE: The negative sign matches cal_coeff_lambda() in dspin_lcao.cpp:
-        //   spin-up:   coeff = -delta_lambda_z
-        //   spin-down: coeff = +delta_lambda_z
         int spin_sign = this->get_spin_sign(ik);
 
         for (int iat = 0; iat < nat; iat++)
@@ -387,42 +494,90 @@ void SpinConstrain<std::complex<double>>::rotate_psi_subspace_lcao(
     ModuleBase::TITLE("SpinConstrain", "rotate_psi_subspace_lcao");
     ModuleBase::timer::start("SpinConstrain", "rotate_psi_subspace_lcao");
 
-    const std::complex<double> one = {1.0, 0.0};
-    const std::complex<double> zero = {0.0, 0.0};
+    const bool use_fp32 = (subspace_exec_precision_ == ModuleGint::GintPrecision::fp32);
 
-    for (int ik = 0; ik < nk; ik++)
+    if (use_fp32)
     {
-        psi.fix_k(ik);
-        std::complex<double>* psi_ptr = psi.get_pointer();
+        ModuleBase::timer::start("SpinConstrain", "rotate_psi_fp32");
+        const std::complex<float> one_f = {1.0f, 0.0f};
+        const std::complex<float> zero_f = {0.0f, 0.0f};
+
+        for (int ik = 0; ik < nk; ik++)
+        {
+            psi.fix_k(ik);
+            std::complex<double>* psi_ptr = psi.get_pointer();
 
 #ifdef __MPI
-        int nloc_wfc = ParaV->nloc_wfc;
-        int lld_Eij = ParaV->nrow;
-        int ncol_bands = ParaV->ncol_bands;
-        int nloc_eij_local = lld_Eij * ncol_bands;
+            int nloc_wfc = ParaV->nloc_wfc;
+            int lld_Eij = ParaV->nrow;
+            int ncol_bands = ParaV->ncol_bands;
+            int nloc_eij_local = lld_Eij * ncol_bands;
 
-        // Scatter full V matrix (nbands x nbands) to local desc_Eij layout
-        std::vector<std::complex<double>> v_local(nloc_eij_local, zero);
-        scatter_sub_matrix_to_local(vcc_all[ik].data(), ParaV, v_local.data(), nbands);
+            std::vector<std::complex<float>> v_local_f(nloc_eij_local, zero_f);
+            scatter_sub_matrix_to_local_float(vcc_all[ik].data(), ParaV, v_local_f.data(), nbands);
 
-        std::vector<std::complex<double>> temp(nloc_wfc, zero);
+            std::vector<std::complex<float>> psi_f(nloc_wfc, zero_f);
+            cast_down_to_float(psi_ptr, psi_f.data(), nloc_wfc);
 
-        // C_new = C_old . V (ScaLAPACK pzgemm)
-        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nbands,
-            one, psi_ptr, 1, 1, ParaV->desc_wfc,
-            v_local.data(), 1, 1, ParaV->desc_Eij,
-            zero, temp.data(), 1, 1, ParaV->desc_wfc);
+            std::vector<std::complex<float>> temp_f(nloc_wfc, zero_f);
+            ScalapackConnector::gemm('N', 'N', nlocal, nbands, nbands,
+                one_f, psi_f.data(), 1, 1, ParaV->desc_wfc,
+                v_local_f.data(), 1, 1, ParaV->desc_Eij,
+                zero_f, temp_f.data(), 1, 1, ParaV->desc_wfc);
 
-        std::memcpy(psi_ptr, temp.data(), sizeof(std::complex<double>) * nloc_wfc);
+            cast_up_to_double(temp_f.data(), psi_ptr, nloc_wfc);
 #else
-        // Serial case
-        std::vector<std::complex<double>> temp(nlocal * nbands);
-        zgemm_("N", "N", &nlocal, &nbands, &nbands,
-            &one, psi_ptr, &nlocal,
-            vcc_all[ik].data(), &nbands,
-            &zero, temp.data(), &nlocal);
-        std::memcpy(psi_ptr, temp.data(), sizeof(std::complex<double>) * nlocal * nbands);
+            std::vector<std::complex<float>> psi_f(nlocal * nbands);
+            cast_down_to_float(psi_ptr, psi_f.data(), nlocal * nbands);
+            std::vector<std::complex<float>> v_f(nbands * nbands);
+            cast_down_to_float(vcc_all[ik].data(), v_f.data(), nbands * nbands);
+
+            std::vector<std::complex<float>> temp_f(nlocal * nbands, zero_f);
+            cgemm_("N", "N", &nlocal, &nbands, &nbands,
+                &one_f, psi_f.data(), &nlocal,
+                v_f.data(), &nbands,
+                &zero_f, temp_f.data(), &nlocal);
+            cast_up_to_double(temp_f.data(), psi_ptr, nlocal * nbands);
 #endif
+        }
+        ModuleBase::timer::end("SpinConstrain", "rotate_psi_fp32");
+    }
+    else
+    {
+        const std::complex<double> one = {1.0, 0.0};
+        const std::complex<double> zero = {0.0, 0.0};
+
+        for (int ik = 0; ik < nk; ik++)
+        {
+            psi.fix_k(ik);
+            std::complex<double>* psi_ptr = psi.get_pointer();
+
+#ifdef __MPI
+            int nloc_wfc = ParaV->nloc_wfc;
+            int lld_Eij = ParaV->nrow;
+            int ncol_bands = ParaV->ncol_bands;
+            int nloc_eij_local = lld_Eij * ncol_bands;
+
+            std::vector<std::complex<double>> v_local(nloc_eij_local, zero);
+            scatter_sub_matrix_to_local(vcc_all[ik].data(), ParaV, v_local.data(), nbands);
+
+            std::vector<std::complex<double>> temp(nloc_wfc, zero);
+
+            ScalapackConnector::gemm('N', 'N', nlocal, nbands, nbands,
+                one, psi_ptr, 1, 1, ParaV->desc_wfc,
+                v_local.data(), 1, 1, ParaV->desc_Eij,
+                zero, temp.data(), 1, 1, ParaV->desc_wfc);
+
+            std::memcpy(psi_ptr, temp.data(), sizeof(std::complex<double>) * nloc_wfc);
+#else
+            std::vector<std::complex<double>> temp(nlocal * nbands);
+            zgemm_("N", "N", &nlocal, &nbands, &nbands,
+                &one, psi_ptr, &nlocal,
+                vcc_all[ik].data(), &nbands,
+                &zero, temp.data(), &nlocal);
+            std::memcpy(psi_ptr, temp.data(), sizeof(std::complex<double>) * nlocal * nbands);
+#endif
+        }
     }
 
     ModuleBase::timer::end("SpinConstrain", "rotate_psi_subspace_lcao");
@@ -437,26 +592,12 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao_subspace(
     ModuleBase::timer::start("SpinConstrain", "cal_mi_lcao_subspace");
 
 #ifdef __LCAO
-    // ================================================================
-    // DMR-based magnetic moment evaluation:
-    //   1. Save original psi
-    //   2. Rotate psi by subspace eigenvectors V(k)
-    //   3. Build DMK and DMR from rotated psi
-    //   4. Compute Mi via the standard cal_mi_lcao path (uses DMR)
-    //   5. Restore original psi
-    //
-    // The trace formula (V†PV diagonal) was found to have systematic
-    // bias compared to this DMR approach, so we revert to the more
-    // accurate DMR-based evaluation.
-    // ================================================================
-
     psi::Psi<std::complex<double>>* psi_t
         = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
 
     const int nrow = this->ParaV->nrow;
     const int nloc_wfc = this->ParaV->nloc_wfc;
 
-    // 1. Save original psi for all k-points
     std::vector<std::vector<std::complex<double>>> psi_save(nk);
     for (int ik = 0; ik < nk; ik++)
     {
@@ -465,17 +606,20 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao_subspace(
         psi_save[ik].assign(ptr, ptr + nloc_wfc);
     }
 
-    // 2. Rotate psi: C_new(k) = C_old(k) . V(k)
     this->rotate_psi_subspace_lcao(*psi_t, this->ParaV, vcc_all, nbands, nrow, nk);
 
-    // 3. Build DMK and DMR from rotated psi
-    elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+    if (this->subspace_exec_precision_ == ModuleGint::GintPrecision::fp32)
+    {
+        elecstate::cal_dm_psi_mixed(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+    }
+    else
+    {
+        elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+    }
     this->dm_->cal_DMR();
 
-    // 4. Compute Mi using the standard LCAO path (reads DMR)
     this->cal_mi_lcao(0);
 
-    // 5. Restore original psi
     for (int ik = 0; ik < nk; ik++)
     {
         psi_t->fix_k(ik);

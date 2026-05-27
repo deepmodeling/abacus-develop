@@ -638,6 +638,20 @@ void DensityMatrix_Tools::func_exp_mul_dmk<double>(const std::complex<double> kp
 }
 
 template <>
+void DensityMatrix_Tools::func_exp_mul_dmk<float>(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, float* target_DMR_mat)
+{
+    const std::size_t mat_size = DMK_mat_trans.size();
+    const float kr = static_cast<float>(kphase.real());
+    const float ki = static_cast<float>(kphase.imag());
+    for(std::size_t i = 0; i < mat_size; i++)
+    {
+        target_DMR_mat[i]
+            += kr * static_cast<float>(DMK_mat_trans[i].real())
+            - ki * static_cast<float>(DMK_mat_trans[i].imag());
+    }
+}
+
+template <>
 void DensityMatrix_Tools::func_exp_mul_dmk<std::complex<double>>(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, std::complex<double>* target_DMR_mat)
 {
     BlasConnector::axpy(DMK_mat_trans.size(),

@@ -18,14 +18,15 @@ symmetry    0
 
 # DeltaSpin parameters
 sc_mag_switch    1
-sc_thr    1e-4
+sc_thr    1e-5
 nsc    5
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr 10
-sc_acceleration_mode           subspace #acceleration mode for spin-constrained DFT
-sc_acceleration_rms_thr        1e-2 #RMS threshold for acceleration activation
+sc_strategy    fast
+#sc_scf_thr 10
+#sc_acceleration_mode           subspace #acceleration mode for spin-constrained DFT
+#sc_acceleration_rms_thr        1e10 #RMS threshold for acceleration activation
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB

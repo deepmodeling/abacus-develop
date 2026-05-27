@@ -755,7 +755,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
                 // Compute Mi from original (unrotated) psi with updated Fermi weights
-                elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+                if (this->subspace_exec_precision_ == ModuleGint::GintPrecision::fp32)
+                {
+                    elecstate::cal_dm_psi_mixed(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+                }
+                else
+                {
+                    elecstate::cal_dm_psi(this->ParaV, this->pelec->wg, *psi_t, *this->dm_);
+                }
                 this->dm_->cal_DMR();
                 this->cal_mi_lcao(i_step);
             }
