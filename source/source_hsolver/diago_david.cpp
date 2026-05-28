@@ -1,6 +1,6 @@
 #include "diago_david.h"
 
-#include "source_base/timer.h"                  // ModuleBase::timer::start/end
+#include "source_base/timer.h"                  // ModuleBase::timer::tick
 #include "source_base/tool_title.h"             // ModuleBase::TITLE
 #include "source_base/module_device/device.h"
 

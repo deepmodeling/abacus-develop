@@ -39,7 +39,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     int h_info = 0;
     int* d_info = nullptr;
     CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
-    // Perform triangular matrix inversion
+    // Perform Cholesky decomposition
     CHECK_CUSOLVER(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info));
     CHECK_CUDA(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
@@ -1380,7 +1380,7 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        &lwork  // ← correct: pass address of lwork
+        &lwork  // ← 这里才是 lwork 的地址！
     ));
 
     cuComplex* d_work = nullptr;
@@ -1395,7 +1395,7 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        reinterpret_cast<cuComplex*>(d_tau),  // ← correct: d_tau
+        reinterpret_cast<cuComplex*>(d_tau),  // ← 这里才是 d_tau
         d_work, lwork, d_info));
 
     int h_info = 0;
