@@ -596,6 +596,7 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao_subspace(
         = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
 
     const int nrow = this->ParaV->nrow;
+    const int nlocal = this->ParaV->get_global_row_size();
     const int nloc_wfc = this->ParaV->nloc_wfc;
 
     std::vector<std::vector<std::complex<double>>> psi_save(nk);
@@ -606,7 +607,7 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao_subspace(
         psi_save[ik].assign(ptr, ptr + nloc_wfc);
     }
 
-    this->rotate_psi_subspace_lcao(*psi_t, this->ParaV, vcc_all, nbands, nrow, nk);
+    this->rotate_psi_subspace_lcao(*psi_t, this->ParaV, vcc_all, nbands, nlocal, nk);
 
     if (this->subspace_exec_precision_ == ModuleGint::GintPrecision::fp32)
     {

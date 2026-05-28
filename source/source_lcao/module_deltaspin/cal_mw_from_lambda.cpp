@@ -613,7 +613,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             this->free_lcao_subspace_cache();
             const int nk = psi_t->get_nk();
             const int nbands = PARAM.inp.nbands;
-            const int nlocal = this->ParaV->nrow;
+            const int nlocal = this->ParaV->get_global_row_size();
             const int nn = nbands * nbands;
             this->lcao_nbands_ = nbands;
             this->lcao_nk_ = nk;
