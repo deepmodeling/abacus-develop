@@ -171,6 +171,7 @@ namespace GlobalV
     bool DOMAG_Z;
     std::ofstream ofs_device;
     std::ofstream ofs_running;
+    int npol = 1;
 }
 
 namespace GlobalC
