@@ -23,38 +23,31 @@ SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
 }
 
 /**
- * @brief Calculate the spin constraint energy: E_scon = -sum_i (lambda_i . Mi_i).
+ * @brief Calculate the spin constraint energy correction: E_scon = -sum_i (lambda_i . (Mi_i - M_target_i)).
  *
- * @details The constraint energy is the Lagrange multiplier term in the
- * constrained DFT functional:
- *   E'[rho] = E_DFT[rho] - sum_i lambda_i . (Mi_i - M_target_i)
+ * @details In constrained DFT, the augmented energy functional is:
+ *   E'[rho] = E_DFT[rho] - sum_i lambda_i . (M_i - M_target_i)
  *
- * IMPORTANT: Returns 0.0 if magnetic moments are NOT yet converged.
- * This is because the constraint energy is only physically meaningful
- * when Mi ≈ M_target. Before convergence, the lambda values are still
- * adjusting and the energy would be misleading.
+ * The code computes E_KS which corresponds to E'[rho]. To recover E_DFT:
+ *   E_DFT = E_KS + sum_i lambda_i . (M_i - M_target_i)
+ *          = E_KS - E_scon
  *
- * @par Output meaning
- * - E_scon < 0: lambda and Mi are aligned (system resists the constraint)
- * - E_scon > 0: lambda and Mi are anti-aligned (constraint assists the system)
- * - E_scon = 0: not converged OR all lambda = 0 (no constraint needed)
+ * When the constraint is converged (M_i ≈ M_target_i), E_scon → 0 and
+ * E_total → E_KS naturally. This correction must always be applied when
+ * DeltaSpin is active, regardless of convergence status.
  *
- * @return Constraint energy in Ry (0.0 if not converged)
+ * @return Constraint energy in Ry
  */
 template <typename TK>
 double SpinConstrain<TK>::cal_escon()
 {
     this->escon_ = 0.0;
-    if (!this->is_Mi_converged)
-    {
-        return this->escon_;
-    }
     int nat = this->get_nat();
     for (int iat = 0; iat < nat; iat++)
     {
-        this->escon_ -= this->lambda_[iat].x * this->Mi_[iat].x;
-        this->escon_ -= this->lambda_[iat].y * this->Mi_[iat].y;
-        this->escon_ -= this->lambda_[iat].z * this->Mi_[iat].z;
+        this->escon_ -= this->lambda_[iat].x * (this->Mi_[iat].x - this->target_mag_[iat].x);
+        this->escon_ -= this->lambda_[iat].y * (this->Mi_[iat].y - this->target_mag_[iat].y);
+        this->escon_ -= this->lambda_[iat].z * (this->Mi_[iat].z - this->target_mag_[iat].z);
     }
     return this->escon_;
 }

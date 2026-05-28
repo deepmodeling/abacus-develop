@@ -268,13 +268,14 @@ public:
 		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
-   * @brief Calculate the spin constraint energy contribution: E_scon = -sum(lambda_i . Mi_i).
+   * @brief Calculate the spin constraint energy correction: E_scon = -sum(lambda_i . (Mi_i - M_target_i)).
    *
-   * @details Returns 0.0 if magnetic moments are not yet converged, because the
-   * constraint energy is only physically meaningful when Mi ≈ M_target.
-   * This energy is added to the total DFT energy in the SCF loop.
+   * @details Corrects E_KS to recover E_DFT:
+   *   E_DFT = E_KS + sum(lambda . (Mi - M_target)) = E_KS - E_scon
+   * When Mi ≈ M_target, E_scon → 0 and E_total → E_KS naturally.
+   * Always computed when DeltaSpin is active.
    *
-   * @return Constraint energy in Ry (0.0 if not converged)
+   * @return Constraint energy in Ry
    */
   double cal_escon();
 
