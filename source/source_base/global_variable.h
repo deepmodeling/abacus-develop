@@ -68,5 +68,6 @@ extern std::ofstream ofs_device;
 extern std::string global_out_dir;
 extern std::string calculation;
 extern int npol;
+extern int dsp_cluster_id; ///< (#ifdef __DSP only) DSP cluster id used by mt-allocator
 } // namespace GlobalV
 #endif

@@ -136,7 +136,7 @@ void Driver::reading()
     {
         ModuleBase::WARNING_QUIT("driver", "dsp_count must be > 0");
     }
-    base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    GlobalV::dsp_cluster_id = GlobalV::MY_RANK % PARAM.inp.dsp_count;
     BlasConnector::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 

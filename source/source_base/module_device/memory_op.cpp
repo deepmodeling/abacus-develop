@@ -3,6 +3,7 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/tool_threading.h"
 #ifdef __DSP
+#include "source_base/global_variable.h"
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
@@ -442,21 +443,6 @@ template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __DSP
 
-namespace
-{
-int g_dsp_cluster_id = 0;
-}
-
-void set_dsp_cluster_id(int id)
-{
-    g_dsp_cluster_id = id;
-}
-
-int get_dsp_cluster_id()
-{
-    return g_dsp_cluster_id;
-}
-
 template <typename FPTYPE>
 struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
 {
@@ -466,7 +452,7 @@ struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
         {
             mtfunc::free_ht(arr);
         }
-        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, g_dsp_cluster_id);
+        arr = (FPTYPE*)mtfunc::malloc_ht(sizeof(FPTYPE) * size, GlobalV::dsp_cluster_id);
         std::string record_string;
         if (record_in != nullptr)
         {

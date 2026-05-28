@@ -46,5 +46,6 @@ std::ofstream ofs_device; // output device info
 std::string global_out_dir;
 std::string calculation;
 int npol = 1;
+int dsp_cluster_id = 0;
 
 } // namespace GlobalV
