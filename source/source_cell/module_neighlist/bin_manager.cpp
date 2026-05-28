@@ -118,13 +118,19 @@ void BinManager::build_atom_neighbors(
 {
     assert(atoms.size() == neighbor_list.numneigh.size());
 
-    double sradius2 = sradius * sradius;
+    const double sradius2 = sradius * sradius;
+    const int natoms = static_cast<int>(atoms.size());
 
     neighbor_list.reset();
 
-    for (int i = 0; i < atoms.size(); i++)
+    std::vector<std::vector<int>> neighbor_ids(natoms);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 16)
+#endif
+    for (int i = 0; i < natoms; i++)
     {
-        std::vector<int> neigh_tmp;
+        std::vector<int>& neigh_tmp = neighbor_ids[i];
 
         int ix = std::min(
             std::max(int((atoms[i].position_x - x_min) / bin_sizex), 0),
@@ -174,7 +180,12 @@ void BinManager::build_atom_neighbors(
                 }
             }
         } 
-        int n = neigh_tmp.size();
+    }
+
+    for (int i = 0; i < natoms; i++)
+    {
+        const std::vector<int>& neigh_tmp = neighbor_ids[i];
+        int n = static_cast<int>(neigh_tmp.size());
 
         //std::cout<<n<<std::endl;
 
