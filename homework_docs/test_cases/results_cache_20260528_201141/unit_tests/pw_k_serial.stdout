@@ -1,0 +1,21 @@
+Running main() from /home/aunixt/googletest/googletest/src/gtest_main.cc
+[==========] Running 6 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 6 tests from PWBasisKTEST
+[ RUN      ] PWBasisKTEST.Constructor
+[       OK ] PWBasisKTEST.Constructor (0 ms)
+[ RUN      ] PWBasisKTEST.Initgrids1
+[       OK ] PWBasisKTEST.Initgrids1 (0 ms)
+[ RUN      ] PWBasisKTEST.Initgrids2
+[       OK ] PWBasisKTEST.Initgrids2 (0 ms)
+[ RUN      ] PWBasisKTEST.Initparameters
+[       OK ] PWBasisKTEST.Initparameters (22 ms)
+[ RUN      ] PWBasisKTEST.SetupTransform
+[       OK ] PWBasisKTEST.SetupTransform (8 ms)
+[ RUN      ] PWBasisKTEST.CollectLocalPW
+[       OK ] PWBasisKTEST.CollectLocalPW (0 ms)
+[----------] 6 tests from PWBasisKTEST (33 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 1 test suite ran. (33 ms total)
+[  PASSED  ] 6 tests.

@@ -1,0 +1,187 @@
+===== RUN START 2026-05-28T21:32:30+0800 case=gaas_tiny config=mix_np4_omp2 np=4 omp=2 rep=2 =====
+                                                                                     
+                              ABACUS v3.11.0-beta.2
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 63ded64e2 (Thu May 28 16:38:59 2026 +0800)
+
+ Thu May 28 21:32:31 2026
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Ga: [Ar] 3d10 4s2 4p1
+ Warning: the number of valence electrons in pseudopotential > 5 for As: [Ar] 3d10 4s2 4p3
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.057240 START PW_Basis::collect_local_pw
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.057306 END PW_Basis::collect_local_pw elapsed_us=68
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.057313 START PW_Basis::collect_uniqgg
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.057432 END PW_Basis::collect_uniqgg elapsed_us=118
+ UNIFORM GRID DIM     : 24 * 24 * 24
+ UNIFORM GRID DIM(BIG): 24 * 24 * 24
+ DONE(0.072538   SEC) : SYMMETRY
+ DONE(0.072562   SEC) : SETUP UNITCELL
+ DONE(0.139297   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               4           2             8             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Ga      4           
+ As      4           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.171311 START PW_Basis_K::setupIndGk
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.171518 END PW_Basis_K::setupIndGk elapsed_us=211
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.172399 START PW_Basis_K::collect_local_pw
+[TEMP_TIMESTAMP] 2026-05-28T21:32:31.172523 END PW_Basis_K::collect_local_pw elapsed_us=124
+ DONE(0.150159   SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.171511   SEC) : LOCAL POTENTIAL
+ DONE(0.205637   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 5.87036
+ DONE(0.296391   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.53028    SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.95116653e+04   0.00000000e+00   5.1410e+00   0.99
+ CG2     -1.95164690e+04  -4.80364237e+00   2.9104e-01   0.85
+ CG3     -1.95195801e+04  -3.11115048e+00   2.6231e-02   1.47
+ CG4     -1.95199393e+04  -3.59234249e-01   1.0888e-03   0.94
+ CG5     -1.95199343e+04   4.99190283e-03   2.4162e-04   1.02
+ CG6     -1.95199833e+04  -4.90015199e-02   7.7460e-05   1.20
+ CG7     -1.95199674e+04   1.59053856e-02   3.0577e-06   1.24
+ CG8     -1.95199714e+04  -3.97361554e-03   6.7578e-07   2.12
+ CG9     -1.95199709e+04   5.19021365e-04   8.8383e-08   1.35
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11095.7866100850        -0.0000000000        -0.0000000000 
+         -0.0000000000    -11095.7866100850        -0.0000000000 
+         -0.0000000000         0.0000000000    -11095.7866100850 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11095.786610 kbar
+
+ TIME STATISTICS
+------------------------------------------------------------------------------
+    CLASS_NAME           NAME           TIME/s    CALLS     AVG/s     PER/%   
+------------------------------------------------------------------------------
+                  total               12.129795  17       0.713517   100.0000 
+ Driver           atomic_world        12.129796  1        12.129796  100.0000 
+ Driver           reading             0.003397   1        0.003397   0.0280   
+ Input_Conv       Convert             0.000175   1        0.000175   0.0014   
+ UnitCell         check_tau           0.000001   1        0.000001   0.0000   
+ unitcell         check_atomic_stru   0.000168   1        0.000168   0.0014   
+ PW_Basis_Sup     setuptransform      0.004831   1        0.004831   0.0398   
+ PW_Basis_Sup     distributeg         0.000167   1        0.000167   0.0014   
+ mymath           heapsort            0.000244   1332     0.000000   0.0020   
+ PW_Basis_Sup     collect_local_pw    0.000036   1        0.000036   0.0003   
+ PW_Basis_Sup     collect_uniqgg      0.000116   1        0.000116   0.0010   
+ Symmetry         analy_sys           0.037396   1        0.037396   0.3083   
+ Structure_Factor setup               0.000342   1        0.000342   0.0028   
+ Charge_Mixing    init_mixing         0.000008   2        0.000004   0.0001   
+ PW_Basis_K       setuptransform      0.001250   1        0.001250   0.0103   
+ PW_Basis_K       distributeg         0.000156   1        0.000156   0.0013   
+ PW_Basis_K       setupIndGk          0.000141   1        0.000141   0.0012   
+ PW_Basis_K       collect_local_pw    0.000101   1        0.000101   0.0008   
+ Charge           atomic_rho          0.023518   2        0.011759   0.1939   
+ PW_Basis_Sup     recip2real          0.044892   83       0.000541   0.3701   
+ ppcell_vl        init_vloc           0.002913   1        0.002913   0.0240   
+ ppcell_vnl       init                0.011674   1        0.011674   0.0962   
+ ppcell_vnl       init_vnl            0.022345   1        0.022345   0.1842   
+ PSIPrepare       prepare_init        0.090615   1        0.090615   0.7470   
+ psi_init_atomic  initialize          0.000012   1        0.000012   0.0001   
+ psi_init_atomic  tabulate            0.090595   1        0.090595   0.7469   
+ Relax_Driver     relax_driver        11.832167  1        11.832167  97.5463  
+ ESolver_KS       runner              11.434083  1        11.434083  94.2644  
+ ESolver_KS_PW    before_scf          0.233749   1        0.233749   1.9271   
+ H_Ewald_pw       compute_ewald       0.026612   1        0.026612   0.2194   
+ Charge           set_rho_core        0.012137   1        0.012137   0.1001   
+ Potential        init_pot            0.017614   1        0.017614   0.1452   
+ Potential        cal_fixed_v         0.001275   1        0.001275   0.0105   
+ PotLocal         cal_fixed_v         0.001267   1        0.001267   0.0104   
+ Potential        cal_veff            0.039568   10       0.003957   0.3262   
+ H_Hartree_pw     v_hartree           0.002613   10       0.000261   0.0215   
+ PW_Basis_Sup     real2recip          0.045124   107      0.000422   0.3720   
+ PotXC            cal_veff            0.036870   10       0.003687   0.3040   
+ XC_Functional    v_xc                0.063609   12       0.005301   0.5244   
+ Potential        interpolate_vrs     0.000033   10       0.000003   0.0003   
+ Symmetry_rho     begin               0.019863   10       0.001986   0.1638   
+ Symmetry         rhog_symmetry       0.008656   10       0.000866   0.0714   
+ Symmetry         group_fft_grids     0.001307   10       0.000131   0.0108   
+ PSIPrepare       initialize_psi      0.174286   1        0.174286   1.4368   
+ Nonlocal         getvnl              0.048122   40       0.001203   0.3967   
+ pp_cell_vnl      getvnl              0.048007   40       0.001200   0.3958   
+ Structure_Factor get_sk              0.012633   80       0.000158   0.1041   
+ psi_init_atomic  init_psig           0.007286   4        0.001822   0.0601   
+ DiagoIterAssist  diag_subspace_init  0.163289   4        0.040822   1.3462   
+ Operator         hPsi                7.325278   8123     0.000902   60.3908  
+ Operator         EkineticPW          0.057418   8123     0.000007   0.4734   
+ Operator         veff_pw             2.990052   8123     0.000368   24.6505  
+ PW_Basis_K       recip2real          1.778626   13135    0.000135   14.6633  
+ PW_Basis_K       real2recip          1.439570   10615    0.000136   11.8681  
+ Operator         nonlocal_pw         4.259594   8123     0.000524   35.1168  
+ Nonlocal         add_nonlocal_pp     1.573613   8123     0.000194   12.9731  
+ DiagoIterAssist  diag_hegvd          0.060609   36       0.001684   0.4997   
+ ElecState        cal_delta_eband     0.000253   18       0.000014   0.0021   
+ ESolver_KS_PW    hamilt2rho_single   11.158257  9        1.239806   91.9905  
+ HSolverPW        solve               11.141278  9        1.237920   91.8505  
+ HSolverPW        solve_psik          10.795195  36       0.299867   88.9973  
+ DiagoCG          diag_once           9.567271   36       0.265758   78.8741  
+ ElecStatePW      psiToRho            0.297210   9        0.033023   2.4502   
+ Charge_Mixing    get_drho            0.002843   9        0.000316   0.0234   
+ Charge_Mixing    recip_rho           0.000236   9        0.000026   0.0019   
+ Charge_Mixing    mix_rho             0.003245   8        0.000406   0.0268   
+ Charge_Mixing    mix_rho_recip       0.003187   8        0.000398   0.0263   
+ Charge_Mixing    Kerker_screen_recip 0.000028   8        0.000004   0.0002   
+ Broyden_Mixing   tem_cal_coef        0.001641   8        0.000205   0.0135   
+ ElecState        cal_delta_escf      0.000166   8        0.000021   0.0014   
+ ModuleIO         ctrl_iter_pw        0.000004   9        0.000000   0.0000   
+ DiagoIterAssist  diag_subspace       1.159961   32       0.036249   9.5629   
+ Charge_Mixing    recip_hartree       0.001434   56       0.000026   0.0118   
+ ModuleIO         write_rhog          0.002945   1        0.002945   0.0243   
+ ESolver_KS_PW    after_scf           0.006909   1        0.006909   0.0570   
+ ModuleIO         ctrl_output_fp      0.000002   1        0.000002   0.0000   
+ ModuleIO         write_eig_file      0.001228   1        0.001228   0.0101   
+ ModuleIO         ctrl_scf_pw         0.000002   1        0.000002   0.0000   
+ Forces           cal_force           0.150242   1        0.150242   1.2386   
+ Forces           cal_force_loc       0.000718   1        0.000718   0.0059   
+ Forces           cal_force_ew        0.000545   1        0.000545   0.0045   
+ Forces           cal_force_nl        0.099488   1        0.099488   0.8202   
+ Forces           cal_force_cc        0.037237   1        0.037237   0.3070   
+ Forces           cal_force_scc       0.012002   1        0.012002   0.0989   
+ Stress_PW        cal_stress          0.247775   1        0.247775   2.0427   
+ Stress           stress_kin          0.006780   1        0.006780   0.0559   
+ Stress           stress_har          0.000297   1        0.000297   0.0024   
+ Stress           stress_ewa          0.000316   1        0.000316   0.0026   
+ Stress           stress_gga          0.001815   1        0.001815   0.0150   
+ Stress           stress_loc          0.007322   1        0.007322   0.0604   
+ Stress           stress_cc           0.020560   1        0.020560   0.1695   
+ Stress           stress_nl           0.210523   1        0.210523   1.7356   
+ ModuleIO         ctrl_runner_pw      0.000001   1        0.000001   0.0000   
+------------------------------------------------------------------------------
+
+
+ START  Time  : Thu May 28 21:32:31 2026
+ FINISH Time  : Thu May 28 21:32:43 2026
+ TOTAL  Time  : 12
+ SEE INFORMATION IN : OUT.ABACUS/
+===== RUN END 2026-05-28T21:32:43+0800 case=gaas_tiny config=mix_np4_omp2 np=4 omp=2 rep=2 status=0 =====

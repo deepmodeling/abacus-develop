@@ -7,9 +7,9 @@
                Documentation: https://abacus.deepmodeling.com/                       
                   Repository: https://github.com/abacusmodeling/abacus-develop       
                               https://github.com/deepmodeling/abacus-develop         
-                      Commit: 65acba3c6 (Thu May 21 19:32:40 2026 +0800)
+                      Commit: 783b9ef4a (Mon May 25 19:37:18 2026 +0800)
 
- Fri May 22 00:40:11 2026
+ Thu May 28 19:17:34 2026
  MAKE THE DIR         : OUT.ABACUS/
  RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
  WARNING: some of potential function is set to zero cause of less than 1e-30.
@@ -24,9 +24,9 @@
 
  UNIFORM GRID DIM     : 32 * 32 * 32
  UNIFORM GRID DIM(BIG): 32 * 32 * 32
- DONE(0.11909    SEC) : SYMMETRY
- DONE(0.119146   SEC) : SETUP UNITCELL
- DONE(0.205963   SEC) : INIT K-POINTS
+ DONE(0.0465673  SEC) : SYMMETRY
+ DONE(0.0465914  SEC) : SETUP UNITCELL
+ DONE(0.0898502  SEC) : INIT K-POINTS
  ----------------------------------------------------------------
  Self-consistent calculations for electrons
  ----------------------------------------------------------------
@@ -41,66 +41,67 @@
  ----------------------------------------------------------------
  Initial plane wave basis and FFT box
  ----------------------------------------------------------------
- DONE(0.315914   SEC) : INIT PLANEWAVE
+ DONE(0.0919855  SEC) : INIT PLANEWAVE
  START CHARGE         : ATOMIC
- DONE(0.330071   SEC) : LOCAL POTENTIAL
- DONE(0.35574    SEC) : NON-LOCAL POTENTIAL
+ DONE(0.0974679  SEC) : LOCAL POTENTIAL
+ DONE(0.11732    SEC) : NON-LOCAL POTENTIAL
  MEMORY FOR PSI (MB)  : 11.7279
- DONE(0.458294   SEC) : INIT BASIS
+ DONE(0.182002   SEC) : INIT BASIS
 
  ================================================================
  SELF-CONSISTENT: 
  ================================================================
- DONE(0.723818   SEC) : INIT SCF
+ DONE(0.293469   SEC) : INIT SCF
  ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
- CG1     -1.94959838e+04   0.00000000e+00   5.4363e+00   1.55
- CG2     -1.95012282e+04  -5.24446227e+00   2.2308e-01   0.65
- CG3     -1.95026107e+04  -1.38249859e+00   1.6239e-02   1.08
- CG4     -1.95024575e+04   1.53204860e-01   1.3316e-03   1.00
- CG5     -1.95024150e+04   4.25243845e-02   1.8401e-04   1.01
- CG6     -1.95024061e+04   8.88258232e-03   1.5803e-05   1.13
- CG7     -1.95024070e+04  -8.71764362e-04   4.5518e-07   1.04
- 
- ---------------------------------------------------------
-                         !NOTICE!                         
- ---------------------------------------------------------
- 
- File I/O failure: cannot open file OUT.ABACUS/ABACUS-CHARGE-DENSITY.restart
- CHECK IN FILE : OUT.ABACUS/warning.log
- 
- For detailed manual of ABACUS, please see the website
- https://abacus.deepmodeling.com
- For any questions, propose issues on the website
- https://github.com/deepmodeling/abacus-develop/issues
- ---------------------------------------------------------
-                         !NOTICE!                         
- ---------------------------------------------------------
+ CG1     -1.94959838e+04   0.00000000e+00   5.4363e+00   0.54
+ CG2     -1.95012282e+04  -5.24446227e+00   2.2308e-01   0.51
+ CG3     -1.95026107e+04  -1.38249859e+00   1.6239e-02   0.71
+ CG4     -1.95024575e+04   1.53204860e-01   1.3316e-03   0.68
+ CG5     -1.95024150e+04   4.25243845e-02   1.8401e-04   0.67
+ CG6     -1.95024061e+04   8.88258232e-03   1.5803e-05   0.67
+ CG7     -1.95024070e+04  -8.71764362e-04   4.5518e-07   0.69
+ CG8     -1.95024072e+04  -2.62204695e-04   8.2828e-08   0.81
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11616.9219860425         0.0000000000        -0.0000000000 
+          0.0000000000    -11616.9219860425        -0.0000000000 
+          0.0000000000        -0.0000000000    -11616.9219860425 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11616.921986 kbar
 
  TIME STATISTICS
--------------------------------------------------------------------
-    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
--------------------------------------------------------------------
-                  total              9.41   17       0.55   100.00 
- Structure_Factor setup              0.11   1        0.11   1.15   
- PSIPrepare       prepare_init       0.10   1        0.10   1.09   
- psi_init_atomic  tabulate           0.10   1        0.10   1.09   
- ESolver_KS_PW    before_scf         0.27   1        0.27   2.82   
- PSIPrepare       initialize_psi     0.24   1        0.24   2.59   
- DiagoIterAssist  diag_subspace_init 0.22   4        0.05   2.33   
- Operator         hPsi               6.30   6874     0.00   66.93  
- Operator         veff_pw            2.32   6874     0.00   24.66  
- PW_Basis_K       recip2real         1.48   11330    0.00   15.68  
- PW_Basis_K       gathers_scatterp   0.64   11330    0.00   6.85   
- PW_Basis_K       real2recip         0.98   9090     0.00   10.40  
- PW_Basis_K       gatherp_scatters   0.47   9090     0.00   4.98   
- Operator         nonlocal_pw        3.91   6874     0.00   41.56  
- Nonlocal         add_nonlocal_pp    1.77   6874     0.00   18.80  
- ESolver_KS_PW    hamilt2rho_single  8.65   8        1.08   91.87  
- HSolverPW        solve              8.63   8        1.08   91.71  
- HSolverPW        solve_psik         8.33   32       0.26   88.50  
- DiagoCG          diag_once          7.40   32       0.23   78.60  
- ElecStatePW      psiToRho           0.26   8        0.03   2.74   
- DiagoIterAssist  diag_subspace      0.87   28       0.03   9.29   
--------------------------------------------------------------------
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              5.82   17       0.34   100.00 
+ Driver          atomic_world       5.82   1        5.82   100.00 
+ PSIPrepare      prepare_init       0.06   1        0.06   1.11   
+ psi_init_atomic tabulate           0.06   1        0.06   1.11   
+ Relax_Driver    relax_driver       5.64   1        5.64   96.85  
+ ESolver_KS      runner             5.41   1        5.41   92.89  
+ ESolver_KS_PW   before_scf         0.11   1        0.11   1.91   
+ PSIPrepare      initialize_psi     0.10   1        0.10   1.76   
+ DiagoIterAssist diag_subspace_init 0.09   4        0.02   1.57   
+ Operator        hPsi               3.78   6874     0.00   64.94  
+ Operator        veff_pw            1.67   6874     0.00   28.65  
+ PW_Basis_K      recip2real         1.06   11330    0.00   18.25  
+ PW_Basis_K      real2recip         0.70   9090     0.00   12.09  
+ Operator        nonlocal_pw        2.06   6874     0.00   35.46  
+ Nonlocal        add_nonlocal_pp    0.95   6874     0.00   16.27  
+ ESolver_KS_PW   hamilt2rho_single  5.25   8        0.66   90.29  
+ HSolverPW       solve              5.24   8        0.66   90.06  
+ HSolverPW       solve_psik         5.03   32       0.16   86.41  
+ DiagoCG         diag_once          4.35   32       0.14   74.76  
+ ElecStatePW     psiToRho           0.18   8        0.02   3.11   
+ DiagoIterAssist diag_subspace      0.63   28       0.02   10.88  
+ Forces          cal_force          0.06   1        0.06   1.03   
+ Stress_PW       cal_stress         0.17   1        0.17   2.94   
+ Stress          stress_nl          0.15   1        0.15   2.59   
+------------------------------------------------------------------
 
- See output information in : OUT.ABACUS/
+
+ START  Time  : Thu May 28 19:17:34 2026
+ FINISH Time  : Thu May 28 19:17:39 2026
+ TOTAL  Time  : 5
+ SEE INFORMATION IN : OUT.ABACUS/

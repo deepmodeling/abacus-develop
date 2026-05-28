@@ -9,7 +9,7 @@ ny 24
 nz 24
 
 #Parameters (2.Iteration)
-ecutwfc			20
+ecutwfc			40
 scf_thr			1e-7
 scf_nmax		10
 cal_force 		1

@@ -1,0 +1,6 @@
+phase	case	config	rep	command	start_iso	end_iso	start_ns	end_ns	elapsed_s	status
+unit	repo	pw_k_serial	0	/home/aunixt/abacus-develop/build/source/source_basis/module_pw/test_serial/MODULE_PW_basis_pw_k_serial	2026-05-28T21:26:46+0800	2026-05-28T21:26:47+0800	1779974806950222259	1779974807018746677	0.069	0
+unit	repo	pw_mpi_np1	0	/home/aunixt/abacus-develop/build/source/source_basis/module_pw/test/MODULE_PW_pw_test	2026-05-28T21:26:47+0800	2026-05-28T21:26:49+0800	1779974807030886866	1779974809262529665	2.232	0
+unit	repo	pw_mpi_np2	0	mpirun --allow-run-as-root -np 2 /home/aunixt/abacus-develop/build/source/source_basis/module_pw/test/MODULE_PW_pw_test	2026-05-28T21:26:49+0800	2026-05-28T21:26:49+0800	1779974809267308032	1779974809992387398	0.725	0
+benchmark	gaas_tiny	serial	1	np=1 omp=1 /home/aunixt/abacus-develop/build/abacus_basic_para	2026-05-28T21:26:49+0800	2026-05-28T21:27:08+0800	1779974810001058610	1779974828404337878	18.403	0
+benchmark	gaas_tiny	mix_np2_omp2	1	np=2 omp=2 /home/aunixt/abacus-develop/build/abacus_basic_para	2026-05-28T21:27:08+0800	2026-05-28T21:27:22+0800	1779974828412069895	1779974842736665236	14.325	0

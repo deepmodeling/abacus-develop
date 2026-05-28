@@ -205,6 +205,7 @@ void PW_Basis:: initgrids(
     MPI_Allreduce(MPI_IN_PLACE, &this->gridecut_lat, 1, MPI_DOUBLE, MPI_MIN , this->pool_world);
 #endif
     this->gridecut_lat -= 1e-6;
+    this->invalidate_cache();
 
     delete[] ibox;
     return;

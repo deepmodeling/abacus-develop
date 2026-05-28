@@ -29,8 +29,12 @@ TEST_F(PWTEST,test1_1_1)
     pwtest.initgrids(lat0, latvec, wfcecut);
     pwtest.initparameters(gamma_only, wfcecut, distribution_type,xprime);
     pwtest.setuptransform();
+    pwtest.reset_cache_stats();
     pwtest.collect_local_pw();
     pwtest.collect_uniqgg();
+    auto stats_after_build = pwtest.get_cache_stats();
+    EXPECT_EQ(stats_after_build.local_pw_misses, 1);
+    EXPECT_EQ(stats_after_build.uniqgg_misses, 1);
     double* gg_ptr = pwtest.gg;
     int* ig2igg_ptr = pwtest.ig2igg;
     double* gguniq_ptr = pwtest.gg_uniq;
@@ -43,6 +47,10 @@ TEST_F(PWTEST,test1_1_1)
     EXPECT_EQ(pwtest.gg_uniq, gguniq_ptr);
     EXPECT_EQ(pwtest.ngg, ngg_before);
     EXPECT_DOUBLE_EQ(pwtest.gg[0], gg_sample);
+    auto stats_after_hit = pwtest.get_cache_stats();
+    EXPECT_EQ(stats_after_hit.local_pw_hits, 1);
+    EXPECT_EQ(stats_after_hit.uniqgg_hits, 1);
+    EXPECT_GT(stats_after_hit.cache_bytes, 0);
     ModuleBase::Matrix3 GT,G,GGT;
     GT = latvec.Inverse();
 	G  = GT.Transpose();
