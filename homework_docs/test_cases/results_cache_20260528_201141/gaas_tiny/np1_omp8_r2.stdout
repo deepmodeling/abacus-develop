@@ -1,0 +1,108 @@
+===== RUN START 2026-05-28T20:16:16+0800 case=gaas_tiny config=omp8 np=1 omp=8 rep=2 =====
+                                                                                     
+                              ABACUS v3.11.0-beta.2
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 63ded64e2 (Thu May 28 16:38:59 2026 +0800)
+
+ Thu May 28 20:16:16 2026
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Ga: [Ar] 3d10 4s2 4p1
+ Warning: the number of valence electrons in pseudopotential > 5 for As: [Ar] 3d10 4s2 4p3
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 24 * 24 * 24
+ UNIFORM GRID DIM(BIG): 24 * 24 * 24
+ DONE(0.0634956  SEC) : SYMMETRY
+ DONE(0.0635072  SEC) : SETUP UNITCELL
+ DONE(0.106045   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               1           8             8             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Ga      4           
+ As      4           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.111274   SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.113125   SEC) : LOCAL POTENTIAL
+ DONE(0.1333     SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 23.4644
+ DONE(0.194272   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.319334   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.95116653e+04   0.00000000e+00   5.1410e+00   0.50
+ CG2     -1.95164689e+04  -4.80358818e+00   2.9105e-01   0.50
+ CG3     -1.95195803e+04  -3.11141910e+00   2.6146e-02   0.77
+ CG4     -1.95199400e+04  -3.59662442e-01   1.0671e-03   0.65
+ CG5     -1.95199345e+04   5.45892628e-03   2.4459e-04   0.68
+ CG6     -1.95199796e+04  -4.50395540e-02   5.3209e-05   0.67
+ CG7     -1.95199680e+04   1.15640911e-02   3.3209e-06   0.65
+ CG8     -1.95199711e+04  -3.13103107e-03   9.4154e-07   0.98
+ CG9     -1.95199709e+04   2.48209063e-04   9.3225e-08   0.75
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11095.7409212305         0.0000000000         0.0000000000 
+          0.0000000000    -11095.7409212305         0.0000000000 
+          0.0000000000         0.0000000000    -11095.7409212305 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11095.740921 kbar
+
+ TIME STATISTICS
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              6.80   17       0.40   100.00 
+ Driver          atomic_world       6.80   1        6.80   100.00 
+ Relax_Driver    relax_driver       6.60   1        6.60   97.11  
+ ESolver_KS      runner             6.27   1        6.27   92.22  
+ ESolver_KS_PW   before_scf         0.12   1        0.12   1.84   
+ PSIPrepare      initialize_psi     0.12   1        0.12   1.78   
+ DiagoIterAssist diag_subspace_init 0.10   4        0.03   1.49   
+ Operator        hPsi               4.18   8184     0.00   61.48  
+ Operator        EkineticPW         0.09   8184     0.00   1.34   
+ Operator        veff_pw            1.65   8184     0.00   24.29  
+ PW_Basis_K      recip2real         1.10   13196    0.00   16.11  
+ PW_Basis_K      real2recip         0.67   10676    0.00   9.81   
+ Operator        nonlocal_pw        2.42   8184     0.00   35.62  
+ Nonlocal        add_nonlocal_pp    1.20   8184     0.00   17.69  
+ ESolver_KS_PW   hamilt2rho_single  6.12   9        0.68   90.05  
+ HSolverPW       solve              6.12   9        0.68   89.97  
+ HSolverPW       solve_psik         5.90   36       0.16   86.73  
+ DiagoCG         diag_once          5.06   36       0.14   74.34  
+ ElecStatePW     psiToRho           0.18   9        0.02   2.66   
+ DiagoIterAssist diag_subspace      0.75   32       0.02   11.08  
+ Stress_PW       cal_stress         0.27   1        0.27   3.94   
+ Stress          stress_nl          0.26   1        0.26   3.79   
+------------------------------------------------------------------
+
+
+ START  Time  : Thu May 28 20:16:16 2026
+ FINISH Time  : Thu May 28 20:16:23 2026
+ TOTAL  Time  : 7
+ SEE INFORMATION IN : OUT.ABACUS/
+===== RUN END 2026-05-28T20:16:23+0800 case=gaas_tiny config=omp8 np=1 omp=8 rep=2 status=0 =====

@@ -1,0 +1,252 @@
+
+================================================================================
+Case: gaas_medium
+================================================================================
+
+  Config: np=1, omp=1 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  25.3      1.2
+  PW_Basis_K::real2recip                      4.657    0.045     9113  17.5%
+  PW_Basis_K::recip2real                      7.517    0.091    11353  28.3%
+  ESolver_KS_PW::before_scf                   0.540    0.017        1   2.0%
+  ESolver_KS_PW::hamilt2rho_single           24.840    0.565        8  93.6%
+  HSolverPW::solve                           24.790    0.565        8  93.4%
+  Operator::hPsi                             20.527    0.469     6897  77.3%
+  total                                      26.547    0.544       17 100.0%
+
+  Config: np=1, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  10.3      0.6
+  PW_Basis_K::real2recip                      1.847    0.218     9202  17.5%
+  PW_Basis_K::recip2real                      3.130    0.308    11442  29.7%
+  ESolver_KS_PW::before_scf                   0.220    0.026        1   2.1%
+  ESolver_KS_PW::hamilt2rho_single            9.613    0.783        8  91.3%
+  HSolverPW::solve                            9.590    0.782        8  91.1%
+  Operator::hPsi                              7.610    0.638     6986  72.3%
+  total                                      10.523    0.797       17 100.0%
+
+  Config: np=1, omp=8 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  10.7      0.6
+  PW_Basis_K::real2recip                      2.060    0.010     9182  18.6%
+  PW_Basis_K::recip2real                      3.410    0.010    11422  30.8%
+  ESolver_KS_PW::before_scf                   0.230    0.000        1   2.1%
+  ESolver_KS_PW::hamilt2rho_single           10.090    0.053        8  91.1%
+  HSolverPW::solve                           10.060    0.053        8  90.8%
+  Operator::hPsi                              7.873    0.040     6966  71.1%
+  total                                      11.073    0.055       17 100.0%
+
+  Config: np=2, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  10.3      0.6
+  PW_Basis_K::real2recip                      2.150    0.044     9167  20.7%
+  PW_Basis_K::recip2real                      3.070    0.017    11407  29.6%
+  ESolver_KS_PW::before_scf                   0.207    0.021        1   2.0%
+  ESolver_KS_PW::hamilt2rho_single            9.580    0.122        8  92.2%
+  HSolverPW::solve                            9.547    0.127        8  91.9%
+  Operator::hPsi                              7.637    0.138     6951  73.5%
+  total                                      10.387    0.136       17 100.0%
+
+  Config: np=2, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  20.7      1.2
+  PW_Basis_K::real2recip                      4.537    0.055     9223  21.0%
+  PW_Basis_K::recip2real                      6.660    0.142    11463  30.8%
+  ESolver_KS_PW::before_scf                   0.403    0.015        1   1.9%
+  ESolver_KS_PW::hamilt2rho_single           20.510    0.392        8  94.8%
+  HSolverPW::solve                           20.470    0.392        8  94.6%
+  Operator::hPsi                             15.063    0.269     7007  69.6%
+  total                                      21.633    0.397       17 100.0%
+
+  Config: np=4, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  10.7      1.5
+  PW_Basis_K::real2recip                      2.433    0.093     9170  22.1%
+  PW_Basis_K::recip2real                      3.073    0.081    11410  27.9%
+  ESolver_KS_PW::before_scf                   0.230    0.000        1   2.1%
+  ESolver_KS_PW::hamilt2rho_single           10.087    0.346        8  91.7%
+  HSolverPW::solve                           10.040    0.350        8  91.2%
+  Operator::hPsi                              7.850    0.263     6954  71.3%
+  total                                      11.003    0.352       17 100.0%
+
+  --- Summary: gather/scatter as % of FFT ---
+  np=1 omp=1: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=8: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=4 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real
+
+================================================================================
+Case: gaas_small
+================================================================================
+
+  Config: np=1, omp=1 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  16.0      1.0
+  PW_Basis_K::real2recip                      0.973    0.025    10051   6.1%
+  PW_Basis_K::recip2real                      1.777    0.045    12571  11.0%
+  ESolver_KS_PW::before_scf                   0.253    0.006        1   1.6%
+  ESolver_KS_PW::hamilt2rho_single           15.007    0.443        9  93.2%
+  HSolverPW::solve                           14.983    0.441        9  93.0%
+  Operator::hPsi                             11.167    0.344     7559  69.3%
+  total                                      16.107    0.459       17 100.0%
+
+  Config: np=1, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   7.3      0.6
+  PW_Basis_K::real2recip                      0.580    0.030     9136   7.6%
+  PW_Basis_K::recip2real                      1.120    0.053    11376  14.8%
+  ESolver_KS_PW::before_scf                   0.160    0.020        1   2.1%
+  ESolver_KS_PW::hamilt2rho_single            6.790    0.560        8  89.1%
+  HSolverPW::solve                            6.780    0.560        8  88.9%
+  Operator::hPsi                              4.880    0.423     6920  64.0%
+  total                                       7.623    0.633       17 100.0%
+
+  Config: np=1, omp=8 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   6.7      2.1
+  PW_Basis_K::real2recip                      0.713    0.205    10045   9.2%
+  PW_Basis_K::recip2real                      1.283    0.257    12565  16.9%
+  ESolver_KS_PW::before_scf                   0.187    0.072        1   2.4%
+  ESolver_KS_PW::hamilt2rho_single            6.687    1.495        9  87.7%
+  HSolverPW::solve                            6.673    1.498        9  87.5%
+  Operator::hPsi                              4.617    1.095     7553  60.4%
+  total                                       7.627    1.666       17 100.0%
+
+  Config: np=2, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   6.3      0.6
+  PW_Basis_K::real2recip                      0.750    0.062     9090  12.0%
+  PW_Basis_K::recip2real                      1.127    0.070    11330  18.1%
+  ESolver_KS_PW::before_scf                   0.107    0.006        1   1.7%
+  ESolver_KS_PW::hamilt2rho_single            5.650    0.577        8  90.8%
+  HSolverPW::solve                            5.637    0.571        8  90.6%
+  Operator::hPsi                              4.070    0.382     6874  65.4%
+  total                                       6.220    0.618       17 100.0%
+
+  Config: np=2, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  21.7      5.5
+  PW_Basis_K::real2recip                      3.853    0.838    10321  17.3%
+  PW_Basis_K::recip2real                      5.743    0.925    12841  26.0%
+  ESolver_KS_PW::before_scf                   0.357    0.061        1   1.6%
+  ESolver_KS_PW::hamilt2rho_single           21.177    4.404        9  95.4%
+  HSolverPW::solve                           21.150    4.401        9  95.3%
+  Operator::hPsi                             14.397    3.102     7829  64.8%
+  total                                      22.183    4.491       17 100.0%
+
+  Config: np=4, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   7.7      1.5
+  PW_Basis_K::real2recip                      1.070    0.231     9151  13.6%
+  PW_Basis_K::recip2real                      1.337    0.218    11391  17.2%
+  ESolver_KS_PW::before_scf                   0.143    0.015        1   1.9%
+  ESolver_KS_PW::hamilt2rho_single            7.073    1.507        8  90.4%
+  HSolverPW::solve                            7.053    1.507        8  90.1%
+  Operator::hPsi                              4.887    0.997     6935  62.6%
+  total                                       7.810    1.564       17 100.0%
+
+  --- Summary: gather/scatter as % of FFT ---
+  np=1 omp=1: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=8: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=4 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real
+
+================================================================================
+Case: gaas_tiny
+================================================================================
+
+  Config: np=1, omp=1 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  14.7      0.6
+  PW_Basis_K::real2recip                      0.947    0.046    10672   6.1%
+  PW_Basis_K::recip2real                      1.497    0.072    13192   9.7%
+  ESolver_KS_PW::before_scf                   0.247    0.015        1   1.6%
+  ESolver_KS_PW::hamilt2rho_single           14.417    0.739        9  93.6%
+  HSolverPW::solve                           14.407    0.739        9  93.6%
+  Operator::hPsi                             10.533    0.543     8180  68.4%
+  total                                      15.403    0.768       17 100.0%
+
+  Config: np=1, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   6.3      0.6
+  PW_Basis_K::real2recip                      0.547    0.040    10740   8.8%
+  PW_Basis_K::recip2real                      0.910    0.046    13260  14.6%
+  ESolver_KS_PW::before_scf                   0.117    0.012        1   1.9%
+  ESolver_KS_PW::hamilt2rho_single            5.620    0.214        9  90.0%
+  HSolverPW::solve                            5.613    0.210        9  90.0%
+  Operator::hPsi                              3.937    0.144     8248  63.1%
+  total                                       6.237    0.215       17 100.0%
+
+  Config: np=1, omp=8 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   6.3      0.6
+  PW_Basis_K::real2recip                      0.663    0.006    10676   9.8%
+  PW_Basis_K::recip2real                      1.093    0.012    13196  16.0%
+  ESolver_KS_PW::before_scf                   0.127    0.006        1   1.8%
+  ESolver_KS_PW::hamilt2rho_single            6.110    0.017        9  89.8%
+  HSolverPW::solve                            6.107    0.023        9  89.7%
+  Operator::hPsi                              4.167    0.015     8184  61.2%
+  total                                       6.803    0.006       17 100.0%
+
+  Config: np=2, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   5.7      0.6
+  PW_Basis_K::real2recip                      0.760    0.000    10601  11.9%
+  PW_Basis_K::recip2real                      1.123    0.006    13121  17.6%
+  ESolver_KS_PW::before_scf                   0.103    0.006        1   1.6%
+  ESolver_KS_PW::hamilt2rho_single            5.867    0.060        9  91.7%
+  HSolverPW::solve                            5.860    0.056        9  91.6%
+  Operator::hPsi                              4.157    0.047     8109  65.0%
+  total                                       6.393    0.051       17 100.0%
+
+  Config: np=2, omp=4 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                  22.3      1.2
+  PW_Basis_K::real2recip                      4.070    0.271    10615  17.3%
+  PW_Basis_K::recip2real                      5.773    0.384    13135  24.5%
+  ESolver_KS_PW::before_scf                   0.350    0.111        1   1.5%
+  ESolver_KS_PW::hamilt2rho_single           22.523    1.574        9  95.7%
+  HSolverPW::solve                           22.507    1.568        9  95.6%
+  Operator::hPsi                             15.110    1.082     8123  64.2%
+  total                                      23.540    1.659       17 100.0%
+
+  Config: np=4, omp=2 (3 runs)
+  Timer                                       Avg/s      Std    Calls      %
+  ---------------------------------------- -------- -------- -------- ------
+  [Wall Time]                                   7.7      1.2
+  PW_Basis_K::real2recip                      0.997    0.101    10615  12.5%
+  PW_Basis_K::recip2real                      1.347    0.184    13135  16.8%
+  ESolver_KS_PW::before_scf                   0.123    0.006        1   1.5%
+  ESolver_KS_PW::hamilt2rho_single            7.337    0.874        9  91.6%
+  HSolverPW::solve                            7.327    0.874        9  91.5%
+  Operator::hPsi                              4.960    0.509     8123  62.0%
+  total                                       8.007    0.886       17 100.0%
+
+  --- Summary: gather/scatter as % of FFT ---
+  np=1 omp=1: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=1 omp=8: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=2 omp=4: gatherp=0% of real2recip, gathers=0% of recip2real
+  np=4 omp=2: gatherp=0% of real2recip, gathers=0% of recip2real

@@ -1,0 +1,109 @@
+===== RUN START 2026-05-28T20:21:26+0800 case=gaas_small config=mix_np4_omp2 np=4 omp=2 rep=1 =====
+                                                                                     
+                              ABACUS v3.11.0-beta.2
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 63ded64e2 (Thu May 28 16:38:59 2026 +0800)
+
+ Thu May 28 20:21:27 2026
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Ga: [Ar] 3d10 4s2 4p1
+ Warning: the number of valence electrons in pseudopotential > 5 for As: [Ar] 3d10 4s2 4p3
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG): 32 * 32 * 32
+ DONE(0.053471   SEC) : SYMMETRY
+ DONE(0.0535041  SEC) : SETUP UNITCELL
+ DONE(0.100004   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               4           2             8             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Ga      4           
+ As      4           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.10705    SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.118728   SEC) : LOCAL POTENTIAL
+ DONE(0.150372   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 5.87036
+ DONE(0.226241   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.357889   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.94959838e+04   0.00000000e+00   5.4363e+00   0.51
+ CG2     -1.95012283e+04  -5.24452655e+00   2.2308e-01   0.55
+ CG3     -1.95026107e+04  -1.38238401e+00   1.6218e-02   0.73
+ CG4     -1.95024577e+04   1.52984020e-01   1.3404e-03   0.68
+ CG5     -1.95024152e+04   4.25260113e-02   1.8327e-04   0.66
+ CG6     -1.95024062e+04   8.98517884e-03   1.9104e-05   0.74
+ CG7     -1.95024069e+04  -7.35826263e-04   2.4265e-07   0.67
+ CG8     -1.95024072e+04  -3.14390264e-04   9.2468e-08   0.98
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11616.9375925610        -0.0000000000         0.0000000000 
+          0.0000000000    -11616.9375925610        -0.0000000000 
+         -0.0000000000        -0.0000000000    -11616.9375925610 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11616.937593 kbar
+
+ TIME STATISTICS
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              6.14   17       0.36   100.00 
+ Driver          atomic_world       6.14   1        6.14   100.00 
+ PSIPrepare      prepare_init       0.08   1        0.08   1.23   
+ psi_init_atomic tabulate           0.08   1        0.08   1.23   
+ Relax_Driver    relax_driver       5.91   1        5.91   96.29  
+ ESolver_KS      runner             5.67   1        5.67   92.26  
+ ESolver_KS_PW   before_scf         0.13   1        0.13   2.14   
+ PSIPrepare      initialize_psi     0.11   1        0.11   1.87   
+ DiagoIterAssist diag_subspace_init 0.11   4        0.03   1.72   
+ Operator        hPsi               3.86   6935     0.00   62.92  
+ Operator        veff_pw            1.80   6935     0.00   29.35  
+ PW_Basis_K      recip2real         1.10   11391    0.00   17.96  
+ PW_Basis_K      real2recip         0.83   9151     0.00   13.44  
+ Operator        nonlocal_pw        2.02   6935     0.00   32.86  
+ Nonlocal        add_nonlocal_pp    0.86   6935     0.00   14.05  
+ ESolver_KS_PW   hamilt2rho_single  5.49   8        0.69   89.42  
+ HSolverPW       solve              5.47   8        0.68   89.11  
+ HSolverPW       solve_psik         5.24   32       0.16   85.40  
+ DiagoCG         diag_once          4.49   32       0.14   73.03  
+ ElecStatePW     psiToRho           0.20   8        0.02   3.24   
+ DiagoIterAssist diag_subspace      0.73   28       0.03   11.82  
+ Forces          cal_force          0.07   1        0.07   1.18   
+ Stress_PW       cal_stress         0.17   1        0.17   2.85   
+ Stress          stress_nl          0.15   1        0.15   2.39   
+------------------------------------------------------------------
+
+
+ START  Time  : Thu May 28 20:21:27 2026
+ FINISH Time  : Thu May 28 20:21:33 2026
+ TOTAL  Time  : 6
+ SEE INFORMATION IN : OUT.ABACUS/
+===== RUN END 2026-05-28T20:21:33+0800 case=gaas_small config=mix_np4_omp2 np=4 omp=2 rep=1 status=0 =====

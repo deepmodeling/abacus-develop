@@ -1,0 +1,177 @@
+[==========] Running 53 tests from 2 test suites.
+[----------] Global test environment set-up.
+[32m[ SET UP TESTS ][0m
+[32m[ 1 processors are used. ][0m
+[----------] 45 tests from PWTEST
+[32m============================[0m
+[32m=    PW MODULE TEST START  =[0m
+[32m============================[0m
+[ RUN      ] PWTEST.test_big
+[32m[    CASE  ][0m Temporary: test for pw_basis_big and pw_basis_k_big. (They should be removed in the future)
+[       OK ] PWTEST.test_big (1 ms)
+[ RUN      ] PWTEST.test_other
+[32m[    CASE  ][0m Test other codes
+No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings.
+No plane waves are available for this k-point across the whole pool. Please increase ecutwfc or check KPT settings.
+[       OK ] PWTEST.test_other (25 ms)
+[ RUN      ] PWTEST.test_no_plane_wave_message_global_empty_k
+[32m[    CASE  ][0m [       OK ] PWTEST.test_no_plane_wave_message_global_empty_k (0 ms)
+[ RUN      ] PWTEST.test_no_plane_wave_message_parallel_local_empty
+[32m[    CASE  ][0m /home/aunixt/abacus-develop/source/source_basis/module_pw/test/test-other.cpp:171: Skipped
+Requires more than one MPI rank.
+
+[  SKIPPED ] PWTEST.test_no_plane_wave_message_parallel_local_empty (0 ms)
+[ RUN      ] PWTEST.test1_1_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test1_1_1 (13 ms)
+[ RUN      ] PWTEST.test1_1_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: false, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test1_1_2 (3 ms)
+[ RUN      ] PWTEST.test1_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: false, check fft between complex and complex
+[       OK ] PWTEST.test1_2 (45 ms)
+[ RUN      ] PWTEST.test1_3
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: false, check fft
+[       OK ] PWTEST.test1_3 (56 ms)
+[ RUN      ] PWTEST.test1_4
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: false, 2 kpoints, check fft
+[       OK ] PWTEST.test1_4 (92 ms)
+[ RUN      ] PWTEST.test1_5
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: false, gamma kpoint, check fft
+[       OK ] PWTEST.test1_5 (47 ms)
+[ RUN      ] PWTEST.test2_1_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test2_1_1 (1 ms)
+[ RUN      ] PWTEST.test2_1_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: false, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test2_1_2 (2 ms)
+[ RUN      ] PWTEST.test2_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: false, check fft
+[       OK ] PWTEST.test2_2 (0 ms)
+[ RUN      ] PWTEST.test2_3
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: false, check fft
+[       OK ] PWTEST.test2_3 (2 ms)
+[ RUN      ] PWTEST.test3_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: true, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test3_1 (3 ms)
+[ RUN      ] PWTEST.test3_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: true, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test3_2 (2 ms)
+[ RUN      ] PWTEST.test3_3_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: true, check fft between r & c
+[       OK ] PWTEST.test3_3_2 (0 ms)
+[ RUN      ] PWTEST.test3_3
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: true, check fft
+[       OK ] PWTEST.test3_3 (1 ms)
+[ RUN      ] PWTEST.test4_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: true, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test4_1 (3 ms)
+[ RUN      ] PWTEST.test4_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: true, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test4_2 (0 ms)
+[ RUN      ] PWTEST.test4_3
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: true, check fft
+[       OK ] PWTEST.test4_3 (2 ms)
+[ RUN      ] PWTEST.test4_4
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: true, 2 kpoints, check fft
+[       OK ] PWTEST.test4_4 (18 ms)
+[ RUN      ] PWTEST.test4_5
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: true, gamma kpoint, check fft
+[       OK ] PWTEST.test4_5 (5 ms)
+[ RUN      ] PWTEST.test5_1_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, full_pw: true, full_pw_dim: 1, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test5_1_1 (77 ms)
+[ RUN      ] PWTEST.test5_1_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, full_pw: true, full_pw_dim: 2, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test5_1_2 (20 ms)
+[ RUN      ] PWTEST.test5_2_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, full_pw: true, full_pw_dim: 1, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test5_2_1 (1 ms)
+[ RUN      ] PWTEST.test5_2_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, full_pw: true, full_pw_dim: 2, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test5_2_2 (0 ms)
+[ RUN      ] PWTEST.test5_3_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: false, full_pw: true, full_pw_dim: 1, check fft
+[       OK ] PWTEST.test5_3_1 (55 ms)
+[ RUN      ] PWTEST.test5_4_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: false, full_pw: true, full_pw_dim: 1, check fft between complex and complex
+[       OK ] PWTEST.test5_4_1 (50 ms)
+[ RUN      ] PWTEST.test5_4_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: false, full_pw: true, full_pw_dim: 2, check fft between complex and complex
+[       OK ] PWTEST.test5_4_2 (35 ms)
+[ RUN      ] PWTEST.test6_1_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, full_pw: true, full_pw_dim: 1, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test6_1_1 (78 ms)
+[ RUN      ] PWTEST.test6_1_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, full_pw: true, full_pw_dim: 2, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test6_1_2 (20 ms)
+[ RUN      ] PWTEST.test6_2_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, full_pw: true, full_pw_dim: 1, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test6_2_1 (4 ms)
+[ RUN      ] PWTEST.test6_2_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, full_pw: true, full_pw_dim: 2, check gcar,gdirect,gg,istot2ixy,ig2isz
+npw_per
+[       OK ] PWTEST.test6_2_2 (1 ms)
+[ RUN      ] PWTEST.test6_3_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: false, full_pw: true, full_pw_dim: 1, check fft
+[       OK ] PWTEST.test6_3_1 (0 ms)
+[ RUN      ] PWTEST.test6_4_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: false, full_pw: true, full_pw_dim: 1, check fft between complex and complex
+[       OK ] PWTEST.test6_4_1 (0 ms)
+[ RUN      ] PWTEST.test6_4_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: false, full_pw: true, full_pw_dim: 2, check fft between complex and complex
+[       OK ] PWTEST.test6_4_2 (1 ms)
+[ RUN      ] PWTEST.test7_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: on, xprime: true, full_pw: true, full_pw_dim: 0, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test7_1 (2 ms)
+[ RUN      ] PWTEST.test7_3_1
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: true, full_pw: true, full_pw_dim: 1, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test7_3_1 (0 ms)
+[ RUN      ] PWTEST.test7_3_2
+[32m[    CASE  ][0m dividemthd 1, gamma_only: off, xprime: true, full_pw: true, full_pw_dim: 2, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test7_3_2 (0 ms)
+[ RUN      ] PWTEST.test8_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: true, full_pw: true, full_pw_dim: 0, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test8_1 (2 ms)
+[ RUN      ] PWTEST.test8_2_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: on, xprime: true, full_pw: true, full_pw_dim: 1, check fft
+[       OK ] PWTEST.test8_2_1 (14 ms)
+[ RUN      ] PWTEST.test8_3_1
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: true, full_pw: true, full_pw_dim: 1, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test8_3_1 (0 ms)
+[ RUN      ] PWTEST.test8_3_2
+[32m[    CASE  ][0m dividemthd 2, gamma_only: off, xprime: true, full_pw: true, full_pw_dim: 2, check fft between complex and complex, reset ggecut to latecut
+[       OK ] PWTEST.test8_3_2 (0 ms)
+[ RUN      ] PWTEST.test_sup
+[32m[    CASE  ][0m dividemthd 3, gamma_only: off, check gcar,gdirect,gg,istot2ixy,ig2isz
+[       OK ] PWTEST.test_sup (1 ms)
+[32m============================[0m
+[32m=     PW MODULE TEST END   =[0m
+[32m============================[0m
+[----------] 45 tests from PWTEST (701 ms total)
+
+[----------] 8 tests from TestPW_Basis_Big
+[ RUN      ] TestPW_Basis_Big.BxByTest
+[       OK ] TestPW_Basis_Big.BxByTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzTest
+[       OK ] TestPW_Basis_Big.BzTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzNoFactorTest
+[       OK ] TestPW_Basis_Big.BzNoFactorTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzNoFactorNoResultTest
+[       OK ] TestPW_Basis_Big.BzNoFactorNoResultTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzSmallTest
+[       OK ] TestPW_Basis_Big.BzSmallTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzSmallNoResultTest
+[       OK ] TestPW_Basis_Big.BzSmallNoResultTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzNprocTest
+[       OK ] TestPW_Basis_Big.BzNprocTest (0 ms)
+[ RUN      ] TestPW_Basis_Big.BzNprocNoResultTest
+[       OK ] TestPW_Basis_Big.BzNprocNoResultTest (0 ms)
+[----------] 8 tests from TestPW_Basis_Big (0 ms total)
+
+[----------] Global test environment tear-down
+[32m[ TEAR DOWN TESTS ][0m
+[==========] 53 tests from 2 test suites ran. (701 ms total)
+[  PASSED  ] 52 tests.
+[  SKIPPED ] 1 test, listed below:
+[  SKIPPED ] PWTEST.test_no_plane_wave_message_parallel_local_empty

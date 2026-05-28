@@ -56,6 +56,14 @@ class PW_Basis_K : public PW_Basis
 {
 
 public:
+    struct KCacheStats : public PW_Basis::CacheStats
+    {
+        std::uint64_t gcar_hits = 0;
+        std::uint64_t gcar_misses = 0;
+        std::uint64_t gk2_hits = 0;
+        std::uint64_t gk2_misses = 0;
+    };
+
     PW_Basis_K();
     PW_Basis_K(std::string device_, std::string precision_) : PW_Basis(device_, precision_) {classname="PW_Basis_K";}
     ~PW_Basis_K();
@@ -99,14 +107,29 @@ public:
                           const double& erf_height_in = 0.0,
                           const double& erf_sigma_in = 0.1);
 
+    KCacheStats get_k_cache_stats() const;
+    void reset_k_cache_stats();
+
   private:
     void invalidate_cache() override
     {
       PW_Basis::invalidate_cache();
-      this->gk_cache_valid = false;
+      this->gcar_cache_valid.store(false);
+      this->gk_cache_valid.store(false);
     }
 
-    bool gk_cache_valid = false;
+    void clear_k_cache_storage();
+    void sync_gcar_device_cache();
+    void sync_gk2_device_cache();
+
+    std::atomic<bool> gcar_cache_valid{false};
+    std::atomic<bool> gk_cache_valid{false};
+    std::unique_ptr<ModuleBase::Vector3<double>[]> k_gcar_cache_storage;
+    std::unique_ptr<double[]> k_gk2_cache_storage;
+    std::atomic<std::uint64_t> gcar_cache_hits{0};
+    std::atomic<std::uint64_t> gcar_cache_misses{0};
+    std::atomic<std::uint64_t> gk2_cache_hits{0};
+    std::atomic<std::uint64_t> gk2_cache_misses{0};
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
@@ -287,4 +310,3 @@ private:
 #endif //PlaneWave_K class
 
 #include "./pw_basis_k_big.h" //temporary it will be removed
-

@@ -7,9 +7,9 @@
                Documentation: https://abacus.deepmodeling.com/                       
                   Repository: https://github.com/abacusmodeling/abacus-develop       
                               https://github.com/deepmodeling/abacus-develop         
-                      Commit: 65acba3c6 (Thu May 21 19:32:40 2026 +0800)
+                      Commit: 783b9ef4a (Mon May 25 19:37:18 2026 +0800)
 
- Fri May 22 00:45:57 2026
+ Thu May 28 19:21:58 2026
  MAKE THE DIR         : OUT.ABACUS/
  RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
  WARNING: some of potential function is set to zero cause of less than 1e-30.
@@ -24,9 +24,9 @@
 
  UNIFORM GRID DIM     : 48 * 48 * 48
  UNIFORM GRID DIM(BIG): 48 * 48 * 48
- DONE(0.0738799  SEC) : SYMMETRY
- DONE(0.0738906  SEC) : SETUP UNITCELL
- DONE(0.123024   SEC) : INIT K-POINTS
+ DONE(0.0707476  SEC) : SYMMETRY
+ DONE(0.0707567  SEC) : SETUP UNITCELL
+ DONE(0.116319   SEC) : INIT K-POINTS
  ----------------------------------------------------------------
  Self-consistent calculations for electrons
  ----------------------------------------------------------------
@@ -41,32 +41,32 @@
  ----------------------------------------------------------------
  Initial plane wave basis and FFT box
  ----------------------------------------------------------------
- DONE(0.135235   SEC) : INIT PLANEWAVE
+ DONE(0.124944   SEC) : INIT PLANEWAVE
  START CHARGE         : ATOMIC
- DONE(0.145171   SEC) : LOCAL POTENTIAL
- DONE(0.17181    SEC) : NON-LOCAL POTENTIAL
+ DONE(0.133421   SEC) : LOCAL POTENTIAL
+ DONE(0.154623   SEC) : NON-LOCAL POTENTIAL
  MEMORY FOR PSI (MB)  : 23.4644
- DONE(0.244214   SEC) : INIT BASIS
+ DONE(0.218777   SEC) : INIT BASIS
 
  ================================================================
  SELF-CONSISTENT: 
  ================================================================
- DONE(0.572443   SEC) : INIT SCF
+ DONE(0.484962   SEC) : INIT SCF
  ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
- CG1     -1.94733053e+04   0.00000000e+00   5.8422e+00   1.58
- CG2     -1.94811748e+04  -7.86949978e+00   2.2924e-01   1.52
- CG3     -1.94829979e+04  -1.82302596e+00   1.6936e-02   1.84
- CG4     -1.94830481e+04  -5.02352184e-02   1.3159e-03   1.69
- CG5     -1.94830530e+04  -4.88300554e-03   1.4785e-04   2.11
- CG6     -1.94830535e+04  -5.11034264e-04   4.5610e-06   2.08
- CG7     -1.94830535e+04  -2.70761107e-05   1.6871e-07   2.50
- CG8     -1.94830535e+04  -1.07809322e-06   1.8266e-08   2.58
+ CG1     -1.94733053e+04   0.00000000e+00   5.8422e+00   1.25
+ CG2     -1.94811748e+04  -7.86949978e+00   2.2924e-01   1.27
+ CG3     -1.94829979e+04  -1.82302596e+00   1.6936e-02   1.58
+ CG4     -1.94830481e+04  -5.02352184e-02   1.3159e-03   1.48
+ CG5     -1.94830530e+04  -4.88300553e-03   1.4785e-04   1.50
+ CG6     -1.94830535e+04  -5.11034258e-04   4.5610e-06   1.51
+ CG7     -1.94830535e+04  -2.70761293e-05   1.6871e-07   1.71
+ CG8     -1.94830535e+04  -1.07808084e-06   1.8266e-08   1.78
  ----------------------------------------------------------------
               Stress_x             Stress_y             Stress_z 
  ----------------------------------------------------------------
-     -11908.5049005775         0.0000000000        -0.0000000000 
-          0.0000000000    -11908.5049005775         0.0000000000 
-         -0.0000000000         0.0000000000    -11908.5049005775 
+     -11908.5049005707         0.0000000000         0.0000000000 
+          0.0000000000    -11908.5049005707         0.0000000000 
+          0.0000000000         0.0000000000    -11908.5049005707 
  ----------------------------------------------------------------
  TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11908.504901 kbar
 
@@ -74,32 +74,33 @@
 ------------------------------------------------------------------
    CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
 ------------------------------------------------------------------
-                 total              17.02  17       1.00   100.00 
- Driver          atomic_world       17.02  1        17.02  100.00 
- Relax_Driver    relax_driver       16.77  1        16.77  98.52  
- ESolver_KS      runner             16.24  1        16.24  95.45  
- ESolver_KS_PW   before_scf         0.33   1        0.33   1.93   
- PSIPrepare      initialize_psi     0.30   1        0.30   1.76   
- DiagoIterAssist diag_subspace_init 0.27   4        0.07   1.60   
- Operator        hPsi               12.40  6966     0.00   72.85  
- Operator        veff_pw            7.63   6966     0.00   44.83  
- PW_Basis_K      recip2real         5.00   11422    0.00   29.35  
- PW_Basis_K      gathers_scatterp   0.66   11422    0.00   3.86   
- PW_Basis_K      real2recip         2.98   9182     0.00   17.54  
- Operator        nonlocal_pw        4.61   6966     0.00   27.11  
- Nonlocal        add_nonlocal_pp    2.09   6966     0.00   12.25  
- ESolver_KS_PW   hamilt2rho_single  15.74  8        1.97   92.47  
- HSolverPW       solve              15.71  8        1.96   92.28  
- HSolverPW       solve_psik         14.79  32       0.46   86.90  
- DiagoCG         diag_once          12.75  32       0.40   74.90  
- ElecStatePW     psiToRho           0.87   8        0.11   5.11   
- DiagoIterAssist diag_subspace      1.91   28       0.07   11.21  
- Stress_PW       cal_stress         0.40   1        0.40   2.34   
- Stress          stress_nl          0.35   1        0.35   2.07   
+                 total              12.99  17       0.76   100.00 
+ Driver          atomic_world       12.99  1        12.99  100.00 
+ Relax_Driver    relax_driver       12.77  1        12.77  98.28  
+ ESolver_KS      runner             12.34  1        12.34  95.00  
+ ESolver_KS_PW   before_scf         0.27   1        0.27   2.05   
+ Potential       cal_veff           0.14   9        0.02   1.04   
+ XC_Functional   v_xc               0.14   11       0.01   1.09   
+ PSIPrepare      initialize_psi     0.24   1        0.24   1.87   
+ DiagoIterAssist diag_subspace_init 0.22   4        0.05   1.69   
+ Operator        hPsi               9.34   6966     0.00   71.92  
+ Operator        veff_pw            6.04   6966     0.00   46.46  
+ PW_Basis_K      recip2real         3.99   11422    0.00   30.70  
+ PW_Basis_K      real2recip         2.38   9182     0.00   18.32  
+ Operator        nonlocal_pw        3.18   6966     0.00   24.51  
+ Nonlocal        add_nonlocal_pp    1.48   6966     0.00   11.40  
+ ESolver_KS_PW   hamilt2rho_single  11.92  8        1.49   91.77  
+ HSolverPW       solve              11.89  8        1.49   91.50  
+ HSolverPW       solve_psik         11.16  32       0.35   85.91  
+ DiagoCG         diag_once          9.52   32       0.30   73.30  
+ ElecStatePW     psiToRho           0.69   8        0.09   5.30   
+ DiagoIterAssist diag_subspace      1.55   28       0.06   11.92  
+ Stress_PW       cal_stress         0.32   1        0.32   2.47   
+ Stress          stress_nl          0.28   1        0.28   2.16   
 ------------------------------------------------------------------
 
 
- START  Time  : Fri May 22 00:45:57 2026
- FINISH Time  : Fri May 22 00:46:14 2026
- TOTAL  Time  : 17
+ START  Time  : Thu May 28 19:21:58 2026
+ FINISH Time  : Thu May 28 19:22:10 2026
+ TOTAL  Time  : 12
  SEE INFORMATION IN : OUT.ABACUS/

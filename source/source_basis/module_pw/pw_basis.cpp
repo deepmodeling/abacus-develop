@@ -5,12 +5,69 @@
 #include "source_base/timer.h"
 #include "source_base/global_function.h"
 
+#include <vector>
 
 namespace ModulePW
 {
 PW_Basis::PW_Basis()
 {
     classname="PW_Basis";
+}
+
+PW_Basis::PW_Basis(const PW_Basis& other)
+{
+    this->classname = other.classname;
+#ifdef __MPI
+    this->pool_world = other.pool_world;
+#endif
+    this->nst = other.nst;
+    this->nstnz = other.nstnz;
+    this->nstot = other.nstot;
+    this->npw = other.npw;
+    this->npwtot = other.npwtot;
+    this->nrxx = other.nrxx;
+    this->startz_current = other.startz_current;
+    this->nplane = other.nplane;
+    this->ig_gge0 = other.ig_gge0;
+    this->gamma_only = other.gamma_only;
+    this->full_pw = other.full_pw;
+    this->ggecut = other.ggecut;
+    this->gridecut_lat = other.gridecut_lat;
+    this->lat0 = other.lat0;
+    this->tpiba = other.tpiba;
+    this->tpiba2 = other.tpiba2;
+    this->latvec = other.latvec;
+    this->G = other.G;
+    this->GT = other.GT;
+    this->GGT = other.GGT;
+    this->omega = other.omega;
+    this->distribution_type = other.distribution_type;
+    this->full_pw_dim = other.full_pw_dim;
+    this->poolnproc = other.poolnproc;
+    this->poolrank = other.poolrank;
+    this->ngg = other.ngg;
+    this->fftnx = other.fftnx;
+    this->fftny = other.fftny;
+    this->fftnz = other.fftnz;
+    this->fftnxyz = other.fftnxyz;
+    this->fftnxy = other.fftnxy;
+    this->nx = other.nx;
+    this->ny = other.ny;
+    this->nz = other.nz;
+    this->nxyz = other.nxyz;
+    this->nxy = other.nxy;
+    this->liy = other.liy;
+    this->riy = other.riy;
+    this->lix = other.lix;
+    this->rix = other.rix;
+    this->xprime = other.xprime;
+    this->ng_xeq0 = other.ng_xeq0;
+    this->nmaxgr = other.nmaxgr;
+    this->device = other.device;
+    this->precision = other.precision;
+    this->double_data_ = other.double_data_;
+    this->float_data_ = other.float_data_;
+    this->fft_bundle.setfft(this->device, this->precision);
 }
 
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
@@ -28,17 +85,13 @@ PW_Basis:: ~PW_Basis()
     delete[] fftixy2ip;
     delete[] nst_per;
     delete[] npw_per;
-    delete[] gdirect;
-    delete[] gcar;
-    delete[] gg;
     delete[] startz;
     delete[] numz;
     delete[] numg;
     delete[] numr;
     delete[] startg;
     delete[] startr;
-    delete[] ig2igg;
-    delete[] gg_uniq;
+    this->clear_owned_cache();
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu")
     {
@@ -46,6 +99,53 @@ PW_Basis:: ~PW_Basis()
         delmem_int_op()(this->ig2ixyz_gpu);
     }
 #endif
+}
+
+void PW_Basis::clear_owned_cache()
+{
+    this->invalidate_cache();
+    this->gg_cache_storage.reset();
+    this->gdirect_cache_storage.reset();
+    this->gcar_cache_storage.reset();
+    this->ig2igg_cache_storage.reset();
+    this->gg_uniq_cache_storage.reset();
+    this->gg = nullptr;
+    this->gdirect = nullptr;
+    this->gcar = nullptr;
+    this->ig2igg = nullptr;
+    this->gg_uniq = nullptr;
+    this->ngg = 0;
+    this->ig_gge0 = -1;
+}
+
+PW_Basis::CacheStats PW_Basis::get_cache_stats() const
+{
+    CacheStats stats;
+    stats.local_pw_hits = this->local_pw_cache_hits.load();
+    stats.local_pw_misses = this->local_pw_cache_misses.load();
+    stats.uniqgg_hits = this->uniqgg_cache_hits.load();
+    stats.uniqgg_misses = this->uniqgg_cache_misses.load();
+    const bool has_local_pw_cache = this->local_pw_cache_valid.load() && this->npw > 0;
+    const bool has_uniqgg_cache = this->uniqgg_cache_valid.load() && this->ngg > 0;
+    if (has_local_pw_cache)
+    {
+        stats.cache_bytes += sizeof(double) * this->npw;
+        stats.cache_bytes += sizeof(ModuleBase::Vector3<double>) * this->npw * 2;
+    }
+    if (has_uniqgg_cache)
+    {
+        stats.cache_bytes += sizeof(int) * this->npw;
+        stats.cache_bytes += sizeof(double) * this->ngg;
+    }
+    return stats;
+}
+
+void PW_Basis::reset_cache_stats()
+{
+    this->local_pw_cache_hits.store(0);
+    this->local_pw_cache_misses.store(0);
+    this->uniqgg_cache_hits.store(0);
+    this->uniqgg_cache_misses.store(0);
 }
 
 /// 
@@ -138,15 +238,29 @@ void PW_Basis::collect_local_pw()
     {
         return;
     }
-    if (this->local_pw_cache_valid)
+    ModuleBase::timer::start(this->classname, "collect_local_pw");
+    if (this->local_pw_cache_valid.load())
     {
+        this->local_pw_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
+    std::lock_guard<std::mutex> guard(this->cache_mutex);
+    if (this->local_pw_cache_valid.load())
+    {
+        this->local_pw_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
+        return;
+    }
+    this->local_pw_cache_misses.fetch_add(1);
     this->ig_gge0 = -1;
-    delete[] this->gg; this->gg = new double[this->npw];
-    delete[] this->gdirect; this->gdirect = new ModuleBase::Vector3<double>[this->npw];
-    delete[] this->gcar; this->gcar = new ModuleBase::Vector3<double>[this->npw];
-    this->uniqgg_cache_valid = false;
+    this->gg_cache_storage.reset(new double[this->npw]);
+    this->gdirect_cache_storage.reset(new ModuleBase::Vector3<double>[this->npw]);
+    this->gcar_cache_storage.reset(new ModuleBase::Vector3<double>[this->npw]);
+    this->gg = this->gg_cache_storage.get();
+    this->gdirect = this->gdirect_cache_storage.get();
+    this->gcar = this->gcar_cache_storage.get();
+    this->uniqgg_cache_valid.store(false);
 
     ModuleBase::Vector3<double> f;
     int gamma_num = 0;
@@ -187,7 +301,8 @@ void PW_Basis::collect_local_pw()
             }
         }
     }
-    this->local_pw_cache_valid = true;
+    this->local_pw_cache_valid.store(true);
+    ModuleBase::timer::end(this->classname, "collect_local_pw");
     return;
 }
 
@@ -202,17 +317,29 @@ void PW_Basis::collect_uniqgg()
     {
         return;
     }
-    if (this->uniqgg_cache_valid)
+    ModuleBase::timer::start(this->classname, "collect_uniqgg");
+    if (this->uniqgg_cache_valid.load())
     {
+        this->uniqgg_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_uniqgg");
         return;
     }
+    std::lock_guard<std::mutex> guard(this->cache_mutex);
+    if (this->uniqgg_cache_valid.load())
+    {
+        this->uniqgg_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_uniqgg");
+        return;
+    }
+    this->uniqgg_cache_misses.fetch_add(1);
     this->ig_gge0 = -1;
-    delete[] this->ig2igg; this->ig2igg = new int [this->npw];
+    this->ig2igg_cache_storage.reset(new int[this->npw]);
+    this->ig2igg = this->ig2igg_cache_storage.get();
     
-    int *sortindex = new int [this->npw];//Reconstruct the mapping of the plane wave index ig according to the energy size of the plane waves
-    double *tmpgg = new double [this->npw];//Ranking the plane waves by energy size while ensuring that the same energy is preserved for each wave to correspond
-    double *tmpgg2 = new double [this->npw];//ranking the plane waves by energy size and removing the duplicates
-    if (this->local_pw_cache_valid && this->gg != nullptr)
+    std::vector<int> sortindex(this->npw); // Reconstruct the plane-wave index mapping after sorting by energy.
+    std::vector<double> tmpgg(this->npw);
+    std::vector<double> tmpgg2(this->npw);
+    if (this->local_pw_cache_valid.load() && this->gg != nullptr)
     {
         for(int ig = 0 ; ig < this-> npw ; ++ig)
         {
@@ -257,8 +384,8 @@ void PW_Basis::collect_uniqgg()
         }
     }
 
-    ModuleBase::GlobalFunc::ZEROS(sortindex, this->npw);
-    ModuleBase::heapsort(this->npw, tmpgg, sortindex);
+    ModuleBase::GlobalFunc::ZEROS(sortindex.data(), this->npw);
+    ModuleBase::heapsort(this->npw, tmpgg.data(), sortindex.data());
    
 
     int igg = 0;
@@ -285,15 +412,14 @@ void PW_Basis::collect_uniqgg()
     }
     tmpgg2[igg] = avg_gg / double(avg_n);
     this->ngg = igg + 1;
-    delete[] this->gg_uniq; this->gg_uniq = new double [this->ngg];
+    this->gg_uniq_cache_storage.reset(new double[this->ngg]);
+    this->gg_uniq = this->gg_uniq_cache_storage.get();
     for(int igg = 0 ; igg < this->ngg ; ++igg)
     {
             gg_uniq[igg] = tmpgg2[igg];
     }
-    delete[] sortindex;
-    delete[] tmpgg;
-    delete[] tmpgg2;
-    this->uniqgg_cache_valid = true;
+    this->uniqgg_cache_valid.store(true);
+    ModuleBase::timer::end(this->classname, "collect_uniqgg");
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const
@@ -320,10 +446,12 @@ void PW_Basis::getfftixy2is(int * fftixy2is) const
 
 void PW_Basis::set_device(std::string device_) {
     this->device = std::move(device_);
+    this->invalidate_cache();
 }
 
 void PW_Basis::set_precision(std::string precision_) {
     this->precision = std::move(precision_);
+    this->invalidate_cache();
 }
 
 }
