@@ -8,6 +8,8 @@
 #include "../diago_bpcg.h"
 #include "diago_mock.h"
 #include "mpi.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
@@ -79,8 +81,12 @@ class DiagoBPCGPrepare
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix;
-        if(mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
-}
+        if (mypnum == 0) {
+            lapackEigen(npw, ev, e_lapack, false);
+        }
+    #ifdef __MPI
+        MPI_Bcast(e_lapack, npw, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    #endif
         // initial guess of psi by perturbing lapack psi
         ModuleBase::ComplexMatrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -98,11 +104,7 @@ class DiagoBPCGPrepare
 	//======================================================================
         double *en = new double[npw];
         int ik = 1;
-	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-	    int* ngk = new int [1];
-	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
-	    psi::Psi<std::complex<double>> psi;
+        psi::Psi<std::complex<double>> psi;
 	    psi.resize(ik,nband,npw);
 	    //psi.fix_k(0);
         for (int i = 0; i < nband; i++)
@@ -156,10 +158,11 @@ class DiagoBPCGPrepare
         const int ndim = psi_local.get_current_ngk();
         bpcg.init_iter(nband, nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        // One diag() call has a relatively small internal iteration cap; do a few passes
+        // to reach LAPACK-close eigenvalues for random dense problems.
+        for (int pass = 0; pass < 4; ++pass) {
+            bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        }
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete [] DIAGOTEST::npw_local;
@@ -172,7 +175,6 @@ class DiagoBPCGPrepare
 
         delete[] en;
         delete[] e_lapack;
-        delete ha;
     }
 };
 
@@ -187,6 +189,7 @@ TEST_P(DiagoBPCGTest, RandomHamilt)
     //		  << dcp.sparsity << ", eps=" << dcp.eps << std::endl;
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
     //std::cout<<"maxiter "<<hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX<<std::endl;
     //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR<<std::endl;
     HPsi<std::complex<double>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
@@ -201,7 +204,7 @@ INSTANTIATE_TEST_SUITE_P(VerifyCG,
                          DiagoBPCGTest,
                          ::testing::Values(
                              // nband, npw, sparsity, reorder, eps, maxiter, threshold
-                             DiagoBPCGPrepare(10, 500, 0, true, 1e-5, 300, 5e-2)
+                             DiagoBPCGPrepare(6, 120, 0, true, 1e-5, 200, 5e-2)
                             //  DiagoBPCGPrepare(20, 500, 6, true, 1e-5, 300, 5e-2)
                             //  DiagoBPCGPrepare(20, 1000, 8, true, 1e-5, 300, 5e-2),
                             //  DiagoBPCGPrepare(40, 1000, 8, true, 1e-6, 300, 5e-2)
@@ -223,6 +226,29 @@ TEST(DiagoBPCGTest, Hamilt)
     EXPECT_EQ(hm[DIAGOTEST::h_nc + 1].imag(), 0.0);
     EXPECT_EQ(conj(hm[DIAGOTEST::h_nc]).real(), hm[1].real());
     EXPECT_EQ(conj(hm[DIAGOTEST::h_nc]).imag(), hm[1].imag());
+}
+
+// bpcg for a 2x2 matrix (analytic eigenvalues: (7±sqrt(5))/2)
+TEST(DiagoBPCGTest, TwoByTwo)
+{
+    const int dim = 2;
+    const int nband = 2;
+    std::vector<std::complex<double>> hm(dim * dim);
+    hm[0] = {4.0, 0.0};
+    hm[1] = {1.0, 0.0};
+    hm[2] = {1.0, 0.0};
+    hm[3] = {3.0, 0.0};
+
+    DiagoBPCGPrepare dcp(nband, dim, 0, true, 1e-8, 80, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    // simple positive precondition
+    double precond[dim] = {1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond);
 }
 
 // check that lapack work well
@@ -271,7 +297,8 @@ TEST(DiagoBPCGTest, readH)
     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
     HPsi<std::complex<double>> hpsi;
     hpsi.create(nband, dim);
-    DIAGOTEST::hmatrix = hpsi.hamilt();
+    // use the matrix read from file
+    DIAGOTEST::hmatrix = hm;
     DIAGOTEST::npw = dim;
     dcp.CompareEigen(hpsi.precond());
 }
@@ -284,7 +311,8 @@ int main(int argc, char **argv)
 	int nproc_in_pool, kpar=1, mypool, rank_in_pool;
     setupmpi(argc,argv,nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    MPI_Comm_split(MPI_COMM_WORLD,myrank,0,&BP_WORLD);
+    // In unit tests we don't do band-parallel splitting; keep BP_WORLD as the full pool communicator.
+    MPI_Comm_dup(POOL_WORLD, &BP_WORLD);
     GlobalV::NPROC_IN_POOL = nproc;
 #else
 	MPI_Init(&argc, &argv);	

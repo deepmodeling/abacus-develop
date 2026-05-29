@@ -2,6 +2,40 @@ remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
+# Make unit tests runnable directly after build (without `cmake --install`).
+# CI does an install step which also copies these, but local dev often doesn't.
+set(_HSOLVER_TEST_FILES
+  H-KPoints-Si2.dat
+  H-GammaOnly-Si2.dat
+  S-KPoints-Si2.dat
+  S-GammaOnly-Si2.dat
+  H-KPoints-Si64.dat
+  H-GammaOnly-Si64.dat
+  S-KPoints-Si64.dat
+  S-GammaOnly-Si64.dat
+  GammaOnly-Si2-Solution.dat
+  GammaOnly-Si64-Solution.dat
+  KPoints-Si2-Solution.dat
+  KPoints-Si64-Solution.dat
+  PEXSI-H-GammaOnly-Si2.dat
+  PEXSI-S-GammaOnly-Si2.dat
+  PEXSI-DM-GammaOnly-Si2.dat
+  diago_cg_parallel_test.sh
+  diago_david_parallel_test.sh
+  diago_lcao_parallel_test.sh
+  diago_pexsi_parallel_test.sh
+  parallel_k2d_test.sh
+)
+
+foreach(_f IN LISTS _HSOLVER_TEST_FILES)
+  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${_f}")
+    configure_file(
+      "${CMAKE_CURRENT_LIST_DIR}/${_f}"
+      "${CMAKE_CURRENT_BINARY_DIR}/${_f}"
+      COPYONLY)
+  endif()
+endforeach()
+
 if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
@@ -12,6 +46,15 @@ if (ENABLE_MPI)
     TARGET MODULE_HSOLVER_bpcg
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_ppcg
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp
+            ../kernels/hegvd_op.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
