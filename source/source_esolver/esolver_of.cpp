@@ -94,6 +94,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
+    const int istep=0;
     this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, 
 		    PARAM.globalv.global_out_dir, PARAM.inp);
 
