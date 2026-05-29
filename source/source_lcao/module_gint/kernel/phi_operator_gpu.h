@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <vector>
+#include <cstdint>
 #include <cuda_runtime.h>
 
 #include "source_lcao/module_gint/batch_biggrid.h"
@@ -8,6 +10,30 @@
 
 namespace ModuleGint
 {
+
+// Upper bound for per-atom orbital count. Used to flatten a (nw1, nw2) pair
+// into a single integer key via `nw1 * NW_MAX + nw2`, so that shape-exact
+// bucketing of phi_mul_phi / phi_mul_dm can index a dense counts[] table
+// instead of hashing. 64 comfortably covers the typical max nw (~25).
+constexpr int NW_MAX = 64;
+
+// Per-atom-pair metadata cached in PhiOperatorGpu::set_bgrid_batch() so that
+// phi_mul_phi / phi_mul_dm skip the O(bgrid * atoms^2) enumeration on every
+// call. Holds only the fields both callers need; HContainer lookups still
+// happen lazily in the hot path because they depend on hRGint / dm.
+struct PairInfo
+{
+    int phi_1_offset;
+    int phi_2_offset;
+    int phi_len_mgrid;
+    int iat_1;
+    int iat_2;
+    Vec3i r_diff;
+    uint16_t nw1;
+    uint16_t nw2;
+    uint8_t ia_le;   // (ia_1 <= ia_2) within the bgrid, for is_symm filter
+    uint8_t is_diag; // (ia_1 == ia_2), for phi_mul_dm is_symm alpha
+};
 
 template<typename Real = double>
 class PhiOperatorGpu
@@ -102,19 +128,25 @@ private:
     // Mapping of the index of meshgrid in the batch of biggrids to the index of meshgrid in the local cell
     CudaMemWrapper<int> batch_mgrid_lidx_;
 
-    mutable CudaMemWrapper<int> gemm_m_;
-    mutable CudaMemWrapper<int> gemm_n_;
-    mutable CudaMemWrapper<int> gemm_k_;
     mutable CudaMemWrapper<int> gemm_lda_;
     mutable CudaMemWrapper<int> gemm_ldb_;
     mutable CudaMemWrapper<int> gemm_ldc_;
     mutable CudaMemWrapper<const Real*> gemm_A_;
     mutable CudaMemWrapper<const Real*> gemm_B_;
-    // Single C-pointer buffer: both phi_mul_phi (output hr) and phi_mul_dm
-    // (output phi_dm) write into double* accumulators, so a single shared
-    // gemm_C_ device buffer can serve both call sites.
+    // C accumulator pointers are always double*: both phi_mul_phi (hr) and
+    // phi_mul_dm (phi_dm) write into fp64 buffers via the GEMM's fp64 atomicAdd.
     mutable CudaMemWrapper<double*> gemm_C_;
     mutable CudaMemWrapper<Real> gemm_alpha_;
+
+    // Full (ia_1, ia_2) pair enumeration, rebuilt in set_bgrid_batch().
+    // Consumed by phi_mul_phi (TN, iat_1 <= iat_2 filter) and phi_mul_dm
+    // (NN, optional is_symm upper-triangle filter).
+    std::vector<PairInfo> pair_cache_;
+
+    // Scratch buffer reused across phi_mul_phi / phi_mul_dm calls to cache
+    // per-pair HContainer offsets from Pass 1 and replay them in Pass 2
+    // without a second find_matrix_offset() call.
+    mutable std::vector<int> pair_scratch_offset_;
 };
 
 }

@@ -43,3 +43,44 @@ inline int ceil_div(const int a, const int b)
     return a / b + (a % b != 0 && (a ^ b) > 0);
 }
 
+// ---------------------------------------------------------------------------
+// gemm_vec_traits<T> -- wide-LDS primitive for the V1 K-inner inner loop.
+//
+// VK  = how many T elements pack into one 16-byte LDS (4 for FP32, 2 for FP64)
+// vec_t = the 16-byte CUDA vector type used for the LDS
+// PAD = K-stride padding that makes (BLK_K + PAD) * sizeof(T) a multiple of
+//       16 *and* keeps the warp's idx-strided shmem access bank-conflict-free
+//       (gcd((BLK_K+PAD) % 32, 32) == VK).
+//
+// The load is issued as one *reinterpret_cast<vec_t*>(&sA(m,k)); the
+// component fan-out is done by unpack(). FP64 needs the explicit cast --
+// the compiler's auto-vectorizer is reliable for float4 but not for
+// double2; per-component .x/.y/.z/.w writes guarantee the LDS.{64,128}
+// SASS forms emit.
+// ---------------------------------------------------------------------------
+template <typename T> struct gemm_vec_traits;
+
+template <> struct gemm_vec_traits<float>
+{
+    using vec_t = float4;
+    static constexpr int VK = 4;
+    static constexpr int PAD = 4;
+    __forceinline__ __device__
+    static void unpack(const vec_t& v, float* d)
+    {
+        d[0] = v.x; d[1] = v.y; d[2] = v.z; d[3] = v.w;
+    }
+};
+
+template <> struct gemm_vec_traits<double>
+{
+    using vec_t = double2;
+    static constexpr int VK = 2;
+    static constexpr int PAD = 2;
+    __forceinline__ __device__
+    static void unpack(const vec_t& v, double* d)
+    {
+        d[0] = v.x; d[1] = v.y;
+    }
+};
+
