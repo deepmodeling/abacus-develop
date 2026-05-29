@@ -43,14 +43,14 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_base
-  LIBS parameter  ${math_libs} base device io_basic
+  LIBS parameter  ${math_libs} base device
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_pw
-  LIBS parameter  ${math_libs} planewave_serial base device io_basic
+  LIBS parameter  ${math_libs} planewave_serial base device
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
     ../elecstate_pw_cal_tau.cpp

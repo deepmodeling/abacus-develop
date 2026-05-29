@@ -26,6 +26,7 @@ void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const UnitCell* const ucell,
                          const int precision = 11,
                          const int out_fermi = 1,
+                         const bool two_fermi, // whether to use two fermi energies
                          const bool reduce_all_pool = false); // only reduce in the main pool as default
 
 /// read the full data from a cube file

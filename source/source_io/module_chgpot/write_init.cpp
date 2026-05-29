@@ -111,7 +111,9 @@ void ModuleIO::write_chg_init(
                                               filename,
                                               fermi_energy,
                                               &(ucell),
-                                              inp.out_chg[1]);
+                                              inp.out_chg[1],
+                                              1,
+                                              inp.two_fermi);
             }
         }
     }
@@ -157,7 +159,8 @@ void ModuleIO::write_pot_init(
                                               0.0,
                                               &(ucell),
                                               inp.out_pot[1],
-                                              0);
+                                              0,
+                                              inp.two_fermi);
             }
         }
     }

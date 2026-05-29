@@ -17,7 +17,8 @@ void write_elf(
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision,
-    const std::string& geom_block);
+    const std::string& geom_block,
+    const bool two_fermi);
 }
 
 #endif

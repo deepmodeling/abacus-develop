@@ -16,7 +16,8 @@ void write_elf(
     const Parallel_Grid& pgrid,
     const UnitCell* ucell_,
     const int& precision,
-    const std::string& geom_block)
+    const std::string& geom_block,
+    const bool two_fermi)
 {
     ModuleBase::timer::start("ModuleIO", "write_elf");
     // For nspin = 4, we only calculate the total ELF using the
@@ -170,7 +171,8 @@ void write_elf(
             ef_tmp,
             ucell_,
             precision,
-            out_fermi);
+            out_fermi,
+            two_fermi);
     }
     else if (nspin == 2)
     {
@@ -190,7 +192,8 @@ void write_elf(
                 ef_tmp,
                 ucell_,
                 precision,
-                out_fermi);
+                out_fermi,
+                two_fermi);
         }
 
         std::vector<double> elf_tot(nrxx, 0.0);
@@ -224,7 +227,8 @@ void write_elf(
             ef_tmp,
             ucell_,
             precision,
-            out_fermi);
+            out_fermi,
+            two_fermi);
     }
     ModuleBase::timer::end("ModuleIO", "write_elf");
 } // end write_elf

@@ -79,7 +79,8 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
                                       this->pelec->eferm.get_efval(is),
                                       &(ucell),
                                       3,
-                                      1);
+                                      1,
+                                      PARAM.sys.two_fermi);
     }
 
     ModuleBase::timer::end("ESolver_DM2rho", "runner");

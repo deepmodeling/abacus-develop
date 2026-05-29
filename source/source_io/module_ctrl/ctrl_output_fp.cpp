@@ -83,7 +83,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                           pelec->eferm.get_efval(is),
                                           &(ucell),
                                           PARAM.inp.out_chg[1],
-                                          1);
+                                          1,
+                                          PARAM.sys.two_fermi);
 
             if (XC_Functional::get_ked_flag())
             {
@@ -98,7 +99,10 @@ void ctrl_output_fp(UnitCell& ucell,
                                               istep,
                                               fn,
                                               pelec->eferm.get_efval(is),
-                                              &(ucell));
+                                              &(ucell),
+                                              11, // default precision
+                                              1, // default out_fermi
+                                              PARAM.sys.two_fermi);
             }
         }
     }
@@ -131,7 +135,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                           0.0, // efermi
                                           &(ucell),
                                           PARAM.inp.out_pot[1],  // precision
-                                          0); // out_fermi
+                                          0, // out_fermi
+                                          PARAM.sys.two_fermi);
         }
     }
     else if (PARAM.inp.out_pot[0] == 2 && should_output)
@@ -174,7 +179,8 @@ void ctrl_output_fp(UnitCell& ucell,
             para_grid,
             &(ucell),
             PARAM.inp.out_elf[1],
-            geom_block);
+            geom_block,
+            PARAM.sys.two_fermi);
     }
 
 #ifdef USE_LIBXC
