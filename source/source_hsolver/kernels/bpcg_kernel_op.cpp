@@ -3,8 +3,25 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_reduce.h"
 #include <vector>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 namespace hsolver
 {
+
+namespace
+{
+constexpr int kBpcgOpenmpMinWork = 4096;
+
+inline bool use_bpcg_openmp(int n)
+{
+#ifdef _OPENMP
+    return n >= kBpcgOpenmpMinWork && omp_get_max_threads() > 1;
+#else
+    return false;
+#endif
+}
+} // namespace
 
 template <typename T>
 struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
@@ -26,6 +43,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) reduction(+:epsilo_0,epsilo_1,epsilo_2) if(use_bpcg_openmp(n_basis))
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -41,6 +61,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
             cos_theta = std::cos(theta);
             sin_theta = std::sin(theta);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(use_bpcg_openmp(n_basis))
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -71,12 +94,14 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             Real err = 0.0;
             Real beta = 0.0;
             Real epsilo = 0.0;
-            Real grad_2 = {0.0};
-            T grad_1 = {0.0, 0.0};
+            const Real beta_old = beta_out[band_idx];
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) reduction(+:epsilo) if(use_bpcg_openmp(n_basis))
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -85,21 +110,27 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
             Parallel_Reduce::reduce_pool(epsilo);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) reduction(+:err,beta) if(use_bpcg_openmp(n_basis))
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_2 = std::norm(grad_1);
+                const T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                const Real grad_2 = std::norm(grad_1);
                 err += grad_2;
                 beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
             }
             Parallel_Reduce::reduce_pool(err);
             Parallel_Reduce::reduce_pool(beta);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(use_bpcg_openmp(n_basis))
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_out[band_idx] * grad_old_out[item];
+                const T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_old * grad_old_out[item];
             }
             beta_out[band_idx] = beta;
             err_out[band_idx] = sqrt(err);
@@ -113,6 +144,9 @@ struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if(use_bpcg_openmp(nbase * notconv))
+#endif
         for (int m = 0; m < notconv; m++)
         {
             for (int idx = 0; idx < nbase; idx++)
@@ -133,19 +167,14 @@ struct precondition_op<T, base_device::DEVICE_CPU> {
                    const Real* precondition,
                    const Real* eigenvalues)
     {
-        std::vector<Real> pre(dim, 0.0);
         for (int m = 0; m < notconv; m++)
         {
             for (size_t i = 0; i < dim; i++)
             {
                 Real x = std::abs(precondition[i] - eigenvalues[m]);
-                pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+                Real denom = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+                psi_iter[(nbase + m) * dim + i] /= denom;
             }
-            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU>()(
-                                                             dim,
-                                                             psi_iter + (nbase + m) * dim,
-                                                             psi_iter + (nbase + m) * dim,
-                                                             pre.data());
         }
     }
 };
