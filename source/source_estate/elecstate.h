@@ -109,9 +109,9 @@ class ElecState
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
                   const bool* numeric,
-                  const int istep = 0,
-                  const std::string& out_dir = "",
-                  const Input_para& inp = PARAM.inp);
+                  const int istep,
+                  const std::string& out_dir,
+                  const Input_para& inp);
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
