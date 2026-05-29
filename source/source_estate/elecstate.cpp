@@ -3,6 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "occupy.h"
+#include "source_io/module_chgpot/write_init.h"
 
 namespace elecstate
 {
@@ -29,7 +30,10 @@ void ElecState::init_scf(const UnitCell& ucell,
                          const ModuleBase::ComplexMatrix& strucfac, 
                          const bool* numeric,
                          ModuleSymmetry::Symmetry& symm, 
-                         const void* wfcpw)
+                         const void* wfcpw,
+                         const int istep,
+                         const std::string& out_dir,
+                         const Input_para& inp)
 {
     //! core correction potential.
     this->charge->set_rho_core(ucell,strucfac, numeric);
@@ -39,6 +43,9 @@ void ElecState::init_scf(const UnitCell& ucell,
 
     //! initialize the potential
     this->pot->init_pot(this->charge);
+
+    //! output the initial potential
+    ModuleIO::write_pot_init(ucell, pgrid, this, istep, out_dir, inp);
 }
 
 

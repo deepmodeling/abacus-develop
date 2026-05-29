@@ -101,13 +101,19 @@ class ElecState
      * @param strucfac structure factor
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
+     * @param istep ionic step index
+     * @param out_dir output directory
+     * @param inp input parameters
      */
     void init_scf(const UnitCell& ucell,
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
                   const bool* numeric,
                   ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr);
+                  const void* wfcpw = nullptr,
+                  const int istep = 0,
+                  const std::string& out_dir = "",
+                  const Input_para& inp = PARAM.inp);
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
