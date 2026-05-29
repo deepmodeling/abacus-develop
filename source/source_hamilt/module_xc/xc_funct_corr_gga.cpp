@@ -11,14 +11,25 @@
 
 #include "xc_functional.h"
 
-void XC_Functional::perdew86(const double rho, const double grho, double &sc, double &v1c, double &v2c)
+void XC_Functional::perdew86(
+    const double rho,
+    const double grho,
+    double &sc,
+    double &v1c,
+    double &v2c)
 {
     // Perdew gradient correction on correlation: PRB 33, 8822 (1986)
 
     // USE kinds
     // implicit none
     // real(kind=DP) :: rho, grho, sc, v1c, v2c
-    double p1, p2, p3, p4, pc1, pc2, pci;
+    double p1 = 0.0;
+    double p2 = 0.0;
+    double p3 = 0.0;
+    double p4 = 0.0;
+    double pc1 = 0.0;
+    double pc2 = 0.0;
+    double pci = 0.0;
     // parameter :
     p1 = 0.0232660;
     p2 = 7.389e-6;
@@ -28,12 +39,25 @@ void XC_Functional::perdew86(const double rho, const double grho, double &sc, do
     pc1 = 0.0016670;
     pc2 = 0.0025680;
     pci = pc1 + pc2;
-    double third, pi34;
+    double third = 0.0;
+    double pi34 = 0.0;
     // parameter :
     third = 1.0 / 3.0;
     pi34 = 0.62035049089940;  // pi34=(3/4pi)^(1/3)
-    double rho13, rho43, rs, rs2, rs3, cna, cnb, cn, drs;
-    double dcna, dcnb, dcn, phi, ephi;
+    double rho13 = 0.0;
+    double rho43 = 0.0;
+    double rs = 0.0;
+    double rs2 = 0.0;
+    double rs3 = 0.0;
+    double cna = 0.0;
+    double cnb = 0.0;
+    double cn = 0.0;
+    double drs = 0.0;
+    double dcna = 0.0;
+    double dcnb = 0.0;
+    double dcn = 0.0;
+    double phi = 0.0;
+    double ephi = 0.0;
 
     rho13 = pow(rho, third);
     rho43 = pow(rho13, 4);
@@ -58,10 +82,22 @@ void XC_Functional::perdew86(const double rho, const double grho, double &sc, do
     return;
 } //end subroutine perdew86
 
-void XC_Functional::ggac(const double &rho,const double &grho, double &sc, double &v1c, double &v2c)
+void XC_Functional::ggac(
+    const double &rho,
+    const double &grho,
+    double &sc,
+    double &v1c,
+    double &v2c)
 {
     // Perdew-Wang GGA (PW91) correlation part
-    double al, pa, pb, pc, pd, cx, cxc0, cc0;
+    double al = 0.0;
+    double pa = 0.0;
+    double pb = 0.0;
+    double pc = 0.0;
+    double pd = 0.0;
+    double cx = 0.0;
+    double cxc0 = 0.0;
+    double cc0 = 0.0;
     // parameter :
     al = 0.090;
     pa = 0.0232660;
@@ -72,7 +108,12 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     cx = -0.0016670;
     cxc0 = 0.0025680;
     cc0 = - cx + cxc0;
-    double third, pi34, nu, be, xkf, xks;
+    double third = 0.0;
+    double pi34 = 0.0;
+    double nu = 0.0;
+    double be = 0.0;
+    double xkf = 0.0;
+    double xks = 0.0;
     // parameter :
     third = 1.0 / 3.0;
     pi34 = 0.62035049089940;
@@ -84,17 +125,41 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     xks = 1.1283791670955130;
     // pi34=(3/4pi)^(1/3),  nu=(16/pi)*(3 pi^2)^(1/3)
     // xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
-    double kf, ks, rs, rs2, rs3, ec, vc, t, expe, af, bf, y, xy,
-    qy, s1;
-    double h0, dh0, ddh0, ee, cn, dcn, cna, dcna, cnb, dcnb, h1,
-    dh1, ddh1;
+    double kf = 0.0;
+    double ks = 0.0;
+    double rs = 0.0;
+    double rs2 = 0.0;
+    double rs3 = 0.0;
+    double ec = 0.0;
+    double vc = 0.0;
+    double t = 0.0;
+    double expe = 0.0;
+    double af = 0.0;
+    double bf = 0.0;
+    double y = 0.0;
+    double xy = 0.0;
+    double qy = 0.0;
+    double s1 = 0.0;
+    double h0 = 0.0;
+    double dh0 = 0.0;
+    double ddh0 = 0.0;
+    double ee = 0.0;
+    double cn = 0.0;
+    double dcn = 0.0;
+    double cna = 0.0;
+    double dcna = 0.0;
+    double cnb = 0.0;
+    double dcnb = 0.0;
+    double h1 = 0.0;
+    double dh1 = 0.0;
+    double ddh1 = 0.0;
 
-	rs = pi34 / pow(rho, third);
+    rs = pi34 / pow(rho, third);
     rs2 = rs * rs;
     rs3 = rs * rs2;
 
-	// call function: pw
-	XC_Functional::pw(rs, 0, ec, vc);
+    // call function: pw
+    XC_Functional::pw(rs, 0, ec, vc);
     kf = xkf / rs;
     ks = xks * sqrt(kf);
     t = sqrt(grho) / (2.0 * ks * rho);
@@ -132,60 +197,82 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     return;
 } //end subroutine ggac
 
-void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag, double &sc, double &v1c, double &v2c)
+void XC_Functional::pbec(
+    const double &rho,
+    const double &grho,
+    const int &iflag,
+    double &sc,
+    double &v1c,
+    double &v2c)
 {
-	// PBE correlation (without LDA part)
-	// iflag=0: J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996).
-	// iflag=1: J.P.Perdew et al., PRL 100, 136406 (2008).
-	const double ga = 0.0310906908696548950;
-	const double be[2] = {0.06672455060314922, 0.046};
+    // PBE correlation (without LDA part)
+    // iflag=0: J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996).
+    // iflag=1: J.P.Perdew et al., PRL 100, 136406 (2008).
+    const double ga = 0.0310906908696548950;
+    const double be[2] = {0.06672455060314922, 0.046};
 
-	const double third = 1.0 / 3.0;
-	const double pi34 = 0.62035049089940;
-	const double xkf = 1.9191582926775130;
-	const double xks = 1.1283791670955130;
+    const double third = 1.0 / 3.0;
+    const double pi34 = 0.62035049089940;
+    const double xkf = 1.9191582926775130;
+    const double xks = 1.1283791670955130;
 
-	// pi34=(3/4pi)^(1/3), xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
-	double ec, vc;
+    // pi34=(3/4pi)^(1/3), xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
+    double ec = 0.0;
+    double vc = 0.0;
 
-	const double rs = pi34 / pow(rho, third);
+    const double rs = pi34 / pow(rho, third);
 
-	XC_Functional::pw(rs, 0, ec, vc);
+    XC_Functional::pw(rs, 0, ec, vc);
 
-	const double kf = xkf / rs;
-	const double ks = xks * sqrt(kf);
-	const double t = sqrt(grho) / (2.0 * ks * rho);
-	const double expe = exp(- ec / ga);
-	const double af = be[iflag] / ga * (1.0 / (expe - 1.0));
-	const double bf = expe * (vc - ec);
-	const double y = af * t * t;
-	const double xy = (1.0 + y) / (1.0 + y + y * y);
+    const double kf = xkf / rs;
+    const double ks = xks * sqrt(kf);
+    const double t = sqrt(grho) / (2.0 * ks * rho);
+    const double expe = exp(- ec / ga);
+    const double af = be[iflag] / ga * (1.0 / (expe - 1.0));
+    const double bf = expe * (vc - ec);
+    const double y = af * t * t;
+    const double xy = (1.0 + y) / (1.0 + y + y * y);
 
-	const double x = 1.0 + y + y * y;
-	const double qy = y * y * (2.0 + y) / (x * x);
-	const double s1 = 1.0 + be[iflag] / ga * t * t * xy;
-	const double h0 = ga * log(s1);
-	const double dh0 = be[iflag] * t * t / s1 * (- 7.0 / 3.0 * xy - qy * (af * bf /be[iflag] - 7.0 / 3.0));
-	const double ddh0 = be[iflag] / (2.0 * ks * ks * rho) * (xy - qy) / s1;
+    const double x = 1.0 + y + y * y;
+    const double qy = y * y * (2.0 + y) / (x * x);
+    const double s1 = 1.0 + be[iflag] / ga * t * t * xy;
+    const double h0 = ga * log(s1);
+    const double dh0 = be[iflag] * t * t / s1 * (- 7.0 / 3.0 * xy - qy * (af * bf /be[iflag] - 7.0 / 3.0));
+    const double ddh0 = be[iflag] / (2.0 * ks * ks * rho) * (xy - qy) / s1;
 
-	sc = rho * h0;
-	v1c = h0 + dh0;
+    sc = rho * h0;
+    v1c = h0 + dh0;
     v2c = ddh0;
 
-	return;
+    return;
 }
 
-void XC_Functional::glyp(const double &rho, const double &grho, double &sc, double &v1c, double &v2c)
+void XC_Functional::glyp(
+    const double &rho,
+    const double &grho,
+    double &sc,
+    double &v1c,
+    double &v2c)
 {
     //-----------------------------------------------------------------------
     // Lee Yang Parr: gradient correction part
 
-    double a, b, c, d;
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    double d = 0.0;
     a = 0.049180;
     b = 0.1320;
     c = 0.25330;
     d = 0.3490;
-    double rhom13, rhom43, rhom53, om, xl, ff, dom, dxl;
+    double rhom13 = 0.0;
+    double rhom43 = 0.0;
+    double rhom53 = 0.0;
+    double om = 0.0;
+    double xl = 0.0;
+    double ff = 0.0;
+    double dom = 0.0;
+    double dxl = 0.0;
 
     rhom13 = pow(rho, (- 1.0 / 3.0));
     om = exp(- c * rhom13) / (1.0 + d * rhom13);
@@ -196,7 +283,7 @@ void XC_Functional::glyp(const double &rho, const double &grho, double &sc, doub
     sc = ff * rhom53 * om * xl;
     dom = - om * (c + d + c * d * rhom13) / (1.0 + d * rhom13);
 
-    double x;
+    double x = 0.0;
     x = 1.0 + d * rhom13;
     dxl = (7.0 / 3.0) * (c + d + 2.0 * c * d * rhom13 + c * d * d *
                          rhom13 * rhom13) / (x * x);
@@ -209,8 +296,14 @@ void XC_Functional::glyp(const double &rho, const double &grho, double &sc, doub
 } // end subroutine glyp
 
 //-----------------------------------------------------------------------
-void XC_Functional::perdew86_spin(double rho, double zeta, double grho, double &sc,
-                   double &v1cup, double &v1cdw, double &v2c)
+void XC_Functional::perdew86_spin(
+    double rho,
+    double zeta,
+    double grho,
+    double &sc,
+    double &v1cup,
+    double &v1cdw,
+    double &v2c)
 {
     //-------------------------------------------------------------------
     // Perdew gradient correction on correlation: PRB 33, 8822 (1986)
@@ -219,7 +312,13 @@ void XC_Functional::perdew86_spin(double rho, double zeta, double grho, double &
     // USE kinds
     // implicit none
     // real(kind=DP) :: rho, zeta, grho, sc, v1cup, v1cdw, v2c
-    double p1, p2, p3, p4, pc1, pc2, pci;
+    double p1 = 0.0;
+    double p2 = 0.0;
+    double p3 = 0.0;
+    double p4 = 0.0;
+    double pc1 = 0.0;
+    double pc2 = 0.0;
+    double pci = 0.0;
     // parameter :
     p1 = 0.0232660;
     p2 = 7.389e-6;
@@ -229,14 +328,29 @@ void XC_Functional::perdew86_spin(double rho, double zeta, double grho, double &
     pc1 = 0.0016670;
     pc2 = 0.0025680;
     pci = pc1 + pc2;
-    double third, pi34;
+    double third = 0.0;
+    double pi34 = 0.0;
     // parameter :
     third = 1.0 / 3.0;
     pi34 = 0.62035049089940;
     // pi34=(3/4pi)^(1/3)
 
-    double rho13, rho43, rs, rs2, rs3, cna, cnb, cn, drs;
-    double dcna, dcnb, dcn, phi, ephi, dd, ddd;
+    double rho13 = 0.0;
+    double rho43 = 0.0;
+    double rs = 0.0;
+    double rs2 = 0.0;
+    double rs3 = 0.0;
+    double cna = 0.0;
+    double cnb = 0.0;
+    double cn = 0.0;
+    double drs = 0.0;
+    double dcna = 0.0;
+    double dcnb = 0.0;
+    double dcn = 0.0;
+    double phi = 0.0;
+    double ephi = 0.0;
+    double dd = 0.0;
+    double ddd = 0.0;
 
     rho13 = pow(rho, third);
     rho43 = pow(rho13, 4);
@@ -314,7 +428,7 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
     rs = pi34 / pow(rho, third);
     rs2 = rs * rs;
     rs3 = rs * rs2;
-	XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw);
+    XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw);
     kf = xkf / rs;
     ks = xks * sqrt(kf);
     fz = 0.50 * (pow((1.0 + zeta) , (2.0 / 3.0)) + pow((1.0 - zeta) , (
@@ -331,7 +445,7 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
     //bfdw = expe * (vcdw - ec) / fz3;
     y = af * t * t;
     xy = (1.0 + y) / (1.0 + y + y * y);
-    qy = y * y * (2.0 + y) / (1.0 + y + y * y) ;	// **2;
+    qy = y * y * (2.0 + y) / (1.0 + y + y * y) ;    // **2;
     qy *= qy;
     s1 = 1.0 + 2.0 * al / be * t * t * xy;
     h0 = fz3 * be * be / (2.0 * al) * log(s1);
@@ -346,7 +460,7 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
                 qy * (3.0 * af * expe * ec / fz3 / be + 2.0))) * dfz * (1.0 +
                         zeta);
     ddh0 = be * fz / (2.0 * ks * ks * rho) * (xy - qy) / s1;
-    ee = - 100.0 * fz4 * (ks / kf * t);	// **2;
+    ee = - 100.0 * fz4 * (ks / kf * t);    // **2;
     ee *= ee;
     cna = cxc0 + pa * rs + pb * rs2;
     dcna = pa * rs + 2.0 * pb * rs2;
@@ -369,8 +483,15 @@ void XC_Functional::ggac_spin(double rho, double zeta, double grho, double &sc,
 */
 
 //---------------------------------------------------------------
-void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &iflag, double &sc,
-               double &v1cup, double &v1cdw, double &v2c)
+void XC_Functional::pbec_spin(
+    double rho,
+    double zeta,
+    double grho,
+    const int &iflag,
+    double &sc,
+    double &v1cup,
+    double &v1cdw,
+    double &v2c)
 {
     //-----------------------------------------------------------
 
@@ -380,12 +501,16 @@ void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &i
     // USE kinds
     // implicit none
     // real(kind=DP) :: rho, zeta, grho, sc, v1cup, v1cdw, v2c
-    double ga, be[3];//mohan add
+    double ga = 0.0;
+    double be[3] = {0.0, 0.0, 0.0};//mohan add
     // parameter :
     ga = 0.0310910;
     be[1] = 0.06672455060314922;//zhengdy add 2019-09-12, ensure same parameter with another dft code.
-	be[2] = 0.0460000;//mohan add 2012-05-28
-    double third, pi34, xkf, xks;
+    be[2] = 0.0460000;//mohan add 2012-05-28
+    double third = 0.0;
+    double pi34 = 0.0;
+    double xkf = 0.0;
+    double xks = 0.0;
     // parameter :
     third = 1.0 / 3.0;
     pi34 = 0.62035049089940;
@@ -393,12 +518,34 @@ void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &i
     xkf = 1.9191582926775130;
     xks = 1.1283791670955130;
     // pi34=(3/4pi)^(1/3), xkf=(9 pi/4)^(1/3), xks= sqrt(4/pi)
-    double kf, ks, rs, ec, vcup, vcdw, t, expe, af, y, xy, qy,
-    s1, h0, ddh0;
-    double fz, fz2, fz3, dfz, bfup, bfdw, dh0up, dh0dw, dh0zup, dh0zdw; // fz4
+    double kf = 0.0;
+    double ks = 0.0;
+    double rs = 0.0;
+    double ec = 0.0;
+    double vcup = 0.0;
+    double vcdw = 0.0;
+    double t = 0.0;
+    double expe = 0.0;
+    double af = 0.0;
+    double y = 0.0;
+    double xy = 0.0;
+    double qy = 0.0;
+    double s1 = 0.0;
+    double h0 = 0.0;
+    double ddh0 = 0.0;
+    double fz = 0.0;
+    double fz2 = 0.0;
+    double fz3 = 0.0;
+    double dfz = 0.0;
+    double bfup = 0.0;
+    double bfdw = 0.0;
+    double dh0up = 0.0;
+    double dh0dw = 0.0;
+    double dh0zup = 0.0;
+    double dh0zdw = 0.0; // fz4
 
     rs = pi34 / pow(rho, third);
-	XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); //mohan fix bug 2012-05-28
+    XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); //mohan fix bug 2012-05-28
     kf = xkf / rs;
     ks = xks * sqrt(kf);
     fz = 0.50 * (pow((1.0 + zeta) , (2.0 / 3.0)) + pow((1.0 - zeta) , (

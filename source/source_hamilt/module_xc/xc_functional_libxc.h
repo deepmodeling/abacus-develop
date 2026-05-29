@@ -25,7 +25,7 @@ namespace XC_Functional_Libxc
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
     //        for example, "XC_LDA_X+XC_LDA_C_PZ"
-    extern std::pair<int,std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
+    extern std::pair<int, std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
     /**
      * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
@@ -43,8 +43,9 @@ namespace XC_Functional_Libxc
      *       xc_corr_ext in the input file. The expected format would be an XC ID 
      *       followed by a list of parameters.
      */
-    extern std::vector<xc_func_type> init_func(const std::vector<int> &func_id, 
-                                               const int xc_polarized);
+    extern std::vector<xc_func_type> init_func(
+        const std::vector<int> &func_id,
+        const int xc_polarized);
 
     extern void finish_func(std::vector<xc_func_type> &funcs);
 
@@ -53,7 +54,7 @@ namespace XC_Functional_Libxc
 //  xc_functional_libxc_vxc.cpp
 //-------------------
 
-    extern std::tuple<double,double,ModuleBase::matrix> v_xc_libxc(
+    extern std::tuple<double, double, ModuleBase::matrix> v_xc_libxc(
         const std::vector<int> &func_id,
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
@@ -62,7 +63,7 @@ namespace XC_Functional_Libxc
         const std::map<int, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
 
     // for mGGA functional
-    extern std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(
+    extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
         const std::vector<int> &func_id,
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
@@ -117,7 +118,7 @@ namespace XC_Functional_Libxc
         std::vector<double> exc);
 
     // converting vtxc and v from vrho and vsigma (libxc=>abacus)
-    extern std::pair<double,ModuleBase::matrix> convert_vtxc_v(
+    extern std::pair<double, ModuleBase::matrix> convert_vtxc_v(
         const xc_func_type &func,
         const int nspin,
         const std::size_t nrxx,
@@ -153,8 +154,11 @@ namespace XC_Functional_Libxc
 
     extern void xc_spin_libxc(
         const std::vector<int> &func_id,
-        const double &rhoup, const double &rhodw,
-        double &exc, double &vxcup, double &vxcdw);
+        const double &rhoup,
+        const double &rhodw,
+        double &exc,
+        double &vxcup,
+        double &vxcdw);
 
 
 //-------------------
@@ -164,15 +168,25 @@ namespace XC_Functional_Libxc
     // the entire GGA functional, for nspin=1 case
     extern void gcxc_libxc(
         const std::vector<int> &func_id,
-        const double &rho, const double &grho,
-        double &sxc, double &v1xc, double &v2xc);
+        const double &rho,
+        const double &grho,
+        double &sxc,
+        double &v1xc,
+        double &v2xc);
 
     // the entire GGA functional, for nspin=2 case
     extern void gcxc_spin_libxc(
         const std::vector<int> &func_id,
-        const double rhoup, const double rhodw,
-        const ModuleBase::Vector3<double> gdr1, const ModuleBase::Vector3<double> gdr2,
-        double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud);
+        const double rhoup,
+        const double rhodw,
+        const ModuleBase::Vector3<double> gdr1,
+        const ModuleBase::Vector3<double> gdr2,
+        double &sxc,
+        double &v1xcup,
+        double &v1xcdw,
+        double &v2xcup,
+        double &v2xcdw,
+        double &v2xcud);
 
 
 //-------------------
@@ -182,22 +196,41 @@ namespace XC_Functional_Libxc
     // wrapper for the mGGA functionals
     extern void tau_xc(
         const std::vector<int> &func_id,
-        const double &rho, const double &grho, const double &atau, double &sxc,
-        double &v1xc, double &v2xc, double &v3xc);
+        const double &rho,
+        const double &grho,
+        const double &atau,
+        double &sxc,
+        double &v1xc,
+        double &v2xc,
+        double &v3xc);
 
     extern void tau_xc(
         const std::vector<int> &func_id,
-        const double &rho, const double &grho, const double &atau, double &sxc,
-        double &v1xc, double &v2xc, double &v3xc,
+        const double &rho,
+        const double &grho,
+        const double &atau,
+        double &sxc,
+        double &v1xc,
+        double &v2xc,
+        double &v3xc,
         const double &hybrid_alpha);
 
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
-        double rhoup, double rhodw,
-        ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
-        double tauup, double taudw,
-        double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
-        double &v3xcup, double &v3xcdw);
+        double rhoup,
+        double rhodw,
+        ModuleBase::Vector3<double> gdr1,
+        ModuleBase::Vector3<double> gdr2,
+        double tauup,
+        double taudw,
+        double &sxc,
+        double &v1xcup,
+        double &v1xcdw,
+        double &v2xcup,
+        double &v2xcdw,
+        double &v2xcud,
+        double &v3xcup,
+        double &v3xcdw);
 
 } // namespace XC_Functional_Libxc
 

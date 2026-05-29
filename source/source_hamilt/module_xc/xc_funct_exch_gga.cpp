@@ -10,17 +10,32 @@
 
 #include "xc_functional.h"
 
-void XC_Functional::becke88(const double &rho, const double &grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::becke88(
+    const double &rho,
+    const double &grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     //-----------------------------------------------------------------------
     // Becke exchange: A.D. Becke, PRA 38, 3098 (1988)
     // only gradient-corrected part, no Slater term included
     //
-    double beta, third, two13;
+    double beta = 0.0;
+    double third = 0.0;
+    double two13 = 0.0;
     beta = 0.00420;
     third = 1.0 / 3.0;
     two13 = 1.2599210498948730;
-    double rho13, rho43, xs, xs2, sa2b8, shm1, dd, dd2, ee;
+    double rho13 = 0.0;
+    double rho43 = 0.0;
+    double xs = 0.0;
+    double xs2 = 0.0;
+    double sa2b8 = 0.0;
+    double shm1 = 0.0;
+    double dd = 0.0;
+    double dd2 = 0.0;
+    double ee = 0.0;
 
     rho13 = pow(rho, third);
     rho43 = pow(rho13, 4);
@@ -38,7 +53,12 @@ void XC_Functional::becke88(const double &rho, const double &grho, double &sx, d
     return;
 } // end subroutine becke88
 
-void XC_Functional::ggax(const double &rho, const double &grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::ggax(
+    const double &rho,
+    const double &grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     //-----------------------------------------------------------------------
     // Perdew-Wang GGA (PW91), exchange part:
@@ -51,8 +71,19 @@ void XC_Functional::ggax(const double &rho, const double &grho, double &sx, doub
     const double fp1 = -0.0192920212964260;
     const double fp2 = 0.1616204596739950;
     // fp1 = -3/(16 pi)*(3 pi^2)^(-1/3)
-    double rhom43, s, s2, s3, s4, exps, as, sa2b8, shm1, bs, das,
-    dbs, dls;
+    double rhom43 = 0.0;
+    double s = 0.0;
+    double s2 = 0.0;
+    double s3 = 0.0;
+    double s4 = 0.0;
+    double exps = 0.0;
+    double as = 0.0;
+    double sa2b8 = 0.0;
+    double shm1 = 0.0;
+    double bs = 0.0;
+    double das = 0.0;
+    double dbs = 0.0;
+    double dls = 0.0;
 
     rhom43 = pow(rho, (- 4.0 / 3.0));
     s = fp2 * sqrt(grho) * rhom43;
@@ -67,16 +98,21 @@ void XC_Functional::ggax(const double &rho, const double &grho, double &sx, doub
     das = (200.0 * exps - 2.0 * f5) * s;
     dbs = f1 * (shm1 + f2 * s / sa2b8) + 4.0 * f5 * s3;
     dls = (das / as - dbs / bs);
-    
-	sx = fp1 * grho * rhom43 * as / bs;
-	v1x = - 4.0 / 3.0 * sx / rho * (1.0 + s * dls);
+
+    sx = fp1 * grho * rhom43 * as / bs;
+    v1x = - 4.0 / 3.0 * sx / rho * (1.0 + s * dls);
     v2x = fp1 * rhom43 * as / bs * (2.0 + s * dls);
 
     return;
 } //end subroutine ggax
 
-void XC_Functional::pbex(const double &rho, const double &grho, const int &iflag, 
-double &sx, double &v1x, double &v2x)
+void XC_Functional::pbex(
+    const double &rho,
+    const double &grho,
+    const int &iflag,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     // PBE exchange (without Slater exchange):
     // iflag=0  J.P.Perdew, K.Burke, M.Ernzerhof, PRL 77, 3865 (1996)
@@ -93,8 +129,8 @@ double &sx, double &v1x, double &v2x)
     // n*ds/d(gn)
     // exchange energy LDA part
     // exchange energy gradient part
-    
-	// numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
+
+    // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
     const double third = 1.0 / 3.0;
     const double c1 = 0.750 / ModuleBase::PI;
     const double c2 = 3.0936677262801360;
@@ -122,15 +158,20 @@ double &sx, double &v1x, double &v2x)
     const double dxunif = exunif * third;
     const double dfx1 = f2 * f2;
     const double dfx = 2.0 * mu[iflag] * s1 / dfx1;
-    
-	v1x = sx + dxunif * fx + exunif * dfx * ds;
+
+    v1x = sx + dxunif * fx + exunif * dfx * ds;
     v2x = exunif * dfx * dsg / agrho;
     sx = sx * rho;
 
-	return;
+    return;
 }
 
-void XC_Functional::optx(const double rho, const double grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::optx(
+    const double rho,
+    const double grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     //     OPTX, Handy et al. JCP 116, p. 5411 (2002) and refs. therein
     //     Present release: Mauro Boero, Tsukuba, 10/9/2002
@@ -150,13 +191,18 @@ void XC_Functional::optx(const double rho, const double grho, double &sx, double
     double smal2 = 1.e-10;
     //.......coefficients and exponents....................
     // parameter :
-    double o43 = 4.00 / 3.00,
-                 two13 = 1.2599210498948730,
-                         two53 = 3.1748021039363990,
-                                 gam = 0.0060,
-                                       a1cx = 0.97845711702844210,
-                                              a2 = 1.431690;
-    double gr, rho43, xa, gamx2, uden, uu;
+    double o43 = 4.00 / 3.00;
+    double two13 = 1.2599210498948730;
+    double two53 = 3.1748021039363990;
+    double gam = 0.0060;
+    double a1cx = 0.97845711702844210;
+    double a2 = 1.431690;
+    double gr = 0.0;
+    double rho43 = 0.0;
+    double xa = 0.0;
+    double gamx2 = 0.0;
+    double uden = 0.0;
+    double uu = 0.0;
     //.......OPTX in compact form..........................
 
     if (rho <= small)
@@ -167,7 +213,7 @@ void XC_Functional::optx(const double rho, const double grho, double &sx, double
     }
     else
     {
-        gr = (grho > smal2) ? grho : smal2;	//max()
+        gr = (grho > smal2) ? grho : smal2;    //max()
         rho43 = pow(rho, o43);
         xa = two13 * sqrt(gr) / rho43;
         gamx2 = gam * xa * xa;
@@ -182,69 +228,104 @@ void XC_Functional::optx(const double rho, const double grho, double &sx, double
     return;
 } // end subroutine optx
 
-void XC_Functional::wcx(const double &rho,const double &grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::wcx(
+    const double &rho,
+    const double &grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
-  double kf, agrho, s1, s2, es2, ds, dsg, exunif, fx;
-  // (3*pi2*|rho|)^(1/3)
-  // |grho|
-  // |grho|/(2*kf*|rho|)
-  // s^2
-  // n*ds/dn
-  // n*ds/d(gn)
-  // exchange energy LDA part
-  // exchange energy gradient part
-  double dxunif, dfx, f1, f2, f3, dfx1, x1, x2, x3, dxds1, dxds2, dxds3;
-  // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
-  double third, c1, c2, c5, teneightyone; // c6
+    double kf = 0.0;
+    double agrho = 0.0;
+    double s1 = 0.0;
+    double s2 = 0.0;
+    double es2 = 0.0;
+    double ds = 0.0;
+    double dsg = 0.0;
+    double exunif = 0.0;
+    double fx = 0.0;
+    // (3*pi2*|rho|)^(1/3)
+    // |grho|
+    // |grho|/(2*kf*|rho|)
+    // s^2
+    // n*ds/dn
+    // n*ds/d(gn)
+    // exchange energy LDA part
+    // exchange energy gradient part
+    double dxunif = 0.0;
+    double dfx = 0.0;
+    double f1 = 0.0;
+    double f2 = 0.0;
+    double f3 = 0.0;
+    double dfx1 = 0.0;
+    double x1 = 0.0;
+    double x2 = 0.0;
+    double x3 = 0.0;
+    double dxds1 = 0.0;
+    double dxds2 = 0.0;
+    double dxds3 = 0.0;
+    // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
+    double third = 0.0;
+    double c1 = 0.0;
+    double c2 = 0.0;
+    double c5 = 0.0;
+    double teneightyone = 0.0; // c6
 
-  third = 1.0/3.0;
-  c1 = 0.75 / ModuleBase::PI;
-  c2 = 3.093667726280136;
-  c5 = 4.0 * third;
-  teneightyone = 0.123456790123;
-  // parameters of the functional
-  double k, mu, cwc;
-  k = 0.804;
-  mu = 0.2195149727645171;
-  cwc = 0.00793746933516;
-  //
-  agrho = sqrt (grho);
-  kf = c2 * pow(rho,third);
-  dsg = 0.5 / kf;
-  s1 = agrho * dsg / rho;
-  s2 = s1 * s1;
-  es2 = exp(-s2);
-  ds = - c5 * s1;
-  //
-  //   Energy
-  //
-  // x = 10/81 s^2 + (mu - 10/81) s^2 e^-s^2 + ln (1 + c s^4)
-  x1 = teneightyone * s2;
-  x2 = (mu - teneightyone) * s2 * es2;
-  x3 = log(1.0 + cwc * s2 * s2);
-  f1 = (x1 + x2 + x3) / k;
-  f2 = 1.0 + f1;
-  f3 = k / f2;
-  fx = k - f3;
-  exunif = - c1 * kf;
-  sx = exunif * fx;
-  //
-  //   Potential
-  //
-  dxunif = exunif * third;
-  dfx1 = f2 * f2;
-  dxds1 = teneightyone;
-  dxds2 = (mu - teneightyone) * es2 * (1.0 - s2);
-  dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 *s2);
-  dfx = 2.0 * s1 * (dxds1 + dxds2 + dxds3) / dfx1;
-  v1x = sx + dxunif * fx + exunif * dfx * ds;
-  v2x = exunif * dfx * dsg / agrho;
+    third = 1.0/3.0;
+    c1 = 0.75 / ModuleBase::PI;
+    c2 = 3.093667726280136;
+    c5 = 4.0 * third;
+    teneightyone = 0.123456790123;
+    // parameters of the functional
+    double k = 0.0;
+    double mu = 0.0;
+    double cwc = 0.0;
+    k = 0.804;
+    mu = 0.2195149727645171;
+    cwc = 0.00793746933516;
+    //
+    agrho = sqrt (grho);
+    kf = c2 * pow(rho,third);
+    dsg = 0.5 / kf;
+    s1 = agrho * dsg / rho;
+    s2 = s1 * s1;
+    es2 = exp(-s2);
+    ds = - c5 * s1;
+    //
+    //   Energy
+    //
+    // x = 10/81 s^2 + (mu - 10/81) s^2 e^-s^2 + ln (1 + c s^4)
+    x1 = teneightyone * s2;
+    x2 = (mu - teneightyone) * s2 * es2;
+    x3 = log(1.0 + cwc * s2 * s2);
+    f1 = (x1 + x2 + x3) / k;
+    f2 = 1.0 + f1;
+    f3 = k / f2;
+    fx = k - f3;
+    exunif = - c1 * kf;
+    sx = exunif * fx;
+    //
+    //   Potential
+    //
+    dxunif = exunif * third;
+    dfx1 = f2 * f2;
+    dxds1 = teneightyone;
+    dxds2 = (mu - teneightyone) * es2 * (1.0 - s2);
+    dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 *s2);
+    dfx = 2.0 * s1 * (dxds1 + dxds2 + dxds3) / dfx1;
+    v1x = sx + dxunif * fx + exunif * dfx * ds;
+    v2x = exunif * dfx * dsg / agrho;
 
-  sx = sx * rho;
-  return;
+    sx = sx * rho;
+    return;
 }
 
-void XC_Functional::becke88_spin(double rho, double grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::becke88_spin(
+    double rho,
+    double grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     //-------------------------------------------------------------------
     // Becke exchange: A.D. Becke, PRA 38, 3098 (1988) - Spin polarized case
@@ -258,11 +339,20 @@ void XC_Functional::becke88_spin(double rho, double grho, double &sx, double &v1
     // output: first part of the potential
     // output: the second part of the potential
 
-    double beta, third;
+    double beta = 0.0;
+    double third = 0.0;
     // parameter :
     beta = 0.00420;
     third = 1.0 / 3.0;
-    double rho13, rho43, xs, xs2, sa2b8, shm1, dd, dd2, ee;
+    double rho13 = 0.0;
+    double rho43 = 0.0;
+    double xs = 0.0;
+    double xs2 = 0.0;
+    double sa2b8 = 0.0;
+    double shm1 = 0.0;
+    double dd = 0.0;
+    double dd2 = 0.0;
+    double ee = 0.0;
 
     rho13 = pow(rho, third);
     rho43 = pow(rho13, 4);

@@ -2,7 +2,12 @@
 
 #include "xc_functional.h"
 
-void XC_Functional::hcth(const double rho, const double grho, double &sx, double &v1x, double &v2x)
+void XC_Functional::hcth(
+    const double rho,
+    const double grho,
+    double &sx,
+    double &v1x,
+    double &v2x)
 {
     //     ===============================================================
     //     HCTH/120, JCP 109, p. 6264 (1998)
@@ -24,12 +29,50 @@ void XC_Functional::hcth(const double rho, const double grho, double &sx, double
     double o34 = 4.00 / 3.00;
     double fr83 = 8.0 / 3.0;
     //double cg0[6], cg1[6], caa[6], cab[6], cx[6];
-    double cg0[7], cg1[7], caa[7], cab[7], cx[7];	//mohan modify 2007-10-13
-    double r3q2, r3pi, gr, rho_o3, rho_o34, xa, xa2, ra, rab,
-    dra_drho, drab_drho, g, dg, era1, dera1_dra, erab0, derab0_drab,
-    ex, dex_drho, uaa, uab, ux, ffaa, ffab,  dffaa_drho, dffab_drho,
-    denaa, denab, denx, f83rho, bygr, gaa, gab, gx, taa, tab, txx,
-    dgaa_drho, dgab_drho, dgx_drho, dgaa_dgr, dgab_dgr, dgx_dgr;
+    double cg0[7], cg1[7], caa[7], cab[7], cx[7];    //mohan modify 2007-10-13
+    double r3q2 = 0.0;
+    double r3pi = 0.0;
+    double gr = 0.0;
+    double rho_o3 = 0.0;
+    double rho_o34 = 0.0;
+    double xa = 0.0;
+    double xa2 = 0.0;
+    double ra = 0.0;
+    double rab = 0.0;
+    double dra_drho = 0.0;
+    double drab_drho = 0.0;
+    double g = 0.0;
+    double dg = 0.0;
+    double era1 = 0.0;
+    double dera1_dra = 0.0;
+    double erab0 = 0.0;
+    double derab0_drab = 0.0;
+    double ex = 0.0;
+    double dex_drho = 0.0;
+    double uaa = 0.0;
+    double uab = 0.0;
+    double ux = 0.0;
+    double ffaa = 0.0;
+    double ffab = 0.0;
+    double dffaa_drho = 0.0;
+    double dffab_drho = 0.0;
+    double denaa = 0.0;
+    double denab = 0.0;
+    double denx = 0.0;
+    double f83rho = 0.0;
+    double bygr = 0.0;
+    double gaa = 0.0;
+    double gab = 0.0;
+    double gx = 0.0;
+    double taa = 0.0;
+    double tab = 0.0;
+    double txx = 0.0;
+    double dgaa_drho = 0.0;
+    double dgab_drho = 0.0;
+    double dgx_drho = 0.0;
+    double dgaa_dgr = 0.0;
+    double dgab_dgr = 0.0;
+    double dgx_dgr = 0.0;
 
     r3q2 = std::pow(2.0, (-o3));
     r3pi = std::pow((3.0 / ModuleBase::PI), o3);
@@ -126,17 +169,26 @@ void XC_Functional::hcth(const double rho, const double grho, double &sx, double
     return;
 } //end subroutine hcth
 
-void XC_Functional::pwcorr(const double r, const double c[], double &g, double &dg)
+void XC_Functional::pwcorr(
+    const double r,
+    const double c[],
+    double &g,
+    double &dg)
 {
     // USE kinds
     // implicit none
     // real(kind=DP) :: r, g, dg, c(6)
-    double r12, r32, r2, rb, drb, sb;
+    double r12 = 0.0;
+    double r32 = 0.0;
+    double r2 = 0.0;
+    double rb = 0.0;
+    double drb = 0.0;
+    double sb = 0.0;
 
     r12 = sqrt(r);
     r32 = r * r12;
     r2 = r * r;
-    rb = c[3] * r12 + c[4] * r + c[5] * r32 + c[6] * r2;	//c[i] i=0--5;
+    rb = c[3] * r12 + c[4] * r + c[5] * r32 + c[6] * r2;    //c[i] i=0--5;
     sb = 1.00 + 1.00 / (2.00 * c[1] * rb);
     g = -2.00 * c[1] * (1.00 + c[2] * r) * log(sb);
     drb = c[3] / (2.00 * r12) + c[4] + 1.50 * c[5] * r12 + 2.00 * c[6] * r;
