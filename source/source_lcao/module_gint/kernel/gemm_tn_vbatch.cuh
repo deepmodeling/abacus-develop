@@ -12,15 +12,15 @@
 #include "source_base/module_device/device_check.h"
 #include "source_base/module_device/kernel_compat.h"
 
-// V1 K-inner shmem layout (matches gemm_nn_vbatch.cuh):
-//   sA(m, k) = sA[m * slda + k]   row-major in M, K-inner; slda = BLK_K + PAD
-//   sB(k, n) = sB[n * sldb + k]   col-major in N, K-inner; sldb = BLK_K + PAD
-// PAD comes from gemm_vec_traits<T> (FP32: +4, FP64: +2) and makes the
-// stride 16-byte aligned + bank-conflict-free for warp-wide LDS.
-// See gemm_nn_vbatch.cuh for the full Phase V3 bank-conflict audit table;
-// the TN inner loop uses the same indexing pattern, so the same analysis
-// applies (the only structural difference is sB's load loop, which writes
-// to the same K-inner storage layout).
+// Shared-memory tile layout (K-inner), identical to gemm_nn_vbatch.cuh:
+//   sA(m, k) = sA[m * slda + k]   -- M indexes the row, K is contiguous
+//   sB(k, n) = sB[n * sldb + k]   -- N indexes the column, K is contiguous
+//   slda = sldb = BLK_K + PAD
+// PAD (from gemm_vec_traits<T>: +4 for FP32, +2 for FP64) keeps the K-stride a
+// whole number of 16-byte words for the vector loads and spreads the strided
+// reads across banks. See gemm_nn_vbatch.cuh for the layout rationale; the TN
+// inner loop uses the same access pattern, the only difference being how the
+// dev->shmem load loop for sB is indexed.
 #define sA(i, j) sA[(i)*slda + (j)]
 #define sB(i, j) sB[(j)*sldb + (i)]
 #define fetch(A, m, n, bound) offs_d##A[min(n * LD##A + m, bound)]
@@ -58,9 +58,9 @@ static __device__ void vbatched_gemm_nt_device(int M,
     static_assert(BLK_K % VK == 0,
                   "BLK_K must be divisible by VK (16 / sizeof(T))");
 
-    // Tile-divisibility (Phase V3 audit): same checks as gemm_nn_vbatch.
-    // sB load loop in TN traverses (BLK_K rows x BLK_N cols), so the
-    // divisibility constraints on DIM_XB / DIM_YB are mirrored.
+    // Tile divisibility: same constraints as gemm_nn_vbatch. The TN sB load
+    // loop traverses (BLK_K rows x BLK_N cols), so the DIM_XB / DIM_YB
+    // divisibility checks are mirrored accordingly.
     static_assert(BLK_M % DIM_X  == 0, "BLK_M must be divisible by DIM_X");
     static_assert(BLK_N % DIM_Y  == 0, "BLK_N must be divisible by DIM_Y");
     static_assert(BLK_M % DIM_XA == 0, "BLK_M must be divisible by DIM_XA");
@@ -86,10 +86,11 @@ static __device__ void vbatched_gemm_nt_device(int M,
     int blx = blockIdx.x; // block's m dimension
     int bly = blockIdx.y; // block's n dimension
 
-    // Accumulator tile (registers).
+    // Accumulator tile (registers). rC accumulates in T; the widening to
+    // double happens only at the final atomicAdd into C.
     T rC[THR_N][THR_M];
 
-    // Per-VK-step shmem->reg tiles. One LDS feeds VK FMAs per (m,n).
+    // Per-VK-step shmem->reg tiles. One load feeds VK FMAs per (m,n).
     T rA[THR_M][VK];
     T rB[THR_N][VK];
 
@@ -173,9 +174,9 @@ static __device__ void vbatched_gemm_nt_device(int M,
             }
         }
 
-// Wide-LDS FMA: VK FMAs per shmem read.
-//   FP32: LDS.128 (float4)  -> 4 FMAs per (m,n) per inner step
-//   FP64: LDS.64  (double2) -> 2 FMAs per (m,n) per inner step
+// Wide-load FMA: one vector load feeds VK FMAs per (m, n).
+//   FP32: float4  -> 4 FMAs per (m,n) per inner step
+//   FP64: double2 -> 2 FMAs per (m,n) per inner step
 #pragma unroll
         for (k = 0; k < BLK_K; k += VK)
         {
@@ -239,8 +240,10 @@ static __device__ void vbatched_gemm_nt_device(int M,
         __syncthreads();
     }
 
-    // Tail: scalar from the K-inner layout. Partial-K blocks can be odd
-    // (bxyz=27 -> tail 11; bxyz=125 -> tail 13), so don't try to vectorize.
+    // Tail: the leftover K columns after the BLK_K-strided main loop (here K is
+    // the contraction length, the mesh-grid count bxyz). The remainder is
+    // generally not a multiple of VK, so it runs with scalar shared-memory
+    // reads instead of the vector load.
     // It's okay that m,n exceed matrix bounds as all work is in registers
     // or shared memory, and out-of-bounds rC[n][m] will not be saved later.
     kk = K - kk;
@@ -326,8 +329,8 @@ static __global__ void vbatched_gemm_nt_kernel(int M,
     static_assert(BLK_K % gemm_vec_traits<T>::VK == 0,
                   "BLK_K must be divisible by VK = 16 / sizeof(T)");
 
-    // V1 K-inner: slda = K-axis stride for sA (BLK_M rows of (BLK_K + PAD)),
-    // sldb = K-axis stride for sB (BLK_N cols of (BLK_K + PAD)).
+    // K-inner layout: slda/sldb are the K-axis stride (BLK_K + PAD) for sA
+    // (BLK_M rows) and sB (BLK_N columns) respectively.
     int shared_lda = BLK_K + PAD;
     int shared_ldb = BLK_K + PAD;
     T* shared_A = (T*)shared_mem;
@@ -450,7 +453,7 @@ void vbatched_gemm_tn_impl(int m,
     // This is because vbatch_gemm__tn_kernel is column major,
     // but vatched_gemm_nt_impl is designed to be row major,
 
-    // V1 K-inner shmem footprint (matches gemm_nn_vbatch_impl):
+    // K-inner shared-memory footprint (matches vbatched_gemm_nn_impl):
     //   sA: BLK_M rows of (BLK_K + PAD) elements
     //   sB: BLK_N cols of (BLK_K + PAD) elements
     constexpr int PAD = gemm_vec_traits<T>::PAD;

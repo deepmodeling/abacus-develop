@@ -12,28 +12,17 @@
 #include "source_base/module_device/device_check.h"
 #include "source_base/module_device/kernel_compat.h"
 
-// V1 K-inner shmem layout
-//   sA(m, k) = sA[m * slda + k]   row-major in M, K-inner; slda = BLK_K + PAD
-//   sB(k, n) = sB[n * sldb + k]   col-major in N, K-inner; sldb = BLK_K + PAD
-// Both layouts make the inner loop read VK consecutive K elements per LDS,
-// turning one scalar LDS-per-FMA into one 16-byte LDS-per-VK-FMAs.
-// PAD comes from gemm_vec_traits<T>::PAD (FP32: +4, FP64: +2) and is what
-// makes slda/sldb 16-byte aligned for LDS.{64,128}.
-//
-// Phase V3 bank-conflict audit (sA inner-loop read, idx-strided lanes):
-//   FP64, DIM_X= 8 (8x16 thread tiles): slda=BLK_K+2 -> 8 lanes at
-//     stride 4 banks each side -> banks {0,4,...,28} disjoint -> 0 conflicts.
-//   FP32, DIM_X= 8 (8x16 thread tiles): slda=BLK_K+4 -> 8 lanes at
-//     stride 4 banks (4-bank vec) -> disjoint -> 0 conflicts.
-//   FP64, DIM_X=16 (V2 16x16 big tile): slda=BLK_K+2, 16 lanes; even
-//     slda forces gcd(2*slda,32) >= 2, so the LOW/HIGH bank pair lands
-//     on distinct banks for all 16 lanes only when 2*slda has order >=16
-//     mod 32. With BLK_K=16 -> slda=18 -> 36 mod 32 = 4 -> 8-distinct
-//     -> 2-way conflict. Accepted in V2: still beats scalar LDS by ~VK/2,
-//     and removing the conflict requires a swizzled layout (Step 2).
-//   sB inner-loop read uses idy-strided lanes; with DIM_Y in {8,16} the
-//     warp covers only 2-4 distinct n_col values, broadcast factor >= 8
-//     -> always conflict-free regardless of sldb.
+// Shared-memory tile layout (K-inner): both operands store the contraction
+// (K) axis contiguously so the inner loop can read VK consecutive K elements
+// with a single 16-byte vector load instead of VK scalar loads.
+//   sA(m, k) = sA[m * slda + k]   -- M indexes the row, K is contiguous
+//   sB(k, n) = sB[n * sldb + k]   -- N indexes the column, K is contiguous
+//   slda = sldb = BLK_K + PAD
+// PAD (from gemm_vec_traits<T>: +4 for FP32, +2 for FP64) keeps the K-stride a
+// whole number of 16-byte words so the vector loads stay aligned, and offsets
+// the per-warp access so the strided shared-memory reads spread across banks.
+// The widest FP64 tiles (DIM_X=16) still take a few bank conflicts on the sA
+// read, but that is a net win over the scalar layout this replaces.
 #define sA(i, j) sA[(i)*slda + (j)]
 #define sB(i, j) sB[(j)*sldb + (i)]
 #define fetch(A, m, n, bound) offs_d##A[min(n * LD##A + m, bound)]
@@ -68,17 +57,16 @@ static __device__ void vbatched_gemm_nn_device(int M,
     using vec_t = typename gemm_vec_traits<T>::vec_t;
     constexpr int VK = gemm_vec_traits<T>::VK;
 
-    // V1 contract: BLK_K must be a whole number of VK chunks so the
-    // vectorized FMA loop below covers it cleanly. PAD makes slda * 8/4
-    // a multiple of 16 (LDS alignment) -- enforced at the kernel scope.
+    // BLK_K must be a whole number of VK chunks so the vectorized FMA loop
+    // below covers it exactly; the 16-byte alignment of the K-stride is
+    // enforced separately at kernel scope.
     static_assert(BLK_K % VK == 0,
                   "BLK_K must be divisible by VK (16 / sizeof(T))");
 
-    // Tile-divisibility (Phase V3 audit): every dev->shmem load loop
-    // assumes the BLK_* dim is an exact multiple of the corresponding
-    // DIM_*, and the per-thread fan-out THR_M/N is BLK_M/N / DIM_X/Y.
-    // A mis-spec'd new template instantiation would silently load
-    // garbage; these asserts surface it at compile time.
+    // Tile divisibility: every dev->shmem load loop assumes BLK_* is an exact
+    // multiple of the matching DIM_*, and the per-thread fan-out THR_M/THR_N is
+    // BLK_M/BLK_N divided by DIM_X/DIM_Y. A mis-specified instantiation would
+    // silently load garbage, so surface it at compile time.
     static_assert(BLK_M % DIM_X  == 0, "BLK_M must be divisible by DIM_X");
     static_assert(BLK_N % DIM_Y  == 0, "BLK_N must be divisible by DIM_Y");
     static_assert(BLK_M % DIM_XA == 0, "BLK_M must be divisible by DIM_XA");
@@ -104,10 +92,11 @@ static __device__ void vbatched_gemm_nn_device(int M,
     int blx = blockIdx.x; // block's m dimension
     int bly = blockIdx.y; // block's n dimension
 
-    // Accumulator tile (registers). Layout matches the original.
+    // Accumulator tile (registers). rC accumulates in T; the widening to
+    // double happens only at the final atomicAdd into C.
     T rC[THR_N][THR_M];
 
-    // Per-VK-step shmem->reg tiles. One LDS feeds VK FMAs per (m,n).
+    // Per-VK-step shmem->reg tiles. One load feeds VK FMAs per (m,n).
     T rA[THR_M][VK];
     T rB[THR_N][VK];
 
@@ -191,11 +180,11 @@ static __device__ void vbatched_gemm_nn_device(int M,
             }
         }
 
-// Wide-LDS FMA: VK FMAs per shmem read.
-//   FP32: LDS.128 (float4)  -> 4 FMAs per (m,n) per inner step
-//   FP64: LDS.64  (double2) -> 2 FMAs per (m,n) per inner step
-// Both rely on slda/sldb being 16-byte aligned (PAD math) and on BLK_K
-// being a whole number of VK chunks (static_assert above).
+// Wide-load FMA: one vector load feeds VK FMAs per (m, n).
+//   FP32: float4  -> 4 FMAs per (m,n) per inner step
+//   FP64: double2 -> 2 FMAs per (m,n) per inner step
+// Relies on the K-stride being 16-byte aligned and BLK_K being a whole
+// number of VK chunks (static_asserts above).
 #pragma unroll
         for (k = 0; k < BLK_K; k += VK)
         {
@@ -259,9 +248,10 @@ static __device__ void vbatched_gemm_nn_device(int M,
         __syncthreads();
     }
 
-    // Tail: last full (BLK_K) or partial block. Scalar from the K-inner
-    // layout -- the partial-K block can land on an odd k count (e.g.
-    // bxyz=27 -> tail 11), so don't try to vectorize it.
+    // Tail: the leftover K columns after the BLK_K-strided main loop (here K is
+    // the contraction length, nw1). The remainder is generally not a multiple
+    // of VK, so it runs with scalar shared-memory reads instead of the vector
+    // load.
     // It's okay that m,n exceed matrix bounds as all work is in registers
     // or shared memory, and out-of-bounds rC[n][m] will not be saved later.
     kk = K - kk;
@@ -347,8 +337,8 @@ static __global__ void vbatched_gemm_nn_kernel(int M,
     static_assert(BLK_K % gemm_vec_traits<T>::VK == 0,
                   "BLK_K must be divisible by VK = 16 / sizeof(T)");
 
-    // V1 K-inner: slda is the K-axis stride for sA (M-rows of (BLK_K + PAD)),
-    // sldb is the K-axis stride for sB (N-cols of (BLK_K + PAD)).
+    // K-inner layout: slda/sldb are the K-axis stride (BLK_K + PAD) for sA
+    // (BLK_M rows) and sB (BLK_N columns) respectively.
     int shared_lda = BLK_K + PAD;
     int shared_ldb = BLK_K + PAD;
     T* shared_A = (T*)shared_mem;
@@ -446,7 +436,7 @@ void vbatched_gemm_nn_impl(int m,
     // This is because vbatch_gemm_nn_kernel is column major,
     // but vatched_gemm_nn_impl is designed to be row major,
 
-    // V1 K-inner shmem footprint:
+    // K-inner shared-memory footprint:
     //   sA: BLK_M rows of (BLK_K + PAD) elements
     //   sB: BLK_N cols of (BLK_K + PAD) elements
     constexpr int PAD = gemm_vec_traits<T>::PAD;

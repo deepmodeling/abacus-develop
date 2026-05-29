@@ -40,6 +40,7 @@ gemm_alpha_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true)
     bucket_counts_.assign(nw_stride_ * nw_stride_, 0);
     bucket_base_.assign(nw_stride_ * nw_stride_, 0);
     bucket_cursor_.assign(nw_stride_ * nw_stride_, 0);
+    buckets_.reserve(32);
 }
 
 template<typename Real>
@@ -138,7 +139,9 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
             }
         }
     }
-    pair_scratch_offset_.assign(pair_cache_.size(), -1);
+    // Sized to match pair_cache_; Pass 1 of phi_mul_phi / phi_mul_dm overwrites
+    // every entry before Pass 2 reads it, so no initial value is needed.
+    pair_scratch_offset_.resize(pair_cache_.size());
 }
 
 template<typename Real>
@@ -286,8 +289,8 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     // Shape-exact bucketing: group atom pairs by (nw1, nw2). K = mgrids_num_
     // is already batch-wide constant, so (nw1, nw2) fully determines the GEMM
     // shape. Each bucket hands gemm_tn_vbatch scalar (nw1, nw2, mgrids_num_),
-    // so the 3x3 template ladder picks the tightest tile for every item and
-    // the wrapper sizes the grid exactly -- no cross-species tile waste, no
+    // so the tile ladder picks the tightest tile for every shape and the
+    // wrapper sizes the grid exactly -- no cross-shape tile waste, no
     // over-launched blocks.
     //
     // Algorithm: counting-sort-style two-pass over the pre-enumerated
@@ -315,9 +318,8 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     }
 
     // Prefix sum over dense keys -> compact bucket list.
-    struct Bucket { int key; int off; int cnt; };
-    std::vector<Bucket> buckets;
-    buckets.reserve(32);
+    auto& buckets = buckets_;
+    buckets.clear();
     auto& key_to_base = bucket_base_;
     std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;
@@ -414,9 +416,8 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     }
 
     // Prefix sum over dense keys -> compact bucket list.
-    struct Bucket { int key; int off; int cnt; };
-    std::vector<Bucket> buckets;
-    buckets.reserve(32);
+    auto& buckets = buckets_;
+    buckets.clear();
     auto& key_to_base = bucket_base_;
     std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;

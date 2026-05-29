@@ -44,19 +44,20 @@ inline int ceil_div(const int a, const int b)
 }
 
 // ---------------------------------------------------------------------------
-// gemm_vec_traits<T> -- wide-LDS primitive for the V1 K-inner inner loop.
+// gemm_vec_traits<T> -- the wide-load primitive used by the GEMM inner loop,
+// which reads VK consecutive K elements per shared-memory load instead of one.
 //
-// VK  = how many T elements pack into one 16-byte LDS (4 for FP32, 2 for FP64)
-// vec_t = the 16-byte CUDA vector type used for the LDS
-// PAD = K-stride padding that makes (BLK_K + PAD) * sizeof(T) a multiple of
-//       16 *and* keeps the warp's idx-strided shmem access bank-conflict-free
-//       (gcd((BLK_K+PAD) % 32, 32) == VK).
+//   VK    = number of T elements in one 16-byte load (4 for FP32, 2 for FP64)
+//   vec_t = the 16-byte vector type used for that load (float4 / double2)
+//   PAD   = padding added to the shared-memory K-stride so that (BLK_K + PAD)
+//           elements span a whole number of 16-byte words, keeping the
+//           vectorized shared-memory loads aligned and spreading the warp's
+//           strided reads across banks.
 //
-// The load is issued as one *reinterpret_cast<vec_t*>(&sA(m,k)); the
-// component fan-out is done by unpack(). FP64 needs the explicit cast --
-// the compiler's auto-vectorizer is reliable for float4 but not for
-// double2; per-component .x/.y/.z/.w writes guarantee the LDS.{64,128}
-// SASS forms emit.
+// The load is one *reinterpret_cast<vec_t*>(&sA(m, k)); unpack() then fans the
+// vector out into the per-thread registers. The explicit per-component copy is
+// deliberate: nvcc reliably vectorizes float4 but not double2, and writing
+// .x/.y(/.z/.w) by hand guarantees the wide load instruction is emitted.
 // ---------------------------------------------------------------------------
 template <typename T> struct gemm_vec_traits;
 

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cuda_runtime.h>
 
+#include "source_lcao/module_gint/gint_type.h"   // Vec3i, used by PairInfo
 #include "source_lcao/module_gint/batch_biggrid.h"
 #include "gint_gpu_vars.h"
 #include "cuda_mem_wrapper.h"
@@ -27,6 +28,16 @@ struct PairInfo
     uint16_t nw2;
     uint8_t ia_le;   // (ia_1 <= ia_2) within the bgrid, for is_symm filter
     uint8_t is_diag; // (ia_1 == ia_2), for phi_mul_dm is_symm alpha
+};
+
+// One non-empty (nw1, nw2) bucket produced by the counting sort in
+// phi_mul_phi / phi_mul_dm: a flattened shape key, the bucket's start offset in
+// the flat gemm_* arrays, and how many atom pairs landed in it.
+struct GemmShapeBucket
+{
+    int key;  // nw1 * nw_stride_ + nw2
+    int off;  // start offset in the gemm_* host/device arrays
+    int cnt;  // number of atom pairs in this bucket
 };
 
 template<typename Real = double>
@@ -53,10 +64,12 @@ public:
         const Real* phi_d,
         Real* result_d) const;
     
-    // All GEMM accumulators (hr in phi_mul_phi, phi_dm in phi_mul_dm) are
-    // double-typed regardless of Real: when Real=float the multiplies stay in
-    // fp32 (cheap) but per-block reductions and device-side atomicAdd run in
-    // fp64 so the global reductions don't drift.
+    // The GEMM output buffers (hr in phi_mul_phi, phi_dm in phi_mul_dm) are
+    // always double, independent of Real. When Real=float the per-pair inner
+    // products are reduced in fp32 (cheap); the cross-pair accumulation into a
+    // shared hr/phi_dm element is what runs in fp64, via an atomicAdd into
+    // these double buffers, so summing many atom-pair contributions doesn't
+    // drift.
     void phi_mul_phi(
         const Real* phi_d,
         const Real* phi_vldr3_d,
@@ -156,6 +169,10 @@ private:
     mutable std::vector<int> bucket_counts_;
     mutable std::vector<int> bucket_base_;
     mutable std::vector<int> bucket_cursor_;
+
+    // Compact list of non-empty buckets for the current call. Reused (cleared,
+    // not reallocated) by both phi_mul_phi and phi_mul_dm.
+    mutable std::vector<GemmShapeBucket> buckets_;
 };
 
 }

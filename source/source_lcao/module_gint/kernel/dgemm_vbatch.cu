@@ -3,6 +3,21 @@
 #include "dgemm_vbatch.h"
 #include "source_base/module_device/device.h"
 
+// Tile ladder
+// -----------
+// The caller splits each batch into buckets of identical (m, n, k) and calls
+// in once per bucket. The dispatchers below pick, for each bucket, the kernel
+// instantiation whose (BLK_M, BLK_N) tile is the smallest rung that still
+// covers the bucket's output shape, so boundary blocks don't spend most of
+// their work on masked-off padding.
+//
+// Each thread owns a THR_M x THR_N register accumulator tile, i.e. it computes
+//   THR = THR_M * THR_N = (BLK_M / DIM_X) * (BLK_N / DIM_Y)
+// output elements. We aim to keep THR in roughly [16, 36]: below that the inner
+// FMAs don't amortize the shared-memory traffic and there's too little ILP;
+// above it register pressure starts cutting occupancy. The "(in band)" /
+// "(under)" notes on each case below mark where that rung lands.
+
 template<typename T>
 void gemm_nn_vbatch(
     int m, int n, int k,
@@ -32,8 +47,10 @@ void gemm_nn_vbatch(
                         : (n <= 32) ? 2
                         :             3;
 
-    // BLK_N bracket -- 32 only when bxyz <=32 (caps mask waste at 50% for
-    // bxyz=27); 64 for everything else (best LDS reuse).
+    // BLK_N bracket -- tiles the bxyz (mesh-grid) axis. Use 32 when bxyz<=32 so
+    // a partial final block-row isn't mostly masked padding (e.g. bxyz=27 in a
+    // 64-row tile leaves ~58% of the rows idle); use 64 above that, where the
+    // larger tile gives better shared-memory reuse.
     const int blk_n_tag = (m <= 32) ? 0 : 1;
 
     switch (blk_m_tag * 2 + blk_n_tag)
@@ -87,7 +104,7 @@ void gemm_tn_vbatch(
     switch (blk_m_tag * 4 + blk_n_tag)
     {
         // BLK_M=8  rungs (nw2<=8).  DIM_X=4, THR_M=2.
-        case  0: TN_DISPATCH(4, 8,  8,  8); break;  // THR=2*1=2  (corner)
+        case  0: TN_DISPATCH(4, 8,  8,  8); break;  // THR=2*1=2  (well under band)
         case  1: TN_DISPATCH(4, 8,  8, 16); break;  // THR=2*2=4
         case  2: TN_DISPATCH(4, 8,  8, 32); break;  // THR=2*4=8
         case  3: TN_DISPATCH(4, 8,  8, 48); break;  // THR=2*6=12
