@@ -8,6 +8,7 @@
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
 #include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_cg_mixed.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
@@ -82,7 +83,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "cg_mixed"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -342,6 +343,124 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
         // TODO: Double check tensormap's potential problem
         // ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
+    }
+    else if (this->method == "cg_mixed")
+    {
+        // Mixed-precision CG solver:
+        // Internal CG operations (preconditioner, vector updates) use float
+        // for speed, while eigenvalue updates and convergence checks use double.
+        auto subspace_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim == 2, "dims of psi_in should be <= 2");
+            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
+                                                      1,
+                                                      psi_in.shape().dim_size(0),
+                                                      psi_in.shape().dim_size(1),
+                                                      cur_nbasis);
+            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out.data<T>(),
+                                                       1,
+                                                       psi_out.shape().dim_size(0),
+                                                       psi_out.shape().dim_size(1),
+                                                       cur_nbasis);
+            auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
+                                    ct::DeviceType::CpuDevice,
+                                    ct::TensorShape({psi_in.shape().dim_size(0)}));
+            DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
+        };
+        DiagoCGMixed<T, Device> cg_mixed(this->basis_type,
+                                          this->calculation_type,
+                                          this->need_subspace,
+                                          subspace_func,
+                                          this->diag_thr,
+                                          this->diag_iter_max,
+                                          this->nproc_in_pool);
+
+        using ct_Device = typename ct::PsiToContainer<Device>::type;
+
+        auto hpsi_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be <= 2");
+            if (psi_in.data_type() == ct::DataType::DT_COMPLEX)
+            {
+                int nrows = ndim == 1 ? 1 : psi_in.shape().dim_size(0);
+                int ncols = ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1);
+                const int total = nrows * ncols;
+                auto tmp_psi_d = std::vector<T>(total);
+                auto tmp_hpsi_d = std::vector<T>(total);
+                const std::complex<float>* psi_f = psi_in.data<std::complex<float>>();
+                for (int i = 0; i < total; i++) tmp_psi_d[i] = static_cast<T>(psi_f[i]);
+                auto psi_wrapper = psi::Psi<T, Device>(tmp_psi_d.data(), 1, nrows, ncols, cur_nbasis);
+                psi::Range all_bands_range(true, 0, 0, nrows - 1);
+                using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                hpsi_info info(&psi_wrapper, all_bands_range, tmp_hpsi_d.data());
+                hm->ops->hPsi(info);
+                std::complex<float>* hpsi_f = hpsi_out.data<std::complex<float>>();
+                for (int i = 0; i < total; i++) hpsi_f[i] = static_cast<std::complex<float>>(tmp_hpsi_d[i]);
+            }
+            else
+            {
+                auto psi_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
+                                                       1,
+                                                       ndim == 1 ? 1 : psi_in.shape().dim_size(0),
+                                                       ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                                                       cur_nbasis);
+                psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+                using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
+                hm->ops->hPsi(info);
+            }
+        };
+
+        auto spsi_func = [this, hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be <= 2");
+            if (psi_in.data_type() == ct::DataType::DT_COMPLEX)
+            {
+                int nrows = ndim == 1 ? 1 : psi_in.shape().dim_size(0);
+                int ncols = ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1);
+                const int total = nrows * ncols;
+                auto tmp_psi_d = std::vector<T>(total);
+                auto tmp_spsi_d = std::vector<T>(total);
+                const std::complex<float>* psi_f = psi_in.data<std::complex<float>>();
+                for (int i = 0; i < total; i++) tmp_psi_d[i] = static_cast<T>(psi_f[i]);
+                if (this->use_uspp)
+                    hm->sPsi(tmp_psi_d.data(), tmp_spsi_d.data(), ncols, ncols, nrows);
+                else
+                    for (int i = 0; i < total; i++) tmp_spsi_d[i] = tmp_psi_d[i];
+                std::complex<float>* spsi_f = spsi_out.data<std::complex<float>>();
+                for (int i = 0; i < total; i++) spsi_f[i] = static_cast<std::complex<float>>(tmp_spsi_d[i]);
+            }
+            else
+            {
+                if (this->use_uspp)
+                    hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(),
+                             ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                             ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+                             ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+                else
+                    base_device::memory::synchronize_memory_op<T, Device, Device>()(
+                        spsi_out.data<T>(), psi_in.data<T>(),
+                        static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
+                                            * (ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1))));
+            }
+        };
+
+        auto psi_tensor = ct::TensorMap(psi.get_pointer(),
+                                        ct::DataTypeToEnum<T>::value,
+                                        ct::DeviceTypeToEnum<ct_Device>::value,
+                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}));
+        auto eigen_tensor = ct::TensorMap(eigenvalue,
+                                          ct::DataTypeToEnum<Real>::value,
+                                          ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                          ct::TensorShape({psi.get_nbands()}));
+        auto prec_tensor = ct::TensorMap(pre_condition.data(),
+                                         ct::DataTypeToEnum<Real>::value,
+                                         ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                         ct::TensorShape({static_cast<int>(pre_condition.size())}))
+                               .to_device<ct_Device>()
+                               .slice({0}, {psi.get_current_ngk()});
+
+        cg_mixed.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
     }
     else if (this->method == "bpcg")
     {
