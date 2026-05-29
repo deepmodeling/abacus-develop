@@ -1,7 +1,7 @@
 #include "evolve_ofdft.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include <iostream>
+#include <complex>
 
 #include "source_base/parallel_reduce.h"
 
@@ -29,7 +29,7 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            chr.rho[is][ir] = abs(psi_[is * nrxx + ir])*abs(psi_[is * nrxx + ir]);
+            chr.rho[is][ir] = std::norm(psi_[is * nrxx + ir]);
         }
     }
     this->renormalize_psi(chr, pw_rho, psi_);
@@ -62,7 +62,7 @@ void Evolve_OFDFT::renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std:
     const int nspin = PARAM.inp.nspin;
     const int nrxx = pw_rho->nrxx;
 
-    std::cout<<"sr="<<sr<<" nelec="<<PARAM.inp.nelec<<" normalize_factor="<<normalize_factor<<std::endl;
+
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
@@ -118,51 +118,33 @@ void Evolve_OFDFT::cal_vw_potential_phi(std::vector<std::complex<double>>& pphi,
     const double* gg = pw_rho->gg;
     const double tpiba2 = pw_rho->tpiba2;
 
-    if (nspin <= 0) {
-        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
+    std::vector<std::vector<std::complex<double>>> rLapPhi(nspin, std::vector<std::complex<double>>(nrxx));
+    std::vector<std::vector<std::complex<double>>> recipPhi(nspin, std::vector<std::complex<double>>(npw));
+
+    for (int is = 0; is < nspin; ++is)
+    {
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            rLapPhi[is][ir] = pphi[is * nrxx + ir];
+        }
     }
-    std::complex<double>** rLapPhi = new std::complex<double>*[nspin];
+
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int is = 0; is < nspin; ++is) {
-        rLapPhi[is] = new std::complex<double>[nrxx];
-        for (int ir = 0; ir < nrxx; ++ir)
-        {
-            rLapPhi[is][ir]=pphi[is * nrxx + ir];
-        }
-    }
-    std::complex<double>** recipPhi = new std::complex<double>*[nspin];
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif  
     for (int is = 0; is < nspin; ++is)
     {
-        recipPhi[is] = new std::complex<double>[npw];
-
-        pw_rho->real2recip(rLapPhi[is], recipPhi[is]);
+        pw_rho->real2recip(rLapPhi[is].data(), recipPhi[is].data());
         for (int ik = 0; ik < npw; ++ik)
         {
             recipPhi[is][ik] *= gg[ik] * tpiba2;
         }
-        pw_rho->recip2real(recipPhi[is], rLapPhi[is]);
+        pw_rho->recip2real(recipPhi[is].data(), rLapPhi[is].data());
         for (int ir = 0; ir < nrxx; ++ir)
         {
             Hpsi[is * nrxx + ir] += rLapPhi[is][ir];
         }
     }
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int is = 0; is < nspin; ++is)
-    {
-        delete[] recipPhi[is];
-        delete[] rLapPhi[is];
-    }
-    delete[] recipPhi;
-    delete[] rLapPhi;
 }
 
 void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_, 
@@ -178,19 +160,14 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
     const double* gg = pw_rho->gg;
     const ModuleBase::Vector3<double>* gcar = pw_rho->gcar;
 
-    if (nspin <= 0) {
-        ModuleBase::WARNING_QUIT("Evolve_OFDFT","nspin must be positive");
-    }
-    std::complex<double>** recipPhi = new std::complex<double>*[nspin];
-    std::complex<double>** rPhi = new std::complex<double>*[nspin];
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int is = 0; is < nspin; ++is) {
-        rPhi[is] = new std::complex<double>[nrxx];
+    std::vector<std::vector<std::complex<double>>> recipPhi(nspin, std::vector<std::complex<double>>(npw));
+    std::vector<std::vector<std::complex<double>>> rPhi(nspin, std::vector<std::complex<double>>(nrxx));
+
+    for (int is = 0; is < nspin; ++is)
+    {
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            rPhi[is][ir]=psi_[is * nrxx + ir];
+            rPhi[is][ir] = psi_[is * nrxx + ir];
         }
     }
 
@@ -208,14 +185,13 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
         std::vector<std::complex<double>> rCurrent_z(nrxx);
         std::vector<std::complex<double>> kF_r(nrxx);
         std::vector<std::complex<double>> rCDPotential(nrxx);
-        recipPhi[is] = new std::complex<double>[npw];
 
         for (int ir = 0; ir < nrxx; ++ir)
         {
             kF_r[ir]=std::pow(3*std::pow(ModuleBase::PI*std::abs(rPhi[is][ir]),2),1.0/3.0);
         }
 
-        pw_rho->real2recip(rPhi[is], recipPhi[is]);
+        pw_rho->real2recip(rPhi[is].data(), recipPhi[is].data());
         for (int ik = 0; ik < npw; ++ik)
         {
             recipCurrent_x[ik]=imag*gcar[ik].x*recipPhi[is][ik]*tpiba;
@@ -250,25 +226,14 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
 
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            rpot(0, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3) 
+            rpot(is, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3)
                         / (2.0*std::pow(std::real(kF_r[ir]),2));
-            if (std::isnan(rpot(0, ir))) 
+            if (std::isnan(rpot(is, ir)))
             {
-                rpot(0, ir)=0.0;
+                rpot(is, ir)=0.0;
             }
         }
     }
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int is = 0; is < nspin; ++is)
-    {
-        delete[] recipPhi[is];
-        delete[] rPhi[is];
-    }
-    delete[] recipPhi;
-    delete[] rPhi;
 }
 
 void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec, 
