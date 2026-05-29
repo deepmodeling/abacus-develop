@@ -153,7 +153,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                                                   ucell,
                                                   11,
                                                   1,
-                                                  PARAM.sys.two_fermi,
+                                                  PARAM.globalv.two_fermi,
                                                   true); // reduce_all_pool is true
                 }
             }
@@ -236,7 +236,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                    ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell, 11, 1, PARAM.sys.two_fermi);
+                    ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell, 11, 1, PARAM.globalv.two_fermi);
                 }
             } // else if_separate_k is false
         } // end of ib loop over nbands

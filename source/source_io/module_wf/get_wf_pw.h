@@ -160,7 +160,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               ucell,
                                               11,
                                               1,
-                                              PARAM.sys.two_fermi,
+                                              PARAM.globalv.two_fermi,
                                               true); // reduce_all_pool is true
             }
         }
@@ -251,7 +251,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               ucell,
                                               11,
                                               1,
-                                              PARAM.sys.two_fermi,
+                                              PARAM.globalv.two_fermi,
                                               true); // reduce_all_pool is true
 
                 std::stringstream ss_imag;
@@ -267,7 +267,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                                               ucell,
                                               11,
                                               1,
-                                              PARAM.sys.two_fermi,
+                                              PARAM.globalv.two_fermi,
                                               true); // reduce_all_pool is true
             }
         }

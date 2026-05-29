@@ -187,7 +187,7 @@ TEST_F(ElecStateTest, Constructor)
     elecstate::ElecState* elecstate_new = new elecstate::ElecState(charge, rhopw, bigpw);
     EXPECT_EQ(elecstate_new->charge, charge);
     EXPECT_EQ(elecstate_new->bigpw, bigpw);
-    EXPECT_EQ(elecstate_new->eferm.two_efermi, PARAM.sys.two_fermi);
+    EXPECT_EQ(elecstate_new->eferm.two_efermi, PARAM.globalv.two_fermi);
     delete elecstate_new;
     delete bigpw;
     delete rhopw;

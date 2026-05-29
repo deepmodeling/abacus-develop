@@ -96,7 +96,7 @@ void Get_pchg_lcao::begin(double** rho,
                 double ef_spin = ef_all_spin[is];
                 ModuleIO::write_vdata_palgrid(pgrid, 
 				rho_save[is].data(), is, nspin, 0, 
-				ssc.str(), ef_spin, ucell_in, precision, 1, PARAM.sys.two_fermi);
+				ssc.str(), ef_spin, ucell_in, precision, 1, PARAM.globalv.two_fermi);
             }
         }
     }
@@ -193,7 +193,7 @@ void Get_pchg_lcao::begin(double** rho,
                                                       ssc.str(),
                                                       ef_spin,
                                                       ucell_in, 
-						      precision, 1, PARAM.sys.two_fermi);
+						      precision, 1, PARAM.globalv.two_fermi);
                     }
                 }
             }
@@ -245,7 +245,7 @@ void Get_pchg_lcao::begin(double** rho,
                                                   ssc.str(),
                                                   ef_spin,
                                                   ucell_in, 
-						  precision, 1, PARAM.sys.two_fermi);
+						  precision, 1, PARAM.globalv.two_fermi);
                 }
             }
         }

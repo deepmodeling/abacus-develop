@@ -103,7 +103,7 @@ void write_elecstat_pot(
         ucell,
         precision,
         out_fermi,
-        PARAM.sys.two_fermi);
+        PARAM.globalv.two_fermi);
 
     ModuleBase::timer::end("ModuleIO", "write_elecstat_pot");
     return;

@@ -43,14 +43,15 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_base
-  LIBS parameter  ${math_libs} base device
+  LIBS parameter  ${math_libs} base device cell_info
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+  ../../source_io/module_chgpot/write_init.cpp ../../source_io/module_output/write_cube.cpp
 )
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_pw
-  LIBS parameter  ${math_libs} planewave_serial base device
+  LIBS parameter  ${math_libs} planewave_serial base device cell_info
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
     ../elecstate_pw_cal_tau.cpp
@@ -60,6 +61,7 @@ AddTest(
     ../../source_psi/psi.cpp
     # ../../source_psi/kernels/psi_memory_op.cpp
     ../../source_base/module_device/memory_op.cpp
+    ../../source_io/module_chgpot/write_init.cpp ../../source_io/module_output/write_cube.cpp
 )
 
 AddTest(

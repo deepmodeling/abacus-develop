@@ -91,7 +91,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
                                       &ucell,
                                       precision,
                                       0,
-                                      PARAM.sys.two_fermi);
+                                      PARAM.globalv.two_fermi);
 
         // free memory
         delete[] ldos;
@@ -163,7 +163,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
            << ".cube";
 
         const int precision = PARAM.inp.out_ldos[1];
-        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0, PARAM.sys.two_fermi);
+        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0, PARAM.globalv.two_fermi);
     }
 }
 
