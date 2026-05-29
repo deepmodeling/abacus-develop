@@ -30,8 +30,7 @@ SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
  * (since deband does not include H_DS). To recover E_DFT:
  *   E_DFT = E_KS - sum(λ·Mi) = E_KS + E_scon
  *
- * This correction must always be applied when DeltaSpin is active,
- * regardless of whether Mi has converged to M_target.
+ * Returns 0.0 if lambda_ or Mi_ have not been initialized yet.
  *
  * @return Constraint energy in Ry
  */
@@ -39,6 +38,10 @@ template <typename TK>
 double SpinConstrain<TK>::cal_escon()
 {
     this->escon_ = 0.0;
+    if (this->lambda_.empty() || this->Mi_.empty())
+    {
+        return this->escon_;
+    }
     int nat = this->get_nat();
     for (int iat = 0; iat < nat; iat++)
     {
