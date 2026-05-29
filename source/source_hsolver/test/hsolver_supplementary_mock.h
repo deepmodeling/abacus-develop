@@ -23,8 +23,9 @@ void ElecState::init_scf(const UnitCell& ucell,
                          const Parallel_Grid& pgrid,
                          const ModuleBase::ComplexMatrix& strucfac,
                          const bool*,
-                         ModuleSymmetry::Symmetry&,
-                         const void*)
+                         const int istep,
+                         const std::string& out_dir,
+                         const Input_para& inp)
 {
     return;
 }

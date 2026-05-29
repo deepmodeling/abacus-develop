@@ -109,8 +109,6 @@ class ElecState
                   const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
                   const bool* numeric,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr,
                   const int istep = 0,
                   const std::string& out_dir = "",
                   const Input_para& inp = PARAM.inp);

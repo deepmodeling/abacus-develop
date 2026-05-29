@@ -94,7 +94,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -232,7 +232,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         }
     }
 
-    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
+    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric);
 
     Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
 

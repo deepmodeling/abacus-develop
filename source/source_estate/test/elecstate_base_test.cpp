@@ -262,8 +262,7 @@ TEST_F(ElecStateTest, InitSCF)
     int istep = 0;
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
-    ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(ucell, pgrid, strucfac, nullptr, symm));
+    EXPECT_NO_THROW(elecstate->init_scf(ucell, pgrid, strucfac, nullptr));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }
