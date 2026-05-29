@@ -204,6 +204,32 @@ TEST(DiagoPPCGTest, TwoByTwo)
     dcp.CompareEigen(precond);
 }
 
+TEST(DiagoPPCGTest, ComplexThreeByThree)
+{
+    const int dim = 3;
+    const int nband = 3;
+    std::vector<std::complex<double>> hm(dim * dim);
+    hm[0] = {3.0, 0.0};
+    hm[1] = {1.0, -1.0};
+    hm[2] = {0.5, 0.2};
+    hm[3] = {1.0, 1.0};
+    hm[4] = {5.0, 0.0};
+    hm[5] = {-0.3, -0.4};
+    hm[6] = {0.5, -0.2};
+    hm[7] = {-0.3, 0.4};
+    hm[8] = {7.0, 0.0};
+
+    DiagoPPCGPrepare dcp(nband, dim, 0, 1e-10, 80, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    double precond[dim] = {1.0, 1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond);
+}
+
 TEST(DiagoPPCGTest, readH)
 {
     std::vector<std::complex<double>> hm;

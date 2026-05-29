@@ -6,6 +6,7 @@
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "../diago_iter_assist.h"
 #include "../diago_bpcg.h"
+#include "../kernels/bpcg_kernel_op.h"
 #include "diago_mock.h"
 #include "mpi.h"
 #include "source_base/global_variable.h"
@@ -15,6 +16,9 @@
 #include <gtest/gtest.h>
 #include <complex>
 #include <random>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /************************************************
  *  unit test of functions in Diago_BPCG
@@ -76,7 +80,7 @@ class DiagoBPCGPrepare
     int nprocs=1, mypnum=0;
     // threshold is the comparison standard between bpcg and lapack
 
-    void CompareEigen(double *precondition)
+    void CompareEigen(double *precondition, bool check_vectors = false)
     {
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
@@ -173,6 +177,40 @@ class DiagoBPCGPrepare
             EXPECT_NEAR(en[i], e_lapack[i], threshold);
         }
 
+        if (check_vectors && nprocs == 1)
+        {
+            std::vector<std::complex<double>> hpsi_check(nband * npw);
+            hpsi_func(psi_local.get_pointer(), hpsi_check.data(), npw, nband);
+
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                double norm = 0.0;
+                double residual_norm = 0.0;
+                for (int ig = 0; ig < npw; ++ig)
+                {
+                    const std::complex<double> psi_value = psi_local(ib, ig);
+                    const std::complex<double> residual = hpsi_check[ib * npw + ig] - en[ib] * psi_value;
+                    norm += std::norm(psi_value);
+                    residual_norm += std::norm(residual);
+                }
+                EXPECT_NEAR(norm, 1.0, 1e-10);
+                EXPECT_NEAR(std::sqrt(residual_norm), 0.0, 1e-8);
+            }
+
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                for (int jb = ib + 1; jb < nband; ++jb)
+                {
+                    std::complex<double> overlap = 0.0;
+                    for (int ig = 0; ig < npw; ++ig)
+                    {
+                        overlap += std::conj(psi_local(ib, ig)) * psi_local(jb, ig);
+                    }
+                    EXPECT_NEAR(std::abs(overlap), 0.0, 1e-10);
+                }
+            }
+        }
+
         delete[] en;
         delete[] e_lapack;
     }
@@ -248,7 +286,159 @@ TEST(DiagoBPCGTest, TwoByTwo)
     double precond[dim] = {1.0, 1.0};
     DIAGOTEST::hmatrix = hm;
     DIAGOTEST::npw = dim;
-    dcp.CompareEigen(precond);
+    dcp.CompareEigen(precond, true);
+}
+
+TEST(BpcgKernelOpTest, ApplyEigenvaluesUsesLeadingDimension)
+{
+    using T = std::complex<double>;
+    const int nbase = 4101;
+    const int nbase_x = nbase + 3;
+    const int notconv = 2;
+    const T untouched = {-9.0, 4.0};
+
+    std::vector<T> vectors(nbase_x * notconv);
+    std::vector<T> result(nbase_x * notconv, untouched);
+    const double eigenvalues[notconv] = {2.0, -0.5};
+
+    for (int m = 0; m < notconv; ++m)
+    {
+        for (int i = 0; i < nbase_x; ++i)
+        {
+            vectors[m * nbase_x + i] = T(0.25 * (i + 1), -0.1 * (m + 1));
+        }
+    }
+
+    hsolver::apply_eigenvalues_op<T, base_device::DEVICE_CPU>()(
+        nbase, nbase_x, notconv, result.data(), vectors.data(), eigenvalues);
+
+    for (int m = 0; m < notconv; ++m)
+    {
+        for (int i = 0; i < nbase; ++i)
+        {
+            EXPECT_EQ(result[m * nbase_x + i], eigenvalues[m] * vectors[m * nbase_x + i]);
+        }
+        for (int i = nbase; i < nbase_x; ++i)
+        {
+            EXPECT_EQ(result[m * nbase_x + i], untouched);
+        }
+    }
+}
+
+TEST(BpcgKernelOpTest, PreconditionUsesBandOffsetAndFormula)
+{
+    using T = std::complex<double>;
+    const int dim = 4;
+    const int nbase = 2;
+    const int notconv = 2;
+    std::vector<T> psi_iter((nbase + notconv) * dim);
+    const std::vector<T> original = {
+        {1.0, 0.0}, {2.0, 0.0}, {3.0, 0.0}, {4.0, 0.0},
+        {5.0, 0.0}, {6.0, 0.0}, {7.0, 0.0}, {8.0, 0.0},
+        {1.0, 2.0}, {2.0, 3.0}, {3.0, 4.0}, {4.0, 5.0},
+        {2.0, -1.0}, {3.0, -2.0}, {4.0, -3.0}, {5.0, -4.0}};
+    psi_iter = original;
+
+    const double precondition[dim] = {1.0, 2.5, 4.0, 7.0};
+    const double eigenvalues[notconv] = {0.5, 3.0};
+
+    hsolver::precondition_op<T, base_device::DEVICE_CPU>()(
+        dim, psi_iter.data(), nbase, notconv, precondition, eigenvalues);
+
+    for (int i = 0; i < nbase * dim; ++i)
+    {
+        EXPECT_EQ(psi_iter[i], original[i]);
+    }
+
+    for (int m = 0; m < notconv; ++m)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            const double x = std::abs(precondition[i] - eigenvalues[m]);
+            const double denom = 0.5 * (1.0 + x + std::sqrt(1.0 + (x - 1.0) * (x - 1.0)));
+            const int idx = (nbase + m) * dim + i;
+            EXPECT_NEAR(psi_iter[idx].real(), (original[idx] / denom).real(), 1e-14);
+            EXPECT_NEAR(psi_iter[idx].imag(), (original[idx] / denom).imag(), 1e-14);
+        }
+    }
+}
+
+TEST(BpcgKernelOpTest, RefreshProjectedMatricesOnlyTouchesDiagonal)
+{
+    using T = std::complex<double>;
+    const int n = 3;
+    const int ldh = 5;
+    const T one = {1.0, 0.0};
+    const T h_sentinel = {-1.0, 0.5};
+    const T s_sentinel = {-2.0, 0.5};
+    const T v_sentinel = {-3.0, 0.5};
+    const double eigenvalues[n] = {0.25, 1.5, 3.75};
+
+    std::vector<T> hcc(ldh * ldh, h_sentinel);
+    std::vector<T> scc(ldh * ldh, s_sentinel);
+    std::vector<T> vcc(ldh * ldh, v_sentinel);
+
+    hsolver::refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>()(
+        n, hcc.data(), scc.data(), vcc.data(), ldh, eigenvalues, one);
+
+    for (int col = 0; col < ldh; ++col)
+    {
+        for (int row = 0; row < ldh; ++row)
+        {
+            const int idx = col * ldh + row;
+            if (row == col && row < n)
+            {
+                EXPECT_EQ(hcc[idx], T(eigenvalues[row], 0.0));
+                EXPECT_EQ(scc[idx], one);
+                EXPECT_EQ(vcc[idx], one);
+            }
+            else
+            {
+                EXPECT_EQ(hcc[idx], h_sentinel);
+                EXPECT_EQ(scc[idx], s_sentinel);
+                EXPECT_EQ(vcc[idx], v_sentinel);
+            }
+        }
+    }
+}
+
+TEST(BpcgKernelOpTest, ApplyEigenvaluesMatchesSingleThreadResult)
+{
+#ifndef _OPENMP
+    GTEST_SKIP() << "OpenMP is not enabled in this build";
+#else
+    using T = std::complex<double>;
+    const int nbase = 5000;
+    const int nbase_x = nbase + 7;
+    const int notconv = 3;
+    std::vector<T> vectors(nbase_x * notconv);
+    std::vector<T> result_single(nbase_x * notconv);
+    std::vector<T> result_multi(nbase_x * notconv);
+    const double eigenvalues[notconv] = {1.25, -2.0, 0.125};
+
+    for (int m = 0; m < notconv; ++m)
+    {
+        for (int i = 0; i < nbase_x; ++i)
+        {
+            vectors[m * nbase_x + i] = T(0.01 * (i % 97) + m, -0.02 * (i % 31));
+        }
+    }
+
+    const int old_threads = omp_get_max_threads();
+    omp_set_num_threads(1);
+    hsolver::apply_eigenvalues_op<T, base_device::DEVICE_CPU>()(
+        nbase, nbase_x, notconv, result_single.data(), vectors.data(), eigenvalues);
+
+    omp_set_num_threads(4);
+    hsolver::apply_eigenvalues_op<T, base_device::DEVICE_CPU>()(
+        nbase, nbase_x, notconv, result_multi.data(), vectors.data(), eigenvalues);
+    omp_set_num_threads(old_threads);
+
+    for (size_t i = 0; i < result_single.size(); ++i)
+    {
+        EXPECT_EQ(result_multi[i], result_single[i]);
+    }
+#endif
 }
 
 // check that lapack work well
