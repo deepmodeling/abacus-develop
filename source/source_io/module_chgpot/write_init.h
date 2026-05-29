@@ -52,7 +52,8 @@ void write_chg_init(
     const elecstate::Efermi &efermi,
     const int istep,
     const std::string& out_dir,
-    const Input_para& inp);
+    const Input_para& inp,
+    const bool two_fermi);
 
 // Write initial effective potential to cube file in real space.
 // Triggered when inp.out_pot[0] == 3.
@@ -69,7 +70,8 @@ void write_pot_init(
     elecstate::ElecState *pelec,
     const int istep,
     const std::string& out_dir,
-    const Input_para& inp);
+    const Input_para& inp,
+    const bool two_fermi);
 
 }
 

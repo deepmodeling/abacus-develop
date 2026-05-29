@@ -43,7 +43,7 @@ void ElecState::init_scf(const UnitCell& ucell,
     this->pot->init_pot(this->charge);
 
     //! output the initial potential
-    ModuleIO::write_pot_init(ucell, pgrid, this, istep, out_dir, inp);
+    ModuleIO::write_pot_init(ucell, pgrid, this, istep, out_dir, inp, PARAM.globalv.two_fermi);
 }
 
 

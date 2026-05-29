@@ -80,7 +80,8 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
                                       &(ucell),
                                       3,
                                       1,
-                                      PARAM.globalv.two_fermi);
+                                      PARAM.globalv.two_fermi,
+                                      false);
     }
 
     ModuleBase::timer::end("ESolver_DM2rho", "runner");

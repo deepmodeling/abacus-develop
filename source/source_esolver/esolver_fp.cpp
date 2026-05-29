@@ -177,7 +177,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
     //! output the initial charge density
     ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
-                             PARAM.globalv.global_out_dir, PARAM.inp);
+                             PARAM.globalv.global_out_dir, PARAM.inp, PARAM.globalv.two_fermi);
 
     return;
 }

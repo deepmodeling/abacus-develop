@@ -86,7 +86,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               &(ucell),
                                               11, // default precision
                                               1, // default out_fermi
-                                              PARAM.globalv.two_fermi);
+                                              PARAM.globalv.two_fermi,
+                                              false);
             }
         }
     }
@@ -129,12 +130,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "re.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
             }
         }
     }
@@ -249,7 +250,8 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               &(ucell),
                                               3,
                                               1,
-                                              PARAM.globalv.two_fermi);
+                                              PARAM.globalv.two_fermi,
+                                              false);
 
                 // if (out_wfc_pw || out_wf_r)
                 psi_g.fix_k(ik);
@@ -320,12 +322,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 ss_real << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "re.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
             }
         }
     }

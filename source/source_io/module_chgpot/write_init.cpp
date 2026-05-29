@@ -63,7 +63,8 @@ void ModuleIO::write_chg_init(
     const elecstate::Efermi &efermi,
     const int istep,
     const std::string& out_dir,
-    const Input_para& inp)
+    const Input_para& inp,
+    const bool two_fermi)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -113,7 +114,8 @@ void ModuleIO::write_chg_init(
                                               &(ucell),
                                               inp.out_chg[1],
                                               1,
-                                              inp.two_fermi);
+                                              two_fermi,
+                                              false);
             }
         }
     }
@@ -127,7 +129,8 @@ void ModuleIO::write_pot_init(
     elecstate::ElecState *pelec,
     const int istep,
     const std::string& out_dir,
-    const Input_para& inp)
+    const Input_para& inp,
+    const bool two_fermi)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -160,7 +163,8 @@ void ModuleIO::write_pot_init(
                                               &(ucell),
                                               inp.out_pot[1],
                                               0,
-                                              inp.two_fermi);
+                                              two_fermi,
+                                              false);
             }
         }
     }

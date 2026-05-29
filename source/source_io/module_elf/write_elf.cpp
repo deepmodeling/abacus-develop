@@ -172,7 +172,8 @@ void write_elf(
             ucell_,
             precision,
             out_fermi,
-            two_fermi);
+            two_fermi,
+            false);
     }
     else if (nspin == 2)
     {
@@ -193,7 +194,8 @@ void write_elf(
                 ucell_,
                 precision,
                 out_fermi,
-                two_fermi);
+                two_fermi,
+                false);
         }
 
         std::vector<double> elf_tot(nrxx, 0.0);
@@ -228,7 +230,8 @@ void write_elf(
             ucell_,
             precision,
             out_fermi,
-            two_fermi);
+            two_fermi,
+            false);
     }
     ModuleBase::timer::end("ModuleIO", "write_elf");
 } // end write_elf
