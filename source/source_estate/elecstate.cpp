@@ -3,7 +3,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "occupy.h"
-#include "source_io/module_chgpot/write_init.h"
 
 namespace elecstate
 {
@@ -24,8 +23,6 @@ void ElecState::init_nelec_spin()
         this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
 }
-
-
 
 
 void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
