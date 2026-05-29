@@ -23,18 +23,15 @@ SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
 }
 
 /**
- * @brief Calculate the spin constraint energy correction: E_scon = -sum_i (lambda_i . (Mi_i - M_target_i)).
+ * @brief Calculate the spin constraint energy correction: E_scon = -sum_i (lambda_i . Mi_i).
  *
- * @details In constrained DFT, the augmented energy functional is:
- *   E'[rho] = E_DFT[rho] - sum_i lambda_i . (M_i - M_target_i)
+ * @details Under the unified convention E' = E + Σ λ·(M - M_target),
+ * the Hamiltonian correction is H_DS = +λ·σ. This adds +sum(λ·Mi) to eband
+ * (since deband does not include H_DS). To recover E_DFT:
+ *   E_DFT = E_KS - sum(λ·Mi) = E_KS + E_scon
  *
- * The code computes E_KS which corresponds to E'[rho]. To recover E_DFT:
- *   E_DFT = E_KS + sum_i lambda_i . (M_i - M_target_i)
- *          = E_KS - E_scon
- *
- * When the constraint is converged (M_i ≈ M_target_i), E_scon → 0 and
- * E_total → E_KS naturally. This correction must always be applied when
- * DeltaSpin is active, regardless of convergence status.
+ * This correction must always be applied when DeltaSpin is active,
+ * regardless of whether Mi has converged to M_target.
  *
  * @return Constraint energy in Ry
  */
@@ -45,9 +42,9 @@ double SpinConstrain<TK>::cal_escon()
     int nat = this->get_nat();
     for (int iat = 0; iat < nat; iat++)
     {
-        this->escon_ -= this->lambda_[iat].x * (this->Mi_[iat].x - this->target_mag_[iat].x);
-        this->escon_ -= this->lambda_[iat].y * (this->Mi_[iat].y - this->target_mag_[iat].y);
-        this->escon_ -= this->lambda_[iat].z * (this->Mi_[iat].z - this->target_mag_[iat].z);
+        this->escon_ -= this->lambda_[iat].x * this->Mi_[iat].x;
+        this->escon_ -= this->lambda_[iat].y * this->Mi_[iat].y;
+        this->escon_ -= this->lambda_[iat].z * this->Mi_[iat].z;
     }
     return this->escon_;
 }

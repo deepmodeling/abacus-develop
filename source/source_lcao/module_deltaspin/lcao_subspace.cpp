@@ -472,7 +472,7 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
         {
             if (PI_sub[iat].empty()) continue;
 
-            const std::complex<double> coeff(-effective_lambda[iat][2] * spin_sign, 0.0);
+            const std::complex<double> coeff(effective_lambda[iat][2] * spin_sign, 0.0);
             const std::complex<double>* pi_ptr = PI_sub[iat].data();
             for (int ij = 0; ij < nbands * nbands; ij++)
             {

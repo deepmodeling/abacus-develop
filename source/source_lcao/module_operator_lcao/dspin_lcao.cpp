@@ -54,51 +54,33 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
 // coefficients for the DeltaSpin constraint term.
 //
 // The constrained energy functional is:
-//   E'[rho] = E[rho] - sum_i lambda_i . (M_i - M_target_i)
+//   E'[rho] = E[rho] + sum_i lambda_i . (M_i - M_target_i)
 //
-// The minus sign means: to INCREASE M_i (align with target), lambda should be
-// POSITIVE. This is encoded in the Hamiltonian correction H_delta:
+// Variational derivative gives the Hamiltonian correction:
+//   H_DS = +lambda . sigma
 //
 // nspin=2 (collinear, TR=double):
-//   H_delta = lambda_z * sigma_z  (diagonal, opposite sign per spin channel)
-//   - spin-up channel:   H += +lambda_z  (lowers energy for spin-up electrons)
-//   - spin-down channel: H += -lambda_z  (raises energy for spin-down electrons)
-//   Result: positive lambda_z increases M_z (more spin-up, less spin-down)
+//   H_DS |up> = +lambda_z |up>
+//   H_DS |dn> = -lambda_z |dn>
+//   Positive lambda_z increases M_z (more spin-up, less spin-down)
 //
 // nspin=4 (non-collinear, TR=complex<double>):
-//   H_delta = lambda . sigma (full 2x2 Pauli matrix with spin-flip terms)
-//   H_delta = | -lambda_z      -lambda_x - i*lambda_y |
-//             | -lambda_x + i*lambda_y    +lambda_z    |
-//   The negative signs on off-diagonal terms arise from the energy functional
-//   convention. The full Pauli matrix couples spin-up and spin-down channels,
-//   allowing rotation of the magnetization direction.
+//   H_DS = | +lambda_z       +lambda_x + i*lambda_y |
+//          | +lambda_x - i*lambda_y    -lambda_z     |
 // ============================================================================
 
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<double>& coefficients)
 {
-    // nspin=2 (collinear): coefficients for spin-up and spin-down channels.
-    // current_lambda[0] contains lambda_z (the only constrained component).
-    // current_spin=0 is spin-up (isk=0), current_spin=1 is spin-down (isk=1).
-    // From E' = E - λ·M: H_up += -λ_z × P, H_down += +λ_z × P
-    // coefficients[0] -> spin-up channel (current_spin=0): -lambda_z
-    // coefficients[1] -> spin-down channel (current_spin=1): +lambda_z
-    coefficients[0] = -current_lambda[0];
-    coefficients[1] = current_lambda[0];
+    coefficients[0] = current_lambda[0];
+    coefficients[1] = -current_lambda[0];
 }
 
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {-\lambda^{I,3}, -\lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,1}+i\lambda^{I,2}, +\lambda^{I,3}}
-    // nspin=4 (non-collinear): 4 coefficients for the 2x2 Pauli matrix block.
-    // The coefficients are arranged as:
-    //   | coeff[0]  coeff[1] |   | -lambda_z      -lambda_x - i*lambda_y |
-    //   | coeff[2]  coeff[3] | = | -lambda_x + i*lambda_y    +lambda_z   |
-    //
-    // Note: current_lambda is indexed as {lambda_x, lambda_y, lambda_z}.
-    // The negative signs ensure that positive lambda increases M in the target direction.
-    coefficients[0] = std::complex<double>(-current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(-current_lambda[0] , -current_lambda[1]);
-    coefficients[2] = std::complex<double>(-current_lambda[0] , current_lambda[1]);
-    coefficients[3] = std::complex<double>(current_lambda[2], 0.0);
+{
+    coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
+    coefficients[1] = std::complex<double>(current_lambda[0], current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0], -current_lambda[1]);
+    coefficients[3] = std::complex<double>(-current_lambda[2], 0.0);
 }
 
 template <typename TK, typename TR>

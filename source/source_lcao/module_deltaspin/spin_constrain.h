@@ -268,12 +268,12 @@ public:
 		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
-   * @brief Calculate the spin constraint energy correction: E_scon = -sum(lambda_i . (Mi_i - M_target_i)).
+   * @brief Calculate the spin constraint energy correction: E_scon = -sum(lambda_i . Mi_i).
    *
-   * @details Corrects E_KS to recover E_DFT:
-   *   E_DFT = E_KS + sum(lambda . (Mi - M_target)) = E_KS - E_scon
-   * When Mi ≈ M_target, E_scon → 0 and E_total → E_KS naturally.
-   * Always computed when DeltaSpin is active.
+   * @details Under E' = E + Σ λ·(M - M_target), H_DS = +λ·σ adds +sum(λ·Mi)
+   * to eband. To recover E_DFT:
+   *   E_DFT = E_KS - sum(λ·Mi) = E_KS + E_scon
+   * Always computed when DeltaSpin is active, regardless of convergence.
    *
    * @return Constraint energy in Ry
    */
