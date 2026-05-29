@@ -185,6 +185,12 @@ namespace XC_Functional_Libxc
         const double &rho, const double &grho, const double &atau, double &sxc,
         double &v1xc, double &v2xc, double &v3xc);
 
+    extern void tau_xc(
+        const std::vector<int> &func_id,
+        const double &rho, const double &grho, const double &atau, double &sxc,
+        double &v1xc, double &v2xc, double &v3xc,
+        const double &hybrid_alpha);
+
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
         double rhoup, double rhodw,
