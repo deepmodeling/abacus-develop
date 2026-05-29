@@ -40,8 +40,8 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
-    pelec->init_scf(ucell, para_grid, sf.strucFac,
-            locpp.numeric, istep, out_dir, inp);
+    elecstate::init_scf(ucell, para_grid, sf.strucFac,
+            locpp.numeric, istep, out_dir, inp, pelec);
 
     //----------------------------------------------------------
     //! 2) Symmetrize the charge density (rho)

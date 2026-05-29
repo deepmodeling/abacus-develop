@@ -46,7 +46,6 @@ AddTest(
   LIBS parameter  ${math_libs} base device cell_info
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_io/module_chgpot/write_init.cpp ../../source_io/module_output/write_cube.cpp
 )
 
 AddTest(
