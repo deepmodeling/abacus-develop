@@ -307,9 +307,7 @@ void timer::print_all(std::ofstream &ofs, const bool check_end)
 
         // only print out timers that are larger than 1%
         // mohan add 2025-03-09
-        // Temporary Workflow C profiling: print every timer entry so small
-        // cache-reuse setup functions can be summarized by parse_timers.py.
-        const double percentage_thr = 0.0;
+        const double percentage_thr = 1.0;
         const double percentage = timer_one.cpu_second / timer_pool_order[0].second.cpu_second * 100;
         if(percentage<percentage_thr)
         {
@@ -340,7 +338,7 @@ void timer::print_all(std::ofstream &ofs, const bool check_end)
     assert(class_names.size() == pers.size());
 
     std::vector<std::string> titles = {"CLASS_NAME", "NAME", "TIME/s", "CALLS", "AVG/s", "PER/%"};
-    std::vector<std::string> formats = {"%-10s", "%-10s", "%10.6f", "%8d", "%10.6f", "%8.4f"};
+    std::vector<std::string> formats = {"%-10s", "%-10s", "%6.2f", "%8d", "%6.2f", "%6.2f"};
     FmtTable time_statistics(/*titles=*/titles,
                 /*nrows=*/pers.size(),
                 /*formats=*/formats,
