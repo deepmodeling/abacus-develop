@@ -41,9 +41,11 @@ void XC_Functional::xc(
             case XC_GGA_X_WC:
             case XC_GGA_X_B88:
             case XC_GGA_X_PW91:
+            {
                 //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater(rs, e, v);
                 break;
+            }
 
             // Exchange functionals containing attenuated slater exchange
             case XC_HYB_GGA_XC_PBEH:
@@ -67,27 +69,34 @@ void XC_Functional::xc(
             case XC_GGA_C_PW91:
             case XC_LDA_C_PW:
             case XC_GGA_C_PBE_SOL:
+            {
                 //   PBC,PW91,PWLDA
                 XC_Functional::pw(rs, 0, e, v);
                 break;
+            }
 
             // Correlation functionals containing PZ correlation
             case XC_LDA_C_PZ:
             case XC_GGA_C_P86:
+            {
                 //  PZ,P86
                 XC_Functional::pz(rs, 0, e, v);
                 break;
+            }
 
             // Correlation functionals containing LYP correlation
             case XC_GGA_C_LYP:
+            {
                 //  BLYP
                 XC_Functional::lyp(rs, e, v);
                 break;
+            }
 
             default:
             {
                 e = 0.0;
                 v = 0.0;
+                break;
             }
         }
         exc += e;
@@ -127,9 +136,11 @@ void XC_Functional::xc_spin(
             case XC_GGA_X_WC:
             case XC_GGA_X_B88:
             case XC_GGA_X_PW91:
+            {
                 //  SLA,PBX,rPBX,PBXsol,WC,B88,PW91_X
                 XC_Functional::slater_spin(rho, zeta, e, vup, vdw);
                 break;
+            }
 
             // Exchange functionals containing attenuated slater exchange
             case XC_HYB_GGA_XC_PBEH:
@@ -155,17 +166,21 @@ void XC_Functional::xc_spin(
             // Correlation functionals containing PZ correlation
             case XC_LDA_C_PZ:
             case XC_GGA_C_P86:
+            {
                 //  PZ,P86
                 XC_Functional::pz_spin(rs, zeta, e, vup, vdw);
                 break;
+            }
 
-            // Correlation functionals containing PW correlationtests/integrate/101_PW_OU_pseudopot
+            // Correlation functionals containing PW correlation
             case XC_GGA_C_PBE:
             case XC_GGA_C_PBE_SOL:
             case XC_LDA_C_PW:
+            {
                 //   PBC,PBCsol
                 XC_Functional::pw_spin(rs, zeta, e, vup, vdw);
                 break;
+            }
 
             // Cases that are only realized in LIBXC
             default:
