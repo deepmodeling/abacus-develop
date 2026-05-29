@@ -11,12 +11,6 @@
 namespace ModuleGint
 {
 
-// Upper bound for per-atom orbital count. Used to flatten a (nw1, nw2) pair
-// into a single integer key via `nw1 * NW_MAX + nw2`, so that shape-exact
-// bucketing of phi_mul_phi / phi_mul_dm can index a dense counts[] table
-// instead of hashing. 64 comfortably covers the typical max nw (~25).
-constexpr int NW_MAX = 64;
-
 // Per-atom-pair metadata cached in PhiOperatorGpu::set_bgrid_batch() so that
 // phi_mul_phi / phi_mul_dm skip the O(bgrid * atoms^2) enumeration on every
 // call. Holds only the fields both callers need; HContainer lookups still
@@ -106,6 +100,14 @@ private:
     
     int phi_len_;
 
+    // Stride for flattening a (nw1, nw2) pair into a single dense bucket key
+    // (`nw1 * nw_stride_ + nw2`), so shape-exact bucketing of phi_mul_phi /
+    // phi_mul_dm can index a flat table instead of hashing. Set once in the
+    // ctor to ucell.nwmax + 1 -- nwmax is the largest per-atom orbital count in
+    // the cell, so there is no artificial ceiling: the table is sized to the
+    // actual basis (typical nwmax ~25).
+    int nw_stride_ = 0;
+
     cudaStream_t stream_ = 0;
     cudaEvent_t event_;
 
@@ -147,6 +149,13 @@ private:
     // per-pair HContainer offsets from Pass 1 and replay them in Pass 2
     // without a second find_matrix_offset() call.
     mutable std::vector<int> pair_scratch_offset_;
+
+    // Dense (nw_stride_ * nw_stride_) counting-sort scratch shared by
+    // phi_mul_phi / phi_mul_dm. Sized once in the ctor and just re-zeroed per
+    // call, so the hot path never reallocates.
+    mutable std::vector<int> bucket_counts_;
+    mutable std::vector<int> bucket_base_;
+    mutable std::vector<int> bucket_cursor_;
 };
 
 }

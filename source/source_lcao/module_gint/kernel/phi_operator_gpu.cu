@@ -3,11 +3,9 @@
 #include "dgemm_vbatch.h"
 #include <cuda_runtime.h>
 #include <vector>
-#include <array>
 #include <algorithm>
 #include <type_traits>
-#include <cstdio>
-#include <cstdlib>
+#include <cassert>
 #include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
@@ -34,6 +32,14 @@ gemm_C_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true),
 gemm_alpha_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true)
 {
     CHECK_CUDA(cudaEventCreateWithFlags(&event_, cudaEventDisableTiming));
+    // nwmax is the largest per-atom orbital count in the cell, so a stride of
+    // nwmax + 1 lets every valid (nw1, nw2) flatten to a distinct bucket key
+    // with no artificial cap. Allocate the bucketing scratch once here; the hot
+    // path only re-zeroes it.
+    nw_stride_ = gint_gpu_vars_->nwmax + 1;
+    bucket_counts_.assign(nw_stride_ * nw_stride_, 0);
+    bucket_base_.assign(nw_stride_ * nw_stride_, 0);
+    bucket_cursor_.assign(nw_stride_ * nw_stride_, 0);
 }
 
 template<typename Real>
@@ -120,18 +126,12 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
                 p.r_diff        = atom_1->get_R() - atom_2->get_R();
                 p.nw1           = static_cast<uint16_t>(atom_1->get_nw());
                 p.nw2           = static_cast<uint16_t>(atom_2->get_nw());
-                // The shape key (nw1 * NW_MAX + nw2) indexes a dense
-                // NW_MAX*NW_MAX table in phi_mul_phi / phi_mul_dm, so nw must
-                // stay below NW_MAX or those passes write out of bounds. Guard
-                // it here (always on, including release builds).
-                if (p.nw1 >= NW_MAX || p.nw2 >= NW_MAX)
-                {
-                    fprintf(stderr,
-                            "PhiOperatorGpu: per-atom nw (%d, %d) >= NW_MAX "
-                            "(%d); increase NW_MAX in phi_operator_gpu.h\n",
-                            int(p.nw1), int(p.nw2), NW_MAX);
-                    std::abort();
-                }
+                // The shape key (nw1 * nw_stride_ + nw2) indexes a dense
+                // nw_stride_^2 table in phi_mul_phi / phi_mul_dm. nw_stride_ =
+                // nwmax + 1 and nwmax is by construction the largest per-atom nw
+                // in the cell, so this can only trip on an upstream
+                // inconsistency rather than an undersized cap.
+                assert(p.nw1 < nw_stride_ && p.nw2 < nw_stride_);
                 p.ia_le         = static_cast<uint8_t>(ia_1 <= ia_2);
                 p.is_diag       = static_cast<uint8_t>(ia_1 == ia_2);
                 pair_cache_.push_back(p);
@@ -300,7 +300,8 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     //           scattered -- the wrapper fills them on-device from the
     //           scalar bucket shape.)
 
-    std::array<int, NW_MAX * NW_MAX> counts{};
+    auto& counts = bucket_counts_;
+    std::fill(counts.begin(), counts.end(), 0);
 
     // Pass 1: filter + HContainer lookup + per-shape count.
     for (size_t i = 0; i < pair_cache_.size(); ++i)
@@ -310,16 +311,17 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
         const int hr = hRGint.find_matrix_offset(p.iat_1, p.iat_2, p.r_diff);
         pair_scratch_offset_[i] = hr;
         if (hr == -1) { continue; }
-        counts[p.nw1 * NW_MAX + p.nw2]++;
+        counts[p.nw1 * nw_stride_ + p.nw2]++;
     }
 
     // Prefix sum over dense keys -> compact bucket list.
     struct Bucket { int key; int off; int cnt; };
     std::vector<Bucket> buckets;
     buckets.reserve(32);
-    std::array<int, NW_MAX * NW_MAX> key_to_base{};
+    auto& key_to_base = bucket_base_;
+    std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;
-    for (int k = 0; k < NW_MAX * NW_MAX; ++k)
+    for (int k = 0; k < nw_stride_ * nw_stride_; ++k)
     {
         if (counts[k] == 0) { continue; }
         buckets.push_back({k, ap_num, counts[k]});
@@ -337,13 +339,14 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     CHECK_CUDA(cudaEventSynchronize(event_));
 
     // Pass 2: scatter into the flat host arrays at per-bucket cursors.
-    std::array<int, NW_MAX * NW_MAX> cursor{};
+    auto& cursor = bucket_cursor_;
+    std::fill(cursor.begin(), cursor.end(), 0);
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
         const int hr = pair_scratch_offset_[i];
         if (hr == -1) { continue; }
         const auto& p = pair_cache_[i];
-        const int key = p.nw1 * NW_MAX + p.nw2;
+        const int key = p.nw1 * nw_stride_ + p.nw2;
         const int pos = key_to_base[key] + cursor[key]++;
         h_A[pos]   = phi_d + p.phi_1_offset;
         h_B[pos]   = phi_vldr3_d + p.phi_2_offset;
@@ -363,8 +366,8 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
 
     for (const auto& b : buckets)
     {
-        const int nw1 = b.key / NW_MAX;
-        const int nw2 = b.key % NW_MAX;
+        const int nw1 = b.key / nw_stride_;
+        const int nw2 = b.key % nw_stride_;
         gemm_tn_vbatch<Real>(nw1,
                         nw2,
                         mgrids_num_,
@@ -396,7 +399,8 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     // identical across every pair in the batch. is_symm selects the
     // upper-triangle (ia_1 <= ia_2) subset and fills per-pair alpha.
 
-    std::array<int, NW_MAX * NW_MAX> counts{};
+    auto& counts = bucket_counts_;
+    std::fill(counts.begin(), counts.end(), 0);
 
     // Pass 1: filter + HContainer lookup + per-shape count.
     for (size_t i = 0; i < pair_cache_.size(); ++i)
@@ -406,16 +410,17 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
         const int dm_offset = dm.find_matrix_offset(p.iat_1, p.iat_2, p.r_diff);
         pair_scratch_offset_[i] = dm_offset;
         if (dm_offset == -1) { continue; }
-        counts[p.nw1 * NW_MAX + p.nw2]++;
+        counts[p.nw1 * nw_stride_ + p.nw2]++;
     }
 
     // Prefix sum over dense keys -> compact bucket list.
     struct Bucket { int key; int off; int cnt; };
     std::vector<Bucket> buckets;
     buckets.reserve(32);
-    std::array<int, NW_MAX * NW_MAX> key_to_base{};
+    auto& key_to_base = bucket_base_;
+    std::fill(key_to_base.begin(), key_to_base.end(), 0);
     int ap_num = 0;
-    for (int k = 0; k < NW_MAX * NW_MAX; ++k)
+    for (int k = 0; k < nw_stride_ * nw_stride_; ++k)
     {
         if (counts[k] == 0) { continue; }
         buckets.push_back({k, ap_num, counts[k]});
@@ -434,13 +439,14 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     CHECK_CUDA(cudaEventSynchronize(event_));
 
     // Pass 2: scatter.
-    std::array<int, NW_MAX * NW_MAX> cursor{};
+    auto& cursor = bucket_cursor_;
+    std::fill(cursor.begin(), cursor.end(), 0);
     for (size_t i = 0; i < pair_cache_.size(); ++i)
     {
         const int dm_offset = pair_scratch_offset_[i];
         if (dm_offset == -1) { continue; }
         const auto& p = pair_cache_[i];
-        const int key = p.nw1 * NW_MAX + p.nw2;
+        const int key = p.nw1 * nw_stride_ + p.nw2;
         const int pos = key_to_base[key] + cursor[key]++;
         h_A[pos]   = phi_d + p.phi_1_offset;
         h_B[pos]   = dm_d + dm_offset;
@@ -469,8 +475,8 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
 
     for (const auto& b : buckets)
     {
-        const int nw1 = b.key / NW_MAX;
-        const int nw2 = b.key % NW_MAX;
+        const int nw1 = b.key / nw_stride_;
+        const int nw2 = b.key % nw_stride_;
         auto alpha_ptr = is_symm ? (gemm_alpha_.get_device_ptr() + b.off) : nullptr;
         gemm_nn_vbatch<Real>(mgrids_num_,
                         nw2,
