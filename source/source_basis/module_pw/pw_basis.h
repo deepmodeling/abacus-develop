@@ -9,6 +9,7 @@
 #include <complex>
 #include "source_base/module_fft/fft_bundle.h"
 #include <cstring>
+#include <vector>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -420,6 +421,9 @@ public:
     template <typename T>
     void gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const;
 
+    template <typename T>
+    std::complex<T>* acquire_comm_workbuf(const int size) const;
+
   public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is) const;
@@ -441,7 +445,23 @@ protected:
   std::string precision = "double"; ///< single, double, mixing
   bool double_data_ = true;         ///<  if has double data
   bool float_data_ = false;         ///< if has float data
+  mutable std::vector<std::complex<float>> comm_workbuf_float_;
+  mutable std::vector<std::complex<double>> comm_workbuf_double_;
 };
+
+template <>
+inline std::complex<float>* PW_Basis::acquire_comm_workbuf<float>(const int size) const
+{
+    this->comm_workbuf_float_.resize(size);
+    return this->comm_workbuf_float_.data();
+}
+
+template <>
+inline std::complex<double>* PW_Basis::acquire_comm_workbuf<double>(const int size) const
+{
+    this->comm_workbuf_double_.resize(size);
+    return this->comm_workbuf_double_.data();
+}
 }
 #endif // PWBASIS_H
 #include "pw_basis_sup.h"
