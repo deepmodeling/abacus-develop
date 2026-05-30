@@ -87,6 +87,8 @@ namespace MPICommHelper {
 // Blocking reduce / broadcast — type-dispatching via mpi_type trait
 // =========================================================================
 
+#ifdef __MPI
+
 /// Type trait mapping C++ types to MPI_Datatype.
 template <typename T> struct mpi_type {
     static constexpr MPI_Datatype value = MPI_BYTE;
@@ -103,8 +105,6 @@ template <> struct mpi_type<std::complex<float>> {
 template <> struct mpi_type<int> {
     static constexpr MPI_Datatype value = MPI_INT;
 };
-
-#ifdef __MPI
 
 /**
  * @brief Pool reduce (MPI_SUM). Uses blocking MPI_Allreduce.
