@@ -89,6 +89,8 @@ namespace MPICommHelper {
 
 #ifdef __MPI
 
+#ifdef __MPI
+
 /// Type trait mapping C++ types to MPI_Datatype.
 template <typename T> struct mpi_type {
     static constexpr MPI_Datatype value = MPI_BYTE;
