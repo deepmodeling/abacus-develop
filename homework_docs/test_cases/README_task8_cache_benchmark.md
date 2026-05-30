@@ -149,8 +149,8 @@ bash homework_docs/test_cases/run_task8_cache_suite.sh \
 
 ```bash
 python3 homework_docs/test_cases/collect_task8_cache_suite_results.py \
-  --suite-dir homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_210000 \
-  --suite-dir homework_docs/test_cases/task8_cache_suite_runs/cache_20260530_223000 \
+  --suite-dir homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026 \
+  --suite-dir homework_docs/test_cases/task8_cache_suite_runs/cache_20260530_221730 \
   --out-dir homework_docs/test_cases/task8_cache_suite_runs/combined_baseline_vs_cache
 ```
 
