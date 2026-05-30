@@ -3,7 +3,7 @@
 #include "diago_iter_assist.h"
 #include "source_base/global_function.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_base/parallel_comm.h" // different MPI worlds
+#include "source_base/parallel_comm.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
 
@@ -11,6 +11,7 @@
 #include <ATen/kernels/lapack.h>
 #include <ATen/ops/einsum_op.h>
 #include <limits>
+#include <algorithm>   // for std::swap
 
 namespace hsolver {
 
@@ -30,18 +31,14 @@ DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
 
 template<typename T, typename Device>
 DiagoBPCG<T, Device>::~DiagoBPCG() {
-    // Note, we do not need to free the h_prec and psi pointer as they are refs to the outside data
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::init_iter(const int nband, const int nband_l, const int nbasis, const int ndim) {
-    // Specify the problem size n_basis, n_band, while lda is n_basis
     this->n_band        = nband;
     this->n_band_l      = nband_l;
     this->n_basis       = nbasis;
     this->n_dim         = ndim;
-
-    // All column major tensors
 
     this->beta          = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
     this->eigen         = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
@@ -73,9 +70,6 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vecto
     bool not_conv = false;
     std::vector<Real> tmp_cpu;
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
-        // ct::Tensor h_err_in = err_in.to_device<ct::DEVICE_CPU>();
-        // _err_st = h_err_in.data<Real>();
-        // qianrui change it, because it can not pass the valgrind test
         tmp_cpu.resize(this->n_band_l);
         _err_st = tmp_cpu.data();
         syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
@@ -91,7 +85,6 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vecto
     return not_conv;
 }
 
-// Finally, the last one!
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::line_minimize(
     ct::Tensor& grad_in,
@@ -108,8 +101,6 @@ void DiagoBPCG<T, Device>::line_minimize(
                                              this->n_band_l);
 }
 
-
-// Finally, the last two!
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::orth_cholesky(
 		ct::Tensor& workspace_in,
@@ -117,10 +108,8 @@ void DiagoBPCG<T, Device>::orth_cholesky(
 		ct::Tensor& hpsi_out,
 		ct::Tensor& hsub_out)
 {
-    // gemm: hsub_out(n_band x n_band) = psi_out^T(n_band x n_basis) * psi_out(n_basis x n_band)
     this->pmmcn.multiply(1.0, psi_out.data<T>(), psi_out.data<T>(), 0.0, hsub_out.data<T>());
 
-    // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
         'L', hsub_out.data<T>(), this->n_band);
 
@@ -167,11 +156,7 @@ void DiagoBPCG<T, Device>::orth_projection(
         ct::Tensor& hsub_in,
         ct::Tensor& grad_out)
 {
-    // gemm: hsub_in(n_band x n_band) = psi_in^T(n_band x n_basis) * grad_out(n_basis x n_band)
     this->pmmcn.multiply(1.0, psi_in.data<T>(), grad_out.data<T>(), 0.0, hsub_in.data<T>());
-
-    // grad_out(n_basis x n_band) = 1.0 * grad_out(n_basis x n_band) - psi_in(n_basis x n_band) * hsub_in(n_band x
-    // n_band)
     this->plintrans.act(-1.0, psi_in.data<T>(), hsub_in.data<T>(), 1.0, grad_out.data<T>());
     return;
 }
@@ -182,10 +167,8 @@ void DiagoBPCG<T, Device>::rotate_wf(
         ct::Tensor& psi_out,
         ct::Tensor& workspace_in)
 {
-    // gemm: workspace_in(n_basis x n_band) = psi_out(n_basis x n_band) * hsub_in(n_band x n_band)
     this->plintrans.act(1.0, psi_out.data<T>(), hsub_in.data<T>(), 0.0, workspace_in.data<T>());
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band_l * this->n_basis);
-
     return;
 }
 
@@ -195,7 +178,6 @@ void DiagoBPCG<T, Device>::calc_hpsi_with_block(
         T *psi_in,
         ct::Tensor& hpsi_out)
 {
-    // calculate all-band hpsi
     hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band_l);
 }
 
@@ -206,12 +188,8 @@ void DiagoBPCG<T, Device>::diag_hsub(
         ct::Tensor& hsub_out,
         ct::Tensor& eigenvalue_out)
 {
-    // gemm: hsub_out(n_band x n_band) = hpsi_in^T(n_band x n_basis) * psi_in(n_basis x n_band)
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
-
-    // ct::kernels::lapack_heevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
     ct::kernels::lapack_heevd<T, ct_Device>()(this->n_band, hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
-
     return;
 }
 
@@ -225,18 +203,10 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block(
         ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out)
 {
-    // Apply the H operator to psi and obtain the hpsi matrix.
     this->calc_hpsi_with_block(hpsi_func, psi_in, hpsi_out);
-
-    // Diagonalization of the subspace matrix.
     this->diag_hsub(psi_out,hpsi_out, hsub_out, eigenvalue_out);
-
-    // inplace matmul to get the initial guessed wavefunction psi.
-    // psi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
-    // hpsi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
-
     return;
 }
 
@@ -248,16 +218,12 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
         ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out)
 {
-    // Diagonalization of the subspace matrix.
     this->diag_hsub(psi_out, hpsi_out, hsub_out, eigenvalue_out);
-
-    // inplace matmul to get the initial guessed wavefunction psi.
-    // psi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
-
     return;
 }
 
+// ===== 核心修改：grad_old 通过 swap 而非拷贝来更新 =====
 template <typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 T* psi_in,
@@ -265,53 +231,46 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const std::vector<double>& ethr_band)
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
-    // Get the pointer of the input psi
-    this->psi = std::move(ct::TensorMap(psi_in /*psi_in.get_pointer()*/, t_type, device_type, {this->n_band_l, this->n_basis}));
+    this->psi = std::move(ct::TensorMap(psi_in, t_type, device_type, {this->n_band_l, this->n_basis}));
 
-    // Update the precondition array
     this->calc_prec();
 
-    // Improving the initial guess of the wave function psi through a subspace diagonalization.
     this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
     setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band_l);
-
     setmem_var_op()(this->beta.template data<Real>(), std::numeric_limits<Real>::infinity(), this->n_band_l);
 
     int ntry = 0;
-    int max_iter = current_scf_iter > 1 ?
-                   this->nline :
-                   this->nline * 6;
+    int max_iter = current_scf_iter > 1 ? this->nline : this->nline * 6;
+
+    // 标志位：第一次迭代需要显式拷贝，之后通过 swap 实现
+    bool first_iter = true;
+
     do
     {
+        // 除第一次外，将上一轮的 grad 通过交换传给 grad_old，避免深拷贝
+        if (!first_iter)
+        {
+            std::swap(this->grad, this->grad_old);
+        }
+
         ++ntry;
-        // Be careful here ! dangerous zone!
-        // 1. normalize psi
-        // 2. calculate the epsilo
-        // 3. calculate the gradient by hpsi - epsilo * psi
-        // 4. gradient mix with the previous gradient
-        // 5. Do precondition
         this->calc_grad_with_block(this->prec, this->err_st, this->beta,
                                  this->psi, this->hpsi, this->grad, this->grad_old);
 
-        // Orthogonalize column vectors g_i in matrix grad to column vectors p_j in matrix psi
-        // for all 'j less or equal to i'.
-        // Note: hsub and work are only used to store intermediate variables of gemm operator.
         this->orth_projection(this->psi, this->hsub, this->grad);
 
-        // this->grad_old = this->grad;
-        syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band_l);
+        // 第一次迭代后需要把当前 grad 赋值给 grad_old，供下一轮使用
+        if (first_iter)
+        {
+            syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band_l);
+            first_iter = false;
+        }
 
-        // Calculate H|grad> matrix
-        this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
+        this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), this->hgrad);
 
-        // optimize psi as well as the hpsi
-        // 1. normalize grad
-        // 2. calculate theta
-        // 3. update psi as well as hpsi
         this->line_minimize(this->grad, this->hgrad, this->psi, this->hpsi);
 
-        // orthogonal psi by cholesky method
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
         if (current_scf_iter == 1 && ntry % this->nline == 0) {
@@ -333,6 +292,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     return;
 }
 
+// 显式模板实例化
 template class DiagoBPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoBPCG<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
