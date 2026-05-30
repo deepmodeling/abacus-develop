@@ -1,0 +1,1255 @@
+#include "diago_ppcg.h"
+
+// -----------------------------------------------------------------------------
+// LAPACK Fortran bindings (CPU only)
+// -----------------------------------------------------------------------------
+extern "C"
+{
+void dsyevd_(const char* jobz, const char* uplo,
+             const int* n, double* a, const int* lda, double* w,
+             double* work, const int* lwork, int* iwork,
+             const int* liwork, int* info);
+
+void ssyevd_(const char* jobz, const char* uplo,
+             const int* n, float* a, const int* lda, float* w,
+             float* work, const int* lwork, int* iwork,
+             const int* liwork, int* info);
+
+void dsygvd_(const int* itype, const char* jobz, const char* uplo,
+             const int* n, double* a, const int* lda, double* b,
+             const int* ldb, double* w, double* work, const int* lwork,
+             int* iwork, const int* liwork, int* info);
+
+void ssygvd_(const int* itype, const char* jobz, const char* uplo,
+             const int* n, float* a, const int* lda, float* b,
+             const int* ldb, float* w, float* work, const int* lwork,
+             int* iwork, const int* liwork, int* info);
+
+void dpotrf_(const char* uplo, const int* n, double* a,
+             const int* lda, int* info);
+void spotrf_(const char* uplo, const int* n, float* a,
+             const int* lda, int* info);
+
+void dtrtri_(const char* uplo, const char* diag,
+             const int* n, double* a, const int* lda, int* info);
+void strtri_(const char* uplo, const char* diag,
+             const int* n, float* a, const int* lda, int* info);
+}
+
+namespace hsolver {
+
+// =============================================================================
+// LAPACK wrapper (specialized per real type)
+// =============================================================================
+namespace {
+
+template <typename Real>
+struct Lapack;
+
+template <>
+struct Lapack<double>
+{
+    static void syevd(int n, double* a, double* w)
+    {
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<double> work(1);
+        std::vector<int> iwork(1);
+        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0);
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: dsyevd failed.");
+    }
+
+    static void sygvd(int n, double* a, double* b, double* w)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        const int ldb = n;
+        int info = 0;
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<double> work(1);
+        std::vector<int> iwork(1);
+        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+            liwork = std::max(1, 3 + 10 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0);
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: dsygvd failed.");
+    }
+
+    static void potrf(int n, double* a)
+    {
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+
+        // Save a copy so we can restore and retry with a diagonal shift.
+        double diag_max = 0;
+        for (int i = 0; i < n; ++i)
+            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
+        std::vector<double> a0(a, a + n * lda);
+
+        for (const double shift : {0.0, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 1e-1, 1.0}) {
+            // Restore original and apply shift
+            std::copy(a0.begin(), a0.end(), a);
+            if (shift > 0) {
+                for (int i = 0; i < n; ++i)
+                    a[i + i * lda] += shift * std::max(diag_max, 1.0);
+            }
+            info = 0;
+            dpotrf_(&uplo, &n, a, &lda, &info);
+            if (info == 0) return;
+        }
+        throw std::runtime_error("PPCG: dpotrf failed.");
+    }
+
+    static void trtri(int n, double* a)
+    {
+        const char uplo = 'U';
+        const char diag = 'N';
+        const int lda = n;
+        int info = 0;
+        dtrtri_(&uplo, &diag, &n, a, &lda, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: dtrtri failed.");
+    }
+};
+
+template <>
+struct Lapack<float>
+{
+    static void syevd(int n, float* a, float* w)
+    {
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<float> work(1);
+        std::vector<int> iwork(1);
+        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0f);
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: ssyevd failed.");
+    }
+
+    static void sygvd(int n, float* a, float* b, float* w)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        const int ldb = n;
+        int info = 0;
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<float> work(1);
+        std::vector<int> iwork(1);
+        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+            liwork = std::max(1, 3 + 10 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0f);
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: ssygvd failed.");
+    }
+
+    static void potrf(int n, float* a)
+    {
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+
+        float diag_max = 0;
+        for (int i = 0; i < n; ++i)
+            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
+        std::vector<float> a0(a, a + n * lda);
+
+        for (const float shift : {0.0f, 1e-12f, 1e-10f, 1e-8f, 1e-6f, 1e-4f, 1e-3f, 1e-2f, 1e-1f, 1.0f}) {
+            std::copy(a0.begin(), a0.end(), a);
+            if (shift > 0) {
+                for (int i = 0; i < n; ++i)
+                    a[i + i * lda] += shift * std::max(diag_max, 1.0f);
+            }
+            info = 0;
+            spotrf_(&uplo, &n, a, &lda, &info);
+            if (info == 0) return;
+        }
+        throw std::runtime_error("PPCG: spotrf failed.");
+    }
+
+    static void trtri(int n, float* a)
+    {
+        const char uplo = 'U';
+        const char diag = 'N';
+        const int lda = n;
+        int info = 0;
+        strtri_(&uplo, &diag, &n, a, &lda, &info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: strtri failed.");
+    }
+};
+
+template <typename T>
+inline void set_zero(std::vector<T>& x)
+{
+    std::fill(x.begin(), x.end(), T(0));
+}
+
+} // anonymous namespace
+
+// =============================================================================
+// Constructor
+// =============================================================================
+template <typename T, typename Device>
+DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
+                                 const int& diag_iter_max,
+                                 const int& sbsize,
+                                 const int& rr_step,
+                                 const bool gamma_g0_real,
+                                 const PpcgStrategy strategy)
+    : maxiter_(diag_iter_max),
+      sbsize_(std::max(1, sbsize)),
+      rr_step_(std::max(1, rr_step)),
+      diag_thr_(std::max(diag_thr, static_cast<Real>(1.0e-14))),
+      gamma_g0_real_(gamma_g0_real),
+      strategy_(strategy)
+{
+}
+
+// =============================================================================
+// Input validation
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::validate_input(
+    const T* psi_in,
+    const Real* eigenvalue_in,
+    const std::vector<double>& ethr_band,
+    const Real* prec) const
+{
+    if (psi_in == nullptr || eigenvalue_in == nullptr)
+        throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
+    if (prec == nullptr)
+        throw std::invalid_argument("PPCG: preconditioner pointer is null.");
+    if (ld_psi_ <= 0 || n_band_ <= 0 || n_dim_ <= 0)
+        throw std::invalid_argument("PPCG: invalid dimensions.");
+    if (n_dim_ > ld_psi_)
+        throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
+    if (ethr_band.size() < static_cast<size_t>(n_band_))
+        throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
+}
+
+// =============================================================================
+// Gamma-point symmetry: enforce real-valued first element
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::force_g0_real(T* x, int ncol) const
+{
+    if (!gamma_g0_real_ || n_dim_ <= 0)
+        return;
+    for (int j = 0; j < ncol; ++j)
+        x[idx(0, j, ld_psi_)] = T(std::real(x[idx(0, j, ld_psi_)]), 0.0);
+}
+
+// =============================================================================
+// Operator application
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::apply_h(const HPsiFunc& hpsi_func,
+                                    T* psi_in, T* hpsi_out,
+                                    int ncol) const
+{
+    hpsi_func(psi_in, hpsi_out, ld_psi_, ncol);
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
+                                    T* psi_in, T* spsi_out,
+                                    int ncol) const
+{
+    if (spsi_func)
+        spsi_func(psi_in, spsi_out, ld_psi_, ncol);
+    else
+        for (int j = 0; j < ncol; ++j)
+            std::copy(psi_in + j * ld_psi_, psi_in + (j + 1) * ld_psi_,
+                      spsi_out + j * ld_psi_);
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::apply_s_current(T* psi_in, T* spsi_out,
+                                            int ncol) const
+{
+    apply_s(spsi_func_, psi_in, spsi_out, ncol);
+}
+
+// =============================================================================
+// Inner product <x|y> (real part only, for Hermitian operators)
+// =============================================================================
+template <typename T, typename Device>
+typename DiagoPPCG<T, Device>::Real
+DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
+{
+    Real acc = 0;
+    for (int i = 0; i < n_dim_; ++i)
+        acc += static_cast<Real>(std::real(std::conj(x[i]) * y[i]));
+    return acc;
+}
+
+// =============================================================================
+// Gram matrix: out[i, j] = <a_i | b_j>
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
+                                 int ncol_a, int ncol_b,
+                                 std::vector<Real>& out,
+                                 int ld_out) const
+{
+    out.assign(ld_out * ncol_b, static_cast<Real>(0));
+    for (int jb = 0; jb < ncol_b; ++jb)
+        for (int ia = 0; ia < ncol_a; ++ia)
+            out[ia + jb * ld_out] = gamma_dot(a + ia * ld_psi_,
+                                               b + jb * ld_psi_);
+}
+
+// =============================================================================
+// Column gather: extract selected columns into contiguous storage
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::copy_cols(const T* src,
+                                      const std::vector<int>& cols,
+                                      std::vector<T>& dst) const
+{
+    dst.assign(ld_psi_ * cols.size(), T(0));
+    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    {
+        const int c = cols[j];
+        std::copy(src + c * ld_psi_, src + c * ld_psi_ + ld_psi_,
+                  dst.begin() + j * ld_psi_);
+    }
+}
+
+// =============================================================================
+// Column scatter: write contiguous storage back into selected columns
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::scatter_cols(
+    T* dst,
+    const std::vector<int>& cols,
+    const std::vector<T>& src) const
+{
+    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    {
+        const int c = cols[j];
+        std::copy(src.begin() + j * ld_psi_,
+                  src.begin() + (j + 1) * ld_psi_,
+                  dst + c * ld_psi_);
+    }
+}
+
+// =============================================================================
+// Project x onto vectors orthogonal to S-orthonormal basis
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::project_against(
+    const T* basis, const T* sbasis,
+    const std::vector<int>& basis_cols,
+    std::vector<T>& x, std::vector<T>& sx,
+    const std::vector<int>& x_cols) const
+{
+    if (basis_cols.empty() || x_cols.empty())
+        return;
+
+    for (const int c : x_cols)
+    {
+        for (const int bc : basis_cols)
+        {
+            const Real coeff = gamma_dot(basis + bc * ld_psi_,
+                                         sx.data() + c * ld_psi_);
+            if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
+                continue;
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                x[ idx(ig, c, ld_psi_)] -= basis[ idx(ig, bc, ld_psi_)] * coeff;
+                sx[idx(ig, c, ld_psi_)] -= sbasis[idx(ig, bc, ld_psi_)] * coeff;
+            }
+        }
+    }
+}
+
+// =============================================================================
+// Preconditioner: x[c] /= max(prec, eps) for each active column c
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::divide_by_preconditioner(
+    const std::vector<int>& active_cols,
+    const Real* prec,
+    std::vector<T>& x) const
+{
+    for (const int c : active_cols)
+        for (int ig = 0; ig < n_dim_; ++ig)
+            x[idx(ig, c, ld_psi_)] /=
+                std::max(prec[ig], static_cast<Real>(1.0e-12));
+}
+
+//==============================================================================
+// BLOCK_SUBSPACE STRATEGY
+//==============================================================================
+
+// ---------------------------------------------------------------------------
+// Lock converged eigenpairs: columns with residual below threshold
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::lock_epairs(
+    const std::vector<T>& residual,
+    const std::vector<double>& ethr_band,
+    std::vector<int>& active_cols) const
+{
+    active_cols.clear();
+    for (int j = 0; j < n_band_; ++j)
+    {
+        Real nrm2 = 0;
+        for (int ig = 0; ig < n_dim_; ++ig)
+            nrm2 += static_cast<Real>(std::norm(residual[idx(ig, j, ld_psi_)]));
+        const Real rnrm = std::sqrt(std::max(nrm2, static_cast<Real>(0)));
+        const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
+        if (rnrm > thr)
+            active_cols.push_back(j);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Build K = V^H H V and M = V^H S V where V = [psi, w, p]
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::build_small_subspace(
+    const T* psi,
+    const std::vector<int>& cols,
+    bool use_p,
+    SmallSubspace& subspace) const
+{
+    const int l = static_cast<int>(cols.size());
+    const int nblk = use_p ? 3 : 2;
+    const int dim = nblk * l;
+    subspace.k.assign(dim * dim, static_cast<Real>(0));
+    subspace.m.assign(dim * dim, static_cast<Real>(0));
+    subspace.eval.assign(dim, static_cast<Real>(0));
+
+    std::vector<T> psi_l, spsi_l, hpsi_l;
+    std::vector<T> w_l, sw_l, hw_l;
+    std::vector<T> p_l, sp_l, hp_l;
+    copy_cols(psi, cols, psi_l);
+    copy_cols(spsi_.data(), cols, spsi_l);
+    copy_cols(hpsi_.data(), cols, hpsi_l);
+    copy_cols(w_.data(), cols, w_l);
+    copy_cols(sw_.data(), cols, sw_l);
+    copy_cols(hw_.data(), cols, hw_l);
+    if (use_p)
+    {
+        copy_cols(p_.data(), cols, p_l);
+        copy_cols(sp_.data(), cols, sp_l);
+        copy_cols(hp_.data(), cols, hp_l);
+    }
+
+    auto fill_sym = [&](const std::vector<T>& a, const std::vector<T>& b,
+                        int r0, int c0, std::vector<Real>& mat)
+    {
+        std::vector<Real> g;
+        gram(a.data(), b.data(), l, l, g, l);
+        for (int j = 0; j < l; ++j)
+            for (int i = 0; i < l; ++i)
+            {
+                mat[(r0 + i) + (c0 + j) * dim] = g[i + j * l];
+                mat[(c0 + j) + (r0 + i) * dim] = g[i + j * l];
+            }
+    };
+
+    fill_sym(psi_l, hpsi_l, 0,   0,   subspace.k);
+    fill_sym(psi_l, spsi_l, 0,   0,   subspace.m);
+    fill_sym(w_l,   hw_l,   l,   l,   subspace.k);
+    fill_sym(w_l,   sw_l,   l,   l,   subspace.m);
+    fill_sym(psi_l, hw_l,   0,   l,   subspace.k);
+    fill_sym(psi_l, sw_l,   0,   l,   subspace.m);
+
+    if (use_p)
+    {
+        fill_sym(p_l, hp_l, 2*l, 2*l, subspace.k);
+        fill_sym(p_l, sp_l, 2*l, 2*l, subspace.m);
+        fill_sym(psi_l, hp_l, 0,   2*l, subspace.k);
+        fill_sym(psi_l, sp_l, 0,   2*l, subspace.m);
+        fill_sym(w_l,   hp_l, l,   2*l, subspace.k);
+        fill_sym(w_l,   sp_l, l,   2*l, subspace.m);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Solve K v = λ M v (small generalized eigenvalue problem)
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::solve_small_generalized(
+    int dim, SmallSubspace& subspace) const
+{
+    // Try with increasing diagonal shifts; fall back to identity (no update)
+    // if the subspace is too ill-conditioned.
+    for (int attempt = 0; attempt < 3; ++attempt)
+    {
+        try
+        {
+            Lapack<Real>::sygvd(dim, subspace.k.data(), subspace.m.data(),
+                                subspace.eval.data());
+            return;
+        }
+        catch (const std::runtime_error&)
+        {
+            for (int i = 0; i < dim; ++i)
+                subspace.m[i + i * dim] += static_cast<Real>(1.0e-10);
+        }
+    }
+    // All attempts failed — set eigenvectors to identity (no update).
+    std::fill(subspace.k.begin(), subspace.k.end(), static_cast<Real>(0));
+    for (int i = 0; i < dim; ++i)
+        subspace.k[i + i * dim] = static_cast<Real>(1);
+    std::fill(subspace.eval.begin(), subspace.eval.end(), static_cast<Real>(0));
+}
+
+// ---------------------------------------------------------------------------
+// Update wavefunctions from small subspace eigenvectors
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::update_one_block(
+    T* psi,
+    const std::vector<int>& cols,
+    int l,
+    bool use_p,
+    const SmallSubspace& subspace)
+{
+    const int dim = (use_p ? 3 : 2) * l;
+    const Real* eigvec = subspace.k.data();
+
+    std::vector<T> psi_l, spsi_l, hpsi_l;
+    std::vector<T> w_l, sw_l, hw_l;
+    std::vector<T> p_l, sp_l, hp_l;
+    copy_cols(psi, cols, psi_l);
+    copy_cols(spsi_.data(), cols, spsi_l);
+    copy_cols(hpsi_.data(), cols, hpsi_l);
+    copy_cols(w_.data(), cols, w_l);
+    copy_cols(sw_.data(), cols, sw_l);
+    copy_cols(hw_.data(), cols, hw_l);
+    if (use_p)
+    {
+        copy_cols(p_.data(), cols, p_l);
+        copy_cols(sp_.data(), cols, sp_l);
+        copy_cols(hp_.data(), cols, hp_l);
+    }
+
+    std::vector<T> psi_new(ld_psi_ * l, T(0));
+    std::vector<T> spsi_new(ld_psi_ * l, T(0));
+    std::vector<T> hpsi_new(ld_psi_ * l, T(0));
+    std::vector<T> p_new(ld_psi_ * l, T(0));
+    std::vector<T> sp_new(ld_psi_ * l, T(0));
+    std::vector<T> hp_new(ld_psi_ * l, T(0));
+
+    for (int j = 0; j < l; ++j)
+    {
+        for (int i = 0; i < l; ++i)
+        {
+            const Real cpsi = eigvec[i + j * dim];
+            const Real cw   = eigvec[(l + i) + j * dim];
+
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                psi_new[idx(ig, j, ld_psi_)]  += psi_l[idx(ig, i, ld_psi_)] * cpsi
+                                                + w_l[ idx(ig, i, ld_psi_)] * cw;
+                spsi_new[idx(ig, j, ld_psi_)] += spsi_l[idx(ig, i, ld_psi_)] * cpsi
+                                                + sw_l[ idx(ig, i, ld_psi_)] * cw;
+                hpsi_new[idx(ig, j, ld_psi_)] += hpsi_l[idx(ig, i, ld_psi_)] * cpsi
+                                                + hw_l[ idx(ig, i, ld_psi_)] * cw;
+                p_new[idx(ig, j, ld_psi_)]    += w_l[ idx(ig, i, ld_psi_)] * cw;
+                sp_new[idx(ig, j, ld_psi_)]   += sw_l[ idx(ig, i, ld_psi_)] * cw;
+                hp_new[idx(ig, j, ld_psi_)]   += hw_l[ idx(ig, i, ld_psi_)] * cw;
+            }
+
+            if (use_p)
+            {
+                const Real cp = eigvec[(2*l + i) + j * dim];
+                for (int ig = 0; ig < n_dim_; ++ig)
+                {
+                    psi_new[idx(ig, j, ld_psi_)]  += p_l[ idx(ig, i, ld_psi_)] * cp;
+                    spsi_new[idx(ig, j, ld_psi_)] += sp_l[idx(ig, i, ld_psi_)] * cp;
+                    hpsi_new[idx(ig, j, ld_psi_)] += hp_l[idx(ig, i, ld_psi_)] * cp;
+                    p_new[idx(ig, j, ld_psi_)]    += p_l[ idx(ig, i, ld_psi_)] * cp;
+                    sp_new[idx(ig, j, ld_psi_)]   += sp_l[idx(ig, i, ld_psi_)] * cp;
+                    hp_new[idx(ig, j, ld_psi_)]   += hp_l[idx(ig, i, ld_psi_)] * cp;
+                }
+            }
+        }
+    }
+
+    scatter_cols(psi, cols, psi_new);
+    scatter_cols(spsi_.data(), cols, spsi_new);
+    scatter_cols(hpsi_.data(), cols, hpsi_new);
+    scatter_cols(p_.data(), cols, p_new);
+    scatter_cols(sp_.data(), cols, sp_new);
+    scatter_cols(hp_.data(), cols, hp_new);
+}
+
+// ---------------------------------------------------------------------------
+// Back-substitute with upper triangular Cholesky factor: X *= R^{-1}
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::right_solve_upper_real(
+    const std::vector<Real>& r, int n, std::vector<T>& x) const
+{
+    std::vector<T> b = x;
+    for (int row = 0; row < n_dim_; ++row)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            T v = b[idx(row, j, ld_psi_)];
+            for (int k = 0; k < j; ++k)
+                v -= x[idx(row, k, ld_psi_)] * r[k + j * n];
+            x[idx(row, j, ld_psi_)] = v / r[j + j * n];
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Cholesky QR: S-orthonormalize active columns via Cholesky on S-gram
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::chol_qr_active(
+    T* psi, const std::vector<int>& active_cols)
+{
+    if (active_cols.empty())
+        return;
+
+    const int nact = static_cast<int>(active_cols.size());
+    std::vector<T> psi_a, spsi_a, hpsi_a;
+    copy_cols(psi, active_cols, psi_a);
+    copy_cols(spsi_.data(), active_cols, spsi_a);
+    copy_cols(hpsi_.data(), active_cols, hpsi_a);
+
+    std::vector<Real> s(nact * nact, static_cast<Real>(0));
+    gram(psi_a.data(), spsi_a.data(), nact, nact, s, nact);
+
+    Lapack<Real>::potrf(nact, s.data());
+    right_solve_upper_real(s, nact, psi_a);
+    right_solve_upper_real(s, nact, spsi_a);
+    right_solve_upper_real(s, nact, hpsi_a);
+
+    scatter_cols(psi, active_cols, psi_a);
+    scatter_cols(spsi_.data(), active_cols, spsi_a);
+    scatter_cols(hpsi_.data(), active_cols, hpsi_a);
+}
+
+// ---------------------------------------------------------------------------
+// Rayleigh-Ritz: full subspace diagonalization + residual computation
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::rayleigh_ritz(
+    T* psi, Real* eigenvalue,
+    std::vector<int>& active_cols,
+    const std::vector<double>& ethr_band)
+{
+    std::vector<Real> hsub(n_band_ * n_band_, static_cast<Real>(0));
+    std::vector<Real> ssub(n_band_ * n_band_, static_cast<Real>(0));
+    gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
+    gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
+
+    std::vector<Real> eval(n_band_, static_cast<Real>(0));
+    Lapack<Real>::sygvd(n_band_, hsub.data(), ssub.data(), eval.data());
+
+    std::vector<T> psi_old(psi, psi + ld_psi_ * n_band_);
+    std::vector<T> spsi_old = spsi_;
+    std::vector<T> hpsi_old = hpsi_;
+
+    std::fill(psi, psi + ld_psi_ * n_band_, T(0));
+    set_zero(spsi_);
+    set_zero(hpsi_);
+
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int i = 0; i < n_band_; ++i)
+        {
+            const Real c = hsub[i + j * n_band_];
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                psi[ idx(ig, j, ld_psi_)] += psi_old[ idx(ig, i, ld_psi_)] * c;
+                spsi_[idx(ig, j, ld_psi_)] += spsi_old[idx(ig, i, ld_psi_)] * c;
+                hpsi_[idx(ig, j, ld_psi_)] += hpsi_old[idx(ig, i, ld_psi_)] * c;
+            }
+        }
+        eigenvalue[j] = eval[j];
+    }
+
+    // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
+    set_zero(w_);
+    for (int j = 0; j < n_band_; ++j)
+        for (int ig = 0; ig < n_dim_; ++ig)
+            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
+                                    - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
+
+    lock_epairs(w_, ethr_band, active_cols);
+}
+
+// ---------------------------------------------------------------------------
+// Trace of H|psi> within active columns
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+typename DiagoPPCG<T, Device>::Real
+DiagoPPCG<T, Device>::trace_of_active_projected(
+    const T* psi, const std::vector<int>& active_cols) const
+{
+    if (active_cols.empty())
+        return static_cast<Real>(0);
+
+    std::vector<T> psi_a, hpsi_a;
+    copy_cols(psi, active_cols, psi_a);
+    copy_cols(hpsi_.data(), active_cols, hpsi_a);
+
+    const int nact = static_cast<int>(active_cols.size());
+    std::vector<Real> g(nact * nact, static_cast<Real>(0));
+    gram(psi_a.data(), hpsi_a.data(), nact, nact, g, nact);
+
+    Real tr = 0;
+    for (int i = 0; i < nact; ++i)
+        tr += g[i + i * nact];
+    return tr;
+}
+
+//==============================================================================
+// CONJUGATE_GRADIENT STRATEGY
+//==============================================================================
+
+// ---------------------------------------------------------------------------
+// Compute gradient: grad_i = H|psi_i> - eps_i * S|psi_i>
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::calc_gradient(
+    const Real* /*prec*/,
+    const T* hpsi,
+    const T* spsi,
+    const T* /*psi*/,
+    const Real* eigenvalue,
+    std::vector<T>& grad) const
+{
+    grad.assign(ld_psi_ * n_band_, T(0));
+    for (int j = 0; j < n_band_; ++j)
+    {
+        const Real ej = eigenvalue[j];
+        for (int ig = 0; ig < n_dim_; ++ig)
+            grad[idx(ig, j, ld_psi_)] = hpsi[idx(ig, j, ld_psi_)]
+                                      - spsi[idx(ig, j, ld_psi_)] * ej;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Orthogonalize gradient: grad_j -= sum_i <psi_i|grad_j> * S|psi_i>
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::orth_gradient(
+    const T* psi, const T* spsi,
+    std::vector<T>& grad) const
+{
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int i = 0; i < n_band_; ++i)
+        {
+            const Real coeff = gamma_dot(psi + i * ld_psi_,
+                                         grad.data() + j * ld_psi_);
+            if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
+                continue;
+            for (int ig = 0; ig < n_dim_; ++ig)
+                grad[idx(ig, j, ld_psi_)] -= spsi[idx(ig, i, ld_psi_)] * coeff;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Polak-Ribiere conjugate gradient update with preconditioning:
+//   z_new = -P^{-1} * r_new
+//   beta = max(0, <z_new, r_new - r_old> / <z_old, r_old>)
+//   d_new = z_new + beta * d_old
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::update_polak_ribiere(
+    const std::vector<T>& grad,
+    std::vector<T>& p,
+    std::vector<T>& grad_old,
+    std::vector<T>& z_old,
+    std::vector<Real>& beta_denom,
+    const Real* prec) const
+{
+    const bool first_iter = p.empty();
+    if (first_iter)
+    {
+        p.assign(ld_psi_ * n_band_, T(0));
+        z_old.assign(ld_psi_ * n_band_, T(0));
+        beta_denom.assign(n_band_, std::numeric_limits<Real>::infinity());
+    }
+
+    std::vector<T> z_new(ld_psi_ * n_band_, T(0));
+
+    for (int j = 0; j < n_band_; ++j)
+    {
+        const T* g  = grad.data() + j * ld_psi_;
+        T* pj  = p.data() + j * ld_psi_;
+        T* zn  = z_new.data() + j * ld_psi_;
+        T* zo  = z_old.data() + j * ld_psi_;
+
+        Real beta_num_zr = 0;
+        Real beta_num_zo = 0;
+
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            // z_new = -P^{-1} * grad
+            T z = -g[ig] / std::max(prec[ig], static_cast<Real>(1.0e-12));
+            zn[ig] = z;
+
+            // r_old = -P * z_old (recover old raw residual)
+            T r_old = -prec[ig] * zo[ig];
+
+            beta_num_zr += static_cast<Real>(std::real(z * std::conj(g[ig])));
+            beta_num_zo += static_cast<Real>(std::real(z * std::conj(r_old)));
+        }
+
+        Real beta = 0;
+        const Real denom = beta_denom[j];
+        if (denom > static_cast<Real>(1.0e-30))
+        {
+            beta = (beta_num_zr - beta_num_zo) / denom;
+            if (beta < 0)
+                beta = 0;
+        }
+
+        // d_new = z_new + beta * d_old
+        for (int ig = 0; ig < n_dim_; ++ig)
+            pj[ig] = zn[ig] + beta * pj[ig];
+
+        // Save <z_new, r_new> as denominator for next iteration.
+        beta_denom[j] = beta_num_zr + static_cast<Real>(1.0e-30);
+    }
+
+    // Persist state for next iteration.
+    z_old.swap(z_new);
+    grad_old = grad;
+}
+
+// ---------------------------------------------------------------------------
+// Line minimization along search direction:
+//   For each band j: find optimal step α by minimizing the Rayleigh quotient
+//   in the 2D subspace spanned by |psi_j> and |p_j>.
+//
+//   The optimal α satisfies:
+//     α = (h_ii * s_ip - h_ip * s_ii) / (h_pp * s_ii - h_ii * s_pp)
+//
+//   Update: |psi>  += α |p>
+//           H|psi> += α H|p>
+//           S|psi> += α S|p>
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::line_minimize(
+    T* psi, T* hpsi, T* spsi,
+    const T* p, const T* hp, const T* sp,
+    int ncol) const
+{
+    for (int j = 0; j < ncol; ++j)
+    {
+        const int off = j * ld_psi_;
+        T* pj  = psi  + off;
+        T* hj  = hpsi + off;
+        T* sj  = spsi + off;
+        const T* pp = p   + off;
+        const T* hpp = hp + off;
+        const T* spp = sp + off;
+
+        Real h_ii = gamma_dot(pj, hj);
+        Real s_ii = gamma_dot(pj, sj);
+        Real h_ip = gamma_dot(pj, hpp);
+        Real s_ip = gamma_dot(pj, spp);
+        Real h_pp = gamma_dot(pp, hpp);
+        Real s_pp = gamma_dot(pp, spp);
+
+        Real alpha = 0;
+        Real denom = h_pp * s_ii - h_ii * s_pp;
+        if (std::abs(denom) > static_cast<Real>(1.0e-12))
+            alpha = (h_ii * s_ip - h_ip * s_ii) / denom;
+
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            pj[ig] += alpha * pp[ig];
+            hj[ig] += alpha * hpp[ig];
+            sj[ig] += alpha * spp[ig];
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Cholesky orthonormalization (S-orthonormal):
+//   1. Form S-gram matrix J = psi^H * S * psi
+//   2. Cholesky: J = U^T * U  (upper)
+//   3. Invert U: U^{-1}
+//   4. psi *= U^{-1},  Hpsi *= U^{-1},  Spsi *= U^{-1}
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::orth_cholesky(
+    T* psi, T* hpsi, T* spsi, int ncol) const
+{
+    // Gram matrix of S-orthonormality: J_{ij} = <psi_i | S | psi_j>
+    std::vector<Real> gram_s(ncol * ncol, static_cast<Real>(0));
+    for (int j = 0; j < ncol; ++j)
+        for (int i = 0; i < ncol; ++i)
+            gram_s[i + j * ncol] = gamma_dot(psi + i * ld_psi_,
+                                              spsi + j * ld_psi_);
+
+    // Cholesky factorization: gram_s = U^T U  (U upper)
+    Lapack<Real>::potrf(ncol, gram_s.data());
+
+    // In-place triangular inverse: gram_s now holds U^{-1}
+    Lapack<Real>::trtri(ncol, gram_s.data());
+
+    // Right-multiply: result = input * U^{-1}
+    std::vector<T> tmp(ld_psi_ * ncol, T(0));
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < ncol; ++i)
+        {
+            const Real uinv = gram_s[i + j * ncol];
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                tmp[idx(ig, j, ld_psi_)] += psi[ idx(ig, i, ld_psi_)] * uinv;
+            }
+        }
+    }
+    std::copy(tmp.begin(), tmp.end(), psi);
+
+    set_zero(tmp);
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < ncol; ++i)
+        {
+            const Real uinv = gram_s[i + j * ncol];
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                tmp[idx(ig, j, ld_psi_)] += hpsi[idx(ig, i, ld_psi_)] * uinv;
+            }
+        }
+    }
+    std::copy(tmp.begin(), tmp.end(), hpsi);
+
+    set_zero(tmp);
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < ncol; ++i)
+        {
+            const Real uinv = gram_s[i + j * ncol];
+            for (int ig = 0; ig < n_dim_; ++ig)
+            {
+                tmp[idx(ig, j, ld_psi_)] += spsi[idx(ig, i, ld_psi_)] * uinv;
+            }
+        }
+    }
+    std::copy(tmp.begin(), tmp.end(), spsi);
+}
+
+//==============================================================================
+// MAIN DIAGONALIZATION ROUTINE
+//==============================================================================
+template <typename T, typename Device>
+double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
+                                   const SPsiFunc& spsi_func,
+                                   int ld_psi,
+                                   int nband,
+                                   int dim,
+                                   T* psi_in,
+                                   Real* eigenvalue_in,
+                                   const std::vector<double>& ethr_band,
+                                   const Real* prec)
+{
+    ld_psi_ = ld_psi;
+    n_band_ = nband;
+    n_dim_ = dim;
+
+    validate_input(psi_in, eigenvalue_in, ethr_band, prec);
+    spsi_func_ = spsi_func;
+
+    // Allocate working storage.
+    const int ncol = n_band_;
+    const int sz = ld_psi_ * ncol;
+
+    hpsi_.assign(sz, T(0));
+    spsi_.assign(sz, T(0));
+    w_.assign(sz, T(0));
+    sw_.assign(sz, T(0));
+    hw_.assign(sz, T(0));
+    p_.assign(sz, T(0));
+    sp_.assign(sz, T(0));
+    hp_.assign(sz, T(0));
+
+    std::vector<int> all_cols(ncol);
+    std::iota(all_cols.begin(), all_cols.end(), 0);
+
+    force_g0_real(psi_in, ncol);
+    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+    apply_s_current(psi_in, spsi_.data(), ncol);
+
+    double avg_iter = 1.0;
+    int iter = 1;
+    std::vector<int> active_cols;
+
+    // ---------------------------------------------------------------------------
+    // Strategy dispatch
+    // ---------------------------------------------------------------------------
+    if (strategy_ == PpcgStrategy::BLOCK_SUBSPACE)
+    {
+        // Initialize with Rayleigh-Ritz.
+        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+
+        Real trG = trace_of_active_projected(psi_in, active_cols);
+        Real trdif = static_cast<Real>(-1);
+
+        while (!active_cols.empty() && iter <= maxiter_)
+        {
+            const int nact = static_cast<int>(active_cols.size());
+            const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
+            const Real trtol = diag_thr_ * std::sqrt(static_cast<Real>(nact));
+
+            // Precondition the residual.
+            divide_by_preconditioner(active_cols, prec, w_);
+            apply_s_current(w_.data(), sw_.data(), ncol);
+            project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
+
+            // Apply H to the search direction.
+            std::vector<T> w_active;
+            copy_cols(w_.data(), active_cols, w_active);
+            force_g0_real(w_active.data(), nact);
+            std::vector<T> hw_active(ld_psi_ * nact, T(0));
+            scatter_cols(w_.data(), active_cols, w_active);
+            apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
+            scatter_cols(hw_.data(), active_cols, hw_active);
+            apply_s_current(w_.data(), sw_.data(), ncol);
+
+            avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
+
+            const bool use_p = (iter != 1);
+            if (use_p)
+            {
+                apply_s_current(p_.data(), sp_.data(), ncol);
+                project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
+            }
+
+            // Block subspace solve.
+            for (int isb = 0; isb < nsb; ++isb)
+            {
+                const int i0 = isb * sbsize_;
+                const int l = std::min(sbsize_, nact - i0);
+                std::vector<int> cols(active_cols.begin() + i0,
+                                      active_cols.begin() + i0 + l);
+
+                SmallSubspace subspace;
+                build_small_subspace(psi_in, cols, use_p, subspace);
+                solve_small_generalized((use_p ? 3 : 2) * l, subspace);
+                update_one_block(psi_in, cols, l, use_p, subspace);
+            }
+
+            // Periodic Rayleigh-Ritz.
+            if (iter % rr_step_ == 0)
+            {
+                rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+                trdif = static_cast<Real>(-1);
+                trG = 0;
+                for (const int c : active_cols)
+                    trG += eigenvalue_in[c];
+            }
+            else
+            {
+                chol_qr_active(psi_in, active_cols);
+
+                // Compute updated eigenvalues and residuals.
+                std::vector<T> psi_a, hpsi_a;
+                copy_cols(psi_in, active_cols, psi_a);
+                copy_cols(hpsi_.data(), active_cols, hpsi_a);
+
+                const int na = static_cast<int>(active_cols.size());
+                std::vector<Real> ga(ncol * na, static_cast<Real>(0));
+                gram(psi_in, hpsi_a.data(), ncol, na, ga, ncol);
+
+                set_zero(w_);
+                for (int ja = 0; ja < na; ++ja)
+                {
+                    for (int ig = 0; ig < n_dim_; ++ig)
+                    {
+                        T sum = T(0);
+                        for (int ia = 0; ia < ncol; ++ia)
+                            sum += spsi_[idx(ig, ia, ld_psi_)] * ga[ia + ja * ncol];
+                        w_[idx(ig, active_cols[ja], ld_psi_)] =
+                            hpsi_a[idx(ig, ja, ld_psi_)] - sum;
+                    }
+                    eigenvalue_in[active_cols[ja]] = ga[active_cols[ja] + ja * ncol];
+                }
+
+                Real trG1 = 0;
+                for (int ja = 0; ja < na; ++ja)
+                    trG1 += ga[active_cols[ja] + ja * ncol];
+
+                trdif = std::abs(trG1 - trG);
+                trG = trG1;
+
+                lock_epairs(w_, ethr_band, active_cols);
+                if (trdif >= 0 && trdif <= trtol)
+                {
+                    rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+                    trdif = static_cast<Real>(-1);
+                }
+            }
+
+            ++iter;
+        }
+
+        if ((iter - 1) % rr_step_ != 0)
+            rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+    }
+    else // CONJUGATE_GRADIENT
+    {
+        // Initial eigenvalues from current subspace.
+        for (int i = 0; i < ncol; ++i)
+            eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
+                                         hpsi_.data() + i * ld_psi_)
+                             / gamma_dot(psi_in + i * ld_psi_,
+                                         spsi_.data() + i * ld_psi_);
+
+        std::vector<T> grad;
+        calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
+                      eigenvalue_in, grad);
+        orth_gradient(psi_in, spsi_.data(), grad);
+
+        std::vector<T> p;
+        grad_old_.clear();
+        z_old_.clear();
+        beta_denom_.clear();
+        update_polak_ribiere(grad, p, grad_old_, z_old_, beta_denom_, prec);
+
+        // CG iteration loop.
+        while (iter <= maxiter_)
+        {
+            // Apply H and S to search direction.
+            std::vector<T> hp(ld_psi_ * ncol, T(0));
+            std::vector<T> sp(ld_psi_ * ncol, T(0));
+            apply_h(hpsi_func, p.data(), hp.data(), ncol);
+            apply_s_current(p.data(), sp.data(), ncol);
+
+            // Line minimization.
+            line_minimize(psi_in, hpsi_.data(), spsi_.data(),
+                          p.data(), hp.data(), sp.data(), ncol);
+
+            // Cholesky orthonormalization.
+            orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
+
+            // Update eigenvalues.
+            for (int i = 0; i < ncol; ++i)
+                eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
+                                             hpsi_.data() + i * ld_psi_)
+                                 / gamma_dot(psi_in + i * ld_psi_,
+                                             spsi_.data() + i * ld_psi_);
+
+            // Compute new gradient.
+            calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
+                          eigenvalue_in, grad);
+            orth_gradient(psi_in, spsi_.data(), grad);
+
+            // Polak-Ribiere update.
+            update_polak_ribiere(grad, p, grad_old_, z_old_, beta_denom_, prec);
+
+            // Convergence check.
+            bool all_converged = true;
+            for (int i = 0; i < ncol; ++i)
+            {
+                Real nrm2 = 0;
+                for (int ig = 0; ig < n_dim_; ++ig)
+                    nrm2 += static_cast<Real>(
+                        std::norm(grad[idx(ig, i, ld_psi_)]));
+                if (std::sqrt(nrm2) > std::max(static_cast<Real>(ethr_band[i]),
+                                               diag_thr_))
+                {
+                    all_converged = false;
+                    break;
+                }
+            }
+            if (all_converged)
+                break;
+
+            ++iter;
+        }
+
+        avg_iter = static_cast<double>(iter);
+    }
+
+    return avg_iter;
+}
+
+// =============================================================================
+// Explicit template instantiation (CPU only; extend for GPU as needed)
+// =============================================================================
+template class DiagoPPCG<std::complex<float>,  base_device::DEVICE_CPU>;
+template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;
+
+} // namespace hsolver
