@@ -55,24 +55,10 @@ struct Lapack<double>
         const char uplo = 'U';
         const int lda = n;
         int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<double> work(1);
-        std::vector<int> iwork(1);
-        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0);
-        iwork.assign(static_cast<size_t>(liwork), 0);
+        int lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+        int liwork = std::max(1, 3 + 5 * n);
+        std::vector<double> work(static_cast<size_t>(lwork), 0.0);
+        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
         dsyevd_(&jobz, &uplo, &n, a, &lda, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -87,24 +73,10 @@ struct Lapack<double>
         const int lda = n;
         const int ldb = n;
         int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<double> work(1);
-        std::vector<int> iwork(1);
-        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-            liwork = std::max(1, 3 + 10 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0);
-        iwork.assign(static_cast<size_t>(liwork), 0);
+        int lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+        int liwork = std::max(1, 3 + 10 * n);
+        std::vector<double> work(static_cast<size_t>(lwork), 0.0);
+        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
         dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -158,24 +130,10 @@ struct Lapack<float>
         const char uplo = 'U';
         const int lda = n;
         int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<float> work(1);
-        std::vector<int> iwork(1);
-        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0f);
-        iwork.assign(static_cast<size_t>(liwork), 0);
+        int lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+        int liwork = std::max(1, 3 + 5 * n);
+        std::vector<float> work(static_cast<size_t>(lwork), 0.0f);
+        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
         ssyevd_(&jobz, &uplo, &n, a, &lda, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -190,24 +148,10 @@ struct Lapack<float>
         const int lda = n;
         const int ldb = n;
         int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<float> work(1);
-        std::vector<int> iwork(1);
-        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-            liwork = std::max(1, 3 + 10 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0f);
-        iwork.assign(static_cast<size_t>(liwork), 0);
+        int lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+        int liwork = std::max(1, 3 + 10 * n);
+        std::vector<float> work(static_cast<size_t>(lwork), 0.0f);
+        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
         ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -1063,6 +1007,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     {
         // Initialize with Rayleigh-Ritz.
         rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        // Recompute to keep hpsi/spi consistent with rotated psi.
+        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+        apply_s_current(psi_in, spsi_.data(), ncol);
 
         Real trG = trace_of_active_projected(psi_in, active_cols);
         Real trdif = static_cast<Real>(-1);
@@ -1111,10 +1058,17 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 update_one_block(psi_in, cols, l, use_p, subspace);
             }
 
+            // Re-orthonormalize and recompute after psi modification.
+            chol_qr_active(psi_in, active_cols);
+            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+            apply_s_current(psi_in, spsi_.data(), ncol);
+
             // Periodic Rayleigh-Ritz.
             if (iter % rr_step_ == 0)
             {
                 rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
                 trdif = static_cast<Real>(-1);
                 trG = 0;
                 for (const int c : active_cols)
@@ -1158,6 +1112,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 if (trdif >= 0 && trdif <= trtol)
                 {
                     rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+                    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                    apply_s_current(psi_in, spsi_.data(), ncol);
                     trdif = static_cast<Real>(-1);
                 }
             }
@@ -1167,6 +1123,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
         if ((iter - 1) % rr_step_ != 0)
             rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        // Final consistency: ensure hpsi/spi match the converged psi.
+        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+        apply_s_current(psi_in, spsi_.data(), ncol);
     }
     else // CONJUGATE_GRADIENT
     {
