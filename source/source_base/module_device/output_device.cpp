@@ -3,7 +3,6 @@
 #include "gpu_runtime.h"
 
 #include "source_base/tool_quit.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <base/macros/macros.h>
 #include <cstring>
@@ -92,7 +91,7 @@ int get_device_num(std::string device_flag)
   return 0;
 }
 
-void output_device_info(std::ostream &output)
+void output_device_info(std::ostream &output, const std::string& device)
 {
 #ifdef __MPI
     int world_rank, world_size;
@@ -105,7 +104,7 @@ void output_device_info(std::ostream &output)
     // Get local hardware info
     int local_gpu_count = 0;
     #if defined(__CUDA) || defined(__ROCM)
-    if(PARAM.inp.device == "gpu" && local_rank == 0)
+    if(device == "gpu" && local_rank == 0)
     {
         local_gpu_count = get_device_num("gpu");
     }
@@ -129,7 +128,7 @@ void output_device_info(std::ostream &output)
         std::string cpu_name = get_device_name("cpu");
         std::string gpu_name;
         #if defined(__CUDA) || defined(__ROCM)
-        if(PARAM.inp.device == "gpu" && total_gpus > 0)
+        if(device == "gpu" && total_gpus > 0)
         {
             gpu_name = get_device_name("gpu");
         }
@@ -139,7 +138,7 @@ void output_device_info(std::ostream &output)
         output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
                   << cpu_name << " (x" << total_cpus << ")" << std::endl;
         #if defined(__CUDA) || defined(__ROCM)
-        if(PARAM.inp.device == "gpu" && total_gpus > 0)
+        if(device == "gpu" && total_gpus > 0)
         {
             output << "                        " << "GPU" << " / "
                   << gpu_name << " (x" << total_gpus << ")" << std::endl;
@@ -152,7 +151,7 @@ void output_device_info(std::ostream &output)
         output << " RUNNING WITH DEVICE  : " << "CPU" << " / "
                    << cpu_name << " (x" << cpu_sockets << ")" << std::endl;
         #if defined(__CUDA) || defined(__ROCM)
-        if(PARAM.inp.device == "gpu")
+        if(device == "gpu")
         {
             int gpu_count = get_device_num("gpu");
             if(gpu_count > 0)

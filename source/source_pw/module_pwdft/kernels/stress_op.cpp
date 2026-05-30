@@ -4,7 +4,6 @@
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_polyint.h"
-#include "source_base/memory.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
 #include "vnl_tools.hpp"
 
@@ -261,6 +260,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
     {
+//	std::cout << " DFT+U kernel called " << std::endl;
         FPTYPE local_stress = 0;
         int iat = 0, sum = 0;
         for (int it = 0; it < ntype; it++)

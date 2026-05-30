@@ -4,6 +4,8 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/deepks_descriptor.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
@@ -173,6 +175,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
                                                  this->ld->deepks_param,
                                                  descriptor,
+                                                 this->ld->model_deepks,
                                                  this->ld->gedm,
                                                  this->ld->E_delta,
                                                  GlobalV::MY_RANK);

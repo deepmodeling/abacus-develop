@@ -2,6 +2,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_reduce.h"

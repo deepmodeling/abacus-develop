@@ -8,6 +8,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/center2_orb-orb11.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 

@@ -57,7 +57,7 @@ case "$with_elpa" in
         echo "==================== Installing ELPA ===================="
         pkg_install_dir="${INSTALLDIR}/elpa-${elpa_ver}"
         #pkg_install_dir="${HOME}/lib/elpa/${elpa_ver}-gcc8"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         enable_openmp="yes"
 
         # specific settings needed on CRAY Linux Environment
@@ -74,11 +74,7 @@ case "$with_elpa" in
         else
             require_env MATH_LIBS
             url="https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
-            if [ -f ${elpa_pkg} ]; then
-                echo "${elpa_pkg} is found"
-            else
-                download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
-            fi
+            retrieve_package "${elpa_sha256}" "${elpa_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -115,23 +111,19 @@ case "$with_elpa" in
             fi
             for TARGET in "cpu" "nvidia"; do
                 # Accept both uppercase and lowercase GPU enable flags for compatibility
-                gpu_enabled="${ENABLE_CUDA:-${enable_cuda}}"
+                gpu_enabled="${ENABLE_CUDA}"
                 [ "$TARGET" = "nvidia" ] && [ "$gpu_enabled" != "__TRUE__" ] && continue
                 # disable cpu if cuda is enabled, only install one
                 [ "$TARGET" != "nvidia" ] && [ "$gpu_enabled" = "__TRUE__" ] && continue
-                # extend the pkg_install_dir by TARGET
-                # this linking method is totally different from cp2k toolchain
-                # for cp2k, ref https://github.com/cp2k/cp2k/commit/6fe2fc105b8cded84256248f68c74139dd8fc2e9
-                pkg_install_dir="${pkg_install_dir}/${TARGET}"
 
-                echo "Installing from scratch into ${pkg_install_dir}"
+                echo "Installing from scratch into ${pkg_install_dir}/${TARGET}"
                 mkdir -p "build_${TARGET}"
                 cd "build_${TARGET}"
                 if [ "${with_amd}" != "__DONTUSE__" ] && [ "${WITH_FLANG}" = "yes" ] ; then
                     # special option for flang compiler
                     echo "AMD fortran compiler detected, enable special option operation"
-                    ../configure --prefix="${pkg_install_dir}" \
-                        --libdir="${pkg_install_dir}/lib" \
+                    ../configure --prefix="${pkg_install_dir}/${TARGET}" \
+                        --libdir="${pkg_install_dir}/${TARGET}/lib" \
                         --enable-openmp=${enable_openmp} \
                         --enable-static=no \
                         --enable-shared=yes \
@@ -162,8 +154,8 @@ case "$with_elpa" in
                         -e 's/\\$wl\\$soname //g'
                 else
                     # normal installation
-                    ../configure --prefix="${pkg_install_dir}/" \
-                        --libdir="${pkg_install_dir}/lib" \
+                    ../configure --prefix="${pkg_install_dir}/${TARGET}" \
+                        --libdir="${pkg_install_dir}/${TARGET}/lib" \
                         --enable-openmp=${enable_openmp} \
                         --enable-static=no \
                         --enable-shared=yes \
@@ -191,9 +183,9 @@ case "$with_elpa" in
                 make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
                 cd ..
                 # link elpa
-                link=${pkg_install_dir}/include/elpa
+                link=${pkg_install_dir}/${TARGET}/include/elpa
                 if [[ ! -d $link ]]; then
-                    ln -s ${pkg_install_dir}/include/elpa_openmp-${elpa_ver}/elpa $link
+                    ln -s ${pkg_install_dir}/${TARGET}/include/elpa_openmp-${elpa_ver}/elpa $link
                 fi
             done
             cd ..
@@ -201,8 +193,9 @@ case "$with_elpa" in
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
         fi
         [ "$enable_openmp" != "yes" ] && elpa_dir_openmp=""
-        ELPA_CFLAGS="-I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/modules' -I'${pkg_install_dir}/include/elpa${elpa_dir_openmp}-${elpa_ver}/elpa'"
-        ELPA_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+        elpa_include="${pkg_install_dir}/IF_CUDA(nvidia|cpu)/include/elpa${elpa_dir_openmp}-${elpa_ver}"
+        ELPA_CFLAGS="-I'$elpa_include/modules' -I'$elpa_include/elpa'"
+        ELPA_LDFLAGS="-L'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/lib' -Wl,-rpath,'${pkg_install_dir}/IF_CUDA(nvidia|cpu)/lib'"
         ;;
     __SYSTEM__)
         echo "==================== Finding ELPA from system paths ===================="
@@ -250,25 +243,26 @@ prepend_path CPATH "$elpa_include"
 EOF
     if [ "$with_elpa" != "__SYSTEM__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_elpa"
-prepend_path PATH "$pkg_install_dir/bin"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path CPATH "$pkg_install_dir/include"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export PATH="$pkg_install_dir/bin":\${PATH}
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include":\${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
-export ELPA_ROOT="$pkg_install_dir"
+prepend_path PATH "${pkg_install_dir}/cpu/bin"
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/cpu/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/cpu/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/cpu/lib"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/cpu/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}/cpu"
 EOF
-        cat "${BUILDDIR}/setup_elpa" >> $SETUPFILE
+        if [ -d ${pkg_install_dir}/nvidia ]; then
+            cat << EOF >> "${BUILDDIR}/setup_elpa"
+prepend_path PATH "${pkg_install_dir}/nvidia/bin"
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/nvidia/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/nvidia/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/nvidia/lib"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/nvidia/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}/nvidia"
+EOF
+        fi
     fi
     cat << EOF >> "${BUILDDIR}/setup_elpa"
+export ELPA_ROOT="${pkg_install_dir}"
 export ELPA_CFLAGS="${ELPA_CFLAGS}"
 export ELPA_LDFLAGS="${ELPA_LDFLAGS}"
 export ELPA_LIBS="${ELPA_LIBS}"
@@ -276,10 +270,9 @@ export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__ELPA IF_CUDA(-D__ELPA_NVIDIA_GPU|)|)"
 export CP_CFLAGS="\${CP_CFLAGS} IF_MPI(${ELPA_CFLAGS}|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${ELPA_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(${ELPA_LIBS}|) \${CP_LIBS}"
-export ELPA_ROOT="$pkg_install_dir"
 export ELPA_VERSION="${elpa_ver}"
 EOF
-
+    filter_setup "${BUILDDIR}/setup_elpa" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_elpa"

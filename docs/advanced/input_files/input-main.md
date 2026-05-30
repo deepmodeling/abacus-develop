@@ -28,6 +28,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [gint\_precision](#gint_precision)
     - [timer\_enable\_nvtx](#timer_enable_nvtx)
     - [cell\_factor](#cell_factor)
     - [dm\_to\_rho](#dm_to_rho)
@@ -231,6 +232,7 @@
     - [of\_vw\_weight](#of_vw_weight)
     - [of\_wt\_alpha](#of_wt_alpha)
     - [of\_wt\_beta](#of_wt_beta)
+    - [of\_extwt\_kappa](#of_extwt_kappa)
     - [of\_wt\_rho0](#of_wt_rho0)
     - [of\_hold\_rho0](#of_hold_rho0)
     - [of\_lkt\_a](#of_lkt_a)
@@ -759,6 +761,16 @@
   - double: double precision
 - **Default**: double
 
+### gint_precision
+
+- **Type**: String
+- **Availability**: *Used only for LCAO basis set on CPU.*
+- **Description**: Specifies the precision when performing grid integral in LCAO calculations.
+  - single: single precision
+  - double: double precision
+  - mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough
+- **Default**: double
+
 ### timer_enable_nvtx
 
 - **Type**: Boolean
@@ -982,8 +994,9 @@
 ### pw_diag_nmax
 
 - **Type**: Integer
+- **Availability**: *basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg*
 - **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-- **Default**: 40
+- **Default**: 50
 
 ### pw_diag_ndim
 
@@ -1348,14 +1361,14 @@
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, its total-energy criterion is applied as an additional convergence check only after the charge-density criterion (`scf_thr`) has been satisfied, and only from the second SCF iteration onward (`iter > 1`). For local-orbital calculations, 1e-6 is usually accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 - **Unit**: Ry if scf_thr_type=1, dimensionless if scf_thr_type=2
 
 ### scf_ene_thr
 
 - **Type**: Real
-- **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
+- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
 - **Default**: -1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 
@@ -1790,15 +1803,20 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
-- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
   - For gamma only case:
-   - nspin = 1 and 4: dm_nao.csr;
-   - nspin = 2: dms1_nao.csr and dms2_nao.csr for the two spin channels.
+   - nspin = 1 and 4: dmg1_nao.txt;
+   - nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
   - For multi-k points case:
-   - nspin = 1 and 4: dmk1_nao.csr, dmk2_nao.csr, ...;
-   - nspin = 2: dmk1s1_nao.csr... and dmk1s2_nao.csr... for the two spin channels.
+   - nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+   - nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-  > Note: In the 3.10-LTS version, the parameter is named out_dm and the file names are SPIN1_DM and SPIN2_DM, etc.
+  Here, g{istep} denotes the geometry/step index in the output file name.
+
+  > Note: Version difference (develop vs 3.10-LTS):
+  >
+  > - In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+  > - In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
 - **Default**: False
 
 ### out_dmr
@@ -1922,12 +1940,12 @@
 
 ### out_mat_hs2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
-- **Default**: False
+- **Default**: False [8]
 - **Unit**: Ry
 
 ### out_mat_tk
@@ -1942,42 +1960,42 @@
 
 ### out_mat_r
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
+- **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
 
   > Note: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Bohr
 
 ### out_mat_t
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_dh
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: 0 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_ds
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsrxs1.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_xc
@@ -1992,12 +2010,12 @@
 
 ### out_mat_xc2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital (NAO) basis*
-- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.s.
+- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on.
 
   > Note: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_l
@@ -2384,7 +2402,8 @@
   - vw: von Weizsacker (vW) functional
   - tf+: TF + vW functional
   - wt: Wang-Teter (WT) functional
-  - xwm: XWM functional
+  - ext-wt: Extended Wang-Teter (ext-WT) functional
+  - xwm: Xu-Wang-Ma (XWM) functional
   - lkt: Luo-Karasiev-Trickey (LKT) functional
   - ml: Machine learning KEDF
   - mpn: MPN KEDF (automatically sets ml parameters)
@@ -2430,28 +2449,35 @@
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, xwm*
+- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, ext-wt, xwm*
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, lkt, xwm*
+- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, ext-wt, lkt, xwm*
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 
 ### of_wt_beta
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
+
+### of_extwt_kappa
+
+- **Type**: Real
+- **Availability**: *OFDFT with of_kinetic=ext-wt*
+- **Description**: Parameter kappa for EXT-WT KEDF.
+- **Default**: $\dfrac{1}{2(4/3)^{1/3}-1} \approx 0.832$
 
 ### of_wt_rho0
 

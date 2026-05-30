@@ -6,6 +6,15 @@
 #include "source_base/tool_title.h"
 #include "source_estate/cal_dm.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deepks/deepks_check.h"
+#include "source_lcao/module_deepks/deepks_descriptor.h"
+#include "source_lcao/module_deepks/deepks_fpre.h"
+#include "source_lcao/module_deepks/deepks_orbital.h"
+#include "source_lcao/module_deepks/deepks_orbpre.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
+#include "source_lcao/module_deepks/deepks_spre.h"
+#include "source_lcao/module_deepks/deepks_vdpre.h"
+#include "source_lcao/module_deepks/deepks_vdrpre.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
@@ -135,7 +144,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // new gedm is also useful in cal_f_delta, so it should be ld->gedm
             if (PARAM.inp.deepks_equiv)
             {
-                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->gedm, E_delta, rank);
+                DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->model_deepks, ld->gedm, E_delta, rank);
             }
             else
             {

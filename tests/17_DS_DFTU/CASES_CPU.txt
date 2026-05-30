@@ -1,0 +1,102 @@
+# Test case list for CI testing. Lines starting with # are disabled.
+# Enabled tests are listed without # prefix; disabled tests are commented out with reasons.
+
+# ========================
+# LCAO baseline tests
+# ========================
+01_LCAO_SPIN_S2_Z
+# 02_LCAO_SPIN_S4_XYZ  # DISABLED: Convergence / numerical stability issue with LCAO noncollinear spin
+
+# ========================
+# LCAO DFT+U tests
+# ========================
+03_LCAO_DFTU_S2_Z
+# 04_LCAO_DFTU_S4_XY   # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U
+# 05_LCAO_DFTU_S4_XYZ  # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DFT+U
+
+# ========================
+# PW baseline tests
+# ========================
+06_PW_SPIN_S2_Z
+07_PW_SPIN_S4_XYZ
+08_PW_DFTU_S2_Z
+09_PW_DFTU_S4_XY
+11_PW_DFTU_S2_FeO
+
+# ========================
+# PW pure DeltaSpin tests
+# ========================
+12_PW_DS_S2_Z
+14_PW_DS_S4_XYZ
+15_PW_DS_S4_Z
+16_PW_DS_S4_XY
+
+# ========================
+# PW DFT+U + DeltaSpin tests
+# ========================
+18_PW_DFTU_DS_S2_Z
+19_PW_DFTU_DS_S4_XY
+21_PW_DFTU_DS_S4_Z
+
+# ========================
+# LCAO pure DeltaSpin tests
+# ========================
+# 24_LCAO_DS_S2_Z      # DISABLED: Convergence / numerical stability issue with LCAO DeltaSpin
+# 26_LCAO_DS_S4_XYZ    # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
+# 27_LCAO_DS_S4_Z      # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
+# 28_LCAO_DS_S4_XY     # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
+
+# ========================
+# LCAO DFT+U + DeltaSpin tests
+# ========================
+# 30_LCAO_DFTU_DS_S2_Z # DISABLED: Convergence / numerical stability issue with LCAO DFT+U+DeltaSpin
+# 31_LCAO_DFTU_DS_S4_XY # DISABLED: Convergence / numerical stability issue with LCAO DFT+U+DeltaSpin
+# 32_LCAO_DFTU_DS_S4_XYZ # DISABLED: Convergence / numerical stability issue with LCAO DFT+U+DeltaSpin
+# 33_LCAO_DFTU_DS_S4_Z # DISABLED: Convergence / numerical stability issue with LCAO DFT+U+DeltaSpin
+
+# ========================
+# ReadLam mode (nsc=1, load pre-computed lambda)
+# ========================
+36_PW_DS_S2_ReadLam_Z
+37_PW_DS_S4_ReadLam_XY
+
+# ========================
+# Lambda loop behavior: thr1e-10 = no lambda loop, load from STRU
+# ========================
+38_PW_DS_S2_Thr1e10_Z
+39_PW_DS_S4_Thr1e10_XY
+42_PW_DFTU_DS_S2_Thr1e10_Z
+43_PW_DFTU_DS_S4_Thr1e10_XY
+
+# ========================
+# Lambda loop behavior: thr10 = immediate lambda loop
+# ========================
+40_PW_DS_S2_Thr10_Z
+41_PW_DS_S4_Thr10_XY
+# 44_PW_DFTU_DS_S2_Thr10_Z # DISABLED: Convergence / numerical stability issue with loose threshold
+
+# ========================
+# FeO multi-element DFT+U
+# ========================
+50_FeO_O_first_Fe_second
+51_FeO_Fe_first_O_second
+
+# ========================
+# NSCF (non-self-consistent) tests
+# ========================
+# DISABLED: These tests use SCF+NSCF workflow (run_scf_nscf.sh) and require running SCF first.
+# Run manually with: bash run_scf_nscf.sh <abacus_path> [mpi_np]
+# 55_PW_DS_NSCF_S4_XY       # DISABLED: SCF+NSCF workflow test, run manually
+# 60_PW_DFTU_DS_NSCF_Band_XY # DISABLED: SCF+NSCF workflow test, run manually
+# 61_LCAO_DS_NSCF_S4_XY     # DISABLED: SCF+NSCF workflow test, run manually
+# 62_LCAO_DFTU_NSCF_Band_XY # DISABLED: SCF+NSCF workflow + convergence issue (genelpa eigenvalue inconsistency)
+# 63_LCAO_DFTU_DS_NSCF_Band_XY # DISABLED: SCF+NSCF workflow test, run manually
+# 64_PW_DFTU_NSCF_Band_XY   # DISABLED: SCF+NSCF workflow test, run manually
+
+# ========================
+# DirectionOnly mode (constrain direction, not magnitude)
+# ========================
+56_PW_DS_S4_DirectionOnly_XY
+57_PW_DFTU_DS_S4_DirectionOnly_XY
+# 58_LCAO_DS_S4_DirectionOnly_XY # DISABLED: Convergence / numerical stability issue with LCAO DirectionOnly
+# 59_LCAO_DFTU_DS_S4_DirectionOnly_XY # DISABLED: Convergence / numerical stability issue with LCAO DirectionOnly

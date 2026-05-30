@@ -103,7 +103,7 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     delete[] w1Rho5_6;
     delete[] w2Rho5_6;
 
-    return energy;
+    return this->xwm_energy;
 }
 
 /**
@@ -265,7 +265,7 @@ void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
  */
 void KEDF_XWM::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight)
 {
-    std::cout << "XWM stress is not implemented yet!" << std::endl;
+    ModuleBase::WARNING_QUIT("KEDF_XWM", "XWM stress is not implemented yet!");
 }
 
 /**

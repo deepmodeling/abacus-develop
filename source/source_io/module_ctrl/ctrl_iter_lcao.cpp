@@ -4,6 +4,7 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
+#include "source_io/module_restart/restart.h"
 
 namespace ModuleIO
 {

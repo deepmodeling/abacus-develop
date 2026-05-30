@@ -110,7 +110,7 @@ double KEDF_WT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho
     }
     delete[] kernelRhoBeta;
 
-    return energy;
+    return this->wt_energy;
 }
 
 /**

@@ -2,6 +2,7 @@
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
 using namespace Ions_Move_Basic;
 
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
@@ -169,7 +170,7 @@ CG_begin:
                     < RELAX_CG_THR) // cg to bfgs  by pengfei 13-8-8
                 {
                     Ions_Move_Basic::relax_method[0] = "bfgs";
-                    Ions_Move_Basic::relax_method[1] = "2";
+                    Ions_Move_Basic::relax_method[1] = "1";
                 }
                 Ions_Move_Basic::best_xxx = steplength;
             }

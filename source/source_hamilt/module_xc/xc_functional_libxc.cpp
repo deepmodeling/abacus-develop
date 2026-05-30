@@ -287,7 +287,7 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
 
 void XC_Functional_Libxc::finish_func(std::vector<xc_func_type> &funcs)
 {
-	for(xc_func_type func : funcs)
+	for(xc_func_type& func : funcs)
 	{
 		xc_func_end(&func);
 	}

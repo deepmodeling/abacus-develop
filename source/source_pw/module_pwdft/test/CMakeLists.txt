@@ -13,7 +13,7 @@ AddTest(
 	../../../source_base/tool_quit.cpp
 	../../../source_base/global_variable.cpp
 	../../../source_base/global_file.cpp
-	../../../source_base/memory.cpp
+	../../../source_base/memory_recorder.cpp
 	../../../source_base/timer.cpp
 	../../../source_base/module_external/blas_connector_base.cpp ../../../source_base/module_external/blas_connector_vector.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
 	../../../source_base/parallel_global.cpp

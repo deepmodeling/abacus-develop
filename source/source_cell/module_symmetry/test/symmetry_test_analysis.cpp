@@ -1,4 +1,5 @@
 #include "symmetry_test_cases.h"
+#include "source_io/module_output/output.h"
 #include "mpi.h"
 /************************************************
  *  unit test of class Symmetry

@@ -9,6 +9,7 @@
 #include <array>
 #include <vector>
 #include <cassert>
+#include <cctype>
 #include <limits>
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
@@ -253,7 +254,7 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2 || param.input.out_mat_r || param.input.out_mat_t || param.input.out_mat_dh || param.input.out_mat_ds))
+        && (param.input.out_mat_hs2[0] || param.input.out_mat_r[0] || param.input.out_mat_t[0] || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
     {
         out_dir = true;
     }
@@ -270,7 +271,16 @@ void ReadInput::create_directory(const Parameter& param)
                                           out_wfc_dir,
                                           this->rank,
                                           param.input.mdp.md_restart,
-                                          param.input.out_alllog); // xiaohui add 2013-09-01
+                                          param.input.out_alllog,
+                                          param.globalv.global_out_dir,
+                                          param.globalv.global_stru_dir,
+                                          param.globalv.global_matrix_dir,
+                                          param.globalv.global_wfc_dir,
+                                          param.globalv.global_mlkedf_descriptor_dir,
+                                          param.globalv.global_deepks_label_elec_dir,
+                                          param.globalv.log_file,
+                                          param.input.of_ml_gene_data,
+                                          param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
     //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     struct stat st;
     if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
@@ -522,32 +532,32 @@ void ReadInput::check_ntype(const std::string& fn, int& param_ntype)
             {
                 break;
             }
-            else if (isalpha(temp[0]))
+            else if (!temp.empty() && std::isalpha(static_cast<unsigned char>(temp[0])))
             {
                 ntype_stru += 1;
             }
         }
     }
 
-    if (param_ntype == 0)
+    if (ntype_stru <= 0)
     {
-        param_ntype = ntype_stru;
-        GlobalV::ofs_running << " 'ntype' is no longer required in INPUT, and "
-                                "it will be ignored. "
-                             << std::endl;
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
+                                 "Failed to detect valid ntype from STRU: no valid ATOMIC_SPECIES entries were found.");
     }
-    else if (param_ntype != ntype_stru)
+
+    if (param_ntype < 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput",
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype", "The ntype in INPUT should not be less than 0.");
+    }
+    else if (param_ntype != 0 && param_ntype != ntype_stru)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput::check_ntype",
                                  "The ntype in INPUT is not equal to the ntype "
                                  "counted in STRU, check it.");
     }
-    if (param_ntype <= 0)
+    else if (param_ntype == 0)
     {
-        ModuleBase::WARNING_QUIT("ReadInput", "ntype should be greater than 0.");
-    }
-    else
-    {
+        param_ntype = ntype_stru;
         GlobalV::ofs_running << " 'ntype' is automatically set to " << param_ntype << std::endl;
     }
 }

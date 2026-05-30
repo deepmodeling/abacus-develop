@@ -6,3 +6,4 @@ python3 ./scf.py -v
 python3 ./relax.py -v
 python3 ./md.py -v
 python3 ./band.py -v
+python3 ./magnetic.py -v

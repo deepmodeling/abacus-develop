@@ -1,4 +1,5 @@
 #include "op_pw_exx.h"
+#include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
@@ -192,17 +193,23 @@ void get_exx_potential(const K_Vectors* kv,
 
     // copy the potential to the device memory
 #ifdef __CUDA
-    cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
-    if (err != cudaSuccess) {
-        throw std::runtime_error("failed to register potential CPU memory operations");
+    if (PARAM.inp.device == "gpu")
+    {
+        cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
+        if (err != cudaSuccess) {
+            throw std::runtime_error("failed to register potential CPU memory operations");
+        }
     }
 #endif
     syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
 #ifdef __CUDA
-    cudaHostUnregister(pot_cpu);
+    if (PARAM.inp.device == "gpu")
+    {
+        cudaHostUnregister(pot_cpu);
+    }
 #endif
 
-    delete pot_cpu;
+    delete[] pot_cpu;
 }
 
 template <typename Real, typename Device>
@@ -369,17 +376,23 @@ void get_exx_stress_potential(const K_Vectors* kv,
 
     // copy the potential to the device memory
 #ifdef __CUDA
-    cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
-    if (err != cudaSuccess) {
-        throw std::runtime_error("failed to register potential CPU memory operations");
+    if (PARAM.inp.device == "gpu")
+    {
+        cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
+        if (err != cudaSuccess) {
+            throw std::runtime_error("failed to register potential CPU memory operations");
+        }
     }
 #endif
     syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
 #ifdef __CUDA
-    cudaHostUnregister(pot_cpu);
+    if (PARAM.inp.device == "gpu")
+    {
+        cudaHostUnregister(pot_cpu);
+    }
 #endif
 
-    delete pot_cpu;
+    delete[] pot_cpu;
 }
 
 double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,

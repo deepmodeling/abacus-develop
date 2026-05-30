@@ -2,7 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
@@ -352,7 +352,11 @@ void DensityMatrix_Tools::cal_DMR_td(
     }
     ModuleBase::timer::end("DensityMatrix", "cal_DMR_td");
 }
-
+template <>
+void DensityMatrix<double, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
+{
+    return;
+}
 template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
 {

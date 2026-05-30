@@ -60,7 +60,7 @@ void Gint_vl_nspin4_gpu::cal_hr_gint_()
         CHECK_CUDA(cudaSetDevice(gint_info_->get_dev_id()));
         cudaStream_t stream;
         CHECK_CUDA(cudaStreamCreate(&stream));
-        PhiOperatorGpu phi_op(gint_info_->get_gpu_vars(), stream);
+        PhiOperatorGpu<double> phi_op(gint_info_->get_gpu_vars(), stream);
         CudaMemWrapper<double> phi(BatchBigGrid::get_max_phi_len(), stream, false);
         CudaMemWrapper<double> phi_vldr3(BatchBigGrid::get_max_phi_len(), stream, false);
         #pragma omp for schedule(dynamic)

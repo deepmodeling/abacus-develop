@@ -13,23 +13,23 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 
     biggrid_->set_atoms_startidx(atoms_startidx_);
     biggrid_->set_atoms_phi_len(atoms_phi_len_);
-    biggrid_->set_mgrids_local_idx(meshgrids_local_idx_);
+    biggrid_->set_mgrids_local_idx(mgrid_lidx_);
 
-    // init is_atom_on_mgrid_ and atoms_relative_coords_
+    // init is_atom_on_mgrid_ and atom_rcoords_
     const int atoms_num = biggrid_->get_atoms_num();
-    atoms_relative_coords_.resize(atoms_num);
+    atom_rcoords_.resize(atoms_num);
     is_atom_on_mgrid_.resize(biggrid_->get_mgrids_num() * atoms_num);
     for(int i = 0; i < atoms_num; ++i)
     {
-        biggrid_->set_atom_relative_coords(biggrid_->get_atom(i), atoms_relative_coords_[i]);
+        biggrid_->set_atom_relative_coords(biggrid_->get_atom(i), atom_rcoords_[i]);
         for(int j = 0; j < rows_; ++j)
         {
-            is_atom_on_mgrid_[i * rows_ + j] = atoms_relative_coords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
+            is_atom_on_mgrid_[i * rows_ + j] = atom_rcoords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
         }
     }
 
-    // init atom_pair_start_end_idx_
-    init_atom_pair_start_end_idx_();
+    // init atom_pair_range_
+    init_atom_pair_idx_();
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
@@ -37,7 +37,7 @@ void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, doub
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
-        atom->set_phi_dphi(atoms_relative_coords_[i], cols_, phi, dphi_x, dphi_y, dphi_z);
+        atom->set_phi_dphi(atom_rcoords_[i], cols_, phi, dphi_x, dphi_y, dphi_z);
         if(phi != nullptr)
         {
             phi += atom->get_nw();
@@ -55,7 +55,7 @@ void PhiOperator::set_ddphi(
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
-        atom->set_ddphi(atoms_relative_coords_[i], cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
+        atom->set_ddphi(atom_rcoords_[i], cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
         ddphi_xx += atom->get_nw();
         ddphi_xy += atom->get_nw();
         ddphi_xz += atom->get_nw();
@@ -108,7 +108,7 @@ void PhiOperator::phi_dot_dphi_r(
         for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const int start_idx = atoms_startidx_[j];
-            const Vec3d& r3 = atoms_relative_coords_[j][i];
+            const Vec3d& r3 = atom_rcoords_[j][i];
             for(int k = 0; k < atoms_phi_len_[j]; ++k)
             {
                 const int idx = i * cols_ + start_idx + k;
@@ -151,7 +151,7 @@ void PhiOperator::cal_env_gamma(
                 {
                     tmp += phi[j * cols_ + start_idx + iw] * wfc[iw_lo];
                 }
-                rho[meshgrids_local_idx_[j]] += tmp;
+                rho[mgrid_lidx_[j]] += tmp;
             }
         }
     }
@@ -204,7 +204,7 @@ void PhiOperator::cal_env_k(
                         tmp += std::complex<double>(phi[phi_start_idx + iw], 0.0) * wfc[iw_lo] * kphase;
                     }
                 }
-                rho[meshgrids_local_idx_[j]] += tmp.real();
+                rho[mgrid_lidx_[j]] += tmp.real();
             }
         }
     }
@@ -214,10 +214,10 @@ void PhiOperator::cal_env_k(
 //===============================
 // private methods
 //===============================
-void PhiOperator::init_atom_pair_start_end_idx_()
+void PhiOperator::init_atom_pair_idx_()
 {
     int atoms_num = biggrid_->get_atoms_num();
-    atom_pair_start_end_idx_.resize(atoms_num * (atoms_num + 1) / 2);
+    atom_pair_range_.resize(atoms_num * (atoms_num + 1) / 2);
     int mgrids_num = biggrid_->get_mgrids_num();
     int atom_pair_idx = 0;
     for(int i = 0; i < atoms_num; ++i)
@@ -243,8 +243,8 @@ void PhiOperator::init_atom_pair_start_end_idx_()
                     break;
                 }
             }
-            atom_pair_start_end_idx_[atom_pair_idx].first = start_idx;
-            atom_pair_start_end_idx_[atom_pair_idx].second = end_idx;
+            atom_pair_range_[atom_pair_idx].first = start_idx;
+            atom_pair_range_[atom_pair_idx].second = end_idx;
             atom_pair_idx++;
         }
     }

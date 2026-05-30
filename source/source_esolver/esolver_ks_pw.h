@@ -4,7 +4,6 @@
 #include "source_psi/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/exx_helper_base.h"
-#include "source_pw/module_pwdft/op_pw_vel.h"
 
 #include <memory>
 #include <source_base/macros.h>
@@ -49,7 +48,6 @@ class ESolver_KS_PW : public ESolver_KS
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt(const UnitCell& ucell);
-    virtual void deallocate_hamilt();
 
     // Electronic wave function psi
     Setup_Psi_pw stp;

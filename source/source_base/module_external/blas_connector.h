@@ -426,6 +426,16 @@ public:
 
 	static
 	void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+#ifdef __DSP
+	/// @brief Inject the DSP cluster id used by mt-allocator BLAS kernels.
+	/// Caller-injected (typically once after input parameters are read).
+	/// Defaults to 0 if never set.
+	static void set_dsp_cluster_id(int id);
+
+private:
+	static int dsp_cluster_id_;
+#endif
 };
 
 #ifdef __CUDA

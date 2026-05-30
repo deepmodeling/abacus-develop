@@ -55,7 +55,7 @@ void cal_gint_fvl_meta(
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl);
 
-void cal_dvlocal_R_sparseMatrix(
+void cal_dvlocal_R_sparse(
     const int nspin,
     const int npol,
     const int current_spin,

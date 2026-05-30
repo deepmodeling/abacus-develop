@@ -1,6 +1,7 @@
 #include "operator.h"
 
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 using namespace hamilt;
 

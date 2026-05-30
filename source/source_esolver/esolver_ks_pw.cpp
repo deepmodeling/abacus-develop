@@ -11,7 +11,7 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -52,7 +52,11 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     // do not add any codes in this deconstructor funcion
     //****************************************************
     // delete Hamilt
-    this->deallocate_hamilt();
+    if (this->p_hamilt != nullptr)
+    {
+        delete this->p_hamilt;
+        this->p_hamilt = nullptr;
+    }
 
     // delete exx_helper
     if (this->exx_helper != nullptr)
@@ -77,15 +81,7 @@ void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 			&ucell);
 }
 
-template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::deallocate_hamilt()
-{
-    if (this->p_hamilt != nullptr)
-    {
-        delete static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-        this->p_hamilt = nullptr;
-    }
-}
+
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
@@ -147,14 +143,17 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->stp.p_psi_init);
-        p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
 
     //! Init Hamiltonian (cell changed)
     //! Operators in HamiltPW should be reallocated once cell changed
     //! delete Hamilt if not first scf
-    this->deallocate_hamilt();
+    if (this->p_hamilt != nullptr)
+    {
+        delete this->p_hamilt;
+        this->p_hamilt = nullptr;
+    }
 
     //! Allocate HamiltPW
     this->allocate_hamilt(ucell);
@@ -164,7 +163,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
     pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
-              this->stp.template get_psi_t<T, Device>(), static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc, this->pw_rhod, PARAM.inp);
+              this->stp.template get_psi_t<T, Device>(), 
+	      this->p_hamilt, 
+	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
@@ -215,7 +216,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.calculation,
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
-                                                     false,
                                                      PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,

@@ -5,7 +5,7 @@
 #include "source_base/tool_quit.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/kernels/onsite_op.h"
 
 

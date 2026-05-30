@@ -68,8 +68,8 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 # Refer to scripts/package_versions.sh for specific version numbers
 
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
-ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
+OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
+ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)

@@ -9,7 +9,6 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 
-#include "matrix_methods.h"
 
 class BFGS
 {
@@ -24,6 +23,7 @@ private:
     double maxstep;//every movement smaller than maxstep
     double largest_grad;
     int size;//number of atoms
+    bool is_initialized=false;
 
     std::vector<double> steplength;//the length of atoms displacement 
     std::vector<std::vector<double>> H;//Hessian matrix

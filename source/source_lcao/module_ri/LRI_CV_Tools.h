@@ -7,7 +7,7 @@
 #define LRI_CV_TOOLS_H
 
 #include "Inverse_Matrix.h"
-#include "source_base/abfs-vector3_order.h"
+#include "abfs-vector3_order.h"
 #include "source_lcao/module_ri/abfs.h"
 
 #include <RI/global/Array_Operator.h>

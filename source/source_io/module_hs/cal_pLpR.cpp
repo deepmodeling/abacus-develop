@@ -18,19 +18,33 @@
  * 
  * FIXME: the following part will be transfered to TwoCenterIntegrator soon
  * 
+ * Notation
+ * --------
+ * ylm: complex spherical harmonics
+ * slm: solid (real) spherical harmonics
+ * 
+ * Changelog
+ * ---------
+ * Switch to support the solid spherical harmonics to keep consistent with
+ * implementations of other parts.
+ * Formulation (in Chinese):
+ * https://my.feishu.cn/wiki/D0enwcUKfiJgtSkJ5scc9Dagntc
  */
 
-// L+|l, m> = sqrt((l-m)(l+m+1))|l, m+1>, return the sqrt((l-m)(l+m+1))
-double _lplus_on_ylm(const int l, const int m)
+// L+ylm = sqrt((l-m)(l+m+1))ylm+1, return the sqrt((l-m)(l+m+1))
+double _lambda_plus(const int l, const int m)
 {
-    return std::sqrt((l - m) * (l + m + 1));
+    return std::sqrt((l - m) * (l + m + 1)); // NOTE: complex spherical harmonics
 }
 
-// L-|l, m> = sqrt((l+m)(l-m+1))|l, m-1>, return the sqrt((l+m)(l-m+1))
-double _lminus_on_ylm(const int l, const int m)
+// L-ylm = sqrt((l+m)(l-m+1))ylm-1, return the sqrt((l+m)(l-m+1))
+double _lambda_minus(const int l, const int m)
 {
-    return std::sqrt((l + m) * (l - m + 1));
+    return std::sqrt((l + m) * (l - m + 1)); // NOTE: complex spherical harmonics
 }
+
+const std::complex<double> i = {0., 1.};
+const double invsqrt2 = std::sqrt(2) * 0.5;
 
 std::complex<double> ModuleIO::cal_LzijR(
     const std::unique_ptr<TwoCenterIntegrator>& calculator,
@@ -38,32 +52,12 @@ std::complex<double> ModuleIO::cal_LzijR(
     const int jt, const int ja, const int jl, const int jz, const int mj,
     const ModuleBase::Vector3<double>& vR)
 {
+    if(mj == 0) {
+        return std::complex<double>(0.);
+    }
     double val_ = 0;
-    calculator->calculate(it, il, iz, mi, jt, jl, jz, mj, vR, &val_);
-    return std::complex<double>(mi) * val_;
-}
-
-std::complex<double> ModuleIO::cal_LyijR(
-    const std::unique_ptr<TwoCenterIntegrator>& calculator,
-    const int it, const int ia, const int il, const int iz, const int im,
-    const int jt, const int ja, const int jl, const int jz, const int jm,
-    const ModuleBase::Vector3<double>& vR)
-{
-    // Ly = -i/2 * (L+ - L-)
-    const double plus_ = _lplus_on_ylm(jl, jm);
-    const double minus_ = _lminus_on_ylm(jl, jm);
-    double val_plus = 0, val_minus = 0;
-    if (plus_ != 0)
-    {
-        calculator->calculate(it, il, iz, im, jt, jl, jz, jm + 1, vR, &val_plus);
-        val_plus *= plus_;
-    }
-    if (minus_ != 0)
-    {
-        calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &val_minus);
-        val_minus *= minus_;
-    }
-    return std::complex<double>(0, -0.5) * (val_plus - val_minus);
+    calculator->calculate(it, il, iz, mi, jt, jl, jz, -mj, vR, &val_);
+    return i * static_cast<double>(mj) * val_;
 }
 
 std::complex<double> ModuleIO::cal_LxijR(
@@ -71,22 +65,107 @@ std::complex<double> ModuleIO::cal_LxijR(
     const int it, const int ia, const int il, const int iz, const int im,
     const int jt, const int ja, const int jl, const int jz, const int jm,
     const ModuleBase::Vector3<double>& vR)
+{
+    const double lmbdp = _lambda_plus(jl, jm);
+    const double lmbdm = _lambda_minus(jl, jm);
+    // two-center-integral placeholders
+    double valp = 0.;
+    double valm = 0.;
+    if (jm > 1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm-1), vR, &valm);
+        }
+        return i * 0.5 * (lmbdp * valp + lmbdm * valm);
+    }
+    if (jm == 1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -2, vR, &valp);
+        }
+        return i * 0.5 * lmbdp * valp;
+    }
+    if (jm == 0) {
+        const double lmbd = _lambda_plus(jl, 0); // std::sqrt(jl*(jl+1))
+        if (std::fabs(lmbd) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -1, vR, &valp);
+        }
+        return i * invsqrt2 * lmbd * valp;
+    }
+    if (jm == -1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 0, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 2, vR, &valm);
+        }
+        return -i * 0.5 * (std::sqrt(2) * lmbdp * valp + lmbdm * valm);
+    }
+    if (jm < -1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm-1), vR, &valm);
+        }
+        return -i * 0.5 * (lmbdp * valp + lmbdm * valm);
+    }
+    assert(false); // inaccessible
+}
+
+std::complex<double> ModuleIO::cal_LyijR(
+    const std::unique_ptr<TwoCenterIntegrator>& calculator,
+    const int it, const int ia, const int il, const int iz, const int im,
+    const int jt, const int ja, const int jl, const int jz, const int jm,
+    const ModuleBase::Vector3<double>& vR)
 {   
-    // Lx = 1/2 * (L+ + L-)
-    const double plus_ = _lplus_on_ylm(jl, jm);
-    const double minus_ = _lminus_on_ylm(jl, jm);
-    double val_plus = 0, val_minus = 0;
-    if (plus_ != 0)
-    {
-        calculator->calculate(it, il, iz, im, jt, jl, jz, jm + 1, vR, &val_plus);
-        val_plus *= plus_;
+    const double lmbdp = _lambda_plus(jl, jm);
+    const double lmbdm = _lambda_minus(jl, jm);
+    // two-center-integral placeholders
+    double valp = 0.;
+    double valm = 0.;
+    if (jm > 1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm-1, vR, &valm);
+        }
+        return -i * 0.5 * (lmbdp * valp - lmbdm * valm);
     }
-    if (minus_ != 0)
-    {
-        calculator->calculate(it, il, iz, im, jt, jl, jz, jm - 1, vR, &val_minus);
-        val_minus *= minus_;
+    if (jm == 1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 2, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 0, vR, &valm);
+        }
+        return -i * 0.5 * (lmbdp * valp - std::sqrt(2) * lmbdm * valm);
     }
-    return std::complex<double>(0.5) * (val_plus + val_minus);
+    if (jm == 0) {
+        const double lmbd = _lambda_plus(jl, 0); // std::sqrt(l*(l+1))
+        if (std::fabs(lmbd) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, 1, vR, &valp);
+        }
+        return -i * invsqrt2 * lmbd * valp;
+    }
+    if (jm == -1) {
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, -2, vR, &valm);
+        }
+        return -i * 0.5 * lmbdm * valm;
+    }
+    if (jm < -1) {
+        if (std::fabs(lmbdp) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
+        }
+        if (std::fabs(lmbdm) > 1e-12) {
+            calculator->calculate(it, il, iz, im, jt, jl, jz, jm-1, vR, &valm);
+        }
+        return i * 0.5 * (lmbdp * valp - lmbdm * valm);
+    }
+    assert(false); // inaccessible
 }
 
 ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
