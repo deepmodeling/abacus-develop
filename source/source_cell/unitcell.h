@@ -2,20 +2,46 @@
 #define UNITCELL_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
-#include "source_io/module_output/output.h"
 #include "module_symmetry/symmetry.h"
+#include "source_cell/module_neighlist/unitcell_interface.h"
 
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
 
 // provide the basic information about unitcell.
-class UnitCell {
+class UnitCell : public IAtomProvider {
   public:
+    double get_lat0() const override {
+        return lat0;
+    }
+
+    double get_omega() const override {
+        return omega;
+    }
+
+    const ModuleBase::Matrix3& get_latvec() const override {
+        return latvec;
+    }
+
+    int get_natom() const override {
+        return nat;
+    }
+
+    int get_na(int i) const override {
+        return atoms[i].na;
+    }
+
+    int get_ntype() const override {
+        return ntype;
+    }
+
+    ModuleBase::Vector3<double> get_tauu(int i, int j) const override {
+        return atoms[i].tau[j];
+    }
+
     Atom* atoms = nullptr;
     Sep_Cell sep_cell;
 

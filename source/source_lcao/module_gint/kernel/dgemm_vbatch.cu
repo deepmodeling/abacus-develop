@@ -9,7 +9,7 @@ void gemm_nn_vbatch(
     const int* m_d, const int* n_d, const int* k_d,
     const T* const* A_array_d, const int* lda_d,
     const T* const* B_array_d, const int* ldb_d,
-    T** C_array_d, const int* ldc_d,
+    double** C_array_d, const int* ldc_d,
     int batchCount, cudaStream_t stream,
     const T* alpha)
 {
@@ -28,7 +28,7 @@ void gemm_tn_vbatch(
     const int* m_d, const int* n_d, const int* k_d,
     const T* const* A_array_d, const int* lda_d,
     const T* const* B_array_d, const int* ldb_d,
-    T** C_array_d, const int* ldc_d,
+    double** C_array_d, const int* ldc_d,
     int batchCount, cudaStream_t stream,
     const T* alpha)
 {
@@ -49,7 +49,7 @@ template void gemm_nn_vbatch<double>(
 template void gemm_nn_vbatch<float>(
     int, int, int, const int*, const int*, const int*,
     const float* const*, const int*, const float* const*, const int*,
-    float**, const int*, int, cudaStream_t, const float*);
+    double**, const int*, int, cudaStream_t, const float*);
 
 template void gemm_tn_vbatch<double>(
     int, int, int, const int*, const int*, const int*,
@@ -59,4 +59,4 @@ template void gemm_tn_vbatch<double>(
 template void gemm_tn_vbatch<float>(
     int, int, int, const int*, const int*, const int*,
     const float* const*, const int*, const float* const*, const int*,
-    float**, const int*, int, cudaStream_t, const float*);
+    double**, const int*, int, cudaStream_t, const float*);

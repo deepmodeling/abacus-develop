@@ -65,12 +65,12 @@ PACK_RUN_MODE="no"  # Set to "yes" to enable pack-run mode
 # Refer to scripts/package_versions.sh for specific version numbers
 
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-OPENMPI_VERSION="main"      # main=5.0.8, alt=4.1.6
-MPICH_VERSION="main"        # main=4.1.6, alt=4.1.5
-OPENBLAS_VERSION="main"     # main=0.3.30, alt=0.3.27
-ELPA_VERSION="main"         # main=2025.06.001, alt=2024.05.001
+OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
+MPICH_VERSION="main"        # main=5.0.1, alt=4.3.2
+OPENBLAS_VERSION="main"     # main=0.3.33, alt=0.3.30
+ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
-SCALAPACK_VERSION="main"    # main=2.2.2, alt=2.2.1
+SCALAPACK_VERSION="main"    # main=2.2.3, alt=2.2.1
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # Note: main(2.1.2) version of LibTorch need glibc > 2.27

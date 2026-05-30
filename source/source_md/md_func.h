@@ -3,6 +3,8 @@
 
 #include "source_esolver/esolver.h"
 
+class Parameter;
+
 #ifdef __MPI
 #include <mpi.h> // MPI functions
 #endif

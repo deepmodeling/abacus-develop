@@ -2,6 +2,7 @@
 #include "phi_operator_kernel.cuh"
 #include "dgemm_vbatch.h"
 #include <cuda_runtime.h>
+#include <type_traits>
 #include "source_base/module_device/device_check.h"
 
 namespace ModuleGint
@@ -12,12 +13,12 @@ PhiOperatorGpu<Real>::PhiOperatorGpu(std::shared_ptr<const GintGpuVars> gint_gpu
 :gint_gpu_vars_(gint_gpu_vars), stream_(stream),
 mgrids_num_(BatchBigGrid::get_bgrid_info()->get_mgrids_num()),
 atoms_num_info_(BatchBigGrid::get_max_batch_size(), stream_, true),
-bgrids_phi_len_(BatchBigGrid::get_max_batch_size(), stream_, true),
-bgrids_phi_start_(BatchBigGrid::get_max_batch_size(), stream_, true),
+bgrid_phi_len_(BatchBigGrid::get_max_batch_size(), stream_, true),
+bgrid_phi_start_(BatchBigGrid::get_max_batch_size(), stream_, true),
 atoms_iat_(BatchBigGrid::get_max_atoms_num(), stream_, true),
 atoms_bgrids_rcoords_(BatchBigGrid::get_max_atoms_num(), stream_, true),
-atoms_phi_start_(BatchBigGrid::get_max_atoms_num(), stream_, true),
-mgrids_local_idx_batch_(BatchBigGrid::get_max_batch_size() 
+atom_phi_start_(BatchBigGrid::get_max_atoms_num(), stream_, true),
+batch_mgrid_lidx_(BatchBigGrid::get_max_batch_size() 
     * BatchBigGrid::get_bgrid_info()->get_mgrids_num(), stream_, true),
 gemm_m_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true),
 gemm_n_(BatchBigGrid::get_max_atom_pairs_num(), stream_, true),
@@ -44,50 +45,50 @@ void PhiOperatorGpu<Real>::set_bgrid_batch(std::shared_ptr<BatchBigGrid> bgrid_b
 {
     bgrid_batch_ = bgrid_batch;
     auto atoms_num_info_h = atoms_num_info_.get_host_ptr();
-    auto bgrids_phi_len_h = bgrids_phi_len_.get_host_ptr();
-    auto bgrids_phi_start_h = bgrids_phi_start_.get_host_ptr();
+    auto bgrid_phi_len_h = bgrid_phi_len_.get_host_ptr();
+    auto bgrid_phi_start_h = bgrid_phi_start_.get_host_ptr();
     auto atoms_iat_h = atoms_iat_.get_host_ptr();
-    auto atoms_bgrids_rcoords_h = atoms_bgrids_rcoords_.get_host_ptr();
-    auto atoms_phi_start_h = atoms_phi_start_.get_host_ptr();
-    auto mgrids_local_idx_batch_h = mgrids_local_idx_batch_.get_host_ptr();
+    auto atom_rcoords_h = atoms_bgrids_rcoords_.get_host_ptr();
+    auto atom_phi_start_h = atom_phi_start_.get_host_ptr();
+    auto batch_mgrid_lidx_h = batch_mgrid_lidx_.get_host_ptr();
     int i = 0;
     int j = 0;
     int atoms_accum = 0;
     phi_len_ = 0;
     int phi_start = 0;
-    std::vector<int> mgrids_local_idx;
+    std::vector<int> mgrid_lidx;
     CHECK_CUDA(cudaEventSynchronize(event_));
     for (const auto& bgrid : bgrid_batch->get_bgrids())
     {
         atoms_num_info_h[i] = make_int2(bgrid->get_atoms_num(), atoms_accum);
         atoms_accum += bgrid->get_atoms_num();
-        bgrids_phi_start_h[i] = phi_start;
-        bgrid->set_mgrids_local_idx(mgrids_local_idx);
-        std::copy(mgrids_local_idx.begin(), mgrids_local_idx.end(),
-            mgrids_local_idx_batch_h + i * mgrids_num_);
+        bgrid_phi_start_h[i] = phi_start;
+        bgrid->set_mgrids_local_idx(mgrid_lidx);
+        std::copy(mgrid_lidx.begin(), mgrid_lidx.end(),
+            batch_mgrid_lidx_h + i * mgrids_num_);
         int phi_len_bgrid = 0;
         for (const auto& atom : bgrid->get_atoms())
         {
             atoms_iat_h[j] = atom->get_iat();
             Vec3d rcoord = bgrid->get_bgrid_atom_rcoord(atom);
-            atoms_bgrids_rcoords_h[j] = make_double3(rcoord.x, rcoord.y, rcoord.z);
-            atoms_phi_start_h[j] = phi_len_ + phi_len_bgrid;
+            atom_rcoords_h[j] = make_double3(rcoord.x, rcoord.y, rcoord.z);
+            atom_phi_start_h[j] = phi_len_ + phi_len_bgrid;
             phi_len_bgrid += atom->get_nw();
             j++;
         }
-        bgrids_phi_len_h[i] = phi_len_bgrid;
+        bgrid_phi_len_h[i] = phi_len_bgrid;
         phi_len_ += phi_len_bgrid * bgrid->get_mgrids_num();
         phi_start += phi_len_bgrid * bgrid->get_mgrids_num();
         i++;
     }
 
     atoms_num_info_.copy_host_to_device_async(bgrid_batch->get_batch_size());
-    bgrids_phi_len_.copy_host_to_device_async(bgrid_batch->get_batch_size());
-    bgrids_phi_start_.copy_host_to_device_async(bgrid_batch->get_batch_size());
+    bgrid_phi_len_.copy_host_to_device_async(bgrid_batch->get_batch_size());
+    bgrid_phi_start_.copy_host_to_device_async(bgrid_batch->get_batch_size());
     atoms_iat_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
     atoms_bgrids_rcoords_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
-    atoms_phi_start_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
-    mgrids_local_idx_batch_.copy_host_to_device_async(bgrid_batch->get_batch_size() * mgrids_num_);
+    atom_phi_start_.copy_host_to_device_async(bgrid_batch->get_atoms_num());
+    batch_mgrid_lidx_.copy_host_to_device_async(bgrid_batch->get_batch_size() * mgrids_num_);
     CHECK_CUDA(cudaEventRecord(event_, stream_));
 }
 
@@ -113,8 +114,8 @@ void PhiOperatorGpu<Real>::set_phi(Real* phi_d) const
         atoms_iat_.get_device_ptr(),
         atoms_bgrids_rcoords_.get_device_ptr(),
         atoms_num_info_.get_device_ptr(),
-        atoms_phi_start_.get_device_ptr(),
-        bgrids_phi_len_.get_device_ptr(),
+        atom_phi_start_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
         phi_d);
     CHECK_LAST_CUDA_ERROR("kernel launch");
 }
@@ -124,30 +125,41 @@ void PhiOperatorGpu<Real>::set_phi_dphi(double* phi_d, double* dphi_x_d, double*
 {
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
-    set_phi_dphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
-        gint_gpu_vars_->nwmax,
-        mgrids_num_,
-        gint_gpu_vars_->nr_max,
-        gint_gpu_vars_->dr_uniform,
-        gint_gpu_vars_->ucell_atom_nwl_d,
-        gint_gpu_vars_->atom_iw2_new_d,
-        gint_gpu_vars_->atom_iw2_ylm_d,
-        gint_gpu_vars_->atom_iw2_l_d,
-        gint_gpu_vars_->atom_nw_d,
-        gint_gpu_vars_->iat2it_d,
-        gint_gpu_vars_->rcut_d,
-        gint_gpu_vars_->psi_u_d,
-        gint_gpu_vars_->dpsi_u_d,
-        gint_gpu_vars_->mgrids_pos_d,
-        atoms_iat_.get_device_ptr(),
-        atoms_bgrids_rcoords_.get_device_ptr(),
-        atoms_num_info_.get_device_ptr(),
-        atoms_phi_start_.get_device_ptr(),
-        bgrids_phi_len_.get_device_ptr(),
-        phi_d,
-        dphi_x_d,
-        dphi_y_d,
-        dphi_z_d);
+    // Dispatch the WantPhi template based on whether phi is requested.
+    // Lets the compiler drop the phi[] stores entirely in the dphi-only case
+    // (gint_tau) without paying a per-iw `phi != nullptr` branch in the loop.
+    auto launch = [&](auto want_phi) {
+        constexpr bool WantPhi = decltype(want_phi)::value;
+        set_phi_dphi_kernel<WantPhi><<<grid_dim, threads_per_block, 0, stream_>>>(
+            gint_gpu_vars_->nwmax,
+            mgrids_num_,
+            gint_gpu_vars_->nr_max,
+            gint_gpu_vars_->dr_uniform,
+            gint_gpu_vars_->ucell_atom_nwl_d,
+            gint_gpu_vars_->atom_iw2_new_d,
+            gint_gpu_vars_->atom_iw2_ylm_d,
+            gint_gpu_vars_->atom_iw2_l_d,
+            gint_gpu_vars_->atom_nw_d,
+            gint_gpu_vars_->iat2it_d,
+            gint_gpu_vars_->rcut_d,
+            gint_gpu_vars_->psi_u_d,
+            gint_gpu_vars_->dpsi_u_d,
+            gint_gpu_vars_->mgrids_pos_d,
+            atoms_iat_.get_device_ptr(),
+            atoms_bgrids_rcoords_.get_device_ptr(),
+            atoms_num_info_.get_device_ptr(),
+            atom_phi_start_.get_device_ptr(),
+            bgrid_phi_len_.get_device_ptr(),
+            phi_d,
+            dphi_x_d,
+            dphi_y_d,
+            dphi_z_d);
+    };
+    if (phi_d != nullptr) {
+        launch(std::true_type{});
+    } else {
+        launch(std::false_type{});
+    }
     CHECK_LAST_CUDA_ERROR("kernel launch");
 }
 
@@ -183,8 +195,8 @@ void PhiOperatorGpu<Real>::set_ddphi(double* ddphi_xx_d, double* ddphi_xy_d, dou
         atoms_iat_.get_device_ptr(),
         atoms_bgrids_rcoords_.get_device_ptr(),
         atoms_num_info_.get_device_ptr(),
-        atoms_phi_start_.get_device_ptr(),
-        bgrids_phi_len_.get_device_ptr(),
+        atom_phi_start_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
         ddphi_xx_d,
         ddphi_xy_d,
         ddphi_xz_d,
@@ -208,9 +220,9 @@ void PhiOperatorGpu<Real>::phi_mul_vldr3(
         dr3,
         phi_d,
         mgrids_num_,
-        mgrids_local_idx_batch_.get_device_ptr(),
-        bgrids_phi_len_.get_device_ptr(),
-        bgrids_phi_start_.get_device_ptr(),
+        batch_mgrid_lidx_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
+        bgrid_phi_start_.get_device_ptr(),
         result_d);
     CHECK_LAST_CUDA_ERROR("kernel launch");
 }
@@ -219,8 +231,8 @@ template<typename Real>
 void PhiOperatorGpu<Real>::phi_mul_phi(
     const Real* phi_d,
     const Real* phi_vldr3_d,
-    HContainer<Real>& hRGint,
-    Real* hr_d) const
+    HContainer<double>& hRGint,
+    double* hr_d) const
 {
     // ap_num means number of atom pairs
     int ap_num = 0;
@@ -240,7 +252,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
             const int iat_1 = atom_1->get_iat();
             const auto& r_1 = atom_1->get_R();
             const int nw1 = atom_1->get_nw();
-            const int phi_1_offset = atoms_phi_start_.get_host_ptr()[pre_atoms + ia_1];
+            const int phi_1_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_1];
 
             for (int ia_2 = 0; ia_2 < bgrid->get_atoms_num(); ia_2++)
             {
@@ -256,7 +268,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
                 if (hr_offset == -1)
                 { continue; }
 
-                const int phi_2_offset = atoms_phi_start_.get_host_ptr()[pre_atoms + ia_2];
+                const int phi_2_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_2];
 
                 gemm_A_.get_host_ptr()[ap_num] = phi_d + phi_1_offset;
                 gemm_B_.get_host_ptr()[ap_num] = phi_vldr3_d + phi_2_offset;
@@ -285,7 +297,7 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     gemm_n_.copy_host_to_device_async(ap_num);
     gemm_k_.copy_host_to_device_async(ap_num);
     CHECK_CUDA(cudaEventRecord(event_, stream_));
-    
+
     gemm_tn_vbatch<Real>(max_m,
                     max_n,
                     max_k,
@@ -309,9 +321,9 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
     const Real* dm_d,
     const HContainer<Real>& dm,
     const bool is_symm,
-    Real* phi_dm_d)
+    double* phi_dm_d)
 {
-    CHECK_CUDA(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(Real), stream_));
+    CHECK_CUDA(cudaMemsetAsync(phi_dm_d, 0, phi_len_ * sizeof(double), stream_));
     // ap_num means number of atom pairs
     int ap_num = 0;
     int max_m = mgrids_num_;
@@ -330,7 +342,7 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
             const int iat_1 = atom_1->get_iat();
             const auto& r_1 = atom_1->get_R();
             const int nw1 = atom_1->get_nw();
-            const int phi_1_offset = atoms_phi_start_.get_host_ptr()[pre_atoms + ia_1];
+            const int phi_1_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_1];
             int ia_2 = is_symm ? ia_1 : 0;
             for (; ia_2 < bgrid->get_atoms_num(); ia_2++)
             {
@@ -343,7 +355,7 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
                 if (dm_offset == -1)
                 { continue; }
 
-                const int phi_dm_offset = atoms_phi_start_.get_host_ptr()[pre_atoms + ia_2];
+                const int phi_dm_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_2];
 
                 gemm_A_.get_host_ptr()[ap_num] = phi_d + phi_1_offset;
                 gemm_B_.get_host_ptr()[ap_num] = dm_d + dm_offset;
@@ -401,18 +413,18 @@ void PhiOperatorGpu<Real>::phi_mul_dm(
 template<typename Real>
 void PhiOperatorGpu<Real>::phi_dot_phi(
     const Real* phi_i_d,
-    const Real* phi_j_d,
-    Real* rho_d) const
+    const double* phi_j_d,
+    double* rho_d) const
 {
     dim3 grid_dim(mgrids_num_, bgrid_batch_->get_batch_size());
     dim3 threads_per_block(64);
-    phi_dot_phi_kernel<Real><<<grid_dim, threads_per_block, sizeof(Real) * 32, stream_>>>(
+    phi_dot_phi_kernel<Real, double><<<grid_dim, threads_per_block, sizeof(double) * 32, stream_>>>(
         phi_i_d,
         phi_j_d,
         mgrids_num_,
-        mgrids_local_idx_batch_.get_device_ptr(),
-        bgrids_phi_len_.get_device_ptr(),
-        bgrids_phi_start_.get_device_ptr(),
+        batch_mgrid_lidx_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
+        bgrid_phi_start_.get_device_ptr(),
         rho_d);
     CHECK_LAST_CUDA_ERROR("kernel launch");
 }
@@ -425,18 +437,19 @@ void PhiOperatorGpu<Real>::phi_dot_dphi(
     const double* dphi_z_d,
     double* fvl_d) const
 {
-    dim3 grid_dim(bgrid_batch_->get_max_atoms_num_per_bgrid(),
+    dim3 grid_dim(bgrid_batch_->get_max_atoms_per_bgrid(),
                   bgrid_batch_->get_batch_size());
+    // Kernel reduce is single-warp; blockDim.x MUST stay 32.
     dim3 threads_per_block(32);
-    phi_dot_dphi_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 3, stream_>>>(
+    phi_dot_dphi_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
         phi_d,
         dphi_x_d,
         dphi_y_d,
         dphi_z_d,
         mgrids_num_,
-        bgrids_phi_len_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
         atoms_num_info_.get_device_ptr(),
-        atoms_phi_start_.get_device_ptr(),
+        atom_phi_start_.get_device_ptr(),
         atoms_iat_.get_device_ptr(),
         gint_gpu_vars_->iat2it_d,
         gint_gpu_vars_->atom_nw_d,
@@ -454,16 +467,17 @@ void PhiOperatorGpu<Real>::phi_dot_dphi_r(
 {
     dim3 grid_dim(mgrids_num_,
                   bgrid_batch_->get_batch_size());
+    // Kernel reduce is single-warp; blockDim.x MUST stay 32.
     dim3 threads_per_block(32);
-    phi_dot_dphi_r_kernel<<<grid_dim, threads_per_block, sizeof(double) * 32 * 6, stream_>>>(
+    phi_dot_dphi_r_kernel<<<grid_dim, threads_per_block, 0, stream_>>>(
         phi_d,
         dphi_x_d,
         dphi_y_d,
         dphi_z_d,
         mgrids_num_,
-        bgrids_phi_len_.get_device_ptr(),
+        bgrid_phi_len_.get_device_ptr(),
         atoms_num_info_.get_device_ptr(),
-        atoms_phi_start_.get_device_ptr(),
+        atom_phi_start_.get_device_ptr(),
         atoms_iat_.get_device_ptr(),
         atoms_bgrids_rcoords_.get_device_ptr(),
         gint_gpu_vars_->mgrids_pos_d,

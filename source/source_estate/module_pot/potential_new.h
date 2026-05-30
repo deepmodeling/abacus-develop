@@ -3,7 +3,6 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"

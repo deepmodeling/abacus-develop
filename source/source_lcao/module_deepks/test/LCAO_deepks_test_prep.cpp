@@ -194,6 +194,7 @@ void test_deepks<T>::set_orbs()
              lcao_rmax,
              PARAM.sys.deepks_setorb,
              out_mat_r,
+             PARAM.inp.out_element_info,
              PARAM.input.cal_force,
              my_rank);
 

@@ -7,7 +7,6 @@
 #include "source_base/parallel_2d.h"
 #include "source_psi/psi.h"
 #include <ATen/core/tensor.h>
-#include "source_basis/module_pw/pw_basis.h"
 
 using DAT = container::DataType;
 using DEV = container::DeviceType;

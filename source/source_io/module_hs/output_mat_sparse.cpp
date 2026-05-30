@@ -6,8 +6,7 @@
 namespace ModuleIO
 {
 template <typename T>
-void output_mat_sparse(const bool& out_mat_hsR,
-                       const bool& out_mat_dh,
+void output_mat_sparse(const bool& out_mat_dh,
                        const bool& out_mat_ds,
                        const bool& out_mat_t,
                        const bool& out_mat_r,
@@ -24,12 +23,6 @@ void output_mat_sparse(const bool& out_mat_hsR,
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
-    //! generate a file containing the Hamiltonian and S(overlap) matrices
-    if (out_mat_hsR)
-    {
-        output_HSR(ucell, istep, pv, HS_Arrays, grid, kv, *p_dftu, p_ham);
-    }
-
     //! generate a file containing the kinetic energy matrix
     if (out_mat_t)
     {
@@ -44,10 +37,10 @@ void output_mat_sparse(const bool& out_mat_hsR,
                    ucell,
                    pv,
                    HS_Arrays,
-                   grid, // mohan add 2024-04-06
+                   grid,
                    two_center_bundle,
                    orb,
-                   kv); // LiuXh add 2019-07-15
+                   kv);
     }
     //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
     if (out_mat_ds)
@@ -56,7 +49,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                    ucell,
                    pv,
                    HS_Arrays,
-                   grid, // mohan add 2024-04-06
+                   grid,
                    two_center_bundle,
                    orb,
                    kv);
@@ -67,21 +60,13 @@ void output_mat_sparse(const bool& out_mat_hsR,
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb);
-        if (out_mat_hsR)
-        {
-            r_matrix.out_rR_other(ucell, istep, HS_Arrays.output_R_coor);
-        }
-        else
-        {
-            r_matrix.out_rR(ucell, grid, istep);
-        }
+        r_matrix.out_rR(ucell, grid, istep);
     }
 
     return;
 }
 
-template void output_mat_sparse<double>(const bool& out_mat_hsR,
-                                        const bool& out_mat_dh,
+template void output_mat_sparse<double>(const bool& out_mat_dh,
                                         const bool& out_mat_ds,
                                         const bool& out_mat_t,
                                         const bool& out_mat_r,
@@ -96,8 +81,7 @@ template void output_mat_sparse<double>(const bool& out_mat_hsR,
 										hamilt::Hamilt<double>* p_ham,
 										Plus_U* p_dftu);
 
-template void output_mat_sparse<std::complex<double>>(const bool& out_mat_hsR,
-                                                      const bool& out_mat_dh,
+template void output_mat_sparse<std::complex<double>>(const bool& out_mat_dh,
                                                       const bool& out_mat_ds,
                                                       const bool& out_mat_t,
                                                       const bool& out_mat_r,

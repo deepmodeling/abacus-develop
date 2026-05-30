@@ -2,14 +2,12 @@
 #define LCAO_FORCE_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/force_stress_arrays.h"
-#include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_psi/psi.h"
 #include "source_lcao/setup_deepks.h"
 

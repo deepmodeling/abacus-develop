@@ -1,6 +1,7 @@
 #include "xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
+#include "source_base/tool_title.h"
 
 #ifdef USE_LIBXC
 #include "xc_functional_libxc.h"
@@ -24,6 +25,7 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 {
+    ModuleBase::TITLE("XC_Functional", "set_xc_first_loop");
     /** In the special "two-level" calculation case,
 the first scf iteration only calculate the functional without exact
 exchange. but in "nscf" calculation, there is no need of "two-level"
@@ -57,6 +59,7 @@ method. */
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/
 void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
+    ModuleBase::TITLE("XC_Functional", "set_xc_type");
     //Note : due to the separation of gcx_spin and gcc_spin,
     //when you are adding new GGA functionals,
     //please put exchange first, followed by correlation,
@@ -329,6 +332,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
 std::string XC_Functional::output_info()
 {
+    ModuleBase::TITLE("XC_Functional", "output_info");
   #ifdef USE_LIBXC
     if(use_libxc)
     {

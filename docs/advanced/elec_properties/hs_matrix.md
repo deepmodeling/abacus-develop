@@ -26,24 +26,47 @@ The rest of the file contains the upper triangular part of the specified matrice
 
 The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
 
-For single-point SCF calculations, if nspin = 1 or nspin = 4, two files `hrs1_nao.csr` and `sr_nao.csr` are generated, which contain the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively. For nspin = 2, three files `hrs1_nao.csr` and `hrs2_nao.csr` and `sr_nao.csr` are created, where the first two files correspodn to $H(R)$ for spin up and spin down, respectively.
+### Output Format
 
-Each file or each section of the appended file starts with three lines, the first gives the current ion/md step, the second gives the dimension of the matrix, and the last indicates how many different `R` are in the file.
+The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
 
-The rest of the files are arranged in blocks. Each block starts with a line giving the lattice vector `R` and the number of nonzero matrix elements, such as:
+For single-point SCF calculations:
+- **nspin = 1 or nspin = 4**: Two files `hrs1_nao.csr` and `srs1_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
+- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `srs1_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
 
+### File Structure
+
+Each file starts with a header:
 ```
--3 1 1 1020
+ --- Ionic Step 1 ---
+ # print H matrix in real space H(R)
+ 1 # number of spin directions
+ 1 # spin index
+ 100 # number of localized basis
+ 50 # number of Bravais lattice vector R
+
+[UnitCell information]
+
+#----------------------------------------------------------------------#
+#                               CSR Format                             #
+...
+ 0 0 0 5
+ # CSR values
+ 1.234e-01 2.345e-02 ...
+ # CSR column indices
+ 0 5 10 ...
+ # CSR row pointers
+ 0 3 7 ...
 ```
 
-which means there are 1020 nonzero elements in the (-3,1,1) cell.
+The CSR format stores a sparse m × n matrix M in row form using three arrays (values, column indices, row pointers). According to Wikipedia:
 
-If there is no nonzero matrix element, then the next block starts immediately on the next line. Otherwise, there will be 3 extra lines in the block, which gives the matrix in CSR format. According to Wikipedia:
+- The arrays **values** and **column indices** are of length NNZ (number of nonzero entries), and contain the non-zero values and the column indices of those values respectively.
+- The array **row pointers** is of length m + 1 and encodes the index where each row starts. The last element is NNZ.
 
-The CSR format stores a sparse m × n matrix M in row form using three (one-dimensional) arrays (V, COL_INDEX, ROW_INDEX). Let NNZ denote the number of nonzero entries in M. (Note that zero-based indices shall be used here.)
+### Precision Control
 
-  - The arrays V and COL_INDEX are of length NNZ, and contain the non-zero values and the column indices of those values respectively.
-  - The array ROW_INDEX is of length m + 1 and encodes the index in V and COL_INDEX where the given row starts. This is equivalent to ROW_INDEX[j] encoding the total number of nonzeros above row j. The last element is NNZ , i.e., the fictitious index in V immediately after the last valid index NNZ - 1.
+Use `out_mat_hs2 1 12` to output with 12-digit precision (default is 8).
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 

@@ -111,6 +111,7 @@ scf_out_chg_tau
 207_PW_skip
 208_PW_CG_float
 209_PW_DFTHALF
+210_PW_kspace_shift
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc

@@ -57,24 +57,6 @@ case "${with_aocl}" in
         ;;
 esac
 if [ "$with_aocl" != "__DONTUSE__" ]; then
-    if [ "$with_aocl" != "__SYSTEM__" ]; then
-        cat << EOF > "${BUILDDIR}/setup_aocl"
-prepend_path LD_LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
-prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-prepend_path CPATH "$pkg_install_dir/include"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib:"\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib:"\${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib:"\${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include:"\${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig:"\${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir:"\${CMAKE_PREFIX_PATH}
-export AOCL_ROOT=${pkg_install_dir}
-EOF
-        cat "${BUILDDIR}/setup_aocl" >> $SETUPFILE
-    fi
     cat << EOF >> "${BUILDDIR}/setup_aocl"
 export AOCL_ROOT="${pkg_install_dir}"
 export AOCL_CFLAGS="${AOCL_CFLAGS}"
@@ -84,6 +66,7 @@ export MATH_CFLAGS="\${MATH_CFLAGS} ${AOCL_CFLAGS}"
 export MATH_LDFLAGS="\${MATH_LDFLAGS} ${AOCL_LDFLAGS}"
 export MATH_LIBS="\${MATH_LIBS} ${AOCL_LIBS}"
 EOF
+    filter_setup "${BUILDDIR}/setup_aocl" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_aocl"

@@ -1,6 +1,7 @@
 #ifndef SRC_PW_WF_MULTI_DEVICE_H
 #define SRC_PW_WF_MULTI_DEVICE_H
 
+#include "source_base/module_device/types.h"
 #include "source_psi/psi.h"
 #include <complex>
 

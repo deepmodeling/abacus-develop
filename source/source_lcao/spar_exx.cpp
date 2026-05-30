@@ -10,7 +10,7 @@
 #include <RI/ri/Cell_Nearest.h>
 #include <stdexcept>
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h"

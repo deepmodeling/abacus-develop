@@ -2,6 +2,7 @@ list(APPEND hamilt_ofdft_srcs
     kedf_tf.cpp
     kedf_vw.cpp
     kedf_wt.cpp
+    kedf_extwt.cpp
     kedf_xwm.cpp
     kedf_lkt.cpp
     kedf_manager.cpp

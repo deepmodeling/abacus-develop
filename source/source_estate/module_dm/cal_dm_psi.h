@@ -2,6 +2,7 @@
 #define CAL_DM_PSI_H
 
 #include "source_base/matrix.h"
+#include "source_psi/psi.h"
 #include "density_matrix.h"
 
 namespace elecstate

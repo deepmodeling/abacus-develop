@@ -17,6 +17,7 @@ option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
@@ -51,6 +52,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
+option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
@@ -69,7 +71,7 @@ if(ENABLE_RAPIDJSON)
     include(FetchContent)
     FetchContent_Declare(
       rapidjson
-      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a
     )
     set(RAPIDJSON_BUILD_TESTS
         OFF
@@ -135,36 +137,36 @@ if(ENABLE_LCAO)
   if(USE_CUDA)
     if(ENABLE_MPI)
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2g)
+        set(ABACUS_BIN_NAME abacus_basic_gpu)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3g)
+        set(ABACUS_BIN_NAME abacus_std_gpu)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4g)
+        set(ABACUS_BIN_NAME abacus_ml_gpu)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5g)
+        set(ABACUS_BIN_NAME abacus_max_gpu)
       endif()
     endif()
   # Case: CPU is enabled (suffix with 'p' for parallel) 
   else()
     if(ENABLE_MPI)
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2p)
+        set(ABACUS_BIN_NAME abacus_basic_para)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3p)
+        set(ABACUS_BIN_NAME abacus_std_para)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4p)
+        set(ABACUS_BIN_NAME abacus_ml_para)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5p)
+        set(ABACUS_BIN_NAME abacus_max_para)
       endif()
     else()
       if(NOT ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_2s)
+        set(ABACUS_BIN_NAME abacus_basic_ser)
       elseif(ENABLE_LIBRI AND NOT ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_3s)
+        set(ABACUS_BIN_NAME abacus_std_ser)
       elseif(NOT ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_4s)
+        set(ABACUS_BIN_NAME abacus_ml_ser)
       elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
-        set(ABACUS_BIN_NAME abacus_5s)
+        set(ABACUS_BIN_NAME abacus_max_ser)
       endif()
     endif()
   endif()
@@ -172,13 +174,13 @@ if(ENABLE_LCAO)
 else()
   if(USE_CUDA)
     if(ENABLE_MPI)
-      set(ABACUS_BIN_NAME abacus_1g)
+      set(ABACUS_BIN_NAME abacus_pw_gpu)
     endif()
   else()
     if(ENABLE_MPI)
-      set(ABACUS_BIN_NAME abacus_1p)
+      set(ABACUS_BIN_NAME abacus_pw_para)
     else()
-      set(ABACUS_BIN_NAME abacus_1s)
+      set(ABACUS_BIN_NAME abacus_pw_ser)
     endif()
   endif()
 endif()
@@ -336,6 +338,50 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+
+
+if(USE_KML)
+    add_compile_definitions(__KML)
+    message(STATUS "Huawei KML support enabled. Defining __KML.")
+#    TODO: Create FindKML.cmake
+#    if(NOT DEFINED KML_ROOT)
+#        if(DEFINED ENV{KML_ROOT})
+#            set(KML_ROOT $ENV{KML_ROOT})
+#        else()
+#            message(WARNING "KML_ROOT is not set. Trying default system paths for KML.")
+#        endif()
+#    endif()
+#
+#    find_library(KML_BLAS_LIB NAMES kblas PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_LAPACK_LIB NAMES klapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_SCALAPACK_LIB NAMES kscalapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_FFTW_LIB NAMES fftw3 PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#
+#    set(KML_LIBS_FOUND TRUE)
+#    foreach(LIB_VAR KML_BLAS_LIB KML_LAPACK_LIB KML_SCALAPACK_LIB KML_FFTW_LIB)
+#        if(NOT ${LIB_VAR})
+#            message(WARNING "${LIB_VAR} not found in KML_ROOT! Please check your KML installation.")
+#            set(KML_LIBS_FOUND FALSE)
+#        endif()
+#    endforeach()
+#
+#    if(KML_LIBS_FOUND)
+#        target_link_libraries(abacus PUBLIC
+#            ${KML_BLAS_LIB}
+#            ${KML_LAPACK_LIB}
+#            ${KML_SCALAPACK_LIB}
+#            ${KML_FFTW_LIB}
+#        )
+#        message(STATUS "Huawei KML libraries found and linked successfully.")
+#    else()
+#        message(FATAL_ERROR "Failed to find all required KML libraries. Aborting.")
+#    endif()
+#
+#    set(BLAS_libraries ${KML_BLAS_LIB})
+#    set(LAPACK_libraries ${KML_LAPACK_LIB})
+endif(USE_KML)
+
+
 if (USE_SW)
   add_compile_definitions(__SW)
   set(SW ON)
@@ -451,6 +497,15 @@ if(USE_CUDA)
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
+    if (ENABLE_NCCL_PARALLEL_DEVICE)
+      if (NOT ENABLE_MPI)
+        message(FATAL_ERROR
+          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
+      endif()
+      add_compile_definitions(__NCCL_PARALLEL_DEVICE)
+      include(cmake/SetupNccl.cmake)
+      abacus_setup_nccl(${ABACUS_BIN_NAME})
+    endif()
     if (ENABLE_CUSOLVERMP)
       # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
       include(cmake/SetupCuSolverMp.cmake)
@@ -555,56 +610,8 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  if(SCALAPACK_LIBRARY_DIR)
-    if(IS_DIRECTORY "${SCALAPACK_LIBRARY_DIR}")
-      find_library(
-        USER_SCALAPACK_LIBRARY
-        NAMES scalapack scalapack-openmpi scalapack-mpi scalapack-mpich
-        HINTS ${SCALAPACK_LIBRARY_DIR}
-        PATH_SUFFIXES lib lib64
-        NO_DEFAULT_PATH
-      )
-      if(USER_SCALAPACK_LIBRARY)
-        list(APPEND math_libs ${USER_SCALAPACK_LIBRARY})
-      else()
-        find_package(ScaLAPACK QUIET)
-        if(ScaLAPACK_FOUND)
-          list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-        else()
-          message(
-            FATAL_ERROR
-              "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but no compatible ScaLAPACK library was found there and find_package(ScaLAPACK) also failed."
-          )
-        endif()
-      endif()
-    else()
-      if(NOT IS_ABSOLUTE "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this is not an absolute library path. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      elseif(NOT EXISTS "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this path does not exist. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      elseif(IS_DIRECTORY "${SCALAPACK_LIBRARY_DIR}")
-        message(
-          FATAL_ERROR
-            "SCALAPACK_LIBRARY_DIR is set to '${SCALAPACK_LIBRARY_DIR}', but this value resolved to a directory in the full-library-path branch. Please provide either a directory containing libscalapack or a full absolute path to the ScaLAPACK library file."
-        )
-      endif()
-      list(APPEND math_libs ${SCALAPACK_LIBRARY_DIR})
-    endif()
-  elseif(USE_DSP)
-    message(
-      FATAL_ERROR
-        "USE_DSP is enabled, but SCALAPACK_LIBRARY_DIR is not set. Please provide -DSCALAPACK_LIBRARY_DIR=<scalapack dir or full library path>."
-    )
-  else()
-    find_package(ScaLAPACK REQUIRED)
-    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-  endif()
+  find_package(ScaLAPACK REQUIRED)
+  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -810,6 +817,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  neighbor_search
   io_input
   io_basic
   io_advanced

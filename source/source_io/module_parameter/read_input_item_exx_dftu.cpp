@@ -766,6 +766,16 @@ void ReadInput::item_dftu()
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read()) { return; }
+            if (para.inp.yukawa_potential && para.globalv.uramping > 0.01)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "yukawa_potential and uramping cannot be used together. "
+                                         "yukawa_potential calculates U directly from charge density every iteration, "
+                                         "while uramping gradually increases U from 0. Please set only one of them.");
+            }
+        };
         read_sync_bool(input.yukawa_potential);
         this->add_item(item);
     }

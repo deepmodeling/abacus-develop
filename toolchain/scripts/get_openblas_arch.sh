@@ -49,13 +49,8 @@ source "${INSTALLDIR}"/toolchain.env
 cd "${BUILDDIR}"
 
 echo "==================== Getting proc arch info using OpenBLAS tools ===================="
-if [ -f ${openblas_pkg} ]; then
-    echo "${openblas_pkg} is found"
-else
-# using codeload.github
-    url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
-    download_pkg_from_url "${openblas_sha256}" "${openblas_pkg}" "${url}"
-fi
+url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
+retrieve_package "${openblas_sha256}" "${openblas_pkg}" "${url}"
 # if toolchain run in pack-run mode, do exit
 if [ "${PACK_RUN}" = "__TRUE__" ]; then
     echo "--pack-run mode specified, skip arch detection"

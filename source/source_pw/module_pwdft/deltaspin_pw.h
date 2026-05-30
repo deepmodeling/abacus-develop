@@ -1,9 +1,9 @@
 #ifndef DELTASPIN_PW_H
 #define DELTASPIN_PW_H
 
-#include "source_io/module_parameter/parameter.h"
 
 class Charge_Mixing;
+struct Input_para;
 
 namespace pw
 {

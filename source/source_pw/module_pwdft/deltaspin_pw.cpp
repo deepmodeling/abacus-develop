@@ -1,6 +1,7 @@
 #include "source_pw/module_pwdft/deltaspin_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_estate/module_charge/charge_mixing.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace pw
 {

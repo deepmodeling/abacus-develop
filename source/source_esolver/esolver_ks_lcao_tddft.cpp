@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao_tddft.h"
+#include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
 #include "source_io/module_ctrl/ctrl_output_td.h"
@@ -54,6 +55,12 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
         delete td_p;
     }
     TD_info::td_vel_op = nullptr;
+
+    if (td_mg_ != nullptr)
+    {
+        delete td_mg_;
+        td_mg_ = nullptr;
+    }
 }
 
 template <typename TR, typename Device>
@@ -94,6 +101,16 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
+
+    // Initialize the moving spatial gauge
+    if (use_td_moving_gauge && this->td_mg_ == nullptr)
+    {
+        this->td_mg_ = new module_rt::TD_MovingGauge();
+        auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
+        const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
+        this->td_mg_->init_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+    }
+
     if (PARAM.inp.td_stype == 2)
     {
         this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
@@ -160,7 +177,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                         GlobalV::ofs_running,
                                         GlobalV::ofs_warning);
             this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp);
-            this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+            elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, 
+			    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
             if (totstep <= PARAM.inp.td_tend + 1)
             {
@@ -232,7 +250,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 {
     std::cout << " -------------------------------------------" << std::endl;
-    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
+    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep)+1 << std::endl;
     std::cout << " -------------------------------------------" << std::endl;
 }
 
@@ -242,6 +260,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                           const int iter,
                                                           const double ethr)
 {
+    // Update the moving spatial gauge
+    if (use_td_moving_gauge)
+    {
+        auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
+        const hamilt::HContainer<TR>* sR_template = hamilt_lcao->getSR();
+        this->td_mg_->update_DR(sR_template, &ucell, &this->pv, this->two_center_bundle_.overlap_orb.get());
+    }
+
     if (PARAM.inp.init_wfc == "file")
     {
         if (istep >= TD_info::estep_shift + 1)
@@ -261,7 +287,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                 GlobalV::ofs_running,
                 PARAM.inp.propagator,
                 use_tensor,
-                use_lapack);
+                use_lapack,
+                this->td_mg_,
+                &ucell,
+                this->kv.kvec_d,
+                use_td_moving_gauge);
         }
         this->weight_dm_rho(ucell);
     }
@@ -281,7 +311,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                   GlobalV::ofs_running,
                                                   PARAM.inp.propagator,
                                                   use_tensor,
-                                                  use_lapack);
+                                                  use_lapack,
+                                                  this->td_mg_,
+                                                  &ucell,
+                                                  this->kv.kvec_d,
+                                                  use_td_moving_gauge);
         this->weight_dm_rho(ucell);
     }
     else

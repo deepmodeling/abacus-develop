@@ -1,7 +1,7 @@
 #include "source_lcao/hamilt_lcao.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_io/module_parameter/parameter.h"
@@ -476,6 +476,22 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     ModuleBase::Memory::record("HamiltLCAO::sR", this->sR->get_memory_size());
 
     return;
+}
+
+template <typename TK, typename TR>
+std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
+{
+    if (PARAM.inp.nspin == 2)
+    {
+        const int nnr = this->hRS2.size() / 2;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, this->hRS2.data()));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, this->hRS2.data() + nnr));
+        return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
+    }
+    else
+    {
+        return {this->hR};
+    }
 }
 
 // case for multi-k-points

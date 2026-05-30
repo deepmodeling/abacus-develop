@@ -9,7 +9,6 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 
-#include "matrix_methods.h"
 
 class BFGS
 {

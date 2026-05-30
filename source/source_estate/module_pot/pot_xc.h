@@ -1,7 +1,6 @@
 #ifndef POTXC_H
 #define POTXC_H
 
-#include "source_hamilt/module_xc/xc_functional.h"
 #include "pot_base.h"
 
 namespace elecstate

@@ -131,14 +131,14 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
     ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
 
-    if (PARAM.inp.out_mat_r)
+    if (PARAM.inp.out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb_);
         r_matrix.out_rR(ucell, gd, istep);
     }
 
-    if (PARAM.inp.out_mat_ds)
+    if (PARAM.inp.out_mat_ds[0])
     {
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         //! Print out sparse matrix

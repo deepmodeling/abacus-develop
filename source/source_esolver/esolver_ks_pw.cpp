@@ -11,7 +11,7 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_projector.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -165,7 +165,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
               this->stp.template get_psi_t<T, Device>(), 
 	      this->p_hamilt, 
-	      this->pw_wfc, this->pw_rhod, PARAM.inp);
+	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
@@ -216,7 +216,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.calculation,
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
-                                                     false,
                                                      PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,

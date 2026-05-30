@@ -8,6 +8,7 @@
 #include "source_base/mathzone.h"
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/unitcell.h"
+#include "source_estate/cal_nelec_nband.h"
 #include "source_estate/read_pseudo.h"
 #include <valarray>
 #include <vector>

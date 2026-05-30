@@ -118,7 +118,7 @@ RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
 														case Matrix_Order::B2A2A1B1:	m(iB2,iA2,iA1,iB1) = overlap;	break;
 														case Matrix_Order::B2A2B1A1:	m(iB2,iA2,iB1,iA1) = overlap;	break;
 														case Matrix_Order::B2B1A1A2:	m(iB2,iB1,iA1,iA2) = overlap;	break;
-														case Matrix_Order::B2B1A2A1:	m(iB2,iB1,iA2,iA1) = overlap;	break;														
+														case Matrix_Order::B2B1A2A1:	m(iB2,iB1,iA2,iA1) = overlap;	break;
 														default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 													}
 												}
@@ -217,44 +217,40 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs22::cal_grad_overlap_matrix(
 												const size_t NB2 = co10.first;
 												for( size_t MB2=0; MB2!=2*LB2+1; ++MB2 )
 												{
-													const Tdata overlap = co10.second.cal_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 );
-													switch(matrix_order)
-													{										
-														const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co10.second.cal_grad_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 ));
-														const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
-														const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
-														const size_t iB1 = index_B1[TB][LB1][NB1][MB1];
-														const size_t iB2 = index_B2[TB][LB2][NB2][MB2];
-														for(size_t i=0; i<m.size(); ++i)
+													const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co10.second.cal_grad_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB1, MB2 ));
+													const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
+													const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
+													const size_t iB1 = index_B1[TB][LB1][NB1][MB1];
+													const size_t iB2 = index_B2[TB][LB2][NB2][MB2];
+													for(size_t i=0; i<m.size(); ++i)
+													{
+														switch(matrix_order)
 														{
-															switch(matrix_order)
-															{
-																case Matrix_Order::A1A2B1B2:	m[i](iA1,iA2,iB1,iB2) = grad_overlap;	break;
-																case Matrix_Order::A1A2B2B1:	m[i](iA1,iA2,iB2,iB1) = grad_overlap;	break;
-																case Matrix_Order::A1B1A2B2:	m[i](iA1,iB1,iA2,iB2) = grad_overlap;	break;
-																case Matrix_Order::A1B1B2A2:	m[i](iA1,iB1,iB2,iA2) = grad_overlap;	break;
-																case Matrix_Order::A1B2A2B1:	m[i](iA1,iB2,iA2,iB1) = grad_overlap;	break;
-																case Matrix_Order::A1B2B1A2:	m[i](iA1,iB2,iB1,iA2) = grad_overlap;	break;
-																case Matrix_Order::A2A1B1B2:	m[i](iA2,iA1,iB1,iB2) = grad_overlap;	break;
-																case Matrix_Order::A2A1B2B1:	m[i](iA2,iA1,iB2,iB1) = grad_overlap;	break;
-																case Matrix_Order::A2B1A1B2:	m[i](iA2,iB1,iA1,iB2) = grad_overlap;	break;
-																case Matrix_Order::A2B1B2A1:	m[i](iA2,iB1,iB2,iA1) = grad_overlap;	break;
-																case Matrix_Order::A2B2A1B1:	m[i](iA2,iB2,iA1,iB1) = grad_overlap;	break;
-																case Matrix_Order::A2B2B1A1:	m[i](iA2,iB2,iB1,iA1) = grad_overlap;	break;
-																case Matrix_Order::B1A1A2B2:	m[i](iB1,iA1,iA2,iB2) = grad_overlap;	break;
-																case Matrix_Order::B1A1B2A2:	m[i](iB1,iA1,iB2,iA2) = grad_overlap;	break;
-																case Matrix_Order::B1A2A1B2:	m[i](iB1,iA2,iA1,iB2) = grad_overlap;	break;
-																case Matrix_Order::B1A2B2A1:	m[i](iB1,iA2,iB2,iA1) = grad_overlap;	break;
-																case Matrix_Order::B1B2A1A2:	m[i](iB1,iB2,iA1,iA2) = grad_overlap;	break;
-																case Matrix_Order::B1B2A2A1:	m[i](iB1,iB2,iA2,iA1) = grad_overlap;	break;
-																case Matrix_Order::B2A1A2B1:	m[i](iB2,iA1,iA2,iB1) = grad_overlap;	break;
-																case Matrix_Order::B2A1B1A2:	m[i](iB2,iA1,iB1,iA2) = grad_overlap;	break;
-																case Matrix_Order::B2A2A1B1:	m[i](iB2,iA2,iA1,iB1) = grad_overlap;	break;
-																case Matrix_Order::B2A2B1A1:	m[i](iB2,iA2,iB1,iA1) = grad_overlap;	break;
-																case Matrix_Order::B2B1A1A2:	m[i](iB2,iB1,iA1,iA2) = grad_overlap;	break;
-																case Matrix_Order::B2B1A2A1:	m[i](iB2,iB1,iA2,iA1) = grad_overlap;	break;
-																default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
-															}
+															case Matrix_Order::A1A2B1B2:	m[i](iA1,iA2,iB1,iB2) = grad_overlap;	break;
+															case Matrix_Order::A1A2B2B1:	m[i](iA1,iA2,iB2,iB1) = grad_overlap;	break;
+															case Matrix_Order::A1B1A2B2:	m[i](iA1,iB1,iA2,iB2) = grad_overlap;	break;
+															case Matrix_Order::A1B1B2A2:	m[i](iA1,iB1,iB2,iA2) = grad_overlap;	break;
+															case Matrix_Order::A1B2A2B1:	m[i](iA1,iB2,iA2,iB1) = grad_overlap;	break;
+															case Matrix_Order::A1B2B1A2:	m[i](iA1,iB2,iB1,iA2) = grad_overlap;	break;
+															case Matrix_Order::A2A1B1B2:	m[i](iA2,iA1,iB1,iB2) = grad_overlap;	break;
+															case Matrix_Order::A2A1B2B1:	m[i](iA2,iA1,iB2,iB1) = grad_overlap;	break;
+															case Matrix_Order::A2B1A1B2:	m[i](iA2,iB1,iA1,iB2) = grad_overlap;	break;
+															case Matrix_Order::A2B1B2A1:	m[i](iA2,iB1,iB2,iA1) = grad_overlap;	break;
+															case Matrix_Order::A2B2A1B1:	m[i](iA2,iB2,iA1,iB1) = grad_overlap;	break;
+															case Matrix_Order::A2B2B1A1:	m[i](iA2,iB2,iB1,iA1) = grad_overlap;	break;
+															case Matrix_Order::B1A1A2B2:	m[i](iB1,iA1,iA2,iB2) = grad_overlap;	break;
+															case Matrix_Order::B1A1B2A2:	m[i](iB1,iA1,iB2,iA2) = grad_overlap;	break;
+															case Matrix_Order::B1A2A1B2:	m[i](iB1,iA2,iA1,iB2) = grad_overlap;	break;
+															case Matrix_Order::B1A2B2A1:	m[i](iB1,iA2,iB2,iA1) = grad_overlap;	break;
+															case Matrix_Order::B1B2A1A2:	m[i](iB1,iB2,iA1,iA2) = grad_overlap;	break;
+															case Matrix_Order::B1B2A2A1:	m[i](iB1,iB2,iA2,iA1) = grad_overlap;	break;
+															case Matrix_Order::B2A1A2B1:	m[i](iB2,iA1,iA2,iB1) = grad_overlap;	break;
+															case Matrix_Order::B2A1B1A2:	m[i](iB2,iA1,iB1,iA2) = grad_overlap;	break;
+															case Matrix_Order::B2A2A1B1:	m[i](iB2,iA2,iA1,iB1) = grad_overlap;	break;
+															case Matrix_Order::B2A2B1A1:	m[i](iB2,iA2,iB1,iA1) = grad_overlap;	break;
+															case Matrix_Order::B2B1A1A2:	m[i](iB2,iB1,iA1,iA2) = grad_overlap;	break;
+															case Matrix_Order::B2B1A2A1:	m[i](iB2,iB1,iA2,iA1) = grad_overlap;	break;
+															default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 														}
 													}
 												}

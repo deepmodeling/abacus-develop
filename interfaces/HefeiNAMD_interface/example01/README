@@ -1,0 +1,112 @@
+# Hefei-NAMD Interface Example
+
+This directory contains an example for using the Hefei-NAMD interface in ABACUS. For general information about Hefei-NAMD and the ABACUS-Hefei-NAMD interface, please refer to the README.md file in the parent directory.
+
+## Example Purpose
+
+This example demonstrates how to set up an ABACUS calculation that generates the necessary files for Hefei-NAMD, including overlap matrices, wavefunctions, and Hamiltonian matrices.
+
+## Input Files
+
+### 1. INPUT
+
+The INPUT file contains the following key parameters:
+
+```
+INPUT_PARAMETERS
+#Parameters    (General)
+suffix           autotest
+pseudo_dir       ../../tests/PP_ORB
+orbital_dir      ../../tests/PP_ORB
+nbands           8
+calculation      md
+
+ #Parameters (Accuracy)
+ecutwfc          60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.
+scf_nmax         20
+
+basis_type       lcao
+md_nstep         10
+
+cal_stress       1
+stress_thr       1e-6
+cal_force        1
+force_thr_ev     1.0e-3
+
+ks_solver        genelpa
+mixing_type      broyden
+mixing_beta      0.7
+
+md_type          nve
+md_restart       0
+md_tfirst        10
+init_vel         1
+
+read_file_dir    ./
+
+gamma_only       1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
+
+out_wfc_lcao     1
+out_mat_hs       1
+cal_syns         1
+dmax             0.01
+```
+
+### Key Parameters for Hefei-NAMD Interface:
+
+- `cal_syns`: Set to 1 to calculate asynchronous overlap matrix
+- `dmax`: Maximum displacement of all atoms in one step (in bohr) for calculating asynchronous overlap matrix
+- `out_wfc_lcao`: Set to 1 to output wavefunction files
+- `out_mat_hs`: Set to 1 to output Hamiltonian and overlap matrix files
+
+### 2. STRU
+
+The STRU file describes the crystal structure. In this example, it contains the structure of silicon in diamond structure.
+
+### 3. KPT
+
+The KPT file defines the k-point sampling. Since `gamma_only` is set to 1 in the INPUT file, ABACUS will automatically generate/overwrite this file.
+
+## How to Run
+
+1. Navigate to the example directory:
+   ```bash
+   cd /abacus/interfaces/HefeiNAMD_interface/example01
+   ```
+
+2. Run ABACUS:
+   ```bash
+   abacus
+   ```
+
+3. After the calculation completes, check the output files in the `OUT.autotest` directory.
+
+## Output Files
+
+After running the calculation, you will find the following key output files in the `OUT.autotest` directory:
+
+### For Hefei-NAMD Interface:
+
+- **Overlap matrix files**: These files contain the overlap matrix elements needed for Hefei-NAMD calculations
+- **Wavefunction files**: These files contain the wavefunction information needed for Hefei-NAMD calculations
+- **Hamiltonian matrix files**: These files contain the Hamiltonian matrix elements needed for Hefei-NAMD calculations
+
+### General Output Files:
+
+- **running_scf.log**: Log file for the SCF calculation
+- **running_md.log**: Log file for the MD calculation
+- **forces.dat**: Contains atomic forces
+- **STRU_***: Contains the atomic positions at different MD steps
+
+## Notes
+
+- When `cal_syns` is set to 1, the `dmax` parameter must be set to control the maximum atomic displacement in each step
+- The overlap matrix and wavefunction files are essential for Hefei-NAMD calculations
+- This example uses a small MD step (10 steps) for demonstration purposes; for production calculations, you should use more MD steps
+- The energy cutoff (`ecutwfc`) and other parameters should be tested for convergence in production calculations
+
+## Troubleshooting
+
+- If you encounter errors related to the overlap matrix calculation, check that `dmax` is set to a reasonable value
+- If you do not see the expected output files, ensure that `out_wfc_lcao` and `out_mat_hs` are both set to 1
+- For larger systems, you may need to adjust the memory settings to handle the larger matrix calculations

@@ -2,7 +2,6 @@
 #define LCAO_DOMAIN_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"

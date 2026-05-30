@@ -1,5 +1,4 @@
 #include "source_base/ylm.h"
-#include "source_base/array_pool.h"
 #include "gint_atom.h"
 #include "source_cell/unitcell.h"
 #include "gint_helper.h"
@@ -127,9 +126,9 @@ void GintAtom::set_phi_dphi(
     // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
     
-    std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
-    // TODO: replace array_pool with std::vector
-    ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
+    const int nylm = std::pow(atom_->nwl + 1, 2);
+    std::vector<double> rly(nylm);
+    std::vector<double> grly(nylm * 3);
     
     for(int im = 0; im < num_mgrids; im++)
     {
@@ -154,7 +153,7 @@ void GintAtom::set_phi_dphi(
             // spherical harmonics
             // TODO: vectorize the sph_harm function, 
             // the vectorized function can be called once for all meshgrids in a biggrid
-            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord.x, coord.y, coord.z, rly.data(), grly.get_ptr_2D());
+            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord.x, coord.y, coord.z, rly.data(), grly.data());
 
             // interpolation
             const double position = dist / dr_uniform;
@@ -201,9 +200,9 @@ void GintAtom::set_phi_dphi(
                 // derivative of wave functions with respect to atom positions.
                 const double tmpdphi_rly = (dtmp - tmp * ll / dist) / rl * rly[idx_lm] / dist;
 
-                dphi_x[im * stride + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_lm][0];
-                dphi_y[im * stride + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_lm][1];
-                dphi_z[im * stride + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_lm][2];
+                dphi_x[im * stride + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_lm*3];
+                dphi_y[im * stride + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_lm*3 + 1];
+                dphi_z[im * stride + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_lm*3 + 2];
             }
         }
     }

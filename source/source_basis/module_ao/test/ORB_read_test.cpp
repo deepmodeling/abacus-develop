@@ -98,8 +98,8 @@ void LcaoOrbitalsTest::lcao_read() {
     lcao_.dR = dR_;
     lcao_.Rmax = Rmax_;
 
-    lcao_.Read_Orbitals(ofs_log_, ntype_, lmax_, deepks_setorb_, out_mat_r_, 
-            force_flag_, my_rank_);
+    lcao_.Read_Orbitals(ofs_log_, ntype_, lmax_, deepks_setorb_, out_mat_r_,
+            false /* out_element_info */, force_flag_, my_rank_);
 }
 
 

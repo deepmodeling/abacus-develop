@@ -7,6 +7,7 @@
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
@@ -60,7 +61,7 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2 == 1)
+    if (PARAM.inp.out_mat_hs2[0] == 1)
     {
         TD_info::out_mat_R = true;
     } else {

@@ -9,9 +9,8 @@
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_dm/density_matrix.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
 
 namespace DeePKS_domain
 {

@@ -2,7 +2,6 @@
 #define SETUP_PWRHO_H
 
 #include "source_cell/unitcell.h" // use UnitCell
-#include "source_pw/module_pwdft/structure_factor.h" // use Structure_Factor
 #include "source_basis/module_pw/pw_basis.h" // use PW_Basis
 #include "source_io/module_parameter/input_parameter.h" // use Input_para
 
