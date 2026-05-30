@@ -56,22 +56,6 @@ public:
         }
     }
 
-    /// Wait for a specific subset of requests (by indices)
-    void wait_some(const std::vector<int>& indices) {
-        // This is a simple implementation; for production,
-        // MPI_Waitsome could be used for better efficiency.
-        for (int idx : indices) {
-            if (idx >= 0 && idx < static_cast<int>(requests_.size())) {
-                MPI_Wait(&requests_[idx], MPI_STATUS_IGNORE);
-                requests_[idx] = MPI_REQUEST_NULL;
-            }
-        }
-        // Compact: remove MPI_REQUEST_NULL entries
-        requests_.erase(
-            std::remove(requests_.begin(), requests_.end(), MPI_REQUEST_NULL),
-            requests_.end());
-    }
-
     /// Check if any requests are pending
     bool has_pending() const { return !requests_.empty(); }
 
