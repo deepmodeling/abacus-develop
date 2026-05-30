@@ -6,9 +6,11 @@
 #include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/timer.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_hsolver/mpi_comm_helper.h"
 
 namespace hsolver
 {
@@ -123,10 +125,22 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
+#ifdef __MPI
+        // Use non-blocking reduce for hcc and scc simultaneously
+        MPIRequestTracker tracker;
+        MPICommHelper::nreduce_pool_complex(
+            hcc, nstart * nstart, POOL_WORLD, tracker);
+        if (!S_orth) {
+            MPICommHelper::nreduce_pool_complex(
+                scc, nstart * nstart, POOL_WORLD, tracker);
+        }
+        tracker.wait_all();
+#else
         Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
         if(!S_orth){
             Parallel_Reduce::reduce_pool(scc, nstart * nstart);
         }
+#endif
     }
 
     // after generation of H and (optionally) S matrix, diag them

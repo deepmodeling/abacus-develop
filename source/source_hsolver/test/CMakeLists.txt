@@ -48,6 +48,15 @@ if (ENABLE_MPI)
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
   )
+  # MPI parallel optimization test
+  AddTest(
+    TARGET MODULE_HSOLVER_mpi
+    LIBS parameter  ${math_libs} base psi device MPI::MPI_CXX
+    SOURCES diago_mpi_test.cpp ../diago_david.cpp ../diago_dav_subspace.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
   if(ENABLE_LCAO)
   AddTest(
     TARGET MODULE_HSOLVER_cg_real
@@ -137,6 +146,7 @@ install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES diago_mpi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -183,6 +193,10 @@ if (ENABLE_MPI)
   )
   add_test(NAME MODULE_HSOLVER_dav_parallel
         COMMAND ${BASH} diago_david_parallel_test.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+  add_test(NAME MODULE_HSOLVER_mpi_parallel
+        COMMAND ${BASH} diago_mpi_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
   if(ENABLE_LCAO)

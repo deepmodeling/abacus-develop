@@ -14,6 +14,7 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/diag_hs_para.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
+#include "source_hsolver/mpi_comm_helper.h"
 
 #include <vector>
 
@@ -585,8 +586,15 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
         assert(this->diag_comm.comm == POOL_WORLD);
-        Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-        Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
+        // Use non-blocking pool reduce for hcc and scc simultaneously
+        MPIRequestTracker tracker;
+        MPICommHelper::nreduce_pool_complex(
+            hcc + nbase * this->nbase_x, notconv * this->nbase_x,
+            this->diag_comm.comm, tracker);
+        MPICommHelper::nreduce_pool_complex(
+            scc + nbase * this->nbase_x, notconv * this->nbase_x,
+            this->diag_comm.comm, tracker);
+        tracker.wait_all();
 #endif
     }
 #endif
@@ -714,12 +722,14 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
     {
-        // vcc: nbase * nband
-        for (int i = 0; i < nband; i++)
-        {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
-        }
-        MPI_Bcast((*eigenvalue_iter).data(), nband, MPI_DOUBLE, 0, this->diag_comm.comm);
+        // Use non-blocking broadcast for eigenvalues and eigenvectors
+        // Broadcast continuous block of vcc instead of per-band loop
+        MPIRequestTracker tracker;
+        MPICommHelper::nbcast_complex(vcc, nband * this->nbase_x, 0,
+                                      this->diag_comm.comm, tracker);
+        MPICommHelper::nbcast_double((*eigenvalue_iter).data(), nband, 0,
+                                     this->diag_comm.comm, tracker);
+        tracker.wait_all();
     }
 #endif
 
