@@ -2,6 +2,7 @@
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
+#include <vector>
 
 /************************************************
  *  serial unit test of functions in pw_basis.cpp
@@ -188,4 +189,41 @@ TEST_F(PWBasisKTEST, CollectLocalPW)
 	EXPECT_EQ(basis_k.npwk_max,2721);
 }
 
+TEST_F(PWBasisKTEST, ComplexTransformRoundTrip)
+{
+	ModulePW::PW_Basis_K basis_k(device_flag, precision_double);
+	double lat0 = 2.0;
+	ModuleBase::Matrix3 latvec(1.0,0.0,1.0,
+				0.0,2.0,0.0,
+				0.0,0.0,2.0);
+	double gridecut = 30.0;
+	const bool gamma_only_in = false;
+	const double gk_ecut_in = 20.0;
+	const int nks_in = 1;
+	const ModuleBase::Vector3<double> kvec_d_in[1] = { {0.0, 0.0, 0.0} };
+	const int distribution_type_in = 2;
+	const bool xprime_in = false;
 
+	basis_k.initgrids(lat0, latvec, gridecut);
+	basis_k.initparameters(gamma_only_in, gk_ecut_in, nks_in, kvec_d_in, distribution_type_in, xprime_in);
+	ASSERT_NO_THROW(basis_k.setuptransform());
+
+	std::vector<std::complex<double>> recip_in(basis_k.npwk[0]);
+	std::vector<std::complex<double>> real_space(basis_k.nrxx);
+	std::vector<std::complex<double>> recip_out(basis_k.npwk[0]);
+	for (int ig = 0; ig < basis_k.npwk[0]; ++ig)
+	{
+		const double real_part = (ig % 17 - 8) / 11.0;
+		const double imag_part = (ig % 19 - 9) / 13.0;
+		recip_in[ig] = std::complex<double>(real_part, imag_part);
+	}
+
+	basis_k.recip2real(recip_in.data(), real_space.data(), 0);
+	basis_k.real2recip(real_space.data(), recip_out.data(), 0);
+
+	for (int ig = 0; ig < basis_k.npwk[0]; ++ig)
+	{
+		EXPECT_NEAR(recip_in[ig].real(), recip_out[ig].real(), 1e-10);
+		EXPECT_NEAR(recip_in[ig].imag(), recip_out[ig].imag(), 1e-10);
+	}
+}
