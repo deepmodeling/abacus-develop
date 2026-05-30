@@ -149,12 +149,24 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
 
         const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
                                                                                psi_trial,
+                                                                               snapshot.wg,
+                                                                               1.0e-12,
                                                                                pivot_threshold,
                                                                                check_tolerance);
         if (!orth_result.ok())
         {
             result.status = orth_result.status;
             result.failed_state = orth_result.failed_state;
+            result.failed_pivot_index = orth_result.failed_pivot_index;
+            result.failed_pivot = orth_result.failed_pivot;
+            result.min_metric_diag = orth_result.min_metric_diag;
+            result.max_metric_diag = orth_result.max_metric_diag;
+            result.max_metric_abs = orth_result.max_metric_abs;
+            result.max_metric_asymmetry = orth_result.max_metric_asymmetry;
+            result.nstate = orth_result.nstate;
+            result.nbands = orth_result.nbands;
+            result.nbasis = orth_result.nbasis;
+            result.nactive_bands = orth_result.nactive_bands;
             result.max_orthonormality_deviation = orth_result.max_deviation;
             return result;
         }
@@ -162,6 +174,10 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
         psi = psi_trial;
         result.status = WfcExtrapStatus::Success;
         result.failed_state = -1;
+        result.nstate = orth_result.nstate;
+        result.nbands = orth_result.nbands;
+        result.nbasis = orth_result.nbasis;
+        result.nactive_bands = orth_result.nactive_bands;
         result.max_orthonormality_deviation = orth_result.max_deviation;
         return result;
     }

@@ -14,7 +14,19 @@ struct WfExtrapApplyResult
 {
     WfcExtrapStatus status = WfcExtrapStatus::Disabled;
     double max_orthonormality_deviation = 0.0;
+
+    // Propagated diagnostics from WfOrthonormalizeResult.
+    double failed_pivot = 0.0;
+    double min_metric_diag = 0.0;
+    double max_metric_diag = 0.0;
+    double max_metric_abs = 0.0;
+    double max_metric_asymmetry = 0.0;
     int failed_state = -1;
+    int failed_pivot_index = -1;
+    int nstate = 0;
+    int nbands = 0;
+    int nbasis = 0;
+    int nactive_bands = 0;
     int snapshot_istep = -1;
 
     bool ok() const noexcept
