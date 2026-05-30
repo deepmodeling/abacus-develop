@@ -1,3 +1,0 @@
-===== RUN START 2026-05-28T20:19:37+0800 case=gaas_small config=omp8 np=1 omp=8 rep=1 =====
-Info: Local MPI proc number: 1,OpenMP thread number: 8,Total thread number: 8,Local thread limit: 16
-===== RUN END 2026-05-28T20:19:47+0800 case=gaas_small config=omp8 np=1 omp=8 rep=1 status=0 =====
