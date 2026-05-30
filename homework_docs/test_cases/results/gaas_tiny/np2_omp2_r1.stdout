@@ -7,9 +7,9 @@
                Documentation: https://abacus.deepmodeling.com/                       
                   Repository: https://github.com/abacusmodeling/abacus-develop       
                               https://github.com/deepmodeling/abacus-develop         
-                      Commit: 783b9ef4a (Mon May 25 19:37:18 2026 +0800)
+                      Commit: 65acba3c6 (Thu May 21 19:32:40 2026 +0800)
 
- Thu May 28 19:14:32 2026
+ Fri May 22 00:34:24 2026
  MAKE THE DIR         : OUT.ABACUS/
  RUNNING WITH DEVICE  : CPU / 13th Gen Intel(R) Core(TM) i5-13500H (x1)
  WARNING: some of potential function is set to zero cause of less than 1e-30.
@@ -24,9 +24,9 @@
 
  UNIFORM GRID DIM     : 24 * 24 * 24
  UNIFORM GRID DIM(BIG): 24 * 24 * 24
- DONE(0.0513651  SEC) : SYMMETRY
- DONE(0.0513895  SEC) : SETUP UNITCELL
- DONE(0.0966309  SEC) : INIT K-POINTS
+ DONE(0.0641962  SEC) : SYMMETRY
+ DONE(0.064223   SEC) : SETUP UNITCELL
+ DONE(0.12255    SEC) : INIT K-POINTS
  ----------------------------------------------------------------
  Self-consistent calculations for electrons
  ----------------------------------------------------------------
@@ -41,71 +41,63 @@
  ----------------------------------------------------------------
  Initial plane wave basis and FFT box
  ----------------------------------------------------------------
- DONE(0.098601   SEC) : INIT PLANEWAVE
+ DONE(0.211877   SEC) : INIT PLANEWAVE
  START CHARGE         : ATOMIC
- DONE(0.103102   SEC) : LOCAL POTENTIAL
- DONE(0.114987   SEC) : NON-LOCAL POTENTIAL
+ DONE(0.215705   SEC) : LOCAL POTENTIAL
+ DONE(0.232185   SEC) : NON-LOCAL POTENTIAL
  MEMORY FOR PSI (MB)  : 4.18274
- DONE(0.160778   SEC) : INIT BASIS
+ DONE(0.288435   SEC) : INIT BASIS
 
  ================================================================
  SELF-CONSISTENT: 
  ================================================================
- DONE(0.221823   SEC) : INIT SCF
+ DONE(0.558336   SEC) : INIT SCF
  ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
- CG1     -1.60946268e+04   0.00000000e+00   1.7501e+02   0.36
- CG2     -1.67505734e+04  -6.55946576e+02   4.1513e+01   0.41
- CG3     -1.68334756e+04  -8.29022379e+01   6.6779e+00   0.23
- CG4     -1.68534650e+04  -1.99893741e+01   9.1813e-01   0.20
- CG5     -1.68553159e+04  -1.85092323e+00   2.9200e-02   0.23
- CG6     -1.68554398e+04  -1.23900732e-01   1.9689e-03   0.25
- CG7     -1.68554439e+04  -4.09487994e-03   6.9426e-04   0.20
- CG8     -1.68554471e+04  -3.19435719e-03   1.9455e-04   0.19
- CG9     -1.68554512e+04  -4.08850276e-03   4.0459e-06   0.22
- CG10    -1.68554507e+04   5.27856301e-04   1.6743e-06   0.25
- !!SCF IS NOT CONVERGED!!
- ----------------------------------------------------------------
-              Stress_x             Stress_y             Stress_z 
- ----------------------------------------------------------------
-     -25198.0244751203         0.0000000000        -0.0000000000 
-         -0.0000000000    -25198.0244751203        -0.0000000000 
-          0.0000000000         0.0000000000    -25198.0244751203 
- ----------------------------------------------------------------
- TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -25198.024475 kbar
+ CG1     -1.60946268e+04   0.00000000e+00   1.7501e+02   0.53
+ CG2     -1.67505734e+04  -6.55946576e+02   4.1513e+01  17.18
+ CG3     -1.68334756e+04  -8.29022379e+01   6.6779e+00   2.02
+ CG4     -1.68534650e+04  -1.99893741e+01   9.1813e-01   3.54
+ CG5     -1.68553159e+04  -1.85092323e+00   2.9200e-02   3.65
+ CG6     -1.68554398e+04  -1.23900732e-01   1.9689e-03   0.32
+ CG7     -1.68554439e+04  -4.09487994e-03   6.9426e-04   4.31
+ CG8     -1.68554471e+04  -3.19435719e-03   1.9455e-04   9.21
+ CG9     -1.68554512e+04  -4.08850276e-03   4.0459e-06  10.64
+ 
+ ---------------------------------------------------------
+                         !NOTICE!                         
+ ---------------------------------------------------------
+ 
+ File I/O failure: cannot open file OUT.ABACUS/ABACUS-CHARGE-DENSITY.restart
+ CHECK IN FILE : OUT.ABACUS/warning.log
+ 
+ For detailed manual of ABACUS, please see the website
+ https://abacus.deepmodeling.com
+ For any questions, propose issues on the website
+ https://github.com/deepmodeling/abacus-develop/issues
+ ---------------------------------------------------------
+                         !NOTICE!                         
+ ---------------------------------------------------------
 
  TIME STATISTICS
-------------------------------------------------------------------
-   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
-------------------------------------------------------------------
-                 total              2.86   17       0.17   100.00 
- Driver          atomic_world       2.86   1        2.86   100.00 
- Symmetry        analy_sys          0.03   1        0.03   1.04   
- PSIPrepare      prepare_init       0.05   1        0.05   1.60   
- psi_init_atomic tabulate           0.05   1        0.05   1.60   
- Relax_Driver    relax_driver       2.70   1        2.70   94.36  
- ESolver_KS      runner             2.62   1        2.62   91.37  
- ESolver_KS_PW   before_scf         0.06   1        0.06   2.13   
- PSIPrepare      initialize_psi     0.05   1        0.05   1.90   
- DiagoIterAssist diag_subspace_init 0.05   4        0.01   1.78   
- Operator        hPsi               1.89   9269     0.00   66.19  
- Operator        veff_pw            1.28   9269     0.00   44.67  
- PW_Basis_K      recip2real         0.80   14837    0.00   27.89  
- PW_Basis_K      real2recip         0.59   12037    0.00   20.72  
- Operator        nonlocal_pw        0.60   9269     0.00   20.81  
- Nonlocal        add_nonlocal_pp    0.28   9269     0.00   9.79   
- DiagoIterAssist diag_hegvd         0.04   40       0.00   1.26   
- ESolver_KS_PW   hamilt2rho_single  2.53   10       0.25   88.42  
- HSolverPW       solve              2.52   10       0.25   88.18  
- HSolverPW       solve_psik         2.36   40       0.06   82.33  
- DiagoCG         diag_once          1.92   40       0.05   66.92  
- ElecStatePW     psiToRho           0.15   10       0.02   5.32   
- DiagoIterAssist diag_subspace      0.43   36       0.01   14.94  
- Stress_PW       cal_stress         0.06   1        0.06   2.27   
- Stress          stress_nl          0.05   1        0.05   1.89   
-------------------------------------------------------------------
+-----------------------------------------------------------------
+   CLASS_NAME          NAME        TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------
+                 total             53.35  17       3.14   100.00 
+ Operator        hPsi              36.13  9269     0.00   67.72  
+ Operator        EkineticPW        0.95   9269     0.00   1.78   
+ Operator        veff_pw           27.19  9269     0.00   50.97  
+ PW_Basis_K      recip2real        14.38  14837    0.00   26.96  
+ PW_Basis_K      gathers_scatterp  7.76   14837    0.00   14.54  
+ PW_Basis_K      real2recip        12.74  12037    0.00   23.88  
+ PW_Basis_K      gatherp_scatters  8.07   12037    0.00   15.12  
+ Operator        nonlocal_pw       7.98   9269     0.00   14.96  
+ Nonlocal        add_nonlocal_pp   4.64   9269     0.00   8.69   
+ ESolver_KS_PW   hamilt2rho_single 52.33  10       5.23   98.09  
+ HSolverPW       solve             52.28  10       5.23   97.99  
+ HSolverPW       solve_psik        51.33  40       1.28   96.21  
+ DiagoCG         diag_once         44.13  40       1.10   82.73  
+ ElecStatePW     psiToRho          0.79   10       0.08   1.49   
+ DiagoIterAssist diag_subspace     7.16   36       0.20   13.42  
+-----------------------------------------------------------------
 
-
- START  Time  : Thu May 28 19:14:32 2026
- FINISH Time  : Thu May 28 19:14:35 2026
- TOTAL  Time  : 3
- SEE INFORMATION IN : OUT.ABACUS/
+ See output information in : OUT.ABACUS/
