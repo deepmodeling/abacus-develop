@@ -1,0 +1,138 @@
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{ctex}
+
+\title{NEP 势函数路径的 OpenMP 加速与正确性测试}
+\author{}
+\date{2026 年 5 月 23 日}
+
+\begin{document}
+\maketitle
+
+\section{目标}
+
+问题 2 要求对分子动力学中的势函数计算进行 OpenMP 多线程加速，并重点关注并行过程中的数据依赖、归约操作以及不同线程数下的结果正确性。本文的优化对象是位于
+\texttt{source/source\_md/potential/ml/nep} 目录下的 NEP CPU 实现。
+
+本工作的目标包括：首先，识别 NEP 势函数计算中适合 OpenMP 并行化的核心路径；其次，在保证力、势能和 virial 计算结果正确的前提下，对 force path 进行线程安全的并行优化；最后，通过独立测试程序验证不同线程数下计算结果的一致性，并初步评估运行时间和加速比。
+
+\section{实现方法}
+
+NEP 的描述符计算和近邻表构建部分已经包含了一些 OpenMP 并行循环。进一步检查后发现，仍然存在风险较高、计算量较集中的 force path，主要包括以下函数：
+
+\begin{itemize}
+  \item \texttt{find\_force\_radial\_small\_box}
+  \item \texttt{find\_force\_angular\_small\_box}
+  \item \texttt{find\_force\_ZBL\_small\_box}
+\end{itemize}
+
+这些循环不能直接使用普通的
+
+\begin{lstlisting}[language=C++]
+#pragma omp parallel for
+\end{lstlisting}
+
+进行并行化。原因在于，每一个近邻原子对的贡献会同时更新两个原子的受力：
+
+\[
+  F_{n1} \mathrel{+}= f_{12}, \qquad F_{n2} \mathrel{-}= f_{12}.
+\]
+
+因此，当多个 OpenMP 线程同时处理不同原子对时，它们可能会同时写入同一个原子的 force 数组或 virial 数组，从而产生数据竞争。若不进行额外处理，虽然程序可能可以运行，但并行结果将不再可靠。
+
+为了解决这一问题，本实现采用了线程私有累加缓冲区的方案：
+
+\begin{enumerate}
+  \item 每个 OpenMP 线程分配自己的私有 force 和 virial 数组；
+  \item 外层原子循环使用 \texttt{\#pragma omp for} 进行并行划分；
+  \item 每个线程只将自己负责的原子对贡献累加到本线程的私有数组中；
+  \item 并行循环结束后，再将各线程的私有数组归约到共享输出数组中；
+  \item 归约阶段使用较短的同步区域，避免并行写冲突。
+\end{enumerate}
+
+这种方法避免了多个线程直接写入同一个 force 或 virial 元素的问题，因此能够保持原有 pairwise force 和 virial 公式不变，同时保证并行计算的线程安全性。
+
+\section{正确性测试}
+
+为了验证 OpenMP 并行化后的 NEP force path 是否正确，本文增加了一个小型独立测试程序：
+
+\begin{itemize}
+  \item 测试源文件：\texttt{source/source\_md/tools/nep\_omp\_check.cpp}
+  \item 运行脚本：\texttt{source/source\_md/tools/run\_nep\_omp\_check.sh}
+  \item 测试模型：\texttt{tests/PP\_ORB/nep\_hfo2.txt}
+\end{itemize}
+
+该测试程序使用一个包含六个原子的 Hf/O 构型。程序首先使用单线程计算结果作为参考值，然后分别使用多个不同的 OpenMP 线程数重复计算同一构型。测试程序会输出平均运行时间，并比较不同线程数下势能、力和 virial 数组相对于单线程参考结果的最大绝对误差。
+
+通过这种方式，可以同时检查两个方面：第一，OpenMP 并行化是否改变了数值结果；第二，不同线程数下的运行时间是否有初步改善。
+
+\section{初步运行结果}
+
+本地测试使用如下命令：
+
+\begin{lstlisting}[language=bash]
+tools/run_nep_omp_check.sh ../../tests/PP_ORB/nep_hfo2.txt 1,2,4 100
+\end{lstlisting}
+
+脚本自动选择的编译器为 \texttt{g++-15}，编译选项为：
+
+\begin{lstlisting}[language=bash]
+-O2 -fopenmp
+\end{lstlisting}
+
+测试结果如下表所示：
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+线程数 & 平均时间 (ms) & 加速比 & 最大 $\Delta E$ & 最大 $\Delta F$ & 最大 $\Delta V$ \\
+\midrule
+1 & 0.96246 & 1.00 & 0 & 0 & 0 \\
+2 & 0.78283 & 1.23 & 0 & $2.22045\times10^{-16}$ & $8.88178\times10^{-16}$ \\
+4 & 0.80320 & 1.20 & 0 & $4.44089\times10^{-16}$ & $1.33227\times10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\caption{NEP OpenMP 正确性与运行时间初步测试结果}
+\end{table}
+
+\section{结果分析}
+
+从正确性角度看，不同线程数下的 force 和 virial 差异均处于浮点舍入误差量级。其中最大 force 差异约为 $10^{-16}$，最大 virial 差异约为 $10^{-15}$。这说明经过 OpenMP 并行化后的 force path 与单线程参考结果在数值上保持一致，没有出现明显的数据竞争或并行归约错误。
+
+从性能角度看，在当前六原子小体系测试中，双线程和四线程相对于单线程分别获得了约 $1.23\times$ 和 $1.20\times$ 的加速。四线程结果略慢于双线程，这是可以理解的。由于该测试体系规模较小，实际 NEP 计算量有限，线程启动、私有缓冲区分配以及最终归约的开销会占据较大比例，因此并行效率并不高。
+
+对于更大的原子体系，每个原子的描述符计算、近邻相互作用和 force 累加工作量都会显著增加，OpenMP 并行区域的额外开销更容易被摊薄。因此，当前结果更适合作为正确性验证和初步性能验证，而不能代表该方法在大规模分子动力学体系中的最终可扩展性。
+
+\section{复现实验方法}
+
+在仓库根目录下进入 \texttt{source/source\_md} 目录，然后运行：
+
+\begin{lstlisting}[language=bash]
+cd source/source_md
+tools/run_nep_omp_check.sh
+\end{lstlisting}
+
+也可以手动指定 NEP 模型文件、线程数列表和重复次数：
+
+\begin{lstlisting}[language=bash]
+tools/run_nep_omp_check.sh MODEL_FILE THREAD_LIST REPEATS
+tools/run_nep_omp_check.sh /path/to/nep.txt 1,2,4,8 50
+\end{lstlisting}
+
+其中，\texttt{MODEL\_FILE} 为 NEP 模型文件路径，\texttt{THREAD\_LIST} 为待测试的 OpenMP 线程数列表，\texttt{REPEATS} 为每种线程数下重复计算的次数。
+
+\section{小结}
+
+本文针对 NEP 势函数 force path 中存在潜在数据竞争的部分进行了 OpenMP 并行优化。通过引入线程私有 force 和 virial 缓冲区，并在并行循环结束后进行统一归约，避免了多个线程同时写入共享数组的问题。独立测试结果表明，不同线程数下的势能、力和 virial 结果与单线程参考值保持一致，误差仅处于浮点舍入量级。
+
+虽然当前小体系测试中的加速比有限，但该实现已经完成了问题 2 所要求的 OpenMP 并行化、数据依赖处理和正确性验证，为后续在更大体系上测试 NEP 势函数的并行效率提供了基础。
+
+\end{document}

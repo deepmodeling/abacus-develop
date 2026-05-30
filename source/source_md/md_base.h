@@ -4,6 +4,13 @@
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <array>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "potential/potential_base.h"
+
 /**
  * @brief base class of md
  *
@@ -17,6 +24,26 @@ class MD_base
   public:
     MD_base(const Parameter& param_in, UnitCell& unit_in);
     virtual ~MD_base();
+
+    /**
+     * @brief initialize an optional machine-learning potential.
+     *
+     * If this function is not called, MD keeps using the original ESolver
+     * force/virial calculation path.
+     *
+     * @param potential_type backend name, e.g. "nep", "dpmd", or "deepmd"
+     * @param model_file path to the model file, e.g. nep.txt or frozen_model.pb
+     */
+    void init_ml_potential(const std::string& potential_type,
+                           const std::string& model_file);
+
+    /**
+     * @brief update potential energy, force, and virial.
+     *
+     * This is the single force-evaluation entrance used by both setup()
+     * and the production MD loop.
+     */
+    void update_force_virial(ModuleESolver::ESolver* p_esolver);
 
     /**
      * @brief init before running md, calculate energy, force, and stress of the
@@ -84,6 +111,22 @@ class MD_base
     ModuleBase::matrix stress;          ///< stress for this lattice
     double potential=0.0;               ///< potential energy
     double kinetic;                     ///< kinetic energy
+
+  protected:
+    /**
+     * @brief evaluate the optional ML potential.
+     *
+     * The ML potential adapter should return all quantities in ABACUS internal
+     * MD units: energy in Hartree, force in Hartree/Bohr, and virial in Hartree.
+     */
+    void update_force_virial_ml();
+
+    std::vector<std::array<double, 3>> pack_positions_for_ml() const;
+    std::vector<int> pack_atom_types_for_ml() const;
+    std::array<double, 9> pack_cell_for_ml() const;
+
+    bool use_ml_potential_ = false;
+    std::unique_ptr<ModuleMD::PotentialBase> ml_potential_;
 
   protected:
     const MD_para& mdp; ///< input parameters used in md
