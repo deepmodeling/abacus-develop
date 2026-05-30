@@ -1160,10 +1160,17 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     if (precision_mode_ == PrecisionMode::kMixed)
     {
 #ifdef ENABLE_MIXED_PRECISION
-        return diag_mixed_precision(hpsi_func, spsi_func,
+        int result = diag_mixed_precision(hpsi_func, spsi_func,
                                      ld_psi, psi_in, eigenvalue_in,
                                      ethr_band, david_maxiter,
                                      ntry_max, notconv_max);
+        // If mixed precision converged well, return immediately.
+        // Otherwise fall through to standard double precision path,
+        // using the refined psi as a starting point.
+        if (this->notconv <= std::max(5, nband / 4))
+        {
+            return result;
+        }
 #endif
     }
 
