@@ -30,6 +30,17 @@
 #include <fstream>
 #include <sstream>
 
+using namespace hsolver;
+
+// =========================================================================
+// LAPACK external declaration (Fortran zheev)
+// =========================================================================
+
+extern "C" void zheev_(char* jobz, char* uplo, int* n,
+                        std::complex<double>* a, int* lda,
+                        double* w, std::complex<double>* work, int* lwork,
+                        double* rwork, int* info);
+
 // =========================================================================
 // Test Parameters
 // =========================================================================
