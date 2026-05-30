@@ -23,6 +23,7 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
 
+#include <algorithm>
 #include <numeric>
 #include <unordered_map>
 
@@ -34,6 +35,9 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     nep_force.create(ucell.nat, 3);
     nep_virial.create(3, 3);
     atype.resize(ucell.nat);
+    nep_cell.resize(9);
+    nep_coord.resize(3 * ucell.nat);
+    nep_virial_sum.resize(9);
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
     _v.resize(9 * ucell.nat);
@@ -56,28 +60,27 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
     // note that NEP are column major, thus a transpose is needed
     // cell
-    std::vector<double> cell(9, 0.0);
-    cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
-    cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
-    cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
-    cell[3] = ucell.latvec.e12 * ucell.lat0_angstrom;
-    cell[4] = ucell.latvec.e22 * ucell.lat0_angstrom;
-    cell[5] = ucell.latvec.e32 * ucell.lat0_angstrom;
-    cell[6] = ucell.latvec.e13 * ucell.lat0_angstrom;
-    cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
-    cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
+    nep_cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
+    nep_cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
+    nep_cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
+    nep_cell[3] = ucell.latvec.e12 * ucell.lat0_angstrom;
+    nep_cell[4] = ucell.latvec.e22 * ucell.lat0_angstrom;
+    nep_cell[5] = ucell.latvec.e32 * ucell.lat0_angstrom;
+    nep_cell[6] = ucell.latvec.e13 * ucell.lat0_angstrom;
+    nep_cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
+    nep_cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
     // coord
-    std::vector<double> coord(3 * ucell.nat, 0.0);
+    nep_coord.resize(3 * ucell.nat);
     int iat = 0;
     const int nat = ucell.nat;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+            nep_coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+            nep_coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+            nep_coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
             iat++;
         }
     }
@@ -88,7 +91,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     nep_force.zero_out();
     nep_virial.zero_out();
 
-    nep.compute(atype, cell, coord, _e, _f, _v);
+    nep.compute(atype, nep_cell, nep_coord, _e, _f, _v);
 
     // unit conversion
     const double fact_e = 1.0 / ModuleBase::Ry_to_eV;
@@ -110,13 +113,13 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     }
 
     // virial
-    std::vector<double> v_sum(9, 0.0);
+    std::fill(nep_virial_sum.begin(), nep_virial_sum.end(), 0.0);
     for (int j = 0; j < 9; ++j)
     {
         for (int i = 0; i < nat; ++i)
         {
             int index = j * nat + i;
-            v_sum[j] += _v[index];
+            nep_virial_sum[j] += _v[index];
         }
     }
 
@@ -125,7 +128,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     {
         for (int j = 0; j < 3; ++j)
         {
-            nep_virial(i, j) = v_sum[3 * i + j] * fact_v;
+            nep_virial(i, j) = nep_virial_sum[3 * i + j] * fact_v;
         }
     }
 #else
