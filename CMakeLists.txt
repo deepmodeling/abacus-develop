@@ -775,7 +775,15 @@ if(DEFINED DeePMD_DIR)
   endif()
 endif()
 
-if(DEFINED NEP_DIR)
+option(USE_BUNDLED_NEP "Build NEP from third_party/NEP_CPU with OpenMP optimizations" OFF)
+
+if(USE_BUNDLED_NEP)
+  add_subdirectory(third_party/NEP_CPU)
+  add_compile_definitions(__NEP)
+  target_link_libraries(${ABACUS_BIN_NAME} nep)
+  target_include_directories(${ABACUS_BIN_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/third_party/NEP_CPU/src)
+elseif(DEFINED NEP_DIR)
   find_package(NEP REQUIRED)
 
   if(NEP_FOUND)

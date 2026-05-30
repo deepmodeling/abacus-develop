@@ -51,8 +51,9 @@ case "$with_nep" in
         cat << EOF > Makefile
 CXX ?= g++
 
-# Compiler flags
-CXXFLAGS = -O2 -fPIC -std=c++11
+# Compiler flags (OpenMP enabled for parallel NEP force/descriptor kernels)
+CXXFLAGS = -O3 -fPIC -std=c++11 -fopenmp
+LDFLAGS = -fopenmp
 
 # Include directories
 INCLUDES = -I./src
@@ -71,7 +72,7 @@ all: \$(TARGET)
 
 # Rule to build the shared library
 \$(TARGET): \$(OBJS)
-	\$(CXX) -shared \$(OBJS) -o \$(TARGET)
+	\$(CXX) -shared \$(LDFLAGS) \$(OBJS) -o \$(TARGET) \$(LIBS)
 
 # Rule to compile source files into object files
 %.o: %.cpp

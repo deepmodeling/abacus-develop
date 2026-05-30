@@ -26,6 +26,10 @@
 #include <numeric>
 #include <unordered_map>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace ModuleESolver;
 
 void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
@@ -37,6 +41,9 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
     _v.resize(9 * ucell.nat);
+    cell.resize(9);
+    coord.resize(3 * ucell.nat);
+    nat_cached = ucell.nat;
 
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU.cif", 
                                ucell, 
@@ -54,9 +61,17 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_NEP", "runner");
     ModuleBase::timer::start("ESolver_NEP", "runner");
 
+    const int nat = ucell.nat;
+    if (nat != nat_cached)
+    {
+        _e.resize(nat);
+        _f.resize(3 * nat);
+        _v.resize(9 * nat);
+        coord.resize(3 * nat);
+        nat_cached = nat;
+    }
+
     // note that NEP are column major, thus a transpose is needed
-    // cell
-    std::vector<double> cell(9, 0.0);
     cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
     cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
     cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
@@ -67,10 +82,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    // coord
-    std::vector<double> coord(3 * ucell.nat, 0.0);
     int iat = 0;
-    const int nat = ucell.nat;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
@@ -81,7 +93,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
             iat++;
         }
     }
-    assert(ucell.nat == iat);
+    assert(nat == iat);
 
 #ifdef __NEP
     nep_potential = 0.0;
@@ -97,11 +109,22 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
 
     // potential energy
-    nep_potential = fact_e * std::accumulate(_e.begin(), _e.end(), 0.0) ;
+    double energy_sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : energy_sum) schedule(static)
+#endif
+    for (int i = 0; i < nat; ++i)
+    {
+        energy_sum += _e[i];
+    }
+    nep_potential = fact_e * energy_sum;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << nep_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
-    
+
     // forces
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int i = 0; i < nat; ++i)
     {
         nep_force(i, 0) = _f[i] * fact_f;
@@ -110,14 +133,18 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     }
 
     // virial
-    std::vector<double> v_sum(9, 0.0);
+    double v_sum[9] = {0.0};
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int j = 0; j < 9; ++j)
     {
+        double local_sum = 0.0;
         for (int i = 0; i < nat; ++i)
         {
-            int index = j * nat + i;
-            v_sum[j] += _v[index];
+            local_sum += _v[j * nat + i];
         }
+        v_sum[j] = local_sum;
     }
 
     // virial -> stress

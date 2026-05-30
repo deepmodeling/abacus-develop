@@ -101,6 +101,9 @@ class ESolver_NEP : public ESolver
     std::vector<double> _e;              ///< temporary storage for energy computation
     std::vector<double> _f;              ///< temporary storage for force computation
     std::vector<double> _v;              ///< temporary storage for virial computation
+    std::vector<double> cell;            ///< cached NEP cell (column-major, Angstrom)
+    std::vector<double> coord;           ///< cached NEP coordinates (block layout)
+    int nat_cached = 0;                  ///< cached atom count for buffer reuse
 };
 
 } // namespace ModuleESolver
