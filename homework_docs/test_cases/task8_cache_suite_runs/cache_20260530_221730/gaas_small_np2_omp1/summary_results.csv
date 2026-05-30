@@ -1,0 +1,2 @@
+label,case_name,git_commit,hostname,nproc,threads,repeat_count,successful_runs,time_statistics_runs,wall_times_s,median_time_s,mean_time_s,min_time_s,max_time_s,baseline_median_time_s,speedup_vs_baseline,pw_init_s_median,plane_wave_generation_s_median,gcar_or_gk2_s_median,real2recip_s_median,recip2real_s_median,notes
+cache,gaas_small,434b12cc42503a5ff1f782e376bd9faeb6d124dc,bohrium-667333-1459164,2,1,3,3,3,13.000;13.000;13.000,13.000,13.000,13.000,13.000,NA,NA,NA,NA,NA,1.200,1.790,missing pw_init timer; missing plane-wave generation timer; missing gcar/gk2 timer
