@@ -11,7 +11,7 @@
 #include "source_base/global_function.h"
 
 #ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#include "libxc.h"
 #endif
 
 void XC_Functional::gcxc(

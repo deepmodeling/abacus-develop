@@ -8,7 +8,7 @@
 #ifdef USE_LIBXC
 #include <xc.h>
 #else
-#include "xc_funcs.h"
+#include "xc_ids.h"
 #endif	// ifdef USE_LIBXC
 #include "source_base/macros.h"
 #include "source_base/global_function.h"

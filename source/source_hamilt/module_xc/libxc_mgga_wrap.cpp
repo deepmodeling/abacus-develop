@@ -6,7 +6,7 @@
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "xc_functional_libxc.h"
+#include "libxc.h"
 #include <array>
 
 //tau_xc and tau_xc_spin: interface for calling xc_mgga_exc_vxc from LIBXC

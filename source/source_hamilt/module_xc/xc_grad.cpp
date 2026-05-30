@@ -18,7 +18,7 @@
 #include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
 #ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#include "libxc.h"
 #endif
 
 // from gradcorr.f90

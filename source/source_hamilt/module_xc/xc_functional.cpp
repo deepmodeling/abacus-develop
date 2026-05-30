@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 
 #ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#include "libxc.h"
 #endif
 
 XC_Functional::XC_Functional(){}
