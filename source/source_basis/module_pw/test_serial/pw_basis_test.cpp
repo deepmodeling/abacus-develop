@@ -380,6 +380,8 @@ TEST_F(PWBasisTEST,ComplexTransformRoundTrip)
 	pwb.initparameters(gamma_only_in, pwecut_in, distribution_type_in, xprime_in);
 	ASSERT_NO_THROW(pwb.setuptransform());
 
+	// Use reciprocal-space input because arbitrary real-space data is projected
+	// by the plane-wave cutoff and is not exactly recoverable.
 	std::vector<std::complex<double>> recip_in(pwb.npw);
 	std::vector<std::complex<double>> real_space(pwb.nrxx);
 	std::vector<std::complex<double>> recip_out(pwb.npw);

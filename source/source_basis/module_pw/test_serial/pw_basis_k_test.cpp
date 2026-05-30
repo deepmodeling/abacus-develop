@@ -208,6 +208,8 @@ TEST_F(PWBasisKTEST, ComplexTransformRoundTrip)
 	basis_k.initparameters(gamma_only_in, gk_ecut_in, nks_in, kvec_d_in, distribution_type_in, xprime_in);
 	ASSERT_NO_THROW(basis_k.setuptransform());
 
+	// Use reciprocal-space input because arbitrary real-space data is projected
+	// by the plane-wave cutoff and is not exactly recoverable.
 	std::vector<std::complex<double>> recip_in(basis_k.npwk[0]);
 	std::vector<std::complex<double>> real_space(basis_k.nrxx);
 	std::vector<std::complex<double>> recip_out(basis_k.npwk[0]);

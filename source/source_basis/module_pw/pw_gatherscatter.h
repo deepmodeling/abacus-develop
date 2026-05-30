@@ -7,6 +7,8 @@ namespace ModulePW
 {
 namespace detail
 {
+// Copy complex buffers through the interleaved scalar stream so compilers can
+// vectorize the contiguous real/imaginary data movement.
 template <typename T>
 inline void copy_complex_buffer(const std::complex<T>* in, std::complex<T>* out, const int count)
 {
@@ -21,6 +23,8 @@ inline void copy_complex_buffer(const std::complex<T>* in, std::complex<T>* out,
     }
 }
 
+// Top-level transform copies own the OpenMP parallel region; gather/scatter
+// loops call the non-parallel helper inside their existing parallel regions.
 template <typename T>
 inline void copy_complex_buffer_parallel(const std::complex<T>* in, std::complex<T>* out, const int count)
 {
