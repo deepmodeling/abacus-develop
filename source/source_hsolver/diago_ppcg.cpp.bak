@@ -491,13 +491,6 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
         T hsmall[9] = {}, ssmall[9] = {}, coeff[9] = {};
         Real eval[3] = {};
 
-        // bv/ hbv columns live in separate arrays; pack bv into a temporary
-        // contiguous device matrix so gemv sees the correct adim columns.
-        T* d_bv = nullptr;
-        resmem_op()(d_bv, adim * this->n_basis);
-        for (int j = 0; j < adim; ++j)
-            syncmem_op()(d_bv + j * this->n_basis, bv[j], this->n_basis);
-
         for (int col = 0; col < adim; ++col)
         {
             T* d_tmp = nullptr;
@@ -506,7 +499,7 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 
             // hsmall[:,col] = bv^H * hbv[col]
             ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                                             p_one<T>(), d_bv, this->n_basis,
+                                             p_one<T>(), bv[0], this->n_basis,
                                              hbv[col], 1,
                                              p_zero<T>(), d_tmp, 1);
             T hc[3]; syncmem_d2h()(hc, d_tmp, adim);
@@ -515,7 +508,7 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
             // ssmall[:,col] = bv^H * bv[col]
             setmem_op()(d_tmp, 0, adim);
             ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                                             p_one<T>(), d_bv, this->n_basis,
+                                             p_one<T>(), bv[0], this->n_basis,
                                              bv[col], 1,
                                              p_zero<T>(), d_tmp, 1);
             syncmem_d2h()(hc, d_tmp, adim);
@@ -523,7 +516,6 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 
             delmem_op()(d_tmp);
         }
-        delmem_op()(d_bv);
 
         this->solve_small_problem(adim, hsmall, ssmall, coeff, eval);
         this->h_eigen[ib] = eval[0];

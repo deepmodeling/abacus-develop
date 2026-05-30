@@ -55,6 +55,19 @@ if (ENABLE_MPI)
   if(USE_OPENMP)
     target_link_libraries(MODULE_HSOLVER_david_bench PRIVATE OpenMP::OpenMP_CXX)
   endif()
+  if(USE_CUDA)
+    add_executable(MODULE_HSOLVER_ppcg_bench_cuda
+      diago_ppcg_bench_cuda.cpp ../diago_ppcg.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp ../diago_iter_assist.cpp
+      ../../source_basis/module_pw/test/test_tool.cpp
+      ../../source_hamilt/operator.cpp
+      ../../source_pw/module_pwdft/op_pw.cpp
+    )
+    target_link_libraries(MODULE_HSOLVER_ppcg_bench_cuda PRIVATE parameter ${math_libs} base psi device container Threads::Threads)
+    target_compile_definitions(MODULE_HSOLVER_ppcg_bench_cuda PRIVATE __CUDA)
+    if(USE_OPENMP)
+      target_link_libraries(MODULE_HSOLVER_ppcg_bench_cuda PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+  endif()
   AddTest(
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  ${math_libs} base psi device container

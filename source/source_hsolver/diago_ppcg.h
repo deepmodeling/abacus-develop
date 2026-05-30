@@ -6,6 +6,7 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
 
+#include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
 
 #include <complex>

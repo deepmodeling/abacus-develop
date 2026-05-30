@@ -1,6 +1,9 @@
 /**
- * PPCG benchmark: measures iteration count and runtime for configurable test cases.
+ * PPCG CUDA benchmark: measures iteration count and runtime on GPU.
  * Outputs CSV lines: npw,nband,sparsity,mpi_procs,omp_threads,iterations,time_ms,max_error
+ *
+ * Build requires: -D__CUDA (or -D__ROCM) and linked against the corresponding
+ * device math kernels (math_kernel_op.cu etc.).
  */
 #include "../diago_iter_assist.h"
 #include "../diago_ppcg.h"
@@ -11,6 +14,8 @@
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_psi/psi.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_device/device.h"
 
 #include <chrono>
 #include <complex>
@@ -98,8 +103,6 @@ int main(int argc, char** argv)
         }
     }
     // Initialize extra bands with independent random vectors (different seed).
-    // These need to be linearly independent from the physical bands to avoid
-    // triggering WARNING_QUIT in modified_gram_schmidt.
     {
         std::default_random_engine engine_extra(42);
         std::uniform_real_distribution<double> dist_extra(-1.0, 1.0);
@@ -112,15 +115,22 @@ int main(int argc, char** argv)
         }
     }
 
-    // MPI distribution
+    // MPI distribution: each process keeps full data for correct benchmark
     psi::Psi<std::complex<double>> psi_local;
     DIAGOTEST::npw_local = new int[nproc];
     double* precondition_local = nullptr;
 #ifdef __MPI
     DIAGOTEST::cal_division(DIAGOTEST::npw);
-    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
-    precondition_local = new double[DIAGOTEST::npw_local[myrank]];
-    DIAGOTEST::divide_psi<double>(hpsi_mock.precond(), precondition_local);
+    DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
+    for (int i = 0; i < nproc; i++) {
+        DIAGOTEST::npw_local[i] = DIAGOTEST::npw;
+    }
+    psi_local = psi;
+    precondition_local = new double[DIAGOTEST::npw];
+    for (int ig = 0; ig < DIAGOTEST::npw; ++ig)
+    {
+        precondition_local[ig] = hpsi_mock.precond()[ig];
+    }
 #else
     DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
     DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
@@ -134,23 +144,38 @@ int main(int argc, char** argv)
 
     psi_local.fix_k(0);
     using T = std::complex<double>;
+    using Device = base_device::DEVICE_GPU;
     const int dim = DIAGOTEST::npw;
     const std::vector<T>& h_mat = DIAGOTEST::hmatrix_local;
-    auto hpsi_func = [h_mat, dim](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+
+    // ---- Upload H matrix and psi to GPU ----
+    T* h_mat_device = nullptr;
+    base_device::memory::resize_memory_op<T, Device>()(h_mat_device, static_cast<size_t>(dim) * dim);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        h_mat_device, h_mat.data(), static_cast<size_t>(dim) * dim);
+
+    T* psi_device = nullptr;
+    base_device::memory::resize_memory_op<T, Device>()(psi_device, static_cast<size_t>(n_band_total) * npw);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        psi_device, psi_local.get_pointer(), static_cast<size_t>(n_band_total) * npw);
+
+    auto hpsi_func = [h_mat_device, dim](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
         const T one(1.0);
         const T zero(0.0);
-        ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+        ModuleBase::gemm_op<T, Device>()(
             'N', 'N',
             dim, nvec, dim,
             &one,
-            h_mat.data(), dim,
+            h_mat_device, dim,
             psi_in, ld_psi,
             &zero,
             hpsi_out, ld_psi);
     };
 
-    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = 200;
-    hsolver::DiagoPPCG<std::complex<double>> ppcg(precondition_local);
+    ModuleBase::createGpuBlasHandle();
+
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = 200;
+    hsolver::DiagoPPCG<T, Device> ppcg(precondition_local);
 
     if (n_extra > 0)
     {
@@ -175,7 +200,7 @@ int main(int argc, char** argv)
     std::vector<double> ethr_band(nband, ethr);
 
     auto t_start = std::chrono::high_resolution_clock::now();
-    int niter = ppcg.diag(hpsi_func, psi_local.get_pointer(), eigen.data(), ethr_band);
+    int niter = ppcg.diag(hpsi_func, psi_device, eigen.data(), ethr_band);
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
@@ -204,8 +229,12 @@ int main(int argc, char** argv)
         std::cout << std::endl;
     }
 
+    base_device::memory::delete_memory_op<T, Device>()(h_mat_device);
+    base_device::memory::delete_memory_op<T, Device>()(psi_device);
     delete[] DIAGOTEST::npw_local;
     delete[] precondition_local;
+
+    ModuleBase::destoryBLAShandle();
 
     MPI_Finalize();
     return 0;
