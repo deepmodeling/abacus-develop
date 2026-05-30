@@ -165,7 +165,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
               this->stp.template get_psi_t<T, Device>(), 
 	      this->p_hamilt, 
-	      this->pw_wfc, this->pw_rhod, PARAM.inp);
+	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
