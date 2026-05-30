@@ -307,7 +307,7 @@ TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
     // 1. Empty broadcast (count=0)
     {
         MPIRequestTracker tracker;
-        MPICommHelper::nbcast_double(nullptr, 0, 0, MPI_COMM_WORLD, tracker);
+        MPICommHelper::nbcast(static_cast<double*>(nullptr), 0, 0, MPI_COMM_WORLD, tracker);
         tracker.wait_all();
         EXPECT_FALSE(tracker.has_pending());
     }
@@ -316,7 +316,7 @@ TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
     {
         MPIRequestTracker tracker;
         std::complex<double> dummy;
-        MPICommHelper::nreduce_pool_complex(&dummy, 0, MPI_COMM_WORLD, tracker);
+        MPICommHelper::nreduce_pool(&dummy, 0, MPI_COMM_WORLD, tracker);
         tracker.wait_all();
         EXPECT_FALSE(tracker.has_pending());
     }
@@ -327,8 +327,7 @@ TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
         std::vector<double> data(N, static_cast<double>(rank_));
         MPIRequestTracker tracker;
 
-        MPICommHelper::nallreduce(data.data(), N, MPI_DOUBLE, MPI_SUM,
-                                  MPI_COMM_WORLD, tracker);
+        MPICommHelper::nreduce_pool(data.data(), N, MPI_COMM_WORLD, tracker);
         tracker.wait_all();
 
         // After sum reduction, all elements should equal sum of ranks
@@ -343,7 +342,7 @@ TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
     {
         MPIRequestTracker tracker;
         double val = 42.0;
-        MPICommHelper::nbcast_double(&val, 1, 0, MPI_COMM_WORLD, tracker);
+        MPICommHelper::nbcast(&val, 1, 0, MPI_COMM_WORLD, tracker);
         EXPECT_TRUE(tracker.has_pending());
         tracker.reset();
         EXPECT_FALSE(tracker.has_pending());

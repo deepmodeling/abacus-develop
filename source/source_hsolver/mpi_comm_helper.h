@@ -134,29 +134,7 @@ inline void nbcast(T* buffer, int count, MPI_Datatype datatype,
     tracker.add(req);
 }
 
-// Convenience overloads for common types
-inline void nbcast_complex(std::complex<double>* buffer, int count,
-                           int root, MPI_Comm comm, MPIRequestTracker& tracker) {
-    nbcast(buffer, count, MPI_DOUBLE_COMPLEX, root, comm, tracker);
-}
-
-inline void nbcast_double(double* buffer, int count,
-                          int root, MPI_Comm comm, MPIRequestTracker& tracker) {
-    nbcast(buffer, count, MPI_DOUBLE, root, comm, tracker);
-}
-
-inline void nbcast_int(int* buffer, int count,
-                       int root, MPI_Comm comm, MPIRequestTracker& tracker) {
-    nbcast(buffer, count, MPI_INT, root, comm, tracker);
-}
-
-// =========================================================================
-// Non-blocking reduce (allreduce)
-// =========================================================================
-
-/**
- * @brief Non-blocking allreduce.
- */
+// Convenience: keep nallreduce for internal use
 template <typename T>
 inline void nallreduce(T* buffer, int count, MPI_Datatype datatype,
                        MPI_Op op, MPI_Comm comm, MPIRequestTracker& tracker) {
@@ -165,24 +143,49 @@ inline void nallreduce(T* buffer, int count, MPI_Datatype datatype,
     tracker.add(req);
 }
 
+// =========================================================================
+// Non-blocking reduce / broadcast — type-dispatching via mpi_type trait
+// =========================================================================
+
+/// Type trait mapping C++ types to MPI_Datatype.
+template <typename T> struct mpi_type {
+    static constexpr MPI_Datatype value = MPI_BYTE; // fallback, should not be used
+};
+template <> struct mpi_type<double> {
+    static constexpr MPI_Datatype value = MPI_DOUBLE;
+};
+template <> struct mpi_type<std::complex<double>> {
+    static constexpr MPI_Datatype value = MPI_DOUBLE_COMPLEX;
+};
+template <> struct mpi_type<std::complex<float>> {
+    static constexpr MPI_Datatype value = MPI_C_FLOAT_COMPLEX;
+};
+template <> struct mpi_type<int> {
+    static constexpr MPI_Datatype value = MPI_INT;
+};
+
 /**
- * @brief Non-blocking pool reduce (sum reduction).
+ * @brief Non-blocking pool reduce (MPI_SUM, non-blocking).
  *
- * Equivalent to Parallel_Reduce::reduce_pool but non-blocking.
+ * Works for double, std::complex<double>, std::complex<float> via mpi_type.
  */
 template <typename T>
-inline void nreduce_pool_complex(std::complex<T>* buffer, int count,
-                                 MPI_Comm comm, MPIRequestTracker& tracker) {
-    if (sizeof(T) == sizeof(double)) {
-        nallreduce(buffer, count, MPI_DOUBLE_COMPLEX, MPI_SUM, comm, tracker);
-    } else {
-        nallreduce(buffer, count, MPI_C_FLOAT_COMPLEX, MPI_SUM, comm, tracker);
-    }
+inline void nreduce_pool(T* buffer, int count,
+                         MPI_Comm comm, MPIRequestTracker& tracker) {
+    nallreduce(buffer, count, mpi_type<T>::value, MPI_SUM, comm, tracker);
 }
 
-inline void nreduce_pool_double(double* buffer, int count,
-                                MPI_Comm comm, MPIRequestTracker& tracker) {
-    nallreduce(buffer, count, MPI_DOUBLE, MPI_SUM, comm, tracker);
+/**
+ * @brief Non-blocking broadcast (MPI_Ibcast).
+ *
+ * Works for double, std::complex<double>, std::complex<float> via mpi_type.
+ */
+template <typename T>
+inline void nbcast(T* buffer, int count, int root,
+                   MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Ibcast(buffer, count, mpi_type<T>::value, root, comm, &req);
+    tracker.add(req);
 }
 
 // =========================================================================

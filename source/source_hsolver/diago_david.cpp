@@ -625,7 +625,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 
         // Non-blocking pool reduce: reduce the newly added rows of hcc
         MPIRequestTracker tracker;
-        MPICommHelper::nreduce_pool_complex(
+        MPICommHelper::nreduce_pool(
             hcc + nbase * nbase_x, notconv * nbase_x,
             diag_comm.comm, tracker);
 
@@ -695,8 +695,8 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         // vcc is stored column-major with stride nbase_x,
         // broadcast continuous block: vcc[0:nband*nbase_x]
         MPIRequestTracker tracker;
-        MPICommHelper::nbcast_complex(vcc, nband * nbase_x, 0, diag_comm.comm, tracker);
-        MPICommHelper::nbcast_double(this->eigenvalue, nband, 0, diag_comm.comm, tracker);
+        MPICommHelper::nbcast(vcc, nband * nbase_x, 0, diag_comm.comm, tracker);
+        MPICommHelper::nbcast(this->eigenvalue, nband, 0, diag_comm.comm, tracker);
         tracker.wait_all();
     }
 #endif
