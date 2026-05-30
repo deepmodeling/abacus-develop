@@ -28,6 +28,7 @@
 #include <chrono>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 
 using namespace hsolver;
 
@@ -612,16 +613,14 @@ TEST_F(DiagoMPICorrectnessTest, CommStrategyConfiguration) {
 
 int main(int argc, char** argv) {
 #ifdef __MPI
-    MPI_Init(&argc, &argv);
-
-    int nproc;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    if (nproc < 2) {
-        std::cout << "MPI test skipped: requires at least 2 processes, got "
-                  << nproc << std::endl;
-        MPI_Finalize();
+    // Only run under mpirun (detected via environment variable)
+    const char* ompi_size = getenv("OMPI_COMM_WORLD_SIZE");
+    const char* pmi_size  = getenv("PMI_SIZE");
+    if (!ompi_size && !pmi_size) {
+        std::cout << "MPI test skipped: not running under mpirun" << std::endl;
         return 0;
     }
+    MPI_Init(&argc, &argv);
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
