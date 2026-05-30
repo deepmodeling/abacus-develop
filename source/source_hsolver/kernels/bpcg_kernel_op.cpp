@@ -28,7 +28,7 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
 #ifdef _OPENMP
-#pragma omp critical(reduce_norm)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
@@ -42,15 +42,15 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
             }
 #ifdef _OPENMP
-#pragma omp critical(reduce_epsilo)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(epsilo_0);
 #ifdef _OPENMP
-#pragma omp critical(reduce_epsilo)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(epsilo_1);
 #ifdef _OPENMP
-#pragma omp critical(reduce_epsilo)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(epsilo_2);
             theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
@@ -94,7 +94,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
 #ifdef _OPENMP
-#pragma omp critical(reduce_norm)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
@@ -106,7 +106,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
 #ifdef _OPENMP
-#pragma omp critical(reduce_epsilo)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(epsilo);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
@@ -118,11 +118,11 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
             }
 #ifdef _OPENMP
-#pragma omp critical(reduce_err)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(err);
 #ifdef _OPENMP
-#pragma omp critical(reduce_beta)
+#pragma omp critical(reduce_pool)
 #endif
             Parallel_Reduce::reduce_pool(beta);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
