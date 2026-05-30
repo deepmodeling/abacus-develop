@@ -55,10 +55,24 @@ struct Lapack<double>
         const char uplo = 'U';
         const int lda = n;
         int info = 0;
-        int lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-        int liwork = std::max(1, 3 + 5 * n);
-        std::vector<double> work(static_cast<size_t>(lwork), 0.0);
-        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<double> work(1);
+        std::vector<int> iwork(1);
+        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0);
+        iwork.assign(static_cast<size_t>(liwork), 0);
         dsyevd_(&jobz, &uplo, &n, a, &lda, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -73,10 +87,24 @@ struct Lapack<double>
         const int lda = n;
         const int ldb = n;
         int info = 0;
-        int lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-        int liwork = std::max(1, 3 + 10 * n);
-        std::vector<double> work(static_cast<size_t>(lwork), 0.0);
-        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<double> work(1);
+        std::vector<int> iwork(1);
+        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+            liwork = std::max(1, 3 + 10 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0);
+        iwork.assign(static_cast<size_t>(liwork), 0);
         dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -130,10 +158,24 @@ struct Lapack<float>
         const char uplo = 'U';
         const int lda = n;
         int info = 0;
-        int lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-        int liwork = std::max(1, 3 + 5 * n);
-        std::vector<float> work(static_cast<size_t>(lwork), 0.0f);
-        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<float> work(1);
+        std::vector<int> iwork(1);
+        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0f);
+        iwork.assign(static_cast<size_t>(liwork), 0);
         ssyevd_(&jobz, &uplo, &n, a, &lda, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -148,10 +190,24 @@ struct Lapack<float>
         const int lda = n;
         const int ldb = n;
         int info = 0;
-        int lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-        int liwork = std::max(1, 3 + 10 * n);
-        std::vector<float> work(static_cast<size_t>(lwork), 0.0f);
-        std::vector<int> iwork(static_cast<size_t>(liwork), 0);
+        int lwork = -1;
+        int liwork = -1;
+        std::vector<float> work(1);
+        std::vector<int> iwork(1);
+        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
+                work.data(), &lwork, iwork.data(), &liwork, &info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
+            liwork = std::max(1, 3 + 10 * n);
+        }
+        else
+        {
+            lwork = static_cast<int>(work[0]);
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), 0.0f);
+        iwork.assign(static_cast<size_t>(liwork), 0);
         ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
                 work.data(), &lwork, iwork.data(), &liwork, &info);
         if (info != 0)
@@ -494,6 +550,11 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
 {
     // Try with increasing diagonal shifts; fall back to identity (no update)
     // if the subspace is too ill-conditioned.
+    // Save original M; dsygvd modifies it in-place before it may fail.
+    const std::vector<Real> m0 = subspace.m;
+    const Real shifts[] = {static_cast<Real>(1e-10),
+                           static_cast<Real>(1e-8),
+                           static_cast<Real>(1e-6)};
     for (int attempt = 0; attempt < 3; ++attempt)
     {
         try
@@ -504,8 +565,9 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         }
         catch (const std::runtime_error&)
         {
+            subspace.m = m0;
             for (int i = 0; i < dim; ++i)
-                subspace.m[i + i * dim] += static_cast<Real>(1.0e-10);
+                subspace.m[i + i * dim] += shifts[attempt];
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
@@ -1037,11 +1099,70 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            const bool use_p = (iter != 1);
+            bool use_p = (iter != 1);
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
                 project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
+
+                // For small nband with S=I, p can be nearly collinear
+                // with w (p gets initialized as a scalar multiple of w
+                // in update_one_block).  This makes the 3-vector subspace
+                // [psi,w,p] nearly rank-2, causing sygvd to produce
+                // huge/negative eigenvalues -> NaN.
+                //
+                // When detected, replace p with H·w (a second-order
+                // Krylov direction) which is genuinely independent of w.
+                bool p_bad = false;
+                for (const int c : active_cols)
+                {
+                    Real p_nrm2 = 0, w_nrm2 = 0, pw_re = 0;
+                    for (int ig = 0; ig < n_dim_; ++ig)
+                    {
+                        p_nrm2 += static_cast<Real>(std::norm(p_[idx(ig, c, ld_psi_)]));
+                        w_nrm2 += static_cast<Real>(std::norm(w_[idx(ig, c, ld_psi_)]));
+                        pw_re  += static_cast<Real>(
+                            std::real(std::conj(p_[idx(ig, c, ld_psi_)])
+                                      * w_[idx(ig, c, ld_psi_)]));
+                    }
+                    // p near-zero or p nearly collinear with w:
+                    // both make the [w,p] block of the Gram matrix nearly
+                    // singular, poisoning the 3x3 generalized eigenproblem.
+                    const Real denom = p_nrm2 * w_nrm2;
+                    Real cos2 = -1;
+                    if (denom > Real(1e-60))
+                        cos2 = (pw_re * pw_re) / denom;
+                    if (p_nrm2 <= Real(1e-30) ||
+                        (denom > Real(1e-60) && cos2 > Real(0.99)))
+                    {
+                        p_bad = true;
+                        break;
+                    }
+                }
+                if (p_bad)
+                {
+                    // Replace p with H·w for active columns (Krylov direction).
+                    for (const int c : active_cols)
+                    {
+                        T* pc = p_.data() + c * ld_psi_;
+                        const T* hwc = hw_.data() + c * ld_psi_;
+                        for (int ig = 0; ig < n_dim_; ++ig)
+                            pc[ig] = hwc[ig];
+                    }
+                    // Recompute S·p and H·p for the new direction.
+                    apply_s_current(p_.data(), sp_.data(), ncol);
+                    {
+                        std::vector<T> p_act;
+                        copy_cols(p_.data(), active_cols, p_act);
+                        std::vector<T> hp_act(ld_psi_ * static_cast<int>(active_cols.size()), T(0));
+                        apply_h(hpsi_func, p_act.data(), hp_act.data(),
+                                static_cast<int>(active_cols.size()));
+                        scatter_cols(hp_.data(), active_cols, hp_act);
+                    }
+                    // Re-project against psi.
+                    project_against(psi_in, spsi_.data(), all_cols,
+                                    p_, sp_, active_cols);
+                }
             }
 
             // Block subspace solve.
@@ -1160,15 +1281,38 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             line_minimize(psi_in, hpsi_.data(), spsi_.data(),
                           p.data(), hp.data(), sp.data(), ncol);
 
-            // Cholesky orthonormalization.
-            orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
+            // Periodic Rayleigh-Ritz: full subspace diagonalization
+            // corrects band ordering and gives accurate eigenvalues.
+            if (iter % rr_step_ == 0)
+            {
+                orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
 
-            // Update eigenvalues.
-            for (int i = 0; i < ncol; ++i)
-                eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
-                                             hpsi_.data() + i * ld_psi_)
-                                 / gamma_dot(psi_in + i * ld_psi_,
-                                             spsi_.data() + i * ld_psi_);
+                std::vector<int> dummy_active;
+                rayleigh_ritz(psi_in, eigenvalue_in, dummy_active, ethr_band);
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
+
+                // Reset PR state: the rotation changes the basis,
+                // so old gradients / search directions are invalid.
+                p.clear();
+                grad_old_.clear();
+                z_old_.clear();
+                beta_denom_.clear();
+            }
+            else
+            {
+                // Cholesky orthonormalization.
+                orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
+
+                // Update eigenvalues.
+                for (int i = 0; i < ncol; ++i)
+                    eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
+                                                 hpsi_.data() + i * ld_psi_)
+                                     / gamma_dot(psi_in + i * ld_psi_,
+                                                 spsi_.data() + i * ld_psi_);
+            }
 
             // Compute new gradient.
             calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
