@@ -13,6 +13,7 @@ list(APPEND objects
     diago_pxxxgvx.cpp
     diag_hs_para.cpp
     diago_params.cpp
+    diago_ppcg.cpp
 
 )
 
