@@ -8,6 +8,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
@@ -83,7 +84,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -322,6 +323,39 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+    }
+    else if (this->method == "ppcg")
+    {
+        // wrap the subspace_func into a lambda function (matching CG pattern)
+        auto subspace_func = [hm, cur_nbasis](T* psi_in,
+                                              T* psi_out,
+                                              const int ld_psi,
+                                              const int nband,
+                                              const bool S_orth) {
+            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
+            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
+            std::vector<Real> eigen(nband, 0.0);
+            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data());
+        };
+        DiagoPPCG<T, Device> ppcg(this->basis_type,
+                                  this->calculation_type,
+                                  this->need_subspace,
+                                  subspace_func,
+                                  this->diag_thr,
+                                  this->diag_iter_max,
+                                  this->nproc_in_pool);
+
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            ppcg.diag(hpsi_func,
+                      spsi_func,
+                      psi.get_nbasis(),
+                      psi.get_nbands(),
+                      psi.get_current_ngk(),
+                      psi.get_pointer(),
+                      eigenvalue,
+                      this->ethr_band,
+                      pre_condition.data())
+        );
     }
     else if (this->method == "dav_subspace")
     {

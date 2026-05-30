@@ -131,7 +131,7 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace", "ppcg"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
                 "elpa",
