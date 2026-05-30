@@ -616,12 +616,9 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
 
         assert(diag_comm.comm == POOL_WORLD);
-        // Non-blocking pool reduce: reduce the newly added rows of hcc
-        MPIRequestTracker tracker;
-        MPICommHelper::nreduce_pool(
+        MPICommHelper::reduce_pool(
             hcc + nbase * nbase_x, notconv * nbase_x,
-            diag_comm.comm, tracker);
-        tracker.wait_all();
+            diag_comm.comm);
 
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
     }
@@ -680,10 +677,8 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        MPIRequestTracker tracker;
-        MPICommHelper::nbcast(vcc, nband * nbase_x, 0, diag_comm.comm, tracker);
-        MPICommHelper::nbcast(this->eigenvalue, nband, 0, diag_comm.comm, tracker);
-        tracker.wait_all();
+        MPICommHelper::bcast(vcc, nband * nbase_x, 0, diag_comm.comm);
+        MPICommHelper::bcast(this->eigenvalue, nband, 0, diag_comm.comm);
     }
 #endif
 

@@ -133,7 +133,7 @@ inline void nallreduce(T* buffer, int count, MPI_Datatype datatype,
 
 /// Type trait mapping C++ types to MPI_Datatype.
 template <typename T> struct mpi_type {
-    static constexpr MPI_Datatype value = MPI_BYTE; // fallback, should not be used
+    static constexpr MPI_Datatype value = MPI_BYTE;
 };
 template <> struct mpi_type<double> {
     static constexpr MPI_Datatype value = MPI_DOUBLE;
@@ -149,56 +149,20 @@ template <> struct mpi_type<int> {
 };
 
 /**
- * @brief Non-blocking pool reduce (MPI_SUM, non-blocking).
- *
- * Works for double, std::complex<double>, std::complex<float> via mpi_type.
+ * @brief Pool reduce (MPI_SUM). Uses blocking MPI_Allreduce.
  */
 template <typename T>
-inline void nreduce_pool(T* buffer, int count,
-                         MPI_Comm comm, MPIRequestTracker& tracker) {
-    nallreduce(buffer, count, mpi_type<T>::value, MPI_SUM, comm, tracker);
+inline void reduce_pool(T* buffer, int count, MPI_Comm comm) {
+    MPI_Allreduce(MPI_IN_PLACE, buffer, count, mpi_type<T>::value, MPI_SUM, comm);
 }
 
 /**
- * @brief Non-blocking broadcast (MPI_Ibcast).
- *
- * Works for double, std::complex<double>, std::complex<float> via mpi_type.
+ * @brief Broadcast. Uses blocking MPI_Bcast.
  */
 template <typename T>
-inline void nbcast(T* buffer, int count, int root,
-                   MPI_Comm comm, MPIRequestTracker& tracker) {
-    MPI_Request req;
-    MPI_Ibcast(buffer, count, mpi_type<T>::value, root, comm, &req);
-    tracker.add(req);
+inline void bcast(T* buffer, int count, int root, MPI_Comm comm) {
+    MPI_Bcast(buffer, count, mpi_type<T>::value, root, comm);
 }
-
-// =========================================================================
-// Non-blocking point-to-point (for PLinearTransform optimization)
-// =========================================================================
-
-/**
- * @brief Post non-blocking send.
- */
-template <typename T>
-inline void nsend(const T* buffer, int count, MPI_Datatype datatype,
-                  int dest, int tag, MPI_Comm comm, MPIRequestTracker& tracker) {
-    MPI_Request req;
-    MPI_Issend(buffer, count, datatype, dest, tag, comm, &req);
-    tracker.add(req);
-}
-
-/**
- * @brief Post non-blocking receive.
- */
-template <typename T>
-inline void nrecv(T* buffer, int count, MPI_Datatype datatype,
-                  int source, int tag, MPI_Comm comm, MPIRequestTracker& tracker) {
-    MPI_Request req;
-    MPI_Irecv(buffer, count, datatype, source, tag, comm, &req);
-    tracker.add(req);
-}
-
-#endif // __MPI
 
 } // namespace MPICommHelper
 

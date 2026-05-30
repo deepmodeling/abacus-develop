@@ -312,35 +312,26 @@ TEST_F(DiagoMPICorrectnessTest, MultiProcessConsistency) {
 
 TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
 #ifdef __MPI
-    // Test that non-blocking operations handle edge cases correctly
+    // Test blocking MPI helpers handle edge cases correctly
 
-    // 1. Empty broadcast (count=0)
+    // 1. Empty broadcast (count=0) — should be safe
     {
-        MPIRequestTracker tracker;
-        MPICommHelper::nbcast(static_cast<double*>(nullptr), 0, 0, MPI_COMM_WORLD, tracker);
-        tracker.wait_all();
-        EXPECT_FALSE(tracker.has_pending());
+        MPICommHelper::bcast(static_cast<double*>(nullptr), 0, 0, MPI_COMM_WORLD);
     }
 
-    // 2. Empty reduce
+    // 2. Empty reduce — should be safe
     {
-        MPIRequestTracker tracker;
         std::complex<double> dummy;
-        MPICommHelper::nreduce_pool(&dummy, 0, MPI_COMM_WORLD, tracker);
-        tracker.wait_all();
-        EXPECT_FALSE(tracker.has_pending());
+        MPICommHelper::reduce_pool(&dummy, 0, MPI_COMM_WORLD);
     }
 
-    // 3. Multiple concurrent operations
+    // 3. Correctness: allreduce sum
     {
         const int N = 100;
         std::vector<double> data(N, static_cast<double>(rank_));
-        MPIRequestTracker tracker;
 
-        MPICommHelper::nreduce_pool(data.data(), N, MPI_COMM_WORLD, tracker);
-        tracker.wait_all();
+        MPICommHelper::reduce_pool(data.data(), N, MPI_COMM_WORLD);
 
-        // After sum reduction, all elements should equal sum of ranks
         double expected = nproc_ * (nproc_ - 1.0) / 2.0;
         for (int i = 0; i < N; i++) {
             EXPECT_NEAR(data[i], expected, 1e-10)
@@ -348,16 +339,10 @@ TEST_F(DiagoMPICorrectnessTest, CommunicationErrorHandling) {
         }
     }
 
-    // 4. Request tracker reset
+    // 4. Broadcast correctness
     {
-        MPIRequestTracker tracker;
-        double val = 42.0;
-        MPICommHelper::nbcast(&val, 1, 0, MPI_COMM_WORLD, tracker);
-        EXPECT_TRUE(tracker.has_pending());
-        tracker.reset();
-        EXPECT_FALSE(tracker.has_pending());
-        // After reset, val should still be broadcasted correctly
-        MPI_Bcast(&val, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        double val = (rank_ == 0) ? 42.0 : 0.0;
+        MPICommHelper::bcast(&val, 1, 0, MPI_COMM_WORLD);
         EXPECT_EQ(val, 42.0);
     }
 #endif

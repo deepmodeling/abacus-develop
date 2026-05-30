@@ -126,15 +126,13 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
 #ifdef __MPI
-        // Use non-blocking reduce for hcc and scc simultaneously
-        MPIRequestTracker tracker;
-        MPICommHelper::nreduce_pool(
-            hcc, nstart * nstart, POOL_WORLD, tracker);
+        // Reduce hcc and scc
+        MPICommHelper::reduce_pool(
+            hcc, nstart * nstart, POOL_WORLD);
         if (!S_orth) {
-            MPICommHelper::nreduce_pool(
-                scc, nstart * nstart, POOL_WORLD, tracker);
+            MPICommHelper::reduce_pool(
+                scc, nstart * nstart, POOL_WORLD);
         }
-        tracker.wait_all();
 #else
         Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
         if(!S_orth){
