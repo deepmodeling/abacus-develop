@@ -11,7 +11,6 @@
  */
 
 #include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/mpi_comm_helper.h"
 #include "source_base/parallel_comm.h"
