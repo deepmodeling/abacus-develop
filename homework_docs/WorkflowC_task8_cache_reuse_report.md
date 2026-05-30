@@ -190,8 +190,6 @@
 
 ## 4. benchmark 方法与数据来源
 
-本报告中的 benchmark 结论只基于仓库中已经存在的真实结果，不引用任何未提交或无法在当前仓库中复现的数据。
-
 数据来源包括：
 
 - `homework_docs/test_cases/README_task8_cache_benchmark.md`
