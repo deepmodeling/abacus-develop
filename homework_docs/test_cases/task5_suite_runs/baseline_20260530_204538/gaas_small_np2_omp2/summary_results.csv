@@ -1,0 +1,2 @@
+label,case_name,git_commit,hostname,nproc,threads,repeat_count,successful_runs,time_statistics_runs,wall_times_s,median_time_s,mean_time_s,min_time_s,max_time_s,baseline_median_time_s,speedup_vs_baseline,gatherp_scatters_s_median,gathers_scatterp_s_median,real2recip_s_median,recip2real_s_median,notes
+baseline,gaas_small,6b70def72b8105ecf6e5e1efc0ac0aba9b81230f,bohrium-667333-1459164,2,2,3,3,3,9.000;9.000;10.000,9.000,9.333,9.000,10.000,9.000,1.000,NA,NA,1.230,1.830,missing gatherp_scatters_s; missing gathers_scatterp_s

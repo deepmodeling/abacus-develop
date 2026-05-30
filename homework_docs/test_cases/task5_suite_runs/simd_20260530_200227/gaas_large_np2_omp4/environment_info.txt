@@ -1,0 +1,33 @@
+timestamp=2026-05-30 20:28:31 +0800
+hostname=bohrium-667333-1459164
+repo_dir=/root/abacus-develop
+build_dir=/root/abacus-develop/build
+abacus_bin=/root/abacus-develop/build/abacus_basic_para
+case_dir=/root/abacus-develop/homework_docs/test_cases/gaas_large
+case_name=gaas_large
+label=simd
+nproc=2
+threads=4
+warmup=1
+repeat=3
+timeout_sec=1800
+mpi_launch=mpirun
+git_branch=feat/SIMD
+git_commit=e18908121b32b935ebf5389b43743e43975accf2
+omp_num_threads=4
+omp_proc_bind=NA
+omp_places=NA
+omp_schedule=NA
+omp_dynamic=NA
+omp_display_env=NA
+compiler_c=NA
+compiler_c_id=NA
+compiler_cxx=NA
+compiler_cxx_id=NA
+compiler_cxx_version=NA
+uname=Linux bohrium-667333-1459164 5.10.134-18.0.10.lifsea8.x86_64 #1 SMP Thu May 7 11:27:49 CST 2026 x86_64 x86_64 x86_64 GNU/Linux
+lscpu=Architecture:                       x86_64;CPU op-mode(s):                     32-bit, 64-bit;Address sizes:                      46 bits physical, 48 bits virtual;Byte Order:                         Little Endian;CPU(s):                             16;On-line CPU(s) list:                0-15;Vendor ID:                          GenuineIntel;Model name:                         Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz;CPU family:                         6;Model:                              85;Thread(s) per core:                 2;Core(s) per socket:                 8;Socket(s):                          1;Stepping:                           4;BogoMIPS:                           4999.98;Flags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti ibrs ibpb stibp fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx avx512f avx512dq rdseed adx smap avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 arat;Hypervisor vendor:                  KVM;Virtualization type:                full;L1d cache:                          256 KiB (8 instances);L1i cache:                          256 KiB (8 instances);L2 cache:                           8 MiB (8 instances);L3 cache:                           33 MiB (1 instance);NUMA node(s):                       1;NUMA node0 CPU(s):                  0-15;Vulnerability Itlb multihit:        KVM: Mitigation: VMX unsupported;Vulnerability L1tf:                 Mitigation; PTE Inversion;Vulnerability Mds:                  Vulnerable: Clear CPU buffers attempted, no microcode; SMT Host state unknown;Vulnerability Meltdown:             Mitigation; PTI;Vulnerability Mmio stale data:      Vulnerable: Clear CPU buffers attempted, no microcode; SMT Host state unknown;Vulnerability Retbleed:             Mitigation; IBRS;Vulnerability Spec rstack overflow: Not affected;Vulnerability Spec store bypass:    Vulnerable;Vulnerability Spectre v1:           Mitigation; usercopy/swapgs barriers and __user pointer sanitization;Vulnerability Spectre v2:           Mitigation; IBRS, IBPB conditional, STIBP conditional, RSB filling, PBRSB-eIBRS Not affected;Vulnerability Srbds:                Not affected;Vulnerability Tsx async abort:      Vulnerable: Clear CPU buffers attempted, no microcode; SMT Host state unknown;
+mpirun_version=Intel(R) MPI Library for Linux* OS, Version 2021.13 Build 20240701 (id: 179630a);Copyright 2003-2024, Intel Corporation.
+git_status_short<<EOF
+?? homework_docs/test_cases/task5_suite_runs/
+EOF

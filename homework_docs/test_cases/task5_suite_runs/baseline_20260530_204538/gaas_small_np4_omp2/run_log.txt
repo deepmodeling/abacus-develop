@@ -1,0 +1,13 @@
+Task5 benchmark start: 2026-05-30 20:51:13 +0800
+label=baseline case=gaas_small nproc=4 threads=2 warmup=1 repeat=3
+abacus_bin=/root/abacus-develop/build/abacus_basic_para
+case_dir=/root/abacus-develop/homework_docs/test_cases/gaas_small
+out_dir=/root/abacus-develop/homework_docs/test_cases/task5_suite_runs/baseline_20260530_204538/gaas_small_np4_omp2
+[2026-05-30 20:51:13 +0800] starting baseline_gaas_small_np4_omp2_warmup1
+[2026-05-30 20:51:20 +0800] finished baseline_gaas_small_np4_omp2_warmup1 exit_code=0
+[2026-05-30 20:51:20 +0800] starting baseline_gaas_small_np4_omp2_repeat1
+[2026-05-30 20:51:26 +0800] finished baseline_gaas_small_np4_omp2_repeat1 exit_code=0
+[2026-05-30 20:51:26 +0800] starting baseline_gaas_small_np4_omp2_repeat2
+[2026-05-30 20:51:32 +0800] finished baseline_gaas_small_np4_omp2_repeat2 exit_code=0
+[2026-05-30 20:51:32 +0800] starting baseline_gaas_small_np4_omp2_repeat3
+[2026-05-30 20:51:38 +0800] finished baseline_gaas_small_np4_omp2_repeat3 exit_code=0

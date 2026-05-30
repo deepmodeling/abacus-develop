@@ -1,0 +1,108 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.3
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 6b70def72 (Sat May 30 20:36:20 2026 +0800)
+
+ Sat May 30 21:00:50 2026
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 3 for Ga: [Ar] 3d10 4s2 4p1
+ Warning: the number of valence electrons in pseudopotential > 5 for As: [Ar] 3d10 4s2 4p3
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 48 * 48 * 48
+ UNIFORM GRID DIM(BIG): 48 * 48 * 48
+ DONE(0.123858   SEC) : SYMMETRY
+ DONE(0.123877   SEC) : SETUP UNITCELL
+ DONE(0.228463   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               4           4             16            
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       
+ Ga      4           
+ As      4           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.234334   SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.256318   SEC) : LOCAL POTENTIAL
+ DONE(0.305513   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 5.87036
+ DONE(0.477387   SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.687084   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ CG1     -1.94733053e+04   0.00000000e+00   5.8422e+00   0.74
+ CG2     -1.94811749e+04  -7.86952931e+00   2.2923e-01   0.71
+ CG3     -1.94829978e+04  -1.82290718e+00   1.6942e-02   0.86
+ CG4     -1.94830481e+04  -5.03285068e-02   1.3070e-03   0.78
+ CG5     -1.94830530e+04  -4.87228175e-03   1.4882e-04   0.85
+ CG6     -1.94830535e+04  -5.16875217e-04   4.9283e-06   0.81
+ CG7     -1.94830535e+04  -2.78115067e-05   2.1158e-07   1.56
+ CG8     -1.94830535e+04  -1.17774973e-06   1.8034e-08   1.61
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+     -11908.5013107106         0.0000000000         0.0000000000 
+          0.0000000000    -11908.5013107106        -0.0000000000 
+          0.0000000000         0.0000000000    -11908.5013107106 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -11908.501311 kbar
+
+ TIME STATISTICS
+------------------------------------------------------------------
+   CLASS_NAME           NAME        TIME/s  CALLS   AVG/s  PER/%  
+------------------------------------------------------------------
+                 total              8.96   17       0.53   100.00 
+ Driver          atomic_world       8.96   1        8.96   100.00 
+ PSIPrepare      prepare_init       0.17   1        0.17   1.92   
+ psi_init_atomic tabulate           0.17   1        0.17   1.92   
+ Relax_Driver    relax_driver       8.48   1        8.48   94.65  
+ ESolver_KS      runner             8.14   1        8.14   90.88  
+ ESolver_KS_PW   before_scf         0.21   1        0.21   2.34   
+ Potential       cal_veff           0.09   9        0.01   1.01   
+ XC_Functional   v_xc               0.10   11       0.01   1.06   
+ PSIPrepare      initialize_psi     0.18   1        0.18   1.96   
+ DiagoIterAssist diag_subspace_init 0.15   4        0.04   1.72   
+ Operator        hPsi               5.60   6891     0.00   62.45  
+ Operator        veff_pw            3.81   6891     0.00   42.53  
+ PW_Basis_K      recip2real         2.29   11347    0.00   25.59  
+ PW_Basis_K      real2recip         1.75   9107     0.00   19.54  
+ Operator        nonlocal_pw        1.70   6891     0.00   18.98  
+ Nonlocal        add_nonlocal_pp    0.86   6891     0.00   9.56   
+ ESolver_KS_PW   hamilt2rho_single  7.81   8        0.98   87.21  
+ HSolverPW       solve              7.75   8        0.97   86.45  
+ HSolverPW       solve_psik         7.24   32       0.23   80.82  
+ DiagoCG         diag_once          6.28   32       0.20   70.06  
+ ElecStatePW     psiToRho           0.44   8        0.06   4.94   
+ DiagoIterAssist diag_subspace      0.93   28       0.03   10.38  
+ Stress_PW       cal_stress         0.27   1        0.27   2.97   
+ Stress          stress_nl          0.20   1        0.20   2.23   
+------------------------------------------------------------------
+
+
+ START  Time  : Sat May 30 21:00:50 2026
+ FINISH Time  : Sat May 30 21:00:59 2026
+ TOTAL  Time  : 9
+ SEE INFORMATION IN : OUT.ABACUS/
