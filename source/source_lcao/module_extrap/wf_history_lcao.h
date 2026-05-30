@@ -10,6 +10,19 @@
 namespace ModuleExtrap
 {
 
+struct WfExtrapApplyResult
+{
+    WfcExtrapStatus status = WfcExtrapStatus::Disabled;
+    double max_orthonormality_deviation = 0.0;
+    int failed_state = -1;
+    int snapshot_istep = -1;
+
+    bool ok() const noexcept
+    {
+        return this->status == WfcExtrapStatus::Success;
+    }
+};
+
 template <typename TK>
 class WfHistoryLCAO
 {
@@ -32,6 +45,25 @@ class WfHistoryLCAO
     // Return a copy of the most recent snapshot.  This avoids exposing an internal
     // pointer/reference whose lifetime would be invalidated by the next history update.
     bool latest_snapshot(WfSnapshotLCAO<TK>& snapshot) const;
+
+    /**
+     * Restore the latest Gamma-only NAO wavefunction and reorthonormalize it with
+     * the current overlap matrix.
+     *
+     * This method only updates the Psi object after the full restore and
+     * reorthonormalization path succeeds.  DMK/DMR/rho rebuilding is deliberately
+     * left to the ESolver integration layer, where the existing density-matrix code
+     * can be called with the same control flow as the current initialization path.
+     *
+     * The first PR only supports the real Gamma-only path.  Multi-k support requires
+     * complex WFN snapshots, per-k S(k), and phase/convention handling, and should be
+     * added in a separate path instead of silently reusing this helper.
+     */
+    WfExtrapApplyResult try_use_prev_wf_gamma(const double* current_overlap,
+                                              psi::Psi<double>& psi,
+                                              const ModuleBase::matrix& wg_now,
+                                              double pivot_threshold = 1.0e-14,
+                                              double check_tolerance = 1.0e-8);
 
   private:
     void prune_history();

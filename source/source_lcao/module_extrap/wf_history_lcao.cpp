@@ -1,7 +1,10 @@
 #include "source_lcao/module_extrap/wf_history_lcao.h"
 
+#include "source_lcao/module_extrap/wf_orthonormalize_lcao.h"
+
 #include <algorithm>
 #include <complex>
+#include <type_traits>
 
 namespace ModuleExtrap
 {
@@ -82,6 +85,86 @@ bool WfHistoryLCAO<TK>::latest_snapshot(WfSnapshotLCAO<TK>& snapshot) const
     }
     snapshot = this->snapshots_.back();
     return true;
+}
+
+template <typename TK>
+WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* current_overlap,
+                                                             psi::Psi<double>& psi,
+                                                             const ModuleBase::matrix& wg_now,
+                                                             const double pivot_threshold,
+                                                             const double check_tolerance)
+{
+    WfExtrapApplyResult result;
+
+    if constexpr (!std::is_same<TK, double>::value)
+    {
+        result.status = WfcExtrapStatus::Unsupported;
+        return result;
+    }
+    else
+    {
+        if (this->method_ != WfcExtrapMethod::UsePrevWf)
+        {
+            result.status = WfcExtrapStatus::Disabled;
+            return result;
+        }
+
+        if (this->snapshots_.empty())
+        {
+            result.status = WfcExtrapStatus::EmptyHistory;
+            return result;
+        }
+
+        if (current_overlap == nullptr || !(pivot_threshold >= 0.0) || !(check_tolerance > 0.0))
+        {
+            result.status = WfcExtrapStatus::InvalidInput;
+            return result;
+        }
+
+        // The first PR only supports the real Gamma-only path.  In this path the
+        // first Psi dimension may label spin channels, but not physical k-points.
+        if (!psi.get_k_first())
+        {
+            result.status = WfcExtrapStatus::Unsupported;
+            return result;
+        }
+
+        const WfSnapshotLCAO<TK>& snapshot = this->snapshots_.back();
+        result.snapshot_istep = snapshot.istep;
+
+        if (!snapshot.compatible_with(psi, wg_now))
+        {
+            result.status = WfcExtrapStatus::DimensionMismatch;
+            return result;
+        }
+
+        // Work on an owned trial Psi first.  The caller's Psi is not overwritten
+        // unless the stored WFN can be loaded and reorthonormalized successfully.
+        psi::Psi<double> psi_trial(psi);
+        if (!snapshot.load_to(psi_trial))
+        {
+            result.status = WfcExtrapStatus::DimensionMismatch;
+            return result;
+        }
+
+        const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
+                                                                               psi_trial,
+                                                                               pivot_threshold,
+                                                                               check_tolerance);
+        if (!orth_result.ok())
+        {
+            result.status = orth_result.status;
+            result.failed_state = orth_result.failed_state;
+            result.max_orthonormality_deviation = orth_result.max_deviation;
+            return result;
+        }
+
+        psi = psi_trial;
+        result.status = WfcExtrapStatus::Success;
+        result.failed_state = -1;
+        result.max_orthonormality_deviation = orth_result.max_deviation;
+        return result;
+    }
 }
 
 template <typename TK>

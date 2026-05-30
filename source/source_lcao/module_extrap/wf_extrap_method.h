@@ -15,6 +15,8 @@ enum class WfcExtrapMethod
 enum class WfcExtrapStatus
 {
     Success,
+    Disabled,
+    EmptyHistory,
     DimensionMismatch,
     InvalidInput,
     Unsupported,
@@ -48,6 +50,10 @@ inline const char* to_string(const WfcExtrapStatus status) noexcept
     {
     case WfcExtrapStatus::Success:
         return "success";
+    case WfcExtrapStatus::Disabled:
+        return "disabled";
+    case WfcExtrapStatus::EmptyHistory:
+        return "empty_history";
     case WfcExtrapStatus::DimensionMismatch:
         return "dimension_mismatch";
     case WfcExtrapStatus::InvalidInput:
