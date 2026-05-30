@@ -21,6 +21,12 @@ template <typename T, typename TR>
 class ESolver_LR;
 }
 
+namespace ModuleExtrap
+{
+template <typename TK>
+class WfHistoryLCAO;
+}
+
 //-----------------------------------
 // ESolver for LCAO
 //-----------------------------------
@@ -80,6 +86,11 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     //! Add density matrix class, mohan add 2025-10-30
     LCAO_domain::Setup_DM<TK> dmat;
+
+    //! Optional NAO wavefunction-history extrapolation state.
+    //! The object owns only copied wavefunction snapshots; transient objects such as
+    //! Psi, HamiltLCAO, DensityMatrix, and Charge are passed in only when needed.
+    std::unique_ptr<ModuleExtrap::WfHistoryLCAO<TK>> wf_history_lcao_;
 
 
     // For deepks method, mohan add 2025-10-08

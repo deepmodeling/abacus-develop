@@ -32,6 +32,8 @@ if(ENABLE_LCAO)
         module_operator_lcao/dftu_lcao.cpp
         module_operator_lcao/dftu_fs.cpp
         module_operator_lcao/operator_fs_utils.cpp
+        module_extrap/wf_history_lcao.cpp
+        module_extrap/wf_orthonormalize_lcao.cpp
         dftu_lcao.cpp
         pulay_fs_center2.cpp
         FORCE_STRESS.cpp

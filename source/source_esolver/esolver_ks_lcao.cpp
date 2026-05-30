@@ -17,8 +17,10 @@
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
+#include "source_lcao/module_extrap/wf_history_lcao.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
+#include "source_estate/module_dm/cal_dm_psi.h" // rebuild DMK from extrapolated WFN
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -26,6 +28,8 @@
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
+
+#include <type_traits>
 
 namespace ModuleESolver
 {
@@ -87,6 +91,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
     LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
       this->dmat, this->chr, inp);
+
+    const auto wfc_extrap_method = ModuleExtrap::wfc_extrap_method_from_string(inp.wfc_extrap);
+    if (wfc_extrap_method != ModuleExtrap::WfcExtrapMethod::None)
+    {
+        this->wf_history_lcao_ = std::make_unique<ModuleExtrap::WfHistoryLCAO<TK>>(wfc_extrap_method);
+        GlobalV::ofs_running << " WFN extrapolation method: "
+                             << ModuleExtrap::to_string(wfc_extrap_method) << std::endl;
+    }
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
@@ -181,6 +193,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
+    bool initialized_by_wfc_extrap = false;
+
     // 13.1) decide the strategy for initializing DMR and HR
     if(istep == 0)//if the first scf step, readin DMR from file,
     {
@@ -199,12 +213,50 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                 this->chr, PARAM.inp.ks_solver);
         }
     }
-    else if(PARAM.inp.esolver_type!="tddft")//if not, use the DMR calculated from last step
+    else if(PARAM.inp.esolver_type!="tddft")//if not, initialize DMR from WFN history or last-step DMK
     {
-        // 13.1.2) two cases are considered:
-        // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
-        // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
-        this->dmat.dm->cal_DMR();
+        if constexpr (std::is_same<TK, double>::value)
+        {
+            if (this->wf_history_lcao_ != nullptr)
+            {
+                // Refresh the current Gamma-only overlap matrix before reusing the
+                // previous WFN.  The restored WFN is accepted only after it satisfies
+                // C^T S_now C = I in ModuleExtrap::try_use_prev_wf_gamma().
+                hamilt_lcao->updateSk(0, 0);
+                const ModuleExtrap::WfExtrapApplyResult wfc_result
+                    = this->wf_history_lcao_->try_use_prev_wf_gamma(hamilt_lcao->getSk(),
+                                                                     *(this->psi),
+                                                                     this->pelec->wg);
+                if (wfc_result.ok())
+                {
+                    elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(),
+                                          this->pelec->wg,
+                                          *(this->psi),
+                                          *(this->dmat.dm));
+                    this->dmat.dm->cal_DMR();
+                    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+                    initialized_by_wfc_extrap = true;
+
+                    GlobalV::ofs_running << " WFN extrapolation: use_prev_wf from ionic step "
+                                         << wfc_result.snapshot_istep
+                                         << ", max |C^T S C - I| = "
+                                         << wfc_result.max_orthonormality_deviation << std::endl;
+                }
+                else if (wfc_result.status != ModuleExtrap::WfcExtrapStatus::EmptyHistory)
+                {
+                    GlobalV::ofs_running << " WFN extrapolation: fallback to density-matrix initialization ("
+                                         << ModuleExtrap::to_string(wfc_result.status) << ")" << std::endl;
+                }
+            }
+        }
+
+        if (!initialized_by_wfc_extrap)
+        {
+            // 13.1.2) two cases are considered:
+            // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
+            // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
+            this->dmat.dm->cal_DMR();
+        }
     }
     // 13.2) init_scf, should be before_scf? mohan add 2025-03-10
     elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric,
@@ -569,6 +621,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao,
             this->conv_esolver, this->scf_nmax_flag, istep);
+
+    if (conv_esolver && this->wf_history_lcao_ != nullptr && this->psi != nullptr)
+    {
+        this->wf_history_lcao_->update_after_scf(istep, *(this->psi), this->pelec->wg);
+    }
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)
