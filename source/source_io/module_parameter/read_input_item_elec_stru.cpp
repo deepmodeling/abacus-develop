@@ -131,7 +131,7 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace", "lobpcg"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
                 "elpa",
@@ -1040,7 +1040,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/lobpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         item.availability = "";
@@ -1099,10 +1099,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "max iteration number for cg";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/lobpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/lobpcg method.";
         item.default_value = "50";
         item.unit = "";
-        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg";
+        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg/lobpcg";
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }

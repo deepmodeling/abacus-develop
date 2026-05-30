@@ -11,6 +11,7 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_lobpcg.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
@@ -18,10 +19,43 @@
 
 
 #include <algorithm>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
 {
+
+template <typename T, typename Device, typename HPsiFunc>
+typename std::enable_if<std::is_same<T, std::complex<double>>::value
+                            && std::is_same<Device, base_device::DEVICE_CPU>::value,
+                        void>::type
+run_lobpcg_pw(const HPsiFunc& hpsi_func,
+              psi::Psi<T, Device>& psi,
+              const std::vector<typename GetTypeReal<T>::type>& pre_condition,
+              typename GetTypeReal<T>::type* eigenvalue,
+              const std::vector<double>& ethr_band)
+{
+    const int nband_l = psi.get_nbands();
+    const int nbasis = psi.get_nbasis();
+    const int ndim = psi.get_current_ngk();
+    DiagoLobpcg<T, Device> lobpcg(pre_condition.data());
+    lobpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
+    lobpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, ethr_band);
+}
+
+template <typename T, typename Device, typename HPsiFunc>
+typename std::enable_if<!std::is_same<T, std::complex<double>>::value
+                            || !std::is_same<Device, base_device::DEVICE_CPU>::value,
+                        void>::type
+run_lobpcg_pw(const HPsiFunc&,
+              psi::Psi<T, Device>&,
+              const std::vector<typename GetTypeReal<T>::type>&,
+              typename GetTypeReal<T>::type*,
+              const std::vector<double>&)
+{
+    ModuleBase::WARNING_QUIT("HSolverPW",
+        "LOBPCG is currently implemented only for CPU complex<double> PW calculations.");
+}
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -83,7 +117,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "lobpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -322,6 +356,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+    }
+    else if (this->method == "lobpcg")
+    {
+        run_lobpcg_pw<T, Device>(hpsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {
