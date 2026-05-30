@@ -423,14 +423,21 @@ void DiagoPPCG<T, Device>::project_against(
     {
         for (const int bc : basis_cols)
         {
-            const Real coeff = gamma_dot(basis + bc * ld_psi_,
-                                         sx.data() + c * ld_psi_);
+            // Full complex inner product <basis_bc | sx_c>
+            T coeff = 0;
+            const T* bb = basis + bc * ld_psi_;
+            const T* sc = sx.data() + c * ld_psi_;
+            for (int ig = 0; ig < n_dim_; ++ig)
+                coeff += std::conj(bb[ig]) * sc[ig];
             if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
                 continue;
+            const T* sb = sbasis + bc * ld_psi_;
+            T* xc = x.data() + c * ld_psi_;
+            T* sxc = sx.data() + c * ld_psi_;
             for (int ig = 0; ig < n_dim_; ++ig)
             {
-                x[ idx(ig, c, ld_psi_)] -= basis[ idx(ig, bc, ld_psi_)] * coeff;
-                sx[idx(ig, c, ld_psi_)] -= sbasis[idx(ig, bc, ld_psi_)] * coeff;
+                xc[ig] -= bb[ig] * coeff;
+                sxc[ig] -= sb[ig] * coeff;
             }
         }
     }
@@ -820,12 +827,19 @@ void DiagoPPCG<T, Device>::orth_gradient(
     {
         for (int i = 0; i < n_band_; ++i)
         {
-            const Real coeff = gamma_dot(psi + i * ld_psi_,
-                                         grad.data() + j * ld_psi_);
+            // Full complex inner product <psi_i | grad_j>
+            T coeff = 0;
+            const T* pi = psi + i * ld_psi_;
+            const T* gj = grad.data() + j * ld_psi_;
+            for (int ig = 0; ig < n_dim_; ++ig)
+                coeff += std::conj(pi[ig]) * gj[ig];
             if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
                 continue;
+            // grad_j -= S|psi_i> * coeff
+            const T* si = spsi + i * ld_psi_;
+            T* gj_out = grad.data() + j * ld_psi_;
             for (int ig = 0; ig < n_dim_; ++ig)
-                grad[idx(ig, j, ld_psi_)] -= spsi[idx(ig, i, ld_psi_)] * coeff;
+                gj_out[ig] -= si[ig] * coeff;
         }
     }
 }
