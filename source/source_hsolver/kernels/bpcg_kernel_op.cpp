@@ -6,6 +6,7 @@
 namespace hsolver
 {
 
+// ========== 优化后的 line_minimize_with_block_op ==========
 template <typename T>
 struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
 {
@@ -18,29 +19,65 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
+        // 存储每个 band 的中间结果
+        std::vector<Real> norms(n_band, 0.0);
+        std::vector<Real> epsilo_0(n_band, 0.0);
+        std::vector<Real> epsilo_1(n_band, 0.0);
+        std::vector<Real> epsilo_2(n_band, 0.0);
+
+        // ========== Phase 1: 并行计算 norm ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
-            Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-            Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+        }
+
+        // 归一化
+        for (int i = 0; i < n_band; i++) {
+            Parallel_Reduce::reduce_pool(norms[i]);
+            norms[i] = 1.0 / sqrt(norms[i]);
+        }
+
+        // ========== Phase 2: 并行归一化并计算 epsilo ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real norm = norms[band_idx];
+
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 grad_out[item] *= norm;
                 hgrad_out[item] *= norm;
-                epsilo_0 += std::real(hpsi_out[item] * std::conj(psi_out[item]));
-                epsilo_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
-                epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
+                epsilo_0[band_idx] += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                epsilo_1[band_idx] += std::real(grad_out[item] * std::conj(hpsi_out[item]));
+                epsilo_2[band_idx] += std::real(grad_out[item] * std::conj(hgrad_out[item]));
             }
-            Parallel_Reduce::reduce_pool(epsilo_0);
-            Parallel_Reduce::reduce_pool(epsilo_1);
-            Parallel_Reduce::reduce_pool(epsilo_2);
-            theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
-            cos_theta = std::cos(theta);
-            sin_theta = std::sin(theta);
+        }
+
+        // 归一化 epsilo
+        for (int i = 0; i < n_band; i++) {
+            Parallel_Reduce::reduce_pool(epsilo_0[i]);
+            Parallel_Reduce::reduce_pool(epsilo_1[i]);
+            Parallel_Reduce::reduce_pool(epsilo_2[i]);
+        }
+
+        // ========== Phase 3: 并行更新 psi 和 hpsi ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real theta = 0.5 * std::abs(std::atan(2 * epsilo_1[band_idx] /
+                                                  (epsilo_0[band_idx] - epsilo_2[band_idx])));
+            Real cos_theta = std::cos(theta);
+            Real sin_theta = std::sin(theta);
+
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -51,6 +88,7 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
     }
 };
 
+// ========== 优化后的 calc_grad_with_block_op ==========
 template <typename T>
 struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
 {
@@ -66,43 +104,94 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
+        // 存储每个 band 的中间结果
+        std::vector<Real> norms(n_band, 0.0);
+        std::vector<Real> epsilos(n_band, 0.0);
+        std::vector<Real> errs(n_band, 0.0);
+        std::vector<Real> betas(n_band, 0.0);
+
+        // ========== Phase 1: 并行计算 norm ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
-            Real err = 0.0;
-            Real beta = 0.0;
-            Real epsilo = 0.0;
-            Real grad_2 = {0.0};
-            T grad_1 = {0.0, 0.0};
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+        }
+
+        // 归一化
+        for (int i = 0; i < n_band; i++) {
+            Parallel_Reduce::reduce_pool(norms[i]);
+            norms[i] = 1.0 / sqrt(norms[i]);
+        }
+
+        // ========== Phase 2: 并行归一化并计算 epsilo ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real norm = norms[band_idx];
+
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 psi_out[item] *= norm;
                 hpsi_out[item] *= norm;
-                epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                epsilos[band_idx] += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
-            Parallel_Reduce::reduce_pool(epsilo);
+        }
+
+        // 归一化 epsilo
+        for (int i = 0; i < n_band; i++) {
+            Parallel_Reduce::reduce_pool(epsilos[i]);
+        }
+
+        // ========== Phase 3: 并行计算 err 和 beta ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real epsilo = epsilos[band_idx];
+            T grad_1 = {0.0, 0.0};
+
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_2 = std::norm(grad_1);
-                err += grad_2;
-                beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
+                Real grad_2 = std::norm(grad_1);
+                errs[band_idx] += grad_2;
+                betas[band_idx] += grad_2 / prec_in[basis_idx];
             }
-            Parallel_Reduce::reduce_pool(err);
-            Parallel_Reduce::reduce_pool(beta);
+        }
+
+        // 归一化 err 和 beta
+        for (int i = 0; i < n_band; i++) {
+            Parallel_Reduce::reduce_pool(errs[i]);
+            Parallel_Reduce::reduce_pool(betas[i]);
+        }
+
+        // ========== Phase 4: 并行计算最终梯度 ==========
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 8)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real epsilo = epsilos[band_idx];
+            Real beta = betas[band_idx];
+            T grad_1 = {0.0, 0.0};
+
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_out[band_idx] * grad_old_out[item];
+                grad_out[item] = -grad_1 / prec_in[basis_idx]
+                               + beta / beta_out[band_idx] * grad_old_out[item];
             }
             beta_out[band_idx] = beta;
-            err_out[band_idx] = sqrt(err);
+            err_out[band_idx] = sqrt(errs[band_idx]);
         }
     }
 };
