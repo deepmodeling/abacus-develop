@@ -313,7 +313,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // orthogonal psi by cholesky method
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
-        if (current_scf_iter == 1 && ntry % this->nline == 0) {
+        if (current_scf_iter == 1 && ntry % (this->nline * 2) == 0) {
             this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, ethr_band));
