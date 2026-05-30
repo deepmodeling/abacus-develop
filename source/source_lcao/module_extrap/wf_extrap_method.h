@@ -12,6 +12,15 @@ enum class WfcExtrapMethod
     UsePrevWf
 };
 
+enum class WfcExtrapStatus
+{
+    Success,
+    DimensionMismatch,
+    InvalidInput,
+    Unsupported,
+    OrthogonalizationFailed
+};
+
 inline WfcExtrapMethod wfc_extrap_method_from_string(const std::string& method)
 {
     if (method == "use_prev_wf")
@@ -30,6 +39,25 @@ inline const char* to_string(const WfcExtrapMethod method) noexcept
     case WfcExtrapMethod::None:
     default:
         return "none";
+    }
+}
+
+inline const char* to_string(const WfcExtrapStatus status) noexcept
+{
+    switch (status)
+    {
+    case WfcExtrapStatus::Success:
+        return "success";
+    case WfcExtrapStatus::DimensionMismatch:
+        return "dimension_mismatch";
+    case WfcExtrapStatus::InvalidInput:
+        return "invalid_input";
+    case WfcExtrapStatus::Unsupported:
+        return "unsupported";
+    case WfcExtrapStatus::OrthogonalizationFailed:
+        return "orthogonalization_failed";
+    default:
+        return "unknown";
     }
 }
 

@@ -1,5 +1,6 @@
 list(APPEND objects
     wf_history_lcao.cpp
+    wf_orthonormalize_lcao.cpp
 )
 
 add_library(
