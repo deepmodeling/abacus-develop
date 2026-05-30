@@ -37,7 +37,6 @@ list(APPEND depend_files
   ../../source_base/realarray.cpp
   ../../source_base/complexarray.cpp
   ../../source_base/complexmatrix.cpp
-  ../../source_base/global_variable.cpp
   ../../source_base/libm/branred.cpp
   ../../source_base/libm/sincos.cpp
   ../../source_base/math_integral.cpp
