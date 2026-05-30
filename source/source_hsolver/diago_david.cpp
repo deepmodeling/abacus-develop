@@ -9,10 +9,6 @@
 #include "source_base/parallel_comm.h"
 #include "source_hsolver/mpi_comm_helper.h"
 
-#include <ATen/core/tensor_map.h>
-#include <ATen/core/tensor_types.h>
-#include <ATen/core/tensor.h>
-
 
 using namespace hsolver;
 
@@ -617,20 +613,14 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        // Use non-blocking reduce for better overlap potential
-        // The matrix is transposed so the reduce operates on contiguous rows
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
 
         assert(diag_comm.comm == POOL_WORLD);
-
         // Non-blocking pool reduce: reduce the newly added rows of hcc
         MPIRequestTracker tracker;
         MPICommHelper::nreduce_pool(
             hcc + nbase * nbase_x, notconv * nbase_x,
             diag_comm.comm, tracker);
-
-        // Wait for the reduce to complete before transposing back
-        // (matrixTranspose depends on the reduced data)
         tracker.wait_all();
 
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
@@ -690,10 +680,6 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        // Use single non-blocking broadcast for eigenvectors
-        // instead of per-band sequential broadcasts.
-        // vcc is stored column-major with stride nbase_x,
-        // broadcast continuous block: vcc[0:nband*nbase_x]
         MPIRequestTracker tracker;
         MPICommHelper::nbcast(vcc, nband * nbase_x, 0, diag_comm.comm, tracker);
         MPICommHelper::nbcast(this->eigenvalue, nband, 0, diag_comm.comm, tracker);
@@ -1022,144 +1008,6 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag_mixed_precision(const HPsiFunc& hpsi_func,
-                                                 const SPsiFunc& spsi_func,
-                                                 const int ld_psi,
-                                                 T *psi_in,
-                                                 Real* eigenvalue_in,
-                                                 const std::vector<double>& ethr_band,
-                                                 const int david_maxiter,
-                                                 const int ntry_max,
-                                                 const int notconv_max)
-{
-#ifdef ENABLE_MIXED_PRECISION
-    // Mixed precision: convert to float, run Davidson, then refine in double
-    using MixedT = typename std::conditional<std::is_same<T, double>::value,
-                                              float,
-                                              std::complex<float>>::type;
-    using MixedReal = typename GetTypeReal<MixedT>::type;
-
-    // Mixed precision currently only supported on CPU; fallback to double on GPU
-    if (this->device == base_device::GpuDevice)
-    {
-        // Fallback: run standard double-precision diag
-        return this->diag(hpsi_func, spsi_func, ld_psi, psi_in, eigenvalue_in,
-                          ethr_band, david_maxiter, ntry_max, notconv_max);
-    }
-
-    // Convert psi to mixed precision
-    auto psi_tensor = ct::TensorMap(psi_in,
-                                    ct::DataTypeToEnum<T>::value,
-                                    ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                    ct::TensorShape({nband, ld_psi}));
-    auto psi_slice = psi_tensor.slice({0, 0}, {nband, dim});
-    auto psi_mixed = psi_slice.cast<MixedT>();
-
-    // Convert precondition to mixed precision
-    ct::Tensor prec_mixed;
-    if (this->precondition != nullptr)
-    {
-        auto prec_map = ct::TensorMap(const_cast<Real*>(this->precondition),
-                                      ct::DataTypeToEnum<Real>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({dim}));
-        prec_mixed = prec_map.template cast<MixedReal>();
-    }
-
-    // Wrap H*psi and S*psi to operate in double but return mixed precision results
-    auto hpsi_func_mixed = [hpsi_func](MixedT* psi_in_mixed,
-                                        MixedT* hpsi_out_mixed,
-                                        const int ld_psi_mixed,
-                                        const int nvec) {
-        auto psi_in_map = ct::TensorMap(psi_in_mixed,
-                                        ct::DataTypeToEnum<MixedT>::value,
-                                        ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                        ct::TensorShape({nvec, ld_psi_mixed}));
-        auto psi_in_double = psi_in_map.cast<T>();
-        auto hpsi_double = ct::Tensor(ct::DataTypeToEnum<T>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({nvec, ld_psi_mixed}));
-        hpsi_func(psi_in_double.template data<T>(), hpsi_double.template data<T>(), ld_psi_mixed, nvec);
-        auto hpsi_mixed_out = hpsi_double.cast<MixedT>();
-        ct::TensorMap hpsi_out_tensor(hpsi_out_mixed,
-                                      ct::DataTypeToEnum<MixedT>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({nvec, ld_psi_mixed}));
-        hpsi_out_tensor.CopyFrom(hpsi_mixed_out);
-    };
-
-    auto spsi_func_mixed = [spsi_func](MixedT* psi_in_mixed,
-                                        MixedT* spsi_out_mixed,
-                                        const int ld_psi_mixed,
-                                        const int nvec) {
-        auto psi_in_map = ct::TensorMap(psi_in_mixed,
-                                        ct::DataTypeToEnum<MixedT>::value,
-                                        ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                        ct::TensorShape({nvec, ld_psi_mixed}));
-        auto psi_in_double = psi_in_map.cast<T>();
-        auto spsi_double = ct::Tensor(ct::DataTypeToEnum<T>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({nvec, ld_psi_mixed}));
-        spsi_func(psi_in_double.template data<T>(), spsi_double.template data<T>(), ld_psi_mixed, nvec);
-        auto spsi_mixed_out = spsi_double.cast<MixedT>();
-        ct::TensorMap spsi_out_tensor(spsi_out_mixed,
-                                      ct::DataTypeToEnum<MixedT>::value,
-                                      ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                      ct::TensorShape({nvec, ld_psi_mixed}));
-        spsi_out_tensor.CopyFrom(spsi_mixed_out);
-    };
-
-    // Allocate mixed precision eigenvalue storage
-    std::vector<MixedReal> eigen_mixed(nband, static_cast<MixedReal>(0.0));
-
-    // Run Davidson in mixed (float) precision
-    diag_comm_info comm_info_mixed = this->diag_comm;
-    DiagoDavid<MixedT, Device> david_mixed(
-        prec_mixed.NumElements() > 0 ? prec_mixed.template data<MixedReal>() : nullptr,
-        nband, dim, david_ndim, comm_info_mixed);
-    david_mixed.set_precision_mode(PrecisionMode::kFloat);
-
-    int mixed_iter = david_mixed.diag(
-        hpsi_func_mixed,
-        spsi_func_mixed,
-        ld_psi,
-        psi_mixed.template data<MixedT>(),
-        eigen_mixed.data(),
-        ethr_band,
-        david_maxiter,
-        ntry_max,
-        notconv_max);
-
-    // Convert back to double precision
-    auto psi_refined = psi_mixed.template cast<T>();
-    psi_slice.CopyFrom(psi_refined);
-
-    // Copy eigenvalues to output
-    for (int i = 0; i < nband; ++i)
-    {
-        eigenvalue_in[i] = static_cast<Real>(eigen_mixed[i]);
-    }
-
-    // Refinement: run one double-precision Davidson iteration
-    int refine_iter = this->diag_once(hpsi_func, spsi_func,
-                                       dim, nband, ld_psi,
-                                       psi_in, eigenvalue_in,
-                                       ethr_band, david_maxiter);
-
-    if (this->notconv > std::max(5, nband / 4))
-    {
-        std::cout << "\n notconv = " << this->notconv;
-        std::cout << "\n DiagoDavid::diag_mixed_precision', too many bands are not converged! \n";
-    }
-
-    return mixed_iter + refine_iter;
-#else
-    return 0;
-#endif
-}
-
-
-template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const SPsiFunc& spsi_func,
                                 const int ld_psi,
@@ -1170,24 +1018,6 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const int ntry_max,
                                 const int notconv_max)
 {
-    // Dispatch to mixed precision if requested
-    if (precision_mode_ == PrecisionMode::kMixed)
-    {
-#ifdef ENABLE_MIXED_PRECISION
-        int result = diag_mixed_precision(hpsi_func, spsi_func,
-                                     ld_psi, psi_in, eigenvalue_in,
-                                     ethr_band, david_maxiter,
-                                     ntry_max, notconv_max);
-        // If mixed precision converged well, return immediately.
-        // Otherwise fall through to standard double precision path,
-        // using the refined psi as a starting point.
-        if (this->notconv <= std::max(5, nband / 4))
-        {
-            return result;
-        }
-#endif
-    }
-
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv = 0;
