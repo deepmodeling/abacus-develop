@@ -1,0 +1,47 @@
+Task8 cache suite start: 2026-05-30 22:50:26 +0800
+repo_dir=/root/abacus-develop
+build_dir=/root/abacus-develop/build
+abacus_bin=NA
+label=baseline
+mpi_launch=mpirun
+warmup=1 repeat=3 timeout=1800 continue_on_error=1
+cases=homework_docs/test_cases/gaas_small homework_docs/test_cases/gaas_medium
+nprocs=1 2 4
+threads=1 2 4
+
+[2026-05-30 22:50:26 +0800] starting case=gaas_small nproc=1 threads=1
+[2026-05-30 22:51:50 +0800] finished case=gaas_small nproc=1 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np1_omp1
+[2026-05-30 22:51:50 +0800] starting case=gaas_small nproc=1 threads=2
+[2026-05-30 22:52:49 +0800] finished case=gaas_small nproc=1 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np1_omp2
+[2026-05-30 22:52:49 +0800] starting case=gaas_small nproc=1 threads=4
+[2026-05-30 22:53:23 +0800] finished case=gaas_small nproc=1 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np1_omp4
+[2026-05-30 22:53:23 +0800] starting case=gaas_small nproc=2 threads=1
+[2026-05-30 22:54:17 +0800] finished case=gaas_small nproc=2 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np2_omp1
+[2026-05-30 22:54:17 +0800] starting case=gaas_small nproc=2 threads=2
+[2026-05-30 22:54:56 +0800] finished case=gaas_small nproc=2 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np2_omp2
+[2026-05-30 22:54:56 +0800] starting case=gaas_small nproc=2 threads=4
+[2026-05-30 22:55:29 +0800] finished case=gaas_small nproc=2 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np2_omp4
+[2026-05-30 22:55:29 +0800] starting case=gaas_small nproc=4 threads=1
+[2026-05-30 22:55:58 +0800] finished case=gaas_small nproc=4 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np4_omp1
+[2026-05-30 22:55:58 +0800] starting case=gaas_small nproc=4 threads=2
+[2026-05-30 22:56:22 +0800] finished case=gaas_small nproc=4 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np4_omp2
+[2026-05-30 22:56:22 +0800] starting case=gaas_small nproc=4 threads=4
+[2026-05-30 22:56:52 +0800] finished case=gaas_small nproc=4 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_small_np4_omp4
+[2026-05-30 22:56:52 +0800] starting case=gaas_medium nproc=1 threads=1
+[2026-05-30 22:59:05 +0800] finished case=gaas_medium nproc=1 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np1_omp1
+[2026-05-30 22:59:05 +0800] starting case=gaas_medium nproc=1 threads=2
+[2026-05-30 23:00:31 +0800] finished case=gaas_medium nproc=1 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np1_omp2
+[2026-05-30 23:00:31 +0800] starting case=gaas_medium nproc=1 threads=4
+[2026-05-30 23:01:26 +0800] finished case=gaas_medium nproc=1 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np1_omp4
+[2026-05-30 23:01:26 +0800] starting case=gaas_medium nproc=2 threads=1
+[2026-05-30 23:02:37 +0800] finished case=gaas_medium nproc=2 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np2_omp1
+[2026-05-30 23:02:37 +0800] starting case=gaas_medium nproc=2 threads=2
+[2026-05-30 23:03:27 +0800] finished case=gaas_medium nproc=2 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np2_omp2
+[2026-05-30 23:03:27 +0800] starting case=gaas_medium nproc=2 threads=4
+[2026-05-30 23:04:13 +0800] finished case=gaas_medium nproc=2 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np2_omp4
+[2026-05-30 23:04:13 +0800] starting case=gaas_medium nproc=4 threads=1
+[2026-05-30 23:04:52 +0800] finished case=gaas_medium nproc=4 threads=1 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np4_omp1
+[2026-05-30 23:04:52 +0800] starting case=gaas_medium nproc=4 threads=2
+[2026-05-30 23:05:24 +0800] finished case=gaas_medium nproc=4 threads=2 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np4_omp2
+[2026-05-30 23:05:24 +0800] starting case=gaas_medium nproc=4 threads=4
+[2026-05-30 23:06:06 +0800] finished case=gaas_medium nproc=4 threads=4 exit_code=0 out_dir=/root/abacus-develop/homework_docs/test_cases/task8_cache_suite_runs/baseline_20260530_225026/gaas_medium_np4_omp4
