@@ -5,6 +5,37 @@
 
 namespace ModulePW
 {
+namespace detail
+{
+template <typename T>
+inline void copy_complex_buffer(const std::complex<T>* in, std::complex<T>* out, const int count)
+{
+    const T* __restrict__ in_r = reinterpret_cast<const T*>(in);
+    T* __restrict__ out_r = reinterpret_cast<T*>(out);
+#ifdef __GNUC__
+#pragma GCC ivdep
+#endif
+    for (int i = 0; i < 2 * count; ++i)
+    {
+        out_r[i] = in_r[i];
+    }
+}
+
+template <typename T>
+inline void copy_complex_buffer_parallel(const std::complex<T>* in, std::complex<T>* out, const int count)
+{
+    const T* __restrict__ in_r = reinterpret_cast<const T*>(in);
+    T* __restrict__ out_r = reinterpret_cast<T*>(out);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < 2 * count; ++i)
+    {
+        out_r[i] = in_r[i];
+    }
+}
+} // namespace detail
+
 /**
  * @brief gather planes and scatter sticks
  * @param in: (nplane,fftny,fftnx)
@@ -28,16 +59,8 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         {
             int ixy = istot2ixy_[is];
             std::complex<T>* outp = &out[is*nz_];
-            std::complex<T>* inp = &in[ixy*nz_];
-            T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-            const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for(int iz = 0 ; iz < 2 * nz_ ; ++iz)
-            {
-                outp_r[iz] = inp_r[iz];
-            }
+            const std::complex<T>* inp = &in[ixy*nz_];
+            detail::copy_complex_buffer(inp, outp, nz_);
         }
         return;
     }
@@ -56,16 +79,8 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     {
         int ixy = istot2ixy_gps[istot];
         std::complex<T>* outp = &out[istot * nplane_gps];
-        std::complex<T>* inp = &in[ixy * nplane_gps];
-        T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-        const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-        for (int iz = 0; iz < 2 * nplane_gps; ++iz)
-        {
-            outp_r[iz] = inp_r[iz];
-        }
+        const std::complex<T>* inp = &in[ixy * nplane_gps];
+        detail::copy_complex_buffer(inp, outp, nplane_gps);
     }
 
     //exchange data
@@ -101,16 +116,8 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
             std::complex<T> *outp0 = &out[startz_gps[ip]];
             std::complex<T> *inp0 = &in[startg_gps[ip]];
             std::complex<T>* outp = &outp0[is * nz_gps];
-            std::complex<T>* inp = &inp0[is * nzip ];
-            T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-            const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for (int izip = 0; izip < 2 * nzip; ++izip)
-            {
-                outp_r[izip] = inp_r[izip];
-            }
+            const std::complex<T>* inp = &inp0[is * nzip ];
+            detail::copy_complex_buffer(inp, outp, nzip);
         }
     }
 #endif
@@ -148,16 +155,8 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         {
             int ixy = istot2ixy_[is];
             std::complex<T>* outp = &out[ixy*nz_];
-            std::complex<T>* inp = &in[is*nz_];
-            T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-            const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for(int iz = 0 ; iz < 2 * nz_ ; ++iz)
-            {
-                outp_r[iz] = inp_r[iz];
-            }
+            const std::complex<T>* inp = &in[is*nz_];
+            detail::copy_complex_buffer(inp, outp, nz_);
         }
         return;
     }
@@ -183,16 +182,8 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
             std::complex<T> *outp0 = &out[startg_[ip]];
             std::complex<T> *inp0 = &in[startz_[ip]];
             std::complex<T>* outp = &outp0[is * nzip];
-            std::complex<T>* inp = &inp0[is * nz_ ];
-            T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-            const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-            for (int izip = 0; izip < 2 * nzip; ++izip)
-            {
-                outp_r[izip] = inp_r[izip];
-            }
+            const std::complex<T>* inp = &inp0[is * nz_ ];
+            detail::copy_complex_buffer(inp, outp, nzip);
         }
     }
 
@@ -231,16 +222,8 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         int ixy = istot2ixy[istot];
         //int ixy = (ixy / fftny)*ny + ixy % fftny;
         std::complex<T>* outp = &out[ixy * nplane];
-        std::complex<T>* inp = &in[istot * nplane];
-        T* __restrict__ outp_r = reinterpret_cast<T*>(outp);
-        const T* __restrict__ inp_r = reinterpret_cast<const T*>(inp);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-        for (int iz = 0; iz < 2 * nplane; ++iz)
-        {
-            outp_r[iz] = inp_r[iz];
-        }
+        const std::complex<T>* inp = &in[istot * nplane];
+        detail::copy_complex_buffer(inp, outp, nplane);
     }
 #endif
     return;

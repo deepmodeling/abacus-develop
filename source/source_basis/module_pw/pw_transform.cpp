@@ -34,13 +34,7 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
     const int npw_ = this->npw;
     const int nxyz_ = this->nxyz;
     const int* ig2isz_ = this->ig2isz;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-    for (int ir = 0; ir < nrxx_; ++ir)
-    {
-        this->fft_bundle.get_auxr_data<FPTYPE>()[ir] = in[ir];
-    }
+    detail::copy_complex_buffer_parallel(in, this->fft_bundle.get_auxr_data<FPTYPE>(), nrxx_);
     this->fft_bundle.fftxyfor(fft_bundle.get_auxr_data<FPTYPE>(), fft_bundle.get_auxr_data<FPTYPE>());
 
     this->gatherp_scatters(this->fft_bundle.get_auxr_data<FPTYPE>(), this->fft_bundle.get_auxg_data<FPTYPE>());
@@ -199,13 +193,7 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
     }
     else
     {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-        for (int ir = 0; ir < nrxx_; ++ir)
-        {
-            out[ir] = this->fft_bundle.get_auxr_data<FPTYPE>()[ir];
-        }
+        detail::copy_complex_buffer_parallel(this->fft_bundle.get_auxr_data<FPTYPE>(), out, nrxx_);
     }
     ModuleBase::timer::end(this->classname, "recip2real");
 }
