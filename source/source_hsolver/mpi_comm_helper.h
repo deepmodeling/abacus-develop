@@ -138,6 +138,9 @@ template <typename T> struct mpi_type {
 template <> struct mpi_type<double> {
     static constexpr MPI_Datatype value = MPI_DOUBLE;
 };
+template <> struct mpi_type<float> {
+    static constexpr MPI_Datatype value = MPI_FLOAT;
+};
 template <> struct mpi_type<std::complex<double>> {
     static constexpr MPI_Datatype value = MPI_DOUBLE_COMPLEX;
 };
