@@ -49,11 +49,18 @@ All output file naming conventions can be found in the online documentation (wit
 | `s12` | Non-collinear spin calculation |
 | `k#` | k-point index (e.g., `k1`, `k2`) |
 | `g#` | Ionic step index for relax/md (e.g., `g1`, `g2`) |
+| `ini` | Initial state (before electronic iteration), used before or after `g#` |
 
 **Important:**
 - All index numbers start from 1 (not 0)
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
+- For initial charge density output (`out_chg = 2`):
+  - `out_freq_ion = 0`: `chg_ini.cube` (nspin=1) or `chgs{#}_ini.cube` (nspin=2/4) - output at every step (overwrite same file)
+  - `out_freq_ion > 0`: `chgg{#}_ini.cube` (nspin=1) or `chgs{#}g{#}_ini.cube` (nspin=2/4) - output every out_freq_ion steps
+- For initial potential output (`out_pot = 3`):
+  - `out_freq_ion = 0`: `pot_ini.cube` (nspin=1) or `pots{#}_ini.cube` (nspin=2/4) - output at every step (overwrite same file)
+  - `out_freq_ion > 0`: `potg{#}_ini.cube` (nspin=1) or `pots{#}g{#}_ini.cube` (nspin=2/4) - output every out_freq_ion steps
 
 ### 2.2 Examples
 
@@ -62,7 +69,22 @@ All output file naming conventions can be found in the online documentation (wit
 | `chgs1.cube` | Charge density, spin 1 |
 | `chgs2.cube` | Charge density, spin 2 |
 | `chgs3.cube` | Charge density, spin 3 (non-collinear with SOC) |
+| `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
+| `chgs1_ini.cube` | Initial charge density (out_freq_ion=0, spin 1, nspin=2/4) |
+| `chgg1_ini.cube` | Initial charge density, geometry step 1 (nspin=1) |
+| `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1 (nspin=2/4) |
+| `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
+| `pots1_ini.cube` | Initial potential (out_freq_ion=0, spin 1, nspin=2/4) |
+| `potg1_ini.cube` | Initial potential, geometry step 1 (nspin=1) |
+| `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube` | ELF, spin 1 (nspin=2) |
+| `elfs2.cube` | ELF, spin 2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=1/4) |
+| `elfs1g1.cube` | ELF, spin 1, geometry step 1 (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=2) |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
 | `wf_pw.dat` | Wavefunction, plane wave basis |
@@ -79,8 +101,25 @@ All output file naming conventions can be found in the online documentation (wit
 | `band.txt` | Band structure |
 | `chgs1.cube`, `chgs2.cube` | Charge density (spin 1, spin 2) |
 | `chg.cube` | Total charge density |
+| Initial charge density (out_chg=2) | |
+| `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
+| `chgs{#}_ini.cube` | Initial charge density (out_freq_ion=0, spin {#}, nspin=2/4) |
+| `chgg{#}_ini.cube` | Initial charge density (out_freq_ion>0, geometry step {#}, nspin=1) |
+| `chgs{#}g{#}_ini.cube` | Initial charge density (out_freq_ion>0, spin {#}, geometry step {#}, nspin=2/4) |
+| Initial potential (out_pot=3) | |
+| `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
+| `pots{#}_ini.cube` | Initial potential (out_freq_ion=0, spin {#}, nspin=2/4) |
+| `potg{#}_ini.cube` | Initial potential (out_freq_ion>0, geometry step {#}, nspin=1) |
+| `pots{#}g{#}_ini.cube` | Initial potential (out_freq_ion>0, spin {#}, geometry step {#}, nspin=2/4) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
+| ELF (out_elf) | |
+| `elftot.cube` | ELF, total (nspin=1/4) |
+| `elfs1.cube`, `elfs2.cube` | ELF, spin 1/2 (nspin=2) |
+| `elftot.cube` | ELF, total (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=1/4) |
+| `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#} (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=2) |
 
 ## 3. File Format Standards
 

@@ -118,7 +118,7 @@ TEST_F(RhoIOTest, Write)
     ucell->atoms[0].ncpp.zv = 4;
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/chg.cube", rho[0], ucell->nat);
-    ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1);
+    ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1, false, false);
     std::ifstream ifs1("test_write_vdata_palgrid.cube", std::ifstream::binary | std::ifstream::ate);
     std::ifstream ifs2("support/chg.cube", std::ifstream::binary | std::ifstream::ate);
     EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
