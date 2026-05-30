@@ -9,5 +9,6 @@
 ./scripts/stage4/install_libnpy.sh
 ./scripts/stage4/install_libri.sh
 ./scripts/stage4/install_libcomm.sh
+./scripts/stage4/install_nep.sh
 
 # EOF

@@ -3,6 +3,8 @@
 
 #include "source_esolver/esolver.h"
 
+class Parameter;
+
 #ifdef __MPI
 #include <mpi.h> // MPI functions
 #endif
@@ -219,7 +221,7 @@ void temp_vector(const int& natom,
 /**
  * @brief determine thr current md step and temperature
  *
- * determine thr current md step and temperature according to Restart_md.dat if md_restart is true
+ * determine the current md step and temperature according to Restart_md.txt if md_restart is true
  *
  * @param my_rank MPI rank of the processor
  * @param file_dir the directory of read-in files

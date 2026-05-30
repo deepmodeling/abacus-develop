@@ -22,7 +22,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_integral.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
@@ -53,6 +53,19 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
     this->rhopw = rhopw_in;
 }
 
+// mohan add 2025-12-02
+bool Charge::kin_density()
+{
+	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void Charge::destroy()
 {
     if (allocate_rho || allocate_rho_final_scf) // LiuXh add 20180619
@@ -77,12 +90,19 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int& nspin_in)
+void Charge::allocate(const int& nspin_in, const bool kin_den)
 {
     ModuleBase::TITLE("Charge", "allocate");
+
+	if (this->rhopw == nullptr)
+	{
+		ModuleBase::WARNING_QUIT("Charge::allocate","rhopw is nullptr.");
+	}
+
     this->nrxx = this->rhopw->nrxx;
     this->nxyz = this->rhopw->nxyz;
     this->ngmc = this->rhopw->npw;
+
 
     if (allocate_rho == true)
     {
@@ -105,7 +125,7 @@ void Charge::allocate(const int& nspin_in)
     _space_rho_save = new double[nspin * nrxx];
     _space_rhog = new std::complex<double>[nspin * ngmc];
     _space_rhog_save = new std::complex<double>[nspin * ngmc];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         _space_kin_r = new double[nspin * nrxx];
         _space_kin_r_save = new double[nspin * nrxx];
@@ -114,7 +134,7 @@ void Charge::allocate(const int& nspin_in)
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
     rhog_save = new std::complex<double>*[nspin];
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
@@ -129,7 +149,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
-        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+        if(kin_den) 
         {
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
@@ -142,7 +162,7 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
     ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
     ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
-    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    if(kin_den)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
@@ -229,7 +249,7 @@ void Charge::atomic_rho(const int spin_number_need,
                         const UnitCell& ucell) const // Peize Lin refactor 2021.04.08
 {
     ModuleBase::TITLE("Charge", "atomic_rho");
-    ModuleBase::timer::tick("Charge", "atomic_rho");
+    ModuleBase::timer::start("Charge", "atomic_rho");
 
     {
 		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
@@ -339,7 +359,9 @@ void Charge::atomic_rho(const int spin_number_need,
                             gstart = 1;
                         }
                         if (PARAM.inp.test_charge > 0)
+                        {
                             std::cout << "\n |G|=0 term done." << std::endl;
+                        }
                             //----------------------------------------------------------
                             // Here we compute the G<>0 term
                             // But if in parallel case
@@ -350,14 +372,18 @@ void Charge::atomic_rho(const int spin_number_need,
     #pragma omp parallel
                         {
     #endif
-                            std::vector<double> rho1d(ucell.meshx);
+                            const int ngg = this->rhopw->ngg;
+                            const double* gg_uniq = this->rhopw->gg_uniq;
+                            const int meshx = ucell.meshx;
+                            const double tpiba = ucell.tpiba;
+                            std::vector<double> rho1d(meshx);
 
     #ifdef _OPENMP
     #pragma omp for
     #endif
-                            for (int igg = gstart; igg < this->rhopw->ngg; ++igg)
+                            for (int igg = gstart; igg < ngg; ++igg)
                             {
-                                const double gx = sqrt(this->rhopw->gg_uniq[igg]) * ucell.tpiba;
+                                const double gx = sqrt(gg_uniq[igg]) * tpiba;
                                 for (int ir = 0; ir < mesh; ir++)
                                 {
                                     if (atom->ncpp.r[ir] < 1.0e-8)
@@ -377,7 +403,9 @@ void Charge::atomic_rho(const int spin_number_need,
     #endif
                             {
                                 if (PARAM.inp.test_charge > 0)
+                                {
                                     std::cout << " |G|>0 term done." << std::endl;
+                                }
                             }
                             //----------------------------------------------------------
                             // EXPLAIN : Complete the transfer of rho from real space to
@@ -386,7 +414,7 @@ void Charge::atomic_rho(const int spin_number_need,
     #ifdef _OPENMP
     #pragma omp for
     #endif
-							for (int igg = 0; igg < this->rhopw->ngg; igg++)
+							for (int igg = 0; igg < ngg; igg++)
 							{
 								rho_lgl[igg] /= omega;
 							}
@@ -400,12 +428,14 @@ void Charge::atomic_rho(const int spin_number_need,
                     //----------------------------------------------------------
                     if (spin_number_need == 1)
                     {
+                        const int npw = this->rhopw->npw;
+                        const int* ig2igg = this->rhopw->ig2igg;
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-                        for (int ig = 0; ig < this->rhopw->npw; ig++)
+                        for (int ig = 0; ig < npw; ig++)
                         {
-                            rho_g3d(0, ig) += strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
+                            rho_g3d(0, ig) += strucFac(it, ig) * rho_lgl[ig2igg[ig]];
                         }
                     }
                     // mohan add 2011-06-14, initialize the charge density according to each atom
@@ -413,14 +443,18 @@ void Charge::atomic_rho(const int spin_number_need,
                     {
                         if (startmag_type == 1)
                         {
+                            const int npw = this->rhopw->npw;
+                            const int* ig2igg = this->rhopw->ig2igg;
+                            const double zv = atom->ncpp.zv;
+                            const double start_mag_it = ucell.magnet.start_mag[it];
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-                            for (int ig = 0; ig < this->rhopw->npw; ig++)
+                            for (int ig = 0; ig < npw; ig++)
                             {
-                                const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
-                                const double up = 0.5 * (1 + ucell.magnet.start_mag[it] / atom->ncpp.zv);
-                                const double dw = 0.5 * (1 - ucell.magnet.start_mag[it] / atom->ncpp.zv);
+                                const std::complex<double> swap = strucFac(it, ig) * rho_lgl[ig2igg[ig]];
+                                const double up = 0.5 * (1 + start_mag_it / zv);
+                                const double dw = 0.5 * (1 - start_mag_it / zv);
                                 rho_g3d(0, ig) += swap * up;
                                 rho_g3d(1, ig) += swap * dw;
                             }
@@ -429,25 +463,24 @@ void Charge::atomic_rho(const int spin_number_need,
                         else if (startmag_type == 2)
                         {
                             std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
+                            const int npw = this->rhopw->npw;
+                            const ModuleBase::Vector3<double>* gcar = this->rhopw->gcar;
+                            const int* ig2igg = this->rhopw->ig2igg;
+                            const double zv = atom->ncpp.zv;
                             for (int ia = 0; ia < atom->na; ia++)
                             {
-                                // const double up = 0.5 * ( 1 + atom->mag[ia] );
-                                // const double dw = 0.5 * ( 1 - atom->mag[ia] );
                                 const double up = 0.5 * (1 + atom->mag[ia] / atom->ncpp.zv);
                                 const double dw = 0.5 * (1 - atom->mag[ia] / atom->ncpp.zv);
-                                // std::cout << " atom " << ia << " up=" << up << " dw=" << dw << std::endl;
+                                const double tau_x = atom->tau[ia].x;
+                                const double tau_y = atom->tau[ia].y;
+                                const double tau_z = atom->tau[ia].z;
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-                                for (int ig = 0; ig < this->rhopw->npw; ig++)
+                                for (int ig = 0; ig < npw; ig++)
                                 {
-                                    const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
-                                                        + this->rhopw->gcar[ig][1] * atom->tau[ia].y
-                                                        + this->rhopw->gcar[ig][2] * atom->tau[ia].z;
-
-                                    std::complex<double> swap
-                                        = ModuleBase::libm::exp(ci_tpi * Gtau) * rho_lgl[this->rhopw->ig2igg[ig]];
-
+                                    const double Gtau = gcar[ig][0] * tau_x + gcar[ig][1] * tau_y + gcar[ig][2] * tau_z;
+                                    std::complex<double> swap = ModuleBase::libm::exp(ci_tpi * Gtau) * rho_lgl[ig2igg[ig]];
                                     rho_g3d(0, ig) += swap * up;
                                     rho_g3d(1, ig) += swap * dw;
                                 }
@@ -461,37 +494,42 @@ void Charge::atomic_rho(const int spin_number_need,
                         {
                             double sin_a1, sin_a2, cos_a1, cos_a2;
                             if (PARAM.globalv.domag)
-                            { // will not be used now, will be deleted later
+                            {
                                 ModuleBase::libm::sincos(atom->angle1[0], &sin_a1, &cos_a1);
                                 ModuleBase::libm::sincos(atom->angle2[0], &sin_a2, &cos_a2);
                             }
+                            const int npw = this->rhopw->npw;
+                            const int* ig2igg = this->rhopw->ig2igg;
+                            const double zv = atom->ncpp.zv;
+                            const double start_mag_it = ucell.magnet.start_mag[it];
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-                            for (int ig = 0; ig < this->rhopw->npw; ig++)
+                            for (int ig = 0; ig < npw; ig++)
                             {
-                                const std::complex<double> swap = strucFac(it, ig) * rho_lgl[this->rhopw->ig2igg[ig]];
+                                const std::complex<double> swap = strucFac(it, ig) * rho_lgl[ig2igg[ig]];
                                 rho_g3d(0, ig) += swap;
                                 if (PARAM.globalv.domag)
-                                { // will not be used now, will be deleted later
-                                    rho_g3d(1, ig)
-                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * cos_a2;
-                                    rho_g3d(2, ig)
-                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * sin_a1 * sin_a2;
-                                    rho_g3d(3, ig)
-                                        += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv) * cos_a1;
+                                {
+                                    rho_g3d(1, ig) += swap * (start_mag_it / zv) * sin_a1 * cos_a2;
+                                    rho_g3d(2, ig) += swap * (start_mag_it / zv) * sin_a1 * sin_a2;
+                                    rho_g3d(3, ig) += swap * (start_mag_it / zv) * cos_a1;
                                 }
                                 else if (PARAM.globalv.domag_z)
                                 {
                                     rho_g3d(1, ig) = 0.0;
                                     rho_g3d(2, ig) = 0.0;
-                                    rho_g3d(3, ig) += swap * (ucell.magnet.start_mag[it] / atom->ncpp.zv);
+                                    rho_g3d(3, ig) += swap * (start_mag_it / zv);
                                 }
                             }
                         }
                         else if (startmag_type == 2)
-                        { // zdy-warning-not-available
+                        {
                             std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
+                            const int npw = this->rhopw->npw;
+                            const ModuleBase::Vector3<double>* gcar = this->rhopw->gcar;
+                            const int* ig2igg = this->rhopw->ig2igg;
+                            const double zv = atom->ncpp.zv;
                             for (int ia = 0; ia < atom->na; ia++)
                             {
                                 double sin_a1, sin_a2, cos_a1, cos_a2;
@@ -503,29 +541,27 @@ void Charge::atomic_rho(const int spin_number_need,
                                 {
                                     ModuleBase::libm::sincos(atom->angle2[ia], &sin_a2, &cos_a2);
                                 }
+                                const double mag_ia = atom->mag[ia];
+                                const double tau_x = atom->tau[ia].x;
+                                const double tau_y = atom->tau[ia].y;
+                                const double tau_z = atom->tau[ia].z;
     #ifdef _OPENMP
     #pragma omp parallel for
     #endif
-                                for (int ig = 0; ig < this->rhopw->npw; ig++)
+                                for (int ig = 0; ig < npw; ig++)
                                 {
-                                    const double Gtau = this->rhopw->gcar[ig][0] * atom->tau[ia].x
-                                                        + this->rhopw->gcar[ig][1] * atom->tau[ia].y
-                                                        + this->rhopw->gcar[ig][2] * atom->tau[ia].z;
-
-                                    std::complex<double> swap = exp(ci_tpi * Gtau) * rho_lgl[this->rhopw->ig2igg[ig]];
-
-                                    // calculate rho_total
+                                    const double Gtau = gcar[ig][0] * tau_x + gcar[ig][1] * tau_y + gcar[ig][2] * tau_z;
+                                    std::complex<double> swap = exp(ci_tpi * Gtau) * rho_lgl[ig2igg[ig]];
+                                    const double mag_factor = mag_ia / zv;
                                     rho_g3d(0, ig) += swap;
-                                    // calculate mag_z
                                     if (PARAM.globalv.domag || PARAM.globalv.domag_z)
                                     {
-                                        rho_g3d(3, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * cos_a1;
+                                        rho_g3d(3, ig) += swap * mag_factor * cos_a1;
                                     }
-                                    // calculate mag_x and mag_y
                                     if (PARAM.globalv.domag)
                                     {
-                                        rho_g3d(1, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * sin_a1 * cos_a2;
-                                        rho_g3d(2, ig) += swap * (atom->mag[ia] / atom->ncpp.zv) * sin_a1 * sin_a2;
+                                        rho_g3d(1, ig) += swap * mag_factor * sin_a1 * cos_a2;
+                                        rho_g3d(2, ig) += swap * mag_factor * sin_a1 * sin_a2;
                                     }
                                     else
                                     {
@@ -615,7 +651,7 @@ void Charge::atomic_rho(const int spin_number_need,
 		}
     }
 
-    ModuleBase::timer::tick("Charge", "atomic_rho");
+    ModuleBase::timer::end("Charge", "atomic_rho");
     return;
 }
 
@@ -634,6 +670,8 @@ void Charge::save_rho_before_sum_band()
 
 double Charge::cal_rho2ne(const double* rho_in) const
 {
+    assert(this->rhopw->nxyz > 0); // mohan add 2025-12-02
+
     double ne = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {

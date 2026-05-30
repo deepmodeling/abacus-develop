@@ -1,27 +1,23 @@
 #include "esolver_fp.h"
 
-#include "source_base/global_variable.h"
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_pw/module_pwdft/global.h"
-#include "source_io/cif_io.h"
-#include "source_io/cube_io.h"
-#include "source_io/json_output/init_info.h"
-#include "source_io/json_output/output_info.h"
-#include "source_io/output_log.h"
-#include "source_io/print_info.h"
-#include "source_io/rhog_io.h"
-#include "source_io/write_elecstat_pot.h"
-#include "source_io/write_elf.h"
+#include "source_io/module_output/cif_io.h"
+#include "source_io/module_output/cube_io.h" // use write_vdata_palgrid
+#include "source_io/module_json/init_info.h"
+#include "source_io/module_json/output_info.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_chgpot/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_cell/k_vector_utils.h"
 
-#ifdef USE_LIBXC
-#include "source_io/write_libxc_r.h"
-#endif
+#include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
+#include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
+#include "source_io/module_ctrl/ctrl_output_fp.h"
+#include "source_io/module_chgpot/write_init.h" // write_chg_init, write_pot_init
 
 namespace ModuleESolver
 {
@@ -32,250 +28,90 @@ ESolver_FP::ESolver_FP()
 
 ESolver_FP::~ESolver_FP()
 {
-    if (pw_rho_flag == true)
-    {
-        delete this->pw_rho;
-        this->pw_rho_flag = false;
-    }
-    if (PARAM.globalv.double_grid)
-    {
-        delete pw_rhod;
-    }
-    delete this->pelec;
+	//****************************************************
+	// do not add any codes in this deconstructor funcion
+	//****************************************************
+    // mohan add 20251005
+    pw::teardown_pwrho(this->pw_rho_flag, PARAM.globalv.double_grid, this->pw_rho, this->pw_rhod);
+
+	delete this->pelec;
 }
 
 void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
-    std::string fft_device = inp.device;
-    std::string fft_precison = inp.precision;
-    // LCAO basis doesn't support GPU acceleration on FFT currently
-    if(inp.basis_type == "lcao")
-    {
-        fft_device = "cpu";
-    }
-    if ((inp.precision=="single") || (inp.precision=="mixing"))
-    {
-        fft_precison = "mixing";
-    }
-    else if (inp.precision=="double")
-    {
-        fft_precison = "double";
-    }
-    #if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
-        if (fft_device == "gpu")
-        {
-            fft_precison = "double";
-        }
-    #endif
-    pw_rho = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
-    pw_rho_flag = true;
-    if (PARAM.globalv.double_grid)
-    {
-        pw_rhod = new ModulePW::PW_Basis_Big(fft_device, fft_precison);
-    }
-    else
-    {
-        pw_rhod = pw_rho;
-    }
-    pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
-    pw_big->setbxyz(inp.bx, inp.by, inp.bz);
-    sf.set(pw_rhod, inp.nbspline);
 
     //! 1) read pseudopotentials
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
-    //! 2) initialie the plane wave basis for rho
-#ifdef __MPI
-    this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
-#endif
-    if (this->classname == "ESolver_OF" || inp.of_ml_gene_data == 1)
-    {
-        this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
-    }
+    //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
+    pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
+      this->pw_rho, this->pw_rhod, this->pw_big, this->classname, inp);
 
-    if (inp.nx * inp.ny * inp.nz == 0)
-    {
-        this->pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, 4.0 * inp.ecutwfc);
-    }
-    else
-    {
-        this->pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.nx, inp.ny, inp.nz);
-    }
+    //! 3) setup structure factors
+    this->sf.set(this->pw_rhod, inp.nbspline);
 
-    this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
-    this->pw_rho->fft_bundle.initfftmode(inp.fft_mode);
-    this->pw_rho->setuptransform();
-    this->pw_rho->collect_local_pw();
-    this->pw_rho->collect_uniqgg();
-
-    //! 3) initialize the double grid (for uspp) if necessary
-    if ( PARAM.globalv.double_grid)
-    {
-        ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
-#ifdef __MPI
-        this->pw_rhod->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
-#endif
-        if (this->classname == "ESolver_OF")
-        {
-            this->pw_rhod->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
-        }
-        if (inp.ndx * inp.ndy * inp.ndz == 0)
-        {
-            this->pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ecutrho);
-        }
-        else
-        {
-            this->pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ndx, inp.ndy, inp.ndz);
-        }
-        this->pw_rhod->initparameters(false, inp.ecutrho);
-        this->pw_rhod->fft_bundle.initfftmode(inp.fft_mode);
-        pw_rhod_sup->setuptransform(this->pw_rho);
-        this->pw_rhod->collect_local_pw();
-        this->pw_rhod->collect_uniqgg();
-    }
+    //! 4)  write geometry file
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU.cif",
-                               ucell,
-                               "# Generated by ABACUS ModuleIO::CifParser",
-                               "data_?");
+      ucell, "# Generated by ABACUS ModuleIO::CifParser", "data_?");
 
-    //! 4) print some information
-    ModuleIO::print_rhofft(this->pw_rhod, this->pw_rho, this->pw_big, GlobalV::ofs_running);
-
-    //! 5) initialize the charge extrapolation method if necessary
+    //! 5) init charge extrapolation
     this->CE.Init_CE(inp.nspin, ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
+
+    //! 6) symmetry analysis should be performed every time the cell is changed
+    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    {
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
+    }
+
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+
+    //! 7) setup k points in the Brillouin zone according to symmetry.
+    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+
+    //! 8) print information
+    ModuleIO::print_parameters(ucell, this->kv, inp);
+
+    //! 9) parallel of FFT grid
+    this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
+            this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
+
+    //! 10) calculate the structure factor
+    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
+
+    //! 11) setup the xc functional
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
+
+    //! 11) initialize the charge density, we need to first set xc_type,
+    // then we can call chr.allocate()
+	this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
+    const bool kin_den = this->chr.kin_density(); // mohan add 20251202
+	this->chr.allocate(inp.nspin, kin_den); // mohan move this from setup_estate_pw, 20251128
+
 
     return;
 }
 
-//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
-    // 1) output convergence information
+    //! Output convergence information
     ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
 
-    // 2) write fermi energy
+    //! Write Fermi energy
     ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
 
-    // 3) update delta_rho for charge extrapolation
+    //! Update delta_rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
-    if (istep % PARAM.inp.out_interval == 0)
-    {
-        // 4) write charge density
-        if (PARAM.inp.out_chg[0] > 0)
-        {
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-                std::string fn =PARAM.globalv.global_out_dir + "/chgs" + std::to_string(is + 1) + ".cube";
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                                              this->chr.rho_save[is],
-                                              is,
-                                              PARAM.inp.nspin,
-                                              istep,
-                                              fn,
-                                              this->pelec->eferm.get_efval(is),
-                                              &(ucell),
-                                              PARAM.inp.out_chg[1],
-                                              1);
+    //! print out charge density, potential, elf, etc.
+	ModuleIO::ctrl_output_fp(ucell, this->pelec, this->pw_big, this->pw_rhod, 
+			this->chr, this->solvent, this->Pgrid, istep); 
 
-                if (XC_Functional::get_ked_flag())
-                {
-                    fn =PARAM.globalv.global_out_dir + "/taus" + std::to_string(is + 1) + ".cube";
-                    ModuleIO::write_vdata_palgrid(Pgrid,
-                                                  this->chr.kin_r_save[is],
-                                                  is,
-                                                  PARAM.inp.nspin,
-                                                  istep,
-                                                  fn,
-                                                  this->pelec->eferm.get_efval(is),
-                                                  &(ucell));
-                }
-            }
-        }
-
-        // 5) write potential
-        if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
-        {
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                std::string fn =PARAM.globalv.global_out_dir + "/pots" + std::to_string(is + 1) + ".cube";
-
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                                              this->pelec->pot->get_effective_v(is),
-                                              is,
-                                              PARAM.inp.nspin,
-                                              istep,
-                                              fn,
-                                              0.0, // efermi
-                                              &(ucell),
-                                              3,  // precision
-                                              0); // out_fermi
-            }
-        }
-        else if (PARAM.inp.out_pot == 2)
-        {
-            std::string fn =PARAM.globalv.global_out_dir + "/pot_es.cube";
-            ModuleIO::write_elecstat_pot(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-#endif
-                fn,
-                istep,
-                this->pw_rhod,
-                &this->chr,
-                &(ucell),
-                this->pelec->pot->get_fixed_v(),
-                this->solvent);
-        }
-
-        // 6) write ELF
-        if (PARAM.inp.out_elf[0] > 0)
-        {
-            this->chr.cal_elf = true;
-            Symmetry_rho srho;
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
-            }
-
-            std::string out_dir =PARAM.globalv.global_out_dir;
-            ModuleIO::write_elf(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-#endif
-                out_dir,
-                istep,
-                PARAM.inp.nspin,
-                this->chr.rho,
-                this->chr.kin_r,
-                this->pw_rhod,
-                this->Pgrid,
-                &(ucell),
-                PARAM.inp.out_elf[1]);
-        }
-
-#ifdef USE_LIBXC
-        // 7) write xc(r)
-        if(PARAM.inp.out_xc_r[0]>=0)
-        {
-            ModuleIO::write_libxc_r(
-                PARAM.inp.out_xc_r[0],
-                XC_Functional::get_func_id(),
-                this->pw_rhod->nrxx, // number of real-space grid
-                ucell.omega, // volume of cell
-                ucell.tpiba,
-                this->chr,
-                *this->pw_big,
-                *this->pw_rhod);
-        }
-#endif
-    }
 }
 
 void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
@@ -303,8 +139,6 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         this->locpp.init_vloc(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-        this->pelec->omega = ucell.omega;
-
         // perform symmetry analysis
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
@@ -317,90 +151,40 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
-    //----------------------------------------------------------
     // charge extrapolation
-    //----------------------------------------------------------
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid,
-                                    ucell,
-                                    &this->chr,
-                                    &this->sf,
-                                    GlobalV::ofs_running,
-                                    GlobalV::ofs_warning);
+        this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf,
+                                    GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
-    //----------------------------------------------------------
     //! calculate D2 or D3 vdW
-    //----------------------------------------------------------
     auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
     }
 
-    //----------------------------------------------------------
     //! calculate ewald energy
-    //----------------------------------------------------------
     if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
     }
 
-    //----------------------------------------------------------
     //! set direction of magnetism, used in non-collinear case 
-    //----------------------------------------------------------
     elecstate::cal_ux(ucell);
 
-    //----------------------------------------------------------
     //! output the initial charge density
-    //----------------------------------------------------------
-    if (PARAM.inp.out_chg[0] == 2)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "/chgs" << is + 1 << "_ini.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->chr.rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          this->pelec->eferm.ef,
-                                          &(ucell));
-        }
-    }
-
-    //----------------------------------------------------------
-    //! output total local potential of the initial charge density
-    //----------------------------------------------------------
-    if (PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "pots" << is + 1 << "_ini.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->pot->get_effective_v(is),
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          0.0, // efermi
-                                          &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
-        }
-    }
+    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
+                             PARAM.globalv.global_out_dir, PARAM.inp, PARAM.globalv.two_fermi);
 
     return;
 }
 
 void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
-    //! output charge density
+    //! output charge density in G-space, or if available, kinetic energy density in G-space
     if (PARAM.inp.out_chg[0] != -1)
     {
         if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
@@ -410,7 +194,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
             ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
+                                 PARAM.globalv.gamma_only_pw,
                                  this->pw_rhod,
                                  PARAM.inp.nspin,
                                  ucell.GT,
@@ -429,7 +213,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                     this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
                 }
                 ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-TAU-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
+                                     PARAM.globalv.gamma_only_pw,
                                      this->pw_rhod,
                                      PARAM.inp.nspin,
                                      ucell.GT,
@@ -444,10 +228,12 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
 void ESolver_FP::after_all_runners(UnitCell& ucell)
 {
+    // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
+
 }
 
 } // namespace ModuleESolver

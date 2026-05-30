@@ -7,23 +7,27 @@
 #undef private
 #include "../dftu_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
-ModuleDFTU::DFTU::DFTU(){};
-ModuleDFTU::DFTU::~DFTU(){};
-namespace GlobalC
-{
-ModuleDFTU::DFTU dftu;
-}
+
+Plus_U::Plus_U(){};
+Plus_U::~Plus_U(){};
+
+Plus_U dftu;
+double Plus_U::energy_u = 0.0;
+std::vector<double> Plus_U::U = {}; // U (Hubbard parameter U)
+std::vector<int> Plus_U::orbital_corr = {}; 
+
 const hamilt::HContainer<double>* tmp_DMR;
-const hamilt::HContainer<double>* ModuleDFTU::DFTU::get_dmr(int ispin) const
+
+const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
 {
     return tmp_DMR;
 }
 
 //---------------------------------------
-// Unit test of DFTU class
-// DFTU is a derivative class of Operator, it is used to calculate the kinetic matrix
+// Unit test of Plus_U class
+// Plus_U is a derivative class of Operator, it is used to calculate the kinetic matrix
 // It use HContainer to store the real space HR matrix
-// In this test, we test the correctness and time consuming of 3 functions in DFTU class
+// In this test, we test the correctness and time consuming of 3 functions in Plus_U class
 // - initialize_HR() called in constructor
 // - contributeHR()
 // - contributeHk()
@@ -35,6 +39,7 @@ const hamilt::HContainer<double>* ModuleDFTU::DFTU::get_dmr(int ispin) const
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10; // please larger than 5
+
 class DFTUTest : public ::testing::Test
 {
   protected:
@@ -82,20 +87,20 @@ class DFTUTest : public ::testing::Test
         tmp_DMR = DMR;
 
         // setting of DFTU
-        GlobalC::dftu.locale.resize(test_size);
+        dftu.locale.resize(test_size);
         for (int iat = 0; iat < test_size; iat++)
         {
-            GlobalC::dftu.locale[iat].resize(3);
+            dftu.locale[iat].resize(3);
             for (int l = 0; l < 3; l++)
             {
-                GlobalC::dftu.locale[iat][l].resize(1);
-                GlobalC::dftu.locale[iat][l][0].resize(2);
-                GlobalC::dftu.locale[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
-                GlobalC::dftu.locale[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
+                dftu.locale[iat][l].resize(1);
+                dftu.locale[iat][l][0].resize(2);
+                dftu.locale[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
+                dftu.locale[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
             }
         }
-        GlobalC::dftu.U = {U_test};
-        GlobalC::dftu.orbital_corr = {orbital_c_test};
+        Plus_U::U = {U_test};
+        Plus_U::orbital_corr = {orbital_c_test};
 
         PARAM.input.onsite_radius = 1.0;
     }
@@ -155,7 +160,7 @@ TEST_F(DFTUTest, constructHRd2d)
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &GlobalC::dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -169,7 +174,7 @@ TEST_F(DFTUTest, constructHRd2d)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
     }
     // check the value of HR
@@ -220,14 +225,14 @@ TEST_F(DFTUTest, constructHRd2cd)
         HR->get_wrapper()[i] = 0.0;
     }
     hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &GlobalC::dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
     op.contributeHR();
     // check the occupations of dftu for spin-up
     for (int iat = 0; iat < test_size; iat++)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(dftu.locale[iat][2][0][0].c[icc], 0.5, 1e-10);
         }
     }
     // check the value of HR
@@ -260,7 +265,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(GlobalC::dftu.locale[iat][2][0][1].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(dftu.locale[iat][2][0][1].c[icc], 0.5, 1e-10);
         }
     }
 }

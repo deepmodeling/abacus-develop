@@ -17,9 +17,9 @@ class ElecState
     ElecState()
     {
     }
-    ElecState(Charge* charge_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
+    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
     {
-        this->charge = charge_in;
+        this->charge = chr_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
         this->eferm.two_efermi = PARAM.globalv.two_fermi;
@@ -32,10 +32,9 @@ class ElecState
             this->pot = nullptr;
         }
     }
-    void init_ks(Charge* chg_in, // pointer for class Charge
+    void init_ks(Charge* chr_in, // pointer for class Charge
                  const K_Vectors* klist_in,
                  int nk_in, // number of k points
-                 ModulePW::PW_Basis* rhopw_in,
                  const ModulePW::PW_Basis_Big* bigpw_in);
 
     // return current electronic density rho, as a input for constructing Hamiltonian
@@ -51,8 +50,6 @@ class ElecState
     {
         return;
     }
-    // virtual void updateRhoK(const psi::Psi<std::complex<double>> &psi) = 0;
-    // virtual void updateRhoK(const psi::Psi<double> &psi)=0
     virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
     {
         return;
@@ -77,12 +74,9 @@ class ElecState
         return;
     }
 
-
-
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08
     
-
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();
@@ -100,26 +94,11 @@ class ElecState
         return;
     }
 
-    /**
-     * @brief Init rho_core, init rho, renormalize rho, init pot
-     *
-     * @param istep i-th step
-     * @param ucell unit cell
-     * @param strucfac structure factor
-     * @param symm symmetry
-     * @param wfcpw PW basis for wave function if needed
-     */
-    void init_scf(const int istep,
-                  const UnitCell& ucell,
-                  const Parallel_Grid& pgrid,
-                  const ModuleBase::ComplexMatrix& strucfac,
-                  const bool* numeric,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr);
+
+
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
-    double omega = 0.0;                            ///< volume
     Potential* pot = nullptr;                      ///< pointer to potential
     Charge* charge = nullptr;                      ///< pointer to charge density
     const K_Vectors* klist = nullptr;              ///< pointer to k points lists
@@ -155,7 +134,7 @@ class ElecState
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
-    efermi eferm; ///< fermi energies
+    Efermi eferm; ///< fermi energies
 
     // below defines the bandgap:
 
@@ -170,6 +149,27 @@ class ElecState
 
     bool skip_weights = false;
 };
+
+/**
+ * @brief Init rho_core, init rho, renormalize rho, init pot
+ *
+ * @param ucell unit cell
+ * @param pgrid parallel grid
+ * @param strucfac structure factor
+ * @param numeric numeric flag
+ * @param istep ionic step index
+ * @param out_dir output directory
+ * @param inp input parameters
+ * @param pelec pointer to ElecState
+ */
+void init_scf(const UnitCell& ucell,
+              const Parallel_Grid& pgrid,
+              const ModuleBase::ComplexMatrix& strucfac,
+              const bool* numeric,
+              const int istep,
+              const std::string& out_dir,
+              const Input_para& inp,
+              ElecState* pelec);
 
 } // namespace elecstate
 #endif

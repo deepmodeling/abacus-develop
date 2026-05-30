@@ -3,11 +3,11 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <torch/script.h>
@@ -33,9 +33,7 @@ void read_pdm(bool read_pdm_file,
               bool is_equiv,
               bool& init_pdm,
               const int nat,
-              const int inlmax,
-              const int lmaxd,
-              const std::vector<int>& inl2l,
+              const DeePKS_Param& deepks_param,
               const Numerical_Orbital& alpha,
               std::vector<torch::Tensor>& pdm);
 
@@ -55,10 +53,7 @@ void update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
 //   - Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial pdm
 template <typename TK>
 void cal_pdm(bool& init_pdm,
-             const int inlmax,
-             const int lmaxd,
-             const std::vector<int>& inl2l,
-             const ModuleBase::IntArray* inl_index,
+             const DeePKS_Param& deepks_param,
              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
              const hamilt::HContainer<double>* dmr,
              const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -68,7 +63,7 @@ void cal_pdm(bool& init_pdm,
              const Parallel_Orbitals& pv,
              std::vector<torch::Tensor>& pdm);
 
-void check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm);
+void check_pdm(const DeePKS_Param& deepks_param, const std::vector<torch::Tensor>& pdm);
 } // namespace DeePKS_domain
 
 #endif

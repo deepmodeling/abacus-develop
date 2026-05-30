@@ -4,45 +4,19 @@
 
 #include "Exx_LRI_interface.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
 
-#include "source_io/csr_reader.h"
-#include "source_io/write_HS_sparse.h"
+#include "source_io/module_output/csr_reader.h"
+#include "source_io/module_hs/write_HS_sparse.h"
 #include "source_estate/elecstate_lcao.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_io/module_restart/restart.h"
 
 #include <sys/time.h>
 #include <stdexcept>
 #include <string>
-
-/*
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
-{
-    ModuleBase::TITLE("Exx_LRI_Interface", "write_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
-    std::ofstream ofs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
-    cereal::BinaryOutputArchive oar(ofs);
-    oar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI_Interface", "write_Hexxs_cereal");
-}
-
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name)
-{
-    ModuleBase::TITLE("Exx_LRI_Interface", "read_Hexxs_cereal");
-    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
-    const std::string file_name_rank = file_name + "_" + std::to_string(GlobalV::MY_RANK);
-    std::ifstream ifs(file_name_rank, std::ofstream::binary);
-    if(!ifs.is_open())
-        { ModuleBase::WARNING_QUIT("Exx_LRI_Interface", file_name_rank+" not found."); }
-    cereal::BinaryInputArchive iar(ifs);
-    iar(this->exx_ptr->Hexxs);
-    ModuleBase::timer::tick("Exx_LRI_Interface", "read_Hexxs_cereal");
-}
-*/
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
@@ -139,7 +113,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
         this->symrot_.find_irreducible_sector(
             ucell.symm, ucell.atoms, ucell.st,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-        // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+        this->symrot_.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(this->exx_ptr->abfs));
         this->symrot_.cal_Ms(kv, ucell, pv);
     }
 }
@@ -163,20 +137,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         }
         else
         {
-            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
-            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
-            {
-                XC_Functional::set_xc_type("scan");
-            }
-            // added by jghan, 2024-07-07
-            else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER"
-                || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
-            {
-                XC_Functional::set_xc_type("pbe");
-            }
+            XC_Functional::set_xc_first_loop(ucell);
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
@@ -290,14 +251,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
-                                                  const UnitCell& ucell,
-                                                  hamilt::Hamilt<T>& hamilt,
-                                                  elecstate::ElecState& elec,
-                                                  Charge_Mixing& chgmix,
-                                                  const double& scf_ene_thr,
-                                                  int& iter,
-                                                  const int istep,
-                                                  bool& conv_esolver)
+		const UnitCell& ucell,
+		hamilt::Hamilt<T>& hamilt,
+		elecstate::ElecState& elec,
+		elecstate::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+		Charge_Mixing& chgmix,
+		const double& scf_ene_thr,
+		int& iter,
+		const int istep,
+		bool& conv_esolver)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
@@ -340,11 +302,12 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         {
             chgmix.close_kerker_gg0();
         }
-        this->dm_last_step = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(&elec)->get_DM();
+        // mohan update 2025-11-04
+        this->dm_last_step = dm;
         conv_esolver = this->exx_after_converge(
             ucell,
             hamilt,
-            *dynamic_cast<const elecstate::ElecStateLCAO<T>*>(&elec)->get_DM(),
+            *dm,
             kv,
             PARAM.inp.nspin,
             iter,

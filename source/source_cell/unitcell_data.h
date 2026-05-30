@@ -7,7 +7,7 @@
 struct Lattice
 {
     std::string Coordinate = "Direct"; // "Direct" or "Cartesian" or "Cartesian_angstrom"
-    std::string latName = "none";      // Lattice name
+    std::string latName = "user_defined_lattice";  // Lattice name
     double lat0 = 0.0;                 // Lattice constant(bohr)(a.u.)
     double lat0_angstrom = 0.0;        // Lattice constant(angstrom)
     double tpiba = 0.0;                // 2*pi / lat0;

@@ -9,6 +9,7 @@ if(ENABLE_LCAO)
       ORB_nonlocal_lm.cpp
       ORB_read.cpp
       parallel_orbitals.cpp
+      element_basis_index-ORB.cpp
   )
 
   if(ENABLE_COVERAGE)

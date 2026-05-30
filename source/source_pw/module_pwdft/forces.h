@@ -2,18 +2,19 @@
 #define FORCES_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/elecstate.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
-#include "source_pw/module_pwdft/kernels/force_op.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
 #include "structure_factor.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+
+class pseudopot_cell_vnl;
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces
@@ -40,8 +41,9 @@ class Forces
                    const ModulePW::PW_Basis* const rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
-                   surchem& solvent,
-                   const pseudopot_cell_vl* locpp,
+				   surchem& solvent,
+				   const Plus_U *p_dftu, //mohan add 2025-11-06
+				   const pseudopot_cell_vl* locpp,
                    const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
                    ModulePW::PW_Basis_K* psi_basis = nullptr,
@@ -94,7 +96,9 @@ class Forces
                       const ModuleBase::matrix& wg,
                       const ModulePW::PW_Basis_K* wfc_basis,
                       const UnitCell& ucell_in,
-                      const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr);
+					  const Plus_U &dftu, // mohan add 2025-11-06
+					  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr);
+
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& v_current,

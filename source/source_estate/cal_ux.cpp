@@ -93,7 +93,7 @@ void cal_ux(UnitCell& ucell) {
 
 bool judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
     bool jp = false;
-    double cross;
+    double cross = 0.0;
     cross = pow((a[1] * b.z - a[2] * b.y), 2)
             + pow((a[2] * b.x - a[0] * b.z), 2)
             + pow((a[0] * b.y - a[1] * b.x), 2);

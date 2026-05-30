@@ -4,7 +4,6 @@
 #include "gatefield.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
@@ -12,9 +11,12 @@
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
 #include "potential_new.h"
-#include "pot_local_paw.h"
+#include "pot_sep.h"
 #ifdef __LCAO
 #include "H_TDDFT_pw.h"
+#endif
+#ifdef __MLALGO
+#include "pot_ml_exx.h"
 #endif
 
 namespace elecstate
@@ -33,13 +35,13 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_effective));
+        return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "surchem")
     {
         return new PotSurChem(this->rho_basis_,
                               this->structure_factors_,
-                              this->v_effective_fixed.data(),
+                              this->v_eff_fixed.data(),
                               this->solvent_);
     }
     else if (pot_type == "efield")
@@ -56,6 +58,15 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
         return new H_TDDFT_pw(this->rho_basis_, this->ucell_);
     }
 #endif
+#ifdef __MLALGO
+    else if (pot_type == "ml_exx")
+    {
+        return new PotML_EXX(this->rho_basis_, this->ucell_);
+    }
+#endif
+    else if (pot_type == "dfthalf") {
+        return new PotSep(&(this->structure_factors_->strucFac), this->rho_basis_, this->vsep_cell);
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Potential::get_pot_type", "Please input correct component of potential!");

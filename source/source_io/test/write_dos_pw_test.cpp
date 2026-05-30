@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/write_dos_pw.h"
+#include "source_io/module_dos/write_dos_pw.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -65,7 +65,7 @@ TEST_F(DosPWTest,Dos1)
 	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
-    elecstate::efermi fermi_energy;
+    elecstate::Efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
     
@@ -77,6 +77,7 @@ TEST_F(DosPWTest,Dos1)
 			dosp.wg,
 			*kv,
 			PARAM.inp.nbands,
+            -1, // istep_in
 			fermi_energy,
 			dosp.de_ev,
 			dos_scale,
@@ -90,13 +91,13 @@ TEST_F(DosPWTest,Dos1)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("doss1_pw.txt");
+		ifs.open("dos.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
         EXPECT_THAT(str, testing::HasSubstr("           -4.6           0.25        0.28125        1.42515       0.159819"));
         EXPECT_THAT(str, testing::HasSubstr("             18              0             16              0             16"));
 		ifs.close();
-		remove("doss1_pw.txt");
+		remove("dos.txt");
 #ifdef __MPI
 	}
 #endif
@@ -129,7 +130,7 @@ TEST_F(DosPWTest,Dos2)
 	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
-    elecstate::efermi fermi_energy;
+    elecstate::Efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
 
@@ -140,7 +141,8 @@ TEST_F(DosPWTest,Dos2)
 			dosp.ekb,
 			dosp.wg,
 			*kv,
-            PARAM.inp.nbands,
+			PARAM.inp.nbands,
+			-1, // istep_in
             fermi_energy,
 			dosp.de_ev,
 			dos_scale,
@@ -154,13 +156,13 @@ TEST_F(DosPWTest,Dos2)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("doss1_pw.txt");
+		ifs.open("dos.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str1, testing::HasSubstr("4532 # number of points"));
         EXPECT_THAT(str1, testing::HasSubstr("       -5.38811        0.03125        0.03125"));
         EXPECT_THAT(str1, testing::HasSubstr("        3.07189         0.1875        5.46875"));
 		ifs.close();
-		remove("doss1_pw.txt");
+		remove("dos.txt");
 #ifdef __MPI
 	}
 #endif

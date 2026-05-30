@@ -7,6 +7,7 @@ list(APPEND objects
     lambda_loop.cpp
     cal_mw_from_lambda.cpp
     template_helpers.cpp
+    deltaspin_lcao.cpp
 )
 
 add_library(

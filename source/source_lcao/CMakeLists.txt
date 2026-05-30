@@ -14,26 +14,28 @@ if(ENABLE_LCAO)
         module_operator_lcao/op_dftu_lcao.cpp
         module_operator_lcao/deepks_lcao.cpp
         module_operator_lcao/op_exx_lcao.cpp
-        module_operator_lcao/overlap_new.cpp
-        module_operator_lcao/ekinetic_new.cpp
-        module_operator_lcao/nonlocal_new.cpp
+        module_operator_lcao/overlap.cpp
+        module_operator_lcao/ekinetic.cpp
+        module_operator_lcao/nonlocal.cpp
         module_operator_lcao/td_ekinetic_lcao.cpp
         module_operator_lcao/td_nonlocal_lcao.cpp
         module_operator_lcao/td_pot_hybrid.cpp
         module_operator_lcao/dspin_lcao.cpp
         module_operator_lcao/dftu_lcao.cpp
-        pulay_force_stress_center2.cpp
+        module_operator_lcao/operator_force_stress_utils.cpp
+        dftu_lcao.cpp
+        pulay_fs_center2.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
         FORCE_k.cpp
         stress_tools.cpp
         edm.cpp
-        grid_init.cpp
         spar_dh.cpp
         spar_exx.cpp
         spar_hsr.cpp
         spar_st.cpp
         spar_u.cpp
+        LCAO_set.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp
 		LCAO_nl_mu.cpp	
@@ -41,6 +43,10 @@ if(ENABLE_LCAO)
         LCAO_allocate.cpp
         LCAO_set_mat2d.cpp
         LCAO_init_basis.cpp
+        setup_exx.cpp
+        setup_deepks.cpp
+        setup_dm.cpp
+        rho_tau_lcao.cpp
 		record_adj.cpp
         center2_orb.cpp
         center2_orb-orb11.cpp
@@ -57,6 +63,10 @@ if(ENABLE_LCAO)
 
     if(ENABLE_COVERAGE)
     add_coverage(hamilt_lcao)
+    endif()
+
+    IF (BUILD_TESTING)
+        add_subdirectory(test)
     endif()
 
 endif()

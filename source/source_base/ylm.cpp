@@ -6,55 +6,17 @@
 #include "constants.h"
 #include "timer.h"
 #include "tool_quit.h"
-#include "array_pool.h"
+#include "ylmcoef.h"
 
 namespace ModuleBase
 {
 
 int Ylm::nlm = 0;
-std::vector<double> Ylm::ylmcoef = {
-	1.0 / sqrt(ModuleBase::FOUR_PI),
-	 sqrt (3.0 / ModuleBase::FOUR_PI),
-	 sqrt (15.0) / 2.0,
-	 sqrt (5.0) / 2.0,
-	 sqrt (5.0),
-	 1.0 / sqrt(3.0),
-	 sqrt (5.0 / 3.0),
-	 sqrt (35.0 / 9.0),
-	 sqrt (7.0/3.0)/1.5,
-	 sqrt (35.0 / 8.0),
-	 sqrt (7.0 / 8.0),
-	 sqrt (7.0),
-	 1.0 / sqrt (15.0),
-	 sqrt (14.0 / 15.0),
-	 sqrt (14.0 / 3.0),
-	 sqrt(7.0)*3.0/4.0,
-	 9.0/4.0/sqrt(5.0),
-	 sqrt(21.0/5.0),
-	 sqrt(24.0/25.0),
-	 sqrt(21.0)/2.0,
-	 sqrt(3.0)/2.0,
-	 0.5/sqrt(7.0),
-	 1.5*sqrt(3.0/7.0),
-	 3.0/sqrt(2.0),
-	 0.6*sqrt(11.0),
-	 0.8*sqrt(11.0/7.0),
-	 sqrt (33.0/8.0),
-	 sqrt (55.0/56.0),
-	 sqrt (33.0/7.0),
-	 sqrt (11.0)*2.0/7.0,
-	 sqrt (11.0)*0.75,
-	 sqrt (11.0)*0.25,
-	 sqrt (11.0),
-	 1.0/3.0/sqrt(5.0),
-	 2.0/3.0*sqrt(11.0/5.0),
-	 sqrt(22.0/5.0)
-};
 
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
 {
-	//ModuleBase::timer::tick ("Ylm","get_ylm_real");
+	//ModuleBase::timer::start("Ylm","get_ylm_real");
 	//1e-9 is too large
 	const double cut0 = 1e-12;
 	// allocate space.
@@ -165,7 +127,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		}
 	}// end do
 
-	//ModuleBase::timer::tick ("Ylm", "get_ylm_real");
+	//ModuleBase::timer::end("Ylm", "get_ylm_real");
 	return;
 }
 
@@ -324,15 +286,15 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
  * *************************/
 void Ylm::rlylm
 (
- 	const int& Lmax, //max momentum of l + 1
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of l + 1
+ 	const double x,
+	const double y,
+	const double z,
 	double rly[]
 )
 {
 //	ModuleBase::TITLE("Ylm","rlylm");
-//	ModuleBase::timer::tick("Ylm","rlylm");
+//	ModuleBase::timer::start("Ylm","rlylm");
 
 	int MaxL = Lmax - 1;
 
@@ -474,7 +436,7 @@ void Ylm::rlylm
 				{
 					int twok = 2 * ik;
 
-					double gamma;
+					double gamma = 0.0;
 					double aux0, aux1, aux2, aux3;
 
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);
@@ -522,17 +484,17 @@ void Ylm::rlylm
 		}
 	}
 
-//	ModuleBase::timer::tick("Ylm", "rlylm");
+//	ModuleBase::timer::end("Ylm", "rlylm");
 	return;
 }
 
 //return ylm, not rlylm
 void Ylm::sph_harm
 (
- 	const int& Lmax, //max momentum of l
- 	const double& xdr,
-	const double& ydr,
-	const double& zdr,
+ 	const int Lmax, //max momentum of l
+ 	const double xdr,
+	const double ydr,
+	const double zdr,
 	std::vector<double> &rly
 )
 {
@@ -542,28 +504,28 @@ void Ylm::sph_harm
 	/***************************
 			 L = 0
 	***************************/
-	rly[0] = Ylm::ylmcoef[0]; //l=0, m=0
+	rly[0] = ylmcoef[0]; //l=0, m=0
 	if (Lmax == 0) return;
 
 	/***************************
 			 L = 1
 	***************************/
-	rly[1] = Ylm::ylmcoef[1]*zdr; //l=1, m=0
-	rly[2] = -Ylm::ylmcoef[1]*xdr; //l=1, m=1
-	rly[3] = -Ylm::ylmcoef[1]*ydr; //l=1, m=-1
+	rly[1] = ylmcoef[1]*zdr; //l=1, m=0
+	rly[2] = -ylmcoef[1]*xdr; //l=1, m=1
+	rly[3] = -ylmcoef[1]*ydr; //l=1, m=-1
 	if (Lmax == 1) return;
 
 	/***************************
 			 L = 2
 	***************************/
-	rly[4] = Ylm::ylmcoef[2]*zdr*rly[1]-Ylm::ylmcoef[3]*rly[0];//l=2, m=0
+	rly[4] = ylmcoef[2]*zdr*rly[1]-ylmcoef[3]*rly[0];//l=2, m=0
 
-	double tmp0 = Ylm::ylmcoef[4]*zdr;
+	double tmp0 = ylmcoef[4]*zdr;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	rly[6] = tmp0*rly[3];//l=2,m=-1
 
-	double tmp2 = Ylm::ylmcoef[4]*xdr;
-	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0] - tmp2*rly[2];//l=2,m=2
+	double tmp2 = ylmcoef[4]*xdr;
+	rly[7]= ylmcoef[5]*rly[4]-ylmcoef[6]*rly[0] - tmp2*rly[2];//l=2,m=2
 	rly[8] = -tmp2*rly[3];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
 	if (Lmax == 2) return;
@@ -571,67 +533,67 @@ void Ylm::sph_harm
 	/***************************
 			 L = 3
 	***************************/
-	rly[9] = Ylm::ylmcoef[7]*zdr*rly[4]-Ylm::ylmcoef[8]*rly[1]; //l=3, m=0
+	rly[9] = ylmcoef[7]*zdr*rly[4]-ylmcoef[8]*rly[1]; //l=3, m=0
 
-	double tmp3 = Ylm::ylmcoef[9]*zdr;
-	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2];//l=3,m=1
-	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3];//l=3,m=-1
+	double tmp3 = ylmcoef[9]*zdr;
+	rly[10] = tmp3*rly[5]-ylmcoef[10]*rly[2];//l=3,m=1
+	rly[11] = tmp3*rly[6]-ylmcoef[10]*rly[3];//l=3,m=-1
 
-	double tmp4 = Ylm::ylmcoef[11]*zdr;
+	double tmp4 = ylmcoef[11]*zdr;
 	rly[12] = tmp4*rly[7];//l=3,m=2
 	rly[13] = tmp4*rly[8];//l=3,m=-2
 
-	double tmp5 = Ylm::ylmcoef[14]*xdr;
-	rly[14] = Ylm::ylmcoef[12]*rly[10]-Ylm::ylmcoef[13]*rly[2]-tmp5*rly[7];//l=3,m=3
-	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]-tmp5*rly[8];//l=3,m=-3
+	double tmp5 = ylmcoef[14]*xdr;
+	rly[14] = ylmcoef[12]*rly[10]-ylmcoef[13]*rly[2]-tmp5*rly[7];//l=3,m=3
+	rly[15] = ylmcoef[12]*rly[11]-ylmcoef[13]*rly[3]-tmp5*rly[8];//l=3,m=-3
 	if (Lmax == 3) return;
 
 	/***************************
 			 L = 4
 	***************************/
-	rly[16] = Ylm::ylmcoef[15]*zdr*rly[9]-Ylm::ylmcoef[16]*rly[4];//l=4,m=0
+	rly[16] = ylmcoef[15]*zdr*rly[9]-ylmcoef[16]*rly[4];//l=4,m=0
 
-	double tmp6 = Ylm::ylmcoef[17]*zdr;
-	rly[17] = tmp6*rly[10]-Ylm::ylmcoef[18]*rly[5];//l=4,m=1
-	rly[18] = tmp6*rly[11]-Ylm::ylmcoef[18]*rly[6];//l=4,m=-1
+	double tmp6 = ylmcoef[17]*zdr;
+	rly[17] = tmp6*rly[10]-ylmcoef[18]*rly[5];//l=4,m=1
+	rly[18] = tmp6*rly[11]-ylmcoef[18]*rly[6];//l=4,m=-1
 
-	double tmp7 = Ylm::ylmcoef[19]*zdr;
-	rly[19] = tmp7*rly[12]-Ylm::ylmcoef[20]*rly[7];//l=4,m=2
-	rly[20] = tmp7*rly[13]-Ylm::ylmcoef[20]*rly[8];//l=4,m=-2
+	double tmp7 = ylmcoef[19]*zdr;
+	rly[19] = tmp7*rly[12]-ylmcoef[20]*rly[7];//l=4,m=2
+	rly[20] = tmp7*rly[13]-ylmcoef[20]*rly[8];//l=4,m=-2
 
 	double tmp8 = 3.0*zdr;
 	rly[21] = tmp8*rly[14];//l=4,m=3
 	rly[22] = tmp8*rly[15];//l=4,m=-3
 
-	double tmp9 = Ylm::ylmcoef[23]*xdr;
-	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]-tmp9*rly[14];//l=4,m=4
-	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]-tmp9*rly[15];//l=4,m=-4
+	double tmp9 = ylmcoef[23]*xdr;
+	rly[23] = ylmcoef[21]*rly[19]-ylmcoef[22]*rly[7]-tmp9*rly[14];//l=4,m=4
+	rly[24] = ylmcoef[21]*rly[20]-ylmcoef[22]*rly[8]-tmp9*rly[15];//l=4,m=-4
 	if (Lmax == 4) return;
 
 	/***************************
 			 L = 5
 	***************************/
-	rly[25] = Ylm::ylmcoef[24]*zdr*rly[16]-Ylm::ylmcoef[25]*rly[9];//l=5,m=0
+	rly[25] = ylmcoef[24]*zdr*rly[16]-ylmcoef[25]*rly[9];//l=5,m=0
 
-	double tmp10 = Ylm::ylmcoef[26]*zdr;
-	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10];//l=5,m=1
-	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11];//l=5,m=-1
+	double tmp10 = ylmcoef[26]*zdr;
+	rly[26] = tmp10*rly[17]-ylmcoef[27]*rly[10];//l=5,m=1
+	rly[27] = tmp10*rly[18]-ylmcoef[27]*rly[11];//l=5,m=-1
 
-	double tmp11 = Ylm::ylmcoef[28]*zdr;
-	rly[28] = tmp11*rly[19]-Ylm::ylmcoef[29]*rly[12];//l=5,m=2
-	rly[29] = tmp11*rly[20]-Ylm::ylmcoef[29]*rly[13];//l=5,m=-2
+	double tmp11 = ylmcoef[28]*zdr;
+	rly[28] = tmp11*rly[19]-ylmcoef[29]*rly[12];//l=5,m=2
+	rly[29] = tmp11*rly[20]-ylmcoef[29]*rly[13];//l=5,m=-2
 
-	double tmp12 = Ylm::ylmcoef[30]*zdr;
-	rly[30] = tmp12*rly[21]-Ylm::ylmcoef[31]*rly[14];//l=5,m=3
-	rly[31] = tmp12*rly[22]-Ylm::ylmcoef[31]*rly[15];//l=5,m=-3
+	double tmp12 = ylmcoef[30]*zdr;
+	rly[30] = tmp12*rly[21]-ylmcoef[31]*rly[14];//l=5,m=3
+	rly[31] = tmp12*rly[22]-ylmcoef[31]*rly[15];//l=5,m=-3
 
-	double tmp13 = Ylm::ylmcoef[32]*zdr;
+	double tmp13 = ylmcoef[32]*zdr;
 	rly[32] = tmp13*rly[23];//l=5,m=4
 	rly[33] = tmp13*rly[24];//l=5,m=-4
 
-	double tmp14 = Ylm::ylmcoef[35]*xdr;
-	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]-tmp14*rly[23];//l=5,m=5
-	rly[35] = Ylm::ylmcoef[33]*rly[31]-Ylm::ylmcoef[34]*rly[15]-tmp14*rly[24];//l=5,m=-5
+	double tmp14 = ylmcoef[35]*xdr;
+	rly[34] = ylmcoef[33]*rly[30]-ylmcoef[34]*rly[14]-tmp14*rly[23];//l=5,m=5
+	rly[35] = ylmcoef[33]*rly[31]-ylmcoef[34]*rly[15]-tmp14*rly[24];//l=5,m=-5
 	if (Lmax == 5) return;
 
 	//if Lmax > 5
@@ -668,10 +630,10 @@ void Ylm::sph_harm
 // Peize Lin change rly 2016-08-26
 void Ylm::rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	std::vector<double>& rly
 )
 {
@@ -683,28 +645,28 @@ void Ylm::rl_sph_harm
 	/***************************
 			 L = 0
 	***************************/
-	rly[0] = Ylm::ylmcoef[0]; //l=0, m=0
+	rly[0] = ylmcoef[0]; //l=0, m=0
 	if (Lmax == 0) return;
 
 	/***************************
 			 L = 1
 	***************************/
-	rly[1] = Ylm::ylmcoef[1]*z; //l=1, m=0
-	rly[2] = -Ylm::ylmcoef[1]*x; //l=1, m=1
-	rly[3] = -Ylm::ylmcoef[1]*y; //l=1, m=-1
+	rly[1] = ylmcoef[1]*z; //l=1, m=0
+	rly[2] = -ylmcoef[1]*x; //l=1, m=1
+	rly[3] = -ylmcoef[1]*y; //l=1, m=-1
 	if (Lmax == 1) return;
 
 	/***************************
 			 L = 2
 	***************************/
-	rly[4] = Ylm::ylmcoef[2]*z*rly[1]-Ylm::ylmcoef[3]*rly[0]*radius2;//l=2, m=0
+	rly[4] = ylmcoef[2]*z*rly[1]-ylmcoef[3]*rly[0]*radius2;//l=2, m=0
 
-	double tmp0 = Ylm::ylmcoef[4]*z;
+	double tmp0 = ylmcoef[4]*z;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	rly[6] = tmp0*rly[3];//l=2,m=-1
 
-	double tmp2 = Ylm::ylmcoef[4]*x;
-	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
+	double tmp2 = ylmcoef[4]*x;
+	rly[7]= ylmcoef[5]*rly[4]-ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
 	rly[8] = -tmp2*rly[3];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
 	if (Lmax == 2) return;
@@ -712,67 +674,67 @@ void Ylm::rl_sph_harm
 	/***************************
 			 L = 3
 	***************************/
-	rly[9] = Ylm::ylmcoef[7]*z*rly[4]-Ylm::ylmcoef[8]*rly[1]*radius2; //l=3, m=0
+	rly[9] = ylmcoef[7]*z*rly[4]-ylmcoef[8]*rly[1]*radius2; //l=3, m=0
 
-	double tmp3 = Ylm::ylmcoef[9]*z;
-	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2]*radius2;//l=3,m=1
-	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
+	double tmp3 = ylmcoef[9]*z;
+	rly[10] = tmp3*rly[5]-ylmcoef[10]*rly[2]*radius2;//l=3,m=1
+	rly[11] = tmp3*rly[6]-ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
 
-	double tmp4 = Ylm::ylmcoef[11]*z;
+	double tmp4 = ylmcoef[11]*z;
 	rly[12] = tmp4*rly[7];//l=3,m=2
 	rly[13] = tmp4*rly[8];//l=3,m=-2
 
-	double tmp5 = Ylm::ylmcoef[14]*x;
-	rly[14] = Ylm::ylmcoef[12]*rly[10]-Ylm::ylmcoef[13]*rly[2]*radius2-tmp5*rly[7];//l=3,m=3
-	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
+	double tmp5 = ylmcoef[14]*x;
+	rly[14] = ylmcoef[12]*rly[10]-ylmcoef[13]*rly[2]*radius2-tmp5*rly[7];//l=3,m=3
+	rly[15] = ylmcoef[12]*rly[11]-ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
 	if (Lmax == 3) return;
 
 	/***************************
 			 L = 4
 	***************************/
-	rly[16] = Ylm::ylmcoef[15]*z*rly[9]-Ylm::ylmcoef[16]*rly[4]*radius2;//l=4,m=0
+	rly[16] = ylmcoef[15]*z*rly[9]-ylmcoef[16]*rly[4]*radius2;//l=4,m=0
 
-	double tmp6 = Ylm::ylmcoef[17]*z;
-	rly[17] = tmp6*rly[10]-Ylm::ylmcoef[18]*rly[5]*radius2;//l=4,m=1
-	rly[18] = tmp6*rly[11]-Ylm::ylmcoef[18]*rly[6]*radius2;//l=4,m=-1
+	double tmp6 = ylmcoef[17]*z;
+	rly[17] = tmp6*rly[10]-ylmcoef[18]*rly[5]*radius2;//l=4,m=1
+	rly[18] = tmp6*rly[11]-ylmcoef[18]*rly[6]*radius2;//l=4,m=-1
 
-	double tmp7 = Ylm::ylmcoef[19]*z;
-	rly[19] = tmp7*rly[12]-Ylm::ylmcoef[20]*rly[7]*radius2;//l=4,m=2
-	rly[20] = tmp7*rly[13]-Ylm::ylmcoef[20]*rly[8]*radius2;//l=4,m=-2
+	double tmp7 = ylmcoef[19]*z;
+	rly[19] = tmp7*rly[12]-ylmcoef[20]*rly[7]*radius2;//l=4,m=2
+	rly[20] = tmp7*rly[13]-ylmcoef[20]*rly[8]*radius2;//l=4,m=-2
 
 	double tmp8 = 3.0*z;
 	rly[21] = tmp8*rly[14];//l=4,m=3
 	rly[22] = tmp8*rly[15];//l=4,m=-3
 
-	double tmp9 = Ylm::ylmcoef[23]*x;
-	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
-	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
+	double tmp9 = ylmcoef[23]*x;
+	rly[23] = ylmcoef[21]*rly[19]-ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
+	rly[24] = ylmcoef[21]*rly[20]-ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
 	if (Lmax == 4) return;
 
 	/***************************
 			 L = 5
 	***************************/
-	rly[25] = Ylm::ylmcoef[24]*z*rly[16]-Ylm::ylmcoef[25]*rly[9]*radius2;//l=5,m=0
+	rly[25] = ylmcoef[24]*z*rly[16]-ylmcoef[25]*rly[9]*radius2;//l=5,m=0
 
-	double tmp10 = Ylm::ylmcoef[26]*z;
-	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10]*radius2;//l=5,m=1
-	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
+	double tmp10 = ylmcoef[26]*z;
+	rly[26] = tmp10*rly[17]-ylmcoef[27]*rly[10]*radius2;//l=5,m=1
+	rly[27] = tmp10*rly[18]-ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
 
-	double tmp11 = Ylm::ylmcoef[28]*z;
-	rly[28] = tmp11*rly[19]-Ylm::ylmcoef[29]*rly[12]*radius2;//l=5,m=2
-	rly[29] = tmp11*rly[20]-Ylm::ylmcoef[29]*rly[13]*radius2;//l=5,m=-2
+	double tmp11 = ylmcoef[28]*z;
+	rly[28] = tmp11*rly[19]-ylmcoef[29]*rly[12]*radius2;//l=5,m=2
+	rly[29] = tmp11*rly[20]-ylmcoef[29]*rly[13]*radius2;//l=5,m=-2
 
-	double tmp12 = Ylm::ylmcoef[30]*z;
-	rly[30] = tmp12*rly[21]-Ylm::ylmcoef[31]*rly[14]*radius2;//l=5,m=3
-	rly[31] = tmp12*rly[22]-Ylm::ylmcoef[31]*rly[15]*radius2;//l=5,m=-3
+	double tmp12 = ylmcoef[30]*z;
+	rly[30] = tmp12*rly[21]-ylmcoef[31]*rly[14]*radius2;//l=5,m=3
+	rly[31] = tmp12*rly[22]-ylmcoef[31]*rly[15]*radius2;//l=5,m=-3
 
-	double tmp13 = Ylm::ylmcoef[32]*z;
+	double tmp13 = ylmcoef[32]*z;
 	rly[32] = tmp13*rly[23];//l=5,m=4
 	rly[33] = tmp13*rly[24];//l=5,m=-4
 
-	double tmp14 = Ylm::ylmcoef[35]*x;
-	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
-	rly[35] = Ylm::ylmcoef[33]*rly[31]-Ylm::ylmcoef[34]*rly[15]*radius2-tmp14*rly[24];//l=5,m=-5
+	double tmp14 = ylmcoef[35]*x;
+	rly[34] = ylmcoef[33]*rly[30]-ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
+	rly[35] = ylmcoef[33]*rly[31]-ylmcoef[34]*rly[15]*radius2-tmp14*rly[24];//l=5,m=-5
 	if (Lmax == 5) return;
 
 	//if Lmax > 5
@@ -807,14 +769,18 @@ void Ylm::rl_sph_harm
 
 void Ylm::grad_rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	double* rly,
-	double** grly
+	double* grly_flat
 )
 {
+	// Alias the flat buffer as a pointer-to-array-of-3-doubles so the body
+	// below can continue to use the natural grly[lm][xyz] indexing without
+	// any performance penalty — the memory layout is unchanged.
+	double (*grly)[3] = reinterpret_cast<double(*)[3]>(grly_flat);
 	double radius2 = x*x+y*y+z*z;
 	double tx = 2.0*x;
 	double ty = 2.0*y;
@@ -824,59 +790,59 @@ void Ylm::grad_rl_sph_harm
 	/***************************
 			 L = 0
 	***************************/
-	rly[0] = Ylm::ylmcoef[0]; //l=0, m=0
+	rly[0] = ylmcoef[0]; //l=0, m=0
 	grly[0][0] = grly[0][1] = grly[0][2] = 0.0;
 	if (Lmax == 0) return;
 
 	/***************************
 			 L = 1
 	***************************/
-	rly[1] = Ylm::ylmcoef[1]*z; //l=1, m=0
+	rly[1] = ylmcoef[1]*z; //l=1, m=0
 	grly[1][0] = grly[1][1] = 0.0;
-	grly[1][2] = Ylm::ylmcoef[1];
+	grly[1][2] = ylmcoef[1];
 
-	rly[2] = -Ylm::ylmcoef[1]*x; //l=1, m=1
+	rly[2] = -ylmcoef[1]*x; //l=1, m=1
 	grly[2][1] = grly[2][2] = 0.0;
-	grly[2][0] = -Ylm::ylmcoef[1];
+	grly[2][0] = -ylmcoef[1];
 
-	rly[3] = -Ylm::ylmcoef[1]*y; //l=1, m=-1
+	rly[3] = -ylmcoef[1]*y; //l=1, m=-1
 	grly[3][0] = grly[3][2] = 0.0;
-	grly[3][1] = -Ylm::ylmcoef[1];
+	grly[3][1] = -ylmcoef[1];
 
 	if (Lmax == 1) return;
 
 	/***************************
 			 L = 2
 	***************************/
-	rly[4] = Ylm::ylmcoef[2]*z*rly[1]-Ylm::ylmcoef[3]*rly[0]*radius2;//l=2, m=0
-	grly[4][0] = Ylm::ylmcoef[2]*z*grly[1][0]-Ylm::ylmcoef[3]*(grly[0][0]*radius2+rly[0]*tx);//l=2, m=0
-	grly[4][1] = Ylm::ylmcoef[2]*z*grly[1][1]-Ylm::ylmcoef[3]*(grly[0][1]*radius2+rly[0]*ty);//l=2, m=0
-	grly[4][2] = Ylm::ylmcoef[2]*(z*grly[1][2]+rly[1])-Ylm::ylmcoef[3]*(grly[0][2]*radius2+rly[0]*tz);//l=2, m=0
+	rly[4] = ylmcoef[2]*z*rly[1]-ylmcoef[3]*rly[0]*radius2;//l=2, m=0
+	grly[4][0] = ylmcoef[2]*z*grly[1][0]-ylmcoef[3]*(grly[0][0]*radius2+rly[0]*tx);//l=2, m=0
+	grly[4][1] = ylmcoef[2]*z*grly[1][1]-ylmcoef[3]*(grly[0][1]*radius2+rly[0]*ty);//l=2, m=0
+	grly[4][2] = ylmcoef[2]*(z*grly[1][2]+rly[1])-ylmcoef[3]*(grly[0][2]*radius2+rly[0]*tz);//l=2, m=0
 
 
-	double tmp0 = Ylm::ylmcoef[4]*z;
+	double tmp0 = ylmcoef[4]*z;
 	rly[5] = tmp0*rly[2];//l=2,m=1
 	grly[5][0] = tmp0*grly[2][0];
 	grly[5][1] = tmp0*grly[2][1];
-	grly[5][2] = Ylm::ylmcoef[4]*(rly[2]+z*grly[2][2]);
+	grly[5][2] = ylmcoef[4]*(rly[2]+z*grly[2][2]);
 
 	rly[6] = tmp0*rly[3];//l=2,m=-1
 	grly[6][0] = tmp0*grly[3][0];
 	grly[6][1] = tmp0*grly[3][1];
-	grly[6][2] = Ylm::ylmcoef[4]*(rly[3]+z*grly[3][2]);
+	grly[6][2] = ylmcoef[4]*(rly[3]+z*grly[3][2]);
 
-	double tmp2 = Ylm::ylmcoef[4]*x;
-	rly[7]= Ylm::ylmcoef[5]*rly[4]-Ylm::ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
-	grly[7][0] = Ylm::ylmcoef[5]*grly[4][0]-Ylm::ylmcoef[6]*(rly[0]*tx+grly[0][0]*radius2)-Ylm::ylmcoef[4]*(x*grly[2][0]+rly[2]);
+	double tmp2 = ylmcoef[4]*x;
+	rly[7]= ylmcoef[5]*rly[4]-ylmcoef[6]*rly[0]*radius2 - tmp2*rly[2];//l=2,m=2
+	grly[7][0] = ylmcoef[5]*grly[4][0]-ylmcoef[6]*(rly[0]*tx+grly[0][0]*radius2)-ylmcoef[4]*(x*grly[2][0]+rly[2]);
 
-//	std::cout << "\np1 = "<< Ylm::ylmcoef[5]*grly[4][0] << " p2 = " << -Ylm::ylmcoef[6]*rly[0]*tx
-//						<< " p3 = " << -Ylm::ylmcoef[4]*x*grly[2][0] << " p4 = " << -Ylm::ylmcoef[4]*rly[2] << std::endl;
+//	std::cout << "\np1 = "<< ylmcoef[5]*grly[4][0] << " p2 = " << -ylmcoef[6]*rly[0]*tx
+//						<< " p3 = " << -ylmcoef[4]*x*grly[2][0] << " p4 = " << -ylmcoef[4]*rly[2] << std::endl;
 
-	grly[7][1] = Ylm::ylmcoef[5]*grly[4][1]-Ylm::ylmcoef[6]*(rly[0]*ty+grly[0][1]*radius2)-tmp2*grly[2][1];
-	grly[7][2] = Ylm::ylmcoef[5]*grly[4][2]-Ylm::ylmcoef[6]*(rly[0]*tz+grly[0][2]*radius2)-tmp2*grly[2][2];
+	grly[7][1] = ylmcoef[5]*grly[4][1]-ylmcoef[6]*(rly[0]*ty+grly[0][1]*radius2)-tmp2*grly[2][1];
+	grly[7][2] = ylmcoef[5]*grly[4][2]-ylmcoef[6]*(rly[0]*tz+grly[0][2]*radius2)-tmp2*grly[2][2];
 
 	rly[8] = -tmp2*rly[3];
-	grly[8][0] = -Ylm::ylmcoef[4]*(rly[3]+x*grly[3][0]);
+	grly[8][0] = -ylmcoef[4]*(rly[3]+x*grly[3][0]);
 	grly[8][1] = -tmp2*grly[3][1];
 	grly[8][2] = -tmp2*grly[3][2];
 //	rly[8] = tmp1+tmp2*rly[3];//l=2,m=-2
@@ -885,74 +851,74 @@ void Ylm::grad_rl_sph_harm
 	/***************************
 			 L = 3
 	***************************/
-	rly[9] = Ylm::ylmcoef[7]*z*rly[4]-Ylm::ylmcoef[8]*rly[1]*radius2; //l=3, m=0
-	grly[9][0] = Ylm::ylmcoef[7]*z*grly[4][0]-Ylm::ylmcoef[8]*(rly[1]*tx+grly[1][0]*radius2);
-	grly[9][1] = Ylm::ylmcoef[7]*z*grly[4][1]-Ylm::ylmcoef[8]*(rly[1]*ty+grly[1][1]*radius2);
-	grly[9][2] = Ylm::ylmcoef[7]*(rly[4]+z*grly[4][2])-Ylm::ylmcoef[8]*(rly[1]*tz+grly[1][2]*radius2);
+	rly[9] = ylmcoef[7]*z*rly[4]-ylmcoef[8]*rly[1]*radius2; //l=3, m=0
+	grly[9][0] = ylmcoef[7]*z*grly[4][0]-ylmcoef[8]*(rly[1]*tx+grly[1][0]*radius2);
+	grly[9][1] = ylmcoef[7]*z*grly[4][1]-ylmcoef[8]*(rly[1]*ty+grly[1][1]*radius2);
+	grly[9][2] = ylmcoef[7]*(rly[4]+z*grly[4][2])-ylmcoef[8]*(rly[1]*tz+grly[1][2]*radius2);
 
-	double tmp3 = Ylm::ylmcoef[9]*z;
-	rly[10] = tmp3*rly[5]-Ylm::ylmcoef[10]*rly[2]*radius2;//l=3,m=1
-	grly[10][0] = tmp3*grly[5][0]-Ylm::ylmcoef[10]*(grly[2][0]*radius2+rly[2]*tx);
-	grly[10][1] = tmp3*grly[5][1]-Ylm::ylmcoef[10]*(grly[2][1]*radius2+rly[2]*ty);
-	grly[10][2] = Ylm::ylmcoef[9]*(z*grly[5][2]+rly[5])-Ylm::ylmcoef[10]*(grly[2][2]*radius2+rly[2]*tz);
+	double tmp3 = ylmcoef[9]*z;
+	rly[10] = tmp3*rly[5]-ylmcoef[10]*rly[2]*radius2;//l=3,m=1
+	grly[10][0] = tmp3*grly[5][0]-ylmcoef[10]*(grly[2][0]*radius2+rly[2]*tx);
+	grly[10][1] = tmp3*grly[5][1]-ylmcoef[10]*(grly[2][1]*radius2+rly[2]*ty);
+	grly[10][2] = ylmcoef[9]*(z*grly[5][2]+rly[5])-ylmcoef[10]*(grly[2][2]*radius2+rly[2]*tz);
 
-	rly[11] = tmp3*rly[6]-Ylm::ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
-	grly[11][0] = tmp3*grly[6][0]-Ylm::ylmcoef[10]*(grly[3][0]*radius2+rly[3]*tx);
-	grly[11][1] = tmp3*grly[6][1]-Ylm::ylmcoef[10]*(grly[3][1]*radius2+rly[3]*ty);
-	grly[11][2] = Ylm::ylmcoef[9]*(z*grly[6][2]+rly[6])-Ylm::ylmcoef[10]*(grly[3][2]*radius2+rly[3]*tz);
+	rly[11] = tmp3*rly[6]-ylmcoef[10]*rly[3]*radius2;//l=3,m=-1
+	grly[11][0] = tmp3*grly[6][0]-ylmcoef[10]*(grly[3][0]*radius2+rly[3]*tx);
+	grly[11][1] = tmp3*grly[6][1]-ylmcoef[10]*(grly[3][1]*radius2+rly[3]*ty);
+	grly[11][2] = ylmcoef[9]*(z*grly[6][2]+rly[6])-ylmcoef[10]*(grly[3][2]*radius2+rly[3]*tz);
 
-	double tmp4 = Ylm::ylmcoef[11]*z;
+	double tmp4 = ylmcoef[11]*z;
 	rly[12] = tmp4*rly[7];//l=3,m=2
 	grly[12][0] = tmp4*grly[7][0];
 	grly[12][1] = tmp4*grly[7][1];
-	grly[12][2] = Ylm::ylmcoef[11]*(z*grly[7][2]+rly[7]);
+	grly[12][2] = ylmcoef[11]*(z*grly[7][2]+rly[7]);
 
 	rly[13] = tmp4*rly[8];//l=3,m=-2
 	grly[13][0] = tmp4*grly[8][0];
 	grly[13][1] = tmp4*grly[8][1];
-	grly[13][2] = Ylm::ylmcoef[11]*(z*grly[8][2]+rly[8]);
+	grly[13][2] = ylmcoef[11]*(z*grly[8][2]+rly[8]);
 
-	double tmp5 = Ylm::ylmcoef[14]*x;
-	rly[14] = Ylm::ylmcoef[12]*rly[10]-Ylm::ylmcoef[13]*rly[2]*radius2-tmp5*rly[7];//l=3,m=3
-	grly[14][0] = Ylm::ylmcoef[12]*grly[10][0]-Ylm::ylmcoef[13]*(rly[2]*tx+grly[2][0]*radius2)-Ylm::ylmcoef[14]*(rly[7]+x*grly[7][0]);
-	grly[14][1] = Ylm::ylmcoef[12]*grly[10][1]-Ylm::ylmcoef[13]*(rly[2]*ty+grly[2][1]*radius2)-tmp5*grly[7][1];
-	grly[14][2] = Ylm::ylmcoef[12]*grly[10][2]-Ylm::ylmcoef[13]*(rly[2]*tz+grly[2][2]*radius2)-tmp5*grly[7][2];
+	double tmp5 = ylmcoef[14]*x;
+	rly[14] = ylmcoef[12]*rly[10]-ylmcoef[13]*rly[2]*radius2-tmp5*rly[7];//l=3,m=3
+	grly[14][0] = ylmcoef[12]*grly[10][0]-ylmcoef[13]*(rly[2]*tx+grly[2][0]*radius2)-ylmcoef[14]*(rly[7]+x*grly[7][0]);
+	grly[14][1] = ylmcoef[12]*grly[10][1]-ylmcoef[13]*(rly[2]*ty+grly[2][1]*radius2)-tmp5*grly[7][1];
+	grly[14][2] = ylmcoef[12]*grly[10][2]-ylmcoef[13]*(rly[2]*tz+grly[2][2]*radius2)-tmp5*grly[7][2];
 
-	rly[15] = Ylm::ylmcoef[12]*rly[11]-Ylm::ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
-	grly[15][0] = Ylm::ylmcoef[12]*grly[11][0]-Ylm::ylmcoef[13]*(rly[3]*tx+grly[3][0]*radius2)-Ylm::ylmcoef[14]*(rly[8]+x*grly[8][0]);
-	grly[15][1] = Ylm::ylmcoef[12]*grly[11][1]-Ylm::ylmcoef[13]*(rly[3]*ty+grly[3][1]*radius2)-tmp5*grly[8][1];
-	grly[15][2] = Ylm::ylmcoef[12]*grly[11][2]-Ylm::ylmcoef[13]*(rly[3]*tz+grly[3][2]*radius2)-tmp5*grly[8][2];
+	rly[15] = ylmcoef[12]*rly[11]-ylmcoef[13]*rly[3]*radius2-tmp5*rly[8];//l=3,m=-3
+	grly[15][0] = ylmcoef[12]*grly[11][0]-ylmcoef[13]*(rly[3]*tx+grly[3][0]*radius2)-ylmcoef[14]*(rly[8]+x*grly[8][0]);
+	grly[15][1] = ylmcoef[12]*grly[11][1]-ylmcoef[13]*(rly[3]*ty+grly[3][1]*radius2)-tmp5*grly[8][1];
+	grly[15][2] = ylmcoef[12]*grly[11][2]-ylmcoef[13]*(rly[3]*tz+grly[3][2]*radius2)-tmp5*grly[8][2];
 	if (Lmax == 3) return;
 
 	/***************************
 			 L = 4
 	***************************/
-	rly[16] = Ylm::ylmcoef[15]*z*rly[9]-Ylm::ylmcoef[16]*rly[4]*radius2;//l=4,m=0
-	grly[16][0] = Ylm::ylmcoef[15]*z*grly[9][0]-Ylm::ylmcoef[16]*(rly[4]*tx+grly[4][0]*radius2);
-	grly[16][1] = Ylm::ylmcoef[15]*z*grly[9][1]-Ylm::ylmcoef[16]*(rly[4]*ty+grly[4][1]*radius2);
-	grly[16][2] = Ylm::ylmcoef[15]*(z*grly[9][2]+rly[9])-Ylm::ylmcoef[16]*(rly[4]*tz+grly[4][2]*radius2);
+	rly[16] = ylmcoef[15]*z*rly[9]-ylmcoef[16]*rly[4]*radius2;//l=4,m=0
+	grly[16][0] = ylmcoef[15]*z*grly[9][0]-ylmcoef[16]*(rly[4]*tx+grly[4][0]*radius2);
+	grly[16][1] = ylmcoef[15]*z*grly[9][1]-ylmcoef[16]*(rly[4]*ty+grly[4][1]*radius2);
+	grly[16][2] = ylmcoef[15]*(z*grly[9][2]+rly[9])-ylmcoef[16]*(rly[4]*tz+grly[4][2]*radius2);
 
-	double tmp6 = Ylm::ylmcoef[17]*z;
-	rly[17] = tmp6*rly[10]-Ylm::ylmcoef[18]*rly[5]*radius2;//l=4,m=1
-	grly[17][0] = tmp6*grly[10][0]-Ylm::ylmcoef[18]*(rly[5]*tx+grly[5][0]*radius2);
-	grly[17][1] = tmp6*grly[10][1]-Ylm::ylmcoef[18]*(rly[5]*ty+grly[5][1]*radius2);
-	grly[17][2] = Ylm::ylmcoef[17]*(z*grly[10][2]+rly[10])-Ylm::ylmcoef[18]*(rly[5]*tz+grly[5][2]*radius2);
+	double tmp6 = ylmcoef[17]*z;
+	rly[17] = tmp6*rly[10]-ylmcoef[18]*rly[5]*radius2;//l=4,m=1
+	grly[17][0] = tmp6*grly[10][0]-ylmcoef[18]*(rly[5]*tx+grly[5][0]*radius2);
+	grly[17][1] = tmp6*grly[10][1]-ylmcoef[18]*(rly[5]*ty+grly[5][1]*radius2);
+	grly[17][2] = ylmcoef[17]*(z*grly[10][2]+rly[10])-ylmcoef[18]*(rly[5]*tz+grly[5][2]*radius2);
 
-	rly[18] = tmp6*rly[11]-Ylm::ylmcoef[18]*rly[6]*radius2;//l=4,m=-1
-	grly[18][0] = tmp6*grly[11][0]-Ylm::ylmcoef[18]*(rly[6]*tx+grly[6][0]*radius2);
-	grly[18][1] = tmp6*grly[11][1]-Ylm::ylmcoef[18]*(rly[6]*ty+grly[6][1]*radius2);
-	grly[18][2] = Ylm::ylmcoef[17]*(z*grly[11][2]+rly[11])-Ylm::ylmcoef[18]*(rly[6]*tz+grly[6][2]*radius2);
+	rly[18] = tmp6*rly[11]-ylmcoef[18]*rly[6]*radius2;//l=4,m=-1
+	grly[18][0] = tmp6*grly[11][0]-ylmcoef[18]*(rly[6]*tx+grly[6][0]*radius2);
+	grly[18][1] = tmp6*grly[11][1]-ylmcoef[18]*(rly[6]*ty+grly[6][1]*radius2);
+	grly[18][2] = ylmcoef[17]*(z*grly[11][2]+rly[11])-ylmcoef[18]*(rly[6]*tz+grly[6][2]*radius2);
 
-	double tmp7 = Ylm::ylmcoef[19]*z;
-	rly[19] = tmp7*rly[12]-Ylm::ylmcoef[20]*rly[7]*radius2;//l=4,m=2
-	grly[19][0] = tmp7*grly[12][0]-Ylm::ylmcoef[20]*(rly[7]*tx+grly[7][0]*radius2);
-	grly[19][1] = tmp7*grly[12][1]-Ylm::ylmcoef[20]*(rly[7]*ty+grly[7][1]*radius2);
-	grly[19][2] = Ylm::ylmcoef[19]*(z*grly[12][2]+rly[12])-Ylm::ylmcoef[20]*(rly[7]*tz+grly[7][2]*radius2);
+	double tmp7 = ylmcoef[19]*z;
+	rly[19] = tmp7*rly[12]-ylmcoef[20]*rly[7]*radius2;//l=4,m=2
+	grly[19][0] = tmp7*grly[12][0]-ylmcoef[20]*(rly[7]*tx+grly[7][0]*radius2);
+	grly[19][1] = tmp7*grly[12][1]-ylmcoef[20]*(rly[7]*ty+grly[7][1]*radius2);
+	grly[19][2] = ylmcoef[19]*(z*grly[12][2]+rly[12])-ylmcoef[20]*(rly[7]*tz+grly[7][2]*radius2);
 
-	rly[20] = tmp7*rly[13]-Ylm::ylmcoef[20]*rly[8]*radius2;//l=4,m=-2
-	grly[20][0] = tmp7*grly[13][0]-Ylm::ylmcoef[20]*(rly[8]*tx+grly[8][0]*radius2);
-	grly[20][1] = tmp7*grly[13][1]-Ylm::ylmcoef[20]*(rly[8]*ty+grly[8][1]*radius2);
-	grly[20][2] = Ylm::ylmcoef[19]*(z*grly[13][2]+rly[13])-Ylm::ylmcoef[20]*(rly[8]*tz+grly[8][2]*radius2);
+	rly[20] = tmp7*rly[13]-ylmcoef[20]*rly[8]*radius2;//l=4,m=-2
+	grly[20][0] = tmp7*grly[13][0]-ylmcoef[20]*(rly[8]*tx+grly[8][0]*radius2);
+	grly[20][1] = tmp7*grly[13][1]-ylmcoef[20]*(rly[8]*ty+grly[8][1]*radius2);
+	grly[20][2] = ylmcoef[19]*(z*grly[13][2]+rly[13])-ylmcoef[20]*(rly[8]*tz+grly[8][2]*radius2);
 
 	double tmp8 = 3.0*z;
 	rly[21] = tmp8*rly[14];//l=4,m=3
@@ -966,81 +932,81 @@ void Ylm::grad_rl_sph_harm
 	grly[22][1] = tmp8*grly[15][1];
 	grly[22][2] = 3.0*(z*grly[15][2]+rly[15]);
 
-	double tmp9 = Ylm::ylmcoef[23]*x;
-	rly[23] = Ylm::ylmcoef[21]*rly[19]-Ylm::ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
-	grly[23][0] = Ylm::ylmcoef[21]*grly[19][0]-Ylm::ylmcoef[22]*(rly[7]*tx+grly[7][0]*radius2)-Ylm::ylmcoef[23]*(x*grly[14][0]+rly[14]);
-	grly[23][1] = Ylm::ylmcoef[21]*grly[19][1]-Ylm::ylmcoef[22]*(rly[7]*ty+grly[7][1]*radius2)-tmp9*grly[14][1];
-	grly[23][2] = Ylm::ylmcoef[21]*grly[19][2]-Ylm::ylmcoef[22]*(rly[7]*tz+grly[7][2]*radius2)-tmp9*grly[14][2];
+	double tmp9 = ylmcoef[23]*x;
+	rly[23] = ylmcoef[21]*rly[19]-ylmcoef[22]*rly[7]*radius2-tmp9*rly[14];//l=4,m=4
+	grly[23][0] = ylmcoef[21]*grly[19][0]-ylmcoef[22]*(rly[7]*tx+grly[7][0]*radius2)-ylmcoef[23]*(x*grly[14][0]+rly[14]);
+	grly[23][1] = ylmcoef[21]*grly[19][1]-ylmcoef[22]*(rly[7]*ty+grly[7][1]*radius2)-tmp9*grly[14][1];
+	grly[23][2] = ylmcoef[21]*grly[19][2]-ylmcoef[22]*(rly[7]*tz+grly[7][2]*radius2)-tmp9*grly[14][2];
 
-	rly[24] = Ylm::ylmcoef[21]*rly[20]-Ylm::ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
-	grly[24][0] = Ylm::ylmcoef[21]*grly[20][0]-Ylm::ylmcoef[22]*(rly[8]*tx+grly[8][0]*radius2)-Ylm::ylmcoef[23]*(x*grly[15][0]+rly[15]);
-	grly[24][1] = Ylm::ylmcoef[21]*grly[20][1]-Ylm::ylmcoef[22]*(rly[8]*ty+grly[8][1]*radius2)-tmp9*grly[15][1];
-	grly[24][2] = Ylm::ylmcoef[21]*grly[20][2]-Ylm::ylmcoef[22]*(rly[8]*tz+grly[8][2]*radius2)-tmp9*grly[15][2];
+	rly[24] = ylmcoef[21]*rly[20]-ylmcoef[22]*rly[8]*radius2-tmp9*rly[15];//l=4,m=-4
+	grly[24][0] = ylmcoef[21]*grly[20][0]-ylmcoef[22]*(rly[8]*tx+grly[8][0]*radius2)-ylmcoef[23]*(x*grly[15][0]+rly[15]);
+	grly[24][1] = ylmcoef[21]*grly[20][1]-ylmcoef[22]*(rly[8]*ty+grly[8][1]*radius2)-tmp9*grly[15][1];
+	grly[24][2] = ylmcoef[21]*grly[20][2]-ylmcoef[22]*(rly[8]*tz+grly[8][2]*radius2)-tmp9*grly[15][2];
 
 	if (Lmax == 4) return;
 
 	/***************************
 			 L = 5
 	***************************/
-	rly[25] = Ylm::ylmcoef[24]*z*rly[16]-Ylm::ylmcoef[25]*rly[9]*radius2;//l=5,m=0
-	grly[25][0] = Ylm::ylmcoef[24]*z*grly[16][0]-Ylm::ylmcoef[25]*(rly[9]*tx+grly[9][0]*radius2);
-	grly[25][1] = Ylm::ylmcoef[24]*z*grly[16][1]-Ylm::ylmcoef[25]*(rly[9]*ty+grly[9][1]*radius2);
-	grly[25][2] = Ylm::ylmcoef[24]*(z*grly[16][2]+rly[16])-Ylm::ylmcoef[25]*(rly[9]*tz+grly[9][2]*radius2);
+	rly[25] = ylmcoef[24]*z*rly[16]-ylmcoef[25]*rly[9]*radius2;//l=5,m=0
+	grly[25][0] = ylmcoef[24]*z*grly[16][0]-ylmcoef[25]*(rly[9]*tx+grly[9][0]*radius2);
+	grly[25][1] = ylmcoef[24]*z*grly[16][1]-ylmcoef[25]*(rly[9]*ty+grly[9][1]*radius2);
+	grly[25][2] = ylmcoef[24]*(z*grly[16][2]+rly[16])-ylmcoef[25]*(rly[9]*tz+grly[9][2]*radius2);
 
-	double tmp10 = Ylm::ylmcoef[26]*z;
-	rly[26] = tmp10*rly[17]-Ylm::ylmcoef[27]*rly[10]*radius2;//l=5,m=1
-	grly[26][0] = tmp10*grly[17][0]-Ylm::ylmcoef[27]*(rly[10]*tx+grly[10][0]*radius2);
-	grly[26][1] = tmp10*grly[17][1]-Ylm::ylmcoef[27]*(rly[10]*ty+grly[10][1]*radius2);
-	grly[26][2] = Ylm::ylmcoef[26]*(z*grly[17][2]+rly[17])-Ylm::ylmcoef[27]*(rly[10]*tz+grly[10][2]*radius2);
+	double tmp10 = ylmcoef[26]*z;
+	rly[26] = tmp10*rly[17]-ylmcoef[27]*rly[10]*radius2;//l=5,m=1
+	grly[26][0] = tmp10*grly[17][0]-ylmcoef[27]*(rly[10]*tx+grly[10][0]*radius2);
+	grly[26][1] = tmp10*grly[17][1]-ylmcoef[27]*(rly[10]*ty+grly[10][1]*radius2);
+	grly[26][2] = ylmcoef[26]*(z*grly[17][2]+rly[17])-ylmcoef[27]*(rly[10]*tz+grly[10][2]*radius2);
 
-	rly[27] = tmp10*rly[18]-Ylm::ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
-	grly[27][0] = tmp10*grly[18][0]-Ylm::ylmcoef[27]*(rly[11]*tx+grly[11][0]*radius2);
-	grly[27][1] = tmp10*grly[18][1]-Ylm::ylmcoef[27]*(rly[11]*ty+grly[11][1]*radius2);
-	grly[27][2] = Ylm::ylmcoef[26]*(z*grly[18][2]+rly[18])-Ylm::ylmcoef[27]*(rly[11]*tz+grly[11][2]*radius2);
+	rly[27] = tmp10*rly[18]-ylmcoef[27]*rly[11]*radius2;//l=5,m=-1
+	grly[27][0] = tmp10*grly[18][0]-ylmcoef[27]*(rly[11]*tx+grly[11][0]*radius2);
+	grly[27][1] = tmp10*grly[18][1]-ylmcoef[27]*(rly[11]*ty+grly[11][1]*radius2);
+	grly[27][2] = ylmcoef[26]*(z*grly[18][2]+rly[18])-ylmcoef[27]*(rly[11]*tz+grly[11][2]*radius2);
 
-	double tmp11 = Ylm::ylmcoef[28]*z;
-	rly[28] = tmp11*rly[19]-Ylm::ylmcoef[29]*rly[12]*radius2;//l=5,m=2
-	grly[28][0] = tmp11*grly[19][0]-Ylm::ylmcoef[29]*(rly[12]*tx+grly[12][0]*radius2);
-	grly[28][1] = tmp11*grly[19][1]-Ylm::ylmcoef[29]*(rly[12]*ty+grly[12][1]*radius2);
-	grly[28][2] = Ylm::ylmcoef[28]*(z*grly[19][2]+rly[19])-Ylm::ylmcoef[29]*(rly[12]*tz+grly[12][2]*radius2);
+	double tmp11 = ylmcoef[28]*z;
+	rly[28] = tmp11*rly[19]-ylmcoef[29]*rly[12]*radius2;//l=5,m=2
+	grly[28][0] = tmp11*grly[19][0]-ylmcoef[29]*(rly[12]*tx+grly[12][0]*radius2);
+	grly[28][1] = tmp11*grly[19][1]-ylmcoef[29]*(rly[12]*ty+grly[12][1]*radius2);
+	grly[28][2] = ylmcoef[28]*(z*grly[19][2]+rly[19])-ylmcoef[29]*(rly[12]*tz+grly[12][2]*radius2);
 
-	rly[29] = tmp11*rly[20]-Ylm::ylmcoef[29]*rly[13]*radius2;//l=5,m=-2
-	grly[29][0] = tmp11*grly[20][0]-Ylm::ylmcoef[29]*(rly[13]*tx+grly[13][0]*radius2);
-	grly[29][1] = tmp11*grly[20][1]-Ylm::ylmcoef[29]*(rly[13]*ty+grly[13][1]*radius2);
-	grly[29][2] = Ylm::ylmcoef[28]*(z*grly[20][2]+rly[20])-Ylm::ylmcoef[29]*(rly[13]*tz+grly[13][2]*radius2);
+	rly[29] = tmp11*rly[20]-ylmcoef[29]*rly[13]*radius2;//l=5,m=-2
+	grly[29][0] = tmp11*grly[20][0]-ylmcoef[29]*(rly[13]*tx+grly[13][0]*radius2);
+	grly[29][1] = tmp11*grly[20][1]-ylmcoef[29]*(rly[13]*ty+grly[13][1]*radius2);
+	grly[29][2] = ylmcoef[28]*(z*grly[20][2]+rly[20])-ylmcoef[29]*(rly[13]*tz+grly[13][2]*radius2);
 
-	double tmp12 = Ylm::ylmcoef[30]*z;
-	rly[30] = tmp12*rly[21]-Ylm::ylmcoef[31]*rly[14]*radius2;//l=5,m=3
-	grly[30][0] = tmp12*grly[21][0]-Ylm::ylmcoef[31]*(grly[14][0]*radius2+rly[14]*tx);
-	grly[30][1] = tmp12*grly[21][1]-Ylm::ylmcoef[31]*(grly[14][1]*radius2+rly[14]*ty);
-	grly[30][2] = Ylm::ylmcoef[30]*(z*grly[21][2]+rly[21])-Ylm::ylmcoef[31]*(grly[14][2]*radius2+rly[14]*tz);
+	double tmp12 = ylmcoef[30]*z;
+	rly[30] = tmp12*rly[21]-ylmcoef[31]*rly[14]*radius2;//l=5,m=3
+	grly[30][0] = tmp12*grly[21][0]-ylmcoef[31]*(grly[14][0]*radius2+rly[14]*tx);
+	grly[30][1] = tmp12*grly[21][1]-ylmcoef[31]*(grly[14][1]*radius2+rly[14]*ty);
+	grly[30][2] = ylmcoef[30]*(z*grly[21][2]+rly[21])-ylmcoef[31]*(grly[14][2]*radius2+rly[14]*tz);
 
-	rly[31] = tmp12*rly[22]-Ylm::ylmcoef[31]*rly[15]*radius2;//l=5,m=-3
-	grly[31][0] = tmp12*grly[22][0]-Ylm::ylmcoef[31]*(grly[15][0]*radius2+rly[15]*tx);
-	grly[31][1] = tmp12*grly[22][1]-Ylm::ylmcoef[31]*(grly[15][1]*radius2+rly[15]*ty);
-	grly[31][2] = Ylm::ylmcoef[30]*(z*grly[22][2]+rly[22])-Ylm::ylmcoef[31]*(grly[15][2]*radius2+rly[15]*tz);
+	rly[31] = tmp12*rly[22]-ylmcoef[31]*rly[15]*radius2;//l=5,m=-3
+	grly[31][0] = tmp12*grly[22][0]-ylmcoef[31]*(grly[15][0]*radius2+rly[15]*tx);
+	grly[31][1] = tmp12*grly[22][1]-ylmcoef[31]*(grly[15][1]*radius2+rly[15]*ty);
+	grly[31][2] = ylmcoef[30]*(z*grly[22][2]+rly[22])-ylmcoef[31]*(grly[15][2]*radius2+rly[15]*tz);
 
-	double tmp13 = Ylm::ylmcoef[32]*z;
+	double tmp13 = ylmcoef[32]*z;
 	rly[32] = tmp13*rly[23];//l=5,m=4
 	grly[32][0] = tmp13*grly[23][0];
 	grly[32][1] = tmp13*grly[23][1];
-	grly[32][2] = Ylm::ylmcoef[32]*(rly[23]+z*grly[23][2]);
+	grly[32][2] = ylmcoef[32]*(rly[23]+z*grly[23][2]);
 
 	rly[33] = tmp13*rly[24];//l=5,m=-4
 	grly[33][0] = tmp13*grly[24][0];
 	grly[33][1] = tmp13*grly[24][1];
-	grly[33][2] = Ylm::ylmcoef[32]*(rly[24]+z*grly[24][2]);
+	grly[33][2] = ylmcoef[32]*(rly[24]+z*grly[24][2]);
 
-	double tmp14 = Ylm::ylmcoef[35]*x;
-	rly[34] = Ylm::ylmcoef[33]*rly[30]-Ylm::ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
-	grly[34][0] = Ylm::ylmcoef[33]*grly[30][0]-Ylm::ylmcoef[34]*(rly[14]*tx+grly[14][0]*radius2)-Ylm::ylmcoef[35]*(x*grly[23][0]+rly[23]);
-	grly[34][1] = Ylm::ylmcoef[33]*grly[30][1]-Ylm::ylmcoef[34]*(rly[14]*ty+grly[14][1]*radius2)-tmp14*grly[23][1];
-	grly[34][2] = Ylm::ylmcoef[33]*grly[30][2]-Ylm::ylmcoef[34]*(rly[14]*tz+grly[14][2]*radius2)-tmp14*grly[23][2];
+	double tmp14 = ylmcoef[35]*x;
+	rly[34] = ylmcoef[33]*rly[30]-ylmcoef[34]*rly[14]*radius2-tmp14*rly[23];//l=5,m=5
+	grly[34][0] = ylmcoef[33]*grly[30][0]-ylmcoef[34]*(rly[14]*tx+grly[14][0]*radius2)-ylmcoef[35]*(x*grly[23][0]+rly[23]);
+	grly[34][1] = ylmcoef[33]*grly[30][1]-ylmcoef[34]*(rly[14]*ty+grly[14][1]*radius2)-tmp14*grly[23][1];
+	grly[34][2] = ylmcoef[33]*grly[30][2]-ylmcoef[34]*(rly[14]*tz+grly[14][2]*radius2)-tmp14*grly[23][2];
 
-	rly[35] = Ylm::ylmcoef[33]*rly[31]-Ylm::ylmcoef[34]*rly[15]*radius2-tmp14*rly[24];//l=5,m=-5
-	grly[35][0] = Ylm::ylmcoef[33]*grly[31][0]-Ylm::ylmcoef[34]*(rly[15]*tx+grly[15][0]*radius2)-Ylm::ylmcoef[35]*(x*grly[24][0]+rly[24]);
-	grly[35][1] = Ylm::ylmcoef[33]*grly[31][1]-Ylm::ylmcoef[34]*(rly[15]*ty+grly[15][1]*radius2)-tmp14*grly[24][1];
-	grly[35][2] = Ylm::ylmcoef[33]*grly[31][2]-Ylm::ylmcoef[34]*(rly[15]*tz+grly[15][2]*radius2)-tmp14*grly[24][2];
+	rly[35] = ylmcoef[33]*rly[31]-ylmcoef[34]*rly[15]*radius2-tmp14*rly[24];//l=5,m=-5
+	grly[35][0] = ylmcoef[33]*grly[31][0]-ylmcoef[34]*(rly[15]*tx+grly[15][0]*radius2)-ylmcoef[35]*(x*grly[24][0]+rly[24]);
+	grly[35][1] = ylmcoef[33]*grly[31][1]-ylmcoef[34]*(rly[15]*ty+grly[15][1]*radius2)-tmp14*grly[24][1];
+	grly[35][2] = ylmcoef[33]*grly[31][2]-ylmcoef[34]*(rly[15]*tz+grly[15][2]*radius2)-tmp14*grly[24][2];
 
 	if (Lmax == 5) return;
 
@@ -1097,17 +1063,17 @@ void Ylm::grad_rl_sph_harm
 
 void Ylm::hes_rl_sph_harm
 (
- 	const int& Lmax, //max momentum of L
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of L
+ 	const double x,
+	const double y,
+	const double z,
 	std::vector<std::vector<double>>& hrly
 )
 {
 	hrly.resize( (Lmax+1)*(Lmax+1), std::vector<double>(6) );
 
 	double radius2 = x*x+y*y+z*z;
-	double coeff;
+	double coeff = 0.0;
 
 	//begin calculation
 	/***************************
@@ -1315,9 +1281,224 @@ void Ylm::hes_rl_sph_harm
 	if (Lmax == 4) return;
 
 	/***************************
-			 L > 4
+			 L = 5
 	***************************/
-	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>4 not implemented!");
+	//m=0 : (63z^5 - 70z^3*r^2 + 15z*r^4)
+	coeff = sqrt(11.0 / ModuleBase::PI) / 16.0;
+	hrly[25][0] = (180*x*x*z + 60*y*y*z - 80*z*z*z) * coeff;
+	hrly[25][1] = (120*x*y*z) * coeff;
+	hrly[25][2] = (60*x*x*x + 60*x*y*y - 240*x*z*z) * coeff;
+	hrly[25][3] = (60*x*x*z + 180*y*y*z - 80*z*z*z) * coeff;
+	hrly[25][4] = (60*x*x*y + 60*y*y*y - 240*y*z*z) * coeff;
+	hrly[25][5] = (-240*x*x*z - 240*y*y*z + 160*z*z*z) * coeff;
+
+	//m=1 : x(21z^4 - 14z^2*r^2 + r^4)
+	coeff = sqrt(165.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[26][0] = (20*x*x*x + 12*x*y*y - 72*x*z*z) * coeff;
+	hrly[26][1] = (12*x*x*y + 4*y*y*y - 24*y*z*z) * coeff;
+	hrly[26][2] = (-72*x*x*z - 24*y*y*z + 32*z*z*z) * coeff;
+	hrly[26][3] = (4*x*x*x + 12*x*y*y - 24*x*z*z) * coeff;
+	hrly[26][4] = (-48*x*y*z) * coeff;
+	hrly[26][5] = (-24*x*x*x - 24*x*y*y + 96*x*z*z) * coeff;
+
+	//m=-1 : y(21z^4 - 14z^2*r^2 + r^4)
+	hrly[27][0] = (12*x*x*y + 4*y*y*y - 24*y*z*z) * coeff;
+	hrly[27][1] = (4*x*x*x + 12*x*y*y - 24*x*z*z) * coeff;
+	hrly[27][2] = (-48*x*y*z) * coeff;
+	hrly[27][3] = (12*x*x*y + 20*y*y*y - 72*y*z*z) * coeff;
+	hrly[27][4] = (-24*x*x*z - 72*y*y*z + 32*z*z*z) * coeff;
+	hrly[27][5] = (-24*x*x*y - 24*y*y*y + 96*y*z*z) * coeff;
+
+	//m=2 : (x^2 - y^2)(3z^3 - z*r^2)
+	coeff = sqrt(1155.0 / ModuleBase::PI) / 8.0;
+	hrly[28][0] = (-12*x*x*z + 4*z*z*z) * coeff;
+	hrly[28][1] = 0.0;
+	hrly[28][2] = (-4*x*x*x + 12*x*z*z) * coeff;
+	hrly[28][3] = (12*y*y*z - 4*z*z*z) * coeff;
+	hrly[28][4] = (4*y*y*y - 12*y*z*z) * coeff;
+	hrly[28][5] = (12*x*x*z - 12*y*y*z) * coeff;
+
+	//m=-2 : xy(3z^3 - z*r^2)
+	hrly[29][0] = (-6*x*y*z) * coeff;
+	hrly[29][1] = (-3*x*x*z - 3*y*y*z + 2*z*z*z) * coeff;
+	hrly[29][2] = (-3*x*x*y - y*y*y + 6*y*z*z) * coeff;
+	hrly[29][3] = (-6*x*y*z) * coeff;
+	hrly[29][4] = (-x*x*x - 3*x*y*y + 6*x*z*z) * coeff;
+	hrly[29][5] = (12*x*y*z) * coeff;
+
+	//m=3 : x(x^2 - 3y^2)(9z^2 - r^2)
+	coeff = sqrt(385.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[30][0] = (-20*x*x*x + 12*x*y*y + 48*x*z*z) * coeff;
+	hrly[30][1] = (12*x*x*y + 12*y*y*y - 48*y*z*z) * coeff;
+	hrly[30][2] = (48*x*x*z - 48*y*y*z) * coeff;
+	hrly[30][3] = (4*x*x*x + 36*x*y*y - 48*x*z*z) * coeff;
+	hrly[30][4] = (-96*x*y*z) * coeff;
+	hrly[30][5] = (16*x*x*x - 48*x*y*y) * coeff;
+
+	//m=-3 : y(3x^2 - y^2)(9z^2 - r^2)
+	hrly[31][0] = (-36*x*x*y - 4*y*y*y + 48*y*z*z) * coeff;
+	hrly[31][1] = (-12*x*x*x - 12*x*y*y + 48*x*z*z) * coeff;
+	hrly[31][2] = (96*x*y*z) * coeff;
+	hrly[31][3] = (-12*x*x*y + 20*y*y*y - 48*y*z*z) * coeff;
+	hrly[31][4] = (48*x*x*z - 48*y*y*z) * coeff;
+	hrly[31][5] = (48*x*x*y - 16*y*y*y) * coeff;
+
+	//m=4 : (x^4 - 6x^2*y^2 + y^4) * z
+	coeff = sqrt(385.0 / ModuleBase::PI) / 16.0;
+	hrly[32][0] = (12*x*x*z - 12*y*y*z) * coeff;
+	hrly[32][1] = (-24*x*y*z) * coeff;
+	hrly[32][2] = (4*x*x*x - 12*x*y*y) * coeff;
+	hrly[32][3] = (-12*x*x*z + 12*y*y*z) * coeff;
+	hrly[32][4] = (-12*x*x*y + 4*y*y*y) * coeff;
+	hrly[32][5] = 0.0;
+
+	//m=-4 : xy(x^2 - y^2) * z
+	hrly[33][0] = (6*x*y*z) * coeff;
+	hrly[33][1] = (3*x*x*z - 3*y*y*z) * coeff;
+	hrly[33][2] = (3*x*x*y - y*y*y) * coeff;
+	hrly[33][3] = (-6*x*y*z) * coeff;
+	hrly[33][4] = (x*x*x - 3*x*y*y) * coeff;
+	hrly[33][5] = 0.0;
+
+	//m=5 : x(x^4 - 10x^2*y^2 + 5y^4)
+	coeff = sqrt(77.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[34][0] =  (20.0 * x*x*x - 60.0 * x * y*y) * coeff;
+	hrly[34][1] =  (-60.0 * x*x * y + 20.0 * y*y*y) * coeff;
+	hrly[34][2] =  0.0;
+	hrly[34][3] =  (-20.0 * x*x*x + 60.0 * x * y*y) * coeff;
+	hrly[34][4] =  0.0;
+	hrly[34][5] =  0.0;
+
+	//m=-5 : y(5x^4 - 10x^2*y^2 + y^4)
+	hrly[35][0] =  (60.0 * x*x * y - 20.0 * y*y*y) * coeff;
+	hrly[35][1] =  (20.0 * x*x*x - 60.0 * x * y*y) * coeff;
+	hrly[35][2] =  0.0;
+	hrly[35][3] =  (-60.0 * x*x * y + 20.0 * y*y*y) * coeff;
+	hrly[35][4] =  0.0;
+	hrly[35][5] =  0.0;
+
+	if (Lmax == 5) return;
+
+	/***************************
+			 L = 6
+	***************************/
+	//m=0 : (231z^6 - 315z^4*r^2 + 105z^2*r^4 - 5r^6)
+	coeff = sqrt(13.0 / ModuleBase::PI) / 32.0;
+	hrly[36][0] = (-150*x*x*x*x - 180*x*x*y*y + 1080*x*x*z*z - 30*y*y*y*y + 360*y*y*z*z - 240*z*z*z*z) * coeff;
+	hrly[36][1] = (-120*x*x*x*y - 120*x*y*y*y + 720*x*y*z*z) * coeff;
+	hrly[36][2] = (720*x*x*x*z + 720*x*y*y*z - 960*x*z*z*z) * coeff;
+	hrly[36][3] = (-30*x*x*x*x - 180*x*x*y*y + 360*x*x*z*z - 150*y*y*y*y + 1080*y*y*z*z - 240*z*z*z*z) * coeff;
+	hrly[36][4] = (720*x*x*y*z + 720*y*y*y*z - 960*y*z*z*z) * coeff;
+	hrly[36][5] = (180*x*x*x*x + 360*x*x*y*y - 1440*x*x*z*z + 180*y*y*y*y - 1440*y*y*z*z + 480*z*z*z*z) * coeff;
+
+	//m=1 : x(33z^5 - 30z^3*r^2 + 5z*r^4)
+	coeff = sqrt(273.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[37][0] = (100*x*x*x*z + 60*x*y*y*z - 120*x*z*z*z) * coeff;
+	hrly[37][1] = (60*x*x*y*z + 20*y*y*y*z - 40*y*z*z*z) * coeff;
+	hrly[37][2] = (25*x*x*x*x + 30*x*x*y*y - 180*x*x*z*z + 5*y*y*y*y - 60*y*y*z*z + 40*z*z*z*z) * coeff;
+	hrly[37][3] = (20*x*x*x*z + 60*x*y*y*z - 40*x*z*z*z) * coeff;
+	hrly[37][4] = (20*x*x*x*y + 20*x*y*y*y - 120*x*y*z*z) * coeff;
+	hrly[37][5] = (-120*x*x*x*z - 120*x*y*y*z + 160*x*z*z*z) * coeff;
+
+	//m=-1 : y(33z^5 - 30z^3*r^2 + 5z*r^4)
+	hrly[38][0] = (60*x*x*y*z + 20*y*y*y*z - 40*y*z*z*z) * coeff;
+	hrly[38][1] = (20*x*x*x*z + 60*x*y*y*z - 40*x*z*z*z) * coeff;
+	hrly[38][2] = (20*x*x*x*y + 20*x*y*y*y - 120*x*y*z*z) * coeff;
+	hrly[38][3] = (60*x*x*y*z + 100*y*y*y*z - 120*y*z*z*z) * coeff;
+	hrly[38][4] = (5*x*x*x*x + 30*x*x*y*y - 60*x*x*z*z + 25*y*y*y*y - 180*y*y*z*z + 40*z*z*z*z) * coeff;
+	hrly[38][5] = (-120*x*x*y*z - 120*y*y*y*z + 160*y*z*z*z) * coeff;
+
+	//m=2 : (x^2 - y^2)(33z^4 - 18z^2*r^2 + r^4)
+	coeff = sqrt(1365.0 / ModuleBase::PI) / 32.0;
+	hrly[39][0] = (30*x*x*x*x + 12*x*x*y*y - 192*x*x*z*z - 2*y*y*y*y + 32*z*z*z*z) * coeff;
+	hrly[39][1] = (8*x*x*x*y - 8*x*y*y*y) * coeff;
+	hrly[39][2] = (-128*x*x*x*z + 128*x*z*z*z) * coeff;
+	hrly[39][3] = (2*x*x*x*x - 12*x*x*y*y - 30*y*y*y*y + 192*y*y*z*z - 32*z*z*z*z) * coeff;
+	hrly[39][4] = (128*y*y*y*z - 128*y*z*z*z) * coeff;
+	hrly[39][5] = (-32*x*x*x*x + 192*x*x*z*z + 32*y*y*y*y - 192*y*y*z*z) * coeff;
+
+	//m=-2 : xy(33z^4 - 18z^2*r^2 + r^4)
+	hrly[40][0] = (20*x*x*x*y + 12*x*y*y*y - 96*x*y*z*z) * coeff;
+	hrly[40][1] = (20*x*x*x*x + 36*x*x*y*y - 96*x*x*z*z + 20*y*y*y*y - 96*y*y*z*z + 32*z*z*z*z) * coeff;
+	hrly[40][2] = (-96*x*x*y*z - 32*y*y*y*z + 64*y*z*z*z) * coeff;
+	hrly[40][3] = (12*x*x*x*y + 20*x*y*y*y - 96*x*y*z*z) * coeff;
+	hrly[40][4] = (-32*x*x*x*z - 96*x*y*y*z + 64*x*z*z*z) * coeff;
+	hrly[40][5] = (-32*x*x*x*y - 32*x*y*y*y + 192*x*y*z*z) * coeff;
+
+	//m=3 : x(x^2 - 3y^2)(11z^3 - 3z*r^2)
+	coeff = sqrt(1365.0 / ModuleBase::PI) / 16.0;
+	hrly[41][0] = (-60*x*x*x*z + 36*x*y*y*z + 48*x*z*z*z) * coeff;
+	hrly[41][1] = (36*x*x*y*z + 36*y*y*y*z - 48*y*z*z*z) * coeff;
+	hrly[41][2] = (-30*x*x*x*x + 36*x*x*y*y + 72*x*x*z*z + 18*y*y*y*y - 72*y*y*z*z) * coeff;
+	hrly[41][3] = (12*x*x*x*z + 108*x*y*y*z - 48*x*z*z*z) * coeff;
+	hrly[41][4] = (12*x*x*x*y + 36*x*y*y*y - 144*x*y*z*z) * coeff;
+	hrly[41][5] = (48*x*x*x*z - 144*x*y*y*z) * coeff;
+
+	//m=-3 : y(3x^2 - y^2)(11z^3 - 3z*r^2)
+	hrly[42][0] = (-108*x*x*y*z - 12*y*y*y*z + 48*y*z*z*z) * coeff;
+	hrly[42][1] = (-36*x*x*x*z - 36*x*y*y*z + 48*x*z*z*z) * coeff;
+	hrly[42][2] = (-36*x*x*x*y - 12*x*y*y*y + 144*x*y*z*z) * coeff;
+	hrly[42][3] = (-36*x*x*y*z + 60*y*y*y*z - 48*y*z*z*z) * coeff;
+	hrly[42][4] = (-18*x*x*x*x - 36*x*x*y*y + 72*x*x*z*z + 30*y*y*y*y - 72*y*y*z*z) * coeff;
+	hrly[42][5] = (144*x*x*y*z - 48*y*y*y*z) * coeff;
+
+	//m=4 : (x^4 - 6x^2*y^2 + y^4)(11z^2 - r^2)
+	coeff = sqrt(91.0 / ModuleBase::PI) / 32.0;
+	hrly[43][0] = (-30*x*x*x*x + 60*x*x*y*y + 120*x*x*z*z + 10*y*y*y*y - 120*y*y*z*z) * coeff;
+	hrly[43][1] = (40*x*x*x*y + 40*x*y*y*y - 240*x*y*z*z) * coeff;
+	hrly[43][2] = (80*x*x*x*z - 240*x*y*y*z) * coeff;
+	hrly[43][3] = (10*x*x*x*x + 60*x*x*y*y - 120*x*x*z*z - 30*y*y*y*y + 120*y*y*z*z) * coeff;
+	hrly[43][4] = (-240*x*x*y*z + 80*y*y*y*z) * coeff;
+	hrly[43][5] = (20*x*x*x*x - 120*x*x*y*y + 20*y*y*y*y) * coeff;
+
+	//m=-4 : xy(x^2 - y^2)(11z^2 - r^2)
+	hrly[44][0] = (-20*x*x*x*y + 60*x*y*z*z) * coeff;
+	hrly[44][1] = (-5*x*x*x*x + 30*x*x*z*z + 5*y*y*y*y - 30*y*y*z*z) * coeff;
+	hrly[44][2] = (60*x*x*y*z - 20*y*y*y*z) * coeff;
+	hrly[44][3] = (20*x*y*y*y - 60*x*y*z*z) * coeff;
+	hrly[44][4] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[44][5] = (20*x*x*x*y - 20*x*y*y*y) * coeff;
+
+	//m=5 : x(x^4 - 10x^2*y^2 + 5y^4) * z
+	coeff = sqrt(1001.0 / 2.0 / ModuleBase::PI) / 16.0;
+	hrly[45][0] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[45][1] = (-60*x*x*y*z + 20*y*y*y*z) * coeff;
+	hrly[45][2] = (5*x*x*x*x - 30*x*x*y*y + 5*y*y*y*y) * coeff;
+	hrly[45][3] = (-20*x*x*x*z + 60*x*y*y*z) * coeff;
+	hrly[45][4] = (-20*x*x*x*y + 20*x*y*y*y) * coeff;
+	hrly[45][5] = 0.0;
+
+	//m=-5 : y(5x^4 - 10x^2*y^2 + y^4) * z
+	hrly[46][0] = (60*x*x*y*z - 20*y*y*y*z) * coeff;
+	hrly[46][1] = (20*x*x*x*z - 60*x*y*y*z) * coeff;
+	hrly[46][2] = (20*x*x*x*y - 20*x*y*y*y) * coeff;
+	hrly[46][3] = (-60*x*x*y*z + 20*y*y*y*z) * coeff;
+	hrly[46][4] = (5*x*x*x*x - 30*x*x*y*y + 5*y*y*y*y) * coeff;
+	hrly[46][5] = 0.0;
+
+	//m=6 : (x^6 - 15x^4*y^2 + 15x^2*y^4 - y^6)
+	coeff = sqrt(3003.0 / ModuleBase::PI) / 32.0;
+	hrly[47][0] = (30*x*x*x*x - 180*x*x*y*y + 30*y*y*y*y) * coeff;
+	hrly[47][1] = (-120*x*x*x*y + 120*x*y*y*y) * coeff;
+	hrly[47][2] = 0.0;
+	hrly[47][3] = (-30*x*x*x*x + 180*x*x*y*y - 30*y*y*y*y) * coeff;
+	hrly[47][4] = 0.0;
+	hrly[47][5] = 0.0;
+
+	//m=-6 : xy(3x^4 - 10x^2*y^2 + 3y^4)
+	hrly[48][0] = (60*x*x*x*y - 60*x*y*y*y) * coeff;
+	hrly[48][1] = (15*x*x*x*x - 90*x*x*y*y + 15*y*y*y*y) * coeff;
+	hrly[48][2] = 0.0;
+	hrly[48][3] = (-60*x*x*x*y + 60*x*y*y*y) * coeff;
+	hrly[48][4] = 0.0;
+	hrly[48][5] = 0.0;
+
+	if (Lmax == 6) return;
+
+	/***************************
+			 L > 6
+	***************************/
+	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>6 not implemented!");
 
 
 	return;
@@ -1394,10 +1575,10 @@ void Ylm::test2 (void)
 
 void Ylm::rlylm
 (
- 	const int& Lmax, //max momentum of l + 1
- 	const double& x,
-	const double& y,
-	const double& z,
+ 	const int Lmax, //max momentum of l + 1
+ 	const double x,
+	const double y,
+	const double z,
 	double rly[],
 	double grly[][3]
 )
@@ -1652,7 +1833,7 @@ void Ylm::rlylm
 				{
 					int twok = 2 * ik;
 
-					double gamma;
+					double gamma = 0.0;
 					double aux0, aux1, aux2, aux3;
 
 					aux0 = pow(-1.0, ik) * pow(2.0, -il);

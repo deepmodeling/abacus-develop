@@ -44,15 +44,15 @@ class Parallel_K2D {
     /// set the number of k-points
     void set_kpar(int kpar);
     /// get the number of k-points
-    int get_kpar() { return this->kpar_; }
+    int get_kpar() const { return this->kpar_; }
     /// get my pool
-    int get_my_pool() { return this->MY_POOL; }
+    int get_my_pool() const { return this->MY_POOL; }
     /// get pKpoints
-    Parallel_Kpoints* get_pKpoints() { return this->Pkpoints; }
+    Parallel_Kpoints* get_pKpoints() const { return this->Pkpoints; }
     /// get p2D_global
-    Parallel_2D* get_p2D_global() { return this->P2D_global; }
+    Parallel_2D* get_p2D_global() const { return this->P2D_global; }
     /// get p2D_pool
-    Parallel_2D* get_p2D_pool() { return this->P2D_pool; }
+    Parallel_2D* get_p2D_pool() const { return this->P2D_pool; }
 
     /**
      * the local Hk, Sk matrices in POOL_WORLD_K2D

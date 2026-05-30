@@ -12,6 +12,7 @@ list(APPEND objects
     hsolver.cpp
     diago_pxxxgvx.cpp
     diag_hs_para.cpp
+    diago_params.cpp
 
 )
 
@@ -21,6 +22,7 @@ if(ENABLE_LCAO)
         hsolver_lcao.cpp
         diago_scalapack.cpp
         parallel_k2d.cpp
+        diago_lapack.cpp
     )
   else ()
     list(APPEND objects
@@ -36,14 +38,14 @@ if(ENABLE_LCAO)
   endif ()
 
   if(USE_CUDA)
-      list(APPEND objects
-          ./kernels/dngvd_op.cpp
+      set(cuda_objects
+          ./kernels/hegvd_op.cpp
           ./kernels/cuda/diag_cusolver.cu
           diago_cusolver.cpp
           diago_cusolver.h
       )
       if(ENABLE_CUSOLVERMP)
-        list(APPEND objects
+        list(APPEND cuda_objects
             ./kernels/cuda/diag_cusolvermp.cu
             diago_cusolvermp.cpp
             diago_cusolvermp.h
@@ -52,7 +54,7 @@ if(ENABLE_LCAO)
     add_library(
         diag_cusolver
         OBJECT
-        ${objects}
+        ${cuda_objects}
     )
     if(ENABLE_COVERAGE)
       add_coverage(diag_cusolver)

@@ -2,7 +2,6 @@
 
 #include "source_base/name_angular.h"
 #include "source_base/tool_quit.h"
-#include <stdexcept>
 
 CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,
                      const std::vector<int>& atomCounts_in,
@@ -18,12 +17,12 @@ CellIndex::CellIndex(const std::vector<std::string>& atomLabels_in,
     this->cal_orbitalCounts();
 }
 
-int CellIndex::get_ntype()
+int CellIndex::get_ntype() const
 {
     return this->atomCounts.size();
 }
 
-int CellIndex::get_nat()
+int CellIndex::get_nat() const
 {
     int nat = 0;
     for (int it = 0; it < this->atomCounts.size(); ++it)
@@ -33,12 +32,12 @@ int CellIndex::get_nat()
     return nat;
 }
 
-int CellIndex::get_nat(int it)
+int CellIndex::get_nat(int it) const
 {
     return this->atomCounts[it];
 }
 
-int CellIndex::get_nw()
+int CellIndex::get_nw() const
 {
     int nw = 0;
     for (int it = 0; it < this->orbitalCounts.size(); ++it)
@@ -48,13 +47,13 @@ int CellIndex::get_nw()
     return nw;
 }
 
-int CellIndex::get_nw(int iat)
+int CellIndex::get_nw(int iat) const
 {
     int it = this->iat2it(iat);
     return this->orbitalCounts[it];
 }
 
-int CellIndex::get_iwt(int iat, int orbital_index)
+int CellIndex::get_iwt(int iat, int orbital_index) const
 {
     if (iat < 0 || iat >= this->get_nat())
     {
@@ -83,14 +82,14 @@ int CellIndex::get_iwt(int iat, int orbital_index)
     return iwt;
 }
 
-int CellIndex::get_maxL(int iat)
+int CellIndex::get_maxL(int iat) const
 {
     int it = this->iat2it(iat);
     return this->lnchiCounts[it].size() - 1;
 }
 
 /// @brief  get nchi
-int CellIndex::get_nchi(int iat, int L)
+int CellIndex::get_nchi(int iat, int L) const
 {
     int it = this->iat2it(iat);
     if (L < 0 || L >= this->lnchiCounts[it].size())
@@ -119,7 +118,7 @@ void CellIndex::check_atomCounts()
     }
 }
 
-std::string CellIndex::get_atom_label(int iat, bool order)
+std::string CellIndex::get_atom_label(int iat, bool order) const
 {
     int it = this->iat2it(iat);
     int ia = this->iat2ia(iat);
@@ -129,7 +128,7 @@ std::string CellIndex::get_atom_label(int iat, bool order)
     return atomType;
 }
 
-int CellIndex::iat2it(int iat)
+int CellIndex::iat2it(int iat) const
 {
     int running_iat = 0;
     int it = -1; // Tracks the index of the atom in atomLabels
@@ -151,7 +150,7 @@ int CellIndex::iat2it(int iat)
     return it;
 }
 
-int CellIndex::iat2ia(int iat)
+int CellIndex::iat2ia(int iat) const
 {
     int it = this->iat2it(iat);
     // sum of atoms of previous types
@@ -163,7 +162,7 @@ int CellIndex::iat2ia(int iat)
     return iat - running_iat;
 }
 
-int CellIndex::iw2l(int iat, int iw)
+int CellIndex::iw2l(int iat, int iw) const
 {
     int it = this->iat2it(iat);
     int maxL = this->lnchiCounts[it].size() - 1;
@@ -185,10 +184,10 @@ int CellIndex::iw2l(int iat, int iw)
     {
         ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2l", "unreachable code reached");
 }
 
-int CellIndex::iw2z(int iat, int iw)
+int CellIndex::iw2z(int iat, int iw) const
 {
     int it = this->iat2it(iat);
     int maxL = this->lnchiCounts[it].size() - 1;
@@ -208,12 +207,12 @@ int CellIndex::iw2z(int iat, int iw)
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2z", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2z", "unreachable code reached");
 }
 
-int CellIndex::iw2m(int iat, int iw)
+int CellIndex::iw2m(int iat, int iw) const
 {
     int it = this->iat2it(iat);
     int maxL = this->lnchiCounts[it].size() - 1;
@@ -233,9 +232,9 @@ int CellIndex::iw2m(int iat, int iw)
     }
     if (iw >= 0)
     {
-        ModuleBase::WARNING_QUIT("CellIndex::iw2l", "localized wave funciton index out of range [0, nw)");
+        ModuleBase::WARNING_QUIT("CellIndex::iw2m", "localized wave funciton index out of range [0, nw)");
     }
-    throw std::out_of_range(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    ModuleBase::WARNING_QUIT("CellIndex::iw2m", "unreachable code reached");
 }
 
 bool CellIndex::check_nspin(int nspin)
@@ -262,7 +261,7 @@ void CellIndex::cal_orbitalCounts()
     }
 }
 
-void CellIndex::write_orb_info(std::string out_dir)
+void CellIndex::write_orb_info(const std::string& out_dir) const
 {
     std::stringstream os;
     os << out_dir << "Orbital";

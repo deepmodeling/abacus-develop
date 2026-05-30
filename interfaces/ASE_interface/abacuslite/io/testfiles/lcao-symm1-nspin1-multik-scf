@@ -1,0 +1,135 @@
+ READING UNITCELL INFORMATION
+                       Number of elements = 2
+                  Lattice constant (Bohr) = 6.1416
+              Lattice constant (Angstrom) = 3.24999
+
+                        TOTAL ATOM NUMBER = 2
+
+ DIRECT COORDINATES
+ atom                  x                  y                  z     mag
+   Zn     0.000000000000     0.000000000000     0.000000000000  0.0000
+    O     0.333329999999     0.666670000001     0.500000000000  0.0000
+
+ ATOMIC VELOCITIES
+ atom                 vx                 vy                 vz
+   Zn                  0                  0                  0
+    O                  0                  0                  0
+
+                     Cell volume (Bohr^3) = 320.983
+                        Cell volume (A^3) = 47.5648
+
+ Lattice vectors: (Cartesian coordinate: in unit of a_0)
+                   +1                  +0                  +0
+                 -0.5              +0.866                  +0
+                   +0                  +0                +1.6
+ Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)
+                   +1           +0.577367                  -0
+                   -0            +1.15473                  -0
+                   +0                  -0              +0.625
+
+ #ENERGY SOLVER# ksdft_lcao
+
+ SETUP K-POINTS
+                                    nspin = 1
+                   Input type of k points = Monkhorst-Pack(Gamma)
+                                   nkstot = 2
+                     Right-handed lattice = 1
+
+ For reciprocal-space lattice
+                     Bravais lattice type = 11
+                     Bravais lattice name = 11. Orthorhombic C (base-centered)
+                     Right-handed lattice = 1
+
+ For k-vectors
+                     Bravais lattice type = 12
+                     Bravais lattice name = 12. Monoclinic P (simple)
+                     Right-handed lattice = 1
+              Number of rotation matrices = 8
+           Number of irreducible k-points = 2
+
+ K-POINTS REDUCTION ACCORDING TO SYMMETRY
+     IBZ    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT  ibz2bz
+       1  0.00000000  0.00000000  0.00000000  0.5000       0
+       2  0.50000000  0.00000000  0.00000000  0.5000       1
+
+                               nkstot now = 2
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  0.5000
+       2  0.50000000  0.00000000  0.00000000  0.5000
+
+
+       Number of k-points in this process = 2
+       Minimum distributed k-point number = 2
+
+ K-POINTS CARTESIAN COORDINATES
+ KPOINTS CARTESIAN_X CARTESIAN_Y CARTESIAN_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  1.0000
+       2  0.50000000  0.28868360  0.00000000  1.0000
+
+
+ K-POINTS DIRECT COORDINATES
+ KPOINTS    DIRECT_X    DIRECT_Y    DIRECT_Z  WEIGHT
+       1  0.00000000  0.00000000  0.00000000  1.0000
+       2  0.50000000  0.00000000  0.00000000  1.0000
+
+ DONE : INIT K-POINTS Time : 0.172973 (SEC)
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         1
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Electron density deviation 0.0893377
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.2578934767      -1935.5179367603     
+  E_Harris       -143.4816580020      -1952.1681073148     
+  E_Fermi        -0.0852280930        -1.1595876945        
+  E_gap(k)       0.3010005903         4.0953231295         
+ ----------------------------------------------------------
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         2
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Electron density deviation 0.0527619
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.3016957759      -1936.1138976154     
+  E_Harris       -143.6433224427      -1954.3676648718     
+  E_Fermi        0.1242110447         1.6899779627         
+  E_gap(k)       0.0037426876         0.0509218768         
+ ----------------------------------------------------------
+
+
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ --> #ION MOVE#         1  #ELEC ITER#         3
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Electron density deviation 0.0364934
+ ----------------------------------------------------------
+      Energy           Rydberg                 eV          
+ ----------------------------------------------------------
+  E_KohnSham     -142.2855446344      -1935.8941500616     
+  E_KS(sigma->0) -142.2812283423      -1935.8354238938     
+  E_Harris       -143.1222058877      -1947.2775104019     
+  E_band         -6.0716994722        -82.6097093654       
+  E_one_elec     -82.4655761013       -1122.0017238299     
+  E_Hartree      52.4529512574        713.6590140163       
+  E_xc           -22.3825551768       -304.5302862042      
+  E_Ewald        -89.8817320294       -1222.9037017083     
+  E_entropy(-TS) -0.0086325843        -0.1174523356        
+  E_descf        0.0000000000         0.0000000000         
+  E_localpp      -62.8392385880       -854.9717027777      
+  E_exx          0.0000000000         0.0000000000         
+  E_Fermi        0.1211730503         1.6486439277         
+  E_gap(k)       0.0066246245         0.0901326401         
+ ----------------------------------------------------------
+
+ #SCF IS CONVERGED#
+ #TOTAL ENERGY# -1935.8941501 eV
+ Write eigenvalues and occupations to file: OUT.ABACUS/eig_occ.txt
+
+ --------------------------------------------
+ !FINAL_ETOT_IS -1935.894150061628 eV
+ --------------------------------------------

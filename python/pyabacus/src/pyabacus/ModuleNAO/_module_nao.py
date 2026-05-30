@@ -83,19 +83,21 @@ class RadialCollection(_RadialCollection):
     def ntype(self) -> int: 
         return super().ntype
     
-    def lmax(self, itype: int) -> int: 
-        return super().lmax(itype)
-    
-    @property
-    def lmax(self) -> int: 
-        return super().lmax
-    
-    def rcut_max(self, itype: int) -> float: 
-        return super().rcut_max(itype)
+    @overload
+    def lmax(self) -> int: ...
+    @overload
+    def lmax(self, itype: int) -> int: ...
 
-    @property
-    def rcut_max(self) -> float: 
-        return super().rcut_max
+    def lmax(self, *args, **kwargs): 
+        return super().lmax(*args, **kwargs)
+
+    @overload
+    def rcut_max(self) -> float: ...
+    @overload
+    def rcut_max(self, itype: int) -> float: ...
+
+    def rcut_max(self, *args, **kwargs): 
+        return super().rcut_max(*args, **kwargs)
     
     def nzeta(self, itype: int, l: int) -> int: 
         return super().nzeta(itype, l)

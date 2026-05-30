@@ -5,8 +5,9 @@
 #include "source_base/module_device/device.h"   // base_device
 #include "source_base/module_device/memory_op.h"// base_device::memory"
 
+#include "source_base/module_container/ATen/kernels/lapack.h"
+
 #include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/diag_const_nums.h"
 
 #include <vector>
 #include <functional>
@@ -30,7 +31,6 @@ class Diago_DavSubspace
                       const int& david_ndim_in,
                       const double& diag_thr_in,
                       const int& diag_nmax_in,
-                      const bool& need_subspace_in,
                       const diag_comm_info& diag_comm_in,
                       const int diago_dav_method_in,
                       const int block_size_in);
@@ -58,9 +58,6 @@ class Diago_DavSubspace
     /// maximal iteration number
     const int iter_nmax;
 
-    /// is diagH_subspace needed?
-    const bool is_subspace;
-
     /// the first dimension of the matrix to be diagonalized
     const int n_band = 0;
 
@@ -80,10 +77,10 @@ class Diago_DavSubspace
     T* psi_in_iter = nullptr;
 
     /// the product of H and psi in the reduced basis set
-    T* hphi = nullptr;
+    T* hpsi = nullptr;
 
     /// the product of S and psi in the reduced basis set
-    T* sphi = nullptr;
+    T* spsi = nullptr;
 
     /// Hamiltonian on the reduced basis
     T* hcc = nullptr;
@@ -93,6 +90,9 @@ class Diago_DavSubspace
 
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
+
+    T* d_scc = nullptr;
+    Real* d_eigenvalue = nullptr;
 
     /// device type of psi
     Device* ctx = {};
@@ -105,7 +105,7 @@ class Diago_DavSubspace
                   const int& nbase,
                   const int& notconv,
                   T* psi_iter,
-                  T* hphi,
+                  T* hpsi,
                   T* spsi,
                   T* vcc,
                   const int* unconv,
@@ -115,8 +115,8 @@ class Diago_DavSubspace
                   int& nbase,
                   const int& notconv,
                   const T* psi_iter,
-                  const T* sphi,
-                  const T* hphi,
+                  const T* spsi,
+                  const T* hpsi,
                   T* hcc,
                   T* scc);
 
@@ -125,8 +125,8 @@ class Diago_DavSubspace
                  int& nbase,
                  const Real* eigenvalue,
                  T* psi_iter,
-                 T* hphi,
-                 T* sphi,
+                 T* hpsi,
+                 T* spsi,
                  T* hcc,
                  T* scc,
                  T* vcc);
@@ -176,6 +176,7 @@ class Diago_DavSubspace
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
 #endif
     using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
+    using setmem_complex_2d_op = base_device::memory::set_memory_2d_op<T, Device>;
 
     using resmem_real_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
     using delmem_real_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
@@ -184,9 +185,14 @@ class Diago_DavSubspace
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_complex_2d_op = base_device::memory::synchronize_memory_2d_op<T, Device, Device>;
     using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+
+    // Note that ct_Device is different from base_device!
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    // using hegvd_op = container::kernels::lapack_hegvd<T, ct_Device>;
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);

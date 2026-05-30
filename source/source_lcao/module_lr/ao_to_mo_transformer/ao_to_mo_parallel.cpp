@@ -51,18 +51,18 @@ namespace LR
             char transb = 'N';
             const double alpha = 1.0;
             const double beta = add_on ? 1.0 : 0.0;
-            pdgemm_(&transa, &transb, &naos, &nmo1, &naos,
-                &alpha, mat_ao[isk].data<double>(), &i1, &i1, pmat_ao.desc,
-                coeff.get_pointer(), &i1, &imo1, pcoeff.desc,
-                &beta, Vc.data<double>(), &i1, &i1, pVc.desc);
+            ScalapackConnector::gemm(transa, transb, naos, nmo1, naos,
+                alpha, mat_ao[isk].data<double>(), i1, i1, pmat_ao.desc,
+                coeff.get_pointer(), i1, imo1, pcoeff.desc,
+                beta, Vc.data<double>(), i1, i1, pVc.desc);
 
             transa = 'T';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
-            pdgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
-                &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
-                Vc.data<double>(), &i1, &i1, pVc.desc,
-                &beta, mat_mo + start, &i1, &i1, pmat_mo.desc);
+            ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
+                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                Vc.data<double>(), i1, i1, pVc.desc,
+                beta, mat_mo + start, i1, i1, pmat_mo.desc);
 
         }
     }
@@ -109,18 +109,18 @@ namespace LR
             char transb = 'N';
             const std::complex<double> alpha(1.0, 0.0);
             const std::complex<double> beta = add_on ? std::complex<double>(1.0, 0.0) : std::complex<double>(0.0, 0.0);
-            pzgemm_(&transa, &transb, &naos, &nmo1, &naos,
-                &alpha, mat_ao[isk].data<std::complex<double>>(), &i1, &i1, pmat_ao.desc,
-                coeff.get_pointer(), &i1, &imo1, pcoeff.desc,
-                &beta, Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc);
+            ScalapackConnector::gemm(transa, transb, naos, nmo1, naos,
+                alpha, mat_ao[isk].data<std::complex<double>>(), i1, i1, pmat_ao.desc,
+                coeff.get_pointer(), i1, imo1, pcoeff.desc,
+                beta, Vc.data<std::complex<double>>(), i1, i1, pVc.desc);
 
             transa = 'C';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
-            pzgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
-                &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
-                Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc,
-                &beta, mat_mo + start, &i1, &i1, pmat_mo.desc);
+            ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
+                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                Vc.data<std::complex<double>>(), i1, i1, pVc.desc,
+                beta, mat_mo + start, i1, i1, pmat_mo.desc);
         }
     }
 }

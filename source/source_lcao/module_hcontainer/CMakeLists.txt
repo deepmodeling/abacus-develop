@@ -5,6 +5,7 @@ list(APPEND objects
     atom_pair.cpp
     hcontainer.cpp
     output_hcontainer.cpp
+    read_hcontainer.cpp
     func_folding.cpp
     transfer.cpp
     func_transfer.cpp

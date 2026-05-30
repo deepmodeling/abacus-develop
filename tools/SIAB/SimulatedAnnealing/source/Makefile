@@ -1,30 +1,28 @@
 #===========================================================
 # AUTHOR : mohan
 # DATE START FROM : 2009-04-14
+# LAST UPDATE : 2025-08-28
 # FUNCTION : spillage makefile
 #===========================================================
-### Dirac
-#CPLUSPLUS =CXX -O3 -w -ffast-math -funroll-loops
-#CPLUSPLUS = /export/soft/intel2015/impi/5.0.2.044/intel64/bin/mpiicpc
-#CXXFLAGS = -std=c++11 -O3 -openmp
-#CPLUSPLUS_GPROF = g++ -gp
-#CPLUSPLUS_MPI = /opt/openmpi/bin/mpicxx -O3 -w 
-#CPLUSPLUS_MPI=/export/soft/intel2015/impi/5.0.2.044/intel64/bin/mpiicpc
+MKLROOT=/home/mohan/intel/oneapi/mkl/021.3.0/
 
-### Einstein
-#CPLUSPLUS_MPI = /opt/openmpi-intel9/bin/mpicxx -O3 -w
+#------------------------------
+# for serial version: make s
+#------------------------------
+CPLUSPLUS = icpc 
 
-#LIBS=-L/export/soft/intel2015/composer_xe_2015.1.133/mkl/lib/intel64 -i-dynamic  -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group -lpthread \
+#------------------------------
+# for parallel version: make p
+#------------------------------
+#CPLUSPLUS = mpiicpc
 
-### Version TC4600 wszhang
-CPLUSPLUS     = mpiicpc
-CPLUSPLUS_MPI = mpiicpc
-CXXFLAGS      = -std=c++11 -O2 -xCORE-AVX2 -align -fma -ftz -fomit-frame-pointer -finline-functions \
-                -I${MKLROOT}/include -I${MKLROOT}/include/intel64/ilp64
-LIBS          = -L${MKLROOT}/lib/intel64 \
-                -lmkl_blacs_intelmpi_lp64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core  -lpthread -limf  
+CXXFLAGS = -std=c++11 -O3
 
- 
+#CXXFLAGS = -std=c++11 -O2 -xCORE-AVX2 -align -fma -ftz -fomit-frame-pointer -finline-functions \
+           -I${MKLROOT}/include -I${MKLROOT}/include/intel64/ilp64 \
+           -lmkl_blacs_intelmpi_lp64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core  -lpthread -limf  
+
+LIBS=-L${MKLROOT}/lib/intel64 -Wl,--start-group -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -Wl,--end-group -liomp5 -lpthread -lm
 
 TOOLS_OBJS=src_tools/mathzone.o \
 			src_tools/matrix.o \
@@ -86,7 +84,7 @@ s : ${OBJS}
 	${CPLUSPLUS} ${CXXFLAGS} -o SIA_s.exe ${OBJS} ${LIBS}
 
 p : ${OBJS}
-	$(CPLUSPLUS_MPI) -D__MPI ${CXXFLAGS} -o SIA_p.exe $(OBJS) $(LIBS)
+	${CPLUSPLUS} -D__MPI ${CXXFLAGS} -o SIA_p.exe ${OBJS} ${LIBS}
 
 note :
 	@echo 'atom type label           : it '
@@ -117,7 +115,6 @@ note :
 
 .cpp.o:
 	${CPLUSPLUS} ${CXXFLAGS} -c $< -o $@
-#	$(CPLUSPLUS_MPI) -c -D__MPI $< -o $@
 
 .PHONY:clean
 clean:

@@ -50,8 +50,8 @@ def test_rc():
     assert orb.symbol(3) == 'Fe'
 
     assert orb.ntype == 4
-    assert orb.lmax == 3
-    assert orb.rcut_max == 10.0
+    assert orb.lmax() == 3
+    assert orb.rcut_max() == 10.0
 
     assert orb.nzeta(0,0) == 2
     assert orb.nzeta(1,0) == 2
@@ -85,7 +85,7 @@ def test_twocenterintegrator():
     alpha.build(1, [file_list[0]])
 
     dr = 0.01  # R spacing
-    rmax = max(orb.rcut_max, alpha.rcut_max)
+    rmax = max(orb.rcut_max(), alpha.rcut_max())
     cutoff = 2.0 * rmax
     nr = int(rmax / dr) + 1
 

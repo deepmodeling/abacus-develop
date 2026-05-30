@@ -2,6 +2,7 @@
 #define ESOLVER_LJ_H
 
 #include "esolver.h"
+#include "source_cell/module_neighlist/unitcell_plus.h"
 
 namespace ModuleESolver
 {
@@ -13,6 +14,8 @@ namespace ModuleESolver
         {
             classname = "ESolver_LJ";
         }
+
+        UnitCellPlus change_from_ucell_to_ucell_plus(const UnitCell& ucell);
 
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
@@ -27,9 +30,9 @@ namespace ModuleESolver
         void after_all_runners(UnitCell& ucell) override;
 
       private:
-        double LJ_energy(const double& d, const int& i, const int& j);
+        double LJ_energy(const double& d, const int& i, const int& j) const;
 
-        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j);
+        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
 
         void LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau);
 

@@ -4,8 +4,10 @@
 namespace ModuleIO
 {
 /**
- * @brief This function reture the version information when using command
- * "abacus --version", "abacus -v" or "abacus -V". Otherwise, it does nothing.
+ * @brief This function returns the version information when using command
+ * "abacus --version", "abacus -v" or "abacus -V"; returns the compilation
+ * details when using command "abacus --info", "abacus -i" or "abacus -I";
+ * otherwise, it returns usage.
  * 
  * @param [in] argc (ARGument Count) is an integer variable that stores the number 
  * of command-line arguments passed by the user including the name of the program. 
@@ -18,6 +20,7 @@ namespace ModuleIO
  * arguments.
  */
 void parse_args(int argc, char** argv);
+void print_build_info();
 } // namespace ModuleIO
 
 #endif

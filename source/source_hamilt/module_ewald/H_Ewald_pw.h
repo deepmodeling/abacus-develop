@@ -2,11 +2,8 @@
 #define H_EWALD_PW_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_pw/module_pwdft/forces.h"
-#include "source_pw/module_pwdft/stress_func.h"
 
 class H_Ewald_pw 
 {
@@ -20,6 +17,8 @@ class H_Ewald_pw
                                 const ModuleBase::ComplexMatrix& strucFac);
 
   public:
+    static int estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg);
+
     static void rgen(
         const ModuleBase::Vector3<double> &dtau,
         const double &rmax,
@@ -28,6 +27,7 @@ class H_Ewald_pw
         const ModuleBase::Matrix3 &bg,
         ModuleBase::Vector3<double> *r,
         double *r2,
+      const int mxr,
         int  &nrm
     );
 

@@ -42,7 +42,7 @@ class Center2_Orb::Orb11
     const Numerical_Orbital_Lm& nA;
     const Numerical_Orbital_Lm& nB;
 
-    const ModuleBase::Sph_Bessel_Recursive::D2* psb_;
+    const ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     const ORB_gaunt_table& MGT;
 
     std::map<int, std::vector<double>> Table_r; // unit: Bohr/MOT.dr

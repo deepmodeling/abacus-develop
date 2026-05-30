@@ -7,20 +7,23 @@ add_library(
 add_library(
     psi_overall_init
     OBJECT
-    psi_init.cpp
+    setup_psi_pw.cpp
+    setup_psi.cpp
+    psi_prepare.cpp
 )
 
 add_library(
   psi_initializer
   OBJECT
   psi_initializer.cpp
-  psi_initializer_random.cpp
-  psi_initializer_file.cpp
-  psi_initializer_atomic.cpp
-  psi_initializer_atomic_random.cpp
-  psi_initializer_nao.cpp
-  psi_initializer_nao_random.cpp
+  psi_init_random.cpp
+  psi_init_file.cpp
+  psi_init_atomic.cpp
+  psi_init_atomic_random.cpp
+  psi_init_nao.cpp
+  psi_init_nao_random.cpp
 )
+
 
 if(ENABLE_COVERAGE)
   add_coverage(psi)

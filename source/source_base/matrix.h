@@ -4,13 +4,12 @@
 // Peize Lin update 2018-07-29
 
 #ifdef _MCD_CHECK
-#include "mcd.h"
 #endif
 
 #include <ostream>
 #include<cassert>
 
-#include<fstream>// test
+#include <fstream> // test
 
 namespace ModuleBase
 {
@@ -80,7 +79,7 @@ public:
 
 	std::ostream & print( std::ostream & os, const double threshold=0.0 ) const;		// Peize Lin add 2021.09.08
 
-	using type=double;					// Peiae Lin add 2022.08.08 for template
+	using type=double;					// Peize Lin add 2022.08.08 for template
 };
 
 

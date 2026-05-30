@@ -262,7 +262,7 @@ namespace ModulePW {
 class TestHSolverPW_SDFT : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0), elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0), elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
     }
     ModulePW::PW_Basis_K pwbk;
@@ -280,7 +280,6 @@ class TestHSolverPW_SDFT : public ::testing::Test
             "scf",
             "pw",
             "cg",
-            false,
             PARAM.sys.use_uspp,
             PARAM.input.nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,

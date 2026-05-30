@@ -3,7 +3,8 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/parameter.h"
+
+struct Input_para;
 
 namespace ModuleESolver
 {
@@ -17,6 +18,9 @@ class ESolver
 
     virtual ~ESolver()
     {
+        //****************************************************
+        // do not add any codes in this deconstructor funcion
+        //****************************************************
     }
 
     //! initialize the energy solver by using input parameters and cell modules
@@ -66,7 +70,7 @@ std::string determine_type();
  */
 ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
-void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
+
 
 } // namespace ModuleESolver
 

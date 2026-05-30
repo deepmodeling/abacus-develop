@@ -40,7 +40,7 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
             const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
-            double sinp, cosp;
+            double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
             
@@ -86,7 +86,7 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
         // if TK==std::complex<double>, kphase is e^{ikR}
         const ModuleBase::Vector3<double> dR(rx, ry, rz);
         const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
-        double sinp, cosp;
+        double sinp = 0.0, cosp = 0.0;
         ModuleBase::libm::sincos(arg, &sinp, &cosp);
         std::complex<double> kphase = std::complex<double>(cosp, sinp);
 

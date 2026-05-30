@@ -3,7 +3,6 @@
 // DATE : 2024-03-11
 //==========================================================
 #include "source_lcao/module_rdmft/rdmft_tools.h"
-#include "source_pw/module_pwdft/global.h"
 // used by class Veff_rdmft
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
@@ -12,7 +11,7 @@
 #include "source_estate/module_pot/pot_local.h"
 #include "source_estate/module_pot/pot_xc.h"
 #include "source_pw/module_pwdft/structure_factor.h"
-#include "source_lcao/module_gint/temp_gint/gint_interface.h"
+#include "source_lcao/module_gint/gint_interface.h"
 
 #include <iostream>
 #include <cmath>
@@ -44,8 +43,8 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV,
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    pdgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
-        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_double, &HK, 1, 1, ParaV->desc,
+        &wfc, 1, 1, ParaV->desc_wfc, zero_double, &H_wfc, 1, 1, ParaV->desc_wfc );
 #endif
 
 }
@@ -71,8 +70,8 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
-    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
 #endif
 }
 
@@ -186,20 +185,13 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     
 }
 
-
-template class Veff_rdmft<double, double>;
-
-template class Veff_rdmft<std::complex<double>, double>;
-
-template class Veff_rdmft<std::complex<double>, std::complex<double>>;
-
 // this part of the code is copying from class Veff
 // initialize_HR()
 template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::start("Veff", "initialize_HR");
 
     this->nspin = PARAM.inp.nspin;
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
@@ -239,7 +231,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("Veff", "initialize_HR");
+    ModuleBase::timer::end("Veff", "initialize_HR");
 }
 
 
@@ -249,7 +241,7 @@ template<>
 void Veff_rdmft<std::complex<double>, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
     double* vr_eff_rdmft = nullptr;
 
@@ -266,12 +258,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
 
             // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-            this->GK->cal_gint(&inout);
-#else
             ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
         }
     }
     else if( potential_ == "local" )
@@ -285,12 +272,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         vr_eff_rdmft = &v_matrix_local(0, 0);
 
         // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-        Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
-        this->GK->cal_gint(&inout);
-#else
         ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
     }
     else if( potential_ == "xc" )
     {
@@ -309,12 +291,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_XC(is, 0);
 
             // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-            this->GK->cal_gint(&inout);
-#else
             ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
         }
     }
     else
@@ -323,17 +300,13 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
     }
 
     // get HR for 2D-block parallel format
-    // this->GK->transfer_pvpR(this->hR);
-#ifdef __OLD_GINT
-    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
-#endif
 
     if(this->nspin == 2) 
     { 
         this->current_spin = 1 - this->current_spin; 
     }
 
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
@@ -349,9 +322,8 @@ template<>
 void Veff_rdmft<double, double>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
+    ModuleBase::timer::start("Veff", "contributeHR");
 
-    // this->GK->reset_spin(this->current_spin);
 
     double* vr_eff_rdmft = nullptr;
 
@@ -368,12 +340,7 @@ void Veff_rdmft<double, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
 
             // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-            this->GG->cal_gint(&inout);
-#else
             ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
         }
     }
     else if( potential_ == "local" )
@@ -387,16 +354,7 @@ void Veff_rdmft<double, double>::contributeHR()
         vr_eff_rdmft = &v_matrix_local(0, 0);
 
         // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-        Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
-
-        // because in gamma_only, cal_gint would not set hRGint zero first
-        // so must use cal_vlocal(), and in rdmft_test.h, calculate V_hartree->contributeHR() first
-
-        this->GG->cal_vlocal(&inout, false);  // cal_gint ???
-#else
         ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
     }
     else if( potential_ == "xc" )
     {
@@ -414,12 +372,7 @@ void Veff_rdmft<double, double>::contributeHR()
             vr_eff_rdmft = &v_matrix_XC(is, 0);
 
             // do grid integral calculation to get HR
-#ifdef __OLD_GINT
-            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-            this->GG->cal_gint(&inout);
-#else
             ModuleGint::cal_gint_vl(vr_eff_rdmft, this->hR);
-#endif
         }
     }
     else
@@ -427,10 +380,6 @@ void Veff_rdmft<double, double>::contributeHR()
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
 
-#ifdef __OLD_GINT
-    // get HR for 2D-block parallel format
-    this->GG->transfer_pvpR(this->hR,this->ucell);
-#endif
     this->new_e_iteration = false;
 
     if(this->nspin == 2)
@@ -438,10 +387,15 @@ void Veff_rdmft<double, double>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
+    ModuleBase::timer::end("Veff", "contributeHR");
     return;
 }
 
 }
+template class rdmft::Veff_rdmft<double, double>;
 
+template class rdmft::Veff_rdmft<std::complex<double>, double>;
+
+template class rdmft::Veff_rdmft<std::complex<double>, std::complex<double>>;
 
 

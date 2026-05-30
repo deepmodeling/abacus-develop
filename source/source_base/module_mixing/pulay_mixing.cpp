@@ -1,7 +1,6 @@
 #include "pulay_mixing.h"
 
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/memory.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 namespace Base_Mixing
@@ -32,7 +31,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
     std::vector<FPTYPE> F_tmp(length);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (std::size_t i = 0; i < length; ++i)
     {
@@ -67,7 +66,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
         F = malloc(sizeof(FPTYPE) * length * mixing_ndim);
         FP_F = static_cast<FPTYPE*>(F);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
         {
@@ -79,7 +78,7 @@ void Pulay_Mixing::tem_push_data(Mixing_Data& mdata,
         start_F = (this->start_F + 1) % this->mixing_ndim;
         FPTYPE* FP_startF = FP_F + start_F * length;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
         {
@@ -98,7 +97,7 @@ template <class FPTYPE>
 void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
 {
     ModuleBase::TITLE("Charge_Mixing", "Pulay_mixing");
-    ModuleBase::timer::tick("Charge", "Pulay_mixing");
+    ModuleBase::timer::start("Charge", "Pulay_mixing");
     if (address != &mdata && address != nullptr)
         ModuleBase::WARNING_QUIT(
             "Pulay_mixing",
@@ -177,6 +176,6 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
         coef[0] = 1.0;
     }
 
-    ModuleBase::timer::tick("Charge", "Pulay_mixing");
+    ModuleBase::timer::end("Charge", "Pulay_mixing");
 };
 } // namespace Base_Mixing

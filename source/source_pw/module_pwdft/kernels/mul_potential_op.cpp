@@ -14,8 +14,8 @@ struct mul_potential_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
         #endif
         for (int ig = 0; ig < npw; ig++)
         {
-            int ig_kq = ik * nks * npw + iq * npw + ig;
-            density_recip[ig] *= pot[ig_kq];
+            // int ig_kq = ik * nks * npw + iq * npw + ig;
+            density_recip[ig] *= pot[ig];
 
         }
     }

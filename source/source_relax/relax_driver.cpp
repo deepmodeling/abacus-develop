@@ -1,12 +1,11 @@
 #include "relax_driver.h"
 
 #include "source_base/global_file.h"
-#include "source_pw/module_pwdft/global.h" // use chr.
-#include "source_io/cif_io.h"
-#include "source_io/json_output/output_info.h"
-#include "source_io/output_log.h"
-#include "source_io/print_info.h"
-#include "source_io/read_exit_file.h"
+#include "source_io/module_output/cif_io.h"
+#include "source_io/module_json/output_info.h"
+#include "source_io/module_output/output_log.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_output/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 
@@ -16,7 +15,7 @@ void Relax_Driver::relax_driver(
 		const Input_para& inp)
 { 
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
     if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
     {
@@ -206,6 +205,6 @@ void Relax_Driver::relax_driver(
 		// do nothing 
 	}
 
-    ModuleBase::timer::tick("Relax_Driver", "relax_driver");
+    ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
 }

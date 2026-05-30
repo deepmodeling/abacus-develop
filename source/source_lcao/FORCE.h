@@ -1,34 +1,15 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_FORCE_H
+#ifndef LCAO_FORCE_H
+#define LCAO_FORCE_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/force_stress_arrays.h"
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_psi/psi.h"
-
-#ifndef TGINT_H
-#define TGINT_H
-template <typename T>
-struct TGint;
-template <>
-struct TGint<double>
-{
-    using type = Gint_Gamma;
-};
-template <>
-struct TGint<std::complex<double>>
-{
-    using type = Gint_k;
-};
-#endif
+#include "source_lcao/setup_deepks.h"
 
 template <typename T>
 class Force_Stress_LCAO;
@@ -43,9 +24,9 @@ class Force_LCAO
     ~Force_LCAO(){};
 
   private:
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
 
-    elecstate::Potential* pot;
+    elecstate::Potential* pot = nullptr;
 
     // orthonormal force + contribution from T and VNL
     void ftable(const bool isforce,
@@ -54,8 +35,9 @@ class Force_LCAO
                 const UnitCell& ucell,
                 const Grid_Driver& gd,
                 const psi::Psi<T>* psi,
-                const elecstate::ElecState* pelec,
-                ModuleBase::matrix& foverlap,
+				const elecstate::ElecState* pelec,
+				const elecstate::DensityMatrix<T, double>* dm, // mohan add 2025-11-04
+				ModuleBase::matrix& foverlap,
                 ModuleBase::matrix& ftvnl_dphi,
                 ModuleBase::matrix& fvnl_dbeta,
                 ModuleBase::matrix& fvl_dphi,
@@ -63,12 +45,9 @@ class Force_LCAO
                 ModuleBase::matrix& stvnl_dphi,
                 ModuleBase::matrix& svnl_dbeta,
                 ModuleBase::matrix& svl_dphi,
-#ifdef __MLALGO
                 ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
-                LCAO_Deepks<T>& ld,
-#endif
-                typename TGint<T>::type& gint,
+                Setup_DeePKS<T>& deepks,
                 const TwoCenterBundle& two_center_bundle,
                 const LCAO_Orbitals& orb,
                 const Parallel_Orbitals& pv,
@@ -128,7 +107,6 @@ class Force_LCAO
     void cal_fvl_dphi(const bool isforce,
                       const bool isstress,
                       const elecstate::Potential* pot_in,
-                      typename TGint<T>::type& gint,
                       ModuleBase::matrix& fvl_dphi,
                       ModuleBase::matrix& svl_dphi);
 

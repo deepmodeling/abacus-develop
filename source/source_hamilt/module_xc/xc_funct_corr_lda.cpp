@@ -138,7 +138,7 @@ void XC_Functional::vwn(const double &rs, double &ec, double &vc)
     fx = rs + b * rs12 + c;
     qx = atan(q / (2.0 * rs12 + b));
 
-    double x;
+    double x = 0.0;
     x = (rs12 - x0);
     ec = a * (log(rs / fx) + f1 * qx - f2 * (log((x * x) /
               fx) + f3 * qx));

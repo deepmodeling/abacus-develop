@@ -2,18 +2,16 @@
 #define PSI_INITIALIZER_H
 // data structure support
 #include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_psi/psi.h" // for psi data structure
 // smart pointer for auto-memory management
 #include <memory>
 // numerical algorithm support
-#include "source_base/spherical_bessel_transformer.h" // for spherical bessel transform
 #ifdef __MPI
 #include <mpi.h>
 #endif
 #include "source_base/macros.h"
-#include "source_base/parallel_global.h"
 #include "source_cell/klist.h"
 
 #include <type_traits>

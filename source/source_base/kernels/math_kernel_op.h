@@ -5,7 +5,6 @@
 
 #include "source_base/macros.h"
 
-#include "source_base/parallel_reduce.h"
 
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
@@ -104,7 +103,7 @@ template <typename T, typename Device> struct vector_div_constant_op {
   ///
   /// Input Parameters
   /// \param dim : array size
-  /// \param vector : input array 
+  /// \param vector : input array
   /// \param constant : input constant
   ///
   /// Output Parameters
@@ -241,6 +240,31 @@ template <typename T, typename Device> struct gemm_op {
 };
 
 #ifdef __DSP
+// compute Y = alpha * op(A) * X + beta * Y on DSP Hardware
+template <typename T, typename Device> struct gemv_op_mt {
+  /// @brief Y = alpha * op(A) * X + beta * Y
+  ///
+  /// Input Parameters
+  /// \param trans : whether to transpose matrix A
+  /// \param m : row number of A
+  /// \param n : column number of A
+  /// \param alpha : input constant alpha
+  /// \param A : input matrix A
+  /// \param lda : leading dimension of A
+  /// \param X : input vector X
+  /// \param incx : increment of X
+  /// \param beta : input constant beta
+  /// \param Y : input vector Y
+  /// \param incy : increment of Y
+  ///
+  /// Output Parameters
+  /// \param Y : output vector Y
+  void operator()(const char &trans, const int &m,
+                  const int &n, const T *alpha, const T *A, const int &lda,
+                  const T *X, const int &incx, const T *beta, T *Y,
+                  const int &incy);
+};
+
 // compute C = alpha * op(A) * op(B) + beta * C on DSP Hardware
 template <typename T, typename Device> struct gemm_op_mt {
   /// @brief C = alpha * op(A) * op(B) + beta * C
@@ -299,6 +323,31 @@ template <typename T, typename Device> struct matrixCopy {
 };
 
 template <typename T, typename Device>
+struct matrix_mul_vector_op {
+    using Real = typename GetTypeReal<T>::type;
+  /// @brief a * b * beta by each column
+  ///
+  /// Input Parameters
+  /// \param m : row number
+  /// \param n : column number
+  /// \param a : input matrix
+  /// \param lda : leading dimension of matrix a
+  /// \param b : input vector
+  /// \param alpha : factor
+  /// \param ldc : leading dimension of matrix c
+  ///
+  /// Output Parameters
+  /// \param c : output matrix
+  void operator()(const int &m, const int &n,
+                  T *a,
+                  const int &lda,
+                  const Real *b,
+                  const Real alpha,
+                  T *c,
+                  const int &ldc);
+};
+
+template <typename T, typename Device>
 struct apply_eigenvalues_op {
     using Real = typename GetTypeReal<T>::type;
 
@@ -314,7 +363,7 @@ struct precondition_op {
                    T* psi_iter,
                    const int& nbase,
                    const int& notconv,
-                   const Real* precondition,  
+                   const Real* precondition,
                    const Real* eigenvalues);
 };
 
@@ -391,6 +440,17 @@ template <typename T> struct matrixCopy<T, base_device::DEVICE_GPU> {
                     const int& LDA,
                     T* B, // output
                     const int& LDB);
+};
+
+template <typename T> struct matrix_mul_vector_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int &m, const int &n,
+                  T *a,
+                  const int &lda,
+                  const Real *b,
+                  const Real alpha,
+                  T *c,
+                  const int &ldc);
 };
 
 void createGpuBlasHandle();

@@ -30,7 +30,7 @@ class MSST : public MD_base
      *
      * @return the sum of square of velocities
      */
-    double vel_sum();
+    double vel_sum() const;
 
     /**
      * @brief rescale the lattice and velocities

@@ -156,7 +156,7 @@ Nose_Hoover::~Nose_Hoover()
 void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
-    ModuleBase::timer::tick("Nose_Hoover", "setup");
+    ModuleBase::timer::start("Nose_Hoover", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
     if (mdp.md_type == "npt")
@@ -207,7 +207,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
         }
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "setup");
+    ModuleBase::timer::end("Nose_Hoover", "setup");
 
     return;
 }
@@ -215,7 +215,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
 void Nose_Hoover::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
-    ModuleBase::timer::tick("Nose_Hoover", "first_half");
+    ModuleBase::timer::start("Nose_Hoover", "first_half");
 
     /// update thermostats coupled with barostat if NPT ensemble
     if (npt_flag && mdp.md_pchain)
@@ -266,7 +266,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
         update_volume(ofs);
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "first_half");
+    ModuleBase::timer::end("Nose_Hoover", "first_half");
 
     return;
 }
@@ -275,7 +275,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
 void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
-    ModuleBase::timer::tick("Nose_Hoover", "second_half");
+    ModuleBase::timer::start("Nose_Hoover", "second_half");
 
     /// perform half-step update of vel due to atomic force
     MD_base::update_vel(force);
@@ -310,7 +310,7 @@ void Nose_Hoover::second_half()
         baro_thermo();
     }
 
-    ModuleBase::timer::tick("Nose_Hoover", "second_half");
+    ModuleBase::timer::end("Nose_Hoover", "second_half");
 
     return;
 }
@@ -326,7 +326,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_out_dir << "Restart_md.dat";
+        ssc << global_out_dir << "Restart_md.txt";
         std::ofstream file(ssc.str().c_str());
 
         file << step_ + step_rst_ << std::endl;
@@ -380,7 +380,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     if (!my_rank)
     {
         std::stringstream ssc;
-        ssc << global_readin_dir << "Restart_md.dat";
+        ssc << global_readin_dir << "Restart_md.txt";
         std::ifstream file(ssc.str().c_str());
 
         if (!file)
@@ -390,7 +390,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            double Mnum;
+            double Mnum = 0.0;
             file >> step_rst_ >> md_tfirst >> Mnum;
 
             if (Mnum != mdp.md_tchain)
@@ -449,7 +449,7 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
 
     if (!ok)
     {
-        ModuleBase::WARNING_QUIT("Nose_Hoover", "no Restart_md.dat !");
+        ModuleBase::WARNING_QUIT("Nose_Hoover", "no Restart_md.txt !");
     }
     if (!ok2)
     {
@@ -494,7 +494,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// integrate loop
-    double factor;
+    double factor = 0.0;
     double scale = 1.0;
     double KE = kinetic;
     for (int i = 0; i < nc_tchain; ++i)
@@ -583,7 +583,7 @@ void Nose_Hoover::baro_thermo()
     g_peta[0] = (ke_omega - lkt_press) / mass_peta[0];
 
     /// integrate loop
-    double factor;
+    double factor = 0.0;
     double scale = 1.0;
     double kecurrent = ke_omega;
     for (int i = 0; i < nc_pchain; ++i)
@@ -662,7 +662,7 @@ void Nose_Hoover::update_baro()
     }
     term_one /= pdim * ucell.nat;
 
-    double g_omega;
+    double g_omega = 0.0;
     double term_two = 0;
     for (int i = 0; i < 3; ++i)
     {
@@ -689,7 +689,7 @@ void Nose_Hoover::update_baro()
 
 void Nose_Hoover::vel_baro()
 {
-    double factor[3];
+    double factor[3] = {0.0};
     for (int i = 0; i < 3; ++i)
     {
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
@@ -721,7 +721,7 @@ void Nose_Hoover::vel_baro()
 
 void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
-    double factor;
+    double factor = 0.0;
 
     /// tri mode, off-diagonal components, first half
     if (pflag[4])

@@ -75,7 +75,7 @@ class MD_base
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
     int frozen_freedom_;                ///< the fixed freedom of the system
-    double* allmass;                    ///< atom mass
+    double* allmass = nullptr;                    ///< atom mass
     ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
     ModuleBase::Vector3<double>* vel;   ///< atom velocity
     ModuleBase::Vector3<int>* ionmbl;   ///< atom is frozen or not

@@ -8,24 +8,20 @@
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"
 
-#include "source_pw/module_pwdft/global.h"
-
 namespace ModuleSymmetry
 {
     void Symmetry_rotation::set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi)
     {
         this->reduce_Cs_ = true;
         this->abfs_l_nchi_ = abfs_l_nchi;
-        this->abfs_Lmax_ = 0;
-        for (auto& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1);
-}
+        for (auto& abfs_T : abfs_l_nchi) { this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1); }
     }
     void Symmetry_rotation::cal_Ms(const K_Vectors& kv,
         //const std::vector<std::map<int, TCdouble>>& kstars,
         const UnitCell& ucell, const Parallel_2D& pv)
     {
         ModuleBase::TITLE("Symmetry_rotation", "cal_Ms");
-        ModuleBase::timer::tick("Symmetry_rotation", "cal_Ms");
+        ModuleBase::timer::start("Symmetry_rotation", "cal_Ms");
 
         this->nsym_ = ucell.symm.nrotk;
         this->eps_ = ucell.symm.epsilon;
@@ -36,9 +32,8 @@ namespace ModuleSymmetry
         }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         std::vector<ModuleBase::Matrix3> gmatc(nsym_);
-        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
-}
-        this->cal_rotmat_Slm(gmatc.data(), reduce_Cs_ ? std::max(this->abfs_Lmax_, ucell.lmax) : ucell.lmax);
+        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec); }
+        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax));
 
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
@@ -47,12 +42,9 @@ namespace ModuleSymmetry
                 kvec_res.x = fmod(kvec.x + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.y = fmod(kvec.y + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
                 kvec_res.z = fmod(kvec.z + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
-                if (std::abs(kvec_res.x) < symm_prec) { kvec_res.x = 0.0;
-}
-                if (std::abs(kvec_res.y) < symm_prec) { kvec_res.y = 0.0;
-}
-                if (std::abs(kvec_res.z) < symm_prec) { kvec_res.z = 0.0;
-}
+                if (std::abs(kvec_res.x) < symm_prec) { kvec_res.x = 0.0; }
+                if (std::abs(kvec_res.y) < symm_prec) { kvec_res.y = 0.0; }
+                if (std::abs(kvec_res.z) < symm_prec) { kvec_res.z = 0.0; }
                 return kvec_res;
             };
         int nks_ibz = kv.kstars.size(); // kv.nks = 2 * kv.nks_ibz when nspin=2
@@ -80,14 +72,14 @@ namespace ModuleSymmetry
         // ofs << std::endl;
         // ofs.close();
 
-        ModuleBase::timer::tick("Symmetry_rotation", "cal_Ms");
+        ModuleBase::timer::end("Symmetry_rotation", "cal_Ms");
     }
 
     std::vector<std::vector<std::complex<double>>> Symmetry_rotation::restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz, const Parallel_2D& pv)const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_dm");
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_dm");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_dm");
         auto vec3_eq = [](const TCdouble& v1, const TCdouble& v2, const double& prec) -> bool
             {
                 return (std::abs(v1.x - v2.x) < prec) && (std::abs(v1.y - v2.y) < prec) && (std::abs(v1.z - v2.z) < prec);
@@ -147,7 +139,7 @@ namespace ModuleSymmetry
             }
         ofs.close();
 */
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_dm");
+        ModuleBase::timer::end("Symmetry_rotation", "restore_dm");
         return dm_k_full;
     }
     std::vector<std::vector<double>> Symmetry_rotation::restore_dm(const K_Vectors& kv,
@@ -211,7 +203,7 @@ namespace ModuleSymmetry
     TCdouble Symmetry_rotation::get_euler_angle(const ModuleBase::Matrix3& gmatc) const
     {
         double threshold = this->eps_;
-        double alpha, beta, gamma;
+        double alpha = 0.0, beta = 0.0, gamma = 0.0;
         if (std::fabs(gmatc.e32) > threshold || std::fabs(gmatc.e31) > threshold) // sin(beta) is not zero
         {
             // use the 2-angle elements to get alpha and gamma
@@ -423,24 +415,24 @@ namespace ModuleSymmetry
         if (TRS_conj)
         {
             // D^T* = M^T [M^T (D^T)^T]^\dagger
-            pzgemm_(&transpose, &transpose, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
-                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(transpose, transpose, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
+                beta, DMkibz_M.data(), i1, i1, pv.desc);
             alpha.real(1.0 / static_cast<double>(kstar_size));
-            pzgemm_(&transpose, &dagger, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz_M.data(), &i1, &i1, pv.desc,
-                &beta, DMk.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(transpose, dagger, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz_M.data(), i1, i1, pv.desc,
+                beta, DMk.data(), i1, i1, pv.desc);
         }
         else
         {
             // D^T = M^\daggger D^T M
-            pzgemm_(&dagger, &notrans, &nbasis, &nbasis, &nbasis,
-                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
-                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
+                beta, DMkibz_M.data(), i1, i1, pv.desc);
             alpha.real(1.0 / static_cast<double>(kstar_size));
-            pzgemm_(&notrans, &notrans, &nbasis, &nbasis, &nbasis,
-                &alpha, DMkibz_M.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
-                &beta, DMk.data(), &i1, &i1, pv.desc);
+            ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
+                alpha, DMkibz_M.data(), i1, i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc,
+                beta, DMk.data(), i1, i1, pv.desc);
         }
         return DMk;
     }

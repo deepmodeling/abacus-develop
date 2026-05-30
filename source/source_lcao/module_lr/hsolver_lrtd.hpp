@@ -86,7 +86,6 @@ namespace LR
                                                  nband,
                                                  dim,
                                                  PARAM.inp.pw_diag_ndim,
-                                                 false,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
@@ -100,7 +99,6 @@ namespace LR
                         PARAM.inp.pw_diag_ndim,
                         diag_ethr,
                         maxiter,
-                        false, //always do the subspace diag (check the implementation)
                         comm_info,
                         PARAM.inp.diag_subspace,
                         PARAM.inp.nb2d);
@@ -135,20 +133,27 @@ namespace LR
                     ////// why diago_cg depends on basis_type?
                     // hsolver::DiagoCG<T> cg("lcao", "nscf", true, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
 
-                    auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {};
+                    auto subspace_func = [](T* psi_in, T* psi_out, const int ld_psi, const int nband, const bool S_orth) {
+                    };
                     hsolver::DiagoCG<T> cg("lcao", "nscf", false, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
 
-                    auto psi_tensor = ct::TensorMap(psi, ct::DataTypeToEnum<T>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband, dim }));
-                    auto eigen_tensor = ct::TensorMap(eigenvalue.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband }));
-                    std::vector<Real<T>> precondition_(precondition);   //since TensorMap does not support const pointer
-                    auto precon_tensor = ct::TensorMap(precondition_.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ dim }));
-                    auto hpsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& hpsi) {hm.hPsi(psi_in.data<T>(), hpsi.data<T>(), psi_in.shape().dim_size(0) /*nbasis_local*/, 1/*band-by-band*/);};
-                    auto spsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& spsi) {
-                        std::memcpy(spsi.data<T>(), psi_in.data<T>(), sizeof(T) * psi_in.NumElements());
+                    auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {
+                        hm.hPsi(psi_in, hpsi, ld_psi, nvec);
+                    };
+                    auto spsi_func = [](T* psi_in, T* spsi, const int ld_psi, const int nvec) {
+                        std::memcpy(spsi, psi_in, sizeof(T) * static_cast<size_t>(ld_psi) * static_cast<size_t>(nvec));
                     };
 
                     std::vector<double> ethr_band(nband, diag_ethr);
-                    cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, precon_tensor);
+                    cg.diag(hpsi_func,
+                            spsi_func,
+                            dim,
+                            nband,
+                            dim,
+                            psi,
+                            eigenvalue.data(),
+                            ethr_band,
+                            precondition.data());
                 }
                 else { throw std::runtime_error("HSolverLR::solve: method not implemented"); }
             }
@@ -178,7 +183,7 @@ namespace LR
 
             // output iters
             std::cout << " Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
-                << "; current threshold: " << hsolver::DiagoIterAssist<T>::PW_DIAG_THR << std::endl;
+                << "; current threshold: " << diag_ethr << std::endl;
         }
     }
 }

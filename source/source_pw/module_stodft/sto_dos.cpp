@@ -1,5 +1,6 @@
 #include "sto_dos.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
@@ -79,7 +80,7 @@ template <typename FPTYPE, typename Device>
 void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, const int npart)
 {
     ModuleBase::TITLE("Sto_DOS", "caldos");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::start("Sto_DOS", "caldos");
     std::cout << "=========================" << std::endl;
     std::cout << "###Calculating Dos....###" << std::endl;
     std::cout << "=========================" << std::endl;
@@ -99,7 +100,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         int nchip_new = ceil((double)this->p_stowf->nchip_max / npart);
         allorderchi.resize(nchip_new * npwx * dos_nche);
     }
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::start("Sto_DOS", "Tracepoly");
     std::cout << "1. TracepolyA:" << std::endl;
     for (int ik = 0; ik < nk; ik++)
     {
@@ -157,7 +158,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;
-                dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv.data(), &N);
+                BlasConnector::gemm(normal, trans, N, N, M, kweight, vec_all, LDA, vec_all, LDA, one, spolyv.data(), N);
             }
         }
     }
@@ -168,10 +169,10 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
     this->stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
-    ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
+    ModuleBase::timer::end("Sto_DOS", "Tracepoly");
 
     std::cout << "2. Dos:" << std::endl;
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::start("Sto_DOS", "DOS Loop");
     int n10 = ndos / 10;
     int percent = 10;
     std::vector<double> sto_dos(ndos);
@@ -235,12 +236,12 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
-    MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
+    Parallel_Reduce::reduce_all(sto_dos.data(), ndos);
+    Parallel_Reduce::reduce_all(error.data(), ndos);
+    #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = PARAM.globalv.global_out_dir + "doss1_pw.txt";
+        std::string dosfile = PARAM.globalv.global_out_dir + "dos_sdft.txt";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
@@ -266,8 +267,8 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
     }
-    ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
-    ModuleBase::timer::tick("Sto_DOS", "caldos");
+    ModuleBase::timer::end("Sto_DOS", "DOS Loop");
+    ModuleBase::timer::end("Sto_DOS", "caldos");
     return;
 }
 

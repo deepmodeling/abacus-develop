@@ -1,19 +1,16 @@
-//==========================================================
-// Author:Xin Qu
 #include "source_io/module_parameter/parameter.h"
-// DATE : 2019-12-10
-//==========================================================
+
 #ifdef __LCAO
 #include "dftu.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/magnetism.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/module_pwdft/global.h"
 
 #include <cmath>
 #include <complex>
@@ -24,65 +21,19 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C"
-{
-    // I'm not sure what's happenig here, but the interface in scalapack_connecter.h
-    // does not seem to work, so I'll use this one here
-    void pzgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const std::complex<double>* alpha,
-                 const std::complex<double>* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const std::complex<double>* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const std::complex<double>* beta,
-                 std::complex<double>* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
 
-    void pdgemm_(const char* transa,
-                 const char* transb,
-                 const int* M,
-                 const int* N,
-                 const int* K,
-                 const double* alpha,
-                 const double* A,
-                 const int* IA,
-                 const int* JA,
-                 const int* DESCA,
-                 const double* B,
-                 const int* IB,
-                 const int* JB,
-                 const int* DESCB,
-                 const double* beta,
-                 double* C,
-                 const int* IC,
-                 const int* JC,
-                 const int* DESCC);
-}
-
-namespace ModuleDFTU
-{
-
-void DFTU::force_stress(const UnitCell& ucell,
+void Plus_U::force_stress(const UnitCell& ucell,
                         const Grid_Driver& gd,
-                        const elecstate::ElecState* pelec,
+                        std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
+                        std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
                         const Parallel_Orbitals& pv,
                         ForceStressArrays& fsr, // mohan add 2024-06-16
                         ModuleBase::matrix& force_dftu,
                         ModuleBase::matrix& stress_dftu,
                         const K_Vectors& kv)
 {
-    ModuleBase::TITLE("DFTU", "force_stress");
-    ModuleBase::timer::tick("DFTU", "force_stress");
+    ModuleBase::TITLE("Plus_U", "force_stress");
+    ModuleBase::timer::start("Plus_U", "force_stress");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -114,29 +65,12 @@ void DFTU::force_stress(const UnitCell& ucell,
 
             this->cal_VU_pot_mat_real(spin, false, VU);
 
-            const std::vector<std::vector<double>>& dmk
-                = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-
 #ifdef __MPI
-            pdgemm_(&transT,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &alpha,
-                    dmk[spin].data(),
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    VU,
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    &beta,
-                    &rho_VU[0],
-                    &one_int,
-                    &one_int,
-                    pv.desc);
+            ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
+                    alpha, (*dmk_d)[spin].data(), 1, 1,
+                    pv.desc, VU, 1, 1,
+                    pv.desc, beta, &rho_VU[0],
+                    1, 1, pv.desc);
 #endif
 
             delete[] VU;
@@ -178,31 +112,12 @@ void DFTU::force_stress(const UnitCell& ucell,
 
             this->cal_VU_pot_mat_complex(spin, false, VU);
 
-            const std::vector<std::vector<std::complex<double>>>& dmk
-                = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)
-                      ->get_DM()
-                      ->get_DMK_vector();
 
 #ifdef __MPI
-            pzgemm_(&transT,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &alpha,
-                    dmk[ik].data(),
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    VU,
-                    &one_int,
-                    &one_int,
-                    pv.desc,
-                    &beta,
-                    &rho_VU[0],
-                    &one_int,
-                    &one_int,
-                    pv.desc);
+            ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
+                    alpha, (*dmk_c)[ik].data(), one_int, one_int,
+                    pv.desc, VU, one_int, one_int, pv.desc, beta,
+                    &rho_VU[0], one_int, one_int, pv.desc);
 #endif
 
             delete[] VU;
@@ -244,12 +159,12 @@ void DFTU::force_stress(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::tick("DFTU", "force_stress");
+    ModuleBase::timer::end("Plus_U", "force_stress");
 
     return;
 }
 
-void DFTU::cal_force_k(const UnitCell& ucell,
+void Plus_U::cal_force_k(const UnitCell& ucell,
                        const Grid_Driver& gd,
                        ForceStressArrays& fsr,
                        const Parallel_Orbitals& pv,
@@ -258,8 +173,8 @@ void DFTU::cal_force_k(const UnitCell& ucell,
                        ModuleBase::matrix& force_dftu,
                        const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("DFTU", "cal_force_k");
-    ModuleBase::timer::tick("DFTU", "cal_force_k");
+    ModuleBase::TITLE("Plus_U", "cal_force_k");
+    ModuleBase::timer::start("Plus_U", "cal_force_k");
 
     const char transN = 'N';
     const char transC = 'C';
@@ -275,24 +190,24 @@ void DFTU::cal_force_k(const UnitCell& ucell,
         this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
 
 #ifdef __MPI
-        pzgemm_(&transN,
-                &transC,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transC,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 &dSm_k[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -313,24 +228,24 @@ void DFTU::cal_force_k(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pzgemm_(&transN,
-                &transN,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transN,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 &dSm_k[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                one_int,
+                one_int,
                 pv.desc);
 #endif
 
@@ -374,12 +289,12 @@ void DFTU::cal_force_k(const UnitCell& ucell,
             }             // ia
         }                 // it
     }                     // end dim
-    ModuleBase::timer::tick("DFTU", "cal_force_k");
+    ModuleBase::timer::end("Plus_U", "cal_force_k");
 
     return;
 }
 
-void DFTU::cal_stress_k(const UnitCell& ucell,
+void Plus_U::cal_stress_k(const UnitCell& ucell,
                         const Grid_Driver& gd,
                         ForceStressArrays& fsr,
                         const Parallel_Orbitals& pv,
@@ -388,8 +303,8 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
                         ModuleBase::matrix& stress_dftu,
                         const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("DFTU", "cal_stress_k");
-    ModuleBase::timer::tick("DFTU", "cal_stress_k");
+    ModuleBase::TITLE("Plus_U", "cal_stress_k");
+    ModuleBase::timer::start("Plus_U", "cal_stress_k");
 
     const int nlocal = PARAM.globalv.nlocal;
 
@@ -409,24 +324,24 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
             this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
 
 #ifdef __MPI
-            pzgemm_(&transN,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &minus_half,
+            ScalapackConnector::gemm(transN,
+                    transN,
+                    nlocal,
+                    nlocal,
+                    nlocal,
+                    minus_half,
                     rho_VU,
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
                     &dSR_k[0],
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc,
-                    &zero,
+                    zero,
                     &dm_VU_sover[0],
-                    &one_int,
-                    &one_int,
+                    one_int,
+                    one_int,
                     pv.desc);
 #endif
 
@@ -445,12 +360,12 @@ void DFTU::cal_stress_k(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("DFTU", "cal_stress_k");
+    ModuleBase::timer::end("Plus_U", "cal_stress_k");
 
     return;
 }
 
-void DFTU::cal_force_gamma(const UnitCell& ucell,
+void Plus_U::cal_force_gamma(const UnitCell& ucell,
                            const double* rho_VU,
                            const Parallel_Orbitals& pv,
                            double* dsloc_x,
@@ -458,8 +373,8 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
                            double* dsloc_z,
                            ModuleBase::matrix& force_dftu)
 {
-    ModuleBase::TITLE("DFTU", "cal_force_gamma");
-    ModuleBase::timer::tick("DFTU", "cal_force_gamma");
+    ModuleBase::TITLE("Plus_U", "cal_force_gamma");
+    ModuleBase::timer::start("Plus_U", "cal_force_gamma");
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double one = 1.0, zero = 0.0, minus_one = -1.0;
@@ -468,7 +383,7 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
 
     for (int dim = 0; dim < 3; dim++)
     {
-        double* tmp_ptr;
+        double* tmp_ptr = nullptr;
         if (dim == 0)
         {
             tmp_ptr = dsloc_x;
@@ -483,24 +398,24 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc);
 #endif
 
@@ -521,24 +436,24 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }     // end ir
 
 #ifdef __MPI
-        pdgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &one,
+        ScalapackConnector::gemm(transN,
+                transT,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                PARAM.globalv.nlocal,
+                one,
                 tmp_ptr,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
                 rho_VU,
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc,
-                &zero,
+                zero,
                 &dm_VU_dSm[0],
-                &one_int,
-                &one_int,
+                1,
+                1,
                 pv.desc);
 #endif
 
@@ -585,12 +500,12 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
         }                 // it
 
     } // end dim
-    ModuleBase::timer::tick("DFTU", "cal_force_gamma");
+    ModuleBase::timer::end("Plus_U", "cal_force_gamma");
 
     return;
 }
 
-void DFTU::cal_stress_gamma(const UnitCell& ucell,
+void Plus_U::cal_stress_gamma(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
                             const Grid_Driver* gd,
                             double* dsloc_x,
@@ -600,8 +515,8 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
                             const double* rho_VU,
                             ModuleBase::matrix& stress_dftu)
 {
-    ModuleBase::TITLE("DFTU", "cal_stress_gamma");
-    ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
+    ModuleBase::TITLE("Plus_U", "cal_stress_gamma");
+    ModuleBase::timer::start("Plus_U", "cal_stress_gamma");
 
     const char transN = 'N';
     const int one_int = 1;
@@ -621,24 +536,24 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
             this->fold_dSR_gamma(ucell, pv, gd, dsloc_x, dsloc_y, dsloc_z, dh_r, dim1, dim2, &dSR_gamma[0]);
 
 #ifdef __MPI
-            pdgemm_(&transN,
-                    &transN,
-                    &nlocal,
-                    &nlocal,
-                    &nlocal,
-                    &minus_half,
+            ScalapackConnector::gemm(transN,
+                    transN,
+                    nlocal,
+                    nlocal,
+                    nlocal,
+                    minus_half,
                     rho_VU,
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc,
                     &dSR_gamma[0],
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc,
-                    &zero,
+                    zero,
                     &dm_VU_sover[0],
-                    &one_int,
-                    &one_int,
+                    1,
+                    1,
                     pv.desc);
 #endif
 
@@ -658,8 +573,7 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
+    ModuleBase::timer::end("Plus_U", "cal_stress_gamma");
     return;
 }
-} // namespace ModuleDFTU
 #endif

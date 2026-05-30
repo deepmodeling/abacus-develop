@@ -42,7 +42,7 @@ namespace ModuleSymmetry
         const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreducible) const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_HR");
         std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_full;
         // irreducile-to-full map ver.
         for (auto& tmp1 : HR_irreducible)
@@ -108,7 +108,7 @@ namespace ModuleSymmetry
         //         print_tensor(tmp2.second, "HR_full (" + std::to_string(a1) + ", " + std::to_string(a2) + "), R=(" + std::to_string(R[0]) + " " + std::to_string(R[1]) + " " + std::to_string(R[2]) + ")");
         //     }
         // }
-        ModuleBase::timer::tick("Symmetry_rotation", "restore_HR");
+        ModuleBase::timer::end("Symmetry_rotation", "restore_HR");
         return HR_full;
     }
 

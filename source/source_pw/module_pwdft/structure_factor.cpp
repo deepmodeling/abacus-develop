@@ -3,9 +3,8 @@
 #include "source_io/module_parameter/parameter.h"
 #include "structure_factor.h"
 #include "source_base/constants.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/math_bspline.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
 
@@ -46,7 +45,7 @@ Structure_Factor::~Structure_Factor()
 // called in input.cpp
 void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nbspline_in)
 {
-    ModuleBase::TITLE("PW_Basis","set");
+    ModuleBase::TITLE("Structure_Factor","set");
     this->rho_basis = rho_basis_in;
     this->nbspline = nbspline_in;
     return;
@@ -54,10 +53,11 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 
 // Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
 {
-    ModuleBase::TITLE("PW_Basis","setup_structure_factor");
-    ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
+    ModuleBase::TITLE("Structure_Factor","setup");
+    ModuleBase::timer::start("Structure_Factor","setup");
+
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
     this->ucell = Ucell;
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
@@ -66,9 +66,15 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
 //	std::string outstr;
 //	outstr = PARAM.globalv.global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
-    bool usebspline;
-    if(nbspline > 0) {   usebspline = true;
-    } else {    usebspline = false;}
+	bool usebspline;
+	if(nbspline > 0) 
+	{   
+		usebspline = true;
+	} 
+	else 
+	{    
+		usebspline = false;
+	}
     
     if(usebspline)
     {
@@ -79,18 +85,22 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
     {
         for (int it=0; it<Ucell->ntype; it++)
         {
-	    	const int na = Ucell->atoms[it].na;
-	    	const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau.data();
+            const int na = Ucell->atoms[it].na;
+            const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau.data();
+            // Data race fix: cache shared data to local const variables before OpenMP parallel region
+            // TSan detected race condition when accessing rho_basis->npw and rho_basis->gcar directly
+            // in parallel loop, even though they are logically read-only
+            const int npw = rho_basis->npw;
+            const ModuleBase::Vector3<double> * const gcar = rho_basis->gcar;
 #ifdef _OPENMP
-		    #pragma omp parallel for
+            #pragma omp parallel for
 #endif
-            for (int ig=0; ig<rho_basis->npw; ig++)
+            for (int ig=0; ig<npw; ig++)
             {
-		    	const ModuleBase::Vector3<double> gcar_ig = rho_basis->gcar[ig];
+                const ModuleBase::Vector3<double> gcar_ig = gcar[ig];
                 std::complex<double> sum_phase = ModuleBase::ZERO;
                 for (int ia=0; ia<na; ia++)
                 {
-                    // e^{-i G*tau}
                     sum_phase += ModuleBase::libm::exp( ci_tpi * (gcar_ig * tau[ia]) );
                 }
                 this->strucFac(it,ig) = sum_phase;
@@ -100,12 +110,15 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
 
 //	ofs.close();
 
-    int i,j; //ng;
+    int i=0;
+    int j=0;
+ 
     this->eigts1.create(Ucell->nat, 2*rho_basis->nx + 1);
     this->eigts2.create(Ucell->nat, 2*rho_basis->ny + 1);
     this->eigts3.create(Ucell->nat, 2*rho_basis->nz + 1);
 
-    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
+    ModuleBase::Memory::record("SF::eigts123",sizeof(std::complex<double>) 
+    * (Ucell->nat*2 * (rho_basis->nx + rho_basis->ny + rho_basis->nz) + 3));
 
     ModuleBase::Vector3<double> gtau;
     int inat = 0;
@@ -177,7 +190,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Paral
         this->z_eigts3 = this->eigts3.c;
         // There's no need to delete double precision pointers while in a CPU environment.
     }
-    ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
+    ModuleBase::timer::end("Structure_Factor","setup");
     return;
 }
 
@@ -298,7 +311,7 @@ void Structure_Factor::bspline_sf(const int norder,
     return;
 }
 
-void Structure_Factor:: bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
+void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                         const int nx, const int ny, const int nz, const int norder)
 {
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;

@@ -7,7 +7,7 @@ jobs:
   validate_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch complete git history for version comparison
 
@@ -25,7 +25,7 @@ jobs:
       # Validate version.h matches the release tag
       - name: Assert version increment
         run: |
-          CODE_VERSION=$(grep -oP '#define\s+VERSION\s+"\K\d+(\.\d+){2,3}' source/source_main/version.h)
+          CODE_VERSION=$(grep -oP '#define\s+VERSION\s+"\Kv?\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?' source/source_main/version.h)
 
           if [[ -z "$CODE_VERSION" ]]; then
             echo "::error::Failed to extract version from source/source_main/version.h"
@@ -33,7 +33,7 @@ jobs:
           fi
 
           # Verify that the version in version.h matches the tag
-          if [[ "${{ steps.versions.outputs.current_tag }}" != "v${CODE_VERSION}" ]]; then
+          if [[ "${{ steps.versions.outputs.current_tag }}" != "${CODE_VERSION}" ]]; then
             echo "::error::Version mismatch: tag=${{ steps.versions.outputs.current_tag }} ≠ code=${CODE_VERSION}"
             exit 1
           fi

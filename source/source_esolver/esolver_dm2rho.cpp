@@ -7,9 +7,10 @@
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_io/cube_io.h"
-#include "source_io/io_npz.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/cube_io.h"
+#include "source_io/module_ml/io_npz.h"
+#include "source_io/module_output/print_info.h"
+#include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
 namespace ModuleESolver
 {
@@ -30,36 +31,37 @@ template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
-    ModuleBase::timer::tick("ESolver_DM2rho", "before_all_runners");
+    ModuleBase::timer::start("ESolver_DM2rho", "before_all_runners");
 
     ESolver_KS_LCAO<TK, TR>::before_all_runners(ucell, inp);
 
-    ModuleBase::timer::tick("ESolver_DM2rho", "before_all_runners");
+    ModuleBase::timer::end("ESolver_DM2rho", "before_all_runners");
 }
 
 template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
-    ModuleBase::timer::tick("ESolver_DM2rho", "runner");
+    ModuleBase::timer::start("ESolver_DM2rho", "runner");
 
     ESolver_KS_LCAO<TK, TR>::before_scf(ucell, istep);
 
     // file name of DM
     std::string zipname = "output_DM0.npz";
-    elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
 
     // read DM from file
-    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
+    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(1)));
 
     // if nspin=2, need extra reading
     if (PARAM.inp.nspin == 2)
     {
         zipname = "output_DM1.npz";
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
+        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(2)));
     }
 
-    this->pelec->psiToRho(*this->psi);
+    // it's dangerous to design psiToRho function like this, mohan note 20251024
+    // this->pelec->psiToRho(*this->psi);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
 
     int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
 
@@ -77,21 +79,23 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
                                       this->pelec->eferm.get_efval(is),
                                       &(ucell),
                                       3,
-                                      1);
+                                      1,
+                                      PARAM.globalv.two_fermi,
+                                      false);
     }
 
-    ModuleBase::timer::tick("ESolver_DM2rho", "runner");
+    ModuleBase::timer::end("ESolver_DM2rho", "runner");
 }
 
 template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
-    ModuleBase::timer::tick("ESolver_DM2rho", "after_all_runners");
+    ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");
 
     ESolver_KS_LCAO<TK, TR>::after_all_runners(ucell);
 
-    ModuleBase::timer::tick("ESolver_DM2rho", "after_all_runners");
+    ModuleBase::timer::end("ESolver_DM2rho", "after_all_runners");
 };
 
 template class ESolver_DM2rho<std::complex<double>, double>;

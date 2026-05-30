@@ -68,6 +68,12 @@ exclude_patterns = []
 html_theme = 'sphinx_book_theme'
 html_logo = 'abacus-logo.svg'
 
+# Theme options for sphinx-book-theme
+html_theme_options = {
+    "show_toc_level": 2,  # Only show h2 (categories) in right sidebar, not h3 (parameters)
+    "toc_title": "On this page",
+}
+
 
 # Changes for compatibility with Read the Docs
 import os
@@ -93,3 +99,32 @@ mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml
 latex_elements = {
     'extraclassoptions':'openany,oneside'
 }
+
+
+# -- Auto-generate INPUT keyword documentation from YAML parameter dump ------
+
+from pathlib import Path
+
+def generate_input_docs(app):
+    """Auto-generate input-main.md from parameters.yaml before building.
+
+    Workflow:
+        abacus --generate-parameters-yaml > docs/parameters.yaml
+        # Then Sphinx calls this hook, which runs generate_input_main.py
+    """
+    docs_dir = Path(__file__).resolve().parent
+    yaml_path = docs_dir / 'parameters.yaml'
+    if not yaml_path.exists():
+        print(f"Warning: {yaml_path} not found. "
+              "Run: abacus --generate-parameters-yaml > docs/parameters.yaml")
+        return
+    import sys
+    sys.path.insert(0, str(docs_dir))
+    from generate_input_main import generate
+    generate(
+        yaml_path=yaml_path,
+        output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
+    )
+
+def setup(app):
+    app.connect('builder-inited', generate_input_docs)

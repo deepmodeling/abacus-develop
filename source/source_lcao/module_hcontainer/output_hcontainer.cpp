@@ -1,6 +1,6 @@
 #include "output_hcontainer.h"
 
-#include "source_io/sparse_matrix.h"
+#include "source_io/module_output/sparse_matrix.h"
 
 #include <fstream>
 
@@ -31,8 +31,20 @@ Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
 template <typename T>
 void Output_HContainer<T>::write(bool write_empty)
 {
+    _ofs << " #----------------------------------------------------------------------#" << std::endl;
+    _ofs << " #                               CSR Format                             #" << std::endl;
+    _ofs << " # The outer loop corresponds to the number of Bravais lattice vectors. #" << std::endl;
+    _ofs << " # The first line contains the index of the Bravais lattice vector      #" << std::endl; 
+    _ofs << " # (Rx, Ry, Rz), followed by the number of non-zero elements.           #" << std::endl;
+    _ofs << " # The subsequent lines consist of three blocks of data, which are      #" << std::endl;
+    _ofs << " # values, column indices, row pointers.                                #" << std::endl;
+    _ofs << " #----------------------------------------------------------------------#" << std::endl;
+    _ofs << std::endl;
+
     int size_for_loop_R = this->_hcontainer->size_R_loop();
-    int rx, ry, rz;
+    int rx=0;
+    int ry=0;
+    int rz=0;
     int R_range[2] = {0, 0};
     // find the range of R
     for (int iR = 0; iR < size_for_loop_R; iR++)
@@ -62,7 +74,7 @@ void Output_HContainer<T>::write(bool write_empty)
                 }
                 else if (write_empty)
                 {
-                    _ofs << ix << " " << iy << " " << iz << " 0" << std::endl;
+                    _ofs << " " << ix << " " << iy << " " << iz << " 0" << std::endl;
                 }
                 
             }
@@ -74,7 +86,9 @@ template <typename T>
 void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
-    int rx, ry, rz;
+    int rx=0;
+    int ry=0;
+    int rz=0;
     int find_R = 0;
     for (int iR = 0; iR < size_for_loop_R; iR++)
     {
@@ -126,8 +140,25 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 
     if (sparse_matrix.getNNZ() != 0)
     {
-        _ofs << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
+        _ofs << " " << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
         sparse_matrix.printToCSR(_ofs, _precision);
+    }
+    else
+    {
+        // Write R-block header with 0 nonzero elements and empty CSR data
+        // to keep nR in file header consistent with actual R-block count
+        _ofs << " " << rx << " " << ry << " " << rz << " 0" << std::endl;
+        _ofs << " # CSR values" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR column indices" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR row pointers" << std::endl;
+        int nbasis = _hcontainer->get_nbasis();
+        for (int i = 0; i < nbasis + 1; i++)
+        {
+            _ofs << " 0";
+        }
+        _ofs << std::endl;
     }
     this->_hcontainer->unfix_R();
 }

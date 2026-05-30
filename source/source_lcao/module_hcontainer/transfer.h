@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "source_base/vector3.h"
 #include "./hcontainer.h"
 
 #ifdef __MPI

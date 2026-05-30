@@ -44,9 +44,6 @@ class PW_BASIS_K_GPU_TEST : public ::testing::Test
         int distribution_type = 1;
         bool xprime = false;
         const int nks = 1;
-        ModuleBase::Vector3<double>* kvec_d;
-        kvec_d = new ModuleBase::Vector3<double>[nks];
-        kvec_d[0].set(0, 0, 0);
         // init
         const int mypool = 0;
         const int key = 1;

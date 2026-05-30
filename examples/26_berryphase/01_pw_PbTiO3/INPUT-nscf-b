@@ -1,0 +1,10 @@
+INPUT_PARAMETERS
+pseudo_dir              ../../../tests/PP_ORB
+ecutwfc                 50
+symmetry                -1
+pw_diag_thr             1e-10
+calculation             nscf
+basis_type              pw
+init_chg                file
+berry_phase             1
+gdir                    2

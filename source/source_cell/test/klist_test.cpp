@@ -12,10 +12,10 @@
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/magnetism.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_io/berryphase.h"
+#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/mathzone.h"
@@ -83,6 +83,10 @@ Soc::~Soc()
 Fcoef::~Fcoef()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 
 /************************************************
@@ -309,6 +313,10 @@ TEST_F(KlistTest, ReadKpointsKspacing)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(ucell,k_file);
@@ -324,6 +332,10 @@ TEST_F(KlistTest, ReadKpointsKspacing3values)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0.06;     // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     setucell();
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(ucell,k_file);
@@ -339,6 +351,10 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[1] = 0;        // 0.52918/Bohr = 1/A
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(kv->read_kpoints(ucell,k_file), ::testing::ExitedWithCode(1), "");
@@ -346,6 +362,72 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
     PARAM.input.kspacing[2] = 0.0;
+}
+
+TEST_F(KlistTest, ReadKpointsKspacingShiftedGamma)
+{
+    kv->nspin = 1;
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.052918;
+    PARAM.input.kspacing[2] = 0.052918;
+    PARAM.input.kmesh_type = "gamma";
+    PARAM.input.koffset[0] = 0.5;
+    PARAM.input.koffset[1] = 0.5;
+    PARAM.input.koffset[2] = 0.5;
+    setucell();
+
+    std::string k_file = "./support/KPT3";
+    kv->read_kpoints(ucell, k_file);
+
+    EXPECT_EQ(kv->get_nkstot(), 343);
+    EXPECT_EQ(kv->get_k_kword(), "Gamma");
+    EXPECT_DOUBLE_EQ(kv->get_koffset(0), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(1), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(2), 0.5);
+    EXPECT_NEAR(kv->kvec_d[0].x, 1.0 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].y, 1.0 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].z, 1.0 / 14.0, 1e-12);
+
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
+    PARAM.input.kmesh_type = "gamma";
+}
+
+TEST_F(KlistTest, ReadKpointsKspacingShiftedMP)
+{
+    kv->nspin = 1;
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.052918;
+    PARAM.input.kspacing[2] = 0.052918;
+    PARAM.input.kmesh_type = "mp";
+    PARAM.input.koffset[0] = 0.5;
+    PARAM.input.koffset[1] = 0.5;
+    PARAM.input.koffset[2] = 0.5;
+    setucell();
+
+    std::string k_file = "./support/KPT3";
+    kv->read_kpoints(ucell, k_file);
+
+    EXPECT_EQ(kv->get_nkstot(), 343);
+    EXPECT_EQ(kv->get_k_kword(), "Monkhorst-Pack");
+    EXPECT_DOUBLE_EQ(kv->get_koffset(0), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(1), 0.5);
+    EXPECT_DOUBLE_EQ(kv->get_koffset(2), 0.5);
+    EXPECT_NEAR(kv->kvec_d[0].x, -5.5 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].y, -5.5 / 14.0, 1e-12);
+    EXPECT_NEAR(kv->kvec_d[0].z, -5.5 / 14.0, 1e-12);
+
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
+    PARAM.input.koffset[0] = 0.0;
+    PARAM.input.koffset[1] = 0.0;
+    PARAM.input.koffset[2] = 0.0;
+    PARAM.input.kmesh_type = "gamma";
 }
 
 TEST_F(KlistTest, ReadKpointsGamma)
@@ -723,6 +805,32 @@ TEST_F(KlistTest, NormalizeWk)
     EXPECT_DOUBLE_EQ(kv->wk[1], 1.0);
 }
 
+TEST_F(KlistTest, NormalizeWkZeroWeights)
+{
+    // Test that zero weights are handled correctly
+    kv->nspin = 1;
+    kv->set_nkstot(3);
+    kv->set_nks(3);
+    kv->renew(kv->get_nkstot());
+    kv->wk[0] = 0.0;
+    kv->wk[1] = 0.0;
+    kv->wk[2] = 0.0;
+    int deg = 2;
+
+    // Should not crash and should set equal weights
+    kv->normalize_wk(deg);
+
+    // Each k-point should have weight = deg / nkstot = 2 / 3
+    EXPECT_NEAR(kv->wk[0], 2.0 / 3.0, 1e-10);
+    EXPECT_NEAR(kv->wk[1], 2.0 / 3.0, 1e-10);
+    EXPECT_NEAR(kv->wk[2], 2.0 / 3.0, 1e-10);
+
+    // Sum should equal deg
+    double sum = kv->wk[0] + kv->wk[1] + kv->wk[2];
+    EXPECT_NEAR(sum, 2.0, 1e-10);
+}
+
+
 TEST_F(KlistTest, UpdateUseIBZ)
 {
     kv->nspin = 1;
@@ -784,3 +892,158 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ClearUcell();
     remove("tmp_klist_4");
 }
+
+TEST_F(KlistTest, IbzKpointCustomWeights)
+{
+    // This test verifies the fix for issue #6552: k-point weights should not be overwritten
+    // during IBZ reduction for non-Monkhorst-Pack k-point lists.
+
+    ModuleSymmetry::Symmetry symm;
+    construct_ucell(stru_lib[0]);
+    GlobalV::ofs_running.open("tmp_klist_custom_weights");
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+
+    // Test 1: Non-MP k-points with uniform weights (KPT4)
+    {
+        K_Vectors kv_test1;
+        std::string k_file = "./support/KPT4";
+        kv_test1.nspin = 1;
+        kv_test1.read_kpoints(ucell, k_file);
+        EXPECT_EQ(kv_test1.get_nkstot(), 5);
+        EXPECT_FALSE(kv_test1.is_mp); // Should be non-MP
+
+        // Store original weights before IBZ reduction
+        std::vector<double> original_weights = kv_test1.wk;
+
+        // Apply IBZ reduction
+        std::string skpt;
+        ModuleSymmetry::Symmetry::symm_flag = 1;
+        bool match = true;
+        KVectorUtils::kvec_ibz_kpoint(kv_test1, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+
+        // Verify that weights are preserved (not overwritten with 1/nkstot)
+        // After IBZ reduction, weights should still reflect the input weights
+        double total_weight = 0.0;
+        for (int i = 0; i < kv_test1.get_nkstot(); ++i)
+        {
+            total_weight += kv_test1.wk[i];
+        }
+        // Weights should sum to approximately the number of original k-points (before normalization)
+        EXPECT_GT(total_weight, 0.0);
+    }
+
+    // Test 2: Non-MP k-points with non-uniform custom weights
+    {
+        K_Vectors kv_test2;
+        std::string k_file = "./support/KPT_custom_weights";
+        kv_test2.nspin = 1;
+        kv_test2.read_kpoints(ucell, k_file);
+        EXPECT_EQ(kv_test2.get_nkstot(), 5);
+        EXPECT_FALSE(kv_test2.is_mp); // Should be non-MP
+
+        // Verify custom weights were read correctly
+        EXPECT_DOUBLE_EQ(kv_test2.wk[0], 0.1);
+        EXPECT_DOUBLE_EQ(kv_test2.wk[1], 0.2);
+        EXPECT_DOUBLE_EQ(kv_test2.wk[2], 0.3);
+        EXPECT_DOUBLE_EQ(kv_test2.wk[3], 0.2);
+        EXPECT_DOUBLE_EQ(kv_test2.wk[4], 0.2);
+
+        // Store original weights
+        std::vector<double> original_weights = kv_test2.wk;
+        double original_sum = 0.0;
+        for (double w : original_weights)
+        {
+            original_sum += w;
+        }
+
+        // Apply IBZ reduction
+        std::string skpt;
+        ModuleSymmetry::Symmetry::symm_flag = 1;
+        bool match = true;
+        KVectorUtils::kvec_ibz_kpoint(kv_test2, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+
+        // After IBZ reduction, the weights should be based on the custom input weights,
+        // not uniform 1/nkstot weights. The total weight should be preserved.
+        double total_weight_after = 0.0;
+        for (int i = 0; i < kv_test2.get_nkstot(); ++i)
+        {
+            total_weight_after += kv_test2.wk[i];
+        }
+
+        // The sum of weights after IBZ reduction should equal the sum before
+        // (accounting for symmetry operations that may combine k-points)
+        EXPECT_NEAR(total_weight_after, original_sum, 1e-10);
+
+        // Verify that at least one weight is NOT equal to 1/5 (which would indicate
+        // the bug where custom weights are overwritten with uniform weights)
+        bool has_custom_weight = false;
+        double uniform_weight = 1.0 / 5.0;
+        for (int i = 0; i < kv_test2.get_nkstot(); ++i)
+        {
+            if (std::abs(kv_test2.wk[i] - uniform_weight) > 1e-10)
+            {
+                has_custom_weight = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(has_custom_weight) << "Custom weights were overwritten with uniform weights!";
+    }
+
+    // Test 3: MP grid (regression test - should still work correctly)
+    {
+        K_Vectors kv_test3;
+        std::string k_file = "./support/KPT1";
+        kv_test3.nspin = 1;
+        kv_test3.read_kpoints(ucell, k_file);
+        EXPECT_EQ(kv_test3.get_nkstot(), 512);
+        EXPECT_TRUE(kv_test3.is_mp); // Should be MP
+
+        // Apply IBZ reduction
+        std::string skpt;
+        ModuleSymmetry::Symmetry::symm_flag = 1;
+        bool match = true;
+        KVectorUtils::kvec_ibz_kpoint(kv_test3, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+
+        // For MP grids, all weights should be uniform after IBZ reduction
+        EXPECT_EQ(kv_test3.get_nkstot(), 35); // Known result from existing test
+
+        // Verify weights sum correctly
+        double total_weight = 0.0;
+        for (int i = 0; i < kv_test3.get_nkstot(); ++i)
+        {
+            total_weight += kv_test3.wk[i];
+        }
+        EXPECT_GT(total_weight, 0.0);
+    }
+
+    // Test 4: Weight normalization verification
+    {
+        K_Vectors kv_test4;
+        std::string k_file = "./support/KPT_custom_weights";
+        kv_test4.nspin = 1;
+        kv_test4.read_kpoints(ucell, k_file);
+
+        // Apply IBZ reduction
+        std::string skpt;
+        ModuleSymmetry::Symmetry::symm_flag = 1;
+        bool match = true;
+        KVectorUtils::kvec_ibz_kpoint(kv_test4, symm, ModuleSymmetry::Symmetry::symm_flag, skpt, ucell, match);
+
+        // Normalize weights
+        int degspin = (kv_test4.nspin == 2) ? 1 : 2;
+        kv_test4.normalize_wk(degspin);
+
+        // After normalization, weights should sum to degspin
+        double total_weight = 0.0;
+        for (int i = 0; i < kv_test4.get_nkstot(); ++i)
+        {
+            total_weight += kv_test4.wk[i];
+        }
+        EXPECT_NEAR(total_weight, degspin, 1e-10);
+    }
+
+    GlobalV::ofs_running.close();
+    ClearUcell();
+    remove("tmp_klist_custom_weights");
+}
+

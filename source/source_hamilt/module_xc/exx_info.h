@@ -2,7 +2,6 @@
 #define EXX_INFO_H
 
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
-#include "xc_functional.h"
 
 #include <vector>
 #include <map>
@@ -18,7 +17,7 @@ struct Exx_Info
 
 		// Fock:
 		//		"alpha":		"0"
-		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer"
+		//		"singularity_correction":	"limits" / "spencer" / "revised_spencer" / "massidda" / "carrier"
 		//		"lambda":		"0.3"
         //      "Rcut"
 		// Erfc:
@@ -54,9 +53,12 @@ struct Exx_Info
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
 
         bool real_number = false;
+        bool coul_moment = false;
+        bool rotate_abfs = false;
 
         double pca_threshold = 0;
         std::vector<std::string> files_abfs;
+        std::vector<std::string> files_shrink_abfs;
         double C_threshold = 0;
         double V_threshold = 0;
         double dm_threshold = 0;
@@ -67,6 +69,12 @@ struct Exx_Info
         double ccp_rmesh_times = 10;
         bool exx_symmetry_realspace = true;
         double kmesh_times = 4;
+        double Cs_inv_thr = -1;
+
+        double shrink_abfs_pca_thr = -1;
+        double shrink_LU_inv_thr = 1e-6;
+        double multip_moments_threshold = 1e-10;
+        double exx_cs_inv_thr = -1;
 
         int abfs_Lmax = 0; // tmp
 
@@ -79,9 +87,14 @@ struct Exx_Info
 
     struct Exx_Info_Opt_ABFs
     {
-        int abfs_Lmax = 0; // tmp
+        int abfs_Lmax = 0;
         double ecut_exx = 60;
-        double tolerence = 1E-2;
+        double tolerence = 1E-12;
+        std::vector<std::string> files_jles;
+
+        double pca_threshold = 0;
+        std::vector<std::string> files_abfs;
+
         double kmesh_times = 4;
     };
     Exx_Info_Opt_ABFs info_opt_abfs;
@@ -90,5 +103,10 @@ struct Exx_Info
     {
     }
 };
+
+namespace GlobalC
+{
+    extern Exx_Info exx_info;
+}
 
 #endif

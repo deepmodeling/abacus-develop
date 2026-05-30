@@ -19,6 +19,64 @@
  *   - Ions_Move_Methods::get_update_iter()
  */
 
+ // Mock the remake_cell function from update_cell.h
+namespace unitcell
+{
+    // Track if remake_cell was called and with what lattice
+    static bool remake_cell_called = false;
+    static std::string remake_cell_latName;
+    static ModuleBase::Matrix3 remake_cell_latvec;
+
+    void remake_cell(Lattice& lat)
+    {
+        remake_cell_called = true;
+        remake_cell_latName = lat.latName;
+        remake_cell_latvec = lat.latvec;
+
+        // Mock implementation: enforce simple cubic structure for "sc"
+        if (lat.latName == "sc")
+        {
+            double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 +
+                                     lat.latvec.e12 * lat.latvec.e12 +
+                                     lat.latvec.e13 * lat.latvec.e13);
+            lat.latvec.Zero();
+            lat.latvec.e11 = celldm;
+            lat.latvec.e22 = celldm;
+            lat.latvec.e33 = celldm;
+        }
+        // Mock implementation: enforce FCC structure for "fcc"
+        else if (lat.latName == "fcc")
+        {
+            double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 +
+                                     lat.latvec.e12 * lat.latvec.e12 +
+                                     lat.latvec.e13 * lat.latvec.e13) / std::sqrt(2.0);
+            lat.latvec.e11 = -celldm;
+            lat.latvec.e12 = 0.0;
+            lat.latvec.e13 = celldm;
+            lat.latvec.e21 = 0.0;
+            lat.latvec.e22 = celldm;
+            lat.latvec.e23 = celldm;
+            lat.latvec.e31 = -celldm;
+            lat.latvec.e32 = celldm;
+            lat.latvec.e33 = 0.0;
+        }
+    }
+
+    // Helper function to reset mock state
+    void reset_remake_cell_mock()
+    {
+        remake_cell_called = false;
+        remake_cell_latName = "";
+        remake_cell_latvec.Zero();
+    }
+
+    // Helper function to check if remake_cell was called
+    bool was_remake_cell_called()
+    {
+        return remake_cell_called;
+    }
+}
+
 // Define a fixture for the tests
 class IonsMoveMethodsTest : public ::testing::Test
 {
@@ -40,19 +98,19 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    Ions_Move_Basic::relax_method = "bfgs";
+    Ions_Move_Basic::relax_method[0] = "bfgs";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method = "sd";
+    Ions_Move_Basic::relax_method[0] = "sd";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method = "cg";
+    Ions_Move_Basic::relax_method[0] = "cg";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method = "cg_bfgs";
+    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 }
@@ -60,7 +118,7 @@ TEST_F(IonsMoveMethodsTest, Allocate)
 // Test the allocate() function warning quit
 TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
-    Ions_Move_Basic::relax_method = "none";
+    Ions_Move_Basic::relax_method[0] = "none";
     GlobalV::ofs_warning.open("log");
     imm.allocate(natom);
     GlobalV::ofs_warning.close();
@@ -81,22 +139,22 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     const double etot = 0.0;
     UnitCell ucell;
 
-    Ions_Move_Basic::relax_method = "bfgs";
+    Ions_Move_Basic::relax_method[0] = "bfgs";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    Ions_Move_Basic::relax_method = "sd";
+    Ions_Move_Basic::relax_method[0] = "sd";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    Ions_Move_Basic::relax_method = "cg";
+    Ions_Move_Basic::relax_method[0] = "cg";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    Ions_Move_Basic::relax_method = "cg_bfgs";
+    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
@@ -110,7 +168,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const ModuleBase::matrix f(3, 3);
     const double etot = 0.0;
     UnitCell ucell;
-    Ions_Move_Basic::relax_method = "none";
+    Ions_Move_Basic::relax_method[0] = "none";
     imm.allocate(natom);
 
     GlobalV::ofs_warning.open("log");

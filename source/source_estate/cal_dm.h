@@ -13,7 +13,7 @@ namespace elecstate
 inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<double>& wfc, std::vector<ModuleBase::matrix>& dm)
 {
     ModuleBase::TITLE("elecstate", "cal_dm");
-    ModuleBase::timer::tick("elecstate","cal_dm");
+    ModuleBase::timer::start("elecstate","cal_dm");
 
     //dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -60,7 +60,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
         psiMulPsi(wg_wfc, wfc, dm[ik]);
 #endif
     }
-    ModuleBase::timer::tick("elecstate","cal_dm");
+    ModuleBase::timer::end("elecstate","cal_dm");
 
     return;
 }
@@ -68,7 +68,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>& wfc, std::vector<ModuleBase::ComplexMatrix>& dm)
 {
     ModuleBase::TITLE("elecstate", "cal_dm");
-    ModuleBase::timer::tick("elecstate","cal_dm");
+    ModuleBase::timer::start("elecstate","cal_dm");
 
     //dm.resize(wfc.get_nk(), ParaV->ncol, ParaV->nrow);
     const int nbands_local = wfc.get_nbands();
@@ -120,7 +120,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 #endif
     }
 
-    ModuleBase::timer::tick("elecstate","cal_dm");
+    ModuleBase::timer::end("elecstate","cal_dm");
     return;
 }
 

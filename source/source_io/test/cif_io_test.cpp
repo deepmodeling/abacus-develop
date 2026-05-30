@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "source_io/cif_io.h"
+#include "source_io/module_output/cif_io.h"
 #include <cmath>
 #include <random>
 #include "source_base/formatter.h"

@@ -6,14 +6,15 @@ add_library(
     meta_lcao.cpp
     veff_lcao.cpp
     deepks_lcao.cpp
-    overlap_new.cpp
-    ekinetic_new.cpp
-    nonlocal_new.cpp
+    overlap.cpp
+    ekinetic.cpp
+    nonlocal.cpp
     td_ekinetic_lcao.cpp
     td_nonlocal_lcao.cpp
     td_pot_hybrid.cpp
     dspin_lcao.cpp
     dftu_lcao.cpp
+    operator_force_stress_utils.cpp
 )
 
 if(ENABLE_COVERAGE)

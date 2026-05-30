@@ -5,7 +5,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
@@ -30,28 +30,32 @@ template <typename FPTYPE, typename Device>
 class Onsite_Proj_tools
 {
   public:
-    Onsite_Proj_tools(const pseudopot_cell_vnl* nlpp_in,
-                      const UnitCell* ucell_in,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                      const K_Vectors* kv_in,
-                      const ModulePW::PW_Basis_K* wfc_basis_in,
-                      const Structure_Factor* sf_in,
-                      const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& ekb);
+    Onsite_Proj_tools(
+        const pseudopot_cell_vnl* nlpp_in,
+        const UnitCell* ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+        const K_Vectors* kv_in,
+        const ModulePW::PW_Basis_K* wfc_basis_in,
+        const Structure_Factor* sf_in,
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb
+    );
 
     // a more general constructor is in the following
-    Onsite_Proj_tools(const std::vector<int>& nproj,     // number of projectors for each atom type
-                      const std::vector<int>& lproj,
-                      const ModuleBase::realArray& tab,  // radials' spherical bessel transform
-                      const ModuleBase::matrix& nhtol,
-                      std::complex<FPTYPE>* vkb_buf,
-                      const UnitCell* ucell_in,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
-                      const K_Vectors* kv_in,
-                      const ModulePW::PW_Basis_K* wfc_basis_in,
-                      const Structure_Factor* sf_in,
-                      const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& ekb);
+    Onsite_Proj_tools(
+        const std::vector<int>& nproj,     // number of projectors for each atom type
+        const std::vector<int>& lproj,
+        const ModuleBase::realArray& tab,  // radials' spherical bessel transform
+        const ModuleBase::matrix& nhtol,
+        std::complex<FPTYPE>* vkb_buf,
+        const UnitCell* ucell_in,
+        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
+        const K_Vectors* kv_in,
+        const ModulePW::PW_Basis_K* wfc_basis_in,
+        const Structure_Factor* sf_in,
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb
+    );
 
     ~Onsite_Proj_tools();
 
@@ -69,23 +73,56 @@ class Onsite_Proj_tools
      */
     void cal_dbecp_f(int ik, int npm, int ipol);
 
-    void cal_force_dftu(int ik, int npm, FPTYPE* force, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
-    void cal_force_dspin(int ik, int npm, FPTYPE* force, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
-    void cal_stress_dftu(int ik, int npm, FPTYPE* stress, const int* orbital_corr, const std::complex<FPTYPE>* vu, const int size_vu, const FPTYPE* h_wg);
-    void cal_stress_dspin(int ik, int npm, FPTYPE* stress, const ModuleBase::Vector3<double>* lambda, const FPTYPE* h_wg);
+    void cal_force_dftu(
+        int ik,
+        int npm,
+        FPTYPE* force,
+        const int* orbital_corr,
+        const std::complex<FPTYPE>* vu,
+        const int size_vu,
+        const FPTYPE* h_wg
+    );
+
+    void cal_force_dspin(
+        int ik,
+        int npm,
+        FPTYPE* force,
+        const ModuleBase::Vector3<double>* lambda,
+        const FPTYPE* h_wg
+    );
+
+    // return stress(i,j) value
+    double cal_stress_dftu(
+        int ik,
+        int npm,
+        const int* orbital_corr,
+        const std::complex<FPTYPE>* vu,
+        const int size_vu,
+        const FPTYPE* h_wg
+    );
+
+    // return stress(i,j) value
+    double cal_stress_dspin(
+        int ik,
+        int npm,
+        const ModuleBase::Vector3<double>* lambda,
+        const FPTYPE* h_wg
+    );
 
 
-    std::complex<FPTYPE>* get_becp() { return becp; }
-    std::complex<FPTYPE>* get_dbecp() { return dbecp; }
+    std::complex<FPTYPE>* get_becp() const { return becp; }
+    std::complex<FPTYPE>* get_dbecp() const { return dbecp; }
 
   private:
     /**
      * @brief allocate the memory for the variables
      */
-    void allocate_memory(const ModuleBase::matrix& wg, 
-                         const ModuleBase::matrix& ekb,
-                         const std::vector<int>& nproj,
-                         const std::vector<int>& nch);
+    void allocate_memory(
+        const ModuleBase::matrix& wg,
+        const ModuleBase::matrix& ekb,
+        const std::vector<int>& nproj,
+        const std::vector<int>& nch
+    );
     /**
      * @brief delete the memory for the variables
      */
@@ -93,19 +130,19 @@ class Onsite_Proj_tools
 
   private:
     /// pointers to access the data without memory arrangement
-    const Structure_Factor* sf_;
-    const pseudopot_cell_vnl* nlpp_;
-    const UnitCell* ucell_;
+    const Structure_Factor* sf_ = nullptr;
+    const pseudopot_cell_vnl* nlpp_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
     const psi::Psi<std::complex<FPTYPE>, Device>* psi_;
-    const K_Vectors* kv_;
-    const ModulePW::PW_Basis_K* wfc_basis_;
+    const K_Vectors* kv_ = nullptr;
+    const ModulePW::PW_Basis_K* wfc_basis_ = nullptr;
 
     /// the following variables are used for the calculation
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
-    int nkb;
-    int nbands;
+    int nkb = 0;
+    int nbands = 0;
     int deeq_dims[4] = {0, 0, 0, 0};    // deeq can be something other than that in pseudopotentials
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
@@ -113,8 +150,8 @@ class Onsite_Proj_tools
 
     int max_nh = 0;
     int max_npw = 0;
-    int ntype;
-    bool nondiagonal;
+    int ntype = 0;
+    bool nondiagonal = false;
     int pre_ik_s = -1;
     int pre_ik_f = -1;
 

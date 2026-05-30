@@ -1,5 +1,6 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
+#include "mock_remake_cell.h"
 #define private public
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/lattice_change_cg.h"

@@ -4,13 +4,14 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_base/module_external/scalapack_connector.h"                   // Cpxgemr2d
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_esolver/esolver_ks_lcao_tddft.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
+#include "source_lcao/module_rt/kernels/cublasmp_context.h"
+#include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
 
 //-----------------------------------------------------------
@@ -25,64 +26,101 @@
 // Print the shape of a Tensor
 inline void print_tensor_shape(const ct::Tensor& tensor, const std::string& name)
 {
-    std::cout << "Shape of " << name << ": [";
+    GlobalV::ofs_running << "Shape of " << name << ": [";
     for (int i = 0; i < tensor.shape().ndim(); ++i)
     {
-        std::cout << tensor.shape().dim_size(i);
+        GlobalV::ofs_running << tensor.shape().dim_size(i);
         if (i < tensor.shape().ndim() - 1)
         {
-            std::cout << ", ";
+            GlobalV::ofs_running << ", ";
         }
     }
-    std::cout << "]" << std::endl;
+    GlobalV::ofs_running << "]" << std::endl;
 }
 
 // Recursive print function
+template <typename T>
+inline void print_single_element(const T& val, double threshold)
+{
+    double clean_val = (std::abs(val) < threshold) ? 0.0 : static_cast<double>(val);
+    GlobalV::ofs_running << std::fixed << std::setprecision(6) << clean_val;
+}
+inline void print_single_element(const std::complex<double>& val, double threshold)
+{
+    double re = (std::abs(val.real()) < threshold) ? 0.0 : val.real();
+    double im = (std::abs(val.imag()) < threshold) ? 0.0 : val.imag();
+    GlobalV::ofs_running << std::fixed << std::setprecision(6) << "(" << re << "," << im << ")";
+}
+
 template <typename T>
 inline void print_tensor_data_recursive(const T* data,
                                         const std::vector<int64_t>& shape,
                                         const std::vector<int64_t>& strides,
                                         int dim,
                                         std::vector<int64_t>& indices,
-                                        const std::string& name)
+                                        const std::string& name,
+                                        const double threshold = 1e-10)
 {
     if (dim == shape.size())
     {
-        // Recursion base case: print data when reaching the innermost dimension
-        std::cout << name;
+        GlobalV::ofs_running << name;
         for (size_t i = 0; i < indices.size(); ++i)
         {
-            std::cout << "[" << indices[i] << "]";
+            GlobalV::ofs_running << "[" << indices[i] << "]";
         }
-        std::cout << " = " << *data << std::endl;
+        GlobalV::ofs_running << " = ";
+
+        print_single_element(*data, threshold);
+
+        GlobalV::ofs_running << std::endl;
         return;
     }
-    // Recursively process the current dimension
+
     for (int64_t i = 0; i < shape[dim]; ++i)
     {
         indices[dim] = i;
-        print_tensor_data_recursive(data + i * strides[dim], shape, strides, dim + 1, indices, name);
+        print_tensor_data_recursive(data + i * strides[dim], shape, strides, dim + 1, indices, name, threshold);
     }
 }
 
-// Generic print function
 template <typename T>
 inline void print_tensor_data(const ct::Tensor& tensor, const std::string& name)
 {
-    const std::vector<int64_t>& shape = tensor.shape().dims();
-    const std::vector<int64_t>& strides = tensor.shape().strides();
-    const T* data = tensor.data<T>();
+    const ct::Tensor* p_tensor = &tensor;
+    ct::Tensor cpu_tensor_buffer;
+
+    if (tensor.device_type() != ct::DeviceType::CpuDevice)
+    {
+        cpu_tensor_buffer = tensor.to_device<ct::DEVICE_CPU>();
+        p_tensor = &cpu_tensor_buffer;
+    }
+
+    const std::vector<int64_t>& shape = p_tensor->shape().dims();
+    const std::vector<int64_t>& strides = p_tensor->shape().strides();
+
+    const T* data = p_tensor->data<T>();
+
     std::vector<int64_t> indices(shape.size(), 0);
     print_tensor_data_recursive(data, shape, strides, 0, indices, name);
 }
 
-// Specialization for std::complex<double>
 template <>
 inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, const std::string& name)
 {
-    const std::vector<int64_t>& shape = tensor.shape().dims();
-    const std::vector<int64_t>& strides = tensor.shape().strides();
-    const std::complex<double>* data = tensor.data<std::complex<double>>();
+    const ct::Tensor* p_tensor = &tensor;
+    ct::Tensor cpu_tensor_buffer;
+
+    if (tensor.device_type() != ct::DeviceType::CpuDevice)
+    {
+        cpu_tensor_buffer = tensor.to_device<ct::DEVICE_CPU>();
+        p_tensor = &cpu_tensor_buffer;
+    }
+
+    const std::vector<int64_t>& shape = p_tensor->shape().dims();
+    const std::vector<int64_t>& strides = p_tensor->shape().strides();
+
+    const std::complex<double>* data = p_tensor->data<std::complex<double>>();
+
     std::vector<int64_t> indices(shape.size(), 0);
     print_tensor_data_recursive(data, shape, strides, 0, indices, name);
 }
@@ -91,52 +129,6 @@ inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, co
 
 namespace module_rt
 {
-#ifdef __MPI
-//------------------------ MPI gathering and distributing functions ------------------------//
-template <typename T>
-void gatherPsi(const int myid,
-               const int root_proc,
-               T* psi_l,
-               const Parallel_Orbitals& para_orb,
-               ModuleESolver::Matrix_g<T>& psi_g)
-{
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
-    int ctxt = desc_psi[1];                  // BLACS context
-    int nrows = desc_psi[2];                 // Global matrix row number
-    int ncols = desc_psi[3];                 // Global matrix column number
-
-    if (myid == root_proc)
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
-    }
-    else
-    {
-        psi_g.p.reset(new T[nrows * ncols]); // Placeholder for non-root processes
-    }
-
-    // Set the descriptor of the global psi
-    psi_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
-    psi_g.row = nrows;
-    psi_g.col = ncols;
-
-    // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
-    Cpxgemr2d(nrows, ncols, psi_l, 1, 1, const_cast<int*>(desc_psi), psi_g.p.get(), 1, 1, psi_g.desc.get(), ctxt);
-}
-
-template <typename T>
-void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const ModuleESolver::Matrix_g<T>& psi_g)
-{
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
-    int ctxt = desc_psi[1];                  // BLACS context
-    int nrows = desc_psi[2];                 // Global matrix row number
-    int ncols = desc_psi[3];                 // Global matrix column number
-
-    // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
-    Cpxgemr2d(nrows, ncols, psi_g.p.get(), 1, 1, psi_g.desc.get(), psi_l, 1, 1, const_cast<int*>(desc_psi), ctxt);
-}
-//------------------------ MPI gathering and distributing functions ------------------------//
-#endif // __MPI
-
 template <typename Device = base_device::DEVICE_CPU>
 class Evolve_elec
 {
@@ -159,14 +151,17 @@ class Evolve_elec
                           Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
                           psi::Psi<std::complex<double>>* psi_laststep,
-                          std::complex<double>** Hk_laststep,
-                          std::complex<double>** Sk_laststep,
+                          ct::Tensor& Hk_laststep,
+                          ct::Tensor& Sk_laststep,
                           ModuleBase::matrix& ekb,
                           std::ofstream& ofs_running,
-                          const int htype,
                           const int propagator,
                           const bool use_tensor,
-                          const bool use_lapack);
+                          const bool use_lapack,
+                          module_rt::TD_MovingGauge* td_mg,
+                          const UnitCell* ucell,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                          const bool use_td_moving_gauge);
 
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     static ct::DeviceType ct_device_type;

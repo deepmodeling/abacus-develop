@@ -1,6 +1,5 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
 
 #include <base/macros/macros.h>
@@ -145,6 +144,15 @@ __launch_bounds__(1024) __global__
     }
 }
 
+template <typename T, typename Real>
+__launch_bounds__(1024) __global__
+void matrix_multiply_vector_kernel(const int m, const int n, T *a, const int lda, const Real *b, const Real alpha, T *c, const int ldc){
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if (col >= n || row >= m) return;
+    c[col * ldc + row] = a[col * lda + row] * b[col] * alpha;
+}
+
 hipblasOperation_t judge_trans_op(bool is_complex, const char& trans, const char* name)
 {
     if (trans == 'N')
@@ -159,7 +167,7 @@ hipblasOperation_t judge_trans_op(bool is_complex, const char& trans, const char
     {
         return HIPBLAS_OP_C;
     }
-    else 
+    else
     {
         ModuleBase::WARNING_QUIT(name, std::string("Unknown trans type ") + trans + std::string(" !"));
     }
@@ -179,7 +187,7 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                           const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(false, trans, "gemv_op");
-    hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
+    hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incy));
 }
 
 template <>
@@ -196,7 +204,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const cha
                                                                        const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
-    hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx));
+    hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incy));
 }
 
 template <>
@@ -213,7 +221,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
                                                                         const int& incy)
 {
     hipblasOperation_t cutrans = judge_trans_op(true, trans, "gemv_op");
-    hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incx));
+    hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incy));
 }
 
 template <>
@@ -437,7 +445,38 @@ void matrixCopy<std::complex<double>, base_device::DEVICE_GPU>::operator()(const
     hipCheckOnDebug();
 }
 
+template <>
+void matrix_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  double *a, const int &lda, const double *b, const double alpha, double *c, const int &ldc){
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_multiply_vector_kernel<double, double>), dim3(block, thread),
+        m, n, a, lda, b, alpha, c, ldc);
+    hipCheckOnDebug();
+}
 
+template <>
+void matrix_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  std::complex<float> *a, const int &lda, const float *b, const float alpha, std::complex<float> *c, const int &ldc){
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_multiply_vector_kernel<thrust::complex<float>, float>), dim3(block, thread),
+        m, n, reinterpret_cast<thrust::complex<float>*>(a), lda,
+        b, alpha, reinterpret_cast<thrust::complex<float>*>(c), ldc);
+    hipCheckOnDebug();
+}
+
+template <>
+void matrix_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int &m, const int &n,
+                  std::complex<double> *a, const int &lda, const double *b, const double alpha, std::complex<double> *c, const int &ldc)
+{
+    dim3 thread(16, 16, 1);
+    dim3 block((m + thread.x - 1) / thread.x, (n + thread.y - 1) / thread.y, 1);
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_multiply_vector_kernel<thrust::complex<double>, double>), dim3(block, thread),
+        m, n, reinterpret_cast<thrust::complex<double>*>(a), lda,
+        b, alpha, reinterpret_cast<thrust::complex<double>*>(c), ldc);
+    hipCheckOnDebug();
+}
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct matrixCopy<double, base_device::DEVICE_GPU>;

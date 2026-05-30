@@ -2,8 +2,11 @@
 #define EXX_LRI_INTERFACE_H
 
 #include "Exx_LRI.h"
+#include "source_estate/module_charge/charge_mixing.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
+#include "source_hamilt/hamilt.h"
 #include <memory>
 
 class LCAO_Matrix;
@@ -96,7 +99,8 @@ public:
     void exx_iter_finish(const K_Vectors& kv,
                          const UnitCell& ucell,
                          hamilt::Hamilt<T>& hamilt,
-                         elecstate::ElecState& elec,
+						 elecstate::ElecState& elec,
+						 elecstate::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
                          Charge_Mixing& chgmix,
                          const double& scf_ene_thr,
                          int& iter,

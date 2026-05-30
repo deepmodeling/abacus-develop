@@ -33,7 +33,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const Grid_Driver* gridD_in,
                                const TwoCenterIntegrator* intor,
                                const std::vector<double>& orb_cutoff,
-                               ModuleDFTU::DFTU* dftu_in);
+                               Plus_U* p_dftu);
     ~DFTU<OperatorLCAO<TK, TR>>();
 
     /**
@@ -51,7 +51,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
-    ModuleDFTU::DFTU* dftu = nullptr;
+    Plus_U* dftu = nullptr;
 
     hamilt::HContainer<TR>* HR = nullptr;
 

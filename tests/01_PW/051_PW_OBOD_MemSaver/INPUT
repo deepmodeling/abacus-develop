@@ -1,31 +1,31 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     nscf
+suffix            autotest
+calculation       nscf
 
-nbands			6
-symmetry		0
-pseudo_dir	    ../../PP_ORB
-read_file_dir   ./
+nbands            6
+symmetry          0
+pseudo_dir        ../../PP_ORB
+read_file_dir     ./
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_thr			1e-8
-scf_nmax		100
+ecutwfc           20
+scf_thr           1e-8
+scf_nmax          100
 
-init_chg        file
-out_band        1
-out_dos         1
+init_chg          file
+out_band          1
+out_dos           1
 
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #Parameters (4.Smearing)
-smearing_method	gauss
-smearing_sigma	0.002
+smearing_method   gauss
+smearing_sigma    0.002
 
 #Parameters (5.Mixing)
-mixing_type		plain
-mixing_beta		0.7
+mixing_type       plain
+mixing_beta       0.7
 
-mem_saver 1
+mem_saver         1

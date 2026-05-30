@@ -17,7 +17,6 @@ namespace LR
     class HamiltLR
     {
     public:
-      template <typename TGint>
       HamiltLR(std::string& xc_kernel,
                const int& nspin,
                const int& naos,
@@ -32,7 +31,6 @@ namespace LR
                std::weak_ptr<Exx_LRI<T>> exx_lri_in,
                const double& exx_alpha,
 #endif
-               TGint* gint_in,
                std::weak_ptr<PotHxcLR> pot_in,
                const K_Vectors& kv_in,
                const std::vector<Parallel_2D>& pX_in,
@@ -95,7 +93,7 @@ namespace LR
 #endif
             {
                 OperatorLRHxc<T>* lr_hxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks_in,
-                    this->DM_trans, gint_in, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
+                    this->DM_trans, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
                 this->ops->add(lr_hxc);
             }
 #ifdef __EXX

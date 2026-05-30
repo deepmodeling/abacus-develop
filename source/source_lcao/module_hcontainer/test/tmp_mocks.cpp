@@ -44,6 +44,10 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 void UnitCell::set_iat2iwt(const int& npol_in)
 {
@@ -58,7 +62,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 			this->iat2iwt[iat] = iwt;
 			iwt += atoms[it].nw * this->npol;
 			++iat;
-		}	
+		}
 	}
 	return;
 }

@@ -8,16 +8,16 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate {
 
 template <typename T, typename Device>
 ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                    Charge* chg_in,
+                                    Charge* chr_in,
                                     K_Vectors* pkv_in,
                                     UnitCell* ucell_in,
                                     pseudopot_cell_vnl* ppcell_in,
-                                    ModulePW::PW_Basis* rhodpw_in,
                                     ModulePW::PW_Basis* rhopw_in,
                                     ModulePW::PW_Basis_Big* bigpw_in)
     : basis(wfc_basis_in)
@@ -26,7 +26,7 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
     this->rhopw_smooth = rhopw_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
-    this->init_ks(chg_in, pkv_in, pkv_in->get_nks(), rhodpw_in, bigpw_in);
+    this->init_ks(chr_in, pkv_in, pkv_in->get_nks(), bigpw_in);
 }
 
 template<typename T, typename Device>
@@ -111,7 +111,7 @@ template<typename T, typename Device>
 void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::start("ElecStatePW", "psiToRho");
 
     this->init_rho_data();
 
@@ -151,7 +151,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
     }
     this->parallelK();
-    ModuleBase::timer::tick("ElecStatePW", "psiToRho");
+    ModuleBase::timer::end("ElecStatePW", "psiToRho");
 }
 
 template<typename T, typename Device>

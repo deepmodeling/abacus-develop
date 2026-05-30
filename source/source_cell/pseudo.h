@@ -1,8 +1,10 @@
 #ifndef PSEUDO_H
 #define PSEUDO_H
 
+#include <cstdint>
 #include "source_base/global_function.h"
-#include "source_io/output.h"
+#include "source_base/matrix.h"
+#include "source_base/realarray.h"
 
 //-----------------------------------------
 // read in pseudopotentials
@@ -81,10 +83,10 @@ class pseudo
      */
     void check_betar();
 
-    void print_pseudo_h(std::ofstream& ofs);
-    void print_pseudo_atom(std::ofstream& ofs);
-    void print_pseudo_vl(std::ofstream& ofs);
-    void print_pseudo(std::ofstream& ofs);
+    void print_pseudo_h(std::ofstream& ofs) const;
+    void print_pseudo_atom(std::ofstream& ofs) const;
+    void print_pseudo_vl(std::ofstream& ofs) const;
+    void print_pseudo(std::ofstream& ofs) const;
 };
 
 #endif // PSEUDO_H

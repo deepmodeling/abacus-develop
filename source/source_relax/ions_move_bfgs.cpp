@@ -144,7 +144,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
         std::ifstream hess_file("hess_in");
         if(hess_file)
         {
-            int rank1,rank2;
+            int rank1 = 0, rank2 = 0;
             hess_file >> rank1 >> rank2;
             if(rank1 == dim && rank2 == dim)
             {

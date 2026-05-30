@@ -3,7 +3,7 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/rhog_io.h"
+#include "source_io/module_chgpot/rhog_io.h"
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"

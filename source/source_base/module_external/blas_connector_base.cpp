@@ -13,13 +13,13 @@ namespace BlasUtils{
 
 	void createGpuBlasHandle(){
 		if (cublas_handle == nullptr) {
-			cublasErrcheck(cublasCreate(&cublas_handle));
+			CHECK_CUBLAS(cublasCreate(&cublas_handle));
 		}
 	}
 
 	void destoryBLAShandle(){
 		if (cublas_handle != nullptr) {
-			cublasErrcheck(cublasDestroy(cublas_handle));
+			CHECK_CUBLAS(cublasDestroy(cublas_handle));
 			cublas_handle = nullptr;
 		}
 	}

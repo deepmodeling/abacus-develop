@@ -59,7 +59,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"cusolver", "CU"},
            {"bpcg", "BP"},
            {"pexsi", "PE"},
-           {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+           {"cusolvermp", "CM"},
+           {"sdft", "CT"}}; // CT = Chebyshev Trace, for pure SDFT (nbands=0) where no H diagonalization is performed
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
     std::vector<std::string> td_fmt
@@ -146,7 +147,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
     {
         buf += FmtCore::format(td_fmt[i].c_str(), values[i]);
     }
-    std::cout << buf;
+    std::cout << buf << std::flush;
 }
 
 
@@ -192,28 +193,52 @@ void print_etot(const Magnetism& magnet,
 	if( (iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax )
 	{
         int n_order = std::max(0, Occupy::gaussian_type);
+      
+        //! Kohn-Sham functional energy
         titles.push_back("E_KohnSham");
         energies_Ry.push_back(elec.f_en.etot);
+
+        //! Kohn-Sham energy with sigma->0
         titles.push_back("E_KS(sigma->0)");
         energies_Ry.push_back(elec.f_en.etot - elec.f_en.demet / (2 + n_order));
+
+        //! Harris functional energy
         titles.push_back("E_Harris");
         energies_Ry.push_back(elec.f_en.etot_harris);
+
+        //! band energy
         titles.push_back("E_band");
         energies_Ry.push_back(elec.f_en.eband);
+
+        //! one-electron energy
         titles.push_back("E_one_elec");
         energies_Ry.push_back(elec.f_en.eband + elec.f_en.deband);
+
+        //! Hartree energy
         titles.push_back("E_Hartree");
         energies_Ry.push_back(elec.f_en.hartree_energy);
+
+        //! exchange-correlation energy
         titles.push_back("E_xc");
         energies_Ry.push_back(elec.f_en.etxc - elec.f_en.etxcc);
+
+        //! Ewald energy
         titles.push_back("E_Ewald");
         energies_Ry.push_back(elec.f_en.ewald_energy);
+
+        //! entropy energy
         titles.push_back("E_entropy(-TS)");
         energies_Ry.push_back(elec.f_en.demet);
+
+        //! correction energy for scf
         titles.push_back("E_descf");
         energies_Ry.push_back(elec.f_en.descf);
-        titles.push_back("E_LocalPP");
+
+        //! local potential energy
+        titles.push_back("E_localpp");
         energies_Ry.push_back(elec.f_en.e_local_pp);
+
+        //! vdw energy
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
@@ -225,8 +250,19 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(elec.f_en.evdw);
         }
+
+        // mohan add 20251108
+		if (PARAM.inp.dft_plus_u)
+		{
+            titles.push_back("E_plusU");
+            energies_Ry.push_back(elec.f_en.edftu);
+		}
+
+        //! hybrid functional energy
         titles.push_back("E_exx");
         energies_Ry.push_back(elec.f_en.exx);
+
+        //! solvation energy
         if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
@@ -234,22 +270,32 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(elec.f_en.esol_cav);
         }
+
+        //! electric field energy
         if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
+ 
+        //! gate energy
         if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
+        //! deepks energy
 #ifdef __MLALGO
         if (PARAM.inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
+        }
+        if (PARAM.inp.ml_exx)
+        {
+            titles.push_back("E_ML-EXX");
+            energies_Ry.push_back(elec.f_en.ml_exx);
         }
 #endif
     }
@@ -276,20 +322,17 @@ void print_etot(const Magnetism& magnet,
     }
 
     // print out the band gap if needed
-    if (PARAM.inp.out_bandgap)
+    if (!PARAM.globalv.two_fermi)
     {
-        if (!PARAM.globalv.two_fermi)
-        {
-            titles.push_back("E_bandgap");
-            energies_Ry.push_back(elec.bandgap);
-        }
-        else
-        {
-            titles.push_back("E_bandgap_up");
-            energies_Ry.push_back(elec.bandgap_up);
-            titles.push_back("E_bandgap_dw");
-            energies_Ry.push_back(elec.bandgap_dw);
-        }
+        titles.push_back("E_gap(k)"); // gap of given k-points
+        energies_Ry.push_back(elec.bandgap);
+    }
+    else
+    {
+        titles.push_back("E_gap_up(k)");
+        energies_Ry.push_back(elec.bandgap_up);
+        titles.push_back("E_gap_dw(k)");
+        energies_Ry.push_back(elec.bandgap_dw);
     }
     energies_eV.resize(energies_Ry.size());
     std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
@@ -332,7 +375,12 @@ void print_etot(const Magnetism& magnet,
         {
             drho.push_back(scf_thr_kin);
         }
-        elecstate::print_scf_iterinfo(PARAM.inp.ks_solver,
+        // Pure SDFT (nbands=0) uses Chebyshev trace (CT) since no H diagonalization is performed.
+        // Mixed SDFT (nbands>0) still diagonalizes KS orbitals, so use the actual ks_solver label.
+        const std::string iter_label = (PARAM.inp.esolver_type == "sdft" && PARAM.inp.nbands == 0)
+                                           ? "sdft"
+                                           : PARAM.inp.ks_solver;
+        elecstate::print_scf_iterinfo(iter_label,
                                       iter,
                                       6,
                                       mag,

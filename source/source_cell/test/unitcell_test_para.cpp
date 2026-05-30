@@ -1,3 +1,6 @@
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -249,12 +252,17 @@ TEST_F(UcellTest, ReadPseudo)
         ifs.open("./H/H.NONLOCAL");
         EXPECT_TRUE(ifs.good());
         ifs.close();
-        std::string command1 = "test -d C && rm -rf C";
-        std::string command2 = "test -d H && rm -rf H";
-        auto error1 = std::system(command1.c_str());
-        EXPECT_EQ(error1, 0);
-        auto error2 = std::system(command2.c_str());
-        EXPECT_EQ(error2, 0);
+        
+        struct stat st;
+        int ret1 = stat("C", &st);
+        EXPECT_EQ(ret1, 0);
+        EXPECT_TRUE(S_ISDIR(st.st_mode));
+        rmdir("C");
+        
+        int ret2 = stat("H", &st);
+        EXPECT_EQ(ret2, 0);
+        EXPECT_TRUE(S_ISDIR(st.st_mode));
+        rmdir("H");
     }
     // read_cell_pseudopots
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);

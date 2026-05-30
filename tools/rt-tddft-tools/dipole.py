@@ -154,9 +154,9 @@ class Absorption(Dipole, Efield):
 
 
 if __name__ == "__main__":
-    dipolefile = './SPIN1_DIPOLE'
+    dipolefile = './dipole_s1.txt'
     dipole = Dipole(dipolefile, dt=0.0024)
-    Efile=[[],[],["efield_0.dat"]]
+    Efile=[[],[],["efield_0.txt"]]
     Abs = Absorption(dipolefile, Efile, dt=0.0024)
 
     import matplotlib.pyplot as plt

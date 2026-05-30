@@ -9,7 +9,14 @@ void elecstate::Potential::cal_v_eff(Charge const*, UnitCell const*, ModuleBase:
 void elecstate::Potential::cal_fixed_v(double*){}
 
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl*,const UnitCell*){}
+hamilt::HamiltPW<T, Device>::HamiltPW(
+		elecstate::Potential* pot_in, 
+		ModulePW::PW_Basis_K* wfc_basis, 
+		K_Vectors* p_kv, 
+		pseudopot_cell_vnl* ppcell,
+        Plus_U* p_dftu, // mohan add 20251108
+		const UnitCell* ucell){}
+
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){
     delete this->ops;

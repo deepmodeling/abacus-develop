@@ -16,7 +16,7 @@ namespace elecstate
 double fenergy::calculate_etot()
 {
     etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+            + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot;
 }
 
@@ -24,7 +24,7 @@ double fenergy::calculate_etot()
 double fenergy::calculate_harris()
 {
     etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
-                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+                    + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon + ml_exx;
     return etot_harris;
 }
 
@@ -33,7 +33,7 @@ void fenergy::clear_all()
 {
     etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
         = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon
-        = 0.0;
+        = ml_exx = 0.0;
 }
 
 /// @brief print all energies
@@ -49,6 +49,7 @@ void fenergy::print_all() const
     std::cout << " entropy(-TS)=" << demet << std::endl;
     std::cout << " descf=" << descf << std::endl;
     std::cout << " exx=" << exx << std::endl;
+    std::cout << " ml_exx=" << ml_exx << std::endl;
     std::cout << " efiled=" << efield << std::endl;
     std::cout << " gatefiled=" << gatefield << std::endl;
     std::cout << " evdw=" << evdw << std::endl;
@@ -61,10 +62,10 @@ void fenergy::print_all() const
     std::cout << " total= " << etot << std::endl;
 }
 
-/// @brief set efermi of a specific spin
+/// @brief set Efermi of a specific spin
 /// @param is SPIN
 /// @param ef_in fermi(is)
-void efermi::set_efval(const int& is, const double& ef_in)
+void Efermi::set_efval(const int& is, const double& ef_in)
 {
     if (!two_efermi)
     {
@@ -88,7 +89,7 @@ void efermi::set_efval(const int& is, const double& ef_in)
 /// @brief get the value of fermi of a specific spin
 /// @param is SPIN
 /// @return value of fermi(is)
-double efermi::get_efval(const int& is) const
+double Efermi::get_efval(const int& is) const
 {
     if (!two_efermi)
     {
@@ -111,7 +112,7 @@ double efermi::get_efval(const int& is) const
 
 /// @brief get all fermi energies for all spins
 /// @return all fermi energies for all spins
-std::vector<double> efermi::get_all_ef() const
+std::vector<double> Efermi::get_all_ef() const
 {
     if (two_efermi)
     {

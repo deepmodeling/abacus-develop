@@ -612,7 +612,6 @@ suffix              $element-$rcut-$BL
 stru_file           $name.stru
 pseudo_dir          $Pseudo_dir
 kpoint_file         KPOINTS
-wannier_card        INPUTw
 calculation         scf
 ntype               1
 nspin               1

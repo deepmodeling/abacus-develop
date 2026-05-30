@@ -52,7 +52,7 @@ class Mixing_Data
         ++this->ndim_history;
         FPTYPE* FP_startdata = static_cast<FPTYPE*>(this->data) + this->start * this->length;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (std::size_t i = 0; i < length; ++i)
         {

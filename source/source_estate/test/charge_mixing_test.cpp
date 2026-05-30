@@ -619,7 +619,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     // kerker
     CMtest.mixing_gg0 = 1.0;
     CMtest.Kerker_screen_recip(drhog);
-    double gg0 = std::pow(0.529177, 2);
+    double gg0 = std::pow(ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
         double gg = this->pw_basis.gg[i];
@@ -650,7 +650,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     // mixing_gg0 = 1.0, mixing_gg0_mag = 0.0
     CMtest.mixing_gg0 = 1.0;
     CMtest.Kerker_screen_recip(drhog);
-    gg0 = std::pow(0.529177, 2);
+    gg0 = std::pow(ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
         double gg = this->pw_basis.gg[i];
@@ -683,7 +683,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     // mixing_gg0 = 1.0, mixing_gg0_mag = 0.0
     CMtest.mixing_gg0 = 1.0;
     CMtest.Kerker_screen_recip(drhog);
-    gg0 = std::pow(0.529177, 2);
+    gg0 = std::pow(ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
         double gg = this->pw_basis.gg[i];
@@ -701,8 +701,8 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     CMtest.mixing_gg0 = 1.0;
     CMtest.mixing_gg0_mag = 2.0;
     CMtest.Kerker_screen_recip(drhog);
-    double gg1 = std::pow(1.0 * 0.529177, 2);
-    double gg2 = std::pow(2.0 * 0.529177, 2);
+    double gg1 = std::pow(1.0 * ModuleBase::BOHR_TO_A, 2);
+    double gg2 = std::pow(2.0 * ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
         double gg = this->pw_basis.gg[i];
@@ -782,7 +782,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
     CMtest.mixing_gg0 = 1.0;
     PARAM.input.mixing_gg0_mag = 0.0;
     CMtest.Kerker_screen_recip(drhog);
-    const double gg0 = std::pow(0.529177, 2);
+    const double gg0 = std::pow(ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
         std::complex<double> ration = drhog[i] / drhog[i+pw_basis.npw];

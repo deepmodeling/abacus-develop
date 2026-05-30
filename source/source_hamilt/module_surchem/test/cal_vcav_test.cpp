@@ -253,12 +253,14 @@ TEST_F(cal_vcav_test, cal_vcav)
     int nspin = 2;
     solvent_model.Vcav.create(nspin, nrxx);
 
-    solvent_model.cal_vcav(ucell, &pwtest, PS_TOTN, nspin);
+    ModuleBase::matrix v_res(nspin, nrxx);
+    ModuleBase::GlobalFunc::ZEROS(v_res.c, nspin * nrxx);
+    solvent_model.cal_vcav(ucell, &pwtest, PS_TOTN, nspin, v_res);
 
-    EXPECT_NEAR(solvent_model.Vcav(0, 0), 4.8556305312, 1e-10);
-    EXPECT_NEAR(solvent_model.Vcav(0, 1), -2.1006480538, 1e-10);
-    EXPECT_NEAR(solvent_model.Vcav(1, 0), 4.8556305312, 1e-10);
-    EXPECT_NEAR(solvent_model.Vcav(1, 1), -2.1006480538, 1e-10);
+    EXPECT_NEAR(v_res(0, 0), 4.8556305312, 1e-10);
+    EXPECT_NEAR(v_res(0, 1), -2.1006480538, 1e-10);
+    EXPECT_NEAR(v_res(1, 0), 4.8556305312, 1e-10);
+    EXPECT_NEAR(v_res(1, 1), -2.1006480538, 1e-10);
 
     delete[] PS_TOTN;
 }

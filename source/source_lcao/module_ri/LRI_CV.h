@@ -9,7 +9,7 @@
 #include "Matrix_Orbs11.h"
 #include "Matrix_Orbs21.h"
 #include "source_basis/module_ao/ORB_atomic_lm.h"
-#include "source_base/abfs-vector3_order.h"
+#include "abfs-vector3_order.h"
 #include "source_base/element_basis_index.h"
 
 #include <RI/global/Tensor.h>
@@ -40,8 +40,7 @@ public:
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
 		const double &kmesh_times,
-		ORB_gaunt_table& MGT,
-        const bool& init_MGT,
+		std::shared_ptr<ORB_gaunt_table> MGT,
         const bool& init_C);
 	inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 	cal_Vs(

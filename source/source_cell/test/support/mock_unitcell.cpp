@@ -17,6 +17,10 @@ UnitCell::~UnitCell() {
         delete[] atoms;
     }
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 
@@ -36,4 +40,4 @@ void UnitCell::setup(const std::string& latname_in,
 
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
 
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) {}
+void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) const {}

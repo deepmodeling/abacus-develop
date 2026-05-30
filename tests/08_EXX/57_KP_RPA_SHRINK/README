@@ -1,0 +1,1 @@
+Check k-point shrink RPA output files (`shrink_sinvS_*`, `Cs_*`, `coulomb_*`) for a compact two-atom H `1x1x2` solid case.

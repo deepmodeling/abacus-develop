@@ -45,11 +45,11 @@ class Opt_CG
                        int& ifPD        // if postive definit
     );
 
-    double get_residual()
+    double get_residual() const
     {
         return sqrt(this->gg_);
     };
-    int get_iter()
+    int get_iter() const
     {
         return this->iter_;
     }

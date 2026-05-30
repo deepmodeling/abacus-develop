@@ -7,9 +7,9 @@
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_io/cal_r_overlap_R.h"
-#include "source_io/print_info.h"
-#include "source_io/write_HS_R.h"
+#include "source_io/module_hs/cal_r_overlap_R.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_hs/write_HS_R.h"
 
 namespace ModuleESolver
 {
@@ -27,7 +27,7 @@ ESolver_GetS::~ESolver_GetS()
 void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_GetS", "before_all_runners");
-    ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
+    ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
@@ -43,7 +43,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-    ModuleIO::setup_parameters(ucell, this->kv);
+    ModuleIO::print_parameters(ucell, this->kv, inp);
 
     // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
@@ -53,9 +53,6 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
                                                                          &(this->kv),
                                                                          this->kv.get_nks(),
-                                                                         nullptr, // mohan add 2024-04-01
-                                                                         nullptr, // mohan add 2024-04-01
-                                                                         this->pw_rho,
                                                                          this->pw_big);
     }
 
@@ -72,13 +69,13 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
                                  two_center_bundle_,
                                  orb_);
 
-    ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
+    ModuleBase::timer::end("ESolver_GetS", "before_all_runners");
 }
 
 void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
-    ModuleBase::timer::tick("ESolver_GetS", "runner");
+    ModuleBase::timer::start("ESolver_GetS", "runner");
 
     // (1) Find adjacent atoms for each atom.
     double search_radius = -1.0;
@@ -111,8 +108,9 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
                                                                                      orb_.cutoffs());
-            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
-                ->contributeHR();
+            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+            auto* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(hamilt_ptr->ops);
+            ops_ptr->contributeHR();
         }
         else
         {
@@ -122,22 +120,25 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
                                                                                   orb_.cutoffs());
-            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+            auto* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(hamilt_ptr->ops);
+            ops_ptr->contributeHR();
         }
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
 
-    ModuleIO::output_SR(pv, gd, this->p_hamilt, fn);
+    auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
 
-    if (PARAM.inp.out_mat_r)
+    if (PARAM.inp.out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb_);
         r_matrix.out_rR(ucell, gd, istep);
     }
 
-    if (PARAM.inp.out_mat_ds)
+    if (PARAM.inp.out_mat_ds[0])
     {
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         //! Print out sparse matrix
@@ -151,7 +152,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              kv);
     }
 
-    ModuleBase::timer::tick("ESolver_GetS", "runner");
+    ModuleBase::timer::end("ESolver_GetS", "runner");
 }
 
 void ESolver_GetS::after_all_runners(UnitCell& ucell) {};

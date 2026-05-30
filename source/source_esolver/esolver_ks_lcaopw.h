@@ -36,7 +36,6 @@ namespace ModuleESolver
                                            const double ethr) override;
 
         virtual void allocate_hamilt(const UnitCell& ucell) override;
-        virtual void deallocate_hamilt() override;
         
         psi::Psi<T, base_device::DEVICE_CPU>* psi_local = nullptr; ///< psi for all local NAOs
 

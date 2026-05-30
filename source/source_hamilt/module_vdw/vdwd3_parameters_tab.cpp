@@ -11,7 +11,7 @@ namespace vdw
 
 void Vdwd3Parameters::init_C6()
 {
-    std::vector<double> C6_tmp = {
+    static const double C6_tmp[] = {
       0.30267000E+1,0.100E+1,0.100E+1,0.91180000E+0,0.91180000E+0
      ,0.20835000E+1,0.200E+1,0.100E+1,0.00000000E+0,0.91180000E+0
      ,0.15583000E+1,0.200E+1,0.200E+1,0.00000000E+0,0.00000000E+0
@@ -32475,7 +32475,7 @@ void Vdwd3Parameters::init_rcov()
 
 void Vdwd3Parameters::init_r0ab()
 {
-      std::vector<double> r = {
+      static const double r[] = {
       2.1823,  1.8547,  1.7347,  2.9086,  2.5732,  3.4956,  2.3550,  
       2.5095,  2.9802,  3.0982,  2.5141,  2.3917,  2.9977,  2.9484, 
       3.2160,  2.4492,  2.2527,  3.1933,  3.0214,  2.9531,  2.9103,  

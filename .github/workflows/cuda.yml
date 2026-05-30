@@ -21,7 +21,7 @@ jobs:
       
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -30,9 +30,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ccache
 
-      - name: Build
+      - name: Configure & Build
         run: |
           nvidia-smi
+          rm -rf build
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build

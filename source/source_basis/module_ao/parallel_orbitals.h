@@ -30,8 +30,8 @@ public:
     /// on all adjacent atoms-pairs(2D division)
     ///---------------------------------------
     int nnr=1;
-	int *nlocdim;
-	int *nlocstart;
+	int * nlocdim = nullptr;
+	int * nlocstart = nullptr;
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands
@@ -49,7 +49,7 @@ public:
         const int& lld);
 #endif
 
-    int* loc_sizes;
+    int* loc_sizes = nullptr;
     int loc_size;
 
     int get_wfc_global_nbands () const;

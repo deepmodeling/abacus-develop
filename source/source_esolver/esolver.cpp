@@ -6,19 +6,19 @@
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
+#include "esolver_double_xc.h"
 #include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
 #include "source_lcao/module_lr/esolver_lrtd_lcao.h"
-extern "C"
-{
 #include "source_base/module_external/blacs_connector.h"
-}
 #endif
 #include "esolver_dp.h"
+#include "esolver_nep.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
+#include "esolver_of_tddft.h"
 #include "source_io/module_parameter/md_parameter.h"
 
 #include <stdexcept>
@@ -38,6 +38,10 @@ std::string determine_type()
         else if (PARAM.inp.esolver_type == "ofdft")
         {
             esolver_type = "ofdft";
+        }
+        else if (PARAM.inp.esolver_type == "tdofdft")
+        {
+            esolver_type = "tdofdft";
         }
         else if (PARAM.inp.esolver_type == "ksdft")
         {
@@ -91,6 +95,10 @@ std::string determine_type()
     {
         esolver_type = "dp_pot";
     }
+    else if (PARAM.inp.esolver_type == "nep")
+    {
+        esolver_type = "nep_pot";
+    }
     else if (esolver_type == "none")
     {
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
@@ -107,14 +115,8 @@ std::string determine_type()
             c = std::toupper(c);
         }
     }
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
-                  << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
-    }
-
-    GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl; 
+    base_device::information::output_device_info(std::cout, PARAM.inp.device);
+    base_device::information::output_device_info(GlobalV::ofs_running, PARAM.inp.device);
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
@@ -201,26 +203,45 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
                 return new ESolver_GetS();
             }
         }
-        if (PARAM.globalv.gamma_only_local)
+        else if (PARAM.inp.deepks_out_base != "none")
         {
-            return new ESolver_KS_LCAO<double, double>();
+            if (PARAM.globalv.gamma_only_local)
+            {
+                return new ESolver_DoubleXC<double, double>();
+            }
+            else if (PARAM.inp.nspin < 4)
+            {
+                return new ESolver_DoubleXC<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
+            }
         }
-        else if (PARAM.inp.nspin < 4)
+        else if (PARAM.inp.dm_to_rho)
         {
-            if (PARAM.inp.dm_to_rho)
+            if (PARAM.globalv.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "dm_to_rho is not implemented for gamma_only");
+            }
+            else if (PARAM.inp.nspin < 4)
             {
                 return new ESolver_DM2rho<std::complex<double>, double>();
             }
             else
             {
-                return new ESolver_KS_LCAO<std::complex<double>, double>();
+                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
             }
         }
         else
         {
-            if (PARAM.inp.dm_to_rho)
+            if (PARAM.globalv.gamma_only_local)
             {
-                return new ESolver_DM2rho<std::complex<double>, std::complex<double>>();
+                return new ESolver_KS_LCAO<double, double>();
+            }
+            else if (PARAM.inp.nspin < 4)
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
             }
             else
             {
@@ -287,29 +308,33 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         // of LR-TDDFT is implemented.
         std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
         // initialize the 2nd ESolver_LR at the temporary pointer
-        ModuleESolver::ESolver* p_esolver_lr = nullptr;
-		if (PARAM.globalv.gamma_only_local)
-		{
-			p_esolver_lr = new LR::ESolver_LR<double, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
-        else
-		{
-			p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-					std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-					inp,
-					ucell);
-		}
-        // clean the 1st ESolver_KS and swap the pointer
-        ModuleESolver::clean_esolver(p_esolver, false); // do not call Cblacs_exit, remain it for the 2nd ESolver
+	ModuleESolver::ESolver* p_esolver_lr = nullptr;
+	if (PARAM.globalv.gamma_only_local)
+	{
+		p_esolver_lr = new LR::ESolver_LR<double, double>(
+				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
+				inp,
+				ucell);
+	}
+	else
+	{
+		p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
+				inp,
+				ucell);
+	}
+	// clean the 1st ESolver_KS and swap the pointer
+	delete p_esolver;
         return p_esolver_lr;
     }
 #endif
     else if (esolver_type == "ofdft")
     {
         return new ESolver_OF();
+    }
+    else if (esolver_type == "tdofdft")
+    {
+        return new ESolver_OF_TDDFT();
     }
     else if (esolver_type == "lj_pot")
     {
@@ -319,24 +344,13 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     {
         return new ESolver_DP(PARAM.mdp.pot_file);
     }
+    else if (esolver_type == "nep_pot")
+    {
+        return new ESolver_NEP(PARAM.mdp.pot_file);
+    }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
 }
 
-void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit)
-{
-// Zhang Xiaoyang modified in 2024/7/6:
-// Note: because of the init method of serial lcao hsolver
-// it needs no release step for it, or this [delete] will cause Segmentation Fault
-// Probably it will be modified later.
-#ifdef __MPI
-    delete pesolver;
-#ifdef __LCAO
-    if (lcao_cblacs_exit)
-    {
-        Cblacs_exit(1);
-    }
-#endif
-#endif
-}
+
 } // namespace ModuleESolver

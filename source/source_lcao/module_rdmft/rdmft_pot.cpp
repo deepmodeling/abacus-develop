@@ -12,8 +12,8 @@
 #include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
-#include "source_lcao/module_operator_lcao/ekinetic_new.h"
-#include "source_lcao/module_operator_lcao/nonlocal_new.h"
+#include "source_lcao/module_operator_lcao/ekinetic.h"
+#include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 
 namespace rdmft
@@ -51,7 +51,7 @@ void RDMFT<TK, TR>::cal_V_TV()
 {
     HR_TV->set_zero();
 
-    V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
+    V_ekinetic_potential = new hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                                  kv->kvec_d,
                                                                                  HR_TV,
                                                                                  this->ucell,
@@ -59,7 +59,7 @@ void RDMFT<TK, TR>::cal_V_TV()
                                                                                  this->gd,
                                                                                  two_center_bundle->kinetic_orb.get());
 
-    V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
+    V_nonlocal = new hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                        kv->kvec_d,
                                                                        HR_TV,
                                                                        this->ucell,
@@ -69,8 +69,7 @@ void RDMFT<TK, TR>::cal_V_TV()
 
     if( PARAM.inp.gamma_only )
     {
-        V_local = new rdmft::Veff_rdmft<TK, TR>(GG,
-                                                hsk_TV,
+        V_local = new rdmft::Veff_rdmft<TK, TR>(hsk_TV,
                                                 kv->kvec_d,
                                                 this->pelec->pot,
                                                 HR_TV,
@@ -86,8 +85,7 @@ void RDMFT<TK, TR>::cal_V_TV()
     }
     else
     {
-        V_local = new rdmft::Veff_rdmft<TK, TR>(GK,
-                                                hsk_TV,
+        V_local = new rdmft::Veff_rdmft<TK, TR>(hsk_TV,
                                                 kv->kvec_d,
                                                 this->pelec->pot,
                                                 HR_TV,
@@ -117,8 +115,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
 
     if( PARAM.inp.gamma_only )
     {
-        V_hartree = new rdmft::Veff_rdmft<TK, TR>(GG,
-                                                  hsk_hartree,
+        V_hartree = new rdmft::Veff_rdmft<TK, TR>(hsk_hartree,
                                                   kv->kvec_d,
                                                   this->pelec->pot,
                                                   HR_hartree,
@@ -135,8 +132,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
     else
     {
         // this can be optimized, use potHartree.update_from_charge()
-        V_hartree = new rdmft::Veff_rdmft<TK, TR>(GK,
-                                                  hsk_hartree,
+        V_hartree = new rdmft::Veff_rdmft<TK, TR>(hsk_hartree,
                                                   kv->kvec_d,
                                                   this->pelec->pot,
                                                   HR_hartree,
@@ -197,8 +193,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
         if( PARAM.inp.gamma_only )
         {
             // this can be optimized, use potXC.update_from_charge()
-            V_dft_XC = new rdmft::Veff_rdmft<TK, TR>(GG,
-                                                     hsk_dft_XC,
+            V_dft_XC = new rdmft::Veff_rdmft<TK, TR>(hsk_dft_XC,
                                                      kv->kvec_d,
                                                      this->pelec->pot,
                                                      HR_dft_XC,
@@ -217,8 +212,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
         else
         {   
             // this can be optimized, use potXC.update_from_charge()
-            V_dft_XC = new rdmft::Veff_rdmft<TK, TR>(GK,
-                                                     hsk_dft_XC,
+            V_dft_XC = new rdmft::Veff_rdmft<TK, TR>(hsk_dft_XC,
                                                      kv->kvec_d,
                                                      this->pelec->pot,
                                                      HR_dft_XC,

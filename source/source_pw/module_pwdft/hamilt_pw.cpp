@@ -3,16 +3,15 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_base/parallel_reduce.h"
 
-#include "operator_pw/veff_pw.h"
-#include "operator_pw/ekinetic_pw.h"
-#include "operator_pw/meta_pw.h"
-#include "operator_pw/nonlocal_pw.h"
-#include "operator_pw/onsite_proj_pw.h"
-#include "operator_pw/op_exx_pw.h"
-
-
+#include "op_pw_veff.h"
+#include "op_pw_ekin.h"
+#include "op_pw_meta.h"
+#include "op_pw_nl.h"
+#include "op_pw_proj.h"
+#include "op_pw_exx.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace hamilt
 {
@@ -22,6 +21,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               ModulePW::PW_Basis_K* wfc_basis,
                               K_Vectors* pkv,
                               pseudopot_cell_vnl* nlpp,
+                              Plus_U* p_dftu, // mohan add 2025-11-06
                               const UnitCell* ucell): ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -73,6 +73,14 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         {
             pot_register_in.push_back("gatefield");
         }
+        if (PARAM.inp.ml_exx) // sunliang
+        {
+            pot_register_in.push_back("ml_exx");
+        }
+        // DFT-1/2
+        if (PARAM.inp.dfthalf_type == 1) {
+            pot_register_in.push_back("dfthalf");
+        }
         //only Potential is not empty, Veff and Meta are available
         if(pot_register_in.size()>0)
         {
@@ -116,7 +124,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     if(PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
     {
         Operator<T, Device>* onsite_proj
-            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, 
+                    PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
         this->ops->add(onsite_proj);
     }
     if (GlobalC::exx_info.info_global.cal_exx)
@@ -264,7 +273,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           psi_in,
                           inc,
                           &zero,
@@ -280,7 +289,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           npw,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           psi_in,
                           nrow,
                           &zero,
@@ -352,7 +361,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           ps,
                           inc,
                           &one,
@@ -368,7 +377,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           this->ppcell->nkb,
                           &one,
                           this->vkb,
-                          this->ppcell->vkb.nc,
+                          this->ppcell->vkbnc,
                           ps,
                           this->ppcell->nkb,
                           &one,

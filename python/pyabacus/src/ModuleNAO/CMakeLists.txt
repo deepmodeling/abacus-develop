@@ -1,4 +1,4 @@
-# add nao shared library  
+# add nao shared library
 list(APPEND _naos
     ${NAO_PATH}/atomic_radials.cpp
     ${NAO_PATH}/beta_radials.cpp
@@ -19,6 +19,7 @@ list(APPEND _naos
     # ${ABACUS_SOURCE_DIR}/source_psi/kernels/psi_memory_op.cpp
     ${ABACUS_SOURCE_DIR}/source_base/module_device/memory_op.cpp
     ${ABACUS_SOURCE_DIR}/source_base/module_device/device.cpp
+    ${ABACUS_SOURCE_DIR}/source_base/module_device/device_helpers.cpp
 )
 add_library(naopack SHARED 
     ${_naos}

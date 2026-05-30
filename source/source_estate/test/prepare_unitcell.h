@@ -82,7 +82,7 @@ public:
 		}
 		//lattice info
 		ucell->lat0 = this->lat0;
-		ucell->lat0_angstrom = ucell->lat0 * 0.529177;
+		ucell->lat0_angstrom = ucell->lat0 * ModuleBase::BOHR_TO_A;
 		ucell->tpiba = ModuleBase::TWO_PI/ucell->lat0;
 		ucell->tpiba2 = ucell->tpiba * ucell->tpiba;
 		ucell->latvec.e11 = this->latvec[0];

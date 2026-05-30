@@ -7,21 +7,28 @@
 #include "matrixblock.h"
 #include "source_psi/psi.h"
 #include "operator.h"
+#include "hamilt_base.h"
 
 namespace hamilt
 {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class Hamilt
+class Hamilt : public HamiltBase
 {
   public:
     virtual ~Hamilt(){};
 
     /// for target K point, update consequence of hPsi() and matrix()
-    virtual void updateHk(const int ik){return;}
+    void updateHk(const int ik) override { return; }
 
     /// refresh status of Hamiltonian, for example, refresh H(R) and S(R) in LCAO case
-    virtual void refresh(void){return;}
+    void refresh(bool yes = true) override { return; }
+
+    /// get the class name
+    std::string get_classname() const override { return classname; }
+
+    /// get the operator chain
+    void* get_ops() override { return static_cast<void*>(ops); }
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
 	virtual void hPsi(
@@ -54,8 +61,6 @@ class Hamilt
     virtual std::vector<T> matrix() { return std::vector<T>(); }
 
     std::string classname = "none";
-
-    int non_first_scf=0;
 
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;

@@ -5,7 +5,6 @@
 #include <memory>
 #include "source_base/macros.h"   // GetRealType
 #include "source_hamilt/hamilt.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
@@ -22,7 +21,7 @@ class DiagoPexsi
   public:
     DiagoPexsi(const Parallel_Orbitals* ParaV_in);
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
     std::vector<T*> EDM;
     double totalEnergyH;

@@ -443,7 +443,7 @@ void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const 
 }
 
 //Mock function h_psi
-#include "source_pw/module_pwdft/operator_pw/operator_pw.h"
+#include "source_pw/module_pwdft/op_pw.h"
 template<typename T>
 class OperatorMock : public hamilt::Operator<T>
 {
@@ -572,7 +572,13 @@ template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<double>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv, pseudopot_cell_vnl*,const UnitCell*)
+template<> hamilt::HamiltPW<double>::HamiltPW(
+		elecstate::Potential* pot_in, 
+		ModulePW::PW_Basis_K* wfc_basis, 
+		K_Vectors* pkv, 
+		pseudopot_cell_vnl* ppcell,
+		Plus_U* p_dftu, // mohan add 20251108
+		const UnitCell* ucell)
 {
     this->ops = new OperatorMock<double>;
 }
@@ -587,7 +593,13 @@ template<> void hamilt::HamiltPW<std::complex<double>>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv, pseudopot_cell_vnl*,const UnitCell*)
+template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(
+		elecstate::Potential* pot_in, 
+		ModulePW::PW_Basis_K* wfc_basis, 
+		K_Vectors* pkv, 
+		pseudopot_cell_vnl* ppcell,
+		Plus_U* p_dftu, // mohan add 20251108
+		const UnitCell* ucell)
 {
     this->ops = new OperatorMock<std::complex<double>>;
 }
@@ -602,7 +614,13 @@ template<> void hamilt::HamiltPW<std::complex<float>>::updateHk(const int ik)
     return;
 }
 
-template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv, pseudopot_cell_vnl*,const UnitCell*)
+template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(
+		elecstate::Potential* pot_in, 
+		ModulePW::PW_Basis_K* wfc_basis, 
+		K_Vectors* pkv, 
+		pseudopot_cell_vnl* ppcell,
+		Plus_U* p_dftu, // mohan add 20251108
+		const UnitCell* ucell)
 {
     this->ops = new OperatorMock<std::complex<float>>;
 }

@@ -1,7 +1,8 @@
 #include "spin_constrain.h"
 
 template <>
-void spinconstrain::SpinConstrain<double>::cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda)
+void spinconstrain::SpinConstrain<double>::cal_mw_from_lambda(int i_step, 
+		const ModuleBase::Vector3<double>* delta_lambda)
 {
 }
 
@@ -11,7 +12,8 @@ void spinconstrain::SpinConstrain<double>::cal_mi_lcao(const int& step, bool pri
 }
 
 template <>
-void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step, bool rerun)
+void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step, 
+		bool rerun)
 {
 }
 

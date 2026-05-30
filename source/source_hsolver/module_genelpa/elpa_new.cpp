@@ -57,7 +57,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     else
         kernel_id = read_complex_kernel();
     // cout<<"kernel id is inited as "<<kernel_id<<"\n";
-    int error;
+    int error = 0;
 
     static int total_handle = 0;
 
@@ -139,7 +139,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
 
     int error;
     static std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
-    static int total_handle;
+    static int total_handle = 0;
 
 #ifdef _OPENMP
     int num_threads = omp_get_max_threads();
@@ -270,7 +270,7 @@ int ELPA_Solver::read_cpuflag()
 
 int ELPA_Solver::read_real_kernel()
 {
-    int kernel_id;
+    int kernel_id = 0;
 
     if (const char* env = getenv("ELPA_DEFAULT_real_kernel"))
     {
@@ -454,7 +454,7 @@ int ELPA_Solver::read_complex_kernel()
 int ELPA_Solver::allocate_work()
 {
     unsigned long nloc = static_cast<unsigned long>(narows) * nacols; // local size
-    unsigned long maxloc; // maximum local size
+    unsigned long maxloc = 0; // maximum local size
     MPI_Allreduce(&nloc, &maxloc, 1, MPI_UNSIGNED_LONG, MPI_MAX, comm);
     maxloc = nloc;
 
@@ -467,7 +467,7 @@ int ELPA_Solver::allocate_work()
 
 void ELPA_Solver::timer(int myid, const char function[], const char step[], double& t0)
 {
-    double t1;
+    double t1 = 0.0;
     if (t0 < 0) // t0 < 0 means this is the init call before the function
     {
         t0 = MPI_Wtime();

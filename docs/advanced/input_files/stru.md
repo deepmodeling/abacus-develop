@@ -99,6 +99,7 @@ information that comes below.
   2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
   3. [DOJO](http://www.pseudo-dojo.org/).
   4. [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary).
+  5. For additional pseudopotential options and to view the basic benchmark test results of these pseudopotentials in ABACUS, please refer to the [Benchmarks website](https://kirk0830.github.io/ABACUS-Pseudopot-Nao-Square/pseudopotential/pseudopotential.html)
 
 ### NUMERICAL_ORBITAL
 
@@ -110,6 +111,9 @@ information that comes below.
   ‘Si_gga_8au_60Ry_2s2p1d.orb’ is name of the numerical orbital file. Again here the path is not specified, which means that this file is located in the work directory.
 
   Numerical atomic orbitals may be downloaded from the [official website](http://abacus.ustc.edu.cn/pseudo/list.htm).
+  Recommendation for Pseudopotential and Orbital Sets
+For general usage requirements, the APNSv1.0 pseudopotential and orbital set is recommended. You can access it via [AIS square website](https://www.aissquare.com/datasets/detail?pageType=datasets&name=ABACUS-APNS-PPORBs-v1%253Apre-release&id=326)
+
 ### LATTICE_CONSTANT
 
   The lattice constant of the system in unit of Bohr.
@@ -248,7 +252,7 @@ information that comes below.
   Several other parameters could be defined after the atom position using key words :
 
   - `m` or NO key word: three numbers, which take value in 0 or 1, control how the atom move in geometry relaxation calculations. In example below, the numbers `0 0 0` following the coordinates of the first atom means this atom are *not allowed* to move in all three directions, and the numbers `1 1 1` following the coordinates of the second atom means this atom *can* move in all three directions.
-  - `v` or `vel` or `velocity`: set the three components of initial velocity of atoms in geometry relaxation calculations(e. g. `v 1.0 1.0 1.0`).
+  - `v` or `vel` or `velocity`: set the three components of initial velocity of atoms, used only for restarting MD calculations (e.g., `v 1.0 1.0 1.0`).
   - `mag` or `magmom` : set the start magnetization for each atom. In colinear case only one number should be given. In non-colinear case one have two choice:either set one number for the norm of magnetization here and specify two polar angle later(e. g. see below), or set three number for the xyz commponent of magnetization here (e. g. `mag 0.0 0.0 1.0`). Note that if this parameter is set, the initial magnetic moment setting in the second line will be overrided.
     - `angle1`: in non-colinear case, specify the angle between z-axis and real spin, in angle measure instead of radian measure
     - `angle2`: in non-colinear case, specify angle between x-axis and real spin in projection in xy-plane , in angle measure instead of radian measure
@@ -306,3 +310,34 @@ information that comes below.
       0.5 0.5 0.5 m 1 1 1 mag 1 1 1
       ```
       However, this autoset will not be vaild once `STRU` specalize a finite magnetic for any single atom.
+
+  - `lambda`: Lagrange multiplier vector for spin constraint method. Can specify one value (z-component) or three values for x, y, z components (e.g., `lambda 0.5` or `lambda 0.1 0.2 0.3`). Values are in eV and will be converted to Rydberg internally. Used with spin-constrained DFT (enable with `sc_mag_switch` in INPUT file).
+
+  - `sc`: set the spin constraint target magnetization for each atom. Can specify one value (z-component) or three values for x, y, z components (e.g., `sc 1.0` or `sc 0.5 0.5 1.0`). Used with spin-constrained DFT (enable with `sc_mag_switch` in INPUT file).
+
+### Important Notes for ATOMIC_POSITIONS
+
+1. **Coordinate System Selection**: Choose the appropriate coordinate system based on your needs:
+   - Use `Direct` for fractional coordinates (most common for periodic systems)
+   - Use `Cartesian_angstrom` when working with molecular structures or experimental data
+   - Use centered coordinate systems (`Cartesian_angstrom_center_xy/xz/yz/xyz`) for surface or slab calculations where you want to center the structure
+
+2. **Magnetization Settings**:
+   - For collinear calculations (`nspin=2`), only specify one magnetization value per atom
+   - For non-collinear calculations (`nspin=4`), you can specify:
+     - Three components directly: `mag 1.0 0.0 0.0` (mx, my, mz)
+     - Magnitude with angles: `mag 1.0 angle1 90 angle2 0` (magnitude, polar angle, azimuthal angle)
+   - If no magnetization is specified for any atom, ABACUS will automatically set default values (1.0 for nspin=2, or (1,1,1) for nspin=4)
+
+3. **Movement Constraints**:
+   - Use `m 1 1 1` to allow the atom to move freely in all directions during relaxation
+   - Use `m 0 0 0` to fix the atom completely
+   - Use `m 1 0 1` to allow movement only in x and z directions (useful for constraining surface atoms)
+
+4. **Keyword Order**: The optional keywords (m, v, mag, angle1, angle2, lambda, sc) can appear in any order after the atomic coordinates, but each keyword should only appear once per atom.
+
+5. **Common Mistakes to Avoid**:
+   - Don't mix Direct and Cartesian coordinates in the same STRU file
+   - Ensure the number of atoms specified matches the actual number of coordinate lines provided
+   - When using vector magnetization (`mag x y z`), don't also specify angles for the same atom
+   - Remember that angles are in degrees, not radians

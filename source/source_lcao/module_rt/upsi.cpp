@@ -2,7 +2,9 @@
 
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/timer.h"
 
+#include <cassert>
 #include <complex>
 #include <iostream>
 
@@ -93,74 +95,126 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  const ct::Tensor& psi_k_laststep,
                  ct::Tensor& psi_k,
                  std::ofstream& ofs_running,
-                 const int print_matrix)
+                 const int print_matrix,
+                 CublasMpResources& cublas_res)
 {
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nband,
-                             nlocal,
-                             1.0,
-                             U_operator.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc,
-                             psi_k_laststep.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             psi_k.data<std::complex<double>>(),
-                             1,
-                             1,
-                             pv->desc_wfc);
-
-    if (print_matrix)
+#ifdef __CUBLASMP
+    // 1. Resource validation
+    if (!cublas_res.is_initialized || cublas_res.cublasmp_grid == nullptr)
     {
-        ofs_running << std::endl;
-        ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
-        {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
-                double aa = psi_k.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
-        {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
-            {
-                double aa = psi_k_laststep.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_laststep.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
+        return;
     }
+
+    assert(U_operator.device_type() == ct::DeviceType::GpuDevice);
+    assert(psi_k_laststep.device_type() == ct::DeviceType::GpuDevice);
+    assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
+
+    // 2. Extract device pointers
+    void* d_U = static_cast<void*>(const_cast<std::complex<double>*>(U_operator.data<std::complex<double>>()));
+    void* d_Psi_old
+        = static_cast<void*>(const_cast<std::complex<double>*>(psi_k_laststep.data<std::complex<double>>()));
+    void* d_Psi_k = static_cast<void*>(psi_k.data<std::complex<double>>());
+
+    // 3. Create matrix descriptor for U operator (N x N)
+    int64_t m_u = pv->desc[2];
+    int64_t n_u = pv->desc[3];
+    int64_t mb_u = pv->desc[4];
+    int64_t nb_u = pv->desc[5];
+    int64_t lld_u = pv->desc[8];
+
+    cublasMpMatrixDescriptor_t desc_U;
+    cublasMpMatrixDescriptorCreate(m_u, n_u, mb_u, nb_u, 0, 0, lld_u, CUDA_C_64F, cublas_res.cublasmp_grid, &desc_U);
+
+    // 4. Create matrix descriptor for Psi (N x nband)
+    int64_t m_psi = pv->desc_wfc[2];
+    int64_t n_psi = pv->desc_wfc[3];
+    int64_t mb_psi = pv->desc_wfc[4];
+    int64_t nb_psi = pv->desc_wfc[5];
+    int64_t lld_psi = pv->desc_wfc[8];
+
+    cublasMpMatrixDescriptor_t desc_Psi;
+    cublasMpMatrixDescriptorCreate(m_psi,
+                                   n_psi,
+                                   mb_psi,
+                                   nb_psi,
+                                   0,
+                                   0,
+                                   lld_psi,
+                                   CUDA_C_64F,
+                                   cublas_res.cublasmp_grid,
+                                   &desc_Psi);
+
+    // 5. Query workspace size for GEMM: Psi_k = 1.0 * U * Psi_old + 0.0 * Psi_k
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta = {0.0, 0.0};
+    size_t ws_gemm_dev = 0;
+    size_t ws_gemm_host = 0;
+
+    cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
+                            CUBLAS_OP_N,
+                            CUBLAS_OP_N,
+                            m_u,
+                            n_psi,
+                            n_u,
+                            &alpha,
+                            d_U,
+                            1,
+                            1,
+                            desc_U,
+                            d_Psi_old,
+                            1,
+                            1,
+                            desc_Psi,
+                            &beta,
+                            d_Psi_k,
+                            1,
+                            1,
+                            desc_Psi,
+                            CUBLAS_COMPUTE_64F,
+                            &ws_gemm_dev,
+                            &ws_gemm_host);
+
+    void* d_work = nullptr;
+    void* h_work = nullptr;
+
+    cudaMallocAsync(&d_work, ws_gemm_dev, cublas_res.stream);
+    h_work = malloc(ws_gemm_host);
+
+    // 6. Execute GEMM
+    cublasMpGemm(cublas_res.cublasmp_handle,
+                 CUBLAS_OP_N,
+                 CUBLAS_OP_N,
+                 m_u,
+                 n_psi,
+                 n_u,
+                 &alpha,
+                 d_U,
+                 1,
+                 1,
+                 desc_U,
+                 d_Psi_old,
+                 1,
+                 1,
+                 desc_Psi,
+                 &beta,
+                 d_Psi_k,
+                 1,
+                 1,
+                 desc_Psi,
+                 CUBLAS_COMPUTE_64F,
+                 d_work,
+                 ws_gemm_dev,
+                 h_work,
+                 ws_gemm_host);
+
+    // 7. Synchronize and clean up resources
+    cudaStreamSynchronize(cublas_res.stream);
+
+    cublasMpMatrixDescriptorDestroy(desc_U);
+    cublasMpMatrixDescriptorDestroy(desc_Psi);
+    cudaFreeAsync(d_work, cublas_res.stream);
+    free(h_work);
+#endif // __CUBLASMP
 }
 
 template <typename Device>
@@ -195,56 +249,6 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                                                               &beta,
                                                               psi_k.data<std::complex<double>>(),
                                                               nlocal);
-
-    if (print_matrix)
-    {
-        ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
-        ct::Tensor psi_k_laststep_cpu = psi_k_laststep.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << std::endl;
-        ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = psi_k_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-        ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nlocal; j++)
-            {
-                double aa = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < 1e-8)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < 1e-8)
-                {
-                    bb = 0.0;
-                }
-                ofs_running << aa << "+" << bb << "i ";
-            }
-            ofs_running << std::endl;
-        }
-        ofs_running << std::endl;
-    }
 }
 
 // Explicit instantiation of template functions

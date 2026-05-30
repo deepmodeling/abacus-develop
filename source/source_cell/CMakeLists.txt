@@ -1,5 +1,6 @@
 add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
+add_subdirectory(module_neighlist)
 
 add_library(
     cell
@@ -15,6 +16,7 @@ add_library(
     read_pp_vwr.cpp
     unitcell.cpp
     read_atoms.cpp
+    read_atoms_helper.cpp
     setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp
@@ -26,6 +28,8 @@ add_library(
     print_cell.cpp
     read_atom_species.cpp
     k_vector_utils.cpp
+    sep.cpp
+    sep_cell.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -1,0 +1,34 @@
+#ifndef READ_WFC_PW_H
+#define READ_WFC_PW_H
+
+#include "source_base/complexmatrix.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+
+#include <string>
+
+namespace ModuleIO
+{
+
+/**
+ * @brief read wave functions from binary file
+ *
+ * @param filename filename containing wave functions
+ * @param pw_wfc wave function FFT grids
+ * @param ik k index
+ * @param ikstot total index of k points
+ * @param nkstot total number of k points
+ * @param wfc wave functions
+ */
+void read_wfc_pw(const std::string& filedir,
+		const ModulePW::PW_Basis_K* pw_wfc,
+		const int rank_in_pool,
+		const int nproc_in_pool,
+		const int nbands,
+		const int npol,
+		const int& ik,
+		const int& ikstot,
+		const int& nkstot,
+		ModuleBase::ComplexMatrix& wfc);
+} // namespace ModuleIO
+
+#endif

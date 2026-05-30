@@ -96,8 +96,18 @@ execute_process(
 set(TARGET_PACK pyabacus)
 set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
 
+# Option to build the driver module (requires full ABACUS library)
+option(BUILD_PYABACUS_DRIVER "Build PyABACUS driver module" OFF)
+
 # add subdirectories for submodules
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleBase)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleNAO)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleESolver)
+
+# Conditionally add driver module
+if(BUILD_PYABACUS_DRIVER)
+    message(STATUS "Building PyABACUS driver module")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleDriver)
+endif()
 

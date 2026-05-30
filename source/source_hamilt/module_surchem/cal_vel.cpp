@@ -1,4 +1,5 @@
 #include "source_base/timer.h"
+#include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
@@ -54,14 +55,17 @@ void eps_pot(const double* PS_TOTN_real,
     delete[] phisq;
 }
 
-ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
-                                    const ModulePW::PW_Basis* rho_basis,
-                                    std::complex<double>* TOTN,
-                                    std::complex<double>* PS_TOTN,
-                                    int nspin)
+//The interface is changed to use an explicit output parameter to
+//clarify lifetime management and avoid hidden allocations.
+void surchem::cal_vel(const UnitCell& cell,
+                      const ModulePW::PW_Basis* rho_basis,
+                      std::complex<double>* TOTN,
+                      std::complex<double>* PS_TOTN,
+                      int nspin,
+                      ModuleBase::matrix& v)
 {
     ModuleBase::TITLE("surchem", "cal_vel");
-    ModuleBase::timer::tick("surchem", "cal_vel");
+    ModuleBase::timer::start("surchem", "cal_vel");
 
     rho_basis->recip2real(TOTN, TOTN_real);
 
@@ -134,6 +138,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
         for (int ir = 0; ir < rho_basis->nrxx; ir++)
         {
             Vel(0, ir) += tmp_Vel[ir];
+            v(0, ir) += Vel(0, ir);
         }
     }
     else
@@ -143,6 +148,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
             for (int ir = 0; ir < rho_basis->nrxx; ir++)
             {
                 Vel(is, ir) += tmp_Vel[ir];
+                v(is, ir) += Vel(is, ir);
             }
         }
     }
@@ -157,6 +163,6 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     delete[] phi_tilda_R;
     delete[] phi_tilda_R0;
 
-    ModuleBase::timer::tick("surchem", "cal_vel");
-    return Vel;
+    ModuleBase::timer::end("surchem", "cal_vel");
+    return;
 }

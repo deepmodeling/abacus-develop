@@ -21,7 +21,7 @@ class Matrix_Wrapper
 public:
 	int nr;
 	int nc;
-	double *c;
+	double * c = nullptr;
 	bool flag_delete_c;
 
 	Matrix_Wrapper(): nr(0), nc(0), c(nullptr), flag_delete_c(false){}

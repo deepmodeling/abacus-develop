@@ -35,7 +35,7 @@ void heapAjust(double *r, int *ind, int s, int m)
 
 void heapsort(const int n, double *r, int *ind)
 {
-    ModuleBase::timer::tick("mymath", "heapsort");
+    ModuleBase::timer::start("mymath", "heapsort");
     int i = 0, ic = 0;
     double rc = 0.0;
 
@@ -62,7 +62,7 @@ void heapsort(const int n, double *r, int *ind)
         ind[i] = ic;
         heapAjust(r, ind, 0, i - 1);
     }
-    ModuleBase::timer::tick("mymath", "heapsort");
+    ModuleBase::timer::end("mymath", "heapsort");
     return;
 }
 

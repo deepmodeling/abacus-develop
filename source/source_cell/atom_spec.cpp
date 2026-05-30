@@ -1,5 +1,6 @@
 #include "atom_spec.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_output/output.h"
 #include <cstdlib>
 
 Atom::Atom()
@@ -101,6 +102,7 @@ void Atom::bcast_atom()
             this->tau.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
             this->dis.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
             this->taud.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+            this->boundary_shift.resize(na, ModuleBase::Vector3<int>(0, 0, 0));
             this->vel.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
             this->mag.resize(na, 0);
             this->angle1.resize(na, 0);

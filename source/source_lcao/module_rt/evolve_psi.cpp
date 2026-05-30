@@ -7,10 +7,9 @@
 #include "solve_propagation.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
+#include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_pw/module_pwdft/global.h"
 #include "upsi.h"
 
 #include <complex>
@@ -25,17 +24,15 @@ void evolve_psi(const int nband,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
+                std::complex<double>* P_k,
+                const bool use_td_moving_gauge,
                 double* ekb,
-                int htype,
                 int propagator,
                 std::ofstream& ofs_running,
                 const int print_matrix)
 {
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    // ofs_running << " Evolving electronic wave functions begins" << std::endl;
-
+    ModuleBase::TITLE("module_rt", "evolve_psi");
     time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -63,7 +60,7 @@ void evolve_psi(const int nband,
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
     /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (propagator != 2)
     {
         half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
@@ -91,7 +88,14 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
+        if (use_td_moving_gauge)
+        {
+            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, P_k, psi_k_laststep, psi_k);
+        }
+        else
+        {
         solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+        }
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -113,12 +117,10 @@ void evolve_psi(const int nband,
     delete[] Hold;
     delete[] U_operator;
 
-#endif
+#endif // __MPI
 
     time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " Evolving electronic wave functions ends" << std::endl;
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
@@ -133,12 +135,15 @@ void evolve_psi_tensor(const int nband,
                        ct::Tensor& H_laststep,
                        ct::Tensor& S_laststep,
                        ct::Tensor& ekb,
-                       int htype,
                        int propagator,
                        std::ofstream& ofs_running,
                        const int print_matrix,
-                       const bool use_lapack)
+                       const bool use_lapack,
+                       CublasMpResources& cublas_res)
 {
+    ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
+    time_t time_start = time(nullptr);
+
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -148,96 +153,114 @@ void evolve_psi_tensor(const int nband,
         = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Initialize cuBLAS & cuSOLVER handle
-    ct::kernels::createGpuSolverHandle();
-    ct::kernels::createGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Initialize cuBLAS & cuSOLVER handle
+        ct::kernels::createGpuSolverHandle();
+        ct::kernels::createGpuBlasHandle();
+    }
 #endif // __CUDA
 
-    // ofs_running << " evolve_psi_tensor::start " << std::endl;
-
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(nullptr);
-    // ofs_running << " Start Time : " << ctime(&time_start);
-
 #ifdef __MPI
-
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
-    // Create Tensor objects for temporary data and sync from host to device
-    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
-    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
-    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
-    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+    int myid = 0;
+    int num_procs = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    const int root_proc = 0;
+
+    std::complex<double>* h_src = nullptr;
+    std::complex<double>* s_src = nullptr;
+
+    module_rt::Matrix_g<std::complex<double>> h_mat_g, s_mat_g;
 
     if (use_lapack)
     {
-        // Need to gather H and S matrix to root process here
-        int myid = 0;
-        int num_procs = 1;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-        MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-
-        ModuleESolver::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
-
-        // Collect H matrix
-        ModuleESolver::gatherMatrix(myid, 0, h_mat, h_mat_g);
-        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
-        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
-
-        // Collect S matrix
-        ModuleESolver::gatherMatrix(myid, 0, s_mat, s_mat_g);
-        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat_g.p.get(), len_HS);
+        if (num_procs == 1)
+        {
+            h_src = h_mat.p;
+            s_src = s_mat.p;
+        }
+        else
+        {
+            module_rt::gatherMatrix(myid, 0, h_mat, h_mat_g);
+            module_rt::gatherMatrix(myid, 0, s_mat, s_mat_g);
+            if (myid == root_proc)
+            {
+                h_src = h_mat_g.p.get();
+                s_src = s_mat_g.p.get();
+            }
+        }
     }
     else
     {
-        // Original code
-        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat.p, len_HS);
-        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat.p, len_HS);
-        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat.p, len_HS);
+        h_src = h_mat.p;
+        s_src = s_mat.p;
+    }
+
+    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
+
+    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+
+    if (s_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
+        {
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
+        }
+    }
+
+    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+
+    if (h_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
+        {
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_src, len_HS);
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
+        }
+    }
+
+    // (1) Compute H(t+dt/2)
+    if (propagator != 2)
+    {
+        if (!use_lapack)
+        {
+            half_Hmatrix_tensor(pv,
+                                nband,
+                                nlocal,
+                                Htmp,
+                                Stmp,
+                                H_laststep,
+                                S_laststep,
+                                ofs_running,
+                                print_matrix,
+                                cublas_res);
+        }
+        else if (myid == root_proc)
+        {
+            half_Hmatrix_tensor_lapack<Device>(pv,
+                                               nband,
+                                               nlocal,
+                                               Htmp,
+                                               Stmp,
+                                               H_laststep,
+                                               S_laststep,
+                                               ofs_running,
+                                               print_matrix);
+        }
     }
 
     ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
     U_operator.zero();
 
-    int myid = 0;
-    int root_proc = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-
-    // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute H(t+dt/2)
-    /// @input H_laststep, Htmp, print_matrix
-    /// @output Htmp
-    if (htype == 1 && propagator != 2)
-    {
-        if (!use_lapack)
-        {
-            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
-        }
-        else
-        {
-            if (myid == root_proc)
-            {
-                half_Hmatrix_tensor_lapack<Device>(pv,
-                                                   nband,
-                                                   nlocal,
-                                                   Htmp,
-                                                   Stmp,
-                                                   H_laststep,
-                                                   S_laststep,
-                                                   ofs_running,
-                                                   print_matrix);
-            }
-        }
-    }
-
-    // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute U_operator
-    /// @input Stmp, Htmp, print_matrix
-    /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+    // (2) Compute U_operator
+    Propagator prop(propagator, pv, PARAM.inp.td_dt);
     prop.compute_propagator_tensor<Device>(nlocal,
                                            Stmp,
                                            Htmp,
@@ -245,71 +268,64 @@ void evolve_psi_tensor(const int nband,
                                            U_operator,
                                            ofs_running,
                                            print_matrix,
-                                           use_lapack);
+                                           use_lapack,
+                                           cublas_res);
 
-    // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief apply U_operator to the wave function of the previous step for new wave function
-    /// @input U_operator, psi_k_laststep, print_matrix
-    /// @output psi_k
+    // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)
     {
-        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix, cublas_res);
     }
-    else
+    else if (myid == root_proc)
     {
-        if (myid == root_proc)
+        upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+    }
+
+    // (4) Normalize psi_k
+    if (!use_lapack)
+    {
+        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix, cublas_res);
+    }
+    else if (myid == root_proc)
+    {
+        norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+    }
+
+    // (5) Compute ekb
+    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+
+    // Resync H matrix
+    if (h_src != nullptr)
+    {
+        if (!use_lapack || myid == root_proc)
         {
-            upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+            ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
+            syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_src, len_HS);
+            ModuleBase::timer::end("TD_Efficiency", "host_device_comm");
         }
     }
 
-    // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief normalize psi_k
-    /// @input Stmp, psi_not_norm, psi_k, print_matrix
-    /// @output psi_k
     if (!use_lapack)
     {
-        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, cublas_res);
     }
-    else
+    else if (myid == root_proc)
     {
-        if (myid == root_proc)
-        {
-            norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
-        }
+        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
     }
-
-    // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute ekb
-    /// @input Htmp, psi_k
-    /// @output ekb
-    if (!use_lapack)
-    {
-        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
-    }
-    else
-    {
-        if (myid == root_proc)
-        {
-            compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
-        }
-    }
-
 #endif // __MPI
 
-    time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    // ofs_running << " evolve_psi_tensor::end " << std::endl;
-
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    // Destroy cuBLAS & cuSOLVER handle
-    ct::kernels::destroyGpuSolverHandle();
-    ct::kernels::destroyGpuBlasHandle();
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        // Destroy cuBLAS & cuSOLVER handle
+        ct::kernels::destroyGpuSolverHandle();
+        ct::kernels::destroyGpuBlasHandle();
+    }
 #endif // __CUDA
+
+    time_t time_end = time(nullptr);
+    ModuleBase::GlobalFunc::OUT_TIME("evolve_psi", time_start, time_end);
 
     return;
 }
@@ -324,11 +340,11 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
@@ -340,11 +356,11 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          ct::Tensor& H_laststep,
                                                          ct::Tensor& S_laststep,
                                                          ct::Tensor& ekb,
-                                                         int htype,
                                                          int propagator,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
-                                                         const bool use_lapack);
+                                                         const bool use_lapack,
+                                                         CublasMpResources& cublas_res);
 #endif // __CUDA
 
 } // namespace module_rt

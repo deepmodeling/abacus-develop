@@ -19,9 +19,9 @@ extern std::map<int, elpa_t> NEW_ELPA_HANDLE_POOL;
 
 int ELPA_Solver::eigenvector(std::complex<double>* A, double* EigenValue, std::complex<double>* EigenVector)
 {
-    int info;
-    int allinfo;
-    double t;
+    int info = 0;
+    int allinfo = 0;
+    double t = 0.0;
 
     if((loglevel>0 && myid==0) || loglevel>1)
     {
@@ -42,7 +42,7 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
                                          double* EigenValue, std::complex<double>* EigenVector)
 {
     int info, allinfo;
-    double t;
+    double t = 0.0;
 
     if((loglevel>0 && myid==0) || loglevel>1)
     {
@@ -164,7 +164,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
 {
     int info=0;
     int allinfo=0;
-    double t;
+    double t = 0.0;
 
     // first try cholesky decomposing
     if(nFull<CHOLESKY_CRITICAL_SIZE) // use pdpotrf for small matrix
@@ -316,7 +316,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
 
 int ELPA_Solver::composeEigenVector(int DecomposedState, std::complex<double>* B, std::complex<double>* EigenVector)
 {
-    double t;
+    double t = 0.0;
     if(DecomposedState==1 || DecomposedState==2)
     {
         // transform the eigenvectors to original general equation, let U^-1*q, and put to q

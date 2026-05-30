@@ -3,12 +3,6 @@
 #include <cuda.h>
 #include <complex>
 
-#if CUDA_VERSION < 12090
-#include "nvToolsExt.h"
-#else
-#include "nvtx3/nvToolsExt.h"
-#endif
-
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 
@@ -39,7 +33,7 @@ class Diag_Cusolver_gvd{
     double *d_A = nullptr;
     double *d_B = nullptr;
     double *d_work = nullptr;
-    
+
     cuDoubleComplex *d_A2 = nullptr;
     cuDoubleComplex *d_B2 = nullptr;
     cuDoubleComplex *d_work2 = nullptr;
@@ -54,7 +48,7 @@ class Diag_Cusolver_gvd{
 //  - init_double : initializing relevant double type data structures and gpu apis' handle and memory
 //  - init_complex : initializing relevant complex type data structures and gpu apis' handle and memory
 //      Input Parameters
-//          N: the dimension of the matrix 
+//          N: the dimension of the matrix
     void init_double(int N);
     void init_complex(int N);
 
@@ -70,17 +64,17 @@ public:
 //  - Dngvd_double : dense double type matrix
 //  - Dngvd_complex : dense complex type matrix
 //      Input Parameters
-//          N: the number of rows of the matrix 
-//          M: the number of cols of the matrix  
-//          A: the hermitian matrix A in A x=lambda B (column major) 
-//          B: the SPD matrix B in A x=lambda B (column major) 
+//          N: the number of rows of the matrix
+//          M: the number of cols of the matrix
+//          A: the hermitian matrix A in A x=lambda B (column major)
+//          B: the SPD matrix B in A x=lambda B (column major)
 //      Output Parameter
 //          W: generalized eigenvalues
 //          V: generalized eigenvectors (column major)
 
     void Dngvd_double(int N, int M, double *A, double *B, double *W, double *V);
     void Dngvd_complex(int N, int M, std::complex<double> *A, std::complex<double> *B, double *W, std::complex<double> *V);
-    
+
     void Dngvd(int N, int M, double *A, double *B, double *W, double *V)
     {
         return Dngvd_double(N, M, A, B, W, V);

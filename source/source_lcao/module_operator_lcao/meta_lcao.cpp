@@ -1,7 +1,6 @@
 #include "meta_lcao.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/global.h"
 
 namespace hamilt
 {

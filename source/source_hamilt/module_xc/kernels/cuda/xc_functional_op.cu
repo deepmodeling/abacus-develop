@@ -59,7 +59,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     xc_functional_grad_wfc<Real><<<block, THREADS_PER_BLOCK>>>(
         ik, pol, npw, npwx, tpiba, gcar, kvec_c, rhog_, porter_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename T, typename Device>
@@ -75,7 +75,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     xc_functional_grad_wfc<<<block, THREADS_PER_BLOCK>>>(
         ipol, nrxx, porter_, grad_);
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct xc_functional_grad_wfc_op<std::complex<float>, base_device::DEVICE_GPU>;

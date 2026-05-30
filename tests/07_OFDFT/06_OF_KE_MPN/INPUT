@@ -1,25 +1,25 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     scf
-esolver_type    ofdft
+suffix            autotest
+calculation       scf
+esolver_type      ofdft
 
-symmetry		1
-pseudo_dir      ../../PP_ORB/
-pseudo_rcut     16
+symmetry          1
+pseudo_dir        ../../PP_ORB/
+pseudo_rcut       16
 
 #Parameters (2.Iteration)
-ecutwfc			20
-scf_nmax		100
-dft_functional  XC_GGA_X_PBE+XC_GGA_C_PBE
+ecutwfc           20
+scf_nmax          100
+dft_functional    XC_GGA_X_PBE+XC_GGA_C_PBE
 
 
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #OFDFT
-of_kinetic      mpn
-of_ml_device    cpu
+of_kinetic        mpn
+of_ml_device      cpu
 
 #of_ml_chi_xi      1
 #of_ml_chi_p       0.2

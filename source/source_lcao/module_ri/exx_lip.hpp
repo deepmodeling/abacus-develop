@@ -11,7 +11,6 @@
 #include "source_base/vector3.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_cell/klist.h"
 #include "source_lcao/wavefunc_in_pw.h"
 #include "source_base/module_external/lapack_connector.h"
@@ -20,18 +19,23 @@
 #include "source_estate/elecstate.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_psi/psi_init.h"
+#include "source_psi/psi_initializer.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 #include <limits>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::cal_exx()
 {
     ModuleBase::TITLE("Exx_Lip", "cal_exx");
-    ModuleBase::timer::tick("Exx_Lip", "cal_exx");
+    ModuleBase::timer::start("Exx_Lip", "cal_exx");
 
     this->wf_wg_cal();
     this->psi_cal();
@@ -76,7 +80,7 @@ void Exx_Lip<T, Device>::cal_exx()
     }
     this->exx_energy_cal();
 
-    ModuleBase::timer::tick("Exx_Lip", "cal_exx");
+    ModuleBase::timer::end("Exx_Lip", "cal_exx");
 }
 
 template <typename T, typename Device>
@@ -93,7 +97,7 @@ Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
     : info(info_in)
 {
     ModuleBase::TITLE("Exx_Lip", "init");
-    ModuleBase::timer::tick("Exx_Lip", "init");
+    ModuleBase::timer::start("Exx_Lip", "init");
 
     this->k_pack = new k_package;
     this->k_pack->kv_ptr = kv_ptr_in;
@@ -165,7 +169,7 @@ Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
             { this->exx_matrix[ik][iw_l].resize(PARAM.globalv.nlocal); }
     }
 
-    ModuleBase::timer::tick("Exx_Lip", "init");
+    ModuleBase::timer::end("Exx_Lip", "init");
 }
 
 template <typename T, typename Device>
@@ -192,7 +196,7 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::wf_wg_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
-    ModuleBase::timer::tick("Exx_Lip", "wf_wg_cal");
+    ModuleBase::timer::start("Exx_Lip", "wf_wg_cal");
     if (PARAM.inp.nspin == 1) {
         for (int ik = 0; ik < this->k_pack->kv_ptr->get_nks(); ++ik) {
             for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
@@ -203,13 +207,13 @@ void Exx_Lip<T, Device>::wf_wg_cal()
             for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
                 this->k_pack->wf_wg(ik, ib) = this->k_pack->pelec->wg(ik, ib);
     } } }
-    ModuleBase::timer::tick("Exx_Lip", "wf_wg_cal");
+    ModuleBase::timer::end("Exx_Lip", "wf_wg_cal");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::phi_cal(k_package* kq_pack, const int ikq)
 {
-    ModuleBase::timer::tick("Exx_Lip", "phi_cal");
+    ModuleBase::timer::start("Exx_Lip", "phi_cal");
     std::vector<T> porter (this->wfc_basis->nrxx);
     for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
     {
@@ -232,14 +236,14 @@ void Exx_Lip<T, Device>::phi_cal(k_package* kq_pack, const int ikq)
             }
         }
     }
-    ModuleBase::timer::tick("Exx_Lip", "phi_cal");
+    ModuleBase::timer::end("Exx_Lip", "phi_cal");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::psi_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "psi_cal");
-    ModuleBase::timer::tick("Exx_Lip", "psi_cal");
+    ModuleBase::timer::start("Exx_Lip", "psi_cal");
     if (PARAM.inp.init_chg == "atomic")
     {
         std::vector<T> porter (this->wfc_basis->nrxx);
@@ -289,13 +293,13 @@ void Exx_Lip<T, Device>::psi_cal()
     ///////////////////////////////////////////////////////////////////////////
     //			!!! k_point parallel incompleted. need to loop iq in other pool
     ///////////////////////////////////////////////////////////////////////////
-    ModuleBase::timer::tick("Exx_Lip", "psi_cal");
+    ModuleBase::timer::end("Exx_Lip", "psi_cal");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::judge_singularity(const int ik)
 {
-    ModuleBase::timer::tick("Exx_Lip", "judge_singularity");
+    ModuleBase::timer::start("Exx_Lip", "judge_singularity");
     if (PARAM.inp.init_chg=="atomic")
     {
         this->iq_vecik = ik;
@@ -313,13 +317,13 @@ void Exx_Lip<T, Device>::judge_singularity(const int ik)
             }
         }
     }
-    ModuleBase::timer::tick("Exx_Lip", "judge_singularity");
+    ModuleBase::timer::end("Exx_Lip", "judge_singularity");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::qkg2_exp(const int ik, const int iq)
 {
-    ModuleBase::timer::tick("Exx_Lip", "qkg2_exp");
+    ModuleBase::timer::start("Exx_Lip", "qkg2_exp");
     for( int ig=0; ig<this->rho_basis->npw; ++ig)
     {
         const Treal qkg2 = ((this->q_pack->kv_ptr->kvec_c[iq] - this->k_pack->kv_ptr->kvec_c[ik] + this->rho_basis->gcar[ig]) * (ModuleBase::TWO_PI / this->ucell_ptr->lat0)).norm2();
@@ -344,13 +348,13 @@ void Exx_Lip<T, Device>::qkg2_exp(const int ik, const int iq)
             throw( std::string(__FILE__) + " line " + std::to_string(__LINE__) );
         }
     }
-    ModuleBase::timer::tick("Exx_Lip", "qkg2_exp");
+    ModuleBase::timer::end("Exx_Lip", "qkg2_exp");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::b_cal(const int ik, const int iq, const int ib)
 {
-    ModuleBase::timer::tick("Exx_Lip", "b_cal");
+    ModuleBase::timer::start("Exx_Lip", "b_cal");
     const ModuleBase::Vector3<double> q_minus_k = this->q_pack->kv_ptr->kvec_d[iq] - this->k_pack->kv_ptr->kvec_d[ik];
     std::vector<T > mul_tmp(this->rho_basis->nrxx);
     for( size_t ir=0,ix=0; ix<this->rho_basis->nx; ++ix)
@@ -388,25 +392,25 @@ void Exx_Lip<T, Device>::b_cal(const int ik, const int iq, const int ib)
         for (size_t ig = 0; ig < this->rho_basis->npw; ++ig)
             { b_w[ig] *= this->recip_qkg2[ig]; }
     }
-    ModuleBase::timer::tick("Exx_Lip", "b_cal");
+    ModuleBase::timer::end("Exx_Lip", "b_cal");
 }
 
 template <typename T, typename Device>
 void  Exx_Lip<T, Device>::sum3_cal(const int iq, const int ib)
 {
-    ModuleBase::timer::tick("Exx_Lip", "sum3_cal");
+    ModuleBase::timer::start("Exx_Lip", "sum3_cal");
     if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
         for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) {
             for (int iw_r = 0; iw_r < PARAM.globalv.nlocal; ++iw_r) {
                 this->sum3[iw_l][iw_r] += this->b0[iw_l] * conj(this->b0[iw_r]) * (Treal)this->q_pack->wf_wg(iq, ib);
     } } }
-    ModuleBase::timer::tick("Exx_Lip", "sum3_cal");
+    ModuleBase::timer::end("Exx_Lip", "sum3_cal");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::b_sum(const int iq, const int ib)			// Peize Lin change 2019-04-14
 {
-    ModuleBase::timer::tick("Exx_Lip", "b_sum");
+    ModuleBase::timer::start("Exx_Lip", "b_sum");
     // this->sum1[iw_l,iw_r] += \sum_{ig} this->b[iw_l,ig] * conj(this->b[iw_r,ig]) * this->q_pack->wf_wg(iq,ib)
     LapackConnector::herk(
         'U','N',
@@ -417,13 +421,13 @@ void Exx_Lip<T, Device>::b_sum(const int iq, const int ib)			// Peize Lin change
     // 			PARAM.globalv.nlocal, this->rho_basis->npw,
     // 			this->q_pack->wf_wg(iq,ib), static_cast<void*>(this->b), this->rho_basis->npw,
     // 			1.0, static_cast<void*>(this->sum1), PARAM.globalv.nlocal);
-    ModuleBase::timer::tick("Exx_Lip", "b_sum");
+    ModuleBase::timer::end("Exx_Lip", "b_sum");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::sum_all(const int ik)
 {
-    ModuleBase::timer::tick("Exx_Lip", "sum_all");
+    ModuleBase::timer::start("Exx_Lip", "sum_all");
     Treal sum2_factor_g = 0.0;
     const Treal fourpi_div_omega = 4 * (Treal)(ModuleBase::PI / this->ucell_ptr->omega);
     const Treal spin_fac = 2.0;
@@ -451,14 +455,14 @@ void Exx_Lip<T, Device>::sum_all(const int ik)
             }
         }
     }
-    ModuleBase::timer::tick("Exx_Lip", "sum_all");
+    ModuleBase::timer::end("Exx_Lip", "sum_all");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::exx_energy_cal()
 {
     ModuleBase::TITLE("Exx_Lip","exx_energy_cal");
-    ModuleBase::timer::tick("Exx_Lip", "exx_energy_cal");
+    ModuleBase::timer::start("Exx_Lip", "exx_energy_cal");
 
     Treal exx_energy_tmp = 0.0;
 
@@ -473,13 +477,13 @@ void Exx_Lip<T, Device>::exx_energy_cal()
   #endif
     this->exx_energy *= (PARAM.inp.nspin==1) ? 2 : 1;
     this->exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
-    ModuleBase::timer::tick("Exx_Lip", "exx_energy_cal");
+    ModuleBase::timer::end("Exx_Lip", "exx_energy_cal");
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::write_q_pack() const
 {
-    ModuleBase::timer::tick("Exx_Lip", "write_q_pack");
+    ModuleBase::timer::start("Exx_Lip", "write_q_pack");
 
     if (PARAM.inp.out_chg[0] == 0)
         { return; }
@@ -487,12 +491,20 @@ void Exx_Lip<T, Device>::write_q_pack() const
     if (!GlobalV::RANK_IN_POOL)
     {
         const std::string exx_q_pack = "exx_q_pack/";
+        const std::string dir_path = PARAM.globalv.global_out_dir + exx_q_pack;
 
-        const std::string command_mkdir = "test -d " + PARAM.globalv.global_out_dir + exx_q_pack + " || mkdir " + PARAM.globalv.global_out_dir + exx_q_pack;
-        assert( system(command_mkdir.c_str()) == 0);
+        int ret = mkdir(dir_path.c_str(), 0755);
+        assert(ret == 0 || errno == EEXIST);
 
-        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file + " || cp " + PARAM.inp.kpoint_file + " " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
-        assert( system(command_kpoint.c_str()) == 0);
+        const std::string kpoint_dest = dir_path + PARAM.inp.kpoint_file;
+        struct stat st;
+        if (stat(kpoint_dest.c_str(), &st) != 0)
+        {
+            std::ifstream src(PARAM.inp.kpoint_file, std::ios::binary);
+            std::ofstream dst(kpoint_dest, std::ios::binary);
+            dst << src.rdbuf();
+            assert(dst.good());
+        }
 
         std::stringstream ss_wf_wg;
         ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
@@ -523,7 +535,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
         }
         ofs_hvec.close();
     }
-    ModuleBase::timer::tick("Exx_Lip", "write_q_pack");
+    ModuleBase::timer::end("Exx_Lip", "write_q_pack");
 }
 
 /*
