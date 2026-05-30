@@ -501,7 +501,7 @@ void XC_Functional::gradcorr(
             }
         }
 #ifdef _OPENMP
-    #pragma omp critical(xc_functional_gradcorr_reduce)
+    #pragma omp critical(xc_grad_reduce)
     {
         if(is_stress)
         {

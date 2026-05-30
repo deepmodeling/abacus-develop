@@ -32,7 +32,7 @@ class XC_Functional
 //-------------------
 
 //-------------------
-//  xc_functional_vxc.cpp
+//  xc_pot.cpp
 //-------------------
 
 // This file contains interface to the xc_functional class
@@ -105,7 +105,7 @@ class XC_Functional
     static std::vector<int> get_func_id() { return func_id; }
 
 //-------------------
-//  xc_functional_wrapper_xc.cpp
+//  xc_lda_wrap.cpp
 //-------------------
 
 // This file contains wrapper for the LDA functionals
@@ -142,7 +142,7 @@ class XC_Functional
         double &vxcdw);
 
 //-------------------
-//  xc_functional_wrapper_gcxc.cpp
+//  xc_gga_wrap.cpp
 //-------------------
 
 // This file contains wrapper for the GGA functionals
@@ -185,7 +185,7 @@ class XC_Functional
         double &v2c);
 
 //-------------------
-//  xc_functional_gradcorr.cpp
+//  xc_grad.cpp
 //-------------------
 
 // This file contains subroutines realted to gradient calculations
@@ -239,7 +239,7 @@ class XC_Functional
         const bool lsign_);
 
     //-------------------
-    //  xc_funct_exch_lda.cpp
+    //  xc_lda_exch.cpp
     //-------------------
 
     // This file contains realization of LDA exchange functionals
@@ -278,7 +278,7 @@ class XC_Functional
         double &vxdw);
 
 //-------------------
-//  xc_funct_corr_lda.cpp
+//  xc_lda_corr.cpp
 //-------------------
 
 // This file contains realization of LDA correlation functionals
@@ -321,7 +321,7 @@ class XC_Functional
     static void pz_polarized(const double &rs, double &ec, double &vc);
 
 //-------------------
-//  xc_funct_exch_gga.cpp
+//  xc_gga_exch.cpp
 //-------------------
 
 // This file contains realizations of gradient correction to exchange part
@@ -373,7 +373,7 @@ class XC_Functional
         double &v2x);
 
 //-------------------
-//  xc_funct_corr_gga.cpp
+//  xc_gga_corr.cpp
 //-------------------
 
 // This file contains realizations of gradient correction to correlation part
