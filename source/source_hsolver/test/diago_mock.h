@@ -11,6 +11,12 @@ namespace DIAGOTEST
     std::vector<std::complex<double>> hmatrix_local;
     std::vector<std::complex<float>> hmatrix_f;
     std::vector<std::complex<float>> hmatrix_local_f;
+
+    // diagonal representation of overlap (S) for simple mock of generalized eigenproblem
+    // if empty, sPsi will treat S as identity
+    std::vector<double> sdiag_d;     // for double / complex<double>
+    std::vector<std::complex<float> > sdiag_f; 
+    std::vector<std::complex<double>> sdiag;
     int h_nr;
     int h_nc;
     int npw;
@@ -409,11 +415,15 @@ void hamilt::HamiltPW<double, base_device::DEVICE_CPU>::sPsi(const double* psi_i
                                                              const int npw,
                                                              const int nbands) const
 {
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
+    if (DIAGOTEST::sdiag_d.size() < static_cast<size_t>(nrow)) {
+        DIAGOTEST::sdiag_d.assign(nrow, 1.0); // 默认单位 S
     }
-    return;
+    for (int v = 0; v < nbands; ++v) {
+        for (int i = 0; i < nrow; ++i) {
+            size_t idx = static_cast<size_t>(v) * nrow + i;
+            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_d[i];
+        }
+    }
 }
 template <>
 void hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::sPsi(const std::complex<double>* psi_in,
@@ -422,11 +432,15 @@ void hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::sPsi(const
                                                                            const int npw,
                                                                            const int nbands) const
 {
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
+    if (DIAGOTEST::sdiag_d.size() < static_cast<size_t>(nrow)) {
+        DIAGOTEST::sdiag_d.assign(nrow, 1.0);
     }
-    return;
+    for (int v = 0; v < nbands; ++v) {
+        for (int i = 0; i < nrow; ++i) {
+            size_t idx = static_cast<size_t>(v) * nrow + i;
+            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_d[i];
+        }
+    }
 }
 template <>
 void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const std::complex<float>* psi_in,
@@ -435,11 +449,15 @@ void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const 
                                                                           const int npw,
                                                                           const int nbands) const
 {
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
+    if (DIAGOTEST::sdiag_f.size() < static_cast<size_t>(nrow)) {
+        DIAGOTEST::sdiag_f.assign(nrow, 1.0f);
     }
-    return;
+    for (int v = 0; v < nbands; ++v) {
+        for (int i = 0; i < nrow; ++i) {
+            size_t idx = static_cast<size_t>(v) * nrow + i;
+            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_f[i];
+        }
+    }
 }
 
 //Mock function h_psi

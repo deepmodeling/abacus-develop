@@ -58,6 +58,33 @@ void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float *e, bool 
     delete[] work2;
 }
 
+// LAPACK reference for generalized eigenproblem when S is diagonal (complex<float>)
+void lapackGeneralEigen(int &npw, std::vector<std::complex<float>> &hm, const std::vector<std::complex<float>> &sdiag, float *e, bool outtime = false)
+{
+    // build transformed matrix tmp = S^{-1/2} H S^{-1/2}
+    std::vector<std::complex<float>> tmp(npw * npw);
+    for (int i = 0; i < npw; ++i) {
+        std::complex<float> si = std::sqrt(sdiag[i]);
+        for (int j = 0; j < npw; ++j) {
+            std::complex<float> sj = std::sqrt(sdiag[j]);
+            tmp[i * npw + j] = hm[i * npw + j] / (si * sj);
+        }
+    }
+
+    // call cheev_ on transformed matrix
+    clock_t start = clock(), end;
+    int lwork = 2 * npw;
+    std::complex<float> *work2 = new std::complex<float>[lwork];
+    float *rwork = new float[3 * npw - 2];
+    int info = 0;
+    char tmp_c1 = 'V', tmp_c2 = 'U';
+    cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+    end = clock();
+    if (outtime) std::cout << "Lapack General Run time: " << (float)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    delete[] rwork;
+    delete[] work2;
+}
+
 class DiagoCGPrepare
 {
   public:
@@ -85,8 +112,14 @@ class DiagoCGPrepare
         float *e_lapack = new float[npw];
         auto ev = DIAGOTEST::hmatrix_f;
 
-        if(mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
-}
+        if(mypnum == 0) {  
+            if (DIAGOTEST::sdiag_f.empty()) {
+                lapackEigen(npw, ev, e_lapack);
+            } else {
+                auto hm_copy = ev; // operate on a copy
+                lapackGeneralEigen(npw, hm_copy, DIAGOTEST::sdiag_f, e_lapack);
+            }
+        }
 
         // initial guess of psi by perturbing lapack psi
         std::vector<std::complex<float>> psiguess(nband * npw);
@@ -228,9 +261,29 @@ TEST_P(DiagoCGFloatTest, RandomHamilt)
     //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR<<std::endl;
     HPsi<std::complex<float>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
     DIAGOTEST::hmatrix_f = hpsi.hamilt();
+    DIAGOTEST::sdiag_f.clear(); // ensure sdiag is empty for this test
 
     DIAGOTEST::npw = dcp.npw;
     // ModuleBase::ComplexMatrix psi = hpsi.psi();
+    dcp.CompareEigen(hpsi.precond());
+}
+
+TEST_P(DiagoCGFloatTest, RandomHamiltAndS)
+{
+    DiagoCGPrepare dcp = GetParam();
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = dcp.eps;
+    HPsi<std::complex<float>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
+    DIAGOTEST::hmatrix_f = hpsi.hamilt();
+
+    DIAGOTEST::npw = dcp.npw;
+
+    // 生成正定对角 S（范围 0.5..1.5）
+DIAGOTEST::sdiag_f.resize(dcp.npw);
+std::default_random_engine eng(123);
+std::uniform_real_distribution<float> ud(0.5f, 1.5f);
+for (int i = 0; i < dcp.npw; ++i) DIAGOTEST::sdiag_f[i] = std::complex<float>(ud(eng), 0.0f);
+
     dcp.CompareEigen(hpsi.precond());
 }
 
