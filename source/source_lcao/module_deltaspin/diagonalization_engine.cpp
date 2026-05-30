@@ -285,8 +285,6 @@ DiagonalizationResult SubspaceDiagonalizer::solve(int i_step)
             }
         }
 
-        // Add delta lambda contribution: H_sub = H0_sub + (lambda - lambda_ref) * P_I_sub
-        // Uses the same calculate_delta_hcc_lcao as the original code (full_update=true)
         sc_.calculate_delta_hcc_lcao(h_tmp_.data(), PI_sub_for_ik,
                                      sc_.get_sc_lambda().data(), nbands, ik, true);
 

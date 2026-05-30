@@ -548,7 +548,8 @@ public:
      * @param psi Wavefunction C(k) (2D-block distributed)
      * @param ParaV Parallel orbitals distribution
      * @param kvec_d k-point in direct coordinates
-     * @param PI_sub Output: nbands×nbands Hermitian matrix (gathered to all procs)
+     * @param PI_sub_local Output: local 2D block-cyclic block of P_I_sub(k)
+     *   (ParaV->nrow * ParaV->ncol_bands elements, NOT the full gathered matrix)
      * @param nbands Number of bands
      * @param nlocal Global basis size
      */
@@ -557,23 +558,36 @@ public:
         psi::Psi<std::complex<double>>& psi,
         const Parallel_Orbitals* ParaV,
         const ModuleBase::Vector3<double>& kvec_d,
-        std::complex<double>* PI_sub,
+        std::complex<double>* PI_sub_local,
         int nbands, int nlocal);
 
     /**
      * @brief Apply DeltaSpin correction to LCAO subspace Hamiltonian.
      *
-     * @details H_sub += Σ_I lambda_I · P_I_sub(k) for each constrained atom I.
-     * The P_I_sub matrices are pre-computed by cal_PI_sub().
+     * @details H_sub_local += Σ_I lambda_I · P_I_sub_local(k) for each constrained atom I.
+     * The P_I_sub matrices are pre-computed by cal_PI_sub() and stored as
+     * local 2D block-cyclic blocks (not gathered full matrices).
      * For nspin=4 (npol=2), uses Pauli matrix coefficients.
      * For nspin=2 (npol=1), uses spin_sign scaling.
      *
-     * @param h_sub Subspace Hamiltonian [nbands × nbands] (modified in place)
-     * @param PI_sub Per-atom projector overlap matrices
+     * @param h_sub_local Subspace Hamiltonian local block [nrow * ncol_bands] (modified in place)
+     * @param PI_sub_local Per-atom projector overlap LOCAL BLOCKS (map: iat → local block)
      * @param lambda Lambda values per atom
      * @param nbands Number of bands
      * @param ik K-point index (for spin_sign in nspin=2)
      * @param full_update If true, compute delta = lambda - lcao_lambda_in_sub_
+     * @param ParaV Parallel orbitals distribution info
+     */
+    void calculate_delta_hcc_lcao(std::complex<double>* h_sub_local,
+                                   const std::map<int, std::vector<std::complex<double>>>& PI_sub_local,
+                                    const ModuleBase::Vector3<double>* lambda,
+                                    int nbands, int ik, bool full_update,
+                                    const Parallel_Orbitals* ParaV);
+
+    /**
+     * @brief Backward-compatible overload using full gathered matrices.
+     * @details Used by diagnostic functions and DiagonalizationEngine which
+     * operate on full nbands×nbands matrices (not memory-optimized).
      */
     void calculate_delta_hcc_lcao(std::complex<double>* h_sub,
                                    const std::vector<std::vector<std::complex<double>>>& PI_sub,
@@ -1005,9 +1019,17 @@ public:
     int lcao_nlocal_ = 0;            ///< Global basis size (NLOCAL)
     TK* lcao_sub_h_save = nullptr;   ///< Cached H₀_sub(k) for all k-points [nk * nbands²]
     TK* lcao_sub_s_save = nullptr;   ///< Cached S_sub(k) for all k-points [nk * nbands²]
-    /// Per-k-point, per-atom projector overlap in subspace: PI_sub[ik][iat] = nbands²
-    /// Empty vector for unconstrained atoms
-    std::vector<std::vector<std::vector<std::complex<double>>>> lcao_PI_sub_save_;
+    /// Per-k-point, per-constrained-atom projector overlap in subspace.
+    /// Stored as LOCAL 2D block-cyclic blocks (NOT gathered full matrices).
+    /// Key = constrained atom index; Value = local block vector.
+    std::vector<std::map<int, std::vector<std::complex<double>>>> lcao_PI_sub_save_;
+    std::vector<std::map<int, std::vector<double>>> lcao_PI_sub_diag_;
+    std::vector<std::complex<double>> h_sub_local_buf_;
+    std::vector<std::complex<double>> h_tmp_buf_;
+    std::vector<std::complex<double>> s_tmp_buf_;
+    std::vector<std::complex<double>> vcc_buf_;
+    std::vector<std::complex<double>> s_copy_buf_;
+    std::vector<double> eigenvalues_buf_;
     std::vector<double> lcao_ekb_save_; ///< Cached eigenvalues [nk * nbands]
     /// Lambda values when subspace data was saved (for incremental H correction)
      std::vector<ModuleBase::Vector3<double>> lcao_lambda_in_sub_;

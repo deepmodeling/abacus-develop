@@ -53,12 +53,19 @@ void SpinConstrain<std::complex<double>>::free_lcao_subspace_cache()
     lcao_sub_h_save = nullptr;
     lcao_sub_s_save = nullptr;
     lcao_PI_sub_save_.clear();
+    lcao_PI_sub_diag_.clear();
+    h_sub_local_buf_.clear();
+    h_tmp_buf_.clear();
+    s_tmp_buf_.clear();
+    vcc_buf_.clear();
+    s_copy_buf_.clear();
+    eigenvalues_buf_.clear();
     lcao_ekb_save_.clear();
     lcao_lambda_in_sub_.clear();
     lcao_subspace_initialized_ = false;
 }
 
-static void gather_sub_matrix_to_all(
+void gather_sub_matrix_to_all(
     const std::complex<double>* local_data,
     const Parallel_Orbitals* ParaV,
     std::complex<double>* full_data,
@@ -88,7 +95,7 @@ static void gather_sub_matrix_to_all(
 #endif
 }
 
-static void scatter_sub_matrix_to_local(
+void scatter_sub_matrix_to_local(
     const std::complex<double>* full_data,
     const Parallel_Orbitals* ParaV,
     std::complex<double>* local_data,
@@ -113,6 +120,38 @@ static void scatter_sub_matrix_to_local(
     }
 #else
     std::memcpy(local_data, full_data, sizeof(std::complex<double>) * nbands * nbands);
+#endif
+}
+
+void extract_diagonal_from_local_block(
+    const std::complex<double>* local_data,
+    const Parallel_Orbitals* ParaV,
+    double* diag,
+    int nbands)
+{
+#ifdef __MPI
+    int nrow = ParaV->nrow;
+    int ncol_bands = ParaV->ncol_bands;
+    std::fill(diag, diag + nbands, 0.0);
+    for (int j_local = 0; j_local < ncol_bands; j_local++)
+    {
+        int j_global = ParaV->local2global_col(j_local);
+        if (j_global >= nbands) continue;
+        for (int i_local = 0; i_local < nrow; i_local++)
+        {
+            int i_global = ParaV->local2global_row(i_local);
+            if (i_global == j_global && i_global < nbands)
+            {
+                diag[i_global] = local_data[i_local + j_local * nrow].real();
+            }
+        }
+    }
+    Parallel_Reduce::reduce_pool(diag, nbands);
+#else
+    for (int i = 0; i < nbands; i++)
+    {
+        diag[i] = local_data[i + i * nbands].real();
+    }
 #endif
 }
 
@@ -339,7 +378,7 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
     psi::Psi<std::complex<double>>& psi,
     const Parallel_Orbitals* ParaV,
     const ModuleBase::Vector3<double>& kvec_d,
-    std::complex<double>* PI_sub,
+    std::complex<double>* PI_sub_local_out,
     int nbands, int nlocal)
 {
     ModuleBase::TITLE("SpinConstrain", "calculate_PI_sub_from_hr");
@@ -381,7 +420,7 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
             temp_f.data(), 1, 1, ParaV->desc_wfc,
             zero_f, PI_sub_local_f.data(), 1, 1, ParaV->desc_Eij);
 
-        gather_sub_matrix_to_all_float(PI_sub_local_f.data(), ParaV, PI_sub, nbands);
+        cast_up_to_double(PI_sub_local_f.data(), PI_sub_local_out, nloc_eij_local);
         ModuleBase::timer::end("SpinConstrain", "calc_PI_sub_fp32");
     }
     else
@@ -409,7 +448,7 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
             temp.data(), 1, 1, ParaV->desc_wfc,
             zero, PI_sub_local.data(), 1, 1, ParaV->desc_Eij);
 
-        gather_sub_matrix_to_all(PI_sub_local.data(), ParaV, PI_sub, nbands);
+        std::memcpy(PI_sub_local_out, PI_sub_local.data(), sizeof(std::complex<double>) * nloc_eij_local);
 #else
         std::vector<std::complex<double>> PI_k(nlocal * nlocal, {0.0, 0.0});
         hamilt::folding_HR(*pre_hr_iat, PI_k.data(), kvec_d, nlocal, 1);
@@ -419,11 +458,68 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
             &one, PI_k.data(), &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
 
         zgemm_("C", "N", &nbands, &nbands, &nlocal,
-            &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub, &nbands);
+            &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub_local_out, &nbands);
 #endif
     }
 
     ModuleBase::timer::end("SpinConstrain", "calculate_PI_sub_from_hr");
+}
+
+template <>
+void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
+    std::complex<double>* h_sub_local,
+    const std::map<int, std::vector<std::complex<double>>>& PI_sub_local,
+    const ModuleBase::Vector3<double>* lambda,
+    int nbands, int ik, bool full_update,
+    const Parallel_Orbitals* ParaV)
+{
+    ModuleBase::TITLE("SpinConstrain", "calculate_delta_hcc_lcao");
+    ModuleBase::timer::start("SpinConstrain", "calculate_delta_hcc_lcao");
+
+    const int nat = this->get_nat();
+    std::vector<ModuleBase::Vector3<double>> actual_delta;
+    const ModuleBase::Vector3<double>* effective_lambda = lambda;
+
+    if (full_update)
+    {
+        actual_delta.resize(nat);
+        for (int iat = 0; iat < nat; iat++)
+        {
+            actual_delta[iat] = lambda[iat] - this->lcao_lambda_in_sub_[iat];
+        }
+        effective_lambda = actual_delta.data();
+    }
+
+    const int nloc_eij = ParaV->nrow * ParaV->ncol_bands;
+
+    if (this->npol_ == 2)
+    {
+        for (const auto& [iat, pi_local] : PI_sub_local)
+        {
+            const std::complex<double> coeff0(effective_lambda[iat][2], 0.0);
+            const std::complex<double>* pi_ptr = pi_local.data();
+            for (int ij = 0; ij < nloc_eij; ij++)
+            {
+                h_sub_local[ij] += coeff0 * pi_ptr[ij];
+            }
+        }
+    }
+    else if (this->npol_ == 1)
+    {
+        int spin_sign = this->get_spin_sign(ik);
+
+        for (const auto& [iat, pi_local] : PI_sub_local)
+        {
+            const std::complex<double> coeff(effective_lambda[iat][2] * spin_sign, 0.0);
+            const std::complex<double>* pi_ptr = pi_local.data();
+            for (int ij = 0; ij < nloc_eij; ij++)
+            {
+                h_sub_local[ij] += coeff * pi_ptr[ij];
+            }
+        }
+    }
+
+    ModuleBase::timer::end("SpinConstrain", "calculate_delta_hcc_lcao");
 }
 
 template <>
@@ -450,6 +546,8 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
         effective_lambda = actual_delta.data();
     }
 
+    const int nn = nbands * nbands;
+
     if (this->npol_ == 2)
     {
         for (int iat = 0; iat < nat; iat++)
@@ -458,7 +556,7 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
 
             const std::complex<double> coeff0(effective_lambda[iat][2], 0.0);
             const std::complex<double>* pi_ptr = PI_sub[iat].data();
-            for (int ij = 0; ij < nbands * nbands; ij++)
+            for (int ij = 0; ij < nn; ij++)
             {
                 h_sub[ij] += coeff0 * pi_ptr[ij];
             }
@@ -474,7 +572,7 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
 
             const std::complex<double> coeff(effective_lambda[iat][2] * spin_sign, 0.0);
             const std::complex<double>* pi_ptr = PI_sub[iat].data();
-            for (int ij = 0; ij < nbands * nbands; ij++)
+            for (int ij = 0; ij < nn; ij++)
             {
                 h_sub[ij] += coeff * pi_ptr[ij];
             }

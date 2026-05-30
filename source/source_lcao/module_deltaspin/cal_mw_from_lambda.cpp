@@ -11,6 +11,7 @@
 #include "source_hsolver/hsolver_pw.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
@@ -51,6 +52,23 @@
  *   update_psi_charge_pw(). Failure means the workflow order is wrong.
  *   Solution: Ensure cal_mw_from_lambda() is called at the start of each SCF step.
  */
+
+namespace spinconstrain {
+extern void gather_sub_matrix_to_all(const std::complex<double>* local_data,
+                                     const Parallel_Orbitals* ParaV,
+                                     std::complex<double>* full_data,
+                                     int nbands);
+
+extern void scatter_sub_matrix_to_local(const std::complex<double>* full_data,
+                                        const Parallel_Orbitals* ParaV,
+                                        std::complex<double>* local_data,
+                                        int nbands);
+
+extern void extract_diagonal_from_local_block(const std::complex<double>* local_data,
+                                              const Parallel_Orbitals* ParaV,
+                                              double* diag,
+                                              int nbands);
+}
 
 /**
  * @brief Compute DeltaSpin correction to the subspace Hamiltonian.
@@ -622,39 +640,44 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             this->lcao_sub_h_save = new std::complex<double>[nk * nn];
             this->lcao_sub_s_save = new std::complex<double>[nk * nn];
             this->lcao_PI_sub_save_.resize(nk);
+            this->lcao_PI_sub_diag_.resize(nk);
             this->lcao_ekb_save_.resize(nk * nbands);
+
+            const int nloc_eij = this->ParaV->nrow * this->ParaV->ncol_bands;
 
             for (int ik = 0; ik < nk; ik++)
             {
                 psi_t->fix_k(ik);
 
-                // Compute H₀_sub(k) = C†(k) · H(k) · C(k) and S_sub(k) = C†(k) · S(k) · C(k)
                 this->calculate_lcao_sub_hs(
                     this->p_hamilt, psi_t[0], this->ParaV,
                     this->lcao_sub_h_save + ik * nn,
                     this->lcao_sub_s_save + ik * nn,
                     ik, nbands, nlocal);
 
-                // Compute P_I_sub(k) = C†(k) · P_I(k) · C(k) from real-space pre_hr
-                // Uses folding_HR + pzgemm, consistent with how cal_moment computes Mi
                 auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
                     this->p_operator);
                 const int nat = this->get_nat();
-                this->lcao_PI_sub_save_[ik].resize(nat);
                 for (int iat = 0; iat < nat; iat++)
                 {
                     if (!dspin_op->get_constraint_atom_list()[iat])
                     {
-                        this->lcao_PI_sub_save_[ik][iat].clear();
                         continue;
                     }
-                    this->lcao_PI_sub_save_[ik][iat].resize(nn, {0.0, 0.0});
+                    this->lcao_PI_sub_save_[ik][iat].resize(nloc_eij, {0.0, 0.0});
                     this->calculate_PI_sub_from_hr(
                         dspin_op->get_pre_hr(iat),
                         psi_t[0], this->ParaV,
                         this->kv_.kvec_d[ik],
                         this->lcao_PI_sub_save_[ik][iat].data(),
                         nbands, nlocal);
+
+                    this->lcao_PI_sub_diag_[ik][iat].resize(nbands, 0.0);
+                    extract_diagonal_from_local_block(
+                        this->lcao_PI_sub_save_[ik][iat].data(),
+                        this->ParaV,
+                        this->lcao_PI_sub_diag_[ik][iat].data(),
+                        nbands);
                 }
 
                 // Save eigenvalues for Fermi weight calculation
@@ -733,11 +756,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     for (int ib = 0; ib < nbands; ib++)
                     {
                         double delta_epsilon = 0.0;
-                        for (int iat = 0; iat < this->get_nat(); iat++)
+                        for (const auto& [iat, diag] : this->lcao_PI_sub_diag_[ik])
                         {
-                            if (this->lcao_PI_sub_save_[ik][iat].empty()) continue;
-                            // Diagonal element of projector matrix P_I_sub(k)
-                            double p_diag = this->lcao_PI_sub_save_[ik][iat][ib + ib * nbands].real();
+                            double p_diag = diag[ib];
                             double dl = this->lambda_[iat].z - this->lcao_lambda_in_sub_[iat].z;
                             delta_epsilon += dl * p_diag;
                         }
@@ -769,36 +790,48 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             else // sc_acceleration_mode_ == "subspace"
             {
                 // ---------------------------------------------------------
-                // Subspace diagonalization mode
+                // Subspace diagonalization mode (distributed P_I_sub cache)
                 // ---------------------------------------------------------
-                // 1. Build H_sub(λ) = H₀_sub + (λ - λ_ref) · P_sub
-                // 2. Diagonalize H_sub · V = S_sub · V · ε in the subspace
-                // 3. Rotate psi, build DMR, compute Mi via cal_mi_lcao_subspace
-                // 4. Restore original psi
+                // 1. Scatter H₀_sub(k) to local 2D block
+                // 2. Accumulate correction: h_sub_local += Σ_I Δλ_I · P_I_sub_local
+                // 3. Gather h_sub_local back to full matrix for diagonalization
+                // 4. Same for S_sub (unchanged, just copy)
                 // ---------------------------------------------------------
                 std::vector<std::vector<std::complex<double>>> vcc_all(nk);
+                const int nloc_eij = this->ParaV->nrow * this->ParaV->ncol_bands;
+
+                if (this->h_sub_local_buf_.size() != static_cast<std::size_t>(nloc_eij))
+                {
+                    this->h_sub_local_buf_.resize(nloc_eij, {0.0, 0.0});
+                    this->h_tmp_buf_.resize(nn);
+                    this->s_tmp_buf_.resize(nn);
+                    this->vcc_buf_.resize(nn);
+                    this->s_copy_buf_.resize(nn);
+                    this->eigenvalues_buf_.resize(nbands, 0.0);
+                }
 
                 for (int ik = 0; ik < nk; ik++)
                 {
-                    std::vector<std::complex<double>> h_tmp(nn), s_tmp(nn);
-                    std::memcpy(h_tmp.data(), this->lcao_sub_h_save + ik * nn, sizeof(std::complex<double>) * nn);
-                    std::memcpy(s_tmp.data(), this->lcao_sub_s_save + ik * nn, sizeof(std::complex<double>) * nn);
+                    std::fill(this->h_sub_local_buf_.begin(), this->h_sub_local_buf_.end(), std::complex<double>(0.0, 0.0));
+                    scatter_sub_matrix_to_local(this->lcao_sub_h_save + ik * nn, this->ParaV,
+                                                this->h_sub_local_buf_.data(), nbands);
 
-                    this->calculate_delta_hcc_lcao(h_tmp.data(), this->lcao_PI_sub_save_[ik],
-                                                   this->lambda_.data(), nbands, ik, true);
+                    this->calculate_delta_hcc_lcao(this->h_sub_local_buf_.data(), this->lcao_PI_sub_save_[ik],
+                                                   this->lambda_.data(), nbands, ik, true, this->ParaV);
 
-                    std::vector<std::complex<double>> vcc(nn);
-                    std::vector<double> eigenvalues(nbands, 0.0);
-                    std::vector<std::complex<double>> s_copy(nn);
-                    std::memcpy(s_copy.data(), s_tmp.data(), sizeof(std::complex<double>) * nn);
+                    gather_sub_matrix_to_all(this->h_sub_local_buf_.data(), this->ParaV, this->h_tmp_buf_.data(), nbands);
+
+                    std::memcpy(this->s_tmp_buf_.data(), this->lcao_sub_s_save + ik * nn, sizeof(std::complex<double>) * nn);
+
+                    std::memcpy(this->s_copy_buf_.data(), this->s_tmp_buf_.data(), sizeof(std::complex<double>) * nn);
 
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_hegvd(
-                        nbands, nbands, h_tmp.data(), s_copy.data(), nbands,
-                        eigenvalues.data(), vcc.data());
+                        nbands, nbands, this->h_tmp_buf_.data(), this->s_copy_buf_.data(), nbands,
+                        this->eigenvalues_buf_.data(), this->vcc_buf_.data());
 
-                    vcc_all[ik].assign(vcc.data(), vcc.data() + nn);
+                    vcc_all[ik].assign(this->vcc_buf_.data(), this->vcc_buf_.data() + nn);
                     for (int ib = 0; ib < nbands; ib++)
-                        this->pelec->ekb(ik, ib) = eigenvalues[ib];
+                        this->pelec->ekb(ik, ib) = this->eigenvalues_buf_[ib];
                 }
 
                 elecstate::calculate_weights(this->pelec->ekb,
