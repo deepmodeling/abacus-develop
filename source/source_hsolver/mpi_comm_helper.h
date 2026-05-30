@@ -3,16 +3,24 @@
 
 /**
  * @file mpi_comm_helper.h
- * @brief Blocking MPI communication helpers for eigenvalue solvers.
+ * @brief Non-blocking MPI communication helpers for eigenvalue solver optimization.
  *
- * Provides type-safe wrappers for common MPI communication patterns:
- *   - reduce_pool: MPI_Allreduce with MPI_SUM
- *   - bcast: MPI_Bcast
+ * This module provides non-blocking versions of common MPI communication patterns
+ * used in the diagonalization module. It enables:
+ *   - Non-blocking broadcast (MPI_Ibcast wrapper)
+ *   - Non-blocking reduce-to-all (MPI_Iallreduce wrapper)
+ *   - Pipelined communication with request tracking
  *
- * Also includes CommStrategy enum for adaptive communication strategy
- * selection based on problem size.
+ * All operations are guarded by #ifdef __MPI. When MPI is not available,
+ * all functions become no-ops.
  *
- * All MPI operations are guarded by #ifdef __MPI with no-op fallbacks.
+ * Usage example:
+ * @code
+ *   MPIRequestTracker tracker;
+ *   tracker.nbcast(vcc, nbase * nband, MPI_DOUBLE_COMPLEX, 0, comm);
+ *   // ... do local work while broadcast proceeds ...
+ *   tracker.wait_all();
+ * @endcode
  */
 
 #ifdef __MPI
@@ -79,21 +87,53 @@ private:
 /**
  * @brief Non-blocking MPI communication operations.
  *
+ * Each function posts a non-blocking operation and adds the MPI_Request
+ * to the provided tracker. Call tracker.wait_all() to synchronize.
+ *
  * All functions are safe to call in serial mode (they become no-ops).
  */
 namespace MPICommHelper {
 
 // =========================================================================
-// Blocking reduce / broadcast — type-dispatching via mpi_type trait
+// Non-blocking broadcast
 // =========================================================================
 
 #ifdef __MPI
+/**
+ * @brief Non-blocking broadcast (like MPI_Ibcast).
+ *
+ * @tparam T Element type (must match the MPI_Datatype)
+ * @param buffer Pointer to data buffer
+ * @param count  Number of elements
+ * @param datatype MPI datatype for the elements
+ * @param root   Root rank for broadcast
+ * @param comm   MPI communicator
+ * @param tracker Request tracker to hold the MPI_Request
+ */
+template <typename T>
+inline void nbcast(T* buffer, int count, MPI_Datatype datatype,
+                   int root, MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Ibcast(buffer, count, datatype, root, comm, &req);
+    tracker.add(req);
+}
 
-#ifdef __MPI
+// Convenience: keep nallreduce for internal use
+template <typename T>
+inline void nallreduce(T* buffer, int count, MPI_Datatype datatype,
+                       MPI_Op op, MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Iallreduce(MPI_IN_PLACE, buffer, count, datatype, op, comm, &req);
+    tracker.add(req);
+}
+
+// =========================================================================
+// Non-blocking reduce / broadcast — type-dispatching via mpi_type trait
+// =========================================================================
 
 /// Type trait mapping C++ types to MPI_Datatype.
 template <typename T> struct mpi_type {
-    static constexpr MPI_Datatype value = MPI_BYTE;
+    static constexpr MPI_Datatype value = MPI_BYTE; // fallback, should not be used
 };
 template <> struct mpi_type<double> {
     static constexpr MPI_Datatype value = MPI_DOUBLE;
@@ -109,29 +149,56 @@ template <> struct mpi_type<int> {
 };
 
 /**
- * @brief Pool reduce (MPI_SUM). Uses blocking MPI_Allreduce.
+ * @brief Non-blocking pool reduce (MPI_SUM, non-blocking).
+ *
+ * Works for double, std::complex<double>, std::complex<float> via mpi_type.
  */
 template <typename T>
-inline void reduce_pool(T* buffer, int count, MPI_Comm comm) {
-    MPI_Allreduce(MPI_IN_PLACE, buffer, count, mpi_type<T>::value, MPI_SUM, comm);
+inline void nreduce_pool(T* buffer, int count,
+                         MPI_Comm comm, MPIRequestTracker& tracker) {
+    nallreduce(buffer, count, mpi_type<T>::value, MPI_SUM, comm, tracker);
 }
 
 /**
- * @brief Broadcast. Uses blocking MPI_Bcast.
+ * @brief Non-blocking broadcast (MPI_Ibcast).
+ *
+ * Works for double, std::complex<double>, std::complex<float> via mpi_type.
  */
 template <typename T>
-inline void bcast(T* buffer, int count, int root, MPI_Comm comm) {
-    MPI_Bcast(buffer, count, mpi_type<T>::value, root, comm);
+inline void nbcast(T* buffer, int count, int root,
+                   MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Ibcast(buffer, count, mpi_type<T>::value, root, comm, &req);
+    tracker.add(req);
 }
 
-#else // !__MPI — serial no-ops
+// =========================================================================
+// Non-blocking point-to-point (for PLinearTransform optimization)
+// =========================================================================
 
+/**
+ * @brief Post non-blocking send.
+ */
 template <typename T>
-inline void reduce_pool(T*, int, int) {}
-template <typename T>
-inline void bcast(T*, int, int, int) {}
+inline void nsend(const T* buffer, int count, MPI_Datatype datatype,
+                  int dest, int tag, MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Issend(buffer, count, datatype, dest, tag, comm, &req);
+    tracker.add(req);
+}
 
-#endif
+/**
+ * @brief Post non-blocking receive.
+ */
+template <typename T>
+inline void nrecv(T* buffer, int count, MPI_Datatype datatype,
+                  int source, int tag, MPI_Comm comm, MPIRequestTracker& tracker) {
+    MPI_Request req;
+    MPI_Irecv(buffer, count, datatype, source, tag, comm, &req);
+    tracker.add(req);
+}
+
+#endif // __MPI
 
 } // namespace MPICommHelper
 

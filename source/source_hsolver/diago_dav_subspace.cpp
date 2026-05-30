@@ -586,12 +586,15 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
         assert(this->diag_comm.comm == POOL_WORLD);
-        MPICommHelper::reduce_pool(
+        // Use non-blocking pool reduce for hcc and scc simultaneously
+        MPIRequestTracker tracker;
+        MPICommHelper::nreduce_pool(
             hcc + nbase * this->nbase_x, notconv * this->nbase_x,
-            this->diag_comm.comm);
-        MPICommHelper::reduce_pool(
+            this->diag_comm.comm, tracker);
+        MPICommHelper::nreduce_pool(
             scc + nbase * this->nbase_x, notconv * this->nbase_x,
-            this->diag_comm.comm);
+            this->diag_comm.comm, tracker);
+        tracker.wait_all();
 #endif
     }
 #endif
@@ -719,11 +722,14 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
     {
+        // Use non-blocking broadcast for eigenvalues and eigenvectors
         // Broadcast continuous block of vcc instead of per-band loop
-        MPICommHelper::bcast(vcc, nband * this->nbase_x, 0,
-                             this->diag_comm.comm);
-        MPICommHelper::bcast((*eigenvalue_iter).data(), nband, 0,
-                             this->diag_comm.comm);
+        MPIRequestTracker tracker;
+        MPICommHelper::nbcast(vcc, nband * this->nbase_x, 0,
+                              this->diag_comm.comm, tracker);
+        MPICommHelper::nbcast((*eigenvalue_iter).data(), nband, 0,
+                              this->diag_comm.comm, tracker);
+        tracker.wait_all();
     }
 #endif
 
