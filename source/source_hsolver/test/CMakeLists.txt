@@ -52,7 +52,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_mpi
     LIBS parameter  ${math_libs} base psi device MPI::MPI_CXX
-    SOURCES diago_mpi_test.cpp ../diago_david.cpp ../diago_dav_subspace.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp ../diag_hs_para.cpp
+    SOURCES diago_mpi_test.cpp ../diago_david.cpp ../diago_dav_subspace.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
