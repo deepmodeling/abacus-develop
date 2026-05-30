@@ -613,6 +613,15 @@ TEST_F(DiagoMPICorrectnessTest, CommStrategyConfiguration) {
 int main(int argc, char** argv) {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
+
+    int nproc;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    if (nproc < 2) {
+        std::cout << "MPI test skipped: requires at least 2 processes, got "
+                  << nproc << std::endl;
+        MPI_Finalize();
+        return 0;
+    }
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
