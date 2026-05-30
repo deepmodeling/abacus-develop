@@ -5,6 +5,7 @@ add_subdirectory(module_deltaspin)
 
 if(ENABLE_LCAO)
     add_subdirectory(module_operator_lcao)
+    add_subdirectory(module_extrap)
     list(APPEND objects
         hamilt_lcao.cpp
         module_operator_lcao/operator_lcao.cpp

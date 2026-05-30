@@ -921,6 +921,47 @@ Available options are:
         this->add_item(item);
     }
     {
+        Input_Item item("wfc_extrap");
+        item.annotation = "none; use_prev_wf";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(Wavefunction extrapolation method for LCAO calculations.
+
+* none: Disable wavefunction-based extrapolation.
+* use_prev_wf: Use the previous ionic step wavefunctions as the initial guess.
+
+This option is currently limited to Gamma-only LCAO calculations.
+The k-point, ASPC, and GExt_PROJ paths will be enabled by later updates.)";
+        item.default_value = "none";
+        read_sync_string(input.wfc_extrap);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.wfc_extrap != "none" && para.input.wfc_extrap != "use_prev_wf")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "wfc_extrap should be none or use_prev_wf");
+            }
+            if (para.input.wfc_extrap == "use_prev_wf")
+            {
+                if (para.input.basis_type != "lcao")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WFN-based extrapolation is available only for LCAO");
+                }
+                if (!para.input.gamma_only)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WFN-based extrapolation is not implemented for k-points");
+                }
+                if (para.input.esolver_type == "tddft")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WFN-based extrapolation is not implemented for tddft");
+                }
+                if (para.input.nspin == 4)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "WFN-based extrapolation is not implemented for nspin = 4");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("ecutwfc");
         item.annotation = "energy cutoff for wave functions";
         item.category = "Plane wave related variables";

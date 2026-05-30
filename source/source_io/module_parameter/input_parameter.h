@@ -50,6 +50,7 @@ struct Input_para
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
+    std::string wfc_extrap = "none";   ///< wavefunction extrapolation method for LCAO calculations
     bool init_vel = false;              ///< read velocity from STRU or not  liuyu 2021-07-14
 
     std::string input_file = "INPUT";   ///< input file name
