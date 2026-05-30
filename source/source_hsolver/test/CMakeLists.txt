@@ -48,14 +48,11 @@ if (ENABLE_MPI)
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
   )
-  # MPI parallel optimization test
+  # MPI communication helpers test
   AddTest(
     TARGET MODULE_HSOLVER_mpi
-    LIBS parameter  ${math_libs} base psi device MPI::MPI_CXX
-    SOURCES diago_mpi_test.cpp ../diago_david.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp
-            ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
+    LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+    SOURCES diago_mpi_test.cpp
   )
   if(ENABLE_LCAO)
   AddTest(
