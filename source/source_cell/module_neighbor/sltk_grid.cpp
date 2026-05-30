@@ -5,6 +5,25 @@
 #include "source_base/memory.h"
 #include "source_base/timer.h"
 
+#include <algorithm>
+#include <cmath>
+
+namespace
+{
+int clamp_box_index(const int index, const int size)
+{
+    if (index < 0)
+    {
+        return 0;
+    }
+    if (index >= size)
+    {
+        return size - 1;
+    }
+    return index;
+}
+}
+
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 {
 }
@@ -40,6 +59,12 @@ void Grid::Check_Expand_Condition(const UnitCell& ucell)
 
     if (!pbc)
     {
+        glayerX = 1;
+        glayerY = 1;
+        glayerZ = 1;
+        glayerX_minus = 0;
+        glayerY_minus = 0;
+        glayerZ_minus = 0;
         return;
     }
 
@@ -170,12 +195,19 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
     ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
 
+    const int ix_begin = this->pbc ? -glayerX_minus : 0;
+    const int ix_end = this->pbc ? glayerX : 1;
+    const int iy_begin = this->pbc ? -glayerY_minus : 0;
+    const int iy_end = this->pbc ? glayerY : 1;
+    const int iz_begin = this->pbc ? -glayerZ_minus : 0;
+    const int iz_end = this->pbc ? glayerZ : 1;
+
     // calculate min & max value
-    for (int ix = -glayerX_minus; ix < glayerX; ix++)
+    for (int ix = ix_begin; ix < ix_end; ix++)
     {
-        for (int iy = -glayerY_minus; iy < glayerY; iy++)
+        for (int iy = iy_begin; iy < iy_end; iy++)
         {
-            for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
+            for (int iz = iz_begin; iz < iz_end; iz++)
             {
                 for (int i = 0; i < ucell.ntype; i++)
                 {
@@ -202,25 +234,9 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 
     this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
 
-/*  warning box algorithm   
-    this->box_nx = std::ceil((this->x_max - this->x_min) / box_edge_length) + 1;
-    this->box_ny = std::ceil((this->y_max - this->y_min) / box_edge_length) + 1;
-    this->box_nz = std::ceil((this->z_max - this->z_min) / box_edge_length) + 1;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
-
-    atoms_in_box.resize(this->box_nx);
-    for (int i = 0; i < this->box_nx; i++)
-    {
-        atoms_in_box[i].resize(this->box_ny);
-        for (int j = 0; j < this->box_ny; j++)
-        {
-            atoms_in_box[i][j].resize(this->box_nz);
-        }
-    }
- */
-    this->box_nx = glayerX + glayerX_minus;
-    this->box_ny = glayerY + glayerY_minus;
-    this->box_nz = glayerZ + glayerZ_minus;
+    this->box_nx = std::max(1, static_cast<int>(std::floor((this->x_max - this->x_min) / box_edge_length)) + 1);
+    this->box_ny = std::max(1, static_cast<int>(std::floor((this->y_max - this->y_min) / box_edge_length)) + 1);
+    this->box_nz = std::max(1, static_cast<int>(std::floor((this->z_max - this->z_min) / box_edge_length)) + 1);
     ModuleBase::GlobalFunc::OUT(ofs_in, "Number of needed cells", box_nx, box_ny, box_nz);
 
     atoms_in_box.resize(this->box_nx);
@@ -232,11 +248,11 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
             atoms_in_box[i][j].resize(this->box_nz);
         }
     }
-    for (int ix = -glayerX_minus; ix < glayerX; ix++)
+    for (int ix = ix_begin; ix < ix_end; ix++)
     {
-        for (int iy = -glayerY_minus; iy < glayerY; iy++)
+        for (int iy = iy_begin; iy < iy_end; iy++)
         {
-            for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
+            for (int iz = iz_begin; iz < iz_end; iz++)
             {
                 for (int i = 0; i < ucell.ntype; i++)
                 {
@@ -247,10 +263,10 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
                         double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
                         FAtom atom(x, y, z, i, j, ix, iy, iz);
                         int box_i_x, box_i_y, box_i_z;
-                        //this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
-                        box_i_x = ix + glayerX_minus;
-                        box_i_y = iy + glayerY_minus;
-                        box_i_z = iz + glayerZ_minus;
+                        this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
+                        box_i_x = clamp_box_index(box_i_x, this->box_nx);
+                        box_i_y = clamp_box_index(box_i_y, this->box_ny);
+                        box_i_z = clamp_box_index(box_i_z, this->box_nz);
                         this->atoms_in_box[box_i_x][box_i_y][box_i_z].push_back(atom);
                     }
                 }
@@ -269,17 +285,19 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
     ModuleBase::timer::start("Grid", "constru_adj");
 
-    for  (int i_type = 0; i_type < ucell.ntype; i_type++)
+    for (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
         for (int j_atom = 0; j_atom < ucell.atoms[i_type].na; j_atom++)
         {
-
             FAtom atom(ucell.atoms[i_type].tau[j_atom].x,
-                     ucell.atoms[i_type].tau[j_atom].y,
-                     ucell.atoms[i_type].tau[j_atom].z,
-                     i_type,
-                     j_atom,
-                     0, 0 ,0);
+                       ucell.atoms[i_type].tau[j_atom].y,
+                       ucell.atoms[i_type].tau[j_atom].z,
+                       i_type,
+                       j_atom,
+                       0, 0, 0);
 
             this->Construct_Adjacent_near_box(atom);
         }
@@ -289,17 +307,27 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
 
 void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
 {
-    ModuleBase::timer::start("Grid", "adj_near_box");
     int box_i_x=0;
     int box_i_y=0;
     int box_i_z=0;
     this->getBox(box_i_x, box_i_y, box_i_z, fatom.x, fatom.y, fatom.z);
+    box_i_x = clamp_box_index(box_i_x, this->box_nx);
+    box_i_y = clamp_box_index(box_i_y, this->box_ny);
+    box_i_z = clamp_box_index(box_i_z, this->box_nz);
 
-    for (int box_i_x_adj = 0; box_i_x_adj < glayerX + glayerX_minus; box_i_x_adj++)
+    const int search_layer = std::max(1, static_cast<int>(std::ceil(this->sradius / this->box_edge_length)));
+    const int box_x_begin = std::max(0, box_i_x - search_layer);
+    const int box_x_end = std::min(this->box_nx - 1, box_i_x + search_layer);
+    const int box_y_begin = std::max(0, box_i_y - search_layer);
+    const int box_y_end = std::min(this->box_ny - 1, box_i_y + search_layer);
+    const int box_z_begin = std::max(0, box_i_z - search_layer);
+    const int box_z_end = std::min(this->box_nz - 1, box_i_z + search_layer);
+
+    for (int box_i_x_adj = box_x_begin; box_i_x_adj <= box_x_end; box_i_x_adj++)
     {
-        for (int box_i_y_adj = 0; box_i_y_adj < glayerY + glayerY_minus; box_i_y_adj++)
+        for (int box_i_y_adj = box_y_begin; box_i_y_adj <= box_y_end; box_i_y_adj++)
         {
-            for (int box_i_z_adj = 0; box_i_z_adj < glayerZ + glayerZ_minus; box_i_z_adj++)
+            for (int box_i_z_adj = box_z_begin; box_i_z_adj <= box_z_end; box_i_z_adj++)
             {
                 for (auto &fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
                 {
@@ -308,7 +336,6 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
             }
         }
     }
-    ModuleBase::timer::end("Grid", "adj_near_box");
 }
 
 void Grid::Construct_Adjacent_final(const FAtom& fatom1,
