@@ -155,7 +155,7 @@ TEST_F(DiagoMPICorrectnessTest, NonBlockingMatchesBlocking) {
     const int ld_psi = psi_local.get_nbasis();
 
 #ifdef __MPI
-    const hsolver::diag_comm_info comm_info = {POOL_WORLD, rank_, nproc_};
+    const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, rank_, nproc_};
 #else
     const hsolver::diag_comm_info comm_info = {rank_, nproc_};
 #endif
@@ -257,7 +257,7 @@ TEST_F(DiagoMPICorrectnessTest, MultiProcessConsistency) {
     const int ld_psi = psi_local.get_nbasis();
 
 #ifdef __MPI
-    const hsolver::diag_comm_info comm_info = {POOL_WORLD, rank_, nproc_};
+    const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, rank_, nproc_};
 #else
     const hsolver::diag_comm_info comm_info = {rank_, nproc_};
 #endif
@@ -402,7 +402,7 @@ TEST_F(DiagoMPICorrectnessTest, PerformanceBenchmark) {
     const int ld_psi = psi_local.get_nbasis();
 
 #ifdef __MPI
-    const hsolver::diag_comm_info comm_info = {POOL_WORLD, rank_, nproc_};
+    const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, rank_, nproc_};
 #else
     const hsolver::diag_comm_info comm_info = {rank_, nproc_};
 #endif
@@ -533,7 +533,7 @@ TEST_F(DiagoMPICorrectnessTest, BoundaryConditions) {
         const int dim = psi_local.get_current_ngk();
         const int ld_psi = psi_local.get_nbasis();
 #ifdef __MPI
-        const hsolver::diag_comm_info comm_info = {POOL_WORLD, rank_, nproc_};
+        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, rank_, nproc_};
 #else
         const hsolver::diag_comm_info comm_info = {rank_, nproc_};
 #endif
