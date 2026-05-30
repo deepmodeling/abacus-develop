@@ -1,4 +1,5 @@
 #include "md_func.h"
+#include "md_statistics.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
@@ -52,6 +53,71 @@ double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, 
     return ke;
 }
 
+// ============================================================================
+// === New: calc_kinetic_state — pure function =================================
+// ============================================================================
+
+MDKineticState calc_kinetic_state(const int natom,
+                                  const int frozen_freedom,
+                                  const double* allmass,
+                                  const ModuleBase::Vector3<double>* vel)
+{
+    MDKineticState state;
+    if (3 * natom == frozen_freedom)
+    {
+        state.kinetic     = 0.0;
+        state.temperature = 0.0;
+    }
+    else
+    {
+        state.kinetic     = kinetic_energy(natom, vel, allmass);
+        state.temperature = 2.0 * state.kinetic / static_cast<double>(3 * natom - frozen_freedom);
+    }
+    return state;
+}
+
+// ============================================================================
+// === New: calc_stress_state — pure function ==================================
+// ============================================================================
+
+MDStressState calc_stress_state(const UnitCell& unit_in,
+                                const ModuleBase::Vector3<double>* vel,
+                                const double* allmass,
+                                const ModuleBase::matrix& virial)
+{
+    MDStressState state;
+    // create(3,3) zeros the matrix (flag_zero defaults to true), so += below is safe
+    state.t_vector.create(3, 3);
+    state.stress.create(3, 3);
+
+    // compute temperature tensor (same logic as temp_vector)
+    for (int ion = 0; ion < unit_in.nat; ++ion)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                state.t_vector(i, j) += allmass[ion] * vel[ion][i] * vel[ion][j];
+            }
+        }
+    }
+
+    // total stress = virial + t_vector/omega
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            state.stress(i, j) = virial(i, j) + state.t_vector(i, j) / unit_in.omega;
+        }
+    }
+
+    return state;
+}
+
+// ============================================================================
+// === Old interface: compute_stress — now a wrapper around calc_stress_state ===
+// ============================================================================
+
 void compute_stress(const UnitCell& unit_in,
                     const ModuleBase::Vector3<double>* vel,
                     const double* allmass,
@@ -61,17 +127,8 @@ void compute_stress(const UnitCell& unit_in,
 {
     if (cal_stress)
     {
-        ModuleBase::matrix t_vector;
-
-        temp_vector(unit_in.nat, vel, allmass, t_vector);
-
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                stress(i, j) = virial(i, j) + t_vector(i, j) / unit_in.omega;
-            }
-        }
+        MDStressState state = calc_stress_state(unit_in, vel, allmass, virial);
+        stress = state.stress;
     }
 
     return;
@@ -450,22 +507,19 @@ double target_temp(const int& istep, const int& nstep, const double& tfirst, con
     return tfirst + delta * (tlast - tfirst);
 }
 
+// ============================================================================
+// === Old interface: current_temp — now a wrapper around calc_kinetic_state ===
+// ============================================================================
+
 double current_temp(double& kinetic,
                     const int& natom,
                     const int& frozen_freedom,
                     const double* allmass,
                     const ModuleBase::Vector3<double>* vel)
 {
-    if (3 * natom == frozen_freedom)
-    {
-        kinetic = 0.0;
-        return 0.0;
-    }
-    else
-    {
-        kinetic = kinetic_energy(natom, vel, allmass);
-        return 2 * kinetic / (3 * natom - frozen_freedom);
-    }
+    MDKineticState state = calc_kinetic_state(natom, frozen_freedom, allmass, vel);
+    kinetic = state.kinetic;
+    return state.temperature;
 }
 
 void temp_vector(const int& natom,

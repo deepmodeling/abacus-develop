@@ -2,6 +2,7 @@
 #define MD_FUNC_H
 
 #include "source_esolver/esolver.h"
+#include "md_statistics.h"
 
 class Parameter;
 
@@ -116,6 +117,48 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
  * @return the ionic kinetic energy
  */
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass);
+
+// ============================================================================
+// === New: pure-function versions — read-only inputs, explicit struct return ===
+// ============================================================================
+
+/**
+ * @brief compute kinetic energy and temperature as a pure function (no side effects)
+ *
+ * Pure function: does not modify any external state.
+ * Safer than current_temp(kinetic, ...) for unit testing and parallel calls.
+ *
+ * @param natom number of atoms
+ * @param frozen_freedom number of frozen degrees of freedom
+ * @param allmass atomic mass array
+ * @param vel atomic velocity array
+ * @return MDKineticState containing kinetic energy and temperature
+ */
+MDKineticState calc_kinetic_state(const int natom,
+                                  const int frozen_freedom,
+                                  const double* allmass,
+                                  const ModuleBase::Vector3<double>* vel);
+
+/**
+ * @brief compute ionic kinetic stress contribution and total stress as a pure function
+ *
+ * Pure function: does not modify virial/stress references.
+ * The caller decides how to use the returned struct.
+ *
+ * @param unit_in unitcell information
+ * @param vel atomic velocity array
+ * @param allmass atomic mass array
+ * @param virial lattice virial tensor
+ * @return MDStressState containing t_vector and total stress
+ */
+MDStressState calc_stress_state(const UnitCell& unit_in,
+                                const ModuleBase::Vector3<double>* vel,
+                                const double* allmass,
+                                const ModuleBase::matrix& virial);
+
+// ============================================================================
+// === Old write-back interfaces preserved as wrappers =========================
+// ============================================================================
 
 /**
  * @brief calculate the total stress tensor

@@ -67,8 +67,15 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
             }
         }
 
-        MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
-        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+        if (cal_stress)
+        {
+            MDStressState sstate = MD_func::calc_stress_state(ucell, vel, allmass, virial);
+            stress = sstate.stress;
+        }
+
+        MDKineticState kstate = MD_func::calc_kinetic_state(ucell.nat, frozen_freedom_, allmass, vel);
+        kinetic   = kstate.kinetic;
+        t_current = kstate.temperature;
     }
 
     ModuleBase::timer::end("MSST", "setup");
@@ -144,8 +151,16 @@ void MSST::second_half()
     propagate_vel();
 
     vsum = vel_sum();
-    MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+
+    if (cal_stress)
+    {
+        MDStressState sstate = MD_func::calc_stress_state(ucell, vel, allmass, virial);
+        stress = sstate.stress;
+    }
+
+    MDKineticState kstate = MD_func::calc_kinetic_state(ucell.nat, frozen_freedom_, allmass, vel);
+    kinetic   = kstate.kinetic;
+    t_current = kstate.temperature;
 
     /// propagate the time derivative of volume 1/2 step
     propagate_voldot();

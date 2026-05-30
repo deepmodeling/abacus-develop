@@ -232,8 +232,15 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     if (npt_flag)
     {
         /// update temperature and stress due to velocity rescaling
-        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
-        MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
+        MDKineticState kstate = MD_func::calc_kinetic_state(ucell.nat, frozen_freedom_, allmass, vel);
+        kinetic   = kstate.kinetic;
+        t_current = kstate.temperature;
+
+        if (cal_stress)
+        {
+            MDStressState sstate = MD_func::calc_stress_state(ucell, vel, allmass, virial);
+            stress = sstate.stress;
+        }
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -287,12 +294,18 @@ void Nose_Hoover::second_half()
     }
 
     /// update temperature and kinetic energy due to velocity rescaling
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    MDKineticState kstate = MD_func::calc_kinetic_state(ucell.nat, frozen_freedom_, allmass, vel);
+    kinetic   = kstate.kinetic;
+    t_current = kstate.temperature;
 
     if (npt_flag)
     {
         /// update stress due to velocity rescaling
-        MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
+        if (cal_stress)
+        {
+            MDStressState sstate = MD_func::calc_stress_state(ucell, vel, allmass, virial);
+            stress = sstate.stress;
+        }
 
         /// couple stress component due to md_pcouple
         couple_stress();
