@@ -74,6 +74,9 @@ class ESolver_NEP : public ESolver
     void after_all_runners(UnitCell& ucell) override;
 
   private:
+    void prepare_input_buffers(const UnitCell& ucell);
+    void postprocess_outputs(const UnitCell& ucell);
+
     /**
      * @brief determine the type map of NEP model
      *
@@ -101,6 +104,8 @@ class ESolver_NEP : public ESolver
     std::vector<double> _e;              ///< temporary storage for energy computation
     std::vector<double> _f;              ///< temporary storage for force computation
     std::vector<double> _v;              ///< temporary storage for virial computation
+    std::vector<double> cell;            ///< NEP cell matrix in column-major order
+    std::vector<double> coord;           ///< NEP coordinates in structure-of-arrays order
 };
 
 } // namespace ModuleESolver

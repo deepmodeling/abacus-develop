@@ -16,6 +16,7 @@
  * @date 2025-10-10
  */
 #include "esolver_nep.h"
+#include "esolver_nep_postprocess.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_base/parallel_common.h"
@@ -23,7 +24,6 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
 
-#include <numeric>
 #include <unordered_map>
 
 using namespace ModuleESolver;
@@ -37,6 +37,8 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
     _v.resize(9 * ucell.nat);
+    cell.resize(9);
+    coord.resize(3 * ucell.nat);
 
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU.cif", 
                                ucell, 
@@ -54,9 +56,26 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_NEP", "runner");
     ModuleBase::timer::start("ESolver_NEP", "runner");
 
-    // note that NEP are column major, thus a transpose is needed
-    // cell
-    std::vector<double> cell(9, 0.0);
+    prepare_input_buffers(ucell);
+
+#ifdef __NEP
+    nep_potential = 0.0;
+    nep_force.zero_out();
+    nep_virial.zero_out();
+
+    nep.compute(atype, cell, coord, _e, _f, _v);
+    postprocess_outputs(ucell);
+#else
+    ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
+#endif
+    ModuleBase::timer::end("ESolver_NEP", "runner");
+}
+
+void ESolver_NEP::prepare_input_buffers(const UnitCell& ucell)
+{
+    ModuleBase::timer::start("ESolver_NEP", "prepare_input");
+
+    // NEP uses column-major cell and structure-of-arrays coordinates.
     cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
     cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
     cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
@@ -67,8 +86,6 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    // coord
-    std::vector<double> coord(3 * ucell.nat, 0.0);
     int iat = 0;
     const int nat = ucell.nat;
     for (int it = 0; it < ucell.ntype; ++it)
@@ -83,55 +100,51 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     }
     assert(ucell.nat == iat);
 
-#ifdef __NEP
-    nep_potential = 0.0;
-    nep_force.zero_out();
-    nep_virial.zero_out();
+    ModuleBase::timer::end("ESolver_NEP", "prepare_input");
+}
 
-    nep.compute(atype, cell, coord, _e, _f, _v);
+void ESolver_NEP::postprocess_outputs(const UnitCell& ucell)
+{
+    ModuleBase::timer::start("ESolver_NEP", "postprocess");
 
     // unit conversion
     const double fact_e = 1.0 / ModuleBase::Ry_to_eV;
     const double fact_f = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
     const double fact_v = 1.0 / (ucell.omega * ModuleBase::Ry_to_eV);
 
+#ifdef __CUDA
+    if (PARAM.inp.device == "gpu")
+    {
+        postprocess_nep_cuda(ucell.nat,
+                             _e.data(),
+                             _f.data(),
+                             _v.data(),
+                             fact_e,
+                             fact_f,
+                             fact_v,
+                             nep_potential,
+                             nep_force,
+                             nep_virial);
+    }
+    else
+#endif
+    {
+        postprocess_nep_cpu(ucell.nat,
+                            _e.data(),
+                            _f.data(),
+                            _v.data(),
+                            fact_e,
+                            fact_f,
+                            fact_v,
+                            nep_potential,
+                            nep_force,
+                            nep_virial);
+    }
 
-    // potential energy
-    nep_potential = fact_e * std::accumulate(_e.begin(), _e.end(), 0.0) ;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << nep_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
-    
-    // forces
-    for (int i = 0; i < nat; ++i)
-    {
-        nep_force(i, 0) = _f[i] * fact_f;
-        nep_force(i, 1) = _f[i + nat] * fact_f;
-        nep_force(i, 2) = _f[i + 2 * nat] * fact_f;
-    }
 
-    // virial
-    std::vector<double> v_sum(9, 0.0);
-    for (int j = 0; j < 9; ++j)
-    {
-        for (int i = 0; i < nat; ++i)
-        {
-            int index = j * nat + i;
-            v_sum[j] += _v[index];
-        }
-    }
-
-    // virial -> stress
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            nep_virial(i, j) = v_sum[3 * i + j] * fact_v;
-        }
-    }
-#else
-    ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
-#endif
-    ModuleBase::timer::end("ESolver_NEP", "runner");
+    ModuleBase::timer::end("ESolver_NEP", "postprocess");
 }
 
 double ESolver_NEP::cal_energy()

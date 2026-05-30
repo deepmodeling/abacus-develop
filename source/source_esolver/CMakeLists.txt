@@ -8,6 +8,7 @@ list(APPEND objects
     esolver_lj.cpp
     esolver_dp.cpp
     esolver_nep.cpp
+    esolver_nep_postprocess.cpp
     esolver_of.cpp
     esolver_of_tddft.cpp
     esolver_of_interface.cpp
@@ -22,6 +23,12 @@ if(ENABLE_LCAO)
       lcao_others.cpp
       esolver_dm2rho.cpp
       esolver_double_xc.cpp
+  )
+endif()
+
+if(USE_CUDA)
+  list(APPEND objects
+      esolver_nep_postprocess.cu
   )
 endif()
 
@@ -42,4 +49,3 @@ if(BUILD_TESTING)
     add_subdirectory(test)
   endif()
 endif()
-
