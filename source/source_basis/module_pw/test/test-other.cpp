@@ -29,7 +29,7 @@ TEST_F(PWTEST,test_other)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(pwtest.setuptransform(), ::testing::ExitedWithCode(1), "");
     string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+    EXPECT_THAT(output,testing::HasSubstr("ERROR"));
 
     int nks = 2;
     ModuleBase::Vector3<double> *kvec_d = new ModuleBase::Vector3<double>[nks];

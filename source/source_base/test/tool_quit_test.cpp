@@ -78,8 +78,9 @@ TEST_F(ToolQuitTest,warningquit)
 	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter"),
 			::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	// test output on screening
-	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
+	// error exits should keep the error message visible and skip timer output
+	EXPECT_THAT(output, testing::HasSubstr("ERROR"));
+	EXPECT_THAT(output, testing::Not(testing::HasSubstr("TIME STATISTICS")));
 	GlobalV::ofs_warning.close();
 	GlobalV::ofs_running.close();
 	ifs.open("warning.log");
@@ -101,8 +102,9 @@ TEST_F(ToolQuitTest,warningquit_with_ret)
 	EXPECT_EXIT(ModuleBase::WARNING_QUIT("INPUT","bad input parameter",1),
 			::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	// test output on screening
-	EXPECT_THAT(output,testing::HasSubstr("TIME STATISTICS"));
+	// error exits should keep the error message visible and skip timer output
+	EXPECT_THAT(output, testing::HasSubstr("ERROR"));
+	EXPECT_THAT(output, testing::Not(testing::HasSubstr("TIME STATISTICS")));
 	GlobalV::ofs_warning.close();
 	GlobalV::ofs_running.close();
 	ifs.open("warning.log");

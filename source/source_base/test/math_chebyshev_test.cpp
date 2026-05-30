@@ -385,7 +385,7 @@ TEST_F(MathChebyshevTest, recurs)
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleBase::Chebyshev<double> noneche(0), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    EXPECT_THAT(output, testing::HasSubstr("ERROR"));
 
     int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);

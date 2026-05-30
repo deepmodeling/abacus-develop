@@ -1,4 +1,5 @@
 #include "tool_quit.h"
+#include <cstdlib>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -18,6 +19,22 @@ namespace
 {
 std::string g_quit_out_dir;
 std::string g_quit_calculation;
+
+[[noreturn]] void quit_impl(const int ret, const bool print_timer)
+{
+#ifdef __NORMAL
+    (void)print_timer;
+#else
+    if (print_timer)
+    {
+        ModuleBase::timer::finish(GlobalV::ofs_running, GlobalV::MY_RANK == 0, false);
+        std::cout << " See output information in : " << g_quit_out_dir << std::endl;
+    }
+    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
+#endif
+
+    std::exit(ret);
+}
 }
 
 void set_quit_out_dir(const std::string& dir)
@@ -64,35 +81,13 @@ void QUIT()
 
 void QUIT(int ret)
 {
-
-#ifdef __NORMAL
-#else
-    ModuleBase::timer::finish(GlobalV::ofs_running , !GlobalV::MY_RANK, false);
-    ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK);
-    std::cout<<" See output information in : "<<g_quit_out_dir<<std::endl;
-#endif
-
-    exit(ret);
+    quit_impl(ret, true);
 }
 
 
 void WARNING_QUIT(const std::string &file,const std::string &description)
 {
-	WARNING_QUIT(file, description, 1);
-
-	#ifdef __MPI /* if it is MPI run, finalize first, then exit */
-	std::cout << "Detecting if MPI has been initialized..." << std::endl;
-	int is_initialized = 0;
-    MPI_Initialized(&is_initialized);
-	if (is_initialized) {
-		std::cout << "Terminating ABACUS with multiprocessing environment." << std::endl;
-		MPI_Finalize();
-	}
-	else{
-		std::cout << "MPI has not been initialized. Quit normally." << std::endl;
-	}
-	/* but seems this is the only correct way to terminate the MPI */
-#endif
+    WARNING_QUIT(file, description, 1);
 }
 
 void WARNING_QUIT(const std::string &file,const std::string &description,int ret)
@@ -100,7 +95,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 #ifdef __NORMAL
 
 	std::cout << " ---------------------------------------------------------" << std::endl;
-	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << "                         !ERROR!                          " << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
     std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
     std::cout << " https://abacus.deepmodeling.com" << std::endl;
@@ -110,10 +105,11 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 #else
 	std::cout << " " << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
-	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << "                         !ERROR!                          " << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
 	std::cout << " " << std::endl;
 	std::cout << " " << description << std::endl;
+	std::cout << " " << std::endl;
 	std::cout << " CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
 	std::cout << " " << std::endl;
 	std::cout << " For detailed manual of ABACUS, please see the website" << std::endl;
@@ -121,15 +117,16 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	std::cout << " For any questions, propose issues on the website" << std::endl;
 	std::cout << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
-	std::cout << "                         !NOTICE!                         " << std::endl;
+	std::cout << "                         !ERROR!                          " << std::endl;
 	std::cout << " ---------------------------------------------------------" << std::endl;
 
 
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
-	GlobalV::ofs_running << "                         !NOTICE!                         " << std::endl;
+	GlobalV::ofs_running << "                         !ERROR!                          " << std::endl;
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " " << description << std::endl;
+	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " CHECK IN FILE : " << g_quit_out_dir << "warning.log" << std::endl;
 	GlobalV::ofs_running << std::endl;
 	GlobalV::ofs_running << " For detailed manual of ABACUS, please see the website" << std::endl;
@@ -137,7 +134,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 	GlobalV::ofs_running << " For any questions, propose issues on the website" << std::endl;
 	GlobalV::ofs_running << " https://github.com/deepmodeling/abacus-develop/issues" << std::endl;
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
-	GlobalV::ofs_running << "                         NOTICE                           " << std::endl;
+	GlobalV::ofs_running << "                         !ERROR!                          " << std::endl;
 	GlobalV::ofs_running << " ---------------------------------------------------------" << std::endl;
 
 	WARNING(file,description);
@@ -145,7 +142,7 @@ void WARNING_QUIT(const std::string &file,const std::string &description,int ret
 
 #endif
 
-    QUIT(ret);
+    quit_impl(ret, false);
 }
 
 //Check and print warning information for all cores.

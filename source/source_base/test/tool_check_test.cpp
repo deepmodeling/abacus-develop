@@ -61,7 +61,7 @@ TEST_F(ToolCheckTest, Name)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::CHECK_NAME(ifs, "abacus"), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+	EXPECT_THAT(output,testing::HasSubstr("ERROR"));
 	ifs.close();
 }
 
@@ -82,7 +82,7 @@ TEST_F(ToolCheckTest, Int)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::CHECK_INT(ifs, 80), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+	EXPECT_THAT(output,testing::HasSubstr("ERROR"));
 	ifs.close();
 }
 
@@ -103,7 +103,7 @@ TEST_F(ToolCheckTest, Double)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::CHECK_DOUBLE(ifs, 0.22998), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+	EXPECT_THAT(output,testing::HasSubstr("ERROR"));
 	ifs.close();
 }
 
@@ -124,6 +124,6 @@ TEST_F(ToolCheckTest, String)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ModuleBase::CHECK_STRING(ifs, "scf"), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("NOTICE"));
+	EXPECT_THAT(output,testing::HasSubstr("ERROR"));
 	ifs.close();
 }
