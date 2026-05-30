@@ -1,6 +1,7 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
+#include "md_statistics.h"
 #include "source_esolver/esolver.h"
 
 class Parameter;
@@ -118,6 +119,14 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass);
 
 /**
+ * @brief calculate kinetic energy and temperature without writing caller-owned state
+ */
+MDKineticState calc_kinetic_state(const int& natom,
+                                  const int& frozen_freedom,
+                                  const double* allmass,
+                                  const ModuleBase::Vector3<double>* vel);
+
+/**
  * @brief calculate the total stress tensor
  *
  * @param unit_in unitcell information
@@ -133,6 +142,15 @@ void compute_stress(const UnitCell& unit_in,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress);
+
+/**
+ * @brief calculate stress and ionic temperature tensor without writing caller-owned state
+ */
+MDStressState calc_stress_state(const int& natom,
+                                const double& omega,
+                                const ModuleBase::Vector3<double>* vel,
+                                const double* allmass,
+                                const ModuleBase::matrix& virial);
 
 /**
  * @brief output the stress information
