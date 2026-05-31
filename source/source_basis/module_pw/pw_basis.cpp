@@ -39,6 +39,8 @@ PW_Basis:: ~PW_Basis()
     delete[] startr;
     delete[] ig2igg;
     delete[] gg_uniq;
+    this->comm_workbuf_float_.reset();
+    this->comm_workbuf_double_.reset();
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu")
     {
@@ -124,7 +126,21 @@ void PW_Basis::getstartgr()
     {
         this->startr[ip] = this->startr[ip-1] + this->numr[ip-1];
     }
+    this->allocate_comm_buffers();
     return;
+}
+
+void PW_Basis::allocate_comm_buffers()
+{
+    if (this->poolnproc <= 0)
+    {
+        return;
+    }
+    const std::size_t max_size = static_cast<std::size_t>(
+        this->startr[this->poolnproc - 1] + this->numr[this->poolnproc - 1]
+        + this->startg[this->poolnproc - 1] + this->numg[this->poolnproc - 1]);
+    this->comm_workbuf_float_.reset(new std::complex<float>[max_size]);
+    this->comm_workbuf_double_.reset(new std::complex<double>[max_size]);
 }
 
 ///

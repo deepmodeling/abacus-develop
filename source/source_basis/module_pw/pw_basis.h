@@ -8,7 +8,9 @@
 #include "source_base/vector3.h"
 #include <complex>
 #include "source_base/module_fft/fft_bundle.h"
+#include <cassert>
 #include <cstring>
+#include <memory>
 #include <vector>
 #ifdef __MPI
 #include "mpi.h"
@@ -149,7 +151,7 @@ protected:
 
     //prepare for MPI_Alltoall
     void getstartgr();
-
+    void allocate_comm_buffers();
 
 public:
     //collect gdirect, gcar, gg
@@ -445,22 +447,24 @@ protected:
   std::string precision = "double"; ///< single, double, mixing
   bool double_data_ = true;         ///<  if has double data
   bool float_data_ = false;         ///< if has float data
-  mutable std::vector<std::complex<float>> comm_workbuf_float_;
-  mutable std::vector<std::complex<double>> comm_workbuf_double_;
+  std::unique_ptr<std::complex<float>[]> comm_workbuf_float_;
+  std::unique_ptr<std::complex<double>[]> comm_workbuf_double_;
 };
 
 template <>
 inline std::complex<float>* PW_Basis::acquire_comm_workbuf<float>(const int size) const
 {
-    this->comm_workbuf_float_.resize(size);
-    return this->comm_workbuf_float_.data();
+    (void)size;
+    assert(this->comm_workbuf_float_ != nullptr);
+    return this->comm_workbuf_float_.get();
 }
 
 template <>
 inline std::complex<double>* PW_Basis::acquire_comm_workbuf<double>(const int size) const
 {
-    this->comm_workbuf_double_.resize(size);
-    return this->comm_workbuf_double_.data();
+    (void)size;
+    assert(this->comm_workbuf_double_ != nullptr);
+    return this->comm_workbuf_double_.get();
 }
 }
 #endif // PWBASIS_H
