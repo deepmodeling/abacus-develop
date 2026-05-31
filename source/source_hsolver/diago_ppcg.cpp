@@ -51,6 +51,12 @@ DiagoPPCG<T, Device>::~DiagoPPCG()
     delmem_op()(hp_new);
     delmem_op()(hpsi_new);
     delmem_op()(work);
+    delmem_op()(d_bv_cache);
+    delmem_op()(d_tmp_cache);
+    delmem_op()(d_pack_basis);
+    delmem_op()(d_pack_hprod);
+    delmem_op()(d_block_h);
+    delmem_op()(d_block_s);
     delmem_real_op()(d_eigen);
     delmem_real_op()(d_err);
     delmem_real_h()(h_eigen);
@@ -100,6 +106,22 @@ void DiagoPPCG<T, Device>::init_iter(const int nband,
 
     resmem_real_h()(h_eigen, this->n_work);
     resmem_real_h()(h_err, this->n_work);
+
+    // pre-allocate per-band subspace caches (B1: avoid alloc/free in inner loop)
+    resmem_op()(d_bv_cache, 3 * this->n_basis);
+    setmem_op()(d_bv_cache, 0, 3 * this->n_basis);
+    resmem_op()(d_tmp_cache, 3);
+    setmem_op()(d_tmp_cache, 0, 3);
+
+    // pre-allocate blocked-mode pack buffers
+    constexpr int k_max = 10;
+    resmem_op()(d_pack_basis, 3 * k_max * this->n_basis);
+    setmem_op()(d_pack_basis, 0, 3 * k_max * this->n_basis);
+    resmem_op()(d_pack_hprod, 3 * k_max * this->n_basis);
+    setmem_op()(d_pack_hprod, 0, 3 * k_max * this->n_basis);
+    // pre-allocate Hsub/Ssub for blocked solves (max ns = 3*k_max = 30, ns2 = 900)
+    resmem_op()(d_block_h, k_max * k_max * 9);
+    resmem_op()(d_block_s, k_max * k_max * 9);
 
     this->is_locked.assign(this->n_work, 0);
     this->converge_count.assign(this->n_work, 0);
@@ -491,39 +513,32 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
         T hsmall[9] = {}, ssmall[9] = {}, coeff[9] = {};
         Real eval[3] = {};
 
-        // bv/ hbv columns live in separate arrays; pack bv into a temporary
-        // contiguous device matrix so gemv sees the correct adim columns.
-        T* d_bv = nullptr;
-        resmem_op()(d_bv, adim * this->n_basis);
+        // Pack bv into pre-allocated cache so gemv sees contiguous columns.
+        setmem_op()(this->d_bv_cache, 0, adim * this->n_basis);
         for (int j = 0; j < adim; ++j)
-            syncmem_op()(d_bv + j * this->n_basis, bv[j], this->n_basis);
+            syncmem_op()(this->d_bv_cache + j * this->n_basis, bv[j], this->n_basis);
 
         for (int col = 0; col < adim; ++col)
         {
-            T* d_tmp = nullptr;
-            resmem_op()(d_tmp, adim);
-            setmem_op()(d_tmp, 0, adim);
+            setmem_op()(this->d_tmp_cache, 0, adim);
 
             // hsmall[:,col] = bv^H * hbv[col]
             ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                                             p_one<T>(), d_bv, this->n_basis,
+                                             p_one<T>(), this->d_bv_cache, this->n_basis,
                                              hbv[col], 1,
-                                             p_zero<T>(), d_tmp, 1);
-            T hc[3]; syncmem_d2h()(hc, d_tmp, adim);
+                                             p_zero<T>(), this->d_tmp_cache, 1);
+            T hc[3]; syncmem_d2h()(hc, this->d_tmp_cache, adim);
             for (int r = 0; r < adim; ++r) hsmall[r + col * adim] = hc[r];
 
             // ssmall[:,col] = bv^H * bv[col]
-            setmem_op()(d_tmp, 0, adim);
+            setmem_op()(this->d_tmp_cache, 0, adim);
             ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                                             p_one<T>(), d_bv, this->n_basis,
+                                             p_one<T>(), this->d_bv_cache, this->n_basis,
                                              bv[col], 1,
-                                             p_zero<T>(), d_tmp, 1);
-            syncmem_d2h()(hc, d_tmp, adim);
+                                             p_zero<T>(), this->d_tmp_cache, 1);
+            syncmem_d2h()(hc, this->d_tmp_cache, adim);
             for (int r = 0; r < adim; ++r) ssmall[r + col * adim] = hc[r];
-
-            delmem_op()(d_tmp);
         }
-        delmem_op()(d_bv);
 
         this->solve_small_problem(adim, hsmall, ssmall, coeff, eval);
         this->h_eigen[ib] = eval[0];
@@ -565,59 +580,156 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
     setmem_op()(this->hp_new,   0, this->n_work * this->n_basis);
     setmem_op()(this->hpsi_new, 0, this->n_work * this->n_basis);
 
-    int off = 0;
-    for (std::size_t b = 0; b < this->block_sizes.size(); ++b)
+    const int ldb = this->n_basis;
+    const int target_bs = this->block_sizes.empty()
+                          ? 10
+                          : std::max(1, this->block_sizes[0]);
+
+    // ---- Phase 1: classify unlocked bands by P-norm (2D vs 3D subspace) ----
+    std::vector<int> idx_2d, idx_3d;
+    idx_2d.reserve(this->n_band_l);
+    idx_3d.reserve(this->n_band_l);
+
+    for (int ib = 0; ib < this->n_band_l; ++ib)
     {
-        const int k = this->block_sizes[b];
-        if (k <= 0 || off + k > this->n_band_l) { off += k; continue; }
+        if (this->is_locked[ib]) continue;
 
-        const int ns = 3 * k,  ns2 = ns * ns;
+        // Per-band P-norm check — same threshold as per-band solver (adim=2 vs 3).
+        Real p_norm2 = 0;
+        {
+            const T* pi = this->p + ib * ldb;
+            for (int ig = 0; ig < this->n_dim; ++ig) {
+                const T& v = pi[ig];
+                p_norm2 += std::real(v) * std::real(v) + std::imag(v) * std::imag(v);
+            }
+        }
+#ifdef __MPI
+        Parallel_Reduce::reduce_pool(p_norm2);
+#endif
+        if (p_norm2 < Real(1e-30))
+            idx_2d.push_back(ib);
+        else
+            idx_3d.push_back(ib);
+    }
 
-        const T* X  = psi_in    + off * this->n_basis;
-        const T* W  = this->w   + off * this->n_basis;
-        const T* P  = this->p   + off * this->n_basis;
-        const T* HX = this->hpsi + off * this->n_basis;
-        const T* HW = this->hw  + off * this->n_basis;
-        const T* HP = this->hp  + off * this->n_basis;
+    // ---- Phase 2: shared lambda — pack, solve, scatter one block ------------
+    auto process_block = [&](const std::vector<int>& indices, int ndim_eff)
+    {
+        const int k = static_cast<int>(indices.size());
+        if (k == 0) return;
+        const int ns = ndim_eff * k, ns2 = ns * ns;
 
-        const int ldb = this->n_basis;
+        // Check if indices are contiguous — skip pack when possible.
+        bool contiguous = true;
+        for (int i = 1; i < k; ++i) {
+            if (indices[i] != indices[i-1] + 1) { contiguous = false; break; }
+        }
 
-        T* d_h = nullptr;  resmem_op()(d_h, ns2);
-        T* d_s = nullptr;  resmem_op()(d_s, ns2);
+        const T* X_ptr, *W_ptr, *P_ptr, *HX_ptr, *HW_ptr, *HP_ptr;
+        if (contiguous) {
+            const int off = indices[0];
+            X_ptr  = psi_in    + off * ldb;
+            W_ptr  = this->w   + off * ldb;
+            P_ptr  = this->p   + off * ldb;
+            HX_ptr = this->hpsi + off * ldb;
+            HW_ptr = this->hw   + off * ldb;
+            HP_ptr = this->hp   + off * ldb;
+        } else {
+            const T* src_basis[3] = { psi_in, this->w, this->p };
+            const T* src_hprod[3] = { this->hpsi, this->hw, this->hp };
+            for (int dim = 0; dim < ndim_eff; ++dim) {
+                for (int i = 0; i < k; ++i) {
+                    int ib = indices[i];
+                    syncmem_op()(d_pack_basis + (dim * k + i) * ldb,
+                                 src_basis[dim] + ib * ldb, ldb);
+                    syncmem_op()(d_pack_hprod + (dim * k + i) * ldb,
+                                 src_hprod[dim] + ib * ldb, ldb);
+                }
+            }
+            X_ptr  = d_pack_basis + 0*k*ldb;
+            W_ptr  = d_pack_basis + 1*k*ldb;
+            P_ptr  = d_pack_basis + 2*k*ldb;
+            HX_ptr = d_pack_hprod + 0*k*ldb;
+            HW_ptr = d_pack_hprod + 1*k*ldb;
+            HP_ptr = d_pack_hprod + 2*k*ldb;
+        }
 
-        // ---- hsub: 3×3 blocks via gemm ----
-        // row 0  (X^H)
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,HX,ldb, p_zero<T>(),d_h+0*ns+0*k,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,HW,ldb, p_zero<T>(),d_h+1*k*ns+0*k,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,HP,ldb, p_zero<T>(),d_h+2*k*ns+0*k,ns);
-        // row 1  (W^H)
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,HX,ldb, p_zero<T>(),d_h+1*k+0*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,HW,ldb, p_zero<T>(),d_h+1*k+1*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,HP,ldb, p_zero<T>(),d_h+1*k+2*k*ns,ns);
-        // row 2  (P^H)
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,HX,ldb, p_zero<T>(),d_h+2*k+0*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,HW,ldb, p_zero<T>(),d_h+2*k+1*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,HP,ldb, p_zero<T>(),d_h+2*k+2*k*ns,ns);
+        T* d_h = this->d_block_h;  setmem_op()(d_h, 0, ns2);
+        T* d_s = this->d_block_s;  setmem_op()(d_s, 0, ns2);
 
-        // ---- ssub: same structure ----
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,X,ldb, p_zero<T>(),d_s+0*ns+0*k,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,W,ldb, p_zero<T>(),d_s+1*k*ns+0*k,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),X,ldb,P,ldb, p_zero<T>(),d_s+2*k*ns+0*k,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,X,ldb, p_zero<T>(),d_s+1*k+0*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,W,ldb, p_zero<T>(),d_s+1*k+1*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),W,ldb,P,ldb, p_zero<T>(),d_s+1*k+2*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,X,ldb, p_zero<T>(),d_s+2*k+0*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,W,ldb, p_zero<T>(),d_s+2*k+1*k*ns,ns);
-        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim, p_one<T>(),P,ldb,P,ldb, p_zero<T>(),d_s+2*k+2*k*ns,ns);
+        // Hsub upper triangle
+        // (0,0): X^H HX    (0,1): X^H HW
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), X_ptr, ldb, HX_ptr, ldb,
+            p_zero<T>(), d_h+0*k+0*k*ns, ns);
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), X_ptr, ldb, HW_ptr, ldb,
+            p_zero<T>(), d_h+1*k*ns+0*k, ns);
+        // (1,1): W^H HW
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), W_ptr, ldb, HW_ptr, ldb,
+            p_zero<T>(), d_h+1*k+1*k*ns, ns);
+
+        // Ssub upper triangle
+        // (0,0): X^H X     (0,1): X^H W
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), X_ptr, ldb, X_ptr, ldb,
+            p_zero<T>(), d_s+0*k+0*k*ns, ns);
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), X_ptr, ldb, W_ptr, ldb,
+            p_zero<T>(), d_s+1*k*ns+0*k, ns);
+        // (1,1): W^H W
+        ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+            p_one<T>(), W_ptr, ldb, W_ptr, ldb,
+            p_zero<T>(), d_s+1*k+1*k*ns, ns);
+
+        if (ndim_eff >= 3) {
+            // (0,2): X^H HP    (1,2): W^H HP    (2,2): P^H HP
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), X_ptr, ldb, HP_ptr, ldb,
+                p_zero<T>(), d_h+2*k*ns+0*k, ns);
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), W_ptr, ldb, HP_ptr, ldb,
+                p_zero<T>(), d_h+1*k+2*k*ns, ns);
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), P_ptr, ldb, HP_ptr, ldb,
+                p_zero<T>(), d_h+2*k+2*k*ns, ns);
+            // (0,2): X^H P     (1,2): W^H P     (2,2): P^H P
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), X_ptr, ldb, P_ptr, ldb,
+                p_zero<T>(), d_s+2*k*ns+0*k, ns);
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), W_ptr, ldb, P_ptr, ldb,
+                p_zero<T>(), d_s+1*k+2*k*ns, ns);
+            ModuleBase::gemm_op<T, Device>()('C','N',k,k,this->n_dim,
+                p_one<T>(), P_ptr, ldb, P_ptr, ldb,
+                p_zero<T>(), d_s+2*k+2*k*ns, ns);
+        }
 
         // D2H
         std::vector<T> hv(ns2), sv(ns2);
-        syncmem_d2h()(hv.data(), d_h, ns2);  delmem_op()(d_h);
-        syncmem_d2h()(sv.data(), d_s, ns2);  delmem_op()(d_s);
+        syncmem_d2h()(hv.data(), d_h, ns2);
+        syncmem_d2h()(sv.data(), d_s, ns2);
 #ifdef __MPI
         Parallel_Reduce::reduce_pool(hv.data(), ns2);
         Parallel_Reduce::reduce_pool(sv.data(), ns2);
 #endif
+
+        // Fill lower triangle by Hermitian symmetry
+        for (int c = 0; c < k; ++c)
+            for (int r = 0; r < k; ++r) {
+                hv[(1*k+r)+(0*k+c)*ns] = std::conj(hv[(0*k+c)+(1*k+r)*ns]);
+                sv[(1*k+r)+(0*k+c)*ns] = std::conj(sv[(0*k+c)+(1*k+r)*ns]);
+            }
+        if (ndim_eff >= 3) {
+            for (int c = 0; c < k; ++c)
+                for (int r = 0; r < k; ++r) {
+                    hv[(2*k+r)+(0*k+c)*ns] = std::conj(hv[(0*k+c)+(2*k+r)*ns]);
+                    sv[(2*k+r)+(0*k+c)*ns] = std::conj(sv[(0*k+c)+(2*k+r)*ns]);
+                    hv[(2*k+r)+(1*k+c)*ns] = std::conj(hv[(1*k+c)+(2*k+r)*ns]);
+                    sv[(2*k+r)+(1*k+c)*ns] = std::conj(sv[(1*k+c)+(2*k+r)*ns]);
+                }
+        }
 
         for (int i = 0; i < ns; ++i) sv[i + i * ns] += T(1.0e-12);
 
@@ -627,63 +739,158 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
             ct::kernels::lapack_hegvd<T, ct::DEVICE_CPU>()(ns, ns, hv.data(), sv.data(),
                                                             el.data(), ev.data());
         } catch (const std::exception&) {
-            for (int ib = off; ib < off + k && ib < this->n_work; ++ib)
-            {
-                this->copy_vector(this->work     + ib * this->n_basis, psi_in    + ib * this->n_basis);
-                this->copy_vector(this->hpsi_new + ib * this->n_basis, this->hpsi + ib * this->n_basis);
+            for (int i = 0; i < k; ++i) {
+                int ib = indices[i];
+                this->copy_vector(this->work     + ib * ldb, psi_in    + ib * ldb);
+                this->copy_vector(this->hpsi_new + ib * ldb, this->hpsi + ib * ldb);
             }
-            off += k; continue;
+            return;
         }
 
-        for (int ib = 0; ib < k; ++ib)
+        // Scatter updated vectors back to their original positions
+        for (int i = 0; i < k; ++i)
         {
-            const int ig = off + ib;
-            if (this->is_locked[ig])
-            {
-                this->copy_vector(this->work     + ig * this->n_basis, psi_in    + ig * this->n_basis);
-                this->copy_vector(this->hpsi_new + ig * this->n_basis, this->hpsi + ig * this->n_basis);
-                continue;
-            }
-
-            T* xn = this->work     + ig * this->n_basis;
-            T* hn = this->hpsi_new + ig * this->n_basis;
-            T* pn = this->p_new    + ig * this->n_basis;
-            T* hpn= this->hp_new   + ig * this->n_basis;
+            const int ig = indices[i];
+            T* xn  = this->work     + ig * ldb;
+            T* hn  = this->hpsi_new + ig * ldb;
+            T* pn  = this->p_new    + ig * ldb;
+            T* hpn = this->hp_new   + ig * ldb;
             this->zero_vector(xn);  this->zero_vector(hn);
             this->zero_vector(pn);  this->zero_vector(hpn);
 
-            for (int col = 0; col < ns; ++col)
-            {
-                const int cs = col % k, cb = col / k, is = off + cs;
-                const T c = ev[col + ib * ns];
+            // When contiguous, bands are is = off + cs; avoid indices[] lookup.
+            if (contiguous) {
+                const int off = indices[0];
+                for (int col = 0; col < ns; ++col) {
+                    const int cs = col % k, cb = col / k, is = off + cs;
+                    const T c = ev[col + i * ns];
 
-                const T *vs = nullptr, *hs = nullptr;
-                if (cb == 0)      { vs = psi_in + is * ldb; hs = this->hpsi + is * ldb; }
-                else if (cb == 1) { vs = this->w + is * ldb; hs = this->hw   + is * ldb; }
-                else              { vs = this->p + is * ldb; hs = this->hp   + is * ldb; }
+                    const T *vs = nullptr, *hs = nullptr;
+                    if (cb == 0)       { vs = psi_in + is * ldb; hs = this->hpsi + is * ldb; }
+                    else if (cb == 1)  { vs = this->w + is * ldb; hs = this->hw   + is * ldb; }
+                    else               { vs = this->p + is * ldb; hs = this->hp   + is * ldb; }
 
-                this->axpy_vector(xn, vs, c);
-                this->axpy_vector(hn, hs, c);
-                if (cb >= 1) { this->axpy_vector(pn, vs, c); this->axpy_vector(hpn, hs, c); }
+                    this->axpy_vector(xn, vs, c);
+                    this->axpy_vector(hn, hs, c);
+                    if (cb >= 1) { this->axpy_vector(pn, vs, c); this->axpy_vector(hpn, hs, c); }
+                }
+            } else {
+                for (int col = 0; col < ns; ++col) {
+                    const int cs = col % k, cb = col / k, is = indices[cs];
+                    const T c = ev[col + i * ns];
+
+                    const T *vs = nullptr, *hs = nullptr;
+                    if (cb == 0)       { vs = psi_in + is * ldb; hs = this->hpsi + is * ldb; }
+                    else if (cb == 1)  { vs = this->w + is * ldb; hs = this->hw   + is * ldb; }
+                    else               { vs = this->p + is * ldb; hs = this->hp   + is * ldb; }
+
+                    this->axpy_vector(xn, vs, c);
+                    this->axpy_vector(hn, hs, c);
+                    if (cb >= 1) { this->axpy_vector(pn, vs, c); this->axpy_vector(hpn, hs, c); }
+                }
             }
         }
-        off += k;
+    };  // end process_block
+
+    // ---- Phase 3: process 2D and 3D groups in blocks -----------------------
+    for (size_t start = 0; start < idx_2d.size(); start += target_bs)
+    {
+        size_t end = std::min(start + target_bs, idx_2d.size());
+        std::vector<int> block(idx_2d.begin() + start, idx_2d.begin() + end);
+        process_block(block, 2);
+    }
+    for (size_t start = 0; start < idx_3d.size(); start += target_bs)
+    {
+        size_t end = std::min(start + target_bs, idx_3d.size());
+        std::vector<int> block(idx_3d.begin() + start, idx_3d.begin() + end);
+        process_block(block, 3);
     }
 
-    // preserve extra bands
+    // ---- Phase 4: locked bands — keep old values ---------------------------
+    for (int ib = 0; ib < this->n_band_l; ++ib)
+    {
+        if (!this->is_locked[ib]) continue;
+        this->copy_vector(this->work     + ib * ldb, psi_in    + ib * ldb);
+        this->copy_vector(this->hpsi_new + ib * ldb, this->hpsi + ib * ldb);
+    }
+
+    // ---- Phase 5: extra (buffer) bands — per-band PPCG ---------------------
     for (int ib = this->n_band_l; ib < this->n_work; ++ib)
     {
-        this->copy_vector(this->work     + ib * this->n_basis, psi_in    + ib * this->n_basis);
-        this->copy_vector(this->hpsi_new + ib * this->n_basis, this->hpsi + ib * this->n_basis);
-        this->zero_vector(this->p_new  + ib * this->n_basis);
-        this->zero_vector(this->hp_new + ib * this->n_basis);
+        T* xi  = psi_in      + ib * ldb;
+        T* hxi = this->hpsi  + ib * ldb;
+        T* wi  = this->w     + ib * ldb;
+        T* hwi = this->hw    + ib * ldb;
+        T* pi  = this->p     + ib * ldb;
+        T* hpi = this->hp    + ib * ldb;
+
+        T* xnew   = this->work     + ib * ldb;
+        T* hxnew  = this->hpsi_new + ib * ldb;
+        T* pnext  = this->p_new    + ib * ldb;
+        T* hpnext = this->hp_new   + ib * ldb;
+
+        if (this->is_locked[ib]) {
+            this->copy_vector(xnew, xi);
+            this->copy_vector(hxnew, hxi);
+            continue;
+        }
+
+        T* bv[3]  = { xi,  wi,  pi };
+        T* hbv[3] = { hxi, hwi, hpi };
+
+        Real p_norm = this->vector_norm(pi);
+        int  adim = (p_norm > Real(1e-15)) ? 3 : 2;
+
+        setmem_op()(this->d_bv_cache, 0, adim * ldb);
+        for (int j = 0; j < adim; ++j)
+            syncmem_op()(this->d_bv_cache + j * ldb, bv[j], ldb);
+
+        T hsmall[9], ssmall[9], coeff[9];
+        setmem_op()(this->d_tmp_cache, 0, 3);
+        for (int col = 0; col < adim; ++col) {
+            ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
+                p_one<T>(), this->d_bv_cache, ldb, hbv[col], 1,
+                p_zero<T>(), this->d_tmp_cache, 1);
+            T hc[3]; syncmem_d2h()(hc, this->d_tmp_cache, adim);
+            for (int r = 0; r < adim; ++r) hsmall[r + col * adim] = hc[r];
+
+            setmem_op()(this->d_tmp_cache, 0, 3);
+            ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
+                p_one<T>(), this->d_bv_cache, ldb, bv[col], 1,
+                p_zero<T>(), this->d_tmp_cache, 1);
+            syncmem_d2h()(hc, this->d_tmp_cache, adim);
+            for (int r = 0; r < adim; ++r) ssmall[r + col * adim] = hc[r];
+        }
+
+        Real eval[3];
+        this->solve_small_problem(adim, hsmall, ssmall, coeff, eval);
+        this->h_eigen[ib] = eval[0];
+
+        this->zero_vector(xnew);   this->zero_vector(hxnew);
+        this->zero_vector(pnext);  this->zero_vector(hpnext);
+
+        for (int j = 0; j < adim; ++j) {
+            this->axpy_vector(xnew,  bv[j],  coeff[j]);
+            this->axpy_vector(hxnew, hbv[j], coeff[j]);
+        }
+        if (adim >= 2) {
+            this->axpy_vector(pnext,  wi,  coeff[1]);
+            this->axpy_vector(hpnext, hwi, coeff[1]);
+        }
+        if (adim == 3) {
+            this->axpy_vector(pnext,  pi,  coeff[2]);
+            this->axpy_vector(hpnext, hpi, coeff[2]);
+        }
     }
 
-    syncmem_op()(psi_in,  this->work,     this->n_work * this->n_basis);
-    syncmem_op()(this->hpsi, this->hpsi_new, this->n_work * this->n_basis);
-    syncmem_op()(this->p,    this->p_new,    this->n_work * this->n_basis);
-    syncmem_op()(this->hp,   this->hp_new,   this->n_work * this->n_basis);
+    syncmem_op()(psi_in,  this->work,     this->n_work * ldb);
+    syncmem_op()(this->hpsi, this->hpsi_new, this->n_work * ldb);
+    syncmem_op()(this->p,    this->p_new,    this->n_work * ldb);
+    syncmem_op()(this->hp,   this->hp_new,   this->n_work * ldb);
+
+    syncmem_real_h2d()(this->d_eigen, this->h_eigen, this->n_work);
 }
+
 
 // ---- main diagonalization entry point ---------------------------------------
 

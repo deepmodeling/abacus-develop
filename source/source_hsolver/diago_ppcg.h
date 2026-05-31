@@ -80,6 +80,11 @@ class DiagoPPCG
              const std::vector<double>& ethr_band);
 
   private:
+    /// Optimal n_extra / n_band ratio from parameter sweep.
+    static constexpr double DEFAULT_N_EXTRA_RATIO = 0.100;
+    /// Optimal block size from parameter sweep.
+    static constexpr int DEFAULT_BLOCK_SIZE = 10;
+
     /// the number of bands of all processes
     int n_band = 0;
     /// the number of bands of current process
@@ -113,6 +118,17 @@ class DiagoPPCG
     T* hpsi_new = nullptr;  ///< updated H|psi>
     T* work = nullptr;      ///< workspace for rotations / intermediates
 
+    /// pre-allocated caches for per-band subspace construction (B1)
+    T* d_bv_cache = nullptr;   ///< [3 * n_basis]
+    T* d_tmp_cache = nullptr;  ///< [3]
+
+    /// pre-allocated pack buffers for blocked subspace construction.
+    T* d_pack_basis = nullptr;  ///< [3*k_max*n_basis], k_max=DEFAULT_BLOCK_SIZE
+    T* d_pack_hprod = nullptr;  ///< [3*k_max*n_basis]
+    /// Pre-allocated Hsub / Ssub for blocked solve (max ns=30, ns2=900).
+    T* d_block_h = nullptr;     ///< [k_max² * 9]
+    T* d_block_s = nullptr;     ///< [k_max² * 9]
+
     /// device-side eigenvalues / errors [dim: n_work]
     Real* d_eigen = nullptr;
     Real* d_err = nullptr;
@@ -125,6 +141,10 @@ class DiagoPPCG
     std::vector<char> is_locked;       ///< convergence lock flags
     std::vector<int> converge_count;   ///< consecutive convergence counters
     std::vector<int> block_sizes;      ///< block sizes for blocked variant
+
+    /// Whether n_extra / block_sizes were explicitly set by user.
+    bool n_extra_user_set = false;
+    bool block_sizes_user_set = false;
 
   public:
     /**
@@ -139,6 +159,7 @@ class DiagoPPCG
     void set_block_sizes(const std::vector<int>& sizes)
     {
         this->block_sizes = sizes;
+        this->block_sizes_user_set = true;
     }
     /**
      * @brief Set the number of extra bands used for convergence acceleration.
@@ -152,6 +173,7 @@ class DiagoPPCG
     void set_n_extra(const int n)
     {
         this->n_extra = n;
+        this->n_extra_user_set = true;
     }
 
   private:
