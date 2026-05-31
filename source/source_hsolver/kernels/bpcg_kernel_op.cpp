@@ -18,9 +18,10 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
-        // OpenMP parallelization: bands are independent with contiguous memory regions.
-        // MPI collective operations (reduce_pool) are batched and executed serially
-        // to avoid thread-safety issues, while compute-heavy loops run in parallel.
+        // OpenMP parallelization over bands: each band accesses a disjoint memory region
+        // [band_idx * n_basis_max, (band_idx+1) * n_basis_max), so no data races occur.
+        // MPI collective calls (reduce_pool) use per-band scalar reductions executed serially
+        // outside parallel regions to avoid thread-safety issues with MPI.
         // Static scheduling is used since each band has equal workload (n_basis).
         std::vector<Real> norms(n_band);
         std::vector<Real> epsilo_0_arr(n_band);
@@ -37,10 +38,10 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
         }
 
-        // Phase 2: batch MPI reduction of norms across pool, then invert
-        Parallel_Reduce::reduce_pool(norms.data(), n_band);
+        // Phase 2: MPI reduction of norms across pool, then invert
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
+            Parallel_Reduce::reduce_pool(norms[band_idx]);
             norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
         }
 
@@ -66,10 +67,13 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             epsilo_2_arr[band_idx] = eps_2;
         }
 
-        // Phase 4: batch MPI reduction of epsilons across pool
-        Parallel_Reduce::reduce_pool(epsilo_0_arr.data(), n_band);
-        Parallel_Reduce::reduce_pool(epsilo_1_arr.data(), n_band);
-        Parallel_Reduce::reduce_pool(epsilo_2_arr.data(), n_band);
+        // Phase 4: MPI reduction of epsilons across pool
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Parallel_Reduce::reduce_pool(epsilo_0_arr[band_idx]);
+            Parallel_Reduce::reduce_pool(epsilo_1_arr[band_idx]);
+            Parallel_Reduce::reduce_pool(epsilo_2_arr[band_idx]);
+        }
 
         // Phase 5: parallel application of rotation to psi and hpsi
 #ifdef _OPENMP
@@ -108,9 +112,10 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
-        // OpenMP parallelization: bands are independent with contiguous memory regions.
-        // MPI collective operations (reduce_pool) are batched and executed serially
-        // to avoid thread-safety issues, while compute-heavy loops run in parallel.
+        // OpenMP parallelization over bands: each band accesses a disjoint memory region
+        // [band_idx * n_basis_max, (band_idx+1) * n_basis_max), so no data races occur.
+        // MPI collective calls (reduce_pool) use per-band scalar reductions executed serially
+        // outside parallel regions to avoid thread-safety issues with MPI.
         // Static scheduling is used since each band has equal workload (n_basis).
         std::vector<Real> norms(n_band);
         std::vector<Real> epsilo_arr(n_band);
@@ -127,10 +132,10 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
         }
 
-        // Phase 2: batch MPI reduction of norms across pool, then invert
-        Parallel_Reduce::reduce_pool(norms.data(), n_band);
+        // Phase 2: MPI reduction of norms across pool, then invert
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
+            Parallel_Reduce::reduce_pool(norms[band_idx]);
             norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
         }
 
@@ -152,8 +157,11 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             epsilo_arr[band_idx] = eps;
         }
 
-        // Phase 4: batch MPI reduction of epsilons across pool
-        Parallel_Reduce::reduce_pool(epsilo_arr.data(), n_band);
+        // Phase 4: MPI reduction of epsilons across pool
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Parallel_Reduce::reduce_pool(epsilo_arr[band_idx]);
+        }
 
         // Phase 5: parallel computation of per-band err and beta
 #ifdef _OPENMP
@@ -176,9 +184,12 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             beta_arr[band_idx] = beta;
         }
 
-        // Phase 6: batch MPI reduction of err and beta across pool
-        Parallel_Reduce::reduce_pool(err_arr.data(), n_band);
-        Parallel_Reduce::reduce_pool(beta_arr.data(), n_band);
+        // Phase 6: MPI reduction of err and beta across pool
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Parallel_Reduce::reduce_pool(err_arr[band_idx]);
+            Parallel_Reduce::reduce_pool(beta_arr[band_idx]);
+        }
 
         // Phase 7: parallel update of gradient and write output arrays
 #ifdef _OPENMP
