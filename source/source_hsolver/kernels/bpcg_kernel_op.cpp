@@ -18,29 +18,71 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
+        // OpenMP parallelization: bands are independent with contiguous memory regions.
+        // MPI collective operations (reduce_pool) are batched and executed serially
+        // to avoid thread-safety issues, while compute-heavy loops run in parallel.
+        // Static scheduling is used since each band has equal workload (n_basis).
+        std::vector<Real> norms(n_band);
+        std::vector<Real> epsilo_0_arr(n_band);
+        std::vector<Real> epsilo_1_arr(n_band);
+        std::vector<Real> epsilo_2_arr(n_band);
+
+        // Phase 1: parallel computation of per-band norms via BLAS dot
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
-            Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
-            Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+        }
+
+        // Phase 2: batch MPI reduction of norms across pool, then invert
+        Parallel_Reduce::reduce_pool(norms.data(), n_band);
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
+        }
+
+        // Phase 3: parallel normalization of grad/hgrad and accumulation of epsilons
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real eps_0 = 0.0, eps_1 = 0.0, eps_2 = 0.0;
+            Real norm = norms[band_idx];
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 grad_out[item] *= norm;
                 hgrad_out[item] *= norm;
-                epsilo_0 += std::real(hpsi_out[item] * std::conj(psi_out[item]));
-                epsilo_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
-                epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
+                eps_0 += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                eps_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
+                eps_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
             }
-            Parallel_Reduce::reduce_pool(epsilo_0);
-            Parallel_Reduce::reduce_pool(epsilo_1);
-            Parallel_Reduce::reduce_pool(epsilo_2);
-            theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
-            cos_theta = std::cos(theta);
-            sin_theta = std::sin(theta);
+            epsilo_0_arr[band_idx] = eps_0;
+            epsilo_1_arr[band_idx] = eps_1;
+            epsilo_2_arr[band_idx] = eps_2;
+        }
+
+        // Phase 4: batch MPI reduction of epsilons across pool
+        Parallel_Reduce::reduce_pool(epsilo_0_arr.data(), n_band);
+        Parallel_Reduce::reduce_pool(epsilo_1_arr.data(), n_band);
+        Parallel_Reduce::reduce_pool(epsilo_2_arr.data(), n_band);
+
+        // Phase 5: parallel application of rotation to psi and hpsi
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real epsilo_0 = epsilo_0_arr[band_idx];
+            Real epsilo_1 = epsilo_1_arr[band_idx];
+            Real epsilo_2 = epsilo_2_arr[band_idx];
+            Real theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
+            Real cos_theta = std::cos(theta);
+            Real sin_theta = std::sin(theta);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -66,43 +108,94 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                     const int& n_basis_max,
                     const int& n_band)
     {
+        // OpenMP parallelization: bands are independent with contiguous memory regions.
+        // MPI collective operations (reduce_pool) are batched and executed serially
+        // to avoid thread-safety issues, while compute-heavy loops run in parallel.
+        // Static scheduling is used since each band has equal workload (n_basis).
+        std::vector<Real> norms(n_band);
+        std::vector<Real> epsilo_arr(n_band);
+        std::vector<Real> err_arr(n_band);
+        std::vector<Real> beta_arr(n_band);
+
+        // Phase 1: parallel computation of per-band norms via BLAS dot
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int band_idx = 0; band_idx < n_band; band_idx++)
         {
-            Real err = 0.0;
-            Real beta = 0.0;
-            Real epsilo = 0.0;
-            Real grad_2 = {0.0};
-            T grad_1 = {0.0, 0.0};
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
-            Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
-            Parallel_Reduce::reduce_pool(norm);
-            norm = 1.0 / sqrt(norm);
+            norms[band_idx] = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+        }
+
+        // Phase 2: batch MPI reduction of norms across pool, then invert
+        Parallel_Reduce::reduce_pool(norms.data(), n_band);
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            norms[band_idx] = 1.0 / sqrt(norms[band_idx]);
+        }
+
+        // Phase 3: parallel normalization of psi/hpsi and accumulation of epsilo
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real eps = 0.0;
+            Real norm = norms[band_idx];
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
                 psi_out[item] *= norm;
                 hpsi_out[item] *= norm;
-                epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
+                eps += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
-            Parallel_Reduce::reduce_pool(epsilo);
+            epsilo_arr[band_idx] = eps;
+        }
+
+        // Phase 4: batch MPI reduction of epsilons across pool
+        Parallel_Reduce::reduce_pool(epsilo_arr.data(), n_band);
+
+        // Phase 5: parallel computation of per-band err and beta
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real err = 0.0;
+            Real beta = 0.0;
+            Real epsilo = epsilo_arr[band_idx];
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
-                grad_2 = std::norm(grad_1);
+                T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                Real grad_2 = std::norm(grad_1);
                 err += grad_2;
-                beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
+                beta += grad_2 / prec_in[basis_idx];
             }
-            Parallel_Reduce::reduce_pool(err);
-            Parallel_Reduce::reduce_pool(beta);
+            err_arr[band_idx] = err;
+            beta_arr[band_idx] = beta;
+        }
+
+        // Phase 6: batch MPI reduction of err and beta across pool
+        Parallel_Reduce::reduce_pool(err_arr.data(), n_band);
+        Parallel_Reduce::reduce_pool(beta_arr.data(), n_band);
+
+        // Phase 7: parallel update of gradient and write output arrays
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int band_idx = 0; band_idx < n_band; band_idx++)
+        {
+            Real epsilo = epsilo_arr[band_idx];
+            Real beta = beta_arr[band_idx];
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
-                grad_1 = hpsi_out[item] - epsilo * psi_out[item];
+                T grad_1 = hpsi_out[item] - epsilo * psi_out[item];
                 grad_out[item] = -grad_1 / prec_in[basis_idx] + beta / beta_out[band_idx] * grad_old_out[item];
             }
             beta_out[band_idx] = beta;
-            err_out[band_idx] = sqrt(err);
+            err_out[band_idx] = sqrt(err_arr[band_idx]);
         }
     }
 };
