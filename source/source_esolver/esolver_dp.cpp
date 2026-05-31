@@ -37,8 +37,6 @@ void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     dp_force.create(ucell.nat, 3);
     dp_virial.create(3, 3);
     dp_cell.resize(9);
-    dp_coord.resize(3 * ucell.nat);
-    dp_model_force.clear();
     dp_model_virial.clear();
 
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU.cif", 
@@ -73,15 +71,15 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     dp_cell[7] = ucell.latvec.e32 * ucell.lat0_angstrom;
     dp_cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    dp_coord.resize(3 * ucell.nat);
+    std::vector<double> coord(3 * ucell.nat, 0.0);
     int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            dp_coord[3 * iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            dp_coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            dp_coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+            coord[3 * iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+            coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+            coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
             iat++;
         }
     }
@@ -91,10 +89,10 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     dp_potential = 0;
     dp_force.zero_out();
     dp_virial.zero_out();
-    dp_model_force.clear();
+    std::vector<double> model_force;
     dp_model_virial.clear();
 
-    dp.compute(dp_potential, dp_model_force, dp_model_virial, dp_coord, atype, dp_cell, fparam, aparam);
+    dp.compute(dp_potential, model_force, dp_model_virial, coord, atype, dp_cell, fparam, aparam);
 
     // rescale the energy, force, and stress
     const double fact_e = rescaling / ModuleBase::Ry_to_eV;
@@ -107,9 +105,9 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
 
     for (int i = 0; i < ucell.nat; ++i)
     {
-        dp_force(i, 0) = dp_model_force[3 * i] * fact_f;
-        dp_force(i, 1) = dp_model_force[3 * i + 1] * fact_f;
-        dp_force(i, 2) = dp_model_force[3 * i + 2] * fact_f;
+        dp_force(i, 0) = model_force[3 * i] * fact_f;
+        dp_force(i, 1) = model_force[3 * i + 1] * fact_f;
+        dp_force(i, 2) = model_force[3 * i + 2] * fact_f;
     }
 
     for (int i = 0; i < 3; ++i)

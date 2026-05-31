@@ -99,7 +99,6 @@ class ESolver_NEP : public ESolver
     ModuleBase::matrix nep_force;        ///< computed atomic forces
     ModuleBase::matrix nep_virial;       ///< computed lattice virials
     std::vector<double> nep_cell;        ///< NEP cell buffer in Angstrom, column-major
-    std::vector<double> nep_coord;       ///< NEP coordinate buffer in Angstrom, column-major
     std::vector<double> nep_virial_sum;  ///< summed per-atom virial components
     std::vector<double> _e;              ///< temporary storage for energy computation
     std::vector<double> _f;              ///< temporary storage for force computation

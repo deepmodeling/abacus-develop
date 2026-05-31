@@ -36,7 +36,6 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     nep_virial.create(3, 3);
     atype.resize(ucell.nat);
     nep_cell.resize(9);
-    nep_coord.resize(3 * ucell.nat);
     nep_virial_sum.resize(9);
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
@@ -71,16 +70,16 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     nep_cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
     // coord
-    nep_coord.resize(3 * ucell.nat);
+    std::vector<double> coord(3 * ucell.nat, 0.0);
     int iat = 0;
     const int nat = ucell.nat;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            nep_coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            nep_coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            nep_coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+            coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+            coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+            coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
             iat++;
         }
     }
@@ -91,7 +90,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     nep_force.zero_out();
     nep_virial.zero_out();
 
-    nep.compute(atype, nep_cell, nep_coord, _e, _f, _v);
+    nep.compute(atype, nep_cell, coord, _e, _f, _v);
 
     // unit conversion
     const double fact_e = 1.0 / ModuleBase::Ry_to_eV;

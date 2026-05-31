@@ -116,8 +116,6 @@ class ESolver_DP : public ESolver
     ModuleBase::matrix dp_force;     ///< computed atomic forces
     ModuleBase::matrix dp_virial;    ///< computed lattice virials
     std::vector<double> dp_cell;     ///< DP cell buffer in Angstrom
-    std::vector<double> dp_coord;    ///< DP coordinate buffer in Angstrom
-    std::vector<double> dp_model_force;  ///< raw force buffer returned by DP
     std::vector<double> dp_model_virial; ///< raw virial buffer returned by DP
 };
 
