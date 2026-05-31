@@ -72,7 +72,7 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
 
     std::vector<double> coord(3 * ucell.nat, 0.0);
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(ucell, coord)
 #endif
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -101,7 +101,7 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
                          << std::endl;
 
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(ucell, f, fact_f)
 #endif
     for (int i = 0; i < ucell.nat; ++i)
     {
@@ -200,7 +200,7 @@ void ESolver_DP::type_map(const UnitCell& ucell)
 
     // assign atype for each atom
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(ucell, label)
 #endif
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
