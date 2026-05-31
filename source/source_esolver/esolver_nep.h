@@ -95,6 +95,8 @@ class ESolver_NEP : public ESolver
 
     std::string nep_file;                ///< directory of NEP model file
     std::vector<int> atype = {};         ///< atom type mapping for NEP model
+    std::vector<int> atom_type_index;     ///< global atom index to UnitCell atom type
+    std::vector<int> atom_local_index;    ///< global atom index to local index inside atom type
     double nep_potential;                ///< computed potential energy
     ModuleBase::matrix nep_force;        ///< computed atomic forces
     ModuleBase::matrix nep_virial;       ///< computed lattice virials

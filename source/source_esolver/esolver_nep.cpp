@@ -24,7 +24,6 @@
 #include "source_io/module_output/cif_io.h"
 
 #include <algorithm>
-#include <numeric>
 #include <unordered_map>
 
 using namespace ModuleESolver;
@@ -41,6 +40,20 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
     _v.resize(9 * ucell.nat);
+    atom_type_index.resize(ucell.nat);
+    atom_local_index.resize(ucell.nat);
+
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            atom_type_index[iat] = it;
+            atom_local_index[iat] = ia;
+            ++iat;
+        }
+    }
+    assert(ucell.nat == iat);
 
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU.cif", 
                                ucell, 
@@ -72,19 +85,16 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
     // coord
     nep_coord.resize(3 * ucell.nat);
-    int iat = 0;
     const int nat = ucell.nat;
-    for (int it = 0; it < ucell.ntype; ++it)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int iat = 0; iat < nat; ++iat)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            nep_coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            nep_coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            nep_coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
-            iat++;
-        }
+        const int it = atom_type_index[iat];
+        const int ia = atom_local_index[iat];
+        nep_coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+        nep_coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+        nep_coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
     }
-    assert(ucell.nat == iat);
 
 #ifdef __NEP
     nep_potential = 0.0;
@@ -100,11 +110,18 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
 
     // potential energy
-    nep_potential = fact_e * std::accumulate(_e.begin(), _e.end(), 0.0) ;
+    double energy_sum = 0.0;
+#pragma omp parallel for reduction(+:energy_sum) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
+    {
+        energy_sum += _e[i];
+    }
+    nep_potential = fact_e * energy_sum;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << nep_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
     
     // forces
+#pragma omp parallel for schedule(static) if (nat >= 256)
     for (int i = 0; i < nat; ++i)
     {
         nep_force(i, 0) = _f[i] * fact_f;
@@ -114,12 +131,23 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
     // virial
     std::fill(nep_virial_sum.begin(), nep_virial_sum.end(), 0.0);
-    for (int j = 0; j < 9; ++j)
+#pragma omp parallel if (nat >= 256)
     {
-        for (int i = 0; i < nat; ++i)
+        double local_virial_sum[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+#pragma omp for schedule(static)
+        for (int index = 0; index < 9 * nat; ++index)
         {
-            int index = j * nat + i;
-            nep_virial_sum[j] += _v[index];
+            const int j = index / nat;
+            local_virial_sum[j] += _v[index];
+        }
+
+#pragma omp critical
+        {
+            for (int j = 0; j < 9; ++j)
+            {
+                nep_virial_sum[j] += local_virial_sum[j];
+            }
         }
     }
 

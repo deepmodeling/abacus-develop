@@ -44,6 +44,7 @@ double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, 
 {
     double ke = 0;
 
+#pragma omp parallel for reduction(+:ke) schedule(static) if (natom >= 256)
     for (int ion = 0; ion < natom; ++ion)
     {
         ke += 0.5 * allmass[ion] * vel[ion].norm2();
@@ -300,7 +301,9 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     force_temp *= 0.5;
     virial *= 0.5;
 
-    for (int i = 0; i < unit_in.nat; ++i)
+    const int natom = unit_in.nat;
+#pragma omp parallel for schedule(static) if (natom >= 256)
+    for (int i = 0; i < natom; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -503,16 +506,44 @@ void temp_vector(const int& natom,
 {
     t_vector.create(3, 3);
 
+    double t00 = 0.0;
+    double t01 = 0.0;
+    double t02 = 0.0;
+    double t10 = 0.0;
+    double t11 = 0.0;
+    double t12 = 0.0;
+    double t20 = 0.0;
+    double t21 = 0.0;
+    double t22 = 0.0;
+
+#pragma omp parallel for reduction(+:t00, t01, t02, t10, t11, t12, t20, t21, t22) schedule(static) if (natom >= 256)
     for (int ion = 0; ion < natom; ++ion)
     {
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                t_vector(i, j) += allmass[ion] * vel[ion][i] * vel[ion][j];
-            }
-        }
+        const double mass = allmass[ion];
+        const double vx = vel[ion].x;
+        const double vy = vel[ion].y;
+        const double vz = vel[ion].z;
+
+        t00 += mass * vx * vx;
+        t01 += mass * vx * vy;
+        t02 += mass * vx * vz;
+        t10 += mass * vy * vx;
+        t11 += mass * vy * vy;
+        t12 += mass * vy * vz;
+        t20 += mass * vz * vx;
+        t21 += mass * vz * vy;
+        t22 += mass * vz * vz;
     }
+
+    t_vector(0, 0) = t00;
+    t_vector(0, 1) = t01;
+    t_vector(0, 2) = t02;
+    t_vector(1, 0) = t10;
+    t_vector(1, 1) = t11;
+    t_vector(1, 2) = t12;
+    t_vector(2, 0) = t20;
+    t_vector(2, 1) = t21;
+    t_vector(2, 2) = t22;
 
     return;
 }
