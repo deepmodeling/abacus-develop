@@ -3,6 +3,11 @@
 #include "source_cell/unitcell.h"
 
 #include <string>
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 class Parallel_Grid;
 
 namespace ModuleIO
@@ -101,6 +106,26 @@ void trilinear_interpolate(const double* const data_in,
                            const int& ny,
                            const int& nz,
                            double* data_out);
+
+/// MPI-IO parallel cube file write. All ranks must have the full data array.
+/// Each rank writes its z-slice range via collective MPI-IO.
+#ifdef __MPI
+void write_cube_mpi(const std::string& file,
+                    const std::vector<std::string>& comment,
+                    const int& natom,
+                    const std::vector<double>& origin,
+                    const int& nx, const int& ny, const int& nz,
+                    const std::vector<double>& dx,
+                    const std::vector<double>& dy,
+                    const std::vector<double>& dz,
+                    const std::vector<int>& atom_type,
+                    const std::vector<double>& atom_charge,
+                    const std::vector<std::vector<double>>& atom_pos,
+                    const std::vector<double>& data,
+                    const int precision,
+                    const MPI_Comm& comm);
+#endif
+
 } // namespace ModuleIO
 
 #endif
