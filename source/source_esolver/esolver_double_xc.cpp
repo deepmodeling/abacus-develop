@@ -158,7 +158,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 	}
 
     XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
-    this->pelec_base->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, 
+		    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec_base);
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); 
 
     // DMR should be same size with Hamiltonian(R)
