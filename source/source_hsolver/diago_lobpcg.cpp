@@ -16,48 +16,14 @@
 namespace hsolver {
 
 // ============================================================================
-// Band-major explicit-loop helpers (CPU, n_band_l == n_band required)
+// Band-major helpers (CPU, n_band_l == n_band required)
 //
-// Psi is stored band-major:  psi_data[ib * n_basis + ig],
-// shape [n_band_l, n_basis].  ig >= n_dim must be zero-padded.
+// Psi is stored band-major: psi_data[ib * n_basis + ig],
+// shape [n_band_l, n_basis].  The BLAS view is n_basis rows by n_band_l cols.
 //
 // Subspace matrices (C, V) are column-major for direct LAPACK use:
-//   C[col * ld + row]  =  C[j * nb + i]   (nb = leading dimension).
+//   C[col * ld + row] = C[j * nb + i] (nb = leading dimension).
 // ============================================================================
-
-/// C(i,j) = sum_ig  conj( A(i,ig) ) * B(j,ig)    standard inner-product <A|B>
-template <typename T>
-static void inner_product_loop(int nb, int nbs,
-                               T alpha, const T* A, const T* B,
-                               T beta, T* C)
-{
-    for (int j = 0; j < nb; ++j) {
-        for (int i = 0; i < nb; ++i) {
-            T sum = static_cast<T>(0.0);
-            for (int ig = 0; ig < nbs; ++ig) {
-                sum += std::conj(A[i * nbs + ig]) * B[j * nbs + ig];
-            }
-            C[j * nb + i] = alpha * sum + beta * C[j * nb + i];
-        }
-    }
-}
-
-/// newRow_i = sum_k  V(k,i) * oldRow_k
-/// V col-major:  V(k,i) = V[i * nb + k]
-template <typename T>
-static void rotate_loop(int nb, int nbs,
-                        T alpha, const T* V, const T* A,
-                        T beta, T* C)
-{
-    for (int i = 0; i < nb; ++i) {
-        for (int ig = 0; ig < nbs; ++ig) {
-            T sum = static_cast<T>(0.0);
-            for (int k = 0; k < nb; ++k)
-                sum += V[i * nb + k] * A[k * nbs + ig];
-            C[i * nbs + ig] = alpha * sum + beta * C[i * nbs + ig];
-        }
-    }
-}
 
 // ============================================================================
 // File-static helpers
@@ -193,6 +159,23 @@ void DiagoLobpcg<T, Device>::init_iter(int nband, int nband_l,
     this->h_prec = ct::TensorMap(
         (void*)this->h_prec_ptr, this->r_type,
         ct::DeviceType::CpuDevice, {this->n_basis});
+
+#ifdef __MPI
+    this->pmmcn.set_dimension(BP_WORLD, POOL_WORLD,
+                              this->n_band_l, this->n_basis,
+                              this->n_band_l, this->n_basis,
+                              this->n_dim, this->n_band);
+    this->plintrans.set_dimension(this->n_dim, this->n_band_l,
+                                  this->n_band_l, this->n_basis,
+                                  BP_WORLD, false);
+#else
+    this->pmmcn.set_dimension(this->n_band_l, this->n_basis,
+                              this->n_band_l, this->n_basis,
+                              this->n_dim, this->n_band);
+    this->plintrans.set_dimension(this->n_dim, this->n_band_l,
+                                  this->n_band_l, this->n_basis,
+                                  false);
+#endif
 }
 
 // ============================================================================
@@ -220,7 +203,7 @@ void DiagoLobpcg<T, Device>::calc_hpsi_with_block(
 
 template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::calc_spsi_with_block(
-    const SPsiFunc& spsi_func, T* psi_in, ct::Tensor& spsi_out)
+    const SPsiFunc& spsi_func, const T* psi_in, ct::Tensor& spsi_out)
 {
     spsi_func(psi_in, spsi_out.data<T>(), this->n_basis, this->n_band_l);
 }
@@ -243,12 +226,8 @@ void DiagoLobpcg<T, Device>::rayleigh_ritz(
     for (int ii = 0; ii < nb * nb; ++ii)
         this->tmp_hsub.data<T>()[ii] = static_cast<T>(0.0);
 
-    inner_product_loop<T>(nb, nbs, this->one_,
-                          psi_inout.data<T>(), hpsi_inout.data<T>(),
-                          this->zero_, this->tmp_hsub.data<T>());
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(this->tmp_hsub.data<T>(), nb * nb);
-#endif
+    this->pmmcn.multiply(this->one_, psi_inout.data<T>(), hpsi_inout.data<T>(),
+                         this->zero_, this->tmp_hsub.data<T>());
     mirror_lower(this->tmp_hsub.data<T>(), nb, nb);
     clean_hermitian_diag(this->tmp_hsub.data<T>(), nb, nb);
 
@@ -270,14 +249,16 @@ void DiagoLobpcg<T, Device>::rayleigh_ritz(
     ct::kernels::lapack_heevd<T, ct_Device>()(
         nb, this->tmp_hsub.data<T>(), nb, eigen_out.data<Real>());
 
-    rotate_loop<T>(nb, nbs, this->one_,
-                   this->tmp_hsub.data<T>(), psi_inout.data<T>(),
-                   this->zero_, this->work.data<T>());
+    setmem_complex_op()(this->work.data<T>(), static_cast<T>(0.0), local_sz);
+    this->plintrans.act(this->one_, psi_inout.data<T>(),
+                        this->tmp_hsub.data<T>(),
+                        this->zero_, this->work.data<T>());
     syncmem_complex_op()(psi_inout.data<T>(), this->work.data<T>(), local_sz);
 
-    rotate_loop<T>(nb, nbs, this->one_,
-                   this->tmp_hsub.data<T>(), hpsi_inout.data<T>(),
-                   this->zero_, this->work.data<T>());
+    setmem_complex_op()(this->work.data<T>(), static_cast<T>(0.0), local_sz);
+    this->plintrans.act(this->one_, hpsi_inout.data<T>(),
+                        this->tmp_hsub.data<T>(),
+                        this->zero_, this->work.data<T>());
     syncmem_complex_op()(hpsi_inout.data<T>(), this->work.data<T>(), local_sz);
 }
 
@@ -347,27 +328,12 @@ template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::orth_projection(
     const ct::Tensor& psi_in, ct::Tensor& hsub_work, ct::Tensor& grad_out)
 {
-    const int nb  = this->n_band;
-    const int nbs = this->n_basis;
+    this->pmmcn.multiply(this->one_, psi_in.data<T>(), grad_out.data<T>(),
+                         this->zero_, hsub_work.data<T>());
 
-    inner_product_loop<T>(nb, nbs, this->one_,
-                          psi_in.data<T>(), grad_out.data<T>(),
-                          this->zero_, hsub_work.data<T>());
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(hsub_work.data<T>(), nb * nb);
-#endif
-
-    const T* inner = hsub_work.data<T>();
-    const T* psi   = psi_in.data<T>();
-    T*       grad  = grad_out.data<T>();
-    for (int jb = 0; jb < this->n_band_l; jb++) {
-        for (int ig = 0; ig < nbs; ig++) {
-            T sum = static_cast<T>(0.0);
-            for (int ib = 0; ib < nb; ib++)
-                sum += psi[ib * nbs + ig] * inner[jb * nb + ib];
-            grad[jb * nbs + ig] -= sum;
-        }
-    }
+    this->plintrans.act(this->neg_one_, psi_in.data<T>(),
+                        hsub_work.data<T>(),
+                        this->one_, grad_out.data<T>());
 }
 
 template <typename T, typename Device>
@@ -386,11 +352,12 @@ template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::rotate_wf(
     const ct::Tensor& hsub_in, ct::Tensor& psi_out, ct::Tensor& workspace_in)
 {
-    const int nb = this->n_band;
     const int nbs = this->n_basis;
-    rotate_loop<T>(nb, nbs, this->one_,
-                   hsub_in.data<T>(), psi_out.data<T>(),
-                   this->zero_, workspace_in.data<T>());
+    setmem_complex_op()(workspace_in.data<T>(), static_cast<T>(0.0),
+                        this->n_band_l * nbs);
+    this->plintrans.act(this->one_, psi_out.data<T>(),
+                        hsub_in.data<T>(),
+                        this->zero_, workspace_in.data<T>());
     syncmem_complex_op()(psi_out.data<T>(), workspace_in.data<T>(),
                          this->n_band_l * nbs);
 }
@@ -597,13 +564,13 @@ void DiagoLobpcg<T, Device>::lobpcg_update(
 }
 
 // ============================================================================
-// diag — main LOBPCG loop (NC, S=I; n_band_l == n_band required)
+// diag — main LOBPCG loop (generalized interface, S=I currently supported)
 // ============================================================================
 
 template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::diag(
-    const HPsiFunc& hpsi_func, T* psi_in,
-    Real* eigenvalue_in, const std::vector<double>& ethr_band)
+    const HPsiFunc& hpsi_func, const SPsiFunc& spsi_func,
+    T* psi_in, Real* eigenvalue_in, const std::vector<double>& ethr_band)
 {
     // ---- runtime guard -----------------------------------------------------
     if (this->n_band_l != this->n_band) {
@@ -621,6 +588,17 @@ void DiagoLobpcg<T, Device>::diag(
     this->calc_prec();
 
     this->calc_hpsi_with_block(hpsi_func, psi_in, this->hpsi);
+    this->calc_spsi_with_block(spsi_func, psi_in, this->spsi);
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        for (int ig = 0; ig < this->n_dim; ++ig) {
+            const int idx = ib * this->n_basis + ig;
+            if (std::abs(this->spsi.data<T>()[idx] - this->psi.data<T>()[idx])
+                > static_cast<Real>(100) * std::numeric_limits<Real>::epsilon()) {
+                ModuleBase::WARNING_QUIT("DiagoLobpcg",
+                    "Generalized LOBPCG for S != I is not implemented yet.");
+            }
+        }
+    }
     // Re-orthonormalize before initial R-R so H_sub is well-conditioned
     this->orth_cholesky(this->work, this->psi, this->hpsi, this->tmp_hsub);
     this->rayleigh_ritz(this->psi, this->hpsi, this->eigen);
@@ -709,14 +687,6 @@ void DiagoLobpcg<T, Device>::diag(
     syncmem_var_d2h_op()(eigenvalue_in,
                           this->eigen.data<Real>(),
                           this->n_band_l);
-}
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::diag(
-    const HPsiFunc&, const SPsiFunc&, T*, Real*, const std::vector<double>&)
-{
-    ModuleBase::WARNING_QUIT("DiagoLobpcg",
-        "USPP/generalized LOBPCG (S != I) is not implemented yet.");
 }
 
 template class DiagoLobpcg<std::complex<double>, base_device::DEVICE_CPU>;

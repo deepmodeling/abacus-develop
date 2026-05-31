@@ -45,6 +45,8 @@ static void run_generalized_lobpcg()
 {
     const int npw = 8, nband = 3;
     std::vector<TestT> psi(nband * npw, {0.0, 0.0});
+    for (int ib = 0; ib < nband; ++ib)
+        psi[ib * npw + ib] = {1.0, 0.0};
     std::vector<TestReal> eigens(nband, 0.0);
     std::vector<TestReal> prec(npw, 1.0);
     std::vector<double> ethr(nband, 1e-6);
@@ -53,7 +55,11 @@ static void run_generalized_lobpcg()
                         int ld_psi, int nvec) {
         std::copy(psi_in, psi_in + ld_psi * nvec, hpsi_out);
     };
-    auto spsi_func = hpsi_func;
+    auto spsi_func = [](const TestT* psi_in, TestT* spsi_out,
+                        int ld_psi, int nvec) {
+        std::copy(psi_in, psi_in + ld_psi * nvec, spsi_out);
+        spsi_out[0] *= 2.0;
+    };
 
     hsolver::DiagoLobpcg<TestT, TestDevice> lobpcg(prec.data());
     lobpcg.init_iter(nband, nband, npw, npw);
@@ -125,7 +131,11 @@ class DiagoLobpcgTest : public ::testing::Test
         hsolver::DiagoLobpcg<TestT, TestDevice> lobpcg(prec.data());
         lobpcg.init_iter(nband, nband, npw, npw);
         lobpcg.set_nline(4);
-        lobpcg.diag(hpsi_func, psi.data(), eigens.data(), ethr);
+        auto spsi_func = [](const TestT* psi_in, TestT* spsi_out,
+                            int ld_psi, int nvec) {
+            std::copy(psi_in, psi_in + ld_psi * nvec, spsi_out);
+        };
+        lobpcg.diag(hpsi_func, spsi_func, psi.data(), eigens.data(), ethr);
 
         hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER = old_scf;
 
@@ -239,7 +249,7 @@ TEST_F(DiagoLobpcgTest, LargerMatrixFewBands)
     run_and_validate(npw, nband, hmat, prec, e_ref, 1e-4, 1e-6, 3e-4);
 }
 
-TEST_F(DiagoLobpcgTest, GeneralizedInterfaceNotImplemented)
+TEST_F(DiagoLobpcgTest, NonIdentityOverlapNotImplemented)
 {
     EXPECT_EXIT(
         run_generalized_lobpcg(),

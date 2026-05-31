@@ -48,8 +48,8 @@ class DiagoLobpcg
     /// @brief H * psi -> hpsi.
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
-    /// @brief S * psi -> spsi (Phase 2, USPP).
-    using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    /// @brief S * psi -> spsi.
+    using SPsiFunc = std::function<void(const T*, T*, const int, const int)>;
 
     /// Constructor — stores host preconditioner pointer.
     explicit DiagoLobpcg(const Real* precondition);
@@ -62,13 +62,7 @@ class DiagoLobpcg
     /// Set max inner iterations per SCF step (default 4).
     void set_nline(const int n) { this->nline = n; }
 
-    /// NC (S=I) diagonalization.
-    void diag(const HPsiFunc& hpsi_func,
-              T* psi_in,
-              Real* eigenvalue_in,
-              const std::vector<double>& ethr_band);
-
-    /// USPP (S≠I) diagonalization. NOT IMPLEMENTED — aborts.
+    /// Generalized diagonalization interface. Currently supports S = I only.
     void diag(const HPsiFunc& hpsi_func,
               const SPsiFunc& spsi_func,
               T* psi_in,
@@ -144,7 +138,7 @@ class DiagoLobpcg
                               ct::Tensor& hpsi_out);
 
     void calc_spsi_with_block(const SPsiFunc& spsi_func,
-                              T* psi_in,
+                              const T* psi_in,
                               ct::Tensor& spsi_out);
 
     /// Standard R-R: H_sub = psi^H * hpsi → heevd → rotate.

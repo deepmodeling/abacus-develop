@@ -25,11 +25,12 @@
 namespace hsolver
 {
 
-template <typename T, typename Device, typename HPsiFunc>
+template <typename T, typename Device, typename HPsiFunc, typename SPsiFunc>
 typename std::enable_if<std::is_same<T, std::complex<double>>::value
                             && std::is_same<Device, base_device::DEVICE_CPU>::value,
                         void>::type
 run_lobpcg_pw(const HPsiFunc& hpsi_func,
+              const SPsiFunc& spsi_func,
               psi::Psi<T, Device>& psi,
               const std::vector<typename GetTypeReal<T>::type>& pre_condition,
               typename GetTypeReal<T>::type* eigenvalue,
@@ -40,14 +41,15 @@ run_lobpcg_pw(const HPsiFunc& hpsi_func,
     const int ndim = psi.get_current_ngk();
     DiagoLobpcg<T, Device> lobpcg(pre_condition.data());
     lobpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
-    lobpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, ethr_band);
+    lobpcg.diag(hpsi_func, spsi_func, psi.get_pointer(), eigenvalue, ethr_band);
 }
 
-template <typename T, typename Device, typename HPsiFunc>
+template <typename T, typename Device, typename HPsiFunc, typename SPsiFunc>
 typename std::enable_if<!std::is_same<T, std::complex<double>>::value
                             || !std::is_same<Device, base_device::DEVICE_CPU>::value,
                         void>::type
 run_lobpcg_pw(const HPsiFunc&,
+              const SPsiFunc&,
               psi::Psi<T, Device>&,
               const std::vector<typename GetTypeReal<T>::type>&,
               typename GetTypeReal<T>::type*,
@@ -307,8 +309,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
         hm->ops->hPsi(info);
     };
-    auto spsi_func = [hm](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
-        hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
+    auto spsi_func = [hm, cur_nbasis](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+        hm->sPsi(psi_in, spsi_out, ld_psi, cur_nbasis, nvec);
     };
 
     if (this->method == "cg")
@@ -359,7 +361,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     }
     else if (this->method == "lobpcg")
     {
-        run_lobpcg_pw<T, Device>(hpsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
+        run_lobpcg_pw<T, Device>(hpsi_func, spsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {
