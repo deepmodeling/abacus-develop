@@ -79,38 +79,48 @@ All three original `mutable` usages are eliminated:
 
 ## Performance Validation
 
-A standalone microbenchmark (`bench_comm.cpp`) was written to compare the blocking
-(`MPI_Alltoallv`) and nonblocking (`MPI_Isend/Irecv + MPI_Waitsome`) communication patterns
-using the exact same algorithms as `pw_gatherscatter.h`.
+A benchmark (`bench_real_comm.cpp`) was written that directly calls the **actual**
+`PW_Basis::gatherp_scatters()` and `PW_Basis::gathers_scatterp()` methods (feat/unblock,
+nonblocking) and compares them against the **exact blocking implementations** extracted
+from the `develop` branch. Both run on the same `PW_Basis` instance with identical input data.
 
 ### Methodology
 
-- Tested across **grid sizes** (32³, 48³, 64³), **MPI ranks** (2, 3, 4), and **OpenMP threads** (1, 2)
-- 18 total configurations, 500 iterations each after warmup
-- Measured both `gatherp_scatters` (forward FFT) and `gathers_scatterp` (reverse FFT)
+- **Real ABACUS setup**: 10Å cubic cell, ecut=100 Ry, auto-determined 64³ FFT grid
+  (`nstot=2845`, realistic production parameters)
+- **Tested across MPI ranks** (2, 3, 4) and **OpenMP threads** (1, 2)
+- 500 iterations (300 for OMP=2) per configuration after warmup
+- The blocking comparison code is the **exact unmodified** `gatherp_scatters` and
+  `gathers_scatterp` from `git show develop:source/source_basis/module_pw/pw_gatherscatter.h`
 
-### Results
+### Results (roundtrip speedup, nonblocking/blocking)
 
-| Grid | MPI=2 | MPI=3 | MPI=4 |
-|------|-------|-------|-------|
-| 32³  | **1.02x** | **1.13x** | **1.22x** |
-| 48³  | **1.06x** | **1.28x** | **1.39x** |
-| 64³  | **1.11x** | **1.27x** | **1.42x** |
+| MPI ranks | OMP=1  | OMP=2  |
+|-----------|--------|--------|
+| 2         | 0.98x  | 1.06x  |
+| 3         | 1.14x  | 1.40x  |
+| 4         | 1.23x  | **1.45x** |
 
-*Table: Roundtrip speedup (nonblocking/blocking) with OMP_NUM_THREADS=2.*
+### Per-operation detail (OMP=2, 4 ranks)
+
+| Operation          | Blocking (μs) | Nonblocking (μs) | Speedup |
+|--------------------|---------------|-------------------|---------|
+| gatherp_scatters   | 682           | 405               | 1.69x   |
+| gathers_scatterp   | 558           | 452               | 1.24x   |
+| **Total roundtrip** | 1240          | 857               | **1.45x** |
 
 ### Key findings
 
-1. **Nonblocking is consistently faster** — all 18 configurations show nonblocking ≥ blocking
-2. **Speedup scales with MPI parallelism** — more ranks → more peers to overlap: avg 1.07x (2p) → 1.21x (3p) → 1.29x (4p)
-3. **Speedup scales with problem size** — larger grids → more unpack work to overlap: up to **1.42x**
-4. **`gathers_scatterp` benefits most** — its zeroing step overlaps with in-flight MPI data
+1. **Nonblocking is faster at realistic MPI concurrency** — speedup grows from ~even at 2 ranks
+   to **1.45x at 4 ranks** (with OpenMP).
+2. **`gatherp_scatters` benefits most** — the forward direction shows up to **1.69x** speedup
+   because its unpack work overlaps with in-flight MPI data from multiple peers.
+3. **OpenMP amplifies the benefit** — multi-threaded unpacking creates more computation that can
+   be overlapped with communication, improving speedup from 1.23x to 1.45x at 4 ranks.
+4. **At low parallelism (2 ranks), performance is comparable** — the overhead of
+   `MPI_Waitsome` management is offset by the self-copy optimization.
 
-The benchmark source is included at `source/source_basis/module_pw/test/bench_comm.cpp` and can
-be compiled and run with:
-```bash
-mpicxx -std=c++14 -O3 -fopenmp -o bench_comm bench_comm.cpp
-OMP_NUM_THREADS=2 mpirun -np 4 ./bench_comm 500 64 64 64
-```
+The benchmark source is at `source/source_basis/module_pw/test/bench_real_comm.cpp`. It compiles
+against the actual ABACUS source and calls the real `PW_Basis` methods directly.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
