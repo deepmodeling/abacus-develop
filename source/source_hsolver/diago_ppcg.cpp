@@ -1193,11 +1193,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 update_one_block(psi_in, cols, l, use_p, subspace);
             }
 
-            // Re-orthonormalize and recompute after psi modification.
-            chol_qr_active(psi_in, active_cols);
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
-
             // Periodic Rayleigh-Ritz.
             if (iter % rr_step_ == 0)
             {
