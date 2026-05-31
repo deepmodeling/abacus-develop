@@ -75,10 +75,14 @@ protected:
         std::mt19937 rng(42);
         std::uniform_real_distribution<Real> dist(-1.0, 1.0);
 
+        // Use real-only initial guess.  H and S are real symmetric, so the
+        // exact eigenvectors are real and any imaginary component can only
+        // slow convergence.  Keeping psi real also avoids the need for
+        // complex-Hermitian Gram matrices in the subspace eigenvalue solves.
         psi.assign(ld * nband, T(0));
         for (int j = 0; j < nband; ++j)
             for (int i = 0; i < n_dim; ++i)
-                psi[i + j * ld] = T(dist(rng), dist(rng));
+                psi[i + j * ld] = T(dist(rng), 0.0);
 
         // Gram-Schmidt orthonormalisation (S = I)
         for (int j = 0; j < nband; ++j) {
