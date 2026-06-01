@@ -303,6 +303,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.orb = &orb;
         dh_params.kv = &kv;
         dh_params.v_eff = &pelec->pot->get_eff_v();
+        dh_params.pot = pelec->pot;
         dh_params.iat2iwt = ucell.get_iat2iwt();
         dh_params.nat = ucell.nat;
         dh_params.nspin = inp.nspin;

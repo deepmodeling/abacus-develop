@@ -7,17 +7,17 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(hamilt::HContainer<double>* dhR_x,
-                                                  hamilt::HContainer<double>* dhR_y,
-                                                  hamilt::HContainer<double>* dhR_z)
+void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_x,
+                                                  std::vector<hamilt::HContainer<double>*>& dhR_y,
+                                                  std::vector<hamilt::HContainer<double>*>& dhR_z)
 {
     ModuleBase::TITLE("Nonlocal", "cal_dH");
     ModuleBase::timer::start("Nonlocal", "cal_dH");
 
-    const Parallel_Orbitals* paraV = dhR_x->get_paraV();
-    const int npol = this->ucell->get_npol();
-
     const int nat = this->ucell->nat;
+    assert(static_cast<int>(dhR_x.size()) == nat);
+    const Parallel_Orbitals* paraV = dhR_x[0]->get_paraV();
+    const int npol = this->ucell->get_npol();
 
     for (int iat0 = 0; iat0 < nat; iat0++)
     {
@@ -68,16 +68,22 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(hamilt::HContainer<double>* dhR_x,
                 ModuleBase::Vector3<int> dR(R_index2.x - R_index1.x, R_index2.y - R_index1.y, R_index2.z - R_index1.z);
 
                 hamilt::AtomPair<double> ap(iat1, iat2, dR.x, dR.y, dR.z, paraV);
-                dhR_x->insert_pair(ap);
-                dhR_y->insert_pair(ap);
-                dhR_z->insert_pair(ap);
+                for (int iat = 0; iat < nat; ++iat)
+                {
+                    dhR_x[iat]->insert_pair(ap);
+                    dhR_y[iat]->insert_pair(ap);
+                    dhR_z[iat]->insert_pair(ap);
+                }
             }
         }
     }
 
-    dhR_x->allocate(nullptr, true);
-    dhR_y->allocate(nullptr, true);
-    dhR_z->allocate(nullptr, true);
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        dhR_x[iat]->allocate(nullptr, true);
+        dhR_y[iat]->allocate(nullptr, true);
+        dhR_z[iat]->allocate(nullptr, true);
+    }
 
 #pragma omp parallel
     {
@@ -167,18 +173,31 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(hamilt::HContainer<double>* dhR_x,
                                                 R_index2.y - R_index1.y,
                                                 R_index2.z - R_index1.z);
 
-                    hamilt::BaseMatrix<double>* mtx_x = dhR_x->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
-                    hamilt::BaseMatrix<double>* mtx_y = dhR_y->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
-                    hamilt::BaseMatrix<double>* mtx_z = dhR_z->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    // destination block (iat1,iat2,dR) for the three differentiated atoms:
+                    //   iat1 (orbital 1), iat2 (orbital 2), iat0 (projector / Hellmann-Feynman)
+                    hamilt::BaseMatrix<double>* m1_x = dhR_x[iat1]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m1_y = dhR_y[iat1]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m1_z = dhR_z[iat1]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m2_x = dhR_x[iat2]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m2_y = dhR_y[iat2]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m2_z = dhR_z[iat2]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m0_x = dhR_x[iat0]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m0_y = dhR_y[iat0]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
+                    hamilt::BaseMatrix<double>* m0_z = dhR_z[iat0]->find_matrix(iat1, iat2, dR.x, dR.y, dR.z);
 
-                    if (!mtx_x || !mtx_y || !mtx_z)
+                    if (!m1_x || !m1_y || !m1_z || !m2_x || !m2_y || !m2_z || !m0_x || !m0_y || !m0_z)
                         continue;
 
-                    double* ptr_x = mtx_x->get_pointer();
-                    double* ptr_y = mtx_y->get_pointer();
-                    double* ptr_z = mtx_z->get_pointer();
-                    const int row_sz = mtx_x->get_row_size();
-                    const int col_sz = mtx_x->get_col_size();
+                    double* p1_x = m1_x->get_pointer();
+                    double* p1_y = m1_y->get_pointer();
+                    double* p1_z = m1_z->get_pointer();
+                    double* p2_x = m2_x->get_pointer();
+                    double* p2_y = m2_y->get_pointer();
+                    double* p2_z = m2_z->get_pointer();
+                    double* p0_x = m0_x->get_pointer();
+                    double* p0_y = m0_y->get_pointer();
+                    double* p0_z = m0_z->get_pointer();
+                    const int col_sz = m1_x->get_col_size();
 
                     auto& nlm1_all = nlm_iat0[ad1];
                     auto& nlm2_all = nlm_iat0[ad2];
@@ -203,7 +222,10 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(hamilt::HContainer<double>* dhR_x,
                             const std::vector<double>& nlm2 = it2->second;
                             const int iw2_col = paraV->global2local_col(col_indexes[iw2l]);
 
-                            std::vector<double> nlm_tmp(3, 0.0);
+                            // tU = <grad phi_iat1|beta> D <beta|phi_iat2>  (orbital 1 moves)
+                            // tV = <phi_iat1|beta> D <beta|grad phi_iat2>  (orbital 2 moves)
+                            double tU[3] = {0, 0, 0};
+                            double tV[3] = {0, 0, 0};
 
                             for (int no = 0; no < this->ucell->atoms[T0].ncpp.non_zero_count_soc[0]; no++)
                             {
@@ -211,15 +233,35 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(hamilt::HContainer<double>* dhR_x,
                                 const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[0][no];
                                 const double* tmp_d = nullptr;
                                 this->ucell->atoms[T0].ncpp.get_d(0, p1, p2, tmp_d);
-                                nlm_tmp[0] += nlm1[p1 + length] * nlm2[p2] * (*tmp_d);
-                                nlm_tmp[1] += nlm1[p1 + length * 2] * nlm2[p2] * (*tmp_d);
-                                nlm_tmp[2] += nlm1[p1 + length * 3] * nlm2[p2] * (*tmp_d);
+                                for (int d = 0; d < 3; ++d)
+                                {
+                                    tU[d] += nlm1[p1 + length * (d + 1)] * nlm2[p2] * (*tmp_d);
+                                    tV[d] += nlm1[p1] * nlm2[p2 + length * (d + 1)] * (*tmp_d);
+                                }
                             }
 
-                            int idx = iw1_row * col_sz + iw2_col;
-                            ptr_x[idx] += nlm_tmp[0];
-                            ptr_y[idx] += nlm_tmp[1];
-                            ptr_z[idx] += nlm_tmp[2];
+                            const int idx = iw1_row * col_sz + iw2_col;
+                            // d/dtau_iat1, d/dtau_iat2, and (translational invariance) d/dtau_iat0
+                            // dtau<phi1|phi2>=-<grad phi1|phi2>-<phi1|grad phi2>
+                            // <phi|grad beta>=-<grad phi|beta> for Hellmann-Feynman terms
+#pragma omp atomic
+                            p1_x[idx] -= tU[0];
+#pragma omp atomic
+                            p1_y[idx] -= tU[1];
+#pragma omp atomic
+                            p1_z[idx] -= tU[2];
+#pragma omp atomic
+                            p2_x[idx] -= tV[0];
+#pragma omp atomic
+                            p2_y[idx] -= tV[1];
+#pragma omp atomic
+                            p2_z[idx] -= tV[2];
+#pragma omp atomic
+                            p0_x[idx] += tU[0] + tV[0];
+#pragma omp atomic
+                            p0_y[idx] += tU[1] + tV[1];
+#pragma omp atomic
+                            p0_z[idx] += tU[2] + tV[2];
                         }
                     }
                 }

@@ -5,6 +5,7 @@
 #include "operator_lcao.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
+#include <string>
 #include <vector>
 
 namespace hamilt
@@ -57,6 +58,14 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * grid integration is used to calculate the contribution Hamiltonian of effective potential
      */
     virtual void contributeHR() override;
+
+    // per-atom-I derivative d<phi|V|phi>/dtau_I; one HContainer per atom I (size nat each).
+    // Includes the Pulay term (-<grad phi|V|phi>) for all types, plus the Hellmann-Feynman
+    // term for "vl"; "none" gives Pulay only (V^XC), "hartree" is deferred.
+    void cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_perI_x,
+                std::vector<hamilt::HContainer<double>*>& dhR_perI_y,
+                std::vector<hamilt::HContainer<double>*>& dhR_perI_z,
+                const std::string& hellmann_feynman_type = "none");
   
   const UnitCell* ucell = nullptr;
   const Grid_Driver* gd = nullptr;

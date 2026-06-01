@@ -75,9 +75,10 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 
-    void cal_dH(hamilt::HContainer<double>* dhR_x,
-                      hamilt::HContainer<double>* dhR_y,
-                      hamilt::HContainer<double>* dhR_z);
+    // per-atom-I derivative d<phi|T|phi>/dtau_I; one HContainer per atom I (size nat each)
+    void cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_x,
+                std::vector<hamilt::HContainer<double>*>& dhR_y,
+                std::vector<hamilt::HContainer<double>*>& dhR_z);
 
   private:
     const UnitCell* ucell = nullptr;

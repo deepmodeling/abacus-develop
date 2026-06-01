@@ -1,17 +1,103 @@
 #include "write_dH.h"
 
 #include "source_base/timer.h"
+#include "source_io/module_hs/write_HS.h"
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
 
+#include <complex>
 #include <fstream>
 #include <iomanip>
+#include <string>
 
 namespace ModuleIO
 {
+
+void write_dh_perI(WriteDHParams& params,
+                   int ispin,
+                   const std::string& rprefix,
+                   const std::string& kprefix,
+                   const std::string& label,
+                   std::vector<hamilt::HContainer<double>*>& gx,
+                   std::vector<hamilt::HContainer<double>*>& gy,
+                   std::vector<hamilt::HContainer<double>*>& gz)
+{
+    const UnitCell& ucell = *params.ucell;
+    const Parallel_Orbitals& pv = *params.pv;
+    const int nat = params.nat;
+    const int nspin = params.nspin;
+    const int nbasis = gx[0]->get_nbasis();
+
+    const char dirc[3] = {'x', 'y', 'z'};
+    std::vector<hamilt::HContainer<double>*>* g[3] = {&gx, &gy, &gz};
+
+    // k-space (dense, folded like H(k)) parameters
+    const int nspin_k = (nspin == 2 ? 2 : 1);
+    const int nks = params.kv->get_nks() / nspin_k;
+    const int nlocal = PARAM.globalv.nlocal;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool out_app_flag = PARAM.inp.out_app_flag;
+    const std::string r_dir
+        = (PARAM.inp.calculation == "md" && !out_app_flag) ? PARAM.globalv.global_matrix_dir : global_out_dir;
+
+#ifdef __MPI
+    Parallel_Orbitals serialV;
+    serialV.init(nbasis, nbasis, nbasis, pv.comm());
+    serialV.set_serial(nbasis, nbasis);
+    serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
+#endif
+
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        for (int d = 0; d < 3; ++d)
+        {
+            hamilt::HContainer<double>* hR = (*g[d])[iat];
+            const std::string tag = std::string(1, dirc[d]) + "_iat" + std::to_string(iat + 1);
+
+            // ---- real space dH(R), CSR ----
+#ifdef __MPI
+            hamilt::HContainer<double> hR_s(&serialV);
+            hamilt::gatherParallels(*hR, &hR_s, 0);
+            if (GlobalV::MY_RANK == 0)
+#endif
+            {
+                std::string fr = r_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
+#ifdef __MPI
+                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label);
+#else
+                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, hR, params.istep, ispin, nspin, label);
+#endif
+            }
+
+            // ---- k space dH(k), dense (folded like H(k), comparable to *_nao.txt) ----
+            // build the filename directly (filename_output only accepts a fixed property set)
+            for (int ik = 0; ik < nks; ++ik)
+            {
+                std::vector<std::complex<double>> hk(static_cast<size_t>(nlocal) * nlocal, 0);
+                hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
+                std::string fk = global_out_dir + kprefix + tag;
+                if (nks > 1)
+                {
+                    fk += "_ik" + std::to_string(params.kv->ik2iktot[ik]);
+                }
+                fk += "_nao.txt";
+                ModuleIO::save_mat(params.istep,
+                                   hk.data(),
+                                   nlocal,
+                                   false,
+                                   8,
+                                   false,
+                                   out_app_flag,
+                                   fk,
+                                   pv,
+                                   GlobalV::DRANK);
+            }
+        }
+    }
+}
 
 bool any_dh_term_enabled()
 {
@@ -87,6 +173,11 @@ bool write_dH_sum(WriteDHParams& params)
         dH_sum_x.set_zero();
         dH_sum_y.set_zero();
         dH_sum_z.set_zero();
+
+        if (dH_sum_x.size_atom_pairs() == 0)
+        {
+            continue;
+        }
 
         const int nbasis = dH_sum_x.get_nbasis();
 

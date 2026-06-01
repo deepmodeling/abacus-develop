@@ -82,11 +82,7 @@ if(ENABLE_LCAO)
       module_ml/io_npz.cpp
       module_hs/cal_pLpR.cpp
       module_dhs/write_dH.cpp
-      module_dhs/write_dH_t.cpp
-      module_dhs/write_dH_vnl.cpp
-      module_dhs/write_dH_vl.cpp
-      module_dhs/write_dH_vh.cpp
-      module_dhs/write_dH_vxc.cpp
+      module_dhs/write_dH_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
