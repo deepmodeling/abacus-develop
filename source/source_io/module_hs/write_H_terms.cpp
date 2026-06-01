@@ -254,7 +254,7 @@ void write_h_vl(const UnitCell& ucell,
         hamilt::HContainer<double> hR_tmp(const_cast<Parallel_Orbitals*>(&pv));
         setup_veff_hcontainer(hR_tmp, ucell, gd, pv, orb_cutoff);
 
-        const double* v_local = pot->get_fixed_v();
+        const double* v_local = pot->get_fixed_v(); // local pp, no Hxc
         ModuleGint::cal_gint_vl(v_local, &hR_tmp);
 
         gather_and_write("vl", "V^L", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);

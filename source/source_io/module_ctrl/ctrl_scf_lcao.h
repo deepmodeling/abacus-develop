@@ -7,6 +7,7 @@
 #include "source_cell/unitcell.h"                      // use UnitCell
 #include "source_estate/elecstate.h"                   // use elecstate::ElecStateLCAO<TK>
 #include "source_estate/module_dm/density_matrix.h"    // mohan add 2025-11-04
+#include "source_hamilt/module_surchem/surchem.h"       // use surchem (for dH veff pots)
 #include "source_lcao/hamilt_lcao.h"                   // use hamilt::HamiltLCAO<TK, TR>
 #include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
 #include "source_lcao/module_rdmft/rdmft.h"            // use RDMFT codes
@@ -37,6 +38,9 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const ModulePW::PW_Basis* pw_rho,     // for berryphase
                    const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
                    const Structure_Factor& sf,           // for Wannier90
+                   const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
+                   const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
+                   surchem& solvent,                     // solvent model (for dH veff pots)
                    rdmft::RDMFT<TK, TR>& rdmft_solver,   // for RDMFT
                    Setup_DeePKS<TK>& deepks,
                    Exx_NAO<TK>& exx_nao,

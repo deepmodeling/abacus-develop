@@ -69,7 +69,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
         ModuleBase::timer::start("Veff", "cal_dH_pulay");
 
         // term-specific local potential: V^L (fixed local pseudopotential) for "vl",
-        // otherwise the effective potential (used by "none"/"hartree" placeholders).
+        // otherwise the effective potential ("hartree/xc").
         const double* vr_eff
             = (hellmann_feynman_type == "vl") ? this->pot->get_fixed_v() : this->pot->get_eff_v(0);
 

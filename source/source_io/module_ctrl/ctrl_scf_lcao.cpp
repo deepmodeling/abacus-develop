@@ -58,6 +58,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const ModulePW::PW_Basis* pw_rho,     // for berryphase
                              const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
                              const Structure_Factor& sf,           // for Wannier90
+                             const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
+                             const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
+                             surchem& solvent,                     // solvent model (for dH veff pots)
                              rdmft::RDMFT<TK, TR>& rdmft_solver,   // for RDMFT
                              Setup_DeePKS<TK>& deepks,
                              Exx_NAO<TK>& exx_nao,
@@ -304,6 +307,38 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.kv = &kv;
         dh_params.v_eff = &pelec->pot->get_eff_v();
         dh_params.pot = pelec->pot;
+        // pelec->pot->get_eff_v() is the SUM V^L + V^H + V^XC; feeding it to cal_dH would
+        // give the wrong potential for the separated V^L / V^H / V^XC outputs. Build one
+        // dedicated Potential per term with exactly one component registered (see write_vxc.hpp).
+        double dh_etxc = 0.0;
+        double dh_vtxc = 0.0;
+        elecstate::Potential* pot_vl = nullptr;
+        elecstate::Potential* pot_vh = nullptr;
+        elecstate::Potential* pot_vxc = nullptr;
+        if (inp.out_mat_dh_vl[0])
+        {
+            pot_vl = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vl->pot_register({"local"});
+            pot_vl->update_from_charge(pelec->charge, &ucell);
+        }
+        if (inp.out_mat_dh_vh[0])
+        {
+            pot_vh = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vh->pot_register({"hartree"});
+            pot_vh->update_from_charge(pelec->charge, &ucell);
+        }
+        if (inp.out_mat_dh_vxc[0])
+        {
+            pot_vxc = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vxc->pot_register({"xc"});
+            pot_vxc->update_from_charge(pelec->charge, &ucell);
+        }
+        dh_params.pot_vl = pot_vl;
+        dh_params.pot_vh = pot_vh;
+        dh_params.pot_vxc = pot_vxc;
         dh_params.iat2iwt = ucell.get_iat2iwt();
         dh_params.nat = ucell.nat;
         dh_params.nspin = inp.nspin;
@@ -315,6 +350,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             dh_params.dmR = dm->get_DMR_pointer(1);
         }
         ModuleIO::write_dH_components(dh_params);
+        delete pot_vl;
+        delete pot_vh;
+        delete pot_vxc;
     }
 
 
@@ -628,6 +666,9 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const ModulePW::PW_Basis* pw_rho,           // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
     const Structure_Factor& sf,                 // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,          // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,             // local pseudopotential (for dH veff pots)
+    surchem& solvent,                           // solvent model (for dH veff pots)
     rdmft::RDMFT<double, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<double>& deepks,
     Exx_NAO<double>& exx_nao,
@@ -653,6 +694,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const ModulePW::PW_Basis* pw_rho,                         // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                     // for Wannier90
     const Structure_Factor& sf,                               // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,                        // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,                           // local pseudopotential (for dH veff pots)
+    surchem& solvent,                                         // solvent model (for dH veff pots)
     rdmft::RDMFT<std::complex<double>, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,
@@ -677,6 +721,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const ModulePW::PW_Basis* pw_rho,                                       // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                                   // for Wannier90
     const Structure_Factor& sf,                                             // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,                                      // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,                                         // local pseudopotential (for dH veff pots)
+    surchem& solvent,                                                       // solvent model (for dH veff pots)
     rdmft::RDMFT<std::complex<double>, std::complex<double>>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,

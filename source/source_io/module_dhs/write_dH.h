@@ -24,6 +24,13 @@ struct WriteDHParams
     const ModuleBase::matrix* v_eff = nullptr;
     const int* iat2iwt = nullptr;
     elecstate::Potential* pot = nullptr;
+    // Dedicated single-component potentials for the Veff-based dH terms. pelec->pot mixes
+    // V^L + V^H + V^XC in get_eff_v(), so cal_dH would read the wrong potential for the
+    // separate V^H / V^XC (and V^L) outputs. Each of these is built with exactly one
+    // component registered ("local" / "hartree" / "xc"); see ctrl_scf_lcao.
+    elecstate::Potential* pot_vl = nullptr;
+    elecstate::Potential* pot_vh = nullptr;
+    elecstate::Potential* pot_vxc = nullptr;
     int nat = 0;
     int nspin = 1;
     int istep = 0;

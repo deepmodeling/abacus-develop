@@ -50,6 +50,7 @@ struct PerIContainers
 // Shared driver for the Veff-based terms (V^L, V^H, V^XC), which differ only in the
 // Hellmann-Feynman type passed to Veff::cal_dH and in the output prefixes/label.
 bool write_dH_veff_term(WriteDHParams& params,
+                        elecstate::Potential* pot,
                         const std::string& hf_type,
                         const std::string& rprefix,
                         const std::string& kprefix,
@@ -68,7 +69,7 @@ bool write_dH_veff_term(WriteDHParams& params,
 
         hamilt::Veff<hamilt::OperatorLCAO<double, double>> veff(nullptr,
                                                                 params.kv->kvec_d,
-                                                                params.pot,
+                                                                pot,
                                                                 &hR_dummy,
                                                                 &ucell,
                                                                 orb_cutoff,
@@ -162,7 +163,7 @@ bool write_dH_vl(WriteDHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_dH_vl");
     ModuleBase::timer::start("ModuleIO", "write_dH_vl");
 
-    const bool ok = write_dH_veff_term(params, "vl", "dvlr", "dvlk", "dV^L");
+    const bool ok = write_dH_veff_term(params, params.pot_vl, "vl", "dvlr", "dvlk", "dV^L");
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vl");
     return ok;
@@ -173,7 +174,7 @@ bool write_dH_vh(WriteDHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_dH_vh");
     ModuleBase::timer::start("ModuleIO", "write_dH_vh");
 
-    const bool ok = write_dH_veff_term(params, "hartree", "dvhr", "dvhk", "dV^H");
+    const bool ok = write_dH_veff_term(params, params.pot_vh, "hartree", "dvhr", "dvhk", "dV^H");
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vh");
     return ok;
@@ -184,7 +185,7 @@ bool write_dH_vxc(WriteDHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_dH_vxc");
     ModuleBase::timer::start("ModuleIO", "write_dH_vxc");
 
-    const bool ok = write_dH_veff_term(params, "none", "dvxcr", "dvxck", "dV^XC");
+    const bool ok = write_dH_veff_term(params, params.pot_vxc, "none", "dvxcr", "dvxck", "dV^XC");
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vxc");
     return ok;
