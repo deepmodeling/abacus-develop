@@ -198,11 +198,44 @@ bool ModuleIO::read_cube(const std::string& file,
 
     const int nxyz = nx * ny * nz;
     data.resize(nxyz);
-    for (int i = 0;i < nxyz;++i) 
-    { 
-	    ifs >> data[i]; 
+
+    // Check for MPI binary format marker (CIPM in little-endian)
+    static constexpr uint32_t CUBE_MPI_MARKER = 0x4D504943; // "CIPM"
+
+    ifs >> std::ws;
+    const std::streampos data_start = ifs.tellg();
+
+    // Peek at the first 4 bytes to detect MPI binary format
+    char peek_buf[4] = {};
+    ifs.read(peek_buf, 4);
+    uint32_t magic = 0;
+    std::memcpy(&magic, peek_buf, 4);
+
+    if (magic == CUBE_MPI_MARKER)
+    {
+        // MPI-parallel binary format: 4-byte marker + nxyz doubles in binary
+        ifs.close();
+
+        std::ifstream ifs_bin(file, std::ios::binary);
+        if (ifs_bin)
+        {
+            ifs_bin.seekg(data_start + static_cast<std::streampos>(4));
+            ifs_bin.read(reinterpret_cast<char*>(data.data()),
+                         nxyz * static_cast<std::streamsize>(sizeof(double)));
+        }
+        ifs_bin.close();
+    }
+    else
+    {
+        // Text format: rewind and parse as floating-point numbers
+        ifs.clear();
+        ifs.seekg(data_start);
+        for (int i = 0; i < nxyz; ++i)
+        {
+            ifs >> data[i];
+        }
+        ifs.close();
     }
 
-    ifs.close();
     return true;
 }
