@@ -8,6 +8,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
@@ -83,7 +84,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -322,6 +323,19 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+    }
+    else if (this->method == "ppcg")
+    {
+        const int nband_l = psi.get_nbands();
+        const int nbasis = psi.get_nbasis();
+        const int ndim = psi.get_current_ngk();
+        DiagoPPCG<T, Device> ppcg(pre_condition.data());
+        ppcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
+        // Multiple passes for robust convergence (same strategy as BPCG in unit tests)
+        for (int pass = 0; pass < std::min(5, this->diag_iter_max); ++pass)
+        {
+            ppcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+        }
     }
     else if (this->method == "dav_subspace")
     {
