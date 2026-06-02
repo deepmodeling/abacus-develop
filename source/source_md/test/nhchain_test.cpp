@@ -5,9 +5,8 @@
 #undef private
 #define private public
 #define protected public
-#include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
-#include "setcell.h"
+#include "md_test_fixture.h"
 #define doublethreshold 1e-12
 /************************************************
  *  unit test of functions in nhchain.h
@@ -33,34 +32,20 @@
  *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
-class NHC_test : public testing::Test
+class NHC_test : public MdTestBase
 {
   protected:
-    MD_base* mdrun;
-    UnitCell ucell;
-    Parameter param_in;
-    ModuleESolver::ESolver* p_esolver;
+    std::unique_ptr<MD_base> mdrun;
 
-    void SetUp()
+    void SetUp() override
     {
-        Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
-
-        p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(ucell, param_in.inp);
-
+        MdTestBase::SetUp();
         param_in.input.mdp.md_type = "npt";
         param_in.input.mdp.md_pmode = "tri";
         param_in.input.mdp.md_pfirst = 1;
         param_in.input.mdp.md_plast = 1;
-        mdrun = new Nose_Hoover(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
-    }
-
-    void TearDown()
-    {
-        delete mdrun;
-        delete p_esolver;
+        mdrun.reset(new Nose_Hoover(param_in, ucell));
+        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
     }
 };
 
@@ -179,7 +164,7 @@ TEST_F(NHC_test, restart)
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
-    Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
+    Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun.get());
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(mdrun->mdp.md_tchain, 4);
     EXPECT_EQ(mdrun->mdp.md_pchain, 4);
