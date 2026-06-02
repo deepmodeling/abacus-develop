@@ -85,7 +85,8 @@ EOF
 cat << EOF
 ========================== usage =========================
 Done! Binary: ${ABACUS_DIR}/${BUILD_DIR}/abacus_pw_ser.exe
-To run it, exactly like the Linux toolchain:
+To run it, exactly like the Linux toolchain in a mingw bash:
+    bash
     source ${TOOL}/abacus_env.sh
     abacus                 # -> abacus.exe (a copy of abacus_pw_ser.exe)
 ==========================================================
