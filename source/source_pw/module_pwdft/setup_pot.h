@@ -30,6 +30,7 @@ void setup_pot(const int istep,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 }

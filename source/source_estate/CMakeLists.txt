@@ -1,5 +1,6 @@
 list(APPEND objects
     elecstate.cpp
+    init_scf.cpp
     elecstate_energy_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
