@@ -83,6 +83,7 @@ void test_orb::set_orbs()
                        lcao_rmax,
                        0,
                        0,
+                       false, // out_element_info
                        1,  // force
                        0); // myrank
 

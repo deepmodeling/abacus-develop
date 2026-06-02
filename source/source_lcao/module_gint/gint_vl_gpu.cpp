@@ -28,32 +28,18 @@ void Gint_vl_gpu::cal_gint()
     ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 
-// Helper: finalize hr_gint (double path — no cast needed)
-inline void finalize_hr_gint_gpu_(HContainer<double>& hr_gint, HContainer<double>* hR)
-{
-    compose_hr_gint(hr_gint);
-    hr_gint_to_hR(hr_gint, *hR);
-}
-
-// Helper: finalize hr_gint (non-double path — cast to double first)
-template<typename Real>
-void finalize_hr_gint_gpu_(HContainer<Real>& hr_gint, HContainer<double>* hR)
-{
-    HContainer<double> hr_gint_dp = make_cast_hcontainer<double>(hr_gint);
-    compose_hr_gint(hr_gint_dp);
-    hr_gint_to_hR(hr_gint_dp, *hR);
-}
-
 template<typename Real>
 void Gint_vl_gpu::cal_gint_impl_()
 {
-    // 1. Initialize hr_gint as HContainer<Real>
-    HContainer<Real> hr_gint = gint_info_->get_hr<Real>();
+    // hr_gint is always allocated as HContainer<double>: the per-atom-pair GEMM
+    // accumulates fp32 multiplies into a fp64 register/atomicAdd inside the
+    // kernel so that the global reduction across many biggrids stays accurate.
+    HContainer<double> hr_gint = gint_info_->get_hr<double>();
 
-    // 2. Convert vr_eff to Real and transfer to GPU
+    // 1. Convert vr_eff to Real and transfer to GPU
     const int local_mgrid_num = gint_info_->get_local_mgrid_num();
     CudaMemWrapper<Real> vr_eff_d(local_mgrid_num, 0, false);
-    CudaMemWrapper<Real> hr_gint_d(hr_gint.get_nnr(), 0, false);
+    CudaMemWrapper<double> hr_gint_d(hr_gint.get_nnr(), 0, false);
 
     if (std::is_same<Real, double>::value)
     {
@@ -71,7 +57,7 @@ void Gint_vl_gpu::cal_gint_impl_()
             local_mgrid_num * sizeof(Real), cudaMemcpyHostToDevice));
     }
 
-    // 3. Calculate hr_gint on GPU
+    // 2. Calculate hr_gint on GPU
 #pragma omp parallel num_threads(gint_info_->get_streams_num())
     {
         // 20240620 Note that it must be set again here because
@@ -101,12 +87,13 @@ void Gint_vl_gpu::cal_gint_impl_()
         CHECK_CUDA(cudaStreamDestroy(stream));
     }
 
-    // 4. Transfer hr_gint back to CPU
+    // 3. Transfer hr_gint back to CPU
     CHECK_CUDA(cudaMemcpy(hr_gint.get_wrapper(), hr_gint_d.get_device_ptr(),
-        hr_gint.get_nnr() * sizeof(Real), cudaMemcpyDeviceToHost));
+        hr_gint.get_nnr() * sizeof(double), cudaMemcpyDeviceToHost));
 
-    // 5. Compose and transfer to hR (with cast if needed)
-    finalize_hr_gint_gpu_(hr_gint, hR_);
+    // 4. Compose and transfer to hR (already double, no cast needed)
+    compose_hr_gint(hr_gint);
+    hr_gint_to_hR(hr_gint, *hR_);
 }
 
 }

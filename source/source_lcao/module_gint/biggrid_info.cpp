@@ -1,7 +1,7 @@
 #include "biggrid_info.h"
 #include "gint_helper.h"
 #include "gint_type.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 
 namespace ModuleGint
 {
