@@ -31,79 +31,62 @@ Phase 1 path.
 
 ## Prerequisites
 
-The simplest consistent way to get the compiler **and** the math libraries is
-[MSYS2](https://www.msys2.org/):
+Install [MSYS2](https://www.msys2.org/). Everything else (compiler, math
+libraries) is installed by the toolchain script below — there is no separate
+Windows build script; the native Windows build is just another **toolchain
+variant**, alongside `gnu`, `intel`, `gcc-mkl`, …
+
+## Building (Phase 1: serial PW) — via the toolchain
+
+Open the **"MSYS2 MinGW 64-bit"** shell and run the two toolchain scripts, the
+same two-step flow as the Linux variants (`toolchain_gnu.sh` →
+`build_abacus_gnu.sh`):
 
 ```bash
-# in an MSYS2 shell
-pacman -S mingw-w64-x86_64-gcc \
-          mingw-w64-x86_64-gcc-fortran \
-          mingw-w64-x86_64-cmake \
-          mingw-w64-x86_64-ninja \
-          mingw-w64-x86_64-openblas \
-          mingw-w64-x86_64-fftw
+cd toolchain
+./toolchain_windows.sh      # pacman-installs gcc/gfortran/openblas/fftw/cmake/ninja
+./build_abacus_windows.sh   # configures + builds the serial PW binary
 ```
 
-This provides, under `C:\msys64\mingw64`:
+`toolchain_windows.sh` is the Windows counterpart of `toolchain_gnu.sh`: on
+Linux the dependencies are built from source, while on MSYS2 they come from
+`pacman` (under `/mingw64`). `build_abacus_windows.sh` then configures the
+serial plane-wave build (`ENABLE_MPI=OFF`, `ENABLE_LCAO=OFF`, OpenBLAS + FFTW)
+and builds `build_abacus_windows/abacus_pw_ser.exe`.
 
-| Need            | Package                          |
-|-----------------|----------------------------------|
-| C++17 compiler  | `mingw-w64-x86_64-gcc`           |
-| Fortran runtime (libgfortran, needed to link OpenBLAS's LAPACK) | `mingw-w64-x86_64-gcc-fortran` |
-| Build driver    | `mingw-w64-x86_64-cmake` + `ninja` |
-| BLAS + LAPACK   | `mingw-w64-x86_64-openblas`      |
-| FFTW3 (double + single) | `mingw-w64-x86_64-fftw`  |
-
-ScaLAPACK, ELPA, PEXSI and MPI are **not** required for Phase 1.
-
-## Building (Phase 1: serial PW)
-
-From a shell where the MinGW toolchain is on `PATH` (the "MSYS2 MinGW 64-bit"
-shell, or PowerShell with `C:\msys64\mingw64\bin` on `PATH`):
-
-```powershell
-# PowerShell helper (this repo): tools/windows/build-native-serial.ps1
-./tools/windows/build-native-serial.ps1 -PrefixPath "C:\msys64\mingw64"
-```
-
-Or invoke CMake directly:
-
-```powershell
-cmake -S . -B build_win_serial_pw -G Ninja `
-      -DCMAKE_BUILD_TYPE=Release `
-      -DENABLE_MPI=OFF -DENABLE_LCAO=OFF -DUSE_OPENMP=OFF `
-      -DUSE_ELPA=OFF -DENABLE_PEXSI=OFF -DENABLE_LIBRI=OFF -DENABLE_MLALGO=OFF `
-      -DUSE_CUDA=OFF -DBUILD_TESTING=OFF -DCOMMIT_INFO=OFF `
-      -DBLA_VENDOR=OpenBLAS -DENABLE_FLOAT_FFTW=ON `
-      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ `
-      -DCMAKE_CXX_FLAGS="-include cstdint -include cstring -include algorithm" `
-      -DCMAKE_PREFIX_PATH="C:\msys64\mingw64"
-cmake --build build_win_serial_pw --parallel
-```
-
-Notes on the non-obvious flags:
-- `-DBLA_VENDOR=OpenBLAS` — OpenBLAS supplies both BLAS and LAPACK in one library.
-- `-DENABLE_FLOAT_FFTW=ON` — compiles `fft_cpu_float.cpp` so the `FFT_CPU<float>`
+A few non-default options the build script sets, and why:
+- `BLA_VENDOR=OpenBLAS` — OpenBLAS supplies both BLAS and LAPACK in one library.
+- `ENABLE_FLOAT_FFTW=ON` — compiles `fft_cpu_float.cpp` so the `FFT_CPU<float>`
   vtable is fully defined (see *source changes* below); needs `libfftw3f`.
-- `-DCMAKE_CXX_FLAGS="-include ..."` — MSYS2 ships a very new GCC whose libstdc++
-  dropped many transitive standard-header includes; force-including the common
-  ones lets the existing sources build unchanged. (A cleaner long-term fix is to
-  add the missing `#include`s per file, or use a GCC version ABACUS officially
-  supports.)
+- `CMAKE_CXX_FLAGS="-include cstdint -include cstring -include algorithm"` —
+  MSYS2 ships a very new GCC whose libstdc++ dropped several transitive
+  standard-header includes; force-including the common ones lets the existing
+  sources build unchanged. (Not Windows-specific — tied to GCC ≥ 15. A cleaner
+  long-term fix is to add the missing `#include`s per file.)
 
-The resulting executable is `abacus_pw_ser.exe` in the build directory. It has
-been verified to run a plane-wave SCF (`examples/02_scf/01_pw_Si2`) to
-convergence with a deterministic total energy.
+To run the binary, `source toolchain/abacus_env.sh` (written by the build
+script); it puts the binary and the MinGW runtime DLLs (libstdc++, libgcc,
+libgfortran, libopenblas, libfftw3) on `PATH`.
 
-At runtime the executable needs the MinGW runtime DLLs (libstdc++, libgcc,
-libgfortran, libopenblas, libfftw3) on `PATH`; the simplest way is to run from a
-shell with `C:\msys64\mingw64\bin` on `PATH`.
+## Testing — the existing integration harness, serial mode
 
-### Validate against a Linux baseline
+There is **no separate Windows test script**. `tests/integrate/Autotest.sh`
+gained a serial mode: passing `-n 0` runs the ABACUS binary directly with no
+MPI launcher, so a serial build reuses the standard harness and its
+`result.ref` comparison unchanged. From the MSYS2 shell:
 
-Run a small PW SCF case (e.g. `examples/02_scf/...`) and compare the total
-energy / forces with a Linux serial build of the same commit. They should agree
-to roughly machine precision (~1e-8 Ry).
+```bash
+cd tests/integrate
+# cases_file lists case dirs relative to tests/integrate, e.g. one line:
+#   ../01_PW/004_PW_UPF201_Si
+bash Autotest.sh -a "$(pwd)/../../toolchain/build_abacus_windows/abacus_pw_ser.exe" \
+                 -n 0 -f <cases_file>
+```
+
+Use serial-PW-compatible `01_PW` cases (avoid those needing `kpar>1`,
+ScaLAPACK, or LibXC functionals — features excluded from the Phase 1 build).
+The harness extracts properties with `tools/catch_properties.sh` and compares
+against each case's `result.ref`, exactly as on Linux.
 
 ## What changed in the source for the port
 
@@ -139,12 +122,23 @@ or platform-neutral:
   macros `S_IRUSR`/`S_IWUSR` are undefined in the Windows CRT; mapped them to
   `_S_IREAD`/`_S_IWRITE` and include `<io.h>` for the low-level `open/read/
   write/close`.
+- **`source/source_psi/psi_initializer.cpp`**: fixed the seeded (`pw_seed>0`)
+  random-wavefunction path in **serial** builds. The per-stick random data was
+  only gathered into the working arrays via `stick_to_pool()` under `#ifdef
+  __MPI`, so without MPI the wavefunctions stayed all-zero and tripped
+  Gram-Schmidt (`psi_norm <= 0.0`). Added the serial direct-copy counterpart.
+  (Pre-existing serial bug, not Windows-specific — CI only runs under MPI.)
 - **`CMakeLists.txt`**:
   - `find_package(ScaLAPACK REQUIRED)` is now gated on `ENABLE_MPI` (a serial
     build must not require a distributed-memory library).
   - On Windows, defines `_USE_MATH_DEFINES`, `NOMINMAX`, `_CRT_SECURE_NO_WARNINGS`.
   - The default `-O3 -g` flags and the `-lm` link are skipped for MSVC.
   - The post-install `abacus` symlink step is skipped on Windows.
+- **`tests/integrate/Autotest.sh`**: added a serial mode (`-n 0`) that runs the
+  binary without an MPI launcher, so serial builds reuse the standard harness.
+- **`toolchain/toolchain_windows.sh`**, **`toolchain/build_abacus_windows.sh`**
+  (new): the native-Windows toolchain variant (MSYS2/MinGW-w64), mirroring the
+  `gnu`/`intel`/`gcc-mkl` variants.
 
 ## Known limitations / not yet ported
 
