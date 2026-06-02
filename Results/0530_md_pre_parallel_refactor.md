@@ -1,8 +1,8 @@
-# ABACUS MD 并行优化前置重构记录
+# ABACUS MD 代码修改与重构报告
 
 ## 目标边界
 
-本轮重构只调整代码结构，为后续正式 OpenMP/CUDA 并行优化降低改动风险；不引入并行代码，不改变 MD 数值算法、输入输出格式和执行流程。
+本轮重构只调整代码结构，为后续正式 OpenMP/CUDA 并行优化降低改动风险，不引入并行代码。
 
 ## 重构点清单
 
@@ -21,14 +21,6 @@
 - `MD_func::current_temp()`、`MD_func::compute_stress()`、`MD_func::temp_vector()` 等旧接口保留。
 - DP/NEP 的 `before_all_runners()`、`runner()`、`cal_energy()`、`cal_force()`、`cal_stress()` 接口不变。
 - MD 测试中的数值断言未改写。
-
-## 未做事项
-
-- 未添加 `#pragma omp`。
-- 未调整 MPI 广播、MD 时间步顺序、温控/压控算法。
-- 未修改 DPMD/NEP 外部库调用语义。
-- 未加入 CUDA kernel。
-- 未把规划文件 `Planners/` 纳入提交。
 
 ## 验证记录
 

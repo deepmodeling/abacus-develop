@@ -130,26 +130,37 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
     }
 
     // virial
-    std::fill(nep_virial_sum.begin(), nep_virial_sum.end(), 0.0);
-#pragma omp parallel if (nat >= 256)
+    double v0 = 0.0;
+    double v1 = 0.0;
+    double v2 = 0.0;
+    double v3 = 0.0;
+    double v4 = 0.0;
+    double v5 = 0.0;
+    double v6 = 0.0;
+    double v7 = 0.0;
+    double v8 = 0.0;
+#pragma omp parallel for reduction(+:v0, v1, v2, v3, v4, v5, v6, v7, v8) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
-        double local_virial_sum[9] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-#pragma omp for schedule(static)
-        for (int index = 0; index < 9 * nat; ++index)
-        {
-            const int j = index / nat;
-            local_virial_sum[j] += _v[index];
-        }
-
-#pragma omp critical
-        {
-            for (int j = 0; j < 9; ++j)
-            {
-                nep_virial_sum[j] += local_virial_sum[j];
-            }
-        }
+        v0 += _v[i];
+        v1 += _v[nat + i];
+        v2 += _v[2 * nat + i];
+        v3 += _v[3 * nat + i];
+        v4 += _v[4 * nat + i];
+        v5 += _v[5 * nat + i];
+        v6 += _v[6 * nat + i];
+        v7 += _v[7 * nat + i];
+        v8 += _v[8 * nat + i];
     }
+    nep_virial_sum[0] = v0;
+    nep_virial_sum[1] = v1;
+    nep_virial_sum[2] = v2;
+    nep_virial_sum[3] = v3;
+    nep_virial_sum[4] = v4;
+    nep_virial_sum[5] = v5;
+    nep_virial_sum[6] = v6;
+    nep_virial_sum[7] = v7;
+    nep_virial_sum[8] = v8;
 
     // virial -> stress
     for (int i = 0; i < 3; ++i)

@@ -3,6 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "source_esolver/esolver_lj.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_md/md_base.h"
 #include "setcell.h"
 
