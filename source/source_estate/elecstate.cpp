@@ -24,23 +24,6 @@ void ElecState::init_nelec_spin()
     }
 }
 
-void ElecState::init_scf(const UnitCell& ucell,
-                         const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac, 
-                         const bool* numeric,
-                         ModuleSymmetry::Symmetry& symm, 
-                         const void* wfcpw)
-{
-    //! core correction potential.
-    this->charge->set_rho_core(ucell,strucfac, numeric);
-
-    //! renormalize the charge density
-    this->charge->renormalize_rho();
-
-    //! initialize the potential
-    this->pot->init_pot(this->charge);
-}
-
 
 void ElecState::init_ks(Charge* chr_in, // pointer for class Charge
                         const K_Vectors* klist_in,
