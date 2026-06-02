@@ -81,8 +81,18 @@ $cmakeArgs = @(
     "-DENABLE_MLALGO=OFF",
     "-DUSE_CUDA=OFF",
     "-DBUILD_TESTING=OFF",
+    "-DCOMMIT_INFO=OFF",      # generate_build_info uses git/sh; skip on Windows
+    # OpenBLAS provides both BLAS and LAPACK; tell CMake's FindBLAS/FindLAPACK.
+    "-DBLA_VENDOR=OpenBLAS",
+    # Enable the single-precision FFTW path so FFT_CPU<float> is fully defined
+    # (its vtable is emitted via the float instantiation); requires libfftw3f.
+    "-DENABLE_FLOAT_FFTW=ON",
     "-DCMAKE_CXX_COMPILER=g++",
-    "-DCMAKE_C_COMPILER=gcc"
+    "-DCMAKE_C_COMPILER=gcc",
+    # MSYS2 ships a very recent GCC whose libstdc++ dropped several transitive
+    # standard-header includes. Force-include the common ones so the existing
+    # sources (which rely on the older transitive behaviour) still compile.
+    "-DCMAKE_CXX_FLAGS=-include cstdint -include cstring -include algorithm"
 )
 if ($PrefixPath -ne "") {
     $cmakeArgs += "-DCMAKE_PREFIX_PATH=$PrefixPath"

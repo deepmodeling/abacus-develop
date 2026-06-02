@@ -37,6 +37,7 @@ The simplest consistent way to get the compiler **and** the math libraries is
 ```bash
 # in an MSYS2 shell
 pacman -S mingw-w64-x86_64-gcc \
+          mingw-w64-x86_64-gcc-fortran \
           mingw-w64-x86_64-cmake \
           mingw-w64-x86_64-ninja \
           mingw-w64-x86_64-openblas \
@@ -45,12 +46,13 @@ pacman -S mingw-w64-x86_64-gcc \
 
 This provides, under `C:\msys64\mingw64`:
 
-| Need            | Package                       |
-|-----------------|-------------------------------|
-| C++17 compiler  | `mingw-w64-x86_64-gcc`        |
+| Need            | Package                          |
+|-----------------|----------------------------------|
+| C++17 compiler  | `mingw-w64-x86_64-gcc`           |
+| Fortran runtime (libgfortran, needed to link OpenBLAS's LAPACK) | `mingw-w64-x86_64-gcc-fortran` |
 | Build driver    | `mingw-w64-x86_64-cmake` + `ninja` |
-| BLAS + LAPACK   | `mingw-w64-x86_64-openblas`   |
-| FFTW3 (double)  | `mingw-w64-x86_64-fftw`       |
+| BLAS + LAPACK   | `mingw-w64-x86_64-openblas`      |
+| FFTW3 (double + single) | `mingw-w64-x86_64-fftw`  |
 
 ScaLAPACK, ELPA, PEXSI and MPI are **not** required for Phase 1.
 
@@ -71,12 +73,31 @@ cmake -S . -B build_win_serial_pw -G Ninja `
       -DCMAKE_BUILD_TYPE=Release `
       -DENABLE_MPI=OFF -DENABLE_LCAO=OFF -DUSE_OPENMP=OFF `
       -DUSE_ELPA=OFF -DENABLE_PEXSI=OFF -DENABLE_LIBRI=OFF -DENABLE_MLALGO=OFF `
-      -DUSE_CUDA=OFF -DBUILD_TESTING=OFF `
+      -DUSE_CUDA=OFF -DBUILD_TESTING=OFF -DCOMMIT_INFO=OFF `
+      -DBLA_VENDOR=OpenBLAS -DENABLE_FLOAT_FFTW=ON `
+      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ `
+      -DCMAKE_CXX_FLAGS="-include cstdint -include cstring -include algorithm" `
       -DCMAKE_PREFIX_PATH="C:\msys64\mingw64"
 cmake --build build_win_serial_pw --parallel
 ```
 
-The resulting executable is `abacus_pw_ser.exe` in the build directory.
+Notes on the non-obvious flags:
+- `-DBLA_VENDOR=OpenBLAS` — OpenBLAS supplies both BLAS and LAPACK in one library.
+- `-DENABLE_FLOAT_FFTW=ON` — compiles `fft_cpu_float.cpp` so the `FFT_CPU<float>`
+  vtable is fully defined (see *source changes* below); needs `libfftw3f`.
+- `-DCMAKE_CXX_FLAGS="-include ..."` — MSYS2 ships a very new GCC whose libstdc++
+  dropped many transitive standard-header includes; force-including the common
+  ones lets the existing sources build unchanged. (A cleaner long-term fix is to
+  add the missing `#include`s per file, or use a GCC version ABACUS officially
+  supports.)
+
+The resulting executable is `abacus_pw_ser.exe` in the build directory. It has
+been verified to run a plane-wave SCF (`examples/02_scf/01_pw_Si2`) to
+convergence with a deterministic total energy.
+
+At runtime the executable needs the MinGW runtime DLLs (libstdc++, libgcc,
+libgfortran, libopenblas, libfftw3) on `PATH`; the simplest way is to run from a
+shell with `C:\msys64\mingw64\bin` on `PATH`.
 
 ### Validate against a Linux baseline
 
@@ -94,6 +115,30 @@ or platform-neutral:
   CRT `mkdir` takes no permission-mode argument.
 - **`source/source_base/global_file.cpp`**, **`global_function.cpp`**: use the
   helper above instead of calling `mkdir(path, 0755)` directly.
+- **`cmake/FindBlas.cmake`**, **`cmake/FindLapack.cmake`**: these wrappers delegate
+  to CMake's builtin `FindBLAS`/`FindLAPACK`. On the case-insensitive Windows
+  filesystem `FindBlas.cmake` and `FindBLAS.cmake` are the same file, so the
+  delegating `find_package(BLAS)`/`find_package(LAPACK)` recursed into the
+  wrapper forever ("maximum nesting depth exceeded"). Fixed by temporarily
+  dropping our module dir from `CMAKE_MODULE_PATH` around the builtin call.
+- **`source/source_base/module_fft/fft_base.h`**, **`fft_cpu.h`**: removed
+  `__attribute__((weak))` from the FFT virtual functions. The weak-without-
+  definition pattern relied on the ELF linker resolving unbound weak symbols to
+  null; on Windows/PE (MinGW) it produced **null vtable slots**, so the first
+  FFT dispatch (`FFT_Bundle::setupFFT`) jumped to address 0 and crashed. The
+  base virtuals now have trivial default bodies; the float overrides are made
+  concrete by building with `ENABLE_FLOAT_FFTW=ON`.
+- **`source/source_io/module_parameter/input_conv.h`**: replaced the POSIX
+  `<regex.h>` (`regcomp`/`regexec`) expression parser with portable C++
+  `<regex>` (`std::regex`). MinGW has no `<regex.h>`.
+- **`source/source_base/module_container/base/core/cpu_allocator.cpp`**: replaced
+  `posix_memalign` (no Windows CRT equivalent) with `_aligned_malloc`/
+  `_aligned_free` on Windows, used consistently across both `allocate` overloads
+  and `free`.
+- **`source/source_io/module_restart/restart.cpp`**: the POSIX owner-permission
+  macros `S_IRUSR`/`S_IWUSR` are undefined in the Windows CRT; mapped them to
+  `_S_IREAD`/`_S_IWRITE` and include `<io.h>` for the low-level `open/read/
+  write/close`.
 - **`CMakeLists.txt`**:
   - `find_package(ScaLAPACK REQUIRED)` is now gated on `ENABLE_MPI` (a serial
     build must not require a distributed-memory library).

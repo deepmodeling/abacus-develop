@@ -15,19 +15,26 @@ class FFT_BASE
      * @brief Initialize the fft parameters as virtual function.
      *
      * The function is used to initialize the fft parameters.
+     *
+     * These virtuals carry a trivial default body so that the vtable always
+     * has a valid (non-null) entry for every backend. The previous
+     * `__attribute__((weak))` + no-definition pattern relied on the ELF
+     * linker resolving unbound weak symbols to null; on Windows/PE (MinGW)
+     * that produces null vtable slots and crashes when a non-overridden
+     * slot is dispatched. Derived backends still override what they use.
      */
-    virtual __attribute__((weak)) void initfft(int nx_in,
-                                               int ny_in,
-                                               int nz_in,
-                                               int lixy_in,
-                                               int rixy_in,
-                                               int ns_in,
-                                               int nplane_in,
-                                               int nproc_in,
-                                               bool gamma_only_in,
-                                               bool xprime_in = true);
+    virtual void initfft(int nx_in,
+                         int ny_in,
+                         int nz_in,
+                         int lixy_in,
+                         int rixy_in,
+                         int ns_in,
+                         int nplane_in,
+                         int nproc_in,
+                         bool gamma_only_in,
+                         bool xprime_in = true) {};
 
-    virtual __attribute__((weak)) void initfft(int nx_in, int ny_in, int nz_in);
+    virtual void initfft(int nx_in, int ny_in, int nz_in) {};
 
     /**
      * @brief Setup the fft plan and data as pure virtual function.
@@ -72,11 +79,11 @@ class FFT_BASE
      * FFT_BASE is an abstract class,the function will be override,
      * The attribute weak is used to avoid define the function.
      */
-    virtual __attribute__((weak)) FPTYPE* get_rspace_data() const;
+    virtual FPTYPE* get_rspace_data() const { return nullptr; }
 
-    virtual __attribute__((weak)) std::complex<FPTYPE>* get_auxr_data() const;
+    virtual std::complex<FPTYPE>* get_auxr_data() const { return nullptr; }
 
-    virtual __attribute__((weak)) std::complex<FPTYPE>* get_auxg_data() const;
+    virtual std::complex<FPTYPE>* get_auxg_data() const { return nullptr; }
 
     /**
      * @brief Get the auxiliary real space data in 3D
@@ -85,7 +92,7 @@ class FFT_BASE
      * While the FFT_BASE is an abstract class,the function will be override,
      * The attribute weak is used to avoid define the function.
      */
-    virtual __attribute__((weak)) std::complex<FPTYPE>* get_auxr_3d_data() const;
+    virtual std::complex<FPTYPE>* get_auxr_3d_data() const { return nullptr; }
 
     // forward fft in x-y direction
 
@@ -100,11 +107,11 @@ class FFT_BASE
      * determined by the xprime flag).Notably, the Y axis operates in
      * "many-many-FFT" mode.
      */
-    virtual __attribute__((weak)) void fftxyfor(std::complex<FPTYPE>* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual void fftxyfor(std::complex<FPTYPE>* in,
+                          std::complex<FPTYPE>* out) const {};
 
-    virtual __attribute__((weak)) void fftxybac(std::complex<FPTYPE>* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual void fftxybac(std::complex<FPTYPE>* in,
+                          std::complex<FPTYPE>* out) const {};
 
     /**
      * @brief Forward FFT in z direction
@@ -115,11 +122,11 @@ class FFT_BASE
      * It involves only one axis, z. The FFT is applied only once.
      * Notably, the Z axis operates in many FFT with nz*ns.
      */
-    virtual __attribute__((weak)) void fftzfor(std::complex<FPTYPE>* in, 
-                                               std::complex<FPTYPE>* out) const;
+    virtual void fftzfor(std::complex<FPTYPE>* in,
+                         std::complex<FPTYPE>* out) const {};
 
-    virtual __attribute__((weak)) void fftzbac(std::complex<FPTYPE>* in, 
-                                               std::complex<FPTYPE>* out) const;
+    virtual void fftzbac(std::complex<FPTYPE>* in,
+                         std::complex<FPTYPE>* out) const {};
 
     /**
      * @brief Forward FFT in x-y direction with real to complex
@@ -129,11 +136,11 @@ class FFT_BASE
      * This function performs the forward FFT in the x-y direction
      * with real to complex.There is no difference between fftxyfor.
      */
-    virtual __attribute__((weak)) void fftxyr2c(FPTYPE* in, 
-                                                std::complex<FPTYPE>* out) const;
+    virtual void fftxyr2c(FPTYPE* in,
+                          std::complex<FPTYPE>* out) const {};
 
-    virtual __attribute__((weak)) void fftxyc2r(std::complex<FPTYPE>* in, 
-                                                FPTYPE* out) const;
+    virtual void fftxyc2r(std::complex<FPTYPE>* in,
+                          FPTYPE* out) const {};
 
     /**
      * @brief Forward FFT in 3D
@@ -144,11 +151,11 @@ class FFT_BASE
      * It involves three axes, x, y, and z. The FFT is applied multiple times
      * for fft3D_forward.
      */
-    virtual __attribute__((weak)) void fft3D_forward(std::complex<FPTYPE>* in, 
-                                                     std::complex<FPTYPE>* out) const;
+    virtual void fft3D_forward(std::complex<FPTYPE>* in,
+                               std::complex<FPTYPE>* out) const {};
 
-    virtual __attribute__((weak)) void fft3D_backward(std::complex<FPTYPE>* in, 
-                                                      std::complex<FPTYPE>* out) const;
+    virtual void fft3D_backward(std::complex<FPTYPE>* in,
+                                std::complex<FPTYPE>* out) const {};
 
   protected:
     int nx = 0;
