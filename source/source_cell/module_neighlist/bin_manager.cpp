@@ -122,16 +122,11 @@ void BinManager::build_atom_neighbors(
     const int natoms = static_cast<int>(atoms.size());
 
     neighbor_list.reset();
+    std::fill(neighbor_list.numneigh.begin(), neighbor_list.numneigh.end(), 0);
+    std::fill(neighbor_list.firstneigh.begin(), neighbor_list.firstneigh.end(), nullptr);
 
-    std::vector<std::vector<int>> neighbor_ids(natoms);
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < natoms; i++)
+    auto collect_neighbors = [&](const int i, std::vector<int>& neigh_tmp)
     {
-        std::vector<int>& neigh_tmp = neighbor_ids[i];
-
         int ix = std::min(
             std::max(int((atoms[i].position_x - x_min) / bin_sizex), 0),
             nbinx - 1
@@ -179,29 +174,41 @@ void BinManager::build_atom_neighbors(
                     }
                 }
             }
-        } 
-    }
+        }
+    };
+
+    constexpr int chunk_size = 256;
+    for (int chunk_begin = 0; chunk_begin < natoms; chunk_begin += chunk_size)
+    {
+        const int chunk_end = std::min(chunk_begin + chunk_size, natoms);
+        const int chunk_len = chunk_end - chunk_begin;
+        std::vector<std::vector<int>> chunk_neighbor_ids(chunk_len);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int i = 0; i < natoms; i++)
-    {
-        const std::vector<int>& neigh_tmp = neighbor_ids[i];
-        int n = static_cast<int>(neigh_tmp.size());
-
-        //std::cout<<n<<std::endl;
-
-        int* ptr = neighbor_list.allocator.allocate(n);
-        assert(n == 0 || ptr != nullptr);
-    
-        for (int k = 0; k < n; k++)
+        for (int local_i = 0; local_i < chunk_len; local_i++)
         {
-            ptr[k] = neigh_tmp[k];
+            collect_neighbors(chunk_begin + local_i, chunk_neighbor_ids[local_i]);
         }
 
-        neighbor_list.firstneigh[i] = ptr;
-        neighbor_list.numneigh[i] = n;
+        for (int local_i = 0; local_i < chunk_len; local_i++)
+        {
+            const int atom_i = chunk_begin + local_i;
+            const std::vector<int>& neigh_tmp = chunk_neighbor_ids[local_i];
+            const int n = static_cast<int>(neigh_tmp.size());
+
+            int* ptr = neighbor_list.allocator.allocate(n);
+            assert(n == 0 || ptr != nullptr);
+
+            for (int k = 0; k < n; k++)
+            {
+                ptr[k] = neigh_tmp[k];
+            }
+
+            neighbor_list.firstneigh[atom_i] = ptr;
+            neighbor_list.numneigh[atom_i] = n;
+        }
     }
 }
 
