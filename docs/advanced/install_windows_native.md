@@ -161,3 +161,19 @@ or platform-neutral:
   GPU (CUDA/ROCm), DSP — all disabled for Phase 1.
 - Expect additional small portability fixes to surface during compilation;
   they are tracked as part of the staged port.
+
+### `pw_seed` is not bit-reproducible across platforms
+
+The random wavefunction initializer (`pw_seed > 0`) uses C `std::rand()`, whose
+sequence and `RAND_MAX` are implementation-defined (e.g. 32767 on the Windows
+CRT vs 2^31-1 on glibc). So for a given `pw_seed`, the *initial* wavefunctions
+differ between Windows and Linux. For almost all systems the SCF converges to
+the same state regardless of initialization, so results still match. But a few
+**init-sensitive** cases (near-degenerate / charged / fixed-spin systems, e.g.
+`tests/01_PW/078_PW_S2_elec_add`) can settle into a different near-degenerate
+solution, so energy/force differ from the Linux-generated `result.ref`. This is
+**not a code bug** — both states are valid converged solutions (the reference
+state is reachable on Windows with a different seed). A proper cross-platform
+fix would replace `std::rand` with a bit-portable generator (e.g. `std::mt19937`)
+and regenerate the `pw_seed` references; that is left as a separate, upstream
+change because it alters the sequence on Linux too.
