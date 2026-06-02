@@ -1390,13 +1390,16 @@ def _argparse():
     
     -f, --folder: the folder of the ABACUS calculation, in which the STRU, INPUT, KPT, and OUT* folders are located.
     -n, --ndigits: the number of digits for the MO coefficients. For MO coefficients smaller than 10^-n, they will be set to 0.
-    -g, --ngto: the number of GTOs to fit ABACUS NAOs. The default is 7.
-    -r, --rel_r: the relative cutoff radius for the GTOs. The default is 2.
+    -g, --ngto: the number of GTOs to fit ABACUS NAOs.
+    -r, --rel_r: the relative cutoff radius for the GTOs.
     --write-nval: write the Molden [Nval] section from UPF z_valence.
-    -o, --output: the output Molden file name. The default is ABACUS.molden.
+    -o, --output: the output Molden file name.
     """
     import argparse
-    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method")
+    parser = argparse.ArgumentParser(
+        description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     welcome = """WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
 the total number of electrons may not be conserved. Always use after a re-normalization operation.
 Once meet any problem, please submit an issue at: https://github.com/deepmodeling/abacus-develop/issues
