@@ -64,9 +64,19 @@ A few non-default options the build script sets, and why:
   sources build unchanged. (Not Windows-specific — tied to GCC ≥ 15. A cleaner
   long-term fix is to add the missing `#include`s per file.)
 
-To run the binary, `source toolchain/abacus_env.sh` (written by the build
-script); it puts the binary and the MinGW runtime DLLs (libstdc++, libgcc,
-libgfortran, libopenblas, libfftw3) on `PATH`.
+To run it, `source toolchain/abacus_env.sh` and then call `abacus` directly —
+exactly like the Linux toolchain:
+
+```bash
+source toolchain/abacus_env.sh
+abacus --version
+```
+
+`abacus_env.sh` puts the binary directory and the MinGW runtime DLLs (libstdc++,
+libgcc, libgfortran, libopenblas, libfftw3) on `PATH`. Because native Windows
+symlinks need elevation, the build step copies the configured binary to
+`abacus.exe` (instead of the Linux `abacus` symlink), so a bare `abacus`
+resolves in the MSYS2 shell and in cmd/PowerShell.
 
 ## Testing — the existing `01_PW` suite, serial mode
 

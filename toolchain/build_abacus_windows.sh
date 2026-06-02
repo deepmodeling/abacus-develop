@@ -60,7 +60,22 @@ cmake -B $BUILD_DIR -G Ninja -DCMAKE_INSTALL_PREFIX=$PREFIX \
 
 cmake --build $BUILD_DIR -j "${NUM_JOBS}"
 
-# generate abacus_env.sh (puts the MinGW runtime DLLs + binary on PATH)
+# Provide a generic `abacus` command, matching the Linux toolchain (which
+# symlinks `abacus` -> abacus_<config>). Native Windows symlinks need elevated
+# privileges, so instead copy the built binary to abacus.exe; a bare `abacus`
+# then resolves to it in the MSYS2 shell (and in cmd/PowerShell). The glob
+# matches the configured target (abacus_pw_ser.exe now, abacus_basic_ser.exe in
+# later phases) but not the abacus.exe copy itself (no underscore).
+built_exe=$(ls "${ABACUS_DIR}/${BUILD_DIR}"/abacus_*.exe 2>/dev/null | head -n 1)
+if [ -n "$built_exe" ]; then
+    cp -f "$built_exe" "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe"
+    echo "Created generic launcher: ${ABACUS_DIR}/${BUILD_DIR}/abacus.exe -> $(basename "$built_exe")"
+else
+    echo "WARNING: no abacus_*.exe found in ${BUILD_DIR}; 'abacus' command not created."
+fi
+
+# generate abacus_env.sh: sourcing it puts the MinGW runtime DLLs (via the
+# toolchain setup) and the binary directory on PATH, so `abacus` runs directly.
 cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 [ -f "${INSTALL_DIR}/setup" ] && source "${INSTALL_DIR}/setup"
@@ -70,6 +85,8 @@ EOF
 cat << EOF
 ========================== usage =========================
 Done! Binary: ${ABACUS_DIR}/${BUILD_DIR}/abacus_pw_ser.exe
-Source ${TOOL}/abacus_env.sh to put it (and the MinGW runtime DLLs) on PATH.
+To run it, exactly like the Linux toolchain:
+    source ${TOOL}/abacus_env.sh
+    abacus                 # -> abacus.exe (a copy of abacus_pw_ser.exe)
 ==========================================================
 EOF
