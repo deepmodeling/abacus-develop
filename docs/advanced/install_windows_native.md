@@ -68,25 +68,30 @@ To run the binary, `source toolchain/abacus_env.sh` (written by the build
 script); it puts the binary and the MinGW runtime DLLs (libstdc++, libgcc,
 libgfortran, libopenblas, libfftw3) on `PATH`.
 
-## Testing — the existing integration harness, serial mode
+## Testing — the existing `01_PW` suite, serial mode
 
-There is **no separate Windows test script**. `tests/integrate/Autotest.sh`
-gained a serial mode: passing `-n 0` runs the ABACUS binary directly with no
-MPI launcher, so a serial build reuses the standard harness and its
-`result.ref` comparison unchanged. From the MSYS2 shell:
+There is **no separate Windows test script and no separate case list**. The PW
+test suite is `tests/01_PW`, driven by the standard harness exactly as in CI
+(`tests/01_PW/CMakeLists.txt` runs `Autotest.sh` from that directory, which
+reads `tests/01_PW/CASES_CPU.txt`). The only addition is a **serial mode** in
+`Autotest.sh`: `-n 0` runs the ABACUS binary directly with no MPI launcher.
+
+From the MSYS2 MinGW 64-bit shell:
 
 ```bash
-cd tests/integrate
-# cases_file lists case dirs relative to tests/integrate, e.g. one line:
-#   ../01_PW/004_PW_UPF201_Si
-bash Autotest.sh -a "$(pwd)/../../toolchain/build_abacus_windows/abacus_pw_ser.exe" \
-                 -n 0 -f <cases_file>
+cd tests/01_PW
+bash ../integrate/Autotest.sh \
+     -a "$(pwd)/../../build_abacus_windows/abacus_pw_ser.exe" -n 0
 ```
 
-Use serial-PW-compatible `01_PW` cases (avoid those needing `kpar>1`,
-ScaLAPACK, or LibXC functionals — features excluded from the Phase 1 build).
-The harness extracts properties with `tools/catch_properties.sh` and compares
-against each case's `result.ref`, exactly as on Linux.
+This runs the whole `01_PW` suite and compares every case against its
+`result.ref` with `tools/catch_properties.sh`, identical to the Linux/MPI run
+apart from `-n 0`. (`bc`, used by `catch_properties.sh`, is installed by
+`toolchain_windows.sh`.)
+
+Cases requiring features outside the Phase 1 serial-PW build (multi-process
+`kpar`, the ScaLAPACK solver, or LibXC functionals) are expected to report
+warnings/failures; that is a property of the reduced build, not of the port.
 
 ## What changed in the source for the port
 
