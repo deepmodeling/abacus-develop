@@ -98,7 +98,7 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
     __attribute__((weak)) 
     void fftxyc2r(std::complex<FPTYPE>* in, 
                   FPTYPE* out) const override;
-    private:
+    protected:  // exposed so FFT_SWDFTI (CPE DFTI) can reuse plans/dims
         void clearfft(fftw_plan& plan);
         void clearfft(fftwf_plan& plan);
 

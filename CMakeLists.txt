@@ -338,6 +338,18 @@ if (USE_DSP)
 endif()
 if (USE_SW)
   add_compile_definitions(__SW)
+  # IEEE-compliant FP: required for swFFT/DFTI numerical correctness on Sunway.
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag("-mieee" ABACUS_CXX_SUPPORTS_MIEEE)
+  if(ABACUS_CXX_SUPPORTS_MIEEE)
+    add_compile_options(-mieee)
+  endif()
+  # CPE-DFTI: accelerate FFT_CPU local 1D sticks FFTs via swFFT xMath DFTI (CPE).
+  # Needs the isolated libswfft_xmath_iso.a linked below. Disable with -DUSE_SWDFTI=OFF.
+  option(USE_SWDFTI "Use swFFT CPE DFTI for local 1D FFTs" ON)
+  if(USE_SWDFTI)
+    add_compile_definitions(__SWDFTI)
+  endif()
   set(SW ON)
   include_directories(${SW_MATH}/include)
   include_directories(${SW_FFT}/include)
@@ -806,7 +818,10 @@ if(ENABLE_RAPIDJSON)
 endif()
 
 if (USE_SW)
-  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
+  # CPE-DFTI engine: link the objcopy-ISOLATED xMath swfft (fftw_* renamed ->
+  # swfftpriv_*) so it provides DftiInitAthread/Compute* WITHOUT hijacking ABACUS
+  # FFTW (raw ${SW_MATH}/libswfft.a breaks the density FFT). Build per HOWTO.
+  target_link_libraries(${ABACUS_BIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/source/source_base/module_fft/libswfft_xmath_iso.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)

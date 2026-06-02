@@ -11,6 +11,9 @@
 #if defined(__ROCM)
 #include "fft_rocm.h"
 #endif
+#if defined(__SWDFTI)
+#include "fft_swdfti.h"   // CPE-DFTI CPU backend (Sunway)
+#endif
 #if defined(__DSP)
 #include "fft_dsp.h"
 #endif
@@ -88,7 +91,11 @@ void FFT_Bundle::initfft(int nx_in,
         }
         if (double_flag)
         {
+#if defined(__SWDFTI)
+            fft_double = make_unique<FFT_SWDFTI<double>>(this->fft_mode);   // CPE-DFTI sticks FFT
+#else
             fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
+#endif
             fft_double
                 ->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
         }

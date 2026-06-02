@@ -20,6 +20,12 @@ if (USE_DSP)
       pw_transform_k_dsp.cpp)
 endif()
 
+if (USE_SWDFTI)
+  list (APPEND FFT_SRC
+      ../../source_base/module_fft/fft_swdfti.cpp
+  )
+endif()
+
 list(APPEND objects
     pw_basis.cpp
     pw_basis_k.cpp
