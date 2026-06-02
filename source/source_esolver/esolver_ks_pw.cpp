@@ -279,9 +279,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Calculate kinetic energy density tau for ELF if needed
     if (PARAM.inp.out_elf[0] > 0)
     {
-        auto* elec_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
-        auto& psi = *this->stp.template get_psi_t<T, Device>();
-        elec_pw->cal_tau(psi);
+        this->pelec->cal_tau(*(this->stp.psi_cpu));
     }
 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);
