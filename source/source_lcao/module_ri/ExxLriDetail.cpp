@@ -9,6 +9,7 @@
 #include "RI_Util.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
+#include "source_base/global_function.h"
 
 namespace ExxLriDetail
 {
@@ -38,7 +39,7 @@ CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
             auto rcut_it = param.find("Rcut");
             if (rcut_it == param.end() || rcut_it->second.empty())
             {
-                param["Rcut"] = std::to_string(fallback_rcut);
+                param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
                 used_fallback_rcut = true;
             }
         }
