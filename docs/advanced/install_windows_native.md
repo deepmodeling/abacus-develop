@@ -6,13 +6,21 @@
 > the Linux binary inside WSL2 and remains the recommended way to **run**
 > full-featured ABACUS on Windows.
 >
-> The port is staged:
-> 1. **Phase 1 — serial, plane-wave (PW) only** ← *current target*
-> 2. Phase 2 — serial, add LCAO
-> 3. Phase 3 — MPI parallel
+> The port was staged, all three phases are now working:
+> 1. **Phase 1 — serial, plane-wave (PW)** ✓
+> 2. **Phase 2 — add LCAO** ✓ (serial LCAO works for multi-k; the gamma-only
+>    serial path has a known bug — see *Known limitations*)
+> 3. **Phase 3 — MPI parallel (MS-MPI + ScaLAPACK)** ✓ — the default build
 >
-> Phases 1–3 deliberately exclude ELPA, PEXSI and hybrid functionals (LibRI),
-> as well as GPU/DSP backends.
+> It deliberately excludes ELPA, PEXSI, hybrid functionals (LibRI/LibComm),
+> DeePKS/ML-KEDF, LibXC, and GPU/DSP backends — these have no reliable native
+> Windows build yet and remain ordinary feature switches.
+>
+> Validated against the `01_PW`, `02_NAO_Gamma`, and `03_NAO_multik` test
+> suites (via the standard harness): under MPI all three pass within the
+> expected cross-platform error range; the residual warnings are float noise
+> at the harness's strict absolute thresholds or excluded features (e.g. SCAN
+> meta-GGA needs LibXC).
 
 ## Toolchain: MinGW-w64 GCC
 
@@ -26,8 +34,7 @@ The native build targets **MinGW-w64 GCC**, not MSVC. Reasons:
   MSVC would reject many.
 - It pairs cleanly with OpenBLAS + FFTW3, which have good native Windows builds.
 
-MSVC and Intel oneAPI (`icx`) remain possible future targets but are not the
-Phase 1 path.
+MSVC and Intel oneAPI (`icx`) remain possible future targets.
 
 ## Prerequisites
 
@@ -36,7 +43,7 @@ libraries) is installed by the toolchain script below — there is no separate
 Windows build script; the native Windows build is just another **toolchain
 variant**, alongside `gnu`, `intel`, `gcc-mkl`, …
 
-## Building (Phase 1: serial PW) — via the toolchain
+## Building — via the toolchain
 
 Open the **"MSYS2 MinGW 64-bit"** shell and run the two toolchain scripts, the
 same two-step flow as the Linux variants (`toolchain_gnu.sh` →
@@ -44,15 +51,25 @@ same two-step flow as the Linux variants (`toolchain_gnu.sh` →
 
 ```bash
 cd toolchain
-./toolchain_windows.sh      # pacman-installs gcc/gfortran/openblas/fftw/cmake/ninja
-./build_abacus_windows.sh   # configures + builds the serial PW binary
+./toolchain_windows.sh      # pacman-installs gcc/gfortran/openblas/fftw/cmake/ninja/
+                            #                 cereal/msmpi/scalapack/bc
+./build_abacus_windows.sh   # configures + builds the MPI + LCAO binary
 ```
 
 `toolchain_windows.sh` is the Windows counterpart of `toolchain_gnu.sh`: on
 Linux the dependencies are built from source, while on MSYS2 they come from
-`pacman` (under `/mingw64`). `build_abacus_windows.sh` then configures the
-serial plane-wave build (`ENABLE_MPI=OFF`, `ENABLE_LCAO=OFF`, OpenBLAS + FFTW)
-and builds `build_abacus_windows/abacus_pw_ser.exe`.
+`pacman` (under `/mingw64`). `build_abacus_windows.sh` then builds the **MPI +
+LCAO** configuration by default (`abacus_basic_para.exe`, OpenBLAS + FFTW +
+ScaLAPACK). Pick a lighter configuration with environment toggles:
+
+```bash
+ENABLE_MPI=OFF ./build_abacus_windows.sh                 # serial LCAO+PW
+ENABLE_MPI=OFF ENABLE_LCAO=OFF ./build_abacus_windows.sh # serial PW only
+```
+
+The MPI build needs the **MS-MPI runtime** (`msmpi.dll`, `mpiexec`) installed
+system-wide — a separate Microsoft redistributable — in addition to the MinGW
+`msmpi` package that `toolchain_windows.sh` installs for building.
 
 A few non-default options the build script sets, and why:
 - `BLA_VENDOR=OpenBLAS` — OpenBLAS supplies both BLAS and LAPACK in one library.
@@ -73,20 +90,40 @@ abacus --version
 ```
 
 `abacus_env.sh` puts the binary directory and the MinGW runtime DLLs (libstdc++,
-libgcc, libgfortran, libopenblas, libfftw3) on `PATH`. Because native Windows
-symlinks need elevation, the build step copies the configured binary to
-`abacus.exe` (instead of the Linux `abacus` symlink), so a bare `abacus`
-resolves in the MSYS2 shell and in cmd/PowerShell.
+libgcc, libgfortran, libopenblas, libfftw3, libscalapack, libmsmpi) on `PATH`,
+and sets `OPENBLAS_NUM_THREADS=1`. Because native Windows symlinks need
+elevation, the build step copies the configured binary to `abacus.exe`
+(instead of the Linux `abacus` symlink), so a bare `abacus` resolves in the
+MSYS2 shell and in cmd/PowerShell. Run in parallel with MS-MPI:
 
-## Testing — the existing `01_PW` suite, serial mode
+```bash
+mpiexec -n 4 abacus
+```
 
-There is **no separate Windows test script and no separate case list**. The PW
-test suite is `tests/01_PW`, driven by the standard harness exactly as in CI
-(`tests/01_PW/CMakeLists.txt` runs `Autotest.sh` from that directory, which
-reads `tests/01_PW/CASES_CPU.txt`). The only addition is a **serial mode** in
-`Autotest.sh`: `-n 0` runs the ABACUS binary directly with no MPI launcher.
+`OPENBLAS_NUM_THREADS=1` is important under MPI: OpenBLAS's multithreaded
+buffer allocator otherwise fails ("Memory allocation still failed after 10
+retries") when several ranks each spawn many threads.
 
-From the MSYS2 MinGW 64-bit shell:
+## Testing — the existing harness
+
+There is **no separate Windows test script and no separate case list**. The
+suites `tests/01_PW`, `tests/02_NAO_Gamma`, `tests/03_NAO_multik` are driven by
+the standard harness exactly as in CI (`tests/<suite>/CMakeLists.txt` runs
+`Autotest.sh` from that directory, which reads its `CASES_CPU.txt`).
+
+**Parallel (recommended — matches the MPI references):** with MS-MPI, the
+launcher is `mpiexec`, not `mpirun`, so put a tiny `mpirun` shim on `PATH` that
+forwards to `mpiexec` with `-env OPENBLAS_NUM_THREADS 1`, then run the harness
+normally:
+
+```bash
+cd tests/02_NAO_Gamma
+bash ../integrate/Autotest.sh \
+     -a "$(pwd)/../../build_abacus_windows/abacus_basic_para.exe" -n 2
+```
+
+**Serial:** `Autotest.sh` also gained a serial mode — `-n 0` runs the binary
+directly with no MPI launcher — for a serial build:
 
 ```bash
 cd tests/01_PW
@@ -94,14 +131,16 @@ bash ../integrate/Autotest.sh \
      -a "$(pwd)/../../build_abacus_windows/abacus_pw_ser.exe" -n 0
 ```
 
-This runs the whole `01_PW` suite and compares every case against its
-`result.ref` with `tools/catch_properties.sh`, identical to the Linux/MPI run
-apart from `-n 0`. (`bc`, used by `catch_properties.sh`, is installed by
+Either way the harness compares every case against its `result.ref` with
+`tools/catch_properties.sh`. (`bc`, used by that script, is installed by
 `toolchain_windows.sh`.)
 
-Cases requiring features outside the Phase 1 serial-PW build (multi-process
-`kpar`, the ScaLAPACK solver, or LibXC functionals) are expected to report
-warnings/failures; that is a property of the reduced build, not of the port.
+Expected residual differences (not bugs): cross-platform/cross-BLAS floating
+point that just exceeds the harness's strict absolute thresholds (energies
+still match to ~1e-7 eV); gauge-dependent outputs (raw wavefunction values,
+Wannier `.amn`); a few file comparisons at ~1e-6; the init-sensitive
+`078_PW_S2_elec_add` (see the `pw_seed` note); and excluded features
+(SCAN/meta-GGA needs LibXC, DFT+U requires MPI, etc.).
 
 ## What changed in the source for the port
 
@@ -143,6 +182,15 @@ or platform-neutral:
   __MPI`, so without MPI the wavefunctions stayed all-zero and tripped
   Gram-Schmidt (`psi_norm <= 0.0`). Added the serial direct-copy counterpart.
   (Pre-existing serial bug, not Windows-specific — CI only runs under MPI.)
+- **`source/source_pw/module_pwdft/structure_factor.cpp`**: same family of bug
+  in `bspline_sf` (`nbspline>0`) — the real-space plane scatter (`zpiece_to_all`)
+  was MPI-only, leaving the structure factor uninitialized in serial → wrong
+  total energy/force/stress. Added the serial direct-fill.
+- **`source/source_io/module_output/binstream.cpp`**: force binary `fopen` mode;
+  on Windows text mode corrupted the binary wavefunction/charge files.
+- **`source/source_esolver/esolver_ks_lcao.cpp`**: guard the dereference of the
+  DeePKS integrator `overlap_orb_alpha` (null when DeePKS is off) — it is only
+  built for DeePKS runs.
 - **`CMakeLists.txt`**:
   - `find_package(ScaLAPACK REQUIRED)` is now gated on `ENABLE_MPI` (a serial
     build must not require a distributed-memory library).
@@ -157,10 +205,16 @@ or platform-neutral:
 
 ## Known limitations / not yet ported
 
-- LCAO, MPI, ELPA, PEXSI, hybrid functionals (LibRI/LibComm), DeePKS/ML-KEDF,
-  GPU (CUDA/ROCm), DSP — all disabled for Phase 1.
-- Expect additional small portability fixes to surface during compilation;
-  they are tracked as part of the staged port.
+- ELPA, PEXSI, hybrid functionals (LibRI/LibComm), DeePKS/ML-KEDF, LibXC
+  (so meta-GGA/SCAN), GPU (CUDA/ROCm), DSP — all disabled. Test cases needing
+  them are expected to fail (e.g. `scf_metagga`, `scf_out_chg_tau`).
+- **Serial gamma-only LCAO is buggy.** The `gamma_only` LCAO path gives a
+  wrong (self-consistently converged) energy in a *serial* build — the same
+  serial-only (`#ifndef __MPI`) reduction-gap family as the fixes above, but in
+  the gamma H/density assembly and not yet located. The **MPI build is correct**
+  (gamma matches the reference to ~1e-11, even on a single rank), so run LCAO
+  gamma-only cases under MPI (`mpiexec -n 1 abacus` suffices). Multi-k serial
+  LCAO is unaffected.
 
 ### `pw_seed` is not bit-reproducible across platforms
 

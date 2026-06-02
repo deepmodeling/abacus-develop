@@ -6,10 +6,10 @@
 # MinGW-w64 dependencies are provided by the MSYS2 distribution, so here we just
 # install them with pacman and record their location for build_abacus_windows.sh.
 #
-# Scope: Phase 1 of the native-Windows port -- serial, plane-wave only
-# (no MPI / ELPA / ScaLAPACK / LCAO / LibXC). Those are intentionally omitted
-# because they have no reliable native-Windows build yet; they come in later
-# phases just like the other ABACUS feature switches.
+# Scope: PW + LCAO, serial and MPI (MS-MPI + ScaLAPACK). ELPA / PEXSI / hybrid
+# functionals (LibRI) / DeePKS / LibXC / GPU are intentionally omitted because
+# they have no reliable native-Windows build yet; they remain ordinary ABACUS
+# feature switches for the future.
 #
 # Usage: open the "MSYS2 MinGW 64-bit" shell and run:
 #     ./toolchain_windows.sh
@@ -28,7 +28,18 @@ pacman -S --needed --noconfirm \
     mingw-w64-x86_64-cmake \
     mingw-w64-x86_64-ninja \
     mingw-w64-x86_64-openblas \
-    mingw-w64-x86_64-fftw
+    mingw-w64-x86_64-fftw \
+    mingw-w64-x86_64-cereal \
+    mingw-w64-x86_64-msmpi \
+    mingw-w64-x86_64-scalapack
+
+# Notes:
+#  * cereal    : header-only serialization, required by the LCAO build.
+#  * msmpi     : MS-MPI headers + import lib for the MPI build. The MS-MPI
+#                *runtime* (msmpi.dll, mpiexec) is a separate Microsoft
+#                redistributable that must be installed system-wide to run
+#                parallel jobs: https://www.microsoft.com/download/details.aspx?id=105289
+#  * scalapack : distributed eigensolver used by the LCAO MPI build (no ELPA).
 
 # 'bc' (a base MSYS tool, not a MinGW package) is used by the integration-test
 # harness tests/integrate/tools/catch_properties.sh; install it so the existing
