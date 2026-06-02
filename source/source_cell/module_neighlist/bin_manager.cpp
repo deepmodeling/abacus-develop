@@ -126,7 +126,7 @@ void BinManager::build_atom_neighbors(
     std::vector<std::vector<int>> neighbor_ids(natoms);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic, 16)
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < natoms; i++)
     {
@@ -182,6 +182,9 @@ void BinManager::build_atom_neighbors(
         } 
     }
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int i = 0; i < natoms; i++)
     {
         const std::vector<int>& neigh_tmp = neighbor_ids[i];
@@ -190,10 +193,10 @@ void BinManager::build_atom_neighbors(
         //std::cout<<n<<std::endl;
 
         int* ptr = neighbor_list.allocator.allocate(n);
+        assert(n == 0 || ptr != nullptr);
     
         for (int k = 0; k < n; k++)
         {
-            assert(ptr != nullptr);
             ptr[k] = neigh_tmp[k];
         }
 

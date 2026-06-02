@@ -57,45 +57,113 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
+    ModuleBase::timer::start("ESolver_LJ", "runner");
+
     UnitCellPlus ucell_plus = change_from_ucell_to_ucell_plus(ucell);
     NeighborSearch neighbor_search;
     neighbor_search.init(ucell_plus, search_radius, 0);
     neighbor_search.build_neighbors();
-
-    double distance = 0.0;
-    int index = 0;
 
     // Important! potential, force, virial must be zero per step
     lj_potential = 0;
     lj_force.zero_out();
     lj_virial.zero_out();
 
-    ModuleBase::Vector3<double> tau1, tau2, dtau;
-    for (int it = 0; it < ucell.ntype; ++it)
+    const int nlocal = neighbor_search.neighbor_list.nlocal;
+    double potential_sum = 0.0;
+    double virial_sum[9] = {0.0};
+    std::cout<<1<<std::endl;
+
+#ifdef _OPENMP
+#pragma omp parallel
     {
-        Atom* atom1 = &ucell.atoms[it];
-        for (int ia = 0; ia < atom1->na; ++ia)
+        double potential_private = 0.0;
+        double virial_private[9] = {0.0};
+
+#pragma omp for schedule(static)
+        for (int index = 0; index < nlocal; ++index)
         {
-            tau1 = atom1->tau[ia];
+            const NeighborAtom& atom1 = neighbor_search.inside_atoms[index];
+            const int it = atom1.atom_type;
+            ModuleBase::Vector3<double> tau1(atom1.position_x, atom1.position_y, atom1.position_z);
+
             for (int ad = 0; ad < neighbor_search.neighbor_list.numneigh[index]; ++ad)
             {
+                ModuleBase::Vector3<double> tau2;
                 tau2.x = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_x;
                 tau2.y = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_y;
                 tau2.z = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_z;
                 int it2 = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].atom_type;
-                dtau = (tau1 - tau2) * ucell.lat0;
-                distance = dtau.norm();
+                ModuleBase::Vector3<double> dtau = (tau1 - tau2) * ucell.lat0;
+                double distance = dtau.norm();
                 if (distance < lj_rcut(it, it2))
                 {
-                    lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                    potential_private += LJ_energy(distance, it, it2) - en_shift(it, it2);
                     ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
                     lj_force(index, 0) += f_ij.x;
                     lj_force(index, 1) += f_ij.y;
                     lj_force(index, 2) += f_ij.z;
-                    LJ_virial(f_ij, dtau);
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        for (int j = 0; j < 3; ++j)
+                        {
+                            virial_private[i * 3 + j] += dtau[i] * f_ij[j];
+                        }
+                    }
                 }
             }
-            index++;
+        }
+
+#pragma omp critical
+        {
+            potential_sum += potential_private;
+            for (int i = 0; i < 9; ++i)
+            {
+                virial_sum[i] += virial_private[i];
+            }
+        }
+    }
+#else
+    for (int index = 0; index < nlocal; ++index)
+    {
+        const NeighborAtom& atom1 = neighbor_search.inside_atoms[index];
+        const int it = atom1.atom_type;
+        ModuleBase::Vector3<double> tau1(atom1.position_x, atom1.position_y, atom1.position_z);
+
+        for (int ad = 0; ad < neighbor_search.neighbor_list.numneigh[index]; ++ad)
+        {
+            ModuleBase::Vector3<double> tau2;
+            tau2.x = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_x;
+            tau2.y = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_y;
+            tau2.z = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].position_z;
+            int it2 = neighbor_search.all_atoms[neighbor_search.neighbor_list.firstneigh[index][ad]].atom_type;
+            ModuleBase::Vector3<double> dtau = (tau1 - tau2) * ucell.lat0;
+            double distance = dtau.norm();
+            if (distance < lj_rcut(it, it2))
+            {
+                potential_sum += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
+                lj_force(index, 0) += f_ij.x;
+                lj_force(index, 1) += f_ij.y;
+                lj_force(index, 2) += f_ij.z;
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        virial_sum[i * 3 + j] += dtau[i] * f_ij[j];
+                    }
+                }
+            }
+        }
+    }
+#endif
+
+    lj_potential = potential_sum;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            lj_virial(i, j) = virial_sum[i * 3 + j];
         }
     }
 
@@ -156,6 +224,8 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
             lj_virial(i, j) /= (2.0 * ucell.omega);
         }
     }
+
+    ModuleBase::timer::end("ESolver_LJ", "runner");
     }
 
     double ESolver_LJ::cal_energy()

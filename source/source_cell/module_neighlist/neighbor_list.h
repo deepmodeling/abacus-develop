@@ -4,6 +4,7 @@
 #include<iostream>
 #include <cmath>
 #include <cassert>
+#include <mutex>
 
 class PageAllocator {
 public:
@@ -20,11 +21,11 @@ public:
 
     // Default constructor
     PageAllocator() : pgsize(DEFAULT_PGSIZE) {
-        if (pgsize > 0) new_page();
+        if (pgsize > 0) new_page_unlocked();
     }
 
     PageAllocator(int pgsize_) : pgsize(pgsize_) {
-        new_page();
+        new_page_unlocked();
     }
 
     ~PageAllocator() {
@@ -34,30 +35,42 @@ public:
     PageAllocator(const PageAllocator&) = delete;
     PageAllocator& operator=(const PageAllocator&) = delete;
 
-    // Allow move
-    PageAllocator(PageAllocator&&) = default;
-    PageAllocator& operator=(PageAllocator&&) = default;
+    // Allow move; mutex state is not moved.
+    PageAllocator(PageAllocator&& other) noexcept {
+        std::lock_guard<std::mutex> lock(other.mutex_);
+        pages = std::move(other.pages);
+        pgsize = other.pgsize;
+    }
+
+    PageAllocator& operator=(PageAllocator&& other) noexcept {
+        if (this != &other) {
+            std::lock(mutex_, other.mutex_);
+            std::lock_guard<std::mutex> lock_this(mutex_, std::adopt_lock);
+            std::lock_guard<std::mutex> lock_other(other.mutex_, std::adopt_lock);
+            pages = std::move(other.pages);
+            pgsize = other.pgsize;
+        }
+        return *this;
+    }
 
     void new_page() {
-        Page p;
-        p.capacity = pgsize;
-        p.offset = 0;
-        p.data.resize(pgsize);
-        pages.push_back(std::move(p));
+        std::lock_guard<std::mutex> lock(mutex_);
+        new_page_unlocked();
     }
 
     int* allocate(int n) {
+        std::lock_guard<std::mutex> lock(mutex_);
         if (n <= 0) return nullptr;
         // reject requests larger than a single page
         if (n > pgsize) {
             std::cerr << "PageAllocator::allocate error: request " << n << " larger than page size " << pgsize << std::endl;
             return nullptr;
         }
-        if (pages.empty()) new_page();
+        if (pages.empty()) new_page_unlocked();
         Page& p = pages.back();
         if (p.offset + n > p.capacity) {
-            new_page();
-            return allocate(n);
+            new_page_unlocked();
+            return allocate_unlocked(n);
         }
         int* ptr = p.data.data() + p.offset;
         p.offset += n;
@@ -65,8 +78,29 @@ public:
     }
 
     void reset() {
-        pages.resize(1);
-        pages[0].offset = 0;
+        std::lock_guard<std::mutex> lock(mutex_);
+        pages.clear();
+        if (pgsize > 0) new_page_unlocked();
+    }
+
+private:
+    std::mutex mutex_;
+
+    void new_page_unlocked() {
+        Page p;
+        p.capacity = pgsize;
+        p.offset = 0;
+        p.data.resize(pgsize);
+        pages.push_back(std::move(p));
+    }
+
+    int* allocate_unlocked(int n) {
+        if (n <= 0) return nullptr;
+        Page& p = pages.back();
+        assert(p.offset + n <= p.capacity);
+        int* ptr = p.data.data() + p.offset;
+        p.offset += n;
+        return ptr;
     }
 };
 
