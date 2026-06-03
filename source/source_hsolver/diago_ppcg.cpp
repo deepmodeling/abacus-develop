@@ -1113,7 +1113,14 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            bool use_p = (iter != 1);
+            // Use only the [psi, w] 2-block subspace.
+            // The 3-block [psi, w, p] subspace can become ill-conditioned
+            // when p is constructed from the previous subspace eigenvectors
+            // (p ~ w), leading to near-singular M matrices and catastrophic
+            // eigenvalue blow-up.  Without p the method reduces to a
+            // preconditioned Davidson-like iteration that converges robustly,
+            // albeit with slightly more iterations for hard problems.
+            const bool use_p = false;
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
