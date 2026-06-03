@@ -97,14 +97,48 @@ else
     echo "WARNING: no abacus_*.exe found in ${BUILD_DIR}; 'abacus' command not created."
 fi
 
+# Bundle the dependent MinGW / OpenBLAS / FFTW / ScaLAPACK runtime DLLs next to
+# the binary. Windows searches the *application directory* before PATH, so this
+# makes abacus.exe self-contained and, crucially, lets it find its DLLs even
+# when launched by a process that does not propagate PATH to its children --
+# which is exactly what MS-MPI's mpiexec does when the test harness redirects
+# stdout to a file ("error while loading shared libraries"). System DLLs
+# (msmpi.dll in System32, kernel32, ...) resolve on their own and are skipped.
+if [ -n "$built_exe" ]; then
+    echo "Bundling dependent DLLs into ${BUILD_DIR}/ ..."
+    ldd "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe" 2>/dev/null \
+        | awk -v p="$MINGW_PREFIX" '$3 ~ p {print $3}' | sort -u \
+        | while read -r dll; do cp -f "$dll" "${ABACUS_DIR}/${BUILD_DIR}/"; done
+fi
+
+# When MPI is on, drop an `mpirun` shim next to the binary so the shared test
+# harness (which invokes `mpirun -np N`) drives MS-MPI unchanged. MS-MPI ships
+# only `mpiexec`; the shim forwards to it and pins the (OpenMP-threaded) BLAS to
+# one thread per rank -- otherwise each rank's multithreaded OpenBLAS
+# oversubscribes the cores and its buffer allocator fails under several ranks.
+if [ "$ENABLE_MPI" = "ON" ]; then
+    cat << 'SHIM' > "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+#!/bin/bash
+# mpirun -> mpiexec shim for native Windows (MS-MPI). See build_abacus_windows.sh.
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+exec mpiexec "$@"
+SHIM
+    chmod +x "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+    echo "Created mpirun->mpiexec shim: ${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+fi
+
 # generate abacus_env.sh: sourcing it puts the MinGW runtime DLLs (via the
 # toolchain setup) and the binary directory on PATH, so `abacus` runs directly.
-# OPENBLAS_NUM_THREADS=1 keeps OpenBLAS single-threaded, which is required to
-# avoid its multithread buffer allocator failing when running several MPI ranks.
+# MSYS2's OpenBLAS is OpenMP-threaded, so OMP_NUM_THREADS (not the often-cited
+# OPENBLAS_NUM_THREADS) is what actually caps its threads; pin it to 1 so that
+# `mpiexec -n N abacus` doesn't oversubscribe and trip OpenBLAS's buffer
+# allocator. (Both are set; OPENBLAS_NUM_THREADS alone has no effect here.)
 cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 [ -f "${INSTALL_DIR}/setup" ] && source "${INSTALL_DIR}/setup"
 export PATH="${ABACUS_DIR}/${BUILD_DIR}":\${PATH}
+export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 EOF
 
@@ -116,5 +150,11 @@ Run it from a MinGW bash shell:
     source ${TOOL}/abacus_env.sh
     abacus                                   # serial run
     mpiexec -n 4 abacus                      # parallel run (MS-MPI)
+
+Run the standard test suite (the mpirun->mpiexec shim makes the existing
+harness work unchanged):
+    cd ${ABACUS_DIR}/tests/01_PW
+    bash ../integrate/Autotest.sh -a abacus          # MPI (default np=4)
+    bash ../integrate/Autotest.sh -a abacus -n 0     # serial (no launcher)
 ==========================================================
 EOF

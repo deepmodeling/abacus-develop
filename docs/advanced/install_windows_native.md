@@ -89,20 +89,27 @@ source toolchain/abacus_env.sh
 abacus --version
 ```
 
-`abacus_env.sh` puts the binary directory and the MinGW runtime DLLs (libstdc++,
-libgcc, libgfortran, libopenblas, libfftw3, libscalapack, libmsmpi) on `PATH`,
-and sets `OPENBLAS_NUM_THREADS=1`. Because native Windows symlinks need
-elevation, the build step copies the configured binary to `abacus.exe`
-(instead of the Linux `abacus` symlink), so a bare `abacus` resolves in the
-MSYS2 shell and in cmd/PowerShell. Run in parallel with MS-MPI:
+`abacus_env.sh` puts the binary directory on `PATH` and sets `OMP_NUM_THREADS=1`
+(plus `OPENBLAS_NUM_THREADS=1`). The build step also **bundles the dependent
+DLLs** (libstdc++, libgcc, libgfortran, libquadmath, libgomp, libwinpthread,
+libopenblas, libfftw3, libfftw3f, libscalapack) next to `abacus.exe`; Windows
+searches the application directory before `PATH`, so the binary is
+self-contained. Because native Windows symlinks need elevation, the build copies
+the configured binary to `abacus.exe` (instead of the Linux `abacus` symlink),
+so a bare `abacus` resolves in the MSYS2 shell and in cmd/PowerShell. Run in
+parallel with MS-MPI:
 
 ```bash
 mpiexec -n 4 abacus
 ```
 
-`OPENBLAS_NUM_THREADS=1` is important under MPI: OpenBLAS's multithreaded
-buffer allocator otherwise fails ("Memory allocation still failed after 10
-retries") when several ranks each spawn many threads.
+`OMP_NUM_THREADS=1` matters under MPI. MSYS2's OpenBLAS is *OpenMP*-threaded
+(it links `libgomp`), so `OMP_NUM_THREADS` — **not** the commonly cited
+`OPENBLAS_NUM_THREADS` — is what actually caps its threads. Without it, each MPI
+rank spawns a multithreaded BLAS, the ranks oversubscribe the cores, and
+OpenBLAS's buffer allocator dies ("Memory allocation still failed after 10
+retries"). ABACUS itself is built `USE_OPENMP=OFF`, so pinning the BLAS to one
+thread per rank costs nothing — parallelism comes from MPI.
 
 ## Testing — the existing harness
 
@@ -111,24 +118,25 @@ suites `tests/01_PW`, `tests/02_NAO_Gamma`, `tests/03_NAO_multik` are driven by
 the standard harness exactly as in CI (`tests/<suite>/CMakeLists.txt` runs
 `Autotest.sh` from that directory, which reads its `CASES_CPU.txt`).
 
-**Parallel (recommended — matches the MPI references):** with MS-MPI, the
-launcher is `mpiexec`, not `mpirun`, so put a tiny `mpirun` shim on `PATH` that
-forwards to `mpiexec` with `-env OPENBLAS_NUM_THREADS 1`, then run the harness
-normally:
+**Parallel (recommended — matches the MPI references):** just run the harness
+normally. MS-MPI's launcher is `mpiexec`, not the `mpirun` the harness invokes,
+so the build drops a small **`mpirun` shim** next to the binary (on `PATH` via
+`abacus_env.sh`) that forwards to `mpiexec` and pins `OMP_NUM_THREADS=1`. With
+that in place the default invocation works unchanged:
 
 ```bash
+source toolchain/abacus_env.sh
 cd tests/02_NAO_Gamma
-bash ../integrate/Autotest.sh \
-     -a "$(pwd)/../../build_abacus_windows/abacus_basic_para.exe" -n 2
+bash ../integrate/Autotest.sh -a abacus      # default np=4, via the mpirun shim
 ```
 
 **Serial:** `Autotest.sh` also gained a serial mode — `-n 0` runs the binary
-directly with no MPI launcher — for a serial build:
+directly with no MPI launcher — for a serial build (PW and multi-k LCAO only;
+gamma-only LCAO must use the MPI build, see below):
 
 ```bash
 cd tests/01_PW
-bash ../integrate/Autotest.sh \
-     -a "$(pwd)/../../build_abacus_windows/abacus_pw_ser.exe" -n 0
+bash ../integrate/Autotest.sh -a abacus -n 0
 ```
 
 Either way the harness compares every case against its `result.ref` with
@@ -201,7 +209,11 @@ or platform-neutral:
   binary without an MPI launcher, so serial builds reuse the standard harness.
 - **`toolchain/toolchain_windows.sh`**, **`toolchain/build_abacus_windows.sh`**
   (new): the native-Windows toolchain variant (MSYS2/MinGW-w64), mirroring the
-  `gnu`/`intel`/`gcc-mkl` variants.
+  `gnu`/`intel`/`gcc-mkl` variants. After the build, `build_abacus_windows.sh`
+  bundles the dependent DLLs next to `abacus.exe` (so it runs without `PATH`
+  set, including under `mpiexec` redirected to a file) and — for MPI builds —
+  drops an `mpirun`→`mpiexec` shim that pins `OMP_NUM_THREADS=1`, letting the
+  unmodified harness drive MS-MPI.
 
 ## Known limitations / not yet ported
 
