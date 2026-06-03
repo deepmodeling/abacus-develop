@@ -508,37 +508,12 @@ void FFT_CPU<double>::fftxyc2r(std::complex<double> *in,double *out) const
     }
 }
 
-template <> double*
+template <> double* 
 FFT_CPU<double>::get_rspace_data() const {return d_rspace;}
-template <> std::complex<double>*
+template <> std::complex<double>* 
 FFT_CPU<double>::get_auxr_data()   const {return z_auxr;}
-template <> std::complex<double>*
+template <> std::complex<double>* 
 FFT_CPU<double>::get_auxg_data()   const {return z_auxg;}
-
-#if !defined(__ENABLE_FLOAT_FFTW)
-// When single-precision FFTW is disabled, the real FFT_CPU<float> methods
-// (in fft_cpu_float.cpp) are not compiled -- but the FFT_CPU<float> vtable is
-// still emitted wherever the class is constructed (e.g. FFT_Bundle::setupFFT,
-// and the explicit ctor/dtor instantiations below). Provide trivial
-// definitions so every vtable slot is valid on any linker/ABI. This replaces
-// the former __attribute__((weak)) declarations, which relied on the ELF
-// linker resolving undefined weak symbols to null -- a behaviour PE/MinGW does
-// not share (it left null vtable slots and crashed on first dispatch). The
-// float CPU path is never taken at runtime without __ENABLE_FLOAT_FFTW:
-// FFT_Bundle::setupFFT calls WARNING_QUIT for a single/mixing CPU FFT first.
-template <> void FFT_CPU<float>::setupFFT() {}
-template <> void FFT_CPU<float>::cleanFFT() {}
-template <> void FFT_CPU<float>::clear() {}
-template <> float* FFT_CPU<float>::get_rspace_data() const { return nullptr; }
-template <> std::complex<float>* FFT_CPU<float>::get_auxr_data() const { return nullptr; }
-template <> std::complex<float>* FFT_CPU<float>::get_auxg_data() const { return nullptr; }
-template <> void FFT_CPU<float>::fftxyfor(std::complex<float>*, std::complex<float>*) const {}
-template <> void FFT_CPU<float>::fftxybac(std::complex<float>*, std::complex<float>*) const {}
-template <> void FFT_CPU<float>::fftzfor(std::complex<float>*, std::complex<float>*) const {}
-template <> void FFT_CPU<float>::fftzbac(std::complex<float>*, std::complex<float>*) const {}
-template <> void FFT_CPU<float>::fftxyr2c(float*, std::complex<float>*) const {}
-template <> void FFT_CPU<float>::fftxyc2r(std::complex<float>*, float*) const {}
-#endif
 
 template FFT_CPU<float>::FFT_CPU();
 template FFT_CPU<float>::~FFT_CPU();
