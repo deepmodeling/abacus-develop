@@ -1061,34 +1061,6 @@ __global__ void cal_stress_onsite(
     }
 }
 
-    FPTYPE stress_var = 0;
-    const FPTYPE fac = d_wg[ik * wg_nc + ib];
-    const int nprojs = atom_nh[it];
-    for (int ia = 0; ia < atom_na[it]; ia++)
-    {
-        const thrust::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-        const thrust::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-        const thrust::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-        const thrust::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
-        for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x) {
-            const int inkb = sum + ip + ib2 * nkb;
-            //out<<"\n ps = "<<ps;
-            const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb]) * becp[inkb];
-            const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb]) * becp[inkb + nkb];
-            const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb + nkb]) * becp[inkb];
-            const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb + nkb]) * becp[inkb + nkb];
-            stress_var -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
-        }
-        ++iat;
-        sum+=nprojs;
-    }//ia
-    __syncwarp();
-    warp_reduce(stress_var);
-    if (threadIdx.x % WARP_SIZE == 0) {
-        atomicAdd(stress, stress_var);
-    }
-}
-
 //kernel for DFTU stress
 template <typename FPTYPE>
 void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
