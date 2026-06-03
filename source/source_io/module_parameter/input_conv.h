@@ -91,13 +91,22 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
             sub_str = match[0].str();
         }
 
+        // A token that matches nothing is invalid input. Fail fast instead of
+        // feeding an empty string to the parsers below, which would push an
+        // indeterminate value into vec.
+        if (sub_str.empty())
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv::parse_expression",
+                                     "invalid token in expression: \"" + str[i] + "\"");
+        }
+
         // Check if the substring contains multiplication (e.g., "2*3.14")
         if (sub_str.find('*') != std::string::npos)
         {
             size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
             assert(num >= 0);
-            T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
+            T occ = static_cast<T>(stof(sub_str.substr(pos + 1, sub_str.size())));
 
             // Add the value to the vector `num` times
             for (size_t k = 0; k != num; k++)
@@ -107,11 +116,17 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         }
         else
         {
-            // Handle scientific notation and convert to T
+            // Handle scientific notation and convert to T. Initialize occ and
+            // check the extraction so a malformed token fails fast rather than
+            // pushing an indeterminate value.
             std::stringstream convert;
             convert << sub_str;
-            T occ;
-            convert >> occ;
+            T occ{};
+            if (!(convert >> occ))
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv::parse_expression",
+                                         "failed to parse number: \"" + sub_str + "\"");
+            }
             vec.emplace_back(occ);
         }
     }
