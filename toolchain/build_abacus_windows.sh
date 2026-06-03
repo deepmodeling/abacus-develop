@@ -138,6 +138,9 @@ cat << EOF > "${TOOL}/abacus_env.sh"
 #!/bin/bash
 [ -f "${INSTALL_DIR}/setup" ] && source "${INSTALL_DIR}/setup"
 export PATH="${ABACUS_DIR}/${BUILD_DIR}":\${PATH}
+# MS-MPI's mpiexec lives in its own Bin dir (MSMPI_BIN), which the MinGW PATH
+# does not inherit; add it so \`mpiexec\` and the mpirun shim resolve.
+[ -n "\$MSMPI_BIN" ] && export PATH="\$(cygpath -u "\$MSMPI_BIN")":\${PATH}
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 EOF
