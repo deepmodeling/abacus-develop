@@ -95,7 +95,7 @@ class OperatorLCAO : public Operator<TK> {
     /**
      * @brief set current spin index
      */
-    void set_current_spin(const int current_spin_in);
+    virtual void set_current_spin(const int current_spin_in);
 
     // protected:
     // Hamiltonian matrices which are calculated in OperatorLCAO
