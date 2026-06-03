@@ -1297,9 +1297,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             line_minimize(psi_in, hpsi_.data(), spsi_.data(),
                           p.data(), hp.data(), sp.data(), ncol);
 
-            // Periodic Rayleigh-Ritz: full subspace diagonalization
-            // corrects band ordering and gives accurate eigenvalues.
-            if (iter % rr_step_ == 0)
+            const bool do_rr = (iter % rr_step_ == 0);
+            if (do_rr)
             {
                 orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
                 apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make --version)",
+      "Bash(pacman -Q mingw-w64-x86_64-lapack)",
+      "Bash(pacman -S --noconfirm mingw-w64-x86_64-lapack mingw-w64-x86_64-openblas)",
+      "Bash(\"D:/HuaweiMoveData/Users/李家齐/Desktop/ppcg-for-abacus-develop/test_ppcg.exe\")",
+      "Bash(g++ -std=c++17 -O2 -Wall -o test_ppcg_run.exe diago_ppcg.cpp test/diago_ppcg_test.cpp test/lapack_replacement.cpp -I.)",
+      "Bash(g++ -std=c++17 -O2 -Wall -o test_ppcg_v2.exe diago_ppcg.cpp test/lapack_replacement.cpp -I. \"D:/HuaweiMoveData/Users/李家齐/Desktop/ppcg-for-abacus-develop/test_main.cpp\" -I.)",
+      "Bash(./test_ppcg_v2.exe)",
+      "Bash(./test_ppcg.exe)",
+      "Bash(g++ -std=c++17 -O0 -g -o debug_block.exe diago_ppcg.cpp test/lapack_replacement.cpp debug_block_ppcg.cpp -I. -I test)",
+      "Bash(./debug_block.exe)"
+    ]
+  }
+}
