@@ -50,55 +50,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     CHECK_CUDA(cudaFree(d_info));
 }
 #else
-// Legacy API fallback (CUDA < 11.0)
-static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float* A, const int& lda)
-{
-    int lwork = 0;
-    CHECK_CUSOLVER(cusolverDnStrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
-    float* d_work = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(float)));
-    int* d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
-    CHECK_CUSOLVER(cusolverDnStrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
-    CHECK_CUDA(cudaFree(d_work));
-    CHECK_CUDA(cudaFree(d_info));
-}
-static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, double* A, const int& lda)
-{
-    int lwork = 0;
-    CHECK_CUSOLVER(cusolverDnDtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
-    double* d_work = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(double)));
-    int* d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
-    CHECK_CUSOLVER(cusolverDnDtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
-    CHECK_CUDA(cudaFree(d_work));
-    CHECK_CUDA(cudaFree(d_info));
-}
-static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<float>* A, const int& lda)
-{
-    int lwork = 0;
-    CHECK_CUSOLVER(cusolverDnCtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
-    cuComplex* d_work = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(cuComplex)));
-    int* d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
-    CHECK_CUSOLVER(cusolverDnCtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, d_work, lwork, d_info));
-    CHECK_CUDA(cudaFree(d_work));
-    CHECK_CUDA(cudaFree(d_info));
-}
-static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<double>* A, const int& lda)
-{
-    int lwork = 0;
-    CHECK_CUSOLVER(cusolverDnZtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, &lwork));
-    cuDoubleComplex* d_work = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(cuDoubleComplex)));
-    int* d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
-    CHECK_CUSOLVER(cusolverDnZtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, d_work, lwork, d_info));
-    CHECK_CUDA(cudaFree(d_work));
-    CHECK_CUDA(cudaFree(d_info));
-}
+#error "CUDA version < 11.0 is not supported. cusolverDnXtrtri (CUDA 11.0+) is required."
 #endif
 
 static inline
