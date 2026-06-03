@@ -553,7 +553,9 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vel[i] *= scale;
     }

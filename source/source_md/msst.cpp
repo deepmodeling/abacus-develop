@@ -262,7 +262,9 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     unitcell::setup_cell_after_vc(ucell,ofs);
 
     /// rescale velocity
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vel[i][sd] *= dilation[sd];
     }
