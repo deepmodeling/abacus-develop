@@ -435,6 +435,10 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     }
                     else if (npol == 1)
                     {
+                        int spin_sign = 1;
+                        if (PARAM.inp.nspin == 2) {
+                            spin_sign = (this->isk[this->ik] == 0) ? 1 : -1;
+                        }
                         for (int ip = 0; ip < nproj; ip++)
                         {
                             const int inkb = sum + ip;
@@ -444,7 +448,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 const int index0 = ipol * nbands * nkb + ib * nkb + inkb;
                                 const int index1 = ib * nkb + inkb;
                                 const FPTYPE dbb = (conj(dbecp[index0]) * becp[index1]).real();
-                                local_force[ipol] -= fac * lambda[iat*3+2] * dbb;
+                                local_force[ipol] -= fac * lambda[iat*3+2] * spin_sign * dbb;
                             }
                         } // ip
                     }

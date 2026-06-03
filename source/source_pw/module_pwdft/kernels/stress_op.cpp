@@ -379,7 +379,11 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 }
                 else if (npol == 1)
                 {
-                    const FPTYPE coefficients0(lambda[iat*3+2]);
+                    int spin_sign = 1;
+                    if (PARAM.inp.nspin == 2) {
+                        spin_sign = (this->isk[this->ik] == 0) ? 1 : -1;
+                    }
+                    const FPTYPE coefficients0(lambda[iat*3+2] * spin_sign);
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         FPTYPE fac = d_wg[ik * wg_nc + ib];
