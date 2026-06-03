@@ -586,7 +586,8 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                 if (iw_local < 0) { continue;
                 }
 
-                // D_I[lm, jb_global] += nlm_vec[lm] * phase * C_k[iw_local, jb_local]
+                // D_I[lm + jb_global * r] += nlm_vec[lm] * phase * C_k[iw_local, jb_local]
+                // Column-major storage for BLAS: D_I[lm + jb * r]
                 // C_k is column-major: C_k[irow, icol] = psi_k[irow + icol * lda]
                 for (int jb_local = 0; jb_local < ncol_local; jb_local++)
                 {
@@ -594,7 +595,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                     const std::complex<double> c_val = phase * psi_k[iw_local + jb_local * lda];
                     for (int lm = 0; lm < r; lm++)
                     {
-                        D_I[lm * nbands_global + jb_global] += nlm_vec[lm] * c_val;
+                        D_I[lm + jb_global * r] += nlm_vec[lm] * c_val;
                     }
                 }
             }
@@ -613,10 +614,11 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
         PI_sub[iat].resize(nbands_global * nbands_global, {0.0, 0.0});
         const std::complex<double> one = {1.0, 0.0};
         const std::complex<double> zero_c = {0.0, 0.0};
-        // zgemm: P = D^H * D, where D is r × nbands (row-major: D[lm][jb])
-        // In column-major (Fortran) convention for BLAS:
-        // D stored as nbands_global × r (transposed view)
-        // We want P = D^H * D = (r×nb)^H * (r×nb) = nb×nb
+        // D_I is stored column-major: D_I[lm + jb_global * r]
+        // zgemm: P = D^H * D, where D is r × nbands (column-major)
+        // A^H: conjugate transpose of A (nbands × r)
+        // B: D_I (r × nbands)
+        // Result: nbands × nbands
         zgemm_("C", "N", &nbands_global, &nbands_global, &r,
                &one, D_I.data(), &r,
                D_I.data(), &r,
