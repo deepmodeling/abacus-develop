@@ -204,7 +204,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         search = delta_spin;
 
         // [direction_only mode] Modify residual to exclude parallel component
-        // and adjust target_mag to maintain direction constraint
+        // and adjust target direction without mutating target_mag_
+        std::vector<ModuleBase::Vector3<double>> target_mag_adj = this->target_mag_;
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++)
         {
@@ -219,8 +220,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                                 std::pow(delta_spin[ia].z,2) - std::pow(parallel,2);
                 temp_1[ia][1] = 0;
                 temp_1[ia][2] = 0;
-                // Adjust target to include parallel component
-                this->target_mag_[ia] += parallel * dir;
+                // Adjust target to include parallel component (work on copy, don't mutate target_mag_)
+                target_mag_adj[ia] += parallel * dir;
             }
             else {
                 temp_1[ia][0] = std::pow(delta_spin[ia].x,2) +
@@ -321,10 +322,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // dnu = dnu + alpha_trial * search
         add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
 
-        // [direction_only] Project out parallel component from dnu
+        // [direction_only mode] Project out parallel component from dnu
+        // Use target_mag_adj (copy with parallel components added) instead of mutating target_mag_
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
-            const auto& target = this->target_mag_[ia];
+            const auto& target = target_mag_adj[ia];
             const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
             if (norm > 1e-8) {
@@ -358,9 +360,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         add_scalar_multiply_2d(dnu, temp_1, one, dnu);
 
         // [direction_only] Project out parallel component from corrected dnu
+        // Use target_mag_adj (copy) instead of mutating target_mag_
         if(this->direction_only_)
         for (int ia = 0; ia < nat; ia++) {
-            const auto& target = this->target_mag_[ia];
+            const auto& target = target_mag_adj[ia];
             const double norm = std::sqrt(target.x*target.x + target.y*target.y + target.z*target.z);
 
             if (norm > 1e-8) {
