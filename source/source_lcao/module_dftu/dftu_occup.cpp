@@ -109,29 +109,44 @@ void Plus_U::mix_locale(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (!has_correlated_orbital(T))
-		{
-			continue;
-		}
+        int target_l = get_orbital_corr(T);
+        if (target_l == -1)
+            continue;
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
 
-            for (int l = 0; l < ucell.atoms[T].nwl + 1; l++)
+            if (PARAM.inp.nspin == 4)
             {
-                const int N = ucell.atoms[T].l_nchi[l];
-
-                for (int n = 0; n < N; n++)
+                const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
+                for (int mm = 0; mm < size; mm++)
                 {
-                    if (PARAM.inp.nspin == 4)
+                    locale[iat][target_l][0][0].c[mm] = locale[iat][target_l][0][0].c[mm] * beta + locale_save[iat][target_l][0][0].c[mm] * (1.0 - beta);
+                }
+                if (this->uom_save.size() != 0)
+                {
+                    for (int mm = 0; mm < size; mm++)
                     {
-                        locale[iat][l][n][0] = locale[iat][l][n][0]*beta + locale_save[iat][l][n][0]*(1.0-beta);
+                        this->uom_save[eff_pot_pw_index[iat] + mm] = locale[iat][target_l][0][0].c[mm];
                     }
-                    else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                }
+            }
+            else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+            {
+                const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
+                const int half_size = this->uom_save.size() / 2;
+                for (int mm = 0; mm < size; mm++)
+                {
+                    locale[iat][target_l][0][0].c[mm] = locale[iat][target_l][0][0].c[mm] * beta + locale_save[iat][target_l][0][0].c[mm] * (1.0 - beta);
+                    locale[iat][target_l][0][1].c[mm] = locale[iat][target_l][0][1].c[mm] * beta + locale_save[iat][target_l][0][1].c[mm] * (1.0 - beta);
+                }
+                if (this->uom_save.size() != 0)
+                {
+                    for (int mm = 0; mm < size; mm++)
                     {
-                        locale[iat][l][n][0] = locale[iat][l][n][0] * beta + locale_save[iat][l][n][0] * (1.0-beta);
-                        locale[iat][l][n][1] = locale[iat][l][n][1] * beta + locale_save[iat][l][n][1] * (1.0-beta);
+                        this->uom_save[eff_pot_pw_index[iat] + mm] = locale[iat][target_l][0][0].c[mm];
+                        this->uom_save[half_size + eff_pot_pw_index[iat] + mm] = locale[iat][target_l][0][1].c[mm];
                     }
                 }
             }

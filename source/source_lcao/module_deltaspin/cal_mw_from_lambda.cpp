@@ -426,6 +426,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
                                                                                 &this->pelec->ekb(ik, 0));
     }
 
+    base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
+    base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
+
     // Free GPU memory for saved subspace data
     base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(sub_h_save);
     base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(sub_s_save);
@@ -531,6 +534,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
 
+        // Note: although update_lambda() modifies lambda in-place above,
+        // solve() unconditionally recomputes DM and DMR (via cal_dm_psi +
+        // cal_DMR) from the psi obtained by diagonalizing with the new
+        // lambda. Therefore the DMR used inside cal_mi_lcao() is consistent
+        // with the updated lambda and is NOT stale.
         this->cal_mi_lcao(i_step);
     }
     else
@@ -660,6 +668,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 }
 
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(h_tmp);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(s_tmp);
             }
 #endif
 
@@ -704,6 +714,16 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
     {
+        // TODO: Known issue — the base-class psiToRho() is a no-op for
+        // LCAO, so the charge density rho is NOT recomputed here after the
+        // final lambda update. After the lambda loop converges, rho remains
+        // from the last solve() call with skip_charge=false, which was
+        // computed with a different lambda. To fix this, update_psi_charge
+        // should recalculate DM from the current psi/weights, then DMR,
+        // then rho via dm2rho (similar to the PW path which performs a
+        // subspace diagonalization + optional full solve). The DMR inside
+        // cal_mi_lcao() itself is fresh (see comment above), but the
+        // charge density fed back into the next SCF iteration is stale.
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
         this->pelec->psiToRho(*psi_t);
     }
