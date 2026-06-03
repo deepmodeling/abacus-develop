@@ -44,6 +44,20 @@ void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     atype.resize(ucell.nat);
 
+    // Build flat atom index for OpenMP coordinate fill in runner()
+    atom_type_index.resize(ucell.nat);
+    atom_local_index.resize(ucell.nat);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            atom_type_index[iat] = it;
+            atom_local_index[iat] = ia;
+            iat++;
+        }
+    }
+
     rescaling = inp.mdp.dp_rescaling;
     fparam = inp.mdp.dp_fparam;
     aparam = inp.mdp.dp_aparam;
@@ -71,18 +85,16 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
     std::vector<double> coord(3 * ucell.nat, 0.0);
-    int iat = 0;
-    for (int it = 0; it < ucell.ntype; ++it)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int iat = 0; iat < nat; ++iat)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            coord[3 * iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
-            iat++;
-        }
+        const int it = atom_type_index[iat];
+        const int ia = atom_local_index[iat];
+        coord[3 * iat]     = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+        coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+        coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
     }
-    assert(ucell.nat == iat);
 
 #ifdef __DPMD
     std::vector<double> f, v;
@@ -101,7 +113,9 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat_f = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat_f >= 256)
+    for (int i = 0; i < nat_f; ++i)
     {
         dp_force(i, 0) = f[3 * i] * fact_f;
         dp_force(i, 1) = f[3 * i + 1] * fact_f;
