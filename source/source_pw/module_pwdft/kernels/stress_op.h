@@ -137,21 +137,22 @@ struct cal_stress_nl_op
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
-    // kernel for DeltaSpin
-    void operator()(const base_device::DEVICE_CPU* ctx,
-                    const int& nkb,
-                    const int& nbands_occ,
-                    const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
-                    const int& npol,
-                    const int* atom_nh,
-                    const int* atom_na,
-                    const FPTYPE* d_wg,
-                    const double* lambda,
-                    const std::complex<FPTYPE>* becp,
-                    const std::complex<FPTYPE>* dbecp,
-                    FPTYPE* stress);
+     // kernel for DeltaSpin
+     void operator()(const base_device::DEVICE_CPU* ctx,
+                     const int& nkb,
+                     const int& nbands_occ,
+                     const int& ntype,
+                     const int& wg_nc,
+                     const int& ik,
+                     const int& npol,
+                     const int* atom_nh,
+                     const int* atom_na,
+                     const FPTYPE* d_wg,
+                     const double* lambda,
+                     const int* isk,
+                     const std::complex<FPTYPE>* becp,
+                     const std::complex<FPTYPE>* dbecp,
+                     FPTYPE* stress);
 };
 
 template <typename T, typename Device>
@@ -344,21 +345,22 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
-    // kernel for DeltaSpin
-    void operator()(const base_device::DEVICE_GPU* ctx,
-                    const int& nkb,
-                    const int& nbands_occ,
-                    const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
-                    const int& npol,
-                    const int* atom_nh,
-                    const int* atom_na,
-                    const FPTYPE* d_wg,
-                    const double* lambda,
-                    const std::complex<FPTYPE>* becp,
-                    const std::complex<FPTYPE>* dbecp,
-                    FPTYPE* stress);
+     // kernel for DeltaSpin
+     void operator()(const base_device::DEVICE_GPU* ctx,
+                     const int& nkb,
+                     const int& nbands_occ,
+                     const int& ntype,
+                     const int& wg_nc,
+                     const int& ik,
+                     const int& npol,
+                     const int* atom_nh,
+                     const int* atom_na,
+                     const FPTYPE* d_wg,
+                     const double* lambda,
+                     const int* isk,
+                     const std::complex<FPTYPE>* becp,
+                     const std::complex<FPTYPE>* dbecp,
+                     FPTYPE* stress);
 };
 
 // cpu version first, gpu version later

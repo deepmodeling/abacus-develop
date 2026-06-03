@@ -1116,14 +1116,15 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int* atom_na,
                     const FPTYPE* d_wg,
                     const double* lambda,
+                    const int* isk,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
 {
     int spin_sign = 1;
-    if (this->isk != nullptr && npol == 1)
+    if (isk != nullptr && npol == 1)
     {
-        spin_sign = (this->isk[ik] == 0) ? 1 : -1;
+        spin_sign = (isk[ik] == 0) ? 1 : -1;
     }
     if (npol == 1)
     {

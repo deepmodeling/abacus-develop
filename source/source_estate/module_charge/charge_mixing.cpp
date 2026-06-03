@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/module_mixing/pulay_mixing.h"
+#include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 

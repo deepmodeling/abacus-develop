@@ -331,21 +331,22 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
         } // end it
         *stress += local_stress;
     };
-    // kernel for DeltaSpin 
-    void operator()(const base_device::DEVICE_CPU* ctx,
-                    const int& nkb,
-                    const int& nbands_occ,
-                    const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
-                    const int& npol,
-                    const int* atom_nh,
-                    const int* atom_na,
-                    const FPTYPE* d_wg,
-                    const FPTYPE* lambda,
-                    const std::complex<FPTYPE>* becp,
-                    const std::complex<FPTYPE>* dbecp,
-                    FPTYPE* stress)
+     // kernel for DeltaSpin 
+     void operator()(const base_device::DEVICE_CPU* ctx,
+                     const int& nkb,
+                     const int& nbands_occ,
+                     const int& ntype,
+                     const int& wg_nc,
+                     const int& ik,
+                     const int& npol,
+                     const int* atom_nh,
+                     const int* atom_na,
+                     const FPTYPE* d_wg,
+                     const FPTYPE* lambda,
+                     const int* isk,
+                     const std::complex<FPTYPE>* becp,
+                     const std::complex<FPTYPE>* dbecp,
+                     FPTYPE* stress)
     {
         FPTYPE local_stress = 0;
         int iat0 = 0, sum = 0;
@@ -380,8 +381,8 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 else if (npol == 1)
                 {
                     int spin_sign = 1;
-                    if (PARAM.inp.nspin == 2) {
-                        spin_sign = (this->isk[this->ik] == 0) ? 1 : -1;
+                    if (isk != nullptr && isk[ik] == 1) {
+                        spin_sign = -1;
                     }
                     const FPTYPE coefficients0(lambda[iat*3+2] * spin_sign);
                     for (int ib = 0; ib < nbands_occ; ib++)

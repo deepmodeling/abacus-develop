@@ -344,23 +344,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // in the matrix indices (ipol0, ipol1 for Pauli block indices)
             if (this->nspin == 4)
             {
-                const int tlp1_local = 2 * target_L + 1;
-                const int m_size2_local = tlp1_local * tlp1_local;
-                for (int i = 0; i < static_cast<int>(occ.size()); i++)
-                {
-                    // Decode flattened index to (Pauli_block, m, m') format
-                    const int ib = i / m_size2_local;          // Pauli block index (0-3)
-                    const int m = (i % m_size2_local) / tlp1_local;  // m quantum number
-                    const int m2_val = (i % m_size2_local) % tlp1_local; // m' quantum number
-                    const int ipol0 = ib / 2;               // Row Pauli index (Pauli blocks are stacked, not interleaved)
-                    const int ipol1 = ib % 2;               // Column Pauli index
-                    // For nspin=4, locale is stored as 4 stacked tlp1^2 blocks
-                    // at offsets 0, tlp1^2, 2*tlp1^2, 3*tlp1^2 for the 4 Pauli channels.
-                    // get_locale(iat, L, spin, ipol, m, m2) accesses:
-                    //   locale[iat][L][0][0] at offset (ipol0 * 2 + ipol1) * tlp1^2 + m * tlp1 + m2
-                    // Use get_locale_flat to read the stacked blocks directly
-                    occ[i] = this->dftu->get_locale_flat(iat0, target_L)[i];
-                }
+                // For nspin=4, locale is stored as 4 stacked tlp1^2 blocks
+                // at offsets 0, tlp1^2, 2*tlp1^2, 3*tlp1^2 for the 4 Pauli channels.
+                // Use get_locale_flat to read the stacked blocks directly
+                this->dftu->get_locale_flat(iat0, target_L, occ);
             }
             // nspin=1 or nspin=2: Collinear spin case
             // Locale stored separately for each spin channel
