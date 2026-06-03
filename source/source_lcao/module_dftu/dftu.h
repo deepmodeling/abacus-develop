@@ -142,9 +142,6 @@ class Plus_U
 			Charge_Mixing* p_chgmix,
 			const int* isk);
 
-    /// calculate the local DFT+U effective potential matrix for PW base.
-    void cal_VU_pot_pw(const int spin);
-
     /// get effective potential pointer for the given spin channel (PW basis)
     ///
     /// nspin=1: isk is ignored, returns &eff_pot_pw[0]
