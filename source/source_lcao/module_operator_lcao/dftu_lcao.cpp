@@ -352,14 +352,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                     const int ib = i / m_size2_local;          // Pauli block index (0-3)
                     const int m = (i % m_size2_local) / tlp1_local;  // m quantum number
                     const int m2_val = (i % m_size2_local) % tlp1_local; // m' quantum number
-                    const int ipol0 = ib / npol;               // Row Pauli index
-                    const int ipol1 = ib % npol;               // Column Pauli index
-                    const int m0_all = m + ipol0 * tlp1_local; // Combined row index
-                    const int m1_all = m2_val + ipol1 * tlp1_local; // Combined col index
-                    // TODO: UNSAFE - get_locale indices must match storage format exactly.
-                    // Mismatch in indexing between set_locale_flat and get_locale causes silent corruption.
-                    // TODO: Add bounds checking for m0_all, m1_all against locale array dimensions.
-                    occ[i] = this->dftu->get_locale(iat0, target_L, 0, 0, m0_all, m1_all);
+                    const int ipol0 = ib / 2;               // Row Pauli index (Pauli blocks are stacked, not interleaved)
+                    const int ipol1 = ib % 2;               // Column Pauli index
+                    // For nspin=4, locale is stored as 4 stacked tlp1^2 blocks
+                    // at offsets 0, tlp1^2, 2*tlp1^2, 3*tlp1^2 for the 4 Pauli channels.
+                    // get_locale(iat, L, spin, ipol, m, m2) accesses:
+                    //   locale[iat][L][0][0] at offset (ipol0 * 2 + ipol1) * tlp1^2 + m * tlp1 + m2
+                    // Use get_locale_flat to read the stacked blocks directly
+                    occ[i] = this->dftu->get_locale_flat(iat0, target_L)[i];
                 }
             }
             // nspin=1 or nspin=2: Collinear spin case
