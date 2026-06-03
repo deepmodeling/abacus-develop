@@ -247,7 +247,7 @@ void Plus_U::cal_occ_pw(const int iter,
     }
 
     Plus_U::energy_u = 0.0;
-    const double weight_eu = (PARAM.inp.nspin == 1) ? 1.0 : (PARAM.inp.nspin == 2) ? 0.5 : 0.25;
+    const double weight_eu = (PARAM.inp.nspin == 1) ? 0.25 : (PARAM.inp.nspin == 2) ? 0.5 : 0.25;
     const double diag_coeff = (PARAM.inp.nspin == 4) ? 1.0 : 0.5;
     // calculate VU and energy (locale already reduced above)
     for(int iat = 0; iat < cell.nat; iat++)
