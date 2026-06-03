@@ -17,8 +17,20 @@
 #include <utility>
 #include <vector>
 
-#ifdef _OPENMP
+#if defined(_OPENMP)
+#if defined(__has_include)
+#if __has_include(<omp.h>)
 #include <omp.h>
+#define ABACUS_WRITE_CUBE_USE_OPENMP 1
+#endif
+#else
+#include <omp.h>
+#define ABACUS_WRITE_CUBE_USE_OPENMP 1
+#endif
+#endif
+
+#ifndef ABACUS_WRITE_CUBE_USE_OPENMP
+#define ABACUS_WRITE_CUBE_USE_OPENMP 0
 #endif
 
 namespace
@@ -139,7 +151,7 @@ std::vector<std::string> format_cube_data_chunk_parallel(const std::vector<doubl
                                                          const int precision,
                                                          const int ndata_line)
 {
-#ifdef _OPENMP
+#if ABACUS_WRITE_CUBE_USE_OPENMP
     const int row_count = row_end - row_begin;
     const int max_threads = std::max(omp_get_max_threads(), 1);
     const int subchunk_count = std::min(max_threads, row_count);
