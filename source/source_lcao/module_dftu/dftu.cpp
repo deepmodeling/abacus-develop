@@ -91,10 +91,6 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     // it:index of type of atom
     for (int it = 0; it < cell.ntype; ++it)
     {
-        if(!has_correlated_orbital(it))
-        {
-            continue;
-        }
         for (int ia = 0; ia < cell.atoms[it].na; ia++)
         {
             // ia:index of atoms of this type
@@ -103,6 +99,14 @@ void Plus_U::init(UnitCell& cell, // unitcell class
 
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
+
+            // initialize the arrry iatlnm2iwt[iat][l][n][m]
+            this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl + 1);
+
+            if(!has_correlated_orbital(it))
+            {
+                continue;
+            }
 
             const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
             const int tlp1 = 2 * get_orbital_corr(it) + 1;
@@ -116,16 +120,16 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     //          spin-down at eff_pot_pw[size/2 + eff_pot_pw_index[iat] + mm]
     // nspin=4: offset = sum(tlp1_npol^2) where tlp1_npol = (2l+1)*npol = 2*(2l+1)
     //          each atom occupies (2*tlp1)^2 = 4*tlp1^2 entries for 4 Pauli blocks
-    if(nspin == 4)
-    {
-        this->eff_pot_pw_index[iat] = pot_index;
-        pot_index += tlp1_npol * tlp1_npol;
-    }
-    else // nspin=1 or nspin=2: one tlp1^2 block per atom per spin channel
-    {
-        this->eff_pot_pw_index[iat] = pot_index;
-        pot_index += elem_size;
-    }
+            if(nspin == 4)
+            {
+                this->eff_pot_pw_index[iat] = pot_index;
+                pot_index += tlp1_npol * tlp1_npol;
+            }
+            else // nspin=1 or nspin=2: one tlp1^2 block per atom per spin channel
+            {
+                this->eff_pot_pw_index[iat] = pot_index;
+                pot_index += elem_size;
+            }
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
