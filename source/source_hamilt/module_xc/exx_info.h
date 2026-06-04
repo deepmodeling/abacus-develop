@@ -36,10 +36,17 @@ struct Exx_Info
     };
     Exx_Info_Global info_global;
 
+    // WARNING: Lifetime dependency
+    // Exx_Info_Lip and Exx_Info_RI hold const references to members of Exx_Info_Global.
+    // Their lifetimes MUST NOT exceed the Exx_Info_Global they were initialized from.
+    // Currently this is safe because Exx_Info owns both info_global and info_lip/info_ri,
+    // and GlobalC::exx_info is a global variable with program-lifetime scope.
+    // However, if Exx_Info is ever copied or moved, these references will become dangling.
+    // Do NOT add copy/move constructors to Exx_Info without addressing this.
     struct Exx_Info_Lip
     {
-        const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
-        const double& hse_omega;
+        const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;  // reference to info_global.ccp_type
+        const double& hse_omega;                        // reference to info_global.hse_omega
         double lambda = 0.3;
 
         Exx_Info_Lip(const Exx_Info::Exx_Info_Global& info_global)
@@ -50,6 +57,10 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
+        // reference to info_global.coulomb_param
+        // Note: coulomb_param is populated AFTER Exx_Info construction (in input_conv.cpp),
+        // so this reference is valid but initially points to an empty map.
+        // The data is filled later into info_global, and this reference sees it via aliasing.
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> &coulomb_param;
 
         bool real_number = false;
