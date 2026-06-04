@@ -12,44 +12,24 @@
 
 namespace
 {
-class ScopedMpiInit
+void ensure_mpi_initialized()
 {
-  public:
-    ScopedMpiInit() : initialized_before_(false), should_finalize_(false)
-    {
 #ifdef __MPI
-        int initialized = 0;
-        MPI_Initialized(&initialized);
-        initialized_before_ = initialized != 0;
-        if (!initialized_before_)
-        {
-            int argc = 0;
-            char** argv = nullptr;
-            MPI_Init(&argc, &argv);
-            should_finalize_ = true;
-        }
-#endif
-    }
-
-    ~ScopedMpiInit()
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized)
     {
-#ifdef __MPI
-        if (should_finalize_)
-        {
-            MPI_Finalize();
-        }
-#endif
+        int argc = 0;
+        char** argv = nullptr;
+        MPI_Init(&argc, &argv);
     }
-
-  private:
-    bool initialized_before_;
-    bool should_finalize_;
-};
+#endif
+}
 } // namespace
 
 TEST(MpiDomainTest, CreatesCartesianDomainAndOwnsLocalPoint)
 {
-    ScopedMpiInit mpi;
+    ensure_mpi_initialized();
 
     ModuleNeighbor::MpiDomain domain;
     domain.initialize(MPI_COMM_WORLD,
@@ -75,7 +55,7 @@ TEST(MpiDomainTest, CreatesCartesianDomainAndOwnsLocalPoint)
 
 TEST(MpiDomainTest, SelectsLocalAtomsAndCountsGhostCandidates)
 {
-    ScopedMpiInit mpi;
+    ensure_mpi_initialized();
 
     const double cutoff = 0.5;
     ModuleNeighbor::MpiDomain domain;
