@@ -46,8 +46,7 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
         inp.of_ml_tanh_pnl,
         inp.of_ml_tanh_qnl,
         inp.of_ml_tanhp_nl,
-        inp.of_ml_tanhq_nl,
-        ofs_running);
+        inp.of_ml_tanhq_nl);
 
     ofs_running << "ninput = " << this->ninput << std::endl;
 

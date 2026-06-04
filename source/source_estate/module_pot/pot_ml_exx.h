@@ -40,8 +40,7 @@ public:
         const std::vector<int> &of_ml_tanh_pnl,
         const std::vector<int> &of_ml_tanh_qnl,
         const std::vector<int> &of_ml_tanhp_nl,
-        const std::vector<int> &of_ml_tanhq_nl,
-        std::ostream& ofs_running
+        const std::vector<int> &of_ml_tanhq_nl
     );
 
     double ml_exx_energy = 0.0;

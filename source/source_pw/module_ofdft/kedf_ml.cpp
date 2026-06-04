@@ -72,7 +72,7 @@ void KEDF_ML::set_para(
         of_ml_tanhq_nl,
         ofs_running);
 
-    ofs_running << "ninput = " << ninput << std::endl;
+    ofs_running << " ninput = " << ninput << std::endl;
 
     if (PARAM.inp.of_kinetic == "ml")
     {
@@ -98,7 +98,7 @@ void KEDF_ML::set_para(
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
             }
 
-            ofs_running << "feg_net_F = " << this->feg_net_F << std::endl;
+            ofs_running << " feg_net_F = " << this->feg_net_F << std::endl;
         }
     } 
     
@@ -113,7 +113,9 @@ void KEDF_ML::set_para(
         this->chi_qnl = chi_qnl;
 
         this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
-                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, kernel_scaling, yukawa_alpha, kernel_file, this->dV * pw_rho->nxyz, pw_rho, ofs_running);
+                                chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, 
+				kernel_scaling, yukawa_alpha, kernel_file, 
+				this->dV * pw_rho->nxyz, pw_rho, ofs_running);
     }
 }
 
@@ -139,7 +141,6 @@ double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
     {
         energy += enhancement_cpu_ptr[ir] * std::pow(prho[0][ir], this->energy_exponent);
     }
-    std::cout << "energy" << energy << std::endl;
     energy *= this->dV * this->energy_prefactor;
     this->ml_energy = energy;
     Parallel_Reduce::reduce_all(this->ml_energy);
@@ -160,8 +161,11 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     this->NN_forward(prho, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
+
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
+
     torch::Tensor gradient_cpu_tensor = this->nn->inputs.grad().to(this->device_CPU).contiguous();
+
     this->gradient_cpu_ptr = gradient_cpu_tensor.data_ptr<double>();
 
     this->get_potential_(prho, pw_rho, rpotential);
