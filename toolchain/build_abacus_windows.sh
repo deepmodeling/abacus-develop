@@ -32,6 +32,19 @@ LAPACK=${OPENBLAS_ROOT:-$MINGW_PREFIX}/lib   # OpenBLAS supplies both BLAS and L
 FFTW3=${FFTW_ROOT:-$MINGW_PREFIX}
 
 NUM_JOBS="$(nproc)"
+# Cap the *default* parallelism by available RAM. Several heavy -O3 template
+# TUs (e.g. source_cell/module_symmetry/symmetry.cpp, read_pp_upf201.cpp) can
+# each peak around 3 GB in cc1plus, and ninja tends to schedule them together;
+# on a many-core box -j nproc then exhausts memory and the build dies with
+# "cc1plus.exe: out of memory" (seen even on a 31 GB / 20-core machine at
+# -j 20). Budget ~3 GB per job. An explicit -j below always overrides this.
+if [ -r /proc/meminfo ]; then
+  mem_gb=$(awk '/^MemTotal:/ {printf "%d", $2/1024/1024}' /proc/meminfo)
+  if [ -n "$mem_gb" ] && [ "$mem_gb" -ge 1 ]; then
+    mem_jobs=$(( mem_gb / 3 )); [ "$mem_jobs" -lt 1 ] && mem_jobs=1
+    [ "$mem_jobs" -lt "$NUM_JOBS" ] && NUM_JOBS=$mem_jobs
+  fi
+fi
 while [[ $# -gt 0 ]]; do
   case $1 in
     -j)
@@ -41,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     *) echo "ERROR: Unsupported argument: $1" >&2; echo "Usage: $0 [-j N|-jN]" >&2; exit 1 ;;
   esac
 done
+echo "Building with -j ${NUM_JOBS} (override with -j N; lower it if cc1plus runs out of memory)."
 
 # MPI on Windows is MS-MPI (mingw-w64-x86_64-msmpi). Point FindMPI at it.
 MPI_ARGS=()
