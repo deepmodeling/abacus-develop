@@ -6,6 +6,7 @@
 #include <mpi.h>
 #endif
 
+#include <algorithm>
 #include <array>
 #include <vector>
 
