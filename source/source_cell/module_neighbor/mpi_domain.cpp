@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 
 namespace ModuleNeighbor
 {
@@ -55,9 +56,11 @@ MpiDomain::MpiDomain()
       global_lower_{{0.0, 0.0, 0.0}},
       global_upper_{{0.0, 0.0, 0.0}},
       global_length_{{0.0, 0.0, 0.0}},
-      local_bounds_{{{0.0, 0.0, 0.0}}, {{0.0, 0.0, 0.0}}},
+      local_bounds_(),
       ghost_cutoff_(0.0)
 {
+    local_bounds_.lower = std::array<double, 3>{{0.0, 0.0, 0.0}};
+    local_bounds_.upper = std::array<double, 3>{{0.0, 0.0, 0.0}};
 }
 
 MpiDomain::MpiDomain(MpiDomain&& other) : MpiDomain()
