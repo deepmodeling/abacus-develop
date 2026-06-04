@@ -12,6 +12,7 @@ ML_Base::~ML_Base()
 
 void ML_Base::set_device(const std::string& device_inpt, std::ostream& ofs_running)
 {
+    ModuleBase::TITLE("ML_Base", "set_device");
     if (device_inpt == "cpu")
     {
         ofs_running << "------------------- Running Neural Network on CPU -------------------" << std::endl;
@@ -36,7 +37,8 @@ void ML_Base::set_device(const std::string& device_inpt, std::ostream& ofs_runni
 
 void ML_Base::updateInput(const double * const * prho, const ModulePW::PW_Basis *pw_rho)
 {
-    ModuleBase::timer::start("ML_Base", "updateInput");
+    ModuleBase::TITLE("ML_Base", "update_input");
+    ModuleBase::timer::start("ML_Base", "update_input");
     if (this->gene_data_label["gamma"][0])
     {   
         this->cal_tool->getGamma(prho, this->gamma);
@@ -92,12 +94,13 @@ void ML_Base::updateInput(const double * const * prho, const ModulePW::PW_Basis 
             this->cal_tool->getTanhQ_nl(ik, this->tanhq, pw_rho, this->tanhq_nl[ik]);
         }
     }
-    ModuleBase::timer::end("ML_Base", "updateInput");
+    ModuleBase::timer::end("ML_Base", "update_input");
 }
 
 void ML_Base::NN_forward(const double * const * prho, const ModulePW::PW_Basis *pw_rho, bool cal_grad)
 {
-    ModuleBase::timer::start("ML_Base", "Forward");
+    ModuleBase::TITLE("ML_Base", "nn_forward");
+    ModuleBase::timer::start("ML_Base", "forward");
 
     this->nn->zero_grad();
     this->nn->inputs.requires_grad_(false);
@@ -122,13 +125,13 @@ void ML_Base::NN_forward(const double * const * prho, const ModulePW::PW_Basis *
     {
         this->nn->F = torch::softplus(this->nn->F - this->feg_net_F + this->feg3_correct);
     }
-    ModuleBase::timer::end("ML_Base", "Forward");
+    ModuleBase::timer::end("ML_Base", "forward");
 
     if (cal_grad)
     {
-        ModuleBase::timer::start("ML_Base", "Backward");
+        ModuleBase::timer::start("ML_Base", "backward");
         this->nn->F.backward(torch::ones({this->nx, 1}, this->device_type));
-        ModuleBase::timer::end("ML_Base", "Backward");
+        ModuleBase::timer::end("ML_Base", "backward");
     }
 }
 
@@ -154,7 +157,8 @@ torch::Tensor ML_Base::get_data(std::string parameter, const int ikernel) const 
 
 void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
-    ModuleBase::timer::start("ML_Base", "Pauli Potential");
+    ModuleBase::TITLE("ML_Base", "get_potential_");
+    ModuleBase::timer::start("ML_Base", "pauli_potential");
 
     std::vector<double> pauli_potential(this->nx, 0.);
     std::vector<double> tau_lda(this->nx, 0.); // Dummy or calculated inside
@@ -163,26 +167,61 @@ void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Bas
         tau_lda[ir] = this->energy_prefactor * std::pow(prho[0][ir], this->energy_exponent);
     }
 
-    if (this->ml_gammanl) this->potGammanlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_xi) this->potXinlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_tanhxi) this->potTanhxinlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_tanhxi_nl) this->potTanhxi_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_p || this->ml_pnl) this->potPPnlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_q || this->ml_qnl) this->potQQnlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_tanh_pnl) this->potTanhpTanh_pnlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if (this->ml_tanh_qnl) this->potTanhqTanh_qnlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if ((this->ml_tanhp || this->ml_tanhp_nl) && !this->ml_tanh_pnl) this->potTanhpTanhp_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
-    if ((this->ml_tanhq || this->ml_tanhq_nl) && !this->ml_tanh_qnl) this->potTanhqTanhq_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    if (this->ml_gammanl)
+    {
+        this->potGammanlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_xi)
+    {
+        this->potXinlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_tanhxi)
+    {
+        this->potTanhxinlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_tanhxi_nl)
+    {
+        this->potTanhxi_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_p || this->ml_pnl)
+    {
+        this->potPPnlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_q || this->ml_qnl)
+    {
+        this->potQQnlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_tanh_pnl)
+    {
+        this->potTanhpTanh_pnlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if (this->ml_tanh_qnl)
+    {
+        this->potTanhqTanh_qnlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if ((this->ml_tanhp || this->ml_tanhp_nl) && !this->ml_tanh_pnl)
+    {
+        this->potTanhpTanhp_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
+    if ((this->ml_tanhq || this->ml_tanhq_nl) && !this->ml_tanh_qnl)
+    {
+        this->potTanhqTanhq_nlTerm(prho, tau_lda, pw_rho, pauli_potential);
+    }
 
     for (int ir = 0; ir < this->nx; ++ir)
     {
         double factor = tau_lda[ir] / prho[0][ir];       
+
         pauli_potential[ir] += factor *
-                      (this->energy_exponent * this->enhancement_cpu_ptr[ir] + this->potGammaTerm(ir) + this->potPTerm1(ir) + this->potQTerm1(ir)
-                      + this->potXiTerm1(ir) + this->potTanhxiTerm1(ir) + this->potTanhpTerm1(ir) + this->potTanhqTerm1(ir));
+                      (this->energy_exponent * this->enhancement_cpu_ptr[ir] 
+		       + this->potGammaTerm(ir) + this->potPTerm1(ir) + this->potQTerm1(ir)
+                      + this->potXiTerm1(ir) + this->potTanhxiTerm1(ir) 
+		      + this->potTanhpTerm1(ir) + this->potTanhqTerm1(ir));
+
         rpotential(0, ir) += pauli_potential[ir];
     }
-    ModuleBase::timer::end("ML_Base", "Pauli Potential");
+
+    ModuleBase::timer::end("ML_Base", "pauli_potential");
 }
 
 // IO tools

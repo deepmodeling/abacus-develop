@@ -156,6 +156,9 @@ double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
  */
 void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
+    ModuleBase::TITLE("KEDF_ML", "ml_potential");
+    ModuleBase::timer::start("KEDF_ML", "pauli_energy");
+
     this->updateInput(prho, pw_rho);
 
     this->NN_forward(prho, pw_rho, true);
@@ -170,8 +173,6 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
 
     this->get_potential_(prho, pw_rho, rpotential);
 
-    // get energy
-    ModuleBase::timer::start("KEDF_ML", "Pauli Energy");
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
@@ -180,7 +181,8 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     energy *= this->dV * this->energy_prefactor;
     this->ml_energy = energy;
     Parallel_Reduce::reduce_all(this->ml_energy);
-    ModuleBase::timer::end("KEDF_ML", "Pauli Energy");
+
+    ModuleBase::timer::end("KEDF_ML", "pauli_energy");
 }
 
 /**

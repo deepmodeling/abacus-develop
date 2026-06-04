@@ -132,12 +132,17 @@ protected:
     bool ml_tanhp_nl = false;
     bool ml_tanhq_nl = false;
 
-    // Maps
-    std::vector<std::string> descriptor_type;                  
-    std::vector<int> kernel_index;                             
-    std::map<std::string, std::vector<int>> descriptor2kernel; 
-    std::map<std::string, std::vector<int>> descriptor2index;  
-    std::map<std::string, std::vector<bool>> gene_data_label;  
+    // Maps for descriptor management
+    std::vector<std::string> descriptor_type;                  // List of enabled descriptors (e.g., "gamma", "pnl", "tanhxi")
+    std::vector<int> kernel_index;                             // Kernel index for each descriptor (-1 = no kernel for semi-local)
+    std::map<std::string, std::vector<int>> descriptor2kernel; // Maps descriptor name to its kernel index(s)
+                                                               //   - []: descriptor not enabled
+                                                               //   - [-1]: semi-local descriptor (no kernel needed)
+                                                               //   - [N]: non-local descriptor using kernel N
+    std::map<std::string, std::vector<int>> descriptor2index;  // Maps descriptor name to its position(s) in NN input vector
+                                                               //   - []: descriptor not enabled
+                                                               //   - [0, 1, ...]: indices in input vector
+    std::map<std::string, std::vector<bool>> gene_data_label;  // Flags indicating whether to compute each descriptor
 };
 
 #endif // __MLALGO

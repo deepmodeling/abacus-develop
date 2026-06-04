@@ -188,6 +188,7 @@ void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
  */
 void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_WT", "wt_potential");
     ModuleBase::timer::start("KEDF_WT", "wt_potential");
 
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
