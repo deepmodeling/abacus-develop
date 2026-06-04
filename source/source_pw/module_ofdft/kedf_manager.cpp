@@ -499,6 +499,6 @@ void KEDF_Manager::generate_ml_target(
 )
 {
 #ifdef __MLALGO
-    this->ml_->generateTrainData(prho, pw_rho, veff);
+    this->ml_->gen_training_data(prho, pw_rho, veff);
 #endif
 }

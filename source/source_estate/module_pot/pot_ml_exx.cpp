@@ -172,7 +172,7 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
  * @param pw_rho PW_Basis
  * @param veff effective potential
  */
-void ML_EXX::generateTrainData(const double * const *prho, const ModulePW::PW_Basis *pw_rho, const double *veff)
+void ML_EXX::gen_training_data(const double * const *prho, const ModulePW::PW_Basis *pw_rho, const double *veff)
 {
     if (PARAM.inp.of_kinetic == "ml")
     {

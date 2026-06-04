@@ -56,8 +56,7 @@ public:
 
     void ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
 
-    // output all parameters
-    void generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff);
+    void gen_training_data(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff);
 
     void localTest(const double * const *prho, ModulePW::PW_Basis *pw_rho);
 

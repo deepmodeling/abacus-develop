@@ -110,7 +110,11 @@ void KEDF_ML::set_para(
 
             ofs_running << " feg_net_F = " << this->feg_net_F << " (Fermi energy guess factor)" << std::endl << std::endl;
         }
-    } 
+    }
+    else
+    {
+        ofs_running << " ML KEDF not enabled (of_kinetic != \"ml\")" << std::endl;
+    }
     
     if (PARAM.inp.of_kinetic == "ml" || PARAM.inp.of_ml_gene_data == 1)
     {
@@ -126,6 +130,10 @@ void KEDF_ML::set_para(
                                 chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, 
 				kernel_scaling, yukawa_alpha, kernel_file, 
 				this->dV * pw_rho->nxyz, pw_rho, ofs_running);
+    }
+    else
+    {
+        ofs_running << " ML descriptor calculator not initialized (neither ml kinetic nor gene_data enabled)" << std::endl;
     }
 }
 
@@ -168,7 +176,7 @@ double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
 void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::TITLE("KEDF_ML", "ml_potential");
-    ModuleBase::timer::start("KEDF_ML", "pauli_energy");
+    ModuleBase::timer::start("KEDF_ML", "ml_potential");
 
     this->update_input(prho, pw_rho);
 
@@ -184,6 +192,8 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
 
     this->get_potential_(prho, pw_rho, rpotential);
 
+    // Calculate Pauli energy (ml_energy) from enhancement factor
+    // E_pauli = c_TF * ∫ F(ρ) * ρ^(5/3) dr
     double energy = 0.;
     for (int ir = 0; ir < this->nx; ++ir)
     {
@@ -193,7 +203,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     this->ml_energy = energy;
     Parallel_Reduce::reduce_all(this->ml_energy);
 
-    ModuleBase::timer::end("KEDF_ML", "pauli_energy");
+    ModuleBase::timer::end("KEDF_ML", "ml_potential");
 }
 
 /**
@@ -205,9 +215,9 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
  * @param pw_rho PW_Basis
  * @param veff effective potential
  */
-void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
+void KEDF_ML::gen_training_data(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
 {
-    ModuleBase::TITLE("KEDF_ML", "generate_train_data");
+    ModuleBase::TITLE("KEDF_ML", "gen_training_data");
     // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
     {
@@ -227,6 +237,10 @@ void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *
 
         this->dump_tensor("enhancement.npy", enhancement);
         this->dump_matrix("potential.npy", potential);
+    }
+    else
+    {
+        std::cout << " Warning: gen_training_data skipped (of_kinetic != \"ml\")" << std::endl;
     }
 }
 
@@ -250,8 +264,13 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     for (int ir = 0; ir < this->nx; ++ir) prho[0][ir] = temp_prho[ir];
     for (int ir = 0; ir < this->nx; ++ir) 
     {
-        if (prho[0][ir] == 0.){
-            std::cout << "WARNING: rho = 0" << std::endl;
+        if (prho[0][ir] == 0.)
+        {
+            std::cout << "WARNING: rho = 0 at grid point " << ir << std::endl;
+        }
+        else
+        {
+            // Normal case: non-zero density
         }
     };
     // ==============================
