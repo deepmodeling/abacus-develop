@@ -12,7 +12,7 @@
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
-#include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
+#include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
 #include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
 #include "../module_hs/write_HS.h"                            // use ModuleIO::write_hsk()
