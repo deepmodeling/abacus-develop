@@ -130,13 +130,26 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         DeePKS_domain::cal_descriptor(nat, deepks_param, pdm, descriptor); // final descriptor
         DeePKS_domain::check_descriptor(deepks_param, ucell, PARAM.globalv.global_out_dir, descriptor, rank);
 
+        // nspin=2 (traditional): also build the magnetization-channel descriptor,
+        // reused for the dm_eig label and the 2-channel model below.
+        const bool deepks_spin2 = (nspin == 2 && !PARAM.inp.deepks_equiv);
+        std::vector<torch::Tensor> descriptor_mag;
+        if (deepks_spin2)
+        {
+            DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
+            bool init_pdm_mag = false;
+            DeePKS_domain::cal_pdm<TK>(init_pdm_mag, deepks_param, kvec_d, ld->dm_r_mag, phialpha, ucell, orb, GridD, *ParaV, ld->pdm_mag);
+            DeePKS_domain::cal_descriptor(nat, deepks_param, ld->pdm_mag, descriptor_mag);
+        }
+
         const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_d(nat,
                                    PARAM.inp.deepks_equiv,
                                    deepks_param,
                                    descriptor,
                                    file_d,
-                                   rank); // libnpy needed
+                                   rank,
+                                   deepks_spin2 ? &descriptor_mag : nullptr); // libnpy needed
 
         if (PARAM.inp.deepks_scf)
         {
@@ -148,14 +161,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
             else // traditional version
             {
-                if (nspin == 2)
+                if (deepks_spin2)
                 {
-                    // spin-polarized: feed the 2-channel (charge + magnetization) model
-                    DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
-                    bool init_pdm_mag = false;
-                    DeePKS_domain::cal_pdm<TK>(init_pdm_mag, deepks_param, kvec_d, ld->dm_r_mag, phialpha, ucell, orb, GridD, *ParaV, ld->pdm_mag);
-                    std::vector<torch::Tensor> descriptor_mag;
-                    DeePKS_domain::cal_descriptor(nat, deepks_param, ld->pdm_mag, descriptor_mag);
                     DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, pdm, ld->model_deepks, ld->gedm, E_delta, &descriptor_mag, &ld->pdm_mag, ld->gedm_mag);
                 }
                 else
