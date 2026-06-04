@@ -345,7 +345,7 @@ void RI_2D_Comm::add_Hexx_td(
                 const std::complex<double> frac
                     = alpha
                       * std::exp(ModuleBase::IMAG_UNIT
-                                 * (ModuleBase::TWO_PI * kv.kvec_c[ik] * (r_index * ucell.latvec))) * phase_hybrid[r_index];
+                                 * (ModuleBase::TWO_PI * kv.kvec_c[ik] * (r_index * ucell.latvec))) * phase_hybrid.at(r_index);
 
                 const RI::Tensor<Tdata>& H = Hs_tmpB.second;
                 for (size_t iw0_b = 0; iw0_b < H.shape[0]; ++iw0_b)
