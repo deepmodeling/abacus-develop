@@ -146,9 +146,22 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->model_deepks, ld->gedm, E_delta, rank);
             }
-            else
+            else // traditional version
             {
-                DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, pdm, ld->model_deepks, ld->gedm, E_delta);
+                if (nspin == 2)
+                {
+                    // spin-polarized: feed the 2-channel (charge + magnetization) model
+                    DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
+                    bool init_pdm_mag = false;
+                    DeePKS_domain::cal_pdm<TK>(init_pdm_mag, deepks_param, kvec_d, ld->dm_r_mag, phialpha, ucell, orb, GridD, *ParaV, ld->pdm_mag);
+                    std::vector<torch::Tensor> descriptor_mag;
+                    DeePKS_domain::cal_descriptor(nat, deepks_param, ld->pdm_mag, descriptor_mag);
+                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, pdm, ld->model_deepks, ld->gedm, E_delta, &descriptor_mag, &ld->pdm_mag, ld->gedm_mag);
+                }
+                else
+                {
+                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, pdm, ld->model_deepks, ld->gedm, E_delta);
+                }
             }
         }
     }

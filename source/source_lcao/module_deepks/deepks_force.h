@@ -37,7 +37,9 @@ void cal_f_delta(const hamilt::HContainer<double>* dmr,
                  double** gedm,
                  ModuleBase::matrix& f_delta,
                  const bool isstress,
-                 ModuleBase::matrix& svnl_dalpha);
+                 ModuleBase::matrix& svnl_dalpha,
+                 const hamilt::HContainer<double>* dmr_mag = nullptr,
+                 double** gedm_mag = nullptr);
 } // namespace DeePKS_domain
 
 #endif

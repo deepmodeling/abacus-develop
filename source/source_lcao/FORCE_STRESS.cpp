@@ -279,14 +279,18 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r, ucell, orb, gd,
                                                *flk.ParaV, nks, deepks.ld.deepks_param,
                                                kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                               fvnl_dalpha, isstress, svnl_dalpha);
+                                               fvnl_dalpha, isstress, svnl_dalpha,
+                                               (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                                               (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
         else
         {
             DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r, ucell, orb, gd,
                                                               *flk.ParaV, nks, deepks.ld.deepks_param,
                                                               kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                                              fvnl_dalpha, isstress, svnl_dalpha);
+                                                              fvnl_dalpha, isstress, svnl_dalpha,
+                                               (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                                               (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
 
         if (isforce)

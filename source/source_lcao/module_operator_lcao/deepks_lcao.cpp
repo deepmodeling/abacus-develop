@@ -225,18 +225,42 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             }
         }
 
-        // // recalculate the V_delta_R
-        // if (this->V_delta_R == nullptr)
-        // {
-        //     this->V_delta_R = new hamilt::HContainer<std::complex<double>>(*this->hR);
-        // }
-        this->V_delta_R->set_zero();
-        this->calculate_HR();
+        // For nspin=1 (and the equivariant version) V_delta_R is spin-independent;
+        // build it once here and reuse it across calls. For nspin=2 it is
+        // spin-dependent and is rebuilt per spin below.
+        if (!(PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv))
+        {
+            this->V_delta_R->set_zero();
+            this->calculate_HR(this->ld->gedm);
+        }
 
         this->ld->set_hr_cal(false);
 
         ModuleBase::timer::end("DeePKS", "contributeHR");
     }
+
+    // nspin=2 (traditional): the correction for spin sigma is
+    // |alpha>(gedm + sigma * gedm_mag)<alpha|, so rebuild V_delta_R per spin.
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv)
+    {
+        const double sign = (this->current_spin == 0) ? 1.0 : -1.0;
+        const int inlmax = this->ld->deepks_param.inlmax;
+        const int pdm_size = (2 * this->ld->deepks_param.lmaxd + 1) * (2 * this->ld->deepks_param.lmaxd + 1);
+        std::vector<std::vector<double>> gedm_eff_buf(inlmax, std::vector<double>(pdm_size));
+        std::vector<double*> gedm_eff(inlmax);
+        for (int inl = 0; inl < inlmax; ++inl)
+        {
+            for (int k = 0; k < pdm_size; ++k)
+            {
+                gedm_eff_buf[inl][k] = this->ld->gedm[inl][k] + sign * this->ld->gedm_mag[inl][k];
+            }
+            gedm_eff[inl] = gedm_eff_buf[inl].data();
+        }
+        this->V_delta_R->set_zero();
+        this->calculate_HR(gedm_eff.data());
+        this->current_spin = 1 - this->current_spin;
+    }
+
     // save V_delta_R to hR
     this->hR->add(*this->V_delta_R);
 #endif
@@ -245,7 +269,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 #ifdef __MLALGO
 
 template <typename TK, typename TR>
-void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_use)
 {
     ModuleBase::TITLE("DeePKS", "calculate_HR");
     ModuleBase::timer::start("DeePKS", "calculate_HR");
@@ -279,7 +303,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 for (int N0 = 0; N0 < ptr_orb_->Alpha[0].getNchi(L0); ++N0)
                 {
                     const int inl = this->ld->deepks_param.inl_index[T0](I0, L0, N0);
-                    const double* pgedm = this->ld->gedm[inl];
+                    const double* pgedm = gedm_use[inl];
                     const int nm = 2 * L0 + 1;
 
                     for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -297,7 +321,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
         else
         {
-            const double* pgedm = this->ld->gedm[iat0];
+            const double* pgedm = gedm_use[iat0];
             int nproj = 0;
             for (int il = 0; il < this->ld->deepks_param.lmaxd + 1; il++)
             {
