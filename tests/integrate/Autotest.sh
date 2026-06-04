@@ -9,6 +9,8 @@ nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
 threshold=0.0000001
 force_threshold=0.0001
 stress_threshold=0.001
+# descriptor mean threshold
+descriptor_threshold=0.00001
 # check accuracy
 ca=8
 # specify the test cases file
@@ -55,6 +57,7 @@ echo "Number of threads: $nt"
 echo "Test accuracy totenergy: $threshold eV"
 echo "Test accuracy force: $force_threshold"
 echo "Test accuracy stress: $stress_threshold"
+echo "Test accuracy descriptor mean: $descriptor_threshold"
 echo "Check accuaracy: $ca"
 echo "Test cases file: $cases_file"
 echo "Test cases regex: $case"
@@ -84,6 +87,7 @@ check_out(){
     force_thr=$3
     stress_thr=$4
     fatal_thr=$5
+    descriptor_thr=$6
 
     #------------------------------------------------------
     # outfile = result.out
@@ -139,7 +143,11 @@ check_out(){
             fatal_case_list+=$dir'\n'
             break
         else
-            if [ $(check_deviation_pass $deviation $thr) = 0 ]; then
+            compare_thr=$thr
+            if [[ $key == ml_desc_mean_* ]]; then
+                compare_thr=$descriptor_thr
+            fi
+            if [ $(check_deviation_pass $deviation $compare_thr) = 0 ]; then
                 if [ $key == "totalforceref" ]; then
                     if [ $(check_deviation_pass $deviation $force_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
@@ -251,11 +259,15 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
+        run_np=$np
         if [ "$case" = "282_NO_RPA" ]; then
-            mpirun -np 1 $abacus > log.txt
-        else
-            mpirun -np $np $abacus > log.txt
+            run_np=1
         fi
+        if grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
+            # of_ml_gene_data supports single-rank only.
+            run_np=1
+        fi
+        mpirun -np $run_np $abacus > log.txt
 
         # if ABACUS failed, print out the error message
         if [ $? -ne 0 ]; then
@@ -279,7 +291,7 @@ for dir in $testdir; do
                     my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
                     my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
                     my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
-                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
+                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $descriptor_threshold
                 fi
             else
                 bash -e ../../integrate/tools/catch_properties.sh result.ref
