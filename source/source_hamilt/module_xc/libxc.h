@@ -1,5 +1,5 @@
-#ifndef XC_FUNCTIONAL_LIBXC_H
-#define XC_FUNCTIONAL_LIBXC_H
+#ifndef LIBXC_H
+#define LIBXC_H
 
 #ifdef USE_LIBXC
 
@@ -12,7 +12,7 @@
 #include <tuple>
 #include <vector>
 
-#include <map> // added by jghan, 2024-10-10
+#include <map>
 #include <utility>
 
 class Charge;
@@ -20,7 +20,7 @@ class Charge;
 namespace XC_Functional_Libxc
 {
 //-------------------
-//  xc_functional_libxc.cpp
+//  libxc_setup.cpp
 //-------------------
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
@@ -51,7 +51,7 @@ namespace XC_Functional_Libxc
 
 
 //-------------------
-//  xc_functional_libxc_vxc.cpp
+//  libxc_pot.cpp
 //-------------------
 
     extern std::tuple<double, double, ModuleBase::matrix> v_xc_libxc(
@@ -72,7 +72,7 @@ namespace XC_Functional_Libxc
 
 
 //-------------------
-//  xc_functional_libxc_tools.cpp
+//  libxc_tools.cpp
 //-------------------
 
     // converting rho (abacus=>libxc)
@@ -149,7 +149,7 @@ namespace XC_Functional_Libxc
 
 
 //-------------------
-//  xc_functional_libxc_wrapper_xc.cpp
+//  libxc_lda_wrap.cpp
 //-------------------
 
     extern void xc_spin_libxc(
@@ -162,7 +162,7 @@ namespace XC_Functional_Libxc
 
 
 //-------------------
-//  xc_functional_libxc_wrapper_gcxc.cpp
+//  libxc_gga_wrap.cpp
 //-------------------
 
     // the entire GGA functional, for nspin=1 case
@@ -190,20 +190,10 @@ namespace XC_Functional_Libxc
 
 
 //-------------------
-//  xc_functional_libxc_wrapper_tauxc.cpp
+//  libxc_mgga_wrap.cpp
 //-------------------
 
     // wrapper for the mGGA functionals
-    extern void tau_xc(
-        const std::vector<int> &func_id,
-        const double &rho,
-        const double &grho,
-        const double &atau,
-        double &sxc,
-        double &v1xc,
-        double &v2xc,
-        double &v3xc);
-
     extern void tau_xc(
         const std::vector<int> &func_id,
         const double &rho,
@@ -230,10 +220,11 @@ namespace XC_Functional_Libxc
         double &v2xcdw,
         double &v2xcud,
         double &v3xcup,
-        double &v3xcdw);
+        double &v3xcdw,
+        const double &hybrid_alpha);
 
 } // namespace XC_Functional_Libxc
 
 #endif // USE_LIBXC
 
-#endif // XC_FUNCTIONAL_LIBXC_H
+#endif // LIBXC_H

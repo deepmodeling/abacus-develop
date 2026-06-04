@@ -21,23 +21,6 @@ void XC_Functional_Libxc::tau_xc(
     double& sxc,
     double& v1xc,
     double& v2xc,
-    double& v3xc)
-{
-#ifdef __EXX
-    tau_xc(func_id, rho, grho, atau, sxc, v1xc, v2xc, v3xc, GlobalC::exx_info.info_global.hybrid_alpha);
-#else
-    tau_xc(func_id, rho, grho, atau, sxc, v1xc, v2xc, v3xc, 0.0);
-#endif
-}
-
-void XC_Functional_Libxc::tau_xc(
-    const std::vector<int>& func_id,
-    const double& rho,
-    const double& grho,
-    const double& atau,
-    double& sxc,
-    double& v1xc,
-    double& v2xc,
     double& v3xc,
     const double& hybrid_alpha)
 {
@@ -95,7 +78,8 @@ void XC_Functional_Libxc::tau_xc_spin(
     double& v2xcdw,
     double& v2xcud,
     double& v3xcup,
-    double& v3xcdw)
+    double& v3xcdw,
+    const double& hybrid_alpha)
 {
     sxc = 0.0;
     v1xcup = 0.0;
@@ -142,6 +126,20 @@ void XC_Functional_Libxc::tau_xc_spin(
             // call Libxc function: xc_mgga_exc_vxc
             xc_mgga_exc_vxc(&func, 1, rho.data(), grho.data(), lapl.data(), tau.data(), &s, 
 			    v1xc.data(), v2xc.data(), vlapl.data(), v3xc.data());
+
+#ifdef __EXX
+            if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
+            {
+                s *= (1.0 - hybrid_alpha);
+                v1xc[0] *= (1.0 - hybrid_alpha);
+                v1xc[1] *= (1.0 - hybrid_alpha);
+                v2xc[0] *= (1.0 - hybrid_alpha);
+                v2xc[1] *= (1.0 - hybrid_alpha);
+                v2xc[2] *= (1.0 - hybrid_alpha);
+                v3xc[0] *= (1.0 - hybrid_alpha);
+                v3xc[1] *= (1.0 - hybrid_alpha);
+            }
+#endif
 
             sxc += s * (rho[0] * sgn[0] + rho[1] * sgn[1]);
             v1xcup += v1xc[0] * sgn[0];
