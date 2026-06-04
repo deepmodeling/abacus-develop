@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/module_diag/diag_orthogonalizer.h"
 
 #include <ATen/kernels/lapack.h>
 
@@ -220,107 +221,22 @@ void DiagoPPCG<T, Device>::calc_hpsi(const HPsiFunc& hpsi_func,
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::modified_gram_schmidt(T* psi_in, T* hpsi_in) const
 {
-    for (int ib = 0; ib < this->n_work; ++ib)
-    {
-        T* xi  = psi_in  + ib * this->n_basis;
-        T* hxi = hpsi_in + ib * this->n_basis;
-
-        if (ib > 0)
-        {
-            // lagrange = psi[:,0:ib)^H * xi  → device → host
-            T* d_lag = nullptr;
-            resmem_op()(d_lag, ib);
-            setmem_op()(d_lag, 0, ib);
-            ModuleBase::gemv_op<T, Device>()('C', this->n_dim, ib,
-                                             p_one<T>(), psi_in, this->n_basis,
-                                             xi, 1, p_zero<T>(), d_lag, 1);
-            std::vector<T> lag(ib);
-            syncmem_d2h()(lag.data(), d_lag, ib);
-            delmem_op()(d_lag);
-            Parallel_Reduce::reduce_pool(lag.data(), ib);
-
-            // upload to device for gemv input
-            T* d_lag2 = nullptr;
-            resmem_op()(d_lag2, ib);
-            syncmem_h2d()(d_lag2, lag.data(), ib);
-
-            T neg1 = static_cast<T>(-1.0);
-            ModuleBase::gemv_op<T, Device>()('N', this->n_dim, ib,
-                                             &neg1, psi_in,  this->n_basis,
-                                             d_lag2, 1, p_one<T>(), xi, 1);
-            ModuleBase::gemv_op<T, Device>()('N', this->n_dim, ib,
-                                             &neg1, hpsi_in, this->n_basis,
-                                             d_lag2, 1, p_one<T>(), hxi, 1);
-            delmem_op()(d_lag2);
-        }
-
-        const Real nrm = this->vector_norm(xi);
-        if (nrm <= Real(1.0e-14))
-            ModuleBase::WARNING_QUIT("DiagoPPCG::modified_gram_schmidt",
-                                     "linear dependent wavefunctions");
-        this->scale_vector(xi,  Real(1) / nrm);
-        this->scale_vector(hxi, Real(1) / nrm);
-    }
+    DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .modified_gram_schmidt(psi_in, hpsi_in, this->n_work);
 }
 
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::orth_cholesky(T* psi_in, T* hpsi_in)
 {
-    const int nw = this->n_work;
-
-    // S = psi^H psi → device → host
-    T* d_s = nullptr;
-    resmem_op()(d_s, nw * nw);
-    setmem_op()(d_s, 0, nw * nw);
-    ModuleBase::gemm_op<T, Device>()('C', 'N', nw, nw, this->n_dim,
-                                     p_one<T>(), psi_in, this->n_basis,
-                                     psi_in, this->n_basis,
-                                     p_zero<T>(), d_s, nw);
-    std::vector<T> s(nw * nw);
-    syncmem_d2h()(s.data(), d_s, nw * nw);
-    delmem_op()(d_s);
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(s.data(), nw * nw);
-#endif
-
-    ct::kernels::lapack_potrf<T, ct::DEVICE_CPU>()('U', nw, s.data(), nw);
-    for (int col = 0; col < nw; ++col)
-        for (int row = col + 1; row < nw; ++row)
-            s[row + col * nw] = T(0);
-    ct::kernels::lapack_trtri<T, ct::DEVICE_CPU>()('U', 'N', nw, s.data(), nw);
-
-    this->rotate_block(psi_in,  s.data(), this->work);
-    this->rotate_block(hpsi_in, s.data(), this->work);
+    DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .cholesky_orth(psi_in, hpsi_in, this->work, this->n_work);
 }
 
 template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in) const
 {
-    const int nw = this->n_work;
-
-    T* d_s = nullptr;
-    resmem_op()(d_s, nw * nw);
-    setmem_op()(d_s, 0, nw * nw);
-    ModuleBase::gemm_op<T, Device>()('C', 'N', nw, nw, this->n_dim,
-                                     p_one<T>(), psi_in, this->n_basis,
-                                     psi_in, this->n_basis,
-                                     p_zero<T>(), d_s, nw);
-    std::vector<T> s(nw * nw);
-    syncmem_d2h()(s.data(), d_s, nw * nw);
-    delmem_op()(d_s);
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(s.data(), nw * nw);
-#endif
-
-    Real frob2 = 0;
-    for (int col = 0; col < nw; ++col)
-        for (int row = 0; row < nw; ++row)
-        {
-            const T delta = s[row + col * nw]
-                            - static_cast<T>(row == col ? 1.0 : 0.0);
-            frob2 += std::norm(delta);
-        }
-    return std::sqrt(frob2) < Real(1e-1);
+    return DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .check_orthonormality(psi_in, this->n_work, Real(1e-1));
 }
 
 // ---- rotation ---------------------------------------------------------------
@@ -420,33 +336,8 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_to_orthogonal_complement(T* psi_in,
                                                             T* block) const
 {
-    const int nw = this->n_work;
-
-    // C = psi^H * block → device → host
-    T* d_c = nullptr;
-    resmem_op()(d_c, nw * nw);
-    setmem_op()(d_c, 0, nw * nw);
-    ModuleBase::gemm_op<T, Device>()('C', 'N', nw, nw, this->n_dim,
-                                     p_one<T>(), psi_in, this->n_basis,
-                                     block, this->n_basis,
-                                     p_zero<T>(), d_c, nw);
-    std::vector<T> coeff(nw * nw);
-    syncmem_d2h()(coeff.data(), d_c, nw * nw);
-    delmem_op()(d_c);
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(coeff.data(), nw * nw);
-#endif
-
-    // block = block - psi * coeff
-    T* d_c2 = nullptr;
-    resmem_op()(d_c2, nw * nw);
-    syncmem_h2d()(d_c2, coeff.data(), nw * nw);
-    T neg1 = static_cast<T>(-1.0);
-    ModuleBase::gemm_op<T, Device>()('N', 'N', this->n_dim, nw, nw,
-                                     &neg1, psi_in, this->n_basis,
-                                     d_c2, nw,
-                                     p_one<T>(), block, this->n_basis);
-    delmem_op()(d_c2);
+    DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .project_out(psi_in, block, this->n_work, this->n_work);
 }
 
 // ---- small generalized eigenproblem -----------------------------------------

@@ -11,6 +11,7 @@
 #include <source_base/tool_title.h>             // ModuleBase::TITLE
 #include <source_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
 #include <source_hsolver/diago_cg.h>
+#include <source_hsolver/module_diag/diag_orthogonalizer.h>
 
 using namespace hsolver;
 
@@ -265,46 +266,10 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                    ct::Tensor& lagrange)
 {
     this->spsi_func_(grad.data<T>(), scg.data<T>(), this->n_basis_, 1); // scg = S|grad>
-    ModuleBase::gemv_op<T, Device>()('C',
-                                     this->n_basis_,
-                                     m,
-                                     this->one_,
-                                     psi.data<T>(),
-                                     this->n_basis_,
-                                     scg.data<T>(),
-                                     1,
-                                     this->zero_,
-                                     lagrange.data<T>(),
-                                     1);
-
-    Parallel_Reduce::reduce_pool(lagrange.data<T>(), m);
-
-    // (3) orthogonal |g> and |scg> to all states (0~m-1)
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan replace 2022-10-07
-    ModuleBase::gemv_op<T, Device>()('N',
-                                     this->n_basis_,
-                                     m,
-                                     this->neg_one_,
-                                     psi.data<T>(),
-                                     this->n_basis_,
-                                     lagrange.data<T>(),
-                                     1,
-                                     this->one_,
-                                     grad.data<T>(),
-                                     1);
-
-    ModuleBase::gemv_op<T, Device>()('N',
-                                     this->n_basis_,
-                                     m,
-                                     this->neg_one_,
-                                     psi.data<T>(),
-                                     this->n_basis_,
-                                     lagrange.data<T>(),
-                                     1,
-                                     this->one_,
-                                     scg.data<T>(),
-                                     1);
+    DiagOrthogonalizer<T, Device> orth(this->n_basis_, this->n_basis_);
+    orth.overlap_with_metric(psi.data<T>(), scg.data<T>(), lagrange.data<T>(), m, 1);
+    orth.project_out_with_coeff(psi.data<T>(), lagrange.data<T>(), grad.data<T>(), m, 1);
+    orth.project_out_with_coeff(psi.data<T>(), lagrange.data<T>(), scg.data<T>(), m, 1);
 }
 
 template <typename T, typename Device>
@@ -487,79 +452,12 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
     REQUIRES_OK(this->n_band_ >= m, "DiagoCG_New::schmit_orth: n_band < m");
 
     ct::Tensor lagrange_so = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {m + 1});
-
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan replace 2022-10-6
-    int inc = 1;
-    ModuleBase::gemv_op<T, Device>()('C',
-                                     this->n_basis_,
-                                     m + 1,
-                                     this->one_,
-                                     psi.data<T>(),
-                                     this->n_basis_,
-                                     sphi.data<T>(),
-                                     inc,
-                                     this->zero_,
-                                     lagrange_so.data<T>(),
-                                     inc);
-
-    // be careful , here reduce m+1
-    Parallel_Reduce::reduce_pool(lagrange_so.data<T>(), m + 1);
-
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan replace 2022-10-6
-    ModuleBase::gemv_op<T, Device>()('N',
-                                     this->n_basis_,
-                                     m,
-                                     this->neg_one_,
-                                     psi.data<T>(),
-                                     this->n_basis_,
-                                     lagrange_so.data<T>(),
-                                     inc,
-                                     this->one_,
-                                     phi_m.data<T>(),
-                                     inc);
-
-    //======================================================================
-    /*for (int j = 0; j < m; j++)
-    {
-        for (int ig =0; ig < dim; ig++)
-        {
-            phi_m[ig] -= lagrange[j] * psi(j, ig);
-        }
-        psi_norm -= ( conj(lagrange[j]) * lagrange[j] ).real();
-    }*/
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    auto psi_norm = ct::extract<Real>(lagrange_so[m])
-                    - dot_real_op()(m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
-
-    if (psi_norm <= 0.0)
-    {
-        std::cout << " m = " << m << std::endl;
-        for (int j = 0; j <= m; ++j)
-        {
-            std::cout << "j = " << j << " lagrange norm = " << ct::extract<Real>(lagrange_so[j] * lagrange_so[j])
-                      << std::endl;
-        }
-        std::cout << " in DiagoCG, psi norm = " << psi_norm << std::endl;
-        std::cout << " This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-        std::cout << " the number of bands, leading to a rank-deficient problem." << std::endl;
-        std::cout << " Please increase ecutwfc or reduce nbands." << std::endl;
-        std::cout << " If you use GNU compiler, it may due to the zdotc is unavailable." << std::endl;
-        ModuleBase::WARNING_QUIT("schmit_orth", "psi_norm <= 0.0");
-    }
-
-    psi_norm = sqrt(psi_norm);
-
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan replace 2022-10-6
-    // scal_op<Real, Device>()(ctx_, this->n_basis_, &psi_norm, pphi_m, 1);
-    //======================================================================
-    // for (int ig = 0; ig < this->n_basis_; ig++)
-    // {
-    //     pphi_m[ig] /= psi_norm;
-    // }
-    ModuleBase::vector_mul_real_op<T, Device>()(this->n_basis_, phi_m.data<T>(), phi_m.data<T>(), Real(1.0 / psi_norm));
+    DiagOrthogonalizer<T, Device>(this->n_basis_, this->n_basis_)
+        .schmidt_orthogonalize_s_metric(psi.data<T>(),
+                                        sphi.data<T>(),
+                                        phi_m.data<T>(),
+                                        lagrange_so.data<T>(),
+                                        m);
 
     // ModuleBase::timer::end("DiagoCG","schmit_orth");
 }
