@@ -108,7 +108,8 @@ void KEDF_ML::set_para(
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
             }
 
-            ofs_running << " feg_net_F = " << this->feg_net_F << " (Fermi energy guess factor)" << std::endl << std::endl;
+            ofs_running << " feg_net_F = " << this->feg_net_F 
+		    << " (Pauli energy enhancement factor in free electron gas)" << std::endl << std::endl;
         }
     }
     else

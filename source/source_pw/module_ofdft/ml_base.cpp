@@ -27,6 +27,8 @@ void ML_Base::set_device(const std::string& device_inpt, std::ostream& ofs_runni
         }
         else
         {
+	    std::cout << "--------------- Warning: GPU is unavailable ---------------" << std::endl;
+
             ofs_running << "--------------- Warning: GPU is unavailable ---------------" << std::endl;
             ofs_running << "------------------- Running Neural Network on CPU -------------------" << std::endl;
             this->device_type = torch::kCPU;
