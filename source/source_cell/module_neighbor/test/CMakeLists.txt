@@ -23,3 +23,9 @@ AddTest(
   ../sltk_atom.cpp
   ../../../source_io/module_output/output.cpp
 )
+
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_mpi_domain
+  LIBS ${math_libs}
+  SOURCES mpi_domain_test.cpp ../mpi_domain.cpp
+)
