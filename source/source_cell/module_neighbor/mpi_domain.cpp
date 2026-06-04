@@ -102,11 +102,14 @@ MpiDomain::~MpiDomain()
 void MpiDomain::reset()
 {
 #ifdef __MPI
-    int mpi_finalized = 0;
-    MPI_Finalized(&mpi_finalized);
-    if (!mpi_finalized && owns_comm_ && cart_comm_ != MPI_COMM_NULL)
+    if (owns_comm_ && cart_comm_ != MPI_COMM_NULL)
     {
-        MPI_Comm_free(&cart_comm_);
+        int mpi_finalized = 0;
+        MPI_Finalized(&mpi_finalized);
+        if (!mpi_finalized)
+        {
+            MPI_Comm_free(&cart_comm_);
+        }
     }
 #endif
     cart_comm_ = MPI_COMM_NULL;
