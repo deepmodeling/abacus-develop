@@ -258,3 +258,65 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
 
     delete elecstate.charge;
 }
+
+TEST_F(ElecStatePrintTest, PrintEtotSDFTPure)
+{
+    bool converged = false;
+    int iter = 1;
+    double scf_thr = 0.1;
+    double scf_thr_kin = 0.0;
+    double duration = 2.0;
+    double pw_diag_thr = 0.1;
+    int avg_iter = 2;
+    bool print = true;
+    elecstate.charge = new Charge;
+    elecstate.charge->nrxx = 100;
+    elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
+    PARAM.input.nspin = 1;
+    GlobalV::MY_RANK = 0;
+    // Pure SDFT: nbands=0, no KS diagonalization -> ITER column should show CT
+    PARAM.input.esolver_type = "sdft";
+    PARAM.input.nbands = 0;
+    PARAM.input.ks_solver = "cg";
+
+    testing::internal::CaptureStdout();
+    elecstate::print_etot(ucell.magnet, elecstate, converged, iter, scf_thr,
+                          scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("CT"));
+
+    delete elecstate.charge;
+}
+
+TEST_F(ElecStatePrintTest, PrintEtotSDFTMixed)
+{
+    bool converged = false;
+    int iter = 1;
+    double scf_thr = 0.1;
+    double scf_thr_kin = 0.0;
+    double duration = 2.0;
+    double pw_diag_thr = 0.1;
+    int avg_iter = 2;
+    bool print = true;
+    elecstate.charge = new Charge;
+    elecstate.charge->nrxx = 100;
+    elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
+    PARAM.input.nspin = 1;
+    GlobalV::MY_RANK = 0;
+    // Mixed SDFT: nbands>0, still diagonalizes KS orbitals -> ITER column shows ks_solver label
+    PARAM.input.esolver_type = "sdft";
+    PARAM.input.nbands = 5;
+    PARAM.input.ks_solver = "dav";
+
+    testing::internal::CaptureStdout();
+    elecstate::print_etot(ucell.magnet, elecstate, converged, iter, scf_thr,
+                          scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("DA"));
+
+    delete elecstate.charge;
+}
