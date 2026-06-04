@@ -84,12 +84,12 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 
     const int nat = ucell.nat;
 
-#pragma omp parallel
+#pragma omp parallel if (nat >= 256)
     {
         double vl[9] = {0};
         double pot_local = 0.0;
 
-#pragma omp for schedule(dynamic, 32) if (nat >= 256)
+#pragma omp for schedule(dynamic, 32)
         for (int iat = 0; iat < nat; ++iat)
         {
             const int it = atom_type_index[iat];
