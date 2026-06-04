@@ -135,7 +135,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         }
     }
 
-    if (PARAM.inp.nspin == 2) // magnetization-channel PDM
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel PDM
     {
         this->pdm_mag.resize(this->deepks_param.inlmax);
         for (int inl = 0; inl < this->deepks_param.inlmax; ++inl)
@@ -222,7 +222,7 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
 
-    if (PARAM.inp.nspin == 2) // magnetization-channel gedm
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel gedm
     {
         this->gedm_mag = new double*[this->deepks_param.inlmax];
         for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
@@ -280,7 +280,7 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
                                });
     this->dm_r->allocate(nullptr, true);
 
-    if (PARAM.inp.nspin == 2) // magnetization-channel real-space DM
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel real-space DM
     {
         this->dm_r_mag = new hamilt::HContainer<double>(*this->dm_r);
     }

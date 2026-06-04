@@ -41,7 +41,10 @@ void cal_edelta_gedm(const int nat,
                      const std::vector<torch::Tensor>& pdm,
                      torch::jit::script::Module& model_deepks,
                      double** gedm,
-                     double& E_delta);
+                     double& E_delta,
+                     const std::vector<torch::Tensor>* descriptor_mag = nullptr,
+                     const std::vector<torch::Tensor>* pdm_mag = nullptr,
+                     double** gedm_mag = nullptr);
 void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
 void cal_edelta_gedm_equiv(const int nat,
                            const DeePKS_Param& deepks_param,

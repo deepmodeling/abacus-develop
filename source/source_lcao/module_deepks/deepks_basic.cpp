@@ -221,16 +221,30 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     const std::vector<torch::Tensor>& pdm,
                                     torch::jit::script::Module& model_deepks,
                                     double** gedm,
-                                    double& E_delta)
+                                    double& E_delta,
+                                    const std::vector<torch::Tensor>* descriptor_mag,
+                                    const std::vector<torch::Tensor>* pdm_mag,
+                                    double** gedm_mag)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
     ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm");
 
+    const bool two_channel = (descriptor_mag != nullptr && pdm_mag != nullptr && gedm_mag != nullptr);
+
     // forward
     std::vector<torch::jit::IValue> inputs;
-
-    // input_dim:(natom, des_per_atom)
-    inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom}));
+    if (!two_channel)
+    {
+        // input_dim:(natom, des_per_atom)
+        inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom}));
+    }
+    else
+    {
+        // nspin=2: charge and magnetization channels -> (1, natom, 2, des_per_atom)
+        torch::Tensor d_charge = torch::cat(descriptor, 0).reshape({1, nat, deepks_param.des_per_atom});
+        torch::Tensor d_mag = torch::cat(*descriptor_mag, 0).reshape({1, nat, deepks_param.des_per_atom});
+        inputs.push_back(torch::stack({d_charge, d_mag}, 2));
+    }
     std::vector<torch::Tensor> ec;
     try
     {
@@ -250,8 +264,13 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
     gedm_shell.push_back(torch::ones_like(ec[0]));
+    std::vector<torch::Tensor> grad_inputs(pdm.begin(), pdm.end());
+    if (two_channel)
+    {
+        grad_inputs.insert(grad_inputs.end(), pdm_mag->begin(), pdm_mag->end());
+    }
     std::vector<torch::Tensor> gedm_tensor = torch::autograd::grad(ec,
-                                                                   pdm,
+                                                                   grad_inputs,
                                                                    gedm_shell,
                                                                    /*retain_grad=*/true,
                                                                    /*create_graph=*/false,
@@ -268,6 +287,21 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
             {
                 int index = m1 * nm + m2;
                 gedm[inl][index] = accessor[m1][m2] * 2; //*2 is for Hartree to Ry
+            }
+        }
+    }
+    if (two_channel)
+    {
+        for (int inl = 0; inl < deepks_param.inlmax; ++inl)
+        {
+            int nm = 2 * deepks_param.inl2l[inl] + 1;
+            auto accessor = gedm_tensor[deepks_param.inlmax + inl].accessor<double, 2>();
+            for (int m1 = 0; m1 < nm; ++m1)
+            {
+                for (int m2 = 0; m2 < nm; ++m2)
+                {
+                    gedm_mag[inl][m1 * nm + m2] = accessor[m1][m2] * 2;
+                }
             }
         }
     }

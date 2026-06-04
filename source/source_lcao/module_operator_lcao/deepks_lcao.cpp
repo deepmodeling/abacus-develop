@@ -172,6 +172,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       descriptor);
         if (PARAM.inp.deepks_equiv)
         {
+            // equivariant version: an independent path; spin is not handled here
             DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
                                                  this->ld->deepks_param,
                                                  descriptor,
@@ -180,15 +181,48 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                                  this->ld->E_delta,
                                                  GlobalV::MY_RANK);
         }
-        else
+        else // traditional version
         {
-            DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
+            if (PARAM.inp.nspin == 2)
+            {
+                // spin-polarized: add the magnetization channel
+                bool init_pdm_mag = false;
+                DeePKS_domain::cal_pdm<TK>(init_pdm_mag,
                                            this->ld->deepks_param,
-                                           descriptor,
-                                           this->ld->pdm,
-                                           this->ld->model_deepks,
-                                           this->ld->gedm,
-                                           this->ld->E_delta);
+                                           this->kvec_d,
+                                           this->ld->dm_r_mag,
+                                           this->ld->phialpha,
+                                           *this->ucell,
+                                           *ptr_orb_,
+                                           *(this->gd),
+                                           *(this->hR->get_paraV()),
+                                           this->ld->pdm_mag);
+                std::vector<torch::Tensor> descriptor_mag;
+                DeePKS_domain::cal_descriptor(this->ucell->nat,
+                                              this->ld->deepks_param,
+                                              this->ld->pdm_mag,
+                                              descriptor_mag);
+                DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
+                                               this->ld->deepks_param,
+                                               descriptor,
+                                               this->ld->pdm,
+                                               this->ld->model_deepks,
+                                               this->ld->gedm,
+                                               this->ld->E_delta,
+                                               &descriptor_mag,
+                                               &this->ld->pdm_mag,
+                                               this->ld->gedm_mag);
+            }
+            else
+            {
+                DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
+                                               this->ld->deepks_param,
+                                               descriptor,
+                                               this->ld->pdm,
+                                               this->ld->model_deepks,
+                                               this->ld->gedm,
+                                               this->ld->E_delta);
+            }
         }
 
         // // recalculate the V_delta_R
