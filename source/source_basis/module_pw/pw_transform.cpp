@@ -15,11 +15,30 @@ namespace ModulePW
 //     return default_device_cpu;
 // }
 /**
- * @brief transform real space to reciprocal space
- * @details c(g)=\int dr*f(r)*exp(-ig*r)
- *          Here we calculate c(g)
- * @param in: (nplane,ny,nx), std::complex<double> data
- * @param out: (nz, ns),  std::complex<double> data
+ * @brief Transform real-space data to reciprocal-space plane-wave coefficients (complex input).
+ * @details
+ * Performs the forward 3D FFT with MPI parallel transposition for non-gamma-only calculations.
+ * Computes: c(g) = (1/N) * sum_r f(r) * exp(-i g·r)
+ *
+ * This is the #1 hotspot function in ABACUS, accounting for 22-30% of total SCF runtime.
+ * The implementation uses a 2D domain decomposition strategy:
+ * 1. Copy input real-space data to FFT buffer (z-slab distributed, O(nrxx))
+ * 2. In-place 2D FFT on each xy-plane (fftxyfor, independent per process)
+ * 3. MPI_Alltoallv transposition: xy-planes → z-sticks (gatherp_scatters)
+ *    - Communication volume: O(nst_per * nz * sizeof(complex))
+ * 4. In-place 1D FFT along each z-stick (fftzfor)
+ * 5. Extract plane-wave coefficients: out[ig] = auxg[ig2isz[ig]] / nxyz
+ *
+ * @tparam FPTYPE Floating-point precision (float or double)
+ * @param in  Input real-space array, shape (nplane, ny, nx) in z-slab distribution
+ *            Each MPI process holds nplane xy-planes, for nrxx = nplane*nx*ny local elements
+ * @param out Output reciprocal-space array, shape (npw) — plane-wave coefficients
+ *            Only stores coefficients for G-vectors on this process (stick distribution)
+ * @param add If true, add scaled result to existing out[]; if false, overwrite out[]
+ * @param factor Scaling factor applied when add=true: out[ig] += factor * c(g)
+ * @note The 1/nxyz normalization is always applied regardless of add/factor
+ * @note For gamma-only calculations, use the real-input overload (r2c FFT path)
+ * @see recip2real() for the inverse transform, gatherp_scatters() for MPI communication
  */
 template <typename FPTYPE>
 void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
@@ -73,11 +92,20 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
 }
 
 /**
- * @brief transform real space to reciprocal space
- * @details c(g)=\int dr*f(r)*exp(-ig*r)
- *          Here we calculate c(g)
- * @param in: (nplane,ny,nx), double data
- * @param out: (nz, ns),  std::complex<double> data
+ * @brief Transform real-valued real-space data to reciprocal-space (gamma-only or non-gamma).
+ * @details
+ * Two code paths depending on gamma_only flag:
+ * - gamma_only=true:  Uses r2c FFT (fftxyr2c). Only half the FFT grid is stored (fftnx = nx/2+1),
+ *   exploiting Hermitian symmetry to save ~50% memory and computation.
+ * - gamma_only=false: Converts real input to complex, then follows the same 3D FFT path as
+ *   the complex-input overload (fftxyfor → gatherp_scatters → fftzfor).
+ *
+ * @tparam FPTYPE Floating-point precision (float or double)
+ * @param in  Input real-space array (real-valued), shape (nplane, ny, nx) in z-slab distribution
+ * @param out Output reciprocal-space plane-wave coefficients (complex)
+ * @param add  If true, accumulate scaled result into out[]; if false, overwrite
+ * @param factor Scaling factor for add mode
+ * @see real2recip(const std::complex<FPTYPE>*, ...) for the complex-input variant
  */
 template <typename FPTYPE>
 void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
@@ -147,11 +175,25 @@ void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const boo
 }
 
 /**
- * @brief transform reciprocal space to real space
- * @details f(r)=1/V * \sum_{g} c(g)*exp(ig*r)
- *          Here we calculate f(r)
- * @param in: (nz,ns), std::complex<double>
- * @param out: (nplane, ny, nx), std::complex<double>
+ * @brief Transform reciprocal-space plane-wave coefficients to real-space data (complex output).
+ * @details
+ * Performs the inverse 3D FFT — the reverse of real2recip():
+ * f(r) = sum_g c(g) * exp(i g·r)
+ *
+ * Algorithm (reverse of real2recip):
+ * 1. Zero-fill the FFT stick buffer (nst*nz elements), then scatter: auxg[ig2isz[ig]] = in[ig]
+ * 2. Backward 1D FFT along each z-stick (fftzbac)
+ * 3. MPI_Alltoallv transposition: sticks → xy-planes (gathers_scatterp, reverse direction)
+ * 4. Backward 2D FFT on each xy-plane (fftxybac)
+ * 5. Copy/extract real-space result: out[ir] = auxr[ir]
+ *
+ * @tparam FPTYPE Floating-point precision (float or double)
+ * @param in  Input reciprocal-space array, shape (npw) — plane-wave coefficients in stick distribution
+ * @param out Output real-space array, shape (nplane, ny, nx) in z-slab distribution
+ * @param add If true, add scaled result to existing out[]; if false, overwrite
+ * @param factor Scaling factor for add mode: out[ir] += factor * f(r)
+ * @note No 1/nxyz normalization factor is applied (unlike real2recip)
+ * @see real2recip() for the forward transform, gathers_scatterp() for MPI communication
  */
 template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
@@ -211,11 +253,20 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
 }
 
 /**
- * @brief transform reciprocal space to real space
- * @details f(r)=1/V * \sum_{g} c(g)*exp(ig*r)
- *          Here we calculate f(r)
- * @param in: (nz,ns), std::complex<double>
- * @param out: (nplane, ny, nx), double
+ * @brief Transform reciprocal-space to real-valued real-space (gamma-only or non-gamma).
+ * @details
+ * Two code paths:
+ * - gamma_only=true:  Uses c2r FFT (fftxyc2r) to exploit Hermitian symmetry. After backward 1D FFT
+ *   and MPI transposition, applies c2r FFT producing real-valued output directly.
+ * - gamma_only=false: Follows the standard complex path (fftzbac → gathers_scatterp → fftxybac),
+ *   then extracts the real part of the complex result.
+ *
+ * @tparam FPTYPE Floating-point precision (float or double)
+ * @param in  Input reciprocal-space plane-wave coefficients (complex)
+ * @param out Output real-space array (real-valued)
+ * @param add If true, accumulate scaled result into out[]; if false, overwrite
+ * @param factor Scaling factor for add mode
+ * @see recip2real(const std::complex<FPTYPE>*, std::complex<FPTYPE>*, ...) for complex output
  */
 template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
