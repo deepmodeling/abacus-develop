@@ -149,6 +149,7 @@ void rescale_vel(const int& natom,
         factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
     }
 
+#pragma omp parallel for schedule(static) if (natom >= 256)
     for (int i = 0; i < natom; i++)
     {
         vel[i] = vel[i] * sqrt(factor);

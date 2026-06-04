@@ -189,7 +189,10 @@ void FIRE::check_fire(void)
         dt_max = 2.5 * md_dt;
     }
 
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+
+#pragma omp parallel for reduction(+:P, sumforce, normvel) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         P += vel[i].x * force[i].x + vel[i].y * force[i].y + vel[i].z * force[i].z;
         sumforce += force[i].norm2();
@@ -199,7 +202,8 @@ void FIRE::check_fire(void)
     sumforce = sqrt(sumforce);
     normvel = sqrt(normvel);
 
-    for (int i = 0; i < ucell.nat; ++i)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -221,7 +225,8 @@ void FIRE::check_fire(void)
         md_dt *= fdec;
         negative_count = 0;
 
-        for (int i = 0; i < ucell.nat; ++i)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+        for (int i = 0; i < nat; ++i)
         {
             for (int j = 0; j < 3; ++j)
             {
