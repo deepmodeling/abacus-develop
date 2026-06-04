@@ -35,7 +35,6 @@ void Cal_MLKEDF_Descriptors::set_para(
     this->kernel_scaling = kernel_scaling;
     this->yukawa_alpha = yukawa_alpha;
     this->kernel_file = kernel_file;
-    ofs_running << "nkernel = " << nkernel << std::endl;
 
     if (PARAM.inp.of_wt_rho0 != 0)
     {

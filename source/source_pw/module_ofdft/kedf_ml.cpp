@@ -72,7 +72,8 @@ void KEDF_ML::set_para(
         of_ml_tanhq_nl,
         ofs_running);
 
-    ofs_running << " ninput = " << ninput << std::endl;
+    ofs_running << " ninput = " << ninput << " (number of descriptors)" << std::endl;
+    ofs_running << " nkernel = " << this->nkernel << " (number of kernel functions)" << std::endl;
 
     if (PARAM.inp.of_kinetic == "ml")
     {
@@ -80,7 +81,7 @@ void KEDF_ML::set_para(
         int nlayer = 3;
         this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device, ofs_running);
         torch::load(this->nn, "net.pt", this->device_type);
-        ofs_running << "load net done" << std::endl;
+        ofs_running << " load net done (neural network loaded successfully)" << std::endl;
         if (PARAM.inp.of_ml_feg != 0)
         {
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
@@ -98,7 +99,7 @@ void KEDF_ML::set_para(
                 this->feg_net_F = this->nn->forward(feg_inpt).to(this->device_CPU).contiguous().data_ptr<double>()[0];
             }
 
-            ofs_running << " feg_net_F = " << this->feg_net_F << std::endl;
+            ofs_running << " feg_net_F = " << this->feg_net_F << " (Fermi energy guess factor)" << std::endl << std::endl;
         }
     } 
     
