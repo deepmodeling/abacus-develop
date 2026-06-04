@@ -19,6 +19,9 @@
 
 #ifdef USE_LIBXC
 #include "libxc.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 #endif
 
 void XC_Functional::gradcorr(
