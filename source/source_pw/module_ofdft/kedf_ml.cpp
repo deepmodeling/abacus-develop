@@ -130,9 +130,9 @@ void KEDF_ML::set_para(
  */
 double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
 {
-    this->updateInput(prho, pw_rho);
+    this->update_input(prho, pw_rho);
 
-    this->NN_forward(prho, pw_rho, false);
+    this->nn_forward(prho, pw_rho, false);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -160,9 +160,9 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
     ModuleBase::TITLE("KEDF_ML", "ml_potential");
     ModuleBase::timer::start("KEDF_ML", "pauli_energy");
 
-    this->updateInput(prho, pw_rho);
+    this->update_input(prho, pw_rho);
 
-    this->NN_forward(prho, pw_rho, true);
+    this->nn_forward(prho, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
 
@@ -200,9 +200,9 @@ void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *
     // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
     {
-        this->updateInput(prho, pw_rho);
+        this->update_input(prho, pw_rho);
 
-        this->NN_forward(prho, pw_rho, true);
+        this->nn_forward(prho, pw_rho, true);
         
         torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
         this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -214,8 +214,8 @@ void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *
 
         this->get_potential_(prho, pw_rho, potential);
 
-        this->dumpTensor("enhancement.npy", enhancement);
-        this->dumpMatrix("potential.npy", potential);
+        this->dump_tensor("enhancement.npy", enhancement);
+        this->dump_matrix("potential.npy", potential);
     }
 }
 
@@ -232,7 +232,7 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     bool fortran_order = false;
 
     std::vector<double> temp_prho(this->nx);
-    this->loadVector("dir_of_input_rho", temp_prho);
+    this->load_vector("dir_of_input_rho", temp_prho);
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
     for (int ir = 0; ir < this->nx; ++ir) prho[0][ir] = temp_prho[ir];
@@ -244,9 +244,9 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
     };
     // ==============================
 
-    this->updateInput(prho, pw_rho);
+    this->update_input(prho, pw_rho);
 
-    this->NN_forward(prho, pw_rho, true);
+    this->nn_forward(prho, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -258,8 +258,8 @@ void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
 
     this->get_potential_(prho, pw_rho, potential);
 
-    this->dumpTensor("enhancement-abacus.npy", enhancement);
-    this->dumpMatrix("potential-abacus.npy", potential);
+    this->dump_tensor("enhancement-abacus.npy", enhancement);
+    this->dump_matrix("potential-abacus.npy", potential);
     exit(0);
 }
 #endif
