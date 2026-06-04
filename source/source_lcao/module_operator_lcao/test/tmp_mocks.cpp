@@ -213,8 +213,17 @@ void Numerical_Orbital::set_orbital_info(const int&,
 // mock of TD_info
 class TD_info {
 public:
-    TD_info() {}
+    TD_info(): phase_hybrid{} {td_vel_op = this;}
     ~TD_info() {}
     static ModuleBase::Vector3<double> cart_At;
+    static TD_info* td_vel_op;
+    std::map<ModuleBase::Vector3<int>, std::complex<double>> phase_hybrid;
+    const std::map<ModuleBase::Vector3<int>, std::complex<double>>& get_phase_hybrid() const
+    {
+        return this->phase_hybrid;
+    }
 };
 ModuleBase::Vector3<double> TD_info::cart_At(0.0, 0.0, 0.0);
+TD_info* TD_info::td_vel_op = nullptr;
+
+static TD_info mock_td_info;  
