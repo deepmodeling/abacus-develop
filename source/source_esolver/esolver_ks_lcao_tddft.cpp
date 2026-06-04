@@ -177,7 +177,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                         GlobalV::ofs_running,
                                         GlobalV::ofs_warning);
             this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp);
-            this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+            elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, 
+			    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
             if (totstep <= PARAM.inp.td_tend + 1)
             {

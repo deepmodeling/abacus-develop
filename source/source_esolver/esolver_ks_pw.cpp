@@ -165,7 +165,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
               this->stp.template get_psi_t<T, Device>(), 
 	      this->p_hamilt, 
-	      this->pw_wfc, this->pw_rhod, PARAM.inp);
+	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
@@ -279,7 +279,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Calculate kinetic energy density tau for ELF if needed
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->pelec->cal_tau(*(this->stp.psi_cpu));
+        auto* elec_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto& psi = *this->stp.template get_psi_t<T, Device>();
+        elec_pw->cal_tau(psi);
     }
 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);
