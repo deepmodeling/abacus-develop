@@ -211,6 +211,16 @@ class GTORadials:
         import numpy as np
         g = c * np.exp(-a * r**2) * r**l
         return g
+
+    def _gto_radial_norm(a, l):
+        """Normalization factor of r^l exp(-a r^2) with normalized spherical harmonics.
+
+        The NAO fit uses unnormalized radial primitives, while Molden readers
+        usually normalize primitive Gaussian functions internally. Therefore the
+        fitted coefficient should be divided by this factor when writing Molden.
+        """
+        import math
+        return math.sqrt(2.0 * (2.0 * a)**(l + 1.5) / math.gamma(l + 1.5))
     
     def __str__(self) -> str:
         """print the GTOs in the Gaussian format. Different CGTO are printed as different section."""
@@ -247,6 +257,7 @@ class GTORadials:
                     out += f"{spectra[l]:>25s}{ngto:>8d}{'1.00':>8s}\n"
                     for ig in range(ngto):
                         a, c = NumericalRadial[l][ic][ig]
+                        c /= GTORadials._gto_radial_norm(a, l)
                         out += f"{a:>62.3f} {c:>12.3f}\n"
             out += "\n"
         return out
@@ -261,11 +272,12 @@ class GTORadials:
                     out += f"{spectra[l]:>25s}{ngto:>8d}{'1.00':>8s}\n"
                     for ig in range(ngto):
                         a, c = NumericalRadial[l][ic][ig]
+                        c /= GTORadials._gto_radial_norm(a, l)
                         out += f"{a:>62.3f} {c:>12.3f}\n"
         out += "\n"
         return out
 
-def fit_radial_with_gto(nao, ngto, l, r, rel_r=2):
+def _fit_radial_with_gto_result(nao, ngto, l, r, rel_r=2):
     """fit one radial function mapped on grid with GTOs
     
     Args:
@@ -334,16 +346,35 @@ def fit_radial_with_gto(nao, ngto, l, r, rel_r=2):
     norm_nao = simpson(nao**2 * r**2, x=r)
     norm_gto = simpson(out[0][l][0]**2 * r**2, x=r)
     factor = np.sqrt(norm_nao / norm_gto)
-    print(f"NAO2GTO: Renormalize the CGTO from NAO2GTO method with factor {factor:.4f}")
     c *= factor # renormalize the coefficients to make the norm of GTO equals to that of NAO
 
+    return a, c, err, factor
+
+def _print_fit_radial_with_gto_result(a, c, err, factor, ngto, l, best_rel_r=None):
+    print(f"NAO2GTO: Renormalize the CGTO from NAO2GTO method with factor {factor:.4f}")
+    best_rel_r_line = "" if best_rel_r is None else f"         Best rel_r: {best_rel_r}\n"
+
     print(f"""NAO2GTO: Angular momentum {l}, with {ngto} superposition to fit numerical atomic orbitals on given grid, 
-         Nonlinear fitting error: {err:.4e}
+{best_rel_r_line}         Nonlinear fitting error: {err:.4e}
          Exponential and contraction coefficients of primitive GTOs in a.u.:
 {"a":>10} {"c":>10}\n---------------------""")
     for i in range(ngto):
         print(f"{a[i]:10.6f} {c[i]:10.6f}")
     print(f"\nNAO2GTO: The fitted GTOs are saved in the CGTO instance.")
+
+def fit_radial_with_gto(nao, ngto, l, r, rel_r=2):
+    a, c, err, factor = _fit_radial_with_gto_result(nao, ngto, l, r, rel_r)
+    _print_fit_radial_with_gto_result(a, c, err, factor, ngto, l)
+    return a, c
+
+def fit_radial_with_gto_multistart(nao, ngto, l, r, rel_rs):
+    """Run independent rel_r starts and keep the fit with the lowest error."""
+    results = []
+    for rel_r in rel_rs:
+        a, c, err, factor = _fit_radial_with_gto_result(nao, ngto, l, r, rel_r)
+        results.append((err, rel_r, a, c, factor))
+    err, best_rel_r, a, c, factor = min(results, key=lambda item: item[0])
+    _print_fit_radial_with_gto_result(a, c, err, factor, ngto, l, best_rel_r)
     return a, c
 
 def read_nao(fpath):
@@ -399,6 +430,15 @@ def read_nao(fpath):
 
     return {'elem': elem, 'ecut': ecut, 'rcut': rcut, 'nr': nr, 'dr': dr, 'chi': chi}
 
+def parse_rel_r(rel_r):
+    """Return a single rel_r value, or a list for optional multi-start fitting."""
+    if isinstance(rel_r, str):
+        rel_r = rel_r.strip()
+        if "," in rel_r:
+            return [float(item) for item in rel_r.split(",") if item.strip()]
+        return float(rel_r)
+    return rel_r
+
 def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7, rel_r: float = 2):
     """convert the numerical atomic orbitals to GTOs. Each chi (or say the zeta function)
     corresponds to a CGTO (contracted GTO), and the GTOs are fitted to the radial functions.
@@ -408,6 +448,7 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7, rel_r: float = 2):
     import numpy as np
     import os
 
+    rel_r = parse_rel_r(rel_r)
     gto = GTORadials()
     # read the numerical atomic orbitals
     nao = read_nao(fnao)
@@ -418,7 +459,10 @@ def convert_nao_to_gto(fnao, fgto = None, ngto: int = 7, rel_r: float = 2):
     for l in range(lmax+1):
         nchi = len(nao["chi"][l])
         for i in range(nchi):
-            a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid, rel_r)
+            if isinstance(rel_r, list):
+                a, c = fit_radial_with_gto_multistart(nao["chi"][l][i], ngto, l, rgrid, rel_r)
+            else:
+                a, c = fit_radial_with_gto(nao["chi"][l][i], ngto, l, rgrid, rel_r)
             gto.register_cgto(a, c, l, symbol, 'a')
     
     # draw the fitted GTOs
@@ -791,6 +835,34 @@ def write_molden_atoms(labels, kinds, labels_kinds_map, coords):
         out += f"{elem:<2s}{i+1:>8d}{ptable(elem):>8d}{coords[i][0]:>15.6f}{coords[i][1]:>15.6f}{coords[i][2]:>15.6f}\n"
     return out
 
+def read_upf_z_valence(fupf):
+    """Read z_valence from a UPF pseudopotential file."""
+    import re
+    with open(fupf, "r") as file:
+        data = file.read()
+    m = re.search(r'\bz_valence\s*=\s*[\'"]([^\'"]+)[\'"]', data)
+    if not m:
+        raise ValueError(f"Cannot find z_valence in UPF file {fupf}")
+    zval = float(m.group(1))
+    if abs(zval - round(zval)) < 1e-8:
+        return int(round(zval))
+    return zval
+
+def write_molden_nval(kinds, nvals):
+    """Write Molden [Nval] effective valence charges per element."""
+    out = "[Nval]\n"
+    for elem, nval in zip(kinds, nvals):
+        out += f"{elem} {nval:g}\n"
+    return out
+
+def write_molden_nval_from_stru(stru, pseudo_dir):
+    """Build [Nval] from STRU species and their UPF z_valence values."""
+    import os
+    kinds = [spec['symbol'] for spec in stru['species']]
+    fpps = [os.path.abspath(os.path.join(pseudo_dir, spec['pp_file'])) for spec in stru["species"]]
+    nvals = [read_upf_z_valence(fpp) for fpp in fpps]
+    return write_molden_nval(kinds, nvals)
+
 def read_abacus_input(finput):
     """Read the ABACUS input file and return the key-value pairs
     
@@ -889,7 +961,7 @@ def indexing_mo(total_gto: GTORadials, labels: list):
                 i += 2*l+1
     return out
 
-def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
+def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", write_nval=False):
     """Entrance function: generate molden file by reading the outdir of ABACUS, for only LCAO 
     calculation.
     
@@ -921,6 +993,8 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
     _ = read_abacus_kpt(kv.get("kpoint_file", "KPT"))
     stru = read_abacus_stru(kv.get("stru_file", "STRU"))
     out += write_molden_cell(stru['lat']['const'], stru['lat']['vec'])
+    if write_nval:
+        out += write_molden_nval_from_stru(stru, kv.get("pseudo_dir", "./"))
     
     ####################
     # write the atoms  #
@@ -941,7 +1015,7 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
         coords = np.dot(coords, vec)
     elif stru['coord_type'].startswith("Cartesian_angstrom"):
         # including *_center_xy, *_center_z, *_center_xyz, ... cases
-        coords *= 0.529177249
+        coords /= 0.529177210903
     else:
         raise NotImplementedError(f"Unknown coordinate type {stru['coord_type']}")
     out += write_molden_atoms(labels, kinds, labels_kinds_map, coords.tolist())
@@ -1316,12 +1390,16 @@ def _argparse():
     
     -f, --folder: the folder of the ABACUS calculation, in which the STRU, INPUT, KPT, and OUT* folders are located.
     -n, --ndigits: the number of digits for the MO coefficients. For MO coefficients smaller than 10^-n, they will be set to 0.
-    -g, --ngto: the number of GTOs to fit ABACUS NAOs. The default is 7.
-    -r, --rel_r: the relative cutoff radius for the GTOs. The default is 2.
-    -o, --output: the output Molden file name. The default is ABACUS.molden.
+    -g, --ngto: the number of GTOs to fit ABACUS NAOs.
+    -r, --rel_r: the relative cutoff radius for the GTOs.
+    --write-nval: write the Molden [Nval] section from UPF z_valence.
+    -o, --output: the output Molden file name.
     """
     import argparse
-    parser = argparse.ArgumentParser(description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method")
+    parser = argparse.ArgumentParser(
+        description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     welcome = """WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
 the total number of electrons may not be conserved. Always use after a re-normalization operation.
 Once meet any problem, please submit an issue at: https://github.com/deepmodeling/abacus-develop/issues
@@ -1330,7 +1408,8 @@ Once meet any problem, please submit an issue at: https://github.com/deepmodelin
     parser.add_argument("-f", "--folder", type=str, help="the folder of the ABACUS calculation")
     parser.add_argument("-n", "--ndigits", type=int, default=3, help="the number of digits for the MO coefficients")
     parser.add_argument("-g", "--ngto", type=int, default=7, help="the number of GTOs to fit ABACUS NAOs")
-    parser.add_argument("-r", "--rel_r", type=int, default=2, help="the relative cutoff radius for the GTOs")
+    parser.add_argument("-r", "--rel_r", type=str, default="2", help="the relative cutoff radius for the GTOs; comma-separated values enable multi-start fitting")
+    parser.add_argument("--write-nval", action="store_true", help="write the Molden [Nval] section from UPF z_valence")
     parser.add_argument("-o", "--output", type=str, default="ABACUS.molden", help="the output Molden file name")
     args = parser.parse_args()
     return args
@@ -1338,7 +1417,7 @@ Once meet any problem, please submit an issue at: https://github.com/deepmodelin
 if __name__ == "__main__":
     #unittest.main(exit=False)
     args = _argparse()
-    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output)
+    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output, args.write_nval)
     print(" ".join("*"*10).center(80, " "))
     print(f"""MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}.
 WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
