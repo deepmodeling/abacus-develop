@@ -1,26 +1,22 @@
 #include "pw_basis.h"
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
+#include <algorithm>
 #include <typeinfo>
 
 namespace ModulePW
 {
 namespace detail
 {
-// Copy complex buffers through the interleaved scalar stream so compilers can
-// vectorize the contiguous real/imaginary data movement.
 template <typename T>
 inline void copy_complex_buffer(const std::complex<T>* in, std::complex<T>* out, const int count)
 {
-    const T* __restrict__ in_r = reinterpret_cast<const T*>(in);
-    T* __restrict__ out_r = reinterpret_cast<T*>(out);
-#ifdef __GNUC__
-#pragma GCC ivdep
-#endif
-    for (int i = 0; i < 2 * count; ++i)
+    if (count <= 0)
     {
-        out_r[i] = in_r[i];
+        return;
     }
+
+    std::copy_n(in, count, out);
 }
 
 // Top-level transform copies own the OpenMP parallel region; gather/scatter
@@ -28,15 +24,23 @@ inline void copy_complex_buffer(const std::complex<T>* in, std::complex<T>* out,
 template <typename T>
 inline void copy_complex_buffer_parallel(const std::complex<T>* in, std::complex<T>* out, const int count)
 {
-    const T* __restrict__ in_r = reinterpret_cast<const T*>(in);
-    T* __restrict__ out_r = reinterpret_cast<T*>(out);
+    constexpr int chunk_size = 1024;
+    if (count <= chunk_size)
+    {
+        copy_complex_buffer(in, out, count);
+        return;
+    }
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
-#endif
-    for (int i = 0; i < 2 * count; ++i)
+    for (int offset = 0; offset < count; offset += chunk_size)
     {
-        out_r[i] = in_r[i];
+        const int chunk_count = std::min(chunk_size, count - offset);
+        std::copy_n(in + offset, chunk_count, out + offset);
     }
+#else
+    copy_complex_buffer(in, out, count);
+#endif
 }
 } // namespace detail
 
@@ -56,6 +60,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         const int nst_ = this->nst;
         const int nz_ = this->nz;
         const int* istot2ixy_ = this->istot2ixy;
+        ModuleBase::timer::start(this->classname, "gatherp_copy_serial");
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -66,6 +71,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
             const std::complex<T>* inp = &in[ixy*nz_];
             detail::copy_complex_buffer(inp, outp, nz_);
         }
+        ModuleBase::timer::end(this->classname, "gatherp_copy_serial");
         return;
     }
 
@@ -76,6 +82,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     const int nstot_gps = this->nstot;
     const int nplane_gps = this->nplane;
     const int* istot2ixy_gps = this->istot2ixy;
+    ModuleBase::timer::start(this->classname, "gatherp_copy_pack");
 #ifdef _OPENMP
     #pragma omp parallel for
 #endif
@@ -86,6 +93,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
         const std::complex<T>* inp = &in[ixy * nplane_gps];
         detail::copy_complex_buffer(inp, outp, nplane_gps);
     }
+    ModuleBase::timer::end(this->classname, "gatherp_copy_pack");
 
     //exchange data
     //(nplane,nstot) to (numz[ip],ns, poolnproc)
@@ -109,6 +117,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
     const int* numz_gps = this->numz;
     const int* startg_gps = this->startg;
     const int* startz_gps = this->startz;
+    ModuleBase::timer::start(this->classname, "gatherp_copy_unpack");
 #ifdef _OPENMP
     #pragma omp parallel for collapse(2)
 #endif
@@ -124,6 +133,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
             detail::copy_complex_buffer(inp, outp, nzip);
         }
     }
+    ModuleBase::timer::end(this->classname, "gatherp_copy_unpack");
 #endif
     return;
 }
@@ -144,6 +154,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         const int nst_ = this->nst;
         const int nz_ = this->nz;
         const int* istot2ixy_ = this->istot2ixy;
+        ModuleBase::timer::start(this->classname, "gathers_zero_serial");
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -151,7 +162,9 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         {
             out[i] = std::complex<T>(0, 0);
         }
+        ModuleBase::timer::end(this->classname, "gathers_zero_serial");
 
+        ModuleBase::timer::start(this->classname, "gathers_copy_serial");
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -162,6 +175,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
             const std::complex<T>* inp = &in[is*nz_];
             detail::copy_complex_buffer(inp, outp, nz_);
         }
+        ModuleBase::timer::end(this->classname, "gathers_copy_serial");
         return;
     }
 
@@ -175,6 +189,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     const int* numz_ = this->numz;
     const int* startg_ = this->startg;
     const int* startz_ = this->startz;
+    ModuleBase::timer::start(this->classname, "gathers_copy_pack");
 #ifdef _OPENMP
     #pragma omp parallel for collapse(2)
 #endif
@@ -190,6 +205,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
             detail::copy_complex_buffer(inp, outp, nzip);
         }
     }
+    ModuleBase::timer::end(this->classname, "gathers_copy_pack");
 
     //exchange data
     //(numz[ip],ns, poolnproc) to (nplane,nstot)
@@ -207,6 +223,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     }
 
     const int nrxx_gsp = this->nrxx;
+    ModuleBase::timer::start(this->classname, "gathers_zero_mpi");
 #ifdef _OPENMP
     #pragma omp parallel for schedule(static)
 #endif
@@ -214,10 +231,12 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     {
         out[i] = std::complex<T>(0, 0);
     }
+    ModuleBase::timer::end(this->classname, "gathers_zero_mpi");
     //change (nplane,nstot) to (nplane fftnxy)
     const int nstot = this->nstot;
     const int nplane = this->nplane;
     const int* istot2ixy = this->istot2ixy;
+    ModuleBase::timer::start(this->classname, "gathers_copy_unpack");
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -229,6 +248,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
         const std::complex<T>* inp = &in[istot * nplane];
         detail::copy_complex_buffer(inp, outp, nplane);
     }
+    ModuleBase::timer::end(this->classname, "gathers_copy_unpack");
 #endif
     return;
 }
