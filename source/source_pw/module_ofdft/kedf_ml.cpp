@@ -42,6 +42,7 @@ void KEDF_ML::set_para(
     std::ostream& ofs_running
 )
 {
+    ModuleBase::TITLE("KEDF_ML", "set_para");
     torch::set_default_dtype(caffe2::TypeMeta::fromScalarType(torch::kDouble));
     auto output = torch::get_default_dtype();
     ofs_running << " Default type: " << output << std::endl;
@@ -80,8 +81,16 @@ void KEDF_ML::set_para(
         int nnode = 100;
         int nlayer = 3;
         this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device, ofs_running);
-        torch::load(this->nn, "net.pt", this->device_type);
-        ofs_running << " load net done (neural network loaded successfully)" << std::endl;
+        try
+        {
+            torch::load(this->nn, "net.pt", this->device_type);
+        }
+        catch (const std::exception& e)
+        {
+            ModuleBase::WARNING_QUIT("KEDF_ML::set_para", 
+                                    "Failed to load neural network model from net.pt: " + std::string(e.what()));
+        }
+        ofs_running << " load net done (ML KEDF neural network model loaded successfully)" << std::endl;
         if (PARAM.inp.of_ml_feg != 0)
         {
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
@@ -130,6 +139,7 @@ void KEDF_ML::set_para(
  */
 double KEDF_ML::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
 {
+    ModuleBase::TITLE("KEDF_ML", "get_energy");
     this->update_input(prho, pw_rho);
 
     this->nn_forward(prho, pw_rho, false);
@@ -197,6 +207,7 @@ void KEDF_ML::ml_potential(const double * const * prho, ModulePW::PW_Basis *pw_r
  */
 void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *pw_rho, const double *veff)
 {
+    ModuleBase::TITLE("KEDF_ML", "generate_train_data");
     // this->cal_tool->generateTrainData_WT(prho, wt, tf, pw_rho, veff); // Will be fixed in next pr
     if (PARAM.inp.of_kinetic == "ml")
     {
@@ -227,6 +238,7 @@ void KEDF_ML::generateTrainData(const double * const *prho, ModulePW::PW_Basis *
  */
 void KEDF_ML::localTest(const double * const *pprho, ModulePW::PW_Basis *pw_rho)
 {
+    ModuleBase::TITLE("KEDF_ML", "local_test");
     // for test =====================
     std::vector<long unsigned int> cshape = {(long unsigned) this->nx};
     bool fortran_order = false;

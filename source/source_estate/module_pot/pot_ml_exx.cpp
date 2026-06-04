@@ -55,8 +55,16 @@ void ML_EXX::set_para(const Input_para& inp, const UnitCell* ucell_in, const Mod
         int nnode = 100;
         int nlayer = 3;
         this->nn = std::make_shared<NN_OFImpl>(this->nx, 0, this->ninput, nnode, nlayer, this->device, ofs_running);
-        torch::load(this->nn, "net.pt", this->device_type);
-        ofs_running << "load net done" << std::endl;
+        try
+        {
+            torch::load(this->nn, "net.pt", this->device_type);
+        }
+        catch (const std::exception& e)
+        {
+            ModuleBase::WARNING_QUIT("ML_EXX::set_para", 
+                                    "Failed to load neural network model from net.pt: " + std::string(e.what()));
+        }
+        ofs_running << "load net done (ML EXX neural network functional model loaded successfully)" << std::endl;
         if (PARAM.inp.of_ml_feg != 0)
         {
             torch::Tensor feg_inpt = torch::zeros(this->ninput, this->device_type);
@@ -128,9 +136,9 @@ void ML_EXX::ml_potential(const double * const * prho, const ModulePW::PW_Basis 
         rho_data[ir] = std::abs(prho[0][ir]);
     }
 
-    this->updateInput(prho_mod, pw_rho);
+    this->update_input(prho_mod, pw_rho);
 
-    this->NN_forward(prho_mod, pw_rho, true);
+    this->nn_forward(prho_mod, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -168,9 +176,9 @@ void ML_EXX::generateTrainData(const double * const *prho, const ModulePW::PW_Ba
 {
     if (PARAM.inp.of_kinetic == "ml")
     {
-        this->updateInput(prho, pw_rho);
+        this->update_input(prho, pw_rho);
 
-        this->NN_forward(prho, pw_rho, true);
+        this->nn_forward(prho, pw_rho, true);
         
         torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
         this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -182,8 +190,8 @@ void ML_EXX::generateTrainData(const double * const *prho, const ModulePW::PW_Ba
 
         this->get_potential_(prho, pw_rho, potential);
 
-        this->dumpTensor("enhancement.npy", enhancement);
-        this->dumpMatrix("potential.npy", potential);
+        this->dump_tensor("enhancement.npy", enhancement);
+        this->dump_matrix("potential.npy", potential);
     }
 }
 
@@ -200,7 +208,7 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
     bool fortran_order = false;
 
     std::vector<double> temp_prho(this->nx);
-    this->loadVector("path_to_rho_file", temp_prho);
+    this->load_vector("path_to_rho_file", temp_prho);
     
     double ** prho = new double *[1];
     prho[0] = new double[this->nx];
@@ -212,9 +220,9 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
         }
     };
     // ==============================
-    this->updateInput(prho, pw_rho);
+    this->update_input(prho, pw_rho);
 
-    this->NN_forward(prho, pw_rho, true);
+    this->nn_forward(prho, pw_rho, true);
     
     torch::Tensor enhancement_cpu_tensor = this->nn->F.to(this->device_CPU).contiguous();
     this->enhancement_cpu_ptr = enhancement_cpu_tensor.data_ptr<double>();
@@ -226,8 +234,8 @@ void ML_EXX::localTest(const double * const *pprho, const ModulePW::PW_Basis *pw
 
     this->get_potential_(prho, pw_rho, potential);
 
-    this->dumpTensor("enhancement-abacus.npy", enhancement);
-    this->dumpMatrix("potential-abacus.npy", potential);
+    this->dump_tensor("enhancement-abacus.npy", enhancement);
+    this->dump_matrix("potential-abacus.npy", potential);
     exit(0);
 }
 
