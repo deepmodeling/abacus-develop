@@ -6,6 +6,9 @@
 #ifndef RPA_LRI_HPP
 #define RPA_LRI_HPP
 #include <algorithm>
+#include <cmath>
+#include <complex>
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -13,6 +16,7 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
@@ -29,6 +33,13 @@
 
 namespace RpaLriDetail
 {
+constexpr int LIBRPA_COULOMB_V1_MARKER = -20129433;
+constexpr int LIBRPA_LRICOEF_V1_MARKER = -10267453;
+constexpr int LIBRPA_COULOMB_V1_COMPLEX_FLAG = 1;
+
+static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
+              "LibRPA v1 Coulomb output expects complex<double> as two doubles.");
+
 inline void trim_malloc_cache()
 {
 #if defined(__GLIBC__)
@@ -46,6 +57,84 @@ inline bool debug_dump_exx_ao_enabled()
     const std::string value(env);
     return !(value.empty() || value == "0" || value == "f" || value == "F"
              || value == "false" || value == "FALSE");
+}
+
+inline std::size_t coulomb_atom_pair_index(const std::size_t I, const std::size_t J, const std::size_t natoms)
+{
+    if (I > J)
+    {
+        throw std::runtime_error("LibRPA v1 Coulomb output expects upper-triangular atom pairs.");
+    }
+    return I * natoms - I * (I - 1) / 2 + (J - I);
+}
+
+inline void checked_write(std::ofstream& ofs, const void* data, const std::size_t bytes, const std::string& filename)
+{
+    const char* ptr = reinterpret_cast<const char*>(data);
+    std::size_t bytes_left = bytes;
+    const std::size_t max_chunk = static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max());
+    while (bytes_left > 0)
+    {
+        const std::size_t chunk = std::min(bytes_left, max_chunk);
+        ofs.write(ptr, static_cast<std::streamsize>(chunk));
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to write " + filename);
+        }
+        ptr += chunk;
+        bytes_left -= chunk;
+    }
+}
+
+template <typename Value>
+inline void write_scalar(std::ofstream& ofs, const Value& value, const std::string& filename)
+{
+    checked_write(ofs, &value, sizeof(Value), filename);
+}
+
+inline unsigned long long checked_mul_u64(const unsigned long long lhs,
+                                          const unsigned long long rhs,
+                                          const std::string& context)
+{
+    if (lhs != 0 && rhs > std::numeric_limits<unsigned long long>::max() / lhs)
+    {
+        throw std::runtime_error(context + " exceeds uint64_t range.");
+    }
+    return lhs * rhs;
+}
+
+inline std::int64_t checked_i64_from_u64(const unsigned long long value, const std::string& context)
+{
+    if (value > static_cast<unsigned long long>(std::numeric_limits<std::int64_t>::max()))
+    {
+        throw std::runtime_error(context + " exceeds int64_t range.");
+    }
+    return static_cast<std::int64_t>(value);
+}
+
+inline int sum_int_vector(const std::vector<int>& values)
+{
+    int sum = 0;
+    for (const int value: values)
+    {
+        if (value > std::numeric_limits<int>::max() - sum)
+        {
+            throw std::runtime_error("Integer overflow while summing LibRPA v1 basis sizes.");
+        }
+        sum += value;
+    }
+    return sum;
+}
+
+template <typename Value>
+inline double real_as_double(const Value& value)
+{
+    return static_cast<double>(value);
+}
+
+inline double real_as_double(const std::complex<double>& value)
+{
+    return value.real();
 }
 
 inline std::vector<std::vector<int>>
@@ -370,21 +459,65 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Vs_cut_IJR.clear();
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
-    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_cut_", exx_lri_rpa);
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        this->out_librpa_basis_v1(ucell, exx_lri_rpa);
+        this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_cut_iq_", exx_lri_rpa);
+    }
+    else
+    {
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_cut_", exx_lri_rpa);
+    }
     Vs_period.clear();
     Vs_period.swap(tmp);
 
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_lri_rpa->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 
-    if (this->info.shrink_abfs_pca_thr >= 0.0)
-        this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_data_");
+    }
     else
-        this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+    {
+        if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+            this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
+        else
+            this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+    }
     Cs_period.clear();
     Cs_period.swap(tmp);
 
     ModuleBase::timer::end("RPA_LRI", "output_cut_coulomb_cs");
+}
+
+template <typename T, typename Tdata>
+Conv_Coulomb_Pot_K::Coulomb_Method RPA_LRI<T, Tdata>::select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const
+{
+    if (exx_lri == nullptr || exx_lri->exx_objs.empty())
+    {
+        throw std::invalid_argument("Cannot select Coulomb basis method from an empty Exx_LRI object.");
+    }
+    return exx_lri->exx_objs.count(Conv_Coulomb_Pot_K::Coulomb_Method::Center2)
+        ? Conv_Coulomb_Pot_K::Coulomb_Method::Center2
+        : exx_lri->exx_objs.begin()->first;
+}
+
+template <typename T, typename Tdata>
+std::vector<int> RPA_LRI<T, Tdata>::collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const
+{
+    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    std::vector<int> atom_naux(static_cast<std::size_t>(ucell.nat), 0);
+    for (int I = 0; I != ucell.nat; ++I)
+    {
+        atom_naux[static_cast<std::size_t>(I)]
+            = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[I]);
+        if (atom_naux[static_cast<std::size_t>(I)] <= 0)
+        {
+            throw std::runtime_error("LibRPA v1 output found a non-positive per-atom auxiliary size.");
+        }
+    }
+    return atom_naux;
 }
 
 template <typename T, typename Tdata>
@@ -465,7 +598,15 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
             this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
         }
     }
-    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb.get());
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        this->out_librpa_basis_v1(ucell, exx_full_coulomb.get());
+        this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_full_iq_", exx_full_coulomb.get());
+    }
+    else
+    {
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb.get());
+    }
     Vs_period.clear();
     Vs_period.swap(tmp);
     Cs.clear();
@@ -1486,7 +1627,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
             ofs << std::setw(24) << std::scientific << std::setprecision(15) << x
                 << std::setw(24) << std::scientific << std::setprecision(15) << y
                 << std::setw(24) << std::scientific << std::setprecision(15) << z
-                << std::setw(15) << 1 << std::endl;
+                << std::setw(15) << (it + 1) << std::endl;
         }
     }
 
@@ -1591,6 +1732,143 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
 }
 
 template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_Cs_v1(const UnitCell& ucell,
+                                  std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in,
+                                  std::string filename)
+{
+    ModuleBase::TITLE("DFT_RPA_interface", "out_Cs_v1");
+    ModuleBase::timer::tick("RPA_LRI", "out_Cs_v1");
+
+    struct CsRecord
+    {
+        int ia1 = 0;
+        int ia2 = 0;
+        int R[3] = {0, 0, 0};
+        double max_abs = 0.0;
+        std::int64_t offset = 0;
+        RI::Tensor<Tdata>* tensor = nullptr;
+        int nw1 = 0;
+        int nw2 = 0;
+        int naux = 0;
+    };
+
+    std::vector<CsRecord> records;
+    records.reserve(Cs_in.size());
+    for (auto& Ip: Cs_in)
+    {
+        const int I = static_cast<int>(Ip.first);
+        const int i_num = ucell.atoms[ucell.iat2it[I]].nw;
+        for (auto& JPp: Ip.second)
+        {
+            const int J = static_cast<int>(JPp.first.first);
+            auto& tmp_Cs = JPp.second;
+            if (tmp_Cs.shape.size() != 3 || tmp_Cs.shape[0] <= 0 || tmp_Cs.shape[1] <= 0 || tmp_Cs.shape[2] <= 0)
+            {
+                continue;
+            }
+            const int j_num = ucell.atoms[ucell.iat2it[J]].nw;
+            if (static_cast<int>(tmp_Cs.shape[1]) != i_num || static_cast<int>(tmp_Cs.shape[2]) != j_num)
+            {
+                throw std::runtime_error("LibRPA v1 Cs output encountered an inconsistent tensor shape.");
+            }
+            CsRecord record;
+            record.ia1 = I + 1;
+            record.ia2 = J + 1;
+            record.R[0] = JPp.first.second[0];
+            record.R[1] = JPp.first.second[1];
+            record.R[2] = JPp.first.second[2];
+            record.tensor = &tmp_Cs;
+            record.nw1 = i_num;
+            record.nw2 = j_num;
+            record.naux = static_cast<int>(tmp_Cs.shape[0]);
+            for (int i = 0; i != record.nw1; ++i)
+            {
+                for (int j = 0; j != record.nw2; ++j)
+                {
+                    for (int mu = 0; mu != record.naux; ++mu)
+                    {
+                        record.max_abs = std::max(record.max_abs, std::abs(RpaLriDetail::real_as_double(tmp_Cs(mu, i, j))));
+                    }
+                }
+            }
+            records.push_back(record);
+        }
+    }
+
+    const std::int64_t nblocks = static_cast<std::int64_t>(records.size());
+    const std::int64_t record_bytes = static_cast<std::int64_t>(5 * sizeof(std::int32_t)
+        + sizeof(double) + sizeof(std::int64_t));
+    std::int64_t offset = static_cast<std::int64_t>(3 * sizeof(std::int32_t) + 2 * sizeof(std::int64_t))
+        + nblocks * record_bytes;
+    for (auto& record: records)
+    {
+        record.offset = offset;
+        const unsigned long long nw_product = RpaLriDetail::checked_mul_u64(
+            static_cast<unsigned long long>(record.nw1),
+            static_cast<unsigned long long>(record.nw2),
+            "LibRPA v1 Cs block size");
+        const unsigned long long values = RpaLriDetail::checked_mul_u64(
+            nw_product,
+            static_cast<unsigned long long>(record.naux),
+            "LibRPA v1 Cs block size");
+        const unsigned long long bytes = RpaLriDetail::checked_mul_u64(
+            values,
+            static_cast<unsigned long long>(sizeof(double)),
+            "LibRPA v1 Cs block size");
+        offset += RpaLriDetail::checked_i64_from_u64(bytes, "LibRPA v1 Cs block size");
+    }
+
+    std::stringstream ss;
+    ss << filename << GlobalV::MY_RANK << ".txt";
+    const std::string out_name = ss.str();
+    std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to open " + out_name);
+    }
+
+    const std::int32_t marker = RpaLriDetail::LIBRPA_LRICOEF_V1_MARKER;
+    const std::int32_t natom = static_cast<std::int32_t>(ucell.nat);
+    const std::int32_t ncell = 0;
+    RpaLriDetail::write_scalar(ofs, marker, out_name);
+    RpaLriDetail::write_scalar(ofs, natom, out_name);
+    RpaLriDetail::write_scalar(ofs, ncell, out_name);
+    RpaLriDetail::write_scalar(ofs, nblocks, out_name);
+    RpaLriDetail::write_scalar(ofs, nblocks, out_name);
+    for (const auto& record: records)
+    {
+        const std::int32_t ia1 = record.ia1;
+        const std::int32_t ia2 = record.ia2;
+        const std::int32_t r0 = record.R[0];
+        const std::int32_t r1 = record.R[1];
+        const std::int32_t r2 = record.R[2];
+        RpaLriDetail::write_scalar(ofs, ia1, out_name);
+        RpaLriDetail::write_scalar(ofs, ia2, out_name);
+        RpaLriDetail::write_scalar(ofs, r0, out_name);
+        RpaLriDetail::write_scalar(ofs, r1, out_name);
+        RpaLriDetail::write_scalar(ofs, r2, out_name);
+        RpaLriDetail::write_scalar(ofs, record.max_abs, out_name);
+        RpaLriDetail::write_scalar(ofs, record.offset, out_name);
+    }
+    for (const auto& record: records)
+    {
+        for (int i = 0; i != record.nw1; ++i)
+        {
+            for (int j = 0; j != record.nw2; ++j)
+            {
+                for (int mu = 0; mu != record.naux; ++mu)
+                {
+                    const double value = RpaLriDetail::real_as_double((*record.tensor)(mu, i, j));
+                    RpaLriDetail::write_scalar(ofs, value, out_name);
+                }
+            }
+        }
+    }
+    ofs.close();
+    ModuleBase::timer::tick("RPA_LRI", "out_Cs_v1");
+}
+
+template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
                                       std::string filename,
@@ -1601,13 +1879,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 
     int all_mu = 0;
     std::vector<int> mu_shift(ucell.nat);
-    if (exx_lri->exx_objs.empty())
-    {
-        throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
-    }
-    const auto basis_method = exx_lri->exx_objs.count(Conv_Coulomb_Pot_K::Coulomb_Method::Center2)
-        ? Conv_Coulomb_Pot_K::Coulomb_Method::Center2
-        : exx_lri->exx_objs.begin()->first;
+    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
     for (int I = 0; I != ucell.nat; I++)
     {
         mu_shift[I] = all_mu;
@@ -1674,44 +1946,205 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
-                                    const Grid_Driver &gd,
-                                    const TwoCenterBundle &two_center_bundle,
-                                    const Parallel_Orbitals &parav,/*nbasis×nbasis*/
-                                    const psi::Psi<T> &psi,
-                                    const elecstate::ElecState* pelec)
+void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri)
 {
-    ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
-    ModuleBase::timer::start("RPA_LRI", "out_velocity");
-
-    Parallel_2D parac;/*nbasis×nbands*/
-    LR_Util::setup_2d_division(parac, parav.get_block_size(), PARAM.globalv.nlocal, PARAM.inp.nbands
-        #ifdef __MPI
-            , parav.blacs_ctxt
-        #endif
-            );
-
-    const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
-    const int nbands = parav.get_wfc_global_nbands();
-    const int nbasis = parav.get_wfc_global_nbasis();
-
-    // nocc and nvirt dosen't matter, their sum is actually used
-    std::vector<int> nocc(2, nbands);
-    std::vector<int> nvirt(2, 0);
-
-    std::vector<std::complex<double>> velocity_mo = LR_Util::cal_velocity_mo(ucell, gd, two_center_bundle,
-        parav, parac, *this->p_kv, psi, nk, nspin_tmp, PARAM.globalv.nlocal, nocc, nvirt);
-    if (GlobalV::MY_RANK == 0){
-        // for librpa readable
-        LR_Util::output_spectrum_mo_librpa(velocity_mo, outdir + "velocity_matrix.txt",
-            nk, nspin_tmp, nbands, nbasis, nbands, *this->p_kv);
-        // for human readable
-        // LR_Util::output_spectrum_mo(velocity_mo, PARAM.globalv.global_out_dir + "velocity_matrix_h.txt",
-        //     pelec->ekb.c, nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
     }
-    ModuleBase::timer::end("RPA_LRI", "out_velocity");
+    ModuleBase::TITLE("DFT_RPA_interface", "out_librpa_basis_v1");
+
+    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    std::vector<int> type_naux(static_cast<std::size_t>(ucell.ntype), 0);
+    int total_wfc = 0;
+    int total_aux = 0;
+    for (int it = 0; it != ucell.ntype; ++it)
+    {
+        type_naux[static_cast<std::size_t>(it)] = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(it);
+        if (type_naux[static_cast<std::size_t>(it)] <= 0)
+        {
+            throw std::runtime_error("LibRPA v1 basis_out found a non-positive per-type auxiliary size.");
+        }
+        total_wfc += ucell.atoms[it].nw * ucell.atoms[it].na;
+        total_aux += type_naux[static_cast<std::size_t>(it)] * ucell.atoms[it].na;
+    }
+
+    std::ofstream ofs("basis_out", std::ios::out | std::ios::trunc);
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to open basis_out");
+    }
+    ofs << std::setw(10) << ucell.ntype
+        << std::setw(10) << total_wfc
+        << std::setw(10) << total_aux
+        << "    fallback" << std::endl;
+    for (int it = 0; it != ucell.ntype; ++it)
+    {
+        ofs << std::setw(10) << it + 1
+            << std::setw(10) << ucell.atoms[it].nw
+            << std::setw(10) << type_naux[static_cast<std::size_t>(it)]
+            << std::endl;
+    }
 }
+
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
+                                         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
+                                         std::string filename,
+                                         Exx_LRI<double>* exx_lri)
+{
+    ModuleBase::TITLE("DFT_RPA_interface", "out_coulomb_k_v1");
+    ModuleBase::timer::tick("RPA_LRI", "out_coulomb_k_v1");
+
+    const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
+    const auto atom_naux = this->collect_atom_naux_(ucell, exx_lri);
+    const int all_mu = RpaLriDetail::sum_int_vector(atom_naux);
+    const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
+    const std::size_t natoms = static_cast<std::size_t>(ucell.nat);
+
+    struct V1Block
+    {
+        int pair_index = 0;
+        int I = 0;
+        int J = 0;
+        std::int64_t offset = 0;
+        RI::Tensor<std::complex<double>> tensor;
+    };
+
+    for (int ik = 0; ik != nks_tot; ++ik)
+    {
+        std::vector<V1Block> blocks;
+        for (auto& Ip: Vs)
+        {
+            const int I = static_cast<int>(Ip.first);
+            const int mu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[I]);
+            std::map<size_t, RI::Tensor<std::complex<double>>> Vq_k_IJ;
+            for (auto& JPp: Ip.second)
+            {
+                const int J = static_cast<int>(JPp.first.first);
+                if (J < I)
+                {
+                    continue;
+                }
+                if (!RpaLriDetail::has_valid_matrix_shape(JPp.second))
+                {
+                    continue;
+                }
+                RI::Tensor<std::complex<double>> tmp_VR = RI::Global_Func::convert<std::complex<double>>(JPp.second);
+                const auto R = JPp.first.second;
+                const double arg = (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec))
+                    * ModuleBase::TWO_PI;
+                const std::complex<double> kphase = std::complex<double>(std::cos(arg), std::sin(arg));
+                if (Vq_k_IJ[J].empty())
+                {
+                    Vq_k_IJ[J] = RI::Tensor<std::complex<double>>({tmp_VR.shape[0], tmp_VR.shape[1]});
+                }
+                Vq_k_IJ[J] = Vq_k_IJ[J] + tmp_VR * kphase;
+            }
+            for (auto& vq_Jp: Vq_k_IJ)
+            {
+                const int J = static_cast<int>(vq_Jp.first);
+                auto& vq_J = vq_Jp.second;
+                const int nu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[J]);
+                if (static_cast<int>(vq_J.shape[0]) != mu_num || static_cast<int>(vq_J.shape[1]) != nu_num)
+                {
+                    throw std::runtime_error("LibRPA v1 Coulomb output encountered an inconsistent tensor shape.");
+                }
+                V1Block block;
+                block.pair_index = static_cast<int>(RpaLriDetail::coulomb_atom_pair_index(
+                    static_cast<std::size_t>(I), static_cast<std::size_t>(J), natoms));
+                block.I = I;
+                block.J = J;
+                block.tensor = std::move(vq_J);
+                blocks.push_back(std::move(block));
+            }
+        }
+
+        std::sort(blocks.begin(), blocks.end(), [](const V1Block& lhs, const V1Block& rhs) {
+            return lhs.pair_index < rhs.pair_index;
+        });
+        if (blocks.empty())
+        {
+            continue;
+        }
+        for (std::size_t ib = 1; ib < blocks.size(); ++ib)
+        {
+            if (blocks[ib - 1].pair_index == blocks[ib].pair_index)
+            {
+                throw std::runtime_error("LibRPA v1 Coulomb output found duplicate atom-pair blocks on one MPI rank.");
+            }
+        }
+
+        const std::int64_t nblocks = static_cast<std::int64_t>(blocks.size());
+        const std::int64_t header_size = static_cast<std::int64_t>(6 * sizeof(std::int32_t))
+            + static_cast<std::int64_t>(ucell.nat * sizeof(std::int32_t))
+            + nblocks * static_cast<std::int64_t>(sizeof(std::int32_t) + sizeof(std::int64_t));
+        std::int64_t offset = header_size;
+        for (auto& block: blocks)
+        {
+            block.offset = offset;
+            const unsigned long long values = RpaLriDetail::checked_mul_u64(
+                static_cast<unsigned long long>(atom_naux[static_cast<std::size_t>(block.I)]),
+                static_cast<unsigned long long>(atom_naux[static_cast<std::size_t>(block.J)]),
+                "LibRPA v1 Coulomb block size");
+            const unsigned long long bytes = RpaLriDetail::checked_mul_u64(
+                values,
+                static_cast<unsigned long long>(sizeof(std::complex<double>)),
+                "LibRPA v1 Coulomb block size");
+            offset += RpaLriDetail::checked_i64_from_u64(bytes, "LibRPA v1 Coulomb block size");
+        }
+
+        std::stringstream ss;
+        ss << filename << ik + 1 << "_rank" << GlobalV::MY_RANK << ".dat";
+        const std::string out_name = ss.str();
+        std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to open " + out_name);
+        }
+
+        const std::int32_t marker = RpaLriDetail::LIBRPA_COULOMB_V1_MARKER;
+        const std::int32_t iq = ik + 1;
+        const std::int32_t naux = all_mu;
+        const std::int32_t value_flag = RpaLriDetail::LIBRPA_COULOMB_V1_COMPLEX_FLAG;
+        const std::int32_t natom = ucell.nat;
+        const std::int32_t nblock_i32 = static_cast<std::int32_t>(nblocks);
+        RpaLriDetail::write_scalar(ofs, marker, out_name);
+        RpaLriDetail::write_scalar(ofs, iq, out_name);
+        RpaLriDetail::write_scalar(ofs, naux, out_name);
+        RpaLriDetail::write_scalar(ofs, value_flag, out_name);
+        RpaLriDetail::write_scalar(ofs, natom, out_name);
+        RpaLriDetail::write_scalar(ofs, nblock_i32, out_name);
+        for (const int atom_aux: atom_naux)
+        {
+            const std::int32_t atom_aux_i32 = atom_aux;
+            RpaLriDetail::write_scalar(ofs, atom_aux_i32, out_name);
+        }
+        for (const auto& block: blocks)
+        {
+            const std::int32_t pair_index = block.pair_index;
+            RpaLriDetail::write_scalar(ofs, pair_index, out_name);
+            RpaLriDetail::write_scalar(ofs, block.offset, out_name);
+        }
+        for (const auto& block: blocks)
+        {
+            const std::size_t nvalues = block.tensor.get_shape_all();
+            if (nvalues == 0)
+            {
+                throw std::runtime_error("LibRPA v1 Coulomb output encountered an empty tensor payload.");
+            }
+            RpaLriDetail::checked_write(
+                ofs,
+                block.tensor.ptr(),
+                nvalues * sizeof(std::complex<double>),
+                out_name);
+        }
+        ofs.close();
+    }
+
+    ModuleBase::timer::tick("RPA_LRI", "out_coulomb_k_v1");
+}
+
 
 // template<typename Tdata>
 // void RPA_LRI<T, Tdata>::init(const MPI_Comm &mpi_comm_in)

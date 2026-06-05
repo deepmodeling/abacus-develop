@@ -309,6 +309,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exx_ccp_rmesh_times, "1.5");
     EXPECT_DOUBLE_EQ(param.inp.exx_ewald_lambda, 0.25);
     EXPECT_DOUBLE_EQ(param.inp.rpa_ccp_rmesh_times, 10.0);
+    EXPECT_EQ(param.inp.out_librpa_reader_version, 1);
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_ecut, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_tolerence, 0.0);
