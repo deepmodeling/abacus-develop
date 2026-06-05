@@ -158,10 +158,10 @@ typename DiagoPPCG<T, Device>::Real DiagoPPCG<T, Device>::update_cg_direction(
     }
 
     // g0 = P * S|grad> = prec * scg (element-wise multiply)
-    for (int i = 0; i < this->n_basis_; i++)
-    {
-        g0.data<T>()[i] = s_grad.data<T>()[i] * prec.data<Real>()[i];
-    }
+    ModuleBase::vector_mul_vector_op<T, Device>()(this->n_basis_,
+                                                  g0.data<T>(),
+                                                  s_grad.data<T>(),
+                                                  prec.data<Real>());
 
     const Real gg_now = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, grad.data<T>(), g0.data<T>());
 
@@ -325,7 +325,7 @@ void DiagoPPCG<T, Device>::schmidt_orth(const int& m,
     Real psi_norm = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, psi_m.data<T>(), psi_m.data<T>());
     if (psi_norm <= 0.0)
     {
-        std::cout << " DiagoPPGC: psi_norm <= 0.0, m = " << m << std::endl;
+        std::cout << " DiagoPPCG: psi_norm <= 0.0, m = " << m << std::endl;
         ModuleBase::WARNING_QUIT("schmidt_orth", "psi_norm <= 0.0");
     }
     psi_norm = std::sqrt(psi_norm);
@@ -377,13 +377,20 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     this->n_basis_ = dim;
     this->ld_psi_ = ld_psi;
     this->notconv_ = 0;
+    this->avg_iter_ = 0.0;
 
     this->hpsi_func_ = hpsi_func;
     this->spsi_func_ = spsi_func;
 
-    // Get convergence parameters from DiagoIterAssist
-    this->pw_diag_nmax_ = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
-    this->pw_diag_thr_ = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+    // Use provided convergence parameters (from constructor) or fall back to DiagoIterAssist
+    if (this->pw_diag_nmax_ == 0)
+    {
+        this->pw_diag_nmax_ = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+    }
+    if (this->pw_diag_thr_ == 1e-5)
+    {
+        this->pw_diag_thr_ = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+    }
 
     // Allocate working arrays
     // psi_m: current band vector
@@ -608,7 +615,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     } while (this->test_exit_cond(ntry, this->notconv_));
 
     ModuleBase::timer::end("DiagoPPCG", "diag");
-    return avg;
+    return this->avg_iter_;
 }
 
 // Template instantiations

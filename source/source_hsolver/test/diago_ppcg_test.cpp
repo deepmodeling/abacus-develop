@@ -5,10 +5,13 @@
 #include "../diago_iter_assist.h"
 #include "../diago_ppcg.h"
 #include "diago_mock.h"
+#include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
 #include <complex>
 #include <random>
+
+#include "mpi.h"
 
 /************************************************
  *  unit test of functions in DiagoPPCG
