@@ -282,6 +282,10 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     int max_iter = current_scf_iter > 1 ?
                    this->nline :
                    this->nline * 6;
+
+    // Compute optimal frequency for subspace diagonalization based on problem size
+    this->optimal_freq = compute_optimal_freq(this->n_band, this->n_basis, this->nline);
+
     do
     {
         ++ntry;
@@ -314,7 +318,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // orthogonal psi by cholesky method
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
-        if (current_scf_iter == 1 && ntry % this->nline == 0) {
+        if (current_scf_iter == 1 && ntry % this->optimal_freq == 0) {
             this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, ethr_band));

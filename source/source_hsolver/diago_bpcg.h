@@ -84,6 +84,8 @@ class DiagoBPCG
     int n_dim = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
+    /// optimal frequency for subspace diagonalization (computed dynamically)
+    int optimal_freq = 4;
     /// parallel matrix multiplication
     ModuleBase::PGemmCN<T, Device> pmmcn;
     PLinearTransform<T, Device> plintrans;
