@@ -112,7 +112,7 @@ class DiagoCGMixedPrepare
         // Step 4: Setup psi
         double* en_mixed = new double[npw];
         int ik = 1;
-        auto* ha = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr);
+        auto* ha = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
         int* ngk = new int[1];
 
         psi::Psi<std::complex<double>> psi;
