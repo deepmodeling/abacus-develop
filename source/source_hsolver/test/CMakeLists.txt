@@ -38,7 +38,7 @@ if (ENABLE_MPI)
     SOURCES diago_cg_mixed_test.cpp ../diago_cg_mixed.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav
