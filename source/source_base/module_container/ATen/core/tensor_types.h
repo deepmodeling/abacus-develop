@@ -13,6 +13,12 @@
 #include "source_base/module_device/types.h"
 #include "ATen/core/tensor_enums.h"
 
+// NOTE: Previously this file included <base/macros/cuda.h> or <base/macros/rocm.h>,
+// which transitively provided GetTypeThrust, GetTypeCuda, GetTypeRocm, etc.
+// Now replaced with <thrust/complex.h> which only provides thrust::complex type.
+// If you need GetTypeThrust/GetTypeCuda/GetTypeRocm, include <base/macros/cuda.h>
+// or <base/macros/rocm.h> directly in your .cpp file.
+// mohan add 20260605
 #if defined(__CUDACC__) || defined(__HIPCC__)
 #include <thrust/complex.h>
 #endif

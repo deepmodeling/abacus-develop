@@ -1,3 +1,8 @@
+// Extracted from tensor_types.h to break the circular dependency:
+// macros.h -> tensor_types.h -> cuda.h/rocm.h -> macros.h
+// This file provides only enums and template specializations needed by macros.h,
+// without any GPU library dependencies.
+// mohan add 20260605
 #ifndef ATEN_CORE_TENSOR_ENUMS_H_
 #define ATEN_CORE_TENSOR_ENUMS_H_
 
