@@ -40,14 +40,14 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
                  bool gamma_only_in, 
                  bool xprime_in = true) override;
                  
-	__attribute__((weak)) 
+	ABACUS_FFT_WEAK 
     void setupFFT() override; 
 
 	// void initplan(const unsigned int& flag = 0);
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void cleanFFT() override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void clear() override;
 
     /**
@@ -58,13 +58,13 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
      * which is used in the CPU fft.Use the weak attribute
      * to avoid defining float while without flag ENABLE_FLOAT_FFTW.
      */
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     FPTYPE* get_rspace_data() const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     std::complex<FPTYPE>* get_auxr_data() const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     std::complex<FPTYPE>* get_auxg_data() const override;
 
     /**
@@ -75,27 +75,27 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
      * The function details can be found in FFT_BASE,
      * and the function interfaces can be found in FFT_BUNDLE.
      */
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftxyfor(std::complex<FPTYPE>* in, 
                   std::complex<FPTYPE>* out) const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftxybac(std::complex<FPTYPE>* in, 
                   std::complex<FPTYPE>* out) const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftzfor(std::complex<FPTYPE>* in, 
                   std::complex<FPTYPE>* out) const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftzbac(std::complex<FPTYPE>* in, 
                  std::complex<FPTYPE>* out) const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftxyr2c(FPTYPE* in, 
                   std::complex<FPTYPE>* out) const override;
 
-    __attribute__((weak)) 
+    ABACUS_FFT_WEAK 
     void fftxyc2r(std::complex<FPTYPE>* in, 
                   FPTYPE* out) const override;
     private:

@@ -44,7 +44,12 @@ done
 
 # number of OpenMP threads
 if [[ -z "$nt" ]]; then
-    nt=$(expr `nproc` / ${np})
+    if [ "$np" -le 0 ] 2>/dev/null; then
+        # serial build (no MPI launcher): use all cores for OpenMP
+        nt=$(nproc)
+    else
+        nt=$(expr `nproc` / ${np})
+    fi
 fi
 export OMP_NUM_THREADS=${nt}
 
@@ -251,7 +256,12 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-        if [ "$case" = "282_NO_RPA" ]; then
+        if [ "$np" -le 0 ] 2>/dev/null; then
+            # serial build: run the binary directly, no MPI launcher.
+            # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
+            # Windows build) reuse this harness unchanged.
+            $abacus > log.txt
+        elif [ "$case" = "282_NO_RPA" ]; then
             mpirun -np 1 $abacus > log.txt
         else
             mpirun -np $np $abacus > log.txt
