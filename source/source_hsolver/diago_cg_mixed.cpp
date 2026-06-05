@@ -7,7 +7,7 @@
 #include <ATen/core/tensor_utils.h>
 #include <ATen/kernels/memory.h>
 #include <source_base/constants.h>
-#include <source_base/memory.h>
+#include <source_base/memory_recorder.h>
 #include <source_base/parallel_reduce.h>
 #include <source_base/timer.h>
 #include <source_base/tool_title.h>
