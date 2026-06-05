@@ -5,18 +5,10 @@
 #ifndef ATEN_CORE_TENSOR_TYPES_H_
 #define ATEN_CORE_TENSOR_TYPES_H_
 
-#include <regex>
 #include <string>
-#include <vector>
-#include <numeric>
 #include <complex>
-#include <utility>
-#include <iomanip>
 #include <iostream>
 #include <stdexcept>
-#include <algorithm>
-#include <unordered_map>
-#include <initializer_list>
 
 #include "source_base/module_device/types.h"
 
