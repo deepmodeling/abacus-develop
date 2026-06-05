@@ -336,7 +336,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
                                     ct::DeviceType::CpuDevice,
                                     ct::TensorShape({psi_in.shape().dim_size(0)}));
-            DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
+            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
         };
         DiagoCGMixed<T, Device> cg_mixed(this->basis_type,
                                           this->calculation_type,

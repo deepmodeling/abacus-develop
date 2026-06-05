@@ -54,7 +54,7 @@ void DiagoCGMixed<T, Device>::diag_once(const ct::Tensor& prec_in, ct::Tensor& p
                                          ct::Tensor& eigen, const std::vector<double>& ethr_band)
 {
     ModuleBase::TITLE("DiagoCGMixed", "diag_once");
-    ModuleBase::timer::tick("DiagoCGMixed", "diag_once");
+    ModuleBase::timer::start("DiagoCGMixed", "diag_once");
 
     notconv_ = 0;
     n_band_ = psi.shape().dim_size(0);
@@ -141,7 +141,7 @@ void DiagoCGMixed<T, Device>::diag_once(const ct::Tensor& prec_in, ct::Tensor& p
         }
     }
     avg /= n_band_; avg_iter_ += avg;
-    ModuleBase::timer::tick("DiagoCGMixed", "diag_once");
+    ModuleBase::timer::end("DiagoCGMixed", "diag_once");
 }
 
 template <typename T, typename Device>
