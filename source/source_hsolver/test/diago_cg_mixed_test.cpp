@@ -66,8 +66,12 @@ class DiagoCGMixedPrepare
           eps(eps), maxiter(maxiter), threshold(threshold)
     {
 #ifdef __MPI
-        MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-        MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+        int initialized = 0;
+        MPI_Initialized(&initialized);
+        if (initialized) {
+            MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+            MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+        }
 #endif
     }
 
