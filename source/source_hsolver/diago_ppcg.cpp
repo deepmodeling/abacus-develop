@@ -1300,12 +1300,19 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             const bool do_rr = (iter % rr_step_ == 0);
             if (do_rr)
             {
-                orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
+                // Rayleigh-Ritz: full subspace diagonalization.
+                // We recompute H|psi> and S|psi> first because line_minimize
+                // modified psi.  We do NOT call orth_cholesky here — Cholesky
+                // mixes bands through the upper-triangular U^{-1} factor,
+                // contaminating low-energy bands with high-energy components
+                // and driving the eigenvalues upward.
                 apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
                 apply_s_current(psi_in, spsi_.data(), ncol);
 
                 std::vector<int> dummy_active;
                 rayleigh_ritz(psi_in, eigenvalue_in, dummy_active, ethr_band);
+
+                // Sync hpsi/spi to the rotated wavefunctions.
                 apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
                 apply_s_current(psi_in, spsi_.data(), ncol);
 
