@@ -388,8 +388,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
             {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
-                    "of_ml_gene_data is only available for KSDFT with PW basis on a single core (NPROC = 1)");
-            }
+                    "of_ml_gene_data is only available for KSDFT with PW basis on a single MPI rank (NPROC = 1)");
         };
         read_sync_bool(input.of_ml_gene_data);
         this->add_item(item);
