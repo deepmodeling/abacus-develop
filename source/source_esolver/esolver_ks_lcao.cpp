@@ -151,8 +151,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
-    // since it depends on ionic positions
-    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    // since it depends on ionic positions.
+    // overlap_orb_alpha is only built when DeePKS is enabled (descriptor
+    // orbitals); guard the dereference so non-DeePKS runs don't form a
+    // reference from a null unique_ptr (undefined behaviour).
+    if (two_center_bundle_.overlap_orb_alpha)
+    {
+        this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    }
 
     // 10) prepare sc calculation
     init_deltaspin_lcao<TK>(ucell, PARAM.inp, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);

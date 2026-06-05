@@ -47,3 +47,11 @@ The following references are required to be cited when using ABACUS. Specificall
     Sun, Liang, and Mohan Chen. "Machine learning based nonlocal kinetic energy density functional for simple metals and alloys." Physical Review B 109.11 (2024): 115135.
 
     Sun, Liang, and Mohan Chen. "Multi-channel machine learning based nonlocal kinetic energy density functional for semiconductors." Electronic Structure 6.4 (2024): 045006.
+
+- **If DFT-D4 dispersion correction is used:**
+
+    Eike Caldeweyher, Sebastian Ehlert, Andreas Hansen, Hagen Neugebauer, Sebastian Spicher, Christoph Bannwarth, and Stefan Grimme. "A generally applicable atomic-charge dependent London dispersion correction." The Journal of Chemical Physics 150, 154122 (2019). DOI: 10.1063/1.5090222.
+
+    Eike Caldeweyher, Jan-Michael Mewes, Sebastian Ehlert, and Stefan Grimme. "Extension and evaluation of the D4 London-dispersion model for periodic systems." Physical Chemistry Chemical Physics 22, 8499-8512 (2020). DOI: 10.1039/D0CP00502A.
+
+    Nikolay V. Tkachenko, Linus B. Dittmer, Rebecca Tomann, and Martin Head-Gordon. "Smooth D4S model." The Journal of Physical Chemistry Letters 15, 10629-10637 (2024). DOI: 10.1021/acs.jpclett.4c02653.

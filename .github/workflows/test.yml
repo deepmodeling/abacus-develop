@@ -7,6 +7,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Test
@@ -32,12 +36,20 @@ jobs:
       - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache ca-certificates python-is-python3 python3-pip
+          sudo apt-get install -y gfortran ccache ca-certificates python-is-python3 python3-pip
           sudo pip install clang-format clang-tidy
+
+      - name: Install dftd4 from toolchain
+        run: |
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_dftd4.sh
+          cd ..
 
       - name: Configure
         run: |
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON
+          source toolchain/install/setup
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON -DENABLE_DFTD4=ON
 
 # Temporarily removed because no one maintains this now.
 # And it will break the CI test workflow.

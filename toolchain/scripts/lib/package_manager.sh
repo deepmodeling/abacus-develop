@@ -60,6 +60,7 @@ package_manager_define_dependencies() {
     PACKAGE_DEPENDENCIES["elpa"]="scalapack"
     
     # Stage 4: Advanced Libraries
+    PACKAGE_DEPENDENCIES["dftd4"]="cmake"
     PACKAGE_DEPENDENCIES["cereal"]="gcc cmake"
     PACKAGE_DEPENDENCIES["rapidjson"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libtorch"]="gcc cmake"
