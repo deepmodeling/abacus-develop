@@ -280,6 +280,16 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     for (int inl = 0; inl < deepks_param.inlmax; ++inl)
     {
         int nm = 2 * deepks_param.inl2l[inl] + 1;
+        // allow_unused=true may return an undefined gradient when the model
+        // output does not depend on this PDM block; treat it as zero
+        if (!gedm_tensor[inl].defined())
+        {
+            for (int index = 0; index < nm * nm; ++index)
+            {
+                gedm[inl][index] = 0.0;
+            }
+            continue;
+        }
         auto accessor = gedm_tensor[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; ++m1)
         {
@@ -295,7 +305,16 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
         for (int inl = 0; inl < deepks_param.inlmax; ++inl)
         {
             int nm = 2 * deepks_param.inl2l[inl] + 1;
-            auto accessor = gedm_tensor[deepks_param.inlmax + inl].accessor<double, 2>();
+            const torch::Tensor& grad_mag = gedm_tensor[deepks_param.inlmax + inl];
+            if (!grad_mag.defined())
+            {
+                for (int index = 0; index < nm * nm; ++index)
+                {
+                    gedm_mag[inl][index] = 0.0;
+                }
+                continue;
+            }
+            auto accessor = grad_mag.accessor<double, 2>();
             for (int m1 = 0; m1 < nm; ++m1)
             {
                 for (int m2 = 0; m2 < nm; ++m2)

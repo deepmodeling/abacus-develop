@@ -551,12 +551,12 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         {
                             torch::Tensor gevdm_out;
                             DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
-                    if (deepks_spin2)
-                    {
-                        torch::Tensor gevdm_out_mag;
-                        DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
-                        if (rank == 0) { gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1); }
-                    }
+                            if (deepks_spin2)
+                            {
+                                torch::Tensor gevdm_out_mag;
+                                DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
+                                if (rank == 0) { gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1); }
+                            }
                             const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
 
