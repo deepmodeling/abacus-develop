@@ -204,27 +204,24 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                               descriptor_mag);
                 DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
                                                this->ld->deepks_param,
-                                               descriptor,
-                                               descriptor_mag,
-                                               this->ld->pdm,
-                                               this->ld->pdm_mag,
                                                this->ld->model_deepks,
+                                               this->ld->E_delta,
+                                               descriptor,
+                                               this->ld->pdm,
                                                this->ld->gedm,
-                                               this->ld->gedm_mag,
-                                               this->ld->E_delta);
+                                               descriptor_mag,
+                                               this->ld->pdm_mag,
+                                               this->ld->gedm_mag);
             }
             else
             {
                 DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
                                                this->ld->deepks_param,
-                                               descriptor,
-                                               {},
-                                               this->ld->pdm,
-                                               {},
                                                this->ld->model_deepks,
-                                               this->ld->gedm,
-                                               nullptr,
-                                               this->ld->E_delta);
+                                               this->ld->E_delta,
+                                               descriptor,
+                                               this->ld->pdm,
+                                               this->ld->gedm);
             }
         }
 

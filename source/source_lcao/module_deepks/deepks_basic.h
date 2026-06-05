@@ -37,14 +37,14 @@ void cal_gevdm(const int nat,
 /// calculate partial of energy correction to descriptors
 void cal_edelta_gedm(const int nat,
                      const DeePKS_Param& deepks_param,
-                     const std::vector<torch::Tensor>& descriptor,
-                     const std::vector<torch::Tensor>& descriptor_mag,
-                     const std::vector<torch::Tensor>& pdm,
-                     const std::vector<torch::Tensor>& pdm_mag,
                      torch::jit::script::Module& model_deepks,
+                     double& E_delta,
+                     const std::vector<torch::Tensor>& descriptor,
+                     const std::vector<torch::Tensor>& pdm,
                      double** gedm,
-                     double** gedm_mag,
-                     double& E_delta);
+                     const std::vector<torch::Tensor>& descriptor_mag = {},
+                     const std::vector<torch::Tensor>& pdm_mag = {},
+                     double** gedm_mag = nullptr);
 void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
 void cal_edelta_gedm_equiv(const int nat,
                            const DeePKS_Param& deepks_param,

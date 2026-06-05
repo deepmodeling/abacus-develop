@@ -217,14 +217,14 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 // E_delta is also calculated here
 void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     const DeePKS_Param& deepks_param,
-                                    const std::vector<torch::Tensor>& descriptor,
-                                    const std::vector<torch::Tensor>& descriptor_mag,
-                                    const std::vector<torch::Tensor>& pdm,
-                                    const std::vector<torch::Tensor>& pdm_mag,
                                     torch::jit::script::Module& model_deepks,
+                                    double& E_delta,
+                                    const std::vector<torch::Tensor>& descriptor,
+                                    const std::vector<torch::Tensor>& pdm,
                                     double** gedm,
-                                    double** gedm_mag,
-                                    double& E_delta)
+                                    const std::vector<torch::Tensor>& descriptor_mag,
+                                    const std::vector<torch::Tensor>& pdm_mag,
+                                    double** gedm_mag)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
     ModuleBase::timer::start("DeePKS_domain", "cal_edelta_gedm");

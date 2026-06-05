@@ -77,10 +77,10 @@ void LCAO_deepks_io::load_npy_gedm(const int nat,
 void LCAO_deepks_io::save_npy_d(const int nat,
                                 const bool deepks_equiv,
                                 const DeePKS_Param& deepks_param,
-                                const std::vector<torch::Tensor>& descriptor,
-                                const std::vector<torch::Tensor>& descriptor_mag,
                                 const std::string& dm_eig_file,
-                                const int rank)
+                                const int rank,
+                                const std::vector<torch::Tensor>& descriptor,
+                                const std::vector<torch::Tensor>& descriptor_mag)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_d");
 

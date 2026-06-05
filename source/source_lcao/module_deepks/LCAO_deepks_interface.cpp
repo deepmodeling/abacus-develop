@@ -146,10 +146,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         LCAO_deepks_io::save_npy_d(nat,
                                    PARAM.inp.deepks_equiv,
                                    deepks_param,
-                                   descriptor,
-                                   descriptor_mag,
                                    file_d,
-                                   rank); // libnpy needed
+                                   rank,
+                                   descriptor,
+                                   descriptor_mag); // libnpy needed
 
         if (PARAM.inp.deepks_scf)
         {
@@ -163,11 +163,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 if (deepks_spin2)
                 {
-                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, descriptor_mag, pdm, ld->pdm_mag, ld->model_deepks, ld->gedm, ld->gedm_mag, E_delta);
+                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, ld->model_deepks, E_delta, descriptor, pdm, ld->gedm, descriptor_mag, ld->pdm_mag, ld->gedm_mag);
                 }
                 else
                 {
-                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, {}, pdm, {}, ld->model_deepks, ld->gedm, nullptr, E_delta);
+                    DeePKS_domain::cal_edelta_gedm(nat, deepks_param, ld->model_deepks, E_delta, descriptor, pdm, ld->gedm);
                 }
             }
         }
