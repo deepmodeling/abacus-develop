@@ -780,6 +780,7 @@ if(DEFINED NEP_DIR)
 
   if(NEP_FOUND)
     add_compile_definitions(__NEP)
+    include_directories(${NEP_INCLUDE_DIR})
     target_link_libraries(${ABACUS_BIN_NAME} NEP::nep)
   endif()
 endif()

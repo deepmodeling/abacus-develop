@@ -38,6 +38,54 @@ __global__ void nep_postprocess_kernel(const int nat,
 
 } // namespace
 
+void init_nep_cuda_postprocess_workspace(NepCudaPostprocessWorkspace& workspace, const int nat)
+{
+    if (workspace.capacity >= nat)
+    {
+        return;
+    }
+
+    release_nep_cuda_postprocess_workspace(workspace);
+
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.energy), sizeof(double) * nat));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.raw_force), sizeof(double) * 3 * nat));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.raw_virial), sizeof(double) * 9 * nat));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.potential), sizeof(double)));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.force), sizeof(double) * 3 * nat));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&workspace.virial), sizeof(double) * 9));
+    workspace.capacity = nat;
+}
+
+void release_nep_cuda_postprocess_workspace(NepCudaPostprocessWorkspace& workspace)
+{
+    if (workspace.energy != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.energy));
+    }
+    if (workspace.raw_force != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.raw_force));
+    }
+    if (workspace.raw_virial != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.raw_virial));
+    }
+    if (workspace.potential != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.potential));
+    }
+    if (workspace.force != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.force));
+    }
+    if (workspace.virial != nullptr)
+    {
+        CHECK_CUDA(cudaFree(workspace.virial));
+    }
+
+    workspace = NepCudaPostprocessWorkspace{};
+}
+
 void postprocess_nep_cuda(const int nat,
                           const double* atomic_energy,
                           const double* raw_force,
@@ -49,51 +97,59 @@ void postprocess_nep_cuda(const int nat,
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& virial)
 {
-    double* d_energy = nullptr;
-    double* d_raw_force = nullptr;
-    double* d_raw_virial = nullptr;
-    double* d_potential = nullptr;
-    double* d_force = nullptr;
-    double* d_virial = nullptr;
+    NepCudaPostprocessWorkspace workspace;
+    postprocess_nep_cuda(nat,
+                         atomic_energy,
+                         raw_force,
+                         raw_virial,
+                         fact_e,
+                         fact_f,
+                         fact_v,
+                         potential,
+                         force,
+                         virial,
+                         workspace);
+    release_nep_cuda_postprocess_workspace(workspace);
+}
 
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_energy), sizeof(double) * nat));
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_raw_force), sizeof(double) * 3 * nat));
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_raw_virial), sizeof(double) * 9 * nat));
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_potential), sizeof(double)));
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_force), sizeof(double) * 3 * nat));
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void**>(&d_virial), sizeof(double) * 9));
+void postprocess_nep_cuda(const int nat,
+                          const double* atomic_energy,
+                          const double* raw_force,
+                          const double* raw_virial,
+                          const double fact_e,
+                          const double fact_f,
+                          const double fact_v,
+                          double& potential,
+                          ModuleBase::matrix& force,
+                          ModuleBase::matrix& virial,
+                          NepCudaPostprocessWorkspace& workspace)
+{
+    init_nep_cuda_postprocess_workspace(workspace, nat);
 
-    CHECK_CUDA(cudaMemcpy(d_energy, atomic_energy, sizeof(double) * nat, cudaMemcpyHostToDevice));
-    CHECK_CUDA(cudaMemcpy(d_raw_force, raw_force, sizeof(double) * 3 * nat, cudaMemcpyHostToDevice));
-    CHECK_CUDA(cudaMemcpy(d_raw_virial, raw_virial, sizeof(double) * 9 * nat, cudaMemcpyHostToDevice));
-    CHECK_CUDA(cudaMemset(d_potential, 0, sizeof(double)));
-    CHECK_CUDA(cudaMemset(d_virial, 0, sizeof(double) * 9));
+    CHECK_CUDA(cudaMemcpy(workspace.energy, atomic_energy, sizeof(double) * nat, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(workspace.raw_force, raw_force, sizeof(double) * 3 * nat, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(workspace.raw_virial, raw_virial, sizeof(double) * 9 * nat, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemset(workspace.potential, 0, sizeof(double)));
+    CHECK_CUDA(cudaMemset(workspace.virial, 0, sizeof(double) * 9));
 
     const int block_size = 256;
     const int grid_size = (nat + block_size - 1) / block_size;
     nep_postprocess_kernel<<<grid_size, block_size>>>(nat,
-                                                      d_energy,
-                                                      d_raw_force,
-                                                      d_raw_virial,
+                                                      workspace.energy,
+                                                      workspace.raw_force,
+                                                      workspace.raw_virial,
                                                       fact_e,
                                                       fact_f,
                                                       fact_v,
-                                                      d_potential,
-                                                      d_force,
-                                                      d_virial);
+                                                      workspace.potential,
+                                                      workspace.force,
+                                                      workspace.virial);
     CHECK_LAST_CUDA_ERROR("nep_postprocess_kernel");
     CHECK_CUDA_SYNC();
 
-    CHECK_CUDA(cudaMemcpy(&potential, d_potential, sizeof(double), cudaMemcpyDeviceToHost));
-    CHECK_CUDA(cudaMemcpy(force.c, d_force, sizeof(double) * 3 * nat, cudaMemcpyDeviceToHost));
-    CHECK_CUDA(cudaMemcpy(virial.c, d_virial, sizeof(double) * 9, cudaMemcpyDeviceToHost));
-
-    CHECK_CUDA(cudaFree(d_energy));
-    CHECK_CUDA(cudaFree(d_raw_force));
-    CHECK_CUDA(cudaFree(d_raw_virial));
-    CHECK_CUDA(cudaFree(d_potential));
-    CHECK_CUDA(cudaFree(d_force));
-    CHECK_CUDA(cudaFree(d_virial));
+    CHECK_CUDA(cudaMemcpy(&potential, workspace.potential, sizeof(double), cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy(force.c, workspace.force, sizeof(double) * 3 * nat, cudaMemcpyDeviceToHost));
+    CHECK_CUDA(cudaMemcpy(virial.c, workspace.virial, sizeof(double) * 9, cudaMemcpyDeviceToHost));
 }
 
 } // namespace ModuleESolver

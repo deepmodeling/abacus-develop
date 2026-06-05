@@ -2,6 +2,7 @@
 #define ESOLVER_NEP_H
 
 #include "esolver.h"
+#include "esolver_nep_postprocess.h"
 #ifdef __NEP
 #include "nep.h"
 #endif
@@ -106,6 +107,9 @@ class ESolver_NEP : public ESolver
     std::vector<double> _v;              ///< temporary storage for virial computation
     std::vector<double> cell;            ///< NEP cell matrix in column-major order
     std::vector<double> coord;           ///< NEP coordinates in structure-of-arrays order
+#ifdef __CUDA
+    NepCudaPostprocessWorkspace cuda_postprocess_workspace; ///< persistent CUDA workspace for NEP postprocess
+#endif
 };
 
 } // namespace ModuleESolver

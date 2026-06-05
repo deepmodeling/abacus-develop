@@ -43,6 +43,10 @@ void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
                                "data_?");
 
     atype.resize(ucell.nat);
+    cell.resize(9);
+    coord.resize(3 * ucell.nat);
+    force_raw.resize(3 * ucell.nat);
+    virial_raw.resize(9);
 
     rescaling = inp.mdp.dp_rescaling;
     fparam = inp.mdp.dp_fparam;
@@ -59,7 +63,25 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_DP", "runner");
     ModuleBase::timer::start("ESolver_DP", "runner");
 
-    std::vector<double> cell(9, 0.0);
+    prepare_input_buffers(ucell);
+
+#ifdef __DPMD
+    dp_potential = 0;
+    dp_force.zero_out();
+    dp_virial.zero_out();
+
+    run_model();
+    postprocess_outputs(ucell);
+#else
+    ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
+#endif
+    ModuleBase::timer::end("ESolver_DP", "runner");
+}
+
+void ESolver_DP::prepare_input_buffers(const UnitCell& ucell)
+{
+    ModuleBase::timer::start("ESolver_DP", "prepare_input");
+
     cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
     cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
     cell[2] = ucell.latvec.e13 * ucell.lat0_angstrom;
@@ -70,7 +92,6 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     cell[7] = ucell.latvec.e32 * ucell.lat0_angstrom;
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    std::vector<double> coord(3 * ucell.nat, 0.0);
     int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -84,13 +105,25 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     }
     assert(ucell.nat == iat);
 
-#ifdef __DPMD
-    std::vector<double> f, v;
-    dp_potential = 0;
-    dp_force.zero_out();
-    dp_virial.zero_out();
+    ModuleBase::timer::end("ESolver_DP", "prepare_input");
+}
 
-    dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
+void ESolver_DP::run_model()
+{
+    ModuleBase::timer::start("ESolver_DP", "model_compute");
+
+#ifdef __DPMD
+    dp.compute(dp_potential, force_raw, virial_raw, coord, atype, cell, fparam, aparam);
+#else
+    ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
+#endif
+
+    ModuleBase::timer::end("ESolver_DP", "model_compute");
+}
+
+void ESolver_DP::postprocess_outputs(const UnitCell& ucell)
+{
+    ModuleBase::timer::start("ESolver_DP", "postprocess");
 
     // rescale the energy, force, and stress
     const double fact_e = rescaling / ModuleBase::Ry_to_eV;
@@ -103,22 +136,20 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
 
     for (int i = 0; i < ucell.nat; ++i)
     {
-        dp_force(i, 0) = f[3 * i] * fact_f;
-        dp_force(i, 1) = f[3 * i + 1] * fact_f;
-        dp_force(i, 2) = f[3 * i + 2] * fact_f;
+        dp_force(i, 0) = force_raw[3 * i] * fact_f;
+        dp_force(i, 1) = force_raw[3 * i + 1] * fact_f;
+        dp_force(i, 2) = force_raw[3 * i + 2] * fact_f;
     }
 
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            dp_virial(i, j) = v[3 * i + j] * fact_v;
+            dp_virial(i, j) = virial_raw[3 * i + j] * fact_v;
         }
     }
-#else
-    ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
-#endif
-    ModuleBase::timer::end("ESolver_DP", "runner");
+
+    ModuleBase::timer::end("ESolver_DP", "postprocess");
 }
 
 double ESolver_DP::cal_energy()

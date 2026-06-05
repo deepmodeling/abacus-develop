@@ -77,6 +77,23 @@ class ESolver_DP : public ESolver
 
   private:
     /**
+     * @brief Prepare DeePMD cell and coordinate buffers from ABACUS UnitCell.
+     *
+     * DeePMD uses a row-major 3x3 cell and atom-major coordinates.
+     */
+    void prepare_input_buffers(const UnitCell& ucell);
+
+    /**
+     * @brief Call the external DeePMD model.
+     */
+    void run_model();
+
+    /**
+     * @brief Convert DeePMD outputs to ABACUS internal units and matrices.
+     */
+    void postprocess_outputs(const UnitCell& ucell);
+
+    /**
      * @brief determine the type map of DP model
      *
      * @param ucell unitcell information
@@ -111,6 +128,10 @@ class ESolver_DP : public ESolver
     std::vector<int> atype = {};     ///< atom type corresponding to DP model
     std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
     std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
+    std::vector<double> cell = {};       ///< DeePMD cell matrix in row-major order
+    std::vector<double> coord = {};      ///< DeePMD atom-major coordinates
+    std::vector<double> force_raw = {};  ///< raw DeePMD forces in eV/Angstrom
+    std::vector<double> virial_raw = {}; ///< raw DeePMD virial in eV
     double rescaling = 1.0;          ///< rescaling factor for DP model
     double dp_potential = 0.0;       ///< computed potential energy
     ModuleBase::matrix dp_force;     ///< computed atomic forces
