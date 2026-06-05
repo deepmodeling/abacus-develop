@@ -147,13 +147,12 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
 #ifdef __MLALGO
     ModuleBase::TITLE("DeePKS", "contributeHR");
+    ModuleBase::timer::start("DeePKS", "contributeHR");
     // if DM changed, HR of DeePKS need to refresh.
     // the judgement is based on the status of HR in ld
     // this operator should be informed that DM has changed and HR need to recalculate.
     if (this->ld->get_hr_cal())
     {
-        ModuleBase::timer::start("DeePKS", "contributeHR");
-
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
                                    this->ld->deepks_param,
                                    this->kvec_d,
@@ -223,8 +222,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         }
 
         this->ld->set_hr_cal(false);
-
-        ModuleBase::timer::end("DeePKS", "contributeHR");
     }
 
     // nspin=2 (traditional): the correction for spin sigma is
@@ -240,6 +237,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
     // save V_delta_R to hR
     this->hR->add(*this->V_delta_R);
+
+    ModuleBase::timer::end("DeePKS", "contributeHR");
 #endif
 }
 
