@@ -140,8 +140,10 @@ class DiagoPPCGPrepare
         ppcg.init_iter(nband, nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-6);
 
-        // A few passes for robustness on random problems
-        for (int pass = 0; pass < 2; ++pass)
+        // As in BPCG, several diag() passes are needed for harder problems.
+        // Each pass starts from the refined X of the previous one and rebuilds
+        // the search directions from scratch.
+        for (int pass = 0; pass < 5; ++pass)
         {
             ppcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         }

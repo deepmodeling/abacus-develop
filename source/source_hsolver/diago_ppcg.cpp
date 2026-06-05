@@ -57,6 +57,9 @@ void DiagoPPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
     this->scc = ct::Tensor(this->t_type, this->device_type, {max_small, max_small});
     this->vcc = ct::Tensor(this->t_type, this->device_type, {max_small, max_small});
     this->eval = ct::Tensor(this->r_type, this->device_type, {max_small});
+    // Zero-initialize so that uninitialised entries are immediately visible
+    // as exact 0.0 rather than denormal garbage (e.g. 4.68e-310).
+    Parallel_Reduce::ZEROS(this->eval.data<Real>(), max_small);
 
     this->work = ct::Tensor(this->t_type, this->device_type, {max_cols, this->n_basis});
 
@@ -328,74 +331,145 @@ void DiagoPPCG<T, Device>::update_from_projected(const int ncols, const bool has
     // P_new = W * Cw + P * Cp, where Cw = coeff(rows b..2b-1, cols 0..b-1)
     // and Cp = coeff(rows 2b..3b-1, cols 0..b-1)
     const int b = this->n_band_l;
-    const T* Cw = coeff + b;          // row offset b
     const int ld = ld_small;
 
-    ModuleBase::gemm_op<T, Device>()('N',
-                                    'N',
-                                    this->n_dim,
-                                    b,
-                                    b,
-                                    this->one,
-                                    this->W.data<T>(),
-                                    this->n_basis,
-                                    Cw,
-                                    ld,
-                                    this->zero,
-                                    this->P.data<T>(),
-                                    this->n_basis);
-
-    ModuleBase::gemm_op<T, Device>()('N',
-                                    'N',
-                                    this->n_dim,
-                                    b,
-                                    b,
-                                    this->one,
-                                    this->HW.data<T>(),
-                                    this->n_basis,
-                                    Cw,
-                                    ld,
-                                    this->zero,
-                                    this->HP.data<T>(),
-                                    this->n_basis);
-
-    if (has_p)
+    // When the subspace is smaller than the full [X,W,P] block (ncols < 3b),
+    // only a prefix of W and/or P participates.  Keep the inner dimensions
+    // consistent so we never read garbage rows from vcc.
+    const int ncols_W = std::max(0, std::min(b, ncols - b));
+    if (ncols_W > 0)
     {
-        const T* Cp = coeff + 2 * b;
+        const T* Cw = coeff + b; // row offset b in vcc
+
         ModuleBase::gemm_op<T, Device>()('N',
                                         'N',
                                         this->n_dim,
                                         b,
-                                        b,
+                                        ncols_W,
                                         this->one,
-                                        this->V.data<T>() + 2 * b * this->n_basis,
+                                        this->W.data<T>(),
                                         this->n_basis,
-                                        Cp,
+                                        Cw,
                                         ld,
-                                        this->one,
+                                        this->zero,
                                         this->P.data<T>(),
                                         this->n_basis);
+
         ModuleBase::gemm_op<T, Device>()('N',
                                         'N',
                                         this->n_dim,
                                         b,
-                                        b,
+                                        ncols_W,
                                         this->one,
-                                        this->HV.data<T>() + 2 * b * this->n_basis,
+                                        this->HW.data<T>(),
                                         this->n_basis,
-                                        Cp,
+                                        Cw,
                                         ld,
-                                        this->one,
+                                        this->zero,
                                         this->HP.data<T>(),
                                         this->n_basis);
     }
 
-    // Keep P orthogonal to X to reduce instabilities
-    this->project_out(this->X, this->n_band_l, this->P, this->n_band_l);
-    normalize_op<T, Device>()(this->n_dim, this->P.data<T>(), 0, this->n_band_l, nullptr);
+    if (has_p)
+    {
+        const int ncols_P = std::max(0, std::min(b, ncols - 2 * b));
+        if (ncols_P > 0)
+        {
+            const T* Cp = coeff + 2 * b;
+            // The P block inside V / HV always stores b columns (pack_basis
+            // writes the full block).  Only the first ncols_P of them
+            // correspond to valid rows in Cp.
+            ModuleBase::gemm_op<T, Device>()('N',
+                                            'N',
+                                            this->n_dim,
+                                            b,
+                                            ncols_P,
+                                            this->one,
+                                            this->V.data<T>() + 2 * b * this->n_basis,
+                                            this->n_basis,
+                                            Cp,
+                                            ld,
+                                            this->one,
+                                            this->P.data<T>(),
+                                            this->n_basis);
+            ModuleBase::gemm_op<T, Device>()('N',
+                                            'N',
+                                            this->n_dim,
+                                            b,
+                                            ncols_P,
+                                            this->one,
+                                            this->HV.data<T>() + 2 * b * this->n_basis,
+                                            this->n_basis,
+                                            Cp,
+                                            ld,
+                                            this->one,
+                                            this->HP.data<T>(),
+                                            this->n_basis);
+        }
+    }
 
-    // Make P block-orthonormal so later projections with P^H * W are mathematically correct.
-    this->orthonormalize_block(this->P, &this->HP, this->n_band_l);
+        // Keep P orthogonal to X and keep HP consistent with P.
+        // If we do: P <- P - X * (X^H P), then we must also do: HP <- HP - HX * (X^H P)
+        // to preserve the relation HP = H * P inside the subspace.
+        {
+        const int bproj = this->n_band_l;
+        const int ld_coef = bproj;
+        ct::Tensor coef_xp(this->t_type, this->device_type, {ld_coef, bproj});
+
+    #ifdef __MPI
+        this->pmmcn.set_dimension(BP_WORLD,
+                      POOL_WORLD,
+                      bproj,
+                      this->n_basis,
+                      bproj,
+                      this->n_basis,
+                      this->n_dim,
+                      ld_coef);
+    #else
+        this->pmmcn.set_dimension(bproj,
+                      this->n_basis,
+                      bproj,
+                      this->n_basis,
+                      this->n_dim,
+                      ld_coef);
+    #endif
+        // coef_xp = X^H * P
+        this->pmmcn.multiply(1.0, this->X.data<T>(), this->P.data<T>(), 0.0, coef_xp.data<T>());
+
+        // P  -= X  * coef_xp
+        ModuleBase::gemm_op<T, Device>()('N',
+                        'N',
+                        this->n_dim,
+                        bproj,
+                        bproj,
+                        this->neg_one,
+                        this->X.data<T>(),
+                        this->n_basis,
+                        coef_xp.data<T>(),
+                        ld_coef,
+                        this->one,
+                        this->P.data<T>(),
+                        this->n_basis);
+
+        // HP -= HX * coef_xp
+        ModuleBase::gemm_op<T, Device>()('N',
+                        'N',
+                        this->n_dim,
+                        bproj,
+                        bproj,
+                        this->neg_one,
+                        this->HX.data<T>(),
+                        this->n_basis,
+                        coef_xp.data<T>(),
+                        ld_coef,
+                        this->one,
+                        this->HP.data<T>(),
+                        this->n_basis);
+        }
+
+        // Block-orthonormalize P and apply the same transformation to HP.
+        // (Avoid calling normalize_op(P) alone, which would desynchronize HP.)
+        this->orthonormalize_block(this->P, &this->HP, this->n_band_l);
 }
 
 template <typename T, typename Device>
@@ -496,6 +570,9 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     // HX = H X
     this->apply_h(hpsi_func, this->X, this->HX, this->n_band_l);
 
+    // Make X block-orthonormal (and keep HX consistent) before any projection/RR.
+    this->orthonormalize_block(this->X, &this->HX, this->n_band_l);
+
     // Initial Rayleigh-Ritz on X alone: solve (X^H H X) c = (X^H X) c Λ
     {
         const int ncols = this->n_band;
@@ -571,6 +648,7 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     Parallel_Reduce::ZEROS(this->P.data<T>(), this->n_band_l * this->n_basis);
     Parallel_Reduce::ZEROS(this->HP.data<T>(), this->n_band_l * this->n_basis);
 
+    // Compute initial residual and preconditioned direction W.
     bool not_conv = true;
     this->compute_residual_and_precond(ethr_band, not_conv);
 
@@ -580,11 +658,18 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     // Keep W and HW consistent while improving conditioning.
     this->orthonormalize_block(this->W, &this->HW, this->n_band_l);
 
-    const int max_iter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+    // Determine how many inner iterations to allow.
+    // When 3*n_band fits in the ambient space the P block is safe and
+    // 2-3 iterations accelerate convergence.  Otherwise stick to 1 to
+    // avoid near-singular overlap matrices.
+    const bool p_safe = (3 * this->n_band <= this->n_dim - 2);
+    const int max_iter = p_safe ? 3 : 1;
     for (int iter = 0; iter < max_iter && not_conv; ++iter)
     {
-        const bool has_p = (iter > 0);
-        const int ncols = has_p ? 3 * this->n_band : 2 * this->n_band;
+        const bool has_p = (iter > 0) && p_safe;
+        const int raw_ncols = has_p ? 3 * this->n_band : 2 * this->n_band;
+        const int ncols_max = std::max(this->n_dim - 2, this->n_band_l);
+        const int ncols = std::min(raw_ncols, ncols_max);
 
         // Pack basis V/HV
         this->pack_basis(ncols, has_p);
@@ -596,19 +681,90 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Update X/HX and P/HP
         this->update_from_projected(ncols, has_p);
 
-        // Residual + W
+        // Residual for next convergence check
         this->compute_residual_and_precond(ethr_band, not_conv);
 
-        if (!not_conv)
+        if (!not_conv || iter + 1 >= max_iter)
         {
             break;
         }
 
-        // Update HW
+        // Update HW for the next iteration
         this->apply_h(hpsi_func, this->W, this->HW, this->n_band_l);
 
-        // Keep W and HW consistent while improving conditioning.
+        // Keep W and HW consistent
         this->orthonormalize_block(this->W, &this->HW, this->n_band_l);
+    }
+
+    // Final Rayleigh-Ritz on the current X subspace to ensure (X, eval) consistency.
+    // This mirrors BPCG's exit behavior (subspace diagonalization before returning).
+    {
+        const int ncols = this->n_band;
+        ct::Tensor hxx(this->t_type, this->device_type, {ncols, ncols});
+        ct::Tensor sxx(this->t_type, this->device_type, {ncols, ncols});
+        ct::Tensor vxx(this->t_type, this->device_type, {ncols, ncols});
+        ct::Tensor exx(this->r_type, this->device_type, {ncols});
+
+#ifdef __MPI
+        this->pmmcn.set_dimension(BP_WORLD,
+                                  POOL_WORLD,
+                                  this->n_band_l,
+                                  this->n_basis,
+                                  this->n_band_l,
+                                  this->n_basis,
+                                  this->n_dim,
+                                  ncols);
+#else
+        this->pmmcn.set_dimension(this->n_band_l,
+                                  this->n_basis,
+                                  this->n_band_l,
+                                  this->n_basis,
+                                  this->n_dim,
+                                  ncols);
+#endif
+        this->pmmcn.multiply(1.0, this->X.data<T>(), this->HX.data<T>(), 0.0, hxx.data<T>());
+        this->pmmcn.multiply(1.0, this->X.data<T>(), this->X.data<T>(), 0.0, sxx.data<T>());
+
+        hsolver::hegvd_op<T, Device>()(this->ctx,
+                                       ncols,
+                                       ncols,
+                                       hxx.data<T>(),
+                                       sxx.data<T>(),
+                                       exx.data<Real>(),
+                                       vxx.data<T>());
+
+        // Rotate X, HX: X <- X * vxx, HX <- HX * vxx
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         this->n_dim,
+                                         this->n_band_l,
+                                         ncols,
+                                         this->one,
+                                         this->X.data<T>(),
+                                         this->n_basis,
+                                         vxx.data<T>(),
+                                         ncols,
+                                         this->zero,
+                                         this->work.data<T>(),
+                                         this->n_basis);
+        syncmem_complex_op()(this->X.data<T>(), this->work.data<T>(), this->n_band_l * this->n_basis);
+
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         this->n_dim,
+                                         this->n_band_l,
+                                         ncols,
+                                         this->one,
+                                         this->HX.data<T>(),
+                                         this->n_basis,
+                                         vxx.data<T>(),
+                                         ncols,
+                                         this->zero,
+                                         this->work.data<T>(),
+                                         this->n_basis);
+        syncmem_complex_op()(this->HX.data<T>(), this->work.data<T>(), this->n_band_l * this->n_basis);
+
+        syncmem_var_op()(this->eval.data<Real>(), exx.data<Real>(), this->n_band);
     }
 
     // Copy eigenvalues out
@@ -616,11 +772,11 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 }
 
 // explicit instantiation
-#if __CUDA || __UT_USE_CUDA
-// TODO: add GPU instantiation if needed
-#endif
-
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class DiagoPPCG<std::complex<double>, base_device::DEVICE_GPU>;
+template class DiagoPPCG<std::complex<float>, base_device::DEVICE_GPU>;
+#endif
 
 } // namespace hsolver
