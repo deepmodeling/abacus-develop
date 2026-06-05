@@ -13,11 +13,9 @@
 #include "source_base/module_device/types.h"
 #include "ATen/core/tensor_enums.h"
 
-#if defined(__CUDACC__)
-#include <base/macros/cuda.h>
-#elif defined(__HIPCC__)
-#include <base/macros/rocm.h>
-#endif // defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#include <thrust/complex.h>
+#endif
 
 namespace container {
 
