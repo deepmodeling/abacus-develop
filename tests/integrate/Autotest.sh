@@ -211,7 +211,7 @@ get_threshold()
     default_value=$3
     if [ -e $threshold_f ]; then 
         threshold_value=$(awk -v tn="$threshold_name" '$1==tn {print $2}' "$threshold_f")
-         if [ -n "$threshold_value" ]; then
+        if [ -n "$threshold_value" ]; then
             echo $threshold_value
         else
             echo $default_value
@@ -291,7 +291,8 @@ for dir in $testdir; do
                     my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
                     my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
                     my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
-                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $descriptor_threshold
+                    my_descriptor_threshold=$(get_threshold $threshold_file "descriptor_threshold" $descriptor_threshold)
+                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                 fi
             else
                 bash -e ../../integrate/tools/catch_properties.sh result.ref
