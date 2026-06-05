@@ -14,62 +14,6 @@ PW_Basis::PW_Basis()
     classname="PW_Basis";
 }
 
-PW_Basis::PW_Basis(const PW_Basis& other)
-{
-    this->classname = other.classname;
-#ifdef __MPI
-    this->pool_world = other.pool_world;
-#endif
-    this->nst = other.nst;
-    this->nstnz = other.nstnz;
-    this->nstot = other.nstot;
-    this->npw = other.npw;
-    this->npwtot = other.npwtot;
-    this->nrxx = other.nrxx;
-    this->startz_current = other.startz_current;
-    this->nplane = other.nplane;
-    this->ig_gge0 = other.ig_gge0;
-    this->gamma_only = other.gamma_only;
-    this->full_pw = other.full_pw;
-    this->ggecut = other.ggecut;
-    this->gridecut_lat = other.gridecut_lat;
-    this->lat0 = other.lat0;
-    this->tpiba = other.tpiba;
-    this->tpiba2 = other.tpiba2;
-    this->latvec = other.latvec;
-    this->G = other.G;
-    this->GT = other.GT;
-    this->GGT = other.GGT;
-    this->omega = other.omega;
-    this->distribution_type = other.distribution_type;
-    this->full_pw_dim = other.full_pw_dim;
-    this->poolnproc = other.poolnproc;
-    this->poolrank = other.poolrank;
-    this->ngg = other.ngg;
-    this->fftnx = other.fftnx;
-    this->fftny = other.fftny;
-    this->fftnz = other.fftnz;
-    this->fftnxyz = other.fftnxyz;
-    this->fftnxy = other.fftnxy;
-    this->nx = other.nx;
-    this->ny = other.ny;
-    this->nz = other.nz;
-    this->nxyz = other.nxyz;
-    this->nxy = other.nxy;
-    this->liy = other.liy;
-    this->riy = other.riy;
-    this->lix = other.lix;
-    this->rix = other.rix;
-    this->xprime = other.xprime;
-    this->ng_xeq0 = other.ng_xeq0;
-    this->nmaxgr = other.nmaxgr;
-    this->device = other.device;
-    this->precision = other.precision;
-    this->double_data_ = other.double_data_;
-    this->float_data_ = other.float_data_;
-    this->fft_bundle.setfft(this->device, this->precision);
-}
-
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
     this->fft_bundle.setfft("cpu",this->precision);
@@ -125,8 +69,15 @@ PW_Basis::CacheStats PW_Basis::get_cache_stats() const
     stats.local_pw_misses = this->local_pw_cache_misses.load();
     stats.uniqgg_hits = this->uniqgg_cache_hits.load();
     stats.uniqgg_misses = this->uniqgg_cache_misses.load();
-    const bool has_local_pw_cache = this->local_pw_cache_valid.load() && this->npw > 0;
-    const bool has_uniqgg_cache = this->uniqgg_cache_valid.load() && this->ngg > 0;
+    const bool has_local_pw_cache = this->local_pw_cache_valid.load()
+                                    && this->npw > 0
+                                    && this->gg != nullptr
+                                    && this->gdirect != nullptr
+                                    && this->gcar != nullptr;
+    const bool has_uniqgg_cache = this->uniqgg_cache_valid.load()
+                                  && this->ngg > 0
+                                  && this->ig2igg != nullptr
+                                  && this->gg_uniq != nullptr;
     if (has_local_pw_cache)
     {
         stats.cache_bytes += sizeof(double) * this->npw;
@@ -260,6 +211,7 @@ void PW_Basis::collect_local_pw()
     this->gg = this->gg_cache_storage.get();
     this->gdirect = this->gdirect_cache_storage.get();
     this->gcar = this->gcar_cache_storage.get();
+    // Unique-G data depends on gg, so rebuilding local G data invalidates it.
     this->uniqgg_cache_valid.store(false);
 
     ModuleBase::Vector3<double> f;
@@ -339,6 +291,7 @@ void PW_Basis::collect_uniqgg()
     std::vector<int> sortindex(this->npw); // Reconstruct the plane-wave index mapping after sorting by energy.
     std::vector<double> tmpgg(this->npw);
     std::vector<double> tmpgg2(this->npw);
+    // Reuse gg when collect_local_pw has already built the same G^2 values.
     if (this->local_pw_cache_valid.load() && this->gg != nullptr)
     {
         for(int ig = 0 ; ig < this-> npw ; ++ig)

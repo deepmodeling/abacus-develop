@@ -116,6 +116,7 @@ public:
       PW_Basis::invalidate_cache();
       this->gcar_cache_valid.store(false);
       this->gk_cache_valid.store(false);
+      this->gk2 = nullptr;
     }
 
     void clear_k_cache_storage();
@@ -136,9 +137,6 @@ public:
     void setupIndGk();
     // get ig2ixyz_k
     void get_ig2ixyz_k();
-    //calculate G+K, it is a private function
-    ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
-
   public:
     template <typename FPTYPE>
     void real2recip(const FPTYPE* in,

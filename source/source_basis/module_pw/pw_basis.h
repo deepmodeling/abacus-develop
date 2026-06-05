@@ -72,7 +72,10 @@ public:
 
     std::string classname;
     PW_Basis();
-    PW_Basis(const PW_Basis& other);
+    // PW_Basis owns FFT/distribution maps through raw pointers, so copying would
+    // create ambiguous ownership and stale cache pointers.
+    PW_Basis(const PW_Basis& other) = delete;
+    PW_Basis& operator=(const PW_Basis& other) = delete;
     PW_Basis(std::string device_, std::string precision_);
     virtual ~PW_Basis();
     //Init mpi parameters
@@ -162,10 +165,17 @@ protected:
     {
         this->local_pw_cache_valid.store(false);
         this->uniqgg_cache_valid.store(false);
+        this->gg = nullptr;
+        this->gdirect = nullptr;
+        this->gcar = nullptr;
+        this->ig2igg = nullptr;
+        this->gg_uniq = nullptr;
+        this->ig_gge0 = -1;
     }
 
     void clear_owned_cache();
 
+    // Public gg/gcar/gdirect pointers are non-owning views of these cache buffers.
     std::atomic<bool> local_pw_cache_valid{false};
     std::atomic<bool> uniqgg_cache_valid{false};
     mutable std::mutex cache_mutex;
