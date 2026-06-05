@@ -1266,12 +1266,13 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     }
     else // CONJUGATE_GRADIENT
     {
-        // Initial eigenvalues from current subspace.
-        for (int i = 0; i < ncol; ++i)
-            eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
-                                         hpsi_.data() + i * ld_psi_)
-                             / gamma_dot(psi_in + i * ld_psi_,
-                                         spsi_.data() + i * ld_psi_);
+        // Initialize with Rayleigh-Ritz — same as BLOCK_SUBSPACE.
+        // Diagonal Rayleigh quotients are poor approximations for random
+        // initial guesses; starting the CG loop with them produces wrong
+        // gradients that drive the search toward high-energy bands.
+        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+        apply_s_current(psi_in, spsi_.data(), ncol);
 
         std::vector<T> grad;
         calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
