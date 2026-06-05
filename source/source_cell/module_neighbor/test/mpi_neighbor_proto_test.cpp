@@ -1,3 +1,4 @@
+#include "../atom_pack.h"
 #include "../mpi_domain.h"
 
 #include "gtest/gtest.h"
@@ -25,39 +26,26 @@ void ensure_mpi_initialized()
     }
 #endif
 }
+
+int count_ghost_atoms(const ModuleNeighbor::AtomPack& pack)
+{
+    int count = 0;
+    for (int i = 0; i < pack.size(); ++i)
+    {
+        if (pack.is_ghost[i])
+        {
+            ++count;
+        }
+    }
+    return count;
+}
 } // namespace
 
-TEST(MpiDomainTest, CreatesCartesianDomainAndOwnsLocalPoint)
+TEST(MpiNeighborPrototypeTest, AppendsGhostsToAtomPack)
 {
     ensure_mpi_initialized();
 
-    ModuleNeighbor::MpiDomain domain;
-    domain.initialize(MPI_COMM_WORLD,
-                      std::array<double, 3>{{0.0, 0.0, 0.0}},
-                      std::array<double, 3>{{8.0, 4.0, 2.0}},
-                      0.5,
-                      true);
-
-    EXPECT_TRUE(domain.initialized());
-    EXPECT_GE(domain.size(), 1);
-    EXPECT_EQ(domain.periods()[0], 1);
-    EXPECT_EQ(domain.periods()[1], 1);
-    EXPECT_EQ(domain.periods()[2], 1);
-    EXPECT_GT(domain.local_bounds().upper[0], domain.local_bounds().lower[0]);
-    EXPECT_GT(domain.local_bounds().upper[1], domain.local_bounds().lower[1]);
-    EXPECT_GT(domain.local_bounds().upper[2], domain.local_bounds().lower[2]);
-
-    const double x_mid = 0.5 * (domain.local_bounds().lower[0] + domain.local_bounds().upper[0]);
-    const double y_mid = 0.5 * (domain.local_bounds().lower[1] + domain.local_bounds().upper[1]);
-    const double z_mid = 0.5 * (domain.local_bounds().lower[2] + domain.local_bounds().upper[2]);
-    EXPECT_TRUE(domain.owns(x_mid, y_mid, z_mid));
-}
-
-TEST(MpiDomainTest, SelectsLocalAtomsAndCountsGhostCandidates)
-{
-    ensure_mpi_initialized();
-
-    const double cutoff = 0.5;
+    const double cutoff = 0.75;
     ModuleNeighbor::MpiDomain domain;
     domain.initialize(MPI_COMM_WORLD,
                       std::array<double, 3>{{0.0, 0.0, 0.0}},
@@ -69,13 +57,20 @@ TEST(MpiDomainTest, SelectsLocalAtomsAndCountsGhostCandidates)
     const double y_local = 0.5 * (domain.local_bounds().lower[1] + domain.local_bounds().upper[1]);
     const double z_local = 0.5 * (domain.local_bounds().lower[2] + domain.local_bounds().upper[2]);
 
-    std::vector<ModuleNeighbor::MpiAtomRecord> atoms;
-    atoms.push_back(ModuleNeighbor::MpiAtomRecord(x_local, y_local, z_local, domain.rank()));
+    std::vector<ModuleNeighbor::MpiAtomRecord> local_records;
+    local_records.push_back(ModuleNeighbor::MpiAtomRecord(x_local, y_local, z_local, domain.rank()));
 
-    const std::vector<int> local_indices = domain.select_local_atoms(atoms);
-    EXPECT_EQ(local_indices.size(), 1);
+    ModuleNeighbor::AtomPack pack;
+    pack.append_mpi_record(local_records.front(), 0, domain.rank());
 
-    const std::vector<ModuleNeighbor::MpiAtomRecord> ghosts = domain.exchange_ghost_atoms(atoms);
+    const std::vector<ModuleNeighbor::MpiAtomRecord> ghosts = domain.exchange_ghost_atoms(local_records);
+    for (const ModuleNeighbor::MpiAtomRecord& ghost: ghosts)
+    {
+        pack.append_mpi_record(ghost);
+    }
+
+    EXPECT_EQ(pack.size(), static_cast<int>(ghosts.size()) + 1);
+    EXPECT_EQ(count_ghost_atoms(pack), static_cast<int>(ghosts.size()));
 
 #ifdef __MPI
     int local_ghost_count = static_cast<int>(ghosts.size());

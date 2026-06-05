@@ -5,6 +5,7 @@ add_library(
     sltk_atom_arrange.cpp
     sltk_grid.cpp
     sltk_grid_driver.cpp
+    atom_pack.cpp
     mpi_domain.cpp
 )
 
@@ -13,7 +14,5 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  if(ENABLE_MPI)
-    add_subdirectory(test)
-  endif()
+  add_subdirectory(test)
 endif()
