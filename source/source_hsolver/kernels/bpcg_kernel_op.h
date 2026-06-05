@@ -3,7 +3,21 @@
 #include "source_base/macros.h"
 #include "source_base/module_device/types.h"
 namespace hsolver
-{
+{/**
+ * @brief Compute the optimal frequency for subspace diagonalization calls
+ *        based on problem size (n_band * n_basis).
+ *
+ * Large problems benefit from more frequent subspace diagonalization to
+ * maintain orthogonality, while small problems can reduce overhead by
+ * calling it less frequently.
+ *
+ * @param n_band Number of bands (eigenvectors).
+ * @param n_basis Number of basis functions.
+ * @param nline Base iteration count for SCF > 1.
+ * @return Optimal frequency (number of CG steps between calc_hsub_with_block calls).
+ */
+int compute_optimal_freq(const int n_band, const int n_basis, const int nline);
+
 
 template <typename T, typename Device>
 struct line_minimize_with_block_op

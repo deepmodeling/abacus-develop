@@ -311,6 +311,50 @@ struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>
     }
 };
 
+
+/**
+ * @brief Compute the optimal frequency for subspace diagonalization calls
+ *        based on problem size. Uses a tiered approach:
+ *        - Small problems: less frequent calls reduce overhead
+ *        - Large problems: more frequent calls maintain orthogonality
+ *
+ * The problem size is computed as n_band * n_basis using size_t to avoid
+ * integer overflow. The frequency is clamped to [1, nline] range and
+ * should not exceed the base iteration count.
+ *
+ * Tier thresholds (problem_size = n_band * n_basis):
+ *   size < 10,000        -> freq = nline     (small, minimal overhead needed)
+ *   size < 100,000       -> freq = min(6, nline)
+ *   size < 500,000       -> freq = min(5, nline)
+ *   size < 2,000,000     -> freq = min(4, nline) (baseline)
+ *   size < 10,000,000    -> freq = min(3, nline)
+ *   size >= 10,000,000   -> freq = min(2, nline) (large, frequent calls)
+ *
+ * @param n_band Number of bands (eigenvectors).
+ * @param n_basis Number of basis functions.
+ * @param nline Base iteration count for SCF > 1.
+ * @return Optimal frequency (number of CG steps between subspace diag calls).
+ */
+int compute_optimal_freq(const int n_band, const int n_basis, const int nline)
+{
+    const size_t problem_size = static_cast<size_t>(n_band) * static_cast<size_t>(n_basis);
+    int freq = nline;
+    if (problem_size >= 10000000) {
+        freq = 2;
+    } else if (problem_size >= 2000000) {
+        freq = 3;
+    } else if (problem_size >= 500000) {
+        freq = 4;
+    } else if (problem_size >= 100000) {
+        freq = 5;
+    } else if (problem_size >= 10000) {
+        freq = 6;
+    }
+    if (freq < 1) freq = 1;
+    if (freq > nline) freq = nline;
+    return freq;
+}
+
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
