@@ -1,6 +1,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <algorithm>
+#include <tuple>
+#include <vector>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #define private public
 #include "../sltk_grid.h"
 #include "prepare_unitcell.h"
@@ -74,6 +82,28 @@ class SltkGridTest : public testing::Test
 
 using SltkGridDeathTest = SltkGridTest;
 
+namespace
+{
+using NeighborKey = std::tuple<int, int, int, int, int>;
+
+std::vector<NeighborKey> collect_neighbor_keys(const Grid& grid)
+{
+    std::vector<NeighborKey> keys;
+    for (const auto& type_neighbors: grid.all_adj_info)
+    {
+        for (const auto& atom_neighbors: type_neighbors)
+        {
+            for (const FAtom* atom: atom_neighbors)
+            {
+                keys.push_back(NeighborKey(atom->type, atom->natom, atom->cell_x, atom->cell_y, atom->cell_z));
+            }
+        }
+    }
+    std::sort(keys.begin(), keys.end());
+    return keys;
+}
+} // namespace
+
 TEST_F(SltkGridTest, Init)
 {
     ofs.open("test.out");
@@ -120,6 +150,32 @@ TEST_F(SltkGridTest, InitSmall)
     */
     ofs.close();
     remove("test.out");
+}
+
+TEST_F(SltkGridTest, OpenMPThreadCountKeepsNeighborSet)
+{
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    std::ofstream ofs_one("test_one.out");
+    Grid grid_one(PARAM.input.test_grid);
+#ifdef _OPENMP
+    omp_set_num_threads(1);
+#endif
+    grid_one.init(ofs_one, *ucell, radius, pbc);
+    ofs_one.close();
+
+    std::ofstream ofs_many("test_many.out");
+    Grid grid_many(PARAM.input.test_grid);
+#ifdef _OPENMP
+    omp_set_num_threads(4);
+#endif
+    grid_many.init(ofs_many, *ucell, radius, pbc);
+    ofs_many.close();
+
+    EXPECT_EQ(collect_neighbor_keys(grid_many), collect_neighbor_keys(grid_one));
+
+    remove("test_one.out");
+    remove("test_many.out");
 }
 
 /*
