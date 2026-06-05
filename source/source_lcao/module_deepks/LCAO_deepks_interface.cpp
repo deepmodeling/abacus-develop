@@ -5,6 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
 #include "source_estate/cal_dm.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deepks/deepks_check.h"
 #include "source_lcao/module_deepks/deepks_descriptor.h"

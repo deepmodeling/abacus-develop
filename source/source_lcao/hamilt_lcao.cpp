@@ -6,6 +6,8 @@
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/setup_deepks.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>
