@@ -60,7 +60,7 @@ class DiagoCGMixed final
                     const double& ethreshold, Real& cg_norm, Real& theta, Real& eigen,
                     ct::Tensor& phi_m, ct::Tensor& sphi, ct::Tensor& hphi);
     void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
-    void diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen,
+    void diag_once(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen,
                    const std::vector<double>& ethr_band);
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 };

@@ -1,4 +1,8 @@
 #include <source_hsolver/diago_cg_mixed.h>
+
+#include <algorithm>
+#include <cmath>
+
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 #include <ATen/kernels/memory.h>
@@ -9,7 +13,7 @@
 #include <source_base/tool_title.h>
 #include <source_base/global_function.h>
 
-using namespace hsolver;
+namespace hsolver {
 
 template <typename T, typename Device>
 DiagoCGMixed<T, Device>::DiagoCGMixed(const std::string& basis_type, const std::string& calculation)
@@ -46,7 +50,7 @@ void DiagoCGMixed<T, Device>::convert_f2d(const ct::Tensor& f_src, ct::Tensor& d
 }
 
 template <typename T, typename Device>
-void DiagoCGMixed<T, Device>::diag_mock(const ct::Tensor& prec_in, ct::Tensor& psi,
+void DiagoCGMixed<T, Device>::diag_once(const ct::Tensor& prec_in, ct::Tensor& psi,
                                          ct::Tensor& eigen, const std::vector<double>& ethr_band)
 {
     ModuleBase::TITLE("DiagoCGMixed", "diag_once");
@@ -182,7 +186,7 @@ void DiagoCGMixed<T, Device>::calc_gamma_cg(const int& iter, const Real& cg_norm
                                              const ct::Tensor& grad, const ct::Tensor& phi_m,
                                              Real& gg_last, ct::Tensor& g0, ct::Tensor& cg)
 {
-    Real gg_inter;
+    Real gg_inter = 0.0;
     if (iter > 0) gg_inter = ModuleBase::dot_real_op<T, Device>()(n_basis_, grad.data<T>(), g0.data<T>());
 
     auto dtf = ct::DataTypeToEnum<T_float>::value;
@@ -201,7 +205,7 @@ void DiagoCGMixed<T, Device>::calc_gamma_cg(const int& iter, const Real& cg_norm
         const Real gamma = (gg_now - gg_inter) / gg_last;
         gg_last = gg_now;
         ModuleBase::vector_add_vector_op<T, Device>()(n_basis_, cg.data<T>(), cg.data<T>(), gamma, grad.data<T>(), 1.0);
-        T znorma = static_cast<T>(-gamma * cg_norm * sin(theta));
+        T znorma = static_cast<T>(-gamma * cg_norm * std::sin(theta));
         ModuleBase::axpy_op<T, Device>()(n_basis_, &znorma, phi_m.data<T>(), 1, cg.data<T>(), 1);
     }
 }
@@ -211,19 +215,28 @@ bool DiagoCGMixed<T, Device>::update_psi(const ct::Tensor& pphi, const ct::Tenso
                                           const double& ethreshold, Real& cg_norm, Real& theta, Real& eigen,
                                           ct::Tensor& phi_m, ct::Tensor& sphi, ct::Tensor& hphi)
 {
-    cg_norm = sqrt(ModuleBase::dot_real_op<T, Device>()(n_basis_, cg.data<T>(), scg.data<T>()));
+    cg_norm = std::sqrt(ModuleBase::dot_real_op<T, Device>()(n_basis_, cg.data<T>(), scg.data<T>()));
     if (cg_norm < 1e-10) return true;
 
     const Real a0 = ModuleBase::dot_real_op<T, Device>()(n_basis_, phi_m.data<T>(), pphi.data<T>()) * 2.0 / cg_norm;
     const Real b0 = ModuleBase::dot_real_op<T, Device>()(n_basis_, cg.data<T>(), pphi.data<T>()) / (cg_norm * cg_norm);
     const Real e0 = eigen;
-    theta = atan(a0 / (e0 - b0)) / 2.0;
-    const Real new_e = (e0 - b0) * cos(2.0 * theta) + a0 * sin(2.0 * theta);
-    const Real e1 = (e0 + b0 + new_e) / 2.0, e2 = (e0 + b0 - new_e) / 2.0;
-    if (e1 > e2) theta += ModuleBase::PI_HALF;
-    eigen = std::min(e1, e2);
+    const Real denom = e0 - b0;
+    // Guard against near-degenerate case where e0 ≈ b0
+    if (std::abs(denom) < 1e-30) {
+        // For degenerate case, diagonalize directly
+        const Real disc = std::sqrt(a0 * a0);
+        eigen = std::min(e0 + b0 - disc, e0 + b0 + disc) / 2.0;
+        theta = (a0 > 0 ? 1.0 : -1.0) * ModuleBase::PI / 4.0;
+    } else {
+        theta = std::atan(a0 / denom) / 2.0;
+        const Real new_e = denom * std::cos(2.0 * theta) + a0 * std::sin(2.0 * theta);
+        const Real e1 = (e0 + b0 + new_e) / 2.0, e2 = (e0 + b0 - new_e) / 2.0;
+        if (e1 > e2) theta += ModuleBase::PI_HALF;
+        eigen = std::min(e1, e2);
+    }
 
-    const Real cost = cos(theta), sint_norm = sin(theta) / cg_norm;
+    const Real cost = std::cos(theta), sint_norm = std::sin(theta) / cg_norm;
     ModuleBase::vector_add_vector_op<T, Device>()(n_basis_, phi_m.data<T>(), phi_m.data<T>(), cost, cg.data<T>(), sint_norm);
 
     if (std::abs(eigen - e0) < ethreshold) return true;
@@ -246,7 +259,7 @@ void DiagoCGMixed<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi,
 
     auto psi_norm = ct::extract<Real>(lagrange_so[m])
                     - ModuleBase::dot_real_op<T, Device>()(m, lagrange_so.data<T>(), lagrange_so.data<T>(), false);
-    ModuleBase::vector_div_constant_op<T, Device>()(n_basis_, phi_m.data<T>(), phi_m.data<T>(), sqrt(psi_norm));
+    ModuleBase::vector_div_constant_op<T, Device>()(n_basis_, phi_m.data<T>(), phi_m.data<T>(), std::sqrt(psi_norm));
 }
 
 template <typename T, typename Device>
@@ -262,7 +275,9 @@ void DiagoCGMixed<T, Device>::diag(const Func& hpsi_func, const Func& spsi_func,
 {
     int ntry = 0; notconv_ = 0;
     hpsi_func_ = hpsi_func; spsi_func_ = spsi_func;
-    ct::Tensor psi_temp = psi.slice({0, 0}, {int(psi.shape().dim_size(0)), int(prec.shape().dim_size(0))});
+    const int nbasis = int(psi.shape().dim_size(1));
+    const int nprec = prec.NumElements() > 0 ? int(prec.shape().dim_size(0)) : nbasis;
+    ct::Tensor psi_temp = psi.slice({0, 0}, {int(psi.shape().dim_size(0)), nprec});
     do {
         if (need_subspace_ || ntry > 0) {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
@@ -270,12 +285,11 @@ void DiagoCGMixed<T, Device>::diag(const Func& hpsi_func, const Func& spsi_func,
             psi_temp.sync(psi_map);
         }
         ++ntry; avg_iter_ += 1.0;
-        diag_mock(prec, psi_temp, eigen, ethr_band);
+        diag_once(prec, psi_temp, eigen, ethr_band);
     } while (test_exit_cond(ntry, notconv_));
     psi.zero(); psi.sync(psi_temp);
 }
 
-namespace hsolver {
 template class DiagoCGMixed<std::complex<double>, base_device::DEVICE_CPU>;
 template class DiagoCGMixed<std::complex<float>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
