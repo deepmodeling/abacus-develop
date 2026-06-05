@@ -3,6 +3,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
