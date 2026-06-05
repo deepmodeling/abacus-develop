@@ -1,6 +1,7 @@
 #ifdef __MLALGO
 
 #include "kedf_ml.h"
+#include <iomanip>
 
 /**
  * @brief Initialize the data for ML KEDF, and generate the mapping between descriptor and kernel
@@ -38,24 +39,30 @@ void KEDF_ML::init_data(
     const std::vector<int> &of_ml_tanh_pnl,
     const std::vector<int> &of_ml_tanh_qnl,
     const std::vector<int> &of_ml_tanhp_nl,
-    const std::vector<int> &of_ml_tanhq_nl
+    const std::vector<int> &of_ml_tanhq_nl,
+    std::ostream& ofs_running
 )
 {
+    ModuleBase::TITLE("KEDF_ML", "init_data");
+    ModuleBase::timer::start("KEDF_ML", "init_data");
 
     this->ninput = 0;
 
     // --------- semi-local descriptors ---------
-    if (of_ml_gamma){
+    if (of_ml_gamma)
+    {
         this->descriptor_type.push_back("gamma");
         this->kernel_index.push_back(-1);
         ninput++;
     } 
-    if (of_ml_p){
+    if (of_ml_p)
+    {
         this->descriptor_type.push_back("p");
         this->kernel_index.push_back(-1);
         ninput++;
     }
-    if (of_ml_q){
+    if (of_ml_q)
+    {
         this->descriptor_type.push_back("q");
         this->kernel_index.push_back(-1);
         ninput++;
@@ -63,44 +70,52 @@ void KEDF_ML::init_data(
     // --------- non-local descriptors ---------
     for (int ik = 0; ik < nkernel; ++ik)
     {
-        if (of_ml_gammanl[ik]){
+        if (of_ml_gammanl[ik])
+        {
             this->descriptor_type.push_back("gammanl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_pnl[ik]){
+        if (of_ml_pnl[ik])
+        {
             this->descriptor_type.push_back("pnl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_qnl[ik]){
+        if (of_ml_qnl[ik])
+        {
             this->descriptor_type.push_back("qnl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_xi[ik]){
+        if (of_ml_xi[ik])
+        {
             this->descriptor_type.push_back("xi");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_tanhxi[ik]){
+        if (of_ml_tanhxi[ik])
+        {
             this->descriptor_type.push_back("tanhxi");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_tanhxi_nl[ik]){
+        if (of_ml_tanhxi_nl[ik])
+        {
             this->descriptor_type.push_back("tanhxi_nl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
     }
     // --------- semi-local descriptors ---------
-    if (of_ml_tanhp){
+    if (of_ml_tanhp)
+    {
         this->descriptor_type.push_back("tanhp");
         this->kernel_index.push_back(-1);
         ninput++;
     }
-    if (of_ml_tanhq){
+    if (of_ml_tanhq)
+    {
         this->descriptor_type.push_back("tanhq");
         this->kernel_index.push_back(-1);
         ninput++;
@@ -108,22 +123,26 @@ void KEDF_ML::init_data(
     // --------- non-local descriptors ---------
     for (int ik = 0; ik < nkernel; ++ik)
     {
-        if (of_ml_tanh_pnl[ik]){
+        if (of_ml_tanh_pnl[ik])
+        {
             this->descriptor_type.push_back("tanh_pnl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_tanh_qnl[ik]){
+        if (of_ml_tanh_qnl[ik])
+        {
             this->descriptor_type.push_back("tanh_qnl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_tanhp_nl[ik]){
+        if (of_ml_tanhp_nl[ik])
+        {
             this->descriptor_type.push_back("tanhp_nl");
             this->kernel_index.push_back(ik);
             this->ninput++;
         }
-        if (of_ml_tanhq_nl[ik]){
+        if (of_ml_tanhq_nl[ik])
+        {
             this->descriptor_type.push_back("tanhq_nl");
             this->kernel_index.push_back(ik);
             this->ninput++;
@@ -152,8 +171,52 @@ void KEDF_ML::init_data(
         this->descriptor2kernel[descriptor_type[i]].push_back(kernel_index[i]);
         this->descriptor2index[descriptor_type[i]].push_back(i);
     }
-    std::cout << "descriptor2index    " << descriptor2index << std::endl;
-    std::cout << "descriptor2kernel    " << descriptor2kernel << std::endl;
+
+    ofs_running << "\n  ------------------- ML-KEDF Reference -------------------\n";
+    ofs_running << "  Liang Sun and Mohan Chen*, \"Multi-channel machine learning based \n";
+    ofs_running << "    nonlocal kinetic energy density functional for semiconductors,\"\n";
+    ofs_running << "    Electronic Structure, 6, 045006 (2024).\n";
+    ofs_running << "  ---------------------------------------------------------\n";
+    ofs_running << "\n  ------------------- Descriptor Mapping -------------------\n";
+    ofs_running << "  Legend:\n";
+    ofs_running << "    descriptor2index: [indices] in neural network input vector\n";
+    ofs_running << "    descriptor2kernel: [-1]=no kernel (semi-local), [N]=use kernel N (non-local)\n";
+    ofs_running << "    Semi-local descriptors: gamma, p, q, tanhp, tanhq (no kernel needed)\n";
+    ofs_running << "    Non-local descriptors: gammanl, pnl, qnl, xi, tanhxi, etc. (need kernel)\n";
+    ofs_running << "  ---------------------------------------------------------\n";
+    ofs_running << "  descriptor2index (input vector positions):\n";
+
+    for (const auto& pair : this->descriptor2index) 
+    {
+        ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
+        for (size_t i = 0; i < pair.second.size(); ++i) 
+        {
+            ofs_running << pair.second[i];
+            if (i < pair.second.size() - 1) 
+            {
+                ofs_running << ", ";
+            }
+        }
+        ofs_running << "]\n";
+    }
+
+    ofs_running << "  ---------------------------------------------------------\n";
+    ofs_running << "  descriptor2kernel (kernel indices):\n";
+
+    for (const auto& pair : this->descriptor2kernel) 
+    {
+        ofs_running << "    " << std::setw(15) << std::left << pair.first << " : [";
+        for (size_t i = 0; i < pair.second.size(); ++i) 
+        {
+            ofs_running << pair.second[i];
+            if (i < pair.second.size() - 1) 
+            {
+                ofs_running << ", ";
+            }
+        }
+        ofs_running << "]\n";
+    }
+    ofs_running << "  ---------------------------------------------------------\n";
 
     this->ml_gamma = this->descriptor2index["gamma"].size() > 0;
     this->ml_p = this->descriptor2index["p"].size() > 0;
@@ -248,20 +311,25 @@ void KEDF_ML::init_data(
     this->gene_data_label["q"][0] = of_ml_q || this->gene_data_label["tanhq"][0] || gene_qnl_tot;
 
 
-    if (this->gene_data_label["gamma"][0]){
+    if (this->gene_data_label["gamma"][0])
+    {
         this->gamma = std::vector<double>(this->nx, 0.);
     }
-    if (this->gene_data_label["p"][0]){
+    if (this->gene_data_label["p"][0])
+    {
         this->nablaRho = std::vector<std::vector<double> >(3, std::vector<double>(this->nx, 0.));
         this->p = std::vector<double>(this->nx, 0.);
     }
-    if (this->gene_data_label["q"][0]){
+    if (this->gene_data_label["q"][0])
+    {
         this->q = std::vector<double>(this->nx, 0.);
     }
-    if (this->gene_data_label["tanhp"][0]){
+    if (this->gene_data_label["tanhp"][0])
+    {
         this->tanhp = std::vector<double>(this->nx, 0.);
     }
-    if (this->gene_data_label["tanhq"][0]){
+    if (this->gene_data_label["tanhq"][0])
+    {
         this->tanhq = std::vector<double>(this->nx, 0.);
     }
 
@@ -278,36 +346,48 @@ void KEDF_ML::init_data(
         this->tanhp_nl.push_back({});
         this->tanhq_nl.push_back({});
 
-        if (this->gene_data_label["gammanl"][ik]){
+        if (this->gene_data_label["gammanl"][ik])
+        {
             this->gammanl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["pnl"][ik]){
+        if (this->gene_data_label["pnl"][ik])
+        {
             this->pnl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["qnl"][ik]){
+        if (this->gene_data_label["qnl"][ik])
+        {
             this->qnl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["xi"][ik]){
+        if (this->gene_data_label["xi"][ik])
+        {
             this->xi[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanhxi"][ik]){
+        if (this->gene_data_label["tanhxi"][ik])
+        {
             this->tanhxi[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanhxi_nl"][ik]){
+        if (this->gene_data_label["tanhxi_nl"][ik])
+        {
             this->tanhxi_nl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanh_pnl"][ik]){
+        if (this->gene_data_label["tanh_pnl"][ik])
+        {
             this->tanh_pnl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanh_qnl"][ik]){
+        if (this->gene_data_label["tanh_qnl"][ik])
+        {
             this->tanh_qnl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanhp_nl"][ik]){
+        if (this->gene_data_label["tanhp_nl"][ik])
+        {
             this->tanhp_nl[ik] = std::vector<double>(this->nx, 0.);
         }
-        if (this->gene_data_label["tanhq_nl"][ik]){
+        if (this->gene_data_label["tanhq_nl"][ik])
+        {
             this->tanhq_nl[ik] = std::vector<double>(this->nx, 0.);
         }
     }
+
+    ModuleBase::timer::end("KEDF_ML", "init_data");
 }
 #endif

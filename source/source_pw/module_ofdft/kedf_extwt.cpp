@@ -265,6 +265,7 @@ void KEDF_ExtWT::tau_extwt(const double* const* prho, ModulePW::PW_Basis* pw_rho
  */
 void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_ExtWT", "extwt_potential");
     ModuleBase::timer::start("KEDF_ExtWT", "extwt_potential");
 
     // 1. WT potential
