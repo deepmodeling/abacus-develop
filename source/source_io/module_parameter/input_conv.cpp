@@ -25,7 +25,6 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI

@@ -5,7 +5,6 @@
 #include <mpi.h>
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "tddft_test.h"
 
 /************************************************
