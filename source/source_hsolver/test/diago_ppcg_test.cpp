@@ -78,7 +78,7 @@ class DiagoPPCGPrepare
             }
         }
 
-        double *en = new double[npw];
+        double *en = new double[nband];
         hamilt::Hamilt<std::complex<double>> *ha = new hamilt::HamiltPW<std::complex<double>>(
             nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
@@ -206,7 +206,9 @@ INSTANTIATE_TEST_SUITE_P(VerifyPPCG,
                          DiagoPPCGTest,
                          ::testing::Values(
                              // nband, npw, sparsity, eps, maxiter, threshold
-                             DiagoPPCGPrepare(4, 100, 0, 1e-5, 300, 5e-2)
+                             DiagoPPCGPrepare(4, 100, 0, 1e-5, 300, 5e-2),
+                             DiagoPPCGPrepare(4, 200, 4, 1e-5, 300, 5e-2),
+                             DiagoPPCGPrepare(8, 100, 0, 1e-5, 300, 5e-2)
                              ));
 
 int main(int argc, char **argv)

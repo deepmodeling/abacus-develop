@@ -519,6 +519,7 @@ parameters:
 
       * cg: The conjugate-gradient (CG) method.
       * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
+      * ppcg: The band-by-band projected preconditioned conjugate gradient method, similar to CG but with an alternative convergence strategy.
       * dav: The Davidson algorithm.
       * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
@@ -942,7 +943,7 @@ parameters:
     category: Plane wave related variables
     type: Real
     description: |
-      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
+      Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.
     default_value: "0.01"
     unit: ""
     availability: ""
@@ -966,10 +967,10 @@ parameters:
     category: Plane wave related variables
     type: Integer
     description: |
-      Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
+      Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method.
     default_value: "50"
     unit: ""
-    availability: "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg"
+    availability: "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg/ppcg"
   - name: pw_diag_ndim
     category: Plane wave related variables
     type: Integer

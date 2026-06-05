@@ -17,11 +17,20 @@ namespace hsolver {
 
 /**
  * @class DiagoPPCG
- * @brief Projected Preconditioned Conjugate Gradient method for eigenvalue problems.
+ * @brief Band-by-band projected preconditioned conjugate gradient method
+ *        for eigenvalue problems.
  *
- * PPCG solves the generalized eigenvalue problem H*psi = lambda*psi
- * using a preconditioned conjugate gradient approach with explicit
- * projection to maintain orthogonality against converged eigenvectors.
+ * This implementation solves the generalized eigenvalue problem H*psi = lambda*psi
+ * using a band-by-band preconditioned conjugate gradient approach, closely
+ * following the algorithm of DiagoCG. Each band is solved sequentially with
+ * explicit projection (Schmidt orthogonalization) against previously converged
+ * eigenvectors and a 2D Rayleigh-Ritz line minimization in the [psi, cg] subspace.
+ *
+ * Key algorithmic components:
+ * - Preconditioned gradient with Rayleigh-quotient projection
+ * - Polak-Ribiere CG direction update with automatic restart
+ * - 2D subspace line minimization via atan-based optimal angle
+ * - Outer retry loop with subspace diagonalization for improved initial guesses
  *
  * @tparam T The floating-point type (float, double, complex<float>, complex<double>)
  * @tparam Device The device type (CPU or GPU)

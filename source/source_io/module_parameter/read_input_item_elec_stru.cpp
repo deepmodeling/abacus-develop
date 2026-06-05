@@ -45,7 +45,7 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
+        item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver; ppcg";
         item.category = "Electronic structure";
         item.type = "String";
         item.description = R"(Choose the diagonalization methods for the Hamiltonian matrix expanded in a certain basis set.
@@ -54,6 +54,7 @@ For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
+* ppcg: The band-by-band projected preconditioned conjugate gradient method, similar to CG but with an alternative convergence strategy.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
