@@ -152,6 +152,48 @@ TEST_F(DiagoPPCGTest, BlockSubspaceStrategy)
         << "BLOCK_SUBSPACE: too many iterations";
 }
 
+// -----------------------------------------------------------------------------
+// Test CONJUGATE_GRADIENT strategy
+// -----------------------------------------------------------------------------
+TEST_F(DiagoPPCGTest, ConjugateGradientStrategy)
+{
+    std::vector<T>    psi_run = psi;
+    std::vector<Real> eval(nband, 0.0);
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 100,
+        /* sbsize   = */ 4,
+        /* rr_step  = */ 1,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+    );
+
+    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    double avg_iter = solver.diag(
+        h_op,
+        /* spsi_func = */ nullptr,   // S = I
+        ld, nband, n_dim,
+        psi_run.data(),
+        eval.data(),
+        ethr,
+        prec.data()
+    );
+
+    // Check eigenvalues against exact solution
+    for (int i = 0; i < nband; ++i) {
+        EXPECT_NEAR(eval[i], exact[i], 1e-8)
+            << "CONJUGATE_GRADIENT: eigenvalue[" << i << "] mismatch";
+    }
+
+    // Should converge within reasonable iterations
+    EXPECT_LE(avg_iter, static_cast<double>(100))
+        << "CONJUGATE_GRADIENT: too many iterations";
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);

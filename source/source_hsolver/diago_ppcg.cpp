@@ -919,8 +919,19 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
 //   For each band j: find optimal step α by minimizing the Rayleigh quotient
 //   in the 2D subspace spanned by |psi_j> and |p_j>.
 //
-//   The optimal α satisfies:
-//     α = (h_ii * s_ip - h_ip * s_ii) / (h_pp * s_ii - h_ii * s_pp)
+//   The Rayleigh quotient:
+//     R(α) = (h_ii + 2α h_ip + α² h_pp) / (s_ii + 2α s_ip + α² s_pp)
+//
+//   Setting dR/dα = 0 gives a QUADRATIC equation A α² + B α + C = 0 with:
+//     A = s_ip * h_pp - h_ip * s_pp
+//     B = s_ii * h_pp - h_ii * s_pp
+//     C = s_ii * h_ip - h_ii * s_ip
+//
+//   The linear approximation α = -C / B (dropping the α² term) picks one of
+//   the two stationary points more-or-less arbitrarily.  For bands far from
+//   convergence this can select the MAXIMUM, driving ψ toward high-energy
+//   states.  We solve the full quadratic and explicitly pick the root with
+//   the lower Rayleigh quotient.
 //
 //   Update: |psi>  += α |p>
 //           H|psi> += α H|p>
@@ -949,10 +960,54 @@ void DiagoPPCG<T, Device>::line_minimize(
         Real h_pp = gamma_dot(pp, hpp);
         Real s_pp = gamma_dot(pp, spp);
 
+        // Coefficients of A α² + B α + C = 0
+        const Real A = s_ip * h_pp - h_ip * s_pp;
+        const Real B = s_ii * h_pp - h_ii * s_pp;
+        const Real C = s_ii * h_ip - h_ii * s_ip;
+
+        // Helper: evaluate R(α)
+        auto ray_quot = [&](Real a) -> Real {
+            return (h_ii + static_cast<Real>(2) * a * h_ip + a * a * h_pp)
+                 / std::max(s_ii + static_cast<Real>(2) * a * s_ip + a * a * s_pp,
+                            static_cast<Real>(1e-30));
+        };
+
         Real alpha = 0;
-        Real denom = h_pp * s_ii - h_ii * s_pp;
-        if (std::abs(denom) > static_cast<Real>(1.0e-12))
-            alpha = (h_ii * s_ip - h_ip * s_ii) / denom;
+        Real alpha_linear = (std::abs(B) > static_cast<Real>(1e-30))
+                          ? -C / B : static_cast<Real>(0);
+
+        // Use full quadratic when the α² term is significant.
+        const Real tol = std::numeric_limits<Real>::epsilon() * static_cast<Real>(100);
+        if (std::abs(A) > tol * std::max(static_cast<Real>(1), std::abs(B)))
+        {
+            const Real disc = B * B - static_cast<Real>(4) * A * C;
+            if (disc >= static_cast<Real>(0))
+            {
+                const Real sqrt_disc = std::sqrt(disc);
+                const Real a1 = (-B + sqrt_disc) / (static_cast<Real>(2) * A);
+                const Real a2 = (-B - sqrt_disc) / (static_cast<Real>(2) * A);
+
+                const Real r1 = ray_quot(a1);
+                const Real r2 = ray_quot(a2);
+                const Real r_lin = ray_quot(alpha_linear);
+
+                // Pick the root with the lowest Rayleigh quotient.
+                if (r1 < r2 && r1 < r_lin)
+                    alpha = a1;
+                else if (r2 < r1 && r2 < r_lin)
+                    alpha = a2;
+                else
+                    alpha = alpha_linear;
+            }
+            else
+            {
+                alpha = alpha_linear;
+            }
+        }
+        else
+        {
+            alpha = alpha_linear;
+        }
 
         for (int ig = 0; ig < n_dim_; ++ig)
         {
