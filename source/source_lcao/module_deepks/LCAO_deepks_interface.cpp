@@ -237,7 +237,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         DeePKS_domain::cal_gdmx<TK>(nks, deepks_param, kvec_d, phialpha, ld->dm_r_mag, ucell, orb, *ParaV, GridD, gdmx_mag);
                         torch::Tensor gvx_mag;
                         DeePKS_domain::cal_gvx(ucell.nat, deepks_param, gevdm_mag, gdmx_mag, gvx_mag, rank);
-                        gvx = torch::stack({gvx, gvx_mag}, gvx.dim() - 1);
+                        if (rank == 0) { gvx = torch::stack({gvx, gvx_mag}, gvx.dim() - 1); }
                     }
                     const std::string file_gradvx = get_filename("gradvx", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, rank);
@@ -269,7 +269,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         DeePKS_domain::cal_gdmepsl<TK>(nks, deepks_param, kvec_d, phialpha, ld->dm_r_mag, ucell, orb, *ParaV, GridD, gdmepsl_mag);
                         torch::Tensor gvepsl_mag;
                         DeePKS_domain::cal_gvepsl(ucell.nat, deepks_param, gevdm_mag, gdmepsl_mag, gvepsl_mag, rank);
-                        gvepsl = torch::stack({gvepsl, gvepsl_mag}, gvepsl.dim() - 1);
+                        if (rank == 0) { gvepsl = torch::stack({gvepsl, gvepsl_mag}, gvepsl.dim() - 1); }
                     }
                     const std::string file_gvepsl = get_filename("gvepsl", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, rank);
@@ -442,7 +442,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 // save obase and orbital_precalc
                 if (deepks_spin2)
                 {
-                    orbital_precalc = torch::stack({orbital_precalc, orbital_precalc_mag}, orbital_precalc.dim() - 1);
+                    if (rank == 0) { orbital_precalc = torch::stack({orbital_precalc, orbital_precalc_mag}, orbital_precalc.dim() - 1); }
                 }
                 const std::string file_orbpre = get_filename("orbpre", PARAM.inp.deepks_out_labels, iter);
                 LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, rank);
@@ -542,7 +542,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             {
                                 torch::Tensor vdr_precalc_mag;
                                 DeePKS_domain::cal_vdr_precalc(nlocal, nat, nks, R_size, deepks_param, kvec_d, phialpha, gevdm_mag, ucell, orb, *ParaV, GridD, vdr_precalc_mag);
-                                vdr_precalc = torch::stack({vdr_precalc, vdr_precalc_mag}, vdr_precalc.dim() - 1);
+                                if (rank == 0) { vdr_precalc = torch::stack({vdr_precalc, vdr_precalc_mag}, vdr_precalc.dim() - 1); }
                             }
                             const std::string file_vdrpre = PARAM.globalv.global_out_dir + "deepks_vdrpre.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_vdrpre, vdr_precalc, rank);
@@ -555,7 +555,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     {
                         torch::Tensor gevdm_out_mag;
                         DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
-                        gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1);
+                        if (rank == 0) { gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1); }
                     }
                             const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
@@ -638,7 +638,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     {
                         torch::Tensor v_delta_precalc_mag;
                         DeePKS_domain::cal_v_delta_precalc<TK>(nlocal, nat, nks, deepks_param, kvec_d, phialpha, gevdm_mag, ucell, orb, *ParaV, GridD, v_delta_precalc_mag);
-                        v_delta_precalc = torch::stack({v_delta_precalc, v_delta_precalc_mag}, v_delta_precalc.dim() - 1);
+                        if (rank == 0) { v_delta_precalc = torch::stack({v_delta_precalc, v_delta_precalc_mag}, v_delta_precalc.dim() - 1); }
                     }
                     const std::string file_vdpre = get_filename("vdpre", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<TK>(file_vdpre, v_delta_precalc, rank);
@@ -657,7 +657,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     {
                         torch::Tensor gevdm_out_mag;
                         DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
-                        gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1);
+                        if (rank == 0) { gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1); }
                     }
                     const std::string file_gevdm = get_filename("gevdm", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
