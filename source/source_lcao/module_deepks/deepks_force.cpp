@@ -170,14 +170,17 @@ void DeePKS_domain::cal_f_delta(const UnitCell& ucell,
                                                 }
                                                 if (spin2)
                                                 {
-                                                    nlm_mag[dim] += gedm_mag[inl][m1 * nm + m2]
-                                                                    * overlap_1->get_value(row_indexes[iw1], ib + m1)
-                                                                    * grad_overlap_2[dim]->get_value(col_indexes[iw2], ib + m2);
+                                                    nlm_mag[dim]
+                                                        += gedm_mag[inl][m1 * nm + m2]
+                                                           * overlap_1->get_value(row_indexes[iw1], ib + m1)
+                                                           * grad_overlap_2[dim]->get_value(col_indexes[iw2], ib + m2);
                                                     if (isstress)
                                                     {
-                                                        nlm_t_mag[dim] += gedm_mag[inl][m1 * nm + m2]
-                                                                        * overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                                        * grad_overlap_1[dim]->get_value(row_indexes[iw1], ib + m2);
+                                                        nlm_t_mag[dim]
+                                                            += gedm_mag[inl][m1 * nm + m2]
+                                                               * overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                               * grad_overlap_1[dim]->get_value(row_indexes[iw1],
+                                                                                                ib + m2);
                                                     }
                                                 }
                                             }
@@ -243,8 +246,7 @@ void DeePKS_domain::cal_f_delta(const UnitCell& ucell,
                             {
                                 for (int jpol = ipol; jpol < 3; jpol++)
                                 {
-                                    svnl_dalpha_local(ipol, jpol)
-                                        += wnlm[ipol] * r2[jpol] + wnlm_t[ipol] * r1[jpol];
+                                    svnl_dalpha_local(ipol, jpol) += wnlm[ipol] * r2[jpol] + wnlm_t[ipol] * r1[jpol];
                                 }
                             }
                         }

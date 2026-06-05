@@ -127,11 +127,16 @@ void LCAO_deepks_io::save_npy_d(const int nat,
             npy_both.reserve(2 * nat * des);
             for (int iat = 0; iat < nat; ++iat)
             {
-                for (int i = 0; i < des; ++i) { npy_both.push_back(npy_des[iat * des + i]); }
-                for (int i = 0; i < des; ++i) { npy_both.push_back(npy_mag[iat * des + i]); }
+                for (int i = 0; i < des; ++i)
+                {
+                    npy_both.push_back(npy_des[iat * des + i]);
+                }
+                for (int i = 0; i < des; ++i)
+                {
+                    npy_both.push_back(npy_mag[iat * des + i]);
+                }
             }
-            const long unsigned dshape[]
-                = {static_cast<unsigned long>(nat), 2ul, static_cast<unsigned long>(des)};
+            const long unsigned dshape[] = {static_cast<unsigned long>(nat), 2ul, static_cast<unsigned long>(des)};
             npy::SaveArrayAsNumpy(dm_eig_file, false, 3, dshape, npy_both);
         }
     }

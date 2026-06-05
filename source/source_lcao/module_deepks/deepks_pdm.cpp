@@ -486,7 +486,9 @@ template void DeePKS_domain::update_dmr<double>(const std::vector<ModuleBase::Ve
                                                 const LCAO_Orbitals& orb,
                                                 const Parallel_Orbitals& pv,
                                                 const Grid_Driver& GridD,
-                                                hamilt::HContainer<double>* dmr_deepks, const int nspin, const bool mag);
+                                                hamilt::HContainer<double>* dmr_deepks,
+                                                const int nspin,
+                                                const bool mag);
 
 template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                               const std::vector<std::vector<std::complex<double>>>& dmk,
@@ -494,7 +496,9 @@ template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<
                                                               const LCAO_Orbitals& orb,
                                                               const Parallel_Orbitals& pv,
                                                               const Grid_Driver& GridD,
-                                                              hamilt::HContainer<double>* dmr_deepks, const int nspin, const bool mag);
+                                                              hamilt::HContainer<double>* dmr_deepks,
+                                                              const int nspin,
+                                                              const bool mag);
 
 template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              const DeePKS_Param& deepks_param,
