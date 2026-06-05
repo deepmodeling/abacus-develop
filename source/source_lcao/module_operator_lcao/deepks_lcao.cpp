@@ -170,6 +170,24 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       this->ld->deepks_param,
                                       this->ld->pdm,
                                       descriptor);
+        // nspin=2 (traditional): prepare the magnetization-channel descriptor
+        std::vector<torch::Tensor> descriptor_mag;
+        if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv)
+        {
+            bool init_pdm_mag = false;
+            DeePKS_domain::cal_pdm<TK>(init_pdm_mag,
+                                       this->ld->deepks_param,
+                                       this->kvec_d,
+                                       this->ld->dm_r_mag,
+                                       this->ld->phialpha,
+                                       *this->ucell,
+                                       *ptr_orb_,
+                                       *(this->gd),
+                                       *(this->hR->get_paraV()),
+                                       this->ld->pdm_mag);
+            DeePKS_domain::cal_descriptor(this->ucell->nat, this->ld->deepks_param, this->ld->pdm_mag, descriptor_mag);
+        }
+
         if (PARAM.inp.deepks_equiv)
         {
             // equivariant version: an independent path; spin is not handled here
@@ -181,48 +199,18 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                                  this->ld->E_delta,
                                                  GlobalV::MY_RANK);
         }
-        else // traditional version
+        else // traditional version (descriptor_mag is empty for nspin=1 -> single channel)
         {
-            if (PARAM.inp.nspin == 2)
-            {
-                // spin-polarized: add the magnetization channel
-                bool init_pdm_mag = false;
-                DeePKS_domain::cal_pdm<TK>(init_pdm_mag,
+            DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
                                            this->ld->deepks_param,
-                                           this->kvec_d,
-                                           this->ld->dm_r_mag,
-                                           this->ld->phialpha,
-                                           *this->ucell,
-                                           *ptr_orb_,
-                                           *(this->gd),
-                                           *(this->hR->get_paraV()),
-                                           this->ld->pdm_mag);
-                std::vector<torch::Tensor> descriptor_mag;
-                DeePKS_domain::cal_descriptor(this->ucell->nat,
-                                              this->ld->deepks_param,
-                                              this->ld->pdm_mag,
-                                              descriptor_mag);
-                DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
-                                               this->ld->deepks_param,
-                                               this->ld->model_deepks,
-                                               this->ld->E_delta,
-                                               descriptor,
-                                               this->ld->pdm,
-                                               this->ld->gedm,
-                                               descriptor_mag,
-                                               this->ld->pdm_mag,
-                                               this->ld->gedm_mag);
-            }
-            else
-            {
-                DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
-                                               this->ld->deepks_param,
-                                               this->ld->model_deepks,
-                                               this->ld->E_delta,
-                                               descriptor,
-                                               this->ld->pdm,
-                                               this->ld->gedm);
-            }
+                                           this->ld->model_deepks,
+                                           this->ld->E_delta,
+                                           descriptor,
+                                           this->ld->pdm,
+                                           this->ld->gedm,
+                                           descriptor_mag,
+                                           this->ld->pdm_mag,
+                                           this->ld->gedm_mag);
         }
 
         // For nspin=1 (and the equivariant version) V_delta_R is spin-independent;
@@ -240,24 +228,13 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     }
 
     // nspin=2 (traditional): the correction for spin sigma is
-    // |alpha>(gedm + sigma * gedm_mag)<alpha|, so rebuild V_delta_R per spin.
+    // |alpha>(gedm + sigma * gedm_mag)<alpha|; the combination is folded into
+    // calculate_HR, so no per-call gedm buffer is allocated.
     if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv)
     {
         const double sign = (this->current_spin == 0) ? 1.0 : -1.0;
-        const int inlmax = this->ld->deepks_param.inlmax;
-        const int pdm_size = (2 * this->ld->deepks_param.lmaxd + 1) * (2 * this->ld->deepks_param.lmaxd + 1);
-        std::vector<std::vector<double>> gedm_eff_buf(inlmax, std::vector<double>(pdm_size));
-        std::vector<double*> gedm_eff(inlmax);
-        for (int inl = 0; inl < inlmax; ++inl)
-        {
-            for (int k = 0; k < pdm_size; ++k)
-            {
-                gedm_eff_buf[inl][k] = this->ld->gedm[inl][k] + sign * this->ld->gedm_mag[inl][k];
-            }
-            gedm_eff[inl] = gedm_eff_buf[inl].data();
-        }
         this->V_delta_R->set_zero();
-        this->calculate_HR(gedm_eff.data());
+        this->calculate_HR(this->ld->gedm, this->ld->gedm_mag, sign);
         this->current_spin = 1 - this->current_spin;
     }
 
@@ -269,7 +246,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 #ifdef __MLALGO
 
 template <typename TK, typename TR>
-void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_use)
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_use,
+                                                                double** gedm_mag_use,
+                                                                const double sign)
 {
     ModuleBase::TITLE("DeePKS", "calculate_HR");
     ModuleBase::timer::start("DeePKS", "calculate_HR");
@@ -304,6 +283,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_us
                 {
                     const int inl = this->ld->deepks_param.inl_index[T0](I0, L0, N0);
                     const double* pgedm = gedm_use[inl];
+                    const double* pgedm_mag = (gedm_mag_use != nullptr) ? gedm_mag_use[inl] : nullptr;
                     const int nm = 2 * L0 + 1;
 
                     for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -312,7 +292,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR(double** gedm_us
                         {
                             trace_alpha_row.push_back(ib + m1);
                             trace_alpha_col.push_back(ib + m2);
-                            gedms.push_back(pgedm[m1 * nm + m2]);
+                            gedms.push_back(pgedm_mag != nullptr ? pgedm[m1 * nm + m2] + sign * pgedm_mag[m1 * nm + m2]
+                                                                 : pgedm[m1 * nm + m2]);
                         }
                     }
                     ib += nm;
