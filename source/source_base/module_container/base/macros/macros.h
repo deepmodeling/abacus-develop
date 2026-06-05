@@ -10,7 +10,7 @@
 #include <base/macros/rocm.h>
 #endif
 
-#include <ATen/core/tensor_types.h>
+#include <ATen/core/tensor_enums.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;      \
