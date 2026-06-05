@@ -4,6 +4,8 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/setup_exx.h"
+#include "source_lcao/setup_deepks.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>

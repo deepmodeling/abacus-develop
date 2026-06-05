@@ -13,13 +13,15 @@
 #include <vector>
 
 #include "source_lcao/setup_deepks.h" // mohan add 20251008
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
 
-#include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
+// forward declaration, full definition in setup_exx.h (moved to .cpp)
+// in order to decrease dependency, mohan add 20260605
+template <typename TK> class Exx_NAO; 
 
 namespace hamilt
 {
