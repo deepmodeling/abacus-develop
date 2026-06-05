@@ -52,7 +52,10 @@ class DiagoPPCGPrepare
     int nprocs = 1;
     int mypnum = 0;
 
-    void CompareEigen(double* precondition)
+    void CompareEigen(double* precondition,
+                      bool check_vectors = false,
+                      double residual_threshold = 1e-8,
+                      double orthogonality_threshold = 1e-10)
     {
         // Reference by LAPACK
         double* e_lapack = new double[npw];
@@ -74,7 +77,7 @@ class DiagoPPCGPrepare
             for (int j = 0; j < npw; j++)
             {
                 double rand = static_cast<double>(u(p)) / 10.;
-                psiguess(i, j) = ev[j * DIAGOTEST::h_nc + i] * rand;
+                psiguess(i, j) = ev[j * npw + i] * rand;
             }
         }
 
@@ -148,14 +151,47 @@ class DiagoPPCGPrepare
             ppcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         }
 
-        delete[] DIAGOTEST::npw_local;
-        delete[] precondition_local;
-
         for (int i = 0; i < nband; i++)
         {
             EXPECT_NEAR(en[i], e_lapack[i], threshold);
         }
 
+        if (check_vectors && nprocs == 1)
+        {
+            std::vector<std::complex<double>> hpsi_check(nband * npw);
+            hpsi_func(psi_local.get_pointer(), hpsi_check.data(), npw, nband);
+
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                double norm = 0.0;
+                double residual_norm = 0.0;
+                for (int ig = 0; ig < npw; ++ig)
+                {
+                    const std::complex<double> psi_value = psi_local(ib, ig);
+                    const std::complex<double> residual = hpsi_check[ib * npw + ig] - en[ib] * psi_value;
+                    norm += std::norm(psi_value);
+                    residual_norm += std::norm(residual);
+                }
+                EXPECT_NEAR(norm, 1.0, orthogonality_threshold);
+                EXPECT_LT(std::sqrt(residual_norm), residual_threshold);
+            }
+
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                for (int jb = ib + 1; jb < nband; ++jb)
+                {
+                    std::complex<double> overlap = 0.0;
+                    for (int ig = 0; ig < npw; ++ig)
+                    {
+                        overlap += std::conj(psi_local(ib, ig)) * psi_local(jb, ig);
+                    }
+                    EXPECT_LT(std::abs(overlap), orthogonality_threshold);
+                }
+            }
+        }
+
+        delete[] DIAGOTEST::npw_local;
+        delete[] precondition_local;
         delete[] en;
         delete[] e_lapack;
     }
@@ -203,7 +239,7 @@ TEST(DiagoPPCGTest, TwoByTwo)
     double precond[dim] = {1.0, 1.0};
     DIAGOTEST::hmatrix = hm;
     DIAGOTEST::npw = dim;
-    dcp.CompareEigen(precond);
+    dcp.CompareEigen(precond, true);
 }
 
 TEST(DiagoPPCGTest, ComplexThreeByThree)
@@ -229,7 +265,115 @@ TEST(DiagoPPCGTest, ComplexThreeByThree)
     double precond[dim] = {1.0, 1.0, 1.0};
     DIAGOTEST::hmatrix = hm;
     DIAGOTEST::npw = dim;
-    dcp.CompareEigen(precond);
+    dcp.CompareEigen(precond, true);
+}
+
+TEST(DiagoPPCGTest, SubspaceFourByFour)
+{
+    const int dim = 4;
+    const int nband = 2;
+    std::vector<std::complex<double>> hm(dim * dim, {0.0, 0.0});
+    hm[0] = {1.0, 0.0};
+    hm[5] = {2.0, 0.0};
+    hm[10] = {4.0, 0.0};
+    hm[15] = {8.0, 0.0};
+
+    DiagoPPCGPrepare dcp(nband, dim, 0, 1e-10, 100, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    double precond[dim] = {1.0, 1.0, 1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond, true);
+}
+
+TEST(DiagoPPCGTest, SubspaceFourByFourThreeBands)
+{
+    const int dim = 4;
+    const int nband = 3;
+    std::vector<std::complex<double>> hm(dim * dim, {0.0, 0.0});
+    hm[0] = {1.0, 0.0};
+    hm[5] = {2.0, 0.0};
+    hm[10] = {4.0, 0.0};
+    hm[15] = {8.0, 0.0};
+
+    DiagoPPCGPrepare dcp(nband, dim, 0, 1e-10, 100, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    double precond[dim] = {1.0, 1.0, 1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond, true);
+}
+
+TEST(DiagoPPCGTest, CoupledSubspaceFourByFour)
+{
+    const int dim = 4;
+    const int nband = 2;
+    std::vector<std::complex<double>> hm(dim * dim);
+    hm[0] = {2.0, 0.0};
+    hm[1] = {0.4, -0.1};
+    hm[2] = {0.0, 0.2};
+    hm[3] = {0.1, 0.0};
+    hm[4] = {0.4, 0.1};
+    hm[5] = {3.0, 0.0};
+    hm[6] = {-0.3, 0.2};
+    hm[7] = {0.0, -0.1};
+    hm[8] = {0.0, -0.2};
+    hm[9] = {-0.3, -0.2};
+    hm[10] = {5.0, 0.0};
+    hm[11] = {0.6, 0.3};
+    hm[12] = {0.1, 0.0};
+    hm[13] = {0.0, 0.1};
+    hm[14] = {0.6, -0.3};
+    hm[15] = {8.0, 0.0};
+
+    DiagoPPCGPrepare dcp(nband, dim, 0, 1e-10, 100, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    double precond[dim] = {1.0, 1.0, 1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond, true);
+}
+
+TEST(DiagoPPCGTest, CoupledSubspaceFourByFourThreeBands)
+{
+    const int dim = 4;
+    const int nband = 3;
+    std::vector<std::complex<double>> hm(dim * dim);
+    hm[0] = {2.0, 0.0};
+    hm[1] = {0.4, -0.1};
+    hm[2] = {0.0, 0.2};
+    hm[3] = {0.1, 0.0};
+    hm[4] = {0.4, 0.1};
+    hm[5] = {3.0, 0.0};
+    hm[6] = {-0.3, 0.2};
+    hm[7] = {0.0, -0.1};
+    hm[8] = {0.0, -0.2};
+    hm[9] = {-0.3, -0.2};
+    hm[10] = {5.0, 0.0};
+    hm[11] = {0.6, 0.3};
+    hm[12] = {0.1, 0.0};
+    hm[13] = {0.0, 0.1};
+    hm[14] = {0.6, -0.3};
+    hm[15] = {8.0, 0.0};
+
+    DiagoPPCGPrepare dcp(nband, dim, 0, 1e-10, 100, 1e-8);
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER = 1;
+
+    double precond[dim] = {1.0, 1.0, 1.0, 1.0};
+    DIAGOTEST::hmatrix = hm;
+    DIAGOTEST::npw = dim;
+    dcp.CompareEigen(precond, true);
 }
 
 TEST(DiagoPPCGTest, readH)

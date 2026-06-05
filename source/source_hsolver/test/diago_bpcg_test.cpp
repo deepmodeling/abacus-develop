@@ -101,7 +101,7 @@ class DiagoBPCGPrepare
             {
 		        double rand = static_cast<double>(u(p))/10.;
                 // psiguess(i,j) = ev(j,i)*(1+rand);
-                psiguess(i, j) = ev[j * DIAGOTEST::h_nc + i] * rand;
+                psiguess(i, j) = ev[j * npw + i] * rand;
             }
         }
         // run bpcg

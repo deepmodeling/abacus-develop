@@ -105,7 +105,7 @@ class DiagoPPCG
 
     void solve_projected(const int ncols);
 
-    void update_from_projected(const int ncols, const bool has_p);
+    void update_from_projected(const int ncols, const bool has_p, const bool update_p);
 
     void compute_residual_and_precond(const std::vector<double>& ethr_band, bool& not_conv);
 
