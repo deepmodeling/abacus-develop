@@ -78,9 +78,9 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                                 const bool deepks_equiv,
                                 const DeePKS_Param& deepks_param,
                                 const std::vector<torch::Tensor>& descriptor,
+                                const std::vector<torch::Tensor>& descriptor_mag,
                                 const std::string& dm_eig_file,
-                                const int rank,
-                                const std::vector<torch::Tensor>* descriptor_mag)
+                                const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_d");
 
@@ -103,7 +103,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                 npy_des.push_back(accessor[im]);
             }
         }
-        if (descriptor_mag == nullptr)
+        if (descriptor_mag.empty())
         {
             const long unsigned dshape[]
                 = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
@@ -115,7 +115,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
             std::vector<double> npy_mag;
             for (int inl = 0; inl < deepks_param.inlmax; ++inl)
             {
-                auto accessor = (*descriptor_mag)[inl].accessor<double, 1>();
+                auto accessor = descriptor_mag[inl].accessor<double, 1>();
                 int nm = 2 * deepks_param.inl2l[inl] + 1;
                 for (int im = 0; im < nm; im++)
                 {

@@ -341,9 +341,12 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
         DeePKS_domain::cal_edelta_gedm(ucell.nat,
                                        this->ld.deepks_param,
                                        descriptor,
+                                       {},
                                        this->ld.pdm,
+                                       {},
                                        this->ld.model_deepks,
                                        this->ld.gedm,
+                                       nullptr,
                                        this->ld.E_delta);
     }
 
@@ -400,6 +403,7 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
     const int cal_stress = 1;
     const int nks = kv.nkstot;
     DeePKS_domain::cal_f_delta<T>(this->ld.dm_r,
+                                  nullptr,
                                   ucell,
                                   ORB,
                                   Test_Deepks::GridD,
@@ -409,6 +413,7 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
                                   kv.kvec_d,
                                   this->ld.phialpha,
                                   this->ld.gedm,
+                                  nullptr,
                                   fvnl_dalpha,
                                   cal_stress,
                                   svnl_dalpha);

@@ -26,6 +26,7 @@ namespace DeePKS_domain
 
 template <typename TK>
 void cal_f_delta(const hamilt::HContainer<double>* dmr,
+                 const hamilt::HContainer<double>* dmr_mag,
                  const UnitCell& ucell,
                  const LCAO_Orbitals& orb,
                  const Grid_Driver& GridD,
@@ -35,11 +36,10 @@ void cal_f_delta(const hamilt::HContainer<double>* dmr,
                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                  std::vector<hamilt::HContainer<double>*> phialpha,
                  double** gedm,
+                 double** gedm_mag,
                  ModuleBase::matrix& f_delta,
                  const bool isstress,
-                 ModuleBase::matrix& svnl_dalpha,
-                 const hamilt::HContainer<double>* dmr_mag = nullptr,
-                 double** gedm_mag = nullptr);
+                 ModuleBase::matrix& svnl_dalpha);
 } // namespace DeePKS_domain
 
 #endif

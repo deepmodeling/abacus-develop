@@ -218,6 +218,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r,
+                                           nullptr,
                                            ucell,
                                            orb,
                                            gd,
@@ -227,6 +228,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            kv->kvec_d,
                                            deepks.ld.phialpha,
                                            deepks.ld.gedm,
+                                           nullptr,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);

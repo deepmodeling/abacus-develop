@@ -48,9 +48,9 @@ void save_npy_d(const int nat,
                 const bool deepks_equiv,
                 const DeePKS_Param& deepks_param,
                 const std::vector<torch::Tensor>& descriptor,
+                const std::vector<torch::Tensor>& descriptor_mag,
                 const std::string& dm_eig_file,
-                const int rank,
-                const std::vector<torch::Tensor>* descriptor_mag = nullptr);
+                const int rank);
 
 // save energy
 void save_npy_e(const double& e, /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/

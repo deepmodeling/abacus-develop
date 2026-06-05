@@ -12,6 +12,7 @@
 
 template <typename TK>
 void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
+                                const hamilt::HContainer<double>* dmr_mag,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Grid_Driver& GridD,
@@ -21,11 +22,10 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
                                 double** gedm,
+                                double** gedm_mag,
                                 ModuleBase::matrix& f_delta,
                                 const bool isstress,
-                                ModuleBase::matrix& svnl_dalpha,
-                                const hamilt::HContainer<double>* dmr_mag,
-                                double** gedm_mag)
+                                ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta");
     ModuleBase::timer::start("DeePKS_domain", "cal_f_delta");
@@ -302,6 +302,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
 }
 
 template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double>* dmr,
+                                                 const hamilt::HContainer<double>* dmr_mag,
                                                  const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Grid_Driver& GridD,
@@ -311,11 +312,13 @@ template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
                                                  double** gedm,
+                                                 double** gedm_mag,
                                                  ModuleBase::matrix& f_delta,
                                                  const bool isstress,
-                                                 ModuleBase::matrix& svnl_dalpha, const hamilt::HContainer<double>* dmr_mag, double** gedm_mag);
+                                                 ModuleBase::matrix& svnl_dalpha);
 
 template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HContainer<double>* dmr,
+                                                               const hamilt::HContainer<double>* dmr_mag,
                                                                const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Grid_Driver& GridD,
@@ -325,8 +328,9 @@ template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HCo
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
                                                                double** gedm,
+                                                               double** gedm_mag,
                                                                ModuleBase::matrix& f_delta,
                                                                const bool isstress,
-                                                               ModuleBase::matrix& svnl_dalpha, const hamilt::HContainer<double>* dmr_mag, double** gedm_mag);
+                                                               ModuleBase::matrix& svnl_dalpha);
 
 #endif
