@@ -1,8 +1,5 @@
 #include "../global_function.h"
 #include "../global_variable.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "../vector3.h"
 #include "../tool_quit.h"
 #include <string>
@@ -13,6 +10,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <ctime>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
 
 /************************************************
  *  unit test of functions in global_function
@@ -56,7 +57,7 @@
  *   - print out warning info in running.log file
  * - COPYARRAY
  *   - copy complex or double arrays
- * - IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver)
+ * - IS_COLUMN_MAJOR_KS_SOLVER(ks_solver)
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
@@ -420,9 +421,13 @@ TEST_F(GlobalFunctionTest, MakeDir)
 {
     GlobalV::MY_RANK = 0;
     ModuleBase::GlobalFunc::MAKE_DIR("scf");
-    auto error1 = std::system("test -d ");
+    
+    struct stat st;
+    int error1 = stat("scf", &st);
     EXPECT_EQ(error1, 0);
-    auto error2 = std::system("rm -r scf ");
+    EXPECT_TRUE(S_ISDIR(st.st_mode));
+
+    int error2 = rmdir("scf");
     EXPECT_EQ(error2, 0);
     SUCCEED();
 }
@@ -654,8 +659,7 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
-	PARAM.input.ks_solver = "genelpa";
-	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver));
+	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER("genelpa"));
 }
 
 TEST_F(GlobalFunctionTest,Vector2Ptr)

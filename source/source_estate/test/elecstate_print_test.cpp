@@ -11,7 +11,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_print.h"
-#undef private 
+#undef private
 /***************************************************************
  *  mock functions
  ****************************************************************/
@@ -37,6 +37,10 @@ Charge::Charge()
 Charge::~Charge()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
@@ -131,7 +135,6 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     GlobalV::MY_RANK = 0;
     PARAM.input.basis_type = "pw";
     PARAM.input.nspin = 2;
@@ -141,7 +144,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
     for (int i = 0; i < vdw_methods.size(); i++)
     {
         PARAM.input.vdw_method = vdw_methods[i];
-        elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, 
+        elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr,
         scf_thr_kin, duration, pw_diag_thr, avg_iter, false);
     }
 
@@ -152,7 +155,7 @@ TEST_F(ElecStatePrintTest, PrintEtot)
         PARAM.input.ks_solver = ks_solvers[i];
         testing::internal::CaptureStdout();
 
-        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, 
+        elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr,
         scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
 
         output = testing::internal::GetCapturedStdout();
@@ -217,11 +220,10 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS2)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 2;
     GlobalV::MY_RANK = 0;
 
-    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr, 
+    elecstate::print_etot(ucell.magnet,elecstate,converged, iter, scf_thr,
     scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
 
     delete elecstate.charge;
@@ -247,13 +249,74 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     PARAM.input.efield_flag = true;
     PARAM.input.gate_flag = true;
     PARAM.sys.two_fermi = true;
-    PARAM.input.out_bandgap = true;
     PARAM.input.nspin = 4;
     PARAM.input.noncolin = true;
     GlobalV::MY_RANK = 0;
 
-    elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin, 
+    elecstate::print_etot(ucell.magnet,elecstate, converged, iter, scf_thr, scf_thr_kin,
     duration, pw_diag_thr, avg_iter, print);
+
+    delete elecstate.charge;
+}
+
+TEST_F(ElecStatePrintTest, PrintEtotSDFTPure)
+{
+    bool converged = false;
+    int iter = 1;
+    double scf_thr = 0.1;
+    double scf_thr_kin = 0.0;
+    double duration = 2.0;
+    double pw_diag_thr = 0.1;
+    int avg_iter = 2;
+    bool print = true;
+    elecstate.charge = new Charge;
+    elecstate.charge->nrxx = 100;
+    elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
+    PARAM.input.nspin = 1;
+    GlobalV::MY_RANK = 0;
+    // Pure SDFT: nbands=0, no KS diagonalization -> ITER column should show CT
+    PARAM.input.esolver_type = "sdft";
+    PARAM.input.nbands = 0;
+    PARAM.input.ks_solver = "cg";
+
+    testing::internal::CaptureStdout();
+    elecstate::print_etot(ucell.magnet, elecstate, converged, iter, scf_thr,
+                          scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("CT"));
+
+    delete elecstate.charge;
+}
+
+TEST_F(ElecStatePrintTest, PrintEtotSDFTMixed)
+{
+    bool converged = false;
+    int iter = 1;
+    double scf_thr = 0.1;
+    double scf_thr_kin = 0.0;
+    double duration = 2.0;
+    double pw_diag_thr = 0.1;
+    int avg_iter = 2;
+    bool print = true;
+    elecstate.charge = new Charge;
+    elecstate.charge->nrxx = 100;
+    elecstate.charge->nxyz = 1000;
+
+    PARAM.input.out_freq_elec = 1;
+    PARAM.input.nspin = 1;
+    GlobalV::MY_RANK = 0;
+    // Mixed SDFT: nbands>0, still diagonalizes KS orbitals -> ITER column shows ks_solver label
+    PARAM.input.esolver_type = "sdft";
+    PARAM.input.nbands = 5;
+    PARAM.input.ks_solver = "dav";
+
+    testing::internal::CaptureStdout();
+    elecstate::print_etot(ucell.magnet, elecstate, converged, iter, scf_thr,
+                          scf_thr_kin, duration, pw_diag_thr, avg_iter, print);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("DA"));
 
     delete elecstate.charge;
 }

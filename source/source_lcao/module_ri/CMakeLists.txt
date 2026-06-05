@@ -14,13 +14,14 @@ if (ENABLE_LIBRI)
   if(ENABLE_LCAO)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
-        exx_abfs-abfs_index.cpp
         exx_abfs-construct_orbs.cpp
         exx_abfs-io.cpp
         exx_abfs-jle.cpp
         ABFs_Construct-PCA.cpp
         exx_opt_orb-print.cpp
         exx_opt_orb.cpp
+        gaussian_abfs.cpp
+        singular_value.cpp
     )
   endif()
   add_library(

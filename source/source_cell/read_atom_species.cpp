@@ -3,9 +3,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
 #ifdef __EXX
-#include "source_pw/module_pwdft/global.h"
 #include "source_lcao/module_ri/serialization_cereal.h"
 #endif
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
 namespace unitcell
 {
 bool read_atom_species(std::ifstream& ifa,
@@ -112,6 +113,16 @@ bool read_atom_species(std::ifstream& ifa,
                 std::string ofile;
                 ifa >> ofile;
                 GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
+                GlobalC::exx_info.info_opt_abfs.files_abfs.push_back(ofile);
+            }
+        }
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
+        {
+            for(int i=0; i<ntype; i++)
+            {
+                std::string ofile;
+                ifa >> ofile;
+                GlobalC::exx_info.info_opt_abfs.files_jles.push_back(ofile);
             }
         }
     }
@@ -140,7 +151,7 @@ bool read_lattice_constant(std::ifstream& ifa,
         {
             ModuleBase::WARNING_QUIT("read_atom_species","Lattice constant <= 0.0");
         }
-        lat0_angstrom = lat0 * 0.529177;
+        lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Bohr)",lat0);
         ModuleBase::GlobalFunc::OUT(ofs_running,"Lattice constant (Angstrom)",lat0_angstrom);
         lat.tpiba  = ModuleBase::TWO_PI / lat0;
@@ -151,7 +162,7 @@ bool read_lattice_constant(std::ifstream& ifa,
     // Read in latticies vector
     //===========================
 
-    if(latName=="none")
+    if(latName=="user_defined_lattice")
     {
         // check the existence of keyword "LATTICE_PARAMETERS"
         if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa,

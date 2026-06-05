@@ -10,7 +10,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
-#include "source_io/output_log.h"
+#include "source_io/module_output/output_log.h"
 
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
@@ -182,6 +182,10 @@ pseudo::pseudo()
 pseudo::~pseudo()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {

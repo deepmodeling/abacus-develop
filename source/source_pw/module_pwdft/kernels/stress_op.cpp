@@ -1,9 +1,9 @@
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 
+#include "source_base/truncated_func.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_polyint.h"
-#include "source_base/memory.h"
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
 #include "vnl_tools.hpp"
 
@@ -140,8 +140,10 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 const int inkb1 = sum + ia * nproj + ip1;
                                 const int inkb2 = sum + ia * nproj + ip2;
-                                // out<<"\n ps = "<<ps;
-
+#ifdef __SW
+                                ModuleBase::truncated_underflow(dbecp[ib * nkb + inkb1]);
+                                ModuleBase::truncated_underflow(becp[ib * nkb + inkb2]);
+#endif
                                 const FPTYPE dbb = (conj(dbecp[ib * nkb + inkb1]) * becp[ib * nkb + inkb2]).real();
                                 local_stress -= ps * fac * dbb;
                             }
@@ -258,6 +260,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
     {
+//	std::cout << " DFT+U kernel called " << std::endl;
         FPTYPE local_stress = 0;
         int iat = 0, sum = 0;
         for (int it = 0; it < ntype; it++)
@@ -618,7 +621,8 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
             {
                 rhocg1 *= ModuleBase::FOUR_PI / omega / 2.0 / gx_arr[igl];
                 FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
-                rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp(-g2a) * (g2a + 1)
+                rhocg1 += ModuleBase::FOUR_PI / omega * gx_arr[ngg] * 
+                           ModuleBase::truncated_exp(-g2a) * (g2a + 1)
                           / pow(gx_arr[igl] * gx_arr[igl], 2);
                 drhocg [igl] = rhocg1;
             }
@@ -626,49 +630,6 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 #ifdef _OPENMP
         }
 #endif
-    }
-};
-
-
-template <typename FPTYPE>
-struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
-    void operator()(const std::complex<FPTYPE>* psiv,
-                    const FPTYPE* gv_x,
-                    const FPTYPE* gv_y,
-                    const FPTYPE* gv_z,
-                    const FPTYPE* rhocgigg_vec,
-                    FPTYPE* force,
-                    const FPTYPE pos_x,
-                    const FPTYPE pos_y,
-                    const FPTYPE pos_z,
-                    const int npw,
-                    const FPTYPE omega,
-                    const FPTYPE tpiba)
-    {
-
-#ifdef _OPENMP
-#pragma omp for nowait
-#endif
-        for (int ig = 0; ig < npw; ig++)
-        {
-            const std::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
-
-            const FPTYPE arg = ModuleBase::TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
-            FPTYPE sinp, cosp;
-            ModuleBase::libm::sincos(arg, &sinp, &cosp);
-            const std::complex<FPTYPE> expiarg = std::complex<FPTYPE>(sinp, cosp);
-
-            const std::complex<FPTYPE> tmp_var = psiv_conj * expiarg * tpiba * omega * rhocgigg_vec[ig];
-
-            const std::complex<FPTYPE> ipol0 = tmp_var * gv_x[ig];
-            force[0] += ipol0.real();
-
-            const std::complex<FPTYPE> ipol1 = tmp_var * gv_y[ig];
-            force[1] += ipol1.real();
-
-            const std::complex<FPTYPE> ipol2 = tmp_var * gv_z[ig];
-            force[2] += ipol2.real();
-        }
     }
 };
 
@@ -687,6 +648,9 @@ struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
 #endif
         for (int i = 0; i < npw; i++)
         {
+#ifdef __SW
+            ModuleBase::truncated_underflow(psi[i]);
+#endif
             sum += fac * gk1[i] * gk2[i] * d_kfac[i] * std::norm(psi[i]);
         }
         return sum;
@@ -767,9 +731,6 @@ template struct cal_vq_deri_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_CPU>;
 template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_CPU>;
-
-template struct cal_force_npw_op<float, base_device::DEVICE_CPU>;
-template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_multi_dot_op<float, base_device::DEVICE_CPU>;
 template struct cal_multi_dot_op<double, base_device::DEVICE_CPU>;

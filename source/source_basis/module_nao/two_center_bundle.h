@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASIS_MODULE_NAO_TWO_CENTER_BUNDLE_H
+#ifndef TWO_CENTER_BUNDLE_H
+#define TWO_CENTER_BUNDLE_H
 
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_integrator.h"
@@ -15,7 +15,7 @@ class TwoCenterBundle
     TwoCenterBundle& operator=(TwoCenterBundle&&) = default;
 
     // NOTE: some variables might be set only on RANK-0
-    void build_orb(int ntype, const std::string* file_orb0);
+    void build_orb(int ntype, const std::string* file_orb0, const std::string& orbital_dir);
     void build_beta(int ntype, Numerical_Nonlocal* nl);
     void build_alpha(int ndesc = 0, std::string* file_desc0 = nullptr);
     void build_orb_onsite(const double& radius);
@@ -37,7 +37,9 @@ class TwoCenterBundle
                           const double lcao_ecut,
                           const double lcao_dk,
                           const double lcao_dr,
-                          const double lcao_rmax) const;
+                          const double lcao_rmax,
+                          const bool out_element_info,
+                          const bool cal_force) const;
 
     std::unique_ptr<TwoCenterIntegrator> kinetic_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;

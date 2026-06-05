@@ -218,6 +218,153 @@ TEST_F(TwoCenterIntegratorTest, SphericalBessel)
     delete[] zeros;
 }
 
+TEST_F(TwoCenterIntegratorTest, HessianSymmetry)
+{
+    nfile = 3;
+    orb.build(nfile, file, 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
+    double rmax = orb.rcut_max() * 2.0;
+    double dr = 0.01;
+    int nr = static_cast<int>(rmax / dr) + 1;
+
+    orb.set_uniform_grid(true, nr, rmax, 'i', true);
+
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
+
+    ModuleBase::Vector3<double> R(1.5, 2.0, 1.0);
+    double hess[9];
+
+    // Test S operator
+    S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess);
+
+    EXPECT_NEAR(hess[1], hess[3], 1e-10);  // H_xy == H_yx
+    EXPECT_NEAR(hess[2], hess[6], 1e-10);  // H_xz == H_zx
+    EXPECT_NEAR(hess[5], hess[7], 1e-10);  // H_yz == H_zy
+
+    // Test T operator
+    T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess);
+
+    EXPECT_NEAR(hess[1], hess[3], 1e-10);  // H_xy == H_yx
+    EXPECT_NEAR(hess[2], hess[6], 1e-10);  // H_xz == H_zx
+    EXPECT_NEAR(hess[5], hess[7], 1e-10);  // H_yz == H_zy
+}
+
+TEST_F(TwoCenterIntegratorTest, HessianFiniteDifference)
+{
+    nfile = 3;
+    orb.build(nfile, file, 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
+    double rmax = orb.rcut_max() * 2.0;
+    double dr = 0.01;
+    int nr = static_cast<int>(rmax / dr) + 1;
+
+    orb.set_uniform_grid(true, nr, rmax, 'i', true);
+
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
+
+    ModuleBase::Vector3<double> R(1.5, 2.0, 1.0);
+    double hess_analytical[9];
+    double hess_numerical[9];
+    double eps = 1e-5;
+
+    // Test S operator
+    S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess_analytical);
+
+    // Compute numerical Hessian via finite differences
+    for (int alpha = 0; alpha < 3; ++alpha)
+    {
+        for (int beta = 0; beta < 3; ++beta)
+        {
+            ModuleBase::Vector3<double> R_plus = R, R_minus = R;
+            R_plus[beta] += eps;
+            R_minus[beta] -= eps;
+
+            double grad_plus[3], grad_minus[3];
+            S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R_plus, nullptr, grad_plus, nullptr);
+            S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R_minus, nullptr, grad_minus, nullptr);
+
+            hess_numerical[alpha * 3 + beta] = (grad_plus[alpha] - grad_minus[alpha]) / (2.0 * eps);
+        }
+    }
+
+    // Compare with tolerance appropriate for finite differences
+    for (int i = 0; i < 9; ++i)
+    {
+        EXPECT_NEAR(hess_analytical[i], hess_numerical[i], 1e-5);
+    }
+
+    // Test T operator
+    T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, nullptr, hess_analytical);
+
+    for (int alpha = 0; alpha < 3; ++alpha)
+    {
+        for (int beta = 0; beta < 3; ++beta)
+        {
+            ModuleBase::Vector3<double> R_plus = R, R_minus = R;
+            R_plus[beta] += eps;
+            R_minus[beta] -= eps;
+
+            double grad_plus[3], grad_minus[3];
+            T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R_plus, nullptr, grad_plus, nullptr);
+            T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R_minus, nullptr, grad_minus, nullptr);
+
+            hess_numerical[alpha * 3 + beta] = (grad_plus[alpha] - grad_minus[alpha]) / (2.0 * eps);
+        }
+    }
+
+    for (int i = 0; i < 9; ++i)
+    {
+        EXPECT_NEAR(hess_analytical[i], hess_numerical[i], 1e-5);
+    }
+}
+
+TEST_F(TwoCenterIntegratorTest, HessianDoesNotBreakGradient)
+{
+    nfile = 3;
+    orb.build(nfile, file, 'o');
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
+    double rmax = orb.rcut_max() * 2.0;
+    double dr = 0.01;
+    int nr = static_cast<int>(rmax / dr) + 1;
+
+    orb.set_uniform_grid(true, nr, rmax, 'i', true);
+
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
+
+    ModuleBase::Vector3<double> R(1.5, 2.0, 1.0);
+    double grad_only[3], grad_with_hess[3], hess[9];
+
+    // Test S operator
+    S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_only, nullptr);
+    S_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_with_hess, hess);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_NEAR(grad_only[i], grad_with_hess[i], 1e-12);
+    }
+
+    // Test T operator
+    T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_only, nullptr);
+    T_intor.calculate(0, 1, 0, 0, 1, 1, 0, 0, R, nullptr, grad_with_hess, hess);
+
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_NEAR(grad_only[i], grad_with_hess[i], 1e-12);
+    }
+}
+
 int main(int argc, char** argv)
 {
 

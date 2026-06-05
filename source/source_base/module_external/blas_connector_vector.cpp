@@ -22,7 +22,7 @@ void BlasConnector::axpy( const int n, const float alpha, const float *X, const 
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasSaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+		CHECK_CUBLAS(cublasSaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
 	}
 #endif
 	else {
@@ -37,7 +37,7 @@ void BlasConnector::axpy( const int n, const double alpha, const double *X, cons
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasDaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
+		CHECK_CUBLAS(cublasDaxpy(BlasUtils::cublas_handle, n, &alpha, X, incX, Y, incY));
 	}
 #endif
 	else {
@@ -52,7 +52,7 @@ void BlasConnector::axpy( const int n, const std::complex<float> alpha, const st
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
+		CHECK_CUBLAS(cublasCaxpy(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX, (float2*)Y, incY));
 	}
 #endif
 	else {
@@ -67,7 +67,7 @@ void BlasConnector::axpy( const int n, const std::complex<double> alpha, const s
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
+		CHECK_CUBLAS(cublasZaxpy(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX, (double2*)Y, incY));
 	}
 #endif
 	else {
@@ -84,7 +84,7 @@ void BlasConnector::scal( const int n,  const float alpha, float *X, const int i
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasSscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+		CHECK_CUBLAS(cublasSscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
 	}
 #endif
 	else {
@@ -99,7 +99,7 @@ void BlasConnector::scal( const int n, const double alpha, double *X, const int 
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasDscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
+		CHECK_CUBLAS(cublasDscal(BlasUtils::cublas_handle, n, &alpha, X, incX));
 	}
 #endif
 	else {
@@ -114,7 +114,7 @@ void BlasConnector::scal( const int n, const std::complex<float> alpha, std::com
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
+		CHECK_CUBLAS(cublasCscal(BlasUtils::cublas_handle, n, (float2*)&alpha, (float2*)X, incX));
 	}
 #endif
 	else {
@@ -129,7 +129,7 @@ void BlasConnector::scal( const int n, const std::complex<double> alpha, std::co
 	}
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		cublasErrcheck(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
+		CHECK_CUBLAS(cublasZscal(BlasUtils::cublas_handle, n, (double2*)&alpha, (double2*)X, incX));
 	}
 #endif
 	else {
@@ -147,7 +147,7 @@ float BlasConnector::dot( const int n, const float*const X, const int incX, cons
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
-		cublasErrcheck(cublasSdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
+		CHECK_CUBLAS(cublasSdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
 	}
 #endif
@@ -164,7 +164,7 @@ double BlasConnector::dot( const int n, const double*const X, const int incX, co
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
+		CHECK_CUBLAS(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
 		return result;
 	}
 #endif
@@ -276,7 +276,7 @@ float BlasConnector::nrm2( const int n, const float *X, const int incX, base_dev
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		float result = 0.0;
-		cublasErrcheck(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		CHECK_CUBLAS(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
 	}
 #endif
@@ -294,7 +294,7 @@ double BlasConnector::nrm2( const int n, const double *X, const int incX, base_d
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		CHECK_CUBLAS(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
 		return result;
 	}
 #endif
@@ -312,7 +312,7 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 #ifdef __CUDA
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 		double result = 0.0;
-		cublasErrcheck(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
+		CHECK_CUBLAS(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
 		return result;
 	}
 #endif
@@ -322,7 +322,17 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 }
 
 // copies a into b
-void BlasConnector::copy(const long n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const float *a, const int incx, float *b, const int incy, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		scopy_(&n, a, &incx, b, &incy);
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+void BlasConnector::copy(const int n, const double *a, const int incx, double *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		dcopy_(&n, a, &incx, b, &incy);
@@ -332,7 +342,17 @@ void BlasConnector::copy(const long n, const double *a, const int incx, double *
 	}
 }
 
-void BlasConnector::copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
+void BlasConnector::copy(const int n, const std::complex<float> *a, const int incx, std::complex<float> *b, const int incy, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+		ccopy_(&n, a, &incx, b, &incy);
+	}
+	else {
+		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+	}
+}
+
+void BlasConnector::copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
@@ -348,7 +368,7 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -371,7 +391,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	using Real = typename GetTypeReal<T>::type;
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#pragma omp parallel for schedule(static)
 #endif
 		for (int i = 0; i < dim; i++)
         {
@@ -392,7 +412,7 @@ void vector_add_vector(const int& dim, float *result, const float *vector1, cons
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(float))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -413,7 +433,7 @@ void vector_add_vector(const int& dim, double *result, const double *vector1, co
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -434,7 +454,7 @@ void vector_add_vector(const int& dim, std::complex<float> *result, const std::c
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<float>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {
@@ -455,7 +475,7 @@ void vector_add_vector(const int& dim, std::complex<double> *result, const std::
 {
 	if (device_type == base_device::CpuDevice){
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < dim; i++)
         {

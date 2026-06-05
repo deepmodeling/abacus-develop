@@ -24,8 +24,8 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     // if(!SCAN_BEGIN(ifs,"BLPS")) WARNING_QUIT("read_pp_blps","Find no PP_HEADER");
     ifs.ignore(300, '\n');
 
-    double zatom;
-    double zion;
+    double zatom = 0.0;
+    double zion = 0.0;
     ifs >> zatom >> zion;
     pp.zv = zion;
     ifs.ignore(300, '\n');

@@ -64,9 +64,9 @@ typedef struct ChunkS
 #else
 	long long	id;	// 64bit allocation ID
 #endif
-	char		*function;	//creating function
-	char		*file;		//file function is in
-	void		*ptr;		//pointer to allocation
+	char		* function = nullptr;	//creating function
+	char		* file = nullptr;		//file function is in
+	void		* ptr = nullptr;		//pointer to allocation
 	struct ChunkS 	*next,		//next chunk (null if nonw)
 			*prev;		//previous chunk (null if nonw)
 }Chunk;
@@ -514,7 +514,7 @@ char *MCD_strdup(const char*s,char*fun,char*file,int line)
 char *MCD_strdup(char*s,char*fun,char*file,int line)
 #endif
 {
-	char *n;
+	char * n = nullptr;
 
 #ifdef MCD_FASTFREE
 	n=(char*)malloc(sizeof(char)*strlen(s)+1+sizeof(Chunk));
@@ -542,7 +542,7 @@ char *MCD_strndup(const char*s, int z,char*fun,char*file,int line)
 char *MCD_strndup(char*s, int z,char*fun,char*file,int line)
 #endif
 {
-	char *n;
+	char * n = nullptr;
 	int size;
 	if((signed)strlen(s)>z)
 		size=z;
@@ -575,7 +575,7 @@ int MCD_asprintf(char **ptr,const char *fmt,char *fun, char*file, int line,...)
 	int retval;
 	va_list argptr;
 #ifdef MCD_FASTFREE
-	void *fc;
+	void * fc = nullptr;
 #endif	
 	
 	va_start(argptr,line);
@@ -610,7 +610,7 @@ int MCD_vasprintf(char **ptr,const char *fmt,va_list argptr,char *fun, char*file
 {
 	int retval;
 #ifdef MCD_FASTFREE
-	void *fc;
+	void * fc = nullptr;
 #endif
 	
 	if((retval=vasprintf(ptr, fmt, argptr))<0)
@@ -705,8 +705,8 @@ int MCD_sscanf(const char *str,const char *fmt,char*fun,char*file,int line,...)
 /* scanf etc helper function */
 void scan_args(const char *fmt,va_list argptr,char*fun,char*file,int line)
 {
-	char **ptr;
-	void *dummy;	// clear up the unused warning
+	char ** ptr = nullptr;
+	void * dummy = nullptr;	// clear up the unused warning
 
 	for(;*fmt;fmt++) {
 		if(*fmt!='%')
@@ -781,7 +781,7 @@ void showMemStats()
 	Chunk*c=MemoryChunks;
 	int total=0;
 	
-	FILE *o;
+	FILE * o = nullptr;
 	
 	if(MemStatLog)
 		o=MemStatLog;

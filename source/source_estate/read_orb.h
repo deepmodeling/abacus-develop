@@ -13,7 +13,7 @@ namespace elecstate
      * @param ofs_running ofstream
      * @param atom Atom instance stored in UnitCell
     */
-    void read_orb_file(int it,
+    bool read_orb_file(int it,
                        std::string& orb_file,
                        std::ofstream& ofs_running,
                        Atom* atom);

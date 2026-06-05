@@ -19,6 +19,7 @@
 #include "deepks_pdm.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
 #ifdef __MPI
@@ -29,15 +30,13 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                              bool is_equiv,
                              bool& init_pdm,
                              const int nat,
-                             const int inlmax,
-                             const int lmaxd,
-                             const std::vector<int>& inl2l,
+                             const DeePKS_Param& deepks_param,
                              const Numerical_Orbital& alpha,
                              std::vector<torch::Tensor>& pdm)
 {
     if (read_pdm_file && !init_pdm) // for DeePKS NSCF calculation
     {
-        const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
+        const std::string file_projdm = PARAM.globalv.global_readin_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
         if (!ifs)
@@ -46,15 +45,15 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
         }
         if (!is_equiv)
         {
-            for (int inl = 0; inl < inlmax; inl++)
+            for (int inl = 0; inl < deepks_param.inlmax; inl++)
             {
-                int nm = 2 * inl2l[inl] + 1;
+                int nm = 2 * deepks_param.inl2l[inl] + 1;
                 auto accessor = pdm[inl].accessor<double, 2>();
                 for (int m1 = 0; m1 < nm; m1++)
                 {
                     for (int m2 = 0; m2 < nm; m2++)
                     {
-                        double c;
+                        double c = 0.0;
                         ifs >> c;
                         accessor[m1][m2] = c;
                     }
@@ -65,7 +64,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
         {
             int pdm_size = 0;
             int nproj = 0;
-            for (int il = 0; il < lmaxd + 1; il++)
+            for (int il = 0; il < deepks_param.lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * alpha.getNchi(il);
             }
@@ -75,7 +74,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                 auto accessor = pdm[iat].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
-                    double c;
+                    double c = 0.0;
                     ifs >> c;
                     accessor[ind] = c;
                 }
@@ -177,10 +176,7 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
 // pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 template <typename TK>
 void DeePKS_domain::cal_pdm(bool& init_pdm,
-                            const int inlmax,
-                            const int lmaxd,
-                            const std::vector<int>& inl2l,
-                            const ModuleBase::IntArray* inl_index,
+                            const DeePKS_Param& deepks_param,
                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                             const hamilt::HContainer<double>* dmr,
                             const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -192,20 +188,21 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_pdm");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::start("DeePKS_domain", "cal_pdm");
 
     // if pdm has been initialized, skip the calculation
     if (init_pdm)
     {
         init_pdm = false;
+        ModuleBase::timer::end("DeePKS_domain", "cal_pdm");
         return;
     }
 
     if (!PARAM.inp.deepks_equiv)
     {
-        for (int inl = 0; inl < inlmax; inl++)
+        for (int inl = 0; inl < deepks_param.inlmax; inl++)
         {
-            int nm = 2 * inl2l[inl] + 1;
+            int nm = 2 * deepks_param.inl2l[inl] + 1;
             pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
         }
     }
@@ -213,7 +210,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
     {
         int pdm_size = 0;
         int nproj = 0;
-        for (int il = 0; il < lmaxd + 1; il++)
+        for (int il = 0; il < deepks_param.lmaxd + 1; il++)
         {
             nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
@@ -246,7 +243,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             {
                 for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                 {
-                    const int inl = inl_index[T0](I0, L0, N0);
+                    const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                     const int nm = 2 * L0 + 1;
 
                     for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -264,7 +261,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
         else
         {
             int nproj = 0;
-            for (int il = 0; il < lmaxd + 1; il++)
+            for (int il = 0; il < deepks_param.lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
             }
@@ -378,19 +375,19 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 // all the input should be data pointer
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
-                dgemm_(&transa,
-                       &transb,
-                       &row_size,
-                       &trace_alpha_size,
-                       &col_size,
-                       &gemm_alpha,
-                       dm_current,
-                       &col_size,
+                BlasConnector::gemm(transb,
+                       transa,
+                       trace_alpha_size,
+                       row_size,
+                       col_size,
+                       gemm_alpha,
                        s_2t.data(),
-                       &col_size,
-                       &gemm_beta,
+                       col_size,
+                       dm_current,
+                       col_size,
+                       gemm_beta,
                        g_1dmt.data(),
-                       &row_size);
+                       row_size);
             } // ad2
             if (!PARAM.inp.deepks_equiv)
             {
@@ -399,7 +396,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 {
                     for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                     {
-                        const int inl = inl_index[T0](I0, L0, N0);
+                        const int inl = deepks_param.inl_index[T0](I0, L0, N0);
                         const int nm = 2 * L0 + 1;
 
                         auto accessor = pdm[inl].accessor<double, 2>();
@@ -407,11 +404,11 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         {
                             for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                accessor[m1][m2] += ddot_(&row_size,
-                                                          g_1dmt.data() + index * row_size,
-                                                          &inc,
-                                                          s_1t.data() + index * row_size,
-                                                          &inc);
+                                accessor[m1][m2] += BlasConnector::dot(row_size,
+                                                                       g_1dmt.data() + index * row_size,
+                                                                       inc,
+                                                                       s_1t.data() + index * row_size,
+                                                                       inc);
                                 index++;
                             }
                         }
@@ -423,7 +420,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 auto accessor = pdm[iat].accessor<double, 1>();
                 int index = 0, inc = 1;
                 int nproj = 0;
-                for (int il = 0; il < lmaxd + 1; il++)
+                for (int il = 0; il < deepks_param.lmaxd + 1; il++)
                 {
                     nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
                 }
@@ -433,11 +430,11 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     {
                         // ddot_: dot product of two vectors
                         // inc means the increment of the index
-                        accessor[iproj * nproj + jproj] += ddot_(&row_size,
-                                                                 g_1dmt.data() + index * row_size,
-                                                                 &inc,
-                                                                 s_1t.data() + index * row_size,
-                                                                 &inc);
+                        accessor[iproj * nproj + jproj] += BlasConnector::dot(row_size,
+                                                                              g_1dmt.data() + index * row_size,
+                                                                              inc,
+                                                                              s_1t.data() + index * row_size,
+                                                                              inc);
                         index++;
                     }
                 }
@@ -446,25 +443,25 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
     }     // iat
 
 #ifdef __MPI
-    for (int inl = 0; inl < inlmax; inl++)
+    for (int inl = 0; inl < deepks_param.inlmax; inl++)
     {
-        int pdm_size = (2 * inl2l[inl] + 1) * (2 * inl2l[inl] + 1);
+        int pdm_size = (2 * deepks_param.inl2l[inl] + 1) * (2 * deepks_param.inl2l[inl] + 1);
         Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);
     }
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::end("DeePKS_domain", "cal_pdm");
     return;
 }
 
-void DeePKS_domain::check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm)
+void DeePKS_domain::check_pdm(const DeePKS_Param& deepks_param, const std::vector<torch::Tensor>& pdm)
 {
     const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     ofs << std::setprecision(10);
-    for (int inl = 0; inl < inlmax; inl++)
+    for (int inl = 0; inl < deepks_param.inlmax; inl++)
     {
-        const int nm = 2 * inl2l[inl] + 1;
+        const int nm = 2 * deepks_param.inl2l[inl] + 1;
         auto accessor = pdm[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; m1++)
         {
@@ -494,10 +491,7 @@ template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<
                                                               hamilt::HContainer<double>* dmr_deepks);
 
 template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
-                                             const int inlmax,
-                                             const int lmaxd,
-                                             const std::vector<int>& inl2l,
-                                             const ModuleBase::IntArray* inl_index,
+                                             const DeePKS_Param& deepks_param,
                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                              const hamilt::HContainer<double>* dmr,
                                              const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -508,10 +502,7 @@ template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              std::vector<torch::Tensor>& pdm);
 
 template void DeePKS_domain::cal_pdm<std::complex<double>>(bool& init_pdm,
-                                                           const int inlmax,
-                                                           const int lmaxd,
-                                                           const std::vector<int>& inl2l,
-                                                           const ModuleBase::IntArray* inl_index,
+                                                           const DeePKS_Param& deepks_param,
                                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                            const hamilt::HContainer<double>* dmr,
                                                            const std::vector<hamilt::HContainer<double>*> phialpha,

@@ -88,3 +88,7 @@ Compiling ABACUS with [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit), 
 
 To employ DPMD calculations, [esolver_type](./input_files/input-main.md#esolver_type) should be set to `dp`.
 And the filename of DP model is specified by keyword [pot_file](./input_files/input-main.md#pot_file).
+
+## NEP
+
+If ABACUS is compiled with the Neuroevolution Potential ([NEP](https://gpumd.org/potentials/nep.html)), MD simulations using  NEP models are enabled. To use this feature, set [esolver_type](./input_files/input-main.md#esolver_type) to `nep` and specify the potential file path with the [pot_file](./input_files/input-main.md#pot_file) keyword in your INPUT file.

@@ -1,5 +1,6 @@
 #include "hsolver_pw.h"
 
+#include "source_base/parallel_comm.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -77,7 +78,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int nat)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
-    ModuleBase::timer::tick("HSolverPW", "solve");
+    ModuleBase::timer::start("HSolverPW", "solve");
 
     this->rank_in_pool = rank_in_pool_in;
     this->nproc_in_pool = nproc_in_pool_in;
@@ -106,13 +107,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         for (int i = 0; i < this->wfc_basis->nks; ++i)
         {
             const int ik = k_order[i];
-            
+
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -134,22 +133,20 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             if (skip_charge)
             {
-                GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
-                                    << " is: " << DiagoIterAssist<T, Device>::avg_iter
-                                    << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
+                GlobalV::ofs_running << " Average iterative diagonalization steps for k-points " << ik
+                                    << " is " << DiagoIterAssist<T, Device>::avg_iter
+                                    << "\n current threshold of diagonalization is " << this->diag_thr << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
         }
-    }
+    } // if (use_k_continuity)
     else {
         // Original code without k-point continuity
         for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
@@ -157,9 +154,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-#ifdef USE_PAW
-            this->paw_func_in_kloop(ik, tpiba);
-#endif
+
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -176,13 +171,12 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                     ethr_band);
             }
 
-#ifdef USE_PAW
-            this->call_paw_cell_set_currentk(ik);
-#endif
+
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
+            // output iteration information and reset avg_iter
             if (skip_charge)
             {
                 GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
@@ -190,10 +184,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                      << " threshold=" << this->diag_thr << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
+
             /// calculate the contribution of Psi for charge density rho
         }
-    }
-    
+    } // else (use_k_continuity)
+
+    // output average iteration information and reset avg_iter
+    this->output_iterInfo();
+
     count++;
     // END Loop over k points
 
@@ -225,7 +223,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
     }
 
-	ModuleBase::timer::tick("HSolverPW", "solve");
+	ModuleBase::timer::end("HSolverPW", "solve");
 	return;
 }
 
@@ -236,7 +234,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            Real* eigenvalue,
                                            const int& nk_nums)
 {
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    ModuleBase::timer::start("HSolverPW", "solve_psik");
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
@@ -245,30 +243,55 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     const int cur_nbasis = psi.get_current_nbas();
 
+    // Check for rank deficiency: the total number of plane waves (summed across
+    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
+    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
+    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
+    // psi.get_nbasis() gives the local storage dimension, not the total.
+    const int nbands = psi.get_nbands();
+    int npw_total = cur_nbasis;
+#ifdef __MPI
+    if (this->nproc_in_pool > 1)
+    {
+        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+    }
+#endif
+    if (npw_total < nbands)
+    {
+        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
+                            + "): the total number of plane waves across all MPI processes "
+                            + "is less than the number of bands, "
+                            + "which leads to a rank-deficient problem. "
+                            + "Please increase ecutwfc or reduce nbands.";
+        ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", msg);
+    }
+
+    // Shared matrix-blockvector operators used by all iterative solvers.
+    auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+        auto psi_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
+        psi::Range bands_range(true, 0, 0, nvec - 1);
+        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+        hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
+        hm->ops->hPsi(info);
+    };
+    auto spsi_func = [hm](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+        hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
+    };
+
     if (this->method == "cg")
     {
         // wrap the subspace_func into a lambda function
-        auto subspace_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-            // Convert a Tensor object to a psi::Psi object
-            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
-                                                      1,
-                                                      psi_in.shape().dim_size(0),
-                                                      psi_in.shape().dim_size(1),
-                                                      cur_nbasis);
-            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out.data<T>(),
-                                                       1,
-                                                       psi_out.shape().dim_size(0),
-                                                       psi_out.shape().dim_size(1),
-                                                       cur_nbasis);
-            auto eigen = ct::Tensor(ct::DataTypeToEnum<Real>::value,
-                                    ct::DeviceType::CpuDevice,
-                                    ct::TensorShape({psi_in.shape().dim_size(0)}));
-
-            DiagoIterAssist<T, Device>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
+        // if S_orth is true, then assume psi is S-orthogonal, solve standard eigenproblem
+        // otherwise, solve generalized eigenproblem
+        auto subspace_func = [hm, cur_nbasis](T* psi_in,
+                                              T* psi_out,
+                                              const int ld_psi,
+                                              const int nband,
+                                              const bool S_orth) {
+            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
+            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
+            std::vector<Real> eigen(nband, 0.0);
+            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data());
         };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,
@@ -278,69 +301,17 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               this->diag_iter_max,
                               this->nproc_in_pool);
 
-        // wrap the hpsi_func and spsi_func into a lambda function
-        using ct_Device = typename ct::PsiToContainer<Device>::type;
-
-        // wrap the hpsi_func and spsi_func into a lambda function
-        auto hpsi_func = [hm, cur_nbasis](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-            // Convert a Tensor object to a psi::Psi object
-            auto psi_wrapper = psi::Psi<T, Device>(psi_in.data<T>(),
-                                                   1,
-                                                   ndim == 1 ? 1 : psi_in.shape().dim_size(0),
-                                                   ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                                                   cur_nbasis);
-            psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
-            hm->ops->hPsi(info);
-        };
-        auto spsi_func = [this, hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-
-            if (this->use_uspp)
-            {
-                // Convert a Tensor object to a psi::Psi object
-                hm->sPsi(psi_in.data<T>(),
-                         spsi_out.data<T>(),
-                         ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                         ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
-                         ndim == 1 ? 1 : psi_in.shape().dim_size(0));
-            }
-            else
-            {
-                base_device::memory::synchronize_memory_op<T, Device, Device>()(
-                    spsi_out.data<T>(),
-                    psi_in.data<T>(),
-                    static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
-                                        * (ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1))));
-            }
-        };
-
-        auto psi_tensor = ct::TensorMap(psi.get_pointer(),
-                                        ct::DataTypeToEnum<T>::value,
-                                        ct::DeviceTypeToEnum<ct_Device>::value,
-                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}));
-
-        auto eigen_tensor = ct::TensorMap(eigenvalue,
-                                          ct::DataTypeToEnum<Real>::value,
-                                          ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                          ct::TensorShape({psi.get_nbands()}));
-
-        auto prec_tensor = ct::TensorMap(pre_condition.data(),
-                                         ct::DataTypeToEnum<Real>::value,
-                                         ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                         ct::TensorShape({static_cast<int>(pre_condition.size())}))
-                               .to_device<ct_Device>()
-                               .slice({0}, {psi.get_current_ngk()});
-
-        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+            cg.diag(hpsi_func,
+                    spsi_func,
+                    psi.get_nbasis(),
+                    psi.get_nbands(),
+                    psi.get_current_ngk(),
+                    psi.get_pointer(),
+                    eigenvalue,
+                    this->ethr_band,
+                    pre_condition.data())
+        );
         // TODO: Double check tensormap's potential problem
         // ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
@@ -467,41 +438,13 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband_l = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
         const int ndim = psi.get_current_ngk();
-        // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-
-            // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
-
-            psi::Range bands_range(true, 0, 0, nvec - 1);
-
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
-        };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {
-        // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-
-            // Convert "pointer data stucture" to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
-
-            psi::Range bands_range(true, 0, 0, nvec - 1);
-
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
-        };
         bool scf = this->calculation_type == "nscf" ? false : true;
-
-        auto spsi_func = [hm](T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
-            hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
-        };
 
         Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
                                                   psi.get_nbands(),
@@ -510,14 +453,18 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   PARAM.inp.pw_diag_ndim,
                                                   this->diag_thr,
                                                   this->diag_iter_max,
-                                                  this->need_subspace,
                                                   comm_info,
                                                   PARAM.inp.diag_subspace,
                                                   PARAM.inp.nb2d);
 
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace
-                .diag(hpsi_func, spsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf));
+            dav_subspace.diag(hpsi_func,
+                              spsi_func,
+                              psi.get_pointer(),
+                              psi.get_nbasis(),
+                              eigenvalue,
+                              this->ethr_band,
+                              scf));
     }
     else if (this->method == "dav")
     {
@@ -538,47 +485,20 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        // Davidson matrix-blockvector functions
-        /// wrap hpsi into lambda function, Matrix \times blockvector
-        // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-
-            // Convert pointer of psi_in to a psi::Psi object
-            auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
-
-            psi::Range bands_range(true, 0, 0, nvec - 1);
-
-            using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-            hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-            hm->ops->hPsi(info);
-        };
-
-        /// wrap spsi into lambda function, Matrix \times blockvector
-        /// spsi(X, SX, ld, nvec)
-        /// ld is leading dimension of psi and spsi
-        auto spsi_func = [hm](const T* psi_in,
-                              T* spsi_out,
-                              const int ld_psi, // Leading dimension of psi and spsi.
-                              const int nvec    // Number of vectors(bands)
-                         ) {
-            // sPsi determines S=I or not by  PARAM.globalv.use_uspp inside
-            // sPsi(psi, spsi, nrow, npw, nbands)
-            hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
-        };
-
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, this->use_paw, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, PARAM.inp.pw_diag_ndim, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(david.diag(hpsi_func,
-                                                                               spsi_func,
-                                                                               ld_psi,
-                                                                               psi.get_pointer(),
-                                                                               eigenvalue,
-                                                                               this->ethr_band,
-                                                                               david_maxiter,
-                                                                               ntry_max,
-                                                                               notconv_max));
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+             david.diag(hpsi_func,
+                        spsi_func,
+                        ld_psi,
+                        psi.get_pointer(),
+                        eigenvalue,
+                        this->ethr_band,
+                        david_maxiter,
+                        ntry_max,
+                        notconv_max));
     }
-    ModuleBase::timer::tick("HSolverPW", "solve_psik");
+    ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;
 }
 
@@ -637,9 +557,9 @@ void HSolverPW<T, Device>::output_iterInfo()
     // in PW base, average iteration steps for each band and k-point should be printing
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running << "Average iterative diagonalization steps: "
+        GlobalV::ofs_running << " Average iterative diagonalization steps for k-points is "
                              << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
+                             << "\n current threshold of diagonalizaiton is " << this->diag_thr << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
@@ -651,39 +571,39 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     kvecs_c.resize(nk);
     k_order.clear();
     k_order.reserve(nk);
-    
+
     // Store k-points and corresponding indices
     struct KPoint {
         ModuleBase::Vector3<double> kvec;
-        int index;
-        double norm;
-        
-        KPoint(const ModuleBase::Vector3<double>& v, int i) : 
+        int index = 0;
+        double norm = 0.0;
+
+        KPoint(const ModuleBase::Vector3<double>& v, int i) :
             kvec(v), index(i), norm(v.norm()) {}
     };
-    
+
     // Build k-point list
     std::vector<KPoint> klist;
     for (int ik = 0; ik < nk; ++ik) {
         kvecs_c[ik] = this->wfc_basis->kvec_c[ik];
         klist.push_back(KPoint(kvecs_c[ik], ik));
     }
-    
+
     // Sort k-points by distance from origin
     std::sort(klist.begin(), klist.end(),
         [](const KPoint& a, const KPoint& b) {
             return a.norm < b.norm;
         });
-    
+
     // Build parent-child relationships
     k_order.push_back(klist[0].index);
-    
+
     // Find nearest processed k-point as parent for each k-point
     for (int i = 1; i < nk; ++i) {
         int current_k = klist[i].index;
         double min_dist = 1e10;
         int parent = -1;
-        
+
         // find the nearest k-point as parent
         for (int j = 0; j < k_order.size(); ++j) {
             int processed_k = k_order[j];
@@ -693,7 +613,7 @@ void HSolverPW<T, Device>::build_k_neighbors() {
                 parent = processed_k;
             }
         }
-        
+
         k_parent[current_k] = parent;
         k_order.push_back(current_k);
     }
@@ -703,34 +623,34 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik) {
     const int nbands = psi.get_nbands();
     const int npwk = this->wfc_basis->npwk[to_ik];
-    
+
     // Get k-point difference
     ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
-    
+
     // Allocate porter locally
     T* porter = nullptr;
     resmem_complex_op()(porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
-    
+
     // Process each band
     for (int ib = 0; ib < nbands; ib++)
     {
         // Fix current k-point and band
         // psi.fix_k(from_ik);
-        
+
         // FFT to real space
         // this->wfc_basis->recip_to_real(this->ctx, psi.get_pointer(ib), porter, from_ik);
         this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
-        
+
         // Apply phase factor
         //     // TODO: Check how to get the r vector
         //     ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
         //     double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
         //     psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
         // }
-        
+
         // Fix k-point for target
         // psi.fix_k(to_ik);
-        
+
         // FFT back to reciprocal space
         // this->wfc_basis->real_to_recip(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
         this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);

@@ -8,7 +8,6 @@
 
 #include "xc_functional.h"
 #include <stdexcept>
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/global_function.h"
 
 #ifdef USE_LIBXC
@@ -129,7 +128,7 @@ void XC_Functional::gcx_spin(double rhoup, double rhodw, double grhoup2, double 
     // parameter :
     double small = 1.e-10;
     double sxup, sxdw;
-    int iflag;
+    int iflag = 0;
 
     // exchange
     double rho = rhoup + rhodw;
@@ -248,7 +247,7 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
     double small = 1.0e-10;
 	double epsr = 1.0e-6;
 
-    double x;
+    double x = 0.0;
 
     sc = 0.00;
     v1cup = 0.00; v1cdw = 0.00;

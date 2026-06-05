@@ -1,0 +1,26 @@
+INPUT_PARAMETERS 
+#Parameters (1.General)
+suffix            autotest
+calculation       nscf
+
+nbands            6
+symmetry          0
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+read_file_dir     ./
+gamma_only        0
+
+#Parameters (2.Iteration)
+ecutwfc           20
+scf_thr           1e-8
+scf_nmax          100
+
+#out_chg       1
+init_chg          file
+out_band          1
+out_proj_band     1
+
+#Parameters (3.Basis)
+basis_type        lcao
+
+ks_solver         scalapack_gvx

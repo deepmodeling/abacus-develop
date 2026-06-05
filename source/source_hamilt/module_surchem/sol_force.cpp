@@ -1,4 +1,5 @@
 #include "surchem.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -153,7 +154,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
                             ModuleBase::matrix& forcesol)
 {
     ModuleBase::TITLE("surchem", "cal_force_sol");
-    ModuleBase::timer::tick("surchem", "cal_force_sol");
+    ModuleBase::timer::start("surchem", "cal_force_sol");
 
     int nat = cell.nat;
 	ModuleBase::matrix force1(nat, 3);
@@ -177,6 +178,6 @@ void surchem::cal_force_sol(const UnitCell& cell,
     }
     
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
-    ModuleBase::timer::tick("surchem", "cal_force_sol");
+    ModuleBase::timer::end("surchem", "cal_force_sol");
     return;
 }

@@ -3,13 +3,10 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_pw/module_pwdft/global.h"
-
-// Constructor
-template <typename TK, typename TR>
-cal_r_overlap_R hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::r_calculator;
 
 template <typename TK, typename TR>
 hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
@@ -54,7 +51,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("TD_pot_hybrid", "initialize_HR");
-    ModuleBase::timer::tick("TD_pot_hybrid", "initialize_HR");
+    ModuleBase::timer::start("TD_pot_hybrid", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -102,7 +99,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     this->hR->allocate(nullptr, true);
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "initialize_HR");
+    ModuleBase::timer::end("TD_pot_hybrid", "initialize_HR");
 }
 
 template <typename TK, typename TR>
@@ -113,7 +110,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     {
         ModuleBase::WARNING_QUIT("hamilt::TD_pot_hybrid::calculate_HR", "HR_fixed is nullptr or empty");
     }
-    ModuleBase::timer::tick("TD_pot_hybrid", "calculate_HR");
+    ModuleBase::timer::start("TD_pot_hybrid", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
@@ -146,7 +143,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
     }
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "calculate_HR");
+    ModuleBase::timer::end("TD_pot_hybrid", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -207,7 +204,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
 
-            ModuleBase::Vector3<double> tmp_r = r_calculator.get_psi_r_psi(tau1 * this->ucell->lat0, T1, L1, m1, N1, tau2 * this->ucell->lat0, T2, L2, m2, N2);
+            ModuleBase::Vector3<double> tmp_r = r_calculator->get_psi_r_psi(tau1 * this->ucell->lat0, T1, L1, m1, N1, tau2 * this->ucell->lat0, T2, L2, m2, N2);
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
 
@@ -228,12 +225,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::init_td()
 {
     // initialize the r_calculator
-    if(TD_info::td_vel_op->get_istep()==(TD_info::estep_shift-1))
-    {
-        //std::cout << "init_r_overlap" <<std::endl;
-        r_calculator.init(*ucell, *this->hR->get_paraV(), orb_);
-    }
-    //hk_hybrid.resize(this->hR->get_paraV()->nloc);
+    this->r_calculator = &TD_info::td_vel_op->r_calculator;
 }
 template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::update_td()
@@ -256,7 +248,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("TD_pot_hybrid", "contributeHR");
-    ModuleBase::timer::tick("TD_pot_hybrid", "contributeHR");
+    ModuleBase::timer::start("TD_pot_hybrid", "contributeHR");
 
     if (!this->HR_fixed_done || TD_info::evolve_once)
     {
@@ -285,7 +277,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->hR->add(*(this->HR_fixed));
     }
 
-    ModuleBase::timer::tick("TD_pot_hybrid", "contributeHR");
+    ModuleBase::timer::end("TD_pot_hybrid", "contributeHR");
     return;
 }
 

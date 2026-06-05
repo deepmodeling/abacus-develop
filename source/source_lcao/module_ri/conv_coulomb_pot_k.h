@@ -20,6 +20,11 @@ namespace Conv_Coulomb_Pot_K
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
 		const double rmesh_times);
 
+	template<typename T> extern T cal_orbs_ccp_spencer(
+		const T &orbs,
+		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const double rmesh_times);
+
   //private:
 	template< typename T > extern double get_rmesh_proportion(
 		const T &orbs,

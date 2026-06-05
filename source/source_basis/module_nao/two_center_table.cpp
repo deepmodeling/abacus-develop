@@ -79,7 +79,8 @@ void TwoCenterTable::lookup(const int itype1,
                             const int l,
                             const double R,
                             double* val,
-                            double* dval) const
+                            double* dval,
+                            double* d2val) const
 {
 #ifdef __DEBUG
     assert(R >= 0);
@@ -91,12 +92,14 @@ void TwoCenterTable::lookup(const int itype1,
             *val = 0.0;
         if (dval)
             *dval = 0.0;
+        if (d2val)
+            *d2val = 0.0;
         return;
     }
 
     const double* tab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, false);
     const double* dtab = table(itype1, l1, izeta1, itype2, l2, izeta2, l, true);
-    ModuleBase::CubicSpline::eval(nr_, rgrid_, tab, dtab, 1, &R, val, dval);
+    ModuleBase::CubicSpline::eval(nr_, rgrid_, tab, dtab, 1, &R, val, dval, d2val);
 }
 
 int& TwoCenterTable::table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l)

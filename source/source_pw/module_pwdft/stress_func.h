@@ -3,19 +3,18 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/realarray.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/module_pwdft/VNL_in_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
+#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
@@ -179,8 +178,9 @@ class Stress_Func
     void stress_onsite(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
                        const ModulePW::PW_Basis_K* wfc_basis,
-                       const UnitCell& ucell_in,
-                       const psi::Psi <std::complex<FPTYPE>, Device>* psi_in,
+		               const UnitCell& ucell_in,
+		               const Plus_U &dftu, // mohan add 2025-11-06
+		               const void* psi_in,
                        ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 
     void get_dvnl1(ModuleBase::ComplexMatrix& vkb,

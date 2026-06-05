@@ -85,13 +85,17 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
     return *this;
 }
 
-void RadialSet::to_numerical_orbital(Numerical_Orbital& no, const int nk_legacy, const double lcao_dk) const
+void RadialSet::to_numerical_orbital(Numerical_Orbital& no,
+                                     const int nk_legacy,
+                                     const double lcao_dk,
+                                     const bool out_element_info,
+                                     const bool cal_force) const
 {
     no.chi().clear();
     no.chi().resize(nchi_);
     for (int i = 0; i < nchi_; i++)
     {
-        chi_[i].to_numerical_orbital_lm(no.chi()[i], nk_legacy, lcao_dk);
+        chi_[i].to_numerical_orbital_lm(no.chi()[i], nk_legacy, lcao_dk, out_element_info, cal_force);
     }
 
     no.set_orbital_info(itype_, symbol_, lmax_, nzeta_, nchi_);
@@ -138,7 +142,7 @@ void RadialSet::indexing()
     }
 }
 
-const NumericalRadial& RadialSet::chi(const int l, const int izeta)
+const NumericalRadial& RadialSet::chi(const int l, const int izeta) const
 {
     int i = index_map_[l * nzeta_max_ + izeta];
 #ifdef __DEBUG

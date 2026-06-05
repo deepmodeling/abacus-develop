@@ -12,10 +12,8 @@
 #endif	// ifdef USE_LIBXC
 #include "source_base/macros.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix.h"
-#include "exx_info.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_cell/unitcell.h"
@@ -82,6 +80,8 @@ class XC_Functional
     };
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
+
+	static std::string output_info();
 
 	private:
 

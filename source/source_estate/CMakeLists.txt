@@ -1,5 +1,6 @@
 list(APPEND objects
     elecstate.cpp
+    init_scf.cpp
     elecstate_energy_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
@@ -13,9 +14,15 @@ list(APPEND objects
     module_pot/H_Hartree_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
-    module_pot/pot_local_paw.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
+    module_pot/pot_ml_exx.cpp
+    module_pot/pot_ml_exx_label.cpp
+    module_pot/pot_sep.cpp
+    module_pot/pot_xc_fdm.cpp
+    module_pot/pot_cosikr.cpp
+    module_charge/chgmixing.cpp
+    module_charge/gint_precision_controller.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp
@@ -36,13 +43,15 @@ list(APPEND objects
     cal_nelec_nband.cpp
     read_pseudo.cpp
     cal_wfc.cpp
+    setup_estate_pw.cpp
+    update_pot.cpp
 )
 
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      elecstate_lcao_cal_tau.cpp
       module_pot/H_TDDFT_pw.cpp
+      module_dm/init_dm.cpp
       module_dm/density_matrix.cpp
       module_dm/density_matrix_io.cpp
       module_dm/cal_dm_psi.cpp

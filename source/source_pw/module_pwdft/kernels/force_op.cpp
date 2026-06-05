@@ -1,5 +1,7 @@
 #include "source_pw/module_pwdft/kernels/force_op.h"
 
+#include "source_base/truncated_func.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -109,9 +111,12 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
 
                             for (int ipol = 0; ipol < 3; ipol++)
                             {
-                                const FPTYPE dbb
-                                    = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) * becp[ib * nkb + inkb])
-                                          .real();
+#ifdef __SW
+                                ModuleBase::truncated_underflow(dbecp[ipol * nbands * nkb + ib * nkb + inkb]);
+                                ModuleBase::truncated_underflow(becp[ib * nkb + inkb]);
+                                ModuleBase::truncated_underflow(local_force[ipol]);
+#endif
+                                const FPTYPE dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) * becp[ib * nkb + inkb]).real();
                                 local_force[ipol] -= ps * fac * dbb;
                                 // cf[iat*3+ipol] += ps * fac * dbb;
                             }

@@ -25,21 +25,7 @@ class Center2_Orb
 
     static int get_rmesh(const double& R1, const double& R2, const double dr);
 
-    static void init_Lmax(const int orb_num,
-                          const int mode,
-                          int& Lmax_used,
-                          int& Lmax,
-                          const int& Lmax_exx,
-                          const int lmax_orb,
-                          const int lmax_beta);
-
-    static void init_Table_Spherical_Bessel(const int orb_num,
-                                            const int mode,
-                                            int& Lmax_used,
-                                            int& Lmax,
-                                            const int& Lmax_exx,
-                                            const int lmax_orb,
-                                            const int lmax_beta,
+    static void init_Table_Spherical_Bessel(const int Lmax_used,
                                             const double dr,
                                             const double dk,
                                             const int kmesh,
@@ -51,8 +37,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const int& rmesh,
-                               double* rs,
-                               double* drs,
+                               std::vector<double> &rs,
+                               std::vector<double> &drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 
     // Peize Lin add 2017-10-13
@@ -61,8 +47,8 @@ class Center2_Orb
                                const Numerical_Orbital_Lm& n1,
                                const Numerical_Orbital_Lm& n2,
                                const std::set<size_t>& radials, // only calculate ir in radials
-                               double* rs,
-                               double* drs,
+                               std::vector<double> &rs,
+                               std::vector<double> &drs,
                                const ModuleBase::Sph_Bessel_Recursive::D2* psb);
 };
 

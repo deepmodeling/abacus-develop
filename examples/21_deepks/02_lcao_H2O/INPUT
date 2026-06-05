@@ -1,0 +1,40 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix               abacus
+pseudo_dir           ../../../tests/PP_ORB
+orbital_dir          ../../../tests/PP_ORB
+calculation          scf
+nbands               16
+symmetry             0
+
+#Parameters (2.Iteration)
+ecutwfc              60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
+scf_thr              1e-8
+scf_nmax             5
+
+#Parameters (3.Basis)
+basis_type           lcao 
+gamma_only           0
+
+#Parameters (4.Smearing)
+smearing_method      gaussian
+smearing_sigma       0.015
+
+#Parameters (5.Mixing)
+mixing_type          broyden
+mixing_beta          0.4
+
+#Parameters (6.Deepks)
+cal_force            1
+test_force           1
+deepks_out_labels    1
+deepks_scf           1
+deepks_model         model.ptg
+deepks_bandgap       1
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.
+
+

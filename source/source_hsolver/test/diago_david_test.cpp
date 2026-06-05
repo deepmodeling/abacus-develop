@@ -1,5 +1,6 @@
 #include"source_hsolver/diago_david.h"
 #include"source_hsolver/diago_iter_assist.h"
+#include "source_base/parallel_comm.h"
 #include"source_pw/module_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "source_psi/psi.h"
@@ -77,17 +78,19 @@ public:
 	{
 		//calculate eigenvalues by LAPACK;
 		double* e_lapack = new double[npw];
-		double* ev;
-		if(mypnum == 0) { lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
-}
+		double* ev = nullptr;
+		if(mypnum == 0) 
+		{ 
+			lapackEigen(npw, DIAGOTEST::hmatrix, e_lapack,DETAILINFO);
+		}
 
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt<std::complex<double>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
-        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
+        const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};
 #else
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
@@ -95,7 +98,7 @@ public:
 		const int dim = phi.get_current_ngk();
 		const int nband = phi.get_nbands();
 		const int ld_psi = phi.get_nbasis();
-		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, false, comm_info);
+		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, comm_info);
 
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
@@ -199,7 +202,7 @@ TEST(DiagoDavRealSystemTest, dataH)
 {
 	std::vector<std::complex<double>> hmatrix;
 	std::ifstream ifs;
-	std::string filename = "H-KPoints-Si64.dat";
+	std::string filename = "H-KPoints-Si2.dat";
 	ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

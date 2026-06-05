@@ -58,6 +58,40 @@ Direct //`Direct' or `Cartesian' coordinate
 0.5 0.5 0.5 0.125
 ```
 
+### K-point Weights and Symmetry
+
+When explicitly setting k-points, you can specify custom weights for each k-point. These weights determine the contribution of each k-point to the total energy and density calculations.
+
+**Important notes about k-point weights:**
+
+1. **Custom weights are preserved**: When using explicit k-point lists (non-Monkhorst-Pack), ABACUS preserves the custom weights you specify, even when symmetry operations are applied to reduce the k-points to the irreducible Brillouin zone (IBZ).
+
+2. **Symmetry reduction**: When [`symmetry`](./input-main.md#symmetry) is set to 1, ABACUS will analyze the crystal symmetry and reduce the k-point set to the irreducible Brillouin zone. During this reduction:
+   - For **Monkhorst-Pack grids** (automatically generated): All k-points have uniform weights (1/N where N is the total number of k-points)
+   - For **explicit k-point lists**: Custom weights are preserved and properly combined when symmetry-equivalent k-points are merged
+
+3. **Weight normalization**: After symmetry reduction, k-point weights are normalized so that their sum equals `degspin` (2 for non-spin-polarized calculations, 1 for spin-polarized calculations).
+
+**Example with custom weights:**
+
+```
+K_POINTS
+5
+Direct
+0.0 0.0 0.0   0.1   // Gamma point with weight 0.1
+0.5 0.0 0.0   0.2   // X point with weight 0.2
+0.0 0.5 0.0   0.3   // Y point with weight 0.3
+0.5 0.5 0.0   0.2   // M point with weight 0.2
+0.0 0.0 0.5   0.2   // Z point with weight 0.2
+```
+
+In this example, different k-points have different weights, which might be useful for:
+- Special sampling schemes
+- Convergence testing with specific k-point importance
+- Custom integration methods
+
+> **Note**: When using custom weights with symmetry, ensure that your weight distribution is consistent with the crystal symmetry. ABACUS will preserve your weights during IBZ reduction, but inconsistent weights may lead to unexpected results.
+
 [back to top](#the-kpt-file)
 
 ## Band structure calculations

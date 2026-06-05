@@ -5,11 +5,11 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 
 #ifdef __EXX
@@ -32,7 +32,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                           const int nat)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
-    ModuleBase::timer::tick("HSolverLIP", "solve");
+    ModuleBase::timer::start("HSolverLIP", "solve");
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
@@ -65,7 +65,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         };
 #endif
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T>::diagH_subspace_init(
+        hsolver::DiagoIterAssist<T>::diag_subspace_init(
             pHamilt,                 // interface to hamilt
             transform.get_pointer(), // transform matrix between lcao and pw
             transform.get_nbands(),
@@ -108,12 +108,12 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         {
             reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
         }
-        ModuleBase::timer::tick("HSolverLIP", "solve");
+        ModuleBase::timer::end("HSolverLIP", "solve");
         return;
     }
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
 
-    ModuleBase::timer::tick("HSolverLIP", "solve");
+    ModuleBase::timer::end("HSolverLIP", "solve");
     return;
 }
 

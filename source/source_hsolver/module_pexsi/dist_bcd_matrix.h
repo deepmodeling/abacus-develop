@@ -75,7 +75,7 @@ class DistBCDMatrix
     // current process id
     int myproc;
 
-    int* prowpcol2pnum;
+    int* prowpcol2pnum = nullptr;
     // the local data layout
     // 'R' or 'r' for row-major, which is used in C/C++
     // 'C' or 'c' for column-major, which is used in Fortran

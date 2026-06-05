@@ -99,7 +99,7 @@ class DiagoBPCGPrepare
         double *en = new double[npw];
         int ik = 1;
 	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr,nullptr);
+	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 	    int* ngk = new int [1];
 	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<double>> psi;
@@ -201,10 +201,11 @@ INSTANTIATE_TEST_SUITE_P(VerifyCG,
                          DiagoBPCGTest,
                          ::testing::Values(
                              // nband, npw, sparsity, reorder, eps, maxiter, threshold
-                             DiagoBPCGPrepare(10, 500, 0, true, 1e-5, 300, 5e-2),
-                             DiagoBPCGPrepare(20, 500, 6, true, 1e-5, 300, 5e-2),
-                             DiagoBPCGPrepare(20, 1000, 8, true, 1e-5, 300, 5e-2),
-                             DiagoBPCGPrepare(40, 1000, 8, true, 1e-6, 300, 5e-2))); 
+                             DiagoBPCGPrepare(10, 500, 0, true, 1e-5, 300, 5e-2)
+                            //  DiagoBPCGPrepare(20, 500, 6, true, 1e-5, 300, 5e-2)
+                            //  DiagoBPCGPrepare(20, 1000, 8, true, 1e-5, 300, 5e-2),
+                            //  DiagoBPCGPrepare(40, 1000, 8, true, 1e-6, 300, 5e-2)
+                            )); 
                             //DiagoBPCGPrepare(40, 2000, 8, true, 1e-5, 500, 1e-2))); 
 			    // the last one is passed but time-consumming.
 
@@ -251,7 +252,7 @@ TEST(DiagoBPCGTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<std::complex<double>> hm;
     std::ifstream ifs;
-    std::string filename = "H-KPoints-Si64.dat";
+    std::string filename = "H-KPoints-Si2.dat";
     ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

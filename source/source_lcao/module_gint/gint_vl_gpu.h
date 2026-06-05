@@ -1,53 +1,37 @@
-#ifndef GINT_VL_GPU_H
-#define GINT_VL_GPU_H
+#pragma once
 
+#include <memory>
+#include <vector>
+#include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint.h"
-#include "grid_technique.h"
-#include "kernels/cuda/cuda_tools.cuh"
+#include "gint_info.h"
 
-namespace GintKernel
+namespace ModuleGint
 {
 
-void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
-                 const double* vlocal,
-                 const double* ylmcoef_now,
-                 const double dr,
-                 const double* rcut,
-                 const Grid_Technique& gridt,
-                 const UnitCell& ucell);
+class Gint_vl_gpu : public Gint
+{
+    public:
+    Gint_vl_gpu(
+        const double* vr_eff,
+        HContainer<double>* hR)
+        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()) {}
+    
+    void cal_gint();
 
-void gtask_vlocal(const Grid_Technique& gridt,
-                  const UnitCell& ucell,
-                  const int grid_index_ij,
-                  const int nczp,
-                  const double vfactor,
-                  const double* vlocal_global_value,
-                  int& atoms_per_z,
-                  int* atoms_num_info,
-                  uint8_t* atoms_type,
-                  double* dr_part,
-                  double* vldr3);
+    private:
+    template<typename Real>
+    void cal_gint_impl_();
 
-void alloc_mult_vlocal(const hamilt::HContainer<double>* hRGint,
-                       const Grid_Technique& gridt,
-                       const UnitCell& ucell,
-                       const int grid_index_ij,
-                       const int max_atom,
-                       double* const psi,
-                       double* const psi_vldr3,
-                       double* const grid_vlocal_g,
-                       int* mat_m,
-                       int* mat_n,
-                       int* mat_k,
-                       int* mat_lda,
-                       int* mat_ldb,
-                       int* mat_ldc,
-                       double** mat_A,
-                       double** mat_B,
-                       double** mat_C,
-                       int& atom_pair_num,
-                       int& max_m,
-                       int& max_n);
-} // namespace GintKernel
+    // input
+    const double* vr_eff_ = nullptr;
 
-#endif
+        
+    // output
+    HContainer<double>* hR_;
+
+    // Intermediate variables
+    double dr3_;
+};
+
+}

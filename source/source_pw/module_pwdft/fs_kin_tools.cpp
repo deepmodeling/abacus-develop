@@ -10,7 +10,7 @@ FS_Kin_tools<FPTYPE, Device>::FS_Kin_tools(const UnitCell& ucell_in,
                                            const ModuleBase::matrix& wg)
     : ucell_(ucell_in), nksbands_(wg.nc), wg(wg.c), wk(p_kv->wk.data())
 {
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     this->wfc_basis_ = wfc_basis_in;
     const int npwk_max = this->wfc_basis_->npwk_max;
     const int nks = this->wfc_basis_->nks;

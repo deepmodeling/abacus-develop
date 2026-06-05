@@ -3,8 +3,12 @@
 
 #include "source_basis/module_nao/numerical_radial.h"
 
+#include "utils/pybind_utils.h"
+
 namespace py = pybind11;
 using namespace pybind11::literals;
+using namespace pyabacus::utils;
+
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
@@ -28,22 +32,15 @@ void bind_numerical_radial(py::module& m)
                const std::string symbol = "",
                const int itype,
                const bool init_sbt = true) {
-                py::buffer_info grid_info = grid.request();
-                py::buffer_info value_info = value.request();
-                if (grid_info.ndim != 1 || value_info.ndim != 1)
-                {
-                    throw std::runtime_error("Input arrays must be 1-dimensional");
-                }
-                if (grid_info.shape[0] != value_info.shape[0])
-                {
-                    throw std::runtime_error("Grid and value arrays must have the same size");
-                }
+                check_1d_array(grid, "grid");
+                check_1d_array(value, "value");
+                check_same_size(grid, value, "grid", "value");
 
                 self.build(l,
                            for_r_space,
-                           grid_info.shape[0],
-                           static_cast<double*>(grid_info.ptr),
-                           static_cast<double*>(value_info.ptr),
+                           static_cast<int>(grid.size()),
+                           get_array_ptr(grid),
+                           get_array_ptr(value),
                            p,
                            izeta,
                            symbol,
@@ -68,13 +65,9 @@ void bind_numerical_radial(py::module& m)
                const int ngrid,
                py::array_t<double> grid,
                const char mode) {
-                py::buffer_info grid_info = grid.request();
-                if (grid_info.ndim != 1)
-                {
-                    throw std::runtime_error("Input array must be 1-dimensional");
-                }
+                check_1d_array(grid, "grid");
 
-                self.set_grid(for_r_space, ngrid, static_cast<double*>(grid_info.ptr), mode);
+                self.set_grid(for_r_space, ngrid, get_array_ptr(grid), mode);
             },
             "for_r_space"_a,
             "ngrid"_a,
@@ -86,17 +79,13 @@ void bind_numerical_radial(py::module& m)
              "ngrid"_a,
              "cutoff"_a,
              "mode"_a = 'i',
-             "enable+fft"_a = false)
+             "enable_fft"_a = false)
         .def(
             "set_value",
             [](NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p) {
-                py::buffer_info value_info = value.request();
-                if (value_info.ndim != 1)
-                {
-                    throw std::runtime_error("Input array must be 1-dimensional");
-                }
+                check_1d_array(value, "value");
 
-                self.set_value(for_r_space, static_cast<double*>(value_info.ptr), p);
+                self.set_value(for_r_space, get_array_ptr(value), p);
             },
             "for_r_space"_a,
             "value"_a,
@@ -112,13 +101,9 @@ void bind_numerical_radial(py::module& m)
                const int nr_tab,
                const double rmax_tab,
                const bool deriv) {
-                py::buffer_info table_info = table.request();
-                if (table_info.ndim != 1)
-                {
-                    throw std::runtime_error("Table array must be 1-dimensional");
-                }
+                check_1d_array(table, "table");
 
-                self.radtab(op, ket, l, static_cast<double*>(table_info.ptr), nr_tab, rmax_tab, deriv);
+                self.radtab(op, ket, l, get_array_ptr(table), nr_tab, rmax_tab, deriv);
             },
             "op"_a,
             "ket"_a,
@@ -139,30 +124,21 @@ void bind_numerical_radial(py::module& m)
         .def_property_readonly("kcut", &NumericalRadial::kcut)
         .def_property_readonly("rgrid",
                                [](NumericalRadial& self) {
-                                   const double* rgrid = self.rgrid();
-                                   return py::array_t<double>({self.nr()}, rgrid);
+                                   return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr()));
                                })
         .def_property_readonly("kgrid",
                                [](NumericalRadial& self) {
-                                   const double* kgrid = self.kgrid();
-                                   return py::array_t<double>({self.nk()}, kgrid);
+                                   return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk()));
                                })
         .def_property_readonly("rvalue",
                                [](NumericalRadial& self) {
-                                   const double* rvalue = self.rvalue();
-                                   return py::array_t<double>({self.nr()}, rvalue);
+                                   return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr()));
                                })
         .def_property_readonly("kvalue",
                                [](NumericalRadial& self) {
-                                   const double* kvalue = self.kvalue();
-                                   return py::array_t<double>({self.nk()}, kvalue);
+                                   return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk()));
                                })
         .def_property_readonly("pr", &NumericalRadial::pr)
         .def_property_readonly("pk", &NumericalRadial::pk)
-        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_))
-        // leave transformer for future
-        .def_property_readonly("rgrid", overload_cast_<int>()(&NumericalRadial::rgrid, py::const_))
-        .def_property_readonly("kgrid", overload_cast_<int>()(&NumericalRadial::kgrid, py::const_))
-        .def_property_readonly("rvalue", overload_cast_<int>()(&NumericalRadial::rvalue, py::const_))
-        .def_property_readonly("kvalue", overload_cast_<int>()(&NumericalRadial::kvalue, py::const_));
+        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }

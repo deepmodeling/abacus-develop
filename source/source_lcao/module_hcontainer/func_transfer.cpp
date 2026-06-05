@@ -169,7 +169,7 @@ void transferParallels2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HConta
 
     // send data
     std::vector<TR> receive_values;
-    long max_size;
+    long max_size = 0;
     if (my_rank == serial_rank)
     {
         max_size = trans_s->get_max_size();

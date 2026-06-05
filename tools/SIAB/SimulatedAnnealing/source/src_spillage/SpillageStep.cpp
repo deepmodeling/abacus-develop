@@ -661,7 +661,9 @@ double SpillageStep::get_spillage(
 	//omp_set_num_threads(8);		// Peize Lin test
 	//#endif
 
+    #ifdef _OPENMP
 	#pragma omp parallel for			// Peize Lin add 2016-01-18	
+    #endif
     for (int ik = 0; ik < Stru->nks ; ik++)
     {		
         //	cout << "ik=" << ik << endl;

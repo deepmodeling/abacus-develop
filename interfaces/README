@@ -1,0 +1,38 @@
+# Interfaces for ABACUS
+
+This directory contains interface modules and utilities that enable seamless 
+integration between ABACUS (Atomic-orbital Based Ab-initio Computation at UStc) 
+and other scientific software packages.
+
+## Overview
+
+ABACUS is a powerful electronic structure calculation package for ab-initio 
+simulations. The interfaces here are designed to:
+- Facilitate data exchange (input/output files, calculation results) between 
+  ABACUS and external software
+- Enable interoperability for multi-step workflows (e.g., structure 
+  preprocessing -> ABACUS calculation -> post-analysis)
+- Standardize integration methods to ensure reproducibility and ease of use
+
+## Usage Guidelines
+
+- For each software interface, refer to the dedicated README file in the 
+  corresponding subdirectory (e.g., ASE_interface/README) for detailed usage 
+  instructions.
+- All interfaces follow consistent input/output standards to minimize workflow 
+  disruption.
+- Before using an interface, ensure you have the required dependencies installed 
+  (listed in each subdirectory's requirements.txt).
+
+## Contributing
+
+Contributions to expand or improve ABACUS interfaces are welcome:
+- Follow the ABACUS coding style and documentation standards
+- Add unit tests for new interface modules
+- Update this README and the supported software table when adding new interfaces
+- Submit pull requests with clear descriptions of the integration functionality
+
+## Contact
+
+For questions or issues related to these interfaces, please contact the ABACUS 
+development team at: https://github.com/deepmodeling/abacus-develop/issues 

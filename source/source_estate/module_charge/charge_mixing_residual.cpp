@@ -1,19 +1,20 @@
 #include "charge_mixing.h"
-
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_base/parallel_reduce.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
     ModuleBase::TITLE("Charge_Mixing", "get_drho");
-    ModuleBase::timer::tick("Charge_Mixing", "get_drho");
+    ModuleBase::timer::start("Charge_Mixing", "get_drho");
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
     double drho = 0.0;
 
     if (PARAM.inp.scf_thr_type == 1)
     {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
             chr->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
@@ -23,15 +24,15 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
-        std::vector<std::complex<double>> drhog(PARAM.inp.nspin * this->rhopw->npw);
+        std::vector<std::complex<double>> drhog(nspin * this->rhopw->npw);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < nspin; ++is)
         {
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                drhog[is * rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
+                drhog[is * this->rhopw->npw + ig] = chr->rhog[is][ig] - chr->rhog_save[is][ig];
             }
         }
 
@@ -42,7 +43,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     {
         // Note: Maybe it is wrong.
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < nspin; is++)
         {
             if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {
@@ -66,7 +67,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         drho /= nelec;
     }
 
-    ModuleBase::timer::tick("Charge_Mixing", "get_drho");
+    ModuleBase::timer::end("Charge_Mixing", "get_drho");
     return drho;
 }
 
@@ -77,7 +78,7 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
         return 0.0;
     };
     ModuleBase::TITLE("Charge_Mixing", "get_dkin");
-    ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
+    ModuleBase::timer::start("Charge_Mixing", "get_dkin");
     double dkin = 0.0;
     
     // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
@@ -104,14 +105,14 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     dkin *= *this->omega / static_cast<double>(this->rhopw->nxyz);
     dkin /= nelec;
 
-    ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
+    ModuleBase::timer::end("Charge_Mixing", "get_dkin");
     return dkin;
 }
 
 double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     ModuleBase::TITLE("Charge_Mixing", "recip_rho");
-    ModuleBase::timer::tick("Charge_Mixing", "recip_rho");
+    ModuleBase::timer::start("Charge_Mixing", "recip_rho");
 
     std::complex<double>** rhog1 = new std::complex<double>*[PARAM.inp.nspin];
     std::complex<double>** rhog2 = new std::complex<double>*[PARAM.inp.nspin];
@@ -248,7 +249,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     delete[] rhog1;
     delete[] rhog2;
 
-    ModuleBase::timer::tick("Charge_Mixing", "recip_rho");
+    ModuleBase::timer::end("Charge_Mixing", "recip_rho");
     return sum;
 }
 
@@ -256,7 +257,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     ModuleBase::TITLE("Charge_Mixing", "recip_simple");
-    ModuleBase::timer::tick("Charge_Mixing", "recip_simple");
+    ModuleBase::timer::start("Charge_Mixing", "recip_simple");
 
     double rnorm = 0.0;
     // consider a resize for mixing_angle
@@ -274,7 +275,7 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     Parallel_Reduce::reduce_pool(rnorm);
 #endif
 
-    ModuleBase::timer::tick("Charge_Mixing", "recip_simple");
+    ModuleBase::timer::end("Charge_Mixing", "recip_simple");
 
     return rnorm;
 }
@@ -283,7 +284,7 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
 double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, std::complex<double>* rhog2)
 {
     ModuleBase::TITLE("Charge_Mixing", "recip_hartree");
-    ModuleBase::timer::tick("Charge_Mixing", "recip_hartree");
+    ModuleBase::timer::start("Charge_Mixing", "recip_hartree");
 
     static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / ((*this->tpiba) * (*this->tpiba));
     static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
@@ -449,7 +450,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 
     sum *= *this->omega * 0.5;
 
-    ModuleBase::timer::tick("Charge_Mixing", "recip_hartree");
+    ModuleBase::timer::end("Charge_Mixing", "recip_hartree");
 
     return sum;
 }

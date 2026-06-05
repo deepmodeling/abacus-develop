@@ -1,7 +1,6 @@
 #include "broyden_mixing.h"
 
 #include "source_base/module_external/lapack_connector.h"
-#include "source_base/memory.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -32,7 +31,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
     const size_t length = mdata.length;
     std::vector<FPTYPE> F_tmp(length);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < length; ++i)
     {
@@ -72,7 +71,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
         dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
         FP_dF = static_cast<FPTYPE*>(dF);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -84,7 +83,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
         this->ndim_cal_dF = std::min(this->ndim_cal_dF + 1, this->mixing_ndim);
         start_dF = (this->start_dF + 1) % this->mixing_ndim;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
         for (int i = 0; i < length; ++i)
         {
@@ -105,7 +104,7 @@ template <class FPTYPE>
 void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
 {
     ModuleBase::TITLE("Broyden_Mixing", "Simplified_Broyden_mixing");
-    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
+    ModuleBase::timer::start("Broyden_Mixing", "tem_cal_coef");
 
 	if (address != &mdata && address != nullptr)
 	{
@@ -192,12 +191,12 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
 
     FPTYPE* dFnext = FP_dF + dFindex_move(1) * length;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < length; ++i)
     {
         dFnext[i] = FP_F[i];
     }
-    ModuleBase::timer::tick("Broyden_Mixing", "tem_cal_coef");
+    ModuleBase::timer::end("Broyden_Mixing", "tem_cal_coef");
 };
 } // namespace Base_Mixing

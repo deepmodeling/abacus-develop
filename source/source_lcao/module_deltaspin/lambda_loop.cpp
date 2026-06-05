@@ -99,7 +99,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
 
 template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun)
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(
+        int outer_step,
+		bool rerun)
 {
     // init controlling parameters
     int nat = this->get_nat();
@@ -115,9 +117,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
     std::vector<ModuleBase::Vector3<double>> new_spin(nat, 0.0), spin_plus(nat, 0.0);
 
     double alpha_opt, alpha_plus;
-    double beta;
-    double mean_error, mean_error_old, rms_error;
-    double g;
+    double beta = 0.0, g = 0.0, mean_error = 0.0, mean_error_old = 0.0, rms_error = 0.0;
 
     double alpha_trial = this->alpha_trial_;
 
@@ -139,6 +139,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         double duration = 0.0;
         if (i_step == -1)
         {
+
             this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
@@ -151,7 +152,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         {
             where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
-            this->cal_mw_from_lambda(i_step, delta_lambda.data());
+
+            this->cal_mw_from_lambda(i_step);
+
             new_spin = this->Mi_;
             bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
             if (i_step >= this->nsc_min_ && GradLessThanBound)
@@ -246,6 +249,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
         where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+
         this->cal_mw_from_lambda(i_step, delta_lambda.data());
 
         spin_plus = this->Mi_;

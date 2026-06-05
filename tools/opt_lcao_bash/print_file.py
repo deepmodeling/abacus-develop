@@ -8,7 +8,6 @@ def print_file_pw(info,dis):
 		file.write(textwrap.dedent(f"""\
 			INPUT_PARAMETERS
 			pseudo_dir          {info["input"]["pseudo_dir"]}
-			wannier_card        INPUTw
 			calculation         scf
 			ntype               1
 			nspin               1

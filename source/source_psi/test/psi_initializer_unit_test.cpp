@@ -3,13 +3,14 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "../psi_initializer.h"
-#include "../psi_initializer_atomic.h"
-#include "../psi_initializer_atomic_random.h"
-#include "../psi_initializer_nao.h"
-#include "../psi_initializer_nao_random.h"
-#include "../psi_initializer_random.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "../psi_init_atomic.h"
+#include "../psi_init_atomic_random.h"
+#include "../psi_init_nao.h"
+#include "../psi_init_nao_random.h"
+#include "../psi_init_random.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_cell/klist.h"
+#include "source_io/module_output/output.h"
 
 /*
 =========================
@@ -80,7 +81,7 @@ InfoNonlocal::~InfoNonlocal() {}
 #endif
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
-void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}
+void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}
 std::complex<double>* Structure_Factor::get_sk(int ik, int it, int ia, ModulePW::PW_Basis_K const*wfc_basis) const
 {
     int npw = wfc_basis->npwk[ik];
@@ -272,32 +273,32 @@ class PsiIntializerUnitTest : public ::testing::Test {
 };
 
 TEST_F(PsiIntializerUnitTest, ConstructorRandom) {
-    this->psi_init = new psi_initializer_random<std::complex<double>>();
+    this->psi_init = new psi_init_random<std::complex<double>>();
     EXPECT_EQ("random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorAtomic) {
-    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init = new psi_init_atomic<std::complex<double>>();
     EXPECT_EQ("atomic", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorAtomicRandom) {
-    this->psi_init = new psi_initializer_atomic_random<std::complex<double>>();
+    this->psi_init = new psi_init_atomic_random<std::complex<double>>();
     EXPECT_EQ("atomic+random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorNao) {
-    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init = new psi_init_nao<std::complex<double>>();
     EXPECT_EQ("nao", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorNaoRandom) {
-    this->psi_init = new psi_initializer_nao_random<std::complex<double>>();
+    this->psi_init = new psi_init_nao_random<std::complex<double>>();
     EXPECT_EQ("nao+random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, CastToT) {
-    this->psi_init = new psi_initializer_random<std::complex<double>>();
+    this->psi_init = new psi_init_random<std::complex<double>>();
     std::complex<double> cd = {1.0, 2.0};
     std::complex<float> cf = {1.0, 2.0};
     double d = 1.0;
@@ -310,7 +311,7 @@ TEST_F(PsiIntializerUnitTest, CastToT) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
     PARAM.input.init_wfc = "random";
-    this->psi_init = new psi_initializer_random<std::complex<double>>();
+    this->psi_init = new psi_init_random<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -329,7 +330,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
     PARAM.input.init_wfc = "atomic";
-    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init = new psi_init_atomic<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -352,7 +353,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc *= 2;
-    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init = new psi_init_atomic<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -379,7 +380,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     this->p_ucell->natomwfc *= 2;
-    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init = new psi_init_atomic<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -402,7 +403,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
     PARAM.input.init_wfc = "atomic+random";
-    this->psi_init = new psi_initializer_atomic_random<std::complex<double>>();
+    this->psi_init = new psi_init_atomic_random<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -421,7 +422,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigNao) {
     PARAM.input.init_wfc = "nao";
-    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init = new psi_init_nao<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -440,7 +441,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
     PARAM.input.init_wfc = "nao+random";
-    this->psi_init = new psi_initializer_nao_random<std::complex<double>>();
+    this->psi_init = new psi_init_nao_random<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -464,7 +465,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     this->p_ucell->atoms[0].ncpp.has_so = false;
     PARAM.sys.domag = false;
     PARAM.sys.domag_z = false;
-    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init = new psi_init_nao<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -488,7 +489,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
     this->p_ucell->atoms[0].ncpp.has_so = true;
     PARAM.sys.domag = false;
     PARAM.sys.domag_z = false;
-    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init = new psi_init_nao<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
@@ -512,7 +513,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     this->p_ucell->atoms[0].ncpp.has_so = true;
     PARAM.sys.domag = true;
     PARAM.sys.domag_z = false;
-    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init = new psi_init_nao<std::complex<double>>();
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 

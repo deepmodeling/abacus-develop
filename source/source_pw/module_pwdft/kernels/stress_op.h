@@ -1,7 +1,7 @@
 #ifndef SRC_PW_STRESS_MULTI_DEVICE_H
 #define SRC_PW_STRESS_MULTI_DEVICE_H
-#include "source_io/module_parameter/parameter.h"
 
+#include "source_base/module_device/types.h"
 #include "source_psi/psi.h"
 
 #include <complex>
@@ -241,13 +241,13 @@ struct cal_stress_drhoc_aux_op{
 template <typename FPTYPE, typename Device>
 struct cal_force_npw_op{
     void operator()(const std::complex<FPTYPE> *psiv,
-                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* gv,
                     const FPTYPE* rhocgigg_vec,
                     FPTYPE* force,
-                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const FPTYPE* tau_x,
                     const int npw,
-                    const FPTYPE omega, const FPTYPE tpiba
-    );
+                    const FPTYPE omega, const FPTYPE tpiba, const int na
+    ) {}
 };
 
 template <typename FPTYPE, typename Device>
@@ -480,12 +480,12 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
 template <typename FPTYPE>
 struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
     void operator()(const std::complex<FPTYPE> *psiv,
-                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* gv,
                     const FPTYPE* rhocgigg_vec,
                     FPTYPE* force,
-                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const FPTYPE* tau,
                     const int npw,
-                    const FPTYPE omega, const FPTYPE tpiba
+                    const FPTYPE omega, const FPTYPE tpiba, const int na
     );
 };
 

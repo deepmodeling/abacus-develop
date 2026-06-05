@@ -8,7 +8,13 @@
  ***********************************************/
 
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv,pseudopot_cell_vnl*,const UnitCell*){}
+hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, 
+		ModulePW::PW_Basis_K* wfc_basis, 
+		K_Vectors* p_kv,
+		pseudopot_cell_vnl*,
+        Plus_U* p_dftu, // mohan add 20251108
+		const UnitCell*){}
+
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){};
 template <typename T, typename Device>
@@ -25,9 +31,10 @@ hamilt::HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
                                               const int& npol,
                                               Real* emin_in,
                                               Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, ucell), ngk(p_kv->ngk)
+    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell), ngk(p_kv->ngk)
 {
 }
+
 template <typename T, typename Device>
 void hamilt::HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi, const int& nbands){}
 
@@ -35,6 +42,7 @@ template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
+
 #if ((defined __CUDA) || (defined __ROCM))
 template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
 template class hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_GPU>;

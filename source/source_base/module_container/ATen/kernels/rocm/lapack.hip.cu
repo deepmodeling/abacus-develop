@@ -28,8 +28,8 @@ void destroyGpuSolverHandle() {
 template <typename T>
 __global__ void set_matrix_kernel(
     const char uplo,
-    T* A, 
-    const int dim) 
+    T* A,
+    const int dim)
 {
     int bid = blockIdx.x;
     int tid = threadIdx.x;
@@ -64,7 +64,7 @@ struct lapack_trtri<T, DEVICE_GPU> {
         const char& diag,
         const int& dim,
         T* Mat,
-        const int& lda) 
+        const int& lda)
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
@@ -82,8 +82,8 @@ struct lapack_potrf<T, DEVICE_GPU> {
     void operator()(
         const char& uplo,
         const int& dim,
-        T* Mat, 
-        const int& lda) 
+        T* Mat,
+        const int& lda)
     {
         // hipSolverConnector::potrf(hipsolver_handle, uplo, dim, Mat, dim);
         std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
@@ -94,7 +94,7 @@ struct lapack_potrf<T, DEVICE_GPU> {
 };
 
 template <typename T>
-struct lapack_dnevd<T, DEVICE_GPU> {
+struct lapack_heevd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
         const char& jobz,
@@ -103,30 +103,33 @@ struct lapack_dnevd<T, DEVICE_GPU> {
         const int& dim,
         Real* eigen_val)
     {
-        // hipSolverConnector::dnevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
+        // hipSolverConnector::heevd(hipsolver_handle, jobz, uplo, dim, Mat, dim, eigen_val);
         std::vector<T> H_Mat(dim * dim, static_cast<T>(0.0));
         std::vector<Real> H_eigen_val(dim, static_cast<Real>(0.0));
         hipMemcpy(H_Mat.data(), Mat, sizeof(T) * H_Mat.size(), hipMemcpyDeviceToHost);
         hipMemcpy(H_eigen_val.data(), eigen_val, sizeof(Real) * H_eigen_val.size(), hipMemcpyDeviceToHost);
-        lapack_dnevd<T, DEVICE_CPU>()(jobz, uplo, H_Mat.data(), dim, H_eigen_val.data());
+        lapack_heevd<T, DEVICE_CPU>()(jobz, uplo, H_Mat.data(), dim, H_eigen_val.data());
         hipMemcpy(Mat, H_Mat.data(), sizeof(T) * H_Mat.size(), hipMemcpyHostToDevice);
         hipMemcpy(eigen_val, H_eigen_val.data(), sizeof(Real) * H_eigen_val.size(), hipMemcpyHostToDevice);
     }
 };
 
 template <typename T>
-struct lapack_dngvd<T, DEVICE_GPU> {
+struct lapack_hegvd<T, DEVICE_GPU> {
     using Real = typename GetTypeReal<T>::type;
     void operator()(
-        const int& itype,
-        const char& jobz,
-        const char& uplo,
+        const int dim,
+        const int lda,
         T* Mat_A,
         T* Mat_B,
-        const int& dim,
-        Real* eigen_val)
+        Real* eigen_val,
+        T *eigen_vec)
     {
-        hipSolverConnector::dngvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, dim, Mat_B, dim, eigen_val);
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        hipErrcheck(hipMemcpy(eigen_vec, Mat_A, sizeof(T) * dim * lda, hipMemcpyDeviceToDevice));
+        hipSolverConnector::hegvd(hipsolver_handle, itype, jobz, uplo, dim, Mat_A, lda, Mat_B, lda, eigen_val);
     }
 };
 
@@ -145,15 +148,15 @@ template struct lapack_potrf<double, DEVICE_GPU>;
 template struct lapack_potrf<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_potrf<std::complex<double>, DEVICE_GPU>;
 
-template struct lapack_dnevd<float,  DEVICE_GPU>;
-template struct lapack_dnevd<double, DEVICE_GPU>;
-template struct lapack_dnevd<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_dnevd<std::complex<double>, DEVICE_GPU>;
+template struct lapack_heevd<float,  DEVICE_GPU>;
+template struct lapack_heevd<double, DEVICE_GPU>;
+template struct lapack_heevd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_heevd<std::complex<double>, DEVICE_GPU>;
 
-template struct lapack_dngvd<float,  DEVICE_GPU>;
-template struct lapack_dngvd<double, DEVICE_GPU>;
-template struct lapack_dngvd<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_dngvd<std::complex<double>, DEVICE_GPU>;
+template struct lapack_hegvd<float,  DEVICE_GPU>;
+template struct lapack_hegvd<double, DEVICE_GPU>;
+template struct lapack_hegvd<std::complex<float>,  DEVICE_GPU>;
+template struct lapack_hegvd<std::complex<double>, DEVICE_GPU>;
 
 } // namespace kernels
 } // namespace container

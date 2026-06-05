@@ -52,7 +52,7 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         in); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template <typename FPTYPE>
@@ -69,7 +69,7 @@ void veff_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
         in[0]); // array of data
 
-    cudaCheckOnDebug();
+    CHECK_CUDA_SYNC();
 }
 
 template struct veff_pw_op<float, base_device::DEVICE_GPU>;

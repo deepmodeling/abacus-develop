@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
+#ifndef HCONTAINER_H
+#define HCONTAINER_H
 
 #include "atom_pair.h"
 #include "source_base/vector3.h"
@@ -475,6 +475,9 @@ class HContainer
     // sparse table for (atom_i, atom_j)->index of atom_pairs
     std::vector<std::vector<int>> sparse_ap;
     std::vector<std::vector<int>> sparse_ap_index;
+    
+    // record allocated memory size
+    size_t allocated_size = 0;
 
     /**
      * @brief temporary atom-pair lists to loop selected R index

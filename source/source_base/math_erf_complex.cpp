@@ -106,7 +106,7 @@ std::complex<double> ErrorFunc::scaled_w(std::complex<double> z, double relerr)
     else if (x < 10)
     {
         double prod2ax = 1, prodm2ax = 1;
-        double expx2;
+        double expx2 = 0.0;
 
         if (std::isnan(y))
             return std::complex<double>(y, y);
@@ -235,7 +235,7 @@ std::complex<double> ErrorFunc::scaled_w(std::complex<double> z, double relerr)
         sum3 = std::exp(-dx * dx) / (a2 * (n0 * n0) + y * y);
         sum5 = a * n0 * sum3;
         double exp1 = std::exp(4 * a * dx), exp1dn = 1;
-        int dn;
+        int dn = 0;
         for (dn = 1; n0 - dn > 0; ++dn)
         { // loop over n0-dn and n0+dn terms
             double np = n0 + dn, nm = n0 - dn;

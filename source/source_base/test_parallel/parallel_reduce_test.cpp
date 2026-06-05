@@ -30,9 +30,9 @@
  *   3. ReduceComplexAll:
  *       Tests two variations of reduce_complex_all()
  *   4. GatherIntAll:
- *       Tests gather_int_all() and gather_min_int_all()
+ *       Tests gather_int_all() and reduce_min()
  *   5. GatherDoubleAll:
- *       Tests gather_min_double_all() and gather_max_double_all()
+ *       Tests reduce_min_double() and reduce_max_double()
  *   6. ReduceIntDiag:
  *       Tests reduce_int_diag()
  *   7. ReduceDoubleDiag:
@@ -47,7 +47,7 @@
  *   11.ReduceComplexPool:
  *       Tests two variations of reduce_pool()
  *   12.GatherDoublePool:
- *       Tests gather_min_double_pool() and gather_max_double_pool()
+ *       Tests reduce_min_pool() and reduce_max_pool()
  *
  *
  */
@@ -233,7 +233,7 @@ TEST_F(ParaReduce, GatherIntAll)
     EXPECT_EQ(local_number, array[my_rank]);
     // get minimum integer among all processes
     int min_number = local_number;
-    Parallel_Reduce::gather_min_int_all(nproc, min_number);
+    Parallel_Reduce::reduce_min(min_number);
     for (int i = 0; i < nproc; i++)
     {
         EXPECT_LE(min_number, array[i]);
@@ -256,10 +256,10 @@ TEST_F(ParaReduce, GatherDoubleAll)
     EXPECT_EQ(local_number, array[my_rank]);
     // get minimum integer among all processes
     double min_number = local_number;
-    Parallel_Reduce::gather_min_double_all(nproc, min_number);
+    Parallel_Reduce::reduce_min(min_number);
     // get maximum integer among all processes
     double max_number = local_number;
-    Parallel_Reduce::gather_max_double_all(nproc, max_number);
+    Parallel_Reduce::reduce_max(max_number);
     for (int i = 0; i < nproc; i++)
     {
         EXPECT_LE(min_number, array[i]);
@@ -587,10 +587,10 @@ TEST_F(ParaReduce, GatherDoublePool)
         EXPECT_EQ(local_number, array[mpiContext.rank_in_pool]);
         // get minimum integer among all processes
         double min_number = local_number;
-        Parallel_Reduce::gather_min_double_pool(mpiContext.nproc_in_pool, min_number);
+        Parallel_Reduce::reduce_min_pool(mpiContext.nproc_in_pool, min_number);
         // get maximum integer among all processes
         double max_number = local_number;
-        Parallel_Reduce::gather_max_double_pool(mpiContext.nproc_in_pool, max_number);
+        Parallel_Reduce::reduce_max_pool(mpiContext.nproc_in_pool, max_number);
         for (int i = 0; i < mpiContext.nproc_in_pool; i++)
         {
             EXPECT_LE(min_number, array[i]);

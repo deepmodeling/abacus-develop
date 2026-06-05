@@ -5,19 +5,16 @@
 #ifndef RDMFT_TOOLS_H
 #define RDMFT_TOOLS_H
 
+#include "source_cell/klist.h"
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_base/parallel_reduce.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
@@ -27,7 +24,6 @@
 
 
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_2D_Comm.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
 // there are some operator reload to print data in different formats
 #endif
@@ -79,8 +75,8 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    pzgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
-        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_complex, &HK, one_int, one_int, ParaV->desc,
+        &wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &H_wfc, one_int, one_int, ParaV->desc_wfc );
 #endif
 }
 
@@ -106,8 +102,8 @@ void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
-    pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    ScalapackConnector::gemm( C_char, N_char, nbands, nbands, nbasis, one_complex, &wfc, one_int, one_int, ParaV->desc_wfc,
+            &H_wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &Dmn[0], one_int, one_int, para_Eij_in.desc );
 #endif
 }
 
@@ -259,10 +255,8 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
   public:
     /**
      * @brief Construct a new Veff object for multi-kpoint calculation
-     * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
-    Veff_rdmft(Gint_k* GK_in,
-               hamilt::HS_Matrix_K<TK>* hsk_in,
+    Veff_rdmft(hamilt::HS_Matrix_K<TK>* hsk_in,
                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                elecstate::Potential* pot_in,
                hamilt::HContainer<TR>* hR_in,
@@ -277,45 +271,15 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                const std::string potential_in,
                double* etxc_in = nullptr,
                double* vtxc_in = nullptr)
-        : GK(GK_in), orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
+        : orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
           gd(GridD_in), hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), charge_(charge_in),
           rho_basis_(rho_basis_in), vloc_(vloc_in), sf_(sf_in), potential_(potential_in), etxc(etxc_in), vtxc(vtxc_in)
     {
         this->cal_type = hamilt::calculation_type::lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in);
-#ifdef __OLD_GINT
-        GK_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
-#endif
     }
-    Veff_rdmft(Gint_Gamma* GG_in,
-               hamilt::HS_Matrix_K<TK>* hsk_in,
-               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-               elecstate::Potential* pot_in,
-               hamilt::HContainer<TR>* hR_in,
-               const UnitCell* ucell_in,
-               const std::vector<double>& orb_cutoff,
-               const Grid_Driver* GridD_in,
-               const int& nspin,
-               const Charge* charge_in,
-               const ModulePW::PW_Basis* rho_basis_in,
-               const ModuleBase::matrix* vloc_in,
-               const ModuleBase::ComplexMatrix* sf_in,
-               const std::string potential_in,
-               double* etxc_in = nullptr,
-               double* vtxc_in = nullptr)
-        : GG(GG_in), orb_cutoff_(orb_cutoff), pot(pot_in), hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-          ucell(ucell_in), gd(GridD_in), charge_(charge_in), rho_basis_(rho_basis_in), vloc_(vloc_in), sf_(sf_in),
-          potential_(potential_in), etxc(etxc_in), vtxc(vtxc_in)
-    {
-        this->cal_type = hamilt::calculation_type::lcao_gint;
-
-        this->initialize_HR(ucell_in, GridD_in);
-#ifdef __OLD_GINT
-        GG_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
-#endif
-    }
-
+    
     ~Veff_rdmft<TK, TR>(){};
 
     /**
@@ -326,16 +290,11 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
      */
     virtual void contributeHR() override;
 
-    const UnitCell* ucell;
+    const UnitCell* ucell = nullptr;
 
-    const Grid_Driver* gd;
+    const Grid_Driver* gd = nullptr;
 
   private:
-    // used for k-dependent grid integration.
-    Gint_k* GK = nullptr;
-
-    // used for gamma only algorithms.
-    Gint_Gamma* GG = nullptr;
 
     std::vector<double> orb_cutoff_;
 
@@ -355,19 +314,19 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     // added by jghan
 
-    const Charge* charge_;
+    const Charge* charge_ = nullptr;
 
     std::string potential_;
 
-    const ModulePW::PW_Basis* rho_basis_;
+    const ModulePW::PW_Basis* rho_basis_ = nullptr;
 
     const ModuleBase::matrix* vloc_;
 
-    const ModuleBase::ComplexMatrix* sf_;
+    const ModuleBase::ComplexMatrix* sf_ = nullptr;
 
-    double* etxc;
+    double* etxc = nullptr;
 
-    double* vtxc;
+    double* vtxc = nullptr;
 
 };
 

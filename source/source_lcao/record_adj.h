@@ -2,7 +2,8 @@
 #define RECORD_ADJ_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_gint/grid_technique.h"
+#include "source_cell/unitcell.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 //---------------------------------------------------
 // FUNCTION: record the adjacent atoms for each atom
@@ -26,14 +27,6 @@ class Record_adj
                 bool gamma_only,
                 const std::vector<double>& orb_cutoff);
 
-    //--------------------------------------------
-    // This will record the orbitals according to
-    // grid division (cut along z direction)
-    //--------------------------------------------
-    void for_grid(const UnitCell& ucell,
-                  const Grid_Driver& grid_d,
-                  const Grid_Technique& gt,
-                  const std::vector<double>& orb_cutoff);
 
     void delete_grid();
 
@@ -41,7 +34,7 @@ class Record_adj
     int* na_each=nullptr;
 
     //--------------------------------------------
-    // record sparse atom index in for_grid(const Grid_Technique &gt);
+    // record sparse atom index in for_grid();
     // Map iat(dense atom index) to sparse atom index
     // Mainly removing the index dependency for OpenMP parallel loop
     //

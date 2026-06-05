@@ -11,6 +11,22 @@ class Symmetry_rho
     Symmetry_rho();
     ~Symmetry_rho();
 
+    /**
+     * @brief Symmetrize charge density for all spin channels
+     * 
+     * This is a static helper function that symmetrizes the charge density
+     * for all spin channels by calling begin() for each spin.
+     * 
+     * @param nspin Number of spin channels
+     * @param chr Charge object containing the density
+     * @param pw Plane wave basis
+     * @param symm Symmetry object
+     */
+    static void symmetrize_rho(const int nspin,
+                               const Charge& chr,
+                               const ModulePW::PW_Basis* pw,
+                               ModuleSymmetry::Symmetry& symm);
+
     void begin(const int& spin_now,
                const Charge& CHR,
                const ModulePW::PW_Basis* pw,

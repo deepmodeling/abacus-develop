@@ -1,19 +1,19 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters	(System)
-suffix                  autotest
+suffix            autotest
 
-nbands			4
-stru_file		STRU
-kpoint_file		KPT
-pseudo_dir	../../PP_ORB
-pw_seed         1
-calculation             scf 		
-latname			bco
+nbands            4
+stru_file         STRU
+kpoint_file       KPT
+pseudo_dir        ../../PP_ORB
+pw_seed           1
+calculation       scf
+latname           bco
 #Parameters (PW)
-ecutwfc			25.0              # Rydberg
+ecutwfc           25.0 # Rydberg
 #Parameters (electronic)
-basis_type		pw 	
-scf_thr			1e-10
+basis_type        pw
+scf_thr           1e-10
 
-cal_force			1
-cal_stress			1
+cal_force         1
+cal_stress        1

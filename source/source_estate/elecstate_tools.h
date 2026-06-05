@@ -10,7 +10,7 @@ void calEBand(const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, fener
 void calculate_weights(const ModuleBase::matrix& ekb,
                        ModuleBase::matrix& wg,
                        const K_Vectors* klist,
-                       efermi& eferm,
+                       Efermi& eferm,
                        fenergy& f_en,
                        std::vector<double>& nelec_spin,
                        const bool skip_weights);

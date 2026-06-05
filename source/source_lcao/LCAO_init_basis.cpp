@@ -1,11 +1,7 @@
 #include "LCAO_domain.h"
 
 #include "source_io/module_parameter/parameter.h"
-/// once the GlobalC::exx_info has been deleted, this include can be gone 
-/// mohan note 2024-07-21
-#ifdef __EXX
-#include "source_pw/module_pwdft/global.h"
-#endif
+#include "source_base/parallel_comm.h"
 
 namespace LCAO_domain
 {
@@ -45,7 +41,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
-    two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn.data());
+    two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn.data(), PARAM.inp.orbital_dir);
     two_center_bundle.build_alpha(PARAM.globalv.deepks_setorb, &ucell.descriptor_file);
     two_center_bundle.build_orb_onsite(onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
@@ -53,18 +49,14 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     // TODO Due to the omnipresence of LCAO_Orbitals, we still have to rely
     // on the old interface for now.
-    two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
+    two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax,
+                                       PARAM.inp.out_element_info, PARAM.inp.cal_force);
 
     if (PARAM.inp.vnl_in_h)
     {
         ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
         two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
     }
-
-    int Lmax = 0;
-#ifdef __EXX
-    Lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
-#endif
 
 #ifdef USE_NEW_TWO_CENTER
     two_center_bundle.tabulate();

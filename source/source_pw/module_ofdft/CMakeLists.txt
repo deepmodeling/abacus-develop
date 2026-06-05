@@ -2,10 +2,13 @@ list(APPEND hamilt_ofdft_srcs
     kedf_tf.cpp
     kedf_vw.cpp
     kedf_wt.cpp
+    kedf_extwt.cpp
     kedf_xwm.cpp
     kedf_lkt.cpp
     kedf_manager.cpp
     of_stress_pw.cpp
+    of_print_info.cpp
+    evolve_ofdft.cpp
 )
 
 add_library(
@@ -21,9 +24,10 @@ endif()
 if(ENABLE_MLALGO)
   list(APPEND hamilt_mlkedf_srcs
       kedf_ml.cpp
-      kedf_ml_pot.cpp
       kedf_ml_label.cpp
-      ml_tools/nn_of.cpp
+      ml_base.cpp
+      ml_base_pot.cpp
+      nn_of.cpp
   )
 
   add_library(

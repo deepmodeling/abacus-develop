@@ -63,11 +63,11 @@ template <typename T, typename Device>
 struct apply_eigenvalues_op
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& nbase, 
-                    const int& nbase_x, 
-                    const int& notconv, 
-                    T* result, 
-                    const T* vectors, 
+    void operator()(const int& nbase,
+                    const int& nbase_x,
+                    const int& notconv,
+                    T* result,
+                    const T* vectors,
                     const Real* eigenvalues);
 };
 
@@ -92,6 +92,30 @@ struct normalize_op {
                    Real* psi_norm = nullptr);
 };
 
+template <typename T, typename Device> struct refresh_hcc_scc_vcc_op {
+    using Real = typename GetTypeReal<T>::type;
+  /// @brief refresh hcc scc vcc
+  ///
+  /// Input Parameters
+  /// \param n : first dimension of matrix
+  /// \param ldh : leading dimension of hcc, scc, vcc
+  /// \param nbase : matrix size
+  /// \param eigenvalue : input eigenvalue
+  /// \param one : constant one
+  ///
+  /// Output Parameters
+  /// \param hcc : output matrix hcc
+  /// \param scc : output matrix scc
+  /// \param vcc : output matrix vcc
+  void operator()(const int &n,
+                  T *hcc,
+                  T *scc,
+                  T *vcc,
+                  const int &ldh,
+                  const Real *eigenvalue,
+                  const T& one);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename T>
@@ -114,11 +138,11 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
 template <typename T>
 struct apply_eigenvalues_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const int& nbase, 
-                  const int& nbase_x, 
-                  const int& notconv, 
-                  T* result, 
-                  const T* vectors, 
+  void operator()(const int& nbase,
+                  const int& nbase_x,
+                  const int& notconv,
+                  T* result,
+                  const T* vectors,
                   const Real* eigenvalues);
 };
 
@@ -143,6 +167,17 @@ struct normalize_op<T, base_device::DEVICE_GPU> {
                  Real* psi_norm = nullptr);
 };
 
+template <typename T>
+struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int &n,
+                  T *hcc,
+                  T *scc,
+                  T *vcc,
+                  const int &ldh,
+                  const Real *eigenvalue,
+                  const T& one);
+};
 #endif
 } // namespace hsolver
 

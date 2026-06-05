@@ -29,6 +29,7 @@ struct fenergy
     double demet = 0.0;          ///< correction for metals or entropy (-TS)
     double descf = 0.0;          ///< correction by the difference of rho
     double exx = 0.0;            ///< the exact exchange energy.
+    double ml_exx = 0.0;         ///< the ML-EXX energy.
 
     double efield = 0.0;    ///< dipole potential in surface calculations
     double gatefield = 0.0; ///< correction energy for gatefield
@@ -59,7 +60,7 @@ struct fenergy
  * @struct efermi
  * @brief Fermi energies
  */
-struct efermi
+struct Efermi
 {
     double ef = 0.0;         ///< Fermi energy
     double ef_up = 0.0;      ///< spin up Fermi energy

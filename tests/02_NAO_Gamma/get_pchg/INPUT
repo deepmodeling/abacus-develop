@@ -1,0 +1,19 @@
+INPUT_PARAMETERS 
+basis_type        lcao
+nspin             1
+gamma_only        1
+calculation       get_pchg
+
+nbands            4
+latname           sc
+ecutwfc           25.0
+scf_thr           1e-10
+
+suffix            autotest
+stru_file         STRU
+kpoint_file       KPT
+read_file_dir     ./
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+
+out_pchg          4*1

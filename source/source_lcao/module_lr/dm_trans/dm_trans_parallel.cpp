@@ -53,16 +53,16 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
                              DEV::CpuDevice,
                              {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas
         Xc.zero();
-        pdgemm_(&transa, &transb, &naos, &nmo2, &nmo1,
-            &alpha, c.get_pointer(), &i1, &imo1, pc.desc,
-            X_istate + x_start, &i1, &i1, px.desc,
-            &beta, Xc.data<double>(), &i1, &i1, pXc.desc);
+        ScalapackConnector::gemm(transa, transb, naos, nmo2, nmo1,
+            alpha, c.get_pointer(), 1, imo1, pc.desc,
+            X_istate + x_start, 1, 1, px.desc,
+            beta, Xc.data<double>(), 1, 1, pXc.desc);
 
         // 2. C_virt*[X*C_occ^T]
-        pdgemm_(&transa, &transb, &naos, &naos, &nmo2,
-            &factor, c.get_pointer(), &i1, &imo2, pc.desc,
-            Xc.data<double>(), &i1, &i1, pXc.desc,
-            &beta, dm_trans[isk].data<double>(), &i1, &i1, pmat.desc);
+        ScalapackConnector::gemm(transa, transb, naos, naos, nmo2,
+            factor, c.get_pointer(), 1, imo2, pc.desc,
+            Xc.data<double>(), 1, 1, pXc.desc,
+            beta, dm_trans[isk].data<double>(), 1, 1, pmat.desc);
     }
     return dm_trans;
 }
@@ -130,17 +130,17 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         Xc.zero();
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
-        pzgemm_(&transa, &transb, &nmo2, &naos, &nmo1, &alpha,
-            X_istate + x_start, &i1, &i1, px.desc,
-            c.get_pointer(), &i1, &imo1, pc.desc,
-            &beta, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc);
+        ScalapackConnector::gemm(transa, transb, nmo2, naos, nmo1, alpha,
+            X_istate + x_start, i1, i1, px.desc,
+            c.get_pointer(), i1, imo1, pc.desc,
+            beta, Xc.data<std::complex<double>>(), i1, i1, pXc.desc);
 
         // 2. [X*C_occ^\dagger]^TC_virt^T
         transa = transb = 'T';
-        pzgemm_(&transa, &transb, &naos, &naos, &nmo2,
-            &factor, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc,
-            c.get_pointer(), &i1, &imo2, pc.desc,
-            &beta, dm_trans[isk].data<std::complex<double>>(), &i1, &i1, pmat.desc);
+        ScalapackConnector::gemm(transa, transb, naos, naos, nmo2,
+            factor, Xc.data<std::complex<double>>(), i1, i1, pXc.desc,
+            c.get_pointer(), i1, imo2, pc.desc,
+            beta, dm_trans[isk].data<std::complex<double>>(), i1, i1, pmat.desc);
     }
     return dm_trans;
 }

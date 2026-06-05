@@ -20,7 +20,7 @@ private:
 	size_t dim{0};
 	size_t loop_count{0};
 	size_t exact_loop_num{1};
-	const ComplexMatrix *inverse_old{nullptr};
+	const ComplexMatrix *inverse_old = NULL;
 	
 	inline void copy_matrix_U2L(ComplexMatrix &matrix);
 	inline void zero_matrix_L(ComplexMatrix &matrix);

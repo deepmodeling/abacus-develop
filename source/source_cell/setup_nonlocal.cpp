@@ -4,7 +4,6 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
-//#include "../source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/soc.h"
 // mohan add 2013-08-02
 // In order to get rid of the read in file .NONLOCAL.
@@ -162,7 +161,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
 
     delete[] tmpBeta_lm;
 
-    log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << std::endl;
+    log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS FOR ELEMENT " << atom->label << std::endl;
     return;
 }
 
@@ -313,7 +312,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false))
             {
-                int iproj;
+                int iproj = 0;
                 ModuleBase::GlobalFunc::READ_VALUE(ifs, iproj);
                 if (iproj != p1)
                 {

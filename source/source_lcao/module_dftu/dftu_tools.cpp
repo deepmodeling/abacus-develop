@@ -1,15 +1,11 @@
 #include "dftu.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
-
-namespace ModuleDFTU
-{
 
 #ifdef __LCAO
-void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
+void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
-    ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_complex");
+    ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_complex");
     ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < this->ucell->ntype; ++it)
@@ -71,9 +67,9 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
     return;
 }
 
-void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
+void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
-    ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_real");
+    ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_real");
     ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < this->ucell->ntype; ++it)
@@ -136,7 +132,7 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
     return;
 }
 
-double DFTU::get_onebody_eff_pot(const int T,
+double Plus_U::get_onebody_eff_pot(const int T,
                                  const int iat,
                                  const int L,
                                  const int N,
@@ -145,7 +141,7 @@ double DFTU::get_onebody_eff_pot(const int T,
                                  const int m1,
                                  const bool newlocale)
 {
-    ModuleBase::TITLE("DFTU", "get_onebody_eff_pot");
+    ModuleBase::TITLE("Plus_U", "get_onebody_eff_pot");
 
     double VU = 0.0;
 
@@ -213,4 +209,3 @@ double DFTU::get_onebody_eff_pot(const int T,
     return VU;
 }
 #endif
-} // namespace ModuleDFTU

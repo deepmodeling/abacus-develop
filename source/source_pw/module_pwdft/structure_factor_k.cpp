@@ -1,15 +1,14 @@
-#include "source_base/memory.h"
 #include "source_base/timer.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_pw/module_pwdft/kernels/wf_op.h"
 #include "source_base/module_device/device.h"
 #include "structure_factor.h"
+
 std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
                                                const int ia,
                                                const ModulePW::PW_Basis_K* wfc_basis) const
 {
-    ModuleBase::timer::tick("Structure_Factor", "get_sk");
+    ModuleBase::timer::start("Structure_Factor", "get_sk");
     const double arg = (wfc_basis->kvec_c[ik] * ucell->atoms[it].tau[ia]) * ModuleBase::TWO_PI;
     const std::complex<double> kphase = std::complex<double>(cos(arg), -sin(arg));
     const int npw = wfc_basis->npwk[ik];
@@ -44,7 +43,7 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
         const int iat = ucell->itia2iat(it, ia);
         sk[igl] = kphase * this->eigts1(iat, ix) * this->eigts2(iat, iy) * this->eigts3(iat, iz);
     }
-    ModuleBase::timer::tick("Structure_Factor", "get_sk");
+    ModuleBase::timer::end("Structure_Factor", "get_sk");
     return sk;
 }
 
@@ -54,10 +53,10 @@ void Structure_Factor::get_sk(Device* ctx,
                               const ModulePW::PW_Basis_K* wfc_basis,
                               std::complex<FPTYPE>* sk) const
 {
-    ModuleBase::timer::tick("Structure_Factor", "get_sk");
+    ModuleBase::timer::start("Structure_Factor", "get_sk");
 
     base_device::DEVICE_CPU* cpu_ctx = {};
-    base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
+    base_device::AbacusDevice_t device = base_device::get_device_type(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
@@ -140,14 +139,14 @@ void Structure_Factor::get_sk(Device* ctx,
     }
     delete[] h_atom_na;
     delete[] h_atom_tau;
-    ModuleBase::timer::tick("Structure_Factor", "get_sk");
+    ModuleBase::timer::end("Structure_Factor", "get_sk");
 }
 
 std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 const int it,
                                                 const int ia,
                                                 const ModulePW::PW_Basis_K* wfc_basis,
-                                                ModuleBase::Vector3<double> q) // pengfei 2016-11-23
+                                                ModuleBase::Vector3<double> q) const // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
     std::complex<double> *skq = new std::complex<double>[npw];

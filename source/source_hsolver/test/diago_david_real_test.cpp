@@ -1,5 +1,6 @@
 #include"source_hsolver/diago_david.h"
 #include"source_hsolver/diago_iter_assist.h"
+#include "source_base/parallel_comm.h"
 #include"source_pw/module_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "source_psi/psi.h"
@@ -81,10 +82,10 @@ public:
         //do Diago_David::diag()
         double* en = new double[npw];
         hamilt::Hamilt<double>* phm;
-        phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr,nullptr);
+        phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
-        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
+        const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};
 #else
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
@@ -92,7 +93,7 @@ public:
 		const int dim = phi.get_current_ngk();
         const int nband = phi.get_nbands();
         const int ld_psi = phi.get_nbasis();
-        hsolver::DiagoDavid<double> dav(precondition, nband, dim, order, false, comm_info);
+        hsolver::DiagoDavid<double> dav(precondition, nband, dim, order, comm_info);
 
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
         hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
@@ -195,7 +196,7 @@ TEST(DiagoDavRealSystemTest, dataH)
 {
     std::vector<double> hmatrix;
     std::ifstream ifs;
-    std::string filename = "H-GammaOnly-Si64.dat";
+    std::string filename = "H-GammaOnly-Si2.dat";
     ifs.open(filename);
     // open file and check status
     if (!ifs.is_open())

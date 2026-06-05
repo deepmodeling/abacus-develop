@@ -4,19 +4,19 @@
 
 #include "deepks_orbital.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_title.h"
 #include "source_base/timer.h"
 
 template <typename TK, typename TH>
 void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 const std::vector<std::vector<TK>>& h_delta,
-                                // std::vector<double>& o_delta,
                                 ModuleBase::matrix& o_delta,
                                 const Parallel_Orbitals& pv,
                                 const int nks,
                                 const int nspin)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_o_delta");
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::start("DeePKS_domain", "cal_o_delta");
 
     for (int ik = 0; ik < nks / nspin; ik++)
     {
@@ -30,7 +30,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
 
                 if (mu >= 0 && nu >= 0)
                 {
-                    int iic;
+                    int iic = 0;
                     if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
                         || PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
                     {
@@ -48,17 +48,16 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
             }
         }
         Parallel_Reduce::reduce_all(o_delta_tmp);
-        
+
         const double* o_delta_ptr = reinterpret_cast<const double*>(&o_delta_tmp);
         o_delta(ik, 0) = o_delta_ptr[0]; // real part in complex case
     }
-    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::end("DeePKS_domain", "cal_o_delta");
     return;
 }
 
 template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::vector<ModuleBase::matrix>& dm_hl,
                                                                      const std::vector<std::vector<double>>& h_delta,
-                                                                     //  std::vector<double>& o_delta,
                                                                      ModuleBase::matrix& o_delta,
                                                                      const Parallel_Orbitals& pv,
                                                                      const int nks,
@@ -67,7 +66,6 @@ template void DeePKS_domain::cal_o_delta<double, ModuleBase::matrix>(const std::
 template void DeePKS_domain::cal_o_delta<std::complex<double>, ModuleBase::ComplexMatrix>(
     const std::vector<ModuleBase::ComplexMatrix>& dm_hl,
     const std::vector<std::vector<std::complex<double>>>& h_delta,
-    // std::vector<double>& o_delta,
     ModuleBase::matrix& o_delta,
     const Parallel_Orbitals& pv,
     const int nks,

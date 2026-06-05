@@ -17,6 +17,7 @@ add_library(
     xc_functional_libxc_wrapper_xc.cpp
     xc_functional_libxc_wrapper_gcxc.cpp
     xc_functional_libxc_wrapper_tauxc.cpp
+    exx_info.cpp
 )
 
 if(ENABLE_COVERAGE)

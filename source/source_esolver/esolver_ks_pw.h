@@ -1,10 +1,9 @@
 #ifndef ESOLVER_KS_PW_H
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
-#include "source_pw/module_pwdft/operator_pw/velocity_pw.h"
-#include "source_psi/psi_init.h"
-#include "source_pw/module_pwdft/module_exx_helper/exx_helper.h"
-#include "source_pw/module_pwdft/global.h"
+#include "source_psi/setup_psi_pw.h" // mohan add 20251012
+#include "source_pw/module_pwdft/vsep_pw.h"
+#include "source_pw/module_pwdft/exx_helper_base.h"
 
 #include <memory>
 #include <source_base/macros.h>
@@ -13,7 +12,7 @@ namespace ModuleESolver
 {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class ESolver_KS_PW : public ESolver_KS<T, Device>
+class ESolver_KS_PW : public ESolver_KS
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -33,14 +32,12 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     void after_all_runners(UnitCell& ucell) override;
 
-    Exx_Helper<T, Device> exx_helper;
+    Exx_HelperBase* exx_helper = nullptr;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
-
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
@@ -51,26 +48,12 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt(const UnitCell& ucell);
-    virtual void deallocate_hamilt();
 
-    //! hide the psi in ESolver_KS for tmp use
-    psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
+    // Electronic wave function psi
+    Setup_Psi_pw stp;
 
-    // psi_initializer controller
-    psi::PSIInit<T, Device>* p_psi_init = nullptr;
-
-    Device* ctx = {};
-
-    base_device::AbacusDevice_t device = {};
-
-    psi::Psi<T, Device>* kspw_psi = nullptr;
-
-    psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
-
-    bool already_initpsi = false;
-
-    using castmem_2d_d2h_op
-        = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
+    // DFT-1/2 method
+    VSep* vsep_cell = nullptr;
 
 };
 } // namespace ModuleESolver

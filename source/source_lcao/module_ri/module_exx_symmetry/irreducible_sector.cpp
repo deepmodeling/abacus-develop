@@ -148,7 +148,7 @@ namespace ModuleSymmetry
         if(GlobalV::MY_RANK == 0)
         {
             std::ofstream ofs;
-            ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.dat");
+            ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.txt");
             for (auto& irap_irR : this->irreducible_sector_)
             {
                 for (auto& irR : irap_irR.second){ofs << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}

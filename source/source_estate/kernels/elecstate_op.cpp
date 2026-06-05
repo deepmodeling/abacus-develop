@@ -70,7 +70,7 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
       }
       else {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#pragma omp parallel for collapse(2) schedule(static)
 #endif
           for (int is = 1; is < 4; is++)
           {

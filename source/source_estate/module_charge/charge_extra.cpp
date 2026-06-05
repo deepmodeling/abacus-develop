@@ -4,7 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "source_io/cube_io.h"
+#include "source_io/module_output/cube_io.h"
 
 Charge_Extra::Charge_Extra()
 {
@@ -83,7 +83,7 @@ void Charge_Extra::extrapolate_charge(
     std::ofstream& ofs_warning)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
-    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
+    ModuleBase::timer::start("Charge_Extra", "extrapolate_charge");
     //-------------------------------------------------------
     // Charge density extrapolation:
     //
@@ -107,8 +107,9 @@ void Charge_Extra::extrapolate_charge(
     rho_extr = std::min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
+        sf->setup(&ucell, *Pgrid, chr->rhopw);
         ofs_running << " charge density from previous step !" << std::endl;
+        ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
         return;
     }
 
@@ -169,7 +170,7 @@ void Charge_Extra::extrapolate_charge(
         }
     }
 
-    sf->setup_structure_factor(&ucell, *Pgrid, chr->rhopw);
+    sf->setup(&ucell, *Pgrid, chr->rhopw);
     double** rho_atom = new double*[this->nspin];
     for (int is = 0; is < this->nspin; is++)
     {
@@ -193,7 +194,7 @@ void Charge_Extra::extrapolate_charge(
         delete[] rho_atom[is];
     }
     delete[] rho_atom;
-    ModuleBase::timer::tick("Charge_Extra", "extrapolate_charge");
+    ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
     return;
 }
 

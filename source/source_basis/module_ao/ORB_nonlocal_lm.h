@@ -20,8 +20,8 @@ class Numerical_Nonlocal_Lm
 
 	public:
 
-	double* beta_uniform;
-	double* dbeta_uniform;
+	double* beta_uniform = nullptr;
+	double* dbeta_uniform = nullptr;
 	int nr_uniform;
 	double dr_uniform;
 
@@ -85,12 +85,12 @@ class Numerical_Nonlocal_Lm
 	double kcut;
 	double dk;
 
-	double* r_radial; //points of r
-	double* k_radial;
+	double* r_radial = nullptr; //points of r
+	double* k_radial = nullptr;
 
-	double* rab;
-	double* beta_r; // |beta(r) * r>
-	double* beta_k;
+	double* rab = nullptr;
+	double* beta_r = nullptr; // |beta(r) * r>
+	double* beta_k = nullptr;
 };
 
 #endif

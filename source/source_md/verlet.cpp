@@ -15,35 +15,35 @@ Verlet::~Verlet()
 void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Verlet", "setup");
-    ModuleBase::timer::tick("Verlet", "setup");
+    ModuleBase::timer::start("Verlet", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
 
-    ModuleBase::timer::tick("Verlet", "setup");
+    ModuleBase::timer::end("Verlet", "setup");
 }
 
 
 void Verlet::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Verlet", "first_half");
-    ModuleBase::timer::tick("Verlet", "first_half");
+    ModuleBase::timer::start("Verlet", "first_half");
 
     MD_base::update_vel(force);
     MD_base::update_pos();
 
-    ModuleBase::timer::tick("Verlet", "first_half");
+    ModuleBase::timer::end("Verlet", "first_half");
 }
 
 
 void Verlet::second_half()
 {
     ModuleBase::TITLE("Verlet", "second_half");
-    ModuleBase::timer::tick("Verlet", "second_half");
+    ModuleBase::timer::start("Verlet", "second_half");
 
     MD_base::update_vel(force);
     apply_thermostat();
 
-    ModuleBase::timer::tick("Verlet", "second_half");
+    ModuleBase::timer::end("Verlet", "second_half");
 }
 
 
@@ -75,7 +75,7 @@ void Verlet::apply_thermostat(void)
     {
         if (my_rank == 0)
         {
-            double deviation;
+            double deviation = 0.0;
             for (int i = 0; i < ucell.nat; ++i)
             {
                 if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)

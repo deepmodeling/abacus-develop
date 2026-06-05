@@ -3,7 +3,7 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/single_R_io.h"
+#include "source_io/module_hs/single_R_io.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 /************************************************
@@ -60,9 +60,46 @@ TEST(ModuleIOTest, OutputSingleR)
     std::ifstream ifs;
     ifs.open("test_output_single_R_0.dat");
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("5.00000000e-01 3.00000000e-01 2.00000000e-01 4.00000000e-01 1.00000000e-01 7.00000000e-01"));
-    EXPECT_THAT(str, testing::HasSubstr("1 3 0 2 1 4"));
-    EXPECT_THAT(str, testing::HasSubstr("0 2 4 4 6 6"));
+    std::istringstream content(str);
+    std::string value_line;
+    std::string column_line;
+    std::string indptr_line;
+    std::getline(content, value_line);
+    std::getline(content, column_line);
+    std::getline(content, indptr_line);
+
+    std::istringstream value_stream(value_line);
+    std::vector<double> values;
+    double value = 0.0;
+    while (value_stream >> value)
+    {
+        values.push_back(value);
+    }
+    ASSERT_EQ(values.size(), 6);
+    EXPECT_DOUBLE_EQ(values[0], 0.5);
+    EXPECT_DOUBLE_EQ(values[1], 0.3);
+    EXPECT_DOUBLE_EQ(values[2], 0.2);
+    EXPECT_DOUBLE_EQ(values[3], 0.4);
+    EXPECT_DOUBLE_EQ(values[4], 0.1);
+    EXPECT_DOUBLE_EQ(values[5], 0.7);
+
+    std::istringstream column_stream(column_line);
+    std::vector<int> columns;
+    int column = 0;
+    while (column_stream >> column)
+    {
+        columns.push_back(column);
+    }
+    EXPECT_THAT(columns, testing::ElementsAre(1, 3, 0, 2, 1, 4));
+
+    std::istringstream indptr_stream(indptr_line);
+    std::vector<long long> indptr;
+    long long index = 0;
+    while (indptr_stream >> index)
+    {
+        indptr.push_back(index);
+    }
+    EXPECT_THAT(indptr, testing::ElementsAre(0, 2, 4, 4, 6, 6));
     std::remove("test_output_single_R_0.dat");
 }
 

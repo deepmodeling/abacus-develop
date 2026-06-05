@@ -6,7 +6,7 @@
 #include "md_func.h"
 #include "source_base/global_file.h"
 #include "source_base/timer.h"
-#include "source_io/print_info.h"
+#include "source_io/module_output/print_info.h"
 #include "msst.h"
 #include "nhchain.h"
 #include "verlet.h"
@@ -18,10 +18,10 @@ namespace Run_MD
 void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
-    ModuleBase::timer::tick("Run_MD", "md_line");
+    ModuleBase::timer::start("Run_MD", "md_line");
 
     /// determine the md_type
-    MD_base* mdrun;
+    MD_base* mdrun = nullptr;
     if (param_in.mdp.md_type == "fire")
     {
         mdrun = new FIRE(param_in, unit_in);
@@ -47,8 +47,8 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
     }
 
-    /// md cycle
-    while ((mdrun->step_ + mdrun->step_rst_) <= param_in.mdp.md_nstep && !mdrun->stop)
+    /// md cycle, mohan update 2026-01-04, change '<=' to '<'
+    while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
         if (mdrun->step_ == 0)
         {
@@ -56,7 +56,11 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         }
         else
         {
-            ModuleIO::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
+            // mohan add 2026-01-04
+            const int stress_step = 0;
+            const int force_step = 0;
+            const int istep_print = mdrun->step_ + mdrun->step_rst_ + 1;
+            ModuleIO::print_screen(stress_step, force_step, istep_print);
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
@@ -126,7 +130,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     }
 
     delete mdrun;
-    ModuleBase::timer::tick("Run_MD", "md_line");
+    ModuleBase::timer::end("Run_MD", "md_line");
     return;
 }
 

@@ -2,95 +2,106 @@
 
 ## Introduction
 
-[ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment) provides a set of Python tools for setting, running, and analysing atomic simulations. We have developed an ABACUS calculator ([ase-abacus](https://gitlab.com/1041176461/ase-abacus )) to be used together with the ASE tools, which exists as an external project with respect to ASE and is maintained by ABACUS developers.
+[ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment) performs as a powerful Pythonic platform for atomistic simulations, in which there are plenty of functionalties supported, such as various geometry optimization algorithms for finding both the minimum energy point and the transition states, including BFGS, BFGSLineSearch, FIRE, NEB, AUTO-NEB, etc, and various molecular dynamics techniques, including thermostats (Langevin, CSVR, Nose-Hoover Chain, etc) and metadynamics (via the interface with Plumed). 
+
+Due to the growing number of softwares and machine-learning forcefields, we turn to maintain the interface with ASE by our own, while a legacy version of ASE interface can still be found at [our GitLab repository of ase-abacus](https://gitlab.com/1041176461/ase-abacus ).
 
 ## Installation
 
+We strongly recommend you create a virtual environment for the installation of Python packages of abacus, such as `conda` or `venv`, to avoid conflicts with other packages, for example, with the `conda`:
+
 ```bash
-git clone https://gitlab.com/1041176461/ase-abacus.git
-cd ase-abacus
+conda create -n abacus python=3.10
+conda activate abacus
+```
+
+Then, install the ASE interface by:
+
+```bash
+cd interfaces/ASE_interface
 pip install .
 ```
 
-Another direct way:
-```bash
-pip install git+https://gitlab.com/1041176461/ase-abacus.git
-```
-
-## Environment variables
-
-[ABACUS](http://abacus.ustc.edu.cn) supports two types of basis sets: PW, LCAO. The path of pseudopotential and numerical orbital files can be set throught the environment variables `ABACUS_PP_PATH` and `ABACUS_ORBITAL_PATH`, respectively, e.g.:
-
-```bash
-  PP=${HOME}/pseudopotentials
-  ORB=${HOME}/orbitals
-  export ABACUS_PP_PATH=${PP}
-  export ABACUS_ORBITAL_PATH=${ORB}
-```
- 
-For PW calculations, only `ABACUS_PP_PATH` is needed. For LCAO calculations, both `ABACUS_PP_PATH` and `ABACUS_ORBITAL_PATH` should be set.
-
-Also, one can manally set the paths of PP and ORB when using ABACUS calculator in ASE.
-
 ## ABACUS Calculator
 
-The default initialization command for the ABACUS calculator is
+Present calculator implementation requires a "profile" to act as an interface between the Python runtime and the file system.
+Instantiate an `AbacusProfile` object with proper settings:
 
 ```python
-from ase.calculators.abacus import Abacus
+from abacuslite import AbacusProfile
+aprof = AbacusProfile(
+    command='mpirun -np 4 abacus',
+    omp_num_threads=1,
+    pseudo_dir='/path/to/folder/of/pseudopotentials',
+    orbital_dir='/path/to/folder/of/orbitals', # OPTIONAL!
+)
 ```
+, by such lines, you build the interface between the computational environment and the Python runtime.
+This interface can be reused in multiple calculations.
 
-In order to run a calculation, you have to ensure that at least the following parameters are specified, either in the initialization or as environment variables:
-
-|keyword         |description
-|:---------------|:----------------------------------------------------------
-|`pp`            |dict of pseudopotentials for involved elememts, <br> such as `pp={'Al':'Al_ONCV_PBE-1.0.upf',...}`.
-|`pseudo_dir`    |directory where the pseudopotential are located, <br> Can also be specified with the `ABACUS_PP_PATH` <br> environment variable. Default: `pseudo_dir=./`.
-|`basis`         |dict of orbital files for involved elememts, such as <br> `basis={'Al':'Al_gga_10au_100Ry_4s4p1d.orb'}`.<br> It must be set if you want to do LCAO <br> calculations. But for pw calculations, it can be omitted.
-|`basis_dir`     |directory where the orbital files are located, <br> Can also be specified with the `ABACUS_ORBITAL_PATH`<br> environment variable. Default: `basis_dir=./`.
-|`xc`            |which exchange-correlation functional is used.<br> An alternative way to set this parameter is via <br> seting `dft_functional` which is an ABACUS <br> parameter used to specify exchange-correlation <br> functional
-|`kpts`          |a tuple (or list) of 3 integers `kpts=(int, int, int)`, <br>it is interpreted as the dimensions of a Monkhorst-Pack <br>  grid, when `kmode` is `Gamma` or `MP`. It is <br>  interpreted as k-points, when `kmode` is `Direct`,<br>  `Cartesian` or `Line`, and `knumber` should also<br>  be set in these modes to denote the number of k-points.<br>  Some other parameters for k-grid settings:<br>  including `koffset` and `kspacing`.
-
-For more information on pseudopotentials and numerical orbitals, please visit [ABACUS]. The elaboration of input parameters can be found [here](../input_files/input-main.md).
-
-
-The input parameters can be set like::
-```python
-  # for ABACUS calculator
-  calc = Abacus(profile=profile, 
-                ecutwfc=100, 
-                scf_nmax=100, 
-                smearing_method='gaussian', 
-                smearing_sigma=0.01, 
-                basis_type='pw', 
-                ks_solver='dav', 
-                calculation='scf', 
-                pp=pp, 
-                basis=basis, 
-                kpts=kpts)
-```
-
-The command to run jobs can be set by specifying `AbacusProfile`::
+Then, you can instantiate the `Abacus` calculator with the profile by:
 
 ```python
-  from ase.calculators.abacus import AbacusProfile
-  # for OpenMP setting inside python env
-  import os
-  os.environ("OMP_NUM_THREADS") = 1
-  # for MPI setting used in abacus
-  mpi_num = 4
-  # for ABACUS Profile
-  abacus = '/usr/local/bin/abacus' # specify abacus exec
-  profile = AbacusProfile(command=f'mpirun -n {mpi_num} {abacus}')  # directly the command for running ABACUS
+from abacuslite import Abacus
+abacus = Abacus(
+    profile=aprof,
+    directory='/path/to/work/directory',
+    pseudopotentials={
+        'Si': 'Si_ONCV_PBE-1.0.upf',
+    },
+    basissets={
+        'Si': 'Si_gga_8au_100Ry_2s2p1d.orb',
+    },
+    inp={
+        'calculation': 'scf',
+        'nspin': 1,
+        'basis_type': 'lcao',
+        'ks_solver': 'genelpa',
+        'ecutwfc': 100,
+        'symmetry': 1,
+        'kspacing': 0.1
+    }
+)
+```
+, where except the `directory`, you can focus on the setting of ABACUS itself. In `inp`, you can set everything as you do in INPUT file of ABACUS. The kpoint sampling can also be set by the `kpts` parameter, like:
+
+```python
+abacus = Abacus(
+    # all other parameters
+    kpts={
+        'mode': 'mp-sampling',
+        'gamma-centered': True,
+        'nk': (4, 4, 4),
+        'kshift': (0, 0, 0),
+    }
+)
 ```
 
-in which `abacus` sets the absolute path of the `abacus` executable.
+If with the `tempfile` module, you can create an abacus instance whose directory will be automatically removed when leaves from the context:
 
-## MD Analysis
-After molecular dynamics calculations, the log file `running_md.log` can be read. If the 'STRU_MD_*' files are not continuous (e.g. 'STRU_MD_0', 'STRU_MD_5', 'STRU_MD_10'...), the index parameter of read should be as a slice object. For example, when using the command `read('running_md.log', index=slice(0, 15, 5), format='abacus-out')` to parse 'running_md.log', 'STRU_MD_0', 'STRU_MD_5' and 'STRU_MD_10' will be read.
+```python
+import tempfile
+with tempfile.TemporaryDirectory() as tmpdir:
+    abacus = Abacus(
+        profile=aprof,
+        directory=tmpdir,
+        pseudopotentials={
+            'Si': 'Si_ONCV_PBE-1.0.upf',
+        },
+        basissets={
+            'Si': 'Si_gga_8au_100Ry_2s2p1d.orb',
+        },
+        inp={
+            # the rest of input parameters
+        }
+    )
+```
 
-The `MD_dump` file is also supported to be read-in by `read('MD_dump', format='abacus-md')`
+## Perform Calculations
 
+In the new implementation, we limit the range of functionalties supported to mainly include the necessary ones, such as the SCF calculation, the energy and force/stress evaluation. The other features, such as starting the molecule dynamics directly in ABACUS from Python, is not supported anymore. Instead, it is encouraged to use the ASE tools to perform the molecule dynamics.
+
+Please read the examples in `interfaces/ASE_interface/examples/` for more details.
 
 ## SPAP Analysis
 

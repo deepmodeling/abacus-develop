@@ -49,7 +49,7 @@ void CHECK_INT(std::ifstream &ifs,const int &v,bool quit)
 void CHECK_DOUBLE(std::ifstream &ifs,const double &v,bool quit)
 {
 	const double tiny = 1.0e-5;
-	double v_in;
+	double v_in = 0.0;
 	ifs >> v_in;
 	if( fabs(v - v_in) > tiny )
 	{

@@ -5,16 +5,12 @@
 #ifndef RDMFT_H
 #define RDMFT_H
 
-#include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/global.h"
 #include "source_psi/psi.h"
 #include "source_base/matrix.h"
 
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 
@@ -27,6 +23,9 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 // there are some operator reload to print data in different formats
 #endif
+
+#include "source_estate/elecstate.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h" // use Grid_Driver
 
 #include <iostream>
 #include <type_traits>
@@ -80,9 +79,7 @@ class RDMFT
     // std::vector<double> E_RDMFT(4);
 
     //! initialization of rdmft calculation
-    void init(Gint_Gamma& GG_in,
-              Gint_k& GK_in,
-              Parallel_Orbitals& ParaV_in,
+    void init(Parallel_Orbitals& ParaV_in,
               UnitCell& ucell_in,
               const Grid_Driver& gd_in,
               K_Vectors& kv_in,
@@ -190,9 +187,6 @@ class RDMFT
     const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
 
     /****** these parameters are passed in from outside, don't need delete ******/
-    // GK and GG are used for multi-k grid integration and gamma only algorithms respectively
-    Gint_k* GK = nullptr;
-    Gint_Gamma* GG = nullptr;
     Charge* charge = nullptr;
 
     // update after ion step

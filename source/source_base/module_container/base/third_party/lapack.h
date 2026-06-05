@@ -1,3 +1,18 @@
+/**
+ * @file lapack.h
+ * @brief This is a direct wrapper of some LAPACK routines.
+ * \b Column-Major version.
+ * Direct wrapping of standard LAPACK routines. (Column-Major, fortran style)
+ *
+ * @warning For Row-major version, please refer to \c source/source_base/module_external/lapack_connector.h.
+ *
+ * @note
+ * Some slight modification are made to fit the C++ style for overloading purpose.
+ * You can find some function with different parameter list than the original LAPACK routine.
+ * And some of these parameters are not referred in the function body. They are included just to
+ * ensure the same parameter list for overloaded functions with a uniform name.
+ */
+
 #ifndef BASE_THIRD_PARTY_LAPACK_H_
 #define BASE_THIRD_PARTY_LAPACK_H_
 
@@ -9,6 +24,10 @@
 #elif defined(__ROCM)
 #include <base/third_party/hipsolver.h>
 #endif
+
+/// This is a wrapper of some LAPACK routines.
+/// Direct wrapping of standard LAPACK routines. (column major, fortran style)
+/// with some slight modification to fit the C++ style for overloading purpose.
 
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
@@ -22,103 +41,172 @@
 
 extern "C"
 {
-int ilaenv_(int* ispec,const char* name,const char* opts,
-            const int* n1,const int* n2,const int* n3,const int* n4);
+// ILAENV - environment inquiry
+int ilaenv_(const int* ispec, const char* name, const char* opts,
+            const int* n1, const int* n2, const int* n3, const int* n4);
 
-
-// solve the generalized eigenproblem Ax=eBx, where A is Hermitian and complex couble
-// zhegv_ & zhegvd_ returns all eigenvalues while zhegvx_ returns selected ones
+// Generalized symmetric-definite eigenproblems (divide-and-conquer)
 void ssygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              float* a, const int* lda,
-             const float* b, const int* ldb, float* w,
-             float* work, int* lwork,
-             int* iwork, int* liwork, int* info);
+             float* b, const int* ldb,
+             float* w,
+             float* work, const int* lwork,
+             int* iwork, const int* liwork,
+             int* info);
 
 void dsygvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              double* a, const int* lda,
-             const double* b, const int* ldb, double* w,
-             double* work, int* lwork,
-             int* iwork, int* liwork, int* info);
+             double* b, const int* ldb,
+             double* w,
+             double* work, const int* lwork,
+             int* iwork, const int* liwork,
+             int* info);
 
 void chegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<float>* a, const int* lda,
-             const std::complex<float>* b, const int* ldb, float* w,
-             std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
-             int* iwork, int* liwork, int* info);
+             std::complex<float>* b, const int* ldb,
+             float* w,
+             std::complex<float>* work, const int* lwork,
+             float* rwork, const int* lrwork,
+             int* iwork, const int* liwork,
+             int* info);
 
 void zhegvd_(const int* itype, const char* jobz, const char* uplo, const int* n,
              std::complex<double>* a, const int* lda,
-             const std::complex<double>* b, const int* ldb, double* w,
-             std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
-             int* iwork, int* liwork, int* info);
+             std::complex<double>* b, const int* ldb,
+             double* w,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, const int* lrwork,
+             int* iwork, const int* liwork,
+             int* info);
 
+// Generalized symmetric-definite eigenproblems (selected eigenvalues/vectors)
+void ssygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, float* A, const int* lda, float* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, int* m, float* w, float* Z, const int* ldz,
+             float* work, const int* lwork, int* iwork, int* ifail, int* info);
+
+void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, double* A, const int* lda, double* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, int* m, double* w, double* Z, const int* ldz,
+             double* work, const int* lwork, int* iwork, int* ifail, int* info);
+
+void chegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<float>* A, const int* lda, std::complex<float>* B, const int* ldb,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, int* m, float* w, std::complex<float>* Z, const int* ldz,
+             std::complex<float>* work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+
+void zhegvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n, std::complex<double>* A, const int* lda, std::complex<double>* B, const int* ldb,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, int* m, double* w, std::complex<double>* Z, const int* ldz,
+             std::complex<double>* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+
+// Standard symmetric eigenproblems (selected)
 void ssyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-             float *a, const int* lda,
-             const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
-             const int* m, float* w, float *z, const int *ldz,
-             float *work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+             float* a, const int* lda,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, int* m, float* w, float* z, const int* ldz,
+             float* work, const int* lwork,  int* iwork, int* ifail, int* info);
+
 void dsyevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-             double *a, const int* lda,
-             const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
-             const int* m, double* w, double *z, const int *ldz,
-             double *work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+             double* a, const int* lda,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, int* m, double* w, double* z, const int* ldz,
+             double* work, const int* lwork, int* iwork, int* ifail, int* info);
+
 void cheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-             std::complex<float> *a, const int* lda,
-             const float* vl, const float* vu, const int* il, const int* iu, const float* abstol,
-             const int* m, float* w, std::complex<float> *z, const int *ldz,
-             std::complex<float> *work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+             std::complex<float>* a, const int* lda,
+             const float* vl, const float* vu, const int* il, const int* iu,
+             const float* abstol, int* m, float* w, std::complex<float>* z, const int* ldz,
+             std::complex<float>* work, const int* lwork, float* rwork, int* iwork, int* ifail, int* info);
+
 void zheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
-             std::complex<double> *a, const int* lda,
-             const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
-             const int* m, double* w, std::complex<double> *z, const int *ldz,
-             std::complex<double> *work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
+             std::complex<double>* a, const int* lda,
+             const double* vl, const double* vu, const int* il, const int* iu,
+             const double* abstol, int* m, double* w, std::complex<double>* z, const int* ldz,
+             std::complex<double>* work, const int* lwork, double* rwork, int* iwork, int* ifail, int* info);
 
-void ssyevd_(const char *jobz, const char *uplo, const int *n,
-         float *a, const int *lda, float *w,
-         float *work, int *lwork,
-         int *iwork, int *liwork, int *info);
-void dsyevd_(const char *jobz, const char *uplo, const int *n,
-             double *a, const int *lda, double *w,
-             double *work, int *lwork,
-             int *iwork, int *liwork, int *info);
-void cheevd_(const char *jobz, const char *uplo, const int *n,
-         std::complex<float> *a, const int *lda, float *w,
-         std::complex<float> *work, int *lwork, float *rwork, int *lrwork,
-         int *iwork, int *liwork, int *info);
-void zheevd_(const char *jobz, const char *uplo, const int *n,
-             std::complex<double> *a, const int *lda, double *w,
-             std::complex<double> *work, int *lwork, double *rwork, int *lrwork,
-             int *iwork, int *liwork, int *info);
+// Standard symmetric eigenproblems (divide-and-conquer)
+void ssyevd_(const char* jobz, const char* uplo, const int* n,
+             float* a, const int* lda, float* w,
+             float* work, const int* lwork,
+             int* iwork, const int* liwork, int* info);
 
-void spotrf_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
-void dpotrf_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
-void cpotrf_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
-void zpotrf_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
+void dsyevd_(const char* jobz, const char* uplo, const int* n,
+             double* a, const int* lda, double* w,
+             double* work, const int* lwork,
+             int* iwork, const int* liwork, int* info);
 
-void spotri_(const char*const uplo, const int*const n, float*const A, const int*const lda, int*const info);
-void dpotri_(const char*const uplo, const int*const n, double*const A, const int*const lda, int*const info);
-void cpotri_(const char*const uplo, const int*const n, std::complex<float>*const A, const int*const lda, int*const info);
-void zpotri_(const char*const uplo, const int*const n, std::complex<double>*const A, const int*const lda, int*const info);
+void cheevd_(const char* jobz, const char* uplo, const int* n,
+             std::complex<float>* a, const int* lda, float* w,
+             std::complex<float>* work, const int* lwork, float* rwork, const int* lrwork,
+             int* iwork, const int* liwork, int* info);
 
+void zheevd_(const char* jobz, const char* uplo, const int* n,
+             std::complex<double>* a, const int* lda, double* w,
+             std::complex<double>* work, const int* lwork, double* rwork, const int* lrwork,
+             int* iwork, const int* liwork, int* info);
+
+// Cholesky factorization
+void spotrf_(const char* uplo, const int* n, float* A, const int* lda, int* info);
+void dpotrf_(const char* uplo, const int* n, double* A, const int* lda, int* info);
+void cpotrf_(const char* uplo, const int* n, std::complex<float>* A, const int* lda, int* info);
+void zpotrf_(const char* uplo, const int* n, std::complex<double>* A, const int* lda, int* info);
+
+// Inverse using Cholesky factorization
+void spotri_(const char* uplo, const int* n, float* A, const int* lda, int* info);
+void dpotri_(const char* uplo, const int* n, double* A, const int* lda, int* info);
+void cpotri_(const char* uplo, const int* n, std::complex<float>* A, const int* lda, int* info);
+void zpotri_(const char* uplo, const int* n, std::complex<double>* A, const int* lda, int* info);
+
+// Inverse of triangular matrix
 void strtri_(const char* uplo, const char* diag, const int* n, float* a, const int* lda, int* info);
 void dtrtri_(const char* uplo, const char* diag, const int* n, double* a, const int* lda, int* info);
 void ctrtri_(const char* uplo, const char* diag, const int* n, std::complex<float>* a, const int* lda, int* info);
 void ztrtri_(const char* uplo, const char* diag, const int* n, std::complex<double>* a, const int* lda, int* info);
 
+// LU factorization
 void sgetrf_(const int* m, const int* n, float* a, const int* lda, int* ipiv, int* info);
 void dgetrf_(const int* m, const int* n, double* a, const int* lda, int* ipiv, int* info);
 void cgetrf_(const int* m, const int* n, std::complex<float>* a, const int* lda, int* ipiv, int* info);
 void zgetrf_(const int* m, const int* n, std::complex<double>* a, const int* lda, int* ipiv, int* info);
 
+// Inverse using LU factorization
 void sgetri_(const int* n, float* A, const int* lda, const int* ipiv, float* work, const int* lwork, int* info);
 void dgetri_(const int* n, double* A, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);
 void cgetri_(const int* n, std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* work, const int* lwork, int* info);
 void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
 
-void sgetrs_(const char* trans, const int* n, const int* nrhs, const float* A, const int* lda, const int* ipiv, float* B, const int* ldb, int* info);
-void dgetrs_(const char* trans, const int* n, const int* nrhs, const double* A, const int* lda, const int* ipiv, double* B, const int* ldb, int* info);
-void cgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* B, const int* ldb, int* info);
-void zgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* B, const int* ldb, int* info);
+// Solve linear system using LU factorization
+void sgetrs_(const char* trans, const int* n, const int* nrhs,
+             const float* A, const int* lda, const int* ipiv,
+             float* B, const int* ldb, int* info);
+void dgetrs_(const char* trans, const int* n, const int* nrhs,
+             const double* A, const int* lda, const int* ipiv,
+             double* B, const int* ldb, int* info);
+void cgetrs_(const char* trans, const int* n, const int* nrhs,
+             const std::complex<float>* A, const int* lda, const int* ipiv,
+             std::complex<float>* B, const int* ldb, int* info);
+void zgetrs_(const char* trans, const int* n, const int* nrhs,
+             const std::complex<double>* A, const int* lda, const int* ipiv,
+             std::complex<double>* B, const int* ldb, int* info);
+
+// QR factorization
+// build R and Householder
+void sgeqrf_(const int* m, const int* n, float* A, const int* lda, float* tau, float *work, const int* lwork, int* info);
+void dgeqrf_(const int* m, const int* n, double* A, const int* lda, double* tau, double *work, const int* lwork, int* info);
+void cgeqrf_(const int* m, const int* n, std::complex<float>* A, const int* lda, std::complex<float>* tau, std::complex<float> *work, const int* lwork, int* info);
+void zgeqrf_(const int* m, const int* n, std::complex<double>* A, const int* lda, std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
+// make explicit Q
+void sorgqr_(const int* m, const int* n, const int* k, float* A, const int* lda, const float* tau, float* work, const int* lwork, int* info);
+void dorgqr_(const int* m, const int* n, const int* k, double* A, const int* lda, const double* tau, double* work, const int* lwork, int* info);
+void cungqr_(const int* m, const int* n, const int* k, std::complex<float>* A, const int* lda, const std::complex<float>* tau, std::complex<float> *work, const int* lwork, int* info);
+void zungqr_(const int* m, const int* n, const int* k, std::complex<double>* A, const int* lda, const std::complex<double>* tau, std::complex<double> *work, const int* lwork, int* info);
+
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.
@@ -136,9 +224,9 @@ int ilaenv( int ispec, const char *name,const char *opts,const int n1,const int 
 }
 // wrap function of fortran lapack routine zhegvd. (pointer version)
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             float* a, const int lda,
-            const float* b, const int ldb, float* w,
+            float* b, const int ldb, float* w,
             float* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int info)
 {
@@ -150,9 +238,9 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             double* a, const int lda,
-            const double* b, const int ldb, double* w,
+            double* b, const int ldb, double* w,
             double* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int info)
 {
@@ -163,9 +251,9 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
             iwork, &liwork, &info);
 }
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda,
-            const std::complex<float>* b, const int ldb, float* w,
+            std::complex<float>* b, const int ldb, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int info)
 {
@@ -177,9 +265,9 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dngvd(const int itype, const char jobz, const char uplo, const int n,
+void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda,
-            const std::complex<double>* b, const int ldb, double* w,
+            std::complex<double>* b, const int ldb, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int info)
 {
@@ -190,37 +278,99 @@ void dngvd(const int itype, const char jobz, const char uplo, const int n,
             iwork, &liwork, &info);
 }
 
+// Note
+// rwork is only needed for complex version
+// and we include rwork in the function parameter list
+// for simplicity of function overloading
+// and unification of function parameter list
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            float* a, const int lda, float* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            int m, float* w, float* z, const int ldz,
+            float* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    ssygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda, double* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    dsygvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<float>* a, const int lda, std::complex<float>* b, const int ldb,
+            const float vl, const float vu, const int il, const int iu, const float abstol,
+            int m, float* w, std::complex<float>* z, const int ldz,
+            std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int& info)
+{
+    chegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+static inline
+void hegvx(const int itype, const char jobz, const char range, const char uplo, const int n,
+            std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int m, double* w, std::complex<double>* z, const int ldz,
+            std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int& info)
+{
+    zhegvx_(&itype, &jobz, &range, &uplo, &n,
+            a, &lda, b, &ldb,
+            &vl, &vu, &il, &iu,
+            &abstol, &m, w, z, &ldz,
+            work, &lwork, rwork, iwork, ifail, &info);
+}
+
+
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              float* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
-             const int m, float* w, float* z, const int ldz,
+             int m, float* w, float* z, const int ldz,
              float* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
 {
     ssyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
             &abstol, &m, w, z, &ldz,
-            work, &lwork, rwork, iwork, ifail, &info);
+            work, &lwork,  iwork, ifail, &info);
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
-             double* a, const int lda,
-             const double vl, const double vu, const int il, const int iu, const double abstol,
-             const int m, double* w, double* z, const int ldz,
-             double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
+void heevx(const char jobz, const char range, const char uplo, const int n,
+            double* a, const int lda,
+            const double vl, const double vu, const int il, const int iu, const double abstol,
+            int m, double* w, double* z, const int ldz,
+            double* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
 {
     dsyevx_(&jobz, &range, &uplo, &n,
             a, &lda, &vl, &vu, &il, &iu,
             &abstol, &m, w, z, &ldz,
-            work, &lwork, rwork, iwork, ifail, &info);
+            work, &lwork, iwork, ifail, &info);
 }
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<float>* a, const int lda,
              const float vl, const float vu, const int il, const int iu, const float abstol,
-             const int m, float* w, std::complex<float>* z, const int ldz,
+             int m, float* w, std::complex<float>* z, const int ldz,
              std::complex<float>* work, const int lwork, float* rwork, int* iwork, int* ifail, int info)
 {
     cheevx_(&jobz, &range, &uplo, &n,
@@ -230,10 +380,10 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 // wrap function of fortran lapack routine zheevx.
 static inline
-void dnevx( const int itype, const char jobz, const char range, const char uplo, const int n,
+void heevx(const char jobz, const char range, const char uplo, const int n,
              std::complex<double>* a, const int lda,
              const double vl, const double vu, const int il, const int iu, const double abstol,
-             const int m, double* w, std::complex<double>* z, const int ldz,
+             int m, double* w, std::complex<double>* z, const int ldz,
              std::complex<double>* work, const int lwork, double* rwork, int* iwork, int* ifail, int info)
 {
     zheevx_(&jobz, &range, &uplo, &n,
@@ -243,7 +393,7 @@ void dnevx( const int itype, const char jobz, const char range, const char uplo,
 }
 
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             float* a, const int lda, float* w,
             float* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -256,7 +406,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             double* a, const int lda, double* w,
             double* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -268,7 +418,7 @@ void dnevd(const char jobz, const char uplo, const int n,
              iwork, &liwork, &info);
 }
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -281,7 +431,7 @@ void dnevd(const char jobz, const char uplo, const int n,
 }
 // wrap function of fortran lapack routine zhegvd.
 static inline
-void dnevd(const char jobz, const char uplo, const int n,
+void heevd(const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
             int* iwork, int liwork, int& info)
@@ -297,17 +447,17 @@ static inline
 void potrf( const char &uplo, const int &n, float* A, const int &lda, int &info )
 {
 	spotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, double* A, const int &lda, int &info )
 {
 	dpotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, std::complex<float>* A, const int &lda, int &info )
 {
 	cpotrf_(&uplo, &n, A, &lda, &info );
-}	
+}
 static inline
 void potrf( const char &uplo, const int &n, std::complex<double>* A, const int &lda, int &info )
 {
@@ -396,6 +546,49 @@ static inline
 void getrs(const char& trans, const int n, const int nrhs, std::complex<double>* A, const int lda, const int* ipiv, std::complex<double>* B, const int ldb, int& info)
 {
     zgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
+}
+
+// LAPACK routines for QR decomposition
+static inline
+void geqrf(const int m, const int n, float* A, const int lda, float* tau, float* work, const int lwork, int& info)
+{
+    sgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, double* A, const int lda, double* tau, double* work, const int lwork, int& info)
+{
+    dgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, std::complex<float>* A, const int lda, std::complex<float>* tau, std::complex<float>* work, const int lwork, int& info)
+{
+    cgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, std::complex<double>* A, const int lda, std::complex<double>* tau, std::complex<double>* work, const int lwork, int& info)
+{
+    zgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+// these routines generate the orthogonal matrix Q from the QR decomposition
+static inline
+void orgqr(const int m, const int n, const int k, float* A, const int lda, const float* tau, float* work, const int lwork, int& info)
+{
+    sorgqr_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void orgqr(const int m, const int n, const int k, double* A, const int lda, const double* tau, double* work, const int lwork, int& info)
+{
+    dorgqr_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void orgqr(const int m, const int n, const int k, std::complex<float>* A, const int lda, const std::complex<float>* tau, std::complex<float>* work, const int lwork, int& info)
+{
+    cungqr_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void orgqr(const int m, const int n, const int k, std::complex<double>* A, const int lda, const std::complex<double>* tau, std::complex<double>* work, const int lwork, int& info)
+{
+    zungqr_(&m, &n, &k, A, &lda, tau, work, &lwork, &info);
 }
 
 } // namespace lapackConnector

@@ -31,6 +31,7 @@ class PotSurChem : public PotBase
         }
     }
 
+    // Passing an explicit output matrix makes the lifetime and allocation explicit and avoids hidden allocations.
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override
     {
         if (!this->allocated)
@@ -38,14 +39,16 @@ class PotSurChem : public PotBase
             this->surchem_->allocate(this->rho_basis_->nrxx, v_eff.nr);
             this->allocated = true;
         }
-
-        v_eff += this->surchem_->v_correction(*ucell,
-                                              *chg->pgrid,
-                                              const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
-                                              v_eff.nr,
-                                              chg->rho,
-                                              this->vlocal,
-                                              this->structure_factors_);
+        ModuleBase::matrix v_sol_correction(v_eff.nr, this->rho_basis_->nrxx);
+        this->surchem_->v_correction(*ucell,
+                                 *chg->pgrid,
+                                 const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
+                                 v_eff.nr,
+                                 chg->rho,
+                                 this->vlocal,
+                                 this->structure_factors_,
+                                 v_sol_correction);
+        v_eff += v_sol_correction;
     }
 
   private:

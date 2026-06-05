@@ -6,6 +6,7 @@ Interfaces to Other Softwares
    :maxdepth: 1
    :caption: Examples
 
+   pyabacus
    deepks
    dpgen
    deeph

@@ -4,7 +4,6 @@
 
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_hsolver/diag_comm_info.h"
 
 namespace mtfunc
 {
@@ -62,18 +61,72 @@ void zgemm_mt_(const char* transa,
                int cluster_id);
 
 void cgemm_mt_(const char* transa,
-               const char* transb,
+                const char* transb,
+                const int* m,
+                const int* n,
+                const int* k,
+                const std::complex<float>* alpha,
+                const std::complex<float>* a,
+                const int* lda,
+                const std::complex<float>* b,
+                const int* ldb,
+                const std::complex<float>* beta,
+                std::complex<float>* c,
+                const int* ldc,
+                int cluster_id);
+
+
+
+void sgemv_mt_(const char* transa,
                const int* m,
                const int* n,
-               const int* k,
+               const float* alpha,
+               const float* a,
+               const int* lda,
+               const float* x,
+               const int* incx,
+               const float* beta,
+               float* y,
+               const int* incy,
+               int cluster_id);
+
+void dgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const double* alpha,
+               const double* a,
+               const int* lda,
+               const double* x,
+               const int* incx,
+               const double* beta,
+               double* y,
+               const int* incy,
+               int cluster_id);
+
+void zgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
+               const std::complex<double>* alpha,
+               const std::complex<double>* a,
+               const int* lda,
+               const std::complex<double>* x,
+               const int* incx,
+               const std::complex<double>* beta,
+               std::complex<double>* y,
+               const int* incy,
+               int cluster_id);
+
+void cgemv_mt_(const char* transa,
+               const int* m,
+               const int* n,
                const std::complex<float>* alpha,
                const std::complex<float>* a,
                const int* lda,
-               const std::complex<float>* b,
-               const int* ldb,
+               const std::complex<float>* x,
+               const int* incx,
                const std::complex<float>* beta,
-               std::complex<float>* c,
-               const int* ldc,
+               std::complex<float>* y,
+               const int* incy,
                int cluster_id);
 
 void sgemm_mth_(const char* transa,
@@ -121,6 +174,21 @@ void zgemm_mth_(const char* transa,
                 const int* ldc,
                 int cluster_id);
 
+void zgemm_pack_mth_(const char* transa,
+                     const char* transb,
+                     const int* m,
+                     const int* n,
+                     const int* k,
+                     const std::complex<double>* alpha,
+                     const std::complex<double>* a,
+                     const int* lda,
+                     const std::complex<double>* b,
+                     const int* ldb,
+                     const std::complex<double>* beta,
+                     std::complex<double>* c,
+                     const int* ldc,
+                     int cluster_id);
+
 void cgemm_mth_(const char* transa,
                 const char* transb,
                 const int* m,
@@ -134,6 +202,73 @@ void cgemm_mth_(const char* transa,
                 const std::complex<float>* beta,
                 std::complex<float>* c,
                 const int* ldc,
+                int cluster_id);
+
+void cgemm_pack_mth_(const char* transa,
+                    const char* transb,
+                    const int* m,
+                    const int* n,
+                    const int* k,
+                    const std::complex<float>* alpha,
+                    const std::complex<float>* a,
+                    const int* lda,
+                    const std::complex<float>* b,
+                    const int* ldb,
+                    const std::complex<float>* beta,
+                    std::complex<float>* c,
+                    const int* ldc,
+                    int cluster_id);
+
+void sgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const float* alpha,
+                const float* a,
+                const int* lda,
+                const float* x,
+                const int* incx,
+                const float* beta,
+                float* y,
+                const int* incy,
+                int cluster_id);
+
+void dgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const double* alpha,
+                const double* a,
+                const int* lda,
+                const double* x,
+                const int* incx,
+                const double* beta,
+                double* y,
+                const int* incy,
+                int cluster_id);
+
+void zgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const std::complex<double>* alpha,
+                const std::complex<double>* a,
+                const int* lda,
+                const std::complex<double>* x,
+                const int* incx,
+                const std::complex<double>* beta,
+                std::complex<double>* y,
+                const int* incy,
+                int cluster_id);
+
+void cgemv_mth_(const char* transa,
+                const int* m,
+                const int* n,
+                const std::complex<float>* alpha,
+                const std::complex<float>* a,
+                const int* lda,
+                const std::complex<float>* x,
+                const int* incx,
+                const std::complex<float>* beta,
+                std::complex<float>* y,
+                const int* incy,
                 int cluster_id);
 
 // #define zgemm_ zgemm_mt

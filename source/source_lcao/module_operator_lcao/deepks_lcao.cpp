@@ -4,6 +4,8 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/deepks_descriptor.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
@@ -54,7 +56,7 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DeePKS", "initialize_HR");
-    ModuleBase::timer::tick("DeePKS", "initialize_HR");
+    ModuleBase::timer::start("DeePKS", "initialize_HR");
 
     auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
@@ -136,7 +138,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     this->hR->allocate(nullptr, false);
     // }
 
-    ModuleBase::timer::tick("DeePKS", "initialize_HR");
+    ModuleBase::timer::end("DeePKS", "initialize_HR");
 }
 #endif
 
@@ -150,15 +152,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // this operator should be informed that DM has changed and HR need to recalculate.
     if (this->ld->get_hr_cal())
     {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-
-        const int inlmax = ptr_orb_->Alpha[0].getTotal_nchi() * this->ucell->nat;
+        ModuleBase::timer::start("DeePKS", "contributeHR");
 
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
-                                   inlmax,
-                                   this->ld->lmaxd,
-                                   this->ld->inl2l,
-                                   this->ld->inl_index,
+                                   this->ld->deepks_param,
                                    this->kvec_d,
                                    this->ld->dm_r,
                                    this->ld->phialpha,
@@ -170,20 +167,15 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
-                                      inlmax,
-                                      this->ld->inl2l,
+                                      this->ld->deepks_param,
                                       this->ld->pdm,
-                                      descriptor,
-                                      this->ld->des_per_atom);
+                                      descriptor);
         if (PARAM.inp.deepks_equiv)
         {
             DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
-                                                 this->ld->lmaxd,
-                                                 this->ld->nmaxd,
-                                                 inlmax,
-                                                 this->ld->des_per_atom,
-                                                 this->ld->inl2l,
+                                                 this->ld->deepks_param,
                                                  descriptor,
+                                                 this->ld->model_deepks,
                                                  this->ld->gedm,
                                                  this->ld->E_delta,
                                                  GlobalV::MY_RANK);
@@ -191,9 +183,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         else
         {
             DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
-                                           inlmax,
-                                           this->ld->des_per_atom,
-                                           this->ld->inl2l,
+                                           this->ld->deepks_param,
                                            descriptor,
                                            this->ld->pdm,
                                            this->ld->model_deepks,
@@ -211,7 +201,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
         this->ld->set_hr_cal(false);
 
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
+        ModuleBase::timer::end("DeePKS", "contributeHR");
     }
     // save V_delta_R to hR
     this->hR->add(*this->V_delta_R);
@@ -224,9 +214,10 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("DeePKS", "calculate_HR");
-    ModuleBase::timer::tick("DeePKS", "calculate_HR");
+    ModuleBase::timer::start("DeePKS", "calculate_HR");
     if (this->V_delta_R->size_atom_pairs() == 0)
     {
+        ModuleBase::timer::end("DeePKS", "calculate_HR");
         return;
     }
 
@@ -253,7 +244,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             {
                 for (int N0 = 0; N0 < ptr_orb_->Alpha[0].getNchi(L0); ++N0)
                 {
-                    const int inl = this->ld->inl_index[T0](I0, L0, N0);
+                    const int inl = this->ld->deepks_param.inl_index[T0](I0, L0, N0);
                     const double* pgedm = this->ld->gedm[inl];
                     const int nm = 2 * L0 + 1;
 
@@ -274,7 +265,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         {
             const double* pgedm = this->ld->gedm[iat0];
             int nproj = 0;
-            for (int il = 0; il < this->ld->lmaxd + 1; il++)
+            for (int il = 0; il < this->ld->deepks_param.lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * ptr_orb_->Alpha[0].getNchi(il);
             }
@@ -364,19 +355,19 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
 
-                dgemm_(&transa,
-                       &transb,
-                       &col_size,
-                       &row_size,
-                       &trace_alpha_size,
-                       &gemm_alpha,
-                       s_2t.data(),
-                       &trace_alpha_size,
+                BlasConnector::gemm(transb,
+                       transa,
+                       row_size,
+                       col_size,
+                       trace_alpha_size,
+                       gemm_alpha,
                        s_1t.data(),
-                       &trace_alpha_size,
-                       &gemm_beta,
+                       trace_alpha_size,
+                       s_2t.data(),
+                       trace_alpha_size,
+                       gemm_beta,
                        hr_current.data(),
-                       &col_size);
+                       col_size);
 
             // add data of HR to target BaseMatrix
             #pragma omp critical
@@ -386,7 +377,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
     }
-    ModuleBase::timer::tick("DeePKS", "calculate_HR");
+    ModuleBase::timer::end("DeePKS", "calculate_HR");
 }
 
 // cal_HR_IJR()
@@ -428,7 +419,7 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("DeePKS", "contributeHk");
-    ModuleBase::timer::tick("DeePKS", "contributeHk");
+    ModuleBase::timer::start("DeePKS", "contributeHk");
 
     TK* h_delta_k = this->ld->V_delta[ik].data();
     // set SK to zero and then calculate SK for each k vector
@@ -444,7 +435,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], ncol, 0);
     }
-    ModuleBase::timer::tick("DeePKS", "contributeHk");
+    ModuleBase::timer::end("DeePKS", "contributeHk");
 }
 
 #endif

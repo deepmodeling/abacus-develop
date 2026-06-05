@@ -35,7 +35,6 @@ rpa                            0 #true:generate output files used in rpa calcula
 mem_saver                      0 #Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.
 diago_proc                     4 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
-wannier_card                   none #input card for wannier functions
 soc_lambda                     1 #The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)
 cal_force                      0 #if calculate the force at the end of the electronic iteration
 out_freq_ion                   0 #the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
@@ -137,7 +136,6 @@ lcao_dr                        0.01 #delta r for 1D integration in LCAO
 lcao_rmax                      30 #max R for 1D two-center integration table
 out_mat_hs                     0 #output H and S matrix
 out_mat_hs2                    0 #output H(R) and S(R) matrix
-out_interval               1 #interval for printing H(R) and S(R) matrix during MD
 out_app_flag                   0 #whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD
 out_element_info               0 #output (projected) wavefunction of each element
 out_mat_r                      0 #output r(R) matrix
@@ -280,7 +278,7 @@ exx_hybrid_step                100 #
 exx_mixing_beta                1.0 #
 exx_fock_lambda              0.3 #
 exx_real_number                default #0 or 1
-exx_singularity_correction     default #spencer or revised_spencer
+exx_singularity_correction     default #spencer, revised_spencer, massidda, limits, carrier
 exx_pca_threshold              0 #
 exx_c_threshold                0 #
 exx_v_threshold                0 #
@@ -293,6 +291,11 @@ exx_ccp_rmesh_times            default #
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #
+shrink_abfs_pca_thr            0.02 #
+shrink_lu_inv_thr              1e-5 #
+exx_coul_moment                1 #
+exx_rotate_abfs                1 #
+exx_multip_moments_threshold   1e-12 #
 
 #Parameters (16.tddft)
 td_vext                        0 #add extern potential or not

@@ -14,14 +14,14 @@
  *   - fenergy::calculate_harris()
  *   - fenergy::clear_all()
  *   - fenergy::print_all()
- *   - efermi::set_efval()
- *   - efermi::get_efval()
+ *   - Efermi::set_efval()
+ *   - Efermi::get_efval()
  */
 class fenergy : public ::testing::Test
 {
   protected:
     elecstate::fenergy f_en;
-    elecstate::efermi eferm;
+    elecstate::Efermi eferm;
 };
 
 TEST_F(fenergy, calculate_etot)

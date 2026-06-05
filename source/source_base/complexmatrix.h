@@ -6,7 +6,6 @@
 #include "matrix.h"
 
 #ifdef _MCD_CHECK
-#include "mcd.h"
 #endif
 namespace ModuleBase
 {
@@ -62,7 +61,7 @@ public:
 	std::ostream & print( std::ostream & os, const double threshold_abs=0.0, const double threshold_imag=0.0 ) const;		// Peize Lin add 2021.09.08
 
 	// check if all the elements are real
-	bool checkreal(void);
+	bool checkreal(void) const;
 
 	using type=std::complex<double>;					// Peiae Lin add 2022.08.08 for template
 };

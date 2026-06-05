@@ -1,4 +1,5 @@
 #include "hcontainer.h"
+#include "source_base/memory_recorder.h"
 
 namespace hamilt
 {
@@ -12,12 +13,16 @@ HContainer<T>::~HContainer()
 {
     if(this->allocated)
     {
+        if(this->allocated_size > 0)
+        {
+            ModuleBase::Memory::record("HContainer", -(long long)this->allocated_size, true);
+        }
         delete[] this->wrapper_pointer;
     }
 }
 
 template <typename T>
-HContainer<T>::HContainer() {}
+HContainer<T>::HContainer() : allocated_size(0) {}
 
 // copy constructor
 template <typename T>
@@ -30,6 +35,7 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
     this->current_R = -1;
     this->wrapper_pointer = data_array;
     this->allocated = false;
+    this->allocated_size = 0;
     this->atom_pairs = HR_in.atom_pairs;
     // data of HR_in will not be copied, please call add() after this constructor to copy data.
     this->allocate(this->wrapper_pointer, true);
@@ -47,8 +53,11 @@ HContainer<T>::HContainer(HContainer<T>&& HR_in) noexcept
     this->gamma_only = HR_in.gamma_only;
     this->paraV = HR_in.paraV;
     this->allocated = HR_in.allocated;
+    this->allocated_size = HR_in.allocated_size;
     this->current_R = -1;
     HR_in.wrapper_pointer = nullptr;
+    HR_in.allocated = false;
+    HR_in.allocated_size = 0;
     // tmp terms not moved
 }
 
@@ -65,9 +74,12 @@ HContainer<T>& HContainer<T>::operator=(HContainer<T>&& HR_in) noexcept
         this->gamma_only = HR_in.gamma_only;
         this->paraV = HR_in.paraV;
         this->allocated = HR_in.allocated;
+        this->allocated_size = HR_in.allocated_size;
         this->current_R = -1;
 
         HR_in.wrapper_pointer = nullptr;
+        HR_in.allocated = false;
+        HR_in.allocated_size = 0;
     }
     return *this;
 }
@@ -80,6 +92,7 @@ HContainer<T>::HContainer(int natom)
     this->current_R = -1;
     this->sparse_ap.resize(natom);
     this->sparse_ap_index.resize(natom);
+    this->allocated_size = 0;
 }
 
 // use unitcell to initialize atom_pairs
@@ -88,6 +101,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV
 {
     this->gamma_only = false;
     this->current_R = -1;
+    this->allocated_size = 0;
     std::vector<int> atom_begin_row(ucell_.nat+1, 0);
     std::vector<int> atom_begin_col(ucell_.nat+1, 0);
     int begin = 0;
@@ -148,6 +162,7 @@ template <typename T>
 HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer, const std::vector<int>* ijr_info)
 {
     this->current_R = -1;
+    this->allocated_size = 0;
 
     // use HContainer as a wrapper(!nullptr) or container(nullptr)
     this->wrapper_pointer = data_pointer;
@@ -177,13 +192,23 @@ void HContainer<T>::allocate(T* data_array, bool is_zero)
     size_t nnr = this->get_nnr();
     if(this->allocated)
     {// delete existed memory of this->wrapper_pointer
+        if(this->allocated_size > 0)
+        {
+            ModuleBase::Memory::record("HContainer", -(long long)this->allocated_size, true);
+        }
         delete[] this->wrapper_pointer;
         this->allocated = false;
+        this->allocated_size = 0;
     }
     if(data_array == nullptr)
     {
         // use this->wrapper_pointer as data_array
         this->allocated = true;
+        this->allocated_size = nnr * sizeof(T);
+        if(this->allocated_size > 0)
+        {
+            ModuleBase::Memory::record("HContainer", (long long)this->allocated_size, true);
+        }
         this->wrapper_pointer = new T[nnr];
         ModuleBase::GlobalFunc::ZEROS(this->wrapper_pointer, nnr);
         data_array = this->wrapper_pointer;
@@ -806,6 +831,13 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs)
         const int atom_j = *ijr_p++;
         // get number of R
         const int number_R = *ijr_p++;
+        // skip atom pairs not belonging to this process
+        if (this->paraV->atom_begin_row[atom_i] == -1
+            || this->paraV->atom_begin_col[atom_j] == -1)
+        {
+            ijr_p += number_R * 3; // skip all R entries
+            continue;
+        }
         for (int k = 0; k < number_R; ++k)
         {
             int r_index[3];
@@ -857,7 +889,8 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& uc
     }
 }
 
-// T of HContainer can be double or std::complex<double>
+// T of HContainer can be double, float, or std::complex<double>
+template class HContainer<float>;
 template class HContainer<double>;
 template class HContainer<std::complex<double>>;
 

@@ -201,6 +201,63 @@ TEST_F(ChargeMpiTest, rho_mpi)
     charge->rho_mpi();
 }
 
+TEST_F(ChargeMpiTest, kin_r_mpi)
+{
+    if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
+    {
+        const bool ked_flag_old = XC_Functional::ked_flag;
+        XC_Functional::ked_flag = true;
+        PARAM.input.nspin = 1;
+        PARAM.input.bndpar = 1;
+        GlobalV::KPAR = 2;
+
+        Parallel_Global::divide_pools(GlobalV::NPROC,
+                                      GlobalV::MY_RANK,
+                                      PARAM.input.bndpar,
+                                      GlobalV::KPAR,
+                                      GlobalV::NPROC_IN_BNDGROUP,
+                                      GlobalV::RANK_IN_BPGROUP,
+                                      GlobalV::MY_BNDGROUP,
+                                      GlobalV::NPROC_IN_POOL,
+                                      GlobalV::RANK_IN_POOL,
+                                      GlobalV::MY_POOL);
+        ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis();
+        rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
+        rhopw->initgrids(lat0, latvec, 40);
+        rhopw->initparameters(false, 10);
+        rhopw->setuptransform();
+        charge->rhopw = rhopw;
+
+        const int nz = rhopw->nz;
+        const int nrxx = rhopw->nrxx;
+        const int nxy = rhopw->nxy;
+        const int nplane = rhopw->nplane;
+        charge->nrxx = nrxx;
+        charge->kin_r = new double*[1];
+        charge->kin_r[0] = new double[nrxx];
+
+        for (int ir = 0; ir < nxy; ++ir)
+        {
+            for (int iz = 0; iz < nplane; ++iz)
+            {
+                charge->kin_r[0][nplane * ir + iz]
+                    = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
+            }
+        }
+        const double refsum = sum_array(charge->kin_r[0], nrxx);
+
+        charge->init_chgmpi();
+        charge->kin_r_mpi();
+        const double sum = sum_array(charge->kin_r[0], nrxx);
+        EXPECT_EQ(sum, refsum * GlobalV::KPAR);
+
+        delete[] charge->kin_r[0];
+        delete[] charge->kin_r;
+        delete rhopw;
+        XC_Functional::ked_flag = ked_flag_old;
+    }
+}
+
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);

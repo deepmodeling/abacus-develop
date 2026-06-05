@@ -28,6 +28,8 @@ class PotBase
 
     virtual void cal_fixed_v(double* vl_pseudo){}
 
+    virtual double get_energy() const { return 0.0; } 
+    
     bool fixed_mode = 0;
     bool dynamic_mode = 0;
 

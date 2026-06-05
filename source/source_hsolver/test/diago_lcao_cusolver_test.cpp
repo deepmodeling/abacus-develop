@@ -232,7 +232,9 @@ class DiagoPrepare
             else if (ks_solver == "cusolver")
                 {
                     hsolver::DiagoCusolver<T> dh;
-                    dh.diag(&hmtest, psi, e_solver.data());
+                    hamilt::MatrixBlock<T> h_mat, s_mat;
+                    hmtest.matrix(h_mat, s_mat);
+                    dh.diag(h_mat, s_mat, psi, e_solver.data());
                 }
     #endif
             // dh->diag(&hmtest, psi, e_solver.data());

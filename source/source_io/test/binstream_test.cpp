@@ -12,7 +12,7 @@
  *     - Close a binary file
  */
 
-#include "../binstream.h"
+#include "../module_output/binstream.h"
 
 class BinstreamTest : public testing::Test
 {

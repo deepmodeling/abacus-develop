@@ -104,7 +104,7 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     y = af * t * t;
     xy = (1.0 + y) / (1.0 + y + y * y);
 
-    double x;
+    double x = 0.0;
     x = 1.0 + y + y * y;
     qy = y * y * (2.0 + y) / (x * x);
     s1 = 1.0 + 2.0 * al / be * t * t * xy;

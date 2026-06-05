@@ -24,11 +24,11 @@ class Inverse_Matrix_Iterate
 	inline void iterate(const ComplexMatrix &old_X, ComplexMatrix &new_X);	
 	
 	private:
-	ComplexMatrix *A_ptr{nullptr};
+	ComplexMatrix *A_ptr = NULL;
 	ComplexMatrix X_store_1;
 	ComplexMatrix X_store_2;
-	const ComplexMatrix *X0_ptr{nullptr};
-	const ComplexMatrix *inverse_ptr{nullptr};
+	const ComplexMatrix *X0_ptr = NULL;
+	const ComplexMatrix *inverse_ptr = NULL;
 	ComplexMatrix identity;
 	ComplexMatrix matrix_tmp_1;
 	ComplexMatrix matrix_tmp_2;

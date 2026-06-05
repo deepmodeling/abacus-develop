@@ -2,12 +2,13 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "pot_ml_exx.h"
 
 #include <map>
 
@@ -21,8 +22,10 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      Structure_Factor* structure_factors_in,
                      surchem* solvent_in,
                      double* etxc_in,
-                     double* vtxc_in)
-    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), etxc_(etxc_in),
+                     double* vtxc_in,
+                     VSep* vsep_cell_in)
+    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), 
+      solvent_(solvent_in), vsep_cell(vsep_cell_in), etxc_(etxc_in),
       vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
@@ -80,7 +83,6 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
     {
         PotBase* tmp = this->get_pot_type(comp);
         this->components.push_back(tmp);
-        //        GlobalV::ofs_running << "Successful completion of Potential's registration : " << comp << std::endl;
     }
 
     // after register, reset fixed_done to false
@@ -92,53 +94,58 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
 void Potential::allocate()
 {
     ModuleBase::TITLE("Potential", "allocate");
-    int nrxx = this->rho_basis_->nrxx;
-    int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0) 
+
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
+
+    const int nrxx = this->rho_basis_->nrxx;
+    const int nrxx_smooth = this->rho_basis_smooth_->nrxx;
+
+    if (nrxx == 0)
 	{
 		return;
 	}
-	if (nrxx_smooth == 0) 
+	if (nrxx_smooth == 0)
 	{
 		return;
 	}
 
-    this->v_effective_fixed.resize(nrxx);
+    this->v_eff_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
 
-    this->v_effective.create(PARAM.inp.nspin, nrxx);
-    ModuleBase::Memory::record("Pot::veff", sizeof(double) * PARAM.inp.nspin * nrxx);
+    this->v_eff.create(nspin, nrxx);
+    ModuleBase::Memory::record("Pot::veff", sizeof(double) * nspin * nrxx);
 
-    this->veff_smooth.create(PARAM.inp.nspin, nrxx_smooth);
-    ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
+    this->veff_smooth.create(nspin, nrxx_smooth);
+    ModuleBase::Memory::record("Pot::veff_smooth", sizeof(double) * nspin * nrxx_smooth);
 
     if (XC_Functional::get_ked_flag())
     {
-        this->vofk_effective.create(PARAM.inp.nspin, nrxx);
-        ModuleBase::Memory::record("Pot::vofk", sizeof(double) * PARAM.inp.nspin * nrxx);
+        this->vofk_eff.create(nspin, nrxx);
+        ModuleBase::Memory::record("Pot::vofk", sizeof(double) * nspin * nrxx);
 
-        this->vofk_smooth.create(PARAM.inp.nspin, nrxx_smooth);
-        ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * PARAM.inp.nspin * nrxx_smooth);
+        this->vofk_smooth.create(nspin, nrxx_smooth);
+        ModuleBase::Memory::record("Pot::vofk_smooth", sizeof(double) * nspin * nrxx_smooth);
     }
     if (use_gpu_)
     {
         if (PARAM.globalv.has_float_data)
         {
-            resmem_sd_op()(s_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
-            resmem_sd_op()(s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
+            resmem_sd_op()(s_veff_smooth, nspin * nrxx_smooth);
+            resmem_sd_op()(s_vofk_smooth, nspin * nrxx_smooth);
         }
         if (PARAM.globalv.has_double_data)
         {
-            resmem_dd_op()(d_veff_smooth, PARAM.inp.nspin * nrxx_smooth);
-            resmem_dd_op()(d_vofk_smooth, PARAM.inp.nspin * nrxx_smooth);
+            resmem_dd_op()(d_veff_smooth, nspin * nrxx_smooth);
+            resmem_dd_op()(d_vofk_smooth, nspin * nrxx_smooth);
         }
     }
     else
     {
         if (PARAM.globalv.has_float_data)
         {
-            resmem_sh_op()(s_veff_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::sveff_smooth");
-            resmem_sh_op()(s_vofk_smooth, PARAM.inp.nspin * nrxx_smooth, "POT::svofk_smooth");
+            resmem_sh_op()(s_veff_smooth, nspin * nrxx_smooth, "POT::sveff_smooth");
+            resmem_sh_op()(s_vofk_smooth, nspin * nrxx_smooth, "POT::svofk_smooth");
         }
         if (PARAM.globalv.has_double_data)
         {
@@ -152,15 +159,15 @@ void Potential::allocate()
 void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::start("Potential", "update_from_charge");
 
     if (!this->fixed_done)
     {
-        this->cal_fixed_v(this->v_effective_fixed.data());
+        this->cal_fixed_v(this->v_eff_fixed.data());
         this->fixed_done = true;
     }
 
-    this->cal_v_eff(chg, ucell, this->v_effective);
+    this->cal_v_eff(chg, ucell, this->v_eff);
 
     // interpolate potential on the smooth mesh if necessary
     this->interpolate_vrs();
@@ -188,15 +195,15 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
 
-    //ModuleBase::timer::tick("Potential", "update_from_charge");
+    //ModuleBase::timer::end("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
 {
     ModuleBase::TITLE("Potential", "cal_fixed_v");
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::start("Potential", "cal_fixed_v");
 
-    this->v_effective_fixed.assign(this->v_effective_fixed.size(), 0.0);
+    this->v_eff_fixed.assign(this->v_eff_fixed.size(), 0.0);
     for (size_t i = 0; i < this->components.size(); i++)
     {
         if (this->components[i]->fixed_mode)
@@ -205,18 +212,18 @@ void Potential::cal_fixed_v(double* vl_pseudo)
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_fixed_v");
+    ModuleBase::timer::end("Potential", "cal_fixed_v");
 }
 
 void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::start("Potential", "cal_veff");
 
-    const int nspin_current = this->v_effective.nr;
-    const int nrxx = this->v_effective.nc;
-    // first of all, set v_effective to zero.
-    this->v_effective.zero_out();
+    const int nspin_current = this->v_eff.nr;
+    const int nrxx = this->v_eff.nc;
+    // first of all, set v_eff to zero.
+    this->v_eff.zero_out();
 
     // add fixed potential components
     // nspin = 2, add fixed components for all
@@ -225,11 +232,11 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     {
         if (i == 0 || nspin_current == 2)
         {
-            ModuleBase::GlobalFunc::COPYARRAY(this->v_effective_fixed.data(), this->get_effective_v(i), nrxx);
+            ModuleBase::GlobalFunc::COPYARRAY(this->v_eff_fixed.data(), this->get_eff_v(i), nrxx);
         }
     }
 
-    // cal effective by every components
+    // cal eff by every components
     for (size_t i = 0; i < this->components.size(); i++)
     {
         if (this->components[i]->dynamic_mode)
@@ -238,76 +245,78 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
         }
     }
 
-    ModuleBase::timer::tick("Potential", "cal_veff");
+    ModuleBase::timer::end("Potential", "cal_veff");
 }
 
-void Potential::init_pot(int istep, const Charge*const chg)
+void Potential::init_pot(const Charge*const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::start("Potential", "init_pot");
 
-    assert(istep >= 0);
     // fixed components only calculated in the beginning of SCF
     this->fixed_done = false;
 
     this->update_from_charge(chg, this->ucell_);
 
-    ModuleBase::timer::tick("Potential", "init_pot");
+    ModuleBase::timer::end("Potential", "init_pot");
     return;
 }
 
 void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
 {
     ModuleBase::TITLE("Potential", "get_vnew");
-    vnew.create(this->v_effective.nr, this->v_effective.nc);
-    vnew = this->v_effective;
+    vnew.create(this->v_eff.nr, this->v_eff.nc);
+    vnew = this->v_eff;
 
     this->update_from_charge(chg, this->ucell_);
     //(used later for scf correction to the forces )
     for (int iter = 0; iter < vnew.nr * vnew.nc; ++iter)
     {
-        vnew.c[iter] = this->v_effective.c[iter] - vnew.c[iter];
+        vnew.c[iter] = this->v_eff.c[iter] - vnew.c[iter];
     }
 
     return;
 }
 
-void Potential::interpolate_vrs()
+void Potential::interpolate_vrs(void)
 {
     ModuleBase::TITLE("Potential", "interpolate_vrs");
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::start("Potential", "interpolate_vrs");
 
-    if ( PARAM.globalv.double_grid)
+    const int nspin = PARAM.inp.nspin;
+    assert(nspin==1 || nspin==2 || nspin==4);
+
+    if (PARAM.globalv.double_grid)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {
             ModuleBase::WARNING_QUIT("Potential::interpolate_vrs", "gamma_only is not consistent");
         }
 
-        ModuleBase::ComplexMatrix vrs(PARAM.inp.nspin, rho_basis_->npw);
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        ModuleBase::ComplexMatrix vrs(nspin, rho_basis_->npw);
+        for (int is = 0; is < nspin; is++)
         {
-            rho_basis_->real2recip(&v_effective(is, 0), &vrs(is, 0));
+            rho_basis_->real2recip(&v_eff(is, 0), &vrs(is, 0));
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
         }
 
         if (XC_Functional::get_ked_flag())
         {
-            ModuleBase::ComplexMatrix vrs_ofk(PARAM.inp.nspin, rho_basis_->npw);
-            for (int is = 0; is < PARAM.inp.nspin; is++)
+            ModuleBase::ComplexMatrix vrs_ofk(nspin, rho_basis_->npw);
+            for (int is = 0; is < nspin; is++)
             {
-                rho_basis_->real2recip(&vofk_effective(is, 0), &vrs_ofk(is, 0));
+                rho_basis_->real2recip(&vofk_eff(is, 0), &vrs_ofk(is, 0));
                 rho_basis_smooth_->recip2real(&vrs_ofk(is, 0), &vofk_smooth(is, 0));
             }
         }
     }
     else
     {
-        this->veff_smooth = this->v_effective;
-        this->vofk_smooth = this->vofk_effective;
+        this->veff_smooth = this->v_eff;
+        this->vofk_smooth = this->vofk_eff;
     }
 
-    ModuleBase::timer::tick("Potential", "interpolate_vrs");
+    ModuleBase::timer::end("Potential", "interpolate_vrs");
 }
 
 template <>
@@ -332,6 +341,23 @@ template <>
 double* Potential::get_vofk_smooth_data()
 {
     return this->vofk_smooth.nc > 0 ? this->d_vofk_smooth : nullptr;
+}
+
+double Potential::get_ml_exx_energy() const
+{
+#ifdef __MLALGO
+    for (size_t i = 0; i < this->components.size(); i++)
+    {
+        PotML_EXX* pot_ml_exx = dynamic_cast<PotML_EXX*>(this->components[i]);
+        if (pot_ml_exx != nullptr)
+        {
+            return pot_ml_exx->get_energy();
+        }
+    }
+    return 0.0;
+#else
+    return 0.0;
+#endif
 }
 
 } // namespace elecstate

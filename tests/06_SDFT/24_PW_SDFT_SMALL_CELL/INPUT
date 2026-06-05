@@ -1,0 +1,35 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix          autotest
+calculation     scf
+esolver_type    sdft
+symmetry        1
+pseudo_dir      ../../PP_ORB
+orbital_dir     .
+basis_type      pw
+ecutwfc         500
+cal_stress      1
+cal_force       1
+kpar            1
+bndpar          1
+
+#Parameters (2. SCF iterations)
+scf_thr         1e-6
+
+#Parameters (3. Solve KS equation)
+nbands          0
+nbands_sto      96
+nche_sto        50
+seed_sto        20000
+pw_seed         1
+method_sto      2
+ks_solver       cg
+
+#Parameters (4.Smearing)
+smearing_method     fd
+smearing_sigma      25.33454852
+
+#Parameters (5.Mixing)
+mixing_type     broyden
+mixing_beta     0.7
+mixing_gg0      0

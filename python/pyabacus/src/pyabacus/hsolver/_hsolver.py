@@ -9,7 +9,15 @@ from numpy.typing import NDArray
 from typing import Tuple, List, Union, Callable
 
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
-from ._hsolver_pack import diago_dav_subspace, diago_david, diago_cg
+from ._hsolver_pack import diago_dav_subspace, diago_david
+
+# diago_cg requires ATen support, which may not be available
+try:
+    from ._hsolver_pack import diago_cg
+    _HAS_DIAGO_CG = True
+except ImportError:
+    _HAS_DIAGO_CG = False
+    diago_cg = None
 
 class diag_comm_info(_diag_comm_info):
     def __init__(self, rank: int, nproc: int):
@@ -128,7 +136,6 @@ def davidson(
     tol: float = 1e-2,
     max_iter: int = 1000,
     diag_ethr: Union[List[float], None] = None,
-    use_paw: bool = False,
     # scf_type: bool = False
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
     """ A function to diagonalize a matrix using the Davidson-Subspace method.
@@ -155,8 +162,6 @@ def davidson(
         The maximum number of iterations, by default 1000.
     diag_ethr : List[float] | None, optional
         The list of thresholds of bands, by default None.    
-    use_paw : bool, optional
-        Whether to use projector augmented wave (PAW) method, by default False.
     
     Returns
     -------
@@ -187,7 +192,6 @@ def davidson(
         tol,
         diag_ethr,
         max_iter,
-        use_paw,
         comm_info
     )
     
@@ -196,6 +200,10 @@ def davidson(
     
     return e, v
     
+def cg_available() -> bool:
+    """Check if the CG diagonalizer is available (requires ATen support)."""
+    return _HAS_DIAGO_CG
+
 def cg(
     mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
@@ -248,7 +256,10 @@ def cg(
     """
     if not callable(mvv_op):
         raise TypeError("mvv_op must be a callable object.")
-    
+
+    if not _HAS_DIAGO_CG:
+        raise RuntimeError("CG diagonalizer is not available. It requires ATen support.")
+
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         # the shape of init_v is (num_eigs, dim) = (dim, num_eigs).T
         if init_v.ndim == 2:

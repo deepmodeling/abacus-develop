@@ -15,7 +15,18 @@ if(ENABLE_LCAO)
         snap_psibeta_half_tddft.cpp
         td_folding.cpp
         solve_propagation.cpp
+        boundary_fix.cpp
+        td_moving_gauge.cpp
     )
+
+    if(USE_CUDA)
+        list(APPEND objects
+            kernels/cuda/snap_psibeta_kernel.cu
+            kernels/cuda/snap_psibeta_gpu.cu
+            kernels/cuda/norm_psi_kernel.cu
+            kernels/cuda/band_energy_kernel.cu
+        )
+    endif()
 
     add_library(
         tddft

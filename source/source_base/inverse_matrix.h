@@ -2,7 +2,6 @@
 #define INVERSE_MATRIX_H
 
 #include "global_function.h"
-#include "global_variable.h"
 #include "complexmatrix.h"
 namespace ModuleBase
 {

@@ -4,6 +4,7 @@ if (ENABLE_LIBRI)
         irreducible_sector.cpp
         irreducible_sector_bvk.cpp
         symmetry_rotation.cpp
+        symmetry_rotation_output.cpp
     )
     add_library(
         module_exx_symmetry

@@ -5,14 +5,19 @@
 #define private public
 #define protected public
 #include "source_estate/elecstate_pw.h"
+#ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
+#endif
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_pw/module_pwdft/VL_in_pw.h"
+#include "source_pw/module_pwdft/vl_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_pw/module_pwdft/soc.h"
 #include "source_io/module_parameter/parameter.h"
 // mock functions for testing
 int XC_Functional::func_type = 1;
 namespace elecstate
 {
-void Potential::init_pot(int, Charge const*)
+void Potential::init_pot(Charge const*)
 {
 }
 void Potential::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
@@ -43,6 +48,10 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -126,11 +135,7 @@ Fcoef::~Fcoef()
 void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
-void Charge::set_rho_core_paw()
-{
-}
-void Charge::init_rho(elecstate::efermi&,
-                      const UnitCell&,
+void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
@@ -240,7 +245,6 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     EXPECT_EQ(elecstate_pw_d->classname, "ElecStatePW");
@@ -256,7 +260,6 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     EXPECT_EQ(elecstate_pw_s->classname, "ElecStatePW");
@@ -274,7 +277,6 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     elecstate_pw_d->init_rho_data();
@@ -294,7 +296,6 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     elecstate_pw_s->init_rho_data();
@@ -311,7 +312,6 @@ TEST_F(ElecStatePWTest, ParallelKDouble)
                                                                                                klist,
                                                                                                ucell,
                                                                                                ppcell,
-                                                                                               rhodpw,
                                                                                                rhopw,
                                                                                                bigpw);
     EXPECT_NO_THROW(elecstate_pw_d->parallelK());
@@ -325,7 +325,6 @@ TEST_F(ElecStatePWTest, ParallelKSingle)
                                                                                               klist,
                                                                                               ucell,
                                                                                               ppcell,
-                                                                                              rhodpw,
                                                                                               rhopw,
                                                                                               bigpw);
     EXPECT_NO_THROW(elecstate_pw_s->parallelK());

@@ -10,7 +10,6 @@
 #include <limits>
 
 #include "matrix.h"
-#include "global_function.h"
 
 #ifdef __NORMAL
 #else
@@ -27,7 +26,11 @@
 namespace ModuleBase
 {
 
-void matrixAlloc(){ModuleBase::WARNING_QUIT("matrix","Allocation error for Matrix");}
+void matrixAlloc()
+{
+    std::cerr << "Allocation error for Matrix" << std::endl;
+    std::exit(EXIT_FAILURE);
+}
 
 /*create a matrix with nrows*ncols size */
 matrix::matrix( const int nrows, const int ncols, const bool flag_zero )
@@ -163,7 +166,9 @@ matrix operator+(const matrix &m1, const matrix &m2)
 	matrix tm(m1);
 	const int size = m1.nr*m1.nc;
 	for (int i = 0; i < size; i++) 
+	{
 		tm.c[i] += m2.c[i];
+	}
 	return tm;
 }
 
@@ -176,7 +181,9 @@ matrix operator-(const matrix &m1, const matrix &m2)
 	matrix tm(m1);
 	const int size = m1.nr*m1.nc;
 	for(int i = 0; i < size; i++) 
+	{
 		tm.c[i] -= m2.c[i];
+	}
 	return tm;
 }
 
@@ -224,7 +231,9 @@ matrix operator*(const double &s, const matrix &m)
 	matrix sm(m);
 	const int size=m.nr*m.nc;
 	for (int i = 0; i < size; i++) 
+	{
 		sm.c[i] *= s;
+	}
 	return sm;
 }
 
@@ -234,7 +243,9 @@ matrix operator*(const matrix &m,const double &s)
 	matrix sm(m);
 	const int size=m.nr*m.nc;
 	for (int i = 0; i < size; i++)
+	{
 		sm.c[i] *= s;
+	}
 	return sm;
 }
 
@@ -258,7 +269,9 @@ void matrix::operator+=(const matrix & m)
 	const int size=nc*nr;
 	const double * const c_in = m.c;
 	for( int i = 0; i < size; ++i ) 
+	{
 		c[i] += c_in[i];
+	}
 }
 
 
@@ -274,7 +287,9 @@ void matrix::operator-=(const matrix & m)
 	const int size=nc*nr;
 	const double * const c_in = m.c;
 	for( int i = 0; i < size; ++i ) 
+	{
 		c[i] -= c_in[i];
+	}
 }
 
 /* zero out the matrix */
@@ -322,35 +337,6 @@ double matrix::trace_on(void) const
     }
     return tr;
 }
-
-//this function is wrong, and there is no file use this function.
-// void matrix::get_extreme_eigen_values(double &ev_lower, double &ev_upper)const
-// {
-//     double *a = new double[nr];
-//     double *b = new double[nr];
-//     for (int i = 0; i < nr; ++i)
-//     {
-//         double sum = 0.0;
-//         for(int j = 0; j < nc; ++j)
-//         {
-//             sum += fabs(c[i * nc + j]);
-//         }
-//         sum -= fabs(c[i * nc + i]);
-//         a[i] = c[i * nc + i] - sum;
-//         b[i] = c[i * nc + i] + sum;
-//     }
-
-//     ev_lower = a[0];
-//     ev_upper = b[0];
-
-//     for (int i = 1; i < nr; ++i)
-//     {
-//         if (a[i] < ev_lower) ev_lower = a[i];
-//         if (b[i] > ev_upper) ev_upper = b[i];
-//     }
-//     delete[] a;
-//     delete[] b;
-// }
 
 // Peize Lin add 2017-05-27
 void matrix::reshape( const int nr_new, const int nc_new, const bool flag_zero )

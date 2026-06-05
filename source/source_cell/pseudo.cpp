@@ -1,5 +1,7 @@
 #include "pseudo.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_output/output.h"
+#include <cstdint>
 
 pseudo::pseudo()
 {
@@ -33,11 +35,11 @@ void pseudo::check_betar()
 	}
 	if (min_flag)
 	{
-		std::cout << "WARNING: some of potential function is set to zero cause of less than 1e-30.\n";
+		std::cout << " WARNING: some of potential function is set to zero cause of less than 1e-30.\n";
 	}
 }
 
-void pseudo::print_pseudo(std::ofstream& ofs)
+void pseudo::print_pseudo(std::ofstream& ofs) const
 {
 	print_pseudo_vl(ofs);
 	ofs << "\n pseudo : ";
@@ -49,7 +51,7 @@ void pseudo::print_pseudo(std::ofstream& ofs)
 	ofs << "\n ----------------------";
 }
 
-void pseudo::print_pseudo_atom(std::ofstream &ofs)
+void pseudo::print_pseudo_atom(std::ofstream& ofs) const
 {
 	print_pseudo_h(ofs);
 	ofs << "\n pseudo_atom : ";
@@ -65,7 +67,7 @@ void pseudo::print_pseudo_atom(std::ofstream &ofs)
 }
 
 
-void pseudo::print_pseudo_vl(std::ofstream &ofs)
+void pseudo::print_pseudo_vl(std::ofstream& ofs) const
 {
 	ofs << "\n pseudo_vl:";
 	print_pseudo_atom(ofs);
@@ -73,7 +75,7 @@ void pseudo::print_pseudo_vl(std::ofstream &ofs)
 	ofs << "\n ----------------------------------- ";
 }
 
-void pseudo::print_pseudo_h(std::ofstream &ofs)
+void pseudo::print_pseudo_h(std::ofstream& ofs) const
 {
     ofs << "\n pseudo_info :";
     ofs << "\n nv       " << nv;

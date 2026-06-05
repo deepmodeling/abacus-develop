@@ -55,7 +55,7 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in)
     this->size = size_in;
     this->nnz = 0;
     this->nnzLocal = 0;
-    int myproc;
+    int myproc = 0;
     if (comm != MPI_COMM_NULL)
     {
         MPI_Comm_size(comm, &nprocs);

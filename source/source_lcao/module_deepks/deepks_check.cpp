@@ -56,10 +56,14 @@ void DeePKS_domain::check_tensor(const torch::Tensor& tensor, const std::string&
     ofs.close();
 }
 
-
-
-template void DeePKS_domain::check_tensor<int>(const torch::Tensor& tensor, const std::string& filename, const int rank);
-template void DeePKS_domain::check_tensor<double>(const torch::Tensor& tensor, const std::string& filename, const int rank);
-template void DeePKS_domain::check_tensor<std::complex<double>>(const torch::Tensor& tensor, const std::string& filename, const int rank);
+template void DeePKS_domain::check_tensor<int>(const torch::Tensor& tensor,
+                                               const std::string& filename,
+                                               const int rank);
+template void DeePKS_domain::check_tensor<double>(const torch::Tensor& tensor,
+                                                  const std::string& filename,
+                                                  const int rank);
+template void DeePKS_domain::check_tensor<std::complex<double>>(const torch::Tensor& tensor,
+                                                                const std::string& filename,
+                                                                const int rank);
 
 #endif

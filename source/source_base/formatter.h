@@ -66,7 +66,7 @@ public:
      *  
      * @return std::string 
      */
-    const std::string& fmt() { return fmt_; }
+    const std::string& fmt() const { return fmt_; }
     /**
      * Python-style string functions will be implemented here as toolbox
      */

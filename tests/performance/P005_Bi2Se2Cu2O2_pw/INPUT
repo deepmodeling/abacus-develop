@@ -1,21 +1,21 @@
-INPUT_PARAMETERS
+INPUT_PARAMETERS 
 #Parameters (1.General)
-suffix			autotest
-calculation     scf
-symmetry		1
+suffix            autotest
+calculation       scf
+symmetry          1
 
 #Parameters (2.Iteration)
-ecutwfc			80
-scf_thr				1e-7
-scf_nmax			100
-cal_force 1
-cal_stress 1
+ecutwfc           80
+scf_thr           1e-7
+scf_nmax          100
+cal_force         1
+cal_stress        1
 #Parameters (3.Basis)
-basis_type		pw
+basis_type        pw
 
 #Parameters (4.Smearing)
-smearing_method		fixed
+smearing_method   fixed
 
 #Parameters (5.Mixing)
-mixing_type		broyden
-mixing_beta		0.3
+mixing_type       broyden
+mixing_beta       0.3

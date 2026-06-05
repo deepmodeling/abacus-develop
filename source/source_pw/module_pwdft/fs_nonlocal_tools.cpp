@@ -2,7 +2,6 @@
 
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -26,7 +25,7 @@ FS_Nonlocal_tools<FPTYPE, Device>::FS_Nonlocal_tools(const pseudopot_cell_vnl* n
     : nlpp_(nlpp_in), ucell_(ucell_in), kv_(kv_in), wfc_basis_(wfc_basis_in), sf_(sf_in)
 {
     // get the device context
-    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type(this->ctx);
     this->nkb = nlpp_->nkb;
     this->max_npw = wfc_basis_->npwk_max;
     this->ntype = ucell_->ntype;

@@ -1,15 +1,13 @@
 #include "sto_wf.h"
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
 #include <ctime>
 
-//---------Temporary------------------------------------
 #include "source_base/global_function.h"
-#include "source_pw/module_pwdft/global.h"
-//------------------------------------------------------
 
 template <typename T, typename Device>
 Stochastic_WF<T, Device>::Stochastic_WF()
@@ -21,7 +19,7 @@ Stochastic_WF<T, Device>::~Stochastic_WF()
 {
     delete chi0_cpu;
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         delete chi0;
     }
@@ -62,17 +60,17 @@ void Stochastic_WF<T, Device>::clean_chiallorder()
     delete[] chiallorder;
     chiallorder = nullptr;
 }
-
 template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
 {
+    const unsigned int rank_seed_offset = 10000;
     if (seed_in == 0 || seed_in == -1)
     {
-        srand((unsigned)time(nullptr) + GlobalV::MY_RANK * 10000); // GlobalV global variables are reserved
+        srand(static_cast<unsigned int>(time(nullptr)) + GlobalV::MY_RANK * rank_seed_offset); // GlobalV global variables are reserved
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
+        srand(static_cast<unsigned int>(std::abs(seed_in)) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * rank_seed_offset);
     }
 
     this->allocate_chi0();
@@ -121,7 +119,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -168,7 +166,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     const bool firstrankmore = false;
     const int npwx = this->npwx;
     const int nks = this->nks;
-    int igroup;
+    int igroup = 0;
     // former processor calculate more bands
     if (firstrankmore)
     {
@@ -221,7 +219,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         // give value to orbitals in one parallel group one by one.
         for (int ichi = 0; ichi < nchipk; ++ichi)
         {
-            int ig;
+            int ig = 0;
             if (igroup < re)
             {
                 // It has more nchip.
@@ -250,7 +248,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     delete[] totnpw;
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -282,7 +280,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
 
     // allocate chi0
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
@@ -372,7 +370,7 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::sync_chi0()
 {
     Device* ctx = {};
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         syncmem_h2d_op()(this->chi0->get_pointer(),
                          this->chi0_cpu->get_pointer(),

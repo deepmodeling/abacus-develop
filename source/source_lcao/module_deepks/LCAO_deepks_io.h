@@ -3,6 +3,7 @@
 
 #ifdef __MLALGO
 
+#include "deepks_param.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_base/tool_title.h"
@@ -44,10 +45,8 @@ void load_npy_gedm(const int nat, const int des_per_atom, double** gedm, double&
 
 /// save descriptor
 void save_npy_d(const int nat,
-                const int des_per_atom,
-                const int inlmax,
-                const std::vector<int>& inl2l,
                 const bool deepks_equiv,
+                const DeePKS_Param& deepks_param,
                 const std::vector<torch::Tensor>& descriptor,
                 const std::string& dm_eig_file,
                 const int rank);

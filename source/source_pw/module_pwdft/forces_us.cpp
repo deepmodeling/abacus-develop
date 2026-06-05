@@ -1,4 +1,6 @@
 #include "forces.h"
+#include "source_base/parallel_reduce.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_base/libm/libm.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/math_ylmreal.h"
@@ -21,7 +23,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                                           const UnitCell& ucell)
 {
     ModuleBase::TITLE("Forces", "cal_force_us");
-    ModuleBase::timer::tick("Forces", "cal_force_us");
+    ModuleBase::timer::start("Forces", "cal_force_us");
 
     const int npw = rho_basis->npw;
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
@@ -31,7 +33,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     ModuleBase::matrix forceq(ucell.nat, 3);
 
-    ModuleBase::matrix veff = elec.pot->get_effective_v();
+    ModuleBase::matrix veff = elec.pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -98,19 +100,19 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                 const double zero = 0;
                 for (int ipol = 0; ipol < 3; ipol++)
                 {
-                    dgemm_(&transa,
-                           &transb,
-                           &nij,
-                           &atom->na,
-                           &dim,
-                           &(ucell.omega),
-                           qgm_data,
-                           &dim,
+                    BlasConnector::gemm(transb,
+                           transa,
+                           atom->na,
+                           nij,
+                           dim,
+                           ucell.omega,
                            &aux1_data[ipol * dim * atom->na],
-                           &dim,
-                           &zero,
+                           dim,
+                           qgm_data,
+                           dim,
+                           zero,
                            &ddeeq(is, ipol, 0, 0),
-                           &nij);
+                           nij);
                 }
             }
 
@@ -137,7 +139,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
 
     delete[] qnorm;
 
-    ModuleBase::timer::tick("Forces", "cal_force_us");
+    ModuleBase::timer::end("Forces", "cal_force_us");
 }
 
 template class Forces<double, base_device::DEVICE_CPU>;

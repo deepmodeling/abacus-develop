@@ -3,8 +3,9 @@
 #include "source_io/module_parameter/parameter.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/serialization_cereal.h"
-#include "source_pw/module_pwdft/global.h"
 #endif
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
 namespace unitcell
 {
     void bcast_atoms_tau(Atom* atoms,
@@ -112,8 +113,14 @@ namespace unitcell
 
         #ifdef __EXX
         ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs,
-                                    MPI_COMM_WORLD,
-                                    0);
+                                      MPI_COMM_WORLD,
+                                      0);
+        ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_opt_abfs.files_abfs,
+                                      MPI_COMM_WORLD,
+                                      0);
+        ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_opt_abfs.files_jles,
+                                      MPI_COMM_WORLD,
+                                      0);
         #endif
         return;
     #endif

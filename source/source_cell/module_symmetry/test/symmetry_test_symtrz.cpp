@@ -1,4 +1,5 @@
 #include "symmetry_test_cases.h"
+#include "source_io/module_output/output.h"
 #include "mpi.h"
 
 /************************************************
@@ -19,6 +20,10 @@ UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
+SepPot::SepPot(){}
+SepPot::~SepPot(){}
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 
 inline std::vector<double> allocate_pos(ModuleSymmetry::Symmetry& symm, UnitCell& ucell)
 {
@@ -46,7 +51,7 @@ TEST_F(SymmetryTest, ForceSymmetry)
 {
     auto check_force = [](stru_& conf, ModuleBase::matrix& force)
     {
-        // 1. check zeros  
+        // 1. check zeros
         for (auto iat : conf.force_zero_iat)
             for (int j = 0; j < 3; ++j)
                 EXPECT_NEAR(force(iat, j), 0.0, DOUBLETHRESHOLD);

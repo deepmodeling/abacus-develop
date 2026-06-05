@@ -1,8 +1,6 @@
 #ifndef METALCAO_H
 #define METALCAO_H
 #include "source_base/timer.h"
-#include "source_lcao/module_gint/gint_gamma.h"
-#include "source_lcao/module_gint/gint_k.h"
 #include "operator_lcao.h"
 
 namespace hamilt

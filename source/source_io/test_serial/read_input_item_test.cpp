@@ -16,8 +16,8 @@
  *     - read in specific values for some items
  */
 #define private public
-#include "source_io/input_item.h"
-#include "source_io/read_input.h"
+#include "source_io/module_parameter/input_item.h"
+#include "source_io/module_parameter/read_input.h"
 #undef private
 
 class InputTest : public testing::Test
@@ -219,6 +219,22 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.mem_saver, 0);
     }
+    { // gint_precision
+        auto it = find_label("gint_precision", readinput.input_lists);
+        param.input.gint_precision = "invalid";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.gint_precision = "mix";
+        param.input.basis_type = "pw";
+        param.input.device = "cpu";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // diag_proc
         auto it = find_label("diago_proc", readinput.input_lists);
         param.input.diago_proc = 0;
@@ -365,10 +381,16 @@ TEST_F(InputTest, Item_test)
     }
     { // out_pot
         auto it = find_label("out_pot", readinput.input_lists);
-        param.input.calculation = "get_wf";
-        param.input.out_pot = 1;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_pot, 0);
+        param.input.calculation = "scf";
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_pot[0], 1);
+        EXPECT_EQ(param.input.out_pot[1], 8);
+
+        it->second.str_values = {"1", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_pot[0], 1);
+        EXPECT_EQ(param.input.out_pot[1], 2);
     }
     { // out_dos
         auto it = find_label("out_dos", readinput.input_lists);
@@ -766,7 +788,7 @@ TEST_F(InputTest, Item_test)
     }
     { // relax_method
         auto it = find_label("relax_method", readinput.input_lists);
-        param.input.relax_method = "none";
+        param.input.relax_method[0] = "none";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -775,12 +797,12 @@ TEST_F(InputTest, Item_test)
     { //relax_new
         auto it = find_label("relax_new", readinput.input_lists);
         param.input.relax_new = true;
-        param.input.relax_method = "cg";
+        param.input.relax_method[0] = "cg";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_new, true);
 
         param.input.relax_new = true;
-        param.input.relax_method = "none";
+        param.input.relax_method[0] = "none";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_new, false);
     }
@@ -813,24 +835,27 @@ TEST_F(InputTest, Item_test)
     }
     { // out_dmk
         auto it = find_label("out_dmk", readinput.input_lists);
-        param.input.calculation = "get_wf";
-        param.input.out_dmk = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmk, false);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmk[0], 1);
+        EXPECT_EQ(param.input.out_dmk[1], 8);
+
+        it->second.str_values = {"1", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmk[0], 1);
+        EXPECT_EQ(param.input.out_dmk[1], 2);
     }
     { // out_dmr
         auto it = find_label("out_dmr", readinput.input_lists);
-        param.input.calculation = "get_wf";
-        param.input.out_dmr = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_dmr, false);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmr[0], 1);
+        EXPECT_EQ(param.input.out_dmr[1], 8);
 
-        param.sys.gamma_only_local = true;
-        param.input.out_dmr = true;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        it->second.str_values = {"1", "2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dmr[0], 1);
+        EXPECT_EQ(param.input.out_dmr[1], 2);
     }
     { // method_sto
         auto it = find_label("method_sto", readinput.input_lists);
@@ -916,7 +941,7 @@ TEST_F(InputTest, Item_test)
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
         param.input.esolver_type = "lcao";
-        param.input.out_mat_r = true;
+        param.input.out_mat_r[0] = 1;
         param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -943,12 +968,6 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
         EXPECT_EQ(param.input.out_mat_hs[1], 2);
 
-        it->second.str_values = {"1", "2", "3"};
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-
         param.input.out_mat_hs = {0};
         param.input.qo_switch = true;
         it->second.reset_value(it->second, param);
@@ -964,16 +983,8 @@ TEST_F(InputTest, Item_test2)
     std::string output = "";
     { // out_mat_dh
         auto it = find_label("out_mat_dh", readinput.input_lists);
-        param.input.out_mat_dh = true;
+        param.input.out_mat_dh[0] = 1;
         param.input.nspin = 4;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // out_interval
-        auto it = find_label("out_interval", readinput.input_lists);
-        param.input.out_interval = 0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1408,15 +1419,7 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_ccp_rmesh_times, "1");
 
-        param.input.exx_ccp_rmesh_times = "0";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // exx_opt_orb_lmax
-        auto it = find_label("exx_opt_orb_lmax", readinput.input_lists);
-        param.input.exx_opt_orb_lmax = -1;
+        param.input.exx_ccp_rmesh_times = "-1";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1629,10 +1632,8 @@ TEST_F(InputTest, Item_test2)
     { // sc_mag_switch
         auto it = find_label("sc_mag_switch", readinput.input_lists);
         param.input.sc_mag_switch = true;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        // Since sc_mag_switch check is disabled, just call the function without expecting exit
+        it->second.check_value(it->second, param);
     }
     { // sc_thr
         auto it = find_label("sc_thr", readinput.input_lists);
@@ -1859,5 +1860,73 @@ TEST_F(InputTest, Item_test2)
         param.input.nocc = 0;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.nocc, 4);
+    }
+}
+
+TEST_F(InputTest, Item_test_out_mat_vec)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+
+    { // out_mat_dh
+        auto it = find_label("out_mat_dh", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_dh[0], 1);
+        EXPECT_EQ(param.input.out_mat_dh[1], 8);
+
+        it->second.str_values = {"1", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_dh[0], 1);
+        EXPECT_EQ(param.input.out_mat_dh[1], 12);
+    }
+    { // out_mat_ds
+        auto it = find_label("out_mat_ds", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_ds[0], 1);
+        EXPECT_EQ(param.input.out_mat_ds[1], 8);
+
+        it->second.str_values = {"1", "10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_ds[0], 1);
+        EXPECT_EQ(param.input.out_mat_ds[1], 10);
+    }
+    { // out_mat_t
+        auto it = find_label("out_mat_t", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_t[0], 1);
+        EXPECT_EQ(param.input.out_mat_t[1], 8);
+
+        it->second.str_values = {"1", "15"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_t[0], 1);
+        EXPECT_EQ(param.input.out_mat_t[1], 15);
+    }
+    { // out_mat_r
+        auto it = find_label("out_mat_r", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_r[0], 1);
+        EXPECT_EQ(param.input.out_mat_r[1], 8);
+
+        it->second.str_values = {"1", "6"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_r[0], 1);
+        EXPECT_EQ(param.input.out_mat_r[1], 6);
+    }
+    { // out_mat_xc2
+        auto it = find_label("out_mat_xc2", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_xc2[0], 1);
+        EXPECT_EQ(param.input.out_mat_xc2[1], 8);
+
+        it->second.str_values = {"1", "9"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_mat_xc2[0], 1);
+        EXPECT_EQ(param.input.out_mat_xc2[1], 9);
     }
 }

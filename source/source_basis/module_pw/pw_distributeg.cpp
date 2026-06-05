@@ -2,7 +2,6 @@
 #include "source_base/tool_quit.h"
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 namespace ModulePW
 {
 /**
@@ -12,7 +11,7 @@ namespace ModulePW
  */
 void PW_Basis::distribute_g()
 {
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    ModuleBase::timer::start(this->classname, "distributeg");
     if(this->distribution_type == 1)
     {
         this->distribution_method1();
@@ -25,9 +24,9 @@ void PW_Basis::distribute_g()
     {
         ModuleBase::WARNING_QUIT("divide", "No such division type.");
     }
-    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", PARAM.inp.calculation,
-    "Current core has no plane waves! Please reduce the cores.");
-    ModuleBase::timer::tick(this->classname, "distributeg");
+    const char* no_pw_message = "Current core has no plane waves! Please reduce the cores.";
+    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", no_pw_message);
+    ModuleBase::timer::end(this->classname, "distributeg");
     return;
 }
 
