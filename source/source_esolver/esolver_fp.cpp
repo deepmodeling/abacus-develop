@@ -181,8 +181,20 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf,
-                                    GlobalV::ofs_running, GlobalV::ofs_warning);
+
+        const bool skip_charge_extrap_for_wfc = PARAM.inp.basis_type == "lcao"
+                                                && PARAM.inp.wfc_extrap != "none"
+                                                && istep > 0;
+        if (skip_charge_extrap_for_wfc)
+        {
+            GlobalV::ofs_running << " charge density extrapolation is skipped because wfc_extrap = "
+                                 << PARAM.inp.wfc_extrap << "." << std::endl;
+        }
+        else
+        {
+            this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf,
+                                        GlobalV::ofs_running, GlobalV::ofs_warning);
+        }
     }
 
     //! Evaluate the vdW correction once for this ionic configuration.
