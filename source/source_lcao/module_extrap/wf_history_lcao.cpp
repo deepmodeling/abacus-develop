@@ -1,6 +1,7 @@
 #include "source_lcao/module_extrap/wf_history_lcao.h"
 
 #include "source_lcao/module_extrap/wf_orthonormalize_lcao.h"
+#include "source_base/timer.h"
 
 #include <algorithm>
 #include <complex>
@@ -142,12 +143,16 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
         // Work on an owned trial Psi first.  The caller's Psi is not overwritten
         // unless the stored WFN can be loaded and reorthonormalized successfully.
         psi::Psi<double> psi_trial(psi);
-        if (!snapshot.load_to(psi_trial))
+        ModuleBase::timer::start("WFN_Extrap", "restore_snapshot");
+        const bool snapshot_loaded = snapshot.load_to(psi_trial);
+        ModuleBase::timer::end("WFN_Extrap", "restore_snapshot");
+        if (!snapshot_loaded)
         {
             result.status = WfcExtrapStatus::DimensionMismatch;
             return result;
         }
 
+        ModuleBase::timer::start("WFN_Extrap", "orthonormalize");
         const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
                                                                                pv,
                                                                                psi_trial,
@@ -155,6 +160,7 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
                                                                                1.0e-12,
                                                                                pivot_threshold,
                                                                                check_tolerance);
+        ModuleBase::timer::end("WFN_Extrap", "orthonormalize");
         if (!orth_result.ok())
         {
             result.status = orth_result.status;

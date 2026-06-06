@@ -1,4 +1,5 @@
 #include "source_lcao/module_extrap/wf_orthonormalize_lcao.h"
+#include "source_base/timer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -13,6 +14,24 @@ namespace ModuleExtrap
 {
 namespace
 {
+
+class TimerGuard
+{
+  public:
+    TimerGuard(const char* group, const char* name) : group_(group), name_(name)
+    {
+        ModuleBase::timer::start(group_, name_);
+    }
+
+    ~TimerGuard()
+    {
+        ModuleBase::timer::end(group_, name_);
+    }
+
+  private:
+    const char* group_;
+    const char* name_;
+};
 
 inline std::size_t idx(const int row, const int col, const int ncol) noexcept
 {
@@ -234,6 +253,7 @@ WfcExtrapStatus assemble_global_overlap(const double* overlap,
                                         const Parallel_Orbitals& pv,
                                         std::vector<double>& overlap_global)
 {
+    TimerGuard timer("WFN_Extrap", "assemble_overlap");
     const int nbasis_global = pv.get_global_row_size();
     if (overlap == nullptr || nbasis_global <= 0 || pv.get_global_col_size() != nbasis_global)
     {
@@ -284,6 +304,7 @@ WfcExtrapStatus assemble_global_coeff_active(const double* coeff_local,
                                              const bool coeff_columns_are_basis,
                                              std::vector<double>& coeff_global)
 {
+    TimerGuard timer("WFN_Extrap", "assemble_coeff");
     const int nbasis_global = pv.get_global_row_size();
     if (coeff_local == nullptr || nbasis_global <= 0 || ncoeff_local <= 0 || nbasis_local <= 0
         || nactive_bands < 0 || pv.get_row_size() != nbasis_local)
@@ -320,6 +341,7 @@ void scatter_global_coeff_active(const std::vector<double>& coeff_global,
                                  const bool coeff_columns_are_basis,
                                  double* coeff_local)
 {
+    TimerGuard timer("WFN_Extrap", "scatter_coeff");
     const int nbasis_global = pv.get_global_row_size();
     for (int ib_local = 0; ib_local < ncoeff_local; ++ib_local)
     {
@@ -435,29 +457,33 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
             return result;
         }
 
-        std::vector<double> metric;
-        build_overlap_in_band_space(overlap_global.data(), coeff_global.data(), nactive_bands, nbasis_global, metric);
-        fill_metric_diagnostics(metric, nactive_bands, result);
-
-        if (!cholesky_lower_in_place(metric, nactive_bands, pivot_threshold, result))
+        double max_dev = 0.0;
         {
-            result.status = WfcExtrapStatus::OrthogonalizationFailed;
-            result.failed_state = istate;
-            return result;
-        }
+            TimerGuard timer("WFN_Extrap", "cholesky_transform");
+            std::vector<double> metric;
+            build_overlap_in_band_space(overlap_global.data(), coeff_global.data(), nactive_bands, nbasis_global, metric);
+            fill_metric_diagnostics(metric, nactive_bands, result);
 
-        apply_inverse_cholesky_left(metric, coeff_global.data(), nactive_bands, nbasis_global);
+            if (!cholesky_lower_in_place(metric, nactive_bands, pivot_threshold, result))
+            {
+                result.status = WfcExtrapStatus::OrthogonalizationFailed;
+                result.failed_state = istate;
+                return result;
+            }
 
-        const double max_dev = max_orthonormality_deviation(overlap_global.data(),
-                                                            coeff_global.data(),
-                                                            nactive_bands,
-                                                            nbasis_global);
-        if (!std::isfinite(max_dev) || max_dev > check_tolerance)
-        {
-            result.status = WfcExtrapStatus::OrthogonalizationFailed;
-            result.failed_state = istate;
-            result.max_deviation = max_dev;
-            return result;
+            apply_inverse_cholesky_left(metric, coeff_global.data(), nactive_bands, nbasis_global);
+
+            max_dev = max_orthonormality_deviation(overlap_global.data(),
+                                                   coeff_global.data(),
+                                                   nactive_bands,
+                                                   nbasis_global);
+            if (!std::isfinite(max_dev) || max_dev > check_tolerance)
+            {
+                result.status = WfcExtrapStatus::OrthogonalizationFailed;
+                result.failed_state = istate;
+                result.max_deviation = max_dev;
+                return result;
+            }
         }
         max_deviation_all = std::max(max_deviation_all, max_dev);
 
