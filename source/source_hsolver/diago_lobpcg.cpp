@@ -1502,10 +1502,11 @@ void DiagoLobpcg<T, Device>::orth_cholesky_s(
 template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::validate_ethr_band(const std::vector<double>& ethr_band) const
 {
-    if (ethr_band.size() < static_cast<size_t>(this->n_band_l)) {
+    if (ethr_band.size() != static_cast<size_t>(this->n_band_l)) {
         std::ostringstream oss;
-        oss << "LOBPCG ethr_band size mismatch: size=" << ethr_band.size()
-            << ", required=" << this->n_band_l;
+        oss << "LOBPCG local ethr_band size mismatch: size=" << ethr_band.size()
+            << ", required local bands=" << this->n_band_l
+            << ", global bands=" << this->n_band;
         if (!this->diag_context.empty()) {
             oss << ", context={" << this->diag_context << "}";
         }

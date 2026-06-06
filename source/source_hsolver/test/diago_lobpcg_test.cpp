@@ -523,7 +523,7 @@ class DiagoLobpcgTest : public ::testing::Test
         };
 
         std::vector<TestReal> eigens(nband_l, 0.0);
-        std::vector<double> ethr(nband, 1e-8);
+        std::vector<double> ethr(nband_l, 1e-8);
         const int old_scf = hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER;
         hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER = 1;
 
@@ -630,7 +630,7 @@ class DiagoLobpcgTest : public ::testing::Test
         };
 
         std::vector<TestReal> eigens(nband_l, 0.0);
-        std::vector<double> ethr(nband, 0.0);
+        std::vector<double> ethr(nband_l, 0.0);
         const int old_scf = hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER;
         hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER = 1;
 
@@ -783,7 +783,7 @@ TEST_F(DiagoLobpcgTest, ThrowsWhenNotconvExceedsLimit)
     hsolver::DiagoIterAssist<TestT, TestDevice>::avg_iter = old_avg_iter;
 }
 
-TEST_F(DiagoLobpcgTest, RejectsShortEthrBand)
+TEST_F(DiagoLobpcgTest, RejectsNonLocalEthrBandSize)
 {
     const int npw = 20, nband = 6;
     std::vector<TestT> hmat;
@@ -804,19 +804,20 @@ TEST_F(DiagoLobpcgTest, RejectsShortEthrBand)
     };
 
     std::vector<TestReal> eigens(nband, 0.0);
-    std::vector<double> ethr;
+    std::vector<double> ethr(nband + 1, 1e-6);
     hsolver::DiagoLobpcg<TestT, TestDevice> lobpcg(prec.data());
     lobpcg.init_iter(nband, nband, npw, npw);
     lobpcg.set_diag_context("k=1/1, npw=20, nbands=6");
 
     try {
         lobpcg.diag(hpsi_func, spsi_func, psi.data(), eigens.data(), ethr);
-        FAIL() << "Expected invalid_argument for short ethr_band";
+        FAIL() << "Expected invalid_argument for non-local ethr_band size";
     } catch (const std::invalid_argument& e) {
         const std::string msg = e.what();
-        EXPECT_NE(msg.find("ethr_band size mismatch"), std::string::npos);
-        EXPECT_NE(msg.find("size=0"), std::string::npos);
-        EXPECT_NE(msg.find("required=6"), std::string::npos);
+        EXPECT_NE(msg.find("local ethr_band size mismatch"), std::string::npos);
+        EXPECT_NE(msg.find("size=7"), std::string::npos);
+        EXPECT_NE(msg.find("required local bands=6"), std::string::npos);
+        EXPECT_NE(msg.find("global bands=6"), std::string::npos);
         EXPECT_NE(msg.find("context={k=1/1, npw=20, nbands=6}"), std::string::npos);
     }
 }
@@ -942,8 +943,6 @@ int main(int argc, char** argv)
         MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &POOL_WORLD);
     }
     GlobalV::NPROC_IN_POOL = nproc;
-#else
-    MPI_Init(&argc, &argv);
 #endif
 
     testing::InitGoogleTest(&argc, argv);
@@ -956,6 +955,8 @@ int main(int argc, char** argv)
     if (myrank == 0 && result != 0)
         std::cout << "ERROR: some tests are not passed" << std::endl;
 
+#ifdef __MPI
     MPI_Finalize();
+#endif
     return result;
 }
