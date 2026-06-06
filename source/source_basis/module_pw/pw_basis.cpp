@@ -189,18 +189,15 @@ void PW_Basis::collect_local_pw()
     {
         return;
     }
-    ModuleBase::timer::start(this->classname, "collect_local_pw");
     if (this->local_pw_cache_valid.load())
     {
         this->local_pw_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     if (this->local_pw_cache_valid.load())
     {
         this->local_pw_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     this->local_pw_cache_misses.fetch_add(1);
@@ -254,7 +251,6 @@ void PW_Basis::collect_local_pw()
         }
     }
     this->local_pw_cache_valid.store(true);
-    ModuleBase::timer::end(this->classname, "collect_local_pw");
     return;
 }
 
@@ -269,18 +265,15 @@ void PW_Basis::collect_uniqgg()
     {
         return;
     }
-    ModuleBase::timer::start(this->classname, "collect_uniqgg");
     if (this->uniqgg_cache_valid.load())
     {
         this->uniqgg_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_uniqgg");
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     if (this->uniqgg_cache_valid.load())
     {
         this->uniqgg_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_uniqgg");
         return;
     }
     this->uniqgg_cache_misses.fetch_add(1);
@@ -372,7 +365,6 @@ void PW_Basis::collect_uniqgg()
             gg_uniq[igg] = tmpgg2[igg];
     }
     this->uniqgg_cache_valid.store(true);
-    ModuleBase::timer::end(this->classname, "collect_uniqgg");
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const

@@ -178,7 +178,6 @@ void PW_Basis_K::initparameters(const bool gamma_only_in,
 
 void PW_Basis_K::setupIndGk()
 {
-    ModuleBase::timer::start(this->classname, "setupIndGk");
     this->invalidate_cache();
     // count npwk
     this->npwk_max = 0;
@@ -250,7 +249,6 @@ void PW_Basis_K::setupIndGk()
     // get igl2isz_k and igl2ig_k
     if (this->npwk_max <= 0)
     {
-        ModuleBase::timer::end(this->classname, "setupIndGk");
         return;
     }
 
@@ -277,7 +275,6 @@ void PW_Basis_K::setupIndGk()
     }
 #endif
     this->get_ig2ixyz_k();
-    ModuleBase::timer::end(this->classname, "setupIndGk");
     return;
 }
 
@@ -332,10 +329,8 @@ void PW_Basis_K::setuptransform()
 
 void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_height_in, const double& erf_sigma_in)
 {
-    ModuleBase::timer::start(this->classname, "collect_local_pw");
     if (this->npwk_max <= 0)
     {
-        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     const bool gcar_hit = this->gcar_cache_valid.load() && this->gcar != nullptr;
@@ -348,7 +343,6 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
     {
         this->gcar_cache_hits.fetch_add(1);
         this->gk2_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
@@ -362,7 +356,6 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
     {
         this->gcar_cache_hits.fetch_add(1);
         this->gk2_cache_hits.fetch_add(1);
-        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
     if (locked_gcar_hit)
@@ -448,7 +441,6 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
         this->sync_gk2_device_cache();
         this->gk_cache_valid.store(true);
     }
-    ModuleBase::timer::end(this->classname, "collect_local_pw");
 }
 
 void PW_Basis_K::sync_gcar_device_cache()
