@@ -3738,12 +3738,31 @@ parameters:
       * d2: Grimme's D2 dispersion correction method
       * d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
       * d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
+      * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
       * none: no vdW correction
 
       [NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
+
+      [NOTE] DFT-D4 support requires ABACUS to be configured with ENABLE_DFTD4=ON and a CMake-installed dftd4 library exporting `dftd4-config.cmake`. DFT-D4 damping parameters are loaded from the external library.
     default_value: none
     unit: ""
     availability: ""
+  - name: vdw_d4_xc
+    category: vdW correction
+    type: String
+    description: |
+      Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+    default_value: default
+    unit: ""
+    availability: vdw_method is set to d4
+  - name: vdw_d4_model
+    category: vdW correction
+    type: String
+    description: |
+      DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
+    default_value: d4
+    unit: ""
+    availability: vdw_method is set to d4
   - name: vdw_s6
     category: vdW correction
     type: String
@@ -3852,7 +3871,7 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
+      Defines the cutoff radius when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method. For DFT-D4, this controls the two-body dispersion cutoff, while the three-body cutoff is internally limited to the DFT-D4 default value of 40 Bohr.
     default_value: ""
     unit: defined by vdw_radius_unit (default Bohr)
     availability: vdw_cutoff_type is set to radius
@@ -3878,10 +3897,10 @@ parameters:
     category: vdW correction
     type: Real
     description: |
-      The cutoff radius when calculating coordination numbers.
+      The cutoff radius when calculating coordination numbers. The default is 40 Bohr for DFT-D3 and 30 Bohr for DFT-D4.
     default_value: "40"
     unit: "defined by vdw_cn_thr_unit (default: Bohr)"
-    availability: vdw_method is set to d3_0 or d3_bj
+    availability: vdw_method is set to d3_0, d3_bj, or d4
   - name: vdw_cn_thr_unit
     category: vdW correction
     type: String

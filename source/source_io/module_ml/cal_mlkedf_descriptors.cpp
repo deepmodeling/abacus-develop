@@ -19,7 +19,8 @@ void Cal_MLKEDF_Descriptors::set_para(
     const std::vector<double> &yukawa_alpha,
     const std::vector<std::string> &kernel_file,
     const double &omega,
-    const ModulePW::PW_Basis *pw_rho
+    const ModulePW::PW_Basis *pw_rho,
+    std::ostream& ofs_running
 )
 {
     this->nx = nx;
@@ -34,7 +35,6 @@ void Cal_MLKEDF_Descriptors::set_para(
     this->kernel_scaling = kernel_scaling;
     this->yukawa_alpha = yukawa_alpha;
     this->kernel_file = kernel_file;
-    std::cout << "nkernel = " << nkernel << std::endl;
 
     if (PARAM.inp.of_wt_rho0 != 0)
     {
