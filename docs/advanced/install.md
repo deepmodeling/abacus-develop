@@ -77,6 +77,25 @@ These two libraries are added as submodules in the [deps](https://github.com/dee
 
 If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
 
+
+## Build with DFT-D4 support
+
+ABACUS can use the external [DFT-D4](https://github.com/dftd4/dftd4) library for Grimme's DFT-D4 dispersion correction. DFT-D4 support is optional and disabled by default.
+
+DFT-D4 must be built and installed with CMake, so that ABACUS can locate it through the exported `dftd4-config.cmake` package. Meson-built installations, including the Conda package of `dftd4`, are not supported unless they provide a compatible CMake package file.
+
+To build ABACUS with DFT-D4 support, pass `-DENABLE_DFTD4=ON` to CMake and provide `CMAKE_PREFIX_PATH` environment variable.
+
+In the input file, enable DFT-D4 with:
+
+```text
+vdw_method d4
+vdw_d4_xc pbe
+vdw_d4_model d4    # or d4s for the smooth D4S model
+```
+
+If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
+
 ## Build Unit Tests
 
 To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify path to local installation of [Googletest](https://github.com/google/googletest) by setting `GTEST_DIR` flags. If not found in local, the configuration process will try to download it automatically.
