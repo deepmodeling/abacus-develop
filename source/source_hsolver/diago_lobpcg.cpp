@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -1575,6 +1576,9 @@ void DiagoLobpcg<T, Device>::report_not_converged(
 template <typename T, typename Device>
 bool DiagoLobpcg<T, Device>::profile_enabled() const
 {
+    if (std::getenv("ABACUS_LOBPCG_PROFILE") != nullptr) {
+        return true;
+    }
     return static_cast<long long>(this->n_basis) * this->n_band_l >= 200000;
 }
 
@@ -1803,9 +1807,14 @@ void DiagoLobpcg<T, Device>::lobpcg_update(
         syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
         syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
 
-        if (!finite_scalar_block(psi.data<T>(), local_sz)
-            || !finite_scalar_block(hpsi.data<T>(), local_sz)
-            || !finite_real_block(eigen.data<Real>(), n)) {
+        int update_invalid_mask =
+            (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim) ? 1 : 0)
+          | (!finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim) ? 2 : 0)
+          | (!finite_real_block(eigen.data<Real>(), n) ? 4 : 0);
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, &update_invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
+#endif
+        if (update_invalid_mask != 0) {
             throw std::runtime_error("LOBPCG band-parallel update produced non-finite values");
         }
 
@@ -1920,8 +1929,8 @@ void DiagoLobpcg<T, Device>::lobpcg_update(
     syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
     syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
 
-    if (!finite_scalar_block(psi.data<T>(), local_sz)
-        || !finite_scalar_block(hpsi.data<T>(), local_sz)
+    if (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim)
+        || !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim)
         || !finite_real_block(eigen.data<Real>(), n)) {
         throw std::runtime_error("LOBPCG standard update produced non-finite values");
     }
@@ -2218,10 +2227,24 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
     syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
     syncmem_complex_op()(spdir.data<T>(), sp_new, local_sz);
 
-    if (!finite_scalar_block(psi.data<T>(), local_sz)
-        || !finite_scalar_block(hpsi.data<T>(), local_sz)
-        || !finite_scalar_block(spsi.data<T>(), local_sz)
-        || !finite_real_block(eigen.data<Real>(), n)) {
+    bool psi_invalid = !finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim);
+    bool hpsi_invalid = !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim);
+    bool spsi_invalid = !finite_vector_block(spsi.data<T>(), this->n_band_l, nbs, this->n_dim);
+    bool eigen_invalid = !finite_real_block(eigen.data<Real>(), n);
+    int update_invalid_mask = (psi_invalid ? 1 : 0)
+                            | (hpsi_invalid ? 2 : 0)
+                            | (spsi_invalid ? 4 : 0)
+                            | (eigen_invalid ? 8 : 0);
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &update_invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
+#endif
+    if (update_invalid_mask != 0) {
+        this->diag_log("lobpcg_update_s_parallel produced non-finite values",
+                       vector_block_diagnostics("psi", psi.data<T>(), this->n_band_l, nbs, this->n_dim),
+                       vector_block_diagnostics("hpsi", hpsi.data<T>(), this->n_band_l, nbs, this->n_dim),
+                       vector_block_diagnostics("spsi", spsi.data<T>(), this->n_band_l, nbs, this->n_dim)
+                           + ", eigen_invalid=" + std::to_string((update_invalid_mask & 8) != 0)
+                           + ", invalid_mask=" + std::to_string(update_invalid_mask));
         throw std::runtime_error("LOBPCG generalized parallel update produced non-finite values");
     }
 
@@ -2388,9 +2411,9 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s(
     syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
     syncmem_complex_op()(spdir.data<T>(), sp_new, local_sz);
 
-    if (!finite_scalar_block(psi.data<T>(), local_sz)
-        || !finite_scalar_block(hpsi.data<T>(), local_sz)
-        || !finite_scalar_block(spsi.data<T>(), local_sz)
+    if (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim)
+        || !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim)
+        || !finite_vector_block(spsi.data<T>(), this->n_band_l, nbs, this->n_dim)
         || !finite_real_block(eigen.data<Real>(), n)) {
         throw std::runtime_error("LOBPCG generalized update produced non-finite values");
     }
@@ -2579,13 +2602,28 @@ void DiagoLobpcg<T, Device>::diag(
 
     const int scf_iter = DiagoIterAssist<T, Device>::SCF_ITER;
 
+    auto t0 = LobpcgClock::now();
     this->calc_prec();
+    this->profile_log("S!=I", "initial_calc_prec", 0,
+                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
     if (this->n_band_l != this->n_band) {
+        t0 = LobpcgClock::now();
         this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
+        this->profile_log("S!=I", "initial_hpsi", 0,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        t0 = LobpcgClock::now();
         this->generalized_rayleigh_ritz_parallel(this->psi, this->hpsi, this->spsi, this->eigen);
+        this->profile_log("S!=I", "initial_rr_parallel", 0,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
     } else {
+        t0 = LobpcgClock::now();
         this->repair_initial_subspace_s(hpsi_func, spsi_func);
+        this->profile_log("S!=I", "initial_repair", 0,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        t0 = LobpcgClock::now();
         this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
+        this->profile_log("S!=I", "initial_rr", 0,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
     }
 
     setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0),
@@ -2609,18 +2647,30 @@ void DiagoLobpcg<T, Device>::diag(
 
     for (int ntry = 0; ntry < max_iter; ++ntry) {
         used_iter = ntry + 1;
+        t0 = LobpcgClock::now();
         this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
                                  this->prec, this->grad, this->err_st);
+        this->profile_log("S!=I", "residual", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
         if (!this->test_error(this->err_st, effective_ethr_band))
             break;
 
         const int psi_sz = this->n_basis * this->n_band_l;
         const int eig_sz = this->n_band;
 
+        t0 = LobpcgClock::now();
         this->calc_spsi_with_block(spsi_func, this->grad.data<T>(), this->sgrad);
+        this->profile_log("S!=I", "grad_spsi", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        t0 = LobpcgClock::now();
         this->orth_projection_s(this->psi, this->spsi, this->tmp_hsub,
                                 this->sgrad, this->grad);
+        this->profile_log("S!=I", "grad_projection", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        t0 = LobpcgClock::now();
         this->calc_hpsi_with_block(hpsi_func, this->grad.data<T>(), this->hgrad);
+        this->profile_log("S!=I", "grad_hpsi", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
 
         std::vector<T> psi_bak(psi_sz), hpsi_bak(psi_sz), spsi_bak(psi_sz);
         std::vector<Real> eigen_bak(eig_sz);
@@ -2630,6 +2680,7 @@ void DiagoLobpcg<T, Device>::diag(
         std::copy(this->eigen.data<Real>(), this->eigen.data<Real>() + eig_sz, eigen_bak.data());
 
         try {
+            t0 = LobpcgClock::now();
             if (this->n_band_l != this->n_band) {
                 this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
                                                this->grad, this->hgrad, this->sgrad,
@@ -2641,7 +2692,12 @@ void DiagoLobpcg<T, Device>::diag(
                                       this->pdir, this->hpdir, this->spdir,
                                       this->eigen);
             }
-        } catch (const std::exception&) {
+            this->profile_log("S!=I", "lobpcg_update", used_iter,
+                              std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        } catch (const std::exception& e1) {
+            this->diag_log("lobpcg_update_s failed: " + std::string(e1.what()),
+                           "retry without previous search direction",
+                           "iteration=" + std::to_string(used_iter));
             std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
             std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
             std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
@@ -2653,6 +2709,7 @@ void DiagoLobpcg<T, Device>::diag(
             this->has_pdir = false;
 
             try {
+                t0 = LobpcgClock::now();
                 if (this->n_band_l != this->n_band) {
                     this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
                                                    this->grad, this->hgrad, this->sgrad,
@@ -2664,12 +2721,18 @@ void DiagoLobpcg<T, Device>::diag(
                                           this->pdir, this->hpdir, this->spdir,
                                           this->eigen);
                 }
-            } catch (const std::exception&) {
+                this->profile_log("S!=I", "lobpcg_update_retry", used_iter,
+                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+            } catch (const std::exception& e2) {
+                this->diag_log("lobpcg_update_s retry failed: " + std::string(e2.what()),
+                               "fallback to Rayleigh-Ritz repair",
+                               "iteration=" + std::to_string(used_iter));
                 std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
                 std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
                 std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
                 std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
 
+                t0 = LobpcgClock::now();
                 this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
                 this->calc_spsi_with_block(spsi_func, this->psi.data<T>(), this->spsi);
                 if (this->n_band_l != this->n_band) {
@@ -2677,6 +2740,8 @@ void DiagoLobpcg<T, Device>::diag(
                 } else {
                     this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
                 }
+                this->profile_log("S!=I", "fallback_rr", used_iter,
+                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
             }
         }
 
@@ -2684,6 +2749,7 @@ void DiagoLobpcg<T, Device>::diag(
         const bool restart_next = has_next_iteration && scf_iter == 1 && ((ntry + 1) % this->nline == 0);
         if (has_next_iteration && !restart_next) {
             try {
+                t0 = LobpcgClock::now();
                 if (this->n_band_l != this->n_band) {
                     this->orth_projection_s_with_h(this->psi, this->hpsi, this->spsi,
                                                    this->tmp_hsub, this->hpdir,
@@ -2694,6 +2760,8 @@ void DiagoLobpcg<T, Device>::diag(
                                             this->spdir, this->pdir);
                     this->calc_hpsi_with_block(hpsi_func, this->pdir.data<T>(), this->hpdir);
                 }
+                this->profile_log("S!=I", "p_projection", used_iter,
+                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
             } catch (const std::exception&) {
                 std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
                 std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
@@ -2713,8 +2781,11 @@ void DiagoLobpcg<T, Device>::diag(
         }
     }
 
+    t0 = LobpcgClock::now();
     this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
                              this->prec, this->grad, this->err_st);
+    this->profile_log("S!=I", "final_residual", used_iter,
+                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
     this->report_not_converged("S!=I", used_iter, max_iter, effective_ethr_band);
     DiagoIterAssist<T, Device>::avg_iter += static_cast<Real>(used_iter);
 
