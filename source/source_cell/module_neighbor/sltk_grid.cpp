@@ -389,10 +389,16 @@ void Grid::Construct_Adjacent_final(const FAtom& fatom1,
 
 void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell)
 {
+    // Build the Phase 2.1 integer-indexed path in the same init() pass as the
+    // legacy boxes. This keeps both paths comparable while Grid_Driver moves to
+    // AtomPack as the default query backend.
     atom_pack = ModuleNeighbor::build_atom_pack_from_unitcell(ucell, sradius, pbc);
     grid_storage = ModuleNeighbor::build_grid_storage_from_atom_pack(atom_pack, box_edge_length);
     neighbor_pairs_27 = ModuleNeighbor::build_neighbor_pairs_27(atom_pack, grid_storage, sradius);
 
+    // Convert the global pair list to per-center lookup indices so Find_atom()
+    // can keep its existing single-atom query interface without scanning all
+    // neighbor pairs each time.
     neighbor_pair_indices.clear();
     neighbor_pair_indices.resize(ucell.ntype);
     for (int it = 0; it < ucell.ntype; ++it)

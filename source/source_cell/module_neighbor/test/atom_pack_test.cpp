@@ -78,13 +78,15 @@ std::vector<ModuleNeighbor::NeighborPair> collect_legacy_neighbor_pairs(const Gr
             const auto& atom_neighbors = type_neighbors[center_natom];
             for (const FAtom* atom: atom_neighbors)
             {
-                pairs.push_back(ModuleNeighbor::NeighborPair{center_type,
-                                                             center_natom,
-                                                             atom->type,
-                                                             atom->natom,
-                                                             atom->cell_x,
-                                                             atom->cell_y,
-                                                             atom->cell_z});
+                ModuleNeighbor::NeighborPair pair;
+                pair.center_type = center_type;
+                pair.center_natom = center_natom;
+                pair.neighbor_type = atom->type;
+                pair.neighbor_natom = atom->natom;
+                pair.cell_x = atom->cell_x;
+                pair.cell_y = atom->cell_y;
+                pair.cell_z = atom->cell_z;
+                pairs.push_back(pair);
             }
         }
     }

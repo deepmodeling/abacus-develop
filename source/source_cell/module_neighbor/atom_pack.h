@@ -79,6 +79,8 @@ struct GridStorage
 
 struct NeighborPair
 {
+    // Complete directed pair key used for correctness comparisons and stable
+    // sorting. cell_* is the periodic image shift of the neighbor atom.
     int center_type = 0;
     int center_natom = 0;
     int neighbor_type = 0;
@@ -86,6 +88,10 @@ struct NeighborPair
     int cell_x = 0;
     int cell_y = 0;
     int cell_z = 0;
+
+    // Internal AtomPack indices used to recover coordinates when converting the
+    // pair list back to AdjacentAtomInfo. They are deliberately ignored by
+    // operator< and operator== so tests compare the physical neighbor relation.
     int center_index = -1;
     int neighbor_index = -1;
 

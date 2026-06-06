@@ -28,6 +28,8 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             AdjacentAtomInfo* adjs) const
 {
     ModuleBase::timer::start("Grid_Driver", "Find_atom");
+    // The public interface now uses the Phase 2.1 AtomPack path by default.
+    // Find_atom_from_legacy() is kept only as a regression and fallback route.
     this->Find_atom_from_atom_pack(ucell, ntype, nnumber, adjs);
     ModuleBase::timer::end("Grid_Driver", "Find_atom");
     return;
@@ -77,6 +79,11 @@ void Grid_Driver::Find_atom_from_atom_pack(const UnitCell& ucell,
 {
     AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
     local_adjs->clear();
+    if (ntype < 0 || ntype >= static_cast<int>(neighbor_pair_indices.size())
+        || nnumber < 0 || nnumber >= static_cast<int>(neighbor_pair_indices[ntype].size()))
+    {
+        throw std::runtime_error("AtomPack neighbor path is not built for this atom.");
+    }
 
     const std::vector<int>& pair_indices = neighbor_pair_indices[ntype][nnumber];
     for (const int pair_index: pair_indices)
@@ -96,6 +103,9 @@ void Grid_Driver::Find_atom_from_atom_pack(const UnitCell& ucell,
         local_adjs->adj_num++;
     }
 
+    // Keep the ABACUS compatibility rule from the legacy path: the center atom
+    // itself is appended after all real neighbors, and adj_num counts only the
+    // real neighbor entries.
     local_adjs->ntype.push_back(ntype);
     local_adjs->natom.push_back(nnumber);
     local_adjs->box.push_back(ModuleBase::Vector3<int>(0, 0, 0));

@@ -140,21 +140,29 @@ void validate_neighbor_search_input(const GridStorage& storage, const double rad
 
 NeighborPair make_neighbor_pair(const AtomPack& pack, const int center, const int candidate)
 {
-    return NeighborPair{pack.type[center],
-                        pack.natom[center],
-                        pack.type[candidate],
-                        pack.natom[candidate],
-                        pack.cell_x[candidate],
-                        pack.cell_y[candidate],
-                        pack.cell_z[candidate],
-                        center,
-                        candidate};
+    // Keep explicit assignment for C++11 CI builds: NeighborPair has default
+    // member initializers and member functions, so brace-list aggregate
+    // initialization is not accepted by all toolchain variants.
+    NeighborPair pair;
+    pair.center_type = pack.type[center];
+    pair.center_natom = pack.natom[center];
+    pair.neighbor_type = pack.type[candidate];
+    pair.neighbor_natom = pack.natom[candidate];
+    pair.cell_x = pack.cell_x[candidate];
+    pair.cell_y = pack.cell_y[candidate];
+    pair.cell_z = pack.cell_z[candidate];
+    pair.center_index = center;
+    pair.neighbor_index = candidate;
+    return pair;
 }
 
 NeighborPair make_restored_reverse_pair(const AtomPack& pack,
                                         const NeighborPair& pair,
                                         const std::map<AtomImageKey, int>& index_by_image)
 {
+    // Half-domain search visits only one direction. The restored pair uses the
+    // neighbor's origin-cell image as the new center and the opposite image shift
+    // for the original center atom.
     const int reverse_center = find_atom_image_index(index_by_image, pair.neighbor_type, pair.neighbor_natom, 0, 0, 0);
     const int reverse_neighbor = find_atom_image_index(index_by_image,
                                                        pair.center_type,
@@ -163,15 +171,17 @@ NeighborPair make_restored_reverse_pair(const AtomPack& pack,
                                                        -pair.cell_y,
                                                        -pair.cell_z);
 
-    return NeighborPair{pair.neighbor_type,
-                        pair.neighbor_natom,
-                        pair.center_type,
-                        pair.center_natom,
-                        -pair.cell_x,
-                        -pair.cell_y,
-                        -pair.cell_z,
-                        reverse_center,
-                        reverse_neighbor};
+    NeighborPair reverse;
+    reverse.center_type = pair.neighbor_type;
+    reverse.center_natom = pair.neighbor_natom;
+    reverse.neighbor_type = pair.center_type;
+    reverse.neighbor_natom = pair.center_natom;
+    reverse.cell_x = -pair.cell_x;
+    reverse.cell_y = -pair.cell_y;
+    reverse.cell_z = -pair.cell_z;
+    reverse.center_index = reverse_center;
+    reverse.neighbor_index = reverse_neighbor;
+    return reverse;
 }
 
 bool is_within_radius(const AtomPack& pack, const int center, const int candidate, const double radius2)
