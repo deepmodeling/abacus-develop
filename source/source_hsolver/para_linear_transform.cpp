@@ -84,7 +84,6 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
 #ifdef __MPI
     if (nproc_col > 1)
     {
-        syncmem_dev_op()(B_tmp_, B, ncolB * LDA);
         std::vector<MPI_Request> requests(nproc_col);
         // Send
         for (int ip = 0; ip < nproc_col; ++ip)

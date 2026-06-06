@@ -134,8 +134,12 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 
     Psi<T>* psi_cpu = reinterpret_cast<psi::Psi<T>*>(psi);
     Psi<T, Device>* psi_device = kspw_psi;
+    Psi<T>* bp_global_evc_cpu = nullptr;
+    Psi<T, Device>* bp_global_evc_device = nullptr;
 
-    bool fill = PARAM.inp.ks_solver != "bpcg" || GlobalV::MY_BNDGROUP == 0;
+    const bool supports_band_parallel = PARAM.inp.ks_solver == "bpcg" || PARAM.inp.ks_solver == "lobpcg";
+    const bool lobpcg_band_parallel = PARAM.inp.ks_solver == "lobpcg" && PARAM.inp.bndpar > 1;
+    bool fill = !supports_band_parallel || GlobalV::MY_BNDGROUP == 0;
     if (fill)
     {
         if (not_equal)
@@ -143,6 +147,12 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
             psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
                                                    : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
+            if (lobpcg_band_parallel)
+            {
+                bp_global_evc_cpu = new Psi<T>(1, PARAM.inp.nbands, nbasis, nbasis, true);
+                bp_global_evc_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(bp_global_evc_cpu[0])
+                                                                 : reinterpret_cast<psi::Psi<T, Device>*>(bp_global_evc_cpu);
+            }
         }
         else if (PARAM.inp.precision == "single")
         {
@@ -180,18 +190,19 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             }
 
 
-            if (this->ks_solver == "cg")
+            if (this->ks_solver == "cg" || this->ks_solver == "lobpcg")
             {
                 std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
                 if (not_equal)
                 {
+                    psi::Psi<T, Device>& evc_out = bp_global_evc_device == nullptr ? *kspw_psi : *bp_global_evc_device;
                     // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
                     // different
                     hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(p_hamilt,
                                                                              psi_device->get_pointer(),
                                                                              nbands_start,
                                                                              nbasis,
-                                                                             *(kspw_psi),
+                                                                             evc_out,
                                                                              etatom.data());
                 }
                 else
@@ -213,8 +224,11 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             }
         }
 #ifdef __MPI
-        if (PARAM.inp.ks_solver == "bpcg" && PARAM.inp.bndpar > 1)
+        if (supports_band_parallel && PARAM.inp.bndpar > 1)
         {
+            const T* scatter_source = (lobpcg_band_parallel && bp_global_evc_device != nullptr)
+                                      ? bp_global_evc_device->get_pointer()
+                                      : psi_cpu->get_pointer();
             std::vector<int> sendcounts(PARAM.inp.bndpar);
             std::vector<int> displs(PARAM.inp.bndpar);
             MPI_Allgather(&nbands_l, 1, MPI_INT, sendcounts.data(), 1, MPI_INT, BP_WORLD);
@@ -227,9 +241,13 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             }
             if (GlobalV::MY_BNDGROUP == 0)
             {
+                if (lobpcg_band_parallel && scatter_source != kspw_psi->get_pointer())
+                {
+                    syncmem_complex_op()(kspw_psi->get_pointer(), scatter_source, sendcounts[0]);
+                }
                 for (int ip = 1; ip < PARAM.inp.bndpar; ++ip)
                 {
-                    Parallel_Common::send_data(psi_cpu->get_pointer() + displs[ip], sendcounts[ip], ip, 0, BP_WORLD);
+                    Parallel_Common::send_data(scatter_source + displs[ip], sendcounts[ip], ip, 0, BP_WORLD);
                 }
             }
             else
@@ -245,6 +263,14 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     {
         if (not_equal)
         {
+            if (lobpcg_band_parallel && bp_global_evc_cpu != nullptr)
+            {
+                if (PARAM.inp.device == "gpu")
+                {
+                    delete bp_global_evc_device;
+                }
+                delete bp_global_evc_cpu;
+            }
             delete psi_cpu;
             if (PARAM.inp.device == "gpu")
             {

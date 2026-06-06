@@ -38,6 +38,16 @@ ModuleIO::ReadInput readinput(0);
 Parameter param;
 std::string output = "";
 
+static bool all_ks_run_after_set_globalv(const std::string& ks_solver, const int bndpar)
+{
+    Parameter local_param;
+    local_param.input.ks_solver = ks_solver;
+    local_param.input.bndpar = bndpar;
+    local_param.sys.all_ks_run = true;
+    readinput.set_globalv(local_param.inp, local_param.sys);
+    return local_param.sys.all_ks_run;
+}
+
 TEST_F(InputTest, Item_test)
 {
     readinput.check_ntype_flag = false;
@@ -81,4 +91,12 @@ TEST_F(InputTest, Item_test)
 
         
     }
+}
+
+TEST_F(InputTest, BandParallelAllKsRun)
+{
+    EXPECT_FALSE(all_ks_run_after_set_globalv("cg", 2));
+    EXPECT_FALSE(all_ks_run_after_set_globalv("dav", 2));
+    EXPECT_TRUE(all_ks_run_after_set_globalv("bpcg", 2));
+    EXPECT_TRUE(all_ks_run_after_set_globalv("lobpcg", 2));
 }

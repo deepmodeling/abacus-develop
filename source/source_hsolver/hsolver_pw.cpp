@@ -19,6 +19,7 @@
 
 
 #include <algorithm>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 
@@ -34,13 +35,27 @@ run_lobpcg_pw(const HPsiFunc& hpsi_func,
               psi::Psi<T, Device>& psi,
               const std::vector<typename GetTypeReal<T>::type>& pre_condition,
               typename GetTypeReal<T>::type* eigenvalue,
-              const std::vector<double>& ethr_band)
+              const std::vector<double>& ethr_band,
+              const int diag_iter_max,
+              const int notconv_max,
+              const int nk_nums)
 {
     const int nband_l = psi.get_nbands();
     const int nbasis = psi.get_nbasis();
     const int ndim = psi.get_current_ngk();
     DiagoLobpcg<T, Device> lobpcg(pre_condition.data());
     lobpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
+    lobpcg.set_max_iter(diag_iter_max);
+    lobpcg.set_notconv_max(notconv_max);
+    std::ostringstream context;
+    context << "k=" << psi.get_current_k() + 1 << "/" << nk_nums
+            << ", npw=" << ndim
+            << ", npwx=" << nbasis
+            << ", nbands=" << PARAM.inp.nbands
+            << ", nbands_local=" << nband_l
+            << ", max_iter=" << diag_iter_max
+            << ", use_uspp=" << (PARAM.globalv.use_uspp ? 1 : 0);
+    lobpcg.set_diag_context(context.str());
     lobpcg.diag(hpsi_func, spsi_func, psi.get_pointer(), eigenvalue, ethr_band);
 }
 
@@ -53,7 +68,10 @@ run_lobpcg_pw(const HPsiFunc&,
               psi::Psi<T, Device>&,
               const std::vector<typename GetTypeReal<T>::type>&,
               typename GetTypeReal<T>::type*,
-              const std::vector<double>&)
+              const std::vector<double>&,
+              const int,
+              const int,
+              const int)
 {
     ModuleBase::WARNING_QUIT("HSolverPW",
         "LOBPCG is currently implemented only for CPU complex<double> PW calculations.");
@@ -361,7 +379,15 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     }
     else if (this->method == "lobpcg")
     {
-        run_lobpcg_pw<T, Device>(hpsi_func, spsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
+        run_lobpcg_pw<T, Device>(hpsi_func,
+                                  spsi_func,
+                                  psi,
+                                  pre_condition,
+                                  eigenvalue,
+                                  this->ethr_band,
+                                  this->diag_iter_max,
+                                  ("nscf" == this->calculation_type) ? 0 : -1,
+                                  nk_nums);
     }
     else if (this->method == "dav_subspace")
     {

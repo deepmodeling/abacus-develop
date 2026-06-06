@@ -340,7 +340,9 @@ void ReadInput::item_system()
         item.default_value = "1";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
+            if (para.input.esolver_type != "sdft"
+                && para.input.ks_solver != "bpcg"
+                && para.input.ks_solver != "lobpcg")
             {
                 para.input.bndpar = 1;
             }

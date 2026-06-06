@@ -71,7 +71,7 @@ class CalAtomsInfo
 
         // calculate the number of nbands_local
         para.sys.nbands_l = para.inp.nbands;
-        if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel
+        if (para.inp.ks_solver == "bpcg" || para.inp.ks_solver == "lobpcg")
         {
             para.sys.nbands_l = para.inp.nbands / para.inp.bndpar;
             if (GlobalV::MY_BNDGROUP < para.inp.nbands % para.inp.bndpar)
@@ -80,7 +80,9 @@ class CalAtomsInfo
             }
         }
         // temporary code
-        if (GlobalV::MY_BNDGROUP == 0 || para.inp.ks_solver == "bpcg")
+        if (GlobalV::MY_BNDGROUP == 0
+            || para.inp.ks_solver == "bpcg"
+            || para.inp.ks_solver == "lobpcg")
         {
             para.sys.ks_run = true;
         }

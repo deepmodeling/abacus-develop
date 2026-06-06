@@ -61,7 +61,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_bool(sys.double_grid);
 #endif
     /// set ks_run
-    if (inp.ks_solver != "bpcg" && inp.bndpar > 1)
+    if (inp.ks_solver != "bpcg" && inp.ks_solver != "lobpcg" && inp.bndpar > 1)
     {
         sys.all_ks_run = false;
     }

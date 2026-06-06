@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <functional>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -29,8 +30,8 @@ namespace hsolver {
  *   - Subsequent:       W = [X, Z, P]        (3-block)
  * where X = current eigenvectors, Z = preconditioned residual, P = search directions.
  *
- * @note Currently supports NC (S=I) + CPU only.
- *       GPU and USPP support are planned for subsequent phases.
+ * @note Currently supports CPU only.
+ *       GPU support is planned for subsequent phases.
  *
  * @tparam T      Complex floating-point type.
  * @tparam Device Must be base_device::DEVICE_CPU (GPU not yet supported).
@@ -62,7 +63,15 @@ class DiagoLobpcg
     /// Set max inner iterations per SCF step (default 4).
     void set_nline(const int n) { this->nline = n; }
 
-    /// Generalized diagonalization interface. Currently supports S = I only.
+    /// Set hard iteration limit from pw_diag_nmax. Non-positive keeps legacy default.
+    void set_max_iter(const int n) { this->max_iter = n; }
+
+    /// Set allowed unconverged bands after max_iter. Negative means report only.
+    void set_notconv_max(const int n) { this->notconv_max = n; }
+
+    void set_diag_context(const std::string& context) { this->diag_context = context; }
+
+    /// Generalized diagonalization. The standard problem is covered by S = I.
     void diag(const HPsiFunc& hpsi_func,
               const SPsiFunc& spsi_func,
               T* psi_in,
@@ -76,8 +85,11 @@ class DiagoLobpcg
     int n_basis  = 0;   ///< basis functions (lda of psi)
     int n_dim    = 0;   ///< valid dimension (= current_ngk)
     int nline    = 4;   ///< max inner iterations per SCF step
+    int max_iter = 0;   ///< hard iteration limit; <=0 uses nline-based default
+    int notconv_max = -1; ///< allowed unconverged bands; <0 reports only
     int nsub     = 0;   ///< physical leading dim of hsub (= 3*n_band)
     bool has_pdir = false; ///< true when P block holds valid directions
+    std::string diag_context;
 
     // ---- parallel ops ----
     ModuleBase::PGemmCN<T, Device> pmmcn;
@@ -104,21 +116,27 @@ class DiagoLobpcg
     //   BLAS view: n_basis rows × n_band_l cols, column-major.
     ct::Tensor psi   = {};   ///< X (TensorMap → psi_in, no ownership)
     ct::Tensor hpsi  = {};   ///< HX
-    ct::Tensor spsi  = {};   ///< SX  (Phase 2)
+    ct::Tensor spsi  = {};   ///< SX
     ct::Tensor grad  = {};   ///< Z = T(R)
     ct::Tensor hgrad = {};   ///< HZ
+    ct::Tensor sgrad = {};   ///< SZ
     ct::Tensor pdir  = {};   ///< P
     ct::Tensor hpdir = {};   ///< HP
+    ct::Tensor spdir = {};   ///< SP
 
     // ---- subspace matrices ----
     ct::Tensor hsub = {};    ///< H_sub [nsub × nsub]
+    ct::Tensor ssub = {};    ///< S_sub [nsub × nsub]
 
     // ---- workspace ----
     ct::Tensor work    = {}; ///< [n_band_l, n_basis]
     ct::Tensor hwork   = {}; ///< [n_band_l, n_basis]
+    ct::Tensor swork   = {}; ///< [n_band_l, n_basis]
     ct::Tensor pwork   = {}; ///< [n_band_l, n_basis] (P update)
     ct::Tensor hpwork  = {}; ///< [n_band_l, n_basis] (HP update)
+    ct::Tensor spwork  = {}; ///< [n_band_l, n_basis] (SP update)
     ct::Tensor tmp_hsub = {}; ///< scratch [n_band, n_band]
+    ct::Tensor tmp_ssub = {}; ///< scratch [n_band, n_band]
 
     // ---- GEMM constants (following BPCG pattern) ----
     Device* ctx = {};
@@ -141,17 +159,26 @@ class DiagoLobpcg
                               const T* psi_in,
                               ct::Tensor& spsi_out);
 
+    void repair_initial_subspace_s(const HPsiFunc& hpsi_func,
+                                   const SPsiFunc& spsi_func);
+
     /// Standard R-R: H_sub = psi^H * hpsi → heevd → rotate.
     /// multiply(hpsi, psi) = psi^H * hpsi.
     void rayleigh_ritz(ct::Tensor& psi_inout,
                        ct::Tensor& hpsi_inout,
                        ct::Tensor& eigen_out);
 
-    /// Generalized R-R. NOT IMPLEMENTED — aborts.
+    /// Generalized R-R.
     void generalized_rayleigh_ritz(ct::Tensor& psi_inout,
                                    ct::Tensor& hpsi_inout,
                                    ct::Tensor& spsi_inout,
                                    ct::Tensor& eigen_out);
+
+    /// Distributed generalized R-R for band-parallel S != I.
+    void generalized_rayleigh_ritz_parallel(ct::Tensor& psi_inout,
+                                            ct::Tensor& hpsi_inout,
+                                            ct::Tensor& spsi_inout,
+                                            ct::Tensor& eigen_out);
 
     /// NC residual: R = HX - X*Lambda, Z = R ./ prec.
     /// CPU-only: direct loops.
@@ -162,7 +189,7 @@ class DiagoLobpcg
                           ct::Tensor& grad_out,
                           ct::Tensor& err_out);
 
-    /// USPP residual. NOT IMPLEMENTED — aborts.
+    /// Generalized residual.
     void compute_residual_s(const ct::Tensor& psi_in,
                             const ct::Tensor& hpsi_in,
                             const ct::Tensor& spsi_in,
@@ -176,11 +203,20 @@ class DiagoLobpcg
                          ct::Tensor& hsub_work,
                          ct::Tensor& grad_out);
 
-    /// S-orthogonalize. NOT IMPLEMENTED — aborts.
+    /// S-orthogonalize.
     void orth_projection_s(const ct::Tensor& psi_in,
                            const ct::Tensor& spsi_in,
                            ct::Tensor& hsub_work,
+                           ct::Tensor& sgrad_out,
                            ct::Tensor& grad_out);
+
+    void orth_projection_s_with_h(const ct::Tensor& psi_in,
+                                  const ct::Tensor& hpsi_in,
+                                  const ct::Tensor& spsi_in,
+                                  ct::Tensor& hsub_work,
+                                  ct::Tensor& hpdir_out,
+                                  ct::Tensor& spdir_out,
+                                  ct::Tensor& pdir_out);
 
     /// Core subspace update (2-block first, then 3-block).
     /// Orthonormalizes W = [X, Z, P] before Rayleigh-Ritz for stability.
@@ -191,6 +227,30 @@ class DiagoLobpcg
                        ct::Tensor& pdir,
                        ct::Tensor& hpdir,
                        ct::Tensor& eigen);
+
+    /// Generalized subspace update for S != I.
+    void lobpcg_update_s(ct::Tensor& psi,
+                         ct::Tensor& hpsi,
+                         ct::Tensor& spsi,
+                         ct::Tensor& grad,
+                         ct::Tensor& hgrad,
+                         ct::Tensor& sgrad,
+                         ct::Tensor& pdir,
+                         ct::Tensor& hpdir,
+                         ct::Tensor& spdir,
+                         ct::Tensor& eigen);
+
+    /// Distributed generalized subspace update for band-parallel S != I.
+    void lobpcg_update_s_parallel(ct::Tensor& psi,
+                                  ct::Tensor& hpsi,
+                                  ct::Tensor& spsi,
+                                  ct::Tensor& grad,
+                                  ct::Tensor& hgrad,
+                                  ct::Tensor& sgrad,
+                                  ct::Tensor& pdir,
+                                  ct::Tensor& hpdir,
+                                  ct::Tensor& spdir,
+                                  ct::Tensor& eigen);
 
     /// psi = psi * U  (via plintrans).
     void rotate_wf(const ct::Tensor& hsub_in,
@@ -203,7 +263,7 @@ class DiagoLobpcg
                        ct::Tensor& hpsi_out,
                        ct::Tensor& hsub_out);
 
-    /// S-Cholesky. NOT IMPLEMENTED — aborts.
+    /// S-Cholesky orthonormalization.
     void orth_cholesky_s(ct::Tensor& workspace_in,
                          ct::Tensor& psi_out,
                          ct::Tensor& hpsi_out,
@@ -211,6 +271,26 @@ class DiagoLobpcg
                          ct::Tensor& hsub_out);
 
     bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
+
+    void validate_ethr_band(const std::vector<double>& ethr_band) const;
+
+    void diag_log(const std::string& context,
+                  const std::string& line1,
+                  const std::string& line2,
+                  const std::string& line3 = std::string()) const;
+
+    void report_not_converged(const char* problem_type,
+                              const int used_iter,
+                              const int max_iter,
+                              const std::vector<double>& ethr_band) const;
+
+    bool profile_enabled() const;
+    void profile_log(const char* problem_type,
+                     const char* stage,
+                     const int iter,
+                     const double seconds) const;
+
+    int local_band_start() const;
 
     // ---- memory-op aliases ----
     using ct_Device = typename ct::PsiToContainer<Device>::type;
@@ -226,6 +306,12 @@ class DiagoLobpcg
     using syncmem_complex_op   = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
     using syncmem_complex_h2d_op = ct::kernels::synchronize_memory<T, ct_Device, ct::DEVICE_CPU>;
     using syncmem_complex_d2h_op = ct::kernels::synchronize_memory<T, ct::DEVICE_CPU, ct_Device>;
+
+    /// Internal standard-problem path retained as an implementation detail.
+    void diag(const HPsiFunc& hpsi_func,
+              T* psi_in,
+              Real* eigenvalue_in,
+              const std::vector<double>& ethr_band);
 };
 
 } // namespace hsolver
