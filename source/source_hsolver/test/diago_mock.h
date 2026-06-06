@@ -14,7 +14,7 @@ namespace DIAGOTEST
 
     // diagonal representation of overlap (S) for simple mock of generalized eigenproblem
     // if empty, sPsi will treat S as identity
-    std::vector<double> sdiag_d;     // for double / complex<double>
+    std::vector<double> sdiag_d;
     std::vector<std::complex<float> > sdiag_f; 
     std::vector<std::complex<double>> sdiag;
     int h_nr;
@@ -416,7 +416,7 @@ void hamilt::HamiltPW<double, base_device::DEVICE_CPU>::sPsi(const double* psi_i
                                                              const int nbands) const
 {
     if (DIAGOTEST::sdiag_d.size() < static_cast<size_t>(nrow)) {
-        DIAGOTEST::sdiag_d.assign(nrow, 1.0); // 默认单位 S
+        DIAGOTEST::sdiag_d.assign(nrow, 1.0); 
     }
     for (int v = 0; v < nbands; ++v) {
         for (int i = 0; i < nrow; ++i) {

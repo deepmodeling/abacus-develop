@@ -279,10 +279,12 @@ TEST_P(DiagoCGFloatTest, RandomHamiltAndS)
     DIAGOTEST::npw = dcp.npw;
 
     // 生成正定对角 S（范围 0.5..1.5）
-DIAGOTEST::sdiag_f.resize(dcp.npw);
-std::default_random_engine eng(123);
-std::uniform_real_distribution<float> ud(0.5f, 1.5f);
-for (int i = 0; i < dcp.npw; ++i) DIAGOTEST::sdiag_f[i] = std::complex<float>(ud(eng), 0.0f);
+    DIAGOTEST::sdiag_f.resize(dcp.npw);
+    std::default_random_engine eng(123);
+    std::uniform_real_distribution<float> ud(0.5f, 1.5f);
+    for (int i = 0; i < dcp.npw; ++i) {
+        DIAGOTEST::sdiag_f[i] = std::complex<float>(ud(eng), 0.0f);
+    }
 
     dcp.CompareEigen(hpsi.precond());
 }
