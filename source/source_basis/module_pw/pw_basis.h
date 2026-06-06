@@ -161,7 +161,11 @@ public:
 protected:
     int *startnsz_per=nullptr;//useless intermediate variable// startnsz_per[ip]: starting is * nz stick in the ip^th proc.
 
-    virtual void invalidate_cache();
+    virtual void invalidate_cache()
+    {
+        std::lock_guard<std::mutex> guard(this->cache_mutex);
+        this->invalidate_cache_unlocked();
+    }
 
     void clear_owned_cache();
 
@@ -179,7 +183,23 @@ protected:
     std::atomic<std::uint64_t> uniqgg_cache_hits{0};
     std::atomic<std::uint64_t> uniqgg_cache_misses{0};
 
-    virtual void invalidate_cache_unlocked();
+    virtual void invalidate_cache_unlocked()
+    {
+        this->local_pw_cache_valid.store(false);
+        this->uniqgg_cache_valid.store(false);
+        this->gg_cache_storage.reset();
+        this->gdirect_cache_storage.reset();
+        this->gcar_cache_storage.reset();
+        this->ig2igg_cache_storage.reset();
+        this->gg_uniq_cache_storage.reset();
+        this->gg = nullptr;
+        this->gdirect = nullptr;
+        this->gcar = nullptr;
+        this->ig2igg = nullptr;
+        this->gg_uniq = nullptr;
+        this->ngg = 0;
+        this->ig_gge0 = -1;
+    }
     CacheStats get_cache_stats_unlocked() const;
 
     //distribute plane waves to different processors

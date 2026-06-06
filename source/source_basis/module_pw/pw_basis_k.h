@@ -112,7 +112,18 @@ public:
 
   private:
     void clear_k_cache_storage();
-    void invalidate_cache_unlocked() override;
+    void invalidate_cache_unlocked() override
+    {
+        PW_Basis::invalidate_cache_unlocked();
+        this->gcar_cache_valid.store(false);
+        this->gk_cache_valid.store(false);
+        this->k_gcar_cache_storage.reset();
+        this->k_gk2_cache_storage.reset();
+        this->gcar = nullptr;
+        this->gk2 = nullptr;
+        this->d_gcar = nullptr;
+        this->d_gk2 = nullptr;
+    }
     void sync_gcar_device_cache();
     void sync_gk2_device_cache();
 

@@ -85,7 +85,7 @@ TEST_F(PWTEST,test_big)
 class TestPW_Basis_Big : public ::testing::Test
 {
     public:
-    ModulePW::PW_Basis_Big pwtest = ModulePW::PW_Basis_Big();
+    ModulePW::PW_Basis_Big pwtest;
 };
 
 // Test the function with nproc = 0 (bx and by)

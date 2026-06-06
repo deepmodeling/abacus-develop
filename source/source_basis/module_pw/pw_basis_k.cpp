@@ -53,20 +53,6 @@ void PW_Basis_K::clear_k_cache_storage()
     this->invalidate_cache_unlocked();
 }
 
-void PW_Basis_K::invalidate_cache_unlocked()
-{
-    PW_Basis::invalidate_cache_unlocked();
-    this->gcar_cache_valid.store(false);
-    this->gk_cache_valid.store(false);
-    // These storage objects back the public host-side gcar/gk2 views.
-    this->k_gcar_cache_storage.reset();
-    this->k_gk2_cache_storage.reset();
-    this->gcar = nullptr;
-    this->gk2 = nullptr;
-    this->d_gcar = nullptr;
-    this->d_gk2 = nullptr;
-}
-
 PW_Basis_K::KCacheStats PW_Basis_K::get_k_cache_stats() const
 {
     std::lock_guard<std::mutex> guard(this->cache_mutex);

@@ -51,30 +51,6 @@ void PW_Basis::clear_owned_cache()
     this->invalidate_cache_unlocked();
 }
 
-void PW_Basis::invalidate_cache()
-{
-    std::lock_guard<std::mutex> guard(this->cache_mutex);
-    this->invalidate_cache_unlocked();
-}
-
-void PW_Basis::invalidate_cache_unlocked()
-{
-    this->local_pw_cache_valid.store(false);
-    this->uniqgg_cache_valid.store(false);
-    this->gg_cache_storage.reset();
-    this->gdirect_cache_storage.reset();
-    this->gcar_cache_storage.reset();
-    this->ig2igg_cache_storage.reset();
-    this->gg_uniq_cache_storage.reset();
-    this->gg = nullptr;
-    this->gdirect = nullptr;
-    this->gcar = nullptr;
-    this->ig2igg = nullptr;
-    this->gg_uniq = nullptr;
-    this->ngg = 0;
-    this->ig_gge0 = -1;
-}
-
 PW_Basis::CacheStats PW_Basis::get_cache_stats() const
 {
     std::lock_guard<std::mutex> guard(this->cache_mutex);
