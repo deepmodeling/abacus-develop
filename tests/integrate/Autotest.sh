@@ -46,7 +46,12 @@ done
 
 # number of OpenMP threads
 if [[ -z "$nt" ]]; then
-    nt=$(expr `nproc` / ${np})
+    if [ "$np" -le 0 ] 2>/dev/null; then
+        # serial build (no MPI launcher): use all cores for OpenMP
+        nt=$(nproc)
+    else
+        nt=$(expr `nproc` / ${np})
+    fi
 fi
 export OMP_NUM_THREADS=${nt}
 
@@ -259,15 +264,19 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-        run_np=$np
-        if [ "$case" = "282_NO_RPA" ]; then
-            run_np=1
-        fi
-        if grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
+        if [ "$np" -le 0 ] 2>/dev/null; then
+            # serial build: run the binary directly, no MPI launcher.
+            # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
+            # Windows build) reuse this harness unchanged.
+            $abacus > log.txt
+        elif [ "$case" = "282_NO_RPA" ]; then
+            mpirun -np 1 $abacus > log.txt
+        elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
             # of_ml_gene_data supports single-rank only.
-            run_np=1
+            mpirun -np 1 $abacus > log.txt
+        else
+            mpirun -np $np $abacus > log.txt
         fi
-        mpirun -np $run_np $abacus > log.txt
 
         # if ABACUS failed, print out the error message
         if [ $? -ne 0 ]; then

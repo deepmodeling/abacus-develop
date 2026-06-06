@@ -10,6 +10,9 @@
 #include "source_hamilt/module_vdw/vdwd3_parameters.h"
 #include "source_hamilt/module_vdw/vdwd2.h"
 #include "source_hamilt/module_vdw/vdwd3.h"
+#ifdef __DFTD4
+#include "source_hamilt/module_vdw/vdwd4.h"
+#endif
 #include "source_hamilt/module_vdw/vdw.h"
 #undef private
 
@@ -603,6 +606,111 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
     EXPECT_NEAR(stress.e32, 4.3904235877576833e-06,1e-12);
     EXPECT_NEAR(stress.e33, -3.4278442125590892e-05,1e-12);
 }
+
+#ifdef __DFTD4
+
+class vdwd4Test: public testing::Test
+{
+    protected:
+    UnitCell ucell;
+    Input_para input;
+
+    void SetUp(){
+        stru_ structure{std::vector<double>{0.5,0.5,0.0,0.5,0.0,0.5,0.0,0.5,0.5},
+                        std::vector<atomtype_>{atomtype_{"Si",
+                                                         std::vector<std::vector<double>>{
+                                                             {0., 0., 0.},
+                                                             {0.3, 0.25, 0.25}
+                                                         }}}};
+        construct_ucell(structure,ucell);
+
+        input.vdw_method = "d4";
+        input.vdw_d4_xc = "pbe";
+        input.vdw_d4_model = "d4";
+        input.vdw_cutoff_type = "radius";
+        input.vdw_radius_unit = "Bohr";
+        input.vdw_cutoff_radius = "60";
+        input.vdw_cn_thr_unit = "Bohr";
+        input.vdw_cn_thr = 30;
+    }
+
+    void TearDown(){
+        ClearUcell(ucell);
+    }
+};
+
+TEST_F(vdwd4Test, D4GetEnergy)
+{
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    double ene = vdw_solver->get_energy();
+    EXPECT_NEAR(ene, -0.04998837990336073, 1E-10);
+}
+
+TEST_F(vdwd4Test, D4GetForce)
+{
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    EXPECT_NEAR(force[0].x, -0.0023357259921368717, 1e-12);
+    EXPECT_NEAR(force[0].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[0].z, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].x, 0.0023357259921368730, 1e-12);
+    EXPECT_NEAR(force[1].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].z, 0.0, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4GetStress)
+{
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    EXPECT_NEAR(stress.e11, 0.00015830384474877792, 1e-12);
+    EXPECT_NEAR(stress.e12, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e13, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e21, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e22, 0.00016694998515968720, 1e-12);
+    EXPECT_NEAR(stress.e23, -1.5500973166318808e-05, 1e-12);
+    EXPECT_NEAR(stress.e31, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e32, -1.5500973166318808e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, 0.00016694998515968726, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4SGetEnergy)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    double ene = vdw_solver->get_energy();
+    EXPECT_NEAR(ene, -0.05638517144755526, 1E-10);
+}
+
+TEST_F(vdwd4Test, D4SGetForce)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    EXPECT_NEAR(force[0].x, -0.005448661796788402, 1e-12);
+    EXPECT_NEAR(force[0].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[0].z, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].x, 0.005448661796788397, 1e-12);
+    EXPECT_NEAR(force[1].y, 0.0, 1e-12);
+    EXPECT_NEAR(force[1].z, 0.0, 1e-12);
+}
+
+TEST_F(vdwd4Test, D4SGetStress)
+{
+    input.vdw_d4_model = "d4s";
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    EXPECT_NEAR(stress.e11, 0.00013831119855416262, 1e-12);
+    EXPECT_NEAR(stress.e12, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e13, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e21, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e22, 0.00015770515797834415, 1e-12);
+    EXPECT_NEAR(stress.e23, -3.862972112000666e-05, 1e-12);
+    EXPECT_NEAR(stress.e31, 0.0, 1e-12);
+    EXPECT_NEAR(stress.e32, -3.862972112000666e-05, 1e-12);
+    EXPECT_NEAR(stress.e33, 0.00015770515797834423, 1e-12);
+}
+
+#endif // __DFTD4
 
 int main(int argc, char **argv)
 {
