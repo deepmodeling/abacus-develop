@@ -178,50 +178,17 @@ void PW_Basis_K::setupIndGk()
     this->npwk_max = 0;
     delete[] this->npwk;
     this->npwk = new int[this->nks];
-    // Keep the selected ig list from the counting pass and reuse it when filling
-    // igl2isz_k/igl2ig_k, avoiding a second G+K cutoff scan.
-    std::vector<int> selected_ig;
-    std::vector<int> selected_offsets(this->nks + 1, 0);
-    std::vector<ModuleBase::Vector3<double>> direct_indices(this->npw);
-    for (int ig = 0; ig < this->npw; ig++)
-    {
-        int isz = this->ig2isz[ig];
-        int iz = isz % this->nz;
-        int is = isz / this->nz;
-        int ixy = this->is2fftixy[is];
-        int ix = ixy / this->fftny;
-        int iy = ixy % this->fftny;
-        if (ix >= int(this->nx / 2) + 1)
-        {
-            ix -= this->nx;
-        }
-        if (iy >= int(this->ny / 2) + 1)
-        {
-            iy -= this->ny;
-        }
-        if (iz >= int(this->nz / 2) + 1)
-        {
-            iz -= this->nz;
-        }
-        direct_indices[ig].x = ix;
-        direct_indices[ig].y = iy;
-        direct_indices[ig].z = iz;
-    }
     for (int ik = 0; ik < this->nks; ik++)
     {
         int ng = 0;
-        selected_offsets[ik] = static_cast<int>(selected_ig.size());
         for (int ig = 0; ig < this->npw; ig++)
         {
-            const ModuleBase::Vector3<double> gplusk = direct_indices[ig] + this->kvec_d[ik];
-            const double gk2 = gplusk * (this->GGT * gplusk);
+            const double gk2 = this->cal_GplusK_cartesian(ik, ig).norm2();
             if (gk2 <= this->gk_ecut)
             {
-                selected_ig.push_back(ig);
                 ++ng;
             }
         }
-        selected_offsets[ik + 1] = static_cast<int>(selected_ig.size());
         this->npwk[ik] = ng;
         int ng_global_k = ng;
 #ifdef __MPI
@@ -254,12 +221,15 @@ void PW_Basis_K::setupIndGk()
     for (int ik = 0; ik < this->nks; ik++)
     {
         int igl = 0;
-        for (int i = selected_offsets[ik]; i < selected_offsets[ik + 1]; ++i)
+        for (int ig = 0; ig < this->npw; ig++)
         {
-            const int ig = selected_ig[i];
-            this->igl2isz_k[ik * npwk_max + igl] = this->ig2isz[ig];
-            this->igl2ig_k[ik * npwk_max + igl] = ig;
-            ++igl;
+            const double gk2 = this->cal_GplusK_cartesian(ik, ig).norm2();
+            if (gk2 <= this->gk_ecut)
+            {
+                this->igl2isz_k[ik * npwk_max + igl] = this->ig2isz[ig];
+                this->igl2ig_k[ik * npwk_max + igl] = ig;
+                ++igl;
+            }
         }
     }
 #if defined(__CUDA) || defined(__ROCM)
@@ -271,6 +241,34 @@ void PW_Basis_K::setupIndGk()
 #endif
     this->get_ig2ixyz_k();
     return;
+}
+
+ModuleBase::Vector3<double> PW_Basis_K::cal_GplusK_cartesian(const int ik, const int ig) const
+{
+    int isz = this->ig2isz[ig];
+    int iz = isz % this->nz;
+    int is = isz / this->nz;
+    int ix = this->is2fftixy[is] / this->fftny;
+    int iy = this->is2fftixy[is] % this->fftny;
+    if (ix >= int(this->nx / 2) + 1)
+    {
+        ix -= this->nx;
+    }
+    if (iy >= int(this->ny / 2) + 1)
+    {
+        iy -= this->ny;
+    }
+    if (iz >= int(this->nz / 2) + 1)
+    {
+        iz -= this->nz;
+    }
+    ModuleBase::Vector3<double> f;
+    f.x = ix;
+    f.y = iy;
+    f.z = iz;
+    f = f * this->G;
+    ModuleBase::Vector3<double> g_temp_ = this->kvec_c[ik] + f;
+    return g_temp_;
 }
 
 ///

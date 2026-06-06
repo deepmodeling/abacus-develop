@@ -141,6 +141,8 @@ public:
     void setupIndGk();
     // get ig2ixyz_k
     void get_ig2ixyz_k();
+    //calculate G+K in cartesian coordinates
+    ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
   public:
     template <typename FPTYPE>
     void real2recip(const FPTYPE* in,

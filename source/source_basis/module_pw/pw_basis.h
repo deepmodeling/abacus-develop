@@ -183,6 +183,27 @@ protected:
     std::atomic<std::uint64_t> uniqgg_cache_hits{0};
     std::atomic<std::uint64_t> uniqgg_cache_misses{0};
 
+    struct CacheSignature
+    {
+        double lat0 = 0.0;
+        double tpiba = 0.0;
+        double tpiba2 = 0.0;
+        int nx = 0;
+        int ny = 0;
+        int nz = 0;
+        int fftnx = 0;
+        int fftny = 0;
+        int fftnz = 0;
+        int npw = 0;
+        ModuleBase::Matrix3 G;
+        ModuleBase::Matrix3 GT;
+        ModuleBase::Matrix3 GGT;
+    };
+    CacheSignature make_cache_signature() const;
+    bool cache_signature_matches(const CacheSignature& signature) const;
+    CacheSignature local_pw_cache_signature;
+    CacheSignature uniqgg_cache_signature;
+
     virtual void invalidate_cache_unlocked()
     {
         this->local_pw_cache_valid.store(false);

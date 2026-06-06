@@ -388,3 +388,41 @@ TEST_F(PWBasisTEST, CacheStorageClearedOnParameterChange)
 	EXPECT_EQ(pwb.gg_uniq_cache_storage, nullptr);
 	EXPECT_EQ(pwb.get_cache_stats().cache_bytes, 0);
 }
+
+TEST_F(PWBasisTEST, CacheSignatureRejectsChangedLattice)
+{
+	double lat0 = 1.8897261254578281;
+	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
+				0.0,10.0,0.0,
+				0.0,0.0,10.0);
+	double gridecut=10.0;
+	bool gamma_only_in = true;
+	double pwecut_in = 11.0;
+	int distribution_type_in = 2;
+	bool xprime_in = true;
+	pwb.initgrids(lat0,latvec,gridecut);
+	pwb.initparameters(gamma_only_in,pwecut_in,distribution_type_in,xprime_in);
+	EXPECT_NO_THROW(pwb.setuptransform());
+	pwb.collect_local_pw();
+	int changed_ig = -1;
+	for (int ig = 0; ig < pwb.npw; ++ig)
+	{
+		if (std::abs(pwb.gdirect[ig].x) > 1e-12)
+		{
+			changed_ig = ig;
+			break;
+		}
+	}
+	ASSERT_GE(changed_ig, 0);
+	const double old_gg = pwb.gg[changed_ig];
+	pwb.collect_local_pw();
+	EXPECT_EQ(pwb.get_cache_stats().local_pw_hits, 1);
+	EXPECT_EQ(pwb.get_cache_stats().local_pw_misses, 1);
+
+	pwb.G.e11 *= 1.1;
+	pwb.GGT = pwb.G * pwb.GT;
+	pwb.collect_local_pw();
+	EXPECT_EQ(pwb.get_cache_stats().local_pw_hits, 1);
+	EXPECT_EQ(pwb.get_cache_stats().local_pw_misses, 2);
+	EXPECT_NE(pwb.gg[changed_ig], old_gg);
+}

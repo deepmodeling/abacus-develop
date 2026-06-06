@@ -94,6 +94,42 @@ void PW_Basis::reset_cache_stats()
     this->uniqgg_cache_misses.store(0);
 }
 
+PW_Basis::CacheSignature PW_Basis::make_cache_signature() const
+{
+    CacheSignature signature;
+    signature.lat0 = this->lat0;
+    signature.tpiba = this->tpiba;
+    signature.tpiba2 = this->tpiba2;
+    signature.nx = this->nx;
+    signature.ny = this->ny;
+    signature.nz = this->nz;
+    signature.fftnx = this->fftnx;
+    signature.fftny = this->fftny;
+    signature.fftnz = this->fftnz;
+    signature.npw = this->npw;
+    signature.G = this->G;
+    signature.GT = this->GT;
+    signature.GGT = this->GGT;
+    return signature;
+}
+
+bool PW_Basis::cache_signature_matches(const CacheSignature& signature) const
+{
+    return signature.lat0 == this->lat0
+           && signature.tpiba == this->tpiba
+           && signature.tpiba2 == this->tpiba2
+           && signature.nx == this->nx
+           && signature.ny == this->ny
+           && signature.nz == this->nz
+           && signature.fftnx == this->fftnx
+           && signature.fftny == this->fftny
+           && signature.fftnz == this->fftnz
+           && signature.npw == this->npw
+           && std::memcmp(&signature.G, &this->G, sizeof(ModuleBase::Matrix3)) == 0
+           && std::memcmp(&signature.GT, &this->GT, sizeof(ModuleBase::Matrix3)) == 0
+           && std::memcmp(&signature.GGT, &this->GGT, sizeof(ModuleBase::Matrix3)) == 0;
+}
+
 /// 
 /// distribute plane wave basis and real-space grids to different processors
 /// set up maps for fft and create arrays for MPI_Alltoall
@@ -185,7 +221,8 @@ void PW_Basis::collect_local_pw()
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
-    if (this->local_pw_cache_valid.load())
+    if (this->local_pw_cache_valid.load()
+        && this->cache_signature_matches(this->local_pw_cache_signature))
     {
         this->local_pw_cache_hits.fetch_add(1);
         return;
@@ -246,6 +283,7 @@ void PW_Basis::collect_local_pw()
         }
     }
     this->local_pw_cache_valid.store(true);
+    this->local_pw_cache_signature = this->make_cache_signature();
     return;
 }
 
@@ -261,7 +299,8 @@ void PW_Basis::collect_uniqgg()
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
-    if (this->uniqgg_cache_valid.load())
+    if (this->uniqgg_cache_valid.load()
+        && this->cache_signature_matches(this->uniqgg_cache_signature))
     {
         this->uniqgg_cache_hits.fetch_add(1);
         return;
@@ -355,6 +394,7 @@ void PW_Basis::collect_uniqgg()
             gg_uniq[igg] = tmpgg2[igg];
     }
     this->uniqgg_cache_valid.store(true);
+    this->uniqgg_cache_signature = this->make_cache_signature();
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const
