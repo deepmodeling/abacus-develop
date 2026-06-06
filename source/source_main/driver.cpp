@@ -1,7 +1,7 @@
 #include "source_main/driver.h"
 
 #include "source_base/global_file.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_output/cal_test.h"
@@ -12,6 +12,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 #include "source_base/parallel_global.h"
+#ifdef __DSP
+#include "source_base/module_device/memory_op.h"
+#include "source_base/module_external/blas_connector.h"
+#endif
 
 Driver::Driver()
 {
@@ -118,6 +122,22 @@ void Driver::reading()
     // (1) read the input file
     ModuleIO::ReadInput input(PARAM.globalv.myrank);
     input.read_parameters(PARAM, PARAM.globalv.global_in_card);
+
+    ModuleBase::set_quit_out_dir(PARAM.globalv.global_out_dir);
+    ModuleBase::set_quit_calculation(PARAM.inp.calculation);
+
+#if defined(__CUDA) && defined(__USE_NVTX)
+    ModuleBase::timer::set_nvtx_enabled(PARAM.inp.timer_enable_nvtx);
+#endif
+
+#ifdef __DSP
+    if (PARAM.inp.dsp_count <= 0)
+    {
+        ModuleBase::WARNING_QUIT("driver", "dsp_count must be > 0");
+    }
+    base_device::memory::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    BlasConnector::set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+#endif
 
     // (2) create the output directory, running_*.log and print info
     input.create_directory(PARAM);

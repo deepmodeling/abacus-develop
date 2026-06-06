@@ -60,6 +60,26 @@ from abacuslite.io.generalio import (
 )
 
 __LEGACYIO__ = True
+def switch_io_backend_version(version: str) -> bool:
+    '''determine if the i/o is in legacy format by the version number,
+    for detailed discussion, see issue #7260
+    '''
+    global __LEGACYIO__
+    m = re.match(r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|\-(alpha|beta|rc)\.\d+)?$', version)
+    assert m, f'Invalid format of version number, please check file version.h'
+    assert int(m.group(1)) >= 3, f'ABACUS v2.x is not supported'
+    if int(m.group(2)) >= 11:
+        __LEGACYIO__ = False
+    elif int(m.group(2)) == 9:
+        if m.group(4) is not None:
+            # it is also possible to divide the version more carefully,
+            # but because 3.9.0.x are all on the develop branch, up to
+            # now, there is no user submit issue to request such a careful
+            # division
+            __LEGACYIO__ = False
+    else:
+        __LEGACYIO__ = True
+    return __LEGACYIO__
 
 class AbacusProfile(BaseProfile):
     '''AbacusProfile for interacting the ASE with ABACUS that installed in
@@ -397,11 +417,9 @@ class Abacus(GenericFileIOCalculator):
         # not recommended :(
         profile = AbacusProfile('abacus') if profile is None else profile
 
-        # does not support ABACUS version series v3.9.0.x and v3.11.0-beta.x
-        version = profile.version()
-        if re.match(r'v3\.9\.0\.\d+', version) or re.match(r'v3\.11\.0-beta\.\d+', version):
-            global __LEGACYIO__
-            __LEGACYIO__ = False
+        # to be compatible with both the legacy and latest format of i/o, the
+        # switch is needed. 
+        _ = switch_io_backend_version(profile.version())
 
         # because ABACUS run job in folders, based on the assumption that
         # there is only one job in the folder. Therefore once there are already
@@ -631,6 +649,19 @@ class TestAbacusCalculator(unittest.TestCase):
             silicon.calc = Abacus.restart(aprof, directory=tmpdir)
             e2 = silicon.get_potential_energy()
             self.assertAlmostEqual(e2, e)
+
+    def test_version_number_check(self):
+        # not a version number
+        with self.assertRaises(AssertionError):
+            switch_io_backend_version('not-a-version-number')
+        # too old version
+        with self.assertRaises(AssertionError):
+            switch_io_backend_version('v2.2.2')
+        self.assertTrue(switch_io_backend_version('v3.8.4'))
+        self.assertFalse(switch_io_backend_version('v3.9.0.25'))
+        self.assertTrue(switch_io_backend_version('v3.10.0'))
+        self.assertFalse(switch_io_backend_version('v3.11.0-beta.2'))
+        self.assertFalse(switch_io_backend_version('v3.11.0'))
 
 if __name__ == '__main__':
     unittest.main()

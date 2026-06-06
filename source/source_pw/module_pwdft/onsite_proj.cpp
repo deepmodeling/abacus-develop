@@ -9,8 +9,8 @@
 
 #include "source_base/projgen.h"
 #include "source_base/kernels/math_kernel_op.h"
-#ifdef __MPI
 #include "source_base/parallel_reduce.h"
+#ifdef __MPI
 #include "source_base/parallel_common.h"
 #endif
 #include "source_io/module_parameter/parameter.h"

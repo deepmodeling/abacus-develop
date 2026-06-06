@@ -1,7 +1,6 @@
 #ifndef TD_CURRENT_IO_H
 #define TD_CURRENT_IO_H
 
-#include "source_basis/module_nao/two_center_bundle.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_psi/psi.h"

@@ -45,6 +45,9 @@ WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
 WITH_NEP="no"
 
+# Optional Features (DFT-D4 dispersion correction)
+WITH_DFTD4="install"
+
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
 # GPU_VERSION="75"  # Check your GPU compute capability
@@ -85,7 +88,7 @@ INTELMPI_CLASSIC="no"   # Set to "yes" to use classic Intel MPI wrappers (mpiicc
 # Refer to scripts/package_versions.sh for specific version numbers
 
 CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
-ELPA_VERSION="alt"         # main=2025.06.001, alt=2024.05.001 for intel oneapi<2024.2
+ELPA_VERSION="alt"         # main=2026.02.001, alt=2024.05.001 for intel oneapi<2024.2
 LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
@@ -114,6 +117,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-libxc="$WITH_LIBXC" \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
+  --with-dftd4="$WITH_DFTD4" \
   --with-cereal="$WITH_CEREAL" \
   --with-rapidjson="$WITH_RAPIDJSON" \
   --with-libtorch="$WITH_LIBTORCH" \

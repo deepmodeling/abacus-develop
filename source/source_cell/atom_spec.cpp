@@ -1,5 +1,6 @@
 #include "atom_spec.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_output/output.h"
 #include <cstdlib>
 
 Atom::Atom()

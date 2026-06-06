@@ -2,7 +2,6 @@
 #define CAL_MLKEDF_DESCRIPTORS_H
 
 #include <vector>
-#include "source_base/global_function.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
@@ -39,7 +38,8 @@ public:
         const std::vector<double> &yukawa_alpha,
         const std::vector<std::string> &kernel_file,
         const double &omega,
-        const ModulePW::PW_Basis *pw_rho);
+        const ModulePW::PW_Basis *pw_rho,
+        std::ostream& ofs_running);
     // get input parameters
     void getGamma(const double * const *prho, std::vector<double> &rgamma);
     void getP(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp);

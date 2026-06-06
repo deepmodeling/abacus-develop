@@ -2,10 +2,7 @@
 #define DEEPKS_BASIC_H
 
 #ifdef __MLALGO
-#include "LCAO_deepks_io.h"
 #include "deepks_param.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/tool_title.h"
 #include "source_cell/unitcell.h"
 
 #include <torch/script.h>

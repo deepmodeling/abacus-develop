@@ -1,5 +1,6 @@
 #include "sto_stress_pw.h"
 
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/fs_kin_tools.h"
 #include "source_pw/module_pwdft/fs_nonlocal_tools.h"

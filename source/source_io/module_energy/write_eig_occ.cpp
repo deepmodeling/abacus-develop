@@ -262,8 +262,13 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
                     ofs_eig << std::setiosflags(std::ios::showpoint);
                     for (int ib = 0; ib < ekb.nc; ib++)
                     {
+                        double occupation = wg(ik, ib);
+                        if (std::abs(occupation) < 1.0e-15)
+                        {
+                            occupation = 0.0;
+                        }
                         ofs_eig << " " << ib + 1 << " " << ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << " " << wg(ik, ib) << std::endl;
+                                << " " << occupation << std::endl;
                     }
                     ofs_eig << std::endl;
                 }

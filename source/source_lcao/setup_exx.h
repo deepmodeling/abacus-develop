@@ -11,7 +11,6 @@
 // for EXX
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
-#include "source_lcao/module_ri/Mix_DMk_2D.h"
 #endif
 
 template <typename TK>

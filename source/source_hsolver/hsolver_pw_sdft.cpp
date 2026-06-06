@@ -61,7 +61,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 #ifdef __MPI
         if (nbands > 0 && !PARAM.globalv.all_ks_run)
         {
-            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, &psi_cpu(ik, 0, 0));
+            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif

@@ -1,5 +1,8 @@
 #include "para_linear_transform.h"
 
+#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 
 #include <algorithm>

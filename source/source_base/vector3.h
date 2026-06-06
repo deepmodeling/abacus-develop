@@ -8,7 +8,6 @@
 #include <array>
 
 #ifdef _MCD_CHECK
-#include "mcd.h"
 #endif
 
 namespace ModuleBase

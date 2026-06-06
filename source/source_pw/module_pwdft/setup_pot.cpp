@@ -3,6 +3,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 
@@ -22,6 +23,7 @@ void pw::setup_pot(const int istep,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp) // input parameters
 {
     ModuleBase::TITLE("pw", "setup_pot");
@@ -38,8 +40,8 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 1) Renew local pseudopotential
     //----------------------------------------------------------
-    pelec->init_scf(ucell, para_grid, sf.strucFac,
-            locpp.numeric, ucell.symm, (void*)pw_wfc);
+    elecstate::init_scf(ucell, para_grid, sf.strucFac,
+            locpp.numeric, istep, out_dir, inp, pelec);
 
     //----------------------------------------------------------
     //! 2) Symmetrize the charge density (rho)
@@ -140,6 +142,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 
@@ -159,6 +162,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -179,6 +183,7 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
@@ -197,6 +202,7 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 #endif

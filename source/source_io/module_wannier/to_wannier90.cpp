@@ -1,5 +1,6 @@
 #include "to_wannier90.h"
 
+#include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"

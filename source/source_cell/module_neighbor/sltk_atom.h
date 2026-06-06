@@ -2,8 +2,6 @@
 #define INCLUDE_FATOM
 
 #include <memory>
-#include "sltk_util.h"
-#include "source_base/timer.h"
 #include <vector>
 
 // a class contains the atom position, 

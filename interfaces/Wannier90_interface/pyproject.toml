@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abacusw90"
+version = "0.1.0"
+description = "A Python interface bridging ABACUS DFT calculations with Wannier90"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    {name = "G Jin"},
+    {name = "XY Zhou"}
+]
+keywords = ["ABACUS", "Wannier90", "DFT", "Tight-Binding", "Physics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black"]
+
+[project.urls]
+Homepage = "https://github.com/deepmodeling/abacus-develop"
+Repository = "https://github.com/deepmodeling/abacus-develop"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["abacusw90*"]

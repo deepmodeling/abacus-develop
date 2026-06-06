@@ -175,9 +175,9 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! set direction of magnetism, used in non-collinear case 
     elecstate::cal_ux(ucell);
 
-    //! output the initial charge density and potential
-    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep, PARAM.inp);
-//    ModuleIO::write_pot_init(ucell, this->Pgrid, this->pelec, istep, PARAM.inp); 
+    //! output the initial charge density
+    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
+                             PARAM.globalv.global_out_dir, PARAM.inp, PARAM.globalv.two_fermi);
 
     return;
 }

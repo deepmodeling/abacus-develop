@@ -1,7 +1,6 @@
 #ifndef SETUP_POT_H
 #define SETUP_POT_H
 
-#include "source_base/module_device/device.h" // use Device
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_pw/module_pwdft/structure_factor.h"
@@ -9,6 +8,8 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+
+class pseudopot_cell_vnl;
 
 namespace pw
 {
@@ -29,6 +30,7 @@ void setup_pot(const int istep,
         hamilt::HamiltBase* p_hamilt, // hamiltonian
         ModulePW::PW_Basis_K *pw_wfc,  // pw for wfc
         const ModulePW::PW_Basis *pw_rhod, // pw for rhod
+        const std::string& out_dir,
         const Input_para& inp); // input parameters
 
 }

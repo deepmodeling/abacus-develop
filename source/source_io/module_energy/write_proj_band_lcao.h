@@ -1,8 +1,6 @@
 #ifndef WRITE_PROJ_BAND_LCAO_H
 #define WRITE_PROJ_BAND_LCAO_H
-#include "source_basis/module_ao/ORB_read.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate.h"
 #include "source_psi/psi.h"

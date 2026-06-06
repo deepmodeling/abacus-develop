@@ -6,6 +6,7 @@
 
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_comm.h"
 
 
 using namespace hsolver;
@@ -16,9 +17,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
-                                  const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
@@ -614,25 +614,8 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     {
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
 
-        auto* swap = new T[notconv * nbase_x];
-        syncmem_complex_op()(swap, hcc + nbase * nbase_x, notconv * nbase_x);
-        if (std::is_same<T, double>::value)
-        {
-            Parallel_Reduce::reduce_pool(hcc + nbase * nbase_x, notconv * nbase_x);
-        }
-        else
-        {
-            if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, hcc + nbase * nbase_x, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
-            }
-            else {
-                MPI_Reduce(swap, hcc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
-            }
-
-        }
-        delete[] swap;
-
-        // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * nbase_x, notconv * nbase_x );
+        assert(diag_comm.comm == POOL_WORLD);
+        Parallel_Reduce::reduce_pool(hcc + nbase * nbase_x, notconv * nbase_x);
 
         ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
     }
@@ -933,6 +916,9 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     if (psi_norm < 1.0e-12)
     {
         std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
+        std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+        std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+        std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
         std::cout << "nband = " << nband << std::endl;
         std::cout << "m = " << m << std::endl;
         exit(0);

@@ -106,7 +106,6 @@ public:
         double tol,
         std::vector<double>& diag_ethr,
         int max_iter,
-        bool use_paw,
         hsolver::diag_comm_info comm_info
     ) {
         auto hpsi_func = [mm_op] (
@@ -143,7 +142,6 @@ public:
             nband, 
             nbasis, 
             dav_ndim, 
-            use_paw,
             comm_info
         );
 

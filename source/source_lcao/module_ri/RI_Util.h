@@ -6,8 +6,8 @@
 #ifndef RI_UTIL_H
 #define RI_UTIL_H
 
-#include "source_hamilt/module_xc/exx_info.h"
 #include "source_cell/klist.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>

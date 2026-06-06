@@ -1,6 +1,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 #include "op_pw_exx.h"
 #include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #include "stress_pw.h"
 
 template <typename FPTYPE, typename Device>

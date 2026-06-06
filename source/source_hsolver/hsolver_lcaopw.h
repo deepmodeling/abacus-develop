@@ -4,7 +4,6 @@
 #include "source_estate/elecstate.h"
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
-#include "source_base/module_device/types.h"
 namespace hsolver
 {
 
