@@ -246,8 +246,42 @@ int compute_optimal_freq(const int n_band, const int n_basis, const int nline)
     } else if (problem_size >= 10000) {
         freq = 6;
     }
+    // Ensure freq is at least 1 (call at most every step)
+    if (freq < 1) freq = 1;
+    return freq;
+}
+
+double compute_convergence_rate(const double prev_avg_err, const double curr_avg_err)
+{
+    if (prev_avg_err <= 0.0) return 0.0;
+    if (curr_avg_err <= 0.0) return 0.0;
+    return curr_avg_err / prev_avg_err;
+}
+
+int compute_adaptive_freq(const double conv_rate, const int base_freq, const int nline)
+{
+    int freq = base_freq;
+
+    if (conv_rate < 0.3)
+    {
+        freq = base_freq + 1;
+    }
+    else if (conv_rate < 0.6)
+    {
+        freq = base_freq;
+    }
+    else if (conv_rate < 0.85)
+    {
+        freq = std::max(base_freq - 1, 1);
+    }
+    else
+    {
+        freq = std::max(base_freq - 2, 1);
+    }
+
     if (freq < 1) freq = 1;
     if (freq > nline) freq = nline;
+
     return freq;
 }
 

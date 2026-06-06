@@ -4,6 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds
+#include "source_base/parallel_reduce.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
 #include "para_linear_transform.h"
 
@@ -64,6 +65,40 @@ void DiagoBPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
     this->pmmcn.set_dimension(n_band_l, n_basis, n_band_l, n_basis, n_dim, n_band);
     this->plintrans.set_dimension(n_dim, nband_l, n_band_l, n_basis, false);
 #endif
+}
+
+template<typename T, typename Device>
+void DiagoBPCG<T, Device>::update_adaptive_freq(const std::vector<double>& ethr_band)
+{
+    Real* _err_st = this->err_st.data<Real>();
+    std::vector<Real> tmp_cpu;
+    if (this->err_st.device_type() == ct::DeviceType::GpuDevice) {
+        tmp_cpu.resize(this->n_band_l);
+        _err_st = tmp_cpu.data();
+        syncmem_var_d2h_op()(_err_st, this->err_st.template data<Real>(), this->n_band_l);
+    }
+
+    Real avg_err = 0.0;
+    for (int ii = 0; ii < this->n_band_l; ii++) {
+        avg_err += _err_st[ii];
+    }
+    avg_err /= this->n_band_l;
+
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(avg_err);
+#endif
+
+    if (this->prev_avg_error > 0.0) {
+        double conv_rate = compute_convergence_rate(
+            static_cast<double>(this->prev_avg_error),
+            static_cast<double>(avg_err));
+
+        this->adaptive_freq = compute_adaptive_freq(
+            conv_rate, this->optimal_freq, this->nline);
+    }
+
+    this->prev_avg_error = static_cast<double>(avg_err);
+    this->steps_since_measure = 0;
 }
 
 template<typename T, typename Device>
@@ -285,6 +320,9 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     // Compute optimal frequency for subspace diagonalization based on problem size
     this->optimal_freq = compute_optimal_freq(this->n_band, this->n_basis, this->nline);
+    this->adaptive_freq = this->optimal_freq;
+    this->prev_avg_error = 0.0;
+    this->steps_since_measure = 0;
 
     do
     {
@@ -318,7 +356,12 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // orthogonal psi by cholesky method
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
-        if (current_scf_iter == 1 && ntry % this->optimal_freq == 0) {
+        ++this->steps_since_measure;
+        if (current_scf_iter == 1 && this->steps_since_measure >= this->measure_interval) {
+            this->update_adaptive_freq(ethr_band);
+        }
+
+        if (current_scf_iter == 1 && ntry % this->adaptive_freq == 0) {
             this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, ethr_band));

@@ -86,6 +86,14 @@ class DiagoBPCG
     int nline = 4;
     /// optimal frequency for subspace diagonalization (computed dynamically)
     int optimal_freq = 4;
+    /// current adaptive frequency (may override optimal_freq based on convergence)
+    int adaptive_freq = 4;
+    /// previous average error for convergence rate tracking
+    double prev_avg_error = 0.0;
+    /// number of iterations since last error measurement
+    int steps_since_measure = 0;
+    /// measurement interval (how often to sample error for rate computation)
+    int measure_interval = 2;
     /// parallel matrix multiplication
     ModuleBase::PGemmCN<T, Device> pmmcn;
     PLinearTransform<T, Device> plintrans;
@@ -325,6 +333,17 @@ class DiagoBPCG
         ct::Tensor& psi_out, 
         ct::Tensor& hpsi_out, 
         ct::Tensor& hsub_out);
+
+    /**
+     * @brief Update adaptive frequency based on convergence rate.
+     *
+     * Computes the average error from err_st and compares it with
+     * the previous measurement to determine the convergence rate.
+     * The adaptive frequency is then computed and applied.
+     *
+     * @param ethr_band Per-band error thresholds.
+     */
+    void update_adaptive_freq(const std::vector<double>& ethr_band);
 
     /**
      * @brief Checks if the error satisfies the given threshold.

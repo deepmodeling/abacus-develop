@@ -18,6 +18,34 @@ namespace hsolver
  */
 int compute_optimal_freq(const int n_band, const int n_basis, const int nline);
 
+/**
+ * @brief Compute the convergence rate from historical error values.
+ *
+ * The convergence rate is computed as the ratio of current average error
+ * to previous average error. A rate close to 1.0 indicates slow convergence
+ * (stagnation), while a rate close to 0.0 indicates fast convergence.
+ *
+ * @param prev_avg_err Average error from the previous measurement point.
+ * @param curr_avg_err Average error from the current measurement point.
+ * @return Convergence rate in range [0.0, 1.0+]. Values > 1.0 indicate divergence.
+ */
+double compute_convergence_rate(const double prev_avg_err, const double curr_avg_err);
+
+/**
+ * @brief Compute adaptive diagonalization frequency based on convergence rate.
+ *
+ * Uses the convergence rate to dynamically adjust how often subspace
+ * diagonalization is performed. Slow convergence triggers more frequent
+ * diagonalization to reset the search direction, while fast convergence
+ * reduces the frequency to save computation.
+ *
+ * @param conv_rate Convergence rate (curr_avg_err / prev_avg_err).
+ * @param base_freq Base frequency from problem-size-based computation.
+ * @param nline Maximum allowed frequency (CG iteration limit).
+ * @return Adaptive frequency in range [1, nline].
+ */
+int compute_adaptive_freq(const double conv_rate, const int base_freq, const int nline);
+
 
 template <typename T, typename Device>
 struct line_minimize_with_block_op
