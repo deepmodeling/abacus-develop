@@ -72,79 +72,91 @@ GintInfo::~GintInfo()
 void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
 {
     ModuleBase::timer::start("GintInfo", "init_atoms");
-    int iat = 0;
-    is_atom_in_proc_.resize(ucell_->nat, false);
+    is_atom_in_proc_.assign(ucell_->nat, false);
     atoms_.resize(ucell_->nat);
     orbs_.resize(ntype);
 
-// TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for(int i = 0; i < ntype; i++)
     {
-        const auto& atom = atoms[i];
         orbs_[i] = Phi[i];
-        const auto *orb = &orbs_[i];
+    }
 
+    std::vector<std::vector<std::pair<int, const GintAtom*>>> atom_on_bgrids(ucell_->nat);
+#pragma omp parallel for schedule(dynamic)
+    for(int iat = 0; iat < ucell_->nat; iat++)
+    {
+        const int it = ucell_->iat2it[iat];
+        const int ia = ucell_->iat2ia[iat];
+        const auto& atom = atoms[it];
+        const auto* orb = &orbs_[it];
         // rcut extends to the maximum big grids in x, y, z directions
         Vec3i ext_bgrid = biggrid_info_->max_ext_bgrid_num(atom.Rcut);
 
-        for(int j = 0; j < atom.na; j++)
+        Vec3d fraction;
+        fraction.x = atom.taud[ia].x * unitcell_info_->get_nbx();
+        fraction.y = atom.taud[ia].y * unitcell_info_->get_nby();
+        fraction.z = atom.taud[ia].z * unitcell_info_->get_nbz();
+        const Vec3i atom_bgrid_idx(static_cast<int>(fraction.x),
+                                   static_cast<int>(fraction.y),
+                                   static_cast<int>(fraction.z));
+        const Vec3d delta(fraction.x - atom_bgrid_idx.x,
+                          fraction.y - atom_bgrid_idx.y,
+                          fraction.z - atom_bgrid_idx.z);
+        const Vec3d tau_in_biggrid = biggrid_info_->get_cartesian_coord(delta);
+
+        const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
+        auto& r_to_atom = atoms_[iat];
+        auto& bgrid_list = atom_on_bgrids[iat];
+
+        for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++)
         {
-            Vec3d fraction;
-            fraction.x = atom.taud[j].x * unitcell_info_->get_nbx();
-			fraction.y = atom.taud[j].y * unitcell_info_->get_nby();
-			fraction.z = atom.taud[j].z * unitcell_info_->get_nbz();
-            const Vec3i atom_bgrid_idx(static_cast<int>(fraction.x),
-                                       static_cast<int>(fraction.y),
-                                       static_cast<int>(fraction.z));
-            const Vec3d delta(fraction.x - atom_bgrid_idx.x,
-                              fraction.y - atom_bgrid_idx.y,
-                              fraction.z - atom_bgrid_idx.z);
-            const Vec3d tau_in_biggrid = biggrid_info_->get_cartesian_coord(delta);
-
-            const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
-            auto& r_to_atom = atoms_[iat];
-
-            for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++)
+            for(int bgrid_y = atom_bgrid_idx.y - ext_bgrid.y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid.y; bgrid_y++)
             {
-                for(int bgrid_y = atom_bgrid_idx.y - ext_bgrid.y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid.y; bgrid_y++)
+                for(int bgrid_z = atom_bgrid_idx.z - ext_bgrid.z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid.z; bgrid_z++)
                 {
-                    for(int bgrid_z = atom_bgrid_idx.z - ext_bgrid.z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid.z; bgrid_z++)
+                    // get the extended biggrid idx of the affected biggrid
+                    const Vec3i ext_bgrid_idx(bgrid_x, bgrid_y, bgrid_z);
+                    const Vec3i normal_bgrid_idx = unitcell_info_->map_ext_idx_to_ucell(ext_bgrid_idx);
+                    if(localcell_info_->is_bgrid_in_lcell(normal_bgrid_idx) == false)
                     {
-                        // get the extended biggrid idx of the affected biggrid
-                        const Vec3i ext_bgrid_idx(bgrid_x, bgrid_y, bgrid_z);
-                        const Vec3i normal_bgrid_idx = unitcell_info_->map_ext_idx_to_ucell(ext_bgrid_idx);
-                        if(localcell_info_->is_bgrid_in_lcell(normal_bgrid_idx) == false)
-                        {
-                            continue;
-                        }
-                        const int bgrid_local_idx = localcell_info_->get_bgrid_local_idx_1D(normal_bgrid_idx);
-                        // get the unitcell idx of the big grid
-                        const Vec3i ucell_idx_bgrid = unitcell_info_->get_unitcell_idx(ext_bgrid_idx);
+                        continue;
+                    }
+                    const int bgrid_local_idx = localcell_info_->get_bgrid_local_idx_1D(normal_bgrid_idx);
+                    // get the unitcell idx of the big grid
+                    const Vec3i ucell_idx_bgrid = unitcell_info_->get_unitcell_idx(ext_bgrid_idx);
 
-                        // The index of the unitcell containing the biggrid relative to the unitcell containing the atom.
-                        const Vec3i ucell_idx_relative = ucell_idx_bgrid - ucell_idx_atom;
-                        auto it = r_to_atom.find(ucell_idx_relative);
-                        // if the gint_atom is not in the map,
-                        // it means this is the first time we find this atom may affect some biggrids,
-                        // add it to the r_to_atom map
-                        if(it == r_to_atom.end())
-                        {
-                            Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
-                                                     atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
-                                                     atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
-                            r_to_atom.insert(std::make_pair(ucell_idx_relative, 
-                                GintAtom(&atom, i, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb, ucell_)));
-                        }
-                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_relative)))
-                        {
-                            biggrids_[bgrid_local_idx]->add_atom(&r_to_atom.at(ucell_idx_relative));
-                            is_atom_in_proc_[iat] = true;
-                        }
+                    // The index of the unitcell containing the biggrid relative to the unitcell containing the atom.
+                    const Vec3i ucell_idx_relative = ucell_idx_bgrid - ucell_idx_atom;
+                    auto it_atom = r_to_atom.find(ucell_idx_relative);
+                    // if the gint_atom is not in the map,
+                    // it means this is the first time we find this atom may affect some biggrids,
+                    // add it to the r_to_atom map
+                    if(it_atom == r_to_atom.end())
+                    {
+                        Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
+                                                 atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
+                                                 atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
+                        it_atom = r_to_atom.emplace(ucell_idx_relative,
+                                                    GintAtom(&atom, it, ia, iat, ext_atom_bgrid_idx,
+                                                             ucell_idx_relative, tau_in_biggrid, orb, ucell_)).first;
+                    }
+                    if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&it_atom->second))
+                    {
+                        bgrid_list.emplace_back(bgrid_local_idx, &it_atom->second);
                     }
                 }
             }
-            iat++;
         }
+    }
+
+    for(int iat = 0; iat < ucell_->nat; iat++)
+    {
+        for(const auto& atom_on_bgrid : atom_on_bgrids[iat])
+        {
+            const int bgrid_local_idx = atom_on_bgrid.first;
+            biggrids_[bgrid_local_idx]->add_atom(atom_on_bgrid.second);
+        }
+        is_atom_in_proc_[iat] = (atom_on_bgrids[iat].empty() == false);
     }
     ModuleBase::timer::end("GintInfo", "init_atoms");
 }
