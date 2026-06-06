@@ -3,175 +3,163 @@
  * @brief GPU-accelerated WT KEDF multi_kernel convolution.
  *
  * Offloads the rho^exponent → FFT → kernel multiply → IFFT pipeline
- * to GPU, eliminating CPU↔GPU data transfers between FFT and
- * real-space operations.
+ * to GPU using cuFFT directly (bypassing PW_Basis template API to
+ * avoid cross-target template instantiation issues).
  *
- * Design: follows the same pattern as fft_cuda.cpp —
- * cuFFT for FFT, custom kernels for pointwise operations,
- * with persistent GPU buffers to avoid repeated allocations.
+ * Persistent GPU buffers are lazily allocated and reused across SCF.
  *
- * @author Wang Chenxi (SunsetStand), Reze (AI assistant)
- * @date 2026-06-06
+ * @author Wang Chenxi, Reze
+ * @date 2026-06
  */
 #include "kedf_wt.h"
-#include "source_base/module_device/device.h"
+#include "source_base/module_device/device_check.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_io/module_parameter/parameter.h"
+
 #include <cuda_runtime.h>
 #include <cufft.h>
-#include <cmath>
+#include <thrust/complex.h>
 
-// ── Error checking ──
-#define CUDA_CHECK(call) do { \
-    cudaError_t err = call; \
-    if (err != cudaSuccess) { \
-        std::cerr << "CUDA error: " << cudaGetErrorString(err) \
-                  << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
-        exit(1); \
-    } \
-} while(0)
+namespace {
 
-#define CUFFT_CHECK(call) do { \
-    cufftResult err = call; \
-    if (err != CUFFT_SUCCESS) { \
-        std::cerr << "cuFFT error: " << (int)err \
-                  << " at " << __FILE__ << ":" << __LINE__ << std::endl; \
-        exit(1); \
-    } \
-} while(0)
+constexpr int THREADS_PER_BLOCK = 256;
 
-// ── GPU kernel: rho → rho^exponent ──
-__global__ void gpu_rho_power(
-    const double* __restrict__ rho,
-    double* __restrict__ out,
-    double exponent,
-    int nrxx)
-{
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (; i < nrxx; i += stride) {
-        out[i] = pow(rho[i], exponent);
-    }
-}
-
-// ── GPU kernel: reciprocal-space kernel multiply ──
-__global__ void gpu_recip_kernel_multiply(
-    cufftDoubleComplex* __restrict__ data,
+/// Element-wise multiply: complex array *= real kernel.
+__global__ void kedf_wt_recip_multiply(
+    thrust::complex<double>* __restrict__ data,
     const double* __restrict__ kernel,
     int npw)
 {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (; i < npw; i += stride) {
-        data[i].x *= kernel[i];
-        data[i].y *= kernel[i];
-    }
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= npw) { return; }
+    data[idx] *= kernel[idx];
 }
 
-// ── GPU kernel: complex → real with 1/N normalization ──
-__global__ void gpu_complex_to_real_norm(
-    const cufftDoubleComplex* __restrict__ src,
-    double* __restrict__ dst,
-    double scale,
+/// Real → complex conversion (imag = 0).
+__global__ void kedf_wt_real_to_complex(
+    const double* __restrict__ src,
+    thrust::complex<double>* __restrict__ dst,
     int n)
 {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (; i < n; i += stride) {
-        dst[i] = src[i].x * scale;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) { return; }
+    dst[idx] = thrust::complex<double>(src[idx], 0.0);
+}
+
+/// Complex → real with 1/N normalization (cuFFT inverse doesn't normalize).
+__global__ void kedf_wt_complex_to_real_norm(
+    const thrust::complex<double>* __restrict__ src,
+    double* __restrict__ dst,
+    double inv_n,
+    int n)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= n) { return; }
+    dst[idx] = src[idx].real() * inv_n;
+}
+
+/// cuFFT error check wrapper.
+inline void cufft_check(cufftResult err, const char* file, int line)
+{
+    if (err != CUFFT_SUCCESS) {
+        std::cerr << "cuFFT error " << (int)err
+                  << " at " << file << ":" << line << std::endl;
+        exit(1);
     }
 }
+#define CUFFT_CHECK(call) cufft_check(call, __FILE__, __LINE__)
 
-// ── Utility: compute launch config ──
-static inline int gpu_blocks(int n, int threads = 256) {
-    return std::min((n + threads - 1) / threads, 1024);
-}
+} // anonymous namespace
 
-// ═══════════════════════════════════════════════════════════════
-//  Public: GPU multi_kernel
-// ═══════════════════════════════════════════════════════════════
 void KEDF_WT::multi_kernel_gpu(
-    const double* prho,
-    double* rkernel_rho,
+    const double* const* prho,
+    double** rkernel_rho,
     double exponent,
-    int nrxx, int npw,
-    int nx, int ny, int nz)
+    ModulePW::PW_Basis* pw_rho)
 {
+    const int nrxx = pw_rho->nrxx;
+    const int npw  = pw_rho->npw;
+    const int nx   = pw_rho->nx;
+    const int ny   = pw_rho->ny;
+    const int nz   = pw_rho->nz;
+    const double inv_nrxx = 1.0 / nrxx;
+
     // ── Lazy allocation of persistent GPU buffers ──
     if (!gpu_allocated_) {
-        CUDA_CHECK(cudaMalloc(&d_rho_,          nrxx * sizeof(double)));
-        CUDA_CHECK(cudaMalloc(&d_rkernel_rho_,  nrxx * sizeof(double)));
-        CUDA_CHECK(cudaMalloc(&d_fft_work_,     npw  * sizeof(cufftDoubleComplex)));
-        CUDA_CHECK(cudaMalloc(&d_kernel_,       npw  * sizeof(double)));
-        
-        // Copy kernel to GPU once (kernel is constant throughout SCF)
-        CUDA_CHECK(cudaMemcpy(d_kernel_, this->kernel_, npw * sizeof(double),
-                              cudaMemcpyHostToDevice));
-        
-        // Create cuFFT plans (3D, double precision, in-place)
+        resmem_dd_op()(d_rho_, nrxx);
+        resmem_zd_op()(d_result_, nrxx);  // reused as complex work buffer
+        resmem_dd_op()(d_kernel_, npw);
+
+        syncmem_d2d_h2d_op()(d_kernel_, this->kernel_, npw);
+
+        // Create cuFFT plans (3D Z2Z, in-place)
         CUFFT_CHECK(cufftPlan3d(&cufft_plan_fwd_, nz, ny, nx, CUFFT_Z2Z));
         CUFFT_CHECK(cufftPlan3d(&cufft_plan_bwd_, nz, ny, nx, CUFFT_Z2Z));
-        
+
         gpu_allocated_ = true;
     }
-    
-    int blocks_r = gpu_blocks(nrxx);
-    int blocks_g = gpu_blocks(npw);
-    
-    // Step 1: Copy rho → GPU
-    CUDA_CHECK(cudaMemcpy(d_rho_, prho, nrxx * sizeof(double),
-                          cudaMemcpyHostToDevice));
-    
-    // Step 2: rho^exponent → d_rkernel_rho_ (pointwise on GPU)
-    gpu_rho_power<<<blocks_r, 256>>>(d_rho_, d_rkernel_rho_, exponent, nrxx);
-    
-    // Step 3: Real → Complex (copy into FFT buffer, zero imag)
-    // Use d_rkernel_rho_ as real source, d_fft_work_ as complex target
-    // Reuse gpu_rho_power grid: launch a simple copy-into-complex kernel
-    {
-        dim3 grid(blocks_r);
-        gpu_complex_to_real_norm<<<grid, 256>>>(nullptr, nullptr, 0.0, 0); // placeholder
-        // Actually: directly copy real→complex using CUDA memcpy + memset
-        CUDA_CHECK(cudaMemcpy(d_fft_work_, d_rkernel_rho_,
-                              nrxx * sizeof(double), cudaMemcpyDeviceToDevice));
-        // Zero out imaginary parts beyond what was copied
-        // (cufftDoubleComplex = {double x, double y}; y portions are uninit)
-        // For safety, memset the imaginary half
-        // Since data layout is x0,y0,x1,y1,..., we need to zero the y bytes
-        // Simpler: use a kernel
-    }
-    // (Using a kernel for real→complex to properly zero imaginary parts)
-    {
-        auto real_to_complex_kernel = [] __device__ (const double* src,
-                                                      cufftDoubleComplex* dst, int n) {
-            int i = blockIdx.x * blockDim.x + threadIdx.x;
-            int stride = blockDim.x * gridDim.x;
-            for (; i < n; i += stride) {
-                dst[i].x = src[i];
-                dst[i].y = 0.0;
-            }
-        };
-        // Declared as __global__ above for proper usage
-    }
-    
-    // Initialize d_fft_work_ from d_rkernel_rho_ (real → complex)
-    {
-        // Use a simple CUDA kernel for real-to-complex conversion
-        // For brevity: memset the whole buffer to 0, then copy real parts
-        CUDA_CHECK(cudaMemset(d_fft_work_, 0, npw * sizeof(cufftDoubleComplex)));
-        // Copy real values into the .x fields (interleaved: need stride-2 access)
-        // Simple approach: just copy the whole real array as-is
-        // d_fft_work_[i].x = d_rkernel_rho_[i] for i < nrxx
-        for (int i = 0; i < nrxx; ++i) {
-            // This is a HOST loop — we need a GPU kernel for this!
-            // Will be replaced with a proper kernel
+
+    const int blocks = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+    // d_result_ is a double* but we reuse it as a cuFFT complex buffer.
+    // npw ≥ nrxx for full-pw grids (OFDFT default), so sizeof(complex)*npw
+    // ≥ sizeof(double)*nrxx.  We allocate d_result_ with size npw*2
+    // (cuFFT needs npw complex doubles = npw * 2 doubles).
+    // The resmem_zd_op allocates npw complex doubles — enough for cuFFT in-place.
+    auto* d_fft = reinterpret_cast<cufftDoubleComplex*>(d_result_);
+
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+        // Step 1: rho^exponent on CPU
+        for (int ir = 0; ir < nrxx; ++ir) {
+            rkernel_rho[is][ir] = std::pow(prho[is][ir], exponent);
         }
+
+        // Step 2: H → D
+        syncmem_d2d_h2d_op()(d_rho_, rkernel_rho[is], nrxx);
+
+        // Step 3: Real → Complex on GPU
+        kedf_wt_real_to_complex<<<blocks, THREADS_PER_BLOCK>>>(
+            d_rho_,
+            reinterpret_cast<thrust::complex<double>*>(d_fft),
+            nrxx);
+        CHECK_CUDA_SYNC();
+
+        // Step 4: Forward FFT (in-place on d_fft)
+        CUFFT_CHECK(cufftExecZ2Z(cufft_plan_fwd_, d_fft, d_fft, CUFFT_FORWARD));
+
+        // Step 5: Multiply by WT kernel in G-space
+        kedf_wt_recip_multiply<<<blocks, THREADS_PER_BLOCK>>>(
+            reinterpret_cast<thrust::complex<double>*>(d_fft),
+            d_kernel_,
+            npw);
+        CHECK_CUDA_SYNC();
+
+        // Step 6: Inverse FFT (in-place on d_fft)
+        CUFFT_CHECK(cufftExecZ2Z(cufft_plan_bwd_, d_fft, d_fft, CUFFT_INVERSE));
+
+        // Step 7: Complex → Real with 1/N normalization
+        kedf_wt_complex_to_real_norm<<<blocks, THREADS_PER_BLOCK>>>(
+            reinterpret_cast<thrust::complex<double>*>(d_fft),
+            d_result_,  // back to double* usage
+            inv_nrxx,
+            nrxx);
+        CHECK_CUDA_SYNC();
+
+        // Step 8: D → H
+        syncmem_d2d_d2h_op()(rkernel_rho[is], d_result_, nrxx);
     }
-    
-    // TODO: This is a skeleton. The full GPU implementation requires:
-    // 1. A real→complex kernel (set .x = src, .y = 0)
-    // 2. cuFFT forward
-    // 3. kernel multiply in G-space
-    // 4. cuFFT backward
-    // 5. complex→real with 1/nrxx normalization
-    
-    // For now, fall through to CPU path
+}
+
+void KEDF_WT::free_gpu_buffers()
+{
+    if (!gpu_allocated_) { return; }
+
+    if (cufft_plan_fwd_ != 0) { cufftDestroy(cufft_plan_fwd_); cufft_plan_fwd_ = 0; }
+    if (cufft_plan_bwd_ != 0) { cufftDestroy(cufft_plan_bwd_); cufft_plan_bwd_ = 0; }
+
+    if (d_rho_    != nullptr) { delmem_dd_op()(d_rho_);    d_rho_    = nullptr; }
+    if (d_result_ != nullptr) { delmem_zd_op()(d_result_); d_result_ = nullptr; }
+    if (d_kernel_ != nullptr) { delmem_dd_op()(d_kernel_); d_kernel_ = nullptr; }
+
+    gpu_allocated_ = false;
 }
