@@ -80,7 +80,9 @@ void lapackGeneralEigen(int &npw, std::vector<std::complex<float>> &hm, const st
     char tmp_c1 = 'V', tmp_c2 = 'U';
     cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
     end = clock();
-    if (outtime) std::cout << "Lapack General Run time: " << (float)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    if (outtime) {
+        std::cout << "Lapack General Run time: " << (float)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    }
     delete[] rwork;
     delete[] work2;
 }
@@ -168,6 +170,7 @@ class DiagoCGPrepare
 	    precondition_local = new float[DIAGOTEST::npw];
 	    for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
+        DIAGOTEST::sync_sdiag(DIAGOTEST::sdiag_f, DIAGOTEST::sdiag_local_f);
         // hsolver::DiagoCG<std::complex<float>> cg(precondition_local);
         psi_local.fix_k(0);
         // cg.diag(ha,psi_local,en); 
@@ -278,7 +281,6 @@ TEST_P(DiagoCGFloatTest, RandomHamiltAndS)
 
     DIAGOTEST::npw = dcp.npw;
 
-    // 生成正定对角 S（范围 0.5..1.5）
     DIAGOTEST::sdiag_f.resize(dcp.npw);
     std::default_random_engine eng(123);
     std::uniform_real_distribution<float> ud(0.5f, 1.5f);

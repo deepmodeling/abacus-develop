@@ -15,8 +15,11 @@ namespace DIAGOTEST
     // diagonal representation of overlap (S) for simple mock of generalized eigenproblem
     // if empty, sPsi will treat S as identity
     std::vector<double> sdiag_d;
-    std::vector<std::complex<float> > sdiag_f; 
+    std::vector<double> sdiag_local_d;
+    std::vector<std::complex<float> > sdiag_f;
+    std::vector<std::complex<float>> sdiag_local_f;
     std::vector<std::complex<double>> sdiag;
+    std::vector<std::complex<double>> sdiag_local;
     int h_nr;
     int h_nc;
     int npw;
@@ -127,6 +130,31 @@ namespace DIAGOTEST
     template void divide_psi<double>(double* psi, double* psi_local);
     template void divide_psi<std::complex<double>>(std::complex<double>* psi, std::complex<double>* psi_local);
     template void divide_psi<std::complex<float>>(std::complex<float>* psi, std::complex<float>* psi_local);
+
+    template<typename T>
+    void sync_sdiag(const std::vector<T>& sdiag, std::vector<T>& sdiag_local)
+    {
+        if (sdiag.empty())
+        {
+            sdiag_local.clear();
+            return;
+        }
+
+        int nprocs = 1, mypnum = 0;
+#ifdef __MPI
+        MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+        MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+#endif
+
+        sdiag_local.resize(npw_local[mypnum]);
+        divide_psi(const_cast<T*>(sdiag.data()), sdiag_local.data());
+    }
+
+    template void sync_sdiag<double>(const std::vector<double>& sdiag, std::vector<double>& sdiag_local);
+    template void sync_sdiag<std::complex<double>>(const std::vector<std::complex<double>>& sdiag,
+                                                   std::vector<std::complex<double>>& sdiag_local);
+    template void sync_sdiag<std::complex<float>>(const std::vector<std::complex<float>>& sdiag,
+                                                  std::vector<std::complex<float>>& sdiag_local);
 #ifdef __MPI
     void cal_division(int &npw)
     {
@@ -415,13 +443,19 @@ void hamilt::HamiltPW<double, base_device::DEVICE_CPU>::sPsi(const double* psi_i
                                                              const int npw,
                                                              const int nbands) const
 {
-    if (DIAGOTEST::sdiag_d.size() < static_cast<size_t>(nrow)) {
-        DIAGOTEST::sdiag_d.assign(nrow, 1.0); 
+    std::vector<double>& sdiag_local
+#ifdef __MPI
+        = DIAGOTEST::sdiag_local_d;
+#else
+        = DIAGOTEST::sdiag_d;
+#endif
+    if (sdiag_local.size() < static_cast<size_t>(nrow)) {
+        sdiag_local.assign(nrow, 1.0);
     }
     for (int v = 0; v < nbands; ++v) {
         for (int i = 0; i < nrow; ++i) {
             size_t idx = static_cast<size_t>(v) * nrow + i;
-            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_d[i];
+            spsi[idx] = psi_in[idx] * sdiag_local[i];
         }
     }
 }
@@ -432,13 +466,19 @@ void hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::sPsi(const
                                                                            const int npw,
                                                                            const int nbands) const
 {
-    if (DIAGOTEST::sdiag_d.size() < static_cast<size_t>(nrow)) {
-        DIAGOTEST::sdiag_d.assign(nrow, 1.0);
+    std::vector<std::complex<double>>& sdiag_local
+#ifdef __MPI
+        = DIAGOTEST::sdiag_local;
+#else
+        = DIAGOTEST::sdiag;
+#endif
+    if (sdiag_local.size() < static_cast<size_t>(nrow)) {
+        sdiag_local.assign(nrow, std::complex<double>(1.0, 0.0));
     }
     for (int v = 0; v < nbands; ++v) {
         for (int i = 0; i < nrow; ++i) {
             size_t idx = static_cast<size_t>(v) * nrow + i;
-            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_d[i];
+            spsi[idx] = psi_in[idx] * sdiag_local[i];
         }
     }
 }
@@ -449,13 +489,19 @@ void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const 
                                                                           const int npw,
                                                                           const int nbands) const
 {
-    if (DIAGOTEST::sdiag_f.size() < static_cast<size_t>(nrow)) {
-        DIAGOTEST::sdiag_f.assign(nrow, 1.0f);
+    std::vector<std::complex<float>>& sdiag_local
+#ifdef __MPI
+        = DIAGOTEST::sdiag_local_f;
+#else
+        = DIAGOTEST::sdiag_f;
+#endif
+    if (sdiag_local.size() < static_cast<size_t>(nrow)) {
+        sdiag_local.assign(nrow, std::complex<float>(1.0f, 0.0f));
     }
     for (int v = 0; v < nbands; ++v) {
         for (int i = 0; i < nrow; ++i) {
             size_t idx = static_cast<size_t>(v) * nrow + i;
-            spsi[idx] = psi_in[idx] * DIAGOTEST::sdiag_f[i];
+            spsi[idx] = psi_in[idx] * sdiag_local[i];
         }
     }
 }

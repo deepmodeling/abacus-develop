@@ -136,6 +136,7 @@ public:
         precondition_local = new double[DIAGOTEST::npw];
         for (int i = 0;i < DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
+        DIAGOTEST::sync_sdiag(DIAGOTEST::sdiag_d, DIAGOTEST::sdiag_local_d);
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         // double start, end;

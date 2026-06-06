@@ -58,6 +58,36 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
     delete[] work2;
 }
 
+// LAPACK reference for generalized eigenproblem when S is diagonal (complex<double>)
+void lapackGeneralEigen(int &npw, std::vector<std::complex<double>> &hm, const std::vector<std::complex<double>> &sdiag, double *e, bool outtime = false)
+{
+    // build transformed matrix tmp = S^{-1/2} H S^{-1/2}
+    std::vector<std::complex<double>> tmp(npw * npw);
+    for (int i = 0; i < npw; ++i) {
+        std::complex<double> si = std::sqrt(sdiag[i]);
+        for (int j = 0; j < npw; ++j) {
+            std::complex<double> sj = std::sqrt(sdiag[j]);
+            tmp[i * npw + j] = hm[i * npw + j] / (si * sj);
+        }
+    }
+
+    // call cheev_ on transformed matrix
+    clock_t start = clock(), end;
+    int lwork = 2 * npw;
+    std::complex<double> *work2 = new std::complex<double>[lwork];
+    double *rwork = new double[3 * npw - 2];
+    int info = 0;
+    char tmp_c1 = 'V', tmp_c2 = 'U';
+    zheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+    end = clock();
+    if (outtime) {
+        std::cout << "Lapack General Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    }
+    delete[] rwork;
+    delete[] work2;
+}
+
+
 class DiagoCGPrepare
 {
   public:
@@ -84,8 +114,14 @@ class DiagoCGPrepare
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix;
-        if(mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
-}
+        if(mypnum == 0) {  
+            if (DIAGOTEST::sdiag.empty()) {
+                lapackEigen(npw, ev, e_lapack);
+            } else {
+                auto hm_copy = ev; // operate on a copy
+                lapackGeneralEigen(npw, hm_copy, DIAGOTEST::sdiag, e_lapack);
+            }
+        }
         // initial guess of psi by perturbing lapack psi
         ModuleBase::ComplexMatrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -131,6 +167,7 @@ class DiagoCGPrepare
 	    precondition_local = new double[DIAGOTEST::npw];
 	    for(int i=0;i<DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
+        DIAGOTEST::sync_sdiag(DIAGOTEST::sdiag, DIAGOTEST::sdiag_local);
 
         /**************************************************************/
         //  New interface of cg method
@@ -201,7 +238,6 @@ class DiagoCGPrepare
         {
             EXPECT_NEAR(en[i], e_lapack[i], threshold);
         }
-
         delete[] en;
         delete[] e_lapack;
         delete ha;
@@ -223,11 +259,34 @@ TEST_P(DiagoCGTest, RandomHamilt)
     //std::cout<<"eps "<<hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR<<std::endl;
     HPsi<std::complex<double>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
     DIAGOTEST::hmatrix = hpsi.hamilt();
+    DIAGOTEST::sdiag.clear(); // ensure sdiag is empty for this test
 
     DIAGOTEST::npw = dcp.npw;
     // ModuleBase::ComplexMatrix psi = hpsi.psi();
     dcp.CompareEigen(hpsi.precond());
 }
+
+TEST_P(DiagoCGTest, RandomHamiltAndS)
+{
+    DiagoCGPrepare dcp = GetParam();
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+    HPsi<std::complex<double>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
+    DIAGOTEST::hmatrix = hpsi.hamilt();
+    DIAGOTEST::sdiag.clear(); //ensure sdiag is empty before generating a new one
+
+    DIAGOTEST::npw = dcp.npw;
+
+    DIAGOTEST::sdiag.resize(dcp.npw);
+    std::default_random_engine eng(123);
+    std::uniform_real_distribution<double> ud(0.5f, 1.5f);
+    for (int i = 0; i < dcp.npw; ++i) {
+        DIAGOTEST::sdiag[i] = std::complex<double>(ud(eng), 0.0L);
+    }
+
+    dcp.CompareEigen(hpsi.precond());
+}
+
 
 INSTANTIATE_TEST_SUITE_P(VerifyCG,
                          DiagoCGTest,
