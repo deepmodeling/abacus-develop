@@ -517,6 +517,41 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         copy_cols(hp_.data(), cols, hp_l);
     }
 
+    // ---------------------------------------------------------------------------
+    // Normalize w and p columns to unit S-norm for numerical stability.
+    //
+    // The [w, p] block of the Gram matrix M has entries O(||w||²) which
+    // become tiny when residuals are small, making M nearly singular and
+    // causing sygvd to produce garbage eigenvectors.
+    //
+    // Scaling to unit S-norm keeps M well-conditioned (diagonal ~1) without
+    // changing the subspace.  The Ritz values are identical and the Ritz
+    // vector coefficients in update_one_block automatically compensate.
+    // ---------------------------------------------------------------------------
+    auto scale_to_unit_snorm = [this](std::vector<T>& x, std::vector<T>& sx,
+                                       std::vector<T>& hx, int lcols) {
+        for (int j = 0; j < lcols; ++j) {
+            Real sn2 = 0;
+            for (int ig = 0; ig < n_dim_; ++ig)
+                sn2 += std::real(std::conj(x[idx(ig, j, ld_psi_)])
+                                 * sx[idx(ig, j, ld_psi_)]);
+            Real sn = std::sqrt(std::max(sn2, static_cast<Real>(1e-30)));
+            // Only scale if the norm is non-negligible; a near-zero
+            // column is a converged band whose contribution is harmless.
+            if (sn > static_cast<Real>(1e-15)) {
+                Real inv = static_cast<Real>(1) / sn;
+                for (int ig = 0; ig < n_dim_; ++ig) {
+                    x[ idx(ig, j, ld_psi_)]  *= inv;
+                    sx[idx(ig, j, ld_psi_)] *= inv;
+                    hx[idx(ig, j, ld_psi_)] *= inv;
+                }
+            }
+        }
+    };
+    scale_to_unit_snorm(w_l, sw_l, hw_l, l);
+    if (use_p)
+        scale_to_unit_snorm(p_l, sp_l, hp_l, l);
+
     auto fill_sym = [&](const std::vector<T>& a, const std::vector<T>& b,
                         int r0, int c0, std::vector<Real>& mat)
     {
@@ -1168,15 +1203,13 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            // Use the 2-block [psi, w] subspace (preconditioned Davidson).
-            // The 3-block [psi, w, p] subspace can become ill-conditioned
-            // when residuals are small: the [w, p] block of the Gram matrix
-            // shrinks, making M nearly singular and causing sygvd to produce
-            // garbage eigenvectors.  The p-bad detection + H·w Krylov fallback
-            // (below, currently disabled) addresses p~w collinearity but not
-            // the small-residual ill-conditioning.  Without p the method
-            // converges robustly with slightly more iterations.
-            const bool use_p = false;
+            // Use the 3-block [psi, w, p] subspace.
+            // w and p are normalized to unit S-norm before building the
+            // Gram matrix (see build_small_subspace), which keeps M
+            // well-conditioned even when residuals are small.  The p-bad
+            // detection + H·w Krylov fallback handles the remaining
+            // ill-conditioning: p nearly collinear with w.
+            const bool use_p = true;
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
