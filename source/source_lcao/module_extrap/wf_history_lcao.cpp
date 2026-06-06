@@ -89,6 +89,7 @@ bool WfHistoryLCAO<TK>::latest_snapshot(WfSnapshotLCAO<TK>& snapshot) const
 
 template <typename TK>
 WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* current_overlap,
+                                                             const Parallel_Orbitals& pv,
                                                              psi::Psi<double>& psi,
                                                              const ModuleBase::matrix& wg_now,
                                                              const double pivot_threshold,
@@ -148,6 +149,7 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
         }
 
         const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
+                                                                               pv,
                                                                                psi_trial,
                                                                                snapshot.wg,
                                                                                1.0e-12,

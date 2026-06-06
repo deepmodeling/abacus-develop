@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao.h"
+#include "source_base/global_function.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"
@@ -233,24 +234,38 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                     ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf",
                                              "Failed to access the LCAO operator chain for WFN extrapolation.");
                 }
+                ModuleBase::timer::start("WFN_Extrap", "prepare_overlap");
                 lcao_op->contributeHR();
-                hamilt_lcao->updateSk(0, 0);
+                // Refresh the current Gamma-only overlap matrix before reusing the previous WFN.
+                // The layout must follow the active LCAO solver because the WFN orthonormalizer
+                // assembles distributed local blocks using the same column/row-major convention.
+                const int sk_layout =
+                    ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? 1 : 0;
+                hamilt_lcao->updateSk(0, sk_layout);
+                ModuleBase::timer::end("WFN_Extrap", "prepare_overlap");
+
+                ModuleBase::timer::start("WFN_Extrap", "apply");
                 const ModuleExtrap::WfExtrapApplyResult wfc_result
                     = this->wf_history_lcao_->try_use_prev_wf_gamma(hamilt_lcao->getSk(),
+                                                                     this->pv,
                                                                      *(this->psi),
                                                                      this->pelec->wg);
+                ModuleBase::timer::end("WFN_Extrap", "apply");
                 if (wfc_result.ok())
                 {
+                    ModuleBase::timer::start("WFN_Extrap", "rebuild_density");
                     elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(),
                                           this->pelec->wg,
                                           *(this->psi),
                                           *(this->dmat.dm));
                     this->dmat.dm->cal_DMR();
                     LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+                    ModuleBase::timer::end("WFN_Extrap", "rebuild_density");
                     initialized_by_wfc_extrap = true;
 
                     GlobalV::ofs_running << " WFN extrapolation: use_prev_wf from ionic step "
                                          << wfc_result.snapshot_istep
+                                         << ", active bands = " << wfc_result.nactive_bands
                                          << ", max |C^T S C - I| = "
                                          << wfc_result.max_orthonormality_deviation << std::endl;
                 }

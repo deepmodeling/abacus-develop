@@ -3,6 +3,7 @@
 
 #include "source_lcao/module_extrap/wf_extrap_method.h"
 #include "source_lcao/module_extrap/wf_snapshot_lcao.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <cstddef>
 #include <deque>
@@ -72,6 +73,7 @@ class WfHistoryLCAO
      * added in a separate path instead of silently reusing this helper.
      */
     WfExtrapApplyResult try_use_prev_wf_gamma(const double* current_overlap,
+                                              const Parallel_Orbitals& pv,
                                               psi::Psi<double>& psi,
                                               const ModuleBase::matrix& wg_now,
                                               double pivot_threshold = 1.0e-14,

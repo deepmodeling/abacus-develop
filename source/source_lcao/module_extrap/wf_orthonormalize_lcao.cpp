@@ -2,7 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 namespace ModuleExtrap
 {
@@ -199,9 +204,144 @@ double max_orthonormality_deviation(const double* overlap,
     return max_dev;
 }
 
+
+WfcExtrapStatus allreduce_dense_vector(std::vector<double>& values, const Parallel_Orbitals& pv)
+{
+#ifdef __MPI
+    if (!pv.is_serial)
+    {
+        const MPI_Comm comm = pv.comm();
+        if (comm == MPI_COMM_NULL)
+        {
+            return WfcExtrapStatus::InvalidInput;
+        }
+        if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            return WfcExtrapStatus::InvalidInput;
+        }
+        MPI_Allreduce(MPI_IN_PLACE,
+                      values.data(),
+                      static_cast<int>(values.size()),
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      comm);
+    }
+#endif
+    return WfcExtrapStatus::Success;
+}
+
+WfcExtrapStatus assemble_global_overlap(const double* overlap,
+                                        const Parallel_Orbitals& pv,
+                                        std::vector<double>& overlap_global)
+{
+    const int nbasis_global = pv.get_global_row_size();
+    if (overlap == nullptr || nbasis_global <= 0 || pv.get_global_col_size() != nbasis_global)
+    {
+        return WfcExtrapStatus::DimensionMismatch;
+    }
+
+    overlap_global.assign(static_cast<std::size_t>(nbasis_global) * static_cast<std::size_t>(nbasis_global), 0.0);
+
+    const int nrow_local = pv.get_row_size();
+    const int ncol_local = pv.get_col_size();
+    for (int icol = 0; icol < ncol_local; ++icol)
+    {
+        const int icol_global = pv.local2global_col(icol);
+        for (int irow = 0; irow < nrow_local; ++irow)
+        {
+            const int irow_global = pv.local2global_row(irow);
+            // ABACUS/ScaLAPACK local matrices are stored column-major:
+            // local(irow, icol) -> overlap[icol * nrow_local + irow].
+            overlap_global[idx(irow_global, icol_global, nbasis_global)]
+                = overlap[static_cast<std::size_t>(icol) * static_cast<std::size_t>(nrow_local)
+                          + static_cast<std::size_t>(irow)];
+        }
+    }
+
+    return allreduce_dense_vector(overlap_global, pv);
+}
+
+int local_band_to_global(const int ib_local, const Parallel_Orbitals& pv)
+{
+    return (ib_local / pv.nb * pv.dim1 + pv.coord[1]) * pv.nb + ib_local % pv.nb;
+}
+
+int local_wfc_col_to_global(const int ib_local, const Parallel_Orbitals& pv, const bool coeff_columns_are_basis)
+{
+    // Gamma-only direct diagonalization solvers store Psi columns with the same
+    // distribution as the AO/basis columns, i.e. local Psi column -> global basis
+    // column.  Other NAO paths may store only the requested band columns; in that
+    // case the band-column distribution follows the ScaLAPACK formula used by
+    // Parallel_Orbitals::set_nloc_wfc_Eij().
+    return coeff_columns_are_basis ? pv.local2global_col(ib_local) : local_band_to_global(ib_local, pv);
+}
+
+WfcExtrapStatus assemble_global_coeff_active(const double* coeff_local,
+                                             const Parallel_Orbitals& pv,
+                                             const int ncoeff_local,
+                                             const int nbasis_local,
+                                             const int nactive_bands,
+                                             const bool coeff_columns_are_basis,
+                                             std::vector<double>& coeff_global)
+{
+    const int nbasis_global = pv.get_global_row_size();
+    if (coeff_local == nullptr || nbasis_global <= 0 || ncoeff_local <= 0 || nbasis_local <= 0
+        || nactive_bands < 0 || pv.get_row_size() != nbasis_local)
+    {
+        return WfcExtrapStatus::DimensionMismatch;
+    }
+
+    coeff_global.assign(static_cast<std::size_t>(nactive_bands) * static_cast<std::size_t>(nbasis_global), 0.0);
+
+    for (int ib_local = 0; ib_local < ncoeff_local; ++ib_local)
+    {
+        const int ib_global = local_wfc_col_to_global(ib_local, pv, coeff_columns_are_basis);
+        if (ib_global >= nactive_bands)
+        {
+            continue;
+        }
+        for (int mu_local = 0; mu_local < nbasis_local; ++mu_local)
+        {
+            const int mu_global = pv.local2global_row(mu_local);
+            coeff_global[idx(ib_global, mu_global, nbasis_global)]
+                = coeff_local[static_cast<std::size_t>(ib_local) * static_cast<std::size_t>(nbasis_local)
+                              + static_cast<std::size_t>(mu_local)];
+        }
+    }
+
+    return allreduce_dense_vector(coeff_global, pv);
+}
+
+void scatter_global_coeff_active(const std::vector<double>& coeff_global,
+                                 const Parallel_Orbitals& pv,
+                                 const int ncoeff_local,
+                                 const int nbasis_local,
+                                 const int nactive_bands,
+                                 const bool coeff_columns_are_basis,
+                                 double* coeff_local)
+{
+    const int nbasis_global = pv.get_global_row_size();
+    for (int ib_local = 0; ib_local < ncoeff_local; ++ib_local)
+    {
+        const int ib_global = local_wfc_col_to_global(ib_local, pv, coeff_columns_are_basis);
+        if (ib_global >= nactive_bands)
+        {
+            continue;
+        }
+        for (int mu_local = 0; mu_local < nbasis_local; ++mu_local)
+        {
+            const int mu_global = pv.local2global_row(mu_local);
+            coeff_local[static_cast<std::size_t>(ib_local) * static_cast<std::size_t>(nbasis_local)
+                        + static_cast<std::size_t>(mu_local)]
+                = coeff_global[idx(ib_global, mu_global, nbasis_global)];
+        }
+    }
+}
+
 } // namespace
 
 WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
+                                                   const Parallel_Orbitals& pv,
                                                    psi::Psi<double>& wfc,
                                                    const ModuleBase::matrix& occupations,
                                                    const double occupation_threshold,
@@ -217,13 +357,21 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
     }
 
     const int nstate = wfc.get_nk();
-    const int nbands = wfc.get_nbands();
-    const int nbasis = wfc.get_nbasis();
+    const int ncoeff_local = wfc.get_nbands();
+    const int nbasis_local = wfc.get_nbasis();
+    const int nbasis_global = pv.get_global_row_size();
+    const int ncoeff_global_basis = pv.get_global_col_size();
+    const int ncoeff_global_bands = pv.get_wfc_global_nbands();
+    const bool coeff_columns_are_basis = (ncoeff_local == pv.get_col_size());
+    const bool coeff_columns_are_bands = (ncoeff_local == pv.ncol_bands);
+    const int ncoeff_global = coeff_columns_are_basis ? ncoeff_global_basis : ncoeff_global_bands;
     result.nstate = nstate;
-    result.nbands = nbands;
-    result.nbasis = nbasis;
+    result.nbands = ncoeff_global;
+    result.nbasis = nbasis_global;
 
-    if (nstate <= 0 || nbands <= 0 || nbasis <= 0 || nbands > nbasis)
+    if (nstate <= 0 || ncoeff_local <= 0 || nbasis_local <= 0 || nbasis_global <= 0 || ncoeff_global <= 0
+        || ncoeff_global > nbasis_global || pv.get_row_size() != nbasis_local
+        || pv.get_global_col_size() != nbasis_global || (!coeff_columns_are_basis && !coeff_columns_are_bands))
     {
         result.status = WfcExtrapStatus::DimensionMismatch;
         return result;
@@ -241,6 +389,13 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
         return result;
     }
 
+    std::vector<double> overlap_global;
+    result.status = assemble_global_overlap(overlap, pv, overlap_global);
+    if (!result.ok())
+    {
+        return result;
+    }
+
     // Operate on a full owned copy first.  The caller's Psi is overwritten only after
     // all state/spin channels pass the positive-definiteness and residual checks.
     std::vector<double> trial(wfc.size(), 0.0);
@@ -251,11 +406,11 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
     int max_active_bands = 0;
     for (int istate = 0; istate < nstate; ++istate)
     {
-        double* coeff = trial.data()
-                      + static_cast<std::size_t>(istate) * static_cast<std::size_t>(nbands)
-                            * static_cast<std::size_t>(nbasis);
+        double* coeff_local = trial.data()
+                            + static_cast<std::size_t>(istate) * static_cast<std::size_t>(ncoeff_local)
+                                  * static_cast<std::size_t>(nbasis_local);
 
-        const int nactive_bands = active_bands_for_state(occupations, istate, nbands, occupation_threshold);
+        const int nactive_bands = active_bands_for_state(occupations, istate, ncoeff_global, occupation_threshold);
         max_active_bands = std::max(max_active_bands, nactive_bands);
         result.nactive_bands = nactive_bands;
 
@@ -266,8 +421,22 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
             continue;
         }
 
+        std::vector<double> coeff_global;
+        result.status = assemble_global_coeff_active(coeff_local,
+                                                     pv,
+                                                     ncoeff_local,
+                                                     nbasis_local,
+                                                     nactive_bands,
+                                                     coeff_columns_are_basis,
+                                                     coeff_global);
+        if (!result.ok())
+        {
+            result.failed_state = istate;
+            return result;
+        }
+
         std::vector<double> metric;
-        build_overlap_in_band_space(overlap, coeff, nactive_bands, nbasis, metric);
+        build_overlap_in_band_space(overlap_global.data(), coeff_global.data(), nactive_bands, nbasis_global, metric);
         fill_metric_diagnostics(metric, nactive_bands, result);
 
         if (!cholesky_lower_in_place(metric, nactive_bands, pivot_threshold, result))
@@ -277,9 +446,12 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
             return result;
         }
 
-        apply_inverse_cholesky_left(metric, coeff, nactive_bands, nbasis);
+        apply_inverse_cholesky_left(metric, coeff_global.data(), nactive_bands, nbasis_global);
 
-        const double max_dev = max_orthonormality_deviation(overlap, coeff, nactive_bands, nbasis);
+        const double max_dev = max_orthonormality_deviation(overlap_global.data(),
+                                                            coeff_global.data(),
+                                                            nactive_bands,
+                                                            nbasis_global);
         if (!std::isfinite(max_dev) || max_dev > check_tolerance)
         {
             result.status = WfcExtrapStatus::OrthogonalizationFailed;
@@ -288,6 +460,14 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
             return result;
         }
         max_deviation_all = std::max(max_deviation_all, max_dev);
+
+        scatter_global_coeff_active(coeff_global,
+                                    pv,
+                                    ncoeff_local,
+                                    nbasis_local,
+                                    nactive_bands,
+                                    coeff_columns_are_basis,
+                                    coeff_local);
     }
 
     wfc.set_all_psi(trial.data(), trial.size());
