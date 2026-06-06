@@ -1,6 +1,7 @@
 #ifndef GRID_H
 #define GRID_H
 
+#include "atom_pack.h"
 #include "source_cell/unitcell.h"
 #include "sltk_atom.h"
 #include "sltk_util.h"
@@ -15,6 +16,12 @@ typedef std::vector<FAtom> AtomMap;
 class Grid
 {
   public:
+    enum class NeighborBuildMode
+    {
+        AtomPackOnly,
+        AtomPackAndLegacy
+    };
+
     // Constructors and destructor
     // Grid is Global class,so init it with constant number
     Grid() : test_grid(0){};
@@ -23,7 +30,11 @@ class Grid
 
     Grid& operator=(Grid&&) = default;
 
-    void init(std::ofstream& ofs, const UnitCell& ucell, const double radius_in, const bool boundary = true);
+    void init(std::ofstream& ofs,
+              const UnitCell& ucell,
+              const double radius_in,
+              const bool boundary = true,
+              const NeighborBuildMode build_mode = NeighborBuildMode::AtomPackAndLegacy);
 
     // Data
     bool pbc=false; // When pbc is set to false, periodic boundary conditions are explicitly ignored.
@@ -56,6 +67,15 @@ class Grid
 
     // Stores the adjacent information of atoms. [ntype][natom][adj list]
     std::vector<std::vector< std::vector<FAtom *> >> all_adj_info;
+
+    // Phase 2.1 flat search path. Grid_Driver::Find_atom() uses this
+    // integer-indexed route by default; the legacy FAtom* route above can still
+    // be built as a regression baseline.
+    ModuleNeighbor::AtomPack atom_pack;
+    ModuleNeighbor::GridStorage grid_storage;
+    std::vector<ModuleNeighbor::NeighborPair> neighbor_pairs_27;
+    std::vector<std::vector<std::vector<int>>> neighbor_pair_indices;
+
     void clear_atoms()
     {
         // we have to clear the all_adj_info
@@ -63,6 +83,10 @@ class Grid
         all_adj_info.clear();
 
         atoms_in_box.clear();
+        atom_pack.clear();
+        grid_storage.clear();
+        neighbor_pairs_27.clear();
+        neighbor_pair_indices.clear();
     }
     void clear_adj_info()
     {
@@ -102,6 +126,8 @@ class Grid
     void Construct_Adjacent(const UnitCell& ucell);
     void Construct_Adjacent_near_box(const FAtom& fatom);
     void Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2);
+    void Build_AtomPack_Search_Path(const UnitCell& ucell);
+    void Build_Legacy_Search_Path(const UnitCell& ucell);
 
     void Check_Expand_Condition(const UnitCell& ucell);
     int glayerX=0;

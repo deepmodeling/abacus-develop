@@ -70,6 +70,22 @@ class Grid_Driver : public Grid
                    const int nnumber,
                    AdjacentAtomInfo* adjs = nullptr) const;
 
+    // Phase 2.1 transition helper: query neighbors through the AtomPack +
+    // GridStorage path built by Grid::init(). This is now the default
+    // Find_atom() route; keep the named helper for direct regression checks.
+    void Find_atom_from_atom_pack(const UnitCell& ucell,
+                                  const int ntype,
+                                  const int nnumber,
+                                  AdjacentAtomInfo* adjs = nullptr) const;
+
+    // Phase 2.1 transition helper: keep the legacy all_adj_info route available
+    // for correctness comparisons while AtomPack replaces FAtom* in production
+    // queries.
+    void Find_atom_from_legacy(const UnitCell& ucell,
+                               const int ntype,
+                               const int nnumber,
+                               AdjacentAtomInfo* adjs = nullptr) const;
+
     // cartesian_posi and ucell is deprecated 20241204 zhanghaochong
     // this interface is deprecated, please use Find_atom above
     void Find_atom(const UnitCell& ucell,

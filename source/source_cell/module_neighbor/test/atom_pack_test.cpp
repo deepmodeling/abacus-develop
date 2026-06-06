@@ -66,6 +66,53 @@ std::vector<int> collect_grid_box_counts(const Grid& grid)
     }
     return counts;
 }
+
+std::vector<ModuleNeighbor::NeighborPair> collect_legacy_neighbor_pairs(const Grid& grid)
+{
+    std::vector<ModuleNeighbor::NeighborPair> pairs;
+    for (int center_type = 0; center_type < static_cast<int>(grid.all_adj_info.size()); ++center_type)
+    {
+        const auto& type_neighbors = grid.all_adj_info[center_type];
+        for (int center_natom = 0; center_natom < static_cast<int>(type_neighbors.size()); ++center_natom)
+        {
+            const auto& atom_neighbors = type_neighbors[center_natom];
+            for (const FAtom* atom: atom_neighbors)
+            {
+                pairs.push_back(ModuleNeighbor::NeighborPair{center_type,
+                                                             center_natom,
+                                                             atom->type,
+                                                             atom->natom,
+                                                             atom->cell_x,
+                                                             atom->cell_y,
+                                                             atom->cell_z});
+            }
+        }
+    }
+    std::sort(pairs.begin(), pairs.end());
+    return pairs;
+}
+
+void expect_neighbor_pair_indices_match_pack(const std::vector<ModuleNeighbor::NeighborPair>& pairs,
+                                             const ModuleNeighbor::AtomPack& pack)
+{
+    for (const ModuleNeighbor::NeighborPair& pair: pairs)
+    {
+        ASSERT_GE(pair.center_index, 0);
+        ASSERT_LT(pair.center_index, pack.size());
+        ASSERT_GE(pair.neighbor_index, 0);
+        ASSERT_LT(pair.neighbor_index, pack.size());
+        EXPECT_EQ(pack.type[pair.center_index], pair.center_type);
+        EXPECT_EQ(pack.natom[pair.center_index], pair.center_natom);
+        EXPECT_EQ(pack.cell_x[pair.center_index], 0);
+        EXPECT_EQ(pack.cell_y[pair.center_index], 0);
+        EXPECT_EQ(pack.cell_z[pair.center_index], 0);
+        EXPECT_EQ(pack.type[pair.neighbor_index], pair.neighbor_type);
+        EXPECT_EQ(pack.natom[pair.neighbor_index], pair.neighbor_natom);
+        EXPECT_EQ(pack.cell_x[pair.neighbor_index], pair.cell_x);
+        EXPECT_EQ(pack.cell_y[pair.neighbor_index], pair.cell_y);
+        EXPECT_EQ(pack.cell_z[pair.neighbor_index], pair.cell_z);
+    }
+}
 } // namespace
 
 TEST(AtomPackTest, BuildsNonPeriodicPackWithoutImages)
@@ -214,4 +261,120 @@ TEST(AtomPackTest, FlatGridStorageMatchesLegacyGridBoxCountsWithoutPbc)
 
     remove("atom_pack_grid_compare.out");
     delete ucell;
+}
+
+TEST(AtomPackTest, FlatGridSearchMatchesLegacyGridPairsWithoutPbc)
+{
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    UnitCell* ucell = utp.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    const double radius = 0.5;
+    const ModuleNeighbor::AtomPack pack = ModuleNeighbor::build_atom_pack_from_unitcell(*ucell, radius, false);
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, radius + 0.1);
+    const std::vector<ModuleNeighbor::NeighborPair> flat_pairs
+        = ModuleNeighbor::build_neighbor_pairs_27(pack, storage, radius);
+
+    std::ofstream ofs("atom_pack_neighbor_compare_non_pbc.out");
+    Grid grid(0);
+    grid.init(ofs, *ucell, radius, false);
+    ofs.close();
+    const std::vector<ModuleNeighbor::NeighborPair> legacy_pairs = collect_legacy_neighbor_pairs(grid);
+
+    EXPECT_EQ(flat_pairs, legacy_pairs);
+    EXPECT_EQ(std::adjacent_find(flat_pairs.begin(), flat_pairs.end()), flat_pairs.end());
+
+    remove("atom_pack_neighbor_compare_non_pbc.out");
+    delete ucell;
+}
+
+TEST(AtomPackTest, FlatGridSearchMatchesLegacyGridPairsWithPbc)
+{
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    UnitCell* ucell = utp.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    const double radius = 0.5;
+    const ModuleNeighbor::AtomPack pack = ModuleNeighbor::build_atom_pack_from_unitcell(*ucell, radius, true);
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, radius + 0.1);
+    const std::vector<ModuleNeighbor::NeighborPair> flat_pairs
+        = ModuleNeighbor::build_neighbor_pairs_27(pack, storage, radius);
+
+    std::ofstream ofs("atom_pack_neighbor_compare_pbc.out");
+    Grid grid(0);
+    grid.init(ofs, *ucell, radius, true);
+    ofs.close();
+    const std::vector<ModuleNeighbor::NeighborPair> legacy_pairs = collect_legacy_neighbor_pairs(grid);
+
+    EXPECT_EQ(flat_pairs, legacy_pairs);
+    EXPECT_EQ(std::adjacent_find(flat_pairs.begin(), flat_pairs.end()), flat_pairs.end());
+
+    remove("atom_pack_neighbor_compare_pbc.out");
+    delete ucell;
+}
+
+TEST(AtomPackTest, HalfDomainSearchRestoresFullPairsWithoutPbc)
+{
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    UnitCell* ucell = utp.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    const double radius = 0.5;
+    const ModuleNeighbor::AtomPack pack = ModuleNeighbor::build_atom_pack_from_unitcell(*ucell, radius, false);
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, radius + 0.1);
+    const std::vector<ModuleNeighbor::NeighborPair> full_pairs
+        = ModuleNeighbor::build_neighbor_pairs_27(pack, storage, radius);
+    const std::vector<ModuleNeighbor::NeighborPair> restored_pairs
+        = ModuleNeighbor::build_neighbor_pairs_14(pack, storage, radius);
+
+    EXPECT_EQ(restored_pairs, full_pairs);
+    EXPECT_EQ(std::adjacent_find(restored_pairs.begin(), restored_pairs.end()), restored_pairs.end());
+    expect_neighbor_pair_indices_match_pack(restored_pairs, pack);
+
+    delete ucell;
+}
+
+TEST(AtomPackTest, HalfDomainSearchRestoresFullPairsWithPbc)
+{
+    UcellTestPrepare utp = UcellTestLib["Si"];
+    UnitCell* ucell = utp.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    const double radius = 0.5;
+    const ModuleNeighbor::AtomPack pack = ModuleNeighbor::build_atom_pack_from_unitcell(*ucell, radius, true);
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, radius + 0.1);
+    const std::vector<ModuleNeighbor::NeighborPair> full_pairs
+        = ModuleNeighbor::build_neighbor_pairs_27(pack, storage, radius);
+    const std::vector<ModuleNeighbor::NeighborPair> restored_pairs
+        = ModuleNeighbor::build_neighbor_pairs_14(pack, storage, radius);
+
+    EXPECT_EQ(restored_pairs, full_pairs);
+    EXPECT_EQ(std::adjacent_find(restored_pairs.begin(), restored_pairs.end()), restored_pairs.end());
+    expect_neighbor_pair_indices_match_pack(restored_pairs, pack);
+
+    delete ucell;
+}
+
+TEST(AtomPackTest, FlatGridSearchHandlesSingleAtomWithoutSelfNeighbor)
+{
+    ModuleNeighbor::AtomPack pack;
+    pack.append_atom(0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, false);
+
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, 0.6);
+    const std::vector<ModuleNeighbor::NeighborPair> pairs
+        = ModuleNeighbor::build_neighbor_pairs_27(pack, storage, 0.5);
+
+    EXPECT_TRUE(pairs.empty());
+}
+
+TEST(AtomPackTest, HalfDomainSearchHandlesSingleAtomWithoutSelfNeighbor)
+{
+    ModuleNeighbor::AtomPack pack;
+    pack.append_atom(0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, false);
+
+    const ModuleNeighbor::GridStorage storage = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, 0.6);
+    const std::vector<ModuleNeighbor::NeighborPair> pairs
+        = ModuleNeighbor::build_neighbor_pairs_14(pack, storage, 0.5);
+
+    EXPECT_TRUE(pairs.empty());
 }

@@ -110,6 +110,31 @@ std::vector<NeighborPairKey> collect_neighbor_pair_keys(const Grid& grid)
     std::sort(keys.begin(), keys.end());
     return keys;
 }
+
+std::vector<ModuleNeighbor::NeighborPair> collect_legacy_neighbor_pairs(const Grid& grid)
+{
+    std::vector<ModuleNeighbor::NeighborPair> pairs;
+    for (int center_type = 0; center_type < static_cast<int>(grid.all_adj_info.size()); ++center_type)
+    {
+        const auto& type_neighbors = grid.all_adj_info[center_type];
+        for (int center_natom = 0; center_natom < static_cast<int>(type_neighbors.size()); ++center_natom)
+        {
+            const auto& atom_neighbors = type_neighbors[center_natom];
+            for (const FAtom* atom: atom_neighbors)
+            {
+                pairs.push_back(ModuleNeighbor::NeighborPair{center_type,
+                                                             center_natom,
+                                                             atom->type,
+                                                             atom->natom,
+                                                             atom->cell_x,
+                                                             atom->cell_y,
+                                                             atom->cell_z});
+            }
+        }
+    }
+    std::sort(pairs.begin(), pairs.end());
+    return pairs;
+}
 } // namespace
 
 TEST_F(SltkGridTest, Init)
@@ -184,6 +209,26 @@ TEST_F(SltkGridTest, OpenMPThreadCountKeepsNeighborSet)
 
     remove("test_one.out");
     remove("test_many.out");
+}
+
+TEST_F(SltkGridTest, AtomPackNeighborPairsMatchLegacyGridAfterInit)
+{
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    std::ofstream ofs_pbc("test_pair_pbc.out");
+    Grid grid_pbc(PARAM.input.test_grid);
+    grid_pbc.init(ofs_pbc, *ucell, radius, true);
+    ofs_pbc.close();
+    EXPECT_EQ(grid_pbc.neighbor_pairs_27, collect_legacy_neighbor_pairs(grid_pbc));
+
+    std::ofstream ofs_non_pbc("test_pair_non_pbc.out");
+    Grid grid_non_pbc(PARAM.input.test_grid);
+    grid_non_pbc.init(ofs_non_pbc, *ucell, 0.5, false);
+    ofs_non_pbc.close();
+    EXPECT_EQ(grid_non_pbc.neighbor_pairs_27, collect_legacy_neighbor_pairs(grid_non_pbc));
+
+    remove("test_pair_pbc.out");
+    remove("test_pair_non_pbc.out");
 }
 
 /*

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <numeric>
 #include <stdexcept>
 
@@ -78,6 +79,113 @@ int clamp_index(const int index, const int size)
         return size - 1;
     }
     return index;
+}
+
+void box_id_to_indices(const GridStorage& storage, const int box_id, int& bx, int& by, int& bz)
+{
+    const int yz_size = storage.box_ny * storage.box_nz;
+    bx = box_id / yz_size;
+    const int yz_id = box_id % yz_size;
+    by = yz_id / storage.box_nz;
+    bz = yz_id % storage.box_nz;
+}
+
+bool is_center_atom(const AtomPack& pack, const int index)
+{
+    return !pack.is_ghost[index] && pack.cell_x[index] == 0 && pack.cell_y[index] == 0 && pack.cell_z[index] == 0;
+}
+
+using AtomImageKey = std::tuple<int, int, int, int, int>;
+
+AtomImageKey make_atom_image_key(const AtomPack& pack, const int index)
+{
+    return std::make_tuple(pack.type[index], pack.natom[index], pack.cell_x[index], pack.cell_y[index], pack.cell_z[index]);
+}
+
+std::map<AtomImageKey, int> build_atom_image_index(const AtomPack& pack)
+{
+    std::map<AtomImageKey, int> index_by_image;
+    for (int i = 0; i < pack.size(); ++i)
+    {
+        if (!pack.is_ghost[i])
+        {
+            index_by_image[make_atom_image_key(pack, i)] = i;
+        }
+    }
+    return index_by_image;
+}
+
+int find_atom_image_index(const std::map<AtomImageKey, int>& index_by_image,
+                          const int type,
+                          const int natom,
+                          const int cell_x,
+                          const int cell_y,
+                          const int cell_z)
+{
+    const auto iter = index_by_image.find(std::make_tuple(type, natom, cell_x, cell_y, cell_z));
+    return iter == index_by_image.end() ? -1 : iter->second;
+}
+
+void validate_neighbor_search_input(const GridStorage& storage, const double radius)
+{
+    if (radius < 0.0)
+    {
+        throw std::invalid_argument("Neighbor search radius must be non-negative.");
+    }
+    if (storage.box_edge_length <= 0.0 || storage.box_size() <= 0)
+    {
+        throw std::runtime_error("GridStorage has not been initialized.");
+    }
+}
+
+NeighborPair make_neighbor_pair(const AtomPack& pack, const int center, const int candidate)
+{
+    return NeighborPair{pack.type[center],
+                        pack.natom[center],
+                        pack.type[candidate],
+                        pack.natom[candidate],
+                        pack.cell_x[candidate],
+                        pack.cell_y[candidate],
+                        pack.cell_z[candidate],
+                        center,
+                        candidate};
+}
+
+NeighborPair make_restored_reverse_pair(const AtomPack& pack,
+                                        const NeighborPair& pair,
+                                        const std::map<AtomImageKey, int>& index_by_image)
+{
+    const int reverse_center = find_atom_image_index(index_by_image, pair.neighbor_type, pair.neighbor_natom, 0, 0, 0);
+    const int reverse_neighbor = find_atom_image_index(index_by_image,
+                                                       pair.center_type,
+                                                       pair.center_natom,
+                                                       -pair.cell_x,
+                                                       -pair.cell_y,
+                                                       -pair.cell_z);
+
+    return NeighborPair{pair.neighbor_type,
+                        pair.neighbor_natom,
+                        pair.center_type,
+                        pair.center_natom,
+                        -pair.cell_x,
+                        -pair.cell_y,
+                        -pair.cell_z,
+                        reverse_center,
+                        reverse_neighbor};
+}
+
+bool is_within_radius(const AtomPack& pack, const int center, const int candidate, const double radius2)
+{
+    const double dx = pack.x[center] - pack.x[candidate];
+    const double dy = pack.y[center] - pack.y[candidate];
+    const double dz = pack.z[center] - pack.z[candidate];
+    const double dr = dx * dx + dy * dy + dz * dz;
+    return dr != 0.0 && dr <= radius2;
+}
+
+bool is_half_domain_offset(const int dbx, const int dby, const int dbz)
+{
+    return dbx > 0 || (dbx == 0 && dby > 0) || (dbx == 0 && dby == 0 && dbz >= 0);
 }
 } // namespace
 
@@ -202,6 +310,21 @@ int GridStorage::get_box_id_from_coord(const double x, const double y, const dou
     return get_box_id(bx, by, bz);
 }
 
+std::tuple<int, int, int, int, int, int, int> NeighborPair::key() const
+{
+    return std::make_tuple(center_type, center_natom, neighbor_type, neighbor_natom, cell_x, cell_y, cell_z);
+}
+
+bool NeighborPair::operator<(const NeighborPair& rhs) const
+{
+    return key() < rhs.key();
+}
+
+bool NeighborPair::operator==(const NeighborPair& rhs) const
+{
+    return key() == rhs.key();
+}
+
 AtomPack build_atom_pack_from_unitcell(const UnitCell& ucell, const double radius_lat0, const bool pbc)
 {
     const ExpandLayers layers = compute_expand_layers(ucell, radius_lat0, pbc);
@@ -299,6 +422,143 @@ GridStorage build_grid_storage_from_atom_pack(const AtomPack& pack, const double
     }
 
     return storage;
+}
+
+std::vector<NeighborPair> build_neighbor_pairs_27(const AtomPack& pack,
+                                                  const GridStorage& storage,
+                                                  const double radius)
+{
+    validate_neighbor_search_input(storage, radius);
+
+    std::vector<NeighborPair> pairs;
+    const double radius2 = radius * radius;
+    const int search_layer = std::max(1, static_cast<int>(std::ceil(radius / storage.box_edge_length)));
+
+    for (int center = 0; center < pack.size(); ++center)
+    {
+        if (!is_center_atom(pack, center))
+        {
+            continue;
+        }
+
+        int center_bx = 0;
+        int center_by = 0;
+        int center_bz = 0;
+        box_id_to_indices(storage,
+                          storage.get_box_id_from_coord(pack.x[center], pack.y[center], pack.z[center]),
+                          center_bx,
+                          center_by,
+                          center_bz);
+
+        const int bx_begin = std::max(0, center_bx - search_layer);
+        const int bx_end = std::min(storage.box_nx - 1, center_bx + search_layer);
+        const int by_begin = std::max(0, center_by - search_layer);
+        const int by_end = std::min(storage.box_ny - 1, center_by + search_layer);
+        const int bz_begin = std::max(0, center_bz - search_layer);
+        const int bz_end = std::min(storage.box_nz - 1, center_bz + search_layer);
+
+        for (int bx = bx_begin; bx <= bx_end; ++bx)
+        {
+            for (int by = by_begin; by <= by_end; ++by)
+            {
+                for (int bz = bz_begin; bz <= bz_end; ++bz)
+                {
+                    const int box_id = storage.get_box_id(bx, by, bz);
+                    const int begin = storage.box_offset[box_id];
+                    const int end = begin + storage.box_count[box_id];
+                    for (int offset = begin; offset < end; ++offset)
+                    {
+                        const int candidate = storage.atoms_in_box[offset];
+                        if (is_within_radius(pack, center, candidate, radius2))
+                        {
+                            pairs.push_back(make_neighbor_pair(pack, center, candidate));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::sort(pairs.begin(), pairs.end());
+    return pairs;
+}
+
+std::vector<NeighborPair> build_neighbor_pairs_14(const AtomPack& pack,
+                                                  const GridStorage& storage,
+                                                  const double radius)
+{
+    validate_neighbor_search_input(storage, radius);
+
+    std::vector<NeighborPair> pairs;
+    const double radius2 = radius * radius;
+    const int search_layer = std::max(1, static_cast<int>(std::ceil(radius / storage.box_edge_length)));
+    const std::map<AtomImageKey, int> index_by_image = build_atom_image_index(pack);
+
+    for (int center = 0; center < pack.size(); ++center)
+    {
+        if (!is_center_atom(pack, center))
+        {
+            continue;
+        }
+
+        int center_bx = 0;
+        int center_by = 0;
+        int center_bz = 0;
+        box_id_to_indices(storage,
+                          storage.get_box_id_from_coord(pack.x[center], pack.y[center], pack.z[center]),
+                          center_bx,
+                          center_by,
+                          center_bz);
+
+        for (int dbx = -search_layer; dbx <= search_layer; ++dbx)
+        {
+            for (int dby = -search_layer; dby <= search_layer; ++dby)
+            {
+                for (int dbz = -search_layer; dbz <= search_layer; ++dbz)
+                {
+                    if (!is_half_domain_offset(dbx, dby, dbz))
+                    {
+                        continue;
+                    }
+
+                    const int bx = center_bx + dbx;
+                    const int by = center_by + dby;
+                    const int bz = center_bz + dbz;
+                    if (bx < 0 || bx >= storage.box_nx || by < 0 || by >= storage.box_ny || bz < 0
+                        || bz >= storage.box_nz)
+                    {
+                        continue;
+                    }
+
+                    const int box_id = storage.get_box_id(bx, by, bz);
+                    const int begin = storage.box_offset[box_id];
+                    const int end = begin + storage.box_count[box_id];
+                    for (int offset = begin; offset < end; ++offset)
+                    {
+                        const int candidate = storage.atoms_in_box[offset];
+                        if (!is_within_radius(pack, center, candidate, radius2))
+                        {
+                            continue;
+                        }
+
+                        const NeighborPair forward = make_neighbor_pair(pack, center, candidate);
+                        const NeighborPair reverse = make_restored_reverse_pair(pack, forward, index_by_image);
+                        if (forward.key() == reverse.key())
+                        {
+                            continue;
+                        }
+
+                        pairs.push_back(forward);
+                        pairs.push_back(reverse);
+                    }
+                }
+            }
+        }
+    }
+
+    std::sort(pairs.begin(), pairs.end());
+    pairs.erase(std::unique(pairs.begin(), pairs.end()), pairs.end());
+    return pairs;
 }
 
 } // namespace ModuleNeighbor

@@ -4,6 +4,7 @@
 #include "mpi_domain.h"
 #include "source_cell/unitcell.h"
 
+#include <tuple>
 #include <vector>
 
 namespace ModuleNeighbor
@@ -76,11 +77,40 @@ struct GridStorage
     int get_box_id_from_coord(const double x, const double y, const double z) const;
 };
 
+struct NeighborPair
+{
+    int center_type = 0;
+    int center_natom = 0;
+    int neighbor_type = 0;
+    int neighbor_natom = 0;
+    int cell_x = 0;
+    int cell_y = 0;
+    int cell_z = 0;
+    int center_index = -1;
+    int neighbor_index = -1;
+
+    std::tuple<int, int, int, int, int, int, int> key() const;
+    bool operator<(const NeighborPair& rhs) const;
+    bool operator==(const NeighborPair& rhs) const;
+};
+
 // Build a flat atom pack from UnitCell. When pbc is true, the image layers follow
 // Grid::Check_Expand_Condition() so this helper remains comparable with Grid.
 AtomPack build_atom_pack_from_unitcell(const UnitCell& ucell, const double radius_lat0, const bool pbc);
 
 GridStorage build_grid_storage_from_atom_pack(const AtomPack& pack, const double box_edge_length);
+
+std::vector<NeighborPair> build_neighbor_pairs_27(const AtomPack& pack,
+                                                  const GridStorage& storage,
+                                                  const double radius);
+
+// Build the same directed neighbor-pair result as build_neighbor_pairs_27(), but
+// traverse only one half of the box-neighbor domain and restore the opposite
+// direction explicitly. This keeps the result directly comparable with the
+// current 27-direction baseline.
+std::vector<NeighborPair> build_neighbor_pairs_14(const AtomPack& pack,
+                                                  const GridStorage& storage,
+                                                  const double radius);
 
 } // namespace ModuleNeighbor
 
