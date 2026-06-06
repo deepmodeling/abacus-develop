@@ -14,6 +14,10 @@
 #define private public
 #include "source_cell/sep_cell.h"
 #include "source_cell/unitcell.h"
+#ifdef __LCAO
+#include "source_cell/setup_nonlocal.h"
+#include "source_basis/module_ao/ORB_read.h"
+#endif
 #undef private
 pseudo::pseudo()
 {
@@ -33,18 +37,12 @@ Atom::Atom()
 Atom::~Atom()
 {
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+#ifdef __LCAO
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
+#endif
 Magnetism::Magnetism()
 {
 }

@@ -12,6 +12,15 @@
 
 namespace
 {
+ModuleNeighbor::NeighborMpiComm world_comm()
+{
+#ifdef __MPI
+    return MPI_COMM_WORLD;
+#else
+    return ModuleNeighbor::kSerialMpiCommWorld;
+#endif
+}
+
 void ensure_mpi_initialized()
 {
 #ifdef __MPI
@@ -32,7 +41,7 @@ TEST(MpiDomainTest, CreatesCartesianDomainAndOwnsLocalPoint)
     ensure_mpi_initialized();
 
     ModuleNeighbor::MpiDomain domain;
-    domain.initialize(MPI_COMM_WORLD,
+    domain.initialize(world_comm(),
                       std::array<double, 3>{{0.0, 0.0, 0.0}},
                       std::array<double, 3>{{8.0, 4.0, 2.0}},
                       0.5,
@@ -59,7 +68,7 @@ TEST(MpiDomainTest, SelectsLocalAtomsAndCountsGhostCandidates)
 
     const double cutoff = 0.5;
     ModuleNeighbor::MpiDomain domain;
-    domain.initialize(MPI_COMM_WORLD,
+    domain.initialize(world_comm(),
                       std::array<double, 3>{{0.0, 0.0, 0.0}},
                       std::array<double, 3>{{8.0, 4.0, 2.0}},
                       cutoff,
