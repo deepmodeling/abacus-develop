@@ -164,7 +164,7 @@ TEST_F(DiagoPPCGTest, ConjugateGradientStrategy)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 1,
+        /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
         hsolver::PpcgStrategy::CONJUGATE_GRADIENT
     );

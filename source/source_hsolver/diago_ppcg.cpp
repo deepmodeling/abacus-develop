@@ -1168,14 +1168,13 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            // Use only the [psi, w] 2-block subspace.
-            // The 3-block [psi, w, p] subspace can become ill-conditioned
-            // when p is constructed from the previous subspace eigenvectors
-            // (p ~ w), leading to near-singular M matrices and catastrophic
-            // eigenvalue blow-up.  Without p the method reduces to a
-            // preconditioned Davidson-like iteration that converges robustly,
-            // albeit with slightly more iterations for hard problems.
-            const bool use_p = false;
+            // Use the 3-block [psi, w, p] subspace for faster convergence.
+            // When p is nearly collinear with w (p ~ w), the subspace Gram
+            // matrix becomes nearly singular, causing the generalized
+            // eigenvalue solver to fail.  The p-bad detection below catches
+            // this and replaces p with H·w (a genuinely independent Krylov
+            // direction), keeping the subspace full-rank.
+            const bool use_p = true;
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
@@ -1384,12 +1383,49 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 // Cholesky orthonormalization.
                 orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
 
-                // Update eigenvalues.
-                for (int i = 0; i < ncol; ++i)
-                    eigenvalue_in[i] = gamma_dot(psi_in + i * ld_psi_,
-                                                 hpsi_.data() + i * ld_psi_)
-                                     / gamma_dot(psi_in + i * ld_psi_,
-                                                 spsi_.data() + i * ld_psi_);
+                // After Cholesky the bands are S-orthonormal, but the
+                // upper-triangular U^{-1} transformation mixes high-energy
+                // components into the low-energy bands.  Diagonal Rayleigh
+                // quotients then overestimate the low eigenvalues and
+                // produce wrong gradients that drive the CG search toward
+                // high-energy states.
+                //
+                // Solve the subspace generalized eigenvalue problem to get
+                // correct Ritz values.  We do NOT rotate the states — that
+                // would invalidate the Polak-Ribiere conjugate-direction
+                // accumulators.  The Cholesky basis spans the same subspace,
+                // so the Ritz values are exact for this subspace.
+                std::vector<Real> h_sub(ncol * ncol, static_cast<Real>(0));
+                std::vector<Real> s_sub(ncol * ncol, static_cast<Real>(0));
+                for (int jj = 0; jj < ncol; ++jj)
+                {
+                    for (int ii = 0; ii < ncol; ++ii)
+                    {
+                        h_sub[ii + jj * ncol]
+                            = gamma_dot(psi_in + ii * ld_psi_,
+                                        hpsi_.data() + jj * ld_psi_);
+                        s_sub[ii + jj * ncol]
+                            = gamma_dot(psi_in + ii * ld_psi_,
+                                        spsi_.data() + jj * ld_psi_);
+                    }
+                }
+
+                std::vector<Real> eval_cg(ncol, static_cast<Real>(0));
+                try
+                {
+                    Lapack<Real>::sygvd(ncol, h_sub.data(), s_sub.data(),
+                                        eval_cg.data());
+                }
+                catch (const std::runtime_error&)
+                {
+                    // Fallback: diagonal Rayleigh quotients.
+                    for (int ii = 0; ii < ncol; ++ii)
+                        eval_cg[ii] = h_sub[ii + ii * ncol]
+                                    / std::max(s_sub[ii + ii * ncol],
+                                              static_cast<Real>(1e-30));
+                }
+                for (int ii = 0; ii < ncol; ++ii)
+                    eigenvalue_in[ii] = eval_cg[ii];
             }
 
             // Compute new gradient.
