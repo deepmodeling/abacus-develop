@@ -40,7 +40,7 @@ void RDMFT<TK, TR>::get_DM_XC(std::vector< std::vector<TK> >& DM_XC)
 #ifdef __MPI
         elecstate::psiMulPsiMpi(wk_funEta_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
 #else
-        elecstate::psiMulPsi(wk_funEta_wfc, wfc, DM_Kpointer);
+        elecstate::psiMulPsi(wk_funEta_wfc, wfc, DM_Kpointer, false);
 #endif            
     }
 }

@@ -56,7 +56,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 #ifdef __MPI
         psiMulPsiMpi(wg_wfc, wfc, dm[ik], ParaV->desc_wfc, ParaV->desc);
 #else
-        psiMulPsi(wg_wfc, wfc, dm[ik]);
+        psiMulPsi(wg_wfc, wfc, dm[ik], false);
 #endif
     }
     ModuleBase::timer::end("elecstate","cal_dm");
@@ -114,7 +114,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 #ifdef __MPI
         psiMulPsiMpi(wg_wfc, wfc, dm[ik], ParaV->desc_wfc, ParaV->desc);
 #else
-        psiMulPsi(wg_wfc, wfc, dm[ik]);
+        psiMulPsi(wg_wfc, wfc, dm[ik], false);
 #endif
     }
 

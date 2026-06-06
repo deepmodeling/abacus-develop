@@ -75,7 +75,7 @@ inline void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
 }
 
 #else
-inline void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, ModuleBase::matrix& dm_out)
+inline void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, ModuleBase::matrix& dm_out, const bool is_DMK_row_major)
 {
     const double one_float = 1.0, zero_float = 0.0;
     const int one_int = 1;
@@ -88,9 +88,9 @@ inline void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2
            &nlocal,
            &nbands,
            &one_float,
-           psi1.get_pointer(),
+           is_DMK_row_major ? psi2.get_pointer() : psi1.get_pointer(),
            &nlocal,
-           psi2.get_pointer(),
+           is_DMK_row_major ? psi1.get_pointer() : psi2.get_pointer(),
            &nlocal,
            &zero_float,
            dm_out.c,
@@ -99,7 +99,8 @@ inline void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2
 
 inline void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
                       const psi::Psi<std::complex<double>>& psi2,
-                      ModuleBase::ComplexMatrix& dm_out)
+                      ModuleBase::ComplexMatrix& dm_out,
+                      const bool is_DMK_row_major)
 {
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -112,9 +113,9 @@ inline void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            &nlocal,
            &nbands,
            &one_complex,
-           psi1.get_pointer(),
+           is_DMK_row_major ? psi2.get_pointer() : psi1.get_pointer(),
            &nlocal,
-           psi2.get_pointer(),
+           is_DMK_row_major ? psi1.get_pointer() : psi2.get_pointer(),
            &nlocal,
            &zero_complex,
            dm_out.c,
