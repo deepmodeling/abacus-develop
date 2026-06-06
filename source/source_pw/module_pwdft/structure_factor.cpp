@@ -282,6 +282,17 @@ void Structure_Factor::bspline_sf(const int norder,
         
         #ifdef __MPI
 	    	pgrid.zpiece_to_all(zpiece, iz, tmpr);
+        #else
+	    	// Serial build: the whole real-space grid is local, so there is no
+	    	// pool to scatter to. zpiece_to_all() is MPI-only, which otherwise
+	    	// leaves tmpr uninitialized -> garbage structure factor and a wrong
+	    	// total energy. Fill tmpr directly, using the SAME real-space layout
+	    	// as zpiece_to_all's serial path: rho[ir*nczp + znow], i.e. xy index
+	    	// outer and z innermost (nczp == nz, znow == iz when serial).
+	    	for(int ir = 0; ir < rho_basis->nxy; ir++)
+	    	{
+	    		tmpr[ir*rho_basis->nz + iz] = zpiece[ir];
+	    	}
         #endif
         
 	    }
