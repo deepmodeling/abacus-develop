@@ -1206,24 +1206,25 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             // Use the 3-block [psi, w, p] subspace.
             // w and p are normalized to unit S-norm before building the
             // Gram matrix (see build_small_subspace), which keeps M
-            // well-conditioned even when residuals are small.  The p-bad
-            // detection + H·w Krylov fallback handles the remaining
-            // ill-conditioning: p nearly collinear with w.
+            // well-conditioned even when residuals are small.
+            // When p is zero (first iteration) or nearly collinear with w,
+            // we fall back to the 2-block subspace for this iteration;
+            // update_one_block will still produce a valid p for the next
+            // iteration from the w contribution.
             const bool use_p = true;
+            bool use_p_now = use_p;
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
                 project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
 
-                // For small nband with S=I, p can be nearly collinear
-                // with w (p gets initialized as a scalar multiple of w
-                // in update_one_block).  This makes the 3-vector subspace
-                // [psi,w,p] nearly rank-2, causing sygvd to produce
-                // huge/negative eigenvalues -> NaN.
-                //
-                // When detected, replace p with H·w (a second-order
-                // Krylov direction) which is genuinely independent of w.
-                bool p_bad = false;
+                // Detect when p makes the subspace nearly rank-deficient:
+                // p near-zero (first iteration, not yet built) or p nearly
+                // collinear with w.  Either way the [w,p] block of the
+                // Gram matrix becomes nearly singular.  We do NOT replace p
+                // with H·w because H·w ≈ λ w when w is approximately an
+                // eigenvector — it does not fix the collinearity.  Instead
+                // we simply skip p for this iteration.
                 for (const int c : active_cols)
                 {
                     Real p_nrm2 = 0, w_nrm2 = 0, pw_re = 0;
@@ -1235,9 +1236,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                             std::real(std::conj(p_[idx(ig, c, ld_psi_)])
                                       * w_[idx(ig, c, ld_psi_)]));
                     }
-                    // p near-zero or p nearly collinear with w:
-                    // both make the [w,p] block of the Gram matrix nearly
-                    // singular, poisoning the 3x3 generalized eigenproblem.
                     const Real denom = p_nrm2 * w_nrm2;
                     Real cos2 = -1;
                     if (denom > Real(1e-60))
@@ -1245,33 +1243,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                     if (p_nrm2 <= Real(1e-30) ||
                         (denom > Real(1e-60) && cos2 > Real(0.99)))
                     {
-                        p_bad = true;
+                        use_p_now = false;
                         break;
                     }
-                }
-                if (p_bad)
-                {
-                    // Replace p with H·w for active columns (Krylov direction).
-                    for (const int c : active_cols)
-                    {
-                        T* pc = p_.data() + c * ld_psi_;
-                        const T* hwc = hw_.data() + c * ld_psi_;
-                        for (int ig = 0; ig < n_dim_; ++ig)
-                            pc[ig] = hwc[ig];
-                    }
-                    // Recompute S·p and H·p for the new direction.
-                    apply_s_current(p_.data(), sp_.data(), ncol);
-                    {
-                        std::vector<T> p_act;
-                        copy_cols(p_.data(), active_cols, p_act);
-                        std::vector<T> hp_act(ld_psi_ * static_cast<int>(active_cols.size()), T(0));
-                        apply_h(hpsi_func, p_act.data(), hp_act.data(),
-                                static_cast<int>(active_cols.size()));
-                        scatter_cols(hp_.data(), active_cols, hp_act);
-                    }
-                    // Re-project against psi.
-                    project_against(psi_in, spsi_.data(), all_cols,
-                                    p_, sp_, active_cols);
                 }
             }
 
@@ -1284,9 +1258,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                       active_cols.begin() + i0 + l);
 
                 SmallSubspace subspace;
-                build_small_subspace(psi_in, cols, use_p, subspace);
-                solve_small_generalized((use_p ? 3 : 2) * l, subspace);
-                update_one_block(psi_in, cols, l, use_p, subspace);
+                build_small_subspace(psi_in, cols, use_p_now, subspace);
+                solve_small_generalized((use_p_now ? 3 : 2) * l, subspace);
+                update_one_block(psi_in, cols, l, use_p_now, subspace);
             }
 
             // Periodic Rayleigh-Ritz.
