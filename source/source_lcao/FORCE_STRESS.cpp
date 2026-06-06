@@ -768,7 +768,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_stress("VDW      STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
+                ModuleIO::print_stress("VDW      STRESS", stress_vdw, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.dft_plus_u)
             {

@@ -88,6 +88,22 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
              // then distribute the data to all processors in the pool
                     stick_to_pool(stickrr.data(), ir, tmprr.data());
                     stick_to_pool(stickarg.data(), ir, tmparg.data());
+#else
+                    // Serial build: there is no pool to distribute to, so copy
+                    // the stick directly into the gathered arrays, mirroring the
+                    // rank-0 branch of stick_to_pool(). Without this, tmprr/tmparg
+                    // stay zero-initialized and the seeded (pw_seed>0) random
+                    // wavefunctions become all-zero, which later trips
+                    // Gram-Schmidt with "psi_norm <= 0.0".
+                    {
+                        const int is = this->ixy2is_[ir];
+                        const int nz_loc = this->pw_wfc_->nz;
+                        for (int iz = 0; iz < nz_loc; ++iz)
+                        {
+                            tmprr[is * nz_loc + iz] = stickrr[iz];
+                            tmparg[is * nz_loc + iz] = stickarg[iz];
+                        }
+                    }
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
