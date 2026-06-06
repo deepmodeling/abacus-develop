@@ -220,13 +220,18 @@ void PW_Basis::collect_local_pw()
     {
         return;
     }
+    ModuleBase::timer::start(this->classname, "collect_local_pw");
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     if (this->local_pw_cache_valid.load()
         && this->cache_signature_matches(this->local_pw_cache_signature))
     {
+        ModuleBase::timer::start(this->classname, "collect_local_pw_cache_hit");
         this->local_pw_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_local_pw_cache_hit");
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
     }
+    ModuleBase::timer::start(this->classname, "collect_local_pw_cache_build");
     this->local_pw_cache_misses.fetch_add(1);
     this->ig_gge0 = -1;
     this->gg_cache_storage.reset(new double[this->npw]);
@@ -284,6 +289,8 @@ void PW_Basis::collect_local_pw()
     }
     this->local_pw_cache_valid.store(true);
     this->local_pw_cache_signature = this->make_cache_signature();
+    ModuleBase::timer::end(this->classname, "collect_local_pw_cache_build");
+    ModuleBase::timer::end(this->classname, "collect_local_pw");
     return;
 }
 
@@ -298,13 +305,18 @@ void PW_Basis::collect_uniqgg()
     {
         return;
     }
+    ModuleBase::timer::start(this->classname, "collect_uniqgg");
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     if (this->uniqgg_cache_valid.load()
         && this->cache_signature_matches(this->uniqgg_cache_signature))
     {
+        ModuleBase::timer::start(this->classname, "collect_uniqgg_cache_hit");
         this->uniqgg_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_uniqgg_cache_hit");
+        ModuleBase::timer::end(this->classname, "collect_uniqgg");
         return;
     }
+    ModuleBase::timer::start(this->classname, "collect_uniqgg_cache_build");
     this->uniqgg_cache_misses.fetch_add(1);
     this->ig_gge0 = -1;
     this->ig2igg_cache_storage.reset(new int[this->npw]);
@@ -395,6 +407,8 @@ void PW_Basis::collect_uniqgg()
     }
     this->uniqgg_cache_valid.store(true);
     this->uniqgg_cache_signature = this->make_cache_signature();
+    ModuleBase::timer::end(this->classname, "collect_uniqgg_cache_build");
+    ModuleBase::timer::end(this->classname, "collect_uniqgg");
 }
 
 void PW_Basis::getfftixy2is(int * fftixy2is) const

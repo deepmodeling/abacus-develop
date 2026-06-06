@@ -326,6 +326,7 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
     {
         return;
     }
+    ModuleBase::timer::start(this->classname, "collect_local_pw");
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     const bool locked_gcar_hit = this->gcar_cache_valid.load() && this->gcar != nullptr;
     const bool locked_gk2_hit = this->gk_cache_valid.load()
@@ -335,9 +336,20 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
                                 && this->erf_sigma == erf_sigma_in;
     if (locked_gcar_hit && locked_gk2_hit)
     {
+        ModuleBase::timer::start(this->classname, "collect_local_pw_cache_hit");
         this->gcar_cache_hits.fetch_add(1);
         this->gk2_cache_hits.fetch_add(1);
+        ModuleBase::timer::end(this->classname, "collect_local_pw_cache_hit");
+        ModuleBase::timer::end(this->classname, "collect_local_pw");
         return;
+    }
+    if (!locked_gcar_hit)
+    {
+        ModuleBase::timer::start(this->classname, "collect_local_pw_build_gcar");
+    }
+    if (!locked_gk2_hit)
+    {
+        ModuleBase::timer::start(this->classname, "collect_local_pw_build_gk2");
     }
     if (locked_gcar_hit)
     {
@@ -416,12 +428,15 @@ void PW_Basis_K::collect_local_pw(const double& erf_ecut_in, const double& erf_h
     {
         this->sync_gcar_device_cache();
         this->gcar_cache_valid.store(true);
+        ModuleBase::timer::end(this->classname, "collect_local_pw_build_gcar");
     }
     if (!locked_gk2_hit)
     {
         this->sync_gk2_device_cache();
         this->gk_cache_valid.store(true);
+        ModuleBase::timer::end(this->classname, "collect_local_pw_build_gk2");
     }
+    ModuleBase::timer::end(this->classname, "collect_local_pw");
 }
 
 void PW_Basis_K::sync_gcar_device_cache()

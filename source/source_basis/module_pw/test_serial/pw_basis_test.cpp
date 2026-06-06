@@ -2,6 +2,7 @@
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
+#include "source_base/timer.h"
 
 /************************************************
  *  serial unit test of functions in pw_basis.cpp
@@ -425,4 +426,28 @@ TEST_F(PWBasisTEST, CacheSignatureRejectsChangedLattice)
 	EXPECT_EQ(pwb.get_cache_stats().local_pw_hits, 1);
 	EXPECT_EQ(pwb.get_cache_stats().local_pw_misses, 2);
 	EXPECT_NE(pwb.gg[changed_ig], old_gg);
+}
+
+TEST_F(PWBasisTEST, CacheCollectionRecordsTimers)
+{
+	ModuleBase::timer::timer_pool.clear();
+	double lat0 = 1.8897261254578281;
+	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
+				0.0,10.0,0.0,
+				0.0,0.0,10.0);
+	double gridecut = 10.0;
+	bool gamma_only_in = true;
+	double pwecut_in = 11.0;
+	int distribution_type_in = 2;
+	bool xprime_in = true;
+	pwb.initgrids(lat0, latvec, gridecut);
+	pwb.initparameters(gamma_only_in, pwecut_in, distribution_type_in, xprime_in);
+	pwb.setuptransform();
+	pwb.collect_local_pw();
+	pwb.collect_uniqgg();
+	const auto& timer_pool = ModuleBase::timer::timer_pool[pwb.classname];
+	EXPECT_TRUE(timer_pool.count("collect_local_pw"));
+	EXPECT_TRUE(timer_pool.count("collect_uniqgg"));
+	EXPECT_GE(timer_pool.at("collect_local_pw").calls, 1u);
+	EXPECT_GE(timer_pool.at("collect_uniqgg").calls, 1u);
 }

@@ -34,3 +34,18 @@ AddTest(
   LIBS parameter ${math_libs} planewave_serial device base 
   SOURCES pw_basis_k_test.cpp
 )
+
+add_executable(
+  MODULE_PW_cache_bench_serial
+  pw_cache_bench.cpp
+)
+
+target_link_libraries(
+  MODULE_PW_cache_bench_serial
+  parameter
+  ${math_libs}
+  planewave_serial
+  device
+  base
+  Threads::Threads
+)
