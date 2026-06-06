@@ -90,7 +90,7 @@ void PW_Basis::count_pw_st(
     int liy_local = 0, riy_local = 0;
 
 #ifdef _OPENMP
-    #pragma omp parallel for collapse(2) \
+    #pragma omp parallel for collapse(1) \
         shared(st_length2D, st_bottom2D) \
         reduction(+: npwtot_local, nstot_local) \
         reduction(min: rix_local, riy_local) \
