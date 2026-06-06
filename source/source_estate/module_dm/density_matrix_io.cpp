@@ -213,14 +213,13 @@ void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
 
 // set _DMK element
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value)
+void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int irow, const int icol, const TK value)
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
     assert(ik >= 0 && ik < this->_nk);
 #endif
-    // consider transpose col=>row
-    this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->nrow + j] = value;
+    this->_DMK[ik + this->_nk * (ispin - 1)][this->dmk_index(irow, icol)] = value;
 }
 
 // set _DMK element
@@ -236,13 +235,12 @@ void DensityMatrix<TK, TR>::set_DMK_zero()
 
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
-TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
+TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int irow, const int icol) const
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
 #endif
-    // consider transpose col=>row
-    return this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->nrow + j];
+    return this->_DMK[ik + this->_nk * (ispin - 1)][this->dmk_index(irow, icol)];
 }
 
 // get _DMK nks, nrow, ncol
@@ -353,11 +351,11 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
     } // If file exist, read in data.
     // Finish reading the first part of density matrix.
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
+    for (int irow = 0; irow < this->_paraV->nrow; ++irow)
     {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
+        for (int icol = 0; icol < this->_paraV->ncol; ++icol)
         {
-            ifs >> this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
+            ifs >> this->_DMK[ik + this->_nk * (ispin - 1)][this->dmk_index(irow, icol)];
         }
     }
     ifs.close();
@@ -386,15 +384,15 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
     ofs << std::setprecision(3);
     ofs << std::scientific;
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
+    for (int irow = 0; irow < this->_paraV->nrow; ++irow)
     {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
+        for (int icol = 0; icol < this->_paraV->ncol; ++icol)
         {
-            if (j % 8 == 0)
+            if (icol % 8 == 0)
             {
                 ofs << "\n";
             }
-            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
+            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][this->dmk_index(irow, icol)];
         }
     }
 
@@ -423,15 +421,15 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     ofs << std::setprecision(3);
     ofs << std::scientific;
 
-    for (int i = 0; i < this->_paraV->nrow; ++i)
+    for (int irow = 0; irow < this->_paraV->nrow; ++irow)
     {
-        for (int j = 0; j < this->_paraV->ncol; ++j)
+        for (int icol = 0; icol < this->_paraV->ncol; ++icol)
         {
-            if (j % 8 == 0)
+            if (icol % 8 == 0)
             {
                 ofs << "\n";
             }
-            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j].real();
+            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][this->dmk_index(irow, icol)].real();
         }
     }
 

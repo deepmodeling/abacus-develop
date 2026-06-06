@@ -88,7 +88,8 @@ class DensityMatrix
 	DensityMatrix(const Parallel_Orbitals* _paraV, 
 			const int nspin, 
 			const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
-			const int nk);
+			const int nk,
+            const bool is_DMK_row_major = false);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
@@ -96,7 +97,7 @@ class DensityMatrix
      * @param nspin number of spin of the density matrix, set by user according to global nspin
      *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
      */
-    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin, const bool is_DMK_row_major = false);
 
     /**
      * @brief initialize density matrix DMR from UnitCell
@@ -211,6 +212,15 @@ class DensityMatrix
 
     const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
 
+    bool is_DMK_row_major() const { return this->_is_DMK_row_major; }
+
+    int dmk_index(const int irow, const int icol) const
+    {
+        return this->_is_DMK_row_major
+            ? irow * this->_paraV->ncol + icol
+            : icol * this->_paraV->nrow + irow;
+    }
+
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      * @param ik_in
@@ -297,6 +307,8 @@ class DensityMatrix
      */
     // std::vector<ModuleBase::ComplexMatrix> _DMK;
     std::vector<std::vector<TK>> _DMK;
+
+    bool _is_DMK_row_major = false;
 
     /**
      * @brief K_Vectors object, which is used to get k-point information

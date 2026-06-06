@@ -28,11 +28,15 @@ namespace elecstate
                             const int* desc_dm);
 
     // for Gamma-Only case without MPI
-    void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out);
+    void psiMulPsi(const psi::Psi<double>& psi1,
+                   const psi::Psi<double>& psi2,
+                   double* dm_out,
+                   const bool is_DMK_row_major);
 
     // for multi-k case without MPI
     void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
                         const psi::Psi<std::complex<double>>& psi2,
-                        std::complex<double>* dm_out);
+                        std::complex<double>* dm_out,
+                        const bool is_DMK_row_major);
 };
 #endif

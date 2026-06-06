@@ -61,9 +61,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
         // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
 #ifdef __MPI
+        assert(!DM.is_DMK_row_major());
         psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
 #else
-        psiMulPsi(wg_wfc, wfc, dmk_pointer);
+        psiMulPsi(wg_wfc, wfc, dmk_pointer, DM.is_DMK_row_major());
 #endif
     }
     ModuleBase::timer::end("elecstate", "cal_dm_psi");
@@ -135,14 +136,15 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
         if (PARAM.inp.ks_solver == "cg_in_lcao")
         {
-            psiMulPsi(wg_wfc, wfc, dmk_pointer);
+            psiMulPsi(wg_wfc, wfc, dmk_pointer, DM.is_DMK_row_major());
 		} 
 		else 
 		{
+            assert(!DM.is_DMK_row_major());
             psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
         }
 #else
-        psiMulPsi(wg_wfc, wfc, dmk_pointer);
+        psiMulPsi(wg_wfc, wfc, dmk_pointer, DM.is_DMK_row_major());
 #endif
     }
 
@@ -222,7 +224,7 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
 
 #endif
 
-void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out)
+void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out, const bool is_DMK_row_major)
 {
     const double one_float = 1.0, zero_float = 0.0;
     const int one_int = 1;
@@ -235,9 +237,9 @@ void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, doubl
            nlocal,
            nbands,
            one_float,
-           psi1.get_pointer(),
+           is_DMK_row_major ? psi2.get_pointer() : psi1.get_pointer(),
            nlocal,
-           psi2.get_pointer(),
+           is_DMK_row_major ? psi1.get_pointer() : psi2.get_pointer(),
            nlocal,
            zero_float,
            dm_out,
@@ -246,7 +248,8 @@ void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, doubl
 
 void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
                       const psi::Psi<std::complex<double>>& psi2,
-                      std::complex<double>* dm_out)
+                      std::complex<double>* dm_out,
+                      const bool is_DMK_row_major)
 {
     const int one_int = 1;
     const char N_char = 'N', T_char = 'T';
@@ -260,9 +263,9 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            nlocal,
            nbands,
            one_complex,
-           psi1.get_pointer(),
+           is_DMK_row_major ? psi2.get_pointer() : psi1.get_pointer(),
            nlocal,
-           psi2.get_pointer(),
+           is_DMK_row_major ? psi1.get_pointer() : psi2.get_pointer(),
            nlocal,
            zero_complex,
            dm_out,

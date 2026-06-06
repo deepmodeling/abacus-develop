@@ -203,10 +203,10 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "cal_tmp_DM_k");
     ModuleBase::timer::start("ModuleIO", "cal_tmp_DM_k");
-    int ld_hk = DM_real.get_paraV_pointer()->nrow;
-    int ld_hk2 = 2 * ld_hk;
+    const int ld_hk2 = 2 * DM_real.get_paraV_pointer()->nrow;
     // tmp for is
-    int ik_begin = DM_real.get_DMK_nks() / nspin * (is - 1); // jump nk for spin_down if nspin==2
+    const int ik_begin = DM_real.get_DMK_nks() / nspin * (is - 1); // jump nk for spin_down if nspin==2
+    const bool is_DMK_row_major = DM_real.is_DMK_row_major();
     //sum spin up and down into up
     hamilt::HContainer<double>* tmp_DMR_real = DM_real.get_DMR_vector()[0];
     hamilt::HContainer<double>* tmp_DMR_imag = DM_imag.get_DMR_vector()[0];
@@ -271,9 +271,10 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                 std::complex<double>* tmp_DMK_pointer = DM_real.get_DMK_pointer(ik + ik_begin);
                 double* DMK_real_pointer = nullptr;
                 double* DMK_imag_pointer = nullptr;
-                // jump DMK to fill DMR
-                // DMR is row-major, DMK is column-major
-                tmp_DMK_pointer += col_ap * DM_real.get_paraV_pointer()->nrow + row_ap;
+                // jump DMK to fill DMR; DMR is row-major.
+                tmp_DMK_pointer += is_DMK_row_major
+                                   ? row_ap * DM_real.get_paraV_pointer()->ncol + col_ap
+                                   : col_ap * DM_real.get_paraV_pointer()->nrow + row_ap;
                 for (int mu = 0; mu < DM_real.get_paraV_pointer()->get_row_size(iat1); ++mu)
                 {
                     DMK_real_pointer = (double*)tmp_DMK_pointer;
@@ -282,29 +283,29 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                     BlasConnector::axpy(DM_real.get_paraV_pointer()->get_col_size(iat2),
                                         -kphase.imag(),
                                         DMK_imag_pointer,
-                                        ld_hk2,
+                                        is_DMK_row_major ? 2 : ld_hk2,
                                         tmp_DMR_real_pointer,
                                         1);
                     BlasConnector::axpy(DM_real.get_paraV_pointer()->get_col_size(iat2),
                                         kphase.real(),
                                         DMK_real_pointer,
-                                        ld_hk2,
+                                        is_DMK_row_major ? 2 : ld_hk2,
                                         tmp_DMR_real_pointer,
                                         1);
                     // calculate imag part
                     BlasConnector::axpy(DM_imag.get_paraV_pointer()->get_col_size(iat2),
                                         kphase.imag(),
                                         DMK_real_pointer,
-                                        ld_hk2,
+                                        is_DMK_row_major ? 2 : ld_hk2,
                                         tmp_DMR_imag_pointer,
                                         1);
                     BlasConnector::axpy(DM_imag.get_paraV_pointer()->get_col_size(iat2),
                                         kphase.real(),
                                         DMK_imag_pointer,
-                                        ld_hk2,
+                                        is_DMK_row_major ? 2 : ld_hk2,
                                         tmp_DMR_imag_pointer,
                                         1);
-                    tmp_DMK_pointer += 1;
+                    tmp_DMK_pointer += is_DMK_row_major ? DM_real.get_paraV_pointer()->ncol : 1;
                     tmp_DMR_real_pointer += DM_real.get_paraV_pointer()->get_col_size(iat2);
                     tmp_DMR_imag_pointer += DM_imag.get_paraV_pointer()->get_col_size(iat2);
                 }
@@ -337,18 +338,19 @@ void ModuleIO::cal_tmp_DM_k(const UnitCell& ucell,
                     std::complex<double>* tmp_DMK_pointer = DM_real.get_DMK_pointer(ik + ik_begin);;
                     double* DMK_real_pointer = nullptr;
                     double* DMK_imag_pointer = nullptr;
-                    // jump DMK to fill DMR
-                    // DMR is row-major, DMK is column-major
-                    tmp_DMK_pointer += col_ap * DM_real.get_paraV_pointer()->nrow + row_ap;
+                    // jump DMK to fill DMR; DMR is row-major.
+                    tmp_DMK_pointer += is_DMK_row_major
+                                       ? row_ap * DM_real.get_paraV_pointer()->ncol + col_ap
+                                       : col_ap * DM_real.get_paraV_pointer()->nrow + row_ap;
                     for (int mu = 0; mu < tmp_ap_real.get_row_size(); ++mu)
                     {
                         BlasConnector::axpy(tmp_ap_real.get_col_size(),
                                             kphase,
                                             tmp_DMK_pointer,
-                                            ld_hk,
+                                            is_DMK_row_major ? 1 : DM_real.get_paraV_pointer()->nrow,
                                             tmp_DMR_pointer,
                                             1);
-                        tmp_DMK_pointer += 1;
+                        tmp_DMK_pointer += is_DMK_row_major ? DM_real.get_paraV_pointer()->ncol : 1;
                         tmp_DMR_pointer += tmp_ap_real.get_col_size();
                     }
                 }
@@ -636,4 +638,3 @@ void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
                 const Velocity_op<std::complex<double>>* cal_current,
                 Record_adj& ra);
 #endif //__LCAO
-

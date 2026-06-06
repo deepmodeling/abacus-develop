@@ -54,18 +54,18 @@ namespace elecstate
                             std::complex<double>* tmp_DMR_pointer = tmp_matrix->get_pointer();
                             const std::complex<double>* tmp_DMK_pointer
                                 = this->_DMK[ik + ik_begin].data()
-                                  + col_ap * this->_paraV->nrow + row_ap;
+                                  + this->dmk_index(row_ap, col_ap);
                             // jump DMK to fill DMR
-                            // DMR is row-major, DMK is column-major
+                            // DMR is row-major.
                             for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
                             {
                                 BlasConnector::axpy(this->_paraV->get_col_size(iat2),
                                     kphase,
                                     tmp_DMK_pointer,
-                                    this->_paraV->get_row_size(),
+                                    this->_is_DMK_row_major ? 1 : this->_paraV->nrow,
                                     tmp_DMR_pointer,
                                     1);
-                                tmp_DMK_pointer += 1;
+                                tmp_DMK_pointer += this->_is_DMK_row_major ? this->_paraV->ncol : 1;
                                 tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
                             }
                         }

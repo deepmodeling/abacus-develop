@@ -28,8 +28,17 @@ DensityMatrix<TK, TR>::~DensityMatrix()
 }
 
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk)
-    : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nk((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
+DensityMatrix<TK, TR>::DensityMatrix(
+      const Parallel_Orbitals* paraV_in,
+      const int nspin,
+      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+      const int nk,
+      const bool is_DMK_row_major)
+    : _paraV(paraV_in),
+      _nspin(nspin),
+      _kvec_d(kvec_d),
+      _nk((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size()),
+      _is_DMK_row_major(is_DMK_row_major)
 {
     ModuleBase::TITLE("DensityMatrix", "resize_DMK");
     const int nks = _nk * _nspin;
@@ -42,7 +51,15 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
 }
 
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nk(1)
+DensityMatrix<TK, TR>::DensityMatrix(
+      const Parallel_Orbitals* paraV_in,
+      const int nspin,
+      const bool is_DMK_row_major)
+    : _paraV(paraV_in),
+      _nspin(nspin),
+      _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }),
+      _nk(1),
+      _is_DMK_row_major(is_DMK_row_major)
 {
     ModuleBase::TITLE("DensityMatrix", "resize_gamma");
     this->_DMK.resize(_nspin);
@@ -68,7 +85,6 @@ void DensityMatrix_Tools::cal_DMR(
     assert(dmR_out.size()==dm._nspin && "DMR has not been initialized!");
 
     ModuleBase::timer::start("DensityMatrix", "cal_DMR");
-    const int ld_hk = dm._paraV->nrow;
     for (int is = 1; is <= dm._nspin; ++is)
     {
         const int ik_begin = dm._nk * (is - 1); // jump dm._nk for spin_down if nspin==2
@@ -125,13 +141,13 @@ void DensityMatrix_Tools::cal_DMR(
             for(int ik = 0; ik < dm._nk; ++ik)
             {
                 if(ik_in >= 0 && ik_in != ik) { continue; }
-                // copy column-major DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
+                // copy DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
                 const TK*const DMK_mat_ptr
                     = dm._DMK[ik + ik_begin].data()
-                      + col_ap * dm._paraV->nrow + row_ap;
+                      + dm.dmk_index(row_ap, col_ap);
                 for(int icol = 0; icol < col_size; ++icol) {
                     for(int irow = 0; irow < row_size; ++irow) {
-                        DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[icol * ld_hk + irow];
+                        DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[dm.dmk_index(irow, icol)];
                 }}
 
                 // if nspin != 4, fill DMR
@@ -223,7 +239,6 @@ void DensityMatrix_Tools::cal_DMR_td(
     assert(dmR_out.size()==dm._nspin && "DMR has not been initialized!");
 
     ModuleBase::timer::start("DensityMatrix", "cal_DMR_td");
-    const int ld_hk = dm._paraV->nrow;
     for (int is = 1; is <= dm._nspin; ++is)
     {
         const int ik_begin = dm._nk * (is - 1); // jump dm._nk for spin_down if nspin==2
@@ -283,13 +298,13 @@ void DensityMatrix_Tools::cal_DMR_td(
             for(int ik = 0; ik < dm._nk; ++ik)
             {
                 if(ik_in >= 0 && ik_in != ik) { continue; }
-                // copy column-major DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
+                // copy DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
                 const TK*const DMK_mat_ptr
                     = dm._DMK[ik + ik_begin].data()
-                      + col_ap * dm._paraV->nrow + row_ap;
+                      + dm.dmk_index(row_ap, col_ap);
                 for(int icol = 0; icol < col_size; ++icol) {
                     for(int irow = 0; irow < row_size; ++irow) {
-                        DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[icol * ld_hk + irow];
+                        DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[dm.dmk_index(irow, icol)];
                 }}
 
                 // if nspin != 4, fill DMR
@@ -381,7 +396,6 @@ void DensityMatrix_Tools::cal_DMR_full(
     ModuleBase::TITLE("DensityMatrix", "cal_DMR_full");
 
     ModuleBase::timer::start("DensityMatrix", "cal_DMR_full");
-    const int ld_hk = dm._paraV->nrow;
     hamilt::HContainer<TR_out>* target_DMR = dmR_out;
     // set zero since this function is called in every scf step
     target_DMR->set_zero();
@@ -434,13 +448,13 @@ void DensityMatrix_Tools::cal_DMR_full(
         for(int ik = 0; ik < dm._nk; ++ik)
         {
             if(ik_in >= 0 && ik_in != ik) { continue; }
-            // copy column-major DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
+            // copy DMK to row-major DMK_mat_trans (for the purpose of computational efficiency)
             const TK*const DMK_mat_ptr
                 = dm._DMK[ik].data()
-                  + col_ap * dm._paraV->nrow + row_ap;
+                  + dm.dmk_index(row_ap, col_ap);
             for(int icol = 0; icol < col_size; ++icol) {
                 for(int irow = 0; irow < row_size; ++irow) {
-                    DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[icol * ld_hk + irow];
+                    DMK_mat_trans[irow * col_size + icol] = DMK_mat_ptr[dm.dmk_index(irow, icol)];
             }}
 
             for(int iR = 0; iR < R_size; ++iR)
@@ -487,7 +501,6 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
     assert(this->_DMR.size()==this->_nspin && "DMR has not been initialized!");
 
     ModuleBase::timer::start("DensityMatrix", "cal_DMR");
-    const int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)
     {
         const int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
@@ -522,10 +535,9 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             #endif
             // k index
             constexpr TK kphase = 1;
-            // transpose DMK col=>row
             const TK* DMK_mat_ptr
                 = this->_DMK[0 + ik_begin].data()
-                  + col_ap * this->_paraV->nrow + row_ap;
+                  + this->dmk_index(row_ap, col_ap);
             // set DMR element
             TR* target_DMR_ptr = target_mat->get_pointer();
             for (int mu = 0; mu < row_size; ++mu)
@@ -533,10 +545,10 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
                 BlasConnector::axpy(col_size,
                                     kphase,
                                     DMK_mat_ptr,
-                                    ld_hk,
+                                    this->_is_DMK_row_major ? 1 : this->_paraV->nrow,
                                     target_DMR_ptr,
                                     1);
-                DMK_mat_ptr += 1;
+                DMK_mat_ptr += this->_is_DMK_row_major ? this->_paraV->ncol : 1;
                 target_DMR_ptr += col_size;
             }
         }

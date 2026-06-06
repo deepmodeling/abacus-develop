@@ -160,14 +160,47 @@ TEST_F(DMTest, DMConstructor_nspin1)
             {
                 for (int j = 0; j < paraV->ncol; j++)
                 {
-                    // std::cout << ptr[i*paraV->ncol+j] << " ";
-                    EXPECT_EQ(ptr[i * paraV->ncol + j], is + ik * i + j);
+                    EXPECT_EQ(ptr[DM.dmk_index(i, j)], is + ik * i + j);
                 }
             }
         }
     }
     // delete kv
     delete kv;
+}
+
+TEST_F(DMTest, DMKStorageOrder)
+{
+    int nspin = 1;
+    elecstate::DensityMatrix<double, double> DM_col(paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM_row(paraV, nspin, true);
+
+    EXPECT_FALSE(DM_col.is_DMK_row_major());
+    EXPECT_TRUE(DM_row.is_DMK_row_major());
+
+    for (int i = 0; i < paraV->nrow; i++)
+    {
+        for (int j = 0; j < paraV->ncol; j++)
+        {
+            const double value = 100.0 * i + j;
+            DM_col.set_DMK(1, 0, i, j, value);
+            DM_row.set_DMK(1, 0, i, j, value);
+        }
+    }
+
+    double* col_ptr = DM_col.get_DMK_pointer(0);
+    double* row_ptr = DM_row.get_DMK_pointer(0);
+    for (int i = 0; i < paraV->nrow; i++)
+    {
+        for (int j = 0; j < paraV->ncol; j++)
+        {
+            const double value = 100.0 * i + j;
+            EXPECT_EQ(DM_col.get_DMK(1, 0, i, j), value);
+            EXPECT_EQ(DM_row.get_DMK(1, 0, i, j), value);
+            EXPECT_EQ(col_ptr[j * paraV->nrow + i], value);
+            EXPECT_EQ(row_ptr[i * paraV->ncol + j], value);
+        }
+    }
 }
 
 TEST_F(DMTest, DMConstructor_nspin2)
@@ -227,8 +260,7 @@ TEST_F(DMTest, DMConstructor_nspin2)
             {
                 for (int j = 0; j < paraV->ncol; j++)
                 {
-                    // std::cout << ptr[i*paraV->ncol+j] << " ";
-                    EXPECT_EQ(ptr[i * paraV->ncol + j], ik * i + j);
+                    EXPECT_EQ(ptr[DM.dmk_index(i, j)], ik * i + j);
                 }
             }
         }
