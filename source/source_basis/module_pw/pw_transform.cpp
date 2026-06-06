@@ -13,7 +13,7 @@ namespace ModulePW
 {
 namespace
 {
-constexpr int pw_transform_cache_block = 1024;
+constexpr int pw_transform_cache_block = 128;
 
 inline int block_end(const int begin, const int size)
 {
