@@ -12,6 +12,8 @@
 #include <source_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
 #include <source_hsolver/diago_cg.h>
 
+#include <algorithm>
+
 using namespace hsolver;
 
 template <typename T, typename Device>
@@ -51,6 +53,13 @@ DiagoCG<T, Device>::~DiagoCG()
     delete this->one_;
     delete this->zero_;
     delete this->neg_one_;
+}
+
+template <typename T, typename Device>
+void DiagoCG<T, Device>::set_adaptive_cg(const bool use_pr_plus, const Real max_gamma)
+{
+    this->use_pr_plus_ = use_pr_plus;
+    this->max_cg_gamma_ = max_gamma;
 }
 
 template <typename T, typename Device>
@@ -358,7 +367,15 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
     {
         // (4) Update gamma !
         REQUIRES_OK(gg_last != 0.0, "DiagoCG_New::calc_gamma_cg: gg_last is zero, which is not allowed!");
-        const Real gamma = (gg_now - gg_inter) / gg_last;
+        Real gamma = (gg_now - gg_inter) / gg_last;
+        if (this->use_pr_plus_)
+        {
+            gamma = std::max(static_cast<Real>(0.0), gamma);
+        }
+        if (this->max_cg_gamma_ > static_cast<Real>(0.0))
+        {
+            gamma = std::min(gamma, this->max_cg_gamma_);
+        }
 
         // (5) Update gg_last !
         gg_last = gg_now;

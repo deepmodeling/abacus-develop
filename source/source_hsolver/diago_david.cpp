@@ -7,6 +7,9 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 using namespace hsolver;
 
@@ -112,6 +115,40 @@ DiagoDavid<T, Device>::~DiagoDavid()
         delmem_var_op()(this->d_precondition);
     }
 #endif
+}
+
+template <typename T, typename Device>
+void DiagoDavid<T, Device>::set_preconditioner(const DiagoPreconditioner preconditioner_type_in)
+{
+    this->preconditioner_type = preconditioner_type_in;
+}
+
+template <typename T, typename Device>
+void DiagoDavid<T, Device>::set_adaptive_restart(const bool enabled, const Real fill_ratio)
+{
+    this->adaptive_restart = enabled;
+    this->adaptive_restart_fill_ratio = std::min(static_cast<Real>(1.0),
+                                                 std::max(static_cast<Real>(0.5), fill_ratio));
+}
+
+template <typename T, typename Device>
+void DiagoDavid<T, Device>::set_min_precondition(const Real min_precondition_in)
+{
+    this->min_precondition = std::max(min_precondition_in, std::numeric_limits<Real>::epsilon());
+}
+
+template <typename T, typename Device>
+typename DiagoDavid<T, Device>::Real DiagoDavid<T, Device>::shifted_precondition_denominator(
+    const Real diagonal,
+    const Real eigenvalue,
+    const Real min_precondition)
+{
+    const Real x = std::abs(diagonal - eigenvalue);
+    const Real denom = static_cast<Real>(0.5)
+                       * (static_cast<Real>(1.0) + x
+                          + std::sqrt(static_cast<Real>(1.0)
+                                      + (x - static_cast<Real>(1.0)) * (x - static_cast<Real>(1.0))));
+    return std::max(denom, std::max(min_precondition, std::numeric_limits<Real>::epsilon()));
 }
 
 template <typename T, typename Device>
@@ -233,8 +270,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         }
 
         ModuleBase::timer::end("DiagoDavid", "check_update");
-        if (!this->notconv || (nbase + this->notconv > nbase_x)
-            || (dav_iter == david_maxiter))
+        if (!this->notconv || this->should_refresh(nbase, this->notconv, nbase_x, dav_iter, david_maxiter))
         {
             ModuleBase::timer::start("DiagoDavid", "last");
 
@@ -462,37 +498,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // Preconditioning
-    // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * psi
-    // where T, the preconditioner, is an approximate inverse of H
-    //          T is a diagonal stored in array `precondition`
-    // to do preconditioning, divide each column of basis by the corresponding element of precondition
-    for (int m = 0; m < notconv; m++)
-    {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        if (this->device == base_device::GpuDevice)
-        {
-#if defined(__CUDA) || defined(__ROCM)
-            ModuleBase::vector_div_vector_op<T, Device>()(dim,
-                                                          basis + dim * (nbase + m),
-                                                          basis + dim * (nbase + m),
-                                                          this->d_precondition);
-#endif
-        }
-        else
-        {
-            ModuleBase::vector_div_vector_op<T, Device>()(dim,
-                                                          basis + dim * (nbase + m),
-                                                          basis + dim * (nbase + m),
-                                                          this->precondition);
-        }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // for (int ig = 0; ig < dim; ig++)
-        // {
-        //     ppsi[ig] /= this->precondition[ig];
-        // }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    }
+    this->apply_precondition(dim, nbase, notconv, basis, unconv, eigenvalue);
 
     // there is a nbase to nbase + notconv band orthogonalise
     // plan for SchmidtOrth
@@ -574,6 +580,95 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     return;
 }
 
+template <typename T, typename Device>
+void DiagoDavid<T, Device>::apply_precondition(const int& dim,
+                                               const int& nbase,
+                                               const int& notconv,
+                                               T* basis,
+                                               const int* unconv,
+                                               const Real* eigenvalue)
+{
+    ModuleBase::timer::start("DiagoDavid", "precondition");
+
+    for (int m = 0; m < notconv; m++)
+    {
+        if (this->preconditioner_type == DiagoPreconditioner::Diagonal)
+        {
+            if (this->device == base_device::GpuDevice)
+            {
+#if defined(__CUDA) || defined(__ROCM)
+                ModuleBase::vector_div_vector_op<T, Device>()(dim,
+                                                              basis + dim * (nbase + m),
+                                                              basis + dim * (nbase + m),
+                                                              this->d_precondition);
+#endif
+            }
+            else
+            {
+                ModuleBase::vector_div_vector_op<T, Device>()(dim,
+                                                              basis + dim * (nbase + m),
+                                                              basis + dim * (nbase + m),
+                                                              this->precondition);
+            }
+            continue;
+        }
+
+        std::vector<Real> shifted_precondition(dim);
+        for (int i = 0; i < dim; i++)
+        {
+            shifted_precondition[i] = shifted_precondition_denominator(this->precondition[i],
+                                                                       eigenvalue[unconv[m]],
+                                                                       this->min_precondition);
+        }
+
+        if (this->device == base_device::GpuDevice)
+        {
+#if defined(__CUDA) || defined(__ROCM)
+            Real* d_shifted_precondition = nullptr;
+            resmem_var_op()(d_shifted_precondition, dim);
+            syncmem_var_h2d_op()(d_shifted_precondition, shifted_precondition.data(), dim);
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
+                                                          basis + dim * (nbase + m),
+                                                          basis + dim * (nbase + m),
+                                                          d_shifted_precondition);
+            delmem_var_op()(d_shifted_precondition);
+#endif
+        }
+        else
+        {
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
+                                                          basis + dim * (nbase + m),
+                                                          basis + dim * (nbase + m),
+                                                          shifted_precondition.data());
+        }
+    }
+
+    ModuleBase::timer::end("DiagoDavid", "precondition");
+}
+
+template <typename T, typename Device>
+bool DiagoDavid<T, Device>::should_refresh(const int& nbase,
+                                           const int& notconv,
+                                           const int nbase_x,
+                                           const int& david_iter,
+                                           const int& david_maxiter) const
+{
+    if (notconv == 0 || david_iter == david_maxiter || nbase + notconv > nbase_x)
+    {
+        return true;
+    }
+    if (!this->adaptive_restart || david_iter < 2 || nbase <= nband)
+    {
+        return false;
+    }
+
+    const Real fill_ratio = static_cast<Real>(nbase) / static_cast<Real>(std::max(1, nbase_x));
+    const int free_subspace = nbase_x - nbase;
+    const bool subspace_nearly_full = fill_ratio >= this->adaptive_restart_fill_ratio
+                                      || free_subspace < std::max(1, nband / 2);
+    const bool many_unconverged = notconv > std::max(1, nband / 2);
+    return subspace_nearly_full && many_unconverged;
+}
 
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::cal_elem(const int& dim,

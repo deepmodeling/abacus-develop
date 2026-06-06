@@ -15,6 +15,12 @@
 
 namespace hsolver
 {
+enum class DiagoPreconditioner
+{
+    Diagonal,
+    ShiftedDiagonal
+};
+
 /**
  * @class DiagoDavid
  * @brief A class that implements the block-Davidson algorithm for solving generalized eigenvalue problems.
@@ -69,6 +75,12 @@ class DiagoDavid
      */
     ~DiagoDavid();
 
+    void set_preconditioner(const DiagoPreconditioner preconditioner_type);
+    void set_adaptive_restart(const bool enabled, const Real fill_ratio = static_cast<Real>(0.85));
+    void set_min_precondition(const Real min_precondition);
+    static Real shifted_precondition_denominator(const Real diagonal,
+                                                 const Real eigenvalue,
+                                                 const Real min_precondition);
 
     // declare type of matrix-blockvector functions.
     // the function type is defined as a std::function object.
@@ -157,6 +169,10 @@ class DiagoDavid
     const int david_ndim = 4;
     /// number of unconverged eigenvalues
     int notconv = 0;
+    DiagoPreconditioner preconditioner_type = DiagoPreconditioner::ShiftedDiagonal;
+    bool adaptive_restart = true;
+    Real adaptive_restart_fill_ratio = static_cast<Real>(0.85);
+    Real min_precondition = static_cast<Real>(1.0e-8);
 
     /// precondition for diag, diagonal approximation of matrix A(i.e. Hamilt)
     const Real* precondition = nullptr;
@@ -218,6 +234,19 @@ class DiagoDavid
                   const T* vcc,
                   const int* unconv,
                   const Real* eigenvalue);
+
+    void apply_precondition(const int& dim,
+                            const int& nbase,
+                            const int& notconv,
+                            T* basis,
+                            const int* unconv,
+                            const Real* eigenvalue);
+
+    bool should_refresh(const int& nbase,
+                        const int& notconv,
+                        const int nbase_x,
+                        const int& david_iter,
+                        const int& david_maxiter) const;
 
     /**
      * Calculates the elements of the diagonalization matrix for the DiagoDavid class.

@@ -60,8 +60,15 @@ void lapackEigen(int& npw, std::vector<std::complex<double>>& hm, double* e, boo
 class DiagoDavPrepare 
 {
 public:
-	DiagoDavPrepare(int nband, int npw, int sparsity, int order,double eps,int maxiter):
-		nband(nband),npw(npw),sparsity(sparsity),order(order),eps(eps),maxiter(maxiter) 
+	DiagoDavPrepare(int nband,
+                    int npw,
+                    int sparsity,
+                    int order,
+                    double eps,
+                    int maxiter,
+                    hsolver::DiagoPreconditioner preconditioner_type = hsolver::DiagoPreconditioner::ShiftedDiagonal):
+		nband(nband),npw(npw),sparsity(sparsity),order(order),eps(eps),maxiter(maxiter),
+        preconditioner_type(preconditioner_type)
 	{
 #ifdef __MPI	
 		MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -72,6 +79,7 @@ public:
 	int nband, npw, sparsity, order, maxiter, notconv;
 	double eps, avg_iter;
 	int nprocs=1, mypnum=0;
+    hsolver::DiagoPreconditioner preconditioner_type;
 
 	void CompareEigen(psi::Psi<std::complex<double>> &phi, double *precondition)
 	{
@@ -98,6 +106,7 @@ public:
 		const int nband = phi.get_nbands();
 		const int ld_psi = phi.get_nbasis();
 		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, false, comm_info);
+        dav.set_preconditioner(preconditioner_type);
 
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
@@ -192,10 +201,20 @@ TEST_P(DiagoDavTest,RandomHamilt)
 INSTANTIATE_TEST_SUITE_P(VerifyDiag,DiagoDavTest,::testing::Values(
 		//DiagoDavPrepare(int nband, int npw, int sparsity, int order,double eps,int maxiter)
         DiagoDavPrepare(10,100,0,4,1e-5,500),
-        DiagoDavPrepare(20,500,7,4,1e-5,500)
+        DiagoDavPrepare(20,500,7,4,1e-5,500),
+        DiagoDavPrepare(8,80,0,3,1e-5,300, hsolver::DiagoPreconditioner::Diagonal)
         //DiagoDavPrepare(50,1000,8,4,1e-5,500)
 		//DiagoDavPrepare(20,2000,8,4,1e-5,500)
 ));
+
+TEST(DiagoDavPreconditionerTest, ShiftedDiagonalDenominatorIsBounded)
+{
+    using Dav = hsolver::DiagoDavid<std::complex<double>>;
+    EXPECT_NEAR(Dav::shifted_precondition_denominator(3.0, 2.0, 1.0e-8), 1.5, 1.0e-12);
+    EXPECT_DOUBLE_EQ(Dav::shifted_precondition_denominator(1.0, 3.0, 1.0e-8),
+                     Dav::shifted_precondition_denominator(3.0, 1.0, 1.0e-8));
+    EXPECT_DOUBLE_EQ(Dav::shifted_precondition_denominator(2.0, 2.0, 2.0), 2.0);
+}
 
 TEST(DiagoDavRealSystemTest, dataH)
 {

@@ -40,6 +40,8 @@ class DiagoCG final
 
     ~DiagoCG();
 
+    void set_adaptive_cg(const bool use_pr_plus, const Real max_gamma = static_cast<Real>(5.0));
+
     // virtual void init(){};
     // refactor hpsi_info
     // this is the diag() function for CG method
@@ -80,6 +82,8 @@ class DiagoCG final
     std::string calculation_ = {};
 
     bool need_subspace_ = false;
+    bool use_pr_plus_ = true;
+    Real max_cg_gamma_ = static_cast<Real>(5.0);
     /// A function object that performs the hPsi calculation.
     HPsiFunc hpsi_func_ = nullptr;
     /// A function object that performs the sPsi calculation.
