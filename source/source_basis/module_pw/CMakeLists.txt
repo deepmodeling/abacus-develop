@@ -43,6 +43,25 @@ add_library(
     ${objects}
 )
 
+add_executable(
+    MODULE_PW_simd_bench
+    test_serial/pw_simd_bench.cpp
+)
+
+target_link_libraries(
+    MODULE_PW_simd_bench
+    parameter
+    ${math_libs}
+    planewave
+    device
+    base
+    Threads::Threads
+)
+
+if(USE_OPENMP)
+  target_link_libraries(MODULE_PW_simd_bench OpenMP::OpenMP_CXX)
+endif()
+
 if (USE_DSP)
 target_link_libraries(planewave  PRIVATE
 ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
