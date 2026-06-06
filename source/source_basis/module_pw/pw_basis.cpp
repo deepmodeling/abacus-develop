@@ -47,7 +47,20 @@ PW_Basis:: ~PW_Basis()
 
 void PW_Basis::clear_owned_cache()
 {
-    this->invalidate_cache();
+    std::lock_guard<std::mutex> guard(this->cache_mutex);
+    this->invalidate_cache_unlocked();
+}
+
+void PW_Basis::invalidate_cache()
+{
+    std::lock_guard<std::mutex> guard(this->cache_mutex);
+    this->invalidate_cache_unlocked();
+}
+
+void PW_Basis::invalidate_cache_unlocked()
+{
+    this->local_pw_cache_valid.store(false);
+    this->uniqgg_cache_valid.store(false);
     this->gg_cache_storage.reset();
     this->gdirect_cache_storage.reset();
     this->gcar_cache_storage.reset();
@@ -63,6 +76,12 @@ void PW_Basis::clear_owned_cache()
 }
 
 PW_Basis::CacheStats PW_Basis::get_cache_stats() const
+{
+    std::lock_guard<std::mutex> guard(this->cache_mutex);
+    return this->get_cache_stats_unlocked();
+}
+
+PW_Basis::CacheStats PW_Basis::get_cache_stats_unlocked() const
 {
     CacheStats stats;
     stats.local_pw_hits = this->local_pw_cache_hits.load();
@@ -189,11 +208,6 @@ void PW_Basis::collect_local_pw()
     {
         return;
     }
-    if (this->local_pw_cache_valid.load())
-    {
-        this->local_pw_cache_hits.fetch_add(1);
-        return;
-    }
     std::lock_guard<std::mutex> guard(this->cache_mutex);
     if (this->local_pw_cache_valid.load())
     {
@@ -210,6 +224,11 @@ void PW_Basis::collect_local_pw()
     this->gcar = this->gcar_cache_storage.get();
     // Unique-G data depends on gg, so rebuilding local G data invalidates it.
     this->uniqgg_cache_valid.store(false);
+    this->ig2igg_cache_storage.reset();
+    this->gg_uniq_cache_storage.reset();
+    this->ig2igg = nullptr;
+    this->gg_uniq = nullptr;
+    this->ngg = 0;
 
     ModuleBase::Vector3<double> f;
     int gamma_num = 0;
@@ -263,11 +282,6 @@ void PW_Basis::collect_uniqgg()
 {
     if(this->npw <= 0)
     {
-        return;
-    }
-    if (this->uniqgg_cache_valid.load())
-    {
-        this->uniqgg_cache_hits.fetch_add(1);
         return;
     }
     std::lock_guard<std::mutex> guard(this->cache_mutex);

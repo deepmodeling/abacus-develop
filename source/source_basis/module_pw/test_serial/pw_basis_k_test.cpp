@@ -200,16 +200,18 @@ TEST_F(PWBasisKTEST, CollectLocalPW)
 	EXPECT_EQ(basis_k.get_gcar_data<double>(), gcar_ptr);
 	const auto stats_after_hits = basis_k.get_k_cache_stats();
 	EXPECT_EQ(stats_after_hits.gcar_hits, 2);
-		EXPECT_EQ(stats_after_hits.gcar_misses, 1);
-		EXPECT_EQ(stats_after_hits.gk2_hits, 1);
-		EXPECT_EQ(stats_after_hits.gk2_misses, 2);
-		EXPECT_GT(stats_after_hits.cache_bytes, 0);
-		basis_k.initparameters(gamma_only_in, gk_ecut_in, nks_in, kvec_d_in, distribution_type_in, xprime_in);
-		EXPECT_EQ(basis_k.gcar, nullptr);
-		EXPECT_EQ(basis_k.gk2, nullptr);
-		EXPECT_EQ(basis_k.get_gcar_data<double>(), nullptr);
-		EXPECT_EQ(basis_k.get_gk2_data<double>(), nullptr);
-		EXPECT_EQ(basis_k.get_k_cache_stats().cache_bytes, 0);
-		EXPECT_EQ(basis_k.npw,3695);
-		EXPECT_EQ(basis_k.npwk_max,2721);
-	}
+	EXPECT_EQ(stats_after_hits.gcar_misses, 1);
+	EXPECT_EQ(stats_after_hits.gk2_hits, 1);
+	EXPECT_EQ(stats_after_hits.gk2_misses, 2);
+	EXPECT_GT(stats_after_hits.cache_bytes, 0);
+	basis_k.initparameters(gamma_only_in, gk_ecut_in, nks_in, kvec_d_in, distribution_type_in, xprime_in);
+	EXPECT_EQ(basis_k.gcar, nullptr);
+	EXPECT_EQ(basis_k.gk2, nullptr);
+	EXPECT_EQ(basis_k.k_gcar_cache_storage, nullptr);
+	EXPECT_EQ(basis_k.k_gk2_cache_storage, nullptr);
+	EXPECT_EQ(basis_k.get_gcar_data<double>(), nullptr);
+	EXPECT_EQ(basis_k.get_gk2_data<double>(), nullptr);
+	EXPECT_EQ(basis_k.get_k_cache_stats().cache_bytes, 0);
+	EXPECT_EQ(basis_k.npw,3695);
+	EXPECT_EQ(basis_k.npwk_max,2721);
+}

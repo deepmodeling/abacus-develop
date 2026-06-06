@@ -362,3 +362,29 @@ TEST_F(PWBasisTEST,CollectUniqgg)
 	pwb.collect_uniqgg();
 	EXPECT_EQ(pwb.ngg,78);
 }
+
+TEST_F(PWBasisTEST, CacheStorageClearedOnParameterChange)
+{
+	double lat0 = 1.8897261254578281;
+	ModuleBase::Matrix3 latvec(10.0,0.0,0.0,
+				0.0,10.0,0.0,
+				0.0,0.0,10.0);
+	double gridecut=10.0;
+	bool gamma_only_in = true;
+	double pwecut_in = 11.0;
+	int distribution_type_in = 2;
+	bool xprime_in = true;
+	pwb.initgrids(lat0,latvec,gridecut);
+	pwb.initparameters(gamma_only_in,pwecut_in,distribution_type_in,xprime_in);
+	EXPECT_NO_THROW(pwb.setuptransform());
+	pwb.collect_local_pw();
+	pwb.collect_uniqgg();
+	EXPECT_GT(pwb.get_cache_stats().cache_bytes, 0);
+	pwb.initparameters(gamma_only_in,pwecut_in,distribution_type_in,xprime_in);
+	EXPECT_EQ(pwb.gg_cache_storage, nullptr);
+	EXPECT_EQ(pwb.gdirect_cache_storage, nullptr);
+	EXPECT_EQ(pwb.gcar_cache_storage, nullptr);
+	EXPECT_EQ(pwb.ig2igg_cache_storage, nullptr);
+	EXPECT_EQ(pwb.gg_uniq_cache_storage, nullptr);
+	EXPECT_EQ(pwb.get_cache_stats().cache_bytes, 0);
+}

@@ -143,7 +143,7 @@ void PW_Basis:: initgrids(
     this->nz = ibox[2];
     this->nxy =this->nx * this->ny;
     this->nxyz = this->nxy * this->nz;
-            this->invalidate_cache();
+    this->invalidate_cache();
 
     delete[] ibox;    
     return;
@@ -243,7 +243,7 @@ void PW_Basis:: initparameters(
         this->ggecut = this->gridecut_lat;
     }
     this->distribution_type = distribution_type_in;
-        this->invalidate_cache();
+    this->invalidate_cache();
 }
 
 // Set parameters about full planewave, used only in OFDFT for now. sunliang added 2022-08-30
@@ -255,6 +255,6 @@ void PW_Basis::setfullpw(
     this->full_pw = inpt_full_pw;
     this->full_pw_dim = inpt_full_pw_dim;
     if (!this->full_pw) this->full_pw_dim = 0;
-     this->invalidate_cache();
+    this->invalidate_cache();
 }
 }
