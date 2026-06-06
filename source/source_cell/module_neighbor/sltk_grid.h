@@ -39,7 +39,7 @@ class Grid
     double z_max=0.0;
 
     // The algorithm for searching neighboring atoms uses a "box" partitioning method. 
-    // Each box has an edge length of sradius, and the number of boxes in each direction is recorded here.
+    // Each box has an edge length of sradius + 0.1, and the number of boxes in each direction is recorded here.
     double box_edge_length=0.0;
     int box_nx=0;
     int box_ny=0;

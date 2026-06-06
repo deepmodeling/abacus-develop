@@ -84,18 +84,26 @@ using SltkGridDeathTest = SltkGridTest;
 
 namespace
 {
-using NeighborKey = std::tuple<int, int, int, int, int>;
+using NeighborPairKey = std::tuple<int, int, int, int, int, int, int>;
 
-std::vector<NeighborKey> collect_neighbor_keys(const Grid& grid)
+std::vector<NeighborPairKey> collect_neighbor_pair_keys(const Grid& grid)
 {
-    std::vector<NeighborKey> keys;
-    for (const auto& type_neighbors: grid.all_adj_info)
+    std::vector<NeighborPairKey> keys;
+    for (int center_type = 0; center_type < static_cast<int>(grid.all_adj_info.size()); ++center_type)
     {
-        for (const auto& atom_neighbors: type_neighbors)
+        const auto& type_neighbors = grid.all_adj_info[center_type];
+        for (int center_natom = 0; center_natom < static_cast<int>(type_neighbors.size()); ++center_natom)
         {
+            const auto& atom_neighbors = type_neighbors[center_natom];
             for (const FAtom* atom: atom_neighbors)
             {
-                keys.push_back(NeighborKey(atom->type, atom->natom, atom->cell_x, atom->cell_y, atom->cell_z));
+                keys.push_back(NeighborPairKey(center_type,
+                                               center_natom,
+                                               atom->type,
+                                               atom->natom,
+                                               atom->cell_x,
+                                               atom->cell_y,
+                                               atom->cell_z));
             }
         }
     }
@@ -172,7 +180,7 @@ TEST_F(SltkGridTest, OpenMPThreadCountKeepsNeighborSet)
     grid_many.init(ofs_many, *ucell, radius, pbc);
     ofs_many.close();
 
-    EXPECT_EQ(collect_neighbor_keys(grid_many), collect_neighbor_keys(grid_one));
+    EXPECT_EQ(collect_neighbor_pair_keys(grid_many), collect_neighbor_pair_keys(grid_one));
 
     remove("test_one.out");
     remove("test_many.out");
