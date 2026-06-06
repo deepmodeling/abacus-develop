@@ -1168,13 +1168,15 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            // Use the 3-block [psi, w, p] subspace for faster convergence.
-            // When p is nearly collinear with w (p ~ w), the subspace Gram
-            // matrix becomes nearly singular, causing the generalized
-            // eigenvalue solver to fail.  The p-bad detection below catches
-            // this and replaces p with H·w (a genuinely independent Krylov
-            // direction), keeping the subspace full-rank.
-            const bool use_p = true;
+            // Use the 2-block [psi, w] subspace (preconditioned Davidson).
+            // The 3-block [psi, w, p] subspace can become ill-conditioned
+            // when residuals are small: the [w, p] block of the Gram matrix
+            // shrinks, making M nearly singular and causing sygvd to produce
+            // garbage eigenvectors.  The p-bad detection + H·w Krylov fallback
+            // (below, currently disabled) addresses p~w collinearity but not
+            // the small-residual ill-conditioning.  Without p the method
+            // converges robustly with slightly more iterations.
+            const bool use_p = false;
             if (use_p)
             {
                 apply_s_current(p_.data(), sp_.data(), ncol);
