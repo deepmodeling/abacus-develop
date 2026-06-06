@@ -43,6 +43,7 @@ list(APPEND depend_files
   ../../source_base/math_integral.cpp
   ../../source_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../source_cell/module_neighbor/sltk_atom.cpp
+  ../../source_cell/module_neighbor/atom_pack.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp
   ../../source_cell/module_neighbor/sltk_grid_driver.cpp
   ../../source_io/module_output/output.cpp
