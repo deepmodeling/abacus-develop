@@ -1,4 +1,4 @@
-list(APPEND objects
+set(objects
     wf_history_lcao.cpp
     wf_orthonormalize_lcao.cpp
 )
