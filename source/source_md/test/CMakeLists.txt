@@ -1,5 +1,5 @@
-remove_definitions(-D__MPI -D__LCAO )
-add_definitions(-D__NORMAL)
+abacus_disable_feature_definitions(__MPI __LCAO)
+abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp

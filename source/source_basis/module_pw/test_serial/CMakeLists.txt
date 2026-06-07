@@ -1,10 +1,10 @@
-remove_definitions(-D__MPI)
-remove_definitions(-D__EXX)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__UT_USE_CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__UT_USE_ROCM)
-remove_definitions(-D__MLALGO)
+abacus_disable_feature_definitions(__MPI)
+abacus_disable_feature_definitions(__EXX)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__UT_USE_CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__UT_USE_ROCM)
+abacus_disable_feature_definitions(__MLALGO)
 
 add_library(
     planewave_serial

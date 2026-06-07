@@ -1,7 +1,7 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__MPI)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__MPI)
 
 add_library(
     io_input_serial

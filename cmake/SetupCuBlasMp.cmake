@@ -73,6 +73,6 @@ function(abacus_setup_cublasmp target_name)
   endif()
 
   # 5. Link the library to the target
-  target_link_libraries(${target_name} cublasMp::cublasMp)
+  target_link_libraries(${target_name} PRIVATE cublasMp::cublasMp)
 
 endfunction()

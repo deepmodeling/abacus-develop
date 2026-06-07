@@ -129,10 +129,12 @@ function(abacus_setup_cusolvermp target_name)
   # === Link libraries ===
   if(_use_cal)
     target_link_libraries(${target_name}
+        PRIVATE
         CAL::CAL
         cusolverMp::cusolverMp)
   else()
     target_link_libraries(${target_name}
+        PRIVATE
         NCCL::NCCL
         cusolverMp::cusolverMp)
   endif()

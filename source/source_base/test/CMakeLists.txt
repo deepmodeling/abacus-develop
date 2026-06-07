@@ -1,4 +1,4 @@
-remove_definitions(-D__MPI)
+abacus_disable_feature_definitions(__MPI)
 install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_BASE_blas_connector
