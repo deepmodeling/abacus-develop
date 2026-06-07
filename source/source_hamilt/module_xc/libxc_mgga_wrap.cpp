@@ -28,9 +28,8 @@ void XC_Functional_Libxc::tau_xc(
     double v1 = 0.0;
     double v2 = 0.0;
     double v3 = 0.0;
-    double lapl_rho = 0.0;
+    double lapl_rho = grho;
     double vlapl_rho = 0.0;
-    lapl_rho = grho;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
         /* xc_polarized = */ XC_UNPOLARIZED);
