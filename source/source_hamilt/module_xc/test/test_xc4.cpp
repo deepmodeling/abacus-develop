@@ -1,5 +1,5 @@
 #include "../xc_functional.h"
-#include "../libxc.h"
+#include "../libxc_abacus.h"
 #include "gtest/gtest.h"
 #include "xctest.h"
 #include "../exx_info.h"

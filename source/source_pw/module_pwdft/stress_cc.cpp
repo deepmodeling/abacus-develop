@@ -7,7 +7,7 @@
 #include "source_estate/cal_ux.h"
 
 #ifdef USE_LIBXC
-#include "source_hamilt/module_xc/libxc.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
 

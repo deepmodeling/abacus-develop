@@ -1,6 +1,6 @@
 #ifdef USE_LIBXC
 
-#include "libxc.h"
+#include "libxc_abacus.h"
 
 #include <xc.h>
 #include <array>

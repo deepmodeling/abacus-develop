@@ -18,7 +18,7 @@
 #include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
 #ifdef USE_LIBXC
-#include "libxc.h"
+#include "libxc_abacus.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif

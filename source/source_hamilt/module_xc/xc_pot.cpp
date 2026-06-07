@@ -10,7 +10,7 @@
 #include "xc_functional.h"
 
 #ifdef USE_LIBXC
-#include "libxc.h"
+#include "libxc_abacus.h"
 #endif
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)

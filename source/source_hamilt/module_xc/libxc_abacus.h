@@ -1,5 +1,5 @@
-#ifndef LIBXC_H
-#define LIBXC_H
+#ifndef LIBXC_ABACUS_H
+#define LIBXC_ABACUS_H
 
 #ifdef USE_LIBXC
 
@@ -227,4 +227,4 @@ namespace XC_Functional_Libxc
 
 #endif // USE_LIBXC
 
-#endif // LIBXC_H
+#endif // LIBXC_ABACUS_H
