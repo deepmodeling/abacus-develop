@@ -3,6 +3,10 @@ name: Performance test
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Performance test

@@ -63,29 +63,8 @@ endif()
 
 # enable json support
 if(ENABLE_RAPIDJSON)
-  find_package(RapidJSON)
-  if(NOT RapidJSON_FOUND)
-    message(
-      WARNING
-        "Rapidjson is not found, trying downloading from github, or you can install Rapidjson first and reinstall abacus."
-    )
-    include(FetchContent)
-    FetchContent_Declare(
-      rapidjson
-      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a
-    )
-    set(RAPIDJSON_BUILD_TESTS
-        OFF
-        CACHE INTERNAL "")
-    set(RAPIDJSON_BUILD_EXAMPLES
-        OFF
-        CACHE INTERNAL "")
-    FetchContent_MakeAvailable(rapidjson)
-  endif()
-  set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
+  find_package(RapidJSON REQUIRED)
   add_compile_definitions(__RAPIDJSON)
-  add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
-  include_directories(${RapidJSON_INCLUDE_PATH})
 endif()
 
 # get commit info
@@ -311,9 +290,7 @@ if(WIN32)
 endif()
 
 if(ENABLE_LCAO)
-  find_package(Cereal REQUIRED)
-  include_directories(${CEREAL_INCLUDE_DIR})
-  add_compile_definitions(USE_CEREAL_SERIALIZATION)
+  find_package(cereal REQUIRED)
   add_compile_definitions(__LCAO)
   if(USE_ELPA)
     find_package(ELPA REQUIRED)

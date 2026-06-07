@@ -39,11 +39,11 @@ jobs:
           sudo apt-get install -y gfortran ccache ca-certificates python-is-python3 python3-pip
           sudo pip install clang-format clang-tidy
 
-      - name: Install dftd4 from toolchain
+      - name: Install external tools from toolchain
         run: |
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
-          ./scripts/stage4/install_dftd4.sh
+          ./scripts/stage4/install_stage4.sh
           cd ..
 
       - name: Configure
