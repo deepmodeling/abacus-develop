@@ -21,31 +21,18 @@ void XC_Functional::becke88(
     // Becke exchange: A.D. Becke, PRA 38, 3098 (1988)
     // only gradient-corrected part, no Slater term included
     //
-    double beta = 0.0;
-    double third = 0.0;
-    double two13 = 0.0;
-    beta = 0.00420;
-    third = 1.0 / 3.0;
-    two13 = 1.2599210498948730;
-    double rho13 = 0.0;
-    double rho43 = 0.0;
-    double xs = 0.0;
-    double xs2 = 0.0;
-    double sa2b8 = 0.0;
-    double shm1 = 0.0;
-    double dd = 0.0;
-    double dd2 = 0.0;
-    double ee = 0.0;
-
-    rho13 = pow(rho, third);
-    rho43 = pow(rho13, 4);
-    xs = two13 * sqrt(grho) / rho43;
-    xs2 = xs * xs;
-    sa2b8 = sqrt(1.00 + xs2);
-    shm1 = log(xs + sa2b8);
-    dd = 1.00 + 6.00 * beta * xs * shm1;
-    dd2 = dd * dd;
-    ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
+    double beta = 0.00420;
+    double third = 1.0 / 3.0;
+    double two13 = 1.2599210498948730;
+    double rho13 = pow(rho, third);
+    double rho43 = pow(rho13, 4);
+    double xs = two13 * sqrt(grho) / rho43;
+    double xs2 = xs * xs;
+    double sa2b8 = sqrt(1.00 + xs2);
+    double shm1 = log(xs + sa2b8);
+    double dd = 1.00 + 6.00 * beta * xs * shm1;
+    double dd2 = dd * dd;
+    double ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
     sx = two13 * grho / rho43 * (- beta / dd);
     v1x = - (4.0 / 3.0) / two13 * xs2 * beta * rho13 * ee / dd2;
     v2x = two13 * beta * (ee - dd) / (rho43 * dd2);
@@ -71,33 +58,19 @@ void XC_Functional::ggax(
     const double fp1 = -0.0192920212964260;
     const double fp2 = 0.1616204596739950;
     // fp1 = -3/(16 pi)*(3 pi^2)^(-1/3)
-    double rhom43 = 0.0;
-    double s = 0.0;
-    double s2 = 0.0;
-    double s3 = 0.0;
-    double s4 = 0.0;
-    double exps = 0.0;
-    double as = 0.0;
-    double sa2b8 = 0.0;
-    double shm1 = 0.0;
-    double bs = 0.0;
-    double das = 0.0;
-    double dbs = 0.0;
-    double dls = 0.0;
-
-    rhom43 = pow(rho, (- 4.0 / 3.0));
-    s = fp2 * sqrt(grho) * rhom43;
-    s2 = s * s;
-    s3 = s2 * s;
-    s4 = s2 * s2;
-    exps = f4 * exp(- 100.0 * s2);
-    as = f3 - exps - f5 * s2;
-    sa2b8 = sqrt(1.00 + f2 * f2 * s2);
-    shm1 = log(f2 * s + sa2b8);
-    bs = 1.0 + f1 * s * shm1 + f5 * s4;
-    das = (200.0 * exps - 2.0 * f5) * s;
-    dbs = f1 * (shm1 + f2 * s / sa2b8) + 4.0 * f5 * s3;
-    dls = (das / as - dbs / bs);
+    double rhom43 = pow(rho, (- 4.0 / 3.0));
+    double s = fp2 * sqrt(grho) * rhom43;
+    double s2 = s * s;
+    double s3 = s2 * s;
+    double s4 = s2 * s2;
+    double exps = f4 * exp(- 100.0 * s2);
+    double as = f3 - exps - f5 * s2;
+    double sa2b8 = sqrt(1.00 + f2 * f2 * s2);
+    double shm1 = log(f2 * s + sa2b8);
+    double bs = 1.0 + f1 * s * shm1 + f5 * s4;
+    double das = (200.0 * exps - 2.0 * f5) * s;
+    double dbs = f1 * (shm1 + f2 * s / sa2b8) + 4.0 * f5 * s3;
+    double dls = (das / as - dbs / bs);
 
     sx = fp1 * grho * rhom43 * as / bs;
     v1x = - 4.0 / 3.0 * sx / rho * (1.0 + s * dls);
@@ -187,22 +160,16 @@ void XC_Functional::optx(
     // real(kind=DP) :: rho, grho, sx, v1x, v2x
 
     // parameter :
-    double small = 1.e-30;
-    double smal2 = 1.e-10;
+    const double small = 1.e-30;
+    const double smal2 = 1.e-10;
     //.......coefficients and exponents....................
     // parameter :
-    double o43 = 4.00 / 3.00;
-    double two13 = 1.2599210498948730;
-    double two53 = 3.1748021039363990;
-    double gam = 0.0060;
-    double a1cx = 0.97845711702844210;
-    double a2 = 1.431690;
-    double gr = 0.0;
-    double rho43 = 0.0;
-    double xa = 0.0;
-    double gamx2 = 0.0;
-    double uden = 0.0;
-    double uu = 0.0;
+    const double o43 = 4.00 / 3.00;
+    const double two13 = 1.2599210498948730;
+    const double two53 = 3.1748021039363990;
+    const double gam = 0.0060;
+    const double a1cx = 0.97845711702844210;
+    const double a2 = 1.431690;
     //.......OPTX in compact form..........................
 
     if (rho <= small)
@@ -213,12 +180,12 @@ void XC_Functional::optx(
     }
     else
     {
-        gr = (grho > smal2) ? grho : smal2;    //max()
-        rho43 = pow(rho, o43);
-        xa = two13 * sqrt(gr) / rho43;
-        gamx2 = gam * xa * xa;
-        uden = 1.e+00 / (1.e+00 + gamx2);
-        uu = a2 * gamx2 * gamx2 * uden * uden;
+        double gr = (grho > smal2) ? grho : smal2;    //max()
+        double rho43 = pow(rho, o43);
+        double xa = two13 * sqrt(gr) / rho43;
+        double gamx2 = gam * xa * xa;
+        double uden = 1.e+00 / (1.e+00 + gamx2);
+        double uu = a2 * gamx2 * gamx2 * uden * uden;
         uden = rho43 * uu * uden;
         sx = -rho43 * (a1cx + uu) / two13;
         v1x = o43 * (sx + two53 * uden) / rho;
@@ -235,84 +202,46 @@ void XC_Functional::wcx(
     double &v1x,
     double &v2x)
 {
-    double kf = 0.0;
-    double agrho = 0.0;
-    double s1 = 0.0;
-    double s2 = 0.0;
-    double es2 = 0.0;
-    double ds = 0.0;
-    double dsg = 0.0;
-    double exunif = 0.0;
-    double fx = 0.0;
-    // (3*pi2*|rho|)^(1/3)
-    // |grho|
-    // |grho|/(2*kf*|rho|)
-    // s^2
-    // n*ds/dn
-    // n*ds/d(gn)
-    // exchange energy LDA part
-    // exchange energy gradient part
-    double dxunif = 0.0;
-    double dfx = 0.0;
-    double f1 = 0.0;
-    double f2 = 0.0;
-    double f3 = 0.0;
-    double dfx1 = 0.0;
-    double x1 = 0.0;
-    double x2 = 0.0;
-    double x3 = 0.0;
-    double dxds1 = 0.0;
-    double dxds2 = 0.0;
-    double dxds3 = 0.0;
     // numerical coefficients (NB: c2=(3 pi^2)^(1/3) )
-    double third = 0.0;
-    double c1 = 0.0;
-    double c2 = 0.0;
-    double c5 = 0.0;
-    double teneightyone = 0.0; // c6
-
-    third = 1.0/3.0;
-    c1 = 0.75 / ModuleBase::PI;
-    c2 = 3.093667726280136;
-    c5 = 4.0 * third;
-    teneightyone = 0.123456790123;
+    const double third = 1.0/3.0;
+    const double c1 = 0.75 / ModuleBase::PI;
+    const double c2 = 3.093667726280136;
+    const double c5 = 4.0 * third;
+    const double teneightyone = 0.123456790123; // c6
     // parameters of the functional
-    double k = 0.0;
-    double mu = 0.0;
-    double cwc = 0.0;
-    k = 0.804;
-    mu = 0.2195149727645171;
-    cwc = 0.00793746933516;
-    //
-    agrho = sqrt (grho);
-    kf = c2 * pow(rho,third);
-    dsg = 0.5 / kf;
-    s1 = agrho * dsg / rho;
-    s2 = s1 * s1;
-    es2 = exp(-s2);
-    ds = - c5 * s1;
+    const double k = 0.804;
+    const double mu = 0.2195149727645171;
+    const double cwc = 0.00793746933516;
+
+    const double agrho = sqrt (grho);
+    const double kf = c2 * pow(rho,third);
+    const double dsg = 0.5 / kf;
+    const double s1 = agrho * dsg / rho;
+    const double s2 = s1 * s1;
+    const double es2 = exp(-s2);
+    const double ds = - c5 * s1;
     //
     //   Energy
     //
     // x = 10/81 s^2 + (mu - 10/81) s^2 e^-s^2 + ln (1 + c s^4)
-    x1 = teneightyone * s2;
-    x2 = (mu - teneightyone) * s2 * es2;
-    x3 = log(1.0 + cwc * s2 * s2);
-    f1 = (x1 + x2 + x3) / k;
-    f2 = 1.0 + f1;
-    f3 = k / f2;
-    fx = k - f3;
-    exunif = - c1 * kf;
+    const double x1 = teneightyone * s2;
+    const double x2 = (mu - teneightyone) * s2 * es2;
+    const double x3 = log(1.0 + cwc * s2 * s2);
+    const double f1 = (x1 + x2 + x3) / k;
+    const double f2 = 1.0 + f1;
+    const double f3 = k / f2;
+    const double fx = k - f3;
+    const double exunif = - c1 * kf;
     sx = exunif * fx;
     //
     //   Potential
     //
-    dxunif = exunif * third;
-    dfx1 = f2 * f2;
-    dxds1 = teneightyone;
-    dxds2 = (mu - teneightyone) * es2 * (1.0 - s2);
-    dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 *s2);
-    dfx = 2.0 * s1 * (dxds1 + dxds2 + dxds3) / dfx1;
+    const double dxunif = exunif * third;
+    const double dfx1 = f2 * f2;
+    const double dxds1 = teneightyone;
+    const double dxds2 = (mu - teneightyone) * es2 * (1.0 - s2);
+    const double dxds3 = 2.0 * cwc * s2 / (1.0 + cwc * s2 *s2);
+    const double dfx = 2.0 * s1 * (dxds1 + dxds2 + dxds3) / dfx1;
     v1x = sx + dxunif * fx + exunif * dfx * ds;
     v2x = exunif * dfx * dsg / agrho;
 
@@ -339,30 +268,17 @@ void XC_Functional::becke88_spin(
     // output: first part of the potential
     // output: the second part of the potential
 
-    double beta = 0.0;
-    double third = 0.0;
-    // parameter :
-    beta = 0.00420;
-    third = 1.0 / 3.0;
-    double rho13 = 0.0;
-    double rho43 = 0.0;
-    double xs = 0.0;
-    double xs2 = 0.0;
-    double sa2b8 = 0.0;
-    double shm1 = 0.0;
-    double dd = 0.0;
-    double dd2 = 0.0;
-    double ee = 0.0;
-
-    rho13 = pow(rho, third);
-    rho43 = pow(rho13, 4);
-    xs = sqrt(grho) / rho43;
-    xs2 = xs * xs;
-    sa2b8 = sqrt(1.00 + xs2);
-    shm1 = log(xs + sa2b8);
-    dd = 1.00 + 6.00 * beta * xs * shm1;
-    dd2 = dd * dd;
-    ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
+    double beta = 0.00420;
+    double third = 1.0 / 3.0;
+    double rho13 = pow(rho, third);
+    double rho43 = pow(rho13, 4);
+    double xs = sqrt(grho) / rho43;
+    double xs2 = xs * xs;
+    double sa2b8 = sqrt(1.00 + xs2);
+    double shm1 = log(xs + sa2b8);
+    double dd = 1.00 + 6.00 * beta * xs * shm1;
+    double dd2 = dd * dd;
+    double ee = 6.00 * beta * xs2 / sa2b8 - 1.0;
     sx = grho / rho43 * (- beta / dd);
     v1x = - (4.0 / 3.0) * xs2 * beta * rho13 * ee / dd2;
     v2x = beta * (ee - dd) / (rho43 * dd2);

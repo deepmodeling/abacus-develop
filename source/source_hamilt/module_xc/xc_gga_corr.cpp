@@ -377,7 +377,9 @@ void XC_Functional::pbec_spin(
     double ec = 0.0;
     double vcup = 0.0;
     double vcdw = 0.0;
+
     XC_Functional::pw_spin(rs, zeta, ec, vcup, vcdw); //mohan fix bug 2012-05-28
+
     double kf = xkf / rs;
     double ks = xks * sqrt(kf);
     double fz = 0.50 * (pow((1.0 + zeta) , (2.0 / 3.0)) + pow((1.0 - zeta) , (2.0 / 3.0)));
