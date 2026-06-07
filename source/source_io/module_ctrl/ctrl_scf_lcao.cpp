@@ -349,6 +349,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             dh_params.dmR = dm->get_DMR_pointer(1);
         }
+#ifdef __EXX
+        // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
+        // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
+        if constexpr (std::is_same<TK, double>::value)
+        {
+            if (GlobalC::exx_info.info_global.cal_exx)
+            {
+                if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
+                if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
+            }
+        }
+#endif
         ModuleIO::write_dH_components(dh_params);
         delete pot_vl;
         delete pot_vh;
@@ -360,31 +372,57 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //! 7d) Output H components (T, Vnl, Vl, Vh, Vxc)
     //------------------------------------------------------------------
     {
+        ModuleIO::WriteHParams h_params;
+        h_params.ucell = &ucell;
+        h_params.gd = &gd;
+        h_params.pv = &pv;
+        h_params.two_center_bundle = &two_center_bundle;
+        h_params.orb = &orb;
+        h_params.kv = &kv;
+        h_params.pot = pelec->pot;
+        h_params.chg = pelec->charge;
+        h_params.rho_basis = pw_rho;
+        h_params.nrxx = pw_rho->nrxx;
+        h_params.nspin = nspin;
+        h_params.istep = istep;
+        h_params.append = out_app_flag;
+        h_params.iat2iwt = ucell.get_iat2iwt();
+        h_params.nat = ucell.nat;
         if (inp.out_mat_h_t[0])
         {
-            ModuleIO::write_h_t(ucell, gd, pv, two_center_bundle, orb, kv, nspin, istep, out_app_flag,
-                                ucell.get_iat2iwt(), ucell.nat);
+            ModuleIO::write_h_t(h_params);
         }
         if (inp.out_mat_h_vnl[0])
         {
-            ModuleIO::write_h_vnl(ucell, gd, pv, two_center_bundle, orb, kv, nspin, istep, out_app_flag,
-                                  ucell.get_iat2iwt(), ucell.nat);
+            ModuleIO::write_h_vnl(h_params);
         }
         if (inp.out_mat_h_vl[0])
         {
-            ModuleIO::write_h_vl(ucell, gd, pv, orb, pelec->pot, nspin, istep, out_app_flag,
-                                 ucell.get_iat2iwt(), ucell.nat, kv);
+            ModuleIO::write_h_vl(h_params);
         }
         if (inp.out_mat_h_vh[0])
         {
-            ModuleIO::write_h_vh(ucell, gd, pv, orb, pelec->charge, pw_rho, nspin, istep, out_app_flag,
-                                 ucell.get_iat2iwt(), ucell.nat, kv);
+            ModuleIO::write_h_vh(h_params);
         }
         if (inp.out_mat_h_vxc[0])
         {
-            ModuleIO::write_h_vxc(ucell, gd, pv, orb, pelec->charge, pw_rho->nrxx, nspin, istep,
-                                  out_app_flag, ucell.get_iat2iwt(), ucell.nat, kv);
+            ModuleIO::write_h_vxc(h_params);
         }
+#ifdef __EXX
+        if (inp.out_mat_h_exx[0])
+        {
+            // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
+            if constexpr (std::is_same<TK, double>::value)
+            {
+                if (GlobalC::exx_info.info_global.cal_exx)
+                {
+                    if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
+                    if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
+                    ModuleIO::write_h_exx(h_params);
+                }
+            }
+        }
+#endif
     }
     //------------------------------------------------------------------
     //! 8) Output kinetic matrix

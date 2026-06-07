@@ -506,6 +506,35 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
 }
 
+template <typename TK, typename TR>
+template <typename Tdata>
+void OperatorEXX<OperatorLCAO<TK, TR>>::cal_dH(
+    const int ispin,
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>>, 3>& dHexxs)
+{
+    // dhR is the set of per-atom-I HContainers to fill (not this->hR, which may be a dummy here).
+    const Parallel_Orbitals* const paraV = dhR[0][0]->get_paraV();
+    const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest
+        = this->use_cell_nearest ? &this->cell_nearest : nullptr;
+    for (int idir = 0; idir < 3; ++idir)
+    {
+        for (int iat = 0; iat < ucell.nat; ++iat)
+        {
+            // add_HexxR only fills existing matrices, so first allocate the atom-pair
+            // structure of this per-I container from the exx-form data (same cell mapping).
+            reallocate_hcontainer(dHexxs[idir][iat], dhR[idir][iat], cell_nearest);
+            RI_2D_Comm::add_HexxR(ispin,
+                GlobalC::exx_info.info_global.hybrid_alpha,
+                dHexxs[idir][iat],
+                *paraV,
+                PARAM.globalv.npol,
+                *dhR[idir][iat],
+                cell_nearest);
+        }
+    }
+}
+
 } // namespace hamilt
 #endif // __EXX
 #endif // OPEXXLCAO_HPP

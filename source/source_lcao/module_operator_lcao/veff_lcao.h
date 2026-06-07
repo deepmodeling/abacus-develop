@@ -5,6 +5,7 @@
 #include "operator_lcao.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
+#include <array>
 #include <string>
 #include <vector>
 
@@ -62,10 +63,9 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     // per-atom-I derivative d<phi|V|phi>/dtau_I; one HContainer per atom I (size nat each).
     // Includes the Pulay term (-<grad phi|V|phi>) for all types, plus the Hellmann-Feynman
     // term for "vl"; "none" gives Pulay only (V^XC), "hartree" is deferred.
-    void cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_perI_x,
-                std::vector<hamilt::HContainer<double>*>& dhR_perI_y,
-                std::vector<hamilt::HContainer<double>*>& dhR_perI_z,
-                const std::string& hellmann_feynman_type = "none");
+    void cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+                const std::string& hellmann_feynman_type = "none",
+                const hamilt::HContainer<double>* dmR = nullptr);
   
   const UnitCell* ucell = nullptr;
   const Grid_Driver* gd = nullptr;

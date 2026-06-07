@@ -400,12 +400,14 @@ struct Input_para
     std::vector<int> out_mat_h_vl = {0, 8};  ///< output local pseudopotential Vl(R) matrix
     std::vector<int> out_mat_h_vh = {0, 8};  ///< output Hartree Vh(R) matrix
     std::vector<int> out_mat_h_vxc = {0, 8}; ///< output XC Vxc(R) matrix
+    std::vector<int> out_mat_h_exx = {0, 8}; ///< output exact-exchange Vexx(R) matrix
     std::vector<int> out_mat_dh = {0, 8};   ///< output dH/dR matrices with precision
     std::vector<int> out_mat_dh_t = { 0, 8 };   ///< output kinetic dH/dR (dT/dR) matrices
     std::vector<int> out_mat_dh_vl = { 0, 8 };  ///< output local pseudopotential dH/dR (dV^L/dR) matrices
     std::vector<int> out_mat_dh_vnl = { 0, 8 }; ///< output nonlocal pseudopotential dH/dR (dV^NL/dR) matrices
     std::vector<int> out_mat_dh_vh = { 0, 8 };  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = { 0, 8 }; ///< output XC dH/dR (dV^XC/dR) matrices
+    std::vector<int> out_mat_dh_exx = { 0, 8 }; ///< output exact-exchange dH/dR (dV^EXX/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};   ///< output dS/dR matrices with precision
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.

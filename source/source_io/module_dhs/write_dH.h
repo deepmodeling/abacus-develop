@@ -8,7 +8,12 @@
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <array>
+#include <complex>
 #include <vector>
+
+template <typename T, typename Tdata>
+class Exx_LRI_Interface;
 
 namespace ModuleIO
 {
@@ -36,7 +41,14 @@ struct WriteDHParams
     int istep = 0;
     bool gamma_only = false;
     bool append = false;
+    bool also_dhR = false; // whether to write the real-space dH(R) in addition to the k-space dH(k)
     const hamilt::HContainer<double>* dmR = nullptr;
+#ifdef __EXX
+    // gamma (TK==double) exx interfaces used by write_dH_exx; exactly one is set depending on
+    // GlobalC::exx_info.info_ri.real_number (exd: real Hexx, exc: complex Hexx).
+    Exx_LRI_Interface<double, double>* exd = nullptr;
+    Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
+#endif
 };
 
 bool any_dh_term_enabled();
@@ -45,15 +57,13 @@ bool any_dh_term_enabled();
 //   - dH(R) in CSR real-space format  ({rprefix}{x,y,z}_iat{I}...)
 //   - dH(k) dense matrices            ({kprefix}{x,y,z}_iat{I}...) folded like H(k),
 //     so they can be compared directly with the H(k) term matrices (*_nao.txt).
-// gx/gy/gz are nat per-I HContainers (already filled by an operator's cal_dH).
+// g[d] are nat per-I HContainers for direction d=0..2 (already filled by an operator's cal_dH).
 void write_dh_perI(WriteDHParams& params,
                    int ispin,
                    const std::string& rprefix,
                    const std::string& kprefix,
                    const std::string& label,
-                   std::vector<hamilt::HContainer<double>*>& gx,
-                   std::vector<hamilt::HContainer<double>*>& gy,
-                   std::vector<hamilt::HContainer<double>*>& gz);
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g);
 
 void write_dH_components(WriteDHParams& params);
 
@@ -65,9 +75,15 @@ bool write_dH_vl(WriteDHParams& params);
 
 bool write_dH_vh(WriteDHParams& params);
 
+bool write_dH_vh_pulay(WriteDHParams& params);
+
 bool write_dH_vxc(WriteDHParams& params);
 
 bool write_dH_sum(WriteDHParams& params);
+
+#ifdef __EXX
+bool write_dH_exx(WriteDHParams& params);
+#endif
 
 } // namespace ModuleIO
 

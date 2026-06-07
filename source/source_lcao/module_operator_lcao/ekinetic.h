@@ -6,6 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
+#include <array>
 #include <vector>
 
 namespace hamilt
@@ -76,9 +77,7 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& stress);
 
     // per-atom-I derivative d<phi|T|phi>/dtau_I; one HContainer per atom I (size nat each)
-    void cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_x,
-                std::vector<hamilt::HContainer<double>*>& dhR_y,
-                std::vector<hamilt::HContainer<double>*>& dhR_z);
+    void cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
 
   private:
     const UnitCell* ucell = nullptr;

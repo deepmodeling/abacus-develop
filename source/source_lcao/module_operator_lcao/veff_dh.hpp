@@ -4,23 +4,23 @@
 #include "source_lcao/module_gint/gint_dvlocal.h"
 #include "source_lcao/module_gint/gint_interface.h"
 #include "source_estate/module_charge/charge.h"
+#include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_pw/module_pwdft/forces.h"
 
 namespace hamilt
 {
 
 template <typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_perI_x,
-                                         std::vector<hamilt::HContainer<double>*>& dhR_perI_y,
-                                         std::vector<hamilt::HContainer<double>*>& dhR_perI_z,
-                                         const std::string& hellmann_feynman_type)
+void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+                                         const std::string& hellmann_feynman_type,
+                                         const hamilt::HContainer<double>* dmR)
 {
     ModuleBase::TITLE("Veff", "cal_dH");
     ModuleBase::timer::start("Veff", "cal_dH");
 
     const int nat = this->ucell->nat;
-    assert(static_cast<int>(dhR_perI_x.size()) == nat);
-    const Parallel_Orbitals* paraV = dhR_perI_x[0]->get_paraV();
+    assert(static_cast<int>(dhR[0].size()) == nat);
+    const Parallel_Orbitals* paraV = dhR[0][0]->get_paraV();
 
     // Pass 1: discover atom pairs and build the same structure in each per-atom-I container
     for (int iat1 = 0; iat1 < nat; iat1++)
@@ -48,9 +48,8 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
                 hamilt::AtomPair<double> tmp(iat1, iat2, R_index, paraV);
                 for (int iat = 0; iat < nat; ++iat)
                 {
-                    dhR_perI_x[iat]->insert_pair(tmp);
-                    dhR_perI_y[iat]->insert_pair(tmp);
-                    dhR_perI_z[iat]->insert_pair(tmp);
+                    for (int d = 0; d < 3; ++d)
+                        dhR[d][iat]->insert_pair(tmp);
                 }
             }
         }
@@ -58,9 +57,8 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
 
     for (int iat = 0; iat < nat; ++iat)
     {
-        dhR_perI_x[iat]->allocate(nullptr, true);
-        dhR_perI_y[iat]->allocate(nullptr, true);
-        dhR_perI_z[iat]->allocate(nullptr, true);
+        for (int d = 0; d < 3; ++d)
+            dhR[d][iat]->allocate(nullptr, true);
     }
 
     // Pass 2: Pulay term  -[ delta_UI <grad phi_U|V|phi_V> + delta_VI <grad phi_V|V|phi_U> ]
@@ -80,7 +78,6 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
 
         hamilt::HContainer<double>* pvdpR[3]
             = {gint_dv.get_pvdpRx(), gint_dv.get_pvdpRy(), gint_dv.get_pvdpRz()};
-        std::vector<hamilt::HContainer<double>*>* perI[3] = {&dhR_perI_x, &dhR_perI_y, &dhR_perI_z};
 
         for (int iap = 0; iap < pvdpR[0]->size_atom_pairs(); iap++)
         {
@@ -97,9 +94,9 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
                 {
                     hamilt::BaseMatrix<double>* src = pvdpR[d]->find_matrix(iat1, iat2, R);
                     // delta_VI (I=B): -pvdpR into block (A,B) of container B
-                    hamilt::BaseMatrix<double>* dV = (*perI[d])[iat2]->find_matrix(iat1, iat2, R);
+                    hamilt::BaseMatrix<double>* dV = dhR[d][iat2]->find_matrix(iat1, iat2, R);
                     // delta_UI (I=B): -pvdpR^T into block (B,A) of container B
-                    hamilt::BaseMatrix<double>* dU = (*perI[d])[iat2]->find_matrix(iat2, iat1, negR);
+                    hamilt::BaseMatrix<double>* dU = dhR[d][iat2]->find_matrix(iat2, iat1, negR);
                     if (!src || !dV || !dU)
                         continue;
 
@@ -155,9 +152,9 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
         // up every overlapping atom pair on the grid), all values zero. We mirror the per-I
         // structure and toggle a single element on/off to realize D=delta_{Umu}delta_{Vnu}.
         hamilt::HContainer<double> dm(paraV);
-        for (int iap = 0; iap < dhR_perI_x[0]->size_atom_pairs(); ++iap)
+        for (int iap = 0; iap < dhR[0][0]->size_atom_pairs(); ++iap)
         {
-            dm.insert_pair(dhR_perI_x[0]->get_atom_pair(iap));
+            dm.insert_pair(dhR[0][0]->get_atom_pair(iap));
         }
         dm.allocate(nullptr, true);
         std::vector<hamilt::HContainer<double>*> dm_vec = {&dm};
@@ -190,25 +187,24 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
                     continue;
 
                 // cache the destination pointers of this (iat1, iat2, R) block for every atom I
-                std::vector<double*> dst_x(nat, nullptr);
-                std::vector<double*> dst_y(nat, nullptr);
-                std::vector<double*> dst_z(nat, nullptr);
+                std::vector<double*> dst[3];
+                for (int d = 0; d < 3; ++d)
+                    dst[d].assign(nat, nullptr);
                 int col_size = 0;
                 bool ok = true;
                 for (int iat = 0; iat < nat; ++iat)
                 {
-                    hamilt::BaseMatrix<double>* mx = dhR_perI_x[iat]->find_matrix(iat1, iat2, R_index);
-                    hamilt::BaseMatrix<double>* my = dhR_perI_y[iat]->find_matrix(iat1, iat2, R_index);
-                    hamilt::BaseMatrix<double>* mz = dhR_perI_z[iat]->find_matrix(iat1, iat2, R_index);
-                    if (!mx || !my || !mz)
+                    hamilt::BaseMatrix<double>* m[3];
+                    for (int d = 0; d < 3; ++d)
+                        m[d] = dhR[d][iat]->find_matrix(iat1, iat2, R_index);
+                    if (!m[0] || !m[1] || !m[2])
                     {
                         ok = false;
                         break;
                     }
-                    dst_x[iat] = mx->get_pointer();
-                    dst_y[iat] = my->get_pointer();
-                    dst_z[iat] = mz->get_pointer();
-                    col_size = mx->get_col_size();
+                    for (int d = 0; d < 3; ++d)
+                        dst[d][iat] = m[d]->get_pointer();
+                    col_size = m[0]->get_col_size();
                 }
                 if (!ok)
                     continue;
@@ -237,9 +233,8 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
                         // (sign confirmed against central finite-difference of the V^L matrix for iat2)
                         for (int iat = 0; iat < nat; ++iat)
                         {
-                            dst_x[iat][idx] -= forcelc(iat, 0);
-                            dst_y[iat][idx] -= forcelc(iat, 1);
-                            dst_z[iat][idx] -= forcelc(iat, 2);
+                            for (int d = 0; d < 3; ++d)
+                                dst[d][iat][idx] -= forcelc(iat, d);
                         }
 
                         // reset the delta element back to zero for the next orbital pair
@@ -253,7 +248,119 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>
     else if (hellmann_feynman_type == "hartree")
     {
         ModuleBase::timer::start("Veff", "cal_dH_hf_vh");
-        // HF hartree term: 4-center ERIs with gradient — deferred
+
+        // Hellmann-Feynman Hartree term: the matrix element <phi_mu|V^H[rho]|phi_nu> also
+        // depends on tau_I through rho (the basis on atom I that builds the density moves):
+        //   d_{tau_I,d} V^H_{mu,nu}|HF = INT phi_mu phi_nu V^H[ d_{tau_I,d} rho ]
+        // with  d_{tau_I,d} rho = -[grad rho]^{S,delta}_{I,d},
+        //   [grad rho]^{S,delta}_{I,d}(r) = sum_{Kk,Ll} delta_{KI} (D_{Kk,Ll}+D_{Ll,Kk})
+        //                                   (grad^d phi_Kk)(r) phi_Ll(r).
+        // Hence the HF contribution is  -<phi_mu|V^H[[grad rho]^{S,delta}_{I,d}]|phi_nu>.
+        assert(dmR != nullptr);
+
+        const ModulePW::PW_Basis* rho_basis = this->pot->get_rho_basis();
+        const int nrxx = rho_basis->nrxx;
+
+        // single total-density channel for the gradient density on the grid
+        std::vector<double> drho[3] = {std::vector<double>(nrxx),
+                                       std::vector<double>(nrxx),
+                                       std::vector<double>(nrxx)};
+
+        for (int I = 0; I < nat; ++I)
+        {
+            // M^I = delta_{KI} (D + D^T): the rows on atom I carry the symmetrized DM,
+            // every other block is zero. The full neighbour structure of D must be kept
+            // (cal_gint_drho/dm_2d_to_gint looks up every overlapping pair), so we mirror
+            // D's atom pairs and only fill the atom-I rows.
+            // Block (I,L,R) value = D(I,L,R) + D(L,I,-R)^T  (D^T uses the reverse pair).
+            hamilt::HContainer<double> mI(paraV);
+            for (int iap = 0; iap < dmR->size_atom_pairs(); ++iap)
+            {
+                mI.insert_pair(dmR->get_atom_pair(iap));
+            }
+            mI.allocate(nullptr, true);
+
+            for (int iap = 0; iap < mI.size_atom_pairs(); ++iap)
+            {
+                auto& ap = mI.get_atom_pair(iap);
+                if (ap.get_atom_i() != I)
+                {
+                    continue; // rows not on atom I stay zero (delta_{KI})
+                }
+                const int L = ap.get_atom_j();
+                for (int ir = 0; ir < ap.get_R_size(); ++ir)
+                {
+                    const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
+                    const ModuleBase::Vector3<int> negR(-R.x, -R.y, -R.z);
+                    hamilt::BaseMatrix<double>* dst = mI.find_matrix(I, L, R);
+                    const hamilt::BaseMatrix<double>* d_il = dmR->find_matrix(I, L, R);
+                    const hamilt::BaseMatrix<double>* d_li = dmR->find_matrix(L, I, negR);
+                    const int nrow = dst->get_row_size();
+                    const int ncol = dst->get_col_size();
+                    double* pdst = dst->get_pointer();
+                    for (int a = 0; a < nrow; ++a)
+                    {
+                        for (int b = 0; b < ncol; ++b)
+                        {
+                            double v = 0.0;
+                            if (d_il)
+                                v += d_il->get_pointer()[a * ncol + b];
+                            if (d_li)
+                                v += d_li->get_pointer()[b * nrow + a];
+                            pdst[a * ncol + b] = v;
+                        }
+                    }
+                }
+            }
+
+            // [grad rho]^{S,delta}_{I,d} on the real-space grid (accumulated -> zero first)
+            for (int d = 0; d < 3; ++d)
+                ModuleBase::GlobalFunc::ZEROS(drho[d].data(), nrxx);
+            double* drho_x_p[1] = {drho[0].data()};
+            double* drho_y_p[1] = {drho[1].data()};
+            double* drho_z_p[1] = {drho[2].data()};
+            std::vector<hamilt::HContainer<double>*> dm_vec = {&mI};
+            ModuleGint::cal_gint_drho(dm_vec, 1, drho_x_p, drho_y_p, drho_z_p);
+
+            for (int d = 0; d < 3; ++d)
+            {
+                // Hartree potential of the gradient density (treated as a charge density)
+                double* rho_ptr[1] = {drho[d].data()};
+                ModuleBase::matrix vh = elecstate::H_Hartree_pw::v_hartree(
+                    *this->ucell, const_cast<ModulePW::PW_Basis*>(rho_basis), 1, rho_ptr);
+
+                // AO matrix elements <phi_mu|vh|phi_nu> on the same per-I sparsity
+                hamilt::HContainer<double>* dpI = dhR[d][I];
+                hamilt::HContainer<double> hR_hf(paraV);
+                for (int iap = 0; iap < dpI->size_atom_pairs(); ++iap)
+                {
+                    hR_hf.insert_pair(dpI->get_atom_pair(iap));
+                }
+                hR_hf.allocate(nullptr, true);
+                ModuleGint::cal_gint_vl(&vh(0, 0), &hR_hf);
+
+                // d_{tau_I,d} V^H|HF = -<phi|V^H[[grad rho]^{S,delta}_{I,d}]|phi>
+                for (int iap = 0; iap < dpI->size_atom_pairs(); ++iap)
+                {
+                    auto& ap = dpI->get_atom_pair(iap);
+                    const int i = ap.get_atom_i();
+                    const int j = ap.get_atom_j();
+                    for (int ir = 0; ir < ap.get_R_size(); ++ir)
+                    {
+                        const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
+                        hamilt::BaseMatrix<double>* dst = dpI->find_matrix(i, j, R);
+                        hamilt::BaseMatrix<double>* src = hR_hf.find_matrix(i, j, R);
+                        if (!dst || !src)
+                            continue;
+                        const int n = dst->get_row_size() * dst->get_col_size();
+                        double* pdst = dst->get_pointer();
+                        const double* psrc = src->get_pointer();
+                        for (int k = 0; k < n; ++k)
+                            pdst[k] -= psrc[k];
+                    }
+                }
+            }
+        }
         ModuleBase::timer::end("Veff", "cal_dH_hf_vh");
     }
     else

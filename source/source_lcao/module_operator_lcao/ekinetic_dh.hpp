@@ -7,16 +7,14 @@ namespace hamilt
 {
 
 template <typename TK, typename TR>
-void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<double>*>& dhR_x,
-    std::vector<hamilt::HContainer<double>*>& dhR_y,
-    std::vector<hamilt::HContainer<double>*>& dhR_z)
+void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR)
 {
     ModuleBase::TITLE("EKinetic", "cal_dH");
     ModuleBase::timer::start("EKinetic", "cal_dH");
 
     const int nat = this->ucell->nat;
-    assert(static_cast<int>(dhR_x.size()) == nat);
-    const Parallel_Orbitals* paraV = dhR_x[0]->get_paraV();
+    assert(static_cast<int>(dhR[0].size()) == nat);
+    const Parallel_Orbitals* paraV = dhR[0][0]->get_paraV();
     const int npol = this->ucell->get_npol();
 
     // Pass 1: build the same atom-pair structure in each per-atom-I container
@@ -50,18 +48,16 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<doubl
             hamilt::AtomPair<double> ap(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
             for (int iat = 0; iat < nat; ++iat)
             {
-                dhR_x[iat]->insert_pair(ap);
-                dhR_y[iat]->insert_pair(ap);
-                dhR_z[iat]->insert_pair(ap);
+                for (int d = 0; d < 3; ++d)
+                    dhR[d][iat]->insert_pair(ap);
             }
         }
     }
 
     for (int iat = 0; iat < nat; ++iat)
     {
-        dhR_x[iat]->allocate(nullptr, true);
-        dhR_y[iat]->allocate(nullptr, true);
-        dhR_z[iat]->allocate(nullptr, true);
+        for (int d = 0; d < 3; ++d)
+            dhR[d][iat]->allocate(nullptr, true);
     }
 
 #pragma omp parallel
@@ -93,25 +89,22 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<doubl
                 // d<phi_U|T|phi_V>/dtau_I is nonzero only for I in {U=iat1, V=iat2}:
                 //   olm     = <phi_U|T|grad phi_V> -> d/dtau_V  -> container iat2
                 //   olm_rev = <grad phi_U|T|phi_V> -> d/dtau_U  -> container iat1
-                hamilt::BaseMatrix<double>* mtxU_x = dhR_x[iat1]->find_matrix(iat1, iat2, R_index);
-                hamilt::BaseMatrix<double>* mtxU_y = dhR_y[iat1]->find_matrix(iat1, iat2, R_index);
-                hamilt::BaseMatrix<double>* mtxU_z = dhR_z[iat1]->find_matrix(iat1, iat2, R_index);
-                hamilt::BaseMatrix<double>* mtxV_x = dhR_x[iat2]->find_matrix(iat1, iat2, R_index);
-                hamilt::BaseMatrix<double>* mtxV_y = dhR_y[iat2]->find_matrix(iat1, iat2, R_index);
-                hamilt::BaseMatrix<double>* mtxV_z = dhR_z[iat2]->find_matrix(iat1, iat2, R_index);
+                hamilt::BaseMatrix<double>* mtxU[3];
+                hamilt::BaseMatrix<double>* mtxV[3];
+                for (int d = 0; d < 3; ++d)
+                {
+                    mtxU[d] = dhR[d][iat1]->find_matrix(iat1, iat2, R_index);
+                    mtxV[d] = dhR[d][iat2]->find_matrix(iat1, iat2, R_index);
+                }
 
-                if (!mtxU_x || !mtxU_y || !mtxU_z || !mtxV_x || !mtxV_y || !mtxV_z)
+                if (!mtxU[0] || !mtxU[1] || !mtxU[2] || !mtxV[0] || !mtxV[1] || !mtxV[2])
                 {
                     continue;
                 }
 
-                double* ptrU_x = mtxU_x->get_pointer();
-                double* ptrU_y = mtxU_y->get_pointer();
-                double* ptrU_z = mtxU_z->get_pointer();
-                double* ptrV_x = mtxV_x->get_pointer();
-                double* ptrV_y = mtxV_y->get_pointer();
-                double* ptrV_z = mtxV_z->get_pointer();
-                const int col_size = mtxU_x->get_col_size();
+                double* ptrU[3] = {mtxU[0]->get_pointer(), mtxU[1]->get_pointer(), mtxU[2]->get_pointer()};
+                double* ptrV[3] = {mtxV[0]->get_pointer(), mtxV[1]->get_pointer(), mtxV[2]->get_pointer()};
+                const int col_size = mtxU[0]->get_col_size();
 
                 const Atom& atom2 = this->ucell->atoms[T2];
 
@@ -155,14 +148,13 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::vector<hamilt::HContainer<doubl
                         // grad_out[0..2] (here olm[0..2]); olm[3] is unused.
                         // d<phi|T|phi>/dtau_I = -<grad phi|T|phi>  (dtau = -grad); sign
                         // confirmed against the finite-difference reference.
-                        // d/dtau_V (I = iat2)
-                        ptrV_x[idx] -= olm[0];
-                        ptrV_y[idx] -= olm[1];
-                        ptrV_z[idx] -= olm[2];
-                        // d/dtau_U (I = iat1)
-                        ptrU_x[idx] -= olm_rev[0];
-                        ptrU_y[idx] -= olm_rev[1];
-                        ptrU_z[idx] -= olm_rev[2];
+                        for (int d = 0; d < 3; ++d)
+                        {
+                            // d/dtau_V (I = iat2)
+                            ptrV[d][idx] -= olm[d];
+                            // d/dtau_U (I = iat1)
+                            ptrU[d][idx] -= olm_rev[d];
+                        }
                     }
                 }
             }

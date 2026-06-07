@@ -48,6 +48,11 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     virtual void contributeHk(int ik) override;
     virtual void contributeHR() override;
 
+    template <typename Tdata>
+    void cal_dH(const int ispin,
+        std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+        const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>>, 3>& dHexxs);
+
   private:
     Add_Hexx_Type add_hexx_type = Add_Hexx_Type::R;
     int current_spin = 0;

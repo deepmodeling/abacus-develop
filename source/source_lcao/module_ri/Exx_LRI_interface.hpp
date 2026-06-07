@@ -80,6 +80,35 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const doub
 }
 
 template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface", "cal_exx_dHs");
+    if (!this->flag_finish.init || !this->flag_finish.ions)
+    {
+        throw std::runtime_error("Exx init unfinished when " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+    }
+
+    this->exx_ptr->cal_exx_dHs(Ds, ucell, pv);
+
+    this->flag_finish.dHs = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_dHs(const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    const int nspin)
+{
+    // build D(R) from the current mixed D(k) (mirrors the Ds construction in exx_iter_finish)
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
+        = PARAM.globalv.gamma_only_local
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv, nspin)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv, nspin, this->exx_spacegroup_symmetry);
+    this->cal_exx_dHs(Ds, ucell, pv);
+}
+
+template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
     const K_Vectors& kv,
     const UnitCell& ucell,

@@ -21,18 +21,15 @@ void write_dh_perI(WriteDHParams& params,
                    const std::string& rprefix,
                    const std::string& kprefix,
                    const std::string& label,
-                   std::vector<hamilt::HContainer<double>*>& gx,
-                   std::vector<hamilt::HContainer<double>*>& gy,
-                   std::vector<hamilt::HContainer<double>*>& gz)
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g)
 {
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
     const int nat = params.nat;
     const int nspin = params.nspin;
-    const int nbasis = gx[0]->get_nbasis();
+    const int nbasis = g[0][0]->get_nbasis();
 
-    const char dirc[3] = {'x', 'y', 'z'};
-    std::vector<hamilt::HContainer<double>*>* g[3] = {&gx, &gy, &gz};
+    const char dirc[3] = { 'x', 'y', 'z' };
 
     // k-space (dense, folded like H(k)) parameters
     const int nspin_k = (nspin == 2 ? 2 : 1);
@@ -54,10 +51,12 @@ void write_dh_perI(WriteDHParams& params,
     {
         for (int d = 0; d < 3; ++d)
         {
-            hamilt::HContainer<double>* hR = (*g[d])[iat];
+            hamilt::HContainer<double>* hR = g[d][iat];
             const std::string tag = std::string(1, dirc[d]) + "_iat" + std::to_string(iat + 1);
 
-            // ---- real space dH(R), CSR ----
+            // ---- real space dH(R), CSR (only when also_dhR; dH(k) below is always written) ----
+            if (params.also_dhR)
+            {
 #ifdef __MPI
             hamilt::HContainer<double> hR_s(&serialV);
             hamilt::gatherParallels(*hR, &hR_s, 0);
@@ -70,6 +69,7 @@ void write_dh_perI(WriteDHParams& params,
 #else
                 ModuleIO::write_hcontainer_csr(fr, &ucell, 8, hR, params.istep, ispin, nspin, label);
 #endif
+            }
             }
 
             // ---- k space dH(k), dense (folded like H(k), comparable to *_nao.txt) ----
@@ -140,6 +140,7 @@ void write_dH_components(WriteDHParams& params)
     if (PARAM.inp.out_mat_dh_vh[0])
     {
         write_dH_vh(params);
+        write_dH_vh_pulay(params);
     }
 
     if (PARAM.inp.out_mat_dh_vxc[0])
@@ -151,6 +152,13 @@ void write_dH_components(WriteDHParams& params)
     {
         write_dH_sum(params);
     }
+
+#ifdef __EXX
+    if (PARAM.inp.out_mat_dh_exx[0])
+    {
+        write_dH_exx(params);
+    }
+#endif
 
     ModuleBase::timer::end("ModuleIO", "write_dH_components");
 }
