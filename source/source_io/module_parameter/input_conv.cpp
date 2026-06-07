@@ -516,6 +516,8 @@ void Input_Conv::Convert()
         {
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
+
+        GlobalC::exx_info.sync_from_global();
     }
 
     if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")

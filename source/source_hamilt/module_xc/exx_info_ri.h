@@ -1,7 +1,7 @@
 #ifndef EXX_INFO_RI_H
 #define EXX_INFO_RI_H
 
-#include "exx_info_global.h"
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 
 #include <vector>
 #include <string>
@@ -9,11 +9,7 @@
 
 struct Exx_Info_RI
 {
-    // reference to info_global.coulomb_param
-    // Note: coulomb_param is populated AFTER Exx_Info construction (in input_conv.cpp),
-    // so this reference is valid but initially points to an empty map.
-    // The data is filled later into info_global, and this reference sees it via aliasing.
-    const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> &coulomb_param;
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
 
     bool real_number = false;
     bool coul_moment = false;
@@ -39,12 +35,7 @@ struct Exx_Info_RI
     double multip_moments_threshold = 1e-10;
     double exx_cs_inv_thr = -1;
 
-    int abfs_Lmax = 0; // tmp
-
-    Exx_Info_RI(const Exx_Info_Global& info_global)
-        : coulomb_param(info_global.coulomb_param)
-    {
-    }
+    int abfs_Lmax = 0;
 };
 
 #endif

@@ -145,6 +145,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; // not used now, Hf/Ccp -> singularity_correction, see conv_coulomb_pot_k.cpp
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
+    GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
     this->ccp_rmesh_times_ewald = GlobalC::exx_info.info_ri.ccp_rmesh_times;
     // rpa=1 set
