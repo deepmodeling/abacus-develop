@@ -9,6 +9,10 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
+#ifdef __CUDA
+#include <cufft.h>
+#endif
+
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
  * See Wang L W, Teter M P. Physical Review B, 1992, 45(23): 13196.
@@ -24,8 +28,6 @@ class KEDF_WT
     ~KEDF_WT()
     {
 #ifdef __CUDA
-#include <cufft.h>
-#include <cufft.h>
         this->free_gpu_buffers();
 #endif
         delete[] this->kernel_;
@@ -73,8 +75,6 @@ class KEDF_WT
     double* kernel_ = nullptr;
 
 #ifdef __CUDA
-#include <cufft.h>
-#include <cufft.h>
     void multi_kernel_gpu(const double* const* prho, double** rkernel_rho,
                           double exponent, ModulePW::PW_Basis* pw_rho);
     void free_gpu_buffers();

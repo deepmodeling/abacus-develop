@@ -87,7 +87,7 @@ void KEDF_WT::multi_kernel_gpu(
     // ── Lazy allocation of persistent GPU buffers ──
     if (!gpu_allocated_) {
         resmem_dd_op()(d_rho_, nrxx);
-        resmem_zd_op()(d_result_, nrxx);  // reused as complex work buffer
+        resmem_dd_op()(d_result_, nrxx * 2);  // reused as complex work buffer
         resmem_dd_op()(d_kernel_, npw);
 
         syncmem_d2d_h2d_op()(d_kernel_, this->kernel_, npw);
@@ -101,11 +101,7 @@ void KEDF_WT::multi_kernel_gpu(
 
     const int blocks = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
-    // d_result_ is a double* but we reuse it as a cuFFT complex buffer.
-    // npw ≥ nrxx for full-pw grids (OFDFT default), so sizeof(complex)*npw
-    // ≥ sizeof(double)*nrxx.  We allocate d_result_ with size npw*2
-    // (cuFFT needs npw complex doubles = npw * 2 doubles).
-    // The resmem_zd_op allocates npw complex doubles — enough for cuFFT in-place.
+    // d_result_ is double* but reused as cuFFT complex buffer (nrxx*2 = nrxx complex doubles).
     auto* d_fft = reinterpret_cast<cufftDoubleComplex*>(d_result_);
 
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
@@ -158,7 +154,7 @@ void KEDF_WT::free_gpu_buffers()
     if (cufft_plan_bwd_ != 0) { cufftDestroy(cufft_plan_bwd_); cufft_plan_bwd_ = 0; }
 
     if (d_rho_    != nullptr) { delmem_dd_op()(d_rho_);    d_rho_    = nullptr; }
-    if (d_result_ != nullptr) { delmem_zd_op()(d_result_); d_result_ = nullptr; }
+    if (d_result_ != nullptr) { delmem_dd_op()(d_result_); d_result_ = nullptr; }
     if (d_kernel_ != nullptr) { delmem_dd_op()(d_kernel_); d_kernel_ = nullptr; }
 
     gpu_allocated_ = false;
