@@ -746,18 +746,13 @@ if(ENABLE_LIBCOMM)
 endif()
 
 
-if(DEFINED Libxc_DIR)
-  set(ENABLE_LIBXC ON)
-endif()
 if(ENABLE_LIBXC)
-  # use `cmake/FindLibxc.cmake` to detect Libxc installation with `pkg-config`
   find_package(Libxc REQUIRED)
   message(STATUS "Found Libxc: version " ${Libxc_VERSION})
   if(${Libxc_VERSION} VERSION_LESS 5.1.7)
     message(FATAL_ERROR "LibXC >= 5.1.7 is required.")
   endif()
   target_link_libraries(${ABACUS_BIN_NAME} Libxc::xc)
-  include_directories(${Libxc_INCLUDE_DIRS})
   add_compile_definitions(USE_LIBXC)
 endif()
 

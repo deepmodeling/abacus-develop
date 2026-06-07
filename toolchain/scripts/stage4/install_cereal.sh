@@ -71,6 +71,7 @@ case "$with_cereal" in
             mkdir build && cd build
             cmake \
               -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+              -DCMAKE_INSTALL_LIBDIR="lib" \
               -DCMAKE_VERBOSE_MAKEFILE=ON \
               -DBUILD_DOC=OFF \
               -DBUILD_SANDBOX=OFF \

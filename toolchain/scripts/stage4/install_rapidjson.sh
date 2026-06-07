@@ -73,6 +73,7 @@ case "$with_rapidjson" in
             mkdir build && cd build
             cmake \
               -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+              -DCMAKE_INSTALL_LIBDIR="lib" \
               -DRAPIDJSON_BUILD_DOC=OFF \
               -DRAPIDJSON_BUILD_EXAMPLES=OFF \
               -DRAPIDJSON_BUILD_TESTS=OFF \
