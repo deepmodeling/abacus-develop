@@ -21,7 +21,11 @@ bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
     // see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
     // ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
     const std::vector<std::string> not_supported = {
-        "MGGA_XC_CC06", "MGGA_C_CS", "MGGA_X_BR89", "MGGA_X_MK00"};
+        "MGGA_XC_CC06",
+        "MGGA_C_CS",
+        "MGGA_X_BR89",
+        "MGGA_X_MK00"
+    };
     for (const std::string& s : not_supported)
     {
         if (xc_func_in.find(s) != std::string::npos)
@@ -56,9 +60,9 @@ bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
             return true;
         }
     }
-    /* known excluded: GGA_X_C09X, MGGA_X_VCML, HYB_MGGA_XC_WB97M_V, MGGA_XC_B97M_V */
+    /// known excluded: GGA_X_C09X, MGGA_X_VCML, HYB_MGGA_XC_WB97M_V, MGGA_XC_B97M_V
 
-    /* There is also a functional not quite sure: HYB_GGA_XC_WB97X_V */
+    /// There is also a functional not quite sure: HYB_GGA_XC_WB97X_V
     if(xc_func.find("HYB_GGA_XC_WB97X_V") != std::string::npos)
     {
         std::cout << " WARNING: range-seperated XC omega-B97 family with nonlocal correction term is used.\n" 
