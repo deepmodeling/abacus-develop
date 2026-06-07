@@ -1,22 +1,21 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "source_io/module_parameter/parameter.h"
-
 #include "Exx_LRI_interface.h"
-#include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
-
-#include "source_io/module_output/csr_reader.h"
-#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_io/module_output/csr_reader.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_ri/exx_abfs-jle.h"
 
-#include <sys/time.h>
 #include <stdexcept>
 #include <string>
+#include <sys/time.h>
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,

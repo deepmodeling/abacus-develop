@@ -409,7 +409,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
-        if (inp.out_mat_h_exx[0])
+        if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
             if constexpr (std::is_same<TK, double>::value)

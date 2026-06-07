@@ -54,6 +54,10 @@ public:
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
     auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
+    int get_two_level_step() const
+    {
+        return this->two_level_step;
+    }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
@@ -83,9 +87,7 @@ public:
         const Parallel_Orbitals& pv);
 
     /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
-    void cal_exx_dHs(const UnitCell& ucell,
-        const Parallel_Orbitals& pv,
-        const int nspin);
+    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
 
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
@@ -128,6 +130,10 @@ public:
                             const double& etot,
                             const double& scf_ene_thr);
 
+    /// @brief  the step of the outer loop.
+    /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
+    /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
+    /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;

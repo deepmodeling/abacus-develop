@@ -940,7 +940,7 @@ void Exx_LRI<Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI
         // postprocess exx_lri.dHs[x/y/z]
         for (int ipos = 0; ipos < 3; ++ipos)
         {
-            // 1. regroup by the differentiated atom: relative row/col [0]/[1] to absolute [0, nat-1]
+            // 1. Pulay terms: regroup by the differentiated atom: relative row/col [0]/[1] to absolute [0, nat-1]
             std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> dHs_ipos_ispin(ucell.nat);
             // dHs[ipos][0]: derivative w.r.t. the first (row) atom -> group by the row atom
             for (const auto& item : this->exx_lri.dHs[ipos][0])
@@ -956,15 +956,23 @@ void Exx_LRI<Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI
                 for (const auto& col_item : row_item.second)
                 {
                     const TA iat_col = col_item.first.first; // col atom (TA) of the TAC key
-                    dHs_ipos_ispin[iat_col][iat_row].insert(col_item);
+                    // Accumulate, do NOT drop on key collision:
+                    // when iat_col==iat_row==I, directly insert would make col_item lost.
+                    const auto ins = dHs_ipos_ispin[iat_col][iat_row].insert(col_item);
+                    if (!ins.second)
+                        ins.first->second = ins.first->second + col_item.second;
                 }
             }
-            // 2. convert to 2D-distribution for abacus
+            // 2. add Hellmann-Feynman terms and convert to 2D-distribution for abacus
             for (int iat = 0; iat < ucell.nat; ++iat)
             {
+                dHs_ipos_ispin[iat] = dHs_ipos_ispin[iat] + this->exx_lri.dHs_HF[ipos][iat];
                 dHs_ipos_ispin[iat] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
                     this->mpi_comm, std::move(dHs_ipos_ispin[iat]), std::get<0>(judge[is]), std::get<1>(judge[is]));
                 this->dHexxs[ipos][iat][is] = dHs_ipos_ispin[iat];
+                // Reuse the same post-processing as the Hexx writer (general nspin=1,2,4 factor)
+                // -1 factor compared to cal_force (F=-dE/dτ) is already included in LibRI's cal_dHs function.
+                this->post_process_Hexx(this->dHexxs[ipos][iat][is]);
             }
         }
     }
