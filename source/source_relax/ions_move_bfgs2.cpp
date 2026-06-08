@@ -1,4 +1,4 @@
-#include "bfgs.h"
+#include "ions_move_bfgs2.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
@@ -7,7 +7,7 @@
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19  
 
 //! initialize H0、H、pos0、force0、force
-void BFGS::allocate(const int _size) 
+void Ions_Move_BFGS2::allocate(const int _size) 
 {
     assert(_size > 0);
     alpha=70;//default value in ase is 70
@@ -34,7 +34,7 @@ void BFGS::allocate(const int _size)
 }
 
 
-void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
+void Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
 {
     if(!is_initialized)
     {
@@ -84,7 +84,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
 }
 
-void BFGS::GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
+void Ions_Move_BFGS2::GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
 {
     assert(pos.size() == ucell.nat);
     int k=0;
@@ -100,7 +100,7 @@ void BFGS::GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
     }
 }
 
-void BFGS::GetPostaud(UnitCell& ucell,
+void Ions_Move_BFGS2::GetPostaud(UnitCell& ucell,
                       std::vector<ModuleBase::Vector3<double>>& pos_taud)
 {
     assert(pos_taud.size() == ucell.nat);
@@ -117,7 +117,7 @@ void BFGS::GetPostaud(UnitCell& ucell,
     }
 }
 
-void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
+void Ions_Move_BFGS2::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
                        std::vector<ModuleBase::Vector3<double>>& pos,
                        std::vector<std::vector<double>>& H,
                        std::vector<double>& pos0,
@@ -177,7 +177,7 @@ void BFGS::PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
     force0 = ReshapeMToV(force);
 }
 
-void BFGS::Update(std::vector<double>& pos, 
+void Ions_Move_BFGS2::Update(std::vector<double>& pos, 
                   std::vector<double>& force,
                   std::vector<std::vector<double>>& H,
                   UnitCell& ucell)
@@ -253,7 +253,7 @@ void BFGS::Update(std::vector<double>& pos,
     H = MSubM(H, term4);
 }
 
-void BFGS::DetermineStep(std::vector<double>& steplength,
+void Ions_Move_BFGS2::DetermineStep(std::vector<double>& steplength,
                          std::vector<ModuleBase::Vector3<double>>& dpos,
                          double& maxstep)
 {
@@ -273,7 +273,7 @@ void BFGS::DetermineStep(std::vector<double>& steplength,
     }
 }
 
-void BFGS::UpdatePos(UnitCell& ucell)
+void Ions_Move_BFGS2::UpdatePos(UnitCell& ucell)
 {
     double a[3*size];
     for(int i=0;i<size;i++)
@@ -324,7 +324,7 @@ void BFGS::UpdatePos(UnitCell& ucell)
     pos = this->MAddM(pos, dpos);*/
 }
 
-void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell)
+void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell)
 {
     std::vector<double> grad= std::vector<double>(3*size, 0.0);
     int iat = 0;
@@ -361,7 +361,7 @@ void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell
     }
 }
 
-void BFGS::IsRestrain()
+void Ions_Move_BFGS2::IsRestrain()
 {
     Ions_Move_Basic::converged = largest_grad 
         * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A<PARAM.inp.force_thr_ev;

@@ -1,5 +1,5 @@
-#ifndef BFGS_H
-#define BFGS_H
+#ifndef IONS_MOVE_BFGS2_H
+#define IONS_MOVE_BFGS2_H
 
 #include <vector>
 #include <tuple> 
@@ -10,7 +10,7 @@
 #include "source_cell/unitcell.h"
 
 
-class BFGS
+class Ions_Move_BFGS2
 {
 public:
     void allocate(const int _size);//initialize parameters
@@ -46,4 +46,4 @@ private:
     
 };
 
-#endif // BFGS_H
+#endif // IONS_MOVE_BFGS2_H

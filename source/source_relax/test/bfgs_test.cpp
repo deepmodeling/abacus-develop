@@ -4,7 +4,7 @@
 #include "for_test.h"
 
 #define private public
-#include "source_relax/bfgs.h"
+#include "source_relax/ions_move_bfgs2.h"
 #undef private
 
 #define private public
@@ -14,12 +14,12 @@
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 
 /************************************************
- *  unit tests for BFGS (no MockUnitCell)
+ *  unit tests for Ions_Move_BFGS2 (no MockUnitCell)
  ***********************************************/
 
 class BFGSTest : public ::testing::Test {
 protected:
-    BFGS bfgs;
+    Ions_Move_BFGS2 bfgs;
     void SetUp() override
     {
         // Initialize variables before each test

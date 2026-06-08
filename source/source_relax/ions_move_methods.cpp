@@ -31,7 +31,7 @@ void Ions_Move_Methods::allocate(const int &natom)
     else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
     {
         this->cg.allocate();
-        this->bfgs.allocate(); // added by pengfei  13-8-8
+        this->bfgs.allocate();
     }
     else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
     {

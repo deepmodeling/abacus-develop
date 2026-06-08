@@ -464,6 +464,7 @@ OBJS_RELAXATION=bfgs_basic.o\
     relax_driver.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
+    ions_move_bfgs2.o\
     ions_move_cg.o\
     ions_move_methods.o\
     ions_move_sd.o\
@@ -472,7 +473,6 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     relax_nsync.o\
     relax_sync.o\
-    bfgs.o\
     lbfgs.o\
     matrix_methods.o\
     line_search.o\

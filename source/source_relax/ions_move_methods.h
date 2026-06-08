@@ -5,7 +5,7 @@
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
-#include "bfgs.h"
+#include "ions_move_bfgs2.h"
 #include "lbfgs.h"
 
 class Ions_Move_Methods
@@ -47,7 +47,7 @@ class Ions_Move_Methods
     Ions_Move_BFGS bfgs;
     Ions_Move_CG cg;
     Ions_Move_SD sd;
-    BFGS bfgs_trad;
+    Ions_Move_BFGS2 bfgs_trad;
     LBFGS lbfgs;
 };
 #endif
