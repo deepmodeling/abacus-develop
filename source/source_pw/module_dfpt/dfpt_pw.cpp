@@ -72,6 +72,25 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
 void DFPT_PW::run() {
     int nq = pimpl_->qlist_.get_nq();
     for (int q_idx = 0; q_idx < nq; ++q_idx) {
+        // TODO: Implement self-consistent loop for each q-point
+        // According to the standard DFPT workflow, the SCF loop should include:
+        // 1. Compute the perturbation of the screening potential
+        //    - pimpl_->pert_.compute_screening_potential(q_idx, pimpl_->data_)
+        // 2. Solve the Sternheimer equation
+        //    - pimpl_->stern_.solve(q_idx, pimpl_->data_)
+        // 3. Calculate the first-order density
+        //    - pimpl_->rho_.compute_first_order(q_idx, pimpl_->data_)
+        // 4. Check convergence and iterate until self-consistency is achieved
+        
+        // Special handling for q=0 (uniform electric field responses):
+        // The standard position operator r is ill-defined in periodic systems.
+        // Developers should NOT pass a conventional position matrix. Instead,
+        // matrix elements should be computed using the well-defined periodic
+        // commutator [Ĥ_SCF, r̂]. This is implemented in DFPT_Q0 module.
+        if (q_idx == 0) {
+            pimpl_->q0_.compute_q0_response(pimpl_->data_);
+        }
+        
         pimpl_->phon_.assemble(q_idx, pimpl_->data_);
         pimpl_->phon_.diagonalize(q_idx, pimpl_->data_);
     }
