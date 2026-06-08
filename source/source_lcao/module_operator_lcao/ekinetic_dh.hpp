@@ -137,23 +137,21 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
                         const ModuleBase::Vector3<double> dtau_scaled = dtau * this->ucell->lat0;
 
-                        this->intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau_scaled, nullptr, olm);
+                        this->intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau_scaled, nullptr, olm); // <phi_U|T|dphi_V/dtau_V>
 
                         const ModuleBase::Vector3<double> dtau_rev = (-1.0) * dtau_scaled;
-                        this->intor_->calculate(T2, L2, N2, M2, T1, L1, N1, M1, dtau_rev, nullptr, olm_rev);
+                        this->intor_->calculate(T2, L2, N2, M2, T1, L1, N1, M1, dtau_rev, nullptr, olm_rev);    // <dphi_U/dtau_U|T|phi_V>
 
                         const int idx = (iw1l / npol) * col_size + (iw2l / npol);
 
-                        // calculate() writes the spatial gradient (d/dx,d/dy,d/dz) into
-                        // grad_out[0..2] (here olm[0..2]); olm[3] is unused.
-                        // d<phi|T|phi>/dtau_I = -<grad phi|T|phi>  (dtau = -grad); sign
+                        // d<phi|T|phi>/dtau_I = -<grad phi|T|phi>
+                        // but olm directly gives <dtau_I phi|T|phi> and <phi|T|dtau_I phi>, 
+                        // so we can directly use them without extra negation.
                         // confirmed against the finite-difference reference.
                         for (int d = 0; d < 3; ++d)
                         {
-                            // d/dtau_V (I = iat2)
-                            ptrV[d][idx] -= olm[d];
-                            // d/dtau_U (I = iat1)
-                            ptrU[d][idx] -= olm_rev[d];
+                            ptrV[d][idx] += olm[d];
+                            ptrU[d][idx] += olm_rev[d];
                         }
                     }
                 }

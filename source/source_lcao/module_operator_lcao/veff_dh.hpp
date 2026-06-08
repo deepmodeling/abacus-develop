@@ -1,11 +1,15 @@
 #pragma once
-#include "veff_lcao.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_gint/gint_dvlocal.h"
-#include "source_lcao/module_gint/gint_interface.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_lcao/module_gint/gint_dvlocal.h"
+#include "source_lcao/module_gint/gint_interface.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_pw/module_pwdft/forces.h"
+#include "veff_lcao.h"
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 namespace hamilt
 {
@@ -76,49 +80,77 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         ModuleGint::Gint_dvlocal gint_dv(vr_eff, this->nspin, PARAM.globalv.npol, true);
         gint_dv.cal_dvlocal();
 
-        hamilt::HContainer<double>* pvdpR[3]
+        hamilt::HContainer<double>* pvdpR[3] // grid parallel
             = {gint_dv.get_pvdpRx(), gint_dv.get_pvdpRy(), gint_dv.get_pvdpRz()};
 
-        for (int iap = 0; iap < pvdpR[0]->size_atom_pairs(); iap++)
+#ifdef __MPI
+        int mpi_size = 1;
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+#endif
+        for (int I = 0; I < nat; ++I)
         {
-            const auto& ap = pvdpR[0]->get_atom_pair(iap);
-            const int iat1 = ap.get_atom_i(); // A
-            const int iat2 = ap.get_atom_j(); // B
-
-            for (int ir = 0; ir < ap.get_R_size(); ir++)
+            for (int d = 0; d < 3; ++d)
             {
-                const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
-                const ModuleBase::Vector3<int> negR(-R.x, -R.y, -R.z);
+                // grid-layout source (same structure as pvdpR), only atom-I blocks filled
+                hamilt::HContainer<double> gI(*pvdpR[d]);
+                gI.set_zero();
 
-                for (int d = 0; d < 3; ++d)
+                for (int iap = 0; iap < pvdpR[d]->size_atom_pairs(); iap++)
                 {
-                    hamilt::BaseMatrix<double>* src = pvdpR[d]->find_matrix(iat1, iat2, R);
-                    // delta_VI (I=B): -pvdpR into block (A,B) of container B
-                    hamilt::BaseMatrix<double>* dV = dhR[d][iat2]->find_matrix(iat1, iat2, R);
-                    // delta_UI (I=B): -pvdpR^T into block (B,A) of container B
-                    hamilt::BaseMatrix<double>* dU = dhR[d][iat2]->find_matrix(iat2, iat1, negR);
-                    if (!src || !dV || !dU)
-                        continue;
+                    const auto& ap = pvdpR[d]->get_atom_pair(iap);
+                    const int iat1 = ap.get_atom_i(); // A
+                    const int iat2 = ap.get_atom_j(); // B
+                    if (iat2 != I)
+                        continue; // gradient on the 2nd orbital => only I=B contributes
 
-                    const int rowA = src->get_row_size();
-                    const int colB = src->get_col_size();
-                    double* psrc = src->get_pointer();
-                    double* pV = dV->get_pointer();
-                    double* pU = dU->get_pointer();
-
-                    // pvdpR[A][B] = <phi_A|V|grad phi_B>; since d_{tau_B}phi_B = -grad phi_B,
-                    // the Pulay contribution to d<phi|V|phi>/dtau_I is -pvdpR
-                    // (sign confirmed against the iat2 finite-difference reference).
-                    for (int a = 0; a < rowA; ++a)
+                    for (int ir = 0; ir < ap.get_R_size(); ir++)
                     {
-                        for (int b = 0; b < colB; ++b)
+                        const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
+                        const ModuleBase::Vector3<int> negR(-R.x, -R.y, -R.z);
+
+                        hamilt::BaseMatrix<double>* src = pvdpR[d]->find_matrix(iat1, iat2, R);
+                        // delta_VI (I=B): -pvdpR into block (A,B)
+                        hamilt::BaseMatrix<double>* gV = gI.find_matrix(iat1, iat2, R);
+                        // delta_UI (I=B): -pvdpR^T into block (B,A)
+                        hamilt::BaseMatrix<double>* gU = gI.find_matrix(iat2, iat1, negR);
+                        if (!src || !gV || !gU)
+                            continue;
+
+                        const int rowA = src->get_row_size();
+                        const int colB = src->get_col_size();
+                        const int colU = gU->get_col_size(); // = nw(A) = rowA
+                        double* psrc = src->get_pointer();
+                        double* pV = gV->get_pointer();
+                        double* pU = gU->get_pointer();
+
+                        // pvdpR[A][B] = <phi_A|V|grad phi_B>; since d_{tau_B}phi_B = -grad phi_B,
+                        // the Pulay contribution to d<phi|V|phi>/dtau_I is -pvdpR
+                        // (sign confirmed against the iat2 finite-difference reference).
+                        for (int a = 0; a < rowA; ++a)
                         {
-                            const double val = psrc[a * colB + b];
-                            pV[a * colB + b] -= val;        // block (A,B)[a,b]  (delta_VI)
-                            pU[b * rowA + a] -= val;        // block (B,A)[b,a]  (delta_UI, transpose)
+                            for (int b = 0; b < colB; ++b)
+                            {
+                                const double val = psrc[a * colB + b];
+                                pV[a * colB + b] -= val; // block (A,B)[a,b]  (delta_VI)
+                                pU[b * colU + a] -= val; // block (B,A)[b,a]  (delta_UI, transpose)
+                            }
                         }
                     }
                 }
+
+                // grid -> 2D: sum across ranks and scatter into the 2D-distributed container
+#ifdef __MPI
+                if (mpi_size > 1)
+                {
+                    hamilt::transferSerials2Parallels(gI, dhR[d][I]);
+                }
+                else
+                {
+                    dhR[d][I]->add(gI);
+                }
+#else
+                dhR[d][I]->add(gI);
+#endif
             }
         }
 
@@ -159,6 +191,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         dm.allocate(nullptr, true);
         std::vector<hamilt::HContainer<double>*> dm_vec = {&dm};
 
+        const int* iat2iwt = this->ucell->get_iat2iwt();
         for (int iat1 = 0; iat1 < nat; iat1++)
         {
             auto tau1 = this->ucell->get_tau(iat1);
@@ -180,45 +213,60 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
                     >= this->orb_cutoff_[T1] + this->orb_cutoff_[T2])
                     continue;
 
-                auto row_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat2);
+                // The delta-DM density (cal_gint_rho) and the PW force (cal_force_loc) are both
+                // collective MPI operations and must be called in lockstep on all ranks.
+                // Therefore we iterate GLOBAL orbital pairs (iw1,iw2) to avoid deadlock.
+                // The one-hot DM element is set only on the rank that owns it under the 2D block-cyclic layout,
+                // and the resulting force is written into dhR on that same owning rank.
+                const int nw1 = this->ucell->atoms[T1].nw * PARAM.globalv.npol;
+                const int nw2 = this->ucell->atoms[T2].nw * PARAM.globalv.npol;
+                const int gr0 = iat2iwt[iat1];
+                const int gc0 = iat2iwt[iat2];
 
-                if (row_indexes.size() == 0 || col_indexes.size() == 0)
-                    continue;
-
-                // cache the destination pointers of this (iat1, iat2, R) block for every atom I
-                std::vector<double*> dst[3];
-                for (int d = 0; d < 3; ++d)
-                    dst[d].assign(nat, nullptr);
+                // Does this rank store the (iat1,iat2,R) sub-block at all?  If so, cache the
+                // owner-only pointers (identical for every orbital pair within the block).
+                const bool owns_block = (paraV->get_row_size(iat1) > 0 && paraV->get_col_size(iat2) > 0);
+                double* dm_ptr = nullptr;
                 int col_size = 0;
-                bool ok = true;
-                for (int iat = 0; iat < nat; ++iat)
+                // save the address of the (iat1,iat2,R) block in each dhR[d][iat] for quick access within the loop
+                std::vector<double*> dst[3];
+                if (owns_block)
                 {
-                    hamilt::BaseMatrix<double>* m[3];
+                    hamilt::BaseMatrix<double>* dm_mat = dm.find_matrix(iat1, iat2, R_index);
+                    dm_ptr = dm_mat ? dm_mat->get_pointer() : nullptr;
+                    col_size = dm_mat ? dm_mat->get_col_size() : 0;
                     for (int d = 0; d < 3; ++d)
-                        m[d] = dhR[d][iat]->find_matrix(iat1, iat2, R_index);
-                    if (!m[0] || !m[1] || !m[2])
-                    {
-                        ok = false;
-                        break;
-                    }
-                    for (int d = 0; d < 3; ++d)
-                        dst[d][iat] = m[d]->get_pointer();
-                    col_size = m[0]->get_col_size();
+                        dst[d].assign(nat, nullptr);
+                    for (int iat = 0; iat < nat; ++iat)
+                        for (int d = 0; d < 3; ++d)
+                        {
+                            hamilt::BaseMatrix<double>* m = dhR[d][iat]->find_matrix(iat1, iat2, R_index);
+                            dst[d][iat] = m ? m->get_pointer() : nullptr;
+                        }
                 }
-                if (!ok)
-                    continue;
 
-                double* dm_ptr = dm.find_matrix(iat1, iat2, R_index)->get_pointer();
-
-                for (int iw1l = 0; iw1l < static_cast<int>(row_indexes.size()); ++iw1l)
+                for (int iw1 = 0; iw1 < nw1; ++iw1)
                 {
-                    for (int iw2l = 0; iw2l < static_cast<int>(col_indexes.size()); ++iw2l)
+                    const int lr = paraV->global2local_row(gr0 + iw1);
+                    for (int iw2 = 0; iw2 < nw2; ++iw2)
                     {
-                        const int idx = iw1l * col_size + iw2l;
+                        const int lc = paraV->global2local_col(gc0 + iw2);
+                        // this matrix element is owned iff both its row and col are local here
+                        const bool owned = owns_block && dm_ptr && lr >= 0 && lc >= 0;
 
-                        // delta-density-matrix D_{Ii,Jj} = delta_{Ii,Umu} delta_{Jj,Vnu}
-                        dm_ptr[idx] = 1.0;
+                        int idx = 0;
+                        if (owned)
+                        {
+                            const int br = lr - paraV->atom_begin_row[iat1];
+                            const int bc = lc - paraV->atom_begin_col[iat2];
+                            idx = br * col_size + bc;
+                            // delta-density-matrix D_{Ii,Jj} = delta_{Ii,Umu} delta_{Jj,Vnu}
+                            dm_ptr[idx] = 1.0;
+                        }
+
+                        // (collective: same call count on every rank, = NLOCAL^2)
+                        // the result element (forcelc) is the same on every rank,
+                        // but only stored into dhR on the rank that owns the orbital pair (Umu,Vnu)
 
                         // effective charge density rho(r) = phi_Umu(r) * phi_Vnu(r) by Gint
                         for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -228,17 +276,20 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
                         // Hellmann-Feynman local force on every atom I from this pair density
                         forcelc.zero_out();
                         f_pw.cal_force_loc(*this->ucell, forcelc, rho_basis, vloc, &chr);
+
                         // cal_force_loc returns F_I = -d E_loc/d tau_I, hence the matrix element
                         // <phi_Umu|d_{tau_I}V^L|phi_Vnu> = -F_I
                         // (sign confirmed against central finite-difference of the V^L matrix for iat2)
-                        for (int iat = 0; iat < nat; ++iat)
+                        if (owned)
                         {
-                            for (int d = 0; d < 3; ++d)
-                                dst[d][iat][idx] -= forcelc(iat, d);
-                        }
+                            for (int iat = 0; iat < nat; ++iat)
+                                for (int d = 0; d < 3; ++d)
+                                    if (dst[d][iat])
+                                        dst[d][iat][idx] -= forcelc(iat, d);
 
-                        // reset the delta element back to zero for the next orbital pair
-                        dm_ptr[idx] = 0.0;
+                            // reset the delta element back to zero for the next orbital pair
+                            dm_ptr[idx] = 0.0;
+                        }
                     }
                 }
             }
@@ -268,11 +319,16 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
         for (int I = 0; I < nat; ++I)
         {
-            // M^I = delta_{KI} (D + D^T): the rows on atom I carry the symmetrized DM,
+            // Set M^I = delta_{KI} (D + D^T): the rows on atom I carry the symmetrized DM,
             // every other block is zero. The full neighbour structure of D must be kept
             // (cal_gint_drho/dm_2d_to_gint looks up every overlapping pair), so we mirror
             // D's atom pairs and only fill the atom-I rows.
-            // Block (I,L,R) value = D(I,L,R) + D(L,I,-R)^T  (D^T uses the reverse pair).
+            // Block (I,L,R) value = D(I,L,R) + D(L,I,-R)^T. For the collinear DM (nspin 1/2,
+            // the only case routed here) DMK is Hermitian, so cal_DMR yields the exact symmetry
+            // D(L,I,-R)[l,k] = D(I,L,R)[k,l]; hence the symmetrized block is simply 2*D(I,L,R).
+            // We use only the *local* block D(I,L,R): the reverse pair (L,I,-R) lives on a
+            // different rank under 2D block-cyclic, so reading it directly (the old code) silently
+            // dropped the D^T term in MPI. 2*D(I,L,R) is local and parallel-correct.
             hamilt::HContainer<double> mI(paraV);
             for (int iap = 0; iap < dmR->size_atom_pairs(); ++iap)
             {
@@ -292,9 +348,10 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
                 {
                     const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
                     const ModuleBase::Vector3<int> negR(-R.x, -R.y, -R.z);
+                    (void)negR;
                     hamilt::BaseMatrix<double>* dst = mI.find_matrix(I, L, R);
+                    // D(I,L,R) is the same (locally-owned) 2D block as mI(I,L,R)
                     const hamilt::BaseMatrix<double>* d_il = dmR->find_matrix(I, L, R);
-                    const hamilt::BaseMatrix<double>* d_li = dmR->find_matrix(L, I, negR);
                     const int nrow = dst->get_row_size();
                     const int ncol = dst->get_col_size();
                     double* pdst = dst->get_pointer();
@@ -302,12 +359,8 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
                     {
                         for (int b = 0; b < ncol; ++b)
                         {
-                            double v = 0.0;
-                            if (d_il)
-                                v += d_il->get_pointer()[a * ncol + b];
-                            if (d_li)
-                                v += d_li->get_pointer()[b * nrow + a];
-                            pdst[a * ncol + b] = v;
+                            // M^I(I,L,R) = D + D^T = 2*D(I,L,R) (DMR symmetry, see above)
+                            pdst[a * ncol + b] = (d_il ? 2.0 * d_il->get_pointer()[a * ncol + b] : 0.0);
                         }
                     }
                 }

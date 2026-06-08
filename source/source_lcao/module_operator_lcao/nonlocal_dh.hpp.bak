@@ -133,7 +133,6 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
                     OperatorForceStress::OrbitalQuantumNumbers qn1 = OperatorForceStress::get_orbital_qn(*atom1, iw1);
 
-                    //<phi|dbeta/dtau> = -<phi|grad beta> = <grad phi|beta>
                     ModuleBase::Vector3<double> dtau_at = tau0 - tau1;
                     this->intor_->snap(T1, qn1.L, qn1.N, qn1.M, T0, dtau_at * this->ucell->lat0, true, nlm);
 
@@ -203,7 +202,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                             continue;
                         const std::vector<double>& nlm1 = it1->second;
                         const size_t length = nlm1.size() / 4;
-                        const int iw1_row = static_cast<int>(iw1l);
+                        const int iw1_row = paraV->global2local_row(row_indexes[iw1l]);
 
                         for (size_t iw2l = 0; iw2l < col_indexes.size(); iw2l++)
                         {
@@ -211,7 +210,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                             if (it2 == nlm2_all.end())
                                 continue;
                             const std::vector<double>& nlm2 = it2->second;
-                            const int iw2_col = static_cast<int>(iw2l);
+                            const int iw2_col = paraV->global2local_col(col_indexes[iw2l]);
 
                             // tU = <grad phi_iat1|beta> D <beta|phi_iat2>  (orbital 1 moves)
                             // tV = <phi_iat1|beta> D <beta|grad phi_iat2>  (orbital 2 moves)

@@ -1,5 +1,6 @@
 #include "write_dH.h"
 
+#include "source_base/global_function.h"
 #include "source_base/timer.h"
 #include "source_io/module_hs/write_HS.h"
 #include "source_io/module_hs/write_HS_R.h"
@@ -74,10 +75,23 @@ void write_dh_perI(WriteDHParams& params,
 
             // ---- k space dH(k), dense (folded like H(k), comparable to *_nao.txt) ----
             // build the filename directly (filename_output only accepts a fixed property set)
+#ifdef __MPI
+            const bool col_major = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver);
+            const size_t hk_size = static_cast<size_t>(pv.get_row_size()) * pv.get_col_size();
+#else
+            const size_t hk_size = static_cast<size_t>(nlocal) * nlocal;
+#endif
             for (int ik = 0; ik < nks; ++ik)
             {
-                std::vector<std::complex<double>> hk(static_cast<size_t>(nlocal) * nlocal, 0);
+                std::vector<std::complex<double>> hk(hk_size, 0);
+#ifdef __MPI
+                if (col_major)
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.get_row_size(), 1);
+                else
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.get_col_size(), 0);
+#else
                 hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
+#endif
                 std::string fk = global_out_dir + kprefix + tag;
                 if (nks > 1)
                 {
