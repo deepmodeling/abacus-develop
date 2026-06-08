@@ -79,6 +79,11 @@ void OFDFT::print_info(const int iter,
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(pelec->f_en.evdw);
         }
+        else if (vdw_method == "d4")
+        {
+            titles.push_back("E_vdwD4");
+            energies_Ry.push_back(pelec->f_en.evdw);
+        }
         if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");

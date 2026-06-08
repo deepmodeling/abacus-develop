@@ -68,22 +68,13 @@ public:
 		const MPI_Comm &mpi_comm_in,
 		const UnitCell &ucell,
 		const K_Vectors &kv_in,
-		const LCAO_Orbitals& orb);
-	void init(
-		const MPI_Comm &mpi_comm_in,
-		const UnitCell &ucell,
-		const K_Vectors &kv_in,
 		const LCAO_Orbitals& orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
-    void init_spencer(const MPI_Comm& mpi_comm_in,
-                      const UnitCell& ucell,
-                      const K_Vectors& kv_in,
-                      const LCAO_Orbitals& orb);
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
                       const LCAO_Orbitals& orb,
-                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
+                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
     void cal_cut_coulomb_cs(
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut_IJR,

@@ -84,6 +84,10 @@ scalapack_alt_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7
 # STAGE 4: Advanced Feature Libraries
 # =============================================================================
 
+# DFT-D4 dispersion correction
+dftd4_ver="4.2.0"
+dftd4_sha256="467e024071510ad82b862c66c383c2ebc164fc1140e15dfc79f48d2f999fd184"
+
 # LibTorch (supports dual versions) - main=2.1.2, alt=1.12.1
 libtorch_main_ver="2.1.2"
 libtorch_main_sha256="904b764df6106a8a35bef64c4b55b8c1590ad9d071eb276e680cf42abafe79e9"
@@ -221,6 +225,10 @@ load_package_vars() {
                 scalapack_ver="${scalapack_main_ver}"
                 scalapack_sha256="${scalapack_main_sha256}"
             fi
+            ;;
+        "dftd4")
+            dftd4_ver="${dftd4_ver}"
+            dftd4_sha256="${dftd4_sha256}"
             ;;
         "libtorch")
             if [ "${version_suffix}" = "alt" ]; then
