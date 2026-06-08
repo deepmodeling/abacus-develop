@@ -24,18 +24,7 @@ using namespace Lattice_Change_Basic;
 
 Lattice_Change_CG::Lattice_Change_CG()
 {
-    this->lat0 = nullptr;
-    this->grad0 = nullptr;
-    this->cg_grad0 = nullptr;
-    this->move0 = nullptr;
-}
-
-Lattice_Change_CG::~Lattice_Change_CG()
-{
-    delete[] lat0;
-    delete[] grad0;
-    delete[] cg_grad0;
-    delete[] move0;
+    this->e0 = 0.0;
 }
 
 void Lattice_Change_CG::allocate(void)
@@ -44,20 +33,10 @@ void Lattice_Change_CG::allocate(void)
     // mohan add 2021-02-07
     assert(dim > 0);
 
-    delete[] lat0;
-    delete[] grad0;
-    delete[] cg_grad0;
-    delete[] move0;
-
-    this->lat0 = new double[dim];
-    this->grad0 = new double[dim];
-    this->cg_grad0 = new double[dim];
-    this->move0 = new double[dim];
-
-    ModuleBase::GlobalFunc::ZEROS(lat0, dim);
-    ModuleBase::GlobalFunc::ZEROS(grad0, dim);
-    ModuleBase::GlobalFunc::ZEROS(cg_grad0, dim);
-    ModuleBase::GlobalFunc::ZEROS(move0, dim);
+    this->lat0.resize(dim, 0.0);
+    this->grad0.resize(dim, 0.0);
+    this->cg_grad0.resize(dim, 0.0);
+    this->move0.resize(dim, 0.0);
     this->e0 = 0.0;
 }
 
@@ -65,10 +44,10 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
-    assert(lat0 != 0);
-    assert(grad0 != 0);
-    assert(cg_grad0 != 0);
-    assert(move0 != 0);
+    assert(lat0.size() == static_cast<size_t>(dim));
+    assert(grad0.size() == static_cast<size_t>(dim));
+    assert(cg_grad0.size() == static_cast<size_t>(dim));
+    assert(move0.size() == static_cast<size_t>(dim));
    
 
     // sd , trial are two parameters, when sd=trial=true,
@@ -158,16 +137,16 @@ CG_begin:
         {
             e0 = etot_in;
             setup_cg_grad(grad,
-                          grad0,
+                          grad0.data(),
                           cg_grad,
-                          cg_grad0,
+                          cg_grad0.data(),
                           ncggrad,
                           flag); // we use the last direction ,the last grad and the grad now to get the direction now
             ncggrad++;
 
             normalize(cg_gradn, cg_grad, dim);
-            setup_move(move0, cg_gradn, steplength); // move the atom position
-            Lattice_Change_Basic::change_lattice(ucell, move0, lat);
+            setup_move(move0.data(), cg_gradn, steplength); // move the atom position
+            Lattice_Change_Basic::change_lattice(ucell, move0.data(), lat);
 
             for (int i = 0; i < dim; i++) // grad0 ,cg_grad0 are used to store the grad and cg_grad for the future using
             {
@@ -175,8 +154,8 @@ CG_begin:
                 cg_grad0[i] = cg_grad[i];
             }
 
-            f_cal(move0, move0, dim, xb); // xb = trial steplength
-            f_cal(move0, grad, dim, fa);  // fa is the projection force in this direction
+            f_cal(move0.data(), move0.data(), dim, xb); // xb = trial steplength
+            f_cal(move0.data(), grad, dim, fa);  // fa is the projection force in this direction
 
             fmax = fa;
             sd = false;
@@ -188,8 +167,8 @@ CG_begin:
             if (trial)
             {
                 double e1 = etot_in;
-                f_cal(move0, grad, dim, fb);
-                f_cal(move0, move0, dim, xb);
+                f_cal(move0.data(), grad, dim, fb);
+                f_cal(move0.data(), move0.data(), dim, xb);
 
                 if ((std::abs(fb) < std::abs((fa) / 10.0)))
                 {
@@ -200,7 +179,7 @@ CG_begin:
                     goto CG_begin;
                 }
 
-                normalize(cg_gradn, cg_grad0, dim);
+                normalize(cg_gradn, cg_grad0.data(), dim);
                 third_order(e0, e1, fa, fb, xb, best_x); // cubic interpolation
 
                 if (best_x > 6 * xb || best_x < (-xb))
@@ -213,7 +192,7 @@ CG_begin:
 
                 trial = false;
                 xa = 0;
-                f_cal(move0, move, dim, xc);
+                f_cal(move0.data(), move, dim, xc);
                 xc = xb + xc;
                 xpt = xc;
 
@@ -222,7 +201,7 @@ CG_begin:
             else
             {
                 double xtemp, ftemp;
-                f_cal(move0, grad, dim, fc);
+                f_cal(move0.data(), grad, dim, fc);
 
                 fmin = std::abs(fc);
                 nbrent++;
@@ -251,7 +230,7 @@ CG_begin:
                         goto CG_begin;
                     }
 
-                    normalize(cg_gradn, cg_grad0, dim);
+                    normalize(cg_gradn, cg_grad0.data(), dim);
                     setup_move(move, cg_gradn, best_x);
                     Lattice_Change_Basic::change_lattice(ucell, move, lat);
 

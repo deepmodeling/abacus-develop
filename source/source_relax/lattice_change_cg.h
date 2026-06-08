@@ -3,21 +3,22 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
+#include <vector>
 class Lattice_Change_CG
 {
 
   public:
     Lattice_Change_CG();
-    ~Lattice_Change_CG();
+    ~Lattice_Change_CG() = default;
 
     void allocate(void);
     void start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot);
 
   private:
-    double * lat0 = nullptr;
-    double * grad0 = nullptr;
-    double * cg_grad0 = nullptr;
-    double * move0 = nullptr;
+    std::vector<double> lat0;
+    std::vector<double> grad0;
+    std::vector<double> cg_grad0;
+    std::vector<double> move0;
     double e0=0.0;
 
     // setup gradients.

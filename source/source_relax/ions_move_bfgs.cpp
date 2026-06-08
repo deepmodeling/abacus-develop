@@ -47,19 +47,19 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // In the following steps, the pos is updated by BFGS methods.
     if (first_step)
     {
-        Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
+        Ions_Move_Basic::setup_gradient(ucell, force, this->pos.data(), this->grad.data());
         first_step = false;
     }
     else
     {
         std::vector<double> pos_tmp(3 * ucell.nat);
-        Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad);
+        Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data());
     }
     // use energy_in and istep to setup etot and etot_old.
     Ions_Move_Basic::setup_etot(energy_in, false);
     // use gradient and etot and etot_old to check
     // if the result is converged.
-    Ions_Move_Basic::check_converged(ucell, this->grad);
+    Ions_Move_Basic::check_converged(ucell, this->grad.data());
 
     if (Ions_Move_Basic::converged)
     {
@@ -86,7 +86,7 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         // even if the energy is higher, we save the information.
         this->save_bfgs();
 
-        Ions_Move_Basic::move_atoms(ucell, move, pos);
+        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data());
     }
     return;
 }
@@ -130,9 +130,9 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
     else
     {
         //    bfgs initialization
-        ModuleBase::GlobalFunc::ZEROS(pos_p, dim);
-        ModuleBase::GlobalFunc::ZEROS(grad_p, dim);
-        ModuleBase::GlobalFunc::ZEROS(move_p, dim);
+        ModuleBase::GlobalFunc::ZEROS(pos_p.data(), dim);
+        ModuleBase::GlobalFunc::ZEROS(grad_p.data(), dim);
+        ModuleBase::GlobalFunc::ZEROS(move_p.data(), dim);
 
         Ions_Move_Basic::update_iter = 0;
 
@@ -304,7 +304,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Ions_Move_Basic::update_iter);
 
     // combine the direction and move length now
-    double norm = dot_func(this->move, this->move, dim);
+    double norm = dot_func(this->move.data(), this->move.data(), dim);
     norm = sqrt(norm);
 
     if (norm < 1.0e-16)
