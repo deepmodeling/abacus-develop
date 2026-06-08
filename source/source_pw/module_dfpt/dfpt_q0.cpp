@@ -33,6 +33,10 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi, DFPT_PW_Da
     (void)data;
 }
 
+void DFPT_Q0::compute_q0_response(DFPT_PW_Data& data) {
+    (void)data;
+}
+
 void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
                          std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>& r_mat) {
     (void)psi;

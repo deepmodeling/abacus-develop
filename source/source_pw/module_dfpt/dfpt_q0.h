@@ -30,6 +30,8 @@ public:
     
     void compute_born(const psi::Psi<std::complex<double>>& psi, DFPT_PW_Data& data);
     
+    void compute_q0_response(DFPT_PW_Data& data);
+    
 private:
     UnitCell* ucell_ = nullptr;
     ModulePW::PW_Basis* pw_rho_ = nullptr;
