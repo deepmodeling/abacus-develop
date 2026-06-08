@@ -1,10 +1,9 @@
 #include "bfgs_basic.h"
-
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include<vector>
+
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
@@ -12,50 +11,19 @@ double BFGS_Basic::relax_bfgs_w2 = -1.0; // defalut is 0.05
 
 BFGS_Basic::BFGS_Basic()
 {
-    pos = nullptr;
-    pos_p = nullptr;
-    grad = nullptr;
-    grad_p = nullptr;
-    move = nullptr;
-    move_p = nullptr;
-
     bfgs_ndim = 1;
-}
-
-BFGS_Basic::~BFGS_Basic()
-{
-    delete[] pos;
-    delete[] pos_p;
-    delete[] grad;
-    delete[] grad_p;
-    delete[] move;
-    delete[] move_p;
 }
 
 void BFGS_Basic::allocate_basic(void)
 {
     assert(dim > 0);
 
-    delete[] pos;
-    delete[] pos_p;
-    delete[] grad;
-    delete[] grad_p;
-    delete[] move;
-    delete[] move_p;
-
-    pos = new double[dim];
-    pos_p = new double[dim];
-    grad = new double[dim];
-    grad_p = new double[dim];
-    move = new double[dim];
-    move_p = new double[dim];
-
-    ModuleBase::GlobalFunc::ZEROS(pos, dim);
-    ModuleBase::GlobalFunc::ZEROS(grad, dim);
-    ModuleBase::GlobalFunc::ZEROS(pos_p, dim);
-    ModuleBase::GlobalFunc::ZEROS(grad_p, dim);
-    ModuleBase::GlobalFunc::ZEROS(move, dim);
-    ModuleBase::GlobalFunc::ZEROS(move_p, dim);
+    pos.resize(dim, 0.0);
+    pos_p.resize(dim, 0.0);
+    grad.resize(dim, 0.0);
+    grad_p.resize(dim, 0.0);
+    move.resize(dim, 0.0);
+    move_p.resize(dim, 0.0);
 
     // init inverse Hessien matrix.
     inv_hess.create(dim, dim);
@@ -134,8 +102,8 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
 
 void BFGS_Basic::check_wolfe_conditions(void)
 {
-    double dot_p = dot_func(grad_p, move_p, dim);
-    double dot = dot_func(grad, move_p, dim);
+    double dot_p = dot_func(grad_p.data(), move_p.data(), dim);
+    double dot = dot_func(grad.data(), move_p.data(), dim);
 
     // if the total energy falls rapidly, enlarge the trust radius.
     bool wolfe1 = (etot - etot_p) < this->relax_bfgs_w1 * dot_p;
@@ -263,7 +231,7 @@ void BFGS_Basic::new_step(const double &lat0)
 
             // std::cout << " move after hess " << move[i] << std::endl;
         }
-        GlobalV::ofs_running << " check the norm of new move " << dot_func(move, move, dim) << " (Bohr)" << std::endl;
+        GlobalV::ofs_running << " check the norm of new move " << dot_func(move.data(), move.data(), dim) << " (Bohr)" << std::endl;
     }
     else if (bfgs_ndim > 1)
     {
@@ -313,13 +281,13 @@ void BFGS_Basic::compute_trust_radius(void)
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
     // (1) judge 1
-    double dot = dot_func(grad_p, move_p, dim);
+    double dot = dot_func(grad_p.data(), move_p.data(), dim);
     bool ltest = (etot - etot_p) < this->relax_bfgs_w1 * dot;
 
     // (2) judge 2
     // calculate the norm of move, which
     // is used to compare to trust_radius_old.
-    double norm_move = dot_func(this->move, this->move, dim);
+    double norm_move = dot_func(this->move.data(), this->move.data(), dim);
     norm_move = std::sqrt(norm_move);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "move(norm)", norm_move);
 

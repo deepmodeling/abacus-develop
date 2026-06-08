@@ -2,6 +2,7 @@
 #define BFGS_BASIC
 
 #include "source_base/matrix.h"
+#include <vector>
 
 // references
 // 1) Roger Fletcher, Practical Methods of Optimization, John Wiley and
@@ -18,7 +19,7 @@ class BFGS_Basic
 
   public:
     BFGS_Basic();
-    ~BFGS_Basic();
+    ~BFGS_Basic() = default;
 
   protected:
     void allocate_basic(void);
@@ -26,13 +27,13 @@ class BFGS_Basic
     void reset_hessian(void);
     void save_bfgs(void);
 
-    double* pos = nullptr;  // std::vector containing 3N coordinates of the system ( x )
-    double* grad = nullptr; // std::vector containing 3N components of ( grad( V(x) ) )
-    double* move = nullptr; // pos = pos_p + move.
+    std::vector<double> pos;  // std::vector containing 3N coordinates of the system ( x )
+    std::vector<double> grad; // std::vector containing 3N components of ( grad( V(x) ) )
+    std::vector<double> move; // pos = pos_p + move.
 
-    double* pos_p = nullptr;  // p: previous
-    double* grad_p = nullptr; // p: previous
-    double* move_p = nullptr;
+    std::vector<double> pos_p;  // p: previous
+    std::vector<double> grad_p; // p: previous
+    std::vector<double> move_p;
 
   public:                        // mohan update 2011-06-12
     static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
