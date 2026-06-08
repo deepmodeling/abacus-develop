@@ -5,6 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
+
 int Ions_Move_Basic::dim = 0;
 bool Ions_Move_Basic::converged = false;
 double Ions_Move_Basic::largest_grad = 0.0;
@@ -96,9 +97,10 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     const double move_threshold = 1.0e-10;
     const int total_freedom = ucell.nat * 3;
 
-    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0) {
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0) 
+    {
         ucell.symm.symmetrize_vec3_nat(move);
-}
+    }
 
     for (int i = 0; i < total_freedom; i++)
     {

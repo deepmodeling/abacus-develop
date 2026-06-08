@@ -55,7 +55,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
         // normalize the gradient, in convinience to
         // move atom.
-        double norm = dot_func(grad_saved, grad_saved, dim);
+        double norm = dot_func(grad_saved.data(), grad_saved.data(), dim);
         norm = sqrt(norm);
         for (int i = 0; i < dim; i++)
         {
@@ -75,7 +75,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(ucell, move.data(), pos_saved);
+        move_atoms(ucell, move.data(), pos_saved.data());
         Ions_Move_Basic::update_iter++;
     }
 

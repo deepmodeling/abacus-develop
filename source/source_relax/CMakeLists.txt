@@ -1,12 +1,9 @@
 add_library(
     relax
     OBJECT
-
     relax_driver.cpp
-
     relax_sync.cpp
     line_search.cpp
-    
     bfgs.cpp
     lbfgs.cpp
     relax_nsync.cpp
