@@ -3,6 +3,8 @@
 #include "md_func.h"
 #include "source_base/timer.h"
 
+#include <random>
+
 Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
 }
@@ -100,6 +102,11 @@ void Verlet::apply_thermostat(void)
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);
     }
+    else if (mdp.md_thermostat == "csvr")
+    {
+        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
+        apply_csvr(t_current, t_target);
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Verlet", "No such thermostat!");
@@ -122,6 +129,70 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] *= fac;
+    }
+}
+
+
+void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
+{
+    // CSVR thermostat: Canonical Sampling through Velocity Rescaling
+    // Reference: G. Bussi, D. Donadio, M. Parrinello, J. Chem. Phys. 126, 014101 (2007)
+
+    if (current_temp <= 0.0 || target_temp <= 0.0)
+    {
+        return;
+    }
+
+    // Get degrees of freedom
+    int ndeg = frozen_freedom_;
+
+    // Calculate kinetic energies
+    double kin_energy = current_temp * ndeg * 0.5;  // in Hartree
+    double kin_target = target_temp * ndeg * 0.5;   // in Hartree
+
+    // Calculate tau parameter (characteristic time scale / dt)
+    double taut = mdp.md_csvr_tau / mdp.md_dt;
+
+    // Calculate decay factor
+    double factor = 0.0;
+    if (taut > 0.1)
+    {
+        factor = exp(-1.0 / taut);
+    }
+
+    // Generate Gaussian random number
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    if (mdp.md_seed > 0)
+    {
+        gen.seed(mdp.md_seed + step_);
+    }
+    std::normal_distribution<double> gauss_dist(0.0, 1.0);
+    double rr = gauss_dist(gen);
+
+    // Calculate sum of squared Gaussian random numbers (ndeg - 1)
+    double sumnoises = 0.0;
+    for (int i = 0; i < ndeg - 1; ++i)
+    {
+        double r = gauss_dist(gen);
+        sumnoises += r * r;
+    }
+
+    // CSVR core formula
+    double resample = kin_energy
+                      + (1.0 - factor) * (kin_target * (sumnoises + rr * rr) / ndeg - kin_energy)
+                      + 2.0 * rr * sqrt(kin_energy * kin_target / ndeg * (1.0 - factor) * factor);
+
+    // Ensure non-negative
+    resample = std::max(0.0, resample);
+
+    // Calculate scaling factor
+    double scale = sqrt(resample / kin_energy);
+
+    // Apply velocity scaling
+    for (int i = 0; i < ucell.nat; ++i)
+    {
+        vel[i] *= scale;
     }
 }
 
