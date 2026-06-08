@@ -49,7 +49,17 @@ jobs:
       - name: Configure
         run: |
           source toolchain/install/setup
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON -DENABLE_DFTD4=ON
+          cmake -B build \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DENABLE_MLALGO=ON \
+            -DENABLE_LIBXC=ON \
+            -DENABLE_LIBRI=ON \
+            -DENABLE_GOOGLEBENCH=ON \
+            -DENABLE_RAPIDJSON=ON \
+            -DENABLE_FLOAT_FFTW=ON \
+            -DENABLE_DFTD4=ON \
+            -Werror=dev
 
 # Temporarily removed because no one maintains this now.
 # And it will break the CI test workflow.
