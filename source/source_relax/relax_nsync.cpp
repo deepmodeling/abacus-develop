@@ -89,7 +89,7 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
             ModuleBase::WARNING("Ions", "No atom is allowed to move!");
             return false;
         }
-        //		if(!IMM.get_converged()) return 1;
+        //        if(!IMM.get_converged()) return 1;
         else
         {
             assert(PARAM.inp.cal_force == 1);

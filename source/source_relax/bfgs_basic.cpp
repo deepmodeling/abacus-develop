@@ -76,7 +76,7 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     for (int i = 0; i < dim; i++)
     {
         //      s[i] = this->pos[i] - this->pos_p[i];
-        //		mohan update 2010-07-27
+        //        mohan update 2010-07-27
         s[i] = this->check_move(lat0, pos[i], pos_p[i]);
         s[i] *= lat0;
 

@@ -320,7 +320,7 @@ void BFGS::UpdatePos(UnitCell& ucell)
             move_ion[iat * 3 + 2] = move_ion_dr.z ;
         }
     }
-	ucell.update_pos_taud(move_ion);
+    ucell.update_pos_taud(move_ion);
     pos = this->MAddM(pos, dpos);*/
 }
 

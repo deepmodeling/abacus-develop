@@ -117,24 +117,24 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-		for (int i = 0;i < 3;++i) 
-		{
-			for (int j = 0;j < 3;++j) 
-			{
-				move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
-			}
-		}
-		ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
+        for (int i = 0;i < 3;++i) 
+        {
+            for (int j = 0;j < 3;++j) 
+            {
+                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+            }
+        }
+        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
         move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
 
-		for (int i = 0;i < 3;++i) 
-		{
-			for (int j = 0;j < 3;++j) 
-			{
-				move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
-			}
-		}
+        for (int i = 0;i < 3;++i) 
+        {
+            for (int j = 0;j < 3;++j) 
+            {
+                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+            }
+        }
     }
 
     if (ucell.lc[0] != 0)
@@ -252,9 +252,9 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         for (int i = 0; i < 3; i++)
         {
             if (stress_ii_max < std::abs(stress(i, i))) 
-			{
-				stress_ii_max = std::abs(stress(i, i));
-			}
+            {
+                stress_ii_max = std::abs(stress(i, i));
+            }
             for (int j = 0; j < 3; j++)
             {
                 if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))

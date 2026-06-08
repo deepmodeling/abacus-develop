@@ -10,9 +10,9 @@
 #include "source_cell/print_cell.h"
 
 void Relax_Driver::relax_driver(
-		ModuleESolver::ESolver* p_esolver, 
-		UnitCell& ucell,
-		const Input_para& inp)
+        ModuleESolver::ESolver* p_esolver, 
+        UnitCell& ucell,
+        const Input_para& inp)
 { 
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
@@ -38,13 +38,13 @@ void Relax_Driver::relax_driver(
     {
         time_t estart = time(nullptr);
 
-		if (inp.out_level == "ie"
-				&& (inp.calculation == "relax" 
-					|| inp.calculation == "cell-relax" 
-					|| inp.calculation == "scf"
-					|| inp.calculation == "nscf")
-				&& (inp.esolver_type != "lr"))
-		{
+        if (inp.out_level == "ie"
+                && (inp.calculation == "relax" 
+                    || inp.calculation == "cell-relax" 
+                    || inp.calculation == "scf"
+                    || inp.calculation == "nscf")
+                && (inp.esolver_type != "lr"))
+        {
             ModuleIO::print_screen(stress_step, force_step, istep);
         }
 
@@ -73,10 +73,10 @@ void Relax_Driver::relax_driver(
         {
             p_esolver->cal_force(ucell, force);
         }
-		else
-		{
+        else
+        {
             // do nothing
-		}
+        }
 
 
         // calculate and gather all parts of stress
@@ -84,10 +84,10 @@ void Relax_Driver::relax_driver(
         {
             p_esolver->cal_stress(ucell, stress);
         }
-		else
-		{
+        else
+        {
             // do nothing
-		}
+        }
 
         if (inp.calculation == "relax" || inp.calculation == "cell-relax")
         {
@@ -181,37 +181,37 @@ void Relax_Driver::relax_driver(
                                    "data_?");
     }
 
-	if (inp.calculation == "relax" || inp.calculation == "cell-relax")
-	{
-		if (istep-1 == inp.relax_nmax)
-		{
-			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-			std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-			std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-		}
-		else
-		{
-			std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-			std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
-			std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-		}
-	}
-	else
-	{
-		// do nothing
-	}
+    if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+    {
+        if (istep-1 == inp.relax_nmax)
+        {
+            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+            std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+            std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        }
+        else
+        {
+            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+            std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
+            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        }
+    }
+    else
+    {
+        // do nothing
+    }
 
-	if (inp.relax_nmax == 0)
+    if (inp.relax_nmax == 0)
     {
         std::cout << "-----------------------------------------------" << std::endl;
         std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
         std::cout << "-----------------------------------------------" << std::endl;
     }
-	else
-	{
-		// do nothing 
-	}
+    else
+    {
+        // do nothing 
+    }
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
