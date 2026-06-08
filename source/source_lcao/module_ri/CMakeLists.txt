@@ -22,6 +22,7 @@ if (ENABLE_LIBRI)
         exx_opt_orb.cpp
         gaussian_abfs.cpp
         singular_value.cpp
+        ExxLriDetail.cpp
     )
   endif()
   add_library(

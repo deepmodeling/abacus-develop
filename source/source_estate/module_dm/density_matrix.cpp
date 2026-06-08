@@ -214,7 +214,7 @@ template <typename TK, typename TR_in, typename TR_out>
 void DensityMatrix_Tools::cal_DMR_td(
     const DensityMatrix<TK, TR_in> &dm,
     std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
-    const UnitCell& ucell,
+    const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
     const ModuleBase::Vector3<double> At,
     const int ik_in)
 {
@@ -262,19 +262,21 @@ void DensityMatrix_Tools::cal_DMR_td(
                 }
                 #endif
                 target_DMR_mat_vec[iR] = target_mat->get_pointer();
-                //cal tddft phase for hybrid gauge
-                const ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, R_index);
-                const double arg_td = At * dtau * ucell.lat0;
                 for(int ik = 0; ik < dm._nk; ++ik)
                 {
                     if(ik_in >= 0 && ik_in != ik) { continue; }
                     // cal k_phase
                     // if TK==std::complex<double>, kphase is e^{ikR}
                     const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
-                    const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI + arg_td;
+                    const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
                     kphase_vec[ik][iR] = TK(cosp, sinp);
+                    if(PARAM.inp.td_stype==2)
+                    {
+                        //phase for hybrid gauge tddft
+                        kphase_vec[ik][iR] *= phase_hybrid.at(R_index);
+                    }
                 }
             }
 
@@ -353,20 +355,20 @@ void DensityMatrix_Tools::cal_DMR_td(
     ModuleBase::timer::end("DensityMatrix", "cal_DMR_td");
 }
 template <>
-void DensityMatrix<double, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
+void DensityMatrix<double, double>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
     return;
 }
 template <>
-void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
+void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
-    DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, ucell, At, ik_in);
+    DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
 }
 
 template <>
-void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in)
+void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
-    DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, ucell, At, ik_in);
+    DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
 }
 
 
