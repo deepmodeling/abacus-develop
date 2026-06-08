@@ -4,32 +4,19 @@
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include<vector>
 
 using namespace Ions_Move_Basic;
 
-Ions_Move_SD::Ions_Move_SD()
+Ions_Move_SD::Ions_Move_SD() : energy_saved(1.0e10)
 {
-    this->energy_saved = 1.0e10;
-    this->grad_saved = nullptr;
-    this->pos_saved = nullptr;
-}
-Ions_Move_SD::~Ions_Move_SD()
-{
-    delete[] grad_saved;
-    delete[] pos_saved;
 }
 
 void Ions_Move_SD::allocate()
 {
     ModuleBase::TITLE("Ions_Move_SD", "allocate");
     assert(dim > 0);
-    delete[] grad_saved;
-    delete[] pos_saved;
-    this->grad_saved = new double[dim];
-    this->pos_saved = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(grad_saved, dim);
-    ModuleBase::GlobalFunc::ZEROS(pos_saved, dim);
+    grad_saved.resize(dim, 0.0);
+    pos_saved.resize(dim, 0.0);
 }
 
 void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)
@@ -37,8 +24,8 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
     assert(dim > 0);
-    assert(grad_saved != nullptr);
-    assert(pos_saved != nullptr);
+    assert(grad_saved.size() == static_cast<size_t>(dim));
+    assert(pos_saved.size() == static_cast<size_t>(dim));
 
     std::vector<double> pos(dim);
     std::vector<double> grad(dim);
@@ -58,9 +45,10 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         printf("in cheak_converged");
         printf("pos[0]: %f\n", pos[0]);
         energy_saved = etot_in;
-        for (int i = 0; i < dim; i++) {
+        for (int i = 0; i < dim; i++) 
+        {
             pos_saved[i] = pos[i];
-}
+        }
         for (int i = 0; i < dim; i++)
         {
             grad_saved[i] = grad[i];
