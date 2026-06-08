@@ -47,7 +47,7 @@ namespace DensityMatrix_Tools
     extern void cal_DMR_td(
         const DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
-        const UnitCell& ucell,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const ModuleBase::Vector3<double> At,
         const int ik_in);
 
@@ -225,7 +225,7 @@ class DensityMatrix
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_DMR_td(const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in = -1);
+    void cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in = -1);
 
     /**
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
@@ -327,7 +327,7 @@ class DensityMatrix
     TR* dmr_tmp_ = nullptr;
 
     friend void DensityMatrix_Tools::cal_DMR<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const int ik_in);
-    friend void DensityMatrix_Tools::cal_DMR_td<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const UnitCell& ucell, const ModuleBase::Vector3<double> At, const int ik_in);
+    friend void DensityMatrix_Tools::cal_DMR_td<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in);
     friend void DensityMatrix_Tools::cal_DMR_full<TK,TR>(const DensityMatrix<TK, TR> &dm, hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in);
 };
 
