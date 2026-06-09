@@ -72,6 +72,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_LIBXC=ON \
         -DUSE_OPENMP=ON \
         -DUSE_ELPA=ON \
+        -DENABLE_DFTD4=ON \
         -DENABLE_RAPIDJSON=ON \
         -DRapidJSON_DIR=$RAPIDJSON \
         -DENABLE_LIBRI=ON \
