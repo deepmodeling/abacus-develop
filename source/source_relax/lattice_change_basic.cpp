@@ -6,19 +6,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/update_cell.h"
 
-int Lattice_Change_Basic::dim = 0;
-bool Lattice_Change_Basic::converged = true;
-double Lattice_Change_Basic::largest_grad = 0.0;
+// Lattice-specific parameters (shared variables are in Relax_Data)
 int Lattice_Change_Basic::update_iter = 0;
-int Lattice_Change_Basic::istep = 0;
 int Lattice_Change_Basic::stress_step = 0;
-
-double Lattice_Change_Basic::ediff = 0.0;
-double Lattice_Change_Basic::etot = 0.0;
-double Lattice_Change_Basic::etot_p = 0.0;
-
-// double Lattice_Change_Basic::lattice_change_ini = 0.5; // default is 0.5
-double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.5
+double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.01
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
 void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)

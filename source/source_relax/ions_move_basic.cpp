@@ -6,23 +6,14 @@
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
 
-int Ions_Move_Basic::dim = 0;
-bool Ions_Move_Basic::converged = false;
-double Ions_Move_Basic::largest_grad = 0.0;
+// Ions-specific parameters (shared variables are in Relax_Data)
 int Ions_Move_Basic::update_iter = 0;
-int Ions_Move_Basic::istep = 0;
-
-double Ions_Move_Basic::ediff = 0.0;
-double Ions_Move_Basic::etot = 0.0;
-double Ions_Move_Basic::etot_p = 0.0;
-
 double Ions_Move_Basic::trust_radius = 0.0;
 double Ions_Move_Basic::trust_radius_old = 0.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0; // default is 0.8
 double Ions_Move_Basic::relax_bfgs_rmin = -1.0; // default is 1e-5
 double Ions_Move_Basic::relax_bfgs_init = -1.0; // default is 0.5
 double Ions_Move_Basic::best_xxx = 1.0;
-
 int Ions_Move_Basic::out_stru = 0;
 std::vector<std::string> Ions_Move_Basic::relax_method = {"bfgs","2"};
 

@@ -1,47 +1,90 @@
 #ifndef IONS_MOVE_BASIC_H
 #define IONS_MOVE_BASIC_H
 
+#include "relax_data.h"
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 
+/**
+ * @namespace Ions_Move_Basic
+ * @brief Basic utilities and shared state for ionic relaxation algorithms.
+ * 
+ * This namespace provides common functions and parameters used by all
+ * ion movement methods (BFGS, CG, SD, etc.). It shares core state variables
+ * through references to Relax_Data, ensuring consistent data across different
+ * optimization algorithms.
+ */
 namespace Ions_Move_Basic
 {
-extern int dim;              // dimension of the free variables
-extern bool converged;       // converged force or not
-extern double largest_grad;  // largest gradient among the forces
-extern int update_iter;      // number of successfully updated iterations
-extern int istep;            // index of ionic steps
-extern double ediff;         // energy difference compared to last step
-extern double etot;          // total energy of this step
-extern double etot_p;        // total energy of last step
+// Shared state variables (referenced from Relax_Data for unified data sharing)
+static int& dim = Relax_Data::dim;              ///< Dimension of free variables (3 * number of atoms)
+static bool& converged = Relax_Data::converged; ///< Convergence flag
+static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
+static int& istep = Relax_Data::istep;          ///< Current ionic step index
+static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
+static double& etot = Relax_Data::etot;         ///< Total energy of current step
+static double& etot_p = Relax_Data::etot_p;     ///< Total energy of previous step
 
-extern double trust_radius;     // trust radius now
-extern double trust_radius_old; // old trust radius
-extern double relax_bfgs_rmax;  // max value of trust radius
-extern double relax_bfgs_rmin;  // min value of trust radius
-extern double relax_bfgs_init;  // initial value of trust radius
-extern double best_xxx;         // the last step length of cg, we use it as bfgs initial step length
-extern std::vector<std::string> relax_method; // relaxation method
-extern int out_stru; // output the structure or not
+// Ions-specific parameters (not shared with lattice change)
+extern int update_iter;              ///< Number of successfully updated iterations
+extern double trust_radius;          ///< Current trust radius
+extern double trust_radius_old;      ///< Previous trust radius
+extern double relax_bfgs_rmax;       ///< Maximum trust radius (default: 0.8 Bohr)
+extern double relax_bfgs_rmin;       ///< Minimum trust radius (default: 1e-5 Bohr)
+extern double relax_bfgs_init;       ///< Initial trust radius (default: 0.5 Bohr)
+extern double best_xxx;              ///< Last step length from CG, used as BFGS initial guess
+extern std::vector<std::string> relax_method; ///< Relaxation method settings
+extern int out_stru;                 ///< Structure output flag
 
-// setup the gradient, all the same for any geometry optimization methods.
+/**
+ * @brief Setup gradient from atomic forces.
+ * @param ucell Unit cell containing atomic information
+ * @param force Force matrix (nat x 3)
+ * @param pos Output position array (dimension: dim)
+ * @param grad Output gradient array (dimension: dim)
+ */
 void setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad);
 
-// move the atom positions, considering the periodic boundary condition.
+/**
+ * @brief Move atoms according to displacement vector.
+ * @param ucell Unit cell to update
+ * @param move Displacement vector (dimension: dim)
+ * @param pos Current position array (dimension: dim)
+ */
 void move_atoms(UnitCell &ucell, double *move, double *pos);
 
-// check the converged conditions ( if largest gradient is smaller than the threshold )
+/**
+ * @brief Check convergence based on gradient threshold.
+ * @param ucell Unit cell containing lattice information
+ * @param grad Gradient array (dimension: dim)
+ */
 void check_converged(const UnitCell &ucell, const double *grad);
 
-// terminate the geometry optimization.
+/**
+ * @brief Terminate geometry optimization and output results.
+ * @param ucell Unit cell to output
+ */
 void terminate(const UnitCell &ucell);
 
-// setup the total energy, keep the new energy or not.
+/**
+ * @brief Update energy values and compute energy difference.
+ * @param energy_in Input energy value
+ * @param judgement Flag for SD method (true) or BFGS (false)
+ */
 void setup_etot(const double &energy_in, const bool judgement);
 
-double dot_func(const double *a, const double *b, const int &dim);
+/**
+ * @brief Compute dot product of two vectors.
+ * @param a First vector
+ * @param b Second vector
+ * @param dim_in Dimension of vectors
+ * @return Dot product value
+ */
+double dot_func(const double *a, const double *b, const int &dim_in);
 
-// third order interpolation scheme
+/**
+ * @brief Third-order polynomial interpolation for line search.
+ */
 void third_order();
 
 } // namespace Ions_Move_Basic
