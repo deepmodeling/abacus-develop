@@ -113,14 +113,14 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     this->p_kv = &kv;
     this->orb_cutoff_ = orb.cutoffs();
 
-    Mix_DMk_2D mix_DMk_2D;
+    Mix_DMk_2D<T> mix_DMk_2D;
     bool exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (exx_spacegroup_symmetry)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1));}
     else
-        {mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nks());}
         
-    mix_DMk_2D.set_mixing(nullptr);
+    mix_DMk_2D.set_mixing_plain(1.0);
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -138,9 +138,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
-		Ds = PARAM.globalv.gamma_only_local
-        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, exx_spacegroup_symmetry);
+        Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(
+            ucell,
+            kv,
+            mix_DMk_2D.get_DMk_out(),
+            *dm.get_paraV_pointer(),
+            PARAM.inp.nspin,
+            exx_spacegroup_symmetry);
     
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; // not used now, Hf/Ccp -> singularity_correction, see conv_coulomb_pot_k.cpp
