@@ -20,10 +20,6 @@ Lattice_Change_CG::Lattice_Change_CG()
 {
 }
 
-Lattice_Change_CG::~Lattice_Change_CG()
-{
-}
-
 void Lattice_Change_CG::allocate(void)
 {
 }
