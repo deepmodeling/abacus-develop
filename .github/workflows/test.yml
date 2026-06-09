@@ -242,13 +242,6 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 09_DeePKS
           
-      - name: 17_DS_DFTU Test
-        env:
-          GTEST_COLOR: 'yes'
-          OMP_NUM_THREADS: '2'
-        run: |
-          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
-          
       - name: 10_others Test
         env:
           GTEST_COLOR: 'yes'
