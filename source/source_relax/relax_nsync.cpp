@@ -49,7 +49,7 @@ bool Relax_old::relax_step(const int& istep,
     {
         // do relax calculation and generate next structure
         bool converged = false;
-        converged = this->do_relax(istep, force, energy, ucell, force_step);
+        converged = this->do_relax(istep, force, energy, ucell, force_step, GlobalV::ofs_running);
         if (!converged)
         {
             ucell.ionic_position_updated = true;
@@ -129,10 +129,11 @@ bool Relax_old::do_relax(const int& istep,
                          const ModuleBase::matrix& ionic_force,
                          const double& total_energy,
                          UnitCell& ucell,
-                         int& jstep)
+                         int& jstep,
+                         std::ofstream& ofs)
 {
     ModuleBase::TITLE("Relax_old", "do_relax");
-    IMM.cal_movement(istep, jstep, ionic_force, total_energy, ucell);
+    IMM.cal_movement(istep, jstep, ionic_force, total_energy, ucell, ofs);
     ++jstep;
     return IMM.get_converged();
 }

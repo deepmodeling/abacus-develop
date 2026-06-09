@@ -1,6 +1,8 @@
 #ifndef IONS_MOVE_BASIC_H
 #define IONS_MOVE_BASIC_H
 
+#include <fstream>
+#include <iostream>
 #include "relax_data.h"
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
@@ -42,29 +44,33 @@ extern int out_stru;                 ///< Structure output flag
  * @param force Force matrix (nat x 3)
  * @param pos Output position array (dimension: dim)
  * @param grad Output gradient array (dimension: dim)
+ * @param ofs Output stream for logging
  */
-void setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad);
+void setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad, std::ofstream& ofs);
 
 /**
  * @brief Move atoms according to displacement vector.
  * @param ucell Unit cell to update
  * @param move Displacement vector (dimension: dim)
  * @param pos Current position array (dimension: dim)
+ * @param ofs Output stream for logging
  */
-void move_atoms(UnitCell &ucell, double *move, double *pos);
+void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
 
 /**
  * @brief Check convergence based on gradient threshold.
  * @param ucell Unit cell containing lattice information
  * @param grad Gradient array (dimension: dim)
+ * @param ofs Output stream for logging
  */
-void check_converged(const UnitCell &ucell, const double *grad);
+void check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs);
 
 /**
  * @brief Terminate geometry optimization and output results.
  * @param ucell Unit cell to output
+ * @param ofs Output stream for logging
  */
-void terminate(const UnitCell &ucell);
+void terminate(const UnitCell &ucell, std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.

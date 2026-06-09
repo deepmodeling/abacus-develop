@@ -25,7 +25,7 @@ void Ions_Move_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in)
+void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(dim > 0);
@@ -72,16 +72,16 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             nbrent = 0;
         }
 
-        Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data());
+        Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
         Ions_Move_Basic::setup_etot(etot_in, 0);
 
         if (flag == 0)
         {
-            Ions_Move_Basic::check_converged(ucell, grad.data());
+            Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
         }
         if (Ions_Move_Basic::converged)
         {
-            Ions_Move_Basic::terminate(ucell);
+            Ions_Move_Basic::terminate(ucell, ofs);
             break;
         }
 
@@ -93,7 +93,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());
             CG_Base::setup_move(dim, move0.data(), cg_gradn.data(), steplength);
-            Ions_Move_Basic::move_atoms(ucell, move0.data(), pos.data());
+            Ions_Move_Basic::move_atoms(ucell, move0.data(), pos.data(), ofs);
 
             for (int i = 0; i < dim; i++)
             {
@@ -145,7 +145,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             }
 
             CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-            Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data());
+            Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
             trial = false;
             xa = 0;
             CG_Base::f_cal(dim, move0.data(), move.data(), xc);
@@ -183,7 +183,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
         CG_Base::normalize(dim, cg_gradn.data(), cg_grad0.data());
         CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data());
+        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
         Ions_Move_Basic::relax_bfgs_init = xc;
         break;
     }

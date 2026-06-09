@@ -99,9 +99,9 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     double etot = 0.0;
 
     // call function
-    GlobalV::ofs_running.open("TestStartConverged.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartConverged.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
@@ -137,9 +137,9 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     double etot = 0.0;
 
     // call function
-    GlobalV::ofs_running.open("TestStartSd.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartSd.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -172,13 +172,16 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartTrialGoto_temp1.log");
+    im_cg.start(ucell, force, etot, ofs1);
+    ofs1.close();
+    std::remove("TestStartTrialGoto_temp1.log");
     Ions_Move_Basic::istep = 2;
     im_cg.move0[0] = 10.0;
     force(0, 0) = 0.001;
-    GlobalV::ofs_running.open("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartTrialGoto.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -211,12 +214,15 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartTrial_temp1.log");
+    im_cg.start(ucell, force, etot, ofs1);
+    ofs1.close();
+    std::remove("TestStartTrial_temp1.log");
     Ions_Move_Basic::istep = 2;
     im_cg.move0[0] = 10.0;
-    GlobalV::ofs_running.open("TestStartTrial.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartTrial.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -249,14 +255,20 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartNoTrialGotoCase1_temp1.log");
+    im_cg.start(ucell, force, etot, ofs1);
+    ofs1.close();
+    std::remove("TestStartNoTrialGotoCase1_temp1.log");
     Ions_Move_Basic::istep = 2;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
+    im_cg.start(ucell, force, etot, ofs2);
+    ofs2.close();
+    std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
-    GlobalV::ofs_running.open("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartNoTrialGotoCase1.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -289,13 +301,19 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartNoTrialGotoCase2_temp1.log");
+    im_cg.start(ucell, force, etot, ofs1);
+    ofs1.close();
+    std::remove("TestStartNoTrialGotoCase2_temp1.log");
     Ions_Move_Basic::istep = 2;
     im_cg.move0[0] = 10.0;
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.open("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
+    im_cg.start(ucell, force, etot, ofs2);
+    ofs2.close();
+    std::remove("TestStartNoTrialGotoCase2_temp2.log");
+    std::ofstream ofs("TestStartNoTrialGotoCase2.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -328,14 +346,20 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartNoTrial_temp1.log");
+    im_cg.start(ucell, force, etot, ofs1);
+    ofs1.close();
+    std::remove("TestStartNoTrial_temp1.log");
     Ions_Move_Basic::istep = 2;
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.open("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("TestStartNoTrial_temp2.log");
+    im_cg.start(ucell, force, etot, ofs2);
+    ofs2.close();
+    std::remove("TestStartNoTrial_temp2.log");
+    std::ofstream ofs("TestStartNoTrial.log");
+    im_cg.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"

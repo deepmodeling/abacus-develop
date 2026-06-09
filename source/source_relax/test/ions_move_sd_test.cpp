@@ -74,19 +74,19 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     double etot = 0.0;
 
     // call function
-    GlobalV::ofs_running.open("log");
-    im_sd.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_sd_start_converged.log");
+    im_sd.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
                                   " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_sd_start_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_sd_start_converged.log");
 
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
@@ -127,17 +127,17 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     }
 
     // call function
-    GlobalV::ofs_running.open("log");
-    im_sd.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_sd_start_not_converged.log");
+    im_sd.start(ucell, force, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 25.7111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_sd_start_not_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_sd_start_not_converged.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);

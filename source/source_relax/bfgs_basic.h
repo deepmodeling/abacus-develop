@@ -1,6 +1,8 @@
 #ifndef BFGS_BASIC
 #define BFGS_BASIC
 
+#include <fstream>
+#include <iostream>
 #include "source_base/matrix.h"
 #include <vector>
 
@@ -23,7 +25,7 @@ class BFGS_Basic
 
   protected:
     void allocate_basic(void);
-    void new_step(const double& lat0);
+    void new_step(const double& lat0, std::ofstream& ofs);
     void reset_hessian(void);
     void save_bfgs(void);
 
@@ -53,9 +55,9 @@ class BFGS_Basic
 
     int bfgs_ndim;
 
-    void update_inverse_hessian(const double& lat0);
-    void check_wolfe_conditions(void);
-    void compute_trust_radius(void);
+    void update_inverse_hessian(const double& lat0, std::ofstream& ofs);
+    void check_wolfe_conditions(std::ofstream& ofs);
+    void compute_trust_radius(std::ofstream& ofs);
 };
 
 #endif

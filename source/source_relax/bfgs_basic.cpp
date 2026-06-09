@@ -32,7 +32,7 @@ void BFGS_Basic::allocate_basic(void)
     return;
 }
 
-void BFGS_Basic::update_inverse_hessian(const double &lat0)
+void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream& ofs)
 {
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
@@ -57,8 +57,8 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     }
     if (std::abs(sdoty) < 1.0e-16)
     {
-        GlobalV::ofs_running << " WARINIG: unexpected behaviour in update_inverse_hessian" << std::endl;
-        GlobalV::ofs_running << " Resetting bfgs history " << std::endl;
+        ofs << " WARINIG: unexpected behaviour in update_inverse_hessian" << std::endl;
+        ofs << " Resetting bfgs history " << std::endl;
         this->reset_hessian();
         return;
     }
@@ -96,7 +96,7 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     return;
 }
 
-void BFGS_Basic::check_wolfe_conditions(void)
+void BFGS_Basic::check_wolfe_conditions(std::ofstream& ofs)
 {
     double dot_p = dot_func(grad_p.data(), move_p.data(), dim);
     double dot = dot_func(grad.data(), move_p.data(), dim);
@@ -111,14 +111,14 @@ void BFGS_Basic::check_wolfe_conditions(void)
 
     if (PARAM.inp.test_relax_method)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "etot - etot_p", etot - etot_p);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dot", dot);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w2 * dot_p", relax_bfgs_w2 * dot_p);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w1", relax_bfgs_w1);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w2", relax_bfgs_w2);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe1", wolfe1);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe2", wolfe2);
+        ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", etot - etot_p);
+        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
+        ModuleBase::GlobalFunc::OUT(ofs, "dot", dot);
+        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2 * dot_p", relax_bfgs_w2 * dot_p);
+        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1", relax_bfgs_w1);
+        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2", relax_bfgs_w2);
+        ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
+        ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
     }
 
     this->wolfe_flag = wolfe1 && wolfe2;
@@ -135,13 +135,13 @@ void BFGS_Basic::check_wolfe_conditions(void)
        }
      */
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "etot - etot_p", etot - etot_p);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe1", wolfe1);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe2", wolfe2);
+    ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", etot - etot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
+    ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
     //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot = ",dot);
     //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot_p = ",dot_p);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe condition satisfied", wolfe_flag);
+    ModuleBase::GlobalFunc::OUT(ofs, "wolfe condition satisfied", wolfe_flag);
     return;
 }
 
@@ -175,7 +175,7 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0)
+void BFGS_Basic::new_step(const double &lat0, std::ofstream& ofs)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -203,8 +203,8 @@ void BFGS_Basic::new_step(const double &lat0)
     }
     else if (Ions_Move_Basic::update_iter > 1)
     {
-        this->check_wolfe_conditions();
-        this->update_inverse_hessian(lat0);
+        this->check_wolfe_conditions(ofs);
+        this->update_inverse_hessian(lat0, ofs);
     }
 
     //--------------------------------------------------------------------
@@ -227,7 +227,8 @@ void BFGS_Basic::new_step(const double &lat0)
 
             // std::cout << " move after hess " << move[i] << std::endl;
         }
-        GlobalV::ofs_running << " check the norm of new move " << dot_func(move.data(), move.data(), dim) << " (Bohr)" << std::endl;
+
+        ofs << " check the norm of new move " << dot_func(move.data(), move.data(), dim) << " (Bohr)" << std::endl;
     }
     else if (bfgs_ndim > 1)
     {
@@ -244,7 +245,7 @@ void BFGS_Basic::new_step(const double &lat0)
 
     if (dot > 0.0)
     {
-        GlobalV::ofs_running << " Uphill move : resetting bfgs history" << std::endl;
+        ofs << " Uphill move : resetting bfgs history" << std::endl;
         for (int i = 0; i < dim; i++)
         {
             move[i] = -grad[i];
@@ -264,7 +265,7 @@ void BFGS_Basic::new_step(const double &lat0)
     else if (Ions_Move_Basic::update_iter > 1)
     {
         trust_radius = trust_radius_old;
-        this->compute_trust_radius();
+        this->compute_trust_radius(ofs);
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
     return;
@@ -272,7 +273,7 @@ void BFGS_Basic::new_step(const double &lat0)
 
 // trust radius is computed in this function
 // trust radius determine the step length
-void BFGS_Basic::compute_trust_radius(void)
+void BFGS_Basic::compute_trust_radius(std::ofstream& ofs)
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
@@ -285,7 +286,7 @@ void BFGS_Basic::compute_trust_radius(void)
     // is used to compare to trust_radius_old.
     double norm_move = dot_func(this->move.data(), this->move.data(), dim);
     norm_move = std::sqrt(norm_move);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "move(norm)", norm_move);
+    ModuleBase::GlobalFunc::OUT(ofs, "move(norm)", norm_move);
 
     ltest = ltest && (norm_move > trust_radius_old);
 
@@ -320,11 +321,11 @@ void BFGS_Basic::compute_trust_radius(void)
 
     if (PARAM.inp.test_relax_method)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe_flag", wolfe_flag);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "trust_radius_old", trust_radius_old);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "2*a*trust_radius_old", 2.0 * a * trust_radius_old);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "norm_move", norm_move);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Trust_radius (Bohr)", trust_radius);
+        ModuleBase::GlobalFunc::OUT(ofs, "wolfe_flag", wolfe_flag);
+        ModuleBase::GlobalFunc::OUT(ofs, "trust_radius_old", trust_radius_old);
+        ModuleBase::GlobalFunc::OUT(ofs, "2*a*trust_radius_old", 2.0 * a * trust_radius_old);
+        ModuleBase::GlobalFunc::OUT(ofs, "norm_move", norm_move);
+        ModuleBase::GlobalFunc::OUT(ofs, "Trust_radius (Bohr)", trust_radius);
     }
 
     if (trust_radius < relax_bfgs_rmin)
@@ -336,7 +337,7 @@ void BFGS_Basic::compute_trust_radius(void)
             // something is going wrongsomething is going wrong
             ModuleBase::WARNING_QUIT("bfgs", "bfgs history already reset at previous step, we got trapped!");
         }
-        GlobalV::ofs_running << " Resetting BFGS history." << std::endl;
+        ofs << " Resetting BFGS history." << std::endl;
         this->reset_hessian();
         for (int i = 0; i < dim; i++)
         {

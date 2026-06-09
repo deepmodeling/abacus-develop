@@ -42,7 +42,10 @@ TEST_F(IonsMoveBasicTest, SetupGradient)
 {
     // Call the function being tested
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::setup_gradient(ucell, force, pos, grad);
+    std::ofstream ofs("test_setup_gradient.log");
+    Ions_Move_Basic::setup_gradient(ucell, force, pos, grad, ofs);
+    ofs.close();
+    std::remove("test_setup_gradient.log");
 
     // Check that the expected positions and gradients were generated
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
@@ -72,18 +75,18 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::move_atoms(ucell, move, pos);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_move_atoms.log");
+    Ions_Move_Basic::move_atoms(ucell, move, pos, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_move_atoms.log");
     std::string expected_output = "\n movement of ions (unit is Bohr) : \n         Atom              x              y  "
                                   "            z\n       move_1              0              1              2\n       "
                                   "move_2              3              4              5\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_move_atoms.log");
 
     EXPECT_THAT(output , ::testing::HasSubstr(expected_output));
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
@@ -108,17 +111,17 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case1.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case1.log");
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
@@ -147,17 +150,17 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     grad[0] = 1.0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case2.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case2.log");
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
@@ -186,17 +189,17 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     grad[0] = 1.0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case3.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case3.log");
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
@@ -221,15 +224,15 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
     Ions_Move_Basic::update_iter = 5;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::terminate(ucell);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_converged.log");
+    Ions_Move_Basic::terminate(ucell, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_converged.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_converged.log");
 
     std::string expected_ofs = " end of geometry optimization\n                                    istep = 2\n         "
                                "                update iteration = 5\n";
@@ -244,15 +247,15 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
     Ions_Move_Basic::converged = false;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::terminate(ucell);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_not_converged.log");
+    Ions_Move_Basic::terminate(ucell, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_not_converged.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_not_converged.log");
 
     std::string expected_ofs = " the maximum number of steps has been reached.\n end of geometry optimization.\n";
 

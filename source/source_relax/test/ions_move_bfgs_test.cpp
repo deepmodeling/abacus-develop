@@ -73,15 +73,15 @@ TEST_F(IonsMoveBFGSTest, StartCase1)
 
     // Call the function being tested
     bfgs.allocate();
-    GlobalV::ofs_running.open("log");
-    bfgs.start(ucell, force, energy_in);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_start_case1.log");
+    bfgs.start(ucell, force, energy_in, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_start_case1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_start_case1.log");
 
     EXPECT_THAT(output, testing::HasSubstr("update iteration"));
 }
@@ -99,15 +99,18 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
 
     // Call the function being tested
     bfgs.allocate();
-    GlobalV::ofs_running.open("log");
-    EXPECT_EXIT(bfgs.start(ucell, force, energy_in) , ::testing::ExitedWithCode(1), "");
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_start_case2.log");
+    testing::internal::CaptureStderr();
+    EXPECT_EXIT(bfgs.start(ucell, force, energy_in, ofs) , ::testing::ExitedWithCode(1), "");
+    std::string stderr_output = testing::internal::GetCapturedStderr();
+    ofs.close();
+    std::remove("test_start_case2.log");
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_start_case2.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_start_case2.log");
 
     EXPECT_THAT(output, testing::HasSubstr("Ion relaxation is not converged yet"));
 }
@@ -129,15 +132,15 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    bfgs.restart_bfgs(lat0);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_restart_bfgs_case1.log");
+    bfgs.restart_bfgs(lat0, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_restart_bfgs_case1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_restart_bfgs_case1.log");
 
     std::string expected_output = "                  trust_radius_old (bohr) = 2.44949\n";
 
@@ -167,7 +170,10 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
     }
 
     // Call the function being tested
-    bfgs.restart_bfgs(lat0);
+    std::ofstream ofs("test_restart_bfgs_case2.log");
+    bfgs.restart_bfgs(lat0, ofs);
+    ofs.close();
+    std::remove("test_restart_bfgs_case2.log");
 
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::update_iter, 0.0);
@@ -212,17 +218,17 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_bfgs_routine_case1.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0);
+    bfgs.bfgs_routine(lat0, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_bfgs_routine_case1.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_bfgs_routine_case1.log");
 
     std::string expected_ofs
         = "                                     dE0s = 0\n                                      den = 0.1\n            "
@@ -278,17 +284,17 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_bfgs_routine_case2.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0);
+    bfgs.bfgs_routine(lat0, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_bfgs_routine_case2.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_bfgs_routine_case2.log");
 
     std::string expected_ofs = " quadratic interpolation is impossible.\n                                    istep = "
                                "0\n                         update iteration = 0\n";
@@ -339,15 +345,15 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
     bfgs.inv_hess(1, 1) = -6.0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    bfgs.bfgs_routine(lat0);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_bfgs_routine_case3.log");
+    bfgs.bfgs_routine(lat0, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_bfgs_routine_case3.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_bfgs_routine_case3.log");
 
     std::string expected_ofs = " check the norm of new move 410 (Bohr)\n Uphill move : resetting bfgs history\n        "
                                "                            istep = 0\n                         update iteration = 1\n";
@@ -397,9 +403,12 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     }
 
     // Check the results
+    std::ofstream ofs("test_bfgs_routine_warning_quit1.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, ofs), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
+    ofs.close();
+    std::remove("test_bfgs_routine_warning_quit1.log");
     EXPECT_THAT(output, testing::HasSubstr("trust radius is too small! Break down."));
 }
 
@@ -418,8 +427,11 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
 
     // Check the results
+    std::ofstream ofs("test_bfgs_routine_warning_quit2.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, ofs), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
+    ofs.close();
+    std::remove("test_bfgs_routine_warning_quit2.log");
     EXPECT_THAT(output, testing::HasSubstr("BFGS: move-length unreasonably short"));
 }

@@ -18,7 +18,7 @@ double Ions_Move_Basic::best_xxx = 1.0;
 int Ions_Move_Basic::out_stru = 0;
 std::vector<std::string> Ions_Move_Basic::relax_method = {"bfgs","2"};
 
-void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad)
+void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, double *pos, double *grad, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "setup_gradient");
 
@@ -55,7 +55,7 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     return;
 }
 
-void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
+void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "move_atoms");
 
@@ -68,8 +68,8 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     if (PARAM.inp.test_relax_method)
     {
         int iat = 0;
-        GlobalV::ofs_running << "\n movement of ions (unit is Bohr) : " << std::endl;
-        GlobalV::ofs_running << " " << std::setw(12) << "Atom" << std::setw(15) << "x" << std::setw(15) << "y"
+        ofs << "\n movement of ions (unit is Bohr) : " << std::endl;
+        ofs << " " << std::setw(12) << "Atom" << std::setw(15) << "x" << std::setw(15) << "y"
                              << std::setw(15) << "z" << std::endl;
         for (int it = 0; it < ucell.ntype; it++)
         {
@@ -77,7 +77,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
             {
                 std::stringstream ss;
                 ss << "move_" << ucell.atoms[it].label << ia + 1;
-                GlobalV::ofs_running << " " << std::setw(12) << ss.str().c_str() << std::setw(15) << move[3 * iat + 0]
+                ofs << " " << std::setw(12) << ss.str().c_str() << std::setw(15) << move[3 * iat + 0]
                                      << std::setw(15) << move[3 * iat + 1] << std::setw(15) << move[3 * iat + 2]
                                      << std::endl;
                 iat++;
@@ -106,12 +106,12 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     //--------------------------------------------
     // Print out the structure file.
     //--------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs);
 
     return;
 }
 
-void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
+void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
@@ -132,10 +132,10 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
 
     if (PARAM.inp.test_relax_method)
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "old total energy (ry)", etot_p);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "new total energy (ry)", etot);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "energy difference (ry)", Ions_Move_Basic::ediff);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "largest gradient (ry/bohr)", Ions_Move_Basic::largest_grad);
+        ModuleBase::GlobalFunc::OUT(ofs, "old total energy (ry)", etot_p);
+        ModuleBase::GlobalFunc::OUT(ofs, "new total energy (ry)", etot);
+        ModuleBase::GlobalFunc::OUT(ofs, "energy difference (ry)", Ions_Move_Basic::ediff);
+        ModuleBase::GlobalFunc::OUT(ofs, "largest gradient (ry/bohr)", Ions_Move_Basic::largest_grad);
     }
 
     if (PARAM.inp.out_level == "ie")
@@ -144,7 +144,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                   << std::endl;
 
-        GlobalV::ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+        ofs << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                              << " eV/Angstrom while threshold is " 
                              << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     }
@@ -156,22 +156,22 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
 
     if (Ions_Move_Basic::largest_grad == 0.0)
     {
-        GlobalV::ofs_running << " largest force is 0, no movement is possible." << std::endl;
-        GlobalV::ofs_running << " it may converged, otherwise no movement of atom is allowed." << std::endl;
+        ofs << " largest force is 0, no movement is possible." << std::endl;
+        ofs << " it may converged, otherwise no movement of atom is allowed." << std::endl;
         Ions_Move_Basic::converged = true;
     }
     // mohan update 2011-04-21
     else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr )
     {
-        GlobalV::ofs_running << "\n Ion relaxation is converged!" << std::endl;
-        GlobalV::ofs_running << "\n Energy difference (Ry) = " << etot_diff << std::endl;
+        ofs << "\n Ion relaxation is converged!" << std::endl;
+        ofs << "\n Energy difference (Ry) = " << etot_diff << std::endl;
 
         Ions_Move_Basic::converged = true;
         ++Ions_Move_Basic::update_iter;
     }
     else
     {
-        GlobalV::ofs_running << "\n Ion relaxation is not converged yet (threshold is "
+        ofs << "\n Ion relaxation is not converged yet (threshold is "
                              << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << ")" << std::endl;
         // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
         //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr  << std::endl;
@@ -181,16 +181,16 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     return;
 }
 
-void Ions_Move_Basic::terminate(const UnitCell &ucell)
+void Ions_Move_Basic::terminate(const UnitCell &ucell, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
     if (Ions_Move_Basic::converged)
     {
-        GlobalV::ofs_running << " end of geometry optimization" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "istep", Ions_Move_Basic::istep);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Ions_Move_Basic::update_iter);
+        ofs << " end of geometry optimization" << std::endl;
+        ModuleBase::GlobalFunc::OUT(ofs, "istep", Ions_Move_Basic::istep);
+        ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
         /*
-        GlobalV::ofs_running<<"Saving the approximate inverse hessian"<<std::endl;
+        ofs<<"Saving the approximate inverse hessian"<<std::endl;
         std::ofstream hess("hess.out");
         for(int i=0;i<dim;i++)
         {
@@ -204,14 +204,14 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     }
     else
     {
-        GlobalV::ofs_running << " the maximum number of steps has been reached." << std::endl;
-        GlobalV::ofs_running << " end of geometry optimization." << std::endl;
+        ofs << " the maximum number of steps has been reached." << std::endl;
+        ofs << " end of geometry optimization." << std::endl;
     }
 
     //-----------------------------------------------------------
     // Print the structure.
     //-----------------------------------------------------------
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs);
     return;
 }
 

@@ -1,6 +1,8 @@
 #ifndef IONS_MOVE_CG_H
 #define IONS_MOVE_CG_H
 
+#include <fstream>
+#include <iostream>
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 #include "cg_base.h"
@@ -13,7 +15,7 @@ class Ions_Move_CG : public CG_Base
     ~Ions_Move_CG() = default;
 
     void allocate(void);
-    void start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot);
+    void start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, std::ofstream& ofs);
 
     static double RELAX_CG_THR;
     int sd_step = 0;

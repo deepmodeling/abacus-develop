@@ -1,6 +1,7 @@
 #ifndef RELAX_OLD_H
 #define RELAX_OLD_H
 
+#include <fstream>
 #include "ions_move_methods.h"
 #include "lattice_change_methods.h"
 #include "source_cell/unitcell.h"
@@ -28,7 +29,8 @@ class Relax_old
                   const ModuleBase::matrix& ionic_force,
                   const double& total_energy,
                   UnitCell& ucell,
-                  int& jstep);
+                  int& jstep,
+                  std::ofstream& ofs);
     bool do_cellrelax(const int& istep,
                       const int& stress_step,
                       const ModuleBase::matrix& stress,

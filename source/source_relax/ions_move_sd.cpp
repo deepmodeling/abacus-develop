@@ -20,7 +20,7 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in)
+void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -36,7 +36,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     // 0: ediff < 0
     bool judgement = false;
     setup_etot(etot_in, judgement);
-    setup_gradient(ucell, force, pos.data(), grad.data());
+    setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
 
     if (istep == 1 || etot_in <= energy_saved)
     {
@@ -61,10 +61,10 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    Ions_Move_Basic::check_converged(ucell, grad.data());
+    Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
     if (Ions_Move_Basic::converged)
     {
-        Ions_Move_Basic::terminate(ucell);
+        Ions_Move_Basic::terminate(ucell, ofs);
     }
     else
     {
@@ -73,7 +73,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(ucell, move.data(), pos_saved.data());
+        move_atoms(ucell, move.data(), pos_saved.data(), ofs);
         Ions_Move_Basic::update_iter++;
     }
 

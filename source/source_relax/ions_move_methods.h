@@ -1,6 +1,8 @@
 #ifndef IONS_MOVE_METHODS_H
 #define IONS_MOVE_METHODS_H
 
+#include <fstream>
+#include <iostream>
 #include "ions_move_basic.h"
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
@@ -20,7 +22,8 @@ class Ions_Move_Methods
                       const int &force_step,
                       const ModuleBase::matrix &f,
                       const double &etot,
-                      UnitCell &ucell);
+                      UnitCell &ucell,
+                      std::ofstream& ofs);
 
     bool get_converged() const
     {
