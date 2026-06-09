@@ -11,7 +11,7 @@
  * @author Wang Chenxi, Reze
  * @date 2026-06
  */
-#include "kedf_wt.h"
+#include "source_pw/module_ofdft/kedf_wt.h"
 #include "source_base/module_device/device_check.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_io/module_parameter/parameter.h"
