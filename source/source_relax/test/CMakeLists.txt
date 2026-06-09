@@ -61,7 +61,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RELAX_bfgs_test
   LIBS parameter ${math_libs} base device 
-  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp ../matrix_methods.cpp ${cell_source_files}
+  SOURCES bfgs_test.cpp ../ions_move_bfgs2.cpp ../ions_move_basic.cpp ../matrix_methods.cpp ${cell_source_files}
 )
 
 AddTest(
