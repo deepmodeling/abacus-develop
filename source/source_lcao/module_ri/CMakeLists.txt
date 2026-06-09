@@ -8,7 +8,6 @@ if (ENABLE_LIBRI)
         Matrix_Orbs22.cpp
         RI_2D_Comm.cpp
         Mix_DMk_2D.cpp
-        Mix_Matrix.cpp
   )
 
   if(ENABLE_LCAO)

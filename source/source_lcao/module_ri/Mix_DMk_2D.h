@@ -6,22 +6,21 @@
 #ifndef MIX_DMK_2D_H
 #define MIX_DMK_2D_H
 
-#include "Mix_Matrix.h"
 #include "source_base/module_mixing/mixing.h"
-#include "source_base/matrix.h"
 
+#include <complex>
 #include <vector>
 
+template <typename Tdata>
 class Mix_DMk_2D
 {
 public:
 	/**
-	 * @brief Sets the number of k-points and gamma_only flag.
+	 * @brief Sets the number of k-points.
 	 * @param nks Number of k-points.
-	 * @param gamma_only_in Flag indicating if only gamma point is mixed.
 	 * @return Reference to the current object.
 	 */
-	Mix_DMk_2D &set_nks(const int nks, const bool gamma_only_in);
+	Mix_DMk_2D &set_nks(const int nks);
 
 	/**
 	 * @brief Sets the mixing mode.
@@ -31,41 +30,44 @@ public:
 	Mix_DMk_2D &set_mixing(Base_Mixing::Mixing* mixing_in);
 
 	/**
-	 * @brief Sets the mixing beta.
-	 * @param mixing_beta Mixing beta.
-	 * @return Reference to the current object.
-	 */
-	Mix_DMk_2D &set_mixing_beta(const double mixing_beta);
-
-	/**
-	 * @brief Mixes the double density matrix.
-	 * @param dm Double Density matrix.
+	 * @brief Mixes the density matrix.
+	 * @param dm Density matrix.
 	 * @param flag_restart Flag indicating whether restart mixing.
 	 */
-    void mix(const std::vector<std::vector<double>>& dm, const bool flag_restart);
+    void mix(const std::vector<std::vector<Tdata>>& dm, const bool flag_restart);
 
 	/**
-	 * @brief Mixes the complex density matrix.
-	 * @param dm Complex density matrix.
-	 * @param flag_restart Flag indicating whether restart mixing.
+	 * @brief Returns the density matrix.
+	 * @return Density matrices for each k-points.
 	 */
-    void mix(const std::vector<std::vector<std::complex<double>>>& dm, const bool flag_restart);
-
-	/**
-	 * @brief Returns the double density matrix.
-	 * @return Double density matrices for each k-points.
-	 */
-    std::vector<const std::vector<double>*> get_DMk_gamma_out() const;
-	/**
-	 * @brief Returns the complex density matrix.
-	 * @return Complex density matrices for each k-points.
-	 */
-    std::vector<const std::vector<std::complex<double>>*> get_DMk_k_out() const;
+    std::vector<const std::vector<Tdata>*> get_DMk_out() const;
 
 private:
-    std::vector<Mix_Matrix<std::vector<double>>> mix_DMk_gamma;
-    std::vector<Mix_Matrix<std::vector<std::complex<double>>>> mix_DMk_k;
-	bool gamma_only;
+    using Tmatrix = std::vector<Tdata>;
+
+    struct DMk_Mix_Data
+    {
+        Tmatrix data_out;
+        Base_Mixing::Mixing_Data mixing_data;
+    };
+
+    static void restart_one(DMk_Mix_Data& data,
+                            const Tmatrix& data_in,
+                            Base_Mixing::Mixing& mixing);
+
+    static void mix_one(DMk_Mix_Data& data,
+                        const Tmatrix& data_in,
+                        Base_Mixing::Mixing& mixing);
+
+    void restart_all(std::vector<DMk_Mix_Data>& data_out,
+                     const std::vector<Tmatrix>& data_in);
+
+    void mix_all(std::vector<DMk_Mix_Data>& data_out,
+                 const std::vector<Tmatrix>& data_in);
+
+    std::vector<DMk_Mix_Data> mix_DMk;
+    Base_Mixing::Mixing* mixing = nullptr;
+    bool separate_loop = false;
 };
 
 #endif

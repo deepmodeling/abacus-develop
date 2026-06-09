@@ -4,69 +4,116 @@
 //=======================
 
 #include "Mix_DMk_2D.h"
+#include "source_base/module_mixing/plain_mixing.h"
 #include "source_base/tool_title.h"
 
-Mix_DMk_2D &Mix_DMk_2D::set_nks(const int nks, const bool gamma_only_in)
+#include <cassert>
+
+template <typename Tdata>
+Mix_DMk_2D<Tdata>& Mix_DMk_2D<Tdata>::set_nks(const int nks)
 {
     ModuleBase::TITLE("Mix_DMk_2D", "set_nks");
-    this->gamma_only = gamma_only_in;
-    if (this->gamma_only)
-		this->mix_DMk_gamma.resize(nks);
-	else
-		this->mix_DMk_k.resize(nks);
-	return *this;
+    this->mix_DMk.clear();
+    this->mix_DMk.resize(nks);
+    return *this;
 }
 
-Mix_DMk_2D &Mix_DMk_2D::set_mixing(Base_Mixing::Mixing* mixing_in)
+template <typename Tdata>
+Mix_DMk_2D<Tdata>& Mix_DMk_2D<Tdata>::set_mixing(Base_Mixing::Mixing* mixing_in)
 {
-	ModuleBase::TITLE("Mix_DMk_2D","set_mixing");
-	if(this->gamma_only)
-        for (Mix_Matrix<std::vector<double>>& mix_one : this->mix_DMk_gamma)
-			mix_one.init(mixing_in);
-	else
-        for (Mix_Matrix<std::vector<std::complex<double>>>& mix_one : this->mix_DMk_k)
-			mix_one.init(mixing_in);
-	return *this;
+    ModuleBase::TITLE("Mix_DMk_2D", "set_mixing");
+    this->mixing = mixing_in;
+    this->separate_loop = (mixing_in == nullptr);
+    return *this;
 }
 
-Mix_DMk_2D &Mix_DMk_2D::set_mixing_beta(const double mixing_beta)
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::mix(const std::vector<std::vector<Tdata>>& dm, const bool flag_restart)
 {
-	ModuleBase::TITLE("Mix_DMk_2D","set_mixing_beta");
-	if(this->gamma_only)
-        for (Mix_Matrix<std::vector<double>>& mix_one : this->mix_DMk_gamma)
-			mix_one.mixing_beta = mixing_beta;
-	else
-        for (Mix_Matrix<std::vector<std::complex<double>>>& mix_one : this->mix_DMk_k)
-			mix_one.mixing_beta = mixing_beta;
-	return *this;
+    ModuleBase::TITLE("Mix_DMk_2D", "mix");
+    if (flag_restart)
+    {
+        this->restart_all(this->mix_DMk, dm);
+    }
+    else
+    {
+        this->mix_all(this->mix_DMk, dm);
+    }
 }
 
-void Mix_DMk_2D::mix(const std::vector<std::vector<double>>& dm, const bool flag_restart)
+template <typename Tdata>
+std::vector<const std::vector<Tdata>*> Mix_DMk_2D<Tdata>::get_DMk_out() const
 {
-	ModuleBase::TITLE("Mix_DMk_2D","mix");
-	assert(this->mix_DMk_gamma.size() == dm.size());
-	for(int ik=0; ik<dm.size(); ++ik)
-		this->mix_DMk_gamma[ik].mix(dm[ik], flag_restart);
-}
-void Mix_DMk_2D::mix(const std::vector<std::vector<std::complex<double>>>& dm, const bool flag_restart)
-{
-	ModuleBase::TITLE("Mix_DMk_2D","mix");
-	assert(this->mix_DMk_k.size() == dm.size());
-	for(int ik=0; ik<dm.size(); ++ik)
-		this->mix_DMk_k[ik].mix(dm[ik], flag_restart);
+    std::vector<const std::vector<Tdata>*> DMk_out(this->mix_DMk.size());
+    for (int ik = 0; ik < this->mix_DMk.size(); ++ik)
+        { DMk_out[ik] = &this->mix_DMk[ik].data_out; }
+    return DMk_out;
 }
 
-std::vector<const std::vector<double>*> Mix_DMk_2D::get_DMk_gamma_out() const
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::restart_one(typename Mix_DMk_2D<Tdata>::DMk_Mix_Data& data,
+                                    const typename Mix_DMk_2D<Tdata>::Tmatrix& data_in,
+                                    Base_Mixing::Mixing& mixing)
 {
-    std::vector<const std::vector<double>*> DMk_out(this->mix_DMk_gamma.size());
-	for(int ik=0; ik<this->mix_DMk_gamma.size(); ++ik)
-		DMk_out[ik] = &this->mix_DMk_gamma[ik].get_data_out();
-	return DMk_out;
+    data.data_out = data_in;
+    const int length = static_cast<int>(data_in.size());
+    mixing.init_mixing_data(data.mixing_data, length, sizeof(Tdata));
 }
-std::vector<const std::vector<std::complex<double>>*> Mix_DMk_2D::get_DMk_k_out() const
+
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::mix_one(typename Mix_DMk_2D<Tdata>::DMk_Mix_Data& data,
+                                const typename Mix_DMk_2D<Tdata>::Tmatrix& data_in,
+                                Base_Mixing::Mixing& mixing)
 {
-    std::vector<const std::vector<std::complex<double>>*> DMk_out(this->mix_DMk_k.size());
-	for(int ik=0; ik<this->mix_DMk_k.size(); ++ik)
-		DMk_out[ik] = &this->mix_DMk_k[ik].get_data_out();
-	return DMk_out;
+    mixing.push_data(data.mixing_data, data.data_out.data(), data_in.data(), nullptr, false);
+    mixing.mix_data(data.mixing_data, data.data_out.data());
 }
+
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::restart_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_Data>& data_out,
+                                    const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
+{
+    assert(data_out.size() == data_in.size());
+    if (this->separate_loop)
+    {
+        Base_Mixing::Plain_Mixing plain_mixing(1.0);
+        for (int ik = 0; ik < data_in.size(); ++ik)
+        {
+            restart_one(data_out[ik], data_in[ik], plain_mixing);
+        }
+    }
+    else
+    {
+        assert(this->mixing != nullptr);
+        for (int ik = 0; ik < data_in.size(); ++ik)
+        {
+            restart_one(data_out[ik], data_in[ik], *this->mixing);
+        }
+    }
+}
+
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::mix_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_Data>& data_out,
+                                const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
+{
+    assert(data_out.size() == data_in.size());
+    if (this->separate_loop)
+    {
+        Base_Mixing::Plain_Mixing plain_mixing(1.0);
+        for (int ik = 0; ik < data_in.size(); ++ik)
+        {
+            mix_one(data_out[ik], data_in[ik], plain_mixing);
+        }
+    }
+    else
+    {
+        assert(this->mixing != nullptr);
+        for (int ik = 0; ik < data_in.size(); ++ik)
+        {
+            mix_one(data_out[ik], data_in[ik], *this->mixing);
+        }
+    }
+}
+
+template class Mix_DMk_2D<double>;
+template class Mix_DMk_2D<std::complex<double>>;
