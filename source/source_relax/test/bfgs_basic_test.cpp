@@ -1,4 +1,5 @@
 #include "source_relax/ions_move_basic.h"
+#include "source_relax/relax_data.h"
 #include "gmock/gmock.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -12,44 +13,6 @@
 /************************************************
  *  unit tests of class BFGS_Basic
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - BFGS_Basic::allocate_basic()
- *   - BFGS_Basic::new_step()
- *   - BFGS_Basic::reset_hessian()
- *   - BFGS_Basic::save_bfgs()
- *   - BFGS_Basic::check_move()
- *   - BFGS_Basic::update_inverse_hessian()
- *   - BFGS_Basic::check_wolfe_conditions()
- *   - BFGS_Basic::compute_trust_radius()
- */
-
-int Ions_Move_Basic::dim = 0;
-bool Ions_Move_Basic::converged = false;
-double Ions_Move_Basic::largest_grad = 0.0;
-int Ions_Move_Basic::update_iter = 0;
-int Ions_Move_Basic::istep = 0;
-double Ions_Move_Basic::ediff = 0.0;
-double Ions_Move_Basic::etot = 0.0;
-double Ions_Move_Basic::etot_p = 0.0;
-double Ions_Move_Basic::trust_radius = 0.0;
-double Ions_Move_Basic::trust_radius_old = 0.0;
-double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
-double Ions_Move_Basic::relax_bfgs_rmin = -1.0;
-double Ions_Move_Basic::relax_bfgs_init = -1.0;
-double Ions_Move_Basic::best_xxx = 1.0;
-int Ions_Move_Basic::out_stru = 0;
-
-double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
-{
-    double result = 0.0;
-    for (int i = 0; i < dim_in; i++)
-    {
-        result += a[i] * b[i];
-    }
-    return result;
-}
 
 class BFGSBasicTest : public ::testing::Test
 {
@@ -73,14 +36,13 @@ TEST_F(BFGSBasicTest, TestAllocate)
     Ions_Move_Basic::dim = 4;
     bfgs.allocate_basic();
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, bfgs.pos);
-    EXPECT_NE(nullptr, bfgs.pos_p);
-    EXPECT_NE(nullptr, bfgs.grad);
-    EXPECT_NE(nullptr, bfgs.grad_p);
-    EXPECT_NE(nullptr, bfgs.move);
-    EXPECT_NE(nullptr, bfgs.move_p);
-    EXPECT_NE(nullptr, bfgs.inv_hess.c);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(bfgs.pos.size(), 4U);
+    EXPECT_EQ(bfgs.pos_p.size(), 4U);
+    EXPECT_EQ(bfgs.grad.size(), 4U);
+    EXPECT_EQ(bfgs.grad_p.size(), 4U);
+    EXPECT_EQ(bfgs.move.size(), 4U);
+    EXPECT_EQ(bfgs.move_p.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error

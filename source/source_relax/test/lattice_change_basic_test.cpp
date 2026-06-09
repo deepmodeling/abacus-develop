@@ -1,4 +1,5 @@
 #include "source_relax/lattice_change_basic.h"
+#include "source_relax/relax_data.h"
 #include "mock_remake_cell.h"
 
 #include "for_test.h"
@@ -11,15 +12,6 @@
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Lattice_Change_Basic::setup_gradient()
- *   - Lattice_Change_Basic::change_lattice()
- *   - Lattice_Change_Basic::check_converged()
- *   - Lattice_Change_Basic::terminate()
- *   - Lattice_Change_Basic::setup_etot()
- */
 
 // Define a fixture for the tests
 class LatticeChangeBasicTest : public ::testing::Test

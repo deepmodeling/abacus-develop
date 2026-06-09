@@ -7,20 +7,10 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
 #undef private
+
 /************************************************
  *  unit tests of class Ions_Move_CG
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_CG::allocate()
- *   - Ions_Move_CG::start()
- *   - Ions_Move_CG::setup_cg_grad()
- *   - Ions_Move_CG::setup_move()
- *   - Ions_Move_CG::Brent()
- *   - Ions_Move_CG::f_cal()
- *   - Ions_Move_CG::third_order()
- */
 
 class IonsMoveCGTest : public ::testing::Test
 {
@@ -70,11 +60,11 @@ TEST_F(IonsMoveCGTest, TestAllocate)
     Ions_Move_Basic::dim = 4;
     im_cg.allocate();
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, im_cg.pos0);
-    EXPECT_NE(nullptr, im_cg.grad0);
-    EXPECT_NE(nullptr, im_cg.cg_grad0);
-    EXPECT_NE(nullptr, im_cg.move0);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(im_cg.pos0.size(), 4U);
+    EXPECT_EQ(im_cg.grad0.size(), 4U);
+    EXPECT_EQ(im_cg.cg_grad0.size(), 4U);
+    EXPECT_EQ(im_cg.move0.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -374,7 +364,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000)
     int ncggrad = 50000; // multiple of 10000
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
     EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
@@ -394,7 +384,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
     int ncggrad = 100;
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], 1.25);
     EXPECT_DOUBLE_EQ(cggrad[1], 0.0);
@@ -414,7 +404,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
     int ncggrad = 100;
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
     EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
@@ -571,9 +561,9 @@ TEST_F(IonsMoveCGTest, Fcal)
     Ions_Move_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double g1[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double f_value;
+    double f_value = 0.0;
 
-    im_cg.f_cal(g0, g1, Ions_Move_Basic::dim, f_value);
+    im_cg.f_cal(Ions_Move_Basic::dim, g0, g1, f_value);
 
     EXPECT_DOUBLE_EQ(f_value, 3.0);
 }
@@ -584,9 +574,9 @@ TEST_F(IonsMoveCGTest, SetupMove)
     Ions_Move_Basic::dim = 9;
     double trust_radius = 1.0;
     double cg_gradn[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double move[9];
+    double move[9] = {0.0};
 
-    im_cg.setup_move(move, cg_gradn, trust_radius);
+    im_cg.setup_move(Ions_Move_Basic::dim, move, cg_gradn, trust_radius);
 
     EXPECT_DOUBLE_EQ(move[0], -1.0);
     EXPECT_DOUBLE_EQ(move[1], -1.0);

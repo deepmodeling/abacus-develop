@@ -8,17 +8,10 @@
 #include "source_relax/ions_move_bfgs.h"
 #undef private
 #undef protected
+
 /************************************************
  *  unit tests of class Ions_Move_BFGS
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_BFGS::allocate()
- *   - Ions_Move_BFGS::start()
- *   - Ions_Move_BFGS::bfgs_routine()
- *   - Ions_Move_BFGS::restart_bfgs()
- */
 
 // Define a fixture for the tests
 class IonsMoveBFGSTest : public ::testing::Test

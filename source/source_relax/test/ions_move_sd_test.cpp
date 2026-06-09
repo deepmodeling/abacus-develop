@@ -7,16 +7,10 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
 #undef private
+
 /************************************************
  *  unit tests of class Ions_Move_SD
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_SD::allocate()
- *   - Ions_Move_SD::start()
- *   - Ions_Move_SD::cal_tradius_sd()
- */
 
 class IonsMoveSDTest : public ::testing::Test
 {
@@ -44,9 +38,9 @@ TEST_F(IonsMoveSDTest, TestAllocate)
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, im_sd.grad_saved);
-    EXPECT_NE(nullptr, im_sd.pos_saved);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(im_sd.grad_saved.size(), 4U);
+    EXPECT_EQ(im_sd.pos_saved.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error

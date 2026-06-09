@@ -4,22 +4,12 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_relax/ions_move_basic.h"
+#include "source_relax/relax_data.h"
 #include "for_test.h"
 
 /************************************************
  *  unit tests of namespace Ions_Move_Basic
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_Basic::setup_gradient()
- *   - Ions_Move_Basic::move_atoms()
- *   - Ions_Move_Basic::check_converged()
- *   - Ions_Move_Basic::terminate()
- *   - Ions_Move_Basic::setup_etot()
- *   - Ions_Move_Basic::dot_func()
- *   - Ions_Move_Basic::third_order()
- */
 
 // Define a fixture for the tests
 class IonsMoveBasicTest : public ::testing::Test

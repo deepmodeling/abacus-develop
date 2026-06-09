@@ -10,7 +10,7 @@
  * The functions are designed to be independent of specific data sources.
  */
 class CG_Base {
-protected:
+public:
     /**
      * @brief Setup conjugate gradient direction.
      * @param dim Dimension of the optimization problem
@@ -24,15 +24,6 @@ protected:
     void setup_cg_grad(const int dim, double *grad, const double *grad0,
                        double *cg_grad, const double *cg_grad0,
                        const int &ncggrad, int &flag);
-
-    /**
-     * @brief Calculate movement vector from CG direction.
-     * @param dim Dimension of the optimization problem
-     * @param move Output movement vector
-     * @param cg_gradn Normalized CG direction
-     * @param trust_radius Step size limit
-     */
-    void setup_move(const int dim, double *move, double *cg_gradn, const double &trust_radius);
 
     /**
      * @brief Brent's method for one-dimensional minimization.
@@ -50,15 +41,6 @@ protected:
                double &best_x, double &xpt);
 
     /**
-     * @brief Calculate projection of gradient onto search direction.
-     * @param dim Dimension of vectors
-     * @param g0 First vector (usually search direction)
-     * @param g1 Second vector (usually gradient)
-     * @param f_value Output projection value
-     */
-    void f_cal(const int dim, const double *g0, const double *g1, double &f_value);
-
-    /**
      * @brief Third-order polynomial interpolation for line search.
      * @param e0 Energy at previous step
      * @param e1 Energy at current step
@@ -70,6 +52,26 @@ protected:
     void third_order(const double &e0, const double &e1,
                      const double &fa, const double &fb,
                      const double x, double &best_x);
+
+    /**
+     * @brief Calculate projection of gradient onto search direction.
+     * @param dim Dimension of vectors
+     * @param g0 First vector (usually search direction)
+     * @param g1 Second vector (usually gradient)
+     * @param f_value Output projection value
+     */
+    void f_cal(const int dim, const double *g0, const double *g1, double &f_value);
+
+    /**
+     * @brief Calculate movement vector from CG direction.
+     * @param dim Dimension of the optimization problem
+     * @param move Output movement vector
+     * @param cg_gradn Normalized CG direction
+     * @param trust_radius Step size limit
+     */
+    void setup_move(const int dim, double *move, double *cg_gradn, const double &trust_radius);
+
+protected:
 
     /**
      * @brief Normalize vector.

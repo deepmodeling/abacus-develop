@@ -12,6 +12,7 @@
 #undef private
 
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
+#include "source_relax/relax_data.h"
 
 /************************************************
  *  unit tests for Ions_Move_BFGS2 (no MockUnitCell)
