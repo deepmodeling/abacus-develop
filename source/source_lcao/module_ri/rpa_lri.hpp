@@ -35,6 +35,7 @@ namespace RpaLriDetail
 {
 constexpr int LIBRPA_COULOMB_V1_MARKER = -20129433;
 constexpr int LIBRPA_LRICOEF_V1_MARKER = -10267453;
+constexpr int LIBRPA_SHRINK_SINVS_V1_MARKER = -30241621;
 constexpr int LIBRPA_COULOMB_V1_COMPLEX_FLAG = 1;
 
 static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
@@ -461,7 +462,8 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        this->out_librpa_basis_v1(ucell, exx_lri_rpa);
+        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        this->out_librpa_basis_v1(ucell, exx_lri_rpa, use_shrink ? "basis_out_shrink" : "basis_out");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_cut_iq_", exx_lri_rpa);
     }
     else
@@ -476,7 +478,14 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
 
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_data_");
+        if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+        {
+            this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_shrinked_data_");
+        }
+        else
+        {
+            this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_data_");
+        }
     }
     else
     {
@@ -600,7 +609,8 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     }
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        this->out_librpa_basis_v1(ucell, exx_full_coulomb.get());
+        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        this->out_librpa_basis_v1(ucell, exx_full_coulomb.get(), use_shrink ? "basis_out_shrink" : "basis_out");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_full_iq_", exx_full_coulomb.get());
     }
     else
@@ -714,7 +724,15 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs = std::get<0>(Cs_dCs);
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_cut_coulomb->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
-    this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "basis_out");
+        this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_data_");
+    }
+    else
+    {
+        this->out_Cs(ucell, this->Cs_period, "Cs_data_");
+    }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Cs");
     this->Cs_period.clear();
     this->Cs_period.swap(tmp);
@@ -879,7 +897,16 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
         = RI_2D_Comm::comm_map2_first(mpi_comm, overlap_abfs_abf, atoms00, atoms01);
     overlap_abfs_abf.clear();
 
-    out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "shrink_sinvS_", index_abfs_s, index_abfs);
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
+                            "v1_shrink_sinvS_", index_abfs_s, index_abfs);
+    }
+    else
+    {
+        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
+                         "shrink_sinvS_", index_abfs_s, index_abfs);
+    }
 }
 
 template <typename T, typename Tdata>
@@ -1089,6 +1116,215 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     }
     ofs.close();
     ModuleBase::timer::end("RPA_LRI", "out_abfs_overlap");
+}
+
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
+                                            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
+                                            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abf,
+                                            std::string filename,
+                                            const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
+                                            const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs)
+{
+    ModuleBase::TITLE("RPA_LRI", "out_abfs_overlap_v1");
+    ModuleBase::timer::tick("RPA_LRI", "out_abfs_overlap_v1");
+
+    struct SinvSRecord
+    {
+        std::int32_t iq = 0;
+        std::int32_t nrow_total = 0;
+        std::int32_t ncol_total = 0;
+        std::int32_t begin_row = 0;
+        std::int32_t end_row = 0;
+        std::int32_t begin_col = 0;
+        std::int32_t end_col = 0;
+        double q_weight = 0.0;
+        std::int64_t offset = 0;
+        std::vector<std::complex<double>> payload;
+    };
+
+    int all_mu_s = 0;
+    int all_mu = 0;
+    std::vector<int> mu_s_shift(ucell.nat);
+    std::vector<int> mu_shift(ucell.nat);
+    for (int I = 0; I != ucell.nat; I++)
+    {
+        mu_s_shift[I] = all_mu_s;
+        mu_shift[I] = all_mu;
+        all_mu_s += index_abfs_s[ucell.iat2it[I]].count_size;
+        all_mu += index_abfs[ucell.iat2it[I]].count_size;
+    }
+    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+
+    std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_ss;
+    std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_s;
+    for (int ik = 0; ik != nks_tot; ik++)
+    {
+        for (auto& Ip: overlap_abfs_abfs)
+        {
+            auto I = Ip.first;
+            for (auto& JPp: Ip.second)
+            {
+                auto J = JPp.first.first;
+                auto R = JPp.first.second;
+                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                RI::Tensor<std::complex<double>> tmp_olp_ss
+                    = RI::Global_Func::convert<std::complex<double>>(JPp.second);
+                RI::Tensor<std::complex<double>> tmp_olp_s
+                    = RI::Global_Func::convert<std::complex<double>>(overlap_abfs_abf[I][{J, R}]);
+                if (olp_q_ss[I][{J, q}].empty())
+                {
+                    olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_ss.shape[0], tmp_olp_ss.shape[1]});
+                    olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_s.shape[0], tmp_olp_s.shape[1]});
+                }
+                const double arg = 1 * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec))
+                                   * ModuleBase::TWO_PI;
+                const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
+                olp_q_ss[I][{J, q}] = olp_q_ss[I][{J, q}] + tmp_olp_ss * kphase;
+                olp_q_s[I][{J, q}] = olp_q_s[I][{J, q}] + tmp_olp_s * kphase;
+            }
+        }
+    }
+
+    for (int I = 0; I != ucell.nat; I++)
+    {
+        for (int J = 0; J != ucell.nat; J++)
+        {
+            for (int ik = 0; ik != nks_tot; ik++)
+            {
+                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                if (olp_q_ss[I][{J, q}].empty())
+                {
+                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    auto nu = index_abfs_s[ucell.iat2it[J]].count_size;
+                    olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
+                }
+                if (olp_q_s[I][{J, q}].empty())
+                {
+                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
+                    auto nu = index_abfs[ucell.iat2it[J]].count_size;
+                    olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
+                }
+                for (int ir = 0; ir < olp_q_ss[I][{J, q}].shape[0]; ir++)
+                {
+                    for (int ic = 0; ic < olp_q_ss[I][{J, q}].shape[1]; ic++)
+                    {
+                        Parallel_Reduce::reduce_all<std::complex<double>>(olp_q_ss[I][{J, q}](ir, ic));
+                    }
+                    for (int ic = 0; ic < olp_q_s[I][{J, q}].shape[1]; ic++)
+                    {
+                        Parallel_Reduce::reduce_all<std::complex<double>>(olp_q_s[I][{J, q}](ir, ic));
+                    }
+                }
+            }
+        }
+    }
+
+    inverse_olp(ucell, olp_q_ss, index_abfs_s);
+
+    std::vector<SinvSRecord> records;
+    for (auto& Ip: overlap_abfs_abf)
+    {
+        auto I = Ip.first;
+        size_t mu_num_s = index_abfs_s[ucell.iat2it[I]].count_size;
+
+        for (int ik = 0; ik != nks_tot; ik++)
+        {
+            std::map<size_t, RI::Tensor<std::complex<double>>> sinvS;
+            for (auto& JPp: Ip.second)
+            {
+                auto J = JPp.first.first;
+                auto R = JPp.first.second;
+                if (sinvS[J].empty())
+                {
+                    sinvS[J] = RI::Tensor<std::complex<double>>(
+                        {overlap_abfs_abfs[I][{J, R}].shape[0], overlap_abfs_abf[I][{J, R}].shape[1]});
+                }
+            }
+            for (const auto& pair: sinvS)
+            {
+                auto J = pair.first;
+                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
+                for (int K = 0; K != ucell.nat; K++)
+                {
+                    sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
+                }
+            }
+            for (auto& iJU: sinvS)
+            {
+                auto iJ = iJU.first;
+                auto& vq_J = iJU.second;
+                size_t nu_num = index_abfs[ucell.iat2it[iJ]].count_size;
+                SinvSRecord record;
+                record.iq = static_cast<std::int32_t>(ik + 1);
+                record.nrow_total = static_cast<std::int32_t>(all_mu_s);
+                record.ncol_total = static_cast<std::int32_t>(all_mu);
+                record.begin_row = static_cast<std::int32_t>(mu_s_shift[I] + 1);
+                record.end_row = static_cast<std::int32_t>(mu_s_shift[I] + mu_num_s);
+                record.begin_col = static_cast<std::int32_t>(mu_shift[iJ] + 1);
+                record.end_col = static_cast<std::int32_t>(mu_shift[iJ] + nu_num);
+                record.q_weight = p_kv->wk[ik] / 2.0 * PARAM.inp.nspin;
+                record.payload.reserve(static_cast<std::size_t>(vq_J.shape[0]) *
+                                       static_cast<std::size_t>(vq_J.shape[1]));
+                for (int i = 0; i != vq_J.shape[0]; ++i)
+                {
+                    for (int j = 0; j != vq_J.shape[1]; ++j)
+                    {
+                        if (i >= static_cast<int>(mu_num_s) || j >= static_cast<int>(nu_num))
+                        {
+                            throw std::runtime_error("LibRPA v1 shrink_sinvS encountered an inconsistent block shape.");
+                        }
+                        record.payload.push_back(vq_J(i, j));
+                    }
+                }
+                records.push_back(std::move(record));
+            }
+        }
+    }
+
+    const std::int64_t record_bytes = 7 * static_cast<std::int64_t>(sizeof(std::int32_t))
+        + static_cast<std::int64_t>(sizeof(double)) + static_cast<std::int64_t>(sizeof(std::int64_t));
+    std::int64_t offset = 2 * static_cast<std::int64_t>(sizeof(std::int32_t))
+        + static_cast<std::int64_t>(records.size()) * record_bytes;
+    for (auto& record: records)
+    {
+        record.offset = offset;
+        offset += static_cast<std::int64_t>(record.payload.size() * sizeof(std::complex<double>));
+    }
+
+    std::stringstream ss;
+    ss << filename << GlobalV::MY_RANK << ".txt";
+    const std::string out_name = ss.str();
+    std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to open " + out_name);
+    }
+
+    const std::int32_t marker = RpaLriDetail::LIBRPA_SHRINK_SINVS_V1_MARKER;
+    const std::int32_t nrecords = static_cast<std::int32_t>(records.size());
+    RpaLriDetail::write_scalar(ofs, marker, out_name);
+    RpaLriDetail::write_scalar(ofs, nrecords, out_name);
+    for (const auto& record: records)
+    {
+        RpaLriDetail::write_scalar(ofs, record.iq, out_name);
+        RpaLriDetail::write_scalar(ofs, record.nrow_total, out_name);
+        RpaLriDetail::write_scalar(ofs, record.ncol_total, out_name);
+        RpaLriDetail::write_scalar(ofs, record.begin_row, out_name);
+        RpaLriDetail::write_scalar(ofs, record.end_row, out_name);
+        RpaLriDetail::write_scalar(ofs, record.begin_col, out_name);
+        RpaLriDetail::write_scalar(ofs, record.end_col, out_name);
+        RpaLriDetail::write_scalar(ofs, record.q_weight, out_name);
+        RpaLriDetail::write_scalar(ofs, record.offset, out_name);
+    }
+    for (const auto& record: records)
+    {
+        RpaLriDetail::checked_write(ofs, record.payload.data(),
+                                    record.payload.size() * sizeof(std::complex<double>),
+                                    out_name);
+    }
+    ofs.close();
+    ModuleBase::timer::tick("RPA_LRI", "out_abfs_overlap_v1");
 }
 
 template <typename T, typename Tdata>
@@ -1946,7 +2182,8 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri)
+void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri,
+                                            const std::string& filename)
 {
     if (GlobalV::MY_RANK != 0)
     {
@@ -1969,10 +2206,10 @@ void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<doubl
         total_aux += type_naux[static_cast<std::size_t>(it)] * ucell.atoms[it].na;
     }
 
-    std::ofstream ofs("basis_out", std::ios::out | std::ios::trunc);
+    std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
-        throw std::runtime_error("Failed to open basis_out");
+        throw std::runtime_error("Failed to open " + filename);
     }
     ofs << std::setw(10) << ucell.ntype
         << std::setw(10) << total_wfc

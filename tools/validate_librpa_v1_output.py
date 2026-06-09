@@ -8,6 +8,7 @@ import sys
 
 COULOMB_MARKER = -20129433
 CS_MARKER = -10267453
+SHRINK_SINVS_MARKER = -30241621
 
 
 def read_exact(handle, nbytes, label):
@@ -82,16 +83,47 @@ def validate_cs(path):
     return nblocks
 
 
+def validate_sinvS(path):
+    size = os.path.getsize(path)
+    with open(path, "rb") as handle:
+        marker, nblocks = struct.unpack("<2i", read_exact(handle, 8, path))
+        if marker != SHRINK_SINVS_MARKER:
+            raise RuntimeError("{}: bad shrink_sinvS marker {}".format(path, marker))
+        if nblocks < 0:
+            raise RuntimeError("{}: invalid shrink_sinvS block count".format(path))
+        header_size = 8 + 44 * nblocks
+        if header_size > size:
+            raise RuntimeError("{}: shrink_sinvS header exceeds file size".format(path))
+        ranges = []
+        for _ in range(nblocks):
+            iq, nrow, ncol, brow, erow, bcol, ecol = struct.unpack("<7i", read_exact(handle, 28, path))
+            q_weight, offset = struct.unpack("<dq", read_exact(handle, 16, path))
+            if iq <= 0 or nrow <= 0 or ncol <= 0:
+                raise RuntimeError("{}: invalid shrink_sinvS record".format(path))
+            if brow < 1 or bcol < 1 or erow < brow or ecol < bcol or erow > nrow or ecol > ncol:
+                raise RuntimeError("{}: invalid shrink_sinvS block range".format(path))
+            nbytes = (erow - brow + 1) * (ecol - bcol + 1) * 16
+            if offset < header_size or offset + nbytes > size:
+                raise RuntimeError("{}: bad shrink_sinvS payload range".format(path))
+            ranges.append((offset, offset + nbytes))
+    for (_, end), (begin, _) in zip(sorted(ranges), sorted(ranges)[1:]):
+        if begin < end:
+            raise RuntimeError("{}: overlapping shrink_sinvS payload ranges".format(path))
+    return nblocks
+
+
 def main():
     parser = argparse.ArgumentParser(description="Validate ABACUS direct LibRPA reader-v1 output headers.")
     parser.add_argument("directory")
     parser.add_argument("--coul-prefix", action="append")
     parser.add_argument("--cs-prefix", action="append")
+    parser.add_argument("--sinvs-prefix", action="append")
     args = parser.parse_args()
 
     total = 0
     coul_prefixes = args.coul_prefix or ["v1_coulomb_full_iq_", "v1_coulomb_cut_iq_"]
-    cs_prefixes = args.cs_prefix or ["v1_Cs_data_"]
+    cs_prefixes = args.cs_prefix or ["v1_Cs_data_", "v1_Cs_shrinked_data_"]
+    sinvs_prefixes = args.sinvs_prefix or ["v1_shrink_sinvS_"]
     for prefix in coul_prefixes:
         for path in sorted(glob.glob(os.path.join(args.directory, prefix + "*"))):
             blocks = validate_coulomb(path)
@@ -101,6 +133,11 @@ def main():
         for path in sorted(glob.glob(os.path.join(args.directory, prefix + "*"))):
             blocks = validate_cs(path)
             print("OK Cs {}: blocks={}".format(path, blocks))
+            total += 1
+    for prefix in sinvs_prefixes:
+        for path in sorted(glob.glob(os.path.join(args.directory, prefix + "*"))):
+            blocks = validate_sinvS(path)
+            print("OK shrink_sinvS {}: blocks={}".format(path, blocks))
             total += 1
     if total == 0:
         raise RuntimeError("no LibRPA v1 files found")

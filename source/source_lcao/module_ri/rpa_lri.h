@@ -72,6 +72,12 @@ template <typename T, typename Tdata> class RPA_LRI
                           std::string filename,
                           const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
                           const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
+    void out_abfs_overlap_v1(const UnitCell& ucell,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abf,
+                             std::string filename,
+                             const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
+                             const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
     void out_bands(const elecstate::ElecState *pelec);
@@ -92,7 +98,7 @@ template <typename T, typename Tdata> class RPA_LRI
                           std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
                           std::string filename,
                           Exx_LRI<double>* exx_lri);
-    void out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri);
+    void out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri, const std::string& filename = "basis_out");
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
