@@ -1,5 +1,6 @@
 #include "ions_move_sd.h"
 
+#include <algorithm>
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
@@ -27,12 +28,9 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     assert(grad_saved.size() == static_cast<size_t>(dim));
     assert(pos_saved.size() == static_cast<size_t>(dim));
 
-    std::vector<double> pos(dim);
-    std::vector<double> grad(dim);
-    std::vector<double> move(dim);
-    ModuleBase::GlobalFunc::ZEROS(pos.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(grad.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(move.data(), dim);
+    std::vector<double> pos(dim, 0.0);
+    std::vector<double> grad(dim, 0.0);
+    std::vector<double> move(dim, 0.0);
 
     // 1: ediff = 0
     // 0: ediff < 0

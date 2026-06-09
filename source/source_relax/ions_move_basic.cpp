@@ -1,5 +1,6 @@
 #include "ions_move_basic.h"
 
+#include <algorithm>
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -26,8 +27,8 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     assert(grad != nullptr);
     assert(dim == 3 * ucell.nat);
 
-    ModuleBase::GlobalFunc::ZEROS(pos, dim);
-    ModuleBase::GlobalFunc::ZEROS(grad, dim);
+    std::fill_n(pos, dim, 0.0);
+    std::fill_n(grad, dim, 0.0);
 
     // (1) init gradient
     // the unit of pos: Bohr.

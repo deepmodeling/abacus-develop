@@ -1,4 +1,5 @@
 #include "bfgs_basic.h"
+#include <algorithm>
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
@@ -36,10 +37,8 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
 
-    std::vector<double> s(dim);
-    std::vector<double> y(dim);
-    ModuleBase::GlobalFunc::ZEROS(s.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(y.data(), dim);
+    std::vector<double> s(dim, 0.0);
+    std::vector<double> y(dim, 0.0);
 
     for (int i = 0; i < dim; i++)
     {
@@ -64,12 +63,9 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         return;
     }
 
-    std::vector<double> Hs(dim);
-    std::vector<double> Hy(dim);
-    std::vector<double> yH(dim);
-    ModuleBase::GlobalFunc::ZEROS(Hs.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(Hy.data(), dim);
-    ModuleBase::GlobalFunc::ZEROS(yH.data(), dim);
+    std::vector<double> Hs(dim, 0.0);
+    std::vector<double> Hy(dim, 0.0);
+    std::vector<double> yH(dim, 0.0);
 
     for (int i = 0; i < dim; i++)
     {

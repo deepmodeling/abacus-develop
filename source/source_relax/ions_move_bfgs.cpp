@@ -1,5 +1,6 @@
 #include "ions_move_bfgs.h"
 
+#include <algorithm>
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
@@ -130,9 +131,9 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
     else
     {
         //    bfgs initialization
-        ModuleBase::GlobalFunc::ZEROS(pos_p.data(), dim);
-        ModuleBase::GlobalFunc::ZEROS(grad_p.data(), dim);
-        ModuleBase::GlobalFunc::ZEROS(move_p.data(), dim);
+        std::fill(pos_p.begin(), pos_p.end(), 0.0);
+            std::fill(grad_p.begin(), grad_p.end(), 0.0);
+            std::fill(move_p.begin(), move_p.end(), 0.0);
 
         Ions_Move_Basic::update_iter = 0;
 
