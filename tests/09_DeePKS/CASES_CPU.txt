@@ -26,3 +26,6 @@
 26_NO_KP_deepks_out_freq_elec
 27_NO_GO_deepks_out_2
 28_NO_KP_deepks_out_2
+29_NO_GO_deepks_scf_nspin2
+30_NO_KP_deepks_scf_nspin2
+31_NO_GO_deepks_bandgap_nspin2

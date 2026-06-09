@@ -1,6 +1,6 @@
 #ifdef USE_LIBXC
 
-#include "xc_functional_libxc.h"
+#include "libxc_abacus.h"
 #include "xc_functional.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_io/module_parameter/parameter.h"

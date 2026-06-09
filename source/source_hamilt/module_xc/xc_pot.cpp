@@ -10,13 +10,14 @@
 #include "xc_functional.h"
 
 #ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#include "libxc_abacus.h"
 #endif
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
-std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nrxx, // number of real-space grid
-                                                                   const Charge* const chr,
-                                                                   const UnitCell* ucell) // core charge density
+std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
+    const int& nrxx,
+    const Charge* const chr,
+    const UnitCell* ucell)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
@@ -44,7 +45,6 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
     // the square of the e charge
     // in Rydeberg unit, so * 2.0.
     double e2 = 2.0;
-
     double vanishing_charge = 1.0e-10;
 
     if (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
@@ -57,7 +57,6 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
         {
             // total electron charge density
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-            
             double arhox = std::abs(rhox);
             if (arhox > vanishing_charge)
             {
@@ -80,12 +79,12 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
 #endif
         for (int ir = 0;ir < nrxx;ir++)
         {
-            double rhox = chr->rho[0][ir] + chr->rho[1][ir] + chr->rho_core[ir]; //HLX(05-29-06): bug fixed
+            double rhox = chr->rho[0][ir] + chr->rho[1][ir] + chr->rho_core[ir];
             double arhox = std::abs(rhox);
 
             if (arhox > vanishing_charge)
             {
-                double zeta = (chr->rho[0][ir] - chr->rho[1][ir]) / arhox; //HLX(05-29-06): bug fixed
+                double zeta = (chr->rho[0][ir] - chr->rho[1][ir]) / arhox;
 
                 if (std::abs(zeta)  > 1.0)
                 {
@@ -108,7 +107,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
             }
         }
     }
-    else if(PARAM.inp.nspin == 4)//noncollinear case added by zhengdy
+    else if(PARAM.inp.nspin == 4)
     {
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:etxc) reduction(+:vtxc)
@@ -116,9 +115,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
         for(int ir = 0;ir<nrxx; ir++)
         {
             double amag = sqrt( pow(chr->rho[1][ir],2) + pow(chr->rho[2][ir],2) + pow(chr->rho[3][ir],2) );
-
             double rhox = chr->rho[0][ir] + chr->rho_core[ir];
-
             double arhox = std::abs( rhox );
 
             if ( arhox > vanishing_charge )
@@ -130,7 +127,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
                 if ( std::abs( zeta ) > 1.0 )
                 {
                     zeta = (zeta > 0.0) ? 1.0 : (-1.0);
-                }//end if
+                }
 
                 if(use_libxc)
                 {
@@ -140,7 +137,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
                     XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1]);
 #else
                     ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
-#endif                    
+#endif
                 }
                 else
                 {
@@ -161,11 +158,11 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
                     {
                         v(ipol, ir) = e2 * vs * chr->rho[ipol][ir] / amag;
                         vtxc += v(ipol,ir) * chr->rho[ipol][ir];
-                    }//end do
-                }//end if
-            }//end if
-        }//end do
-    }//end if
+                    }
+                }
+            }
+        }
+    }
     // energy terms, local-density contributions
 
     // add gradient corrections (if any)
