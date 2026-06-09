@@ -10,21 +10,35 @@
 #include <cassert>
 
 template <typename Tdata>
-Mix_DMk_2D<Tdata>& Mix_DMk_2D<Tdata>::set_nks(const int nks)
+Mix_DMk_2D<Tdata>::~Mix_DMk_2D<Tdata>()
 {
-    ModuleBase::TITLE("Mix_DMk_2D", "set_nks");
-    this->mix_DMk.clear();
-    this->mix_DMk.resize(nks);
-    return *this;
+    if(this->delete_mixing)
+        delete this->mixing;
 }
 
 template <typename Tdata>
-Mix_DMk_2D<Tdata>& Mix_DMk_2D<Tdata>::set_mixing(Base_Mixing::Mixing* mixing_in)
+void Mix_DMk_2D<Tdata>::set_nks(const int nks)
 {
-    ModuleBase::TITLE("Mix_DMk_2D", "set_mixing");
+    this->mix_DMk.clear();
+    this->mix_DMk.resize(nks);
+}
+
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::set_mixing(Base_Mixing::Mixing* mixing_in)
+{
+    if(this->delete_mixing)
+        delete this->mixing;
     this->mixing = mixing_in;
-    this->separate_loop = (mixing_in == nullptr);
-    return *this;
+    this->delete_mixing = false;
+}
+
+template <typename Tdata>
+void Mix_DMk_2D<Tdata>::set_mixing_plain(const double& mixing_beta)
+{
+    if(this->delete_mixing)
+        delete this->mixing;
+    this->mixing = new Base_Mixing::Plain_Mixing(mixing_beta);
+    this->delete_mixing = true;
 }
 
 template <typename Tdata>
@@ -32,13 +46,9 @@ void Mix_DMk_2D<Tdata>::mix(const std::vector<std::vector<Tdata>>& dm, const boo
 {
     ModuleBase::TITLE("Mix_DMk_2D", "mix");
     if (flag_restart)
-    {
-        this->restart_all(this->mix_DMk, dm);
-    }
+        { this->restart_all(this->mix_DMk, dm); }
     else
-    {
-        this->mix_all(this->mix_DMk, dm);
-    }
+        { this->mix_all(this->mix_DMk, dm); }
 }
 
 template <typename Tdata>
@@ -51,44 +61,15 @@ std::vector<const std::vector<Tdata>*> Mix_DMk_2D<Tdata>::get_DMk_out() const
 }
 
 template <typename Tdata>
-void Mix_DMk_2D<Tdata>::restart_one(typename Mix_DMk_2D<Tdata>::DMk_Mix_Data& data,
-                                    const typename Mix_DMk_2D<Tdata>::Tmatrix& data_in,
-                                    Base_Mixing::Mixing& mixing)
-{
-    data.data_out = data_in;
-    const int length = static_cast<int>(data_in.size());
-    mixing.init_mixing_data(data.mixing_data, length, sizeof(Tdata));
-}
-
-template <typename Tdata>
-void Mix_DMk_2D<Tdata>::mix_one(typename Mix_DMk_2D<Tdata>::DMk_Mix_Data& data,
-                                const typename Mix_DMk_2D<Tdata>::Tmatrix& data_in,
-                                Base_Mixing::Mixing& mixing)
-{
-    mixing.push_data(data.mixing_data, data.data_out.data(), data_in.data(), nullptr, false);
-    mixing.mix_data(data.mixing_data, data.data_out.data());
-}
-
-template <typename Tdata>
 void Mix_DMk_2D<Tdata>::restart_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_Data>& data_out,
                                     const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
 {
     assert(data_out.size() == data_in.size());
-    if (this->separate_loop)
+    assert(this->mixing != nullptr);
+    for (int ik = 0; ik < data_in.size(); ++ik)
     {
-        Base_Mixing::Plain_Mixing plain_mixing(1.0);
-        for (int ik = 0; ik < data_in.size(); ++ik)
-        {
-            restart_one(data_out[ik], data_in[ik], plain_mixing);
-        }
-    }
-    else
-    {
-        assert(this->mixing != nullptr);
-        for (int ik = 0; ik < data_in.size(); ++ik)
-        {
-            restart_one(data_out[ik], data_in[ik], *this->mixing);
-        }
+        data_out[ik].data_out = data_in[ik];
+        this->mixing->init_mixing_data(data_out[ik].mixing_data, data_in[ik].size(), sizeof(Tdata));
     }
 }
 
@@ -97,21 +78,11 @@ void Mix_DMk_2D<Tdata>::mix_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_
                                 const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
 {
     assert(data_out.size() == data_in.size());
-    if (this->separate_loop)
+    assert(this->mixing != nullptr);
+    for (int ik = 0; ik < data_in.size(); ++ik)
     {
-        Base_Mixing::Plain_Mixing plain_mixing(1.0);
-        for (int ik = 0; ik < data_in.size(); ++ik)
-        {
-            mix_one(data_out[ik], data_in[ik], plain_mixing);
-        }
-    }
-    else
-    {
-        assert(this->mixing != nullptr);
-        for (int ik = 0; ik < data_in.size(); ++ik)
-        {
-            mix_one(data_out[ik], data_in[ik], *this->mixing);
-        }
+        this->mixing->push_data(data_out[ik].mixing_data, data_out[ik].data_out.data(), data_in[ik].data(), nullptr, false);
+        this->mixing->mix_data(data_out[ik].mixing_data, data_out[ik].data_out.data());
     }
 }
 

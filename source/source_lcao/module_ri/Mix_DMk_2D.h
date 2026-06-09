@@ -15,19 +15,25 @@ template <typename Tdata>
 class Mix_DMk_2D
 {
 public:
+	~Mix_DMk_2D<Tdata>();
+
 	/**
 	 * @brief Sets the number of k-points.
 	 * @param nks Number of k-points.
-	 * @return Reference to the current object.
 	 */
-	Mix_DMk_2D &set_nks(const int nks);
+	void set_nks(const int nks);
 
 	/**
 	 * @brief Sets the mixing mode.
 	 * @param Mixing Mixing pointer.
-	 * @return Reference to the current object.
 	 */
-	Mix_DMk_2D &set_mixing(Base_Mixing::Mixing* mixing_in);
+	void set_mixing(Base_Mixing::Mixing* mixing_in);
+
+	/**
+	 * @brief Sets Base_Mixing::Plain_Mixing.
+	 * @param mixing_beta mixing beta for plain mixing.
+	 */
+	void set_mixing_plain(const double& mixing_beta);
 
 	/**
 	 * @brief Mixes the density matrix.
@@ -51,14 +57,6 @@ private:
         Base_Mixing::Mixing_Data mixing_data;
     };
 
-    static void restart_one(DMk_Mix_Data& data,
-                            const Tmatrix& data_in,
-                            Base_Mixing::Mixing& mixing);
-
-    static void mix_one(DMk_Mix_Data& data,
-                        const Tmatrix& data_in,
-                        Base_Mixing::Mixing& mixing);
-
     void restart_all(std::vector<DMk_Mix_Data>& data_out,
                      const std::vector<Tmatrix>& data_in);
 
@@ -67,7 +65,7 @@ private:
 
     std::vector<DMk_Mix_Data> mix_DMk;
     Base_Mixing::Mixing* mixing = nullptr;
-    bool separate_loop = false;
+	bool delete_mixing = false;
 };
 
 #endif

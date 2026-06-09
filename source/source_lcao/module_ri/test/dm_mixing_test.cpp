@@ -65,7 +65,7 @@ TEST_F(DM_Mixing_Test, Mix_DMk_2D)
     //Gamma only
     Mix_DMk_2D<double> mix_dmk_gamma;
     mix_dmk_gamma.set_nks(1);
-    mix_dmk_gamma.set_mixing(nullptr);
+    mix_dmk_gamma.set_mixing_plain(1.0);
     std::vector<std::vector<std::vector<double>>> dm_gamma(2);
     dm_gamma[0] = std::vector<std::vector<double>>(1);
     dm_gamma[0][0] = mix_data_vector[0];
@@ -87,7 +87,7 @@ TEST_F(DM_Mixing_Test, Mix_DMk_2D)
     // not Gamma only
     Mix_DMk_2D<std::complex<double>> mix_dmk;
     mix_dmk.set_nks(1);
-    mix_dmk.set_mixing(nullptr);
+    mix_dmk.set_mixing_plain(1.0);
     std::vector<std::vector<std::vector<std::complex<double>>>> dm(2);
     dm[0] = std::vector<std::vector<std::complex<double>>>(1);
     dm[0][0] = mix_complexdata_vector[0];
