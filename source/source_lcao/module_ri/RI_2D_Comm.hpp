@@ -11,6 +11,7 @@
 #include "source_base/timer.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_rt/td_info.h"
 #include <Comm/Comm_Assemble/Comm_Assemble.h>
 #include <Comm/example/Communicate_Map-1.h>
 #include <Comm/example/Communicate_Map-2.h>
@@ -321,6 +322,7 @@ void RI_2D_Comm::add_Hexx_td(
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
     const Parallel_Orbitals& pv,
     const ModuleBase::Vector3<double>& At,
+    const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
     TK* hk)
 {
     ModuleBase::TITLE("RI_2D_Comm", "add_Hexx_td");
@@ -340,13 +342,10 @@ void RI_2D_Comm::add_Hexx_td(
                 const TA& iat1 = Hs_tmpB.first.first;
                 const TC& cell1 = Hs_tmpB.first.second;
                 const ModuleBase::Vector3<int> r_index = RI_Util::array3_to_Vector3(cell1);
-                const ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat0, iat1, r_index);
-                const double arg_td = At * dtau * ucell.lat0;
-
                 const std::complex<double> frac
                     = alpha
                       * std::exp(ModuleBase::IMAG_UNIT
-                                 * ((ModuleBase::TWO_PI * kv.kvec_c[ik] * (r_index * ucell.latvec)) + arg_td));
+                                 * (ModuleBase::TWO_PI * kv.kvec_c[ik] * (r_index * ucell.latvec))) * phase_hybrid.at(r_index);
 
                 const RI::Tensor<Tdata>& H = Hs_tmpB.second;
                 for (size_t iw0_b = 0; iw0_b < H.shape[0]; ++iw0_b)

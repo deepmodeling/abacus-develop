@@ -1,0 +1,40 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  autotest
+calculation             scf
+nbands                  3
+symmetry                1
+pseudo_dir              ../../PP_ORB
+pseudo_rcut             16
+
+#Parameters (2.Iteration)
+ecutwfc                 10
+scf_nmax                100
+dft_functional          XC_GGA_X_PBE+XC_GGA_C_PBE
+
+
+#Parameters (3.Basis)
+basis_type              pw
+
+#Parameters (4.Smearing)
+smearing_method         gauss
+smearing_sigma          0.0002
+
+#Parameters (5.Mixing)
+mixing_type             broyden
+device                  cpu
+
+#Parameters (6.Gene Data)
+of_full_pw              1
+of_full_pw_dim          1
+
+of_ml_gene_data         1
+
+of_ml_nkernel           2
+of_ml_kernel            1 1
+of_ml_kernel_scaling    1.5 1
+of_ml_chi_p             0.2
+of_ml_chi_q             0.1
+of_ml_chi_pnl           0.2 0.2
+of_ml_chi_qnl           0.1 0.1
+of_ml_chi_xi            0.8 1

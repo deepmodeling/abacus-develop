@@ -24,7 +24,7 @@
 
 
 #ifdef USE_LIBXC
-#include "source_hamilt/module_xc/xc_functional_libxc.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
 

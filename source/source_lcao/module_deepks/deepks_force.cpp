@@ -11,8 +11,7 @@
 #include "source_lcao/module_hcontainer/atom_pair.h"
 
 template <typename TK>
-void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
-                                const UnitCell& ucell,
+void DeePKS_domain::cal_f_delta(const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
                                 const Grid_Driver& GridD,
                                 const Parallel_Orbitals& pv,
@@ -20,13 +19,17 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                 const DeePKS_Param& deepks_param,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
-                                double** gedm,
                                 ModuleBase::matrix& f_delta,
                                 const bool isstress,
-                                ModuleBase::matrix& svnl_dalpha)
+                                ModuleBase::matrix& svnl_dalpha,
+                                const hamilt::HContainer<double>* dmr,
+                                double** gedm,
+                                const hamilt::HContainer<double>* dmr_mag,
+                                double** gedm_mag)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta");
     ModuleBase::timer::start("DeePKS_domain", "cal_f_delta");
+    const bool spin2 = (dmr_mag != nullptr && gedm_mag != nullptr); // nspin=2 magnetization channel
     f_delta.zero_out();
 
     const int lmaxd = orb.get_lmax_d();
@@ -108,6 +111,11 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                 }
                 ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
                 const double* dm_current = dmr->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
+                const double* dm_current_mag = nullptr;
+                if (spin2)
+                {
+                    dm_current_mag = dmr_mag->find_matrix(ibt1, ibt2, dR.x, dR.y, dR.z)->get_pointer();
+                }
 
                 hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
                 hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
@@ -131,6 +139,8 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                     {
                         double nlm[3] = {0, 0, 0};
                         double nlm_t[3] = {0, 0, 0}; // for stress
+                        double nlm_mag[3] = {0, 0, 0};
+                        double nlm_t_mag[3] = {0, 0, 0};
 
                         if (!PARAM.inp.deepks_equiv)
                         {
@@ -157,6 +167,21 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                                                                     * overlap_2->get_value(col_indexes[iw2], ib + m1)
                                                                     * grad_overlap_1[dim]->get_value(row_indexes[iw1],
                                                                                                     ib + m2);
+                                                }
+                                                if (spin2)
+                                                {
+                                                    nlm_mag[dim]
+                                                        += gedm_mag[inl][m1 * nm + m2]
+                                                           * overlap_1->get_value(row_indexes[iw1], ib + m1)
+                                                           * grad_overlap_2[dim]->get_value(col_indexes[iw2], ib + m2);
+                                                    if (isstress)
+                                                    {
+                                                        nlm_t_mag[dim]
+                                                            += gedm_mag[inl][m1 * nm + m2]
+                                                               * overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                               * grad_overlap_1[dim]->get_value(row_indexes[iw1],
+                                                                                                ib + m2);
+                                                    }
                                                 }
                                             }
                                         }
@@ -193,15 +218,27 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                             }
                         }
 
-                        // HF term is minus, only one projector for each atom force.
-                        f_delta_local(iat, 0) -= 2.0 * *dm_current * nlm[0];
-                        f_delta_local(iat, 1) -= 2.0 * *dm_current * nlm[1];
-                        f_delta_local(iat, 2) -= 2.0 * *dm_current * nlm[2];
+                        // combine charge and (for nspin=2) magnetization channels
+                        double wnlm[3];
+                        double wnlm_t[3];
+                        for (int dim = 0; dim < 3; ++dim)
+                        {
+                            wnlm[dim] = (*dm_current) * nlm[dim];
+                            wnlm_t[dim] = (*dm_current) * nlm_t[dim];
+                            if (spin2)
+                            {
+                                wnlm[dim] += (*dm_current_mag) * nlm_mag[dim];
+                                wnlm_t[dim] += (*dm_current_mag) * nlm_t_mag[dim];
+                            }
+                        }
 
-                        // Pulay term is plus, only one projector for each atom force.
-                        f_delta_local(ibt2, 0) += 2.0 * *dm_current * nlm[0];
-                        f_delta_local(ibt2, 1) += 2.0 * *dm_current * nlm[1];
-                        f_delta_local(ibt2, 2) += 2.0 * *dm_current * nlm[2];
+                        // HF term is minus, Pulay term is plus
+                        f_delta_local(iat, 0) -= 2.0 * wnlm[0];
+                        f_delta_local(iat, 1) -= 2.0 * wnlm[1];
+                        f_delta_local(iat, 2) -= 2.0 * wnlm[2];
+                        f_delta_local(ibt2, 0) += 2.0 * wnlm[0];
+                        f_delta_local(ibt2, 1) += 2.0 * wnlm[1];
+                        f_delta_local(ibt2, 2) += 2.0 * wnlm[2];
 
                         if (isstress)
                         {
@@ -209,10 +246,13 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
                             {
                                 for (int jpol = ipol; jpol < 3; jpol++)
                                 {
-                                    svnl_dalpha_local(ipol, jpol)
-                                        += *dm_current * (nlm[ipol] * r2[jpol] + nlm_t[ipol] * r1[jpol]);
+                                    svnl_dalpha_local(ipol, jpol) += wnlm[ipol] * r2[jpol] + wnlm_t[ipol] * r1[jpol];
                                 }
                             }
+                        }
+                        if (spin2)
+                        {
+                            dm_current_mag++;
                         }
                         dm_current++;
                     } // iw2
@@ -263,8 +303,7 @@ void DeePKS_domain::cal_f_delta(const hamilt::HContainer<double>* dmr,
     return;
 }
 
-template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double>* dmr,
-                                                 const UnitCell& ucell,
+template void DeePKS_domain::cal_f_delta<double>(const UnitCell& ucell,
                                                  const LCAO_Orbitals& orb,
                                                  const Grid_Driver& GridD,
                                                  const Parallel_Orbitals& pv,
@@ -272,13 +311,15 @@ template void DeePKS_domain::cal_f_delta<double>(const hamilt::HContainer<double
                                                  const DeePKS_Param& deepks_param,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
-                                                 double** gedm,
                                                  ModuleBase::matrix& f_delta,
                                                  const bool isstress,
-                                                 ModuleBase::matrix& svnl_dalpha);
+                                                 ModuleBase::matrix& svnl_dalpha,
+                                                 const hamilt::HContainer<double>* dmr,
+                                                 double** gedm,
+                                                 const hamilt::HContainer<double>* dmr_mag,
+                                                 double** gedm_mag);
 
-template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HContainer<double>* dmr,
-                                                               const UnitCell& ucell,
+template void DeePKS_domain::cal_f_delta<std::complex<double>>(const UnitCell& ucell,
                                                                const LCAO_Orbitals& orb,
                                                                const Grid_Driver& GridD,
                                                                const Parallel_Orbitals& pv,
@@ -286,9 +327,12 @@ template void DeePKS_domain::cal_f_delta<std::complex<double>>(const hamilt::HCo
                                                                const DeePKS_Param& deepks_param,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,
-                                                               double** gedm,
                                                                ModuleBase::matrix& f_delta,
                                                                const bool isstress,
-                                                               ModuleBase::matrix& svnl_dalpha);
+                                                               ModuleBase::matrix& svnl_dalpha,
+                                                               const hamilt::HContainer<double>* dmr,
+                                                               double** gedm,
+                                                               const hamilt::HContainer<double>* dmr_mag,
+                                                               double** gedm_mag);
 
 #endif

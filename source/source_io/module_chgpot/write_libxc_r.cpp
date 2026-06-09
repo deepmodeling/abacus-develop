@@ -8,7 +8,7 @@
 #include "write_libxc_r.h"
 #include "source_base/parallel_comm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_hamilt/module_xc/xc_functional_libxc.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_basis/module_pw/pw_basis.h"

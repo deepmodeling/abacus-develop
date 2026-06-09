@@ -42,16 +42,16 @@ void ctrl_output_td(const UnitCell& ucell,
     {
         if (TD_info::out_current_k)
         {
-            ModuleIO::write_current_eachk<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, RA);
+            ModuleIO::write_current_eachk<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, td_p, RA);
         }
         else
         {
-            ModuleIO::write_current<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, RA);
+            ModuleIO::write_current<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, td_p, RA);
         }
     }
     else if(TD_info::out_current==2)
     {
-        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p->r_calculator, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
+        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
     }
     // (3) Output file for restart
     if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
