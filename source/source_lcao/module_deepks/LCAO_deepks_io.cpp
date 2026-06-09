@@ -77,9 +77,10 @@ void LCAO_deepks_io::load_npy_gedm(const int nat,
 void LCAO_deepks_io::save_npy_d(const int nat,
                                 const bool deepks_equiv,
                                 const DeePKS_Param& deepks_param,
-                                const std::vector<torch::Tensor>& descriptor,
                                 const std::string& dm_eig_file,
-                                const int rank)
+                                const int rank,
+                                const std::vector<torch::Tensor>& descriptor,
+                                const std::vector<torch::Tensor>& descriptor_mag)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_d");
 
@@ -102,11 +103,41 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                 npy_des.push_back(accessor[im]);
             }
         }
-        const long unsigned dshape[]
-            = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
-        if (rank == 0)
+        if (descriptor_mag.empty())
         {
+            const long unsigned dshape[]
+                = {static_cast<unsigned long>(nat), static_cast<unsigned long>(deepks_param.des_per_atom)};
             npy::SaveArrayAsNumpy(dm_eig_file, false, 2, dshape, npy_des);
+        }
+        else
+        {
+            // nspin=2: store charge and magnetization channels -> (nat, 2, des)
+            std::vector<double> npy_mag;
+            for (int inl = 0; inl < deepks_param.inlmax; ++inl)
+            {
+                auto accessor = descriptor_mag[inl].accessor<double, 1>();
+                int nm = 2 * deepks_param.inl2l[inl] + 1;
+                for (int im = 0; im < nm; im++)
+                {
+                    npy_mag.push_back(accessor[im]);
+                }
+            }
+            const int des = deepks_param.des_per_atom;
+            std::vector<double> npy_both;
+            npy_both.reserve(2 * nat * des);
+            for (int iat = 0; iat < nat; ++iat)
+            {
+                for (int i = 0; i < des; ++i)
+                {
+                    npy_both.push_back(npy_des[iat * des + i]);
+                }
+                for (int i = 0; i < des; ++i)
+                {
+                    npy_both.push_back(npy_mag[iat * des + i]);
+                }
+            }
+            const long unsigned dshape[] = {static_cast<unsigned long>(nat), 2ul, static_cast<unsigned long>(des)};
+            npy::SaveArrayAsNumpy(dm_eig_file, false, 3, dshape, npy_both);
         }
     }
     else
