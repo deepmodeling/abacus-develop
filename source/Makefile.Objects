@@ -461,6 +461,7 @@ OBJS_PW=fft_bundle.o\
     pw_transform_k.o\
 
 OBJS_RELAXATION=relax_data.o\
+    cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
     ions_move_basic.o\

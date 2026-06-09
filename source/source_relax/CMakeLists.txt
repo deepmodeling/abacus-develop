@@ -2,6 +2,7 @@ add_library(
     relax
     OBJECT
     relax_data.cpp
+    cg_base.cpp
     relax_driver.cpp
     relax_sync.cpp
     line_search.cpp
