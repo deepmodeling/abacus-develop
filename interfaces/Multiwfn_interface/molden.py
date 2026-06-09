@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+'''
+This script is implemented referring to Molden file standard:
+https://www.theochem.ru.nl/molden/molden_format.html
+https://zorkzou.github.io/Molden2AIM/readme.html
+
+Users may add this directory to PATH and run chmod +x on this file to use it as a command.
+'''
+
+DEFAULT_FOLDER = "$(pwd)"
+
 ####################
 # Impl. of NAO2GTO #
 ####################
@@ -500,7 +511,7 @@ def write_molden_gto(total_gto: GTORadials, labels: list):
         out += total_gto.molden(l, iat + 1) # iat starts from 0, molden starts from 1
     return out
 
-def read_abacus_lowf(flowf, pat=r'^WFC_NAO_(K\d+|GAMMA(1|2)).txt$'):
+def read_abacus_lowf(flowf, pat=r'^(WFC_NAO_(K\d+|GAMMA\d+)(_ION\d+)?|wf((k\d+)?(s\d+)?|(s\d+)?(k\d+)?)(g\d+)?_nao)\.txt$'):
     """Read the ABACUS WFC_NAO_(K|GAMMA) file, which contains the coefficients of MOs.
     Please note, only Gamma-only calculation is supported. For ABACUS version earlier
     than 3.7.1, the `flowf` file is something like LOWF_K_. Manually change the file
@@ -549,7 +560,8 @@ def read_abacus_lowf(flowf, pat=r'^WFC_NAO_(K\d+|GAMMA(1|2)).txt$'):
         i += 1
 
     # check if the data we collected has the correct number of elements
-    if "WFC_NAO_K" in flowf: # multi-k case, the coef will be complex
+    basename = os.path.basename(flowf)
+    if "WFC_NAO_K" in basename or re.match(r"^wf(k\d+|s\d+k\d+)", basename): # multi-k case, the coef will be complex
         data = [complex(data[i], data[i+1]) for i in range(0, len(data), 2)]
         data = [d.real for d in data]
     data = np.array(data).reshape(nbands, nlocal)
@@ -559,6 +571,104 @@ def read_abacus_lowf(flowf, pat=r'^WFC_NAO_(K\d+|GAMMA(1|2)).txt$'):
         raise ValueError("Data read from file is not consistent with expected size.")
 
     return nbands, nlocal, occ, band, ener, data
+
+def find_abacus_lowf_files(nspin):
+    """Find ABACUS LCAO wavefunction files in OUT.*.
+
+    Keep compatibility with older WFC_NAO_* names and newer wf*_nao.txt names.
+    The KPT parser still restricts this converter to gamma-only single-k runs.
+    """
+    import glob
+    import os
+    import re
+
+    if nspin == 4:
+        raise NotImplementedError("nspin=4/SOC spinor wavefunctions are not supported by this Molden writer")
+    if nspin not in (1, 2):
+        raise NotImplementedError(f"Unsupported nspin={nspin}")
+
+    def newest(pattern):
+        def key(path):
+            nums = [int(x) for x in re.findall(r"\d+", os.path.basename(path))]
+            return nums, path
+        matches = sorted(glob.glob(pattern), key=key)
+        return matches[-1] if matches else None
+
+    def old_k_file(spin):
+        """Select the first-k old WFC_NAO_K* file for a spin channel."""
+        files_by_k = {}
+        for path in glob.glob("WFC_NAO_K*.txt"):
+            match = re.match(r"^WFC_NAO_K(\d+)(?:_ION(\d+))?\.txt$", os.path.basename(path))
+            if match is None:
+                continue
+            ik = int(match.group(1))
+            ion = int(match.group(2) or 0)
+            if ik not in files_by_k or (ion, path) > files_by_k[ik][0]:
+                files_by_k[ik] = ((ion, path), path)
+        k_indices = sorted(files_by_k)
+        if not k_indices:
+            return None
+        if nspin == 1:
+            target = k_indices[0]
+        else:
+            nk = len(k_indices) // 2
+            if nk == 0:
+                return None
+            target = k_indices[0] if spin == 1 else k_indices[nk]
+        return files_by_k.get(target, (None, None))[1]
+
+    if nspin == 1:
+        pattern_groups = [[
+            "WFC_NAO_GAMMA1.txt",
+            "WFC_NAO_GAMMA1_ION*.txt",
+            "OLD_WFC_NAO_K_SPIN1",
+            "wf_nao.txt",
+            "wfk1_nao.txt",
+            "WFC/wfg*_nao.txt",
+            "WFC/wfk1g*_nao.txt",
+        ]]
+    else:
+        pattern_groups = [
+            [
+                "WFC_NAO_GAMMA1.txt",
+                "WFC_NAO_GAMMA1_ION*.txt",
+                "OLD_WFC_NAO_K_SPIN1",
+                "wfs1_nao.txt",
+                "wfs1k1_nao.txt",
+                "wfk1s1_nao.txt",
+                "WFC/wfs1g*_nao.txt",
+                "WFC/wfs1k1g*_nao.txt",
+                "WFC/wfk1s1g*_nao.txt",
+            ],
+            [
+                "WFC_NAO_GAMMA2.txt",
+                "WFC_NAO_GAMMA2_ION*.txt",
+                "OLD_WFC_NAO_K_SPIN2",
+                "wfs2_nao.txt",
+                "wfs2k1_nao.txt",
+                "wfk1s2_nao.txt",
+                "WFC/wfs2g*_nao.txt",
+                "WFC/wfs2k1g*_nao.txt",
+                "WFC/wfk1s2g*_nao.txt",
+            ],
+        ]
+
+    files = []
+    for patterns in pattern_groups:
+        found = None
+        for pattern in patterns:
+            if pattern == "OLD_WFC_NAO_K_SPIN1":
+                found = old_k_file(1)
+            elif pattern == "OLD_WFC_NAO_K_SPIN2":
+                found = old_k_file(2)
+            else:
+                found = newest(pattern)
+            if found is not None:
+                break
+        if found is None:
+            raise FileNotFoundError(f"Cannot find ABACUS LCAO wavefunction file. Tried: {', '.join(patterns)}")
+        files.append(found)
+    return files
 
 def write_molden_mo(coefs, mo_map, occ, ener, spin=0, ndigits=3):
     """Write Molden [MO] section from the coefficients, occupations and energies.
@@ -863,6 +973,21 @@ def write_molden_nval_from_stru(stru, pseudo_dir):
     nvals = [read_upf_z_valence(fpp) for fpp in fpps]
     return write_molden_nval(kinds, nvals)
 
+def write_molden_pseudo(kinds, labels_kinds_map, zvals):
+    """Write Molden [Pseudo] effective nuclear charges per atom."""
+    out = "[Pseudo]\n"
+    for i, itype in enumerate(labels_kinds_map):
+        out += f"{kinds[itype]} {i + 1} {zvals[itype]:g}\n"
+    return out
+
+def write_molden_pseudo_from_stru(stru, pseudo_dir, labels_kinds_map):
+    """Build [Pseudo] from STRU species and their UPF z_valence values."""
+    import os
+    kinds = [spec['symbol'] for spec in stru['species']]
+    fpps = [os.path.abspath(os.path.join(pseudo_dir, spec['pp_file'])) for spec in stru["species"]]
+    zvals = [read_upf_z_valence(fpp) for fpp in fpps]
+    return write_molden_pseudo(kinds, labels_kinds_map, zvals)
+
 def read_abacus_input(finput):
     """Read the ABACUS input file and return the key-value pairs
     
@@ -961,7 +1086,7 @@ def indexing_mo(total_gto: GTORadials, labels: list):
                 i += 2*l+1
     return out
 
-def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", write_nval=False):
+def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS_Multiwfn.molden", with_cell=True, with_nval=True, with_pseudo=False):
     """Entrance function: generate molden file by reading the outdir of ABACUS, for only LCAO 
     calculation.
     
@@ -976,6 +1101,7 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", 
     import os
     import numpy as np
 
+    folder = os.path.abspath(folder)
     files = os.listdir(folder)
     assert ("STRU" in files) and ("INPUT" in files) and ("KPT" in files),\
         "STRU, INPUT, KPT files are required in the folder."
@@ -989,12 +1115,12 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", 
     ####################
     # write the cell   #
     ####################
+    print(f"MOLDEN: Processing ABACUS calculation directory {folder}")
     kv = read_abacus_input("INPUT")
     _ = read_abacus_kpt(kv.get("kpoint_file", "KPT"))
     stru = read_abacus_stru(kv.get("stru_file", "STRU"))
-    out += write_molden_cell(stru['lat']['const'], stru['lat']['vec'])
-    if write_nval:
-        out += write_molden_nval_from_stru(stru, kv.get("pseudo_dir", "./"))
+    if with_cell:
+        out += write_molden_cell(stru['lat']['const'], stru['lat']['vec'])
     
     ####################
     # write the atoms  #
@@ -1019,6 +1145,10 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", 
     else:
         raise NotImplementedError(f"Unknown coordinate type {stru['coord_type']}")
     out += write_molden_atoms(labels, kinds, labels_kinds_map, coords.tolist())
+    if with_nval:
+        out += write_molden_nval_from_stru(stru, kv.get("pseudo_dir", "./"))
+    if with_pseudo:
+        out += write_molden_pseudo_from_stru(stru, kv.get("pseudo_dir", "./"), labels_kinds_map)
 
     ####################
     # write the basis  #
@@ -1039,17 +1169,19 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden", 
     ####################
     suffix = kv.get("suffix", "ABACUS")
     out_dir = ".".join(["OUT", suffix])
+    print(f"MOLDEN: Parsing ABACUS output directory {os.path.abspath(out_dir)}")
     os.chdir(out_dir)
     nspin = int(kv.get("nspin", 1))
-    mo_files = "WFC_NAO_GAMMA1.txt"
-    mo_files = "WFC_NAO_K1.txt" if mo_files not in os.listdir() else mo_files
-    mo_files = [mo_files] if nspin == 1 else [mo_files, mo_files.replace("1.txt", "2.txt")]
+    mo_files = find_abacus_lowf_files(nspin)
     for ispin, mo_file in enumerate(mo_files):
+        print(f"MOLDEN: Parsing wavefunction file {os.path.abspath(mo_file)}")
         nbands, nlocal, occ, band, ener, data_np = read_abacus_lowf(mo_file)
         coefs = data_np.tolist()
         out += write_molden_mo(coefs, mo_map, occ, ener, spin=ispin, ndigits=ndigits)
 
     os.chdir(cwd)
+    fmolden = os.path.abspath(fmolden)
+    print(f"MOLDEN: Writing Molden file {fmolden}")
     with open(fmolden, "w") as file:
         file.write(out)
     return out
@@ -1392,12 +1524,26 @@ def _argparse():
     -n, --ndigits: the number of digits for the MO coefficients. For MO coefficients smaller than 10^-n, they will be set to 0.
     -g, --ngto: the number of GTOs to fit ABACUS NAOs.
     -r, --rel_r: the relative cutoff radius for the GTOs.
-    --write-nval: write the Molden [Nval] section from UPF z_valence.
+    --with-cell: whether to write the Molden [Cell] section.
+    --with-Nval: whether to write the Molden [Nval] section from UPF z_valence.
+    --with-pseudo: whether to write the Molden [Pseudo] section from UPF z_valence.
     -o, --output: the output Molden file name.
     """
     import argparse
+    import os
+
+    def str_to_bool(value):
+        if isinstance(value, bool):
+            return value
+        value = value.lower()
+        if value in ("true", "t", "yes", "y", "1"):
+            return True
+        if value in ("false", "f", "no", "n", "0"):
+            return False
+        raise argparse.ArgumentTypeError("expected true or false")
+
     parser = argparse.ArgumentParser(
-        description="Generate Molden file from ABACUS LCAO calculation via NAO2GTO method",
+        description="Generate Molden file from ABACUS LCAO calculation for Multiwfn",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     welcome = """WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore
@@ -1405,19 +1551,23 @@ the total number of electrons may not be conserved. Always use after a re-normal
 Once meet any problem, please submit an issue at: https://github.com/deepmodeling/abacus-develop/issues
     """
     parser.epilog = welcome
-    parser.add_argument("-f", "--folder", type=str, help="the folder of the ABACUS calculation")
+    parser.add_argument("-f", "--folder", type=str, default=DEFAULT_FOLDER, help="the folder of the ABACUS calculation")
     parser.add_argument("-n", "--ndigits", type=int, default=3, help="the number of digits for the MO coefficients")
     parser.add_argument("-g", "--ngto", type=int, default=7, help="the number of GTOs to fit ABACUS NAOs")
     parser.add_argument("-r", "--rel_r", type=str, default="2", help="the relative cutoff radius for the GTOs; comma-separated values enable multi-start fitting")
-    parser.add_argument("--write-nval", action="store_true", help="write the Molden [Nval] section from UPF z_valence")
-    parser.add_argument("-o", "--output", type=str, default="ABACUS.molden", help="the output Molden file name")
+    parser.add_argument("--with-cell", type=str_to_bool, default=True, help="whether to write the Molden [Cell] section")
+    parser.add_argument("--with-Nval", dest="with_nval", type=str_to_bool, default=True, help="whether to write the Molden [Nval] section")
+    parser.add_argument("--with-pseudo", type=str_to_bool, default=False, help="whether to write the Molden [Pseudo] section")
+    parser.add_argument("-o", "--output", type=str, default="ABACUS_Multiwfn.molden", help="the output Molden file name")
     args = parser.parse_args()
+    if args.folder == DEFAULT_FOLDER:
+        args.folder = os.getcwd()
     return args
 
 if __name__ == "__main__":
     #unittest.main(exit=False)
     args = _argparse()
-    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output, args.write_nval)
+    moldengen(args.folder, args.ndigits, args.ngto, args.rel_r, args.output, args.with_cell, args.with_nval, args.with_pseudo)
     print(" ".join("*"*10).center(80, " "))
     print(f"""MOLDEN: Generated Molden file {args.output} from ABACUS calculation in folder {args.folder}.
 WARNING: use at your own risk because the NAO2GTO will not always conserve the shape of radial function, therefore

@@ -276,17 +276,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         const int nks = (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) ? 1 : kv.get_nks();
         if (PARAM.globalv.gamma_only_local)
         {
-            DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r, ucell, orb, gd,
-                                               *flk.ParaV, nks, deepks.ld.deepks_param,
-                                               kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                               fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<double>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
         else
         {
-            DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r, ucell, orb, gd,
-                                                              *flk.ParaV, nks, deepks.ld.deepks_param,
-                                                              kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                                              fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<std::complex<double>>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
 
         if (isforce)

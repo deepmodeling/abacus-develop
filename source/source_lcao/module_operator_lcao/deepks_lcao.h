@@ -94,7 +94,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @brief calculate the DeePKS correction matrix with specific <I,J,R> atom-pairs
      * use the adjs_all to calculate the HR matrix
      */
-    void calculate_HR();
+    void calculate_HR(double** gedm_use, double** gedm_mag_use = nullptr, const double sign = 0.0);
 
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
