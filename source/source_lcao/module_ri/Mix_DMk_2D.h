@@ -49,23 +49,19 @@ public:
     std::vector<const std::vector<Tdata>*> get_DMk_out() const;
 
 private:
-    using Tmatrix = std::vector<Tdata>;
-
     struct DMk_Mix_Data
     {
-        Tmatrix data_out;
+        std::vector<Tdata> data_out;
         Base_Mixing::Mixing_Data mixing_data;
     };
 
-    void restart_all(std::vector<DMk_Mix_Data>& data_out,
-                     const std::vector<Tmatrix>& data_in);
+    void restart_all(const std::vector<std::vector<Tdata>>& data_in);
 
-    void mix_all(std::vector<DMk_Mix_Data>& data_out,
-                 const std::vector<Tmatrix>& data_in);
+    void mix_all(const std::vector<std::vector<Tdata>>& data_in);
 
     std::vector<DMk_Mix_Data> mix_DMk;
     Base_Mixing::Mixing* mixing = nullptr;
-	bool delete_mixing = false;
+	bool flag_del_mixing = false;
 };
 
 #endif

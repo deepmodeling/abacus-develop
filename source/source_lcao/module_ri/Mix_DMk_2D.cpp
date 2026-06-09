@@ -12,7 +12,7 @@
 template <typename Tdata>
 Mix_DMk_2D<Tdata>::~Mix_DMk_2D<Tdata>()
 {
-    if(this->delete_mixing)
+    if(this->flag_del_mixing)
         delete this->mixing;
 }
 
@@ -26,19 +26,19 @@ void Mix_DMk_2D<Tdata>::set_nks(const int nks)
 template <typename Tdata>
 void Mix_DMk_2D<Tdata>::set_mixing(Base_Mixing::Mixing* mixing_in)
 {
-    if(this->delete_mixing)
+    if(this->flag_del_mixing)
         delete this->mixing;
     this->mixing = mixing_in;
-    this->delete_mixing = false;
+    this->flag_del_mixing = false;
 }
 
 template <typename Tdata>
 void Mix_DMk_2D<Tdata>::set_mixing_plain(const double& mixing_beta)
 {
-    if(this->delete_mixing)
+    if(this->flag_del_mixing)
         delete this->mixing;
     this->mixing = new Base_Mixing::Plain_Mixing(mixing_beta);
-    this->delete_mixing = true;
+    this->flag_del_mixing = true;
 }
 
 template <typename Tdata>
@@ -46,9 +46,9 @@ void Mix_DMk_2D<Tdata>::mix(const std::vector<std::vector<Tdata>>& dm, const boo
 {
     ModuleBase::TITLE("Mix_DMk_2D", "mix");
     if (flag_restart)
-        { this->restart_all(this->mix_DMk, dm); }
+        { this->restart_all(dm); }
     else
-        { this->mix_all(this->mix_DMk, dm); }
+        { this->mix_all(dm); }
 }
 
 template <typename Tdata>
@@ -61,28 +61,26 @@ std::vector<const std::vector<Tdata>*> Mix_DMk_2D<Tdata>::get_DMk_out() const
 }
 
 template <typename Tdata>
-void Mix_DMk_2D<Tdata>::restart_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_Data>& data_out,
-                                    const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
+void Mix_DMk_2D<Tdata>::restart_all(const std::vector<std::vector<Tdata>>& data_in)
 {
-    assert(data_out.size() == data_in.size());
+    assert(this->mix_DMk.size() == data_in.size());
     assert(this->mixing != nullptr);
     for (int ik = 0; ik < data_in.size(); ++ik)
     {
-        data_out[ik].data_out = data_in[ik];
-        this->mixing->init_mixing_data(data_out[ik].mixing_data, data_in[ik].size(), sizeof(Tdata));
+        this->mix_DMk[ik].data_out = data_in[ik];
+        this->mixing->init_mixing_data(this->mix_DMk[ik].mixing_data, data_in[ik].size(), sizeof(Tdata));
     }
 }
 
 template <typename Tdata>
-void Mix_DMk_2D<Tdata>::mix_all(std::vector<typename Mix_DMk_2D<Tdata>::DMk_Mix_Data>& data_out,
-                                const std::vector<typename Mix_DMk_2D<Tdata>::Tmatrix>& data_in)
+void Mix_DMk_2D<Tdata>::mix_all(const std::vector<std::vector<Tdata>>& data_in)
 {
-    assert(data_out.size() == data_in.size());
+    assert(this->mix_DMk.size() == data_in.size());
     assert(this->mixing != nullptr);
     for (int ik = 0; ik < data_in.size(); ++ik)
     {
-        this->mixing->push_data(data_out[ik].mixing_data, data_out[ik].data_out.data(), data_in[ik].data(), nullptr, false);
-        this->mixing->mix_data(data_out[ik].mixing_data, data_out[ik].data_out.data());
+        this->mixing->push_data(this->mix_DMk[ik].mixing_data, this->mix_DMk[ik].data_out.data(), data_in[ik].data(), nullptr, false);
+        this->mixing->mix_data(this->mix_DMk[ik].mixing_data, this->mix_DMk[ik].data_out.data());
     }
 }
 
