@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 
 #ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#include "libxc_abacus.h"
 #endif
 
 XC_Functional::XC_Functional(){}
@@ -71,13 +71,13 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     scaling_factor_xc.clear(); // added by jghan, 2024-07-07
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
-	if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
-	{
+    if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
+    {
         func_id.push_back(XC_LDA_X);
         func_id.push_back(XC_LDA_C_PZ);
         func_type = 1;
         use_libxc = false;
-	}
+    }
     else if (xc_func == "PWLDA")
     {
         func_id.push_back(XC_LDA_X);
@@ -85,84 +85,84 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
     }
-	else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
-	{
+    else if ( xc_func == "PBE" || xc_func == "SLAPWPBXPBC") //PBX+PBC
+    {
         func_id.push_back(XC_GGA_X_PBE);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "PBESOL") //PBX_S+PBC_S
-	{
+    }
+    else if ( xc_func == "PBESOL") //PBX_S+PBC_S
+    {
         func_id.push_back(XC_GGA_X_PBE_SOL);
         func_id.push_back(XC_GGA_C_PBE_SOL);
         func_type = 2;
         use_libxc = false;
-	}
-	else if( xc_func == "REVPBE" ) //PBX_r+PBC
-	{
-		func_id.push_back(XC_GGA_X_PBE_R);
+    }
+    else if( xc_func == "REVPBE" ) //PBX_r+PBC
+    {
+        func_id.push_back(XC_GGA_X_PBE_R);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "WC") //WC+PBC
-	{
+    }
+    else if ( xc_func == "WC") //WC+PBC
+    {
         func_id.push_back(XC_GGA_X_WC);
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "BLYP") //B88+LYP
-	{
+    }
+    else if ( xc_func == "BLYP") //B88+LYP
+    {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_LYP);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "BP") //B88+P86
-	{
+    }
+    else if ( xc_func == "BP") //B88+P86
+    {
         func_id.push_back(XC_GGA_X_B88);
         func_id.push_back(XC_GGA_C_P86);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "PW91") //PW91_X+PW91_C
-	{
+    }
+    else if ( xc_func == "PW91") //PW91_X+PW91_C
+    {
         func_id.push_back(XC_GGA_X_PW91);
         func_id.push_back(XC_GGA_C_PW91);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
-	{
+    }
+    else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
+    {
         func_id.push_back(XC_GGA_X_HCTH_A);
         func_id.push_back(XC_GGA_C_HCTH_A);
         func_type = 2;
         use_libxc = false;
-	}
-	else if ( xc_func == "OLYP") //OPTX+LYP
-	{
+    }
+    else if ( xc_func == "OLYP") //OPTX+LYP
+    {
         func_id.push_back(XC_GGA_X_OPTX);
         func_id.push_back(XC_GGA_C_LYP);
         func_type = 2;
         use_libxc = false;
-	}
+    }
 #ifdef USE_LIBXC
-	else if ( xc_func == "SCAN")
-	{
+    else if ( xc_func == "SCAN")
+    {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 3;
         use_libxc = true;
-	}
+    }
     else if ( xc_func == "SCAN0")
-	{
+    {
         func_id.push_back(XC_MGGA_X_SCAN);
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 5;
         use_libxc = true;
-	}
+    }
     else if( xc_func == "LC_PBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
@@ -199,12 +199,12 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = false;
     }
-   	else if( xc_func == "PBE0")
-	{
+    else if( xc_func == "PBE0")
+    {
         func_id.push_back(XC_HYB_GGA_XC_PBEH);
         func_type = 4;
         use_libxc = false;
-	}
+    }
     else if( xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
     {
         // not doing anything
@@ -230,8 +230,8 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         use_libxc = true;
     }
     else if( xc_func == "CWP22")
-    {   
-        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
+    {
+        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, libxc_pot.cpp
         func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
         func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
         func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
@@ -246,9 +246,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = true;
     }
-    else if( xc_func == "BLYP_LR")
-    {   
-        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
+    else if ( xc_func == "BLYP_LR")
+    {
+        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, libxc_pot.cpp
         func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
         func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
         func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
@@ -274,7 +274,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
 #ifdef USE_LIBXC
         //see if it matches libxc functionals
-        const std::pair<int,std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
+        const std::pair<int, std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
         func_type = std::get<0>(type_id);
         func_id = std::get<1>(type_id);
         use_libxc = true;
@@ -333,7 +333,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 std::string XC_Functional::output_info()
 {
     ModuleBase::TITLE("XC_Functional", "output_info");
-  #ifdef USE_LIBXC
+#ifdef USE_LIBXC
     if(use_libxc)
     {
         std::stringstream ss;
@@ -349,7 +349,9 @@ std::string XC_Functional::output_info()
             {
                 const func_reference_type *ref = xc_func_info_get_references(func.info, i);
                 if(ref)
+                {
                     ss<<"\t"<<xc_func_reference_get_ref(ref)<<std::endl;
+                }
             }
         }
         XC_Functional_Libxc::finish_func(funcs);
@@ -359,13 +361,17 @@ std::string XC_Functional::output_info()
     {
         std::string s = " XC:\t";
         for(const auto &id: func_id)
+        {
             s += std::string(xc_functional_get_name(id))+"\t";
+        }
         return s;
     }
-  #else
+#else
     std::string s = " XC:\t";
     for(const auto &id: func_id)
+    {
         s += std::to_string(id)+"\t";
+    }
     return s;
-  #endif
+#endif
 }

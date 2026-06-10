@@ -502,20 +502,20 @@ OBJS_SYMMETRY=symm_other.o\
 
 OBJS_XC=xc_functional.o\
     xc_functional_op.o\
-    xc_functional_vxc.o\
-    xc_functional_gradcorr.o\
-    xc_functional_wrapper_xc.o\
-    xc_functional_wrapper_gcxc.o\
-    xc_functional_libxc.o\
-    xc_functional_libxc_tools.o\
-    xc_functional_libxc_vxc.o\
-    xc_functional_libxc_wrapper_xc.o\
-    xc_functional_libxc_wrapper_gcxc.o\
-    xc_functional_libxc_wrapper_tauxc.o\
-    xc_funct_exch_lda.o\
-    xc_funct_corr_lda.o\
-    xc_funct_exch_gga.o\
-    xc_funct_corr_gga.o\
+    xc_pot.o\
+    xc_grad.o\
+    xc_lda_wrap.o\
+    xc_gga_wrap.o\
+    libxc_setup.o\
+    libxc_tools.o\
+    libxc_pot.o\
+    libxc_lda_wrap.o\
+    libxc_gga_wrap.o\
+    libxc_mgga_wrap.o\
+    xc_lda_exch.o\
+    xc_lda_corr.o\
+    xc_gga_exch.o\
+    xc_gga_corr.o\
     xc_funct_hcth.o\
     exx_info.o\
 

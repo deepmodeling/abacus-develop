@@ -39,7 +39,7 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info)
+    Exx_LRI_Interface(const Exx_Info_RI& info)
     {
         this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
     }
