@@ -231,7 +231,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad)
+void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -273,22 +273,22 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
 
     if (Lattice_Change_Basic::largest_grad == 0.0)
     {
-        GlobalV::ofs_running << " Largest stress is 0, movement is impossible." << std::endl;
+        ofs << " Largest stress is 0, movement is impossible." << std::endl;
         Lattice_Change_Basic::converged = true;
     }
     else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
+            ofs << "\n Geometry relaxation is converged!" << std::endl;
+            ofs << "\n Largest stress is " << largest_grad  
              << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
                                  << " kbar" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
@@ -298,15 +298,15 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         // the code is almost the same as previous codes
         if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest stress is " << largest_grad  
+            ofs << "\n Geometry relaxation is converged!" << std::endl;
+            ofs << "\n Largest stress is " << largest_grad  
              << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
-            GlobalV::ofs_running << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
                                  << " kbar" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
@@ -315,16 +315,16 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     return;
 }
 
-void Lattice_Change_Basic::terminate()
+void Lattice_Change_Basic::terminate(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
     if (Lattice_Change_Basic::converged)
     {
-        GlobalV::ofs_running << " end of lattice optimization" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "stress_step", Lattice_Change_Basic::stress_step);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Lattice_Change_Basic::update_iter);
+        ofs << " end of lattice optimization" << std::endl;
+        ModuleBase::GlobalFunc::OUT(ofs, "stress_step", Lattice_Change_Basic::stress_step);
+        ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Lattice_Change_Basic::update_iter);
         /*
-        GlobalV::ofs_running<<"Saving the approximate inverse hessian"<<std::endl;
+        ofs<<"Saving the approximate inverse hessian"<<std::endl;
         std::ofstream hess("hess.out");
         for(int i=0;i<dim;i++)
         {
@@ -338,8 +338,8 @@ void Lattice_Change_Basic::terminate()
     }
     else
     {
-        GlobalV::ofs_running << " the maximum number of steps has been reached." << std::endl;
-        GlobalV::ofs_running << " end of lattice optimization." << std::endl;
+        ofs << " the maximum number of steps has been reached." << std::endl;
+        ofs << " end of lattice optimization." << std::endl;
     }
 
     return;

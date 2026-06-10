@@ -1,3 +1,4 @@
+#include <fstream>
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_data.h"
 #include "mock_remake_cell.h"
@@ -222,7 +223,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case1.log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
     ucell.lc[2] = 1;
@@ -237,11 +238,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     stress(2, 2) = 9.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case1.log");
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -250,7 +251,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     EXPECT_FALSE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case1.log");
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1 && largest_grad == 0
@@ -259,7 +260,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case2.log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
     ucell.lc[2] = 1;
@@ -274,11 +275,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case2.log");
     std::string expected_output = " Largest stress is 0, movement is impossible.\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -287,7 +288,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     EXPECT_TRUE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case2.log");
 }
 
 // Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, and converged
@@ -296,7 +297,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case3.log");
     ucell.lc[0] = 1;
     ucell.lc[1] = 1;
     ucell.lc[2] = 1;
@@ -311,11 +312,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case3.log");
     std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -324,7 +325,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     EXPECT_TRUE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case3.log");
 }
 
 // Test for check_converged when ucell.lc != 1, but not converged
@@ -333,7 +334,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case4.log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;
     ucell.lc[2] = 0;
@@ -348,11 +349,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     grad[8] = 1.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case4.log");
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -361,7 +362,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     EXPECT_FALSE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case4.log");
 }
 
 // Test for check_converged when ucell.lc != 1, and largest_grad == 0
@@ -370,7 +371,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case5.log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;
     ucell.lc[2] = 0;
@@ -385,11 +386,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     grad[8] = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case5.log");
     std::string expected_output = " Largest stress is 0, movement is impossible.\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -398,7 +399,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     EXPECT_TRUE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case5.log");
 }
 
 // Test for check_converged when ucell.lc != 1, and converged
@@ -407,7 +408,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case6.log");
     ucell.lc[0] = 0;
     ucell.lc[1] = 0;
     ucell.lc[2] = 0;
@@ -422,11 +423,11 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     grad[8] = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad);
-    GlobalV::ofs_running.close();
+    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case6.log");
     std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
@@ -435,7 +436,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     EXPECT_TRUE(Lattice_Change_Basic::converged);
 
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case6.log");
 }
 
 TEST_F(LatticeChangeBasicTest, TerminateConverged)
@@ -447,16 +448,16 @@ TEST_F(LatticeChangeBasicTest, TerminateConverged)
     std::string expected_output = " end of lattice optimization\n                              stress_step = 5\n       "
                                   "                  update iteration = 10\n";
 
-    GlobalV::ofs_running.open("log");
-    Lattice_Change_Basic::terminate();
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_converged.log");
+    Lattice_Change_Basic::terminate(ofs);
+    ofs.close();
 
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_converged.log");
 }
 
 TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
@@ -465,16 +466,16 @@ TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
 
     std::string expected_output = " the maximum number of steps has been reached.\n end of lattice optimization.\n";
 
-    GlobalV::ofs_running.open("log");
-    Lattice_Change_Basic::terminate();
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_not_converged.log");
+    Lattice_Change_Basic::terminate(ofs);
+    ofs.close();
 
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_not_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_not_converged.log");
 }
 
 TEST_F(LatticeChangeBasicTest, SetupEtotStressStep1)

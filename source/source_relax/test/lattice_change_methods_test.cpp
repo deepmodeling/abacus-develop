@@ -1,3 +1,4 @@
+#include <fstream>
 #include "source_relax/lattice_change_methods.h"
 #include "mock_remake_cell.h"
 
@@ -24,7 +25,7 @@ void Lattice_Change_CG::allocate(void)
 {
 }
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
+void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs)
 {
 }
 
@@ -62,8 +63,9 @@ TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
     ModuleBase::matrix stress(3, 3);
     double etot = 5.0;
     UnitCell ucell;
+    std::ofstream ofs("/dev/null");
 
-    lcm.cal_lattice_change(istep, stress_step, stress, etot, ucell);
+    lcm.cal_lattice_change(istep, stress_step, stress, etot, ucell, ofs);
 
     // Assert that the static variables istep and stress_step are set correctly
     EXPECT_EQ(Lattice_Change_Basic::istep, istep);

@@ -35,7 +35,8 @@ class Relax_old
                       const int& stress_step,
                       const ModuleBase::matrix& stress,
                       const double& total_energy,
-                      UnitCell& ucell);
+                      UnitCell& ucell,
+                      std::ofstream& ofs);
 };
 
 #endif

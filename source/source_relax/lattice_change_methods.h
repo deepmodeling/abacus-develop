@@ -1,6 +1,7 @@
 #ifndef LATTICE_CHANGE_METHODS_H
 #define LATTICE_CHANGE_METHODS_H
 
+#include <fstream>
 #include "lattice_change_basic.h"
 #include "lattice_change_cg.h"
 
@@ -17,7 +18,8 @@ class Lattice_Change_Methods
                             const int &stress_step,
                             const ModuleBase::matrix &stress,
                             const double &etot,
-                            UnitCell &ucell);
+                            UnitCell &ucell,
+                            std::ofstream& ofs);
 
     bool get_converged(void) const
     {

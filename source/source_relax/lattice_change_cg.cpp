@@ -24,7 +24,7 @@ void Lattice_Change_CG::allocate(void)
     this->e0 = 0.0;
 }
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in)
+void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
@@ -81,12 +81,12 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
         if (flag == 0)
         {
-            Lattice_Change_Basic::check_converged(ucell, stress, grad.data());
+            Lattice_Change_Basic::check_converged(ucell, stress, grad.data(), ofs);
         }
 
         if (Lattice_Change_Basic::converged)
         {
-            Lattice_Change_Basic::terminate();
+            Lattice_Change_Basic::terminate(ofs);
             break;
         }
 

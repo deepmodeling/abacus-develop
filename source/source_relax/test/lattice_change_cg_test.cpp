@@ -76,20 +76,20 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
     double etot = 0.0;
 
     // call function
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_lc_cg_start_converged.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output
         = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n                              stress_step = 1\n       "
           "                  update iteration = 5\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_converged.log");
 }
 
 // Test function start() sd branch
@@ -105,19 +105,19 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
     double etot = 0.0;
 
     // call function
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_lc_cg_start_sd.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_sd.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_DOUBLE_EQ(Lattice_Change_Basic::lattice_change_ini, 0.01);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_sd.log");
 }
 
 // Test function start() trial branch with goto
@@ -134,22 +134,25 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
 
     // call function
     lc_cg.move0[0] = 1.0;
-    lc_cg.start(ucell, stress, etot);
+    std::ofstream ofs1("test_lc_cg_start_trial_goto_temp1.log");
+    lc_cg.start(ucell, stress, etot, ofs1);
+    ofs1.close();
+    std::remove("test_lc_cg_start_trial_goto_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     lc_cg.move0[0] = 10.0;
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_lc_cg_start_trial_goto.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_trial_goto.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_NEAR(Lattice_Change_Basic::lattice_change_ini, 10.000004999998749, 1e-12);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_trial_goto.log");
 }
 
 // Test function start() trial branch without goto
@@ -165,21 +168,24 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
     double etot = 0.0;
 
     // call function
-    lc_cg.start(ucell, stress, etot);
+    std::ofstream ofs1("test_lc_cg_start_trial_temp1.log");
+    lc_cg.start(ucell, stress, etot, ofs1);
+    ofs1.close();
+    std::remove("test_lc_cg_start_trial_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_lc_cg_start_trial.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_trial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_NEAR(Lattice_Change_Basic::lattice_change_ini, 70.000034999991243, 1e-12);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_trial.log");
 }
 
 // Test function start() no trial branch with goto case 1
@@ -195,22 +201,28 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
     double etot = 0.0;
 
     // call function
-    lc_cg.start(ucell, stress, etot);
+    std::ofstream ofs1("test_lc_cg_start_notrial_goto_case1_temp1.log");
+    lc_cg.start(ucell, stress, etot, ofs1);
+    ofs1.close();
+    std::remove("test_lc_cg_start_notrial_goto_case1_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("test_lc_cg_start_notrial_goto_case1_temp2.log");
+    lc_cg.start(ucell, stress, etot, ofs2);
+    ofs2.close();
+    std::remove("test_lc_cg_start_notrial_goto_case1_temp2.log");
+    std::ofstream ofs("test_lc_cg_start_notrial_goto_case1.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_notrial_goto_case1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_NEAR(Lattice_Change_Basic::lattice_change_ini, 490.00024499993867, 1e-12);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_notrial_goto_case1.log");
 }
 
 // Test function start() no trial branch with goto case 2
@@ -227,24 +239,30 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
 
     // call function
     lc_cg.move0[0] = 0.1;
-    lc_cg.start(ucell, stress, etot);
+    std::ofstream ofs1("test_lc_cg_start_notrial_goto_case2_temp1.log");
+    lc_cg.start(ucell, stress, etot, ofs1);
+    ofs1.close();
+    std::remove("test_lc_cg_start_notrial_goto_case2_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs2("test_lc_cg_start_notrial_goto_case2_temp2.log");
+    lc_cg.start(ucell, stress, etot, ofs2);
+    ofs2.close();
+    std::remove("test_lc_cg_start_notrial_goto_case2_temp2.log");
+    std::ofstream ofs("test_lc_cg_start_notrial_goto_case2.log");
     lc_cg.move0[0] = 0.1;
     stress(0, 1) = 0.0001;
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_notrial_goto_case2.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_NEAR(Lattice_Change_Basic::lattice_change_ini, 3430.0017149995706, 1e-12);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_notrial_goto_case2.log");
 }
 
 // Test function start() no trial branch without goto
@@ -261,23 +279,29 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
 
     // call function
     lc_cg.move0[0] = 1.0;
-    lc_cg.start(ucell, stress, etot);
+    std::ofstream ofs1("test_lc_cg_start_notrial_temp1.log");
+    lc_cg.start(ucell, stress, etot, ofs1);
+    ofs1.close();
+    std::remove("test_lc_cg_start_notrial_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     lc_cg.move0[0] = 10.0;
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.open("log");
-    lc_cg.start(ucell, stress, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("test_lc_cg_start_notrial_temp2.log");
+    lc_cg.start(ucell, stress, etot, ofs2);
+    ofs2.close();
+    std::remove("test_lc_cg_start_notrial_temp2.log");
+    std::ofstream ofs("test_lc_cg_start_notrial.log");
+    lc_cg.start(ucell, stress, etot, ofs);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Geometry relaxation is not converged because threshold is 0.5 kbar\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_lc_cg_start_notrial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
     EXPECT_EQ(expected_output, output);
     EXPECT_NEAR(Lattice_Change_Basic::lattice_change_ini, 96040.106328872833, 1e-12);
     ifs.close();
-    std::remove("log");
+    std::remove("test_lc_cg_start_notrial.log");
 }
 
 // Test function setup_cg_grad() when ncggrad is multiple of 10000

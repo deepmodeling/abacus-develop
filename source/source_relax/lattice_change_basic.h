@@ -1,6 +1,7 @@
 #ifndef LATTICE_CHANGE_BASIC_H
 #define LATTICE_CHANGE_BASIC_H
 
+#include <fstream>
 #include "relax_data.h"
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
@@ -52,13 +53,15 @@ void change_lattice(UnitCell &ucell, double *move, double *lat);
  * @param ucell Unit cell containing lattice constraints
  * @param stress Stress tensor (3x3 matrix)
  * @param grad Gradient array (9 elements)
+ * @param ofs Output stream for logging
  */
-void check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad);
+void check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs);
 
 /**
  * @brief Terminate lattice optimization and output results.
+ * @param ofs Output stream for logging
  */
-void terminate(void);
+void terminate(std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.

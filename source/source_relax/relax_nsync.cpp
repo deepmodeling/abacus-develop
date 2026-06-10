@@ -64,7 +64,7 @@ bool Relax_old::relax_step(const int& istep,
     {
         // do cell relax calculation and generate next structure
         bool converged = false;
-        converged = this->do_cellrelax(istep, stress_step, stress, energy, ucell);
+        converged = this->do_cellrelax(istep, stress_step, stress, energy, ucell, GlobalV::ofs_running);
         if (!converged)
         {
             force_step = 1;
@@ -141,9 +141,10 @@ bool Relax_old::do_cellrelax(const int& istep,
                              const int& stress_step,
                              const ModuleBase::matrix& stress,
                              const double& total_energy,
-                             UnitCell& ucell)
+                             UnitCell& ucell,
+                             std::ofstream& ofs)
 {
     ModuleBase::TITLE("Relax_old", "do_cellrelax");
-    LCM.cal_lattice_change(istep, stress_step, stress, total_energy, ucell);
+    LCM.cal_lattice_change(istep, stress_step, stress, total_energy, ucell, ofs);
     return LCM.get_converged();
 }
