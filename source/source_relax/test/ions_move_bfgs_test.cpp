@@ -91,6 +91,28 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
 {
     // Initilize data
     UnitCell ucell;
+    // Initialize UnitCell with 2 atoms
+    ucell.ntype = 1;
+    ucell.nat = 2;
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
+    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.lat0 = 1.0;
+    ucell.set_atom_flag = true;
+
+    // Initialize PARAM
+    PARAM.input.force_thr = 1.0e-3;
+    PARAM.input.force_thr_ev = PARAM.input.force_thr * 13.6058 / 0.529177;
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
+
+    // Initialize istep
+    Ions_Move_Basic::istep = 1;
+
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 10.0;
     double energy_in = 0.0;
@@ -100,11 +122,8 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     // Call the function being tested
     bfgs.allocate();
     std::ofstream ofs("test_start_case2.log");
-    testing::internal::CaptureStderr();
-    EXPECT_EXIT(bfgs.start(ucell, force, energy_in, ofs) , ::testing::ExitedWithCode(1), "");
-    std::string stderr_output = testing::internal::GetCapturedStderr();
+    bfgs.start(ucell, force, energy_in, ofs);
     ofs.close();
-    std::remove("test_start_case2.log");
 
     // Check the results
     std::ifstream ifs("test_start_case2.log");
@@ -113,6 +132,9 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     std::remove("test_start_case2.log");
 
     EXPECT_THAT(output, testing::HasSubstr("Ion relaxation is not converged yet"));
+
+    // Clean up
+    delete[] ucell.atoms;
 }
 
 // Test the restart_bfgs() function case 1

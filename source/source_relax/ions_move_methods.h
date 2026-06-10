@@ -16,7 +16,7 @@ class Ions_Move_Methods
     Ions_Move_Methods();
     ~Ions_Move_Methods();
 
-    void allocate(const int &natom);
+    void allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1);
     // void cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot);
     void cal_movement(const int &istep,
                       const int &force_step,

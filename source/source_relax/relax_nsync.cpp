@@ -10,12 +10,12 @@ void Relax_old::init_relax(const int& natom)
     if (PARAM.inp.calculation == "relax")
     {
         // Ions_Move_Methods
-        IMM.allocate(natom);
+        IMM.allocate(natom, PARAM.inp.relax_method[0], PARAM.inp.relax_method[1]);
     }
     if (PARAM.inp.calculation == "cell-relax")
     {
         // Ions_Move_Methods
-        IMM.allocate(natom);
+        IMM.allocate(natom, PARAM.inp.relax_method[0], PARAM.inp.relax_method[1]);
         // allocate arrays related to changes of lattice vectors
         LCM.allocate();
     }
@@ -41,10 +41,13 @@ bool Relax_old::relax_step(const int& istep,
     {
         return true;
     }
+
     // choose what to do next
-    if (PARAM.inp.calculation != "cell-relax") {
+    if (PARAM.inp.calculation != "cell-relax") 
+    {
         force_step = istep;
-}
+    }
+
     if (this->if_do_relax(ucell))
     {
         // do relax calculation and generate next structure

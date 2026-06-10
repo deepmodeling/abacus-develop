@@ -98,34 +98,29 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    Ions_Move_Basic::relax_method[0] = "bfgs";
-    imm.allocate(natom);
+    imm.allocate(natom, "bfgs", "1");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method[0] = "sd";
-    imm.allocate(natom);
+    imm.allocate(natom, "sd", "1");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method[0] = "cg";
-    imm.allocate(natom);
+    imm.allocate(natom, "cg", "1");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
-    imm.allocate(natom);
+    imm.allocate(natom, "cg_bfgs", "1");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 }
 
 // Test the allocate() function warning quit
 TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
-    Ions_Move_Basic::relax_method[0] = "none";
     GlobalV::ofs_warning.open("log");
-    imm.allocate(natom);
+    imm.allocate(natom, "none", "1");
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(output, testing::HasSubstr("the parameter Ions_Move_Basic::relax_method is not correct."));
+    EXPECT_THAT(output, testing::HasSubstr("the parameter relax_method is not correct."));
     ifs.close();
     std::remove("log");
 }
@@ -140,22 +135,23 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     UnitCell ucell;
 
     Ions_Move_Basic::relax_method[0] = "bfgs";
-    imm.allocate(natom);
+    Ions_Move_Basic::relax_method[1] = "1";
+    imm.allocate(natom, "bfgs", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "sd";
-    imm.allocate(natom);
+    imm.allocate(natom, "sd", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg";
-    imm.allocate(natom);
+    imm.allocate(natom, "cg", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg_bfgs";
-    imm.allocate(natom);
+    imm.allocate(natom, "cg_bfgs", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 }
@@ -169,7 +165,8 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const double etot = 0.0;
     UnitCell ucell;
     Ions_Move_Basic::relax_method[0] = "none";
-    imm.allocate(natom);
+    Ions_Move_Basic::relax_method[1] = "1";
+    imm.allocate(natom, "none", "1");
 
     GlobalV::ofs_warning.open("log");
     imm.cal_movement(istep, force_step, f, etot, ucell);
