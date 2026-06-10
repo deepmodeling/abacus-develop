@@ -6,6 +6,7 @@
 #include "relax_sync.h"
 #include "relax_nsync.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_base/matrix.h"
 
 class Relax_Driver
 {
@@ -19,18 +20,25 @@ class Relax_Driver
             const Input_para& inp);
 
   private:
-    // mohan add 2021-01-28
-    // mohan moved this variable from electrons.h to relax_driver.h
     int istep = 0;
     double etot = 0;
+    int force_step = 1;
+    int stress_step = 1;
 
-    // new relaxation method
+    ModuleBase::matrix force_;
+    ModuleBase::matrix stress_;
+
     Relax rl;
-
-    // old relaxation method
     Relax_old rl_old;
 
-
+    void init_relax(const int nat, const Input_para& inp);
+    void iter_info(const Input_para& inp);
+    void esolve(ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
+    bool relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
+    void stru_out(UnitCell& ucell, const Input_para& inp);
+    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
+    bool stop_cond(bool stop);
+    void final_out(UnitCell& ucell, const Input_para& inp);
 };
 
 #endif

@@ -17,189 +17,191 @@ void Relax_Driver::relax_driver(
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
-    if (inp.calculation == "relax" || inp.calculation == "cell-relax" )
-    {
-        if (!inp.relax_new) // traditional relax
-        {
-            rl_old.init_relax(ucell.nat);
-        }
-        else // relax new
-        {
-            rl.init_relax(ucell.nat);
-        }
-    }
+    this->init_relax(ucell.nat, inp);
 
     this->istep = 1;
-    int force_step = 1;
-    int stress_step = 1;
     bool stop = false;
 
-    while (istep <= inp.relax_nmax && !stop)
+    while (this->istep <= inp.relax_nmax && !stop)
     {
-        time_t estart = time(nullptr);
+        this->iter_info(inp);
+        this->esolve(p_esolver, ucell);
+        stop = this->relax_step(p_esolver, ucell, inp);
+        this->json_out(p_esolver, ucell, inp);
+        stop = this->stop_cond(stop);
+        ++this->istep;
+    }
 
-        if (inp.out_level == "ie"
-                && (inp.calculation == "relax" 
-                    || inp.calculation == "cell-relax" 
-                    || inp.calculation == "scf"
-                    || inp.calculation == "nscf")
-                && (inp.esolver_type != "lr"))
-        {
-            ModuleIO::print_screen(stress_step, force_step, istep);
-        }
+    this->final_out(ucell, inp);
 
-#ifdef __RAPIDJSON
-        Json::init_output_array_obj();
-#endif //__RAPIDJSON
+    ModuleBase::timer::end("Relax_Driver", "relax_driver");
+    return;
+}
 
-        // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->runner(ucell, istep - 1);
-
-        time_t eend = time(nullptr);
-        time_t fstart = time(nullptr);
-        ModuleBase::matrix force;
-        ModuleBase::matrix stress;
-
-        // I'm considering putting force and stress
-        // as part of ucell and use ucell to pass information
-        // back and forth between esolver and relaxation
-        // but I'll use force and stress explicitly here for now
-
-        // calculate the total energy
-        this->etot = p_esolver->cal_energy();
-
-        // calculate and gather all parts of total ionic forces
-        if (inp.cal_force)
-        {
-            p_esolver->cal_force(ucell, force);
-        }
-        else
-        {
-            // do nothing
-        }
-
-
-        // calculate and gather all parts of stress
-        if (inp.cal_stress)
-        {
-            p_esolver->cal_stress(ucell, stress);
-        }
-        else
-        {
-            // do nothing
-        }
-
-        if (inp.calculation == "relax" || inp.calculation == "cell-relax")
-        {
-            if (inp.relax_new)
-            {
-                stop = rl.relax_step(ucell, force, stress, this->etot);
-                // mohan added 2025-07-14
-                stress_step = istep+1;
-                force_step = 1;
-            }
-            else
-            {
-                stop = rl_old.relax_step(istep,
-                                         this->etot,
-                                         ucell,
-                                         force,
-                                         stress,
-                                         force_step,
-                                         stress_step);
-            }
-
-            bool need_orb = inp.basis_type == "pw";
-            need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
-            need_orb = need_orb || inp.basis_type == "lcao";
-            need_orb = need_orb || inp.basis_type == "lcao_in_pw";
-
-            std::stringstream ss, ss1;
-            ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
-
-            unitcell::print_stru_file(ucell,
-                                  ucell.atoms,
-                                  ucell.latvec,
-                                  ss.str(),
-                                  inp.nspin,
-                                  true,
-                                  inp.calculation == "md",
-                                  inp.out_mul,
-                                  need_orb,
-                                  PARAM.globalv.deepks_setorb,
-                                  GlobalV::MY_RANK);
-
-            if (Ions_Move_Basic::out_stru)
-            {
-                ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
-                ss1 << istep << "_D";
-                unitcell::print_stru_file(ucell,
-                                      ucell.atoms,
-                                      ucell.latvec,
-                                      ss1.str(),
-                                      inp.nspin,
-                                      true,
-                                      inp.calculation == "md",
-                                      inp.out_mul,
-                                      need_orb,
-                                      PARAM.globalv.deepks_setorb,
-                                      GlobalV::MY_RANK);
-                ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
-                                           ucell,
-                                           "# Generated by ABACUS ModuleIO::CifParser",
-                                           "data_?");
-            }
-
-            ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
-        }// end relax or cell_relax
-
-#ifdef __RAPIDJSON
-        // add the energy to outout
-        Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
-        // add Json of cell coo stress force
-        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        double fac = ModuleBase::Ry_to_eV / 0.529177;
-        Json::add_output_cell_coo_stress_force(&ucell, force, fac, stress, unit_transform);
-#endif //__RAPIDJSON
-
-        if (stop == false)
-        {
-            stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
-        }
-
-        time_t fend = time(nullptr);
-
-        ++istep;
-    } // end while (istep <= inp.relax_nmax && !stop)
-
-    // output the final relaxed structure in CIF format
+void Relax_Driver::init_relax(const int nat, const Input_para& inp)
+{
     if (inp.calculation == "relax" || inp.calculation == "cell-relax")
     {
-        ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_FINAL.cif",
+        if (!inp.relax_new)
+        {
+            this->rl_old.init_relax(nat);
+        }
+        else
+        {
+            this->rl.init_relax(nat);
+        }
+    }
+}
+
+void Relax_Driver::iter_info(const Input_para& inp)
+{
+    if (inp.out_level == "ie"
+            && (inp.calculation == "relax" 
+                || inp.calculation == "cell-relax" 
+                || inp.calculation == "scf"
+                || inp.calculation == "nscf")
+            && (inp.esolver_type != "lr"))
+    {
+        ModuleIO::print_screen(this->stress_step, this->force_step, this->istep);
+    }
+
+#ifdef __RAPIDJSON
+    Json::init_output_array_obj();
+#endif
+}
+
+void Relax_Driver::esolve(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
+{
+    p_esolver->runner(ucell, this->istep - 1);
+
+    this->etot = p_esolver->cal_energy();
+
+    if (PARAM.inp.cal_force)
+    {
+        p_esolver->cal_force(ucell, this->force_);
+    }
+
+    if (PARAM.inp.cal_stress)
+    {
+        p_esolver->cal_stress(ucell, this->stress_);
+    }
+}
+
+bool Relax_Driver::relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp)
+{
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    {
+        return false;
+    }
+
+    bool stop = false;
+
+    if (inp.relax_new)
+    {
+        stop = this->rl.relax_step(ucell, this->force_, this->stress_, this->etot);
+        this->stress_step = this->istep + 1;
+        this->force_step = 1;
+    }
+    else
+    {
+        stop = this->rl_old.relax_step(this->istep, this->etot, ucell, this->force_, this->stress_, this->force_step, this->stress_step);
+    }
+
+    this->stru_out(ucell, inp);
+
+    ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
+
+    return stop;
+}
+
+void Relax_Driver::stru_out(UnitCell& ucell, const Input_para& inp)
+{
+    bool need_orb = inp.basis_type == "pw";
+    need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
+    need_orb = need_orb || inp.basis_type == "lcao";
+    need_orb = need_orb || inp.basis_type == "lcao_in_pw";
+
+    std::stringstream ss, ss1;
+    ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
+
+    unitcell::print_stru_file(ucell,
+                          ucell.atoms,
+                          ucell.latvec,
+                          ss.str(),
+                          inp.nspin,
+                          true,
+                          inp.calculation == "md",
+                          inp.out_mul,
+                          need_orb,
+                          PARAM.globalv.deepks_setorb,
+                          GlobalV::MY_RANK);
+
+    if (Ions_Move_Basic::out_stru)
+    {
+        ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
+        ss1 << this->istep << "_D";
+        unitcell::print_stru_file(ucell,
+                              ucell.atoms,
+                              ucell.latvec,
+                              ss1.str(),
+                              inp.nspin,
+                              true,
+                              inp.calculation == "md",
+                              inp.out_mul,
+                              need_orb,
+                              PARAM.globalv.deepks_setorb,
+                              GlobalV::MY_RANK);
+        ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
                                    ucell,
                                    "# Generated by ABACUS ModuleIO::CifParser",
                                    "data_?");
     }
+}
 
-    if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp)
+{
+#ifdef __RAPIDJSON
+    Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
+
+    double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    double fac = ModuleBase::Ry_to_eV / 0.529177;
+    Json::add_output_cell_coo_stress_force(&ucell, this->force_, fac, this->stress_, unit_transform);
+#endif
+}
+
+bool Relax_Driver::stop_cond(bool stop)
+{
+    if (stop == false)
     {
-        if (istep-1 == inp.relax_nmax)
-        {
-            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-            std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-            std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        }
-        else
-        {
-            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-            std::cout << " Geometry relaxation thresholds are reached within " << istep-1 << " steps." << std::endl; 
-            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        }
+        stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
+    }
+    return stop;
+}
+
+void Relax_Driver::final_out(UnitCell& ucell, const Input_para& inp)
+{
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    {
+        return;
+    }
+
+    ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_FINAL.cif",
+                               ucell,
+                               "# Generated by ABACUS ModuleIO::CifParser",
+                               "data_?");
+
+    if (this->istep - 1 == inp.relax_nmax)
+    {
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
     }
     else
     {
-        // do nothing
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        std::cout << " Geometry relaxation thresholds are reached within " << this->istep - 1 << " steps." << std::endl; 
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
     }
 
     if (inp.relax_nmax == 0)
@@ -208,11 +210,4 @@ void Relax_Driver::relax_driver(
         std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;
         std::cout << "-----------------------------------------------" << std::endl;
     }
-    else
-    {
-        // do nothing 
-    }
-
-    ModuleBase::timer::end("Relax_Driver", "relax_driver");
-    return;
 }
