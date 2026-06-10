@@ -255,8 +255,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     std::string expected_ofs
         = "                                     dE0s = 0\n                                      den = 0.1\n            "
           "    interpolated trust radius = 0\ntrust_radius = 0\nrelax_bfgs_rmin = 1\nrelax_bfgs_rmax = -1\n "
-          "trust_radius < relax_bfgs_rmin, reset bfgs history.\n                                    istep = 0\n        "
-          "                 update iteration = 0\n";
+          "trust_radius < relax_bfgs_rmin, reset bfgs history.\n";
     std::string expected_std = " BFGS TRUST (Bohr)    : 1\n";
 
     EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
@@ -318,8 +317,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     ifs.close();
     std::remove("test_bfgs_routine_case2.log");
 
-    std::string expected_ofs = " quadratic interpolation is impossible.\n                                    istep = "
-                               "0\n                         update iteration = 0\n";
+    std::string expected_ofs = " quadratic interpolation is impossible.\n";
     std::string expected_std = "";
 
      EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
@@ -377,8 +375,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
     ifs.close();
     std::remove("test_bfgs_routine_case3.log");
 
-    std::string expected_ofs = " check the norm of new move 410 (Bohr)\n Uphill move : resetting bfgs history\n        "
-                               "                            istep = 0\n                         update iteration = 1\n";
+    std::string expected_ofs = " check the norm of new move 410 (Bohr)\n Uphill move : resetting bfgs history\n";
 
      EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.2);

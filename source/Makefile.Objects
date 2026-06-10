@@ -475,7 +475,7 @@ OBJS_RELAXATION=relax_data.o\
     lattice_change_methods.o\
     relax_nsync.o\
     relax_sync.o\
-    lbfgs.o\
+    ions_move_lbfgs.o\
     matrix_methods.o\
     line_search.o\
 

@@ -1,5 +1,5 @@
-#ifndef LBFGS_H
-#define LBFGS_H
+#ifndef IONS_MOVE_LBFGS_H
+#define IONS_MOVE_LBFGS_H
 
 #include <vector>
 #include <tuple> 
@@ -13,10 +13,10 @@
 #include "source_esolver/esolver_ks.h"
 
 /**
- * @class LBFGS
+ * @class Ions_Move_LBFGS
  * @brief Implements L-BFGS optimization algorithm for structural relaxation
  */
-class LBFGS
+class Ions_Move_LBFGS
 {
 public:
     /**

@@ -6,7 +6,7 @@ add_library(
     relax_driver.cpp
     relax_sync.cpp
     line_search.cpp
-    lbfgs.cpp
+    ions_move_lbfgs.cpp
     relax_nsync.cpp
     bfgs_basic.cpp
     ions_move_basic.cpp

@@ -8,7 +8,7 @@
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
 #include "ions_move_bfgs2.h"
-#include "lbfgs.h"
+#include "ions_move_lbfgs.h"
 
 class Ions_Move_Methods
 {
@@ -51,6 +51,6 @@ class Ions_Move_Methods
     Ions_Move_CG cg;
     Ions_Move_SD sd;
     Ions_Move_BFGS2 bfgs_trad;
-    LBFGS lbfgs;
+    Ions_Move_LBFGS lbfgs;
 };
 #endif
