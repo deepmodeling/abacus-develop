@@ -5,7 +5,6 @@
 #include "source_esolver/esolver.h"
 #include "relax_sync.h"
 #include "relax_nsync.h"
-#include "ions_move_bfgs2.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 class Relax_Driver
@@ -30,8 +29,6 @@ class Relax_Driver
 
     // old relaxation method
     Relax_old rl_old;
-
-    Ions_Move_BFGS2 bfgs_trad;
 
 
 };

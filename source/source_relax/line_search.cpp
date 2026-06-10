@@ -398,7 +398,6 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
         {
             GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
-            // ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
         return false;
     } // end ibrack
