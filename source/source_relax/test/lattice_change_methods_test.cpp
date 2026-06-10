@@ -78,7 +78,7 @@ TEST_F(LatticeChangeMethodsTest, GetConverged)
     lcm.get_converged();
 
     // Assert that the static variable converged is set to false
-    EXPECT_EQ(Lattice_Change_Basic::converged, true);
+    EXPECT_EQ(Lattice_Change_Basic::converged, false);
 }
 
 // Test the get_ediff function
