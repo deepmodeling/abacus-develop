@@ -3,7 +3,6 @@
 
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "source_esolver/esolver_ks.h"
 #include "relax_sync.h"
 #include "relax_nsync.h"
 #include "ions_move_bfgs2.h"
