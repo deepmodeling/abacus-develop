@@ -1,6 +1,7 @@
 #include "relax_data.h"
 
 int Relax_Data::dim = 0;
+int Relax_Data::dim_lattice = 0;
 bool Relax_Data::converged = false;
 double Relax_Data::largest_grad = 0.0;
 int Relax_Data::istep = 0;

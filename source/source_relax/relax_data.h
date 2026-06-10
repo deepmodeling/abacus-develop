@@ -30,7 +30,8 @@ public:
     void allocate(const int dim_in);
 
     // Static members - shared global state across all relaxation instances
-    static int dim;              ///< Dimension of free variables (3 * number of atoms)
+    static int dim;              ///< Dimension of free variables (3 * number of atoms) for ion movement
+    static int dim_lattice;      ///< Dimension of free variables (9) for lattice change
     static bool converged;       ///< Convergence flag: true if optimization is converged
     static double largest_grad;  ///< Largest gradient component (force) in current step
     static int istep;            ///< Current iteration step index

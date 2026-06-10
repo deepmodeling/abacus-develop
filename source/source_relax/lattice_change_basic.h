@@ -17,7 +17,7 @@
 namespace Lattice_Change_Basic
 {
 // Shared state variables (referenced from Relax_Data for unified data sharing)
-static int& dim = Relax_Data::dim;              ///< Dimension of free variables (9 for full lattice)
+static int& dim = Relax_Data::dim_lattice;      ///< Dimension of free variables (9 for full lattice)
 static bool& converged = Relax_Data::converged; ///< Convergence flag
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
 static int& istep = Relax_Data::istep;          ///< Current ionic step index
