@@ -112,7 +112,11 @@ def load_efield(file_groups: List[List[str]], step_start: int, step_end: int, re
                 raise RuntimeError(f"Error loading efield file {f}: {e}")
 
             available_rows = arr.shape[0]
-            start_idx = min(step_start, available_rows)
+            if available_rows <= step_start:
+                raise ValueError(
+                    f"Execution halted: E-field file '{f}' contains only {available_rows} rows, which is <= --step_start ({step_start})."
+                )
+            start_idx = step_start
             end_idx = min(step_end, available_rows)
 
             sliced = arr[start_idx:end_idx, 1]
@@ -170,6 +174,8 @@ class AbsorptionSpectrum:
         self.pad_factor = pad_factor
         self.decay_beta = decay_beta
         self.volume = volume
+        if self.response_source == "dipole" and self.volume <= 0:
+            raise ValueError("volume must be > 0 when --response_source is 'dipole'")
         self.N_orig = dipole.shape[1]
         self.N_pad = self.N_orig * pad_factor
 
@@ -408,6 +414,11 @@ def main():
                         help="Y-axis bounding box limits overrides inside Wavelength plots.")
 
     args = parser.parse_args()
+
+    if args.step_start < 0:
+        raise ValueError(f"--step_start must be >= 0 (got {args.step_start})")
+    if args.step_end <= args.step_start:
+        raise ValueError(f"--step_end ({args.step_end}) must be > --step_start ({args.step_start})")
 
     # Intelligent fallback tracking path assignments matching runtime selections
     if args.signal_path is None:
