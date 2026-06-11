@@ -97,11 +97,11 @@ bool IonCellOptimizer::relax_step(const int& istep,
         if (!converged)
         {
             ucell.ionic_position_updated = true;
-            return false;
+            return false; // not converged
         }
         else if (!is_cell_relax)
         {
-            return true;
+            return true; // converged
         }
         // Otherwise, continue to cell relaxation
     }
@@ -115,13 +115,6 @@ bool IonCellOptimizer::relax_step(const int& istep,
     // Cell relaxation branch (only in cell-relax mode)
     if (need_cell_relax)
     {
-        // Wait for atomic relaxation to converge first (if atoms can move)
-        if (ucell.if_atoms_can_move() && !IMM.get_converged())
-        {
-            GlobalV::ofs_running << "Note: Need to wait for atomic relaxation first!" << std::endl;
-            return false;
-        }
-
         assert(PARAM.inp.cal_stress == 1);
         
         // Calculate and apply lattice change
