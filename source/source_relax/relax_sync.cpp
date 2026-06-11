@@ -193,48 +193,28 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
         {
             // Note stress is given in the directions of lattice vectors
             // So we need to first convert to Cartesian and then apply the constraint
-            ModuleBase::Matrix3 stress_cart;
-            stress_cart.e11 = stress_ev(0, 0);
-            stress_cart.e12 = stress_ev(0, 1);
-            stress_cart.e13 = stress_ev(0, 2);
-            stress_cart.e21 = stress_ev(1, 0);
-            stress_cart.e22 = stress_ev(1, 1);
-            stress_cart.e23 = stress_ev(1, 2);
-            stress_cart.e31 = stress_ev(2, 0);
-            stress_cart.e32 = stress_ev(2, 1);
-            stress_cart.e33 = stress_ev(2, 2);
-
-            stress_cart = ucell.latvec * stress_cart;
+            ModuleBase::matrix stress_cart = ucell.latvec.to_matrix() * stress_ev;
 
             if (ucell.lc[0] == 0)
             {
-                stress_cart.e11 = 0;
-                stress_cart.e12 = 0;
-                stress_cart.e13 = 0;
+                stress_cart(0, 0) = 0;
+                stress_cart(0, 1) = 0;
+                stress_cart(0, 2) = 0;
             }
             if (ucell.lc[1] == 0)
             {
-                stress_cart.e21 = 0;
-                stress_cart.e22 = 0;
-                stress_cart.e23 = 0;
+                stress_cart(1, 0) = 0;
+                stress_cart(1, 1) = 0;
+                stress_cart(1, 2) = 0;
             }
             if (ucell.lc[2] == 0)
             {
-                stress_cart.e31 = 0;
-                stress_cart.e32 = 0;
-                stress_cart.e33 = 0;
+                stress_cart(2, 0) = 0;
+                stress_cart(2, 1) = 0;
+                stress_cart(2, 2) = 0;
             }
 
-            stress_cart = ucell.GT * stress_cart;
-            stress_ev(0, 0) = stress_cart.e11;
-            stress_ev(0, 1) = stress_cart.e12;
-            stress_ev(0, 2) = stress_cart.e13;
-            stress_ev(1, 0) = stress_cart.e21;
-            stress_ev(1, 1) = stress_cart.e22;
-            stress_ev(1, 2) = stress_cart.e23;
-            stress_ev(2, 0) = stress_cart.e31;
-            stress_ev(2, 1) = stress_cart.e32;
-            stress_ev(2, 2) = stress_cart.e33;
+            stress_ev = ucell.GT.to_matrix() * stress_cart;
         }
 
         for (int i = 0; i < 3; i++)
