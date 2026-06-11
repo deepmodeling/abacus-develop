@@ -29,7 +29,7 @@ class Relax_Driver
     ModuleBase::matrix stress_;
 
     Relax rl;
-    Relax_old rl_old;
+    IonCellOptimizer rl_old;
 
     void init_relax(const int nat, const Input_para& inp);
     void iter_info(const Input_para& inp);

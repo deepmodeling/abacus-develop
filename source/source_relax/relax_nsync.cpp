@@ -1,10 +1,10 @@
 #include "relax_nsync.h"
-
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/update_cell.h"
-void Relax_old::init_relax(const int& natom)
+
+void IonCellOptimizer::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.
     if (PARAM.inp.calculation == "relax")
@@ -22,7 +22,7 @@ void Relax_old::init_relax(const int& natom)
 }
 
 // The interface for relaxation
-bool Relax_old::relax_step(const int& istep,
+bool IonCellOptimizer::relax_step(const int& istep,
                            const double& energy,
                            UnitCell& ucell,
                            ModuleBase::matrix force,
@@ -30,124 +30,95 @@ bool Relax_old::relax_step(const int& istep,
                            int& force_step,
                            int& stress_step)
 {
-    ModuleBase::TITLE("Relax_old", "relax_step");
+    ModuleBase::TITLE("IonCellOptimizer", "relax_step");
 
-    // should not do it this way, will change after the refactor of ucell class
     ucell.ionic_position_updated = false;
     ucell.cell_parameter_updated = false;
 
-    // stop in last step
     if (istep == PARAM.inp.relax_nmax)
     {
         return true;
     }
 
-    // choose what to do next
-    if (PARAM.inp.calculation != "cell-relax") 
+    const bool is_cell_relax = (PARAM.inp.calculation == "cell-relax");
+    const bool is_relax = (PARAM.inp.calculation == "relax");
+
+    if (!is_cell_relax)
     {
         force_step = istep;
     }
 
-    if (this->if_do_relax(ucell))
+    const bool need_atom_relax = (is_relax || is_cell_relax) && ucell.if_atoms_can_move();
+    const bool need_cell_relax = is_cell_relax && ucell.if_cell_can_change();
+
+    if (need_atom_relax)
     {
-        // do relax calculation and generate next structure
-        bool converged = false;
-        converged = this->do_relax(istep, force, energy, ucell, force_step, GlobalV::ofs_running);
+        assert(PARAM.inp.cal_force == 1);
+        bool converged = this->do_relax(istep, force, energy, ucell, force_step, GlobalV::ofs_running);
         if (!converged)
         {
             ucell.ionic_position_updated = true;
-            return converged;
+            return false;
         }
-        else if (PARAM.inp.calculation != "cell-relax")
+        else if (!is_cell_relax)
         {
-            return converged;
+            return true;
         }
     }
-    if (this->if_do_cellrelax(ucell))
+    else if (is_relax)
     {
-        // do cell relax calculation and generate next structure
-        bool converged = false;
-        converged = this->do_cellrelax(istep, stress_step, stress, energy, ucell, GlobalV::ofs_running);
+        ModuleBase::WARNING("IonCellOptimizer", "No atom is allowed to move!");
+        return true;
+    }
+
+    if (need_cell_relax)
+    {
+        if (ucell.if_atoms_can_move() && !IMM.get_converged())
+        {
+            GlobalV::ofs_running << "Note: Need to wait for atomic relaxation first!" << std::endl;
+            return false;
+        }
+
+        assert(PARAM.inp.cal_stress == 1);
+        bool converged = this->do_cellrelax(istep, stress_step, stress, energy, ucell, GlobalV::ofs_running);
         if (!converged)
         {
             force_step = 1;
             stress_step++;
             ucell.cell_parameter_updated = true;
-            unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
+            unitcell::setup_cell_after_vc(ucell, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
         }
         return converged;
     }
+    else if (is_cell_relax)
+    {
+        ModuleBase::WARNING("IonCellOptimizer", "Lattice vectors are not allowed to change!");
+        return true;
+    }
 
     return true;
 }
-
-bool Relax_old::if_do_relax(const UnitCell& ucell)
-{
-    ModuleBase::TITLE("Relax_old", "if_do_relax");
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
-    {
-        if (!ucell.if_atoms_can_move())
-        {
-            ModuleBase::WARNING("Ions", "No atom is allowed to move!");
-            return false;
-        }
-        //        if(!IMM.get_converged()) return 1;
-        else
-        {
-            assert(PARAM.inp.cal_force == 1);
-            return true;
-        }
-    }
-    else {
-        return false;
-}
-}
-bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
-{
-    ModuleBase::TITLE("Relax_old", "if_do_cellrelax");
-    if (PARAM.inp.calculation == "cell-relax")
-    {
-        if (!ucell.if_cell_can_change())
-        {
-            ModuleBase::WARNING("Ions", "Lattice vectors are not allowed to change!");
-            return false;
-        }
-        else if (ucell.if_atoms_can_move() && !IMM.get_converged())
-        {
-            GlobalV::ofs_running << "Note: Need to wait for atomic relaxation first!";
-            return false;
-        }
-        else
-        {
-            assert(PARAM.inp.cal_stress == 1);
-            return true;
-        }
-    }
-    else {
-        return false;
-}
-}
-bool Relax_old::do_relax(const int& istep,
+bool IonCellOptimizer::do_relax(const int& istep,
                          const ModuleBase::matrix& ionic_force,
                          const double& total_energy,
                          UnitCell& ucell,
                          int& jstep,
                          std::ofstream& ofs)
 {
-    ModuleBase::TITLE("Relax_old", "do_relax");
+    ModuleBase::TITLE("IonCellOptimizer", "do_relax");
     IMM.cal_movement(istep, jstep, ionic_force, total_energy, ucell, ofs);
     ++jstep;
     return IMM.get_converged();
 }
-bool Relax_old::do_cellrelax(const int& istep,
+bool IonCellOptimizer::do_cellrelax(const int& istep,
                              const int& stress_step,
                              const ModuleBase::matrix& stress,
                              const double& total_energy,
                              UnitCell& ucell,
                              std::ofstream& ofs)
 {
-    ModuleBase::TITLE("Relax_old", "do_cellrelax");
+    ModuleBase::TITLE("IonCellOptimizer", "do_cellrelax");
     LCM.cal_lattice_change(istep, stress_step, stress, total_energy, ucell, ofs);
     return LCM.get_converged();
 }

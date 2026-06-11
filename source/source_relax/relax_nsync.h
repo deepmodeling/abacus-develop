@@ -6,7 +6,7 @@
 #include "lattice_change_methods.h"
 #include "source_cell/unitcell.h"
 
-class Relax_old
+class IonCellOptimizer
 {
   public:
     void init_relax(const int& natom);
@@ -22,9 +22,6 @@ class Relax_old
     Ions_Move_Methods IMM;
     Lattice_Change_Methods LCM;
 
-    // seperate force_stress function first
-    bool if_do_relax(const UnitCell& ucell);
-    bool if_do_cellrelax(const UnitCell& ucell);
     bool do_relax(const int& istep,
                   const ModuleBase::matrix& ionic_force,
                   const double& total_energy,
