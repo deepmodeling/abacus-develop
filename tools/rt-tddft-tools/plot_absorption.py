@@ -99,8 +99,8 @@ def load_signal(filename: str, step_start: int, step_end: int, remove_dc: bool) 
     return sliced
 
 
-def load_efield(file_groups: List[List[str]], step_start: int, step_end: int, remove_dc: bool) -> np.ndarray:
-    """Load and sum E-field profiles. Elastic zero-padding is applied at the tail if mismatched."""
+def load_efield(file_groups: List[List[str]], step_start: int, step_end: int, dt: float, remove_dc: bool) -> np.ndarray:
+    """Load and sum E-field profiles, mapping them exactly to absolute simulation time."""
     n_steps = step_end - step_start
     efield = np.zeros((3, n_steps))
 
@@ -111,26 +111,39 @@ def load_efield(file_groups: List[List[str]], step_start: int, step_end: int, re
             except OSError as e:
                 raise RuntimeError(f"Error loading efield file {f}: {e}")
 
-            available_rows = arr.shape[0]
-            if available_rows <= step_start:
-                raise ValueError(
-                    f"Execution halted: E-field file '{f}' contains only {available_rows} rows, which is <= --step_start ({step_start})."
-                )
-            start_idx = step_start
-            end_idx = min(step_end, available_rows)
+            if arr.size == 0:
+                continue
 
-            sliced = arr[start_idx:end_idx, 1]
+            # Ensure 2D shape for single-row files to prevent index out of bounds
+            if arr.ndim == 1:
+                arr = arr.reshape(1, -1)
 
-            # Elastic padding mechanism: append trailing zeros if row count is slightly less than step_end
-            if len(sliced) < n_steps:
-                padded = np.zeros(n_steps)
-                padded[:len(sliced)] = sliced
-                sliced = padded
+            times_fs = arr[:, 0]
+            fields = arr[:, 1]
 
-            efield[i] += sliced / V_ANGSTROM_TO_AU_EFIELD
+            # Map absolute physical time to a 0-based global step index
+            # E.g., t = 0.006 fs with dt = 0.002 fs -> global_step = 2
+            abs_step_indices = np.round(times_fs / dt).astype(int) - 1
 
-        if remove_dc and n_steps > 0:
-            efield[i] -= np.mean(efield[i])
+            # Calculate relative indices within the current analysis window [step_start, step_end)
+            rel_indices = abs_step_indices - step_start
+
+            # Create boolean mask to filter out data outside the requested window
+            valid_mask = (rel_indices >= 0) & (rel_indices < n_steps)
+
+            valid_rel_indices = rel_indices[valid_mask]
+            valid_fields = fields[valid_mask]
+
+            # Map valid fields into the pre-allocated zero array.
+            # Time slots before e-field starts or after it ends remain naturally zero.
+            efield[i, valid_rel_indices] += valid_fields / V_ANGSTROM_TO_AU_EFIELD
+
+    if remove_dc and n_steps > 0:
+        for i in range(3):
+            # Only subtract DC component if the channel contains a non-zero signal
+            if np.any(efield[i] != 0):
+                efield[i] -= np.mean(efield[i])
+
     return efield
 
 
@@ -436,7 +449,8 @@ def main():
 
     # Load arrays via distinct specific mechanisms
     signal_data = load_signal(args.signal_path, args.step_start, args.step_end, args.remove_dc)
-    efield_data = load_efield(Efile_groups, args.step_start, args.step_end, args.remove_dc)
+    # Load electric fields utilizing absolute time step mapping
+    efield_data = load_efield(Efile_groups, args.step_start, args.step_end, args.td_dt, args.remove_dc)
 
     # Initialize calculation core workspace
     absorber = AbsorptionSpectrum(
