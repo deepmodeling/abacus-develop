@@ -11,6 +11,7 @@ LCAO_Deepks<T>::LCAO_Deepks()
 {
     deepks_param.inl_index = new ModuleBase::IntArray[1];
     gedm = nullptr;
+    gedm_mag = nullptr;
     this->phialpha.resize(1);
 }
 
@@ -33,6 +34,16 @@ LCAO_Deepks<T>::~LCAO_Deepks()
         }
         delete[] gedm;
     }
+    if (gedm_mag)
+    {
+        for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
+        {
+            delete[] gedm_mag[inl];
+        }
+        delete[] gedm_mag;
+    }
+    pdm_mag.clear();
+    delete dm_r_mag;
 }
 
 template <typename T>
@@ -124,6 +135,15 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         }
     }
 
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel PDM
+    {
+        this->pdm_mag.resize(this->deepks_param.inlmax);
+        for (int inl = 0; inl < this->deepks_param.inlmax; ++inl)
+        {
+            this->pdm_mag[inl] = torch::zeros_like(this->pdm[inl]);
+        }
+    }
+
     this->pv = &pv_in;
 
     ModuleBase::timer::end("LCAO_Deepks", "init");
@@ -202,6 +222,16 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
 
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel gedm
+    {
+        this->gedm_mag = new double*[this->deepks_param.inlmax];
+        for (int inl = 0; inl < this->deepks_param.inlmax; inl++)
+        {
+            this->gedm_mag[inl] = new double[pdm_size];
+            ModuleBase::GlobalFunc::ZEROS(this->gedm_mag[inl], pdm_size);
+        }
+    }
+
     ModuleBase::timer::end("LCAO_Deepks", "allocate_V_delta");
     return;
 }
@@ -249,6 +279,11 @@ void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
                                    this->dm_r->insert_pair(dm_pair);
                                });
     this->dm_r->allocate(nullptr, true);
+
+    if (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) // magnetization-channel real-space DM
+    {
+        this->dm_r_mag = new hamilt::HContainer<double>(*this->dm_r);
+    }
 }
 
 template <typename T>
