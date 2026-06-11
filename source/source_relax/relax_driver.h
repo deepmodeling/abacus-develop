@@ -20,7 +20,6 @@ class Relax_Driver
             const Input_para& inp);
 
   private:
-    int istep = 0;
     double etot = 0;
     int force_step = 1;
     int stress_step = 1;
@@ -32,12 +31,12 @@ class Relax_Driver
     IonCellOptimizer rl_old;
 
     void init_relax(const int nat, const Input_para& inp);
-    void iter_info(const Input_para& inp);
-    void esolve(ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
-    bool relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
-    void stru_out(UnitCell& ucell, const Input_para& inp);
+    void iter_info(const int istep, const Input_para& inp);
+    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
+    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
+    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp);
     void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
-    void final_out(UnitCell& ucell, const Input_para& inp);
+    void final_out(const int istep, UnitCell& ucell, const Input_para& inp);
 };
 
 #endif
