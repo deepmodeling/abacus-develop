@@ -25,9 +25,9 @@ void Relax_Driver::relax_driver(
     // so the loop exits after one iteration
     while (istep < inp.relax_nmax)
     {
-        this->iter_info(istep-1, inp);
-        this->esolve(istep-1, p_esolver, ucell);
-        bool converged = this->relax_step(istep-1, p_esolver, ucell, inp);
+        this->iter_info(istep, inp);
+        this->esolve(istep, p_esolver, ucell);
+        bool converged = this->relax_step(istep, p_esolver, ucell, inp);
         this->json_out(p_esolver, ucell, inp);
 
         // Check stop conditions
@@ -45,7 +45,7 @@ void Relax_Driver::relax_driver(
         ++istep;
     }
 
-    this->final_out(istep, ucell, inp);
+    this->final_out(istep+1, ucell, inp);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -75,7 +75,7 @@ void Relax_Driver::iter_info(const int istep, const Input_para& inp)
                 || inp.calculation == "nscf")
             && (inp.esolver_type != "lr"))
     {
-        ModuleIO::print_screen(this->stress_step, this->force_step, istep);
+        ModuleIO::print_screen(this->stress_step, this->force_step, istep+1);
     }
 
 #ifdef __RAPIDJSON
@@ -85,7 +85,7 @@ void Relax_Driver::iter_info(const int istep, const Input_para& inp)
 
 void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
 {
-    p_esolver->runner(ucell, istep - 1);
+    p_esolver->runner(ucell, istep);
 
     this->etot = p_esolver->cal_energy();
 
@@ -115,16 +115,16 @@ bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver
     if (inp.relax_new)
     {
         converged = this->rl.relax_step(ucell, this->force_, this->stress_, this->etot);
-        this->stress_step = istep + 1;
+        this->stress_step++;
         this->force_step = 1;
     }
     else
     {
-        converged = this->rl_old.relax_step(istep, this->etot, ucell, this->force_, 
+        converged = this->rl_old.relax_step(istep+1, this->etot, ucell, this->force_, 
 			this->stress_, this->force_step, this->stress_step);
     }
 
-    this->stru_out(istep, ucell, inp);
+    this->stru_out(istep+1, ucell, inp);
 
     ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, GlobalV::ofs_running);
 
