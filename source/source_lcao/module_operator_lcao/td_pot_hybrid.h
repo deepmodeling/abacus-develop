@@ -114,6 +114,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const int& iat2,
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
+                    const ModuleBase::Vector3<double>& dR,
                     TR* hr_mat_p,
                     TR* sr_p);
 

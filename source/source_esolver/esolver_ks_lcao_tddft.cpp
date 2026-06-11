@@ -101,7 +101,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
-
+    td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
     // Initialize the moving spatial gauge
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
     {
@@ -113,7 +113,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
 
     if (PARAM.inp.td_stype == 2)
     {
-        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.dm->cal_DMR_td(td_p->get_phase_hybrid(),TD_info::cart_At);
     }
     else
     {
@@ -594,7 +594,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.dm);
     if (PARAM.inp.td_stype == 2)
     {
-        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.dm->cal_DMR_td(td_p->get_phase_hybrid(), TD_info::cart_At);
     }
     else
     {
