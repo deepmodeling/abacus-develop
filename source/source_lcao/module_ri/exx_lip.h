@@ -30,12 +30,12 @@ class Exx_Lip
 {
     using Treal = typename GetTypeReal<T>::type;
 public:
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in);
+    Exx_Lip(const Exx_Info_Lip& info_in);
     ~Exx_Lip();
 
-    const Exx_Info::Exx_Info_Lip& info;
+    const Exx_Info_Lip& info;
 
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
+    Exx_Lip(const Exx_Info_Lip& info_in,
             const ModuleSymmetry::Symmetry& symm,
             K_Vectors* kv_ptr_in,
             psi::Psi<T, Device>* psi_local_in,

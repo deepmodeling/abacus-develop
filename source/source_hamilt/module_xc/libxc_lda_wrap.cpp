@@ -1,6 +1,6 @@
 #ifdef USE_LIBXC
 
-#include "xc_functional_libxc.h"
+#include "libxc_abacus.h"
 
 void XC_Functional_Libxc::xc_spin_libxc(
         const std::vector<int> &func_id,
