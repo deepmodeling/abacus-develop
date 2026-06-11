@@ -18,16 +18,16 @@ void Relax_Driver::relax_driver(
 
     this->init_relax(ucell.nat, inp);
 
-    int istep = 1;
+    int istep = 0;
 
     // Main iteration loop for relaxation calculations
     // For scf/nscf calculations, relax_step returns true immediately,
     // so the loop exits after one iteration
-    while (istep <= inp.relax_nmax)
+    while (istep < inp.relax_nmax)
     {
-        this->iter_info(istep, inp);
-        this->esolve(istep, p_esolver, ucell);
-        bool converged = this->relax_step(istep, p_esolver, ucell, inp);
+        this->iter_info(istep-1, inp);
+        this->esolve(istep-1, p_esolver, ucell);
+        bool converged = this->relax_step(istep-1, p_esolver, ucell, inp);
         this->json_out(p_esolver, ucell, inp);
 
         // Check stop conditions
