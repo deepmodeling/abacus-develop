@@ -21,6 +21,9 @@ void Relax_Driver::relax_driver(
 
     this->istep = 1;
 
+    // Main iteration loop for relaxation calculations
+    // For scf/nscf calculations, relax_step returns true immediately,
+    // so the loop exits after one iteration
     while (this->istep <= inp.relax_nmax)
     {
         this->iter_info(inp);
@@ -31,10 +34,12 @@ void Relax_Driver::relax_driver(
         // Check stop conditions
         if (converged)
         {
+            // Relaxation converged, exit loop immediately
             break;
         }
         else if (ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running))
         {
+            // EXIT file detected, exit loop
             break;
         }
 
@@ -98,9 +103,12 @@ void Relax_Driver::esolve(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
 
 bool Relax_Driver::relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp)
 {
+    // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
+    // to ensure the main loop exits after one iteration. This provides robustness
+    // even if relax_nmax is set to a large value.
     if (inp.calculation != "relax" && inp.calculation != "cell-relax")
     {
-        return false;
+        return true;
     }
 
     bool converged = false;
@@ -113,7 +121,8 @@ bool Relax_Driver::relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell
     }
     else
     {
-        converged = this->rl_old.relax_step(this->istep, this->etot, ucell, this->force_, this->stress_, this->force_step, this->stress_step);
+        converged = this->rl_old.relax_step(this->istep, this->etot, ucell, this->force_, 
+			this->stress_, this->force_step, this->stress_step);
     }
 
     this->stru_out(ucell, inp);
