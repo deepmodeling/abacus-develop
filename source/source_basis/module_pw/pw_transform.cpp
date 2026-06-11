@@ -307,6 +307,49 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const boo
     }
     ModuleBase::timer::end(this->classname, "recip2real");
 }
+
+// CPU stub versions of batch methods - just call sequential in a loop
+// Batching doesn't help CPU, so these are for compilation compatibility only
+template <typename FPTYPE, typename Device,
+          typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type>
+void PW_Basis::real_to_recip_batch(const Device* ctx,
+                                   const std::complex<FPTYPE>* in_batch,
+                                   std::complex<FPTYPE>* out_batch,
+                                   int batch_count,
+                                   const bool add,
+                                   const FPTYPE factor) const
+{
+    // CPU stub: just call sequential version for each batch element
+    for (int ib = 0; ib < batch_count; ++ib)
+    {
+        this->real2recip(
+            in_batch + ib * this->nrxx,
+            out_batch + ib * this->npw,
+            add,
+            factor);
+    }
+}
+
+template <typename FPTYPE, typename Device,
+          typename std::enable_if<std::is_same<Device, base_device::DEVICE_CPU>::value, int>::type>
+void PW_Basis::recip_to_real_batch(const Device* ctx,
+                                   const std::complex<FPTYPE>* in_batch,
+                                   std::complex<FPTYPE>* out_batch,
+                                   int batch_count,
+                                   const bool add,
+                                   const FPTYPE factor) const
+{
+    // CPU stub: just call sequential version for each batch element
+    for (int ib = 0; ib < batch_count; ++ib)
+    {
+        this->recip2real(
+            in_batch + ib * this->npw,
+            out_batch + ib * this->nrxx,
+            add,
+            factor);
+    }
+}
+
 template void PW_Basis::real2recip<float>(const float* in,
                                           std::complex<float>* out,
                                           const bool add,
@@ -340,4 +383,22 @@ template void PW_Basis::recip2real<double>(const std::complex<double>* in,
                                            std::complex<double>* out,
                                            const bool add,
                                            const double factor) const;
+
+// Template instantiations for CPU batch stubs
+template void PW_Basis::real_to_recip_batch<float, base_device::DEVICE_CPU, 0>(
+    const base_device::DEVICE_CPU*, const std::complex<float>*,
+    std::complex<float>*, int, const bool, const float) const;
+
+template void PW_Basis::real_to_recip_batch<double, base_device::DEVICE_CPU, 0>(
+    const base_device::DEVICE_CPU*, const std::complex<double>*,
+    std::complex<double>*, int, const bool, const double) const;
+
+template void PW_Basis::recip_to_real_batch<float, base_device::DEVICE_CPU, 0>(
+    const base_device::DEVICE_CPU*, const std::complex<float>*,
+    std::complex<float>*, int, const bool, const float) const;
+
+template void PW_Basis::recip_to_real_batch<double, base_device::DEVICE_CPU, 0>(
+    const base_device::DEVICE_CPU*, const std::complex<double>*,
+    std::complex<double>*, int, const bool, const double) const;
+
 } // namespace ModulePW

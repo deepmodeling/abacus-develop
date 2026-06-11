@@ -36,8 +36,8 @@ struct Exx_Helper : public Exx_HelperBase
     void set_op() override
     {
         op_exx->first_iter = first_iter;
-        set_psi(psi);
         op_exx->set_wg(wg);
+        set_psi(psi);
     }
 
     bool exx_after_converge(int &iter, bool ene_conv) override;

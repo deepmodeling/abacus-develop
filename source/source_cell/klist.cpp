@@ -38,6 +38,239 @@ void K_Vectors::cal_ik_global()
 
 }
 
+void K_Vectors::build_exx_identity_full_q_map()
+{
+    const int nk_no_spin = this->para_k.nkstot_np > 0 ? this->para_k.nkstot_np
+                                                      : (this->nspin == 2 ? this->nkstot / 2 : this->nkstot);
+    std::vector<ModuleBase::Vector3<double>> kvec_d_global;
+    std::vector<ModuleBase::Vector3<double>> kvec_c_global;
+    std::vector<double> wk_global(nk_no_spin, 0.0);
+    const double spin_weight_scale = (this->nspin == 1) ? 0.5 : 1.0;
+#ifdef __MPI
+    this->para_k.gatherkvec(this->kvec_d, kvec_d_global);
+    this->para_k.gatherkvec(this->kvec_c, kvec_c_global);
+    const int nks_no_spin = this->para_k.nks_np;
+    if (this->para_k.rank_in_pool == 0)
+    {
+        for (int ik = 0; ik < nks_no_spin; ++ik)
+        {
+            const int global_ik = ik + this->para_k.startk_pool[this->para_k.my_pool];
+            if (global_ik >= 0 && global_ik < nk_no_spin && ik < static_cast<int>(this->wk.size()))
+            {
+                wk_global[global_ik] = this->wk[ik] * spin_weight_scale;
+            }
+        }
+    }
+    if (nk_no_spin > 0)
+    {
+        Parallel_Reduce::reduce_all(wk_global.data(), nk_no_spin);
+    }
+#else
+    (void)this->para_k;
+    kvec_d_global = this->kvec_d;
+    kvec_c_global = this->kvec_c;
+    for (int ik = 0; ik < nk_no_spin && ik < static_cast<int>(this->wk.size()); ++ik)
+    {
+        wk_global[ik] = this->wk[ik] * spin_weight_scale;
+    }
+#endif
+
+    this->exx_full_k_map.clear();
+    this->exx_full_q_map.clear();
+    if (nk_no_spin <= 0)
+    {
+        return;
+    }
+    this->exx_full_k_map.reserve(nk_no_spin);
+    this->exx_full_q_map.reserve(nk_no_spin);
+
+    for (int ifull = 0; ifull < nk_no_spin; ++ifull)
+    {
+        ExxFullPoint point;
+        point.full_index = ifull;
+        point.rep_index = ifull;
+        point.rep_pool = this->para_k.whichpool.empty() ? 0 : this->para_k.whichpool[ifull];
+        point.rep_local_index = this->para_k.startk_pool.empty() ? ifull : ifull - this->para_k.startk_pool[point.rep_pool];
+        point.symop = 0;
+        point.time_reversal = false;
+        point.conjugate_only = false;
+        point.identity = true;
+        point.active = true;
+        point.weight = wk_global[ifull];
+        point.gmatrix = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+        point.kgmatrix = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+        point.gtrans = ModuleBase::Vector3<double>(0, 0, 0);
+
+        if (ifull < static_cast<int>(kvec_d_global.size()))
+        {
+            point.full_kvec_d = kvec_d_global[ifull];
+        }
+        if (ifull < static_cast<int>(kvec_c_global.size()))
+        {
+            point.full_kvec_c = kvec_c_global[ifull];
+        }
+        this->exx_full_k_map.push_back(point);
+        this->exx_full_q_map.push_back(point);
+    }
+}
+
+void K_Vectors::finalize_exx_full_q_map()
+{
+    if (this->exx_full_q_map.empty())
+    {
+        this->build_exx_identity_full_q_map();
+        return;
+    }
+
+    if (this->exx_full_k_map.empty())
+    {
+        this->exx_full_k_map = this->exx_full_q_map;
+    }
+
+    auto finalize_point = [this](ExxFullPoint& point) {
+        if (point.rep_index < 0)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "negative EXX representative full-mesh index");
+        }
+        if (this->nkstot_full > 0 && point.rep_index >= this->nkstot_full)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "EXX representative full-mesh index is out of range");
+        }
+
+        const int nkstot_no_spin = (this->nspin == 2 && this->nkstot > 0) ? this->nkstot / 2 : this->nkstot;
+        const bool has_pool_map = !this->para_k.whichpool.empty() && !this->para_k.startk_pool.empty();
+        const bool has_valid_pool = has_pool_map && point.rep_pool >= 0
+                                    && point.rep_pool < static_cast<int>(this->para_k.nks_pool.size());
+        const bool already_pool_local = has_valid_pool && point.rep_local_index >= 0
+                                        && point.rep_local_index < this->para_k.nks_pool[point.rep_pool];
+        const int rep_storage_index = point.rep_local_index < 0 ? point.rep_index : point.rep_local_index;
+        const bool pool_map_is_no_spin = this->nspin == 2 && nkstot_no_spin > 0
+                                         && static_cast<int>(this->para_k.whichpool.size()) == nkstot_no_spin;
+        const int rep_pool_index = already_pool_local
+                                       ? point.rep_local_index + this->para_k.startk_pool[point.rep_pool]
+                                       : (pool_map_is_no_spin ? rep_storage_index % nkstot_no_spin : rep_storage_index);
+        if (rep_storage_index < 0)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "negative EXX representative wavefunction storage index");
+        }
+        if (!this->para_k.whichpool.empty()
+            && (rep_pool_index < 0 || rep_pool_index >= static_cast<int>(this->para_k.whichpool.size())))
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "EXX representative wavefunction storage index is out of range");
+        }
+        if (this->para_k.whichpool.empty() && this->nkstot > 0 && rep_storage_index >= this->nkstot)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "EXX representative wavefunction storage index exceeds nkstot");
+        }
+
+        point.rep_pool = this->para_k.whichpool.empty() ? 0 : this->para_k.whichpool[rep_pool_index];
+        if (this->para_k.startk_pool.empty())
+        {
+            point.rep_local_index = rep_storage_index;
+            return;
+        }
+        if (point.rep_pool < 0 || point.rep_pool >= static_cast<int>(this->para_k.startk_pool.size()))
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map", "invalid EXX representative pool");
+        }
+        point.rep_local_index = rep_pool_index - this->para_k.startk_pool[point.rep_pool];
+        if (point.rep_local_index < 0)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "negative pool-local EXX representative index");
+        }
+        if (point.rep_pool < static_cast<int>(this->para_k.nks_pool.size())
+            && point.rep_local_index >= this->para_k.nks_pool[point.rep_pool])
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::finalize_exx_full_q_map",
+                                     "pool-local EXX representative index is out of range");
+        }
+    };
+
+    for (auto& kpoint: this->exx_full_k_map)
+    {
+        finalize_point(kpoint);
+    }
+    for (auto& qpoint: this->exx_full_q_map)
+    {
+        finalize_point(qpoint);
+    }
+}
+
+void K_Vectors::normalize_exx_full_q_map_weights()
+{
+    auto normalize_full_map_weights = [this](std::vector<ExxFullPoint>& points) {
+        if (points.empty())
+        {
+            return;
+        }
+
+        std::vector<double> raw_rep_weight(this->nkstot, 0.0);
+        std::vector<double> normalized_rep_weight(this->nkstot, 0.0);
+        for (const auto& point: points)
+        {
+            if (point.rep_local_index >= 0 && point.rep_local_index < this->nkstot)
+            {
+                raw_rep_weight[point.rep_local_index] += point.weight;
+            }
+        }
+
+        const double spin_weight_scale = (this->nspin == 1) ? 0.5 : 1.0;
+        for (int ik = 0; ik < this->nkstot && ik < static_cast<int>(this->wk.size()); ++ik)
+        {
+            normalized_rep_weight[ik] = this->wk[ik] * spin_weight_scale;
+        }
+
+        for (auto& point: points)
+        {
+            if (point.rep_local_index < 0 || point.rep_local_index >= this->nkstot)
+            {
+                continue;
+            }
+            const double raw_sum = raw_rep_weight[point.rep_local_index];
+            if (raw_sum > 1.0e-14)
+            {
+                point.weight *= normalized_rep_weight[point.rep_local_index] / raw_sum;
+            }
+        }
+    };
+
+    normalize_full_map_weights(this->exx_full_k_map);
+    normalize_full_map_weights(this->exx_full_q_map);
+}
+
+int K_Vectors::exx_rep_spin_index(const ExxFullPoint& point, int ispin) const
+{
+    if (point.rep_pool < 0)
+    {
+        ModuleBase::WARNING_QUIT("K_Vectors::exx_rep_spin_index", "negative EXX representative pool");
+    }
+    if (point.rep_local_index < 0)
+    {
+        ModuleBase::WARNING_QUIT("K_Vectors::exx_rep_spin_index", "negative EXX representative local index");
+    }
+
+    int nk_local_no_spin = this->nks;
+    if (this->nspin == 2)
+    {
+        if (point.rep_pool >= static_cast<int>(this->para_k.nks_pool.size()))
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::exx_rep_spin_index", "EXX representative pool is out of range");
+        }
+        nk_local_no_spin = this->para_k.nks_pool[point.rep_pool];
+    }
+    if (ispin < 0 || ispin >= (this->nspin == 2 ? 2 : 1))
+    {
+        ModuleBase::WARNING_QUIT("K_Vectors::exx_rep_spin_index", "invalid EXX spin index");
+    }
+    return point.rep_local_index + ispin * nk_local_no_spin;
+}
+
 void K_Vectors::set(const UnitCell& ucell,
                     const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
@@ -97,6 +330,15 @@ void K_Vectors::set(const UnitCell& ucell,
             this->kvec_c_full[ik] = this->kvec_c[ik];
     }
 
+    // Start from the no-reduction map.  The symmetry reducer overwrites this
+    // with the full-to-IBZ map when symmetry/time-reversal reduction is used.
+    this->ibz_index.resize(this->nkstot_full);
+    for (int ik = 0; ik < this->nkstot_full; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+    this->exx_full_k_map.clear();
+    this->exx_full_q_map.clear();
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -152,6 +394,7 @@ void K_Vectors::set(const UnitCell& ucell,
     int deg = (nspin_in == 1) ? 2 : 1;
     // normalize k points weights according to nspin
     this->normalize_wk(deg);
+    this->normalize_exx_full_q_map_weights();
 
     // It's very important in parallel case,
     // firstly do the mpi_k() and then
@@ -170,15 +413,9 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
 
-    // initialize ibz_index
-    this->ibz_index.resize(this->nkstot_full);
-    for (int ik = 0; ik < this->nkstot_full; ik++)
-    {
-        this->ibz_index[ik] = ik;
-    }
-    
     // get ik2iktot
     this->cal_ik_global();
+    this->finalize_exx_full_q_map();
 
     KVectorUtils::print_klists(*this, ofs);
 

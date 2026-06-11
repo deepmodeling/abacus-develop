@@ -1,9 +1,13 @@
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_psi/psi.h"
+#include "source_base/kernels/math_kernel_op.h"
 
 #include <thrust/complex.h>
+#include <thrust/reduce.h>
+#include <thrust/device_ptr.h>
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/kernel_compat.h"
+#include "source_base/module_device/device_check.h"
 
 namespace hamilt
 {
@@ -40,6 +44,84 @@ __global__ void cal_vec_norm_kernel(
 }
 
 template <typename FPTYPE>
+__global__ void cal_vec_norm_accumulate_kernel(
+    const thrust::complex<FPTYPE> *den,
+    const FPTYPE *pot,
+    const FPTYPE scalar,
+    FPTYPE *result,
+    int npw)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < npw)
+    {
+        FPTYPE tmp = (den[idx] * thrust::conj(den[idx])).real() * pot[idx] * scalar;
+        atomicAdd(result, tmp);
+    }
+}
+
+// Kernel to compute element-wise norm of a complex vector and save to real vector
+template <typename FPTYPE>
+__global__ void cal_vec_elem_norm_squared(
+    const thrust::complex<FPTYPE> *vector_in,
+    FPTYPE *vector_out,
+    int n)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
+    for (int i = idx; i < n; i += stride)
+    {
+        vector_out[i] = (vector_in[i] * thrust::conj(vector_in[i])).real();
+    }
+}
+
+
+template <typename FPTYPE>
+struct exx_density_potential_mul_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
+{
+    using T = std::complex<FPTYPE>;
+    FPTYPE operator()(const T *vector_in,
+        FPTYPE *vector_buffer, const FPTYPE *pot,
+        FPTYPE *vec_temp, FPTYPE *weights,
+        int npw, int batch_idx)
+    {
+        const FPTYPE one{1}; // Scalar one for gemv
+        const FPTYPE zero{0}; // Scalar one for gemv
+        const int inc{1}; // Increment for gemv
+        int threads_per_block = 256;
+        int num_blocks = (npw * batch_idx + threads_per_block - 1) / threads_per_block;
+        cal_vec_elem_norm_squared<FPTYPE><<<num_blocks, threads_per_block>>>(
+            reinterpret_cast<const thrust::complex<FPTYPE> *>(vector_in),
+            vector_buffer,
+            npw * batch_idx
+        );
+        cudaError_t err = cudaGetLastError();
+        if (err != cudaSuccess)
+        {
+            throw std::runtime_error("CUDA error in cal_vec_norm_real_kernel: " + std::string(cudaGetErrorString(err)));
+        }
+        ModuleBase::gemv_op<FPTYPE, base_device::DEVICE_GPU>()(
+            'T',
+            npw,          // m
+            batch_idx,           // n
+            &one,            // alpha
+            vector_buffer,   // matrix as (npw, batch_idx ) in column major layour
+            npw,         // lda
+            pot,  // vector (npw, )
+            inc,                   // incx
+            &zero,            // beta
+            vec_temp,          // batch_idx vector (batch_idx)
+            inc);                  // incy
+        // Obtain the energy
+        return ModuleBase::dot_real_op<FPTYPE, base_device::DEVICE_GPU>()(
+            batch_idx,
+            vec_temp,
+            weights,
+            false
+        );
+    }
+};
+
+template <typename FPTYPE>
 struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
 {
     using T = std::complex<FPTYPE>;
@@ -59,8 +141,8 @@ struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
         int num_blocks = (npw + threads_per_block - 1) / threads_per_block;
 
         FPTYPE *d_result;
-        cudaMalloc(&d_result, sizeof(FPTYPE));
-        cudaMemset(d_result, 0, sizeof(FPTYPE));
+        CHECK_CUDA(cudaMalloc(&d_result, sizeof(FPTYPE)));
+        CHECK_CUDA(cudaMemset(d_result, 0, sizeof(FPTYPE)));
 
         cal_vec_norm_kernel<FPTYPE><<<num_blocks, threads_per_block>>>(
             reinterpret_cast<const thrust::complex<FPTYPE> *>(den),
@@ -68,14 +150,11 @@ struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
             d_result,
             npw);
 
-        cudaError_t err = cudaGetLastError();
-        if (err != cudaSuccess)
-        {
-            throw std::runtime_error("CUDA error in cal_vec_norm_kernel: " + std::string(cudaGetErrorString(err)));
-        }
+        CHECK_LAST_CUDA_ERROR("cal_vec_norm_kernel");
+        CHECK_CUDA_SYNC();
 
-        cudaMemcpy(&result, d_result, sizeof(FPTYPE), cudaMemcpyDeviceToHost);
-        cudaFree(d_result);
+        CHECK_CUDA(cudaMemcpy(&result, d_result, sizeof(FPTYPE), cudaMemcpyDeviceToHost));
+        CHECK_CUDA(cudaFree(d_result));
 
         return scalar * result;
     }
@@ -83,4 +162,30 @@ struct exx_cal_energy_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
 
 template struct exx_cal_energy_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct exx_cal_energy_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct exx_density_potential_mul_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct exx_density_potential_mul_op<std::complex<double>, base_device::DEVICE_GPU>;
+
+template <typename FPTYPE>
+struct exx_cal_energy_accumulate_op<std::complex<FPTYPE>, base_device::DEVICE_GPU>
+{
+    using T = std::complex<FPTYPE>;
+    void operator()(const T *den, const FPTYPE *pot, FPTYPE scalar, int npw, FPTYPE* result)
+    {
+        int threads_per_block = 256;
+        int num_blocks = (npw + threads_per_block - 1) / threads_per_block;
+
+        cal_vec_norm_accumulate_kernel<FPTYPE><<<num_blocks, threads_per_block>>>(
+            reinterpret_cast<const thrust::complex<FPTYPE> *>(den),
+            pot,
+            scalar,
+            result,
+            npw);
+
+        CHECK_LAST_CUDA_ERROR("cal_vec_norm_accumulate_kernel");
+        CHECK_CUDA_SYNC();
+    }
+};
+
+template struct exx_cal_energy_accumulate_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct exx_cal_energy_accumulate_op<std::complex<double>, base_device::DEVICE_GPU>;
 } // namespace hamilt

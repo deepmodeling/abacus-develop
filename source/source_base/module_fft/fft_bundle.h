@@ -83,6 +83,17 @@ class FFT_Bundle
         this->fft_mode = fft_mode_in;
     }
 
+    /**
+     * @brief Initialize the batch FFT size.
+     * @param batch_size_in  batch size for batch FFT (1-128)
+     *
+     * the function will initialize the batch FFT size.
+     */
+    void init_batch_size(int batch_size_in)
+    {
+        this->batch_size = batch_size_in;
+    }
+
     void setupFFT();
 
     void clearFFT();
@@ -201,12 +212,85 @@ class FFT_Bundle
     template <typename FPTYPE>
     void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
+    // Batch FFT methods
+    /**
+     * @brief Setup batch FFT plans and allocate batch buffers
+     *
+     * Initializes cufftPlanMany for batch FFT operations on GPU.
+     * No-op on CPU devices. Batch execution APIs throw if batch FFT is unavailable.
+     */
+    void setupBatchFFT();
+
+    /**
+     * @brief Forward batch 3D FFT
+     * @param in_batch  input data batch
+     * @param out_batch output data batch
+     * @param batch_count actual number of FFTs to process
+     *
+     * Performs batch_count forward 3D FFTs in a single kernel launch (GPU).
+     * Falls back to sequential FFTs on CPU or if batch FFT not available.
+     */
+    template <typename FPTYPE>
+    void fft3D_forward_batch(std::complex<FPTYPE>* in_batch,
+                             std::complex<FPTYPE>* out_batch,
+                             int batch_count) const;
+
+    /**
+     * @brief Backward batch 3D FFT
+     * @param in_batch  input data batch
+     * @param out_batch output data batch
+     * @param batch_count actual number of FFTs to process
+     *
+     * Performs batch_count backward 3D FFTs in a single kernel launch (GPU).
+     * Falls back to sequential FFTs on CPU or if batch FFT not available.
+     */
+    template <typename FPTYPE>
+    void fft3D_backward_batch(std::complex<FPTYPE>* in_batch,
+                              std::complex<FPTYPE>* out_batch,
+                              int batch_count) const;
+
+    /**
+     * @brief Check if batch FFT is available for given precision
+     * @return true if batch FFT is ready and available
+     */
+    template <typename FPTYPE>
+    bool is_batch_fft_available() const;
+
+    /**
+     * @brief Get maximum batch size
+     * @return maximum batch size for batch FFT operations
+     */
+    template <typename FPTYPE>
+    int get_batch_size() const;
+
+    /**
+     * @brief Get batch input buffer
+     * @return pointer to device batch input buffer
+     */
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_batch_input_buffer() const;
+
+    /**
+     * @brief Get batch output buffer
+     * @return pointer to device batch output buffer
+     */
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_batch_output_buffer() const;
+
   private:
     int fft_mode = 0;
+    int batch_size = 8;  // Default batch size for batch FFT
     bool float_flag = false;
     bool double_flag = false;
+
+    // Primary FFT objects (CPU or GPU depending on device setting)
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
+
+    // CPU FFT objects for fallback when device="gpu"
+    // These are used by non-templated CPU-style FFT operations (get_auxg_data, fftxyfor, etc.)
+    std::shared_ptr<FFT_BASE<float>> fft_float_cpu = nullptr;
+    std::shared_ptr<FFT_BASE<double>> fft_double_cpu = nullptr;
 
     std::string device = "cpu";
     std::string precision = "double";

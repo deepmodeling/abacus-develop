@@ -17,6 +17,31 @@ struct vec_mul_vec_complex_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
         }
     }
 
+    // Batched operator - CPU fallback (sequential over batches with OpenMP per element)
+    void operator_batch(
+        const T *vec1_batch,
+        const T *vec2_batch,
+        T *out_batch,
+        int n,
+        int batch_size)
+    {
+        // Process each batch element sequentially with OpenMP per element
+        for (int ib = 0; ib < batch_size; ib++)
+        {
+            const T* vec1_ib = vec1_batch + ib * n;
+            const T* vec2_ib = vec2_batch + ib * n;
+            T* out_ib = out_batch + ib * n;
+
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(static)
+            #endif
+            for (int i = 0; i < n; i++)
+            {
+                out_ib[i] = vec1_ib[i] * vec2_ib[i];
+            }
+        }
+    }
+
 };
 template struct vec_mul_vec_complex_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vec_mul_vec_complex_op<std::complex<double>, base_device::DEVICE_CPU>;

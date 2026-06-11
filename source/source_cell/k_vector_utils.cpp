@@ -312,9 +312,9 @@ void kvec_mpi_k(K_Vectors& kv)
         kv.isk[i] = isk_aux[k_index];
     }
 
-#ifdef __EXX
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    { // bcast kstars
+    {
+        // bcast kstars
         kv.kstars.resize(kv.nkstot);
         for (int ikibz = 0; ikibz < kv.nkstot; ++ikibz)
         {
@@ -345,10 +345,60 @@ void kvec_mpi_k(K_Vectors& kv)
             }
         }
     }
-#endif
+
+    auto bcast_exx_full_map = [](std::vector<K_Vectors::ExxFullPoint>& points) {
+        int size = points.size();
+        Parallel_Common::bcast_int(size);
+        if (GlobalV::MY_RANK != 0)
+        {
+            points.resize(size);
+        }
+        for (int i = 0; i < size; ++i)
+        {
+            auto& point = points[i];
+            Parallel_Common::bcast_int(point.full_index);
+            Parallel_Common::bcast_int(point.rep_index);
+            Parallel_Common::bcast_int(point.rep_local_index);
+            Parallel_Common::bcast_int(point.rep_pool);
+            Parallel_Common::bcast_int(point.symop);
+            Parallel_Common::bcast_bool(point.time_reversal);
+            Parallel_Common::bcast_bool(point.conjugate_only);
+            Parallel_Common::bcast_bool(point.identity);
+            Parallel_Common::bcast_bool(point.active);
+            Parallel_Common::bcast_double(point.weight);
+            Parallel_Common::bcast_double(point.full_kvec_d.x);
+            Parallel_Common::bcast_double(point.full_kvec_d.y);
+            Parallel_Common::bcast_double(point.full_kvec_d.z);
+            Parallel_Common::bcast_double(point.full_kvec_c.x);
+            Parallel_Common::bcast_double(point.full_kvec_c.y);
+            Parallel_Common::bcast_double(point.full_kvec_c.z);
+            Parallel_Common::bcast_double(point.gmatrix.e11);
+            Parallel_Common::bcast_double(point.gmatrix.e12);
+            Parallel_Common::bcast_double(point.gmatrix.e13);
+            Parallel_Common::bcast_double(point.gmatrix.e21);
+            Parallel_Common::bcast_double(point.gmatrix.e22);
+            Parallel_Common::bcast_double(point.gmatrix.e23);
+            Parallel_Common::bcast_double(point.gmatrix.e31);
+            Parallel_Common::bcast_double(point.gmatrix.e32);
+            Parallel_Common::bcast_double(point.gmatrix.e33);
+            Parallel_Common::bcast_double(point.kgmatrix.e11);
+            Parallel_Common::bcast_double(point.kgmatrix.e12);
+            Parallel_Common::bcast_double(point.kgmatrix.e13);
+            Parallel_Common::bcast_double(point.kgmatrix.e21);
+            Parallel_Common::bcast_double(point.kgmatrix.e22);
+            Parallel_Common::bcast_double(point.kgmatrix.e23);
+            Parallel_Common::bcast_double(point.kgmatrix.e31);
+            Parallel_Common::bcast_double(point.kgmatrix.e32);
+            Parallel_Common::bcast_double(point.kgmatrix.e33);
+            Parallel_Common::bcast_double(point.gtrans.x);
+            Parallel_Common::bcast_double(point.gtrans.y);
+            Parallel_Common::bcast_double(point.gtrans.z);
+        }
+    };
+    bcast_exx_full_map(kv.exx_full_k_map);
+    bcast_exx_full_map(kv.exx_full_q_map);
 } // END SUBROUTINE
 #endif
-
 
 void kvec_ibz_kpoint(K_Vectors& kv,
                      const ModuleSymmetry::Symmetry& symm,
@@ -394,8 +444,16 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     //===============================================
     bool include_inv = false;
     std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);
+    std::vector<ModuleBase::Matrix3> gmatrix(48 * 2);
+    std::vector<ModuleBase::Vector3<double>> gtrans(48 * 2);
+    std::vector<bool> kgmatrix_time_reversal(48 * 2, false);
     ModuleBase::Matrix3 inv(-1, 0, 0, 0, -1, 0, 0, 0, -1);
     ModuleBase::Matrix3 ind(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    auto matrix_equal = [&symm](const ModuleBase::Matrix3& a, const ModuleBase::Matrix3& b) {
+        return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13)
+                && symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23)
+                && symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
+    };
 
     int nrotkm = 0;
     if (use_symm)
@@ -503,17 +561,12 @@ void kvec_ibz_kpoint(K_Vectors& kv,
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
 
         // check if all the kgmatrix are in bsymop
-        auto matequal = [&symm](ModuleBase::Matrix3 a, ModuleBase::Matrix3 b) {
-            return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13)
-                    && symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23)
-                    && symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
-        };
         for (int i = 0; i < symm.nrotk; ++i)
         {
             match = false;
             for (int j = 0; j < bnop; ++j)
             {
-                if (matequal(symm.kgmatrix[i], bsymop[j]))
+                if (matrix_equal(symm.kgmatrix[i], bsymop[j]))
                 {
                     match = true;
                     break;
@@ -532,6 +585,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                 include_inv = true;
             }
             kgmatrix[i] = symm.kgmatrix[i];
+            gmatrix[i] = symm.gmatrix[i];
+            gtrans[i] = symm.gtrans[i];
+            kgmatrix_time_reversal[i] = false;
         }
 
         if (!include_inv)
@@ -539,6 +595,9 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             for (int i = 0; i < symm.nrotk; ++i)
             {
                 kgmatrix[i + symm.nrotk] = inv * symm.kgmatrix[i];
+                gmatrix[i + symm.nrotk] = inv * symm.gmatrix[i];
+                gtrans[i + symm.nrotk] = symm.gtrans[i];
+                kgmatrix_time_reversal[i + symm.nrotk] = true;
             }
             nrotkm = 2 * symm.nrotk;
         }
@@ -548,6 +607,12 @@ void kvec_ibz_kpoint(K_Vectors& kv,
         nrotkm = 2;
         kgmatrix[0] = ind;
         kgmatrix[1] = inv;
+        gmatrix[0] = ind;
+        gmatrix[1] = inv;
+        gtrans[0] = ModuleBase::Vector3<double>(0, 0, 0);
+        gtrans[1] = ModuleBase::Vector3<double>(0, 0, 0);
+        kgmatrix_time_reversal[0] = false;
+        kgmatrix_time_reversal[1] = true;
     }
     else
     {
@@ -581,6 +646,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
 
     // nkstot is the total input k-points number.
     double weight = 1.0 / static_cast<double>(kv.get_nkstot());
+    std::vector<double> full_k_weights(kv.get_nkstot(), weight);
 
     ModuleBase::Vector3<double> kvec_rot;
     ModuleBase::Vector3<double> kvec_rot_k;
@@ -618,6 +684,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     for (int i = 0; i < kv.get_nkstot(); ++i)
     {
         if (!kv.get_is_mp()) { weight = kv.wk[i]; } // use the input weight, instead of 1/nkstot
+        full_k_weights[i] = weight;
 
         // restrict to [0, 1)
         restrict_kpt(kv.kvec_d[i]);
@@ -713,6 +780,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             if (kmol_new > kmol_old)
             {
                 kvec_d_ibz[exist_number] = kv.kvec_d[i];
+                ibz2bz[exist_number] = i;
             }
         }
         //		BLOCK_HERE("check k point");
@@ -720,38 +788,65 @@ void kvec_ibz_kpoint(K_Vectors& kv,
 
     delete[] kkmatrix;
 
-#ifdef __EXX
-    // setup kstars according to the final (max-norm) kvec_d_ibz
+    // setup kstars and EXX full-q map according to the final (max-norm) kvec_d_ibz
     kv.kstars.resize(nkstot_ibz);
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    kv.exx_full_k_map.clear();
+    kv.exx_full_k_map.resize(kv.get_nkstot_full());
+    kv.exx_full_q_map.clear();
+    kv.exx_full_q_map.resize(kv.get_nkstot_full());
+    for (int i = 0; i < kv.get_nkstot_full(); ++i)
     {
-        for (int i = 0; i < kv.get_nkstot(); ++i)
+        const int ibz_index = kv.ibz_index[i];
+        if (ibz_index < 0 || ibz_index >= nkstot_ibz)
         {
-            int exist_number = -1;
-            int isym = 0;
-            for (int j = 0; j < nrotkm; ++j)
-            {
-                kvec_rot = kv.kvec_d[i] * kgmatrix[j];
-                restrict_kpt(kvec_rot);
-                for (int k = 0; k < nkstot_ibz; ++k)
-                {
-                    if (symm.equal(kvec_rot.x, kvec_d_ibz[k].x) && symm.equal(kvec_rot.y, kvec_d_ibz[k].y)
-                        && symm.equal(kvec_rot.z, kvec_d_ibz[k].z))
-                    {
-                        isym = j;
-                        exist_number = k;
-                        break;
-                    }
-                }
-                if (exist_number != -1)
-                {
-                    break;
-                }
-            }
-            kv.kstars[exist_number].insert(std::make_pair(isym, kv.kvec_d[i]));
+            ModuleBase::WARNING_QUIT("KVectorUtils::kvec_ibz_kpoint", "failed to map full k point to IBZ for EXX");
         }
+        const int rep_index = ibz2bz[ibz_index];
+        if (rep_index < 0)
+        {
+            ModuleBase::WARNING_QUIT("KVectorUtils::kvec_ibz_kpoint", "failed to find EXX representative k point");
+        }
+        int isym = 0;
+
+        bool found_symop = false;
+        for (int j = 0; j < nrotkm && !found_symop; ++j)
+        {
+            kvec_rot = kv.kvec_d[i] * kgmatrix[j];
+            restrict_kpt(kvec_rot);
+            if (symm.equal(kvec_rot.x, kvec_d_ibz[ibz_index].x)
+                && symm.equal(kvec_rot.y, kvec_d_ibz[ibz_index].y)
+                && symm.equal(kvec_rot.z, kvec_d_ibz[ibz_index].z))
+            {
+                isym = j;
+                found_symop = true;
+            }
+        }
+        if (!found_symop)
+        {
+            ModuleBase::WARNING_QUIT("KVectorUtils::kvec_ibz_kpoint", "failed to find symmetry operation for EXX full-q map");
+        }
+
+        kv.kstars[ibz_index].insert(std::make_pair(isym, kv.kvec_d[i]));
+
+        K_Vectors::ExxFullPoint point;
+        point.full_index = i;
+        point.rep_index = rep_index;
+        point.rep_local_index = ibz_index;
+        point.rep_pool = 0;
+        point.symop = isym;
+        point.time_reversal = kgmatrix_time_reversal[isym];
+        point.conjugate_only = point.time_reversal && matrix_equal(kgmatrix[isym], inv);
+        point.identity = (i == rep_index && isym == 0 && !point.time_reversal);
+        point.active = true;
+        point.weight = full_k_weights[i];
+        point.full_kvec_d = kv.kvec_d[i];
+        point.full_kvec_c = kv.kvec_c_full[i];
+        point.gmatrix = gmatrix[isym];
+        point.kgmatrix = kgmatrix[isym];
+        point.gtrans = gtrans[isym];
+        kv.exx_full_k_map[i] = point;
+        kv.exx_full_q_map[i] = point;
     }
-#endif
 
     // output in kpoints file
     std::stringstream ss;

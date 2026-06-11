@@ -7,6 +7,7 @@ struct cal_density_real_op<T, base_device::DEVICE_CPU>
 {
     void operator()(const T *in1, const T *in2, T *out, double omega, int nrxx)
     {
+        T one_over_omega = static_cast<T>(1.0 / omega);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -14,7 +15,7 @@ struct cal_density_real_op<T, base_device::DEVICE_CPU>
         {
             // assert(is_finite(psi_nk_real[ir]));
             // assert(is_finite(psi_mq_real[ir]));
-            out[ir] = in1[ir] * std::conj(in2[ir]) / static_cast<T>(omega); // Phase e^(i(q-k)r)
+            out[ir] = in1[ir] * std::conj(in2[ir]) * one_over_omega; // Phase e^(i(q-k)r)
         }
     }
 

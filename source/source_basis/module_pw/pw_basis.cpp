@@ -4,6 +4,7 @@
 #include "source_base/mymath.h"
 #include "source_base/timer.h"
 #include "source_base/global_function.h"
+#include "source_io/module_parameter/parameter.h"
 
 
 namespace ModulePW
@@ -15,7 +16,8 @@ PW_Basis::PW_Basis()
 
 PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::move(device_)), precision(std::move(precision_)) {
     classname="PW_Basis";
-    this->fft_bundle.setfft("cpu",this->precision);
+    // FFT device setup is deferred to setuptransform() to avoid GPU memory allocation
+    // before GlobalV::ofs_running is initialized (which would crash Memory::record_gpu)
     this->double_data_ = (this->precision == "double") || (this->precision == "mixing");
     this->float_data_ = (this->precision == "single")  || (this->precision == "mixing");
 }
@@ -44,6 +46,9 @@ PW_Basis:: ~PW_Basis()
     {
         delmem_int_op()(this->d_is2fftixy);
         delmem_int_op()(this->ig2ixyz_gpu);
+        if (this->gg_d != nullptr) {
+            delmem_double_op()(this->gg_d);
+        }
     }
 #endif
 }
@@ -53,23 +58,33 @@ PW_Basis:: ~PW_Basis()
 /// set up maps for fft and create arrays for MPI_Alltoall
 /// set up ffts
 ///
-void PW_Basis::setuptransform()
+void PW_Basis::setuptransform(const int batch_fft_size)
 {
     ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
     this->distribute_g();
     this->getstartgr();
     this->fft_bundle.clear();
-    
-    if(this->xprime)    
+
+    // FFT_Bundle now supports dual-mode operation when device="gpu":
+    // - CPU FFT objects (fft_*_cpu) handle non-templated code paths (recip2real, real2recip)
+    // - GPU FFT objects (fft_*) handle templated GPU code paths (recip_to_real<DEVICE_GPU>)
+    // This allows charge mixing to use GPU FFT while maintaining compatibility with
+    // all existing non-templated CPU code paths in charge_init, symmetry_rho, etc.
+    this->fft_bundle.setfft(this->device, this->precision);
+
+    if(this->xprime)
     {
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
-    else                
+    else
     {
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
+    this->fft_bundle.init_batch_size(batch_fft_size);
+    this->fft_bundle.setupBatchFFT();
+
     ModuleBase::timer::end(this->classname, "setuptransform");
 }
 
@@ -177,11 +192,21 @@ void PW_Basis::collect_local_pw()
             ++gamma_num;
             if (gamma_num > 1)
             {
-                ModuleBase::WARNING_QUIT("PW_Basis::collect_local_pw", 
+                ModuleBase::WARNING_QUIT("PW_Basis::collect_local_pw",
                                         "More than one gamma point found in the plane wave basis set.\n");
             }
         }
     }
+
+    // Copy gg array to GPU if device is "gpu"
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == "gpu" && this->npw > 0)
+    {
+        resmem_double_op()(this->gg_d, this->npw, "PW_Basis::gg_d");
+        syncmem_double_h2d_op()(this->gg_d, this->gg, this->npw);
+    }
+#endif
+
     return;
 }
 

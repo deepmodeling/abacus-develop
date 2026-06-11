@@ -38,6 +38,9 @@ void Parallel_Kpoints::kinfo(int& nkstot_in,
     this->nspin = nspin_in;
     this->nkstot_np = nkstot_in;
     this->nks_np = nkstot_in;
+    this->nks_pool = {nkstot_in};
+    this->startk_pool = {0};
+    this->whichpool.assign(nkstot_in, 0);
 
 #endif
     return;

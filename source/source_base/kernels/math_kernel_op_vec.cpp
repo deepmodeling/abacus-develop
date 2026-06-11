@@ -197,4 +197,5 @@ template struct vector_add_vector_op<std::complex<double>, base_device::DEVICE_C
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct dot_real_op<double, base_device::DEVICE_CPU>;
+template struct dot_real_op<float, base_device::DEVICE_CPU>;
 } // namespace ModuleBase

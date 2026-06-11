@@ -11,6 +11,27 @@
 class K_Vectors
 {
 public:
+    struct ExxFullPoint
+    {
+        int full_index = -1;       ///< index in the full k/q mesh before symmetry reduction, without spin
+        int rep_index = -1;        ///< full-mesh index of the representative point, without spin
+        int rep_local_index = -1;  ///< compact representative wavefunction slot in rep_pool, without spin
+        int rep_pool = 0;          ///< pool that owns the compact representative wavefunction slot
+        int symop = 0;             ///< symmetry operation that maps full_index to the representative point
+        bool time_reversal = false;
+        bool conjugate_only = false; ///< full point is represented by conjugating the stored real-space wavefunction
+        bool identity = true;      ///< full point is represented by the stored wavefunction without rotation
+        bool active = true;
+        double weight = 0.0;       ///< explicit full-mesh integration weight
+        ModuleBase::Vector3<double> full_kvec_d;
+        ModuleBase::Vector3<double> full_kvec_c;
+        ModuleBase::Matrix3 gmatrix; ///< direct-space operation used to map full point to representative point
+        ModuleBase::Matrix3 kgmatrix; ///< reciprocal-space operation used to map full point to representative point
+        ModuleBase::Vector3<double> gtrans; ///< fractional direct-space translation paired with gmatrix
+    };
+    using ExxFullQPoint = ExxFullPoint;
+    using ExxFullKPoint = ExxFullPoint;
+
     std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_c_full; // Cartesian coordinates of full k mesh match with nkstot_full
@@ -127,6 +148,13 @@ public:
 
     std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
     std::vector<int> ibz_index; ///< map k points (before symmetry reduction) to irreducible k-points
+    std::vector<ExxFullKPoint> exx_full_k_map; ///< full outer-k mesh descriptor used by PW EXX
+    std::vector<ExxFullQPoint> exx_full_q_map; ///< full q mesh descriptor used by PW EXX
+
+    void build_exx_identity_full_q_map();
+    void normalize_exx_full_q_map_weights();
+    void finalize_exx_full_q_map();
+    int exx_rep_spin_index(const ExxFullPoint& point, int ispin) const;
 
     /**
      * @brief Updates the k-points to use the irreducible Brillouin zone (IBZ).

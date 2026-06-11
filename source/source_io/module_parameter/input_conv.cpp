@@ -518,20 +518,6 @@ void Input_Conv::Convert()
         }
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
-    {
-        if (ModuleSymmetry::Symmetry::symm_flag != -1)
-        {
-            ModuleBase::WARNING("Input_Conv", "EXX PW works only with symmetry=-1");
-            ModuleSymmetry::Symmetry::symm_flag = -1;
-        }
-
-        if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
-        {
-            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
-        }
-    }
-
     //----------------------------------------------------------
     // reset symmetry flag to avoid error
     //----------------------------------------------------------
@@ -548,6 +534,29 @@ void Input_Conv::Convert()
         ModuleSymmetry::Symmetry::symm_flag = -1;
     }
     // end of symmetry reset
+
+    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
+    {
+        if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
+        }
+
+        if (ModuleSymmetry::Symmetry::symm_flag == 1 && PARAM.inp.exx_symmetry_realspace)
+        {
+            if (PARAM.inp.device != "cpu")
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv",
+                                         "EXX PW real-space symmetry reduction is implemented only for CPU");
+            }
+            if (PARAM.inp.noncolin || PARAM.inp.lspinorb)
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv",
+                                         "EXX PW real-space symmetry reduction is not implemented for "
+                                         "noncollinear/SOC calculations");
+            }
+        }
+    }
 
     //----------------------------------------------------------
     // main parameters / electrons / spin ( 2/16 )
