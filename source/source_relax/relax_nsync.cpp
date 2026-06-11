@@ -135,9 +135,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
         
         return converged;
     }
-    else if (is_cell_relax)
+    else if (is_cell_relax && !ucell.if_cell_can_change())
     {
-        // Cell-relax mode but lattice cannot change
         ModuleBase::WARNING("IonCellOptimizer", "Lattice vectors are not allowed to change!");
         return true;
     }

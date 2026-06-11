@@ -37,7 +37,6 @@ class Relax_Driver
     bool relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
     void stru_out(UnitCell& ucell, const Input_para& inp);
     void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
-    bool stop_cond(bool stop);
     void final_out(UnitCell& ucell, const Input_para& inp);
 };
 

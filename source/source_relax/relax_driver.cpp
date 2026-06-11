@@ -20,15 +20,24 @@ void Relax_Driver::relax_driver(
     this->init_relax(ucell.nat, inp);
 
     this->istep = 1;
-    bool stop = false;
 
-    while (this->istep <= inp.relax_nmax && !stop)
+    while (this->istep <= inp.relax_nmax)
     {
         this->iter_info(inp);
         this->esolve(p_esolver, ucell);
-        stop = this->relax_step(p_esolver, ucell, inp);
+        bool converged = this->relax_step(p_esolver, ucell, inp);
         this->json_out(p_esolver, ucell, inp);
-        stop = this->stop_cond(stop);
+
+        // Check stop conditions
+        if (converged)
+        {
+            break;
+        }
+        else if (ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running))
+        {
+            break;
+        }
+
         ++this->istep;
     }
 
@@ -94,24 +103,24 @@ bool Relax_Driver::relax_step(ModuleESolver::ESolver* p_esolver, UnitCell& ucell
         return false;
     }
 
-    bool stop = false;
+    bool converged = false;
 
     if (inp.relax_new)
     {
-        stop = this->rl.relax_step(ucell, this->force_, this->stress_, this->etot);
+        converged = this->rl.relax_step(ucell, this->force_, this->stress_, this->etot);
         this->stress_step = this->istep + 1;
         this->force_step = 1;
     }
     else
     {
-        stop = this->rl_old.relax_step(this->istep, this->etot, ucell, this->force_, this->stress_, this->force_step, this->stress_step);
+        converged = this->rl_old.relax_step(this->istep, this->etot, ucell, this->force_, this->stress_, this->force_step, this->stress_step);
     }
 
     this->stru_out(ucell, inp);
 
-    ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
+    ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, GlobalV::ofs_running);
 
-    return stop;
+    return converged;
 }
 
 void Relax_Driver::stru_out(UnitCell& ucell, const Input_para& inp)
@@ -167,15 +176,6 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, 
     double fac = ModuleBase::Ry_to_eV / 0.529177;
     Json::add_output_cell_coo_stress_force(&ucell, this->force_, fac, this->stress_, unit_transform);
 #endif
-}
-
-bool Relax_Driver::stop_cond(bool stop)
-{
-    if (stop == false)
-    {
-        stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
-    }
-    return stop;
 }
 
 void Relax_Driver::final_out(UnitCell& ucell, const Input_para& inp)
