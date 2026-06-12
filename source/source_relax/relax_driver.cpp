@@ -25,10 +25,13 @@ void Relax_Driver::relax_driver(
     // so the loop exits after one iteration
     while (istep < inp.relax_nmax)
     {
+        ModuleBase::matrix force(ucell.nat, 3);
+        ModuleBase::matrix stress(3, 3);
+
         this->iter_info(istep, inp);
-        this->esolve(istep, p_esolver, ucell);
-        bool converged = this->relax_step(istep, p_esolver, ucell, inp);
-        this->json_out(p_esolver, ucell, inp);
+        this->esolve(istep, p_esolver, ucell, force, stress);
+        bool converged = this->relax_step(istep, p_esolver, ucell, inp, force, stress);
+        this->json_out(p_esolver, ucell, inp, force, stress);
 
         // Check stop conditions
         if (converged)
@@ -83,7 +86,7 @@ void Relax_Driver::iter_info(const int istep, const Input_para& inp)
 #endif
 }
 
-void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
+void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress)
 {
     p_esolver->runner(ucell, istep);
 
@@ -91,16 +94,16 @@ void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, Un
 
     if (PARAM.inp.cal_force)
     {
-        p_esolver->cal_force(ucell, this->force_);
+        p_esolver->cal_force(ucell, force);
     }
 
     if (PARAM.inp.cal_stress)
     {
-        p_esolver->cal_stress(ucell, this->stress_);
+        p_esolver->cal_stress(ucell, stress);
     }
 }
 
-bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp)
+bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
 {
     // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
     // to ensure the main loop exits after one iteration. This provides robustness
@@ -114,14 +117,14 @@ bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver
 
     if (inp.relax_new)
     {
-        converged = this->rl.relax_step(ucell, this->force_, this->stress_, this->etot);
+        converged = this->rl.relax_step(ucell, force, stress, this->etot);
         this->stress_step++;
         this->force_step = 1;
     }
     else
     {
-        converged = this->rl_old.relax_step(istep+1, this->etot, ucell, this->force_, 
-			this->stress_, this->force_step, this->stress_step);
+        converged = this->rl_old.relax_step(istep+1, this->etot, ucell, force, 
+			stress, this->force_step, this->stress_step);
     }
 
     this->stru_out(istep+1, ucell, inp);
@@ -175,14 +178,14 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
     }
 }
 
-void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp)
+void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
 {
 #ifdef __RAPIDJSON
     Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
 
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double fac = ModuleBase::Ry_to_eV / 0.529177;
-    Json::add_output_cell_coo_stress_force(&ucell, this->force_, fac, this->stress_, unit_transform);
+    Json::add_output_cell_coo_stress_force(&ucell, force, fac, stress, unit_transform);
 #endif
 }
 

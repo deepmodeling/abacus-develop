@@ -24,18 +24,15 @@ class Relax_Driver
     int force_step = 1;
     int stress_step = 1;
 
-    ModuleBase::matrix force_;
-    ModuleBase::matrix stress_;
-
     Relax rl;
     IonCellOptimizer rl_old;
 
     void init_relax(const int nat, const Input_para& inp);
     void iter_info(const int istep, const Input_para& inp);
-    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
-    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
+    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress);
+    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
     void stru_out(const int istep, UnitCell& ucell, const Input_para& inp);
-    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp);
+    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
     void final_out(const int istep, UnitCell& ucell, const Input_para& inp);
 };
 
