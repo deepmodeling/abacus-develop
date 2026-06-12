@@ -895,11 +895,11 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("exx_batch_fft_size");
-        item.annotation = "batch size for batched EXX FFT; values <= 1 disable batching";
+        item.annotation = "batch size for GPU batched EXX FFT; values <= 1 disable batching";
         item.category = "Exact Exchange (PW)";
         item.type = "Integer";
-        item.description = "Batch size used by batched FFTs in the plane-wave EXX operator. Set to 1 to use the sequential EXX FFT path.";
-        item.default_value = "1";
+        item.description = "Batch size used by GPU batched FFTs in the plane-wave EXX operator. Set to 1 to use the sequential EXX FFT path.";
+        item.default_value = "8";
         item.unit = "";
         item.availability = "device==gpu";
         read_sync_int(input.exx_batch_fft_size);

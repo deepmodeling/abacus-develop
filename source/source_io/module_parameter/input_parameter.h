@@ -681,7 +681,7 @@ struct Input_para
     std::string exx_thr_type = "density"; ///< threshold type for exx outer loop
     double exx_ene_thr = 1e-5;            ///< threshold when exx_thr_type = energy
     double ecutexx = 0.0;                 ///< energy cutoff for exx calculation, Ry
-    int exx_batch_fft_size = 1;          ///< batch size for batched EXX FFT; values <= 1 disable batching
+    int exx_batch_fft_size = 8;          ///< batch size for GPU batched EXX FFT; values <= 1 disable batching
     bool exx_debug_allow_legacy_gpu_paths = false; ///< allow legacy scalar GPU PW EXX paths for debugging only
 
     // ====   #Parameters (23.XC external parameterization) ========
