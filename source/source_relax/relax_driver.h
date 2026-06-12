@@ -7,7 +7,14 @@
 #include "relax_nsync.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/matrix.h"
+#include <vector>
 
+/**
+ * @brief Driver class for geometry relaxation calculations.
+ *
+ * This class manages the main relaxation loop, including energy solving,
+ * force/stress calculation, and structure optimization steps.
+ */
 class Relax_Driver
 {
 
@@ -15,23 +22,100 @@ class Relax_Driver
     Relax_Driver(){};
     ~Relax_Driver(){};
 
-    void relax_driver(ModuleESolver::ESolver* p_esolver, 
-            UnitCell& ucell, 
+    /**
+     * @brief Main driver function for relaxation calculations.
+     *
+     * This function executes the main iteration loop for relaxation,
+     * calling energy solver and structure optimization steps until
+     * convergence or maximum steps reached.
+     *
+     * @param p_esolver Pointer to the energy solver.
+     * @param ucell Reference to the unit cell to be relaxed.
+     * @param inp Input parameters for the calculation.
+     */
+    void relax_driver(ModuleESolver::ESolver* p_esolver,
+            UnitCell& ucell,
             const Input_para& inp);
 
   private:
-    int force_step = 1;
-    int stress_step = 1;
-
+    /// New relaxation optimizer (Relax class)
     Relax rl;
+    /// Old relaxation optimizer (IonCellOptimizer class)
     IonCellOptimizer rl_old;
 
+    /**
+     * @brief Initialize the relaxation optimizer.
+     *
+     * @param nat Number of atoms in the unit cell.
+     * @param inp Input parameters for the calculation.
+     */
     void init_relax(const int nat, const Input_para& inp);
-    void iter_info(const int istep, const Input_para& inp);
-    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
-    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, const double etot);
+
+    /**
+     * @brief Print iteration information to screen.
+     *
+     * @param steps Vector containing step counters: steps[0]=istep, steps[1]=force_step, steps[2]=stress_step.
+     * @param inp Input parameters for the calculation.
+     */
+    void iter_info(const std::vector<int>& steps, const Input_para& inp);
+
+    /**
+     * @brief Perform energy solving for the current step.
+     *
+     * @param istep Current iteration step.
+     * @param p_esolver Pointer to the energy solver.
+     * @param ucell Reference to the unit cell.
+     * @param force Output matrix for calculated forces.
+     * @param stress Output matrix for calculated stress.
+     * @param etot Output total energy.
+     */
+    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
+            ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
+
+    /**
+     * @brief Perform one relaxation step.
+     *
+     * @param steps Vector containing step counters (modified in place): steps[0]=istep, steps[1]=force_step, steps[2]=stress_step.
+     * @param p_esolver Pointer to the energy solver.
+     * @param ucell Reference to the unit cell.
+     * @param inp Input parameters for the calculation.
+     * @param force Matrix of calculated forces.
+     * @param stress Matrix of calculated stress.
+     * @param etot Total energy.
+     * @return True if relaxation converged, false otherwise.
+     */
+    bool relax_step(std::vector<int>& steps, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
+            const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress,
+            const double etot);
+
+    /**
+     * @brief Output structure files after relaxation step.
+     *
+     * @param istep Current iteration step.
+     * @param ucell Reference to the unit cell.
+     * @param inp Input parameters for the calculation.
+     */
     void stru_out(const int istep, UnitCell& ucell, const Input_para& inp);
-    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+
+    /**
+     * @brief Output JSON format results.
+     *
+     * @param p_esolver Pointer to the energy solver.
+     * @param ucell Reference to the unit cell.
+     * @param inp Input parameters for the calculation.
+     * @param force Matrix of calculated forces.
+     * @param stress Matrix of calculated stress.
+     */
+    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp,
+            const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+
+    /**
+     * @brief Output final results after relaxation.
+     *
+     * @param istep Final iteration step.
+     * @param ucell Reference to the unit cell.
+     * @param inp Input parameters for the calculation.
+     */
     void final_out(const int istep, UnitCell& ucell, const Input_para& inp);
 };
 
