@@ -23,7 +23,7 @@ class Lattice_Change_Methods
 
     bool get_converged(void) const
     {
-        return Lattice_Change_Basic::converged;
+        return converged_;
     }
 
     double get_ediff(void) const
@@ -38,5 +38,6 @@ class Lattice_Change_Methods
 
   private:
     Lattice_Change_CG lccg;
+    bool converged_ = false;
 };
 #endif

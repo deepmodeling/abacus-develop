@@ -177,13 +177,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     std::remove("log");
 }
 
-// Test the get_converged() function
-TEST_F(IonsMoveMethodsTest, GetConverged)
-{
-    Ions_Move_Basic::converged = true;
 
-    EXPECT_EQ(imm.get_converged(), true);
-}
 
 // Test the get_ediff() function
 TEST_F(IonsMoveMethodsTest, GetEdiff)

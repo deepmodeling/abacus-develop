@@ -27,8 +27,9 @@ class Ions_Move_Methods
 
     bool get_converged() const
     {
-        return Ions_Move_Basic::converged;
+        return converged_;
     }
+
     double get_ediff() const
     {
         return Ions_Move_Basic::ediff;
@@ -52,5 +53,6 @@ class Ions_Move_Methods
     Ions_Move_SD sd;
     Ions_Move_BFGS2 bfgs_trad;
     Ions_Move_LBFGS lbfgs;
+    bool converged_ = false;
 };
 #endif

@@ -37,7 +37,7 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
-void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, std::ofstream& ofs)
+bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
@@ -58,11 +58,12 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     Ions_Move_Basic::setup_etot(energy_in, false, istep);
     // use gradient and etot and etot_old to check
     // if the result is converged.
-    Ions_Move_Basic::check_converged(ucell, this->grad.data(), ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), ofs);
 
-    if (Ions_Move_Basic::converged)
+    if (converged)
     {
-        Ions_Move_Basic::terminate(ucell, istep, ofs);
+        Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+        return true;
     }
     else
     {
@@ -86,8 +87,8 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         this->save_bfgs();
 
         Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
+        return false;
     }
-    return;
 }
 
 void Ions_Move_BFGS::restart_bfgs(const double& lat0, std::ofstream& ofs)

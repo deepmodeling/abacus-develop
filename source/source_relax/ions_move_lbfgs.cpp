@@ -25,7 +25,7 @@ void Ions_Move_LBFGS::allocate(const int _size) // initialize H0、H、pos0、fo
     //l_search.init_line_search();
 }
 
-void Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot, std::ofstream& ofs_running)
+bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot, std::ofstream& ofs_running)
 {
     get_pos(ucell,pos);  
     get_pos_taud(ucell,pos_taud);
@@ -62,9 +62,10 @@ void Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell
     this->determine_step(steplength,dpos,maxstep);
     this->update_pos(ucell);
     this->calculate_largest_grad(_force,ucell);
-    this->is_restrain();  
+    bool converged = this->is_restrain();  
     // mohan add 2025-06-22
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
+    return converged;
 }
 
 void Ions_Move_LBFGS::get_pos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
@@ -250,9 +251,9 @@ void Ions_Move_LBFGS::update_pos(UnitCell& ucell)
     unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
 }
 
-void Ions_Move_LBFGS::is_restrain()
+bool Ions_Move_LBFGS::is_restrain()
 {
-    Ions_Move_Basic::converged = Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A<PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
 }
 
 void Ions_Move_LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& ucell)

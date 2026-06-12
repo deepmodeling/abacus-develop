@@ -20,7 +20,6 @@ namespace Ions_Move_Basic
 {
 // Shared state variables (referenced from Relax_Data for unified data sharing)
 static int& dim = Relax_Data::dim;              ///< Dimension of free variables (3 * number of atoms)
-static bool& converged = Relax_Data::converged; ///< Convergence flag
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
 static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
 static double& etot = Relax_Data::etot;         ///< Total energy of current step
@@ -61,16 +60,18 @@ void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
  * @param ucell Unit cell containing lattice information
  * @param grad Gradient array (dimension: dim)
  * @param ofs Output stream for logging
+ * @return true if converged, false otherwise
  */
-void check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs);
+bool check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs);
 
 /**
  * @brief Terminate geometry optimization and output results.
+ * @param converged Convergence flag
  * @param ucell Unit cell to output
  * @param istep Current ionic step index
  * @param ofs Output stream for logging
  */
-void terminate(const UnitCell &ucell, const int istep, std::ofstream& ofs);
+void terminate(const bool converged, const UnitCell &ucell, const int istep, std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.

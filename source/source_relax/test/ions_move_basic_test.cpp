@@ -113,7 +113,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -133,7 +133,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
+    EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
 
@@ -152,7 +152,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -172,7 +172,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 2);
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
+    EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
 
@@ -191,7 +191,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -211,7 +211,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
+    EXPECT_EQ(converged, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
 
@@ -219,13 +219,13 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 TEST_F(IonsMoveBasicTest, TerminateConverged)
 {
     // Initialize data
-    Ions_Move_Basic::converged = true;
+    const bool converged = true;
     const int istep = 2;
     Ions_Move_Basic::update_iter = 5;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_converged.log");
-    Ions_Move_Basic::terminate(ucell, istep, ofs);
+    Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -244,12 +244,12 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
 TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 {
     // Initialize data
-    Ions_Move_Basic::converged = false;
+    const bool converged = false;
     const int istep = 10;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_not_converged.log");
-    Ions_Move_Basic::terminate(ucell, istep, ofs);
+    Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
     ofs.close();
 
     // Check the results

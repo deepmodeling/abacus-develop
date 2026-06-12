@@ -238,7 +238,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     stress(2, 2) = 9.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -248,7 +248,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 1323947.0517790401, 1e-12);
-    EXPECT_FALSE(Lattice_Change_Basic::converged);
+    EXPECT_FALSE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case1.log");
@@ -275,7 +275,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -285,7 +285,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_DOUBLE_EQ(Lattice_Change_Basic::largest_grad, 0.0);
-    EXPECT_TRUE(Lattice_Change_Basic::converged);
+    EXPECT_TRUE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case2.log");
@@ -312,7 +312,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -322,7 +322,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 0.14710522797544887, 1e-12);
-    EXPECT_TRUE(Lattice_Change_Basic::converged);
+    EXPECT_TRUE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case3.log");
@@ -349,7 +349,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     grad[8] = 1.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -359,7 +359,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 147105.22797544891, 1e-12);
-    EXPECT_FALSE(Lattice_Change_Basic::converged);
+    EXPECT_FALSE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case4.log");
@@ -386,7 +386,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     grad[8] = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -396,7 +396,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_DOUBLE_EQ(Lattice_Change_Basic::largest_grad, 0.0);
-    EXPECT_TRUE(Lattice_Change_Basic::converged);
+    EXPECT_TRUE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case5.log");
@@ -423,7 +423,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     grad[8] = 0.0;
 
     // Call the function under test
-    Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
     ofs.close();
 
     // Check the results
@@ -433,7 +433,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 0.14710522797544887, 1e-12);
-    EXPECT_TRUE(Lattice_Change_Basic::converged);
+    EXPECT_TRUE(converged);
 
     ifs.close();
     std::remove("test_check_converged_case6.log");
@@ -441,7 +441,6 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 
 TEST_F(LatticeChangeBasicTest, TerminateConverged)
 {
-    Lattice_Change_Basic::converged = true;
     Lattice_Change_Basic::stress_step = 5;
     Lattice_Change_Basic::update_iter = 10;
 
@@ -449,7 +448,7 @@ TEST_F(LatticeChangeBasicTest, TerminateConverged)
                                   "                  update iteration = 10\n";
 
     std::ofstream ofs("test_terminate_converged.log");
-    Lattice_Change_Basic::terminate(ofs);
+    Lattice_Change_Basic::terminate(true, ofs);
     ofs.close();
 
     std::ifstream ifs("test_terminate_converged.log");
@@ -462,12 +461,10 @@ TEST_F(LatticeChangeBasicTest, TerminateConverged)
 
 TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
 {
-    Lattice_Change_Basic::converged = false;
-
     std::string expected_output = " the maximum number of steps has been reached.\n end of lattice optimization.\n";
 
     std::ofstream ofs("test_terminate_not_converged.log");
-    Lattice_Change_Basic::terminate(ofs);
+    Lattice_Change_Basic::terminate(false, ofs);
     ofs.close();
 
     std::ifstream ifs("test_terminate_not_converged.log");

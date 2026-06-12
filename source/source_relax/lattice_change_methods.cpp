@@ -28,7 +28,7 @@ void Lattice_Change_Methods::cal_lattice_change(const int &istep,
     Lattice_Change_Basic::istep = istep;
     Lattice_Change_Basic::stress_step = stress_step;
 
-    lccg.start(ucell, stress, etot, ofs);
+    converged_ = lccg.start(ucell, stress, etot, ofs);
 
     return;
 }

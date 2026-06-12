@@ -20,7 +20,7 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, std::ofstream& ofs)
+bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -61,10 +61,11 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
-    if (Ions_Move_Basic::converged)
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
+    if (converged)
     {
-        Ions_Move_Basic::terminate(ucell, istep, ofs);
+        Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+        return true;
     }
     else
     {
@@ -75,9 +76,8 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
         move_atoms(ucell, move.data(), pos_saved.data(), ofs);
         Ions_Move_Basic::update_iter++;
+        return false;
     }
-
-    return;
 }
 
 void Ions_Move_SD::cal_tradius_sd(const int istep) const

@@ -111,7 +111,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos, std
     return;
 }
 
-void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs)
+bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
@@ -158,7 +158,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
     {
         ofs << " largest force is 0, no movement is possible." << std::endl;
         ofs << " it may converged, otherwise no movement of atom is allowed." << std::endl;
-        Ions_Move_Basic::converged = true;
+        return true;
     }
     // mohan update 2011-04-21
     else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr )
@@ -166,8 +166,8 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
         ofs << "\n Ion relaxation is converged!" << std::endl;
         ofs << "\n Energy difference (Ry) = " << etot_diff << std::endl;
 
-        Ions_Move_Basic::converged = true;
         ++Ions_Move_Basic::update_iter;
+        return true;
     }
     else
     {
@@ -175,16 +175,14 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
                              << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << ")" << std::endl;
         // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
         //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr  << std::endl;
-        Ions_Move_Basic::converged = false;
+        return false;
     }
-
-    return;
 }
 
-void Ions_Move_Basic::terminate(const UnitCell &ucell, const int istep, std::ofstream& ofs)
+void Ions_Move_Basic::terminate(const bool converged, const UnitCell &ucell, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
-    if (Ions_Move_Basic::converged)
+    if (converged)
     {
         ofs << " end of geometry optimization" << std::endl;
         ModuleBase::GlobalFunc::OUT(ofs, "istep", istep);

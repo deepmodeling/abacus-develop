@@ -18,7 +18,6 @@ namespace Lattice_Change_Basic
 {
 // Shared state variables (referenced from Relax_Data for unified data sharing)
 static int& dim = Relax_Data::dim_lattice;      ///< Dimension of free variables (9 for full lattice)
-static bool& converged = Relax_Data::converged; ///< Convergence flag
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
 static int& istep = Relax_Data::istep;          ///< Current ionic step index
 static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
@@ -54,14 +53,16 @@ void change_lattice(UnitCell &ucell, double *move, double *lat);
  * @param stress Stress tensor (3x3 matrix)
  * @param grad Gradient array (9 elements)
  * @param ofs Output stream for logging
+ * @return true if converged, false otherwise
  */
-void check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs);
+bool check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs);
 
 /**
  * @brief Terminate lattice optimization and output results.
+ * @param converged Convergence flag
  * @param ofs Output stream for logging
  */
-void terminate(std::ofstream& ofs);
+void terminate(const bool converged, std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.

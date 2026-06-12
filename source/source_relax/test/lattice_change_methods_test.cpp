@@ -25,8 +25,9 @@ void Lattice_Change_CG::allocate(void)
 {
 }
 
-void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs)
+bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs)
 {
+    return false;
 }
 
 // Define a fixture for the tests
@@ -77,10 +78,8 @@ TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
 // Test the get_converged function
 TEST_F(LatticeChangeMethodsTest, GetConverged)
 {
-    lcm.get_converged();
-
-    // Assert that the static variable converged is set to false
-    EXPECT_EQ(Lattice_Change_Basic::converged, false);
+    // Assert that the converged state is initially false
+    EXPECT_FALSE(lcm.get_converged());
 }
 
 // Test the get_ediff function

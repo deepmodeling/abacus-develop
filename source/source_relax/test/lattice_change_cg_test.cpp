@@ -19,7 +19,6 @@ class LatticeChangeCGTest : public ::testing::Test
         Lattice_Change_Basic::dim = 9;
         Lattice_Change_Basic::stress_step = 1;
         Lattice_Change_Basic::update_iter = 5;
-        Lattice_Change_Basic::converged = true;
         lc_cg.allocate();
     }
 

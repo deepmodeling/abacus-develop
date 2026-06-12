@@ -23,7 +23,7 @@ void Ions_Move_CG::allocate(const int dim)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, std::ofstream& ofs)
+bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -74,14 +74,15 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
         Ions_Move_Basic::setup_etot(etot_in, 0, istep);
 
+        bool converged = false;
         if (flag == 0)
         {
-            Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
+            converged = Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
         }
-        if (Ions_Move_Basic::converged)
+        if (converged)
         {
-            Ions_Move_Basic::terminate(ucell, istep, ofs);
-            break;
+            Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+            return true;
         }
 
         if (sd)
@@ -117,7 +118,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             }
 
             Ions_Move_Basic::relax_bfgs_init = xb;
-            break;
+            return false;
         }
 
         if (trial)
@@ -151,7 +152,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             xc = xb + xc;
             xpt = xc;
             Ions_Move_Basic::relax_bfgs_init = xc;
-            break;
+            return false;
         }
 
         double xtemp = 0.0;
@@ -184,8 +185,6 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
         Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
         Ions_Move_Basic::relax_bfgs_init = xc;
-        break;
+        return false;
     }
-
-    return;
 }

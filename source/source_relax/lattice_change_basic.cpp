@@ -231,7 +231,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs)
+bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -274,7 +274,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     if (Lattice_Change_Basic::largest_grad == 0.0)
     {
         ofs << " Largest stress is 0, movement is impossible." << std::endl;
-        Lattice_Change_Basic::converged = true;
+        return true;
     }
     else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
     {
@@ -283,14 +283,14 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
             ofs << "\n Geometry relaxation is converged!" << std::endl;
             ofs << "\n Largest stress is " << largest_grad  
              << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
+            return true;
         }
         else
         {
             ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
                                  << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = false;
+            return false;
         }
     }
     else
@@ -301,24 +301,22 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
             ofs << "\n Geometry relaxation is converged!" << std::endl;
             ofs << "\n Largest stress is " << largest_grad  
              << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
+            return true;
         }
         else
         {
             ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
                                  << " kbar" << std::endl;
-            Lattice_Change_Basic::converged = false;
+            return false;
         }
     }
-
-    return;
 }
 
-void Lattice_Change_Basic::terminate(std::ofstream& ofs)
+void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
-    if (Lattice_Change_Basic::converged)
+    if (converged)
     {
         ofs << " end of lattice optimization" << std::endl;
         ModuleBase::GlobalFunc::OUT(ofs, "stress_step", Lattice_Change_Basic::stress_step);

@@ -92,7 +92,6 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = true;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -117,7 +116,6 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
@@ -127,7 +125,6 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
@@ -150,7 +147,6 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     std::remove("TestStartSd.log"); // mohan
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
@@ -163,7 +159,6 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -192,7 +187,6 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     std::remove("TestStartTrialGoto.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
@@ -205,7 +199,6 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -233,7 +226,6 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     std::remove("TestStartTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
@@ -246,7 +238,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -279,7 +270,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     std::remove("TestStartNoTrialGotoCase1.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
@@ -292,7 +282,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -324,7 +313,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     std::remove("TestStartNoTrialGotoCase2.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
@@ -337,7 +325,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
 {
     // setup data
     const int istep = 1;
-    Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
@@ -370,7 +357,6 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     std::remove("TestStartNoTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);

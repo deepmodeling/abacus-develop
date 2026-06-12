@@ -66,31 +66,32 @@ void Ions_Move_Methods::cal_movement(const int &istep,
         // move_ions
         // output tau
         // check all symmery
-        bfgs.start(ucell, f, etot, force_step, ofs);
+        converged_ = bfgs.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "sd")
     {
-        sd.start(ucell, f, etot, force_step, ofs);
+        converged_ = sd.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg")
     {
-        cg.start(ucell, f, etot, force_step, ofs);
+        converged_ = cg.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
     {
-        cg.start(ucell, f, etot, force_step, ofs); // added by pengfei 13-8-10
+        converged_ = cg.start(ucell, f, etot, force_step, ofs); // added by pengfei 13-8-10
     }
     else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
     {
-        bfgs_trad.relax_step(f,ucell, ofs);        
+        converged_ = bfgs_trad.relax_step(f,ucell, ofs);        
     }
     else if(Ions_Move_Basic::relax_method[0] == "lbfgs")
     {
-        lbfgs.relax_step(f,ucell,etot, ofs);        
+        converged_ = lbfgs.relax_step(f,ucell,etot, ofs);        
     }
     else
     {
         ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
+        converged_ = false;
     }
     return;
 }

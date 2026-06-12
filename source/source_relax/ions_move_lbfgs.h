@@ -33,7 +33,7 @@ public:
      * @param etot Current total energy
      * @param ofs_running Output stream for running log
      */
-    void relax_step(const ModuleBase::matrix _force,
+    bool relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
                     const double &etot,
                     std::ofstream& ofs_running);
@@ -76,10 +76,10 @@ private:
                       const double &etot);
 
     /**
-     * @brief Judge if the cell is restrain
-     * @param dpos Position displacements to constrain
+     * @brief Judge if the relaxation has converged
+     * @return true if converged, false otherwise
      */
-    void is_restrain();
+    bool is_restrain();
 
     /**
      * @brief Calculate maximum gradient component
