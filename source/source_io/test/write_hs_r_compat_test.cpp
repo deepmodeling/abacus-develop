@@ -20,6 +20,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace sparse_format
 {
@@ -101,6 +102,17 @@ std::string read_file(const std::string& filename)
     std::ostringstream oss;
     oss << ifs.rdbuf();
     return oss.str();
+}
+
+std::vector<int> read_binary_ints(const std::string& filename, const size_t count)
+{
+    std::ifstream ifs(filename.c_str(), std::ios::binary);
+    std::vector<int> values(count, 0);
+    for (size_t i = 0; i < count; ++i)
+    {
+        ifs.read(reinterpret_cast<char*>(&values[i]), sizeof(int));
+    }
+    return values;
 }
 
 int count_substr(const std::string& text, const std::string& pattern)
@@ -285,6 +297,32 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     EXPECT_THAT(output, testing::HasSubstr("Matrix Dimension of S(R): 2\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix number of S(R): 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("0 0 0 2\n"));
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
+{
+    const std::string filename = "write_hs_r_legacy_binary_s.csr";
+    std::remove(filename.c_str());
+
+    GlobalV::DRANK = 0;
+    PARAM.sys.global_out_dir = "./";
+    PARAM.sys.nlocal = 2;
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    all_R_coor.insert(r_vector);
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> sparse_matrix;
+    sparse_matrix[r_vector][0][1] = 0.5;
+    sparse_matrix[r_vector][1][1] = 1.5;
+
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, true, filename, pv, "S", 3, false);
+
+    const std::vector<int> header_and_r = read_binary_ints(filename, 7);
+    EXPECT_THAT(header_and_r, testing::ElementsAre(3, 2, 1, 0, 0, 0, 2));
 
     std::remove(filename.c_str());
 }

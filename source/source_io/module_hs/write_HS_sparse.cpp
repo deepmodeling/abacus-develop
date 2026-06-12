@@ -6,6 +6,7 @@
 #include "source_lcao/module_rt/td_info.h"
 #include "single_R_io.h"
 
+#include <algorithm>
 
 void ModuleIO::save_dH_sparse(const int& istep,
                               const Parallel_Orbitals& pv,
@@ -421,16 +422,17 @@ void ModuleIO::save_sparse(
     std::ofstream ofs;
     if (!reduce || GlobalV::DRANK == 0) {
         if (binary) {
-            int nlocal = PARAM.globalv.nlocal;
+            const int step = std::max(istep, 0);
+            const int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
                 ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
             } else {
                 ofs.open(sss.str().c_str(), std::ios::binary);
             }
-            ofs.write(reinterpret_cast<char*>(0), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
         } else {
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {

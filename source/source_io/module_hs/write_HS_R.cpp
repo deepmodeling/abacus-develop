@@ -8,34 +8,6 @@
 #include "source_lcao/spar_st.h"
 #include "write_HS_sparse.h"
 
-namespace {
-// Helper: Convert sparse map to HContainer
-template <typename T>
-hamilt::HContainer<T>* sparse_map_to_hcontainer(
-    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparse_map,
-    const Parallel_Orbitals& pv,
-    const int nbasis)
-{
-    hamilt::HContainer<T>* hc = new hamilt::HContainer<T>(&pv);
-    hc->set_zero();
-
-    for (const auto& r_entry : sparse_map)
-    {
-        const auto& R = r_entry.first;
-        for (const auto& row_entry : r_entry.second)
-        {
-            const size_t row = row_entry.first;
-            for (const auto& col_entry : row_entry.second)
-            {
-                hc->set_value(R.x, R.y, R.z, row, col_entry.first, col_entry.second);
-            }
-        }
-    }
-
-    return hc;
-}
-} // anonymous namespace
-
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.
 // If the absolute value of the matrix element is less than or equal to the
