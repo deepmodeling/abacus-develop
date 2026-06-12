@@ -516,6 +516,8 @@ void Input_Conv::Convert()
         {
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
+
+        GlobalC::exx_info.sync_from_global();
     }
 
     //----------------------------------------------------------

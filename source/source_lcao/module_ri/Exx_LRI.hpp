@@ -1,6 +1,5 @@
 //=======================
 // AUTHOR : Peize Lin
-#include "source_io/module_parameter/parameter.h"
 // DATE :   2022-08-17
 //=======================
 
@@ -10,6 +9,7 @@
 #include "Exx_LRI.h"
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
+#include "ExxLriDetail.h"
 #include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
 #include "source_lcao/module_ri/exx_abfs-io.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
@@ -18,6 +18,7 @@
 #include "source_lcao/module_ri/serialization_cereal.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <RI/distribute/Distribute_Equally.h>
 #include <RI/global/Map_Operator-3.h>
@@ -29,106 +30,6 @@
 #if defined(__GLIBC__)
 #include <malloc.h>
 #endif
-
-namespace ExxLriDetail
-{
-using CoulombParam
-    = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
-
-inline void trim_malloc_cache()
-{
-#if defined(__GLIBC__)
-	malloc_trim(0);
-#endif
-}
-
-inline double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
-{
-    return std::pow(0.75 * kv.get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
-}
-
-inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
-                                                    const UnitCell& ucell,
-                                                    const K_Vectors& kv,
-                                                    bool* synthesized_rcut = nullptr)
-{
-    CoulombParam center2_param = RI_Util::update_coulomb_param(coulomb_param, ucell, &kv);
-    const double fallback_rcut = default_spencer_rcut(ucell, kv);
-    bool used_fallback_rcut = false;
-
-    for (auto& param_list: center2_param)
-    {
-        if (param_list.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
-        {
-            continue;
-        }
-        for (auto& param: param_list.second)
-        {
-            auto rcut_it = param.find("Rcut");
-            if (rcut_it == param.end() || rcut_it->second.empty())
-            {
-                param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
-                used_fallback_rcut = true;
-            }
-        }
-    }
-
-    if (synthesized_rcut != nullptr)
-    {
-        *synthesized_rcut = used_fallback_rcut;
-    }
-    return center2_param;
-}
-}
-
-template<typename Tdata>
-void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
-						  const UnitCell &ucell,
-						  const K_Vectors &kv_in,
-						  const LCAO_Orbitals& orb)
-{
-	ModuleBase::TITLE("Exx_LRI","init");
-	ModuleBase::timer::start("Exx_LRI", "init");
-
-	this->mpi_comm = mpi_comm_in;
-	this->p_kv = &kv_in;
-	this->orb_cutoff_ = orb.cutoffs();
-
-	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
-
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
-	if(this->info.files_abfs.empty())
-		{ this->abfs = abfs_same_atom;}
-	else
-		{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
-	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
-
-	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
-
-	this->exx_objs.clear();
-	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-
-	this->MGT = std::make_shared<ORB_gaunt_table>();
-	for(const auto &settings_list : this->coulomb_settings)
-	{
-		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
-															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-															this->info.kmesh_times, this->MGT, settings_list.second.first );
-		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-		{
-			this->exx_objs[settings_list.first].evq.init(ucell, orb,
-														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
-		}
-	}
-
-	ModuleBase::timer::end("Exx_LRI", "init");
-}
 
 template<typename Tdata>
 void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
@@ -147,7 +48,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
-	this->abfs = abfs_in;
+	if(abfs_in.empty())
+	{
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
+			abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
+		if(this->info.files_abfs.empty())
+			{ this->abfs = abfs_same_atom;}
+		else
+			{ this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
+	}
+	else
+	{
+		this->abfs = abfs_in;
+	}
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
@@ -176,131 +89,73 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
-                                  const UnitCell& ucell,
-                                  const K_Vectors& kv_in,
-                                  const LCAO_Orbitals& orb)
+void Exx_LRI<Tdata>::init_spencer(
+	const MPI_Comm& mpi_comm_in,
+	const UnitCell& ucell,
+	const K_Vectors& kv_in,
+	const LCAO_Orbitals& orb,
+	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
 {
-    ModuleBase::TITLE("Exx_LRI", "init_spencer");
-    ModuleBase::timer::start("Exx_LRI", "init_spencer");
+	ModuleBase::TITLE("Exx_LRI", "init_spencer");
+	ModuleBase::timer::start("Exx_LRI", "init_spencer");
 
-    this->mpi_comm = mpi_comm_in;
-    this->p_kv = &kv_in;
-    this->orb_cutoff_ = orb.cutoffs();
+	this->mpi_comm = mpi_comm_in;
+	this->p_kv = &kv_in;
+	this->orb_cutoff_ = orb.cutoffs();
 
-    this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
+	this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
-        = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,
-                                                   orb,
-                                                   this->lcaos,
-                                                   this->info.kmesh_times,
-                                                   this->info.pca_threshold);
-    if (this->info.files_abfs.empty())
-    {
-        this->abfs = abfs_same_atom;
-    }
-    else
-    {
-        this->abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times);
-    }
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+	if (abfs_in.empty())
+	{
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
+			= Exx_Abfs::Construct_Orbs::abfs_same_atom(
+				ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold);
+		if (this->info.files_abfs.empty())
+			{ this->abfs = abfs_same_atom; }
+		else
+			{ this->abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times); }
+	}
+	else
+	{
+		this->abfs = abfs_in;
+	}
+	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
+	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
-    for (size_t T = 0; T != this->abfs.size(); ++T)
-    {
-        GlobalC::exx_info.info_ri.abfs_Lmax
-            = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
-    }
+	for (size_t T = 0; T != this->abfs.size(); ++T)
+	{
+		GlobalC::exx_info.info_ri.abfs_Lmax
+			= std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+	}
 
-    this->exx_objs.clear();
-    this->coulomb_settings.clear();
-    this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2]
-        = std::make_pair(true,
-                         ExxLriDetail::build_center2_cut_coulomb_param(
-                             this->info.coulomb_param, ucell, kv_in));
+	this->exx_objs.clear();
+	this->coulomb_settings.clear();
+	this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(
+			true, ExxLriDetail::build_center2_cut_coulomb_param(this->info.coulomb_param, ucell, kv_in));
 
-    this->MGT = std::make_shared<ORB_gaunt_table>();
-    const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
-    if (center2_settings == this->coulomb_settings.end())
-    {
-        throw std::invalid_argument("Exx_LRI::init_spencer failed to prepare Center2 settings.");
-    }
+	this->MGT = std::make_shared<ORB_gaunt_table>();
+	const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
+	if (center2_settings == this->coulomb_settings.end())
+		{ throw std::invalid_argument("Exx_LRI::init_spencer failed to prepare Center2 settings."); }
 
-    this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp_spencer(
-        this->abfs,
-        center2_settings->second.second,
-        this->info.ccp_rmesh_times);
-    this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_orbitals(
-        ucell,
-        orb,
-        this->lcaos,
-        this->abfs,
-        this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
-        this->info.kmesh_times,
-        this->MGT,
-        center2_settings->second.first);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp_spencer(
+		this->abfs,
+		center2_settings->second.second,
+		this->info.ccp_rmesh_times);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_orbitals(
+		ucell,
+		orb,
+		this->lcaos,
+		this->abfs,
+		this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
+		this->info.kmesh_times,
+		this->MGT,
+		center2_settings->second.first);
 
-    ModuleBase::timer::end("Exx_LRI", "init_spencer");
+	ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }
 
-template <typename Tdata>
-void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
-                                  const UnitCell& ucell,
-                                  const K_Vectors& kv_in,
-                                  const LCAO_Orbitals& orb,
-                                  const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
-{
-    ModuleBase::TITLE("Exx_LRI", "init_spencer");
-    ModuleBase::timer::start("Exx_LRI", "init_spencer");
-
-    this->mpi_comm = mpi_comm_in;
-    this->p_kv = &kv_in;
-    this->orb_cutoff_ = orb.cutoffs();
-
-    this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
-
-    this->abfs = abfs_in;
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
-
-    for (size_t T = 0; T != this->abfs.size(); ++T)
-    {
-        GlobalC::exx_info.info_ri.abfs_Lmax
-            = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
-    }
-
-    this->exx_objs.clear();
-    this->coulomb_settings.clear();
-    this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2]
-        = std::make_pair(true,
-                         ExxLriDetail::build_center2_cut_coulomb_param(
-                             this->info.coulomb_param, ucell, kv_in));
-
-    this->MGT = std::make_shared<ORB_gaunt_table>();
-    const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
-    if (center2_settings == this->coulomb_settings.end())
-    {
-        throw std::invalid_argument("Exx_LRI::init_spencer failed to prepare Center2 settings.");
-    }
-    this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp_spencer(
-        this->abfs,
-        center2_settings->second.second,
-        this->info.ccp_rmesh_times);
-    this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_orbitals(
-        ucell,
-        orb,
-        this->lcaos,
-        this->abfs,
-        this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
-        this->info.kmesh_times,
-        this->MGT,
-        center2_settings->second.first);
-
-    ModuleBase::timer::end("Exx_LRI", "init_spencer");
-}
 
 template<typename Tdata>
 void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
@@ -445,10 +300,11 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	#if 0
 	template <typename Tdata>
-	void Exx_LRI<Tdata>::cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
-	                                    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-	                                    const UnitCell& ucell,
-	                                    const bool write_cv)
+	void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+		const UnitCell& ucell,
+		const bool write_cv)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_cut_coulomb_cs");
 	ModuleBase::timer::start("Exx_LRI", "cal_cut_coulomb_cs");
@@ -468,9 +324,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-    const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
-    const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
+	const std::array<Tcell, Ndim> period_Vs
+		= LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
@@ -484,55 +340,55 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell,Vs_temp);
 
 		// ======rotate ABFs begin======
-        int flag = 0;
-        for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
-        {
-            const TA& I = IJRc.first;
-            const auto& JRc = IJRc.second;
-            for (const auto& JRc_tensor: JRc)
-            {
-                const TA& J = JRc_tensor.first;
-                const auto Rc = JRc_tensor.second;
-                for (const auto& Rc_tensor: Rc)
-                {
-                    const auto& R = Rc_tensor.first;
-                    flag += 1;
-                }
-            }
-        }
-        std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
-        if (this->info.coul_moment == true)
-        {
-            double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
-            // To cal Cs, we still cal all Vs(R) in r space
-            // moment_abfs->cal_VR(ucell,
-            //                     this->abfs,
-            //                     list_As_Vs,
-            //                     orb_cutoff_,
-            //                     hf_Rcut,
-            //                     this->exx_objs[settings_list.first].cv,
-            //                     Vs_cut);
-            delete moment_abfs;
-            moment_abfs = nullptr;
-            malloc_trim(0);
-        }
+		int flag = 0;
+		for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
+		{
+			const TA& I = IJRc.first;
+			const auto& JRc = IJRc.second;
+			for (const auto& JRc_tensor: JRc)
+			{
+				const TA& J = JRc_tensor.first;
+				const auto Rc = JRc_tensor.second;
+				for (const auto& Rc_tensor: Rc)
+				{
+					const auto& R = Rc_tensor.first;
+					flag += 1;
+				}
+			}
+		}
+		std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
+		if (this->info.coul_moment == true)
+		{
+			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+			// To cal Cs, we still cal all Vs(R) in r space
+			// moment_abfs->cal_VR(ucell,
+			//					 this->abfs,
+			//					 list_As_Vs,
+			//					 orb_cutoff_,
+			//					 hf_Rcut,
+			//					 this->exx_objs[settings_list.first].cv,
+			//					 Vs_cut);
+			delete moment_abfs;
+			moment_abfs = nullptr;
+			malloc_trim(0);
+		}
 
-        flag = 0;
-        for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
-        {
-            const auto& JRc = IJRc.second;
-            for (const auto& JRc_tensor: JRc)
-            {
-                const auto Rc = JRc_tensor.second;
-                for (const auto& Rc_tensor: Rc)
-                {
-                    flag += 1;
-                }
-            }
-        }
-        std::cout << "Coulomb: number of all atom-pairs is " << flag << ". " << std::endl;
-        // ======rotate ABFs end======
-        
+		flag = 0;
+		for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
+		{
+			const auto& JRc = IJRc.second;
+			for (const auto& JRc_tensor: JRc)
+			{
+				const auto Rc = JRc_tensor.second;
+				for (const auto& Rc_tensor: Rc)
+				{
+					flag += 1;
+				}
+			}
+		}
+		std::cout << "Coulomb: number of all atom-pairs is " << flag << ". " << std::endl;
+		// ======rotate ABFs end======
+		
 		Vs_cut = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_cut, Vs_temp);
 
 		if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
@@ -546,11 +402,11 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 	}
 
-    if (write_cv && GlobalV::MY_RANK == 0)
-    {
-        LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
-    }
-    this->exx_lri.set_Vs(std::move(Vs_cut), this->info.V_threshold);
+	if (write_cv && GlobalV::MY_RANK == 0)
+	{
+		LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
+	}
+	this->exx_lri.set_Vs(std::move(Vs_cut), this->info.V_threshold);
 
 	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
@@ -609,158 +465,162 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
-                                      std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-                                      const UnitCell& ucell,
-                                      const bool write_cv)
+void Exx_LRI<Tdata>::cal_ewald_coulomb(
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+	const UnitCell& ucell,
+	const bool write_cv)
 {
-    ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
-    ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
+	ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
+	ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
 
-    std::vector<TA> atoms(ucell.nat);
-    for (int iat = 0; iat < ucell.nat; ++iat)
-        atoms[iat] = iat;
-    std::map<TA, TatomR> atoms_pos;
-    for (int iat = 0; iat < ucell.nat; ++iat)
-        atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
-    const std::array<TatomR, Ndim> latvec = {RI_Util::Vector3_to_array3(ucell.a1),
-                                             RI_Util::Vector3_to_array3(ucell.a2),
-                                             RI_Util::Vector3_to_array3(ucell.a3)};
-    const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
+	std::vector<TA> atoms(ucell.nat);
+	for (int iat = 0; iat < ucell.nat; ++iat)
+		atoms[iat] = iat;
+	std::map<TA, TatomR> atoms_pos;
+	for (int iat = 0; iat < ucell.nat; ++iat)
+		atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
+	const std::array<TatomR, Ndim> latvec = {
+		RI_Util::Vector3_to_array3(ucell.a1),
+		RI_Util::Vector3_to_array3(ucell.a2),
+		RI_Util::Vector3_to_array3(ucell.a3)};
+	const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
-    this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
+	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
-    // std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-    const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
-    const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
+	const std::array<Tcell, Ndim> period_Vs
+		= LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
+		= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
-    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
-    for (const auto& settings_list: this->coulomb_settings)
-    {
-        if (!settings_list.second.first)
-            continue;
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp
-            = this->exx_objs[settings_list.first].cv.cal_Vs(ucell,
-                                                            list_As_Vs.first,
-                                                            list_As_Vs.second[0],
-                                                            {{"writable_Vws", true}});
-        this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
+	for (const auto& settings_list: this->coulomb_settings)
+	{
+		if (!settings_list.second.first)
+			continue;
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp
+			= this->exx_objs[settings_list.first].cv.cal_Vs(
+				ucell,
+				list_As_Vs.first,
+				list_As_Vs.second[0],
+				{{"writable_Vws", true}});
+		this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
 
-        // ======rotate ABFs begin======
-        int flag = 0;
-        for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
-        {
-            const TA& I = IJRc.first;
-            const auto& JRc = IJRc.second;
-            for (const auto& JRc_tensor: JRc)
-            {
-                const TA& J = JRc_tensor.first;
-                const auto Rc = JRc_tensor.second;
-                for (const auto& Rc_tensor: Rc)
-                {
-                    const auto& R = Rc_tensor.first;
-                    flag += 1;
-                }
-            }
-        }
-        std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
-        if (this->info.coul_moment == true)
-        {
-            double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
-            // To cal Cs, we still cal all Vs(R) in r space
-            // moment_abfs->cal_VR(ucell,
-            //                     this->abfs,
-            //                     list_As_Vs,
-            //                     orb_cutoff_,
-            //                     hf_Rcut,
-            //                     this->exx_objs[settings_list.first].cv,
-            //                     Vs_full);
-            delete moment_abfs;
-            moment_abfs = nullptr;
-            malloc_trim(0);
-        }
+		// ======rotate ABFs begin======
+		int flag = 0;
+		for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
+		{
+			const TA& I = IJRc.first;
+			const auto& JRc = IJRc.second;
+			for (const auto& JRc_tensor: JRc)
+			{
+				const TA& J = JRc_tensor.first;
+				const auto Rc = JRc_tensor.second;
+				for (const auto& Rc_tensor: Rc)
+				{
+					const auto& R = Rc_tensor.first;
+					flag += 1;
+				}
+			}
+		}
+		std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
+		if (this->info.coul_moment == true)
+		{
+			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+			// To cal Cs, we still cal all Vs(R) in r space
+			// moment_abfs->cal_VR(ucell,
+			//					 this->abfs,
+			//					 list_As_Vs,
+			//					 orb_cutoff_,
+			//					 hf_Rcut,
+			//					 this->exx_objs[settings_list.first].cv,
+			//					 Vs_full);
+			delete moment_abfs;
+			moment_abfs = nullptr;
+			malloc_trim(0);
+		}
 
-        flag = 0;
-        for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
-        {
-            const auto& JRc = IJRc.second;
-            for (const auto& JRc_tensor: JRc)
-            {
-                const auto Rc = JRc_tensor.second;
-                for (const auto& Rc_tensor: Rc)
-                {
-                    flag += 1;
-                }
-            }
-        }
-        std::cout << "Coulomb: number of all atom-pairs is " << flag << ". " << std::endl;
-        // ======rotate ABFs end======
+		flag = 0;
+		for (const auto& IJRc: this->exx_objs[settings_list.first].cv.Vws)
+		{
+			const auto& JRc = IJRc.second;
+			for (const auto& JRc_tensor: JRc)
+			{
+				const auto Rc = JRc_tensor.second;
+				for (const auto& Rc_tensor: Rc)
+				{
+					flag += 1;
+				}
+			}
+		}
+		std::cout << "Coulomb: number of all atom-pairs is " << flag << ". " << std::endl;
+		// ======rotate ABFs end======
 
-        if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-        {
-            this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
-            const auto& coulomb_param = settings_list.second.second;
-            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
-            for (const auto& param_list: coulomb_param)
-            {
-                std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_temp;
-                switch (param_list.first)
-                {
-                case Conv_Coulomb_Pot_K::Coulomb_Type::Fock: {
-                    double chi
-                        = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
-                    Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
-                    break;
-                }
-                default: {
-                    throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
-                }
-                }
-                // Vs_temp cannot be covered here
-                Vs_ewald = Vs_ewald.empty() ? Vs_ewald_temp : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
-            }
-            Vs_temp = Vs_ewald;
-        }
+		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
+			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
+			const auto& coulomb_param = settings_list.second.second;
+			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
+			for (const auto& param_list: coulomb_param)
+			{
+				std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_temp;
+				switch (param_list.first)
+				{
+				case Conv_Coulomb_Pot_K::Coulomb_Type::Fock: {
+					double chi
+						= this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
+					Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+					break;
+				}
+				default: {
+					throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
+				}
+				}
+				// Vs_temp cannot be covered here
+				Vs_ewald = Vs_ewald.empty() ? Vs_ewald_temp : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
+			}
+			Vs_temp = Vs_ewald;
+		}
 
-        Vs_full = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
-    }
+		Vs_full = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
+	}
 
-    if (write_cv && GlobalV::MY_RANK == 0)
-    {
-        LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
-    }
-    // this->exx_lri.set_Vs(std::move(Vs_full), this->info.V_threshold);
+	if (write_cv && GlobalV::MY_RANK == 0)
+	{
+		LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
+	}
+	// this->exx_lri.set_Vs(std::move(Vs_full), this->info.V_threshold);
 
-    // const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell,orb_cutoff_);
-    // const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
-    // 	list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
-    // std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
-    // 		  std::map<TA,std::map<TAC,std::array<RI::Tensor<Tdata>,3>>>>
-    // 	Cs_dCs = this->exx_objs[coulomb_method].cv.cal_Cs_dCs(ucell,
-    // 		list_As_Cs.first, list_As_Cs.second[0],
-    // 		{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
-    // 		 {"writable_Cws",true},
-    // 		 {"writable_dCws",true},
-    // 		 {"writable_Vws",false},
-    // 		 {"writable_dVws",false}});
-    // Cs = std::get<0>(Cs_dCs);
-    // this->exx_objs[coulomb_method].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs);
-    // if(write_cv && GlobalV::MY_RANK==0)
-    // {
-    // 	LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
-    // }
-    // this->exx_lri.set_Cs(Cs, this->info.C_threshold);
-    ModuleBase::timer::end("Exx_LRI", "cal_ewald_coulomb");
+	// const std::array<Tcell,Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell,orb_cutoff_);
+	// const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
+	// 	list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
+	// std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
+	// 		  std::map<TA,std::map<TAC,std::array<RI::Tensor<Tdata>,3>>>>
+	// 	Cs_dCs = this->exx_objs[coulomb_method].cv.cal_Cs_dCs(ucell,
+	// 		list_As_Cs.first, list_As_Cs.second[0],
+	// 		{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
+	// 		 {"writable_Cws",true},
+	// 		 {"writable_dCws",true},
+	// 		 {"writable_Vws",false},
+	// 		 {"writable_dVws",false}});
+	// Cs = std::get<0>(Cs_dCs);
+	// this->exx_objs[coulomb_method].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs);
+	// if(write_cv && GlobalV::MY_RANK==0)
+	// {
+	// 	LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
+	// }
+	// this->exx_lri.set_Cs(Cs, this->info.C_threshold);
+	ModuleBase::timer::end("Exx_LRI", "cal_ewald_coulomb");
 }
 	#endif
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
-                                        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-                                        const UnitCell& ucell,
-                                        const bool write_cv)
+void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut,
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+	const UnitCell& ucell,
+	const bool write_cv)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_cut_coulomb_cs");
 	ModuleBase::timer::start("Exx_LRI", "cal_cut_coulomb_cs");
@@ -775,9 +635,10 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Td
 	{
 		atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
 	}
-	const std::array<TatomR, Ndim> latvec = {RI_Util::Vector3_to_array3(ucell.a1),
-	                                         RI_Util::Vector3_to_array3(ucell.a2),
-	                                         RI_Util::Vector3_to_array3(ucell.a3)};
+	const std::array<TatomR, Ndim> latvec = {
+		RI_Util::Vector3_to_array3(ucell.a1),
+		RI_Util::Vector3_to_array3(ucell.a2),
+		RI_Util::Vector3_to_array3(ucell.a3)};
 	const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
@@ -810,7 +671,7 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Td
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Cs
 		= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 	std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
-	          std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
+			  std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
 		Cs_dCs = center2_obj_it->second.cv.cal_Cs_dCs(
 			ucell,
 			list_As_Cs.first,
@@ -832,10 +693,11 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(std::map<TA, std::map<TAC, RI::Tensor<Td
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
-                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-                                       const UnitCell& ucell,
-                                       const bool write_cv)
+void Exx_LRI<Tdata>::cal_ewald_coulomb(
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
+	std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+	const UnitCell& ucell,
+	const bool write_cv)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
 	ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
@@ -850,9 +712,10 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 	{
 		atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
 	}
-	const std::array<TatomR, Ndim> latvec = {RI_Util::Vector3_to_array3(ucell.a1),
-	                                         RI_Util::Vector3_to_array3(ucell.a2),
-	                                         RI_Util::Vector3_to_array3(ucell.a3)};
+	const std::array<TatomR, Ndim> latvec = {
+		RI_Util::Vector3_to_array3(ucell.a1),
+		RI_Util::Vector3_to_array3(ucell.a2),
+		RI_Util::Vector3_to_array3(ucell.a3)};
 	const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);

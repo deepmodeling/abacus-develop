@@ -19,7 +19,7 @@ CONFIG_FILE_LOADED=false
 tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl aocl openblas"
-lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep"
+lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep dftd4"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 
 # Configuration file paths for loading in advance
@@ -371,6 +371,7 @@ config_set_defaults() {
     CONFIG_CACHE["with_libri"]="__INSTALL__"
     CONFIG_CACHE["with_libcomm"]="__INSTALL__"
     CONFIG_CACHE["with_nep"]="__DONTUSE__"
+    CONFIG_CACHE["with_dftd4"]="__DONTUSE__"
     
     # Default enable options (following original script logic)
     CONFIG_CACHE["dry_run"]="__FALSE__"

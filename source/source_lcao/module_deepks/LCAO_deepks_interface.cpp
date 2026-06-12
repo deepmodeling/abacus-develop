@@ -100,6 +100,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
     const int nspin = PARAM.inp.nspin;
     const int nk = nks / nspin;
+    const bool deepks_spin2 = (nspin == 2 && !PARAM.inp.deepks_equiv);
 
     const bool is_after_scf = (iter == -1); // called in after_scf, not in electronic steps
     const bool output_base
@@ -130,13 +131,26 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         DeePKS_domain::cal_descriptor(nat, deepks_param, pdm, descriptor); // final descriptor
         DeePKS_domain::check_descriptor(deepks_param, ucell, PARAM.globalv.global_out_dir, descriptor, rank);
 
+        // nspin=2 (traditional): also build the magnetization-channel descriptor,
+        // reused for the dm_eig label and the 2-channel model below.
+        std::vector<torch::Tensor> descriptor_mag;
+        if (deepks_spin2)
+        {
+            DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
+            bool init_pdm_mag = false;
+            DeePKS_domain::cal_pdm<
+                TK>(init_pdm_mag, deepks_param, kvec_d, ld->dm_r_mag, phialpha, ucell, orb, GridD, *ParaV, ld->pdm_mag);
+            DeePKS_domain::cal_descriptor(nat, deepks_param, ld->pdm_mag, descriptor_mag);
+        }
+
         const std::string file_d = get_filename("dm_eig", PARAM.inp.deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_d(nat,
                                    PARAM.inp.deepks_equiv,
                                    deepks_param,
-                                   descriptor,
                                    file_d,
-                                   rank); // libnpy needed
+                                   rank,
+                                   descriptor,
+                                   descriptor_mag); // libnpy needed
 
         if (PARAM.inp.deepks_scf)
         {
@@ -146,9 +160,31 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 DeePKS_domain::cal_edelta_gedm_equiv(nat, deepks_param, descriptor, ld->model_deepks, ld->gedm, E_delta, rank);
             }
-            else
+            else // traditional version
             {
-                DeePKS_domain::cal_edelta_gedm(nat, deepks_param, descriptor, pdm, ld->model_deepks, ld->gedm, E_delta);
+                if (deepks_spin2)
+                {
+                    DeePKS_domain::cal_edelta_gedm(nat,
+                                                   deepks_param,
+                                                   ld->model_deepks,
+                                                   E_delta,
+                                                   descriptor,
+                                                   pdm,
+                                                   ld->gedm,
+                                                   descriptor_mag,
+                                                   ld->pdm_mag,
+                                                   ld->gedm_mag);
+                }
+                else
+                {
+                    DeePKS_domain::cal_edelta_gedm(nat,
+                                                   deepks_param,
+                                                   ld->model_deepks,
+                                                   E_delta,
+                                                   descriptor,
+                                                   pdm,
+                                                   ld->gedm);
+                }
             }
         }
     }
@@ -158,9 +194,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     {
         // Used for deepks_scf == 1 or deepks_out_freq_elec!=0, for *precalc items, not for deepks_out_labels=2
         std::vector<torch::Tensor> gevdm;
+        std::vector<torch::Tensor> gevdm_mag;
         if (output_precalc)
         {
             DeePKS_domain::cal_gevdm(nat, deepks_param, pdm, gevdm);
+            if (deepks_spin2)
+            {
+                DeePKS_domain::cal_gevdm(nat, deepks_param, ld->pdm_mag, gevdm_mag);
+            }
         }
 
         //================================================================================
@@ -206,6 +247,18 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                     torch::Tensor gvx;
                     DeePKS_domain::cal_gvx(ucell.nat, deepks_param, gevdm, gdmx, gvx, rank);
+                    if (deepks_spin2)
+                    {
+                        torch::Tensor gdmx_mag;
+                        DeePKS_domain::cal_gdmx<
+                            TK>(nks, deepks_param, kvec_d, phialpha, ld->dm_r_mag, ucell, orb, *ParaV, GridD, gdmx_mag);
+                        torch::Tensor gvx_mag;
+                        DeePKS_domain::cal_gvx(ucell.nat, deepks_param, gevdm_mag, gdmx_mag, gvx_mag, rank);
+                        if (rank == 0)
+                        {
+                            gvx = torch::stack({gvx, gvx_mag}, gvx.dim() - 1);
+                        }
+                    }
                     const std::string file_gradvx = get_filename("gradvx", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, rank);
 
@@ -230,6 +283,26 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                     torch::Tensor gvepsl;
                     DeePKS_domain::cal_gvepsl(ucell.nat, deepks_param, gevdm, gdmepsl, gvepsl, rank);
+                    if (deepks_spin2)
+                    {
+                        torch::Tensor gdmepsl_mag;
+                        DeePKS_domain::cal_gdmepsl<TK>(nks,
+                                                       deepks_param,
+                                                       kvec_d,
+                                                       phialpha,
+                                                       ld->dm_r_mag,
+                                                       ucell,
+                                                       orb,
+                                                       *ParaV,
+                                                       GridD,
+                                                       gdmepsl_mag);
+                        torch::Tensor gvepsl_mag;
+                        DeePKS_domain::cal_gvepsl(ucell.nat, deepks_param, gevdm_mag, gdmepsl_mag, gvepsl_mag, rank);
+                        if (rank == 0)
+                        {
+                            gvepsl = torch::stack({gvepsl, gvepsl_mag}, gvepsl.dim() - 1);
+                        }
+                    }
                     const std::string file_gvepsl = get_filename("gvepsl", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, rank);
 
@@ -346,6 +419,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 ModuleBase::matrix o_delta(nks, range);
                 torch::Tensor orbital_precalc;
+                torch::Tensor orbital_precalc_mag;
                 for (int ir = 0; ir < range; ++ir)
                 {
                     std::vector<TH> dm_bandgap(nks);
@@ -374,6 +448,31 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         orbital_precalc = torch::cat({orbital_precalc, orbital_precalc_temp}, 0);
                     }
 
+                    if (deepks_spin2)
+                    {
+                        torch::Tensor orbital_precalc_mag_temp;
+                        DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
+                                                                   nat,
+                                                                   nks,
+                                                                   deepks_param,
+                                                                   kvec_d,
+                                                                   phialpha,
+                                                                   gevdm_mag,
+                                                                   ucell,
+                                                                   orb,
+                                                                   *ParaV,
+                                                                   GridD,
+                                                                   orbital_precalc_mag_temp);
+                        if (ir == 0)
+                        {
+                            orbital_precalc_mag = orbital_precalc_mag_temp;
+                        }
+                        else
+                        {
+                            orbital_precalc_mag = torch::cat({orbital_precalc_mag, orbital_precalc_mag_temp}, 0);
+                        }
+                    }
+
                     if (PARAM.inp.deepks_scf)
                     {
                         DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta_temp, *ParaV, nks, nspin);
@@ -384,6 +483,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     }
                 }
                 // save obase and orbital_precalc
+                if (deepks_spin2)
+                {
+                    if (rank == 0)
+                    {
+                        orbital_precalc
+                            = torch::stack({orbital_precalc, orbital_precalc_mag}, orbital_precalc.dim() - 1);
+                    }
+                }
                 const std::string file_orbpre = get_filename("orbpre", PARAM.inp.deepks_out_labels, iter);
                 LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, rank);
 
@@ -478,7 +585,27 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                            *ParaV,
                                                            GridD,
                                                            vdr_precalc);
-
+                            if (deepks_spin2)
+                            {
+                                torch::Tensor vdr_precalc_mag;
+                                DeePKS_domain::cal_vdr_precalc(nlocal,
+                                                               nat,
+                                                               nks,
+                                                               R_size,
+                                                               deepks_param,
+                                                               kvec_d,
+                                                               phialpha,
+                                                               gevdm_mag,
+                                                               ucell,
+                                                               orb,
+                                                               *ParaV,
+                                                               GridD,
+                                                               vdr_precalc_mag);
+                                if (rank == 0)
+                                {
+                                    vdr_precalc = torch::stack({vdr_precalc, vdr_precalc_mag}, vdr_precalc.dim() - 1);
+                                }
+                            }
                             const std::string file_vdrpre = PARAM.globalv.global_out_dir + "deepks_vdrpre.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_vdrpre, vdr_precalc, rank);
                         }
@@ -486,6 +613,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                         {
                             torch::Tensor gevdm_out;
                             DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
+                            if (deepks_spin2)
+                            {
+                                torch::Tensor gevdm_out_mag;
+                                DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
+                                if (rank == 0)
+                                {
+                                    gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1);
+                                }
+                            }
                             const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
 
@@ -563,7 +699,27 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                            *ParaV,
                                                            GridD,
                                                            v_delta_precalc);
-
+                    if (deepks_spin2)
+                    {
+                        torch::Tensor v_delta_precalc_mag;
+                        DeePKS_domain::cal_v_delta_precalc<TK>(nlocal,
+                                                               nat,
+                                                               nks,
+                                                               deepks_param,
+                                                               kvec_d,
+                                                               phialpha,
+                                                               gevdm_mag,
+                                                               ucell,
+                                                               orb,
+                                                               *ParaV,
+                                                               GridD,
+                                                               v_delta_precalc_mag);
+                        if (rank == 0)
+                        {
+                            v_delta_precalc
+                                = torch::stack({v_delta_precalc, v_delta_precalc_mag}, v_delta_precalc.dim() - 1);
+                        }
+                    }
                     const std::string file_vdpre = get_filename("vdpre", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<TK>(file_vdpre, v_delta_precalc, rank);
                 }
@@ -577,6 +733,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                     torch::Tensor gevdm_out;
                     DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
+                    if (deepks_spin2)
+                    {
+                        torch::Tensor gevdm_out_mag;
+                        DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm_mag, gevdm_out_mag);
+                        if (rank == 0)
+                        {
+                            gevdm_out = torch::stack({gevdm_out, gevdm_out_mag}, gevdm_out.dim() - 1);
+                        }
+                    }
                     const std::string file_gevdm = get_filename("gevdm", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, rank);
                 }
