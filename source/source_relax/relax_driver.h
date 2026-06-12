@@ -20,7 +20,6 @@ class Relax_Driver
             const Input_para& inp);
 
   private:
-    double etot = 0;
     int force_step = 1;
     int stress_step = 1;
 
@@ -29,8 +28,8 @@ class Relax_Driver
 
     void init_relax(const int nat, const Input_para& inp);
     void iter_info(const int istep, const Input_para& inp);
-    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress);
-    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
+    bool relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, const double etot);
     void stru_out(const int istep, UnitCell& ucell, const Input_para& inp);
     void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
     void final_out(const int istep, UnitCell& ucell, const Input_para& inp);

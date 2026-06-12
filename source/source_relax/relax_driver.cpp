@@ -27,10 +27,11 @@ void Relax_Driver::relax_driver(
     {
         ModuleBase::matrix force(ucell.nat, 3);
         ModuleBase::matrix stress(3, 3);
+        double etot = 0.0;
 
         this->iter_info(istep, inp);
-        this->esolve(istep, p_esolver, ucell, force, stress);
-        bool converged = this->relax_step(istep, p_esolver, ucell, inp, force, stress);
+        this->esolve(istep, p_esolver, ucell, force, stress, etot);
+        bool converged = this->relax_step(istep, p_esolver, ucell, inp, force, stress, etot);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
         // Check stop conditions
@@ -86,11 +87,16 @@ void Relax_Driver::iter_info(const int istep, const Input_para& inp)
 #endif
 }
 
-void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, ModuleBase::matrix& force, ModuleBase::matrix& stress)
+void Relax_Driver::esolve(const int istep, 
+		ModuleESolver::ESolver* p_esolver, 
+		UnitCell& ucell, 
+		ModuleBase::matrix& force, 
+		ModuleBase::matrix& stress, 
+		double& etot)
 {
     p_esolver->runner(ucell, istep);
 
-    this->etot = p_esolver->cal_energy();
+    etot = p_esolver->cal_energy();
 
     if (PARAM.inp.cal_force)
     {
@@ -103,7 +109,13 @@ void Relax_Driver::esolve(const int istep, ModuleESolver::ESolver* p_esolver, Un
     }
 }
 
-bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
+bool Relax_Driver::relax_step(const int istep, 
+		ModuleESolver::ESolver* p_esolver, 
+		UnitCell& ucell, 
+		const Input_para& inp, 
+		const ModuleBase::matrix& force, 
+		const ModuleBase::matrix& stress, 
+		const double etot)
 {
     // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
     // to ensure the main loop exits after one iteration. This provides robustness
@@ -117,13 +129,13 @@ bool Relax_Driver::relax_step(const int istep, ModuleESolver::ESolver* p_esolver
 
     if (inp.relax_new)
     {
-        converged = this->rl.relax_step(ucell, force, stress, this->etot);
+        converged = this->rl.relax_step(ucell, force, stress, etot);
         this->stress_step++;
         this->force_step = 1;
     }
     else
     {
-        converged = this->rl_old.relax_step(istep+1, this->etot, ucell, force, 
+        converged = this->rl_old.relax_step(istep+1, etot, ucell, force, 
 			stress, this->force_step, this->stress_step);
     }
 
