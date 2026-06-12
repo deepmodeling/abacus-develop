@@ -87,16 +87,17 @@ void Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucel
 void Ions_Move_BFGS2::GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
 {
     assert(pos.size() == ucell.nat);
-    int k=0;
+    int iat=0;
+    const double scale = ModuleBase::BOHR_TO_A * ucell.lat0;
     for(int i=0;i<ucell.ntype;i++)
     {
         for(int j=0;j<ucell.atoms[i].na;j++)
         {
-            pos[k+j].x=ucell.atoms[i].tau[j].x*ModuleBase::BOHR_TO_A*ucell.lat0;
-            pos[k+j].y=ucell.atoms[i].tau[j].y*ModuleBase::BOHR_TO_A*ucell.lat0;
-            pos[k+j].z=ucell.atoms[i].tau[j].z*ModuleBase::BOHR_TO_A*ucell.lat0; 
+            pos[iat].x=ucell.atoms[i].tau[j].x*scale;
+            pos[iat].y=ucell.atoms[i].tau[j].y*scale;
+            pos[iat].z=ucell.atoms[i].tau[j].z*scale;
+            iat++;
         }
-        k+=ucell.atoms[i].na;
     }
 }
 
@@ -104,16 +105,16 @@ void Ions_Move_BFGS2::GetPostaud(UnitCell& ucell,
                       std::vector<ModuleBase::Vector3<double>>& pos_taud)
 {
     assert(pos_taud.size() == ucell.nat);
-    int k=0;
+    int iat=0;
     for(int i=0;i<ucell.ntype;i++)
     {
         for(int j=0;j<ucell.atoms[i].na;j++)
         {
-            pos_taud[k+j].x=ucell.atoms[i].taud[j].x;
-            pos_taud[k+j].y=ucell.atoms[i].taud[j].y;
-            pos_taud[k+j].z=ucell.atoms[i].taud[j].z;
+            pos_taud[iat].x=ucell.atoms[i].taud[j].x;
+            pos_taud[iat].y=ucell.atoms[i].taud[j].y;
+            pos_taud[iat].z=ucell.atoms[i].taud[j].z;
+            iat++;
         }
-        k+=ucell.atoms[i].na;
     }
 }
 

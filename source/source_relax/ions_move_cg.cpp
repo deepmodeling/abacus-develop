@@ -4,8 +4,6 @@
 #include "source_base/global_variable.h"
 #include <vector>
 
-using namespace Ions_Move_Basic;
-
 double Ions_Move_CG::RELAX_CG_THR = -1.0; // default is 0.5
 
 Ions_Move_CG::Ions_Move_CG()
@@ -13,7 +11,7 @@ Ions_Move_CG::Ions_Move_CG()
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::allocate(void)
+void Ions_Move_CG::allocate(const int dim)
 {
     ModuleBase::TITLE("Ions_Move_CG", "allocate");
     assert(dim > 0);
@@ -28,7 +26,7 @@ void Ions_Move_CG::allocate(void)
 void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
-    assert(dim > 0);
+    assert(Ions_Move_Basic::dim > 0);
 
     static bool sd = false;
     static bool trial = false;
@@ -44,6 +42,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     static double fmax = 0.0;
     static int nbrent = 0;
 
+    const int dim = Ions_Move_Basic::dim;
     std::vector<double> pos(dim, 0.0);
     std::vector<double> grad(dim, 0.0);
     std::vector<double> cg_gradn(dim, 0.0);

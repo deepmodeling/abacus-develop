@@ -20,7 +20,7 @@ class IonsMoveCGTest : public ::testing::Test
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
         Ions_Move_Basic::update_iter = 5;
-        im_cg.allocate();
+        im_cg.allocate(Ions_Move_Basic::dim);
         PARAM.input.force_thr = 0.001;
 
         // ban the 'cout' 
@@ -57,8 +57,8 @@ class IonsMoveCGTest : public ::testing::Test
 // Test whether the allocate() function can correctly allocate memory space
 TEST_F(IonsMoveCGTest, TestAllocate)
 {
-    Ions_Move_Basic::dim = 4;
-    im_cg.allocate();
+    const int dim = 4;
+    im_cg.allocate(dim);
 
     // Check if allocated vectors are not empty
     EXPECT_EQ(im_cg.pos0.size(), 4U);
@@ -70,15 +70,15 @@ TEST_F(IonsMoveCGTest, TestAllocate)
 // Test if a dimension less than or equal to 0 results in an assertion error
 TEST_F(IonsMoveCGTest, TestAllocateWithZeroDimension)
 {
-    Ions_Move_Basic::dim = 0;
-    ASSERT_DEATH(im_cg.allocate(), "");
+    const int dim = 0;
+    ASSERT_DEATH(im_cg.allocate(dim), "");
 }
 
 // Check that the arrays are correctly initialized to 0
 TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
 {
-    Ions_Move_Basic::dim = 3;
-    im_cg.allocate();
+    const int dim = 3;
+    im_cg.allocate(dim);
 
     // Check that the arrays are correctly initialized to 0
     EXPECT_DOUBLE_EQ(0.0, im_cg.pos0[0]);

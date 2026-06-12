@@ -30,11 +30,11 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
     }
     else if (relax_method_0 == "cg")
     {
-        this->cg.allocate();
+        this->cg.allocate(Ions_Move_Basic::dim);
     }
     else if (relax_method_0 == "cg_bfgs")
     {
-        this->cg.allocate();
+        this->cg.allocate(Ions_Move_Basic::dim);
         this->bfgs.allocate();
     }
     else if(relax_method_0 == "bfgs" && relax_method_1 == "1")

@@ -14,7 +14,7 @@ class Ions_Move_CG : public CG_Base
     Ions_Move_CG();
     ~Ions_Move_CG() = default;
 
-    void allocate(void);
+    void allocate(const int dim);
     void start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, std::ofstream& ofs);
 
     static double RELAX_CG_THR;
