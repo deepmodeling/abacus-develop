@@ -4,6 +4,7 @@
 #include "ions_move_methods.h"
 #include "lattice_change_methods.h"
 #include "source_cell/unitcell.h"
+#include <fstream>
 
 /**
  * @class IonCellOptimizer
@@ -15,8 +16,8 @@
  * (for cell parameter updates).
  * 
  * The optimization follows a sequential approach:
- * 1. First perform atomic relaxation until convergence
- * 2. Then perform cell relaxation (only in cell-relax mode)
+1. First perform atomic relaxation until convergence
+2. Then perform cell relaxation (only in cell-relax mode)
  */
 class IonCellOptimizer
 {
@@ -41,6 +42,7 @@ class IonCellOptimizer
      * @param stress Stress tensor matrix
      * @param force_step Current step counter for force-based relaxation
      * @param stress_step Current step counter for stress-based relaxation
+     * @param ofs_running Output stream for running log
      * @return true if relaxation is converged, false otherwise
      */
     bool relax_step(const int& istep,
@@ -49,7 +51,8 @@ class IonCellOptimizer
                     ModuleBase::matrix force,
                     ModuleBase::matrix stress,
                     int& force_step,
-                    int& stress_step);
+                    int& stress_step,
+                    std::ofstream& ofs_running);
 
   private:
     Ions_Move_Methods IMM;       ///< Ionic movement methods for atom relaxation

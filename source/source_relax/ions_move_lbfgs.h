@@ -5,6 +5,7 @@
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 //#include "line_search.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -30,11 +31,12 @@ public:
      * @param _force Current force
      * @param ucell Unit cell to optimize
      * @param etot Current total energy
-     * @param p_esolver  Structure solver
+     * @param ofs_running Output stream for running log
      */
     void relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
-                    const double &etot);
+                    const double &etot,
+                    std::ofstream& ofs_running);
 
 private:
     //LineSearch l_search;

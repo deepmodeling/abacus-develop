@@ -55,7 +55,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
                            ModuleBase::matrix force,
                            ModuleBase::matrix stress,
                            int& force_step,
-                           int& stress_step)
+                           int& stress_step,
+                           std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("IonCellOptimizer", "relax_step");
 
@@ -89,7 +90,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         assert(PARAM.inp.cal_force == 1);
         
         // Calculate and apply atomic movement
-        IMM.cal_movement(istep, force_step, force, energy, ucell, GlobalV::ofs_running);
+        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running);
         ++force_step;
         
         // Check convergence
@@ -118,7 +119,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         assert(PARAM.inp.cal_stress == 1);
         
         // Calculate and apply lattice change
-        LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, GlobalV::ofs_running);
+        LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running);
         bool converged = LCM.get_converged();
         
         if (!converged)
@@ -129,8 +130,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
             ucell.cell_parameter_updated = true;
             
             // Update cell-related parameters after volume change
-            unitcell::setup_cell_after_vc(ucell, GlobalV::ofs_running);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+            unitcell::setup_cell_after_vc(ucell, ofs_running);
+            ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
         
         return converged;

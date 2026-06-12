@@ -25,8 +25,7 @@ void Ions_Move_LBFGS::allocate(const int _size) // initialize H0、H、pos0、fo
     //l_search.init_line_search();
 }
 
-void Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot)
-
+void Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot, std::ofstream& ofs_running)
 {
     get_pos(ucell,pos);  
     get_pos_taud(ucell,pos_taud);
@@ -65,7 +64,7 @@ void Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell
     this->calculate_largest_grad(_force,ucell);
     this->is_restrain();  
     // mohan add 2025-06-22
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
 }
 
 void Ions_Move_LBFGS::get_pos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)

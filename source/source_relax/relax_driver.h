@@ -8,6 +8,7 @@
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/matrix.h"
 #include <vector>
+#include <fstream>
 
 /**
  * @brief Driver class for geometry relaxation calculations.
@@ -32,10 +33,12 @@ class Relax_Driver
      * @param p_esolver Pointer to the energy solver.
      * @param ucell Reference to the unit cell to be relaxed.
      * @param inp Input parameters for the calculation.
+     * @param ofs_running Output stream for running log.
      */
     void relax_driver(ModuleESolver::ESolver* p_esolver,
             UnitCell& ucell,
-            const Input_para& inp);
+            const Input_para& inp,
+            std::ofstream& ofs_running);
 
   private:
     /// New relaxation optimizer (Relax class)
@@ -83,11 +86,12 @@ class Relax_Driver
      * @param force Matrix of calculated forces.
      * @param stress Matrix of calculated stress.
      * @param etot Total energy.
+     * @param ofs_running Output stream for running log.
      * @return True if relaxation converged, false otherwise.
      */
     bool relax_step(std::vector<int>& steps, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
             const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress,
-            const double etot);
+            const double etot, std::ofstream& ofs_running);
 
     /**
      * @brief Output structure files after relaxation step.

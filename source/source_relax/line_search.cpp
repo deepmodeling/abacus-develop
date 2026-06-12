@@ -11,7 +11,8 @@ bool Line_Search::line_search(const bool restart,
                               const double y, // function value at current point
                               const double f, // derivative at current point
                               double& xnew,   // the next point that we want to try
-                              const double conv_thr)
+                              const double conv_thr,
+                              std::ofstream& ofs_running)
 {
     if (restart)
     {
@@ -39,7 +40,7 @@ bool Line_Search::line_search(const bool restart,
 
     if (ls_step >= 2)
     {
-        return this->brent(x, y, f, xnew, conv_thr);
+        return this->brent(x, y, f, xnew, conv_thr, ofs_running);
     }
     ModuleBase::WARNING_QUIT("line_search", "ls_step <0");
     __builtin_unreachable();
@@ -194,7 +195,7 @@ void Line_Search::update_brent(const double x, const double y, const double f)
     }
 }
 
-bool Line_Search::brent(const double x, const double y, const double f, double& xnew, const double conv_thr)
+bool Line_Search::brent(const double x, const double y, const double f, double& xnew, const double conv_thr, std::ofstream& ofs_running)
 {
     ls_step++;
 
@@ -288,7 +289,7 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
                           // search steps I feel if the line search does not converge, we'd better change the direction
                           // and restart line search
         {
-            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
+            ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
             // ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
@@ -396,7 +397,7 @@ bool Line_Search::brent(const double x, const double y, const double f, double& 
         }
         if (ls_step == 4)
         {
-            GlobalV::ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
+            ofs_running << "Too many Brent steps, let's do next CG step" << std::endl;
             return true;
         }
         return false;

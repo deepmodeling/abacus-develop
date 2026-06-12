@@ -301,8 +301,8 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, std::ofstream& ofs)
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "istep", Ions_Move_Basic::istep);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "update iteration", Ions_Move_Basic::update_iter);
+    ModuleBase::GlobalFunc::OUT(ofs, "istep", Ions_Move_Basic::istep);
+    ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
 
     // combine the direction and move length now
     double norm = dot_func(this->move.data(), this->move.data(), dim);

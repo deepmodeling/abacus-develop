@@ -13,6 +13,7 @@
 
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/relax_data.h"
+#include <fstream>
 
 /************************************************
  *  unit tests for Ions_Move_BFGS2 (no MockUnitCell)
@@ -76,9 +77,11 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
     force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
 
+    std::ofstream ofs_running;
+
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(bfgs.is_initialized);
-    bfgs.relax_step(force, ucell);
+    bfgs.relax_step(force, ucell, ofs_running);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(bfgs.is_initialized);
 }
@@ -230,7 +233,10 @@ TEST_F(BFGSTest, RelaxStepBasic)
     force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
     // Allocate and call relax_step
     bfgs.allocate(ucell.nat);
-    bfgs.relax_step(force, ucell);
+
+    std::ofstream ofs_running;
+
+    bfgs.relax_step(force, ucell, ofs_running);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)

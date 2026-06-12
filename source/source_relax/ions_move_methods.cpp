@@ -84,11 +84,11 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     }
     else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
     {
-        bfgs_trad.relax_step(f,ucell);        
+        bfgs_trad.relax_step(f,ucell, ofs);        
     }
     else if(Ions_Move_Basic::relax_method[0] == "lbfgs")
     {
-        lbfgs.relax_step(f,ucell,etot);        
+        lbfgs.relax_step(f,ucell,etot, ofs);        
     }
     else
     {

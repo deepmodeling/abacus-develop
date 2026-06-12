@@ -5,6 +5,7 @@
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
@@ -14,7 +15,7 @@ class Ions_Move_BFGS2
 {
 public:
     void allocate(const int _size);//initialize parameters
-    void relax_step(const ModuleBase::matrix& _force,UnitCell& ucell);//a full iteration step
+    void relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running);//a full iteration step
     
 
 private:

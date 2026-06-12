@@ -133,26 +133,27 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     const ModuleBase::matrix f(3, 3);
     const double etot = 0.0;
     UnitCell ucell;
+    std::ofstream ofs;
 
     Ions_Move_Basic::relax_method[0] = "bfgs";
     Ions_Move_Basic::relax_method[1] = "1";
     imm.allocate(natom, "bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "sd";
     imm.allocate(natom, "sd", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg";
     imm.allocate(natom, "cg", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     imm.allocate(natom, "cg_bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 }
 
@@ -164,12 +165,13 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const ModuleBase::matrix f(3, 3);
     const double etot = 0.0;
     UnitCell ucell;
+    std::ofstream ofs;
     Ions_Move_Basic::relax_method[0] = "none";
     Ions_Move_Basic::relax_method[1] = "1";
     imm.allocate(natom, "none", "1");
 
     GlobalV::ofs_warning.open("log");
-    imm.cal_movement(istep, force_step, f, etot, ucell);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");

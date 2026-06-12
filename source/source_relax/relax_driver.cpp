@@ -11,7 +11,8 @@
 void Relax_Driver::relax_driver(
         ModuleESolver::ESolver* p_esolver,
         UnitCell& ucell,
-        const Input_para& inp)
+        const Input_para& inp,
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
@@ -34,7 +35,7 @@ void Relax_Driver::relax_driver(
 
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
-        bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot);
+        bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
         // Check stop conditions
@@ -43,7 +44,7 @@ void Relax_Driver::relax_driver(
             // Relaxation converged, exit loop immediately
             break;
         }
-        else if (ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running))
+        else if (ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", ofs_running))
         {
             // EXIT file detected, exit loop
             break;
@@ -119,7 +120,8 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
 		const Input_para& inp,
 		const ModuleBase::matrix& force,
 		const ModuleBase::matrix& stress,
-		const double etot)
+		const double etot,
+		std::ofstream& ofs_running)
 {
     // Guard: For non-relaxation calculations (scf, nscf, etc.), return true immediately
     // to ensure the main loop exits after one iteration. This provides robustness
@@ -133,7 +135,7 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
 
     if (inp.relax_new)
     {
-        converged = this->rl.relax_step(ucell, force, stress, etot);
+        converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
 	// stress step +1
         steps[2]++;
 	// fix force step to 1
@@ -142,12 +144,12 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
     else
     {
         converged = this->rl_old.relax_step(steps[0]+1, etot, ucell, force,
-			stress, steps[1], steps[2]);
+			stress, steps[1], steps[2], ofs_running);
     }
 
     this->stru_out(steps[0]+1, ucell, inp);
 
-    ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, GlobalV::ofs_running);
+    ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, ofs_running);
 
     return converged;
 }

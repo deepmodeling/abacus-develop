@@ -34,7 +34,7 @@ void Ions_Move_BFGS2::allocate(const int _size)
 }
 
 
-void Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell) 
+void Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running) 
 {
     if(!is_initialized)
     {
@@ -81,7 +81,7 @@ void Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucel
     this->CalculateLargestGrad(_force,ucell);
     this->IsRestrain(); 
    // print out geometry information during bfgs_trad relax 
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
 }
 
 void Ions_Move_BFGS2::GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos)
