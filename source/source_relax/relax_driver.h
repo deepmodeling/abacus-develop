@@ -65,12 +65,13 @@ class Relax_Driver
      * @param istep Current iteration step.
      * @param p_esolver Pointer to the energy solver.
      * @param ucell Reference to the unit cell.
+     * @param inp Input parameters for the calculation.
      * @param force Output matrix for calculated forces.
      * @param stress Output matrix for calculated stress.
      * @param etot Output total energy.
      */
     void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
-            ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
+            const Input_para& inp, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
 
     /**
      * @brief Perform one relaxation step.

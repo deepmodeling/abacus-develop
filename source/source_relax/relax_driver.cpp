@@ -33,7 +33,7 @@ void Relax_Driver::relax_driver(
         double etot = 0.0;
 
         this->iter_info(steps, inp);
-        this->esolve(steps[0], p_esolver, ucell, force, stress, etot);
+        this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
@@ -90,23 +90,24 @@ void Relax_Driver::iter_info(const std::vector<int>& steps, const Input_para& in
 #endif
 }
 
-void Relax_Driver::esolve(const int istep, 
-		ModuleESolver::ESolver* p_esolver, 
-		UnitCell& ucell, 
-		ModuleBase::matrix& force, 
-		ModuleBase::matrix& stress, 
+void Relax_Driver::esolve(const int istep,
+		ModuleESolver::ESolver* p_esolver,
+		UnitCell& ucell,
+		const Input_para& inp,
+		ModuleBase::matrix& force,
+		ModuleBase::matrix& stress,
 		double& etot)
 {
     p_esolver->runner(ucell, istep);
 
     etot = p_esolver->cal_energy();
 
-    if (PARAM.inp.cal_force)
+    if (inp.cal_force)
     {
         p_esolver->cal_force(ucell, force);
     }
 
-    if (PARAM.inp.cal_stress)
+    if (inp.cal_stress)
     {
         p_esolver->cal_stress(ucell, stress);
     }
