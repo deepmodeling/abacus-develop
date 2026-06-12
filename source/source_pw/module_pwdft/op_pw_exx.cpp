@@ -69,12 +69,11 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const UnitCell *ucell)
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell)
 {
-    if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false
-        && !std::is_same<Device, base_device::DEVICE_CPU>::value)
+    if (GlobalV::KPAR != 1 && !(PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop))
     {
         // GlobalV::ofs_running << "EXX Calculation does not support k-point parallelism" << std::endl;
         ModuleBase::WARNING_QUIT("OperatorEXXPW",
-                                 "EXX Calculation does not support GPU k-point parallelism when exxace is set to false");
+                                 "PW EXX KPAR is supported only with exxace=1 and exx_separate_loop=1");
     }
     gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
     bool is_mp = kv_in->get_is_mp();
@@ -433,10 +432,10 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
         ModuleBase::WARNING_QUIT("OperatorEXXPW::act_op_batch",
                                  "direct batch path is not used with exx_use_q_tile");
     }
-    if (!std::is_same<Device, base_device::DEVICE_CPU>::value && GlobalV::KPAR > 1)
+    if (GlobalV::KPAR > 1)
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW::act_op_batch",
-                                 "direct noACE GPU batch PW EXX supports KPAR=1 only");
+                                 "direct noACE batch PW EXX supports KPAR=1 only");
     }
 
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
@@ -1639,11 +1638,6 @@ void OperatorEXXPW<T, Device>::set_psi(psi::Psi<T, Device>& psi_in) const
 {
     psi = psi_in;
     kpar_q_cache_ready = false;
-    if (GlobalV::KPAR > 1 && std::is_same<Device, base_device::DEVICE_CPU>::value
-        && !(PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop))
-    {
-        prepare_kpar_q_cache();
-    }
 }
 
 template <typename T, typename Device>

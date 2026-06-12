@@ -48,6 +48,12 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     using syncmem_real_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_real_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 
+    if (GlobalV::KPAR != 1 && !(PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop))
+    {
+        ModuleBase::WARNING_QUIT("Stress_PW::stress_exx",
+                                 "PW EXX KPAR stress is supported only with exxace=1 and exx_separate_loop=1");
+    }
+
     const int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     const Real k_spin_degeneracy = PARAM.inp.nspin == 1 ? 2.0 : 1.0;
     double omega = ucell.omega;
@@ -332,16 +338,16 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 #ifdef __MPI
                                     if (GlobalV::KPAR > 1)
                                     {
-                                    MPI_Bcast(&wg_mqb,
-                                              1,
-                                              MPI_DOUBLE,
-                                              p_kv->para_k.get_startpro_pool(qpoint->rep_pool),
-                                              MPI_COMM_WORLD);
-                                    MPI_Bcast(&wk_mq,
-                                              1,
-                                              MPI_DOUBLE,
-                                              p_kv->para_k.get_startpro_pool(qpoint->rep_pool),
-                                              MPI_COMM_WORLD);
+                                        MPI_Bcast(&wg_mqb,
+                                                  1,
+                                                  MPI_DOUBLE,
+                                                  p_kv->para_k.get_startpro_pool(qpoint->rep_pool),
+                                                  MPI_COMM_WORLD);
+                                        MPI_Bcast(&wk_mq,
+                                                  1,
+                                                  MPI_DOUBLE,
+                                                  p_kv->para_k.get_startpro_pool(qpoint->rep_pool),
+                                                  MPI_COMM_WORLD);
                                     }
 #endif
                                     const std::size_t tile_state = static_cast<std::size_t>(q_local) * source_tile_size
@@ -360,11 +366,11 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 #ifdef __MPI
                                         if (GlobalV::KPAR > 1)
                                         {
-                                        Parallel_Common::bcast_data(q_real_tile
-                                                                        + tile_state * static_cast<std::size_t>(wfcpw->nrxx),
-                                                                    wfcpw->nrxx,
-                                                                    KP_WORLD,
-                                                                    qpoint->rep_pool);
+                                            Parallel_Common::bcast_dev<T, Device>(
+                                                q_real_tile + tile_state * static_cast<std::size_t>(wfcpw->nrxx),
+                                                wfcpw->nrxx,
+                                                KP_WORLD,
+                                                qpoint->rep_pool);
                                         }
 #endif
                                     }
