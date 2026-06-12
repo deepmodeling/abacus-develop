@@ -319,6 +319,7 @@ void ModuleIO::add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfu
 // which may lead to some errors
 template <typename TR>
 void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
+                                    TD_info* td_p,
                                     const LCAO_Orbitals& orb,
                                     const Parallel_Orbitals* pv,
                                     const K_Vectors& kv,
@@ -371,7 +372,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         const int nrow = pv->get_row_size();
         if (elecstate::H_TDDFT_pw::stype == 2)
         {
-            module_rt::folding_HR_td(ucell, hR, hk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -381,7 +382,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         ModuleBase::GlobalFunc::ZEROS(sk, pv->nloc);
         if (elecstate::H_TDDFT_pw::stype == 2)
         {
-            module_rt::folding_HR_td(ucell, sR, sk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -441,6 +442,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                                  partial_hk,
                                                  kv.kvec_d[ik],
                                                  TD_info::cart_At,
+                                                 td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
                                                  1);
@@ -458,6 +460,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                                  partial_sk,
                                                  kv.kvec_d[ik],
                                                  TD_info::cart_At,
+                                                 td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
                                                  1);
@@ -488,7 +491,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (elecstate::H_TDDFT_pw::stype == 2)
             {
-                module_rt::folding_HR_td(ucell, *rR[i_alpha], rk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
             }
             else
             {
@@ -799,7 +802,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                                   const LCAO_Orbitals& orb,
                                   const Parallel_Orbitals* pv,
                                   const K_Vectors& kv,
-                                  cal_r_overlap_R& r_calculator,
+                                  TD_info* td_p,
                                   const hamilt::HContainer<TR>& sR,
                                   const hamilt::HContainer<std::complex<double>>& hR,
                                   const psi::Psi<std::complex<double>>* psi,
@@ -828,9 +831,9 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         }
     }
     // set rR
-    set_rR_from_hR(ucell, GridD, orb, pv, r_calculator, &hR, rR);
+    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, &hR, rR);
     // set velocity_basis_k
-    cal_velocity_basis_k(ucell, orb, pv, kv, rR, sR, hR, velocity_basis_k);
+    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, hR, velocity_basis_k);
     // set velocity_k
     cal_velocity_matrix(psi, pv, kv, velocity_basis_k, velocity_k);
 
@@ -864,7 +867,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              const K_Vectors& kv,
                              const Parallel_Orbitals* pv,
                              const LCAO_Orbitals& orb,
-                             cal_r_overlap_R& r_calculator,
+                             TD_info* td_p,
                              const hamilt::HContainer<TR>* sR,
                              const hamilt::HContainer<TR>* hR,
                              const Exx_NAO<std::complex<double>>& exx_nao)
@@ -878,7 +881,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
     sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao);
-    cal_current_comm_k(ucell, GridD, orb, pv, kv, r_calculator, *sR, *full_hR, psi, pelec, current_k);
+    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 
     int nspin0 = 1;
@@ -938,7 +941,7 @@ template void ModuleIO::write_current<double>(const UnitCell& ucell,
                                               const K_Vectors& kv,
                                               const Parallel_Orbitals* pv,
                                               const LCAO_Orbitals& orb,
-                                              cal_r_overlap_R& r_calculator,
+                                              TD_info* td_p,
                                               const hamilt::HContainer<double>* sR,
                                               const hamilt::HContainer<double>* hR,
                                               const Exx_NAO<std::complex<double>>& exx_nao);
@@ -951,7 +954,7 @@ template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucel
                                                             const K_Vectors& kv,
                                                             const Parallel_Orbitals* pv,
                                                             const LCAO_Orbitals& orb,
-                                                            cal_r_overlap_R& r_calculator,
+                                                            TD_info* td_p,
                                                             const hamilt::HContainer<std::complex<double>>* sR,
                                                             const hamilt::HContainer<std::complex<double>>* hR,
                                                             const Exx_NAO<std::complex<double>>& exx_nao);
