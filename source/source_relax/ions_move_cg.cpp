@@ -23,7 +23,7 @@ void Ions_Move_CG::allocate(const int dim)
     this->e0 = 0.0;
 }
 
-void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, std::ofstream& ofs)
+void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -54,7 +54,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
     while (true)
     {
-        if (Ions_Move_Basic::istep == 1)
+        if (istep == 1)
         {
             steplength = Ions_Move_Basic::relax_bfgs_init;
             sd = true;
@@ -72,7 +72,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         }
 
         Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
-        Ions_Move_Basic::setup_etot(etot_in, 0);
+        Ions_Move_Basic::setup_etot(etot_in, 0, istep);
 
         if (flag == 0)
         {
@@ -80,7 +80,7 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         }
         if (Ions_Move_Basic::converged)
         {
-            Ions_Move_Basic::terminate(ucell, ofs);
+            Ions_Move_Basic::terminate(ucell, istep, ofs);
             break;
         }
 

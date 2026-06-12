@@ -220,12 +220,12 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
 {
     // Initialize data
     Ions_Move_Basic::converged = true;
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::update_iter = 5;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_converged.log");
-    Ions_Move_Basic::terminate(ucell, ofs);
+    Ions_Move_Basic::terminate(ucell, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -245,10 +245,11 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 {
     // Initialize data
     Ions_Move_Basic::converged = false;
+    const int istep = 10;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_not_converged.log");
-    Ions_Move_Basic::terminate(ucell, ofs);
+    Ions_Move_Basic::terminate(ucell, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -266,7 +267,7 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 TEST_F(IonsMoveBasicTest, SetupEtotCase1)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::etot_p = 1.0;
     Ions_Move_Basic::etot = 2.0;
     Ions_Move_Basic::ediff = 0.0;
@@ -274,7 +275,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase1)
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep);
 
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 3.0);
@@ -286,7 +287,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase1)
 TEST_F(IonsMoveBasicTest, SetupEtotCase2)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::etot_p = 4.0;
     Ions_Move_Basic::etot = 2.0;
     Ions_Move_Basic::ediff = 0.0;
@@ -294,7 +295,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase2)
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep);
 
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 3.0);
@@ -306,7 +307,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase2)
 TEST_F(IonsMoveBasicTest, SetupEtotCase3)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::etot_p = 1.0;
     Ions_Move_Basic::etot = 2.0;
     Ions_Move_Basic::ediff = 0.0;
@@ -314,7 +315,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase3)
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep);
 
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 1.0);
@@ -326,7 +327,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase3)
 TEST_F(IonsMoveBasicTest, SetupEtotCase4)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::etot_p = 1.0;
     Ions_Move_Basic::etot = 2.0;
     Ions_Move_Basic::ediff = 0.0;
@@ -334,7 +335,7 @@ TEST_F(IonsMoveBasicTest, SetupEtotCase4)
     bool judgement = false;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep);
 
     // Check the results
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 2.0);

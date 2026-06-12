@@ -91,7 +91,7 @@ TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
 TEST_F(IonsMoveCGTest, TestStartConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = true;
     UnitCell ucell;
     setupucell(ucell);
@@ -100,7 +100,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("TestStartConverged.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -126,7 +126,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 TEST_F(IonsMoveCGTest, TestStartSd)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     Ions_Move_CG::RELAX_CG_THR = 100.0;
@@ -138,7 +138,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 
     // call function
     std::ofstream ofs("TestStartSd.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -162,7 +162,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
@@ -173,14 +173,14 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrialGoto_temp1.log");
-    im_cg.start(ucell, force, etot, ofs1);
+    im_cg.start(ucell, force, etot, istep, ofs1);
     ofs1.close();
     std::remove("TestStartTrialGoto_temp1.log");
-    Ions_Move_Basic::istep = 2;
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -204,7 +204,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 TEST_F(IonsMoveCGTest, TestStartTrial)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
@@ -215,13 +215,13 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrial_temp1.log");
-    im_cg.start(ucell, force, etot, ofs1);
+    im_cg.start(ucell, force, etot, istep, ofs1);
     ofs1.close();
     std::remove("TestStartTrial_temp1.log");
-    Ions_Move_Basic::istep = 2;
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs("TestStartTrial.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -245,7 +245,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
@@ -256,18 +256,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase1_temp1.log");
-    im_cg.start(ucell, force, etot, ofs1);
+    im_cg.start(ucell, force, etot, istep, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase1_temp1.log");
-    Ions_Move_Basic::istep = 2;
+    int istep_2 = 2;
     std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
-    im_cg.start(ucell, force, etot, ofs2);
+    im_cg.start(ucell, force, etot, istep, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -291,7 +291,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
@@ -302,17 +302,17 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase2_temp1.log");
-    im_cg.start(ucell, force, etot, ofs1);
+    im_cg.start(ucell, force, etot, istep, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase2_temp1.log");
-    Ions_Move_Basic::istep = 2;
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
-    im_cg.start(ucell, force, etot, ofs2);
+    im_cg.start(ucell, force, etot, istep, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase2_temp2.log");
     std::ofstream ofs("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -336,7 +336,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 TEST_F(IonsMoveCGTest, TestStartNoTrial)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
     setupucell(ucell);
@@ -347,18 +347,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrial_temp1.log");
-    im_cg.start(ucell, force, etot, ofs1);
+    im_cg.start(ucell, force, etot, istep, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrial_temp1.log");
-    Ions_Move_Basic::istep = 2;
+    int istep_2 = 2;
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs2("TestStartNoTrial_temp2.log");
-    im_cg.start(ucell, force, etot, ofs2);
+    im_cg.start(ucell, force, etot, istep, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrial_temp2.log");
     std::ofstream ofs("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot, ofs);
+    im_cg.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output

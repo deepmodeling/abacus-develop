@@ -139,22 +139,18 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     Ions_Move_Basic::relax_method[1] = "1";
     imm.allocate(natom, "bfgs", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
-    EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "sd";
     imm.allocate(natom, "sd", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
-    EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg";
     imm.allocate(natom, "cg", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
-    EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
     Ions_Move_Basic::relax_method[0] = "cg_bfgs";
     imm.allocate(natom, "cg_bfgs", "1");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
-    EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 }
 
 // Test the cal_movement() function warning quit

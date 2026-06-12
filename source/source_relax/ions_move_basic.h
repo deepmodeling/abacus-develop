@@ -22,7 +22,6 @@ namespace Ions_Move_Basic
 static int& dim = Relax_Data::dim;              ///< Dimension of free variables (3 * number of atoms)
 static bool& converged = Relax_Data::converged; ///< Convergence flag
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
-static int& istep = Relax_Data::istep;          ///< Current ionic step index
 static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
 static double& etot = Relax_Data::etot;         ///< Total energy of current step
 static double& etot_p = Relax_Data::etot_p;     ///< Total energy of previous step
@@ -68,16 +67,18 @@ void check_converged(const UnitCell &ucell, const double *grad, std::ofstream& o
 /**
  * @brief Terminate geometry optimization and output results.
  * @param ucell Unit cell to output
+ * @param istep Current ionic step index
  * @param ofs Output stream for logging
  */
-void terminate(const UnitCell &ucell, std::ofstream& ofs);
+void terminate(const UnitCell &ucell, const int istep, std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.
  * @param energy_in Input energy value
  * @param judgement Flag for SD method (true) or BFGS (false)
+ * @param istep Current ionic step index
  */
-void setup_etot(const double &energy_in, const bool judgement);
+void setup_etot(const double &energy_in, const bool judgement, const int istep);
 
 /**
  * @brief Compute dot product of two vectors.

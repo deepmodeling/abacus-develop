@@ -68,13 +68,14 @@ TEST_F(IonsMoveBFGSTest, StartCase1)
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
     double energy_in = 0.0;
+    const int istep = 1;
     bfgs.init_done = false;
     bfgs.save_flag = true;
 
     // Call the function being tested
     bfgs.allocate();
     std::ofstream ofs("test_start_case1.log");
-    bfgs.start(ucell, force, energy_in, ofs);
+    bfgs.start(ucell, force, energy_in, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -111,7 +112,7 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     PARAM.input.out_level = "ie";
 
     // Initialize istep
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
 
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 10.0;
@@ -122,7 +123,7 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     // Call the function being tested
     bfgs.allocate();
     std::ofstream ofs("test_start_case2.log");
-    bfgs.start(ucell, force, energy_in, ofs);
+    bfgs.start(ucell, force, energy_in, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -229,6 +230,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     double lat0 = 1.0;
+    const int istep = 1;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
@@ -242,7 +244,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case1.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, ofs);
+    bfgs.bfgs_routine(lat0, istep, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -294,6 +296,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     PARAM.input.test_relax_method = 0;
     PARAM.input.out_level = "none";
     double lat0 = 1.0;
+    const int istep = 1;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = -1.0;
@@ -307,7 +310,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case2.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, ofs);
+    bfgs.bfgs_routine(lat0, istep, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -348,6 +351,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 {
     // Initilize data
     double lat0 = 1.0;
+    const int istep = 1;
     Ions_Move_Basic::etot = 0.9;
     Ions_Move_Basic::etot_p = 1.0;
     Ions_Move_Basic::update_iter = 0;
@@ -366,7 +370,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case3.log");
-    bfgs.bfgs_routine(lat0, ofs);
+    bfgs.bfgs_routine(lat0, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -411,6 +415,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     double lat0 = 1.0;
+    const int istep = 1;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
@@ -424,7 +429,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit1.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, ofs), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, ofs), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit1.log");
@@ -441,6 +446,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     double lat0 = 1.0;
+    const int istep = 1;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
     Ions_Move_Basic::relax_bfgs_rmin = 1.0;
@@ -448,7 +454,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit2.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, ofs), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, ofs), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit2.log");

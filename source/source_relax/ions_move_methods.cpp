@@ -61,26 +61,24 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-    // Ions_Move_Basic::istep = istep;
-    Ions_Move_Basic::istep = force_step;
     if (Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] != "1")
     {
         // move_ions
         // output tau
         // check all symmery
-        bfgs.start(ucell, f, etot, ofs);
+        bfgs.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "sd")
     {
-        sd.start(ucell, f, etot, ofs);
+        sd.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg")
     {
-        cg.start(ucell, f, etot, ofs);
+        cg.start(ucell, f, etot, force_step, ofs);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
     {
-        cg.start(ucell, f, etot, ofs); // added by pengfei 13-8-10
+        cg.start(ucell, f, etot, force_step, ofs); // added by pengfei 13-8-10
     }
     else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
     {

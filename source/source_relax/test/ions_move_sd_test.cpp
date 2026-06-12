@@ -67,7 +67,7 @@ TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
 TEST_F(IonsMoveSDTest, TestStartConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = true;
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
@@ -75,7 +75,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_converged.log");
-    im_sd.start(ucell, force, etot, ofs);
+    im_sd.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -107,7 +107,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 TEST_F(IonsMoveSDTest, TestStartNotConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     Ions_Move_Basic::converged = true;
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
@@ -128,7 +128,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_not_converged.log");
-    im_sd.start(ucell, force, etot, ofs);
+    im_sd.start(ucell, force, etot, istep, ofs);
     ofs.close();
 
     // Check output
@@ -162,12 +162,12 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     PARAM.input.out_level = "ie";
 
     // call function
     testing::internal::CaptureStdout();
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep);
     std::string std_outout = testing::internal::GetCapturedStdout();
 
     // Check the results
@@ -180,12 +180,12 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 {
     // setup data
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::ediff = -1.0;
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -195,12 +195,12 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 {
     // setup data
-    Ions_Move_Basic::istep = 2;
+    const int istep = 2;
     Ions_Move_Basic::ediff = 1.0;
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -210,11 +210,11 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 {
     // setup data
-    Ions_Move_Basic::istep = 0;
+    const int istep = 0;
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(im_sd.cal_tradius_sd(istep), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

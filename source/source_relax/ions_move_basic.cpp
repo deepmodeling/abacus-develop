@@ -181,13 +181,13 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
     return;
 }
 
-void Ions_Move_Basic::terminate(const UnitCell &ucell, std::ofstream& ofs)
+void Ions_Move_Basic::terminate(const UnitCell &ucell, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
     if (Ions_Move_Basic::converged)
     {
         ofs << " end of geometry optimization" << std::endl;
-        ModuleBase::GlobalFunc::OUT(ofs, "istep", Ions_Move_Basic::istep);
+        ModuleBase::GlobalFunc::OUT(ofs, "istep", istep);
         ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
         /*
         ofs<<"Saving the approximate inverse hessian"<<std::endl;
@@ -215,9 +215,9 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell, std::ofstream& ofs)
     return;
 }
 
-void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement)
+void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement, const int istep)
 {
-    if (Ions_Move_Basic::istep == 1)
+    if (istep == 1)
     {
         // p == previous
         Ions_Move_Basic::etot_p = energy_in;

@@ -37,11 +37,9 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
-void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, std::ofstream& ofs)
+void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
-
-    // istep must be set eariler.
 
     // use force to setup gradient.
     // Only the first step needs to generate the pos from ucell.
@@ -57,14 +55,14 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data(), ofs);
     }
     // use energy_in and istep to setup etot and etot_old.
-    Ions_Move_Basic::setup_etot(energy_in, false);
+    Ions_Move_Basic::setup_etot(energy_in, false, istep);
     // use gradient and etot and etot_old to check
     // if the result is converged.
     Ions_Move_Basic::check_converged(ucell, this->grad.data(), ofs);
 
     if (Ions_Move_Basic::converged)
     {
-        Ions_Move_Basic::terminate(ucell, ofs);
+        Ions_Move_Basic::terminate(ucell, istep, ofs);
     }
     else
     {
@@ -81,7 +79,7 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         // calculate the new step -> the new move using hessian
         // matrix, and set the new trust radius.
         // [compute the move at last]
-        this->bfgs_routine(ucell.lat0, ofs);
+        this->bfgs_routine(ucell.lat0, istep, ofs);
 
         // get prepared for the next try.
         // even if the energy is higher, we save the information.
@@ -168,7 +166,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, std::ofstream& ofs)
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0, std::ofstream& ofs)
+void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;
@@ -301,7 +299,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, std::ofstream& ofs)
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }
 
-    ModuleBase::GlobalFunc::OUT(ofs, "istep", Ions_Move_Basic::istep);
+    ModuleBase::GlobalFunc::OUT(ofs, "istep", istep);
     ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
 
     // combine the direction and move length now
