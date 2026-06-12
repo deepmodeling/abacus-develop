@@ -106,7 +106,6 @@ hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::Overlap(HS_Matrix_K<TK>* hsk_in,
     this->SR = SR_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->SR != nullptr);
 #endif
     // Initialize SR to allocate sparse overlap matrix memory.
     // Only initialize if SR_in is not nullptr (for force calculation, SR_in can be nullptr).
