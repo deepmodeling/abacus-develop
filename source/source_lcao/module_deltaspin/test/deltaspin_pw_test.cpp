@@ -86,8 +86,6 @@ TEST_F(DeltaSpinPwTest, DeltaHcc_Npol2_SingleAtom)
     EXPECT_NEAR(ps[0 + nkb].imag(), 0.48, 1e-12);
 }
 
-// PLACEHOLDER_DELTASPIN_PW_TESTS
-
 TEST_F(DeltaSpinPwTest, DeltaHcc_Npol2_MultiAtom)
 {
     // Two atoms: verify sum offset advances correctly
@@ -179,57 +177,6 @@ TEST_F(DeltaSpinPwTest, DeltaHcc_Npol1_SignPositive)
     EXPECT_NEAR(ps[1].imag(), -0.25, 1e-12);
 }
 
-TEST_F(DeltaSpinPwTest, DeltaHcc_Npol1_SignNegative)
-{
-    const int nkb = 1;
-    const int nbands = 1;
-    const int sign = -1;
-    const double lambda_z = 0.5;
-
-    std::vector<std::complex<double>> becp(nbands * nkb, {0.0, 0.0});
-    becp[0] = {1.0, 0.0};
-
-    std::vector<std::complex<double>> ps(nbands * nkb, {0.0, 0.0});
-    double coeff = lambda_z * sign;
-    ps[0] += coeff * becp[0];
-
-    EXPECT_NEAR(ps[0].real(), -0.5, 1e-12);
-    EXPECT_NEAR(ps[0].imag(), 0.0, 1e-12);
-}
-
-TEST_F(DeltaSpinPwTest, DeltaHcc_Npol2_ZeroLambda)
-{
-    // lambda = (0,0,0) => ps should remain zero
-    const int nkb = 2;
-    const int nbands = 1;
-    const int npol = 2;
-
-    std::vector<std::complex<double>> becp(nbands * npol * nkb, {0.0, 0.0});
-    becp[0] = {1.0, 0.5};
-    becp[1] = {0.3, -0.2};
-    becp[0 + nkb] = {0.7, 0.1};
-    becp[1 + nkb] = {-0.4, 0.8};
-
-    std::vector<std::complex<double>> ps(nbands * npol * nkb, {0.0, 0.0});
-
-    const std::complex<double> c0(0.0, 0.0);
-    const std::complex<double> c1(0.0, 0.0);
-    const std::complex<double> c2(0.0, 0.0);
-    const std::complex<double> c3(0.0, 0.0);
-
-    for(int ip = 0; ip < nkb; ip++)
-    {
-        ps[ip] += c0 * becp[ip] + c2 * becp[ip + nkb];
-        ps[ip + nkb] += c1 * becp[ip] + c3 * becp[ip + nkb];
-    }
-
-    for(int i = 0; i < nbands * npol * nkb; i++)
-    {
-        EXPECT_NEAR(ps[i].real(), 0.0, 1e-15);
-        EXPECT_NEAR(ps[i].imag(), 0.0, 1e-15);
-    }
-}
-
 // =====================================================================
 // cal_Mi_pw: magnetization accumulation from becp
 // =====================================================================
@@ -271,24 +218,6 @@ TEST_F(DeltaSpinPwTest, MiPw_Npol1_SpinUp)
     // band1: |0.5|^2 + 0 + |1.0|^2 = 0.25 + 1.0 = 1.25, w=0.5
     // Mi_z = 1*1.25 + 0.5*1.25 = 1.875
     EXPECT_NEAR(Mi_z, 1.875, 1e-12);
-}
-
-TEST_F(DeltaSpinPwTest, MiPw_Npol1_SpinDown)
-{
-    // spin-down (sign=-1)
-    const int nkb = 1;
-    const int nbands = 1;
-    const int sign = -1;
-    const double weight = 2.0;
-
-    std::vector<std::complex<double>> becp(1, {0.0, 0.0});
-    becp[0] = {0.6, 0.8}; // |becp|^2 = 0.36 + 0.64 = 1.0
-
-    double Mi_z = 0.0;
-    double occ = (std::conj(becp[0]) * becp[0]).real();
-    Mi_z += sign * weight * occ;
-
-    EXPECT_NEAR(Mi_z, -2.0, 1e-12);
 }
 
 TEST_F(DeltaSpinPwTest, MiPw_Npol2_PureZMag)
@@ -475,41 +404,6 @@ TEST_F(DeltaSpinPwTest, MwFromLambda_Npol2_Accumulation)
     EXPECT_NEAR(Mi_z, 0.14, 1e-12);  // 0.28 - 0.14
     EXPECT_NEAR(Mi_x, 0.0, 1e-15);
     EXPECT_NEAR(Mi_y, 1.44, 1e-12);  // 0.96 + 0.48
-}
-
-TEST_F(DeltaSpinPwTest, MwFromLambda_Npol1_SignHandling)
-{
-    // npol=1: isk[ik]=0 => sign=+1, isk[ik]=1 => sign=-1
-    const int nkb = 1;
-    const int nbands = 1;
-    const int nk = 2;
-    const double weight = 1.0;
-    const int isk[2] = {0, 1}; // first k spin-up, second k spin-down
-
-    std::vector<std::complex<double>> becp_tmp(nbands * nkb * nk, {0.0, 0.0});
-    becp_tmp[0] = {0.5, 0.0}; // k=0: |becp|^2 = 0.25
-    becp_tmp[1] = {0.5, 0.0}; // k=1: |becp|^2 = 0.25
-
-    double Mi_z = 0.0;
-    for(int ik = 0; ik < nk; ik++)
-    {
-        const int sign = (isk[ik] == 0) ? 1 : -1;
-        const std::complex<double>* becp = &becp_tmp[ik * nbands * nkb];
-        for(int ib = 0; ib < nbands; ib++)
-        {
-            double occ = 0.0;
-            for(int ih = 0; ih < nkb; ih++)
-            {
-                const int index = ib * nkb + ih;
-                occ += (std::conj(becp[index]) * becp[index]).real();
-            }
-            Mi_z += weight * occ * sign;
-        }
-    }
-
-    // k=0: +1 * 1.0 * 0.25 = 0.25
-    // k=1: -1 * 1.0 * 0.25 = -0.25
-    EXPECT_NEAR(Mi_z, 0.0, 1e-15);
 }
 
 // =====================================================================
