@@ -164,4 +164,46 @@ struct exx_conjugate_real_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 
 template struct exx_conjugate_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct exx_conjugate_real_op<std::complex<double>, base_device::DEVICE_CPU>;
+
+template <typename FPTYPE>
+struct exx_gather_recip_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
+{
+    using T = std::complex<FPTYPE>;
+    void operator()(const T* in, T* out, const int* map, int nout)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int ig = 0; ig < nout; ++ig)
+        {
+            const int src = map[ig];
+            out[ig] = src >= 0 ? in[src] : T(0);
+        }
+    }
+};
+
+template <typename FPTYPE>
+struct exx_scatter_add_recip_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
+{
+    using T = std::complex<FPTYPE>;
+    void operator()(const T* in, T* out, const int* map, int nin, T factor)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int ig = 0; ig < nin; ++ig)
+        {
+            const int dst = map[ig];
+            if (dst >= 0)
+            {
+                out[dst] += factor * in[ig];
+            }
+        }
+    }
+};
+
+template struct exx_gather_recip_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct exx_gather_recip_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct exx_scatter_add_recip_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct exx_scatter_add_recip_op<std::complex<double>, base_device::DEVICE_CPU>;
 } // namespace hamilt

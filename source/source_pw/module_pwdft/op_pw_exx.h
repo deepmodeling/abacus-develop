@@ -10,6 +10,7 @@
 #include "source_cell/klist.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_pw/module_pwdft/kernels/exx_q_state_op.h"
+#include "source_pw/module_pwdft/exx_wave_redistributor.h"
 #include "source_psi/psi.h"
 #include "source_base/module_container/ATen/kernels/lapack.h"
 
@@ -67,7 +68,9 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     const int* isk = nullptr;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
     const ModulePW::PW_Basis* rhopw = nullptr;
+    ModulePW::PW_Basis_K* wfcpw_exx = nullptr; // k-dependent EXX grid
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
+    bool owns_exx_bases = true;
     const UnitCell *ucell = nullptr;
     Real tpiba = 0;
     
@@ -85,6 +88,10 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                                     const int* band_indices,
                                     int batch_count,
                                     T* out) const;
+    void wave_recip_to_exx_real(const T* psi_recip, T* psi_real, int ik_local) const;
+    void exx_real_to_wave_recip(const T* psi_real, T* h_psi_recip, int ik_local, Real factor) const;
+    const T* wave_recip_to_exx_recip(const T* psi_recip, int ik_local, T* scratch) const;
+    void ensure_exx_wave_mapping() const;
     void ensure_remap_device_cache(const FullPointSpatialRemap& remap) const;
     void clear_remap_device_cache() const;
     Real* get_exx_potential_cached(const K_Vectors::ExxFullKPoint& kpoint,
@@ -257,9 +264,13 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     T *density_recip = nullptr;
     // h_psi recip space memory
     T *h_psi_recip = nullptr;
+    T *psi_nk_exx_recip = nullptr;
+    T *psi_mq_exx_recip = nullptr;
+    T *h_psi_exx_recip = nullptr;
     Real *pot = nullptr;
 
     T *psi_mq_batch_real = nullptr;
+    T *psi_mq_batch_recip = nullptr;
     T *density_real_batch = nullptr;
     T *density_recip_batch = nullptr;
     Real *density_norm_batch = nullptr;
@@ -274,6 +285,11 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     mutable std::vector<const T*> psi_mq_ptrs_cache;
     mutable std::vector<int> batch_local_band_idx_cache;
     mutable std::vector<int> batch_actual_band_idx_cache;
+    mutable std::vector<int> exx_to_wfc_map_host;
+    mutable std::vector<int> exx_to_wfc_offsets;
+    mutable int* exx_to_wfc_map_device = nullptr;
+    mutable std::size_t exx_to_wfc_map_device_capacity = 0;
+    mutable std::unique_ptr<ExxWaveRedistributorCpu<T>> exx_wave_redistributor;
     mutable std::vector<Real> weight_real_host_cache;
     mutable Real* weight_real_device = nullptr;
     mutable std::size_t weight_real_capacity = 0;

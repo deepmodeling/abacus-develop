@@ -75,6 +75,12 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
         ModuleBase::WARNING_QUIT("OperatorEXXPW",
                                  "PW EXX KPAR is supported only with exxace=1 and exx_separate_loop=1");
     }
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW",
+                                 "GPU PW EXX requires poolnproc=1 because GPU PW FFT does not support "
+                                 "intra-pool MPI distribution");
+    }
     gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
     bool is_mp = kv_in->get_is_mp();
 #ifdef __MPI
@@ -89,11 +95,6 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     this->ctx = nullptr;
     this->cpu_ctx = nullptr;
     this->cal_type = hamilt::calculation_type::pw_exx;
-
-    // allocate wavefunction-sized memory
-    resmem_complex_op()(psi_nk_real, wfcpw->nrxx);
-    resmem_complex_op()(psi_mq_real, wfcpw->nrxx);
-    resmem_complex_op()(h_psi_recip, wfcpw->npwk_max);
 
     int nks = wfcpw->nks;
     int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -116,15 +117,49 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
 #endif
     // here we can actually use different ecut to init the grids
     rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, ecut_exx);
-    rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, rhopw->nx, rhopw->ny, rhopw->nz);
     rhopw_dev->initparameters(rhopw->gamma_only, ecut_exx, rhopw->distribution_type, rhopw->xprime);
     rhopw_dev->setuptransform(PARAM.inp.exx_batch_fft_size);
     rhopw_dev->collect_local_pw();
 
-    // allocate EXX-density and potential buffers on the actual EXX grid
+    wfcpw_exx = new ModulePW::PW_Basis_K(wfcpw->get_device(), exx_precision);
+    wfcpw_exx->fft_bundle.setfft(wfcpw->get_device(), exx_precision);
+#ifdef __MPI
+    wfcpw_exx->initmpi(wfcpw->poolnproc, wfcpw->poolrank, wfcpw->pool_world);
+#endif
+    wfcpw_exx->initgrids(wfcpw->lat0, wfcpw->latvec, ecut_exx);
+    wfcpw_exx->initparameters(wfcpw->gamma_only,
+                              ecut_exx,
+                              wfcpw->nks,
+                              wfcpw->kvec_d,
+                              wfcpw->distribution_type,
+                              wfcpw->xprime);
+    wfcpw_exx->setuptransform();
+    wfcpw_exx->collect_local_pw();
+    if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
+    {
+        exx_wave_redistributor.reset(new ExxWaveRedistributorCpu<T>());
+        exx_wave_redistributor->setup(wfcpw, wfcpw_exx);
+    }
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << " EXX effective ecutexx = " << ecut_exx
+                             << " Ry, charge FFT = " << rhopw->nx << " " << rhopw->ny << " " << rhopw->nz
+                             << ", wfc FFT = " << wfcpw->nx << " " << wfcpw->ny << " " << wfcpw->nz
+                             << ", EXX FFT = " << rhopw_dev->nx << " " << rhopw_dev->ny << " " << rhopw_dev->nz
+                             << ", EXX npw = " << rhopw_dev->npw << std::endl;
+    }
+
+    // allocate real-space work buffers on the actual EXX grid
+    resmem_complex_op()(psi_nk_real, wfcpw_exx->nrxx);
+    resmem_complex_op()(psi_mq_real, wfcpw_exx->nrxx);
+    resmem_complex_op()(h_psi_recip, wfcpw->npwk_max);
     resmem_complex_op()(density_real, rhopw_dev->nrxx);
     resmem_complex_op()(h_psi_real, rhopw_dev->nrxx);
     resmem_complex_op()(density_recip, rhopw_dev->npw);
+    resmem_complex_op()(psi_nk_exx_recip, wfcpw_exx->npwk_max);
+    resmem_complex_op()(psi_mq_exx_recip, wfcpw_exx->npwk_max);
+    resmem_complex_op()(h_psi_exx_recip, wfcpw_exx->npwk_max);
     resmem_real_op()(pot, rhopw_dev->npw);
 
     int batch_fft_size = this->wfcpw->fft_bundle.get_batch_size<Real>();
@@ -134,7 +169,8 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     }
     if (batch_fft_size > 0)
     {
-        resmem_complex_op()(psi_mq_batch_real, batch_fft_size * wfcpw->nrxx);
+        resmem_complex_op()(psi_mq_batch_real, batch_fft_size * wfcpw_exx->nrxx);
+        resmem_complex_op()(psi_mq_batch_recip, batch_fft_size * wfcpw_exx->npwk_max);
         resmem_complex_op()(density_real_batch, batch_fft_size * rhopw_dev->nrxx);
         resmem_complex_op()(density_recip_batch, batch_fft_size * rhopw_dev->npw);
         resmem_real_op()(density_norm_batch, batch_fft_size * rhopw_dev->npw);
@@ -180,13 +216,18 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
     delmem_complex_op()(h_psi_real);
     delmem_complex_op()(density_recip);
     delmem_complex_op()(h_psi_recip);
+    delmem_complex_op()(psi_nk_exx_recip);
+    delmem_complex_op()(psi_mq_exx_recip);
+    delmem_complex_op()(h_psi_exx_recip);
     delmem_complex_op()(psi_mq_batch_real);
+    delmem_complex_op()(psi_mq_batch_recip);
     delmem_complex_op()(density_real_batch);
     delmem_complex_op()(density_recip_batch);
     delmem_real_op()(density_norm_batch);
     delmem_real_op()(energy_batch);
     delmem_complex_op()(alpha_all_device);
     delmem_real_op()(weight_real_device);
+    base_device::memory::delete_memory_op<int, Device>()(exx_to_wfc_map_device);
     delmem_complex_op()(qtile_target_real);
     delmem_complex_op()(qtile_h_real);
     delmem_complex_op()(qtile_q_real);
@@ -205,7 +246,11 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
         delmem_complex_op()(Xi_ace);
     }
     Xi_ace_k.clear();
-    delete rhopw_dev;
+    if (owns_exx_bases)
+    {
+        delete rhopw_dev;
+        delete wfcpw_exx;
+    }
 }
 
 template <typename T>
@@ -249,12 +294,10 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
     {
         act_op_ace(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
-    else if (!PARAM.inp.exx_use_q_tile && PARAM.inp.exx_batch_fft_size > 1)
+    else if (!PARAM.inp.exx_use_q_tile
+             && PARAM.inp.exx_batch_fft_size > 1
+             && wfcpw->fft_bundle.is_batch_fft_available<Real>())
     {
-        if (!wfcpw->fft_bundle.is_batch_fft_available<Real>())
-        {
-            throw std::runtime_error("OperatorEXXPW direct batch path requested but batch FFT is unavailable");
-        }
         act_op_batch(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
     else
@@ -334,8 +377,8 @@ void OperatorEXXPW<T, Device>::act_op_scalar(const int nbands,
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
 
     auto q_points = get_q_points(this->ik);
     const int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
@@ -347,7 +390,7 @@ void OperatorEXXPW<T, Device>::act_op_scalar(const int nbands,
     {
         const T *psi_nk = tmpsi_in + n_iband * nbasis;
         // retrieve \psi_nk in real space
-        wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
+        wave_recip_to_exx_real(psi_nk, psi_nk_real, this->ik);
 
         // for \psi_nk, get the representative q wavefunction and band m
         for (const auto* qpoint: q_points)
@@ -388,11 +431,11 @@ void OperatorEXXPW<T, Device>::act_op_scalar(const int nbands,
                 }
                 else
                 {
-                    vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw->nrxx);
+                    vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw_exx->nrxx);
                 }
 
                 T tmp_scalar = wg_mqb / wk_iq * q_weight;
-                axpy_complex_op()(wfcpw->nrxx,
+                axpy_complex_op()(wfcpw_exx->nrxx,
                                   &tmp_scalar,
                                   density_real,
                                   1,
@@ -402,12 +445,12 @@ void OperatorEXXPW<T, Device>::act_op_scalar(const int nbands,
             } // end of m_iband
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-            setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+            setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
 
         } // end of qpoint
         T* h_psi_nk = tmhpsi + n_iband * nbasis;
         Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        exx_real_to_wave_recip(h_psi_real, h_psi_nk, this->ik, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
 
     }
@@ -442,15 +485,16 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
 
     const int batch_fft_size = this->get_batch_fft_size();
     if (batch_fft_size <= 1)
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW::act_op_batch", "batch FFT size must be greater than 1");
     }
-    setmem_complex_op()(psi_mq_batch_real, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw->nrxx);
+    setmem_complex_op()(psi_mq_batch_real, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_batch_recip, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw_exx->npwk_max);
     setmem_complex_op()(density_real_batch, 0, static_cast<std::size_t>(batch_fft_size) * rhopw_dev->nrxx);
     setmem_complex_op()(density_recip_batch, 0, static_cast<std::size_t>(batch_fft_size) * rhopw_dev->npw);
 
@@ -515,7 +559,7 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
     for (int n_iband = 0; n_iband < nbands; ++n_iband)
     {
         const T* psi_nk = tmpsi_in + static_cast<std::size_t>(n_iband) * nbasis;
-        wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
+        wave_recip_to_exx_real(psi_nk, psi_nk_real, this->ik);
 
         for (std::size_t q_idx = 0; q_idx < q_count; ++q_idx)
         {
@@ -544,50 +588,30 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
 
                 if (batch_idx == batch_fft_size || (is_last_band && batch_idx > 0))
                 {
-                    if (direct_batch_transform
-                        && consecutive_integers(batch_actual_band_idx_cache.data(), batch_idx)
-                        && psi.get_k_first())
-                    {
-                        ModuleBase::timer::start("act_op_batch", "recip_to_real_batch direct");
-                        wfcpw->recip_to_real_batch<Real, Device>(ctx,
-                                                                 psi_mq_ptrs_cache[0],
-                                                                 psi_mq_batch_real,
-                                                                 iq_rep_spin,
-                                                                 batch_idx,
-                                                                 false,
-                                                                 Real(1.0));
-                        if (qpoint->conjugate_only)
-                        {
-                            exx_conjugate_real_op<T, Device>()(psi_mq_batch_real,
-                                                               psi_mq_batch_real,
-                                                               static_cast<std::size_t>(batch_idx) * wfcpw->nrxx);
-                        }
-                        ModuleBase::timer::end("act_op_batch", "recip_to_real_batch direct");
-                    }
-                    else if (direct_batch_transform)
+                    if (direct_batch_transform)
                     {
                         ModuleBase::timer::start("act_op_batch", "prepare_batch");
                         for (int ib = 0; ib < batch_idx; ++ib)
                         {
-                            syncmem_complex_op()(psi_mq_batch_real
-                                                     + static_cast<std::size_t>(ib) * wfcpw->npwk_max,
-                                                 psi_mq_ptrs_cache[ib],
-                                                 wfcpw->npwk_max);
+                            wave_recip_to_exx_recip(psi_mq_ptrs_cache[ib],
+                                                    iq_rep_spin,
+                                                    psi_mq_batch_recip
+                                                        + static_cast<std::size_t>(ib) * wfcpw_exx->npwk_max);
                         }
                         ModuleBase::timer::end("act_op_batch", "prepare_batch");
                         ModuleBase::timer::start("act_op_batch", "recip_to_real_batch");
-                        wfcpw->recip_to_real_batch<Real, Device>(ctx,
-                                                                 psi_mq_batch_real,
-                                                                 psi_mq_batch_real,
-                                                                 iq_rep_spin,
-                                                                 batch_idx,
-                                                                 false,
-                                                                 Real(1.0));
+                        wfcpw_exx->recip_to_real_batch<Real, Device>(ctx,
+                                                                     psi_mq_batch_recip,
+                                                                     psi_mq_batch_real,
+                                                                     iq_rep_spin,
+                                                                     batch_idx,
+                                                                     false,
+                                                                     Real(1.0));
                         if (qpoint->conjugate_only)
                         {
                             exx_conjugate_real_op<T, Device>()(psi_mq_batch_real,
                                                                psi_mq_batch_real,
-                                                               static_cast<std::size_t>(batch_idx) * wfcpw->nrxx);
+                                                               static_cast<std::size_t>(batch_idx) * wfcpw_exx->nrxx);
                         }
                         ModuleBase::timer::end("act_op_batch", "recip_to_real_batch");
                     }
@@ -632,18 +656,18 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
                     vec_mul_vec_complex_op<T, Device>().operator_batch(density_real_batch,
                                                                        psi_mq_batch_real,
                                                                        density_real_batch,
-                                                                       wfcpw->nrxx,
+                                                                       wfcpw_exx->nrxx,
                                                                        batch_idx);
                     ModuleBase::timer::end("act_op_batch", "vec_mul_vec_batch");
 
                     ModuleBase::timer::start("act_op_batch", "accumulate");
                     ModuleBase::gemv_op<T, Device>()(
                         'N',
-                        wfcpw->nrxx,
+                        wfcpw_exx->nrxx,
                         batch_idx,
                         &one,
                         density_real_batch,
-                        wfcpw->nrxx,
+                        wfcpw_exx->nrxx,
                         alpha_all_device + q_idx * static_cast<std::size_t>(psi_nbands)
                             + static_cast<std::size_t>(batch_local_band_idx_cache[0]),
                         inc,
@@ -659,7 +683,7 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
 
         T* h_psi_nk = tmhpsi + static_cast<std::size_t>(n_iband) * nbasis;
         const Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        exx_real_to_wave_recip(h_psi_real, h_psi_nk, this->ik, hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     }
 
@@ -694,7 +718,7 @@ void OperatorEXXPW<T, Device>::act_op_tiled_cpu(const int nbands,
     // cache one V_exx(k-q) per q. The source-band wavefunctions are still tiled
     // and fetched once per target-band tile, which is the main reuse here.
     const int q_tile_size = 1;
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
 
     std::vector<T> target_real(static_cast<std::size_t>(target_tile_size) * real_size);
     std::vector<T> h_real(static_cast<std::size_t>(target_tile_size) * real_size);
@@ -715,7 +739,9 @@ void OperatorEXXPW<T, Device>::act_op_tiled_cpu(const int nbands,
         {
             const int n_iband = n_start + n_local;
             const T* psi_nk = tmpsi_in + n_iband * nbasis;
-            wfcpw->recip_to_real(ctx, psi_nk, target_real.data() + static_cast<std::size_t>(n_local) * real_size, this->ik);
+            wave_recip_to_exx_real(psi_nk,
+                                   target_real.data() + static_cast<std::size_t>(n_local) * real_size,
+                                   this->ik);
         }
         ModuleBase::timer::end("OperatorEXXPW", "target_tile");
 
@@ -819,10 +845,10 @@ void OperatorEXXPW<T, Device>::act_op_tiled_cpu(const int nbands,
                                                           qpoint->full_index);
 
                             rho_recip2real(density_recip, density_real);
-                            vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_ptr, density_real, wfcpw->nrxx);
+                            vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_ptr, density_real, wfcpw_exx->nrxx);
 
                             const T pair_weight_t = pair_weight;
-                            axpy_complex_op()(wfcpw->nrxx, &pair_weight_t, density_real, 1, h_ptr, 1);
+                            axpy_complex_op()(wfcpw_exx->nrxx, &pair_weight_t, density_real, 1, h_ptr, 1);
                         }
                     }
                     ModuleBase::timer::end("OperatorEXXPW", "pair_tile");
@@ -836,12 +862,10 @@ void OperatorEXXPW<T, Device>::act_op_tiled_cpu(const int nbands,
             const int n_iband = n_start + n_local;
             T* h_psi_nk = tmhpsi + n_iband * nbasis;
             const Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-            wfcpw->real_to_recip(ctx,
-                                 h_real.data() + static_cast<std::size_t>(n_local) * real_size,
-                                 h_psi_nk,
-                                 this->ik,
-                                 true,
-                                 hybrid_alpha);
+            exx_real_to_wave_recip(h_real.data() + static_cast<std::size_t>(n_local) * real_size,
+                                   h_psi_nk,
+                                   this->ik,
+                                   hybrid_alpha);
         }
         ModuleBase::timer::end("OperatorEXXPW", "target_tile_out");
     }
@@ -906,12 +930,12 @@ void OperatorEXXPW<T, Device>::fill_target_tile(const T* tmpsi_in,
                                                 int n_count,
                                                 T* target_real) const
 {
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     for (int n_local = 0; n_local < n_count; ++n_local)
     {
         const int n_iband = n_start + n_local;
         const T* psi_nk = tmpsi_in + static_cast<std::size_t>(n_iband) * nbasis;
-        wfcpw->recip_to_real(ctx, psi_nk, target_real + static_cast<std::size_t>(n_local) * real_size, this->ik);
+        wave_recip_to_exx_real(psi_nk, target_real + static_cast<std::size_t>(n_local) * real_size, this->ik);
     }
 }
 
@@ -930,7 +954,7 @@ OperatorEXXPW<T, Device>::fill_q_tile_states(const std::vector<const K_Vectors::
 {
     ModuleBase::timer::start("OperatorEXXPW", "q_tile_fetch");
 
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     Real weight_sum = 0;
     const int chunk_size = resolve_qtile_chunk_size();
     for (int q_local = 0; q_local < q_count; ++q_local)
@@ -984,11 +1008,11 @@ OperatorEXXPW<T, Device>::fill_q_tile_states(const std::vector<const K_Vectors::
             {
                 if (std::is_same<Device, base_device::DEVICE_CPU>::value)
                 {
-                    Parallel_Common::bcast_data(q_ptr, wfcpw->nrxx, KP_WORLD, iq_pool);
+                    Parallel_Common::bcast_data(q_ptr, wfcpw_exx->nrxx, KP_WORLD, iq_pool);
                 }
                 else
                 {
-                    Parallel_Common::bcast_dev<T, Device>(q_ptr, wfcpw->nrxx, KP_WORLD, iq_pool);
+                    Parallel_Common::bcast_dev<T, Device>(q_ptr, wfcpw_exx->nrxx, KP_WORLD, iq_pool);
                 }
             }
 #endif
@@ -1037,16 +1061,22 @@ OperatorEXXPW<T, Device>::fill_q_tile_states(const std::vector<const K_Vectors::
             const int first_band = m_start + run_start;
             if ((qpoint->identity || qpoint->conjugate_only) && psi.get_k_first())
             {
-                wfcpw->recip_to_real_batch<Real, Device>(ctx,
-                                                         get_pw(first_band, iq_rep_spin),
-                                                         q_ptr,
-                                                         iq_rep_spin,
-                                                         run_count,
-                                                         false,
-                                                         Real(1.0));
+                for (int ib = 0; ib < run_count; ++ib)
+                {
+                    wave_recip_to_exx_recip(get_pw(first_band + ib, iq_rep_spin),
+                                            iq_rep_spin,
+                                            psi_mq_batch_recip + static_cast<std::size_t>(ib) * wfcpw_exx->npwk_max);
+                }
+                wfcpw_exx->recip_to_real_batch<Real, Device>(ctx,
+                                                             psi_mq_batch_recip,
+                                                             q_ptr,
+                                                             iq_rep_spin,
+                                                             run_count,
+                                                             false,
+                                                             Real(1.0));
                 if (qpoint->conjugate_only)
                 {
-                    exx_conjugate_real_op<T, Device>()(q_ptr, q_ptr, static_cast<std::size_t>(run_count) * wfcpw->nrxx);
+                    exx_conjugate_real_op<T, Device>()(q_ptr, q_ptr, static_cast<std::size_t>(run_count) * wfcpw_exx->nrxx);
                 }
             }
             else if (!qpoint->identity && !qpoint->conjugate_only)
@@ -1092,7 +1122,7 @@ void OperatorEXXPW<T, Device>::process_qtile_apply_tile(const K_Vectors::ExxFull
     ModuleBase::timer::start("OperatorEXXPW", "q_tile_pair");
 
     const bool use_batch = !std::is_same<Device, base_device::DEVICE_CPU>::value && chunk_size > 1;
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     Real* pot_ik_iq = get_exx_potential_cached(local_kpoint, qpoint);
 
     for (int n_local = 0; n_local < n_count; ++n_local)
@@ -1120,10 +1150,10 @@ void OperatorEXXPW<T, Device>::process_qtile_apply_tile(const K_Vectors::ExxFull
                                               this->ik,
                                               qpoint.full_index);
                 rho_recip2real(density_recip, density_real);
-                vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_ptr, density_real, wfcpw->nrxx);
+                vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_ptr, density_real, wfcpw_exx->nrxx);
 
                 const T pair_weight_t = pair_weight;
-                axpy_complex_op()(wfcpw->nrxx, &pair_weight_t, density_real, 1, h_ptr, 1);
+                axpy_complex_op()(wfcpw_exx->nrxx, &pair_weight_t, density_real, 1, h_ptr, 1);
             }
             continue;
         }
@@ -1191,17 +1221,17 @@ void OperatorEXXPW<T, Device>::process_qtile_apply_tile(const K_Vectors::ExxFull
             vec_mul_vec_complex_op<T, Device>().operator_batch(density_real_batch,
                                                                const_cast<T*>(psi_mq_batch),
                                                                density_real_batch,
-                                                               wfcpw->nrxx,
+                                                               wfcpw_exx->nrxx,
                                                                batch_count);
 
             const T one{1, 0};
             const int inc{1};
             ModuleBase::gemv_op<T, Device>()('N',
-                                             wfcpw->nrxx,
+                                             wfcpw_exx->nrxx,
                                              batch_count,
                                              &one,
                                              density_real_batch,
-                                             wfcpw->nrxx,
+                                             wfcpw_exx->nrxx,
                                              alpha_weights,
                                              inc,
                                              &one,
@@ -1227,7 +1257,7 @@ double OperatorEXXPW<T, Device>::process_qtile_energy_tile(const K_Vectors::ExxF
                                                            int chunk_size) const
 {
     const bool use_batch = !std::is_same<Device, base_device::DEVICE_CPU>::value && chunk_size > 1;
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     double energy = 0.0;
 
     Real* pot_ik_iq = get_exx_potential_cached(kpoint, qpoint);
@@ -1344,7 +1374,7 @@ void OperatorEXXPW<T, Device>::act_op_qtile(const int nbands,
                                         : std::max(1, std::min(PARAM.inp.exx_band_tile_size, nbands_psi));
     const int q_tile_size = std::max(1, std::min(PARAM.inp.exx_q_tile_size, static_cast<int>(q_points.size())));
     const int chunk_size = std::min(resolve_qtile_chunk_size(), source_tile_size);
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     const std::size_t target_size = static_cast<std::size_t>(target_tile_size) * real_size;
     const std::size_t q_size = static_cast<std::size_t>(q_tile_size) * static_cast<std::size_t>(source_tile_size)
                                * real_size;
@@ -1466,12 +1496,10 @@ void OperatorEXXPW<T, Device>::act_op_qtile(const int nbands,
                 const int n_iband = n_start + n_local;
                 T* h_psi_nk = tmhpsi + static_cast<std::size_t>(n_iband) * nbasis;
                 const Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-                wfcpw->real_to_recip(ctx,
-                                     h_real + static_cast<std::size_t>(n_local) * real_size,
-                                     h_psi_nk,
-                                     this->ik,
-                                     true,
-                                     hybrid_alpha);
+                exx_real_to_wave_recip(h_real + static_cast<std::size_t>(n_local) * real_size,
+                                       h_psi_nk,
+                                       this->ik,
+                                       hybrid_alpha);
             }
             ModuleBase::timer::end("OperatorEXXPW", "target_tile_out");
         }
@@ -1531,10 +1559,10 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-    // setmem_complex_op()(psi_all_real, 0, wfcpw->nrxx * GlobalV::NBANDS);
+    // setmem_complex_op()(psi_all_real, 0, wfcpw_exx->nrxx * GlobalV::NBANDS);
     // std::map<std::pair<int, int>, bool> has_real;
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
     const auto& local_kpoint = local_representative_kpoint(this->ik, ispin);
@@ -1585,14 +1613,14 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 // send
             }
 #ifdef __MPI
-            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
+            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw_exx->nrxx, KP_WORLD, iq_pool);
 #endif
             for (int n_iband = 0; n_iband < nbands; n_iband++)
             {
                 psi.fix_kb(this->ik, n_iband);
                 const T* psi_nk = psi.get_pointer();
                 // retrieve \psi_nk in real space
-                wfcpw->recip_to_real(ctx, psi_nk, psi_nk_real, this->ik);
+                wave_recip_to_exx_real(psi_nk, psi_nk_real, this->ik);
 
 
                 // direct multiplication in real space, \psi_nk(r) * \psi_mq(r)
@@ -1609,7 +1637,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 }
                 else
                 {
-                    vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw->nrxx);
+                    vec_mul_vec_complex_op<T, Device>()(density_real, psi_mq_real, density_real, wfcpw_exx->nrxx);
                 }
 
 
@@ -1617,13 +1645,13 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 
                 T* h_psi_nk = tmhpsi + n_iband * nbasis;
                 Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-                wfcpw->real_to_recip(ctx, density_real, h_psi_nk, this->ik, true, hybrid_alpha * tmp_scalar);
+                exx_real_to_wave_recip(density_real, h_psi_nk, this->ik, hybrid_alpha * tmp_scalar);
 
 
             } // end of m_iband
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-            setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+            setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
 
         } // end of qpoint
 
@@ -1674,7 +1702,7 @@ void OperatorEXXPW<T, Device>::prepare_kpar_q_cache() const
     kpar_q_cache_nspin = nspin_fac;
     kpar_q_cache_nq = static_cast<int>(kv->exx_full_q_map.size());
     kpar_q_cache_nbands = psi.get_nbands();
-    kpar_q_cache_nrxx = wfcpw->nrxx;
+    kpar_q_cache_nrxx = wfcpw_exx->nrxx;
 
     const std::size_t nstates = static_cast<std::size_t>(kpar_q_cache_nspin)
                                 * static_cast<std::size_t>(kpar_q_cache_nq)
@@ -1850,6 +1878,105 @@ const T *OperatorEXXPW<T, Device>::get_pw(const int m, const int ik_local) const
 }
 
 template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::ensure_exx_wave_mapping() const
+{
+    if (!exx_to_wfc_offsets.empty())
+    {
+        return;
+    }
+
+    exx_to_wfc_offsets.assign(wfcpw_exx->nks + 1, 0);
+    exx_to_wfc_map_host.clear();
+    exx_to_wfc_map_host.reserve(static_cast<std::size_t>(wfcpw_exx->npwk_max) * wfcpw_exx->nks);
+    for (int ik = 0; ik < wfcpw_exx->nks; ++ik)
+    {
+        exx_to_wfc_offsets[ik] = static_cast<int>(exx_to_wfc_map_host.size());
+        std::map<std::tuple<int, int, int>, int> wfc_g_to_igl;
+        for (int igl = 0; igl < wfcpw->npwk[ik]; ++igl)
+        {
+            const auto g = wfcpw->getgdirect(ik, igl);
+            wfc_g_to_igl.emplace(std::make_tuple(static_cast<int>(std::lround(g.x)),
+                                                 static_cast<int>(std::lround(g.y)),
+                                                 static_cast<int>(std::lround(g.z))),
+                                 igl);
+        }
+        for (int igl = 0; igl < wfcpw_exx->npwk[ik]; ++igl)
+        {
+            const auto g = wfcpw_exx->getgdirect(ik, igl);
+            const auto it = wfc_g_to_igl.find(std::make_tuple(static_cast<int>(std::lround(g.x)),
+                                                              static_cast<int>(std::lround(g.y)),
+                                                              static_cast<int>(std::lround(g.z))));
+            exx_to_wfc_map_host.push_back(it == wfc_g_to_igl.end() ? -1 : it->second);
+        }
+    }
+    exx_to_wfc_offsets[wfcpw_exx->nks] = static_cast<int>(exx_to_wfc_map_host.size());
+
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+    {
+        if (exx_to_wfc_map_device_capacity < exx_to_wfc_map_host.size())
+        {
+            base_device::memory::delete_memory_op<int, Device>()(exx_to_wfc_map_device);
+            exx_to_wfc_map_device = nullptr;
+            base_device::memory::resize_memory_op<int, Device>()(exx_to_wfc_map_device, exx_to_wfc_map_host.size());
+            exx_to_wfc_map_device_capacity = exx_to_wfc_map_host.size();
+        }
+        base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(
+            exx_to_wfc_map_device,
+            exx_to_wfc_map_host.data(),
+            exx_to_wfc_map_host.size());
+    }
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::wave_recip_to_exx_real(const T* psi_recip, T* psi_real, int ik_local) const
+{
+    const T* exx_recip = wave_recip_to_exx_recip(psi_recip, ik_local, psi_nk_exx_recip);
+    wfcpw_exx->recip_to_real(ctx, exx_recip, psi_real, ik_local);
+}
+
+template <typename T, typename Device>
+const T* OperatorEXXPW<T, Device>::wave_recip_to_exx_recip(const T* psi_recip, int ik_local, T* scratch) const
+{
+    if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
+    {
+        exx_wave_redistributor->wfc_to_exx(ik_local, psi_recip, scratch);
+        return scratch;
+    }
+    ensure_exx_wave_mapping();
+    const int offset = exx_to_wfc_offsets[ik_local];
+    const int* map = std::is_same<Device, base_device::DEVICE_CPU>::value
+                         ? exx_to_wfc_map_host.data() + offset
+                         : exx_to_wfc_map_device + offset;
+    exx_gather_recip_op<T, Device>()(psi_recip, scratch, map, wfcpw_exx->npwk[ik_local]);
+    return scratch;
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::exx_real_to_wave_recip(const T* psi_real,
+                                                      T* h_psi_recip_out,
+                                                      int ik_local,
+                                                      Real factor) const
+{
+    setmem_complex_op()(h_psi_exx_recip, 0, wfcpw_exx->npwk_max);
+    wfcpw_exx->real_to_recip(ctx, psi_real, h_psi_exx_recip, ik_local, false, Real(1.0));
+    if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
+    {
+        exx_wave_redistributor->exx_to_wfc_add(ik_local, h_psi_exx_recip, h_psi_recip_out, T(factor, 0));
+        return;
+    }
+    ensure_exx_wave_mapping();
+    const int offset = exx_to_wfc_offsets[ik_local];
+    const int* map = std::is_same<Device, base_device::DEVICE_CPU>::value
+                         ? exx_to_wfc_map_host.data() + offset
+                         : exx_to_wfc_map_device + offset;
+    exx_scatter_add_recip_op<T, Device>()(h_psi_exx_recip,
+                                          h_psi_recip_out,
+                                          map,
+                                          wfcpw_exx->npwk[ik_local],
+                                          T(factor, 0));
+}
+
+template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::ensure_full_point_supported(const K_Vectors::ExxFullPoint& point) const
 {
 }
@@ -1922,10 +2049,10 @@ OperatorEXXPW<T, Device>::point_spatial_remap(const K_Vectors::ExxFullPoint& poi
         return cache_it->second;
     }
 
-    FullPointSpatialRemap remap = build_exx_symmetry_remap(wfcpw,
+    FullPointSpatialRemap remap = build_exx_symmetry_remap(wfcpw_exx,
                                                            point,
                                                            point_rep_spin,
-                                                           wfcpw->get_device() == "gpu");
+                                                           wfcpw_exx->get_device() == "gpu");
 
     auto inserted = point_gmaps.emplace(cache_key, std::move(remap));
     return inserted.first->second;
@@ -2031,55 +2158,56 @@ void OperatorEXXPW<T, Device>::load_full_point_real(const K_Vectors::ExxFullPoin
     const T* psi_point = get_pw(iband, point_rep_spin);
     if (point.identity || point.conjugate_only)
     {
-        wfcpw->recip_to_real(ctx, psi_point, out, point_rep_spin);
+        wave_recip_to_exx_real(psi_point, out, point_rep_spin);
         if (point.conjugate_only)
         {
-            exx_conjugate_real_op<T, Device>()(out, out, wfcpw->nrxx);
+            exx_conjugate_real_op<T, Device>()(out, out, wfcpw_exx->nrxx);
         }
     }
     else
     {
         const auto& remap = point_spatial_remap(point, point_rep_spin);
+        const T* psi_point_exx = wave_recip_to_exx_recip(psi_point, point_rep_spin, psi_mq_exx_recip);
         if (std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
             if (point.time_reversal)
             {
-                wfcpw->recip2real_remapped_conjugate(psi_point,
-                                                     out,
-                                                     static_cast<int>(remap.rep_igl.size()),
-                                                     remap.rep_igl.data(),
-                                                     remap.fft_isz.data(),
-                                                     remap.phase.data());
+                wfcpw_exx->recip2real_remapped_conjugate(psi_point_exx,
+                                                         out,
+                                                         static_cast<int>(remap.rep_igl.size()),
+                                                         remap.rep_igl.data(),
+                                                         remap.fft_isz.data(),
+                                                         remap.phase.data());
             }
             else
             {
-                wfcpw->recip2real_remapped(psi_point,
-                                           out,
-                                           static_cast<int>(remap.rep_igl.size()),
-                                           remap.rep_igl.data(),
-                                           remap.fft_isz.data(),
-                                           remap.phase.data());
+                wfcpw_exx->recip2real_remapped(psi_point_exx,
+                                               out,
+                                               static_cast<int>(remap.rep_igl.size()),
+                                               remap.rep_igl.data(),
+                                               remap.fft_isz.data(),
+                                               remap.phase.data());
             }
         }
         else
         {
             if (point.time_reversal)
             {
-                wfcpw->recip2real_remapped_conjugate(psi_point,
-                                                     out,
-                                                     static_cast<int>(remap.rep_igl.size()),
-                                                     remap.rep_igl.data(),
-                                                     remap.fft_isz.data(),
-                                                     remap.phase.data());
+                wfcpw_exx->recip2real_remapped_conjugate(psi_point_exx,
+                                                         out,
+                                                         static_cast<int>(remap.rep_igl.size()),
+                                                         remap.rep_igl.data(),
+                                                         remap.fft_isz.data(),
+                                                         remap.phase.data());
             }
             else
             {
-                wfcpw->recip2real_remapped(psi_point,
-                                           out,
-                                           static_cast<int>(remap.rep_igl.size()),
-                                           remap.rep_igl.data(),
-                                           remap.fft_isz.data(),
-                                           remap.phase.data());
+                wfcpw_exx->recip2real_remapped(psi_point_exx,
+                                               out,
+                                               static_cast<int>(remap.rep_igl.size()),
+                                               remap.rep_igl.data(),
+                                               remap.fft_isz.data(),
+                                               remap.phase.data());
             }
         }
     }
@@ -2096,7 +2224,7 @@ void OperatorEXXPW<T, Device>::load_full_point_real_batch(const K_Vectors::ExxFu
     {
         for (int ib = 0; ib < batch_count; ++ib)
         {
-            load_full_point_real(point, ispin, band_indices[ib], out + static_cast<std::size_t>(ib) * wfcpw->nrxx);
+            load_full_point_real(point, ispin, band_indices[ib], out + static_cast<std::size_t>(ib) * wfcpw_exx->nrxx);
         }
         return;
     }
@@ -2105,20 +2233,37 @@ void OperatorEXXPW<T, Device>::load_full_point_real_batch(const K_Vectors::ExxFu
     const auto& remap = point_spatial_remap(point, point_rep_spin);
     const bool direct_source = consecutive_integers(band_indices, batch_count) && psi.get_k_first();
     const T* in_batch = nullptr;
-    if (direct_source)
+    if (direct_source && (point.identity || point.conjugate_only))
     {
-        in_batch = get_pw(band_indices[0], point_rep_spin);
+        for (int ib = 0; ib < batch_count; ++ib)
+        {
+            wave_recip_to_exx_recip(get_pw(band_indices[ib], point_rep_spin),
+                                    point_rep_spin,
+                                    psi_mq_batch_recip + static_cast<std::size_t>(ib) * wfcpw_exx->npwk_max);
+        }
+        wfcpw_exx->recip_to_real_batch<Real, Device>(ctx,
+                                                     psi_mq_batch_recip,
+                                                     out,
+                                                     point_rep_spin,
+                                                     batch_count,
+                                                     false,
+                                                     Real(1.0));
+        if (point.conjugate_only)
+        {
+            exx_conjugate_real_op<T, Device>()(out, out, static_cast<std::size_t>(batch_count) * wfcpw_exx->nrxx);
+        }
+        return;
     }
-    else
+
     {
         for (int ib = 0; ib < batch_count; ++ib)
         {
             const T* psi_point = get_pw(band_indices[ib], point_rep_spin);
-            syncmem_complex_op()(psi_mq_batch_real + static_cast<std::size_t>(ib) * wfcpw->npwk_max,
-                                 psi_point,
-                                 wfcpw->npwk_max);
+            wave_recip_to_exx_recip(psi_point,
+                                    point_rep_spin,
+                                    psi_mq_batch_recip + static_cast<std::size_t>(ib) * wfcpw_exx->npwk_max);
         }
-        in_batch = psi_mq_batch_real;
+        in_batch = psi_mq_batch_recip;
     }
 
     ensure_remap_device_cache(remap);
@@ -2136,20 +2281,20 @@ void OperatorEXXPW<T, Device>::load_full_point_real_batch(const K_Vectors::ExxFu
         }
     }
 #endif
-    wfcpw->recip2real_remapped_batch<Real, Device>(ctx,
-                                                   in_batch,
-                                                   out,
-                                                   static_cast<int>(remap.rep_igl.size()),
-                                                   remap.rep_igl_device == nullptr ? remap.rep_igl.data()
-                                                                                   : remap.rep_igl_device,
-                                                   remap.fft_isz.data(),
-                                                   remap.fft_ixyz_device,
-                                                   remap.phase.data(),
-                                                   reinterpret_cast<const std::complex<Real>*>(phase_device),
-                                                   batch_count,
-                                                   point.time_reversal,
-                                                   false,
-                                                   Real(1.0));
+    wfcpw_exx->recip2real_remapped_batch<Real, Device>(ctx,
+                                                       in_batch,
+                                                       out,
+                                                       static_cast<int>(remap.rep_igl.size()),
+                                                       remap.rep_igl_device == nullptr ? remap.rep_igl.data()
+                                                                                       : remap.rep_igl_device,
+                                                       remap.fft_isz.data(),
+                                                       remap.fft_ixyz_device,
+                                                       remap.phase.data(),
+                                                       reinterpret_cast<const std::complex<Real>*>(phase_device),
+                                                       batch_count,
+                                                       point.time_reversal,
+                                                       false,
+                                                       Real(1.0));
 }
 
 template <typename T, typename Device>
@@ -2163,66 +2308,77 @@ void OperatorEXXPW<T, Device>::accumulate_full_point_recip(const K_Vectors::ExxF
     const int point_rep_spin = rep_spin_index(point, ispin);
     if (point.identity)
     {
-        wfcpw->real_to_recip(ctx, full_real, rep_recip, point_rep_spin, true, factor);
+        exx_real_to_wave_recip(full_real, rep_recip, point_rep_spin, factor);
     }
     else if (point.conjugate_only)
     {
-        exx_conjugate_real_op<T, Device>()(full_real, density_real, wfcpw->nrxx);
-        wfcpw->real_to_recip(ctx, density_real, rep_recip, point_rep_spin, true, factor);
+        exx_conjugate_real_op<T, Device>()(full_real, density_real, wfcpw_exx->nrxx);
+        exx_real_to_wave_recip(density_real, rep_recip, point_rep_spin, factor);
     }
     else
     {
         const auto& remap = point_spatial_remap(point, point_rep_spin);
+        setmem_complex_op()(h_psi_exx_recip, 0, wfcpw_exx->npwk_max);
         if (std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
             if (point.time_reversal)
             {
-                wfcpw->real2recip_remapped_conjugate(full_real,
-                                                     rep_recip,
-                                                     static_cast<int>(remap.rep_igl.size()),
-                                                     remap.rep_igl.data(),
-                                                     remap.fft_isz.data(),
-                                                     remap.phase.data(),
-                                                     true,
-                                                     factor);
+                wfcpw_exx->real2recip_remapped_conjugate(full_real,
+                                                         h_psi_exx_recip,
+                                                         static_cast<int>(remap.rep_igl.size()),
+                                                         remap.rep_igl.data(),
+                                                         remap.fft_isz.data(),
+                                                         remap.phase.data(),
+                                                         false,
+                                                         Real(1.0));
             }
             else
             {
-                wfcpw->real2recip_remapped(full_real,
-                                           rep_recip,
-                                           static_cast<int>(remap.rep_igl.size()),
-                                           remap.rep_igl.data(),
-                                           remap.fft_isz.data(),
-                                           remap.phase.data(),
-                                           true,
-                                           factor);
+                wfcpw_exx->real2recip_remapped(full_real,
+                                               h_psi_exx_recip,
+                                               static_cast<int>(remap.rep_igl.size()),
+                                               remap.rep_igl.data(),
+                                               remap.fft_isz.data(),
+                                               remap.phase.data(),
+                                               false,
+                                               Real(1.0));
             }
         }
         else
         {
             if (point.time_reversal)
             {
-                wfcpw->real2recip_remapped_conjugate(full_real,
-                                                     rep_recip,
-                                                     static_cast<int>(remap.rep_igl.size()),
-                                                     remap.rep_igl.data(),
-                                                     remap.fft_isz.data(),
-                                                     remap.phase.data(),
-                                                     true,
-                                                     factor);
+                wfcpw_exx->real2recip_remapped_conjugate(full_real,
+                                                         h_psi_exx_recip,
+                                                         static_cast<int>(remap.rep_igl.size()),
+                                                         remap.rep_igl.data(),
+                                                         remap.fft_isz.data(),
+                                                         remap.phase.data(),
+                                                         false,
+                                                         Real(1.0));
             }
             else
             {
-                wfcpw->real2recip_remapped(full_real,
-                                           rep_recip,
-                                           static_cast<int>(remap.rep_igl.size()),
-                                           remap.rep_igl.data(),
-                                           remap.fft_isz.data(),
-                                           remap.phase.data(),
-                                           true,
-                                           factor);
+                wfcpw_exx->real2recip_remapped(full_real,
+                                               h_psi_exx_recip,
+                                               static_cast<int>(remap.rep_igl.size()),
+                                               remap.rep_igl.data(),
+                                               remap.fft_isz.data(),
+                                               remap.phase.data(),
+                                               false,
+                                               Real(1.0));
             }
         }
+        ensure_exx_wave_mapping();
+        const int offset = exx_to_wfc_offsets[point_rep_spin];
+        const int* map = std::is_same<Device, base_device::DEVICE_CPU>::value
+                             ? exx_to_wfc_map_host.data() + offset
+                             : exx_to_wfc_map_device + offset;
+        exx_scatter_add_recip_op<T, Device>()(h_psi_exx_recip,
+                                              rep_recip,
+                                              map,
+                                              wfcpw_exx->npwk[point_rep_spin],
+                                              T(factor, 0));
     }
 }
 
@@ -2233,17 +2389,27 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
     // copy all the datas
     this->isk = op->isk;
     this->wfcpw = op->wfcpw;
+    this->wfcpw_exx = op->wfcpw_exx;
     this->rhopw = op->rhopw;
     this->rhopw_dev = op->rhopw_dev;
+    this->owns_exx_bases = false;
     this->psi = op->psi;
     this->ctx = op->ctx;
     this->cpu_ctx = op->cpu_ctx;
-    resmem_complex_op()(this->ctx, psi_nk_real, wfcpw->nrxx);
-    resmem_complex_op()(this->ctx, psi_mq_real, wfcpw->nrxx);
+    if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
+    {
+        exx_wave_redistributor.reset(new ExxWaveRedistributorCpu<T>());
+        exx_wave_redistributor->setup(wfcpw, wfcpw_exx);
+    }
+    resmem_complex_op()(this->ctx, psi_nk_real, wfcpw_exx->nrxx);
+    resmem_complex_op()(this->ctx, psi_mq_real, wfcpw_exx->nrxx);
     resmem_complex_op()(this->ctx, density_real, rhopw_dev->nrxx);
     resmem_complex_op()(this->ctx, h_psi_real, rhopw_dev->nrxx);
     resmem_complex_op()(this->ctx, density_recip, rhopw_dev->npw);
     resmem_complex_op()(this->ctx, h_psi_recip, wfcpw->npwk_max);
+    resmem_complex_op()(this->ctx, psi_nk_exx_recip, wfcpw_exx->npwk_max);
+    resmem_complex_op()(this->ctx, psi_mq_exx_recip, wfcpw_exx->npwk_max);
+    resmem_complex_op()(this->ctx, h_psi_exx_recip, wfcpw_exx->npwk_max);
 //    this->pws.resize(wfcpw->nks);
 
 
@@ -2290,8 +2456,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2380,7 +2546,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                             load_full_point_real(*qpoint, ispin, m_iband, psi_mq_real);
                         }
 #ifdef __MPI
-                        Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, qpoint->rep_pool);
+                        Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw_exx->nrxx, KP_WORLD, qpoint->rep_pool);
 #endif
                         if (!own_kpoint)
                         {
@@ -2414,8 +2580,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     Parallel_Reduce::reduce_all(Eexx_ik_real);
     //    std::cout << "omega = " << this_->pelec->omega << " tpiba = " << this_->pw_rho->tpiba2 << " exx_div = " << exx_div << std::endl;
 
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2433,8 +2599,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
     const psi::Psi<T, Device> psi_saved = psi;
     psi = *ppsi_;
 
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2461,7 +2627,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
         return cal_exx_energy_op(ppsi_);
     }
 
-    setmem_complex_op()(psi_mq_batch_real, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw->nrxx);
+    setmem_complex_op()(psi_mq_batch_real, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_batch_recip, 0, static_cast<std::size_t>(batch_fft_size) * wfcpw_exx->npwk_max);
     setmem_complex_op()(density_real_batch, 0, static_cast<std::size_t>(batch_fft_size) * rhopw_dev->nrxx);
     setmem_complex_op()(density_recip_batch, 0, static_cast<std::size_t>(batch_fft_size) * rhopw_dev->npw);
     setmem_real_op()(density_norm_batch, 0, static_cast<std::size_t>(batch_fft_size) * rhopw_dev->npw);
@@ -2560,45 +2727,27 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
                         if (batch_idx == batch_fft_size || (is_last_band && batch_idx > 0))
                         {
                             ModuleBase::timer::start("cal_exx_energy_batch", "process_batch");
-                            if (direct_batch_transform
-                                && consecutive_integers(batch_actual_band_idx_cache.data(), batch_idx)
-                                && psi.get_k_first())
-                            {
-                                wfcpw->recip_to_real_batch<Real, Device>(ctx,
-                                                                         psi_mq_ptrs_cache[0],
-                                                                         psi_mq_batch_real,
-                                                                         iq_rep_spin,
-                                                                         batch_idx,
-                                                                         false,
-                                                                         Real(1.0));
-                                if (qpoint->conjugate_only)
-                                {
-                                    exx_conjugate_real_op<T, Device>()(psi_mq_batch_real,
-                                                                       psi_mq_batch_real,
-                                                                       static_cast<std::size_t>(batch_idx) * wfcpw->nrxx);
-                                }
-                            }
-                            else if (direct_batch_transform)
+                            if (direct_batch_transform)
                             {
                                 for (int ib = 0; ib < batch_idx; ++ib)
                                 {
-                                    syncmem_complex_op()(psi_mq_batch_real
-                                                             + static_cast<std::size_t>(ib) * wfcpw->npwk_max,
-                                                         psi_mq_ptrs_cache[ib],
-                                                         wfcpw->npwk_max);
+                                    wave_recip_to_exx_recip(psi_mq_ptrs_cache[ib],
+                                                            iq_rep_spin,
+                                                            psi_mq_batch_recip
+                                                                + static_cast<std::size_t>(ib) * wfcpw_exx->npwk_max);
                                 }
-                                wfcpw->recip_to_real_batch<Real, Device>(ctx,
-                                                                         psi_mq_batch_real,
-                                                                         psi_mq_batch_real,
-                                                                         iq_rep_spin,
-                                                                         batch_idx,
-                                                                         false,
-                                                                         Real(1.0));
+                                wfcpw_exx->recip_to_real_batch<Real, Device>(ctx,
+                                                                             psi_mq_batch_recip,
+                                                                             psi_mq_batch_real,
+                                                                             iq_rep_spin,
+                                                                             batch_idx,
+                                                                             false,
+                                                                             Real(1.0));
                                 if (qpoint->conjugate_only)
                                 {
                                     exx_conjugate_real_op<T, Device>()(psi_mq_batch_real,
                                                                        psi_mq_batch_real,
-                                                                       static_cast<std::size_t>(batch_idx) * wfcpw->nrxx);
+                                                                       static_cast<std::size_t>(batch_idx) * wfcpw_exx->nrxx);
                                 }
                             }
                             else
@@ -2641,8 +2790,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
     Eexx_ik_real *= 0.5 * ucell->omega;
     Parallel_Reduce::reduce_all(Eexx_ik_real);
 
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2668,8 +2817,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
     const psi::Psi<T, Device> psi_saved = psi;
     psi = *ppsi_;
 
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2691,7 +2840,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
     const int source_tile_size = std::max(1, std::min(PARAM.inp.exx_band_tile_size, nbands_psi));
     const int q_tile_size = std::max(1, std::min(PARAM.inp.exx_q_tile_size, static_cast<int>(q_points.size())));
     const int chunk_size = std::min(resolve_qtile_chunk_size(), source_tile_size);
-    const std::size_t real_size = static_cast<std::size_t>(wfcpw->nrxx);
+    const std::size_t real_size = static_cast<std::size_t>(wfcpw_exx->nrxx);
     const std::size_t q_size = static_cast<std::size_t>(q_tile_size) * static_cast<std::size_t>(source_tile_size)
                                * real_size;
     const std::size_t q_weight_count = static_cast<std::size_t>(q_tile_size) * static_cast<std::size_t>(source_tile_size);
@@ -2812,8 +2961,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
     Eexx_ik_real *= 0.5 * ucell->omega;
     Parallel_Reduce::reduce_all(Eexx_ik_real);
 
-    setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-    setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+    setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+    setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
     setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
@@ -2833,7 +2982,7 @@ void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_r
         density_real,
         0,
         rhopw_dev->nrxx);
-    cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+    cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw_exx->nrxx);
     rhopw_dev->real2recip(density_real, density_recip);
 }
 
@@ -2846,7 +2995,7 @@ void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_re
         density_real,
         0,
         rhopw_dev->nrxx);
-    cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+    cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw_exx->nrxx);
     rhopw_dev->real2recip(density_real, density_recip);
 }
 
@@ -2866,12 +3015,12 @@ void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_r
         static_cast<std::size_t>(batch_size) * rhopw_dev->nrxx);
     for (int ib = 0; ib < batch_size; ib++)
     {
-        std::complex<double>* psi_mq_ib = psi_mq_real_batch + static_cast<std::size_t>(ib) * wfcpw->nrxx;
+        std::complex<double>* psi_mq_ib = psi_mq_real_batch + static_cast<std::size_t>(ib) * wfcpw_exx->nrxx;
         std::complex<double>* density_real_ib = density_real_batch + static_cast<std::size_t>(ib) * rhopw_dev->nrxx;
         std::complex<double>* density_recip_ib = density_recip_batch + static_cast<std::size_t>(ib) * rhopw_dev->npw;
 
         cal_density_real_op<std::complex<double>, base_device::DEVICE_CPU>()(
-            psi_nk_real, psi_mq_ib, density_real_ib, omega, wfcpw->nrxx);
+            psi_nk_real, psi_mq_ib, density_real_ib, omega, wfcpw_exx->nrxx);
         rhopw_dev->real2recip(density_real_ib, density_recip_ib);
     }
 }
@@ -2892,12 +3041,12 @@ void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_re
         static_cast<std::size_t>(batch_size) * rhopw_dev->nrxx);
     for (int ib = 0; ib < batch_size; ib++)
     {
-        std::complex<float>* psi_mq_ib = psi_mq_real_batch + static_cast<std::size_t>(ib) * wfcpw->nrxx;
+        std::complex<float>* psi_mq_ib = psi_mq_real_batch + static_cast<std::size_t>(ib) * wfcpw_exx->nrxx;
         std::complex<float>* density_real_ib = density_real_batch + static_cast<std::size_t>(ib) * rhopw_dev->nrxx;
         std::complex<float>* density_recip_ib = density_recip_batch + static_cast<std::size_t>(ib) * rhopw_dev->npw;
 
         cal_density_real_op<std::complex<float>, base_device::DEVICE_CPU>()(
-            psi_nk_real, psi_mq_ib, density_real_ib, omega, wfcpw->nrxx);
+            psi_nk_real, psi_mq_ib, density_real_ib, omega, wfcpw_exx->nrxx);
         rhopw_dev->real2recip(density_real_ib, density_recip_ib);
     }
 }
@@ -2935,7 +3084,7 @@ void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_r
         density_real,
         0,
         rhopw_dev->nrxx);
-    cal_density_real_op<std::complex<double>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+    cal_density_real_op<std::complex<double>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw_exx->nrxx);
     rhopw_dev->real2recip_gpu(density_real, density_recip);
 }
 
@@ -2948,7 +3097,7 @@ void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_re
         density_real,
         0,
         rhopw_dev->nrxx);
-    cal_density_real_op<std::complex<float>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw->nrxx);
+    cal_density_real_op<std::complex<float>, base_device::DEVICE_GPU>()(psi_nk_real, psi_mq_real, density_real, omega, wfcpw_exx->nrxx);
     rhopw_dev->real2recip_gpu(density_real, density_recip);
 }
 
@@ -2967,7 +3116,7 @@ void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_r
         psi_mq_real_batch,
         density_real_batch,
         omega,
-        wfcpw->nrxx,
+        wfcpw_exx->nrxx,
         batch_size);
     rhopw_dev->real_to_recip_batch<double, base_device::DEVICE_GPU>(
         this->ctx,
@@ -2993,7 +3142,7 @@ void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_re
         psi_mq_real_batch,
         density_real_batch,
         omega,
-        wfcpw->nrxx,
+        wfcpw_exx->nrxx,
         batch_size);
     rhopw_dev->real_to_recip_batch<float, base_device::DEVICE_GPU>(
         this->ctx,

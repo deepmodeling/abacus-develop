@@ -38,6 +38,18 @@ struct exx_conjugate_real_op
 {
     void operator()(const T* in, T* out, int nrxx);
 };
+
+template <typename T, typename Device>
+struct exx_gather_recip_op
+{
+    void operator()(const T* in, T* out, const int* map, int nout);
+};
+
+template <typename T, typename Device>
+struct exx_scatter_add_recip_op
+{
+    void operator()(const T* in, T* out, const int* map, int nin, T factor);
+};
 } // namespace hamilt
 
 #endif // EXX_Q_STATE_OP_H

@@ -244,12 +244,10 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                 }
                 else
                 {
-                    if (PARAM.inp.exx_batch_fft_size > 1 && GlobalV::KPAR == 1)
+                    if (PARAM.inp.exx_batch_fft_size > 1
+                        && wfcpw->fft_bundle.is_batch_fft_available<Real>()
+                        && GlobalV::KPAR == 1)
                     {
-                        if (!wfcpw->fft_bundle.is_batch_fft_available<Real>())
-                        {
-                            throw std::runtime_error("OperatorEXXPW ACE batch path requested but batch FFT is unavailable");
-                        }
                         act_op_batch(nbands, nbasis, 1, p_psi, h_psi_ace, nbasis, false);
                     }
                     else
