@@ -1085,6 +1085,9 @@ Use case: When experimental or high-level theoretical results suggest that the S
             if (para.input.use_k_continuity && para.input.calculation == "nscf") {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
             }
+            if (para.input.use_k_continuity && para.input.kpar > 1) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for k-point parallel calculation");
+            }
             if (para.input.use_k_continuity && para.input.nspin == 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
             }
