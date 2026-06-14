@@ -375,6 +375,12 @@ static Vec3 project_lambda_perpendicular(const Vec3& lambda, const Vec3& target)
     return { lambda.x - dot * tx, lambda.y - dot * ty, lambda.z - dot * tz };
 }
 
+class DirectionOnlyTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override {}
+};
+
 TEST_F(DirectionOnlyTest, ParallelLambda_ZeroResult)
 {
     Vec3 lambda = {1.0, 2.0, 3.0};
@@ -454,6 +460,12 @@ static double compute_rms(
     if (n_constrained == 0) return 0.0;
     return std::sqrt(sum_sq / n_constrained);
 }
+
+class RmsErrorTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override {}
+};
 
 TEST_F(RmsErrorTest, SingleComponent)
 {
