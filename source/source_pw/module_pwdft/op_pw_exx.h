@@ -69,6 +69,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis_K* wfcpw_exx = nullptr; // k-dependent EXX grid
+    ModulePW::PW_Basis_K* wfcpw_exx_fullq = nullptr; // explicit full-q EXX grid
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     bool owns_exx_bases = true;
     const UnitCell *ucell = nullptr;
@@ -83,11 +84,21 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     using FullPointSpatialRemap = ExxSymmetryRemap;
     const FullPointSpatialRemap& point_spatial_remap(const K_Vectors::ExxFullPoint& point, int rep_spin_index) const;
     void load_full_point_real(const K_Vectors::ExxFullPoint& point, int ispin, int iband, T* out) const;
+    void load_full_point_real_uncached(const K_Vectors::ExxFullPoint& point, int ispin, int iband, T* out) const;
     void load_full_point_real_batch(const K_Vectors::ExxFullPoint& point,
                                     int ispin,
                                     const int* band_indices,
                                     int batch_count,
                                     T* out) const;
+    bool full_q_cache_active() const;
+    void setup_full_q_cache_basis(double ecut_exx, const std::string& exx_precision);
+    void invalidate_full_q_cache() const;
+    void ensure_full_q_cache_ready() const;
+    void build_full_q_cache() const;
+    void set_psi_for_cache(const psi::Psi<T, Device>& psi_in) const;
+    int full_q_cache_slot(const K_Vectors::ExxFullPoint& point) const;
+    std::size_t full_q_cache_offset(int ispin, int q_slot, int iband) const;
+    const T* full_q_cache_state(const K_Vectors::ExxFullPoint& point, int ispin, int iband) const;
     void wave_recip_to_exx_real(const T* psi_recip, T* psi_real, int ik_local) const;
     void exx_real_to_wave_recip(const T* psi_real, T* h_psi_recip, int ik_local, Real factor) const;
     const T* wave_recip_to_exx_recip(const T* psi_recip, int ik_local, T* scratch) const;
@@ -313,6 +324,17 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     mutable std::vector<const K_Vectors::ExxFullKPoint*> k_points;
     mutable std::map<int, K_Vectors::ExxFullKPoint> local_kpoint_cache;
     mutable std::map<std::pair<int, int>, FullPointSpatialRemap> point_gmaps;
+    mutable T* full_q_recip_cache = nullptr;
+    mutable T* full_q_cache_real_scratch = nullptr;
+    mutable int full_q_cache_nspin = 0;
+    mutable int full_q_cache_nq = 0;
+    mutable int full_q_cache_nbands = 0;
+    mutable int full_q_cache_npwk_max = 0;
+    mutable std::size_t full_q_cache_capacity = 0;
+    mutable bool full_q_cache_enabled = false;
+    mutable bool full_q_cache_ready = false;
+    mutable std::vector<int> full_q_cache_index;
+    mutable std::vector<const K_Vectors::ExxFullQPoint*> full_q_cache_points;
     mutable std::vector<T> kpar_q_real_cache;
     mutable std::vector<Real> kpar_q_weight_cache;
     mutable int kpar_q_cache_nspin = 0;

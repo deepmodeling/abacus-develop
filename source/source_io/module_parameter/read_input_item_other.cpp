@@ -924,6 +924,18 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_full_q_cache");
+        item.annotation = "whether to cache explicit full-q PW EXX wavefunctions";
+        item.category = "Exact Exchange (PW)";
+        item.type = "Boolean";
+        item.description = "Whether to materialize an explicit full-q reciprocal-space wavefunction cache for PW EXX when symmetry-reduced k-points are used. Set to false to use the lower-memory remap-on-demand path.";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.exx_full_q_cache);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_band_tile_size");
         item.annotation = "band tile size for tiled PW EXX real-space reuse";
         item.category = "Exact Exchange (PW)";

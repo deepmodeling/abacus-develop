@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <limits>
+#include <new>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -141,13 +142,37 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
         exx_wave_redistributor->setup(wfcpw, wfcpw_exx);
     }
 
+    setup_full_q_cache_basis(ecut_exx, exx_precision);
+
     if (GlobalV::MY_RANK == 0)
     {
+        int active_full_q_count = 0;
+        for (const auto& qpoint: kv->exx_full_q_map)
+        {
+            if (qpoint.active)
+            {
+                ++active_full_q_count;
+            }
+        }
+        const int estimated_cache_nbands = PARAM.inp.nbands > 0 ? PARAM.inp.nbands : 0;
+        const std::size_t estimated_cache_size = static_cast<std::size_t>(full_q_cache_nspin)
+                                                 * static_cast<std::size_t>(full_q_cache_nq)
+                                                 * static_cast<std::size_t>(estimated_cache_nbands)
+                                                 * static_cast<std::size_t>(full_q_cache_npwk_max);
+        const double cache_mb = static_cast<double>(estimated_cache_size * sizeof(T)) / (1024.0 * 1024.0);
         GlobalV::ofs_running << " EXX effective ecutexx = " << ecut_exx
                              << " Ry, charge FFT = " << rhopw->nx << " " << rhopw->ny << " " << rhopw->nz
                              << ", wfc FFT = " << wfcpw->nx << " " << wfcpw->ny << " " << wfcpw->nz
                              << ", EXX FFT = " << rhopw_dev->nx << " " << rhopw_dev->ny << " " << rhopw_dev->nz
                              << ", EXX npw = " << rhopw_dev->npw << std::endl;
+        GlobalV::ofs_running << " EXX full-q cache = " << (PARAM.inp.exx_full_q_cache ? "on" : "off")
+                             << ", effective = " << (full_q_cache_enabled ? "on" : "off")
+                             << ", ownership = " << (GlobalV::KPAR > 1 ? "owner-local" : "local")
+                             << ", reduced k = " << wfcpw->nks / nk_fac
+                             << ", full q = " << active_full_q_count
+                             << ", cached local q = " << full_q_cache_nq
+                             << ", full-q npwk_max = " << full_q_cache_npwk_max
+                             << ", estimated memory = " << cache_mb << " MB" << std::endl;
     }
 
     // allocate real-space work buffers on the actual EXX grid
@@ -234,6 +259,8 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
 
     clear_exx_potential_cache();
     clear_remap_device_cache();
+    delmem_complex_op()(full_q_recip_cache);
+    delmem_complex_op()(full_q_cache_real_scratch);
     delmem_real_op()(pot);
     delmem_real_op()(qtile_energy_device);
 
@@ -250,6 +277,7 @@ OperatorEXXPW<T, Device>::~OperatorEXXPW()
     {
         delete rhopw_dev;
         delete wfcpw_exx;
+        delete wfcpw_exx_fullq;
     }
 }
 
@@ -566,7 +594,7 @@ void OperatorEXXPW<T, Device>::act_op_batch(const int nbands,
             const auto* qpoint = q_points[q_idx];
             const int iq_rep_spin = rep_spin_index(*qpoint, ispin);
             Real* pot_ik_iq = get_exx_potential_cached(local_kpoint, *qpoint);
-            const bool direct_batch_transform = qpoint->identity || qpoint->conjugate_only;
+            const bool direct_batch_transform = !full_q_cache_ready && (qpoint->identity || qpoint->conjugate_only);
 
             int batch_idx = 0;
             int local_band_index = 0;
@@ -1664,8 +1692,210 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::set_psi(psi::Psi<T, Device>& psi_in) const
 {
-    psi = psi_in;
     kpar_q_cache_ready = false;
+    set_psi_for_cache(psi_in);
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::set_psi_for_cache(const psi::Psi<T, Device>& psi_in) const
+{
+    psi = psi_in;
+    invalidate_full_q_cache();
+}
+
+template <typename T, typename Device>
+bool OperatorEXXPW<T, Device>::full_q_cache_active() const
+{
+    return full_q_cache_enabled && wfcpw_exx_fullq != nullptr;
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::setup_full_q_cache_basis(double ecut_exx, const std::string& exx_precision)
+{
+    full_q_cache_points.clear();
+    full_q_cache_index.clear();
+    full_q_cache_nspin = PARAM.inp.nspin == 2 ? 2 : 1;
+    full_q_cache_nq = 0;
+    full_q_cache_nbands = 0;
+    full_q_cache_npwk_max = 0;
+    full_q_cache_capacity = 0;
+    full_q_cache_enabled = false;
+    full_q_cache_ready = false;
+
+    if (!PARAM.inp.exx_full_q_cache || kv == nullptr || kv->exx_full_q_map.empty())
+    {
+        return;
+    }
+
+    int max_full_index = -1;
+    bool needs_full_q_cache = false;
+    for (const auto& qpoint: kv->exx_full_q_map)
+    {
+        if (!qpoint.active || qpoint.full_index < 0)
+        {
+            continue;
+        }
+        if (GlobalV::KPAR > 1 && qpoint.rep_pool != GlobalV::MY_POOL)
+        {
+            continue;
+        }
+        full_q_cache_points.push_back(&qpoint);
+        max_full_index = std::max(max_full_index, qpoint.full_index);
+        if (!qpoint.identity || qpoint.conjugate_only)
+        {
+            needs_full_q_cache = true;
+        }
+    }
+
+    full_q_cache_nq = static_cast<int>(full_q_cache_points.size());
+    if (!needs_full_q_cache || full_q_cache_nq == 0)
+    {
+        return;
+    }
+
+    full_q_cache_index.assign(static_cast<std::size_t>(max_full_index + 1), -1);
+    std::vector<ModuleBase::Vector3<double>> full_q_kvec_d;
+    full_q_kvec_d.reserve(full_q_cache_points.size());
+    for (std::size_t iq = 0; iq < full_q_cache_points.size(); ++iq)
+    {
+        const auto* qpoint = full_q_cache_points[iq];
+        full_q_cache_index[static_cast<std::size_t>(qpoint->full_index)] = static_cast<int>(iq);
+        full_q_kvec_d.push_back(qpoint->full_kvec_d);
+    }
+
+    wfcpw_exx_fullq = new ModulePW::PW_Basis_K(wfcpw->get_device(), exx_precision);
+    wfcpw_exx_fullq->fft_bundle.setfft(wfcpw->get_device(), exx_precision);
+#ifdef __MPI
+    wfcpw_exx_fullq->initmpi(wfcpw->poolnproc, wfcpw->poolrank, wfcpw->pool_world);
+#endif
+    wfcpw_exx_fullq->initgrids(wfcpw->lat0, wfcpw->latvec, ecut_exx);
+    wfcpw_exx_fullq->initparameters(wfcpw->gamma_only,
+                                    ecut_exx,
+                                    full_q_cache_nq,
+                                    full_q_kvec_d.data(),
+                                    wfcpw->distribution_type,
+                                    wfcpw->xprime);
+    wfcpw_exx_fullq->setuptransform();
+    wfcpw_exx_fullq->collect_local_pw();
+    if (wfcpw_exx_fullq->nrxx != wfcpw_exx->nrxx)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW::setup_full_q_cache_basis",
+                                 "full-q EXX basis real-space grid differs from the EXX work grid");
+    }
+
+    full_q_cache_npwk_max = wfcpw_exx_fullq->npwk_max;
+    full_q_cache_enabled = true;
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::invalidate_full_q_cache() const
+{
+    full_q_cache_ready = false;
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::ensure_full_q_cache_ready() const
+{
+    if (full_q_cache_active() && !full_q_cache_ready)
+    {
+        build_full_q_cache();
+    }
+}
+
+template <typename T, typename Device>
+std::size_t OperatorEXXPW<T, Device>::full_q_cache_offset(int ispin, int q_slot, int iband) const
+{
+    return ((static_cast<std::size_t>(ispin) * static_cast<std::size_t>(full_q_cache_nq)
+             + static_cast<std::size_t>(q_slot))
+                * static_cast<std::size_t>(full_q_cache_nbands)
+            + static_cast<std::size_t>(iband))
+           * static_cast<std::size_t>(full_q_cache_npwk_max);
+}
+
+template <typename T, typename Device>
+int OperatorEXXPW<T, Device>::full_q_cache_slot(const K_Vectors::ExxFullPoint& point) const
+{
+    if (!full_q_cache_active() || point.full_index < 0
+        || static_cast<std::size_t>(point.full_index) >= full_q_cache_index.size())
+    {
+        return -1;
+    }
+    return full_q_cache_index[static_cast<std::size_t>(point.full_index)];
+}
+
+template <typename T, typename Device>
+const T* OperatorEXXPW<T, Device>::full_q_cache_state(const K_Vectors::ExxFullPoint& point,
+                                                      int ispin,
+                                                      int iband) const
+{
+    if (!full_q_cache_ready)
+    {
+        return nullptr;
+    }
+    const int q_slot = full_q_cache_slot(point);
+    if (q_slot < 0 || ispin < 0 || ispin >= full_q_cache_nspin || iband < 0 || iband >= full_q_cache_nbands)
+    {
+        return nullptr;
+    }
+    return full_q_recip_cache + full_q_cache_offset(ispin, q_slot, iband);
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::build_full_q_cache() const
+{
+    if (!full_q_cache_active())
+    {
+        return;
+    }
+    if (psi.get_nbands() <= 0)
+    {
+        return;
+    }
+
+    ModuleBase::timer::start("OperatorEXXPW", "build_full_q_cache");
+    full_q_cache_nbands = psi.get_nbands();
+    full_q_cache_npwk_max = wfcpw_exx_fullq->npwk_max;
+    full_q_cache_capacity = static_cast<std::size_t>(full_q_cache_nspin)
+                            * static_cast<std::size_t>(full_q_cache_nq)
+                            * static_cast<std::size_t>(full_q_cache_nbands)
+                            * static_cast<std::size_t>(full_q_cache_npwk_max);
+    try
+    {
+        delmem_complex_op()(full_q_recip_cache);
+        full_q_recip_cache = nullptr;
+        resmem_complex_op()(full_q_recip_cache, full_q_cache_capacity);
+        resmem_complex_op()(full_q_cache_real_scratch, wfcpw_exx->nrxx);
+    }
+    catch (const std::bad_alloc&)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW::build_full_q_cache",
+                                 "failed to allocate EXX full-q cache; set exx_full_q_cache 0 to use the "
+                                 "memory-saving remap-on-demand path");
+    }
+    setmem_complex_op()(full_q_recip_cache, 0, full_q_cache_capacity);
+
+    for (int ispin = 0; ispin < full_q_cache_nspin; ++ispin)
+    {
+        for (int iq = 0; iq < full_q_cache_nq; ++iq)
+        {
+            const auto& qpoint = *full_q_cache_points[static_cast<std::size_t>(iq)];
+            ensure_full_point_supported(qpoint);
+            for (int iband = 0; iband < full_q_cache_nbands; ++iband)
+            {
+                load_full_point_real_uncached(qpoint, ispin, iband, full_q_cache_real_scratch);
+                wfcpw_exx_fullq->real_to_recip<Real, Device>(
+                    ctx,
+                    full_q_cache_real_scratch,
+                    full_q_recip_cache + full_q_cache_offset(ispin, iq, iband),
+                    iq,
+                    false,
+                    Real(1.0));
+            }
+        }
+    }
+
+    full_q_cache_ready = true;
+    ModuleBase::timer::end("OperatorEXXPW", "build_full_q_cache");
 }
 
 template <typename T, typename Device>
@@ -2153,6 +2383,24 @@ void OperatorEXXPW<T, Device>::load_full_point_real(const K_Vectors::ExxFullPoin
                                                     int iband,
                                                     T* out) const
 {
+    ensure_full_q_cache_ready();
+    const T* cached_state = full_q_cache_state(point, ispin, iband);
+    if (cached_state != nullptr)
+    {
+        const int q_slot = full_q_cache_slot(point);
+        wfcpw_exx_fullq->recip_to_real<Real, Device>(ctx, cached_state, out, q_slot, false, Real(1.0));
+        return;
+    }
+
+    load_full_point_real_uncached(point, ispin, iband, out);
+}
+
+template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::load_full_point_real_uncached(const K_Vectors::ExxFullPoint& point,
+                                                             int ispin,
+                                                             int iband,
+                                                             T* out) const
+{
     ensure_full_point_supported(point);
     const int point_rep_spin = rep_spin_index(point, ispin);
     const T* psi_point = get_pw(iband, point_rep_spin);
@@ -2220,6 +2468,7 @@ void OperatorEXXPW<T, Device>::load_full_point_real_batch(const K_Vectors::ExxFu
                                                           int batch_count,
                                                           T* out) const
 {
+    ensure_full_q_cache_ready();
     if (std::is_same<Device, base_device::DEVICE_CPU>::value)
     {
         for (int ib = 0; ib < batch_count; ++ib)
@@ -2227,6 +2476,37 @@ void OperatorEXXPW<T, Device>::load_full_point_real_batch(const K_Vectors::ExxFu
             load_full_point_real(point, ispin, band_indices[ib], out + static_cast<std::size_t>(ib) * wfcpw_exx->nrxx);
         }
         return;
+    }
+    if (full_q_cache_ready)
+    {
+        ensure_full_point_supported(point);
+        const int q_slot = full_q_cache_slot(point);
+        if (q_slot >= 0)
+        {
+            const bool direct_source = consecutive_integers(band_indices, batch_count);
+            if (direct_source)
+            {
+                const T* in_batch = full_q_recip_cache + full_q_cache_offset(ispin, q_slot, band_indices[0]);
+                wfcpw_exx_fullq->recip_to_real_batch<Real, Device>(ctx,
+                                                                   in_batch,
+                                                                   out,
+                                                                   q_slot,
+                                                                   batch_count,
+                                                                   false,
+                                                                   Real(1.0));
+            }
+            else
+            {
+                for (int ib = 0; ib < batch_count; ++ib)
+                {
+                    load_full_point_real(point,
+                                         ispin,
+                                         band_indices[ib],
+                                         out + static_cast<std::size_t>(ib) * wfcpw_exx->nrxx);
+                }
+            }
+            return;
+        }
     }
     ensure_full_point_supported(point);
     const int point_rep_spin = rep_spin_index(point, ispin);
@@ -2390,9 +2670,17 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
     this->isk = op->isk;
     this->wfcpw = op->wfcpw;
     this->wfcpw_exx = op->wfcpw_exx;
+    this->wfcpw_exx_fullq = op->wfcpw_exx_fullq;
     this->rhopw = op->rhopw;
     this->rhopw_dev = op->rhopw_dev;
     this->owns_exx_bases = false;
+    this->full_q_cache_enabled = op->full_q_cache_enabled;
+    this->full_q_cache_nspin = op->full_q_cache_nspin;
+    this->full_q_cache_nq = op->full_q_cache_nq;
+    this->full_q_cache_nbands = 0;
+    this->full_q_cache_npwk_max = op->full_q_cache_npwk_max;
+    this->full_q_cache_index = op->full_q_cache_index;
+    this->full_q_cache_points = op->full_q_cache_points;
     this->psi = op->psi;
     this->ctx = op->ctx;
     this->cpu_ctx = op->cpu_ctx;
@@ -2452,7 +2740,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     }
 
     const psi::Psi<T, Device> psi_saved = psi;
-    psi = *ppsi_;
+    set_psi_for_cache(*ppsi_);
 
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
@@ -2463,7 +2751,11 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-    if (wg == nullptr) return 0.0;
+    if (wg == nullptr)
+    {
+        set_psi_for_cache(psi_saved);
+        return 0.0;
+    }
     double Eexx_ik_real = 0.0;
     const int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     // K_Vectors::wk includes spin degeneracy for nspin=1, while the explicit
@@ -2587,7 +2879,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-    psi = psi_saved;
+    set_psi_for_cache(psi_saved);
     return Eexx_ik_real;
 }
 
@@ -2597,7 +2889,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
     ModuleBase::timer::start("OperatorEXXPW", "cal_exx_energy_batch");
 
     const psi::Psi<T, Device> psi_saved = psi;
-    psi = *ppsi_;
+    set_psi_for_cache(*ppsi_);
 
     setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
@@ -2608,7 +2900,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
 
     if (wg == nullptr)
     {
-        psi = psi_saved;
+        set_psi_for_cache(psi_saved);
         ModuleBase::timer::end("OperatorEXXPW", "cal_exx_energy_batch");
         return 0.0;
     }
@@ -2616,7 +2908,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
     const int batch_fft_size = this->get_batch_fft_size();
     if (batch_fft_size <= 1)
     {
-        psi = psi_saved;
+        set_psi_for_cache(psi_saved);
         ModuleBase::timer::end("OperatorEXXPW", "cal_exx_energy_batch");
         if (!std::is_same<Device, base_device::DEVICE_CPU>::value
             && !PARAM.inp.exx_debug_allow_legacy_gpu_paths)
@@ -2704,7 +2996,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
                     ensure_full_point_supported(*qpoint);
                     const int iq_rep_spin = rep_spin_index(*qpoint, ispin);
                     Real* pot_ik_iq = get_exx_potential_cached(*kpoint, *qpoint);
-                    const bool direct_batch_transform = qpoint->identity || qpoint->conjugate_only;
+                    const bool direct_batch_transform = !full_q_cache_ready
+                                                        && (qpoint->identity || qpoint->conjugate_only);
 
                     int batch_idx = 0;
                     int local_band_index = 0;
@@ -2797,7 +3090,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_batch(psi::Psi<T, Device> *ppsi_
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-    psi = psi_saved;
+    set_psi_for_cache(psi_saved);
     ModuleBase::timer::end("OperatorEXXPW", "cal_exx_energy_batch");
     return Eexx_ik_real;
 }
@@ -2815,7 +3108,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
     }
 
     const psi::Psi<T, Device> psi_saved = psi;
-    psi = *ppsi_;
+    set_psi_for_cache(*ppsi_);
 
     setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
@@ -2826,7 +3119,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
 
     if (wg == nullptr)
     {
-        psi = psi_saved;
+        set_psi_for_cache(psi_saved);
         ModuleBase::timer::end("OperatorEXXPW", "cal_exx_energy_qtile");
         return 0.0;
     }
@@ -2968,7 +3261,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op_qtile(psi::Psi<T, Device> *pp
     setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-    psi = psi_saved;
+    set_psi_for_cache(psi_saved);
     ModuleBase::timer::end("OperatorEXXPW", "cal_exx_energy_qtile");
     return Eexx_ik_real;
 }

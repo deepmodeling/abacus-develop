@@ -1448,6 +1448,14 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_symmetry_realspace, false);
     }
+    { // exx_full_q_cache
+        auto it = find_label("exx_full_q_cache", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(it->second.default_value, "True");
+        it->second.str_values = {"0"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.exx_full_q_cache, false);
+    }
     { // rpa_ccp_rmesh_times
         auto it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
         param.input.rpa_ccp_rmesh_times = 0;
