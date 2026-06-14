@@ -1,7 +1,20 @@
 #include "restart.h"
 
 #include <fcntl.h>
+#include <sys/stat.h>
+#ifdef _WIN32
+#include <io.h> // open/read/write/close (_open ...) on Windows
+// The POSIX owner-permission bits are not defined by the Windows CRT; map them
+// to the MSVCRT read/write mode bits so open(..., O_CREAT, mode) still works.
+#ifndef S_IRUSR
+#define S_IRUSR _S_IREAD
+#endif
+#ifndef S_IWUSR
+#define S_IWUSR _S_IWRITE
+#endif
+#else
 #include <unistd.h>
+#endif
 
 #include <fstream>
 #include <stdexcept>

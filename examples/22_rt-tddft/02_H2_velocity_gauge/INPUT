@@ -20,7 +20,7 @@ smearing_method      gauss
 
 #Parameters (5.MD Parameters)
 md_type              nve
-md_nstep             1000
+md_nstep             5
 md_dt                0.005
 md_tfirst            0
 
@@ -45,6 +45,9 @@ td_gauss_amp         0.01 0.01
 out_chg              1
 out_efield           1
 out_dipole           1
+
+out_elf              1
+out_freq_ion         0
 
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.

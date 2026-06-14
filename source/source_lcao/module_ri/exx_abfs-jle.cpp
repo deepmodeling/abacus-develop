@@ -9,7 +9,7 @@
 
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
 Exx_Abfs::Jle::init_jle(
-	const Exx_Info::Exx_Info_Opt_ABFs &info,
+	const Exx_Info_Opt_ABFs &info,
 	const double kmesh_times, 
 	const UnitCell& ucell,
 	const LCAO_Orbitals& orb)

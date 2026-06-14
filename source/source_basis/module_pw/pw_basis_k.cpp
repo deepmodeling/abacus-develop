@@ -1,10 +1,9 @@
 #include "pw_basis_k.h"
 
 #include "source_base/constants.h"
-#include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <utility>
 namespace ModulePW
@@ -157,7 +156,6 @@ void PW_Basis_K::setupIndGk()
         }
         ModuleBase::CHECK_WARNING_QUIT((ng == 0),
                                        "pw_basis_k.cpp",
-                                       PARAM.inp.calculation,
                                        no_pw_message);
         if (this->npwk_max < ng)
         {
@@ -216,7 +214,7 @@ void PW_Basis_K::setuptransform()
     std::string fft_device = this->device;
 #if defined(__DSP)
     fft_device = "dsp";
-    this->fft_bundle.set_dsp_cluster_id(GlobalV::MY_RANK % PARAM.inp.dsp_count);
+    this->fft_bundle.set_dsp_cluster_id(base_device::memory::get_dsp_cluster_id());
 #endif
     this->fft_bundle.setfft(fft_device, this->precision);
     if (this->xprime)

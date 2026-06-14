@@ -151,8 +151,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
-    // since it depends on ionic positions
-    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    // since it depends on ionic positions.
+    // overlap_orb_alpha is only built when DeePKS is enabled (descriptor
+    // orbitals); guard the dereference so non-DeePKS runs don't form a
+    // reference from a null unique_ptr (undefined behaviour).
+    if (two_center_bundle_.overlap_orb_alpha)
+    {
+        this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    }
 
     // 10) prepare sc calculation
     init_deltaspin_lcao<TK>(ucell, PARAM.inp, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
@@ -195,7 +201,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->dmat.dm->cal_DMR();
     }
     // 13.2) init_scf, should be before_scf? mohan add 2025-03-10
-    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric,
+                          istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
