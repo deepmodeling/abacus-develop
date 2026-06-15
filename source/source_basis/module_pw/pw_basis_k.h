@@ -57,7 +57,11 @@ class PW_Basis_K : public PW_Basis
 
 public:
     PW_Basis_K();
-    PW_Basis_K(std::string device_, std::string precision_) : PW_Basis(device_, precision_) {classname="PW_Basis_K";}
+    PW_Basis_K(std::string device_, std::string precision_) : PW_Basis(device_, precision_)
+    {
+        classname = "PW_Basis_K";
+        this->fft_bundle.setfft(this->device, this->precision);
+    }
     ~PW_Basis_K();
 
     //init parameters of pw_basis_k class
