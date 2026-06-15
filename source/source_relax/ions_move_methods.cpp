@@ -63,18 +63,19 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     ModuleBase::TITLE("Ions_Move_Methods", "init");
     if (Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] != "1")
     {
-        // move_ions
-        // output tau
-        // check all symmery
-        converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs);
+        converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
+    }
+    else if (Ions_Move_Basic::relax_method[0] == "sd")
+    {
+        converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
     else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs); // added by pengfei 13-8-10
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
     else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
     {

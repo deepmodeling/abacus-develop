@@ -110,14 +110,15 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos, std
     return;
 }
 
-bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs)
+bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
 
-    //------------------------------------------------
-    // check the gradient value
-    //------------------------------------------------
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+
     Ions_Move_Basic::largest_grad = 0.0;
     for (int i = 0; i < dim; i++)
     {
@@ -126,20 +127,21 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
             Ions_Move_Basic::largest_grad = std::abs(grad[i]);
         }
     }
-    // mohan add 2010-08-06
     Ions_Move_Basic::largest_grad /= ucell.lat0;
 
     if (PARAM.inp.test_relax_method)
     {
-        ModuleBase::GlobalFunc::OUT(ofs, "old total energy (ry)", etot_p);
-        ModuleBase::GlobalFunc::OUT(ofs, "new total energy (ry)", etot);
-        ModuleBase::GlobalFunc::OUT(ofs, "energy difference (ry)", Ions_Move_Basic::ediff);
+        ModuleBase::GlobalFunc::OUT(ofs, "old total energy (ry)", etot_info[1]);
+        ModuleBase::GlobalFunc::OUT(ofs, "new total energy (ry)", etot_info[0]);
+        const double ediff = etot_info[0] - etot_info[1];
+        ModuleBase::GlobalFunc::OUT(ofs, "energy difference (ry)", ediff);
         ModuleBase::GlobalFunc::OUT(ofs, "largest gradient (ry/bohr)", Ions_Move_Basic::largest_grad);
     }
 
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
+        const double ediff = etot_info[0] - etot_info[1];
+        std::cout << " ETOT DIFF (eV)       : " << ediff * ModuleBase::Ry_to_eV << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
 		<< Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                 << std::endl;
@@ -149,10 +151,9 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
         << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     }
 
-    const double etot_diff = std::abs(Ions_Move_Basic::ediff);
+    const double etot_diff = std::abs(etot_info[0] - etot_info[1]);
 
-    // need to update, mohan 2010-07-10
-    const double etot_thr = 1.0e-3; // Rydeberg.
+    const double etot_thr = 1.0e-3;
 
     if (Ions_Move_Basic::largest_grad == 0.0)
     {
@@ -160,7 +161,6 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
         ofs << " it may converged, otherwise no movement of atom is allowed." << std::endl;
         return true;
     }
-    // mohan update 2011-04-21
     else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < PARAM.inp.force_thr )
     {
         ofs << "\n Ion relaxation is converged!" << std::endl;
@@ -173,8 +173,6 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
     {
         ofs << "\n Ion relaxation is not converged yet (threshold is "
                              << PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << ")" << std::endl;
-        // std::cout << "\n etot_diff=" << etot_diff << " etot_thr=" << etot_thr
-        //<< " largest_grad=" << largest_grad << " force_thr=" << PARAM.inp.force_thr  << std::endl;
         return false;
     }
 }
@@ -213,44 +211,26 @@ void Ions_Move_Basic::terminate(const bool converged, const int update_iter, con
     return;
 }
 
-void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement, const int istep)
+void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement, const int istep, std::ofstream& ofs, std::vector<double>& etot_info)
 {
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+
     if (istep == 1)
     {
-        // p == previous
-        Ions_Move_Basic::etot_p = energy_in;
-        Ions_Move_Basic::etot = energy_in;
-        ediff = etot - etot_p;
+        etot_info[1] = energy_in;
+        etot_info[0] = energy_in;
     }
     else
     {
-        // mohan modify 2010-07-10
-        // mohan modify again 2010-07-25
-        if (judgement) // for sd
+        etot_info[1] = etot_info[0];
+        etot_info[0] = energy_in;
+        if (etot_info[1] > etot_info[0])
         {
-            Ions_Move_Basic::etot = energy_in;
-            if (Ions_Move_Basic::etot_p > etot)
-            {
-                ediff = etot - etot_p;
-                Ions_Move_Basic::etot_p = etot;
-            }
-            else
-            {
-                // this step will not be accepted
-                ediff = 0.0;
-            }
-        }
-        // note: the equlibrium point is not
-        // need to be the smallest energy point.
-        else // for bfgs
-        {
-            Ions_Move_Basic::etot_p = etot;
-            Ions_Move_Basic::etot = energy_in;
-            ediff = etot - etot_p;
+            etot_info[1] = etot_info[0];
         }
     }
-
-    return;
 }
 
 double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)

@@ -18,12 +18,8 @@
  */
 namespace Ions_Move_Basic
 {
-// Shared state variables (referenced from Relax_Data for unified data sharing)
 static int& dim = Relax_Data::dim;              ///< Dimension of free variables (3 * number of atoms)
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
-static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
-static double& etot = Relax_Data::etot;         ///< Total energy of current step
-static double& etot_p = Relax_Data::etot_p;     ///< Total energy of previous step
 
 // Ions-specific parameters (not shared with lattice change)
 extern double trust_radius;          ///< Current trust radius
@@ -60,9 +56,10 @@ void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
  * @param grad Gradient array (dimension: dim)
  * @param update_iter Number of successfully updated iterations (will be incremented if converged)
  * @param ofs Output stream for logging
+ * @param etot_info Energy information array [etot, etot_p, ediff]
  * @return true if converged, false otherwise
  */
-bool check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs);
+bool check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
 
 /**
  * @brief Terminate geometry optimization and output results.
@@ -79,8 +76,9 @@ void terminate(const bool converged, const int update_iter, const UnitCell &ucel
  * @param energy_in Input energy value
  * @param judgement Flag for SD method (true) or BFGS (false)
  * @param istep Current ionic step index
+ * @param etot_info Energy information array [etot, etot_p, ediff]
  */
-void setup_etot(const double &energy_in, const bool judgement, const int istep);
+void setup_etot(const double &energy_in, const bool judgement, const int istep, std::ofstream& ofs, std::vector<double>& etot_info);
 
 /**
  * @brief Compute dot product of two vectors.

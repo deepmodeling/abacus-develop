@@ -72,10 +72,11 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
 
     // call function
     std::ofstream ofs("test_sd_start_converged.log");
-    im_sd.start(ucell, force, etot, istep, update_iter, ofs);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
     ofs.close();
 
     // Check output
@@ -111,6 +112,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
     for (int it = 0; it < ucell.ntype; it++)
     {
         Atom* atom = &ucell.atoms[it];
@@ -126,7 +128,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_not_converged.log");
-    im_sd.start(ucell, force, etot, istep, update_iter, ofs);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
     ofs.close();
 
     // Check output
@@ -161,10 +163,11 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
     // setup data
     const int istep = 1;
     PARAM.input.out_level = "ie";
+    std::vector<double> etot_info(2, 0.0);
 
     // call function
     testing::internal::CaptureStdout();
-    im_sd.cal_tradius_sd(istep);
+    im_sd.cal_tradius_sd(istep, etot_info);
     std::string std_outout = testing::internal::GetCapturedStdout();
 
     // Check the results
@@ -178,11 +181,11 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 {
     // setup data
     const int istep = 2;
-    Ions_Move_Basic::ediff = -1.0;
+    std::vector<double> etot_info = {0.0, 1.0};
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep);
+    im_sd.cal_tradius_sd(istep, etot_info);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -193,11 +196,11 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 {
     // setup data
     const int istep = 2;
-    Ions_Move_Basic::ediff = 1.0;
+    std::vector<double> etot_info = {1.0, 0.0};
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep);
+    im_sd.cal_tradius_sd(istep, etot_info);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -208,10 +211,11 @@ TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 {
     // setup data
     const int istep = 0;
+    std::vector<double> etot_info(2, 0.0);
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(istep), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(im_sd.cal_tradius_sd(istep, etot_info), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

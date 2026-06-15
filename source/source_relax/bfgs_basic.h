@@ -25,7 +25,7 @@ class BFGS_Basic
 
   protected:
     void allocate_basic(void);
-    void new_step(const double& lat0, int& update_iter, std::ofstream& ofs);
+    void new_step(const double& lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
     void reset_hessian(void);
     void save_bfgs(void);
 
@@ -56,8 +56,8 @@ class BFGS_Basic
     int bfgs_ndim;
 
     void update_inverse_hessian(const double& lat0, std::ofstream& ofs);
-    void check_wolfe_conditions(std::ofstream& ofs);
-    void compute_trust_radius(std::ofstream& ofs);
+    void check_wolfe_conditions(std::ofstream& ofs, std::vector<double>& etot_info);
+    void compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info);
 };
 
 #endif

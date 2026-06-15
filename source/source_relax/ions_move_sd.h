@@ -14,14 +14,14 @@ class Ions_Move_SD
     ~Ions_Move_SD() = default;
 
     void allocate(void);
-    bool start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot, const int istep, int& update_iter, std::ofstream& ofs);
+    bool start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
 
   private:
     double energy_saved;
     std::vector<double> pos_saved;
     std::vector<double> grad_saved;
 
-    void cal_tradius_sd(const int istep) const;
+    void cal_tradius_sd(const int istep, std::vector<double>& etot_info) const;
 };
 
 #endif

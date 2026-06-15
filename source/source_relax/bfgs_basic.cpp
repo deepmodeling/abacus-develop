@@ -96,22 +96,31 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream& ofs)
     return;
 }
 
-void BFGS_Basic::check_wolfe_conditions(std::ofstream& ofs)
+void BFGS_Basic::check_wolfe_conditions(std::ofstream& ofs, std::vector<double>& etot_info)
 {
     double dot_p = dot_func(grad_p.data(), move_p.data(), dim);
     double dot = dot_func(grad.data(), move_p.data(), dim);
 
-    // if the total energy falls rapidly, enlarge the trust radius.
-    bool wolfe1 = (etot - etot_p) < this->relax_bfgs_w1 * dot_p;
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+    const double ediff = etot_info[0] - etot_info[1];
 
-    // if the force is still very large, enlarge the trust radius,
-    // otherwise the dot should be very small, in this case,
-    // enlarge trst radius is not good.
+    bool wolfe1 = ediff < this->relax_bfgs_w1 * dot_p;
+
     bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
 
     this->wolfe_flag = wolfe1 && wolfe2;
 
-    ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", etot - etot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", ediff);
+    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "dot", dot);
+    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2 * dot_p", relax_bfgs_w2 * dot_p);
+    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1", relax_bfgs_w1);
+    ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2", relax_bfgs_w2);
+    ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
+    ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
+    ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", ediff);
     ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
@@ -149,7 +158,7 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs)
+void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -177,7 +186,7 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
     }
     else if (update_iter > 1)
     {
-        this->check_wolfe_conditions(ofs);
+        this->check_wolfe_conditions(ofs, etot_info);
         this->update_inverse_hessian(lat0, ofs);
     }
 
@@ -239,7 +248,7 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
     else if (update_iter > 1)
     {
         trust_radius = trust_radius_old;
-        this->compute_trust_radius(ofs);
+        this->compute_trust_radius(ofs, etot_info);
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
     return;
@@ -247,13 +256,18 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
 
 // trust radius is computed in this function
 // trust radius determine the step length
-void BFGS_Basic::compute_trust_radius(std::ofstream& ofs)
+void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+    const double ediff = etot_info[0] - etot_info[1];
+
     // (1) judge 1
     double dot = dot_func(grad_p.data(), move_p.data(), dim);
-    bool ltest = (etot - etot_p) < this->relax_bfgs_w1 * dot;
+    bool ltest = ediff < this->relax_bfgs_w1 * dot;
 
     // (2) judge 2
     // calculate the norm of move, which

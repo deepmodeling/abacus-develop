@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include "ions_move_basic.h"
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
@@ -17,7 +18,6 @@ class Ions_Move_Methods
     ~Ions_Move_Methods();
 
     void allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1);
-    // void cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot);
     void cal_movement(const int &istep,
                       const int &force_step,
                       const ModuleBase::matrix &f,
@@ -32,7 +32,7 @@ class Ions_Move_Methods
 
     double get_ediff() const
     {
-        return Ions_Move_Basic::ediff;
+        return etot_info_[0] - etot_info_[1];
     }
     double get_largest_grad() const
     {
@@ -55,5 +55,6 @@ class Ions_Move_Methods
     Ions_Move_LBFGS lbfgs;
     bool converged_ = false;
     int update_iter_ = 0;
+    std::vector<double> etot_info_{2, 0.0}; // [etot, etot_p]
 };
 #endif

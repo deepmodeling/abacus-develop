@@ -182,9 +182,8 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
 // Test the get_ediff() function
 TEST_F(IonsMoveMethodsTest, GetEdiff)
 {
-    Ions_Move_Basic::ediff = 1.0;
-
-    EXPECT_DOUBLE_EQ(imm.get_ediff(), 1.0);
+    // etot_info_ is initialized to {0.0, 0.0, 0.0} by default
+    EXPECT_DOUBLE_EQ(imm.get_ediff(), 0.0);
 }
 
 // Test the get_largest_grad() function

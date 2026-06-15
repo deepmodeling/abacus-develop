@@ -37,13 +37,10 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
-bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs)
+bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
-    // use force to setup gradient.
-    // Only the first step needs to generate the pos from ucell.
-    // In the following steps, the pos is updated by BFGS methods.
     if (first_step)
     {
         Ions_Move_Basic::setup_gradient(ucell, force, this->pos.data(), this->grad.data(), ofs);
@@ -54,11 +51,8 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         std::vector<double> pos_tmp(3 * ucell.nat);
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data(), ofs);
     }
-    // use energy_in and istep to setup etot and etot_old.
-    Ions_Move_Basic::setup_etot(energy_in, false, istep);
-    // use gradient and etot and etot_old to check
-    // if the result is converged.
-    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs);
+    Ions_Move_Basic::setup_etot(energy_in, false, istep, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs, etot_info);
 
     if (converged)
     {
@@ -67,23 +61,8 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     }
     else
     {
-        // [ if new step ]
-        // reset trust_radius_old.
-        // [ if run from previous saved info ]
-        // the BFGS file is read from previous run.
-        // and the move_p is renormalized.
         this->restart_bfgs(ucell.lat0, update_iter, ofs);
-
-        //[ if etot>etot_p ]
-        // interpolation
-        //[ if etot<etot_p ]
-        // calculate the new step -> the new move using hessian
-        // matrix, and set the new trust radius.
-        // [compute the move at last]
-        this->bfgs_routine(ucell.lat0, istep, update_iter, ofs);
-
-        // get prepared for the next try.
-        // even if the energy is higher, we save the information.
+        this->bfgs_routine(ucell.lat0, istep, update_iter, ofs, etot_info);
         this->save_bfgs();
 
         Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
@@ -167,63 +146,27 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofs
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& update_iter, std::ofstream& ofs)
+void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;
 
-    // the bfgs algorithm starts here
-    if (etot > etot_p)
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+
+    if (etot_info[0] > etot_info[1])
     {
-        // the previous step is rejected, line search goes on
-        // we believe that we are in a correct direction, what we should do
-        // in this case is to find a better step length until it is accepted
-
-        // s: trust_radius
-        // s': trust_radius_old
-        // assume: E(s) = a*s*s + b*s + c( we use E(0), dE(0), E(s') )
-        // E(s') = etot
-
-        //-------------------------------------------
-        // E(0) = etot_p
-        // ==> c = etot_p
-
-        //-------------------------------------------
-        // Let's see how to calculate b.
-        // dE(s) = (2*a*s + b) * ds
-        // ==> dE(0) = b * ds
-        // b = dE(0)/ds = grad_p
-
-        //-------------------------------------------
-        // Let's see how to calculate s.
-        // dE(s)/ds = 2a*s + b = 0;
-        // ==> s = - 0.5 * b / a
-
-        //-------------------------------------------
-        // Let's see how to calculate a:
-        // E(s') = a*s'*s' + b*s' + etot_p = etot
-        // ==> a*s'*s' = etot-etot_p-b*s'
-
-        //-------------------------------------------
-        // Let's see how to calculate final trust_radius
-        // s = -0.5 * b / a = -0.5 * (b*s'*s') / (etot-etot_p-b*s')
-        // s_min = - 0.5 * ( dE(0)*s'*s' ) / ( E(s') - E(0) - dE(0)*s' )
-
-        // just like how we estimate the step length in CG
-        // dE0s : b*y = averaged_grad * trust_radius_old
         double dE0s = 0.0;
         for (int i = 0; i < dim; i++)
         {
-            // because dE(s)/dR(move_p) = Force(grad)
-            // so dE = dR * grad
             dE0s += this->grad_p[i] * this->move_p[i];
         }
 
-        double den = etot - etot_p - dE0s;
+        double den = etot_info[0] - etot_info[1] - dE0s;
 
         if (den > 1.0e-16)
         {
-            // get optimized trust radius
             trust_radius = -0.5 * dE0s * trust_radius_old / den;
 
             if (PARAM.inp.test_relax_method)
@@ -232,19 +175,14 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
                 ModuleBase::GlobalFunc::OUT(ofs, "den", den);
                 ModuleBase::GlobalFunc::OUT(ofs, "interpolated trust radius", trust_radius);
             }
-            // std::cout << " Formula : " << etot << " * s^2 + " << dE0s << " * s + " << etot_p << std::endl;
-            // std::cout << " Lowest point : " << trust_radius << std::endl;
         }
         else if (den <= 1.0e-16)
         {
-            // no quadratic interpolation is possible
-            // then do is again, but smaller raidus.
             trust_radius = 0.5 * trust_radius_old;
-
             ofs << " quadratic interpolation is impossible." << std::endl;
         }
-        // values from the last succeseful bfgs step are restored
-        etot = etot_p;
+
+        etot_info[0] = etot_info[1];
         for (int i = 0; i < dim; i++)
         {
             this->pos[i] = pos_p[i];
@@ -253,19 +191,13 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
 
         if (trust_radius < relax_bfgs_rmin)
         {
-            // we are trapped in this case..., so the algorithim must be restart
-            // the history is reset
-            // xiaohui add 2013-03-17
             ofs << "trust_radius = " << trust_radius << std::endl;
             ofs << "relax_bfgs_rmin = " << relax_bfgs_rmin << std::endl;
             ofs << "relax_bfgs_rmax = " << relax_bfgs_rmax << std::endl;
-            // xiaohui add 2013-03-17
             ofs << " trust_radius < relax_bfgs_rmin, reset bfgs history." << std::endl;
 
             if (tr_min_hit)
             {
-                // the history has already been reset at the previous step
-                // something is going wrong
                 ModuleBase::WARNING_QUIT("move_ions", "trust radius is too small! Break down.");
             }
 
@@ -277,12 +209,10 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
             }
 
             trust_radius = relax_bfgs_rmin;
-
             tr_min_hit = true;
         }
         else if (trust_radius >= relax_bfgs_rmin)
         {
-            // old bfgs direction ( normalized ) is recovered
             for (int i = 0; i < dim; i++)
             {
                 this->move[i] = this->move_p[i] / trust_radius_old;
@@ -290,9 +220,9 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
             tr_min_hit = false;
         }
     }
-    else if (etot <= etot_p)
+    else if (etot_info[0] <= etot_info[1])
     {
-        this->new_step(lat0, update_iter, ofs);
+        this->new_step(lat0, update_iter, ofs, etot_info);
     }
 
     if (PARAM.inp.out_level == "ie")

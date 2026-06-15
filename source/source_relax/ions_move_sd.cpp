@@ -20,7 +20,7 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, int& update_iter, std::ofstream& ofs)
+bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -32,10 +32,8 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     std::vector<double> grad(dim, 0.0);
     std::vector<double> move(dim, 0.0);
 
-    // 1: ediff = 0
-    // 0: ediff < 0
     bool judgement = false;
-    Ions_Move_Basic::setup_etot(etot_in, judgement, istep);
+    Ions_Move_Basic::setup_etot(etot_in, judgement, istep, ofs, etot_info);
     Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
 
     if (istep == 1 || etot_in <= energy_saved)
@@ -51,8 +49,6 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         {
             grad_saved[i] = grad[i];
         }
-        // normalize the gradient, in convinience to
-        // move atom.
         double norm = dot_func(grad_saved.data(), grad_saved.data(), dim);
         norm = sqrt(norm);
         for (int i = 0; i < dim; i++)
@@ -61,7 +57,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info);
     if (converged)
     {
         Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
@@ -69,7 +65,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     }
     else
     {
-        this->cal_tradius_sd(istep);
+        this->cal_tradius_sd(istep, etot_info);
         for (int i = 0; i < dim; i++)
         {
             move[i] = -grad_saved[i] * trust_radius;
@@ -80,7 +76,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     }
 }
 
-void Ions_Move_SD::cal_tradius_sd(const int istep) const
+void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_info) const
 {
     static int accepted_number = 0;
 
@@ -90,7 +86,8 @@ void Ions_Move_SD::cal_tradius_sd(const int istep) const
     }
     else if (istep > 1)
     {
-        if (Ions_Move_Basic::ediff < 0.0)
+        const double ediff = etot_info[0] - etot_info[1];
+        if (ediff < 0.0)
         {
             accepted_number++;
             if (accepted_number > 3 && accepted_number % 3 == 1)
@@ -98,7 +95,7 @@ void Ions_Move_SD::cal_tradius_sd(const int istep) const
                 Ions_Move_Basic::trust_radius *= 1.5;
             }
         }
-        else if (Ions_Move_Basic::ediff >= 0.0) // == 0 means no accept!
+        else if (ediff >= 0.0)
         {
             accepted_number = 0;
             Ions_Move_Basic::trust_radius *= 0.5;
