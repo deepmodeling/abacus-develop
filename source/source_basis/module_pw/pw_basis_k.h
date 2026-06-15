@@ -60,7 +60,6 @@ public:
     PW_Basis_K(std::string device_, std::string precision_) : PW_Basis(device_, precision_)
     {
         classname = "PW_Basis_K";
-        this->fft_bundle.setfft(this->device, this->precision);
     }
     ~PW_Basis_K();
 
