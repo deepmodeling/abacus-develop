@@ -18,8 +18,6 @@ class Ions_Move_CG : public CG_Base
     bool start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method);
 
     static double RELAX_CG_THR;
-    int sd_step = 0;
-    int cg_step = 0;
 
   private:
     std::vector<double> pos0;
