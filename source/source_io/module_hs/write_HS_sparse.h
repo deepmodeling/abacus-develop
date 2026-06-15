@@ -25,7 +25,8 @@ void save_sparse(const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::
                  const Parallel_Orbitals& pv,
                  const std::string& label,
                  const int& istep = -1,
-                 const bool& reduce = true);
+                 const bool& reduce = true,
+                 const int& matrix_dimension = -1);
 } // namespace ModuleIO
 
 #endif
