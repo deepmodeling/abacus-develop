@@ -23,6 +23,20 @@ class Lattice_Change_CG : public CG_Base
     std::vector<double> cg_grad0;
     std::vector<double> move0;
     double e0 = 0.0;
+
+    bool sd = false;
+    bool trial = false;
+    int ncggrad = 0;
+    int nbrent = 0;
+    double fa = 0.0;
+    double fb = 0.0;
+    double fc = 0.0;
+    double xa = 0.0;
+    double xb = 0.0;
+    double xc = 0.0;
+    double xpt = 0.0;
+    double steplength = 0.0;
+    double fmax = 0.0;
 };
 
 #endif
