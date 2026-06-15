@@ -176,7 +176,7 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
                           PARAM.globalv.deepks_setorb,
                           GlobalV::MY_RANK);
 
-    if (Ions_Move_Basic::out_stru)
+    if (PARAM.inp.out_stru)
     {
         ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
         ss1 << istep << "_D";
