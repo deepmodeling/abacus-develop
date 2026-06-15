@@ -154,8 +154,8 @@ void OperatorEXXPW<T, Device>::construct_ace() const
             setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-            setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-            setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
+            setmem_complex_op()(psi_nk_real, 0, wfcpw_exx->nrxx);
+            setmem_complex_op()(psi_mq_real, 0, wfcpw_exx->nrxx);
 
             bool skip_ik = false;
             if (ik >= wfcpw->nks)
@@ -211,7 +211,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                                 load_full_point_real(qpoint, ispin, m_iband, psi_mq_real);
                             }
 #ifdef __MPI
-                            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
+                            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw_exx->nrxx, KP_WORLD, iq_pool);
 #endif
 
                         } // end of band
