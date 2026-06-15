@@ -307,6 +307,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.kv = &kv;
         dh_params.v_eff = &pelec->pot->get_eff_v();
         dh_params.pot = pelec->pot;
+        dh_params.chg = pelec->charge;
         // pelec->pot->get_eff_v() is the SUM V^L + V^H + V^XC; feeding it to cal_dH would
         // give the wrong potential for the separated V^L / V^H / V^XC outputs. Build one
         // dedicated Potential per term with exactly one component registered (see write_vxc.hpp).

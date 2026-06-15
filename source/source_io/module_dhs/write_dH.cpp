@@ -160,6 +160,7 @@ void write_dH_components(WriteDHParams& params)
     if (PARAM.inp.out_mat_dh_vxc[0])
     {
         write_dH_vxc(params);
+        write_dH_vxc_pulay(params);
     }
 
     if (PARAM.inp.out_mat_dh[0] && any_dh_term_enabled())

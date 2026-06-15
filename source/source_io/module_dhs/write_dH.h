@@ -43,6 +43,7 @@ struct WriteDHParams
     bool append = false;
     bool also_dhR = false; // whether to write the real-space dH(R) in addition to the k-space dH(k)
     const hamilt::HContainer<double>* dmR = nullptr;
+    const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
 #ifdef __EXX
     // gamma (TK==double) exx interfaces used by write_dH_exx; exactly one is set depending on
     // GlobalC::exx_info.info_ri.real_number (exd: real Hexx, exc: complex Hexx).
@@ -78,6 +79,8 @@ bool write_dH_vh(WriteDHParams& params);
 bool write_dH_vh_pulay(WriteDHParams& params);
 
 bool write_dH_vxc(WriteDHParams& params);
+
+bool write_dH_vxc_pulay(WriteDHParams& params);
 
 bool write_dH_sum(WriteDHParams& params);
 

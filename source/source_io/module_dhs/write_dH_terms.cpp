@@ -8,14 +8,21 @@
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/operator_force_stress_utils.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
+#include "source_lcao/module_gint/gint_interface.h"
+#include "source_lcao/module_lr/utils/lr_util_xc.hpp"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
 #include "write_dH.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/Exx_LRI_interface.hpp"
 #endif
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ModuleIO
 {
@@ -46,6 +53,59 @@ struct PerIContainers
     }
 };
 
+#ifdef __DEBUG
+// Self-validation for cal_gint_drho (otherwise untested). For a symmetric DM the product rule
+// gives  grad(rho) = sum_{K,L} D[K,L]( (grad phi_K) phi_L + phi_K (grad phi_L) )
+//                  = 2 * sum_{K,L} D[K,L] (grad phi_K) phi_L = 2 * cal_gint_drho(D).
+// We compare 2*cal_gint_drho(D) against the FFT gradient of cal_gint_rho(D) (same density,
+// independent operator) and log the max relative deviation under a grep-able key so the
+// integrate harness can assert it stays ~0. Cheap: one rho + one drho + one FFT grad.
+void validate_gint_drho(const UnitCell& ucell,
+                        elecstate::Potential* pot,
+                        const hamilt::HContainer<double>* dmR)
+{
+    if (dmR == nullptr)
+        return;
+    const ModulePW::PW_Basis* rho_basis = pot->get_rho_basis();
+    const int nrxx = rho_basis->nrxx;
+    std::vector<hamilt::HContainer<double>*> dm_vec = {const_cast<hamilt::HContainer<double>*>(dmR)};
+
+    // rho via Gint
+    std::vector<double> rho(nrxx, 0.0);
+    double* rho_p[1] = {rho.data()};
+    ModuleGint::cal_gint_rho(dm_vec, 1, rho_p, false);
+
+    // grad rho via FFT
+    std::vector<ModuleBase::Vector3<double>> gradrho(nrxx);
+    LR_Util::grad(rho.data(), gradrho.data(), *rho_basis, ucell.tpiba);
+
+    // drho via Gint (gradient on the first/row orbital)
+    std::vector<double> dx(nrxx, 0.0), dy(nrxx, 0.0), dz(nrxx, 0.0);
+    double* dxp[1] = {dx.data()};
+    double* dyp[1] = {dy.data()};
+    double* dzp[1] = {dz.data()};
+    ModuleGint::cal_gint_drho(dm_vec, 1, dxp, dyp, dzp);
+
+    double maxdev = 0.0, maxref = 0.0;
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        const double r[3] = {2.0 * dx[ir], 2.0 * dy[ir], 2.0 * dz[ir]};
+        const double g[3] = {gradrho[ir].x, gradrho[ir].y, gradrho[ir].z};
+        for (int d = 0; d < 3; ++d)
+        {
+            maxdev = std::max(maxdev, std::abs(r[d] - g[d]));
+            maxref = std::max(maxref, std::abs(g[d]));
+        }
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_all(maxdev);
+    Parallel_Reduce::reduce_all(maxref);
+#endif
+    const double reldev = (maxref > 1e-30) ? (maxdev / maxref) : maxdev;
+    GlobalV::ofs_running << " GINT_DRHO_MAXDEV_REL " << reldev << std::endl;
+}
+#endif
+
 // Shared driver for the Veff-based terms (V^L, V^H, V^XC), which differ only in the
 // Hellmann-Feynman type passed to Veff::cal_dH and in the output prefixes/label.
 bool write_dH_veff_term(WriteDHParams& params,
@@ -62,6 +122,12 @@ bool write_dH_veff_term(WriteDHParams& params,
     const int nat = ucell.nat;
     const int nspin = params.nspin;
 
+#ifdef __DEBUG
+    // Validate cal_gint_drho once (it underpins the V^H Hellmann-Feynman term).
+    if (hf_type == "hartree")
+        validate_gint_drho(ucell, pot, params.dmR);
+#endif
+
     for (int ispin = 0; ispin < (nspin == 2 ? 2 : 1); ispin++)
     {
         hamilt::HContainer<double> hR_dummy(const_cast<Parallel_Orbitals*>(&pv));
@@ -77,7 +143,7 @@ bool write_dH_veff_term(WriteDHParams& params,
 
         PerIContainers c(pv, nat);
 
-        veff.cal_dH(c.g, hf_type, params.dmR);
+        veff.cal_dH(c.g, hf_type, params.dmR, params.chg);
 
         ModuleIO::write_dh_perI(params, ispin, rprefix, kprefix, label, c.g);
     }
@@ -227,9 +293,22 @@ bool write_dH_vxc(WriteDHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_dH_vxc");
     ModuleBase::timer::start("ModuleIO", "write_dH_vxc");
 
-    const bool ok = write_dH_veff_term(params, params.pot_vxc, "none", "dvxcr", "dvxck", "dV^XC");
+    const bool ok = write_dH_veff_term(params, params.pot_vxc,
+                                       params.chg ? "xc" : "none",
+                                       "dvxcr", "dvxck", "dV^XC");
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vxc");
+    return ok;
+}
+
+bool write_dH_vxc_pulay(WriteDHParams& params)
+{
+    ModuleBase::TITLE("ModuleIO", "write_dH_vxc_pulay");
+    ModuleBase::timer::start("ModuleIO", "write_dH_vxc_pulay");
+
+    const bool ok = write_dH_veff_term(params, params.pot_vxc, "none", "dvxcr_pulay_", "dvxck_pulay_", "dV^XC (Pulay)");
+
+    ModuleBase::timer::end("ModuleIO", "write_dH_vxc_pulay");
     return ok;
 }
 
