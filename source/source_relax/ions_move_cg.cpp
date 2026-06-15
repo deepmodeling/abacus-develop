@@ -21,26 +21,26 @@ void Ions_Move_CG::allocate(const int dim)
     this->cg_grad0.resize(dim, 0.0);
     this->move0.resize(dim, 0.0);
     this->e0 = 0.0;
+
+    this->sd = false;
+    this->trial = false;
+    this->ncggrad = 0;
+    this->nbrent = 0;
+    this->fa = 0.0;
+    this->fb = 0.0;
+    this->fc = 0.0;
+    this->xa = 0.0;
+    this->xb = 0.0;
+    this->xc = 0.0;
+    this->xpt = 0.0;
+    this->steplength = 0.0;
+    this->fmax = 0.0;
 }
 
 bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
-
-    static bool sd = false;
-    static bool trial = false;
-    static int ncggrad = 0;
-    static double fa = 0.0;
-    static double fb = 0.0;
-    static double fc = 0.0;
-    static double xa = 0.0;
-    static double xb = 0.0;
-    static double xc = 0.0;
-    static double xpt = 0.0;
-    static double steplength = 0.0;
-    static double fmax = 0.0;
-    static int nbrent = 0;
 
     const int dim = Ions_Move_Basic::dim;
     std::vector<double> pos(dim, 0.0);
@@ -56,19 +56,19 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
     {
         if (istep == 1)
         {
-            steplength = Ions_Move_Basic::relax_bfgs_init;
-            sd = true;
-            trial = true;
-            ncggrad = 0;
-            fa = 0.0;
-            fb = 0.0;
-            fc = 0.0;
-            xa = 0.0;
-            xb = 0.0;
-            xc = 0.0;
-            xpt = 0.0;
-            fmax = 0.0;
-            nbrent = 0;
+            this->steplength = Ions_Move_Basic::relax_bfgs_init;
+            this->sd = true;
+            this->trial = true;
+            this->ncggrad = 0;
+            this->fa = 0.0;
+            this->fb = 0.0;
+            this->fc = 0.0;
+            this->xa = 0.0;
+            this->xb = 0.0;
+            this->xc = 0.0;
+            this->xpt = 0.0;
+            this->fmax = 0.0;
+            this->nbrent = 0;
         }
 
         Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
@@ -85,14 +85,14 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             return true;
         }
 
-        if (sd)
+        if (this->sd)
         {
             e0 = etot_in;
-            CG_Base::setup_cg_grad(dim, grad.data(), grad0.data(), cg_grad.data(), cg_grad0.data(), ncggrad, flag);
-            ncggrad++;
+            CG_Base::setup_cg_grad(dim, grad.data(), grad0.data(), cg_grad.data(), cg_grad0.data(), this->ncggrad, flag);
+            this->ncggrad++;
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());
-            CG_Base::setup_move(dim, move0.data(), cg_gradn.data(), steplength);
+            CG_Base::setup_move(dim, move0.data(), cg_gradn.data(), this->steplength);
             Ions_Move_Basic::move_atoms(ucell, move0.data(), pos.data(), ofs);
 
             for (int i = 0; i < dim; i++)
@@ -101,10 +101,10 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
                 cg_grad0[i] = cg_grad[i];
             }
 
-            CG_Base::f_cal(dim, move0.data(), move0.data(), xb);
-            CG_Base::f_cal(dim, move0.data(), grad.data(), fa);
-            fmax = fa;
-            sd = false;
+            CG_Base::f_cal(dim, move0.data(), move0.data(), this->xb);
+            CG_Base::f_cal(dim, move0.data(), grad.data(), this->fa);
+            this->fmax = this->fa;
+            this->sd = false;
 
             if (relax_method[0] == "cg_bfgs")
             {
@@ -114,69 +114,69 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
                     relax_method[0] = "bfgs";
                     relax_method[1] = "1";
                 }
-                Ions_Move_Basic::best_xxx = steplength;
+                Ions_Move_Basic::best_xxx = this->steplength;
             }
 
-            Ions_Move_Basic::relax_bfgs_init = xb;
+            Ions_Move_Basic::relax_bfgs_init = this->xb;
             return false;
         }
 
-        if (trial)
+        if (this->trial)
         {
             double e1 = etot_in;
-            CG_Base::f_cal(dim, move0.data(), grad.data(), fb);
-            CG_Base::f_cal(dim, move0.data(), move0.data(), xb);
+            CG_Base::f_cal(dim, move0.data(), grad.data(), this->fb);
+            CG_Base::f_cal(dim, move0.data(), move0.data(), this->xb);
 
-            if ((std::abs(fb) < std::abs((fa) / 10.0)))
+            if ((std::abs(this->fb) < std::abs((this->fa) / 10.0)))
             {
-                sd = true;
-                trial = true;
-                steplength = xb;
+                this->sd = true;
+                this->trial = true;
+                this->steplength = this->xb;
                 flag = 1;
                 continue;
             }
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad0.data());
-            CG_Base::third_order(e0, e1, fa, fb, xb, best_x);
+            CG_Base::third_order(e0, e1, this->fa, this->fb, this->xb, best_x);
 
-            if (best_x > 6 * xb || best_x < (-xb))
+            if (best_x > 6 * this->xb || best_x < (-this->xb))
             {
-                best_x = 6 * xb;
+                best_x = 6 * this->xb;
             }
 
             CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
             Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
-            trial = false;
-            xa = 0;
-            CG_Base::f_cal(dim, move0.data(), move.data(), xc);
-            xc = xb + xc;
-            xpt = xc;
-            Ions_Move_Basic::relax_bfgs_init = xc;
+            this->trial = false;
+            this->xa = 0;
+            CG_Base::f_cal(dim, move0.data(), move.data(), this->xc);
+            this->xc = this->xb + this->xc;
+            this->xpt = this->xc;
+            Ions_Move_Basic::relax_bfgs_init = this->xc;
             return false;
         }
 
         double xtemp = 0.0;
         double ftemp = 0.0;
-        CG_Base::f_cal(dim, move0.data(), grad.data(), fc);
-        fmin = std::abs(fc);
-        nbrent++;
+        CG_Base::f_cal(dim, move0.data(), grad.data(), this->fc);
+        fmin = std::abs(this->fc);
+        this->nbrent++;
 
-        if ((fmin < std::abs((fmax) / 10.0)) || (nbrent > 3))
+        if ((fmin < std::abs((this->fmax) / 10.0)) || (this->nbrent > 3))
         {
-            nbrent = 0;
-            sd = true;
-            trial = true;
-            steplength = xpt;
+            this->nbrent = 0;
+            this->sd = true;
+            this->trial = true;
+            this->steplength = this->xpt;
             flag = 1;
             continue;
         }
 
-        CG_Base::Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
-        if (xc < 0)
+        CG_Base::Brent(this->fa, this->fb, this->fc, this->xa, this->xb, this->xc, best_x, this->xpt);
+        if (this->xc < 0)
         {
-            sd = true;
-            trial = true;
-            steplength = xb;
+            this->sd = true;
+            this->trial = true;
+            this->steplength = this->xb;
             flag = 2;
             continue;
         }
@@ -184,7 +184,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         CG_Base::normalize(dim, cg_gradn.data(), cg_grad0.data());
         CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
         Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
-        Ions_Move_Basic::relax_bfgs_init = xc;
+        Ions_Move_Basic::relax_bfgs_init = this->xc;
         return false;
     }
 }
