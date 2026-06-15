@@ -153,8 +153,7 @@ void write_Vxc_R(const int nspin,
                               *pv,
                               filename,
                               -1,
-                              true, // all-reduce
-                              pv->get_global_row_size());
+                              true); // all-reduce
     }
 }
 } // namespace ModuleIO
