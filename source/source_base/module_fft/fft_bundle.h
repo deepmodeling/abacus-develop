@@ -32,6 +32,8 @@ class FFT_Bundle
      */
     void setfft(std::string device_in, std::string precision_in);
 
+    void set_precision(std::string precision_in) { this->precision = precision_in; }
+
     /**
      * @brief Set the DSP cluster id for the FFT_DSP backend.
      * @param id  cluster id, typically computed as (MPI rank % dsp_count).

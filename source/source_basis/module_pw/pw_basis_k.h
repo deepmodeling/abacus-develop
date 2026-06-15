@@ -60,9 +60,7 @@ public:
     PW_Basis_K(std::string device_, std::string precision_) : PW_Basis(device_, precision_)
     {
         classname = "PW_Basis_K";
-        // Preserve constructor-visible FFT precision metadata without selecting
-        // the GPU backend before setuptransform() initializes runtime logging.
-        this->fft_bundle.setfft("cpu", this->precision);
+        this->fft_bundle.set_precision(this->precision);
     }
     ~PW_Basis_K();
 
