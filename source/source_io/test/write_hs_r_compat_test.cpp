@@ -279,7 +279,7 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
 
     GlobalV::DRANK = 0;
     PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 2;
+    PARAM.sys.nlocal = 99;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -290,7 +290,15 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     sparse_matrix[r_vector][0][1] = 0.5;
     sparse_matrix[r_vector][1][1] = 1.5;
 
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, false, filename, pv, "S", 0, false);
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "S";
+    options.threshold = 1e-10;
+    options.binary = false;
+    options.istep = 0;
+    options.reduce = false;
+    options.temp_dir = "./";
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
 
     const std::string output = read_file(filename);
     EXPECT_TRUE(starts_with(output, "STEP: 0\n"));
@@ -308,7 +316,7 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
 
     GlobalV::DRANK = 0;
     PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 2;
+    PARAM.sys.nlocal = 99;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -319,7 +327,15 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
     sparse_matrix[r_vector][0][1] = 0.5;
     sparse_matrix[r_vector][1][1] = 1.5;
 
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, true, filename, pv, "S", 3, false);
+    ModuleIO::SparseWriteOptions options;
+    options.filename = filename;
+    options.label = "S";
+    options.threshold = 1e-10;
+    options.binary = true;
+    options.istep = 3;
+    options.reduce = false;
+    options.temp_dir = "./";
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
 
     const std::vector<int> header_and_r = read_binary_ints(filename, 7);
     EXPECT_THAT(header_and_r, testing::ElementsAre(3, 2, 1, 0, 0, 0, 2));

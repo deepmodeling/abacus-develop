@@ -145,15 +145,18 @@ void write_Vxc_R(const int nspin,
     {
         std::set<Abfs::Vector3_Order<int>> all_R_coor = sparse_format::get_R_range(vxcs_R_ao[is]);
         const std::string filename = "Vxc_R_spin" + std::to_string(is);
+        ModuleIO::SparseWriteOptions options;
+        options.filename = PARAM.globalv.global_out_dir + filename + ".csr";
+        options.label = filename;
+        options.threshold = sparse_thr;
+        options.binary = false;
+        options.istep = -1;
+        options.reduce = true;
+        options.temp_dir = PARAM.globalv.global_out_dir;
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),
                               all_R_coor,
-                              sparse_thr,
-                              false, // binary
-                              PARAM.globalv.global_out_dir + filename + ".csr",
                               *pv,
-                              filename,
-                              -1,
-                              true); // all-reduce
+                              options);
     }
 }
 } // namespace ModuleIO

@@ -628,6 +628,11 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
     int output_R_number = 0;
+    ModuleIO::SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_threshold;
+    single_R_options.binary = binary;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     std::stringstream tem1;
     tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
@@ -789,9 +794,8 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
                 {
                     ModuleIO::output_single_R(ofs_tem1,
                                               psi_r_psi_sparse[direction],
-                                              sparse_threshold,
-                                              binary,
-                                              *(this->ParaV));
+                                              *(this->ParaV),
+                                              single_R_options);
                 }
                 else
                 {
@@ -875,6 +879,11 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
     int output_R_number = output_R_coor.size();
     int step = istep;
+    ModuleIO::SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_threshold;
+    single_R_options.binary = binary;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     std::ofstream out_r;
     std::stringstream ssr;
@@ -1059,7 +1068,10 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
             if (rR_nonzero_num[direction])
             {
-                ModuleIO::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
+                ModuleIO::output_single_R(out_r,
+                                          psi_r_psi_sparse[direction],
+                                          *(this->ParaV),
+                                          single_R_options);
             }
             else
             {

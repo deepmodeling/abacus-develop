@@ -115,28 +115,28 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                           p_ham);
 
     const int istep = 0;
+    ModuleIO::SparseWriteOptions options;
+    options.filename = SR_filename;
+    options.label = "S";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     if (PARAM.inp.nspin == 4)
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
     else
     {
         ModuleIO::save_sparse(HS_Arrays.SR_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -178,15 +178,19 @@ void ModuleIO::output_TR(const int istep,
     }
 
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
+    ModuleIO::SparseWriteOptions options;
+    options.filename = sst.str();
+    options.label = "T";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
-                          sparse_thr,
-                          binary,
-                          sst.str().c_str(),
                           pv,
-                          "T",
-                          istep);
+                          options);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 
