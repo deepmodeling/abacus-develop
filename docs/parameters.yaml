@@ -823,7 +823,7 @@ parameters:
     category: Electronic structure
     type: Real
     description: |
-      It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, the total-energy criterion (`scf_ene_thr`) is evaluated conditionally after the charge-density criterion (`scf_thr`) is satisfied, and not on the first iteration. For local-orbital calculations, 1e-6 is usually accurate enough.
+      It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If scf_ene_thr is set, the total-energy criterion (scf_ene_thr) is additionally checked only after the first SCF iteration and only when the charge-density criterion (scf_thr) has already been satisfied. For local-orbital calculations, 1e-6 is usually accurate enough.
     default_value: "1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis)."
     unit: "Ry if scf_thr_type=1, dimensionless if scf_thr_type=2"
     availability: ""
@@ -831,7 +831,7 @@ parameters:
     category: Electronic structure
     type: Real
     description: |
-      It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
+      It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the Hpsi operation in one SCF step. It is not the same as the screen-output EDIFF, which is the energy difference before Hpsi and after charge mixing (i.e., across both Hpsi and charge-mixing operations).
     default_value: "-1.0. If the user does not set this parameter, it will not take effect."
     unit: eV
     availability: ""
@@ -2848,7 +2848,18 @@ parameters:
                   - nspin = 1: `tau.cube`;
                   - nspin = 2: `taus1.cube`, and `taus2.cube`;
                   - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
-          - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
+          - 2: On top of 1, also output the initial charge density files. The files are named as:
+              - out_freq_ion = 0:
+                  - nspin = 1: `chg_ini.cube`;
+                  - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+                  - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+                  - output at every step (overwrite same file)
+              - out_freq_ion > 0:
+                  - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+                  - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+                  - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+                  - output every out_freq_ion steps
+              Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
           - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
       The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -2869,9 +2880,17 @@ parameters:
        * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
       * 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
       * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
-       * nspin = 1: pots1_ini.cube;
-       * nspin = 2: pots1_ini.cube and pots2_ini.cube;
-       * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+       * out_freq_ion = 0:
+         * nspin = 1: `pot_ini.cube`;
+         * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+         * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+         * output at every step (overwrite same file)
+       * out_freq_ion > 0:
+         * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+         * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+         * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+         * output every out_freq_ion steps
+       Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
 
       The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -2886,17 +2905,18 @@ parameters:
     type: "Boolean \\[Integer\\](optional)"
     description: |
       Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
-      * For gamma only case:
-       * nspin = 1 and 4: dmg1_nao.txt;
-       * nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
-      * For multi-k points case:
-       * nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
-       * nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
-      Here, g{istep} denotes the geometry/step index in the output file name.
+          * For gamma only case:
+           * nspin = 1 and 4: dmg1_nao.txt;
+           * nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
+          * For multi-k points case:
+           * nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+           * nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-      [NOTE] Version difference (develop vs 3.10-LTS):
-      * In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
-      * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
+          Here, g{istep} denotes the geometry/step index in the output file name.
+
+          [NOTE] Version difference (develop vs 3.10-LTS):
+          * In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+          * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis
@@ -3238,12 +3258,14 @@ parameters:
     description: |
       Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
       * nspin = 1:
-          * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+          * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
       * nspin = 2:
-          * elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-          * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+          * elfs1.cube, elfs2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+          * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
       * nspin = 4 (noncollinear):
-          * elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+          * elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+
+      When `out_freq_ion > 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
 
       The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 
@@ -3742,8 +3764,6 @@ parameters:
       * none: no vdW correction
 
       [NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
-
-      [NOTE] DFT-D4 support requires ABACUS to be configured with ENABLE_DFTD4=ON and a CMake-installed dftd4 library exporting `dftd4-config.cmake`. DFT-D4 damping parameters are loaded from the external library.
     default_value: none
     unit: ""
     availability: ""
@@ -3751,7 +3771,8 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+      Functional name used to load DFT-D4 damping parameters from the DFT-D4 library.
+      If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
     default_value: default
     unit: ""
     availability: vdw_method is set to d4
@@ -3759,8 +3780,11 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
-    default_value: d4
+      DFT-D4 dispersion model used by the external DFT-D4 library.
+      Available options are:
+      * d4: standard D4 model
+      * d4s: smooth D4S model
+    default_value: "d4"
     unit: ""
     availability: vdw_method is set to d4
   - name: vdw_s6
@@ -3871,7 +3895,7 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      Defines the cutoff radius when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method. For DFT-D4, this controls the two-body dispersion cutoff, while the three-body cutoff is internally limited to the DFT-D4 default value of 40 Bohr.
+      Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
     default_value: ""
     unit: defined by vdw_radius_unit (default Bohr)
     availability: vdw_cutoff_type is set to radius
@@ -3897,10 +3921,10 @@ parameters:
     category: vdW correction
     type: Real
     description: |
-      The cutoff radius when calculating coordination numbers. The default is 40 Bohr for DFT-D3 and 30 Bohr for DFT-D4.
+      The cutoff radius when calculating coordination numbers.
     default_value: "40"
     unit: "defined by vdw_cn_thr_unit (default: Bohr)"
-    availability: vdw_method is set to d3_0, d3_bj, or d4
+    availability: "vdw_method is set to d3_0, d3_bj, or d4"
   - name: vdw_cn_thr_unit
     category: vdW correction
     type: String
@@ -4659,6 +4683,54 @@ parameters:
     default_value: "True"
     unit: ""
     availability: ""
+  - name: exx_batch_fft_size
+    category: Exact Exchange (PW)
+    type: Integer
+    description: |
+      Batch size used by GPU batched FFTs in the plane-wave EXX operator. Set to 1 to use the sequential EXX FFT path.
+    default_value: "8"
+    unit: ""
+    availability: device==gpu
+  - name: exx_debug_allow_legacy_gpu_paths
+    category: Exact Exchange (PW)
+    type: Boolean
+    description: |
+      Allow legacy scalar GPU PW EXX paths that are otherwise disabled while the batched/q-tile implementations are being validated. This is intended for debugging only.
+    default_value: "False"
+    unit: ""
+    availability: device==gpu
+  - name: exx_full_q_cache
+    category: Exact Exchange (PW)
+    type: Boolean
+    description: |
+      Whether to materialize an explicit full-q reciprocal-space wavefunction cache for PW EXX when symmetry-reduced k-points are used. Set to false to use the lower-memory remap-on-demand path.
+    default_value: "True"
+    unit: ""
+    availability: ""
+  - name: exx_band_tile_size
+    category: Exact Exchange (PW)
+    type: Integer
+    description: |
+      The target/source band tile size used by PW EXX to cache real-space wavefunctions and reduce repeated FFTs.
+    default_value: "8"
+    unit: ""
+    availability: ""
+  - name: exx_use_q_tile
+    category: Exact Exchange (PW)
+    type: Boolean
+    description: |
+      Whether to use the opt-in q-tile path for PW EXX q-state fetching and KPAR communication.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: exx_q_tile_size
+    category: Exact Exchange (PW)
+    type: Integer
+    description: |
+      The q-point tile size used by the opt-in PW EXX q-tile path to fetch and reuse q-state wavefunctions.
+    default_value: "1"
+    unit: ""
+    availability: exx_use_q_tile==True.
   - name: ecutexx
     category: Exact Exchange (PW)
     type: Real
