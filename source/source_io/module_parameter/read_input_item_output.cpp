@@ -637,8 +637,9 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_dh");
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
-        item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+                          "\n\nFormat: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
@@ -653,6 +654,11 @@ Also controled by out_freq_ion and out_app_flag.
                 catch (const std::invalid_argument& e) {
                     ModuleBase::WARNING("Input", "out_mat_dh precision must be an integer, using default 8");
                 }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh enable flag must be 0/1, using default 0");
@@ -664,7 +670,7 @@ Also controled by out_freq_ion and out_app_flag.
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh is not available for nspin = 4");
             }
         };
-        sync_intvec(input.out_mat_dh, 2, 0);
+        sync_intvec(input.out_mat_dh, para.input.out_mat_dh.size(), 0);
         this->add_item(item);
     }
     {
@@ -672,14 +678,24 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output kinetic energy dH/dR (dT/dR) matrices";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the kinetic energy matrix dT/dR. The first value controls output (0/1), and optional subsequent values specify which atoms to compute derivatives for."
-                          "\n\nSee out_mat_dh for format details.";
+        item.description = "Whether to print files containing the derivatives of the kinetic energy matrix dT/dR."
+                          "\n\nSee out_mat_dh for format details (enable, precision, atom indices).";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_t[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_t[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_t[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_t precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_t.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_t atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_t enable flag must be 0/1, using default 0");
@@ -689,7 +705,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_t[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_t is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_t, 2, 0);
+        sync_intvec(input.out_mat_dh_t, para.input.out_mat_dh_t.size(), 0);
         this->add_item(item);
     }
     {
@@ -705,6 +721,16 @@ Also controled by out_freq_ion and out_app_flag.
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_vl[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vl[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vl[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vl precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vl.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vl atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_vl enable flag must be 0/1, using default 0");
@@ -714,7 +740,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_vl[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vl is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_vl, 2, 0);
+        sync_intvec(input.out_mat_dh_vl, para.input.out_mat_dh_vl.size(), 0);
         this->add_item(item);
     }
     {
@@ -730,6 +756,16 @@ Also controled by out_freq_ion and out_app_flag.
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_vnl[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vnl[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vnl[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vnl precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vnl.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vnl atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_vnl enable flag must be 0/1, using default 0");
@@ -739,7 +775,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_vnl[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vnl is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_vnl, 2, 0);
+        sync_intvec(input.out_mat_dh_vnl, para.input.out_mat_dh_vnl.size(), 0);
         this->add_item(item);
     }
     {
@@ -755,6 +791,16 @@ Also controled by out_freq_ion and out_app_flag.
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_vh[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vh[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vh[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vh precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vh.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vh atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_vh enable flag must be 0/1, using default 0");
@@ -764,7 +810,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_vh[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vh is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_vh, 2, 0);
+        sync_intvec(input.out_mat_dh_vh, para.input.out_mat_dh_vh.size(), 0);
         this->add_item(item);
     }
     {
@@ -780,6 +826,16 @@ Also controled by out_freq_ion and out_app_flag.
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_vxc[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vxc[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vxc[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vxc precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vxc.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vxc atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_vxc enable flag must be 0/1, using default 0");
@@ -789,7 +845,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_vxc[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vxc is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_vxc, 2, 0);
+        sync_intvec(input.out_mat_dh_vxc, para.input.out_mat_dh_vxc.size(), 0);
         this->add_item(item);
     }
     {
@@ -805,6 +861,16 @@ Also controled by out_freq_ion and out_app_flag.
             const size_t count = item.get_size();
             try {
                 para.input.out_mat_dh_exx[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_exx[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_exx[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_exx precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_exx.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_exx atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh_exx enable flag must be 0/1, using default 0");
@@ -814,7 +880,7 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.out_mat_dh_exx[0] && para.input.nspin == 4)
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_exx is not available for nspin = 4");
         };
-        sync_intvec(input.out_mat_dh_exx, 2, 0);
+        sync_intvec(input.out_mat_dh_exx, para.input.out_mat_dh_exx.size(), 0);
         this->add_item(item);
     }
     {

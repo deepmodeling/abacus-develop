@@ -9,6 +9,7 @@
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
 
+#include <algorithm>
 #include <complex>
 #include <fstream>
 #include <iomanip>
@@ -18,11 +19,12 @@ namespace ModuleIO
 {
 
 void write_dh_perI(WriteDHParams& params,
-                   int ispin,
-                   const std::string& rprefix,
-                   const std::string& kprefix,
-                   const std::string& label,
-    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g)
+    int ispin,
+    const std::string& rprefix,
+    const std::string& kprefix,
+    const std::string& label,
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
+    const std::vector<int>& atom_filter)
 {
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
@@ -48,8 +50,17 @@ void write_dh_perI(WriteDHParams& params,
     serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
 #endif
 
+    const bool filter_atoms = !atom_filter.empty();
+    if (filter_atoms)
+        for (int idx : atom_filter)
+            if (idx < 0 || idx >= nat)
+                ModuleBase::WARNING("write_dh_perI",
+                    "atom index " + std::to_string(idx + 1) + " (1-based) is out of range [1, "
+                    + std::to_string(nat) + "] and will be skipped");
     for (int iat = 0; iat < nat; ++iat)
     {
+        if (filter_atoms && std::find(atom_filter.begin(), atom_filter.end(), iat) == atom_filter.end())
+            continue;
         for (int d = 0; d < 3; ++d)
         {
             hamilt::HContainer<double>* hR = g[d][iat];
@@ -113,21 +124,18 @@ void write_dh_perI(WriteDHParams& params,
     }
 }
 
-bool any_dh_term_enabled()
-{
-    return PARAM.inp.out_mat_dh_t[0] || PARAM.inp.out_mat_dh_vl[0] || PARAM.inp.out_mat_dh_vnl[0]
-           || PARAM.inp.out_mat_dh_vh[0] || PARAM.inp.out_mat_dh_vxc[0];
-}
-
 void write_dH_components(WriteDHParams& params)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_components");
     ModuleBase::timer::start("ModuleIO", "write_dH_components");
 
-    if (!any_dh_term_enabled())
+    // nspin=4 (noncollinear) is not supported: needs complex spinor blocks (HContainer<std::complex<double>>)
+    // plus noncollinear Gint kernels that do not exist for the dvlocal/drho paths. 
+    if (PARAM.inp.nspin == 4)
     {
-        ModuleBase::timer::end("ModuleIO", "write_dH_components");
-        return;
+        ModuleBase::WARNING_QUIT("write_dH_components",
+                                 "dH/dR component output (out_mat_dh_*) is not supported for "
+                                 "nspin=4 (noncollinear) yet; only nspin=1 and nspin=2.");
     }
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -135,6 +143,11 @@ void write_dH_components(WriteDHParams& params)
     GlobalV::ofs_running << " |                 #Print out dH/dR components#                       |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+
+    if (PARAM.inp.out_mat_dh[0])
+    {
+        write_dH_sum(params);
+    }
 
     if (PARAM.inp.out_mat_dh_t[0])
     {
@@ -163,11 +176,6 @@ void write_dH_components(WriteDHParams& params)
         write_dH_vxc_pulay(params);
     }
 
-    if (PARAM.inp.out_mat_dh[0] && any_dh_term_enabled())
-    {
-        write_dH_sum(params);
-    }
-
 #ifdef __EXX
     if (PARAM.inp.out_mat_dh_exx[0])
     {
@@ -176,81 +184,6 @@ void write_dH_components(WriteDHParams& params)
 #endif
 
     ModuleBase::timer::end("ModuleIO", "write_dH_components");
-}
-
-bool write_dH_sum(WriteDHParams& params)
-{
-    ModuleBase::TITLE("ModuleIO", "write_dH_sum");
-    ModuleBase::timer::start("ModuleIO", "write_dH_sum");
-
-    const UnitCell& ucell = *params.ucell;
-    const Parallel_Orbitals& pv = *params.pv;
-    const int nat = ucell.nat;
-    const int nspin = params.nspin;
-
-    for (int ispin = 0; ispin < (nspin == 2 ? 2 : 1); ispin++)
-    {
-        hamilt::HContainer<double> dH_sum_x(&pv);
-        hamilt::HContainer<double> dH_sum_y(&pv);
-        hamilt::HContainer<double> dH_sum_z(&pv);
-        dH_sum_x.set_zero();
-        dH_sum_y.set_zero();
-        dH_sum_z.set_zero();
-
-        if (dH_sum_x.size_atom_pairs() == 0)
-        {
-            continue;
-        }
-
-        const int nbasis = dH_sum_x.get_nbasis();
-
-#ifdef __MPI
-        Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, pv.comm());
-        serialV.set_serial(nbasis, nbasis);
-        serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
-
-        hamilt::HContainer<double> dH_x_s(&serialV);
-        hamilt::HContainer<double> dH_y_s(&serialV);
-        hamilt::HContainer<double> dH_z_s(&serialV);
-        hamilt::gatherParallels(dH_sum_x, &dH_x_s, 0);
-        hamilt::gatherParallels(dH_sum_y, &dH_y_s, 0);
-        hamilt::gatherParallels(dH_sum_z, &dH_z_s, 0);
-
-        if (GlobalV::MY_RANK == 0)
-#endif
-        {
-            std::string fname_x = ModuleIO::dhr_gen_fname("dhrx", ispin, params.append, params.istep);
-            std::string fname_y = ModuleIO::dhr_gen_fname("dhry", ispin, params.append, params.istep);
-            std::string fname_z = ModuleIO::dhr_gen_fname("dhrz", ispin, params.append, params.istep);
-
-            if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
-            {
-                fname_x = PARAM.globalv.global_matrix_dir + fname_x;
-                fname_y = PARAM.globalv.global_matrix_dir + fname_y;
-                fname_z = PARAM.globalv.global_matrix_dir + fname_z;
-            }
-            else
-            {
-                fname_x = PARAM.globalv.global_out_dir + fname_x;
-                fname_y = PARAM.globalv.global_out_dir + fname_y;
-                fname_z = PARAM.globalv.global_out_dir + fname_z;
-            }
-
-#ifdef __MPI
-            ModuleIO::write_hcontainer_csr(fname_x, &ucell, 8, &dH_x_s, params.istep, ispin, nspin, "dH_sum");
-            ModuleIO::write_hcontainer_csr(fname_y, &ucell, 8, &dH_y_s, params.istep, ispin, nspin, "dH_sum");
-            ModuleIO::write_hcontainer_csr(fname_z, &ucell, 8, &dH_z_s, params.istep, ispin, nspin, "dH_sum");
-#else
-            ModuleIO::write_hcontainer_csr(fname_x, &ucell, 8, &dH_sum_x, params.istep, ispin, nspin, "dH_sum");
-            ModuleIO::write_hcontainer_csr(fname_y, &ucell, 8, &dH_sum_y, params.istep, ispin, nspin, "dH_sum");
-            ModuleIO::write_hcontainer_csr(fname_z, &ucell, 8, &dH_sum_z, params.istep, ispin, nspin, "dH_sum");
-#endif
-        }
-    }
-
-    ModuleBase::timer::end("ModuleIO", "write_dH_sum");
-    return true;
 }
 
 } // namespace ModuleIO

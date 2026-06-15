@@ -57,5 +57,11 @@ AddTest(
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+AddTest(
+  TARGET MODULE_LCAO_hcontainer_add_value_test
+  LIBS parameter ${math_libs} psi base device
+  SOURCES test_add_value.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+)
 
 endif() 

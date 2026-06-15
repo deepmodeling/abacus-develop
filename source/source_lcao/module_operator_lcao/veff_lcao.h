@@ -65,8 +65,9 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     // term for "vl"; "none" gives Pulay only (V^XC), "hartree" is deferred.
     void cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
                 const std::string& hellmann_feynman_type = "none",
-                const hamilt::HContainer<double>* dmR = nullptr,
-                const Charge* chg = nullptr);
+                const std::vector<const hamilt::HContainer<double>*>& dmR = {},
+                const Charge* chg = nullptr,
+                const int ispin = 0);
   
   const UnitCell* ucell = nullptr;
   const Grid_Driver* gd = nullptr;

@@ -140,7 +140,6 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                                                       out_app_flag,
                                                       gamma_only,
                                                       istep);
-        std::cout << "hk term fname = " << fname << std::endl;
         ModuleIO::save_mat(istep,
                            hk_global.data(),
                            nlocal,

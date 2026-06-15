@@ -11,12 +11,9 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
-<<<<<<< HEAD
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
-=======
 #include "source_io/module_dhs/write_dH.h"                    // use ModuleIO::write_dH_components()
 #include "source_io/module_hs/write_H_terms.h"         // use ModuleIO::write_h_*
->>>>>>> 4a0c28784 (initial version of writing H and dH terms (except exx))
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
@@ -268,7 +265,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S)
+    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S), only for multi-k
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
@@ -282,6 +279,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     mat_sparse_options.t_precision = inp.out_mat_t[1];
     mat_sparse_options.r_precision = inp.out_mat_r[1];
 
+    if(!PARAM.globalv.gamma_only_local)
     ModuleIO::output_mat_sparse(mat_sparse_options,
                                 istep,
                                 pelec->pot->get_eff_v(),
@@ -316,21 +314,23 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         elecstate::Potential* pot_vl = nullptr;
         elecstate::Potential* pot_vh = nullptr;
         elecstate::Potential* pot_vxc = nullptr;
-        if (inp.out_mat_dh_vl[0])
+        // out_mat_dh (total dH = sum of all terms) needs every veff potential regardless of the
+        // per-component flags, so allocate all three when it is on; otherwise allocate per flag.
+        if (inp.out_mat_dh_vl[0] || inp.out_mat_dh[0])
         {
             pot_vl = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
                 const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
             pot_vl->pot_register({"local"});
             pot_vl->update_from_charge(pelec->charge, &ucell);
         }
-        if (inp.out_mat_dh_vh[0])
+        if (inp.out_mat_dh_vh[0] || inp.out_mat_dh[0])
         {
             pot_vh = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
                 const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
             pot_vh->pot_register({"hartree"});
             pot_vh->update_from_charge(pelec->charge, &ucell);
         }
-        if (inp.out_mat_dh_vxc[0])
+        if (inp.out_mat_dh_vxc[0] || inp.out_mat_dh[0])
         {
             pot_vxc = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
                 const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
@@ -348,7 +348,12 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.append = out_app_flag;
         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
         {
-            dh_params.dmR = dm->get_DMR_pointer(1);
+            // per-spin DM (1-indexed): nspin=1 -> {spin0}, nspin=2 -> {spin-up, spin-down}.
+            // The Veff Hellmann-Feynman terms need these (V^H sums spins, V^XC is spin-resolved).
+            for (int is = 1; is <= PARAM.inp.nspin; ++is)
+            {
+                dh_params.dmR.push_back(dm->get_DMR_pointer(is));
+            }
         }
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are

@@ -42,7 +42,9 @@ struct WriteDHParams
     bool gamma_only = false;
     bool append = false;
     bool also_dhR = false; // whether to write the real-space dH(R) in addition to the k-space dH(k)
-    const hamilt::HContainer<double>* dmR = nullptr;
+    // per-spin real-space DM (size nspin for nspin=1/2). Used by the Veff Hellmann-Feynman
+    // terms: V^H needs the total density (sum over spins), V^XC the spin-resolved densities.
+    std::vector<const hamilt::HContainer<double>*> dmR;
     const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
 #ifdef __EXX
     // gamma (TK==double) exx interfaces used by write_dH_exx; exactly one is set depending on
@@ -52,19 +54,29 @@ struct WriteDHParams
 #endif
 };
 
-bool any_dh_term_enabled();
+// Returns 0-based atom indices to output (converted from the 1-based user-facing values stored at
+// param[2+]); empty vector (param.size() <= 2) means all atoms.  Out-of-range checking is done in
+// write_dh_perI where nat is available: indices >= nat are warned about and silently skipped.
+inline std::vector<int> dh_atom_filter(const std::vector<int>& param)
+{
+    if (param.size() <= 2)
+        return {};
+    return std::vector<int>(param.begin() + 2, param.end());
+}
 
 // Shared writer for the per-atom-I dH terms. For every differentiated atom I it writes:
 //   - dH(R) in CSR real-space format  ({rprefix}{x,y,z}_iat{I}...)
 //   - dH(k) dense matrices            ({kprefix}{x,y,z}_iat{I}...) folded like H(k),
 //     so they can be compared directly with the H(k) term matrices (*_nao.txt).
 // g[d] are nat per-I HContainers for direction d=0..2 (already filled by an operator's cal_dH).
+// atom_filter: if non-empty, only the listed 0-based atom indices are written; empty = all atoms.
 void write_dh_perI(WriteDHParams& params,
-                   int ispin,
-                   const std::string& rprefix,
-                   const std::string& kprefix,
-                   const std::string& label,
-    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g);
+    int ispin,
+    const std::string& rprefix,
+    const std::string& kprefix,
+    const std::string& label,
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
+    const std::vector<int>& atom_filter = {});
 
 void write_dH_components(WriteDHParams& params);
 

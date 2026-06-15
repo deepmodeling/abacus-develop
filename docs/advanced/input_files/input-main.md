@@ -166,11 +166,23 @@
     - [out\_stru](#out_stru)
     - [out\_level](#out_level)
     - [out\_mat\_hs](#out_mat_hs)
+    - [out\_mat\_h\_t](#out_mat_h_t)
+    - [out\_mat\_h\_vl](#out_mat_h_vl)
+    - [out\_mat\_h\_vnl](#out_mat_h_vnl)
+    - [out\_mat\_h\_vh](#out_mat_h_vh)
+    - [out\_mat\_h\_vxc](#out_mat_h_vxc)
+    - [out\_mat\_h\_exx](#out_mat_h_exx)
     - [out\_mat\_hs2](#out_mat_hs2)
     - [out\_mat\_tk](#out_mat_tk)
     - [out\_mat\_r](#out_mat_r)
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
+    - [out\_mat\_dh\_t](#out_mat_dh_t)
+    - [out\_mat\_dh\_vl](#out_mat_dh_vl)
+    - [out\_mat\_dh\_vnl](#out_mat_dh_vnl)
+    - [out\_mat\_dh\_vh](#out_mat_dh_vh)
+    - [out\_mat\_dh\_vxc](#out_mat_dh_vxc)
+    - [out\_mat\_dh\_exx](#out_mat_dh_exx)
     - [out\_mat\_ds](#out_mat_ds)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
@@ -1944,6 +1956,54 @@
 - **Default**: False 8
 - **Unit**: Ry
 
+### out_mat_h_t
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print the kinetic energy matrix $T_{\mu\nu}(k) = \langle\phi_\mu|\hat{T}|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `tks1_nao.txt`, `tks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs).
+- **Default**: False 8
+- **Unit**: Ry
+
+### out_mat_h_vl
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print the local pseudopotential matrix $V^L_{\mu\nu}(k) = \langle\phi_\mu|\hat{V}^L|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `vlks1_nao.txt`, `vlks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs).
+- **Default**: False 8
+- **Unit**: Ry
+
+### out_mat_h_vnl
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print the nonlocal pseudopotential (Kleinman–Bylander) matrix $V^{NL}_{\mu\nu}(k) = \langle\phi_\mu|\hat{V}^{NL}|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `vnlks1_nao.txt`, `vnlks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs).
+- **Default**: False 8
+- **Unit**: Ry
+
+### out_mat_h_vh
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print the Hartree matrix $V^H_{\mu\nu}(k) = \langle\phi_\mu|\hat{V}^H|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `vhks1_nao.txt`, `vhks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs).
+- **Default**: False 8
+- **Unit**: Ry
+
+### out_mat_h_vxc
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print the exchange-correlation matrix $V^{XC}_{\mu\nu}(k) = \langle\phi_\mu|\hat{V}^{XC}|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `vxcks1_nao.txt`, `vxcks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs).
+- **Default**: False 8
+- **Unit**: Ry
+
+### out_mat_h_exx
+
+- **Type**: Boolean \[Integer\](optional)
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4, hybrid functional only)*
+- **Description**: Whether to print the exact-exchange matrix $V^{EXX}_{\mu\nu}(k) = \langle\phi_\mu|\hat{V}^{EXX}|\phi_\nu\rangle(k)$ for each k-point. The output format and file naming (e.g. `vexxks1_nao.txt`, `vexxks1k1_nao.txt`) follow [`out_mat_hs`](#out_mat_hs). Requires a hybrid functional (`cal_exx = true`).
+- **Default**: False 8
+- **Unit**: Ry
+
 ### out_mat_hs2
 
 - **Type**: Boolean \[Integer\](optional)
@@ -1986,11 +2046,73 @@
 
 ### out_mat_dh
 
-- **Type**: Boolean \[Integer\](optional)
-- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
-
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix $dH(k)/d\tau_I=d\braket{\phi|\hat{H}|\phi}(k)/d\tau_I$ where $\tau_I$ is the Ith atom position with the dense format as `out_mat_dh`. The names are dhk[x/y/z]_iat[I][_ik]_nao.txt.
+  - See also the term-separated output parameters: [`out_mat_dh_t`](#out_mat_dh_t), [`out_mat_dh_vl`](#out_mat_dh_vl), [`out_mat_dh_vnl`](#out_mat_dh_vnl), [`out_mat_dh_vh`](#out_mat_dh_vh), [`out_mat_dh_vxc`](#out_mat_dh_vxc) and [`out_mat_dh_exx`](#out_mat_dh_exx).
+  - If not gamma-only, also $\braket{\nabla\phi|\hat{H}\phi}(R)$ of sparse format as `out_mat_hs2` will also be output. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
+  - **Format**: `<enable> [precision] [iat1 iat2 ...]`
+  - The first value (0/1) enables or disables output.
+  - The second optional value sets the output precision (number of significant digits, default: 8).
+  - Starting from the third value, **1-based atom indices** can be listed to restrict the output to derivatives with respect to those specific atoms only. If no atom indices are given, derivatives are written for all atoms.
+
+  For example, `out_mat_dh 1 8 1 3` writes dH/dR for atoms 1 and 3 only (1-based indexing).
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_t
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print files containing the kinetic energy contribution to the Hamiltonian derivative, see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dhk[x/y/z]_iat[I][_ik]_nao.txt.
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vl
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print files containing the local pseudopotential contribution to the Hamiltonian derivative, see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvlk[x/y/z]_iat[I][_ik]_nao.txt.
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vnl
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print files containing the nonlocal pseudopotential contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvnlk[x/y/z]_iat[I][_ik]_nao.txt.
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vh
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print files containing the Hartree contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvhk[x/y/z]_iat[I][_ik]_nao.txt.
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vxc
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis (nspin ≠ 4)*
+- **Description**: Whether to print files containing the exchange-correlation contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvxck[x/y/z]_iat[I][_ik]_nao.txt.
+
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_exx
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis, hybrid functional only (nspin ≠ 4)*
+- **Description**: Whether to print files containing the exact-exchange contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvexxk[x/y/z]_iat[I][_ik]_nao.txt.
+
 - **Default**: 0 8
 - **Unit**: Ry/Bohr
 
