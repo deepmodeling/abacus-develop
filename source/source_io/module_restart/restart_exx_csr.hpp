@@ -119,11 +119,6 @@ namespace ModuleIO
         {
             matrix_dimension += ucell.atoms[it].na * ucell.atoms[it].nw * ucell.get_npol();
         }
-        Parallel_Orbitals pv;
-        if (matrix_dimension > 0)
-        {
-            pv.set_serial(matrix_dimension, matrix_dimension);
-        }
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])
@@ -142,10 +137,11 @@ namespace ModuleIO
                 sparse_threshold,
                 false, //binary
                 file_name + "_" + std::to_string(is) + ".csr",
-                pv,
+                Parallel_Orbitals(),
                 "Hexxs_" + std::to_string(is),
                 -1,
-                false);  //no reduce, one file for each process
+                false,  //no reduce, one file for each process
+                matrix_dimension);
         }
     }
 }

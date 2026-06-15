@@ -279,7 +279,7 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
 
     GlobalV::DRANK = 0;
     PARAM.sys.global_out_dir = "./";
-    // Ensure save_sparse writes the pv dimension instead of the global parameter.
+    // Ensure save_sparse writes the explicit matrix dimension instead of the global fallback.
     PARAM.sys.nlocal = 99;
 
     Parallel_Orbitals pv;
@@ -291,7 +291,7 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     sparse_matrix[r_vector][0][1] = 0.5;
     sparse_matrix[r_vector][1][1] = 1.5;
 
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, false, filename, pv, "S", 0, false);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, false, filename, pv, "S", 0, false, 2);
 
     const std::string output = read_file(filename);
     EXPECT_TRUE(starts_with(output, "STEP: 0\n"));
@@ -309,7 +309,7 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
 
     GlobalV::DRANK = 0;
     PARAM.sys.global_out_dir = "./";
-    // Ensure save_sparse writes the pv dimension instead of the global parameter.
+    // Ensure save_sparse writes the explicit matrix dimension instead of the global fallback.
     PARAM.sys.nlocal = 99;
 
     Parallel_Orbitals pv;
@@ -321,7 +321,7 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
     sparse_matrix[r_vector][0][1] = 0.5;
     sparse_matrix[r_vector][1][1] = 1.5;
 
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, true, filename, pv, "S", 3, false);
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, 1e-10, true, filename, pv, "S", 3, false, 2);
 
     const std::vector<int> header_and_r = read_binary_ints(filename, 7);
     EXPECT_THAT(header_and_r, testing::ElementsAre(3, 2, 1, 0, 0, 0, 2));

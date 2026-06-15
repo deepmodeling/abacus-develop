@@ -390,10 +390,12 @@ void ModuleIO::save_sparse(
     const Parallel_Orbitals& pv,
     const std::string& label,
     const int& istep,
-    const bool& reduce) {
+    const bool& reduce,
+    const int& matrix_dimension) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-    const int matrix_dimension = pv.get_global_row_size();
+    const int output_matrix_dimension
+        = matrix_dimension >= 0 ? matrix_dimension : pv.get_global_row_size();
 
     int total_R_num = all_R_coor.size();
     std::vector<long long> nonzero_num(total_R_num, 0);
@@ -431,7 +433,7 @@ void ModuleIO::save_sparse(
                 ofs.open(sss.str().c_str(), std::ios::binary);
             }
             ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
-            ofs.write(reinterpret_cast<const char*>(&matrix_dimension),
+            ofs.write(reinterpret_cast<const char*>(&output_matrix_dimension),
                       sizeof(int));
             ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
         } else {
@@ -443,7 +445,7 @@ void ModuleIO::save_sparse(
             }
             ofs << "STEP: " << std::max(istep, 0) << std::endl;
             ofs << "Matrix Dimension of " + label + "(R): "
-                << matrix_dimension << std::endl;
+                << output_matrix_dimension << std::endl;
             ofs << "Matrix number of " + label + "(R): " << output_R_number
                 << std::endl;
         }
@@ -501,7 +503,8 @@ template void ModuleIO::save_sparse<double>(
     const Parallel_Orbitals&,
     const std::string&,
     const int&,
-    const bool&);
+    const bool&,
+    const int&);
 
 template void ModuleIO::save_sparse<std::complex<double>>(
     const std::map<Abfs::Vector3_Order<int>,
@@ -513,4 +516,5 @@ template void ModuleIO::save_sparse<std::complex<double>>(
     const Parallel_Orbitals&,
     const std::string&,
     const int&,
-    const bool&);
+    const bool&,
+    const int&);
