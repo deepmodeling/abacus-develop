@@ -135,6 +135,14 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                   wfcpw->xprime);
         wfcpw_exx->setuptransform();
         wfcpw_exx->collect_local_pw();
+        if (rhopw_exx->nrxx != wfcpw_exx->nrxx)
+        {
+            ModuleBase::WARNING_QUIT("Stress_PW::stress_exx",
+                                     "EXX stress density and wavefunction real-space layouts differ: rhopw_exx nrxx = "
+                                         + std::to_string(rhopw_exx->nrxx)
+                                         + ", wfcpw_exx nrxx = "
+                                         + std::to_string(wfcpw_exx->nrxx));
+        }
         if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
         {
             exx_wave_redistributor.setup(wfcpw, wfcpw_exx);
@@ -689,7 +697,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
                         // overlap density in real space
                         setmem_complex_op()(density_real, 0.0, rhopw_exx->nrxx);
-                        for (int ig = 0; ig < rhopw_exx->nrxx; ig++)
+                        for (int ig = 0; ig < wfcpw_exx->nrxx; ig++)
                         {
                             density_real[ig] = psi_nk_real[ig] * std::conj(psi_mq_real[ig]) * omega_inv;
                         }

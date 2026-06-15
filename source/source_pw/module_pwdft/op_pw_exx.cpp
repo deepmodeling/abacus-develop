@@ -27,6 +27,7 @@
 #include <limits>
 #include <new>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -136,6 +137,14 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                               wfcpw->xprime);
     wfcpw_exx->setuptransform();
     wfcpw_exx->collect_local_pw();
+    if (rhopw_dev->nrxx != wfcpw_exx->nrxx)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW",
+                                 "EXX density and wavefunction real-space layouts differ: rhopw_dev nrxx = "
+                                     + std::to_string(rhopw_dev->nrxx)
+                                     + ", wfcpw_exx nrxx = "
+                                     + std::to_string(wfcpw_exx->nrxx));
+    }
     if (std::is_same<Device, base_device::DEVICE_CPU>::value && wfcpw->poolnproc > 1)
     {
         exx_wave_redistributor.reset(new ExxWaveRedistributorCpu<T>());
