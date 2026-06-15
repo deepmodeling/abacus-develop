@@ -125,9 +125,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                               SR_filename,
                               pv,
                               "S",
-                              istep,
-                              true,
-                              pv.get_global_row_size());
+                              istep);
     }
     else
     {
@@ -138,9 +136,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                               SR_filename,
                               pv,
                               "S",
-                              istep,
-                              true,
-                              pv.get_global_row_size());
+                              istep);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -190,9 +186,7 @@ void ModuleIO::output_TR(const int istep,
                           sst.str().c_str(),
                           pv,
                           "T",
-                          istep,
-                          true,
-                          pv.get_global_row_size());
+                          istep);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 

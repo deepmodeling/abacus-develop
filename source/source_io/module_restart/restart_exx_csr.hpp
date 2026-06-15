@@ -114,11 +114,6 @@ namespace ModuleIO
         ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
         std::set<Abfs::Vector3_Order<int>> all_R_coor;
         double sparse_threshold = 1e-10;
-        int matrix_dimension = 0;
-        for (int it = 0; it < ucell.ntype; ++it)
-        {
-            matrix_dimension += ucell.atoms[it].na * ucell.atoms[it].nw * ucell.get_npol();
-        }
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])
@@ -140,8 +135,7 @@ namespace ModuleIO
                 Parallel_Orbitals(),
                 "Hexxs_" + std::to_string(is),
                 -1,
-                false,  //no reduce, one file for each process
-                matrix_dimension);
+                false);  //no reduce, one file for each process
         }
     }
 }

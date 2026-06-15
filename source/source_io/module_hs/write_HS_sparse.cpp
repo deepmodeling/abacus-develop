@@ -16,7 +16,6 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const std::string& fileflag) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
-    const int matrix_dimension = pv.get_global_row_size();
 
     auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
     auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
@@ -152,6 +151,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
 	{
 		if (binary) // binary format 
 		{
+			int nlocal = PARAM.globalv.nlocal;
 			for (int ispin = 0; ispin < spin_loop; ++ispin) 
 			{
 				if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
@@ -172,19 +172,19 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
 
                 g1x[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1x[ispin].write(reinterpret_cast<const char*>(&matrix_dimension),
+                g1x[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1x[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
 
                 g1y[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1y[ispin].write(reinterpret_cast<const char*>(&matrix_dimension),
+                g1y[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1y[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
 
                 g1z[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
-                g1z[ispin].write(reinterpret_cast<const char*>(&matrix_dimension),
+                g1z[ispin].write(reinterpret_cast<char*>(&nlocal),
                                  sizeof(int));
                 g1z[ispin].write(reinterpret_cast<char*>(&output_R_number),
                                  sizeof(int));
@@ -211,19 +211,19 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
 
                 g1x[ispin] << "STEP: " << step << std::endl;
-                g1x[ispin] << "Matrix Dimension of dHx(R): " << matrix_dimension
+                g1x[ispin] << "Matrix Dimension of dHx(R): " << PARAM.globalv.nlocal
                            << std::endl;
                 g1x[ispin] << "Matrix number of dHx(R): " << output_R_number
                            << std::endl;
 
                 g1y[ispin] << "STEP: " << step << std::endl;
-                g1y[ispin] << "Matrix Dimension of dHy(R): " << matrix_dimension
+                g1y[ispin] << "Matrix Dimension of dHy(R): " << PARAM.globalv.nlocal
                            << std::endl;
                 g1y[ispin] << "Matrix number of dHy(R): " << output_R_number
                            << std::endl;
 
                 g1z[ispin] << "STEP: " << step << std::endl;
-                g1z[ispin] << "Matrix Dimension of dHz(R): " << matrix_dimension
+                g1z[ispin] << "Matrix Dimension of dHz(R): " << PARAM.globalv.nlocal
                            << std::endl;
                 g1z[ispin] << "Matrix number of dHz(R): " << output_R_number
                            << std::endl;
@@ -390,12 +390,9 @@ void ModuleIO::save_sparse(
     const Parallel_Orbitals& pv,
     const std::string& label,
     const int& istep,
-    const bool& reduce,
-    const int& matrix_dimension) {
+    const bool& reduce) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-    const int output_matrix_dimension
-        = matrix_dimension >= 0 ? matrix_dimension : pv.get_global_row_size();
 
     int total_R_num = all_R_coor.size();
     std::vector<long long> nonzero_num(total_R_num, 0);
@@ -426,6 +423,7 @@ void ModuleIO::save_sparse(
     if (!reduce || GlobalV::DRANK == 0) {
         if (binary) {
             const int step = std::max(istep, 0);
+            const int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
                 && istep) {
                 ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
@@ -433,8 +431,7 @@ void ModuleIO::save_sparse(
                 ofs.open(sss.str().c_str(), std::ios::binary);
             }
             ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
-            ofs.write(reinterpret_cast<const char*>(&output_matrix_dimension),
-                      sizeof(int));
+            ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
             ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
         } else {
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
@@ -444,8 +441,8 @@ void ModuleIO::save_sparse(
                 ofs.open(sss.str().c_str());
             }
             ofs << "STEP: " << std::max(istep, 0) << std::endl;
-            ofs << "Matrix Dimension of " + label + "(R): "
-                << output_matrix_dimension << std::endl;
+            ofs << "Matrix Dimension of " + label + "(R): " << PARAM.globalv.nlocal
+                << std::endl;
             ofs << "Matrix number of " + label + "(R): " << output_R_number
                 << std::endl;
         }
@@ -503,8 +500,7 @@ template void ModuleIO::save_sparse<double>(
     const Parallel_Orbitals&,
     const std::string&,
     const int&,
-    const bool&,
-    const int&);
+    const bool&);
 
 template void ModuleIO::save_sparse<std::complex<double>>(
     const std::map<Abfs::Vector3_Order<int>,
@@ -516,5 +512,4 @@ template void ModuleIO::save_sparse<std::complex<double>>(
     const Parallel_Orbitals&,
     const std::string&,
     const int&,
-    const bool&,
-    const int&);
+    const bool&);
