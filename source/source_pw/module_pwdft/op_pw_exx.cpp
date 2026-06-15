@@ -196,7 +196,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     resmem_complex_op()(h_psi_exx_recip, wfcpw_exx->npwk_max);
     resmem_real_op()(pot, rhopw_dev->npw);
 
-    int batch_fft_size = this->wfcpw->fft_bundle.get_batch_size<Real>();
+    int batch_fft_size = this->wfcpw_exx->fft_bundle.get_batch_size<Real>();
     if (batch_fft_size <= 0 && PARAM.inp.exx_use_q_tile && wfcpw->get_device() == "gpu")
     {
         batch_fft_size = 1;
@@ -333,7 +333,7 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
     }
     else if (!PARAM.inp.exx_use_q_tile
              && PARAM.inp.exx_batch_fft_size > 1
-             && wfcpw->fft_bundle.is_batch_fft_available<Real>())
+             && wfcpw_exx->fft_bundle.is_batch_fft_available<Real>())
     {
         act_op_batch(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
@@ -2720,7 +2720,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
         return cal_exx_energy_ace(psi_);
     }
     else if (!PARAM.inp.exx_use_q_tile && PARAM.inp.exx_batch_fft_size > 1
-             && wfcpw->fft_bundle.is_batch_fft_available<Real>() && GlobalV::KPAR == 1)
+             && wfcpw_exx->fft_bundle.is_batch_fft_available<Real>() && GlobalV::KPAR == 1)
     {
         return cal_exx_energy_batch(psi_);
     }
@@ -3478,7 +3478,7 @@ void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::rho_recip2real
 template <typename T, typename Device>
 int OperatorEXXPW<T, Device>::get_batch_fft_size() const
 {
-    return this->wfcpw->fft_bundle.get_batch_size<Real>();
+    return this->wfcpw_exx->fft_bundle.get_batch_size<Real>();
 }
 
 template int OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::get_batch_fft_size() const;
