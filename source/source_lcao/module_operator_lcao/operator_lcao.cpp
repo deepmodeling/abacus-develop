@@ -67,20 +67,6 @@ void OperatorLCAO<TK, TR>::set_hr_done(bool hr_done_in) {
     this->hr_done = hr_done_in;
 }
 
-template<typename TK, typename TR>
-void OperatorLCAO<TK, TR>::set_current_spin(const int current_spin_in)
-{
-    this->current_spin = current_spin_in;
-    if(this->next_op != nullptr)
-    {
-        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->set_current_spin(current_spin_in);
-    }
-    if(this->next_sub_op != nullptr)
-    {
-        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_current_spin(current_spin_in);
-    }
-}
-
 template <typename TK, typename TR>
 void OperatorLCAO<TK, TR>::init(const int ik_in) {
     ModuleBase::TITLE("OperatorLCAO", "init");
@@ -276,7 +262,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int nrow = this->hsk->get_pv()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*(TD_info::td_vel_op->get_ucell()), *this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, nrow, 1);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -288,7 +274,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*(TD_info::td_vel_op->get_ucell()), *this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, ncol, 0);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), ncol, 0);
         }
         else
         {

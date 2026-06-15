@@ -1,5 +1,6 @@
 remove_definitions(-D__LCAO)
 remove_definitions(-D__MLALGO)
+remove_definitions(-D__CUDA)
 
 AddTest(
     TARGET MODULE_PW_Hamilt_Kernels_UTs
@@ -7,4 +8,10 @@ AddTest(
     SOURCES ekinetic_op_test.cpp nonlocal_op_test.cpp veff_op_test.cpp meta_op_test.cpp
     force_op_test.cpp stress_op_test.cpp wf_op_test.cpp vnl_op_test.cpp
     stress_op_mgga_test.cpp
+)
+
+AddTest(
+    TARGET onsite_op_test
+    LIBS parameter ${math_libs} device base container
+    SOURCES onsite_op_test.cpp
 )

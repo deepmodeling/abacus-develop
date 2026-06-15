@@ -477,6 +477,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                                     *this->Hexxc,
                                     *this->hR->get_paraV(),
                                     TD_info::td_vel_op->cart_At,
+                                    TD_info::td_vel_op->get_phase_hybrid(),
                                     this->hsk->get_hk());
         }
         else
