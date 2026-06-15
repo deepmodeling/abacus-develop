@@ -8,7 +8,6 @@
 #include "source_cell/print_cell.h"
 
 // Ions-specific parameters (shared variables are in Relax_Data)
-int Ions_Move_Basic::update_iter = 0;
 double Ions_Move_Basic::trust_radius = 0.0;
 double Ions_Move_Basic::trust_radius_old = 0.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0; // default is 0.8
@@ -111,7 +110,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos, std
     return;
 }
 
-bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs)
+bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "check_converged");
     assert(dim > 0);
@@ -141,12 +140,13 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
     if (PARAM.inp.out_level == "ie")
     {
         std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
-        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
-                  << std::endl;
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
+		<< Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+                << std::endl;
 
         ofs << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
-                             << " eV/Angstrom while threshold is " 
-                             << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
+        << " eV/Angstrom while threshold is " 
+        << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     }
 
     const double etot_diff = std::abs(Ions_Move_Basic::ediff);
@@ -166,7 +166,7 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
         ofs << "\n Ion relaxation is converged!" << std::endl;
         ofs << "\n Energy difference (Ry) = " << etot_diff << std::endl;
 
-        ++Ions_Move_Basic::update_iter;
+        ++update_iter;
         return true;
     }
     else
@@ -179,14 +179,14 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad,
     }
 }
 
-void Ions_Move_Basic::terminate(const bool converged, const UnitCell &ucell, const int istep, std::ofstream& ofs)
+void Ions_Move_Basic::terminate(const bool converged, const int update_iter, const UnitCell &ucell, const int istep, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "terminate");
     if (converged)
     {
         ofs << " end of geometry optimization" << std::endl;
         ModuleBase::GlobalFunc::OUT(ofs, "istep", istep);
-        ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
+        ModuleBase::GlobalFunc::OUT(ofs, "update iteration", update_iter);
         /*
         ofs<<"Saving the approximate inverse hessian"<<std::endl;
         std::ofstream hess("hess.out");

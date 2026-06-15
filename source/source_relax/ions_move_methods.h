@@ -42,9 +42,9 @@ class Ions_Move_Methods
     {
         return Ions_Move_Basic::trust_radius;
     }
-    double get_update_iter() const
+    int get_update_iter() const
     {
-        return Ions_Move_Basic::update_iter;
+        return update_iter_;
     }
 
   private:
@@ -54,5 +54,6 @@ class Ions_Move_Methods
     Ions_Move_BFGS2 bfgs_trad;
     Ions_Move_LBFGS lbfgs;
     bool converged_ = false;
+    int update_iter_ = 0;
 };
 #endif

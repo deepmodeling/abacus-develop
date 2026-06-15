@@ -188,7 +188,7 @@ TEST_F(BFGSBasicTest, SaveBfgs)
 TEST_F(BFGSBasicTest, NewStepCase1)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::update_iter = 0;
+    int update_iter = 0;
     Ions_Move_Basic::largest_grad = 0.0;
     Ions_Move_Basic::relax_bfgs_init = 0.3;
     Ions_Move_Basic::best_xxx = -0.4;
@@ -203,9 +203,9 @@ TEST_F(BFGSBasicTest, NewStepCase1)
 
     double lat0 = 1.0;
     std::ofstream ofs("test_log.log");
-    bfgs.new_step(lat0, ofs);
+    bfgs.new_step(lat0, update_iter, ofs);
 
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
+    EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(bfgs.tr_min_hit, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 0.2);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 0.4);
@@ -222,7 +222,7 @@ TEST_F(BFGSBasicTest, NewStepCase1)
 TEST_F(BFGSBasicTest, NewStepCase2)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::update_iter = 2;
+    int update_iter = 2;
     Ions_Move_Basic::largest_grad = 0.0;
     Ions_Move_Basic::relax_bfgs_init = 0.3;
     Ions_Move_Basic::best_xxx = -0.4;
@@ -237,9 +237,9 @@ TEST_F(BFGSBasicTest, NewStepCase2)
 
     double lat0 = 1.0;
     std::ofstream ofs("test_log.log");
-    bfgs.new_step(lat0, ofs);
+    bfgs.new_step(lat0, update_iter, ofs);
 
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 3);
+    EXPECT_EQ(update_iter, 3);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -1.0);
     EXPECT_DOUBLE_EQ(bfgs.move[0], -1.0);
     EXPECT_DOUBLE_EQ(bfgs.move[1], -2.0);
@@ -253,13 +253,14 @@ TEST_F(BFGSBasicTest, NewStepCase2)
 TEST_F(BFGSBasicTest, NewStepWarningQuit)
 {
     Ions_Move_Basic::dim = 2;
+    int update_iter = 0;
     bfgs.bfgs_ndim = 2;
     bfgs.allocate_basic();
     double lat0 = 1.0;
     std::ofstream ofs("test_log.log");
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step(lat0, ofs), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.new_step(lat0, update_iter, ofs), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }

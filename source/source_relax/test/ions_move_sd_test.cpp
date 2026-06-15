@@ -19,7 +19,7 @@ class IonsMoveSDTest : public ::testing::Test
     {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
-        Ions_Move_Basic::update_iter = 5;
+        update_iter = 5;
         im_sd.allocate();
         PARAM.input.force_thr = 0.001;
     }
@@ -30,6 +30,7 @@ class IonsMoveSDTest : public ::testing::Test
     }
 
     Ions_Move_SD im_sd;
+    int update_iter;
 };
 
 // Test whether the allocate() function can correctly allocate memory space
@@ -74,7 +75,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_converged.log");
-    im_sd.start(ucell, force, etot, istep, ofs);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -90,7 +91,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], 0.0);
@@ -125,7 +126,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_not_converged.log");
-    im_sd.start(ucell, force, etot, istep, ofs);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -137,7 +138,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     std::remove("test_sd_start_not_converged.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 6);
+    EXPECT_EQ(update_iter, 6);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 1.0);
     EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], -1.0);

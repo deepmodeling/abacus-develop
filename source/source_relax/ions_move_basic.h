@@ -26,7 +26,6 @@ static double& etot = Relax_Data::etot;         ///< Total energy of current ste
 static double& etot_p = Relax_Data::etot_p;     ///< Total energy of previous step
 
 // Ions-specific parameters (not shared with lattice change)
-extern int update_iter;              ///< Number of successfully updated iterations
 extern double trust_radius;          ///< Current trust radius
 extern double trust_radius_old;      ///< Previous trust radius
 extern double relax_bfgs_rmax;       ///< Maximum trust radius (default: 0.8 Bohr)
@@ -59,19 +58,21 @@ void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
  * @brief Check convergence based on gradient threshold.
  * @param ucell Unit cell containing lattice information
  * @param grad Gradient array (dimension: dim)
+ * @param update_iter Number of successfully updated iterations (will be incremented if converged)
  * @param ofs Output stream for logging
  * @return true if converged, false otherwise
  */
-bool check_converged(const UnitCell &ucell, const double *grad, std::ofstream& ofs);
+bool check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs);
 
 /**
  * @brief Terminate geometry optimization and output results.
  * @param converged Convergence flag
+ * @param update_iter Number of successfully updated iterations
  * @param ucell Unit cell to output
  * @param istep Current ionic step index
  * @param ofs Output stream for logging
  */
-void terminate(const bool converged, const UnitCell &ucell, const int istep, std::ofstream& ofs);
+void terminate(const bool converged, const int update_iter, const UnitCell &ucell, const int istep, std::ofstream& ofs);
 
 /**
  * @brief Update energy values and compute energy difference.

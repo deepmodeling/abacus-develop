@@ -37,7 +37,7 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
-bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, std::ofstream& ofs)
+bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
@@ -58,11 +58,11 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     Ions_Move_Basic::setup_etot(energy_in, false, istep);
     // use gradient and etot and etot_old to check
     // if the result is converged.
-    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs);
 
     if (converged)
     {
-        Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+        Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
         return true;
     }
     else
@@ -72,7 +72,7 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         // [ if run from previous saved info ]
         // the BFGS file is read from previous run.
         // and the move_p is renormalized.
-        this->restart_bfgs(ucell.lat0, ofs);
+        this->restart_bfgs(ucell.lat0, update_iter, ofs);
 
         //[ if etot>etot_p ]
         // interpolation
@@ -80,7 +80,7 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         // calculate the new step -> the new move using hessian
         // matrix, and set the new trust radius.
         // [compute the move at last]
-        this->bfgs_routine(ucell.lat0, istep, ofs);
+        this->bfgs_routine(ucell.lat0, istep, update_iter, ofs);
 
         // get prepared for the next try.
         // even if the energy is higher, we save the information.
@@ -91,7 +91,7 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     }
 }
 
-void Ions_Move_BFGS::restart_bfgs(const double& lat0, std::ofstream& ofs)
+void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "restart_bfgs");
 
@@ -134,7 +134,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, std::ofstream& ofs)
             std::fill(grad_p.begin(), grad_p.end(), 0.0);
             std::fill(move_p.begin(), move_p.end(), 0.0);
 
-        Ions_Move_Basic::update_iter = 0;
+        update_iter = 0;
 
         // set the trust radius old as the initial trust radius.
         trust_radius_old = relax_bfgs_init;
@@ -167,7 +167,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, std::ofstream& ofs)
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, std::ofstream& ofs)
+void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;
@@ -292,7 +292,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, std::ofst
     }
     else if (etot <= etot_p)
     {
-        this->new_step(lat0, ofs);
+        this->new_step(lat0, update_iter, ofs);
     }
 
     if (PARAM.inp.out_level == "ie")
@@ -301,7 +301,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, std::ofst
     }
 
     ModuleBase::GlobalFunc::OUT(ofs, "istep", istep);
-    ModuleBase::GlobalFunc::OUT(ofs, "update iteration", Ions_Move_Basic::update_iter);
+    ModuleBase::GlobalFunc::OUT(ofs, "update iteration", update_iter);
 
     // combine the direction and move length now
     double norm = dot_func(this->move.data(), this->move.data(), dim);

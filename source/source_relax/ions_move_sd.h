@@ -14,7 +14,7 @@ class Ions_Move_SD
     ~Ions_Move_SD() = default;
 
     void allocate(void);
-    bool start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot, const int istep, std::ofstream& ofs);
+    bool start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot, const int istep, int& update_iter, std::ofstream& ofs);
 
   private:
     double energy_saved;

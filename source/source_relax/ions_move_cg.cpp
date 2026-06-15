@@ -23,7 +23,7 @@ void Ions_Move_CG::allocate(const int dim)
     this->e0 = 0.0;
 }
 
-bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, std::ofstream& ofs)
+bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -77,11 +77,11 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         bool converged = false;
         if (flag == 0)
         {
-            converged = Ions_Move_Basic::check_converged(ucell, grad.data(), ofs);
+            converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs);
         }
         if (converged)
         {
-            Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+            Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
             return true;
         }
 

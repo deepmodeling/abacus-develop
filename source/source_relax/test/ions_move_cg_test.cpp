@@ -19,7 +19,7 @@ class IonsMoveCGTest : public ::testing::Test
     {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
-        Ions_Move_Basic::update_iter = 5;
+        update_iter = 5;
         im_cg.allocate(Ions_Move_Basic::dim);
         PARAM.input.force_thr = 0.001;
 
@@ -52,6 +52,7 @@ class IonsMoveCGTest : public ::testing::Test
         ucell.lat.GT.Zero();
     }
     Ions_Move_CG im_cg;
+    int update_iter;
 };
 
 // Test whether the allocate() function can correctly allocate memory space
@@ -99,7 +100,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("TestStartConverged.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -116,7 +117,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
 
@@ -135,7 +136,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 
     // call function
     std::ofstream ofs("TestStartSd.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -147,7 +148,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     std::remove("TestStartSd.log"); // mohan
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
@@ -168,14 +169,14 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrialGoto_temp1.log");
-    im_cg.start(ucell, force, etot, istep, ofs1);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1);
     ofs1.close();
     std::remove("TestStartTrialGoto_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -187,7 +188,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     std::remove("TestStartTrialGoto.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
@@ -208,13 +209,13 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrial_temp1.log");
-    im_cg.start(ucell, force, etot, istep, ofs1);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1);
     ofs1.close();
     std::remove("TestStartTrial_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs("TestStartTrial.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -226,7 +227,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     std::remove("TestStartTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
@@ -247,18 +248,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase1_temp1.log");
-    im_cg.start(ucell, force, etot, istep, ofs1);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase1_temp1.log");
     int istep_2 = 2;
     std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -270,7 +271,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     std::remove("TestStartNoTrialGotoCase1.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
@@ -291,17 +292,17 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase2_temp1.log");
-    im_cg.start(ucell, force, etot, istep, ofs1);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase2_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase2_temp2.log");
     std::ofstream ofs("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -313,7 +314,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     std::remove("TestStartNoTrialGotoCase2.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
@@ -334,18 +335,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrial_temp1.log");
-    im_cg.start(ucell, force, etot, istep, ofs1);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1);
     ofs1.close();
     std::remove("TestStartNoTrial_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs2("TestStartNoTrial_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrial_temp2.log");
     std::ofstream ofs("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot, istep_2, ofs);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs);
     ofs.close();
 
     // Check output
@@ -357,7 +358,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     std::remove("TestStartNoTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);

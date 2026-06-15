@@ -109,38 +109,12 @@ void BFGS_Basic::check_wolfe_conditions(std::ofstream& ofs)
     // enlarge trst radius is not good.
     bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
 
-    if (PARAM.inp.test_relax_method)
-    {
-        ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", etot - etot_p);
-        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
-        ModuleBase::GlobalFunc::OUT(ofs, "dot", dot);
-        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2 * dot_p", relax_bfgs_w2 * dot_p);
-        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1", relax_bfgs_w1);
-        ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w2", relax_bfgs_w2);
-        ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
-        ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
-    }
-
     this->wolfe_flag = wolfe1 && wolfe2;
-
-    /*
-       for(int i=0; i<dim; i++)
-       {
-       std::cout << " grad_p[" << i << "]=" << grad_p[i] << std::endl;
-       }
-
-       for(int i=0; i<dim; i++)
-       {
-       std::cout << " move_p[" << i << "]=" << move_p[i] << std::endl;
-       }
-     */
 
     ModuleBase::GlobalFunc::OUT(ofs, "etot - etot_p", etot - etot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe1", wolfe1);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe2", wolfe2);
-    //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot = ",dot);
-    //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot_p = ",dot_p);
     ModuleBase::GlobalFunc::OUT(ofs, "wolfe condition satisfied", wolfe_flag);
     return;
 }
@@ -175,15 +149,15 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0, std::ofstream& ofs)
+void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
     //--------------------------------------------------------------------
-    ++Ions_Move_Basic::update_iter;
-    if (Ions_Move_Basic::update_iter == 1)
+    ++update_iter;
+    if (update_iter == 1)
     {
-        // Ions_Move_Basic::update_iter == 1 in this case
+        // update_iter == 1 in this case
         // we haven't succes before, but we also need to decide a direction
         // this is the case when BFGS first start
         // if the gradient is very small now,
@@ -201,7 +175,7 @@ void BFGS_Basic::new_step(const double &lat0, std::ofstream& ofs)
         relax_bfgs_init
             = std::min(Ions_Move_Basic::best_xxx, relax_bfgs_init); // cg to bfgs initial trust_radius   13-8-10 pengfei
     }
-    else if (Ions_Move_Basic::update_iter > 1)
+    else if (update_iter > 1)
     {
         this->check_wolfe_conditions(ofs);
         this->update_inverse_hessian(lat0, ofs);
@@ -255,14 +229,14 @@ void BFGS_Basic::new_step(const double &lat0, std::ofstream& ofs)
 
     //--------------------------------------------------------------------
     // the step must done after hessian is multiplied to grad.
-    // std::cout<<"update_iter="<<Ions_Move_Basic::update_iter<<std::endl;
-    if (Ions_Move_Basic::update_iter == 1)
+    // std::cout<<"update_iter="<<update_iter<<std::endl;
+    if (update_iter == 1)
     {
         trust_radius = relax_bfgs_init;
 
         this->tr_min_hit = false;
     }
-    else if (Ions_Move_Basic::update_iter > 1)
+    else if (update_iter > 1)
     {
         trust_radius = trust_radius_old;
         this->compute_trust_radius(ofs);

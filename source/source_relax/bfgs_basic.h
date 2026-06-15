@@ -25,7 +25,7 @@ class BFGS_Basic
 
   protected:
     void allocate_basic(void);
-    void new_step(const double& lat0, std::ofstream& ofs);
+    void new_step(const double& lat0, int& update_iter, std::ofstream& ofs);
     void reset_hessian(void);
     void save_bfgs(void);
 
@@ -37,7 +37,7 @@ class BFGS_Basic
     std::vector<double> grad_p; // p: previous
     std::vector<double> move_p;
 
-  public:                        // mohan update 2011-06-12
+  public:
     static double relax_bfgs_w1; // fixed: parameters for Wolfe conditions.
     static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 

@@ -102,7 +102,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
+    int update_iter = 1;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
@@ -113,7 +113,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -132,7 +132,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
+    EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
@@ -142,7 +142,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
+    int update_iter = 1;
     Ions_Move_Basic::ediff = 0.0;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
@@ -152,7 +152,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -171,7 +171,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 2);
+    EXPECT_EQ(update_iter, 2);
     EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
@@ -181,7 +181,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
+    int update_iter = 1;
     Ions_Move_Basic::ediff = 1.0;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
@@ -191,7 +191,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, ofs);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -210,7 +210,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
+    EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(converged, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
@@ -221,11 +221,11 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
     // Initialize data
     const bool converged = true;
     const int istep = 2;
-    Ions_Move_Basic::update_iter = 5;
+    const int update_iter = 5;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_converged.log");
-    Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+    Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
     ofs.close();
 
     // Check the results
@@ -246,10 +246,11 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
     // Initialize data
     const bool converged = false;
     const int istep = 10;
+    const int update_iter = 0;
 
     // Call the function being tested
     std::ofstream ofs("test_terminate_not_converged.log");
-    Ions_Move_Basic::terminate(converged, ucell, istep, ofs);
+    Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
     ofs.close();
 
     // Check the results
