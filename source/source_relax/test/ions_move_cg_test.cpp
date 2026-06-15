@@ -175,7 +175,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     im_cg.move0[0] = 10.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep_2, ofs);
     ofs.close();
 
     // Check output
@@ -214,7 +214,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs("TestStartTrial.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep_2, ofs);
     ofs.close();
 
     // Check output
@@ -252,13 +252,13 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     std::remove("TestStartNoTrialGotoCase1_temp1.log");
     int istep_2 = 2;
     std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
-    im_cg.start(ucell, force, etot, istep, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep_2, ofs);
     ofs.close();
 
     // Check output
@@ -297,11 +297,11 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
-    im_cg.start(ucell, force, etot, istep, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase2_temp2.log");
     std::ofstream ofs("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep_2, ofs);
     ofs.close();
 
     // Check output
@@ -341,11 +341,11 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs2("TestStartNoTrial_temp2.log");
-    im_cg.start(ucell, force, etot, istep, ofs2);
+    im_cg.start(ucell, force, etot, istep_2, ofs2);
     ofs2.close();
     std::remove("TestStartNoTrial_temp2.log");
     std::ofstream ofs("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot, istep, ofs);
+    im_cg.start(ucell, force, etot, istep_2, ofs);
     ofs.close();
 
     // Check output
