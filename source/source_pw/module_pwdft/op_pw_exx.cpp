@@ -135,7 +135,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                               wfcpw->kvec_d,
                               wfcpw->distribution_type,
                               wfcpw->xprime);
-    wfcpw_exx->setuptransform();
+    wfcpw_exx->setuptransform(PARAM.inp.exx_batch_fft_size);
     wfcpw_exx->collect_local_pw();
     if (rhopw_dev->nrxx != wfcpw_exx->nrxx)
     {
@@ -1784,7 +1784,7 @@ void OperatorEXXPW<T, Device>::setup_full_q_cache_basis(double ecut_exx, const s
                                     full_q_kvec_d.data(),
                                     wfcpw->distribution_type,
                                     wfcpw->xprime);
-    wfcpw_exx_fullq->setuptransform();
+    wfcpw_exx_fullq->setuptransform(PARAM.inp.exx_batch_fft_size);
     wfcpw_exx_fullq->collect_local_pw();
     if (wfcpw_exx_fullq->nrxx != wfcpw_exx->nrxx)
     {

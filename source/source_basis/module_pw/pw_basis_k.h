@@ -81,7 +81,7 @@ public:
 
 public:
     //prepare for transforms between real and reciprocal spaces
-    void setuptransform();
+    void setuptransform(int batch_fft_size = 1);
 
     int *igl2isz_k=nullptr, * d_igl2isz_k = nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz)
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig

@@ -133,7 +133,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                   wfcpw->kvec_d,
                                   wfcpw->distribution_type,
                                   wfcpw->xprime);
-        wfcpw_exx->setuptransform();
+        wfcpw_exx->setuptransform(PARAM.inp.exx_batch_fft_size);
         wfcpw_exx->collect_local_pw();
         if (rhopw_exx->nrxx != wfcpw_exx->nrxx)
         {

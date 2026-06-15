@@ -4,7 +4,6 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <utility>
 namespace ModulePW
@@ -204,7 +203,7 @@ void PW_Basis_K::setupIndGk()
 /// set up maps for fft and create arrays for MPI_Alltoall
 /// set up ffts
 ///
-void PW_Basis_K::setuptransform()
+void PW_Basis_K::setuptransform(const int batch_fft_size)
 {
     ModuleBase::timer::start(this->classname, "setuptransform");
     this->distribute_r();
@@ -246,10 +245,9 @@ void PW_Basis_K::setuptransform()
     }
     this->fft_bundle.setupFFT();
 
-    // Initialize batch FFT size from input parameters
-    this->fft_bundle.init_batch_size(PARAM.inp.exx_batch_fft_size);
+    this->fft_bundle.init_batch_size(batch_fft_size);
 
-    // Setup batch FFT for GPU acceleration (automatically skipped if not GPU or not available).
+    // Setup batch FFT for GPU acceleration when requested by the caller.
     this->fft_bundle.setupBatchFFT();
     ModuleBase::timer::end(this->classname, "setuptransform");
 }
