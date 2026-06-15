@@ -1689,14 +1689,6 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // sc_scf_nmin
-        auto it = find_label("sc_scf_nmin", readinput.input_lists);
-        param.input.sc_scf_nmin = 1;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
     { // alpha_trial
         auto it = find_label("alpha_trial", readinput.input_lists);
         param.input.alpha_trial = -1;

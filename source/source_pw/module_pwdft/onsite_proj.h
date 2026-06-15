@@ -7,6 +7,7 @@
 #include "source_pw/module_pwdft/radial_proj.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_pwdft/onsite_proj_tools.h"
+#include "source_lcao/module_dftu/dftu.h"
 
 #include <string>
 #include <vector>
@@ -43,9 +44,13 @@ namespace projectors
          */
         void tabulate_atomic(const int ik, const char grad = 'n');
         
+        /// compute becp = <alpha|psi>; ld_psi is the leading dimension of psi
+        /// (defaults to npwx if 0, but should be ngk[ik] when called from
+        /// the Davidson/CG solver where psi stride varies per k-point)
         void overlap_proj_psi(
                     const int npm,
-                    const std::complex<double>* ppsi
+                    const std::complex<double>* ppsi,
+                    const int ld_psi = 0
                     );
         void read_abacus_orb(std::ifstream& ifs,
                             std::string& elem,
@@ -83,6 +88,26 @@ namespace projectors
 
         hamilt::Onsite_Proj_tools<T, Device>* get_fs_tools() const { return fs_tools; }
 
+        /// high-level: compute DFT+U force contribution for one k-point
+        void cal_force_onsite_dftu(int ik, int npm, T* force,
+                                   const Plus_U& dftu, int nks,
+                                   const double* wg_ik) const;
+
+        /// high-level: compute DFT+U stress contribution for one k-point
+        double cal_stress_onsite_dftu(int ik, int npm,
+                                      const Plus_U& dftu, int nks,
+                                      const double* wg_ik) const;
+
+        /// high-level: compute DeltaSpin force contribution for one k-point
+        void cal_force_onsite_dspin(int ik, int npm, T* force,
+                                    const ModuleBase::Vector3<double>* lambda,
+                                    const double* wg_ik) const;
+
+        /// high-level: compute DeltaSpin stress contribution for one k-point
+        double cal_stress_onsite_dspin(int ik, int npm,
+                                       const ModuleBase::Vector3<double>* lambda,
+                                       const double* wg_ik) const;
+
         private:
         OnsiteProjector(){};
         ~OnsiteProjector();
@@ -113,6 +138,8 @@ namespace projectors
         std::vector<int> iat_nh;
 
         const UnitCell* ucell = nullptr;
+
+        const int* isk_ = nullptr;  ///< spin index per k-point (from K_Vectors)
 
         const ModulePW::PW_Basis_K* pw_basis_ = nullptr;             // level1: the plane wave basis, need ik
         Structure_Factor* sf_ = nullptr;                             // level2: the structure factor calculator
