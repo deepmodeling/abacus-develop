@@ -90,7 +90,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
         assert(PARAM.inp.cal_force == 1);
         
         // Calculate and apply atomic movement
-        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running);
+        std::vector<std::string> relax_method = PARAM.inp.relax_method;
+        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method);
         ++force_step;
         
         // Check convergence

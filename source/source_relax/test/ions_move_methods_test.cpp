@@ -135,22 +135,23 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     UnitCell ucell;
     std::ofstream ofs;
 
-    Ions_Move_Basic::relax_method[0] = "bfgs";
-    Ions_Move_Basic::relax_method[1] = "1";
+    std::vector<std::string> relax_method;
+
+    relax_method = {"bfgs", "1"};
     imm.allocate(natom, "bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
 
-    Ions_Move_Basic::relax_method[0] = "sd";
+    relax_method = {"sd", "1"};
     imm.allocate(natom, "sd", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
 
-    Ions_Move_Basic::relax_method[0] = "cg";
+    relax_method = {"cg", "1"};
     imm.allocate(natom, "cg", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
 
-    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
+    relax_method = {"cg_bfgs", "1"};
     imm.allocate(natom, "cg_bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
 }
 
 // Test the cal_movement() function warning quit
@@ -162,17 +163,16 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const double etot = 0.0;
     UnitCell ucell;
     std::ofstream ofs;
-    Ions_Move_Basic::relax_method[0] = "none";
-    Ions_Move_Basic::relax_method[1] = "1";
+    std::vector<std::string> relax_method = {"none", "1"};
     imm.allocate(natom, "none", "1");
 
     GlobalV::ofs_warning.open("log");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(output, testing::HasSubstr("the parameter Ions_Move_Basic::relax_method is not correct."));
+    EXPECT_THAT(output, testing::HasSubstr("the parameter relax_method is not correct."));
     ifs.close();
     std::remove("log");
 }

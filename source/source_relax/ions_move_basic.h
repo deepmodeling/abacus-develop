@@ -28,7 +28,6 @@ extern double relax_bfgs_rmax;       ///< Maximum trust radius (default: 0.8 Boh
 extern double relax_bfgs_rmin;       ///< Minimum trust radius (default: 1e-5 Bohr)
 extern double relax_bfgs_init;       ///< Initial trust radius (default: 0.5 Bohr)
 extern double best_xxx;              ///< Last step length from CG, used as BFGS initial guess
-extern std::vector<std::string> relax_method; ///< Relaxation method settings
 
 /**
  * @brief Setup gradient from atomic forces.

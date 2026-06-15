@@ -58,36 +58,37 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const ModuleBase::matrix &f,
                                      const double &etot,
                                      UnitCell &ucell,
-                                     std::ofstream& ofs)
+                                     std::ofstream& ofs,
+                                     std::vector<std::string>& relax_method)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-    if (Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] != "1")
+    if (relax_method[0] == "bfgs" && relax_method[1] != "1")
     {
         converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "sd")
+    else if (relax_method[0] == "sd")
     {
         converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg")
+    else if (relax_method[0] == "cg")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
+    else if (relax_method[0] == "cg_bfgs")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
     }
-    else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
+    else if (relax_method[0] == "bfgs" && relax_method[1] == "1")
     {
-        converged_ = bfgs_trad.relax_step(f,ucell, ofs);        
+        converged_ = bfgs_trad.relax_step(f, ucell, ofs);        
     }
-    else if(Ions_Move_Basic::relax_method[0] == "lbfgs")
+    else if (relax_method[0] == "lbfgs")
     {
-        converged_ = lbfgs.relax_step(f,ucell,etot, ofs);        
+        converged_ = lbfgs.relax_step(f, ucell, etot, ofs);        
     }
     else
     {
-        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
+        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter relax_method is not correct.");
         converged_ = false;
     }
     return;

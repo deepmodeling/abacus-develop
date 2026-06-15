@@ -23,7 +23,8 @@ class Ions_Move_Methods
                       const ModuleBase::matrix &f,
                       const double &etot,
                       UnitCell &ucell,
-                      std::ofstream& ofs);
+                      std::ofstream& ofs,
+                      std::vector<std::string>& relax_method);
 
     bool get_converged() const
     {
