@@ -25,7 +25,7 @@ void Lattice_Change_CG::allocate(void)
 {
 }
 
-bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs)
+bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     return false;
 }
@@ -68,8 +68,7 @@ TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
 
     lcm.cal_lattice_change(istep, stress_step, stress, etot, ucell, ofs);
 
-    // Assert that the static variables istep and stress_step are set correctly
-    EXPECT_EQ(Lattice_Change_Basic::istep, istep);
+    // Assert that the static variable stress_step is set correctly
     EXPECT_EQ(Lattice_Change_Basic::stress_step, stress_step);
 
     // Note: To fully test this function, we would also need to check the output of lccg.start().
@@ -85,10 +84,9 @@ TEST_F(LatticeChangeMethodsTest, GetConverged)
 // Test the get_ediff function
 TEST_F(LatticeChangeMethodsTest, GetEdiff)
 {
-    lcm.get_ediff();
-
-    // Assert that the static variable ediff is set to 0.0
-    EXPECT_DOUBLE_EQ(Lattice_Change_Basic::ediff, 0.0);
+    // ediff is computed as etot_info[0] - etot_info[1]
+    // Initially both are 0.0, so ediff should be 0.0
+    EXPECT_DOUBLE_EQ(lcm.get_ediff(), 0.0);
 }
 
 // Test the get_largest_grad function

@@ -343,36 +343,32 @@ void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement)
+void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement, std::vector<double>& etot_info)
 {
+    // etot_info[0] = etot (current total energy)
+    // etot_info[1] = etot_p (previous total energy)
+    // ediff = etot_info[0] - etot_info[1] (computed on demand)
+
     if (Lattice_Change_Basic::stress_step == 1)
     {
         // p == previous
-        Lattice_Change_Basic::etot_p = energy_in;
-        Lattice_Change_Basic::etot = energy_in;
-        ediff = etot - etot_p;
+        etot_info[1] = energy_in;
+        etot_info[0] = energy_in;
     }
     else
     {
         if (judgement)
         {
-            Lattice_Change_Basic::etot = energy_in;
-            if (Lattice_Change_Basic::etot_p > etot)
+            etot_info[0] = energy_in;
+            if (etot_info[1] > etot_info[0])
             {
-                ediff = etot - etot_p;
-                Lattice_Change_Basic::etot_p = etot;
-            }
-            else
-            {
-                // this step will not be accepted
-                ediff = 0.0;
+                etot_info[1] = etot_info[0];
             }
         }
         else // for bfgs
         {
-            Lattice_Change_Basic::etot_p = etot;
-            Lattice_Change_Basic::etot = energy_in;
-            ediff = etot - etot_p;
+            etot_info[1] = etot_info[0];
+            etot_info[0] = energy_in;
         }
     }
 

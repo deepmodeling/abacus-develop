@@ -25,10 +25,9 @@ void Lattice_Change_Methods::cal_lattice_change(const int &istep,
                                                 std::ofstream& ofs)
 {
     ModuleBase::TITLE("Lattice_Change_Methods", "lattice_change_init");
-    Lattice_Change_Basic::istep = istep;
     Lattice_Change_Basic::stress_step = stress_step;
 
-    converged_ = lccg.start(ucell, stress, etot, ofs);
+    converged_ = lccg.start(ucell, stress, etot, ofs, etot_info_);
 
     return;
 }

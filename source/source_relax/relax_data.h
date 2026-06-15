@@ -32,12 +32,8 @@ public:
     // Static members - shared global state across all relaxation instances
     static int dim;              ///< Dimension of free variables (3 * number of atoms) for ion movement
     static int dim_lattice;      ///< Dimension of free variables (9) for lattice change
-    
+
     static double largest_grad;  ///< Largest gradient component (force) in current step
-    static int istep;            ///< Current iteration step index
-    static double ediff;         ///< Energy difference from previous step (etot - etot_p)
-    static double etot;          ///< Total energy of current step
-    static double etot_p;        ///< Total energy of previous step
 
     // Instance members - per-iteration data
     std::vector<double> pos;     ///< Current atomic positions in Bohr

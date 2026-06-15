@@ -2,6 +2,7 @@
 #define LATTICE_CHANGE_BASIC_H
 
 #include <fstream>
+#include <vector>
 #include "relax_data.h"
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
@@ -9,20 +10,17 @@
 /**
  * @namespace Lattice_Change_Basic
  * @brief Basic utilities and shared state for lattice relaxation algorithms.
- * 
+ *
  * This namespace provides common functions and parameters used by lattice
  * optimization methods. It shares core state variables through references to
  * Relax_Data, ensuring consistent data across different optimization algorithms.
+ *
  */
 namespace Lattice_Change_Basic
 {
 // Shared state variables (referenced from Relax_Data for unified data sharing)
 static int& dim = Relax_Data::dim_lattice;      ///< Dimension of free variables (9 for full lattice)
 static double& largest_grad = Relax_Data::largest_grad; ///< Largest gradient component
-static int& istep = Relax_Data::istep;          ///< Current ionic step index
-static double& ediff = Relax_Data::ediff;       ///< Energy difference from previous step
-static double& etot = Relax_Data::etot;         ///< Total energy of current step
-static double& etot_p = Relax_Data::etot_p;     ///< Total energy of previous step
 
 // Lattice-specific parameters (not shared with ion movement)
 extern int update_iter;          ///< Number of successfully updated iterations
@@ -68,7 +66,8 @@ void terminate(const bool converged, std::ofstream& ofs);
  * @brief Update energy values and compute energy difference.
  * @param energy_in Input energy value
  * @param judgement Flag for SD method (true) or BFGS (false)
+ * @param etot_info Vector containing [etot, etot_p]
  */
-void setup_etot(const double &energy_in, const bool judgement);
+void setup_etot(const double &energy_in, const bool judgement, std::vector<double>& etot_info);
 } // namespace Lattice_Change_Basic
 #endif

@@ -15,7 +15,7 @@ class Lattice_Change_CG : public CG_Base
     ~Lattice_Change_CG() = default;
 
     void allocate(void);
-    bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs);
+    bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs, std::vector<double>& etot_info);
 
   private:
     std::vector<double> lat0;
