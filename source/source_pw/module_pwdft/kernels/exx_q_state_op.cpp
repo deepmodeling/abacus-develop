@@ -72,6 +72,11 @@ ModuleBase::Vector3<double> generic_g_cartesian_from_ig(const ModulePW::PW_Basis
 {
     return generic_g_direct_from_ig(wfcpw, ig) * wfcpw->G;
 }
+
+ModuleBase::Vector3<double> k_g_direct_from_igl(const ModulePW::PW_Basis_K* wfcpw, int ik, int igl)
+{
+    return generic_g_direct_from_ig(wfcpw, wfcpw->igl2ig_k[ik * wfcpw->npwk_max + igl]);
+}
 } // namespace
 
 ExxSymmetryRemap build_exx_symmetry_remap(const ModulePW::PW_Basis_K* wfcpw,
@@ -86,7 +91,7 @@ ExxSymmetryRemap build_exx_symmetry_remap(const ModulePW::PW_Basis_K* wfcpw,
     rep_g_to_ig.reserve(wfcpw->npwk[rep_spin_index]);
     for (int ig_rep = 0; ig_rep < wfcpw->npwk[rep_spin_index]; ++ig_rep)
     {
-        rep_g_to_ig.emplace(make_int_g_key(wfcpw->getgdirect(rep_spin_index, ig_rep)), ig_rep);
+        rep_g_to_ig.emplace(make_int_g_key(k_g_direct_from_igl(wfcpw, rep_spin_index, ig_rep)), ig_rep);
     }
 
     ExxSymmetryRemap remap;
@@ -118,8 +123,8 @@ ExxSymmetryRemap build_exx_symmetry_remap(const ModulePW::PW_Basis_K* wfcpw,
         const int ig_rep = it->second;
         remap.rep_igl.push_back(ig_rep);
         remap.fft_isz.push_back(wfcpw->ig2isz[ig]);
-        const ModuleBase::Vector3<double> gk_rep = wfcpw->getgdirect(rep_spin_index, ig_rep)
-                                                   + wfcpw->kvec_d[rep_spin_index];
+        const ModuleBase::Vector3<double> gk_rep
+            = k_g_direct_from_igl(wfcpw, rep_spin_index, ig_rep) + wfcpw->kvec_d[rep_spin_index];
         const double phase_arg = ModuleBase::TWO_PI * (gk_rep * full_point.gtrans);
         remap.phase.push_back(std::complex<double>(std::cos(phase_arg), std::sin(phase_arg)));
 
