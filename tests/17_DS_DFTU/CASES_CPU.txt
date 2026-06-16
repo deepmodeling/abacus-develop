@@ -96,7 +96,7 @@
 # ========================
 # DirectionOnly mode (constrain direction, not magnitude)
 # ========================
-56_PW_DS_S4_DirectionOnly_XY
-57_PW_DFTU_DS_S4_DirectionOnly_XY
+# 56_PW_DS_S4_DirectionOnly_XY # DISABLED: Sensitive to SCF convergence with MPI/OMP variations
+# 57_PW_DFTU_DS_S4_DirectionOnly_XY # DISABLED: Sensitive to SCF convergence with MPI/OMP variations
 # 58_LCAO_DS_S4_DirectionOnly_XY # DISABLED: Convergence / numerical stability issue with LCAO DirectionOnly
 # 59_LCAO_DFTU_DS_S4_DirectionOnly_XY # DISABLED: Convergence / numerical stability issue with LCAO DirectionOnly

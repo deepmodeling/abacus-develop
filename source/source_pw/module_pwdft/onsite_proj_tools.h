@@ -62,7 +62,7 @@ class Onsite_Proj_tools
     /**
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr);
+    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr, int npwx = 0);
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated

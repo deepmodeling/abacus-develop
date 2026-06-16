@@ -33,6 +33,7 @@ double Plus_U::uramping = 0.0; // increase U by uramping, default is -1.0
 int Plus_U::omc=0; // occupation matrix control
 
 int Plus_U::mixing_dftu=0; //whether to mix locale
+int Plus_U::nspin=0;
 
 bool Plus_U::Yukawa=false; // whether to use Yukawa potential
 
@@ -73,6 +74,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     const int npol = PARAM.globalv.npol;     // number of polarization directions
     const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
     const int nspin = PARAM.inp.nspin;   // number of spins
+    Plus_U::nspin = nspin;
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;
@@ -98,9 +100,36 @@ void Plus_U::init(UnitCell& cell, // unitcell class
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
 
-            const int tlp1_npol = (this->orbital_corr[it]*2+1)*npol;
-            this->eff_pot_pw_index[iat] = pot_index;
-            pot_index += tlp1_npol * tlp1_npol;
+            // initialize the arrry iatlnm2iwt[iat][l][n][m]
+            this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl + 1);
+
+            if(!has_correlated_orbital(it))
+            {
+                continue;
+            }
+
+            const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
+            const int tlp1 = 2 * get_orbital_corr(it) + 1;
+            const int elem_size = tlp1 * tlp1;
+    // eff_pot_pw_index: per-atom offset into eff_pot_pw (and uom_array)
+    //
+    // nspin=1: offset = sum(tlp1^2 for preceding atoms), total = sum(all tlp1^2)
+    // nspin=2: same per-spin-channel offset; after the loop, pot_index *= 2
+    //          to create split layout: [all_spin_up | all_spin_down]
+    //          spin-up  at eff_pot_pw[eff_pot_pw_index[iat] + mm]
+    //          spin-down at eff_pot_pw[size/2 + eff_pot_pw_index[iat] + mm]
+    // nspin=4: offset = sum(tlp1_npol^2) where tlp1_npol = (2l+1)*npol = 2*(2l+1)
+    //          each atom occupies (2*tlp1)^2 = 4*tlp1^2 entries for 4 Pauli blocks
+            if(nspin == 4)
+            {
+                this->eff_pot_pw_index[iat] = pot_index;
+                pot_index += tlp1_npol * tlp1_npol;
+            }
+            else // nspin=1 or nspin=2: one tlp1^2 block per atom per spin channel
+            {
+                this->eff_pot_pw_index[iat] = pot_index;
+                pot_index += elem_size;
+            }
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
@@ -166,7 +195,13 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         }
     }
     // allocate memory for eff_pot_pw
+    // nspin=2: split layout [all_spin_up | all_spin_down], double the size
+    // nspin=4: each atom already has 4*tlp1^2 (tlp1_npol^2) entries for Pauli blocks
+    if (nspin == 2) pot_index *= 2;
+
     this->eff_pot_pw.resize(pot_index, 0.0);
+    this->uom_array.resize(pot_index, 0.0);
+    this->uom_save.resize(pot_index, 0.0);
 
     if (Yukawa)
     {
@@ -208,7 +243,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         this->local_occup_bcast(cell);
 #endif
 
-        initialed_locale = true;
+        mark_locale_initialized();
         this->copy_locale(cell);
     }
     else
@@ -216,12 +251,12 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         if (PARAM.inp.init_chg == "file")
         {
             std::stringstream sst;
-            sst << PARAM.globalv.global_out_dir << "onsite.dm";
+            sst << PARAM.globalv.global_readin_dir << "onsite.dm";
             this->read_occup_m(cell,sst.str());
 #ifdef __MPI
             this->local_occup_bcast(cell);
 #endif
-            initialed_locale = true;
+            mark_locale_initialized();
         }
         else
         {
@@ -240,7 +275,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Plus_U", "cal_energy_correction");
     ModuleBase::timer::start("Plus_U", "cal_energy_correction");
-    if (!initialed_locale)
+    if (!is_locale_initialized())
     {
         ModuleBase::timer::end("Plus_U", "cal_energy_correction");
         return;
@@ -254,7 +289,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
     for (int T = 0; T < ucell.ntype; T++)
     {
         const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = orbital_corr[T];
+        const int LC = get_orbital_corr(T);
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             if (LC == -1)
@@ -263,11 +298,11 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
             }
 
             const int iat = ucell.itia2iat(T, I);
-            const int L = orbital_corr[T];
+            const int L = get_orbital_corr(T);
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != get_orbital_corr(T))
                 {
                     continue;
                 }

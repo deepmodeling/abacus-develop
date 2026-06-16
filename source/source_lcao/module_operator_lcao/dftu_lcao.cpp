@@ -55,11 +55,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
 
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -107,12 +107,12 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
-		const int tlp1 = 2 * target_L + 1;
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
+        const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         // calculate and save the table of two-center integrals
@@ -173,17 +173,75 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
 }
 
 // contributeHR()
+/**
+ * @brief Contribute DFT+U Hamiltonian to real-space HR matrix
+ * 
+ * @details This function handles different scenarios based on:
+ * 1. Whether locale (occupation matrix) is read from file (is_locale_initialized)
+ * 2. Spin configuration (nspin=1, 2, or 4)
+ * 3. SCF iteration stage (first vs subsequent iterations)
+ * 
+ * Case 1: Locale NOT initialized (!is_locale_initialized)
+ *   - First electronic iteration: calculates occupation matrix from density matrix (DMR)
+ *     * Uses get_dmr(current_spin) to get real-space density matrix
+ *     * Accumulates contributions from all atom pairs via cal_occ()
+ *     * Performs MPI reduction to sum occ across processes
+ *     * Stores result via set_locale_flat() for use in VU calculation
+ *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
+ *   - Subsequent iterations: locale is computed fresh each iteration from updated DMR
+ * 
+ * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from onsite.dm file)
+ *   - First electronic iteration: uses pre-read locale directly without DMR calculation
+ *     * Skips DMR-based occ calculation entirely
+ *     * Reads locale from stored data via get_locale()
+ *     * Different indexing for nspin=4 vs nspin=1/2 (see below)
+ *   - After first iteration: mark_locale_dirty() is called to force recomputation
+ * 
+ * Spin configurations:
+ *   nspin=1 (non-spin-polarized):
+ *     - Single spin channel, occ computed once
+ *     - Energy correction doubled at end (set_double_energy)
+ *     - current_spin always 0
+ *   
+ *   nspin=2 (collinear spin-polarized):
+ *     - Two separate spin channels (spin-up: 0, spin-down: 1)
+ *     - current_spin toggles between 0 and 1 across iterations
+ *     - mark_locale_dirty() called when current_spin == 1 (last spin)
+ *     - HR accumulated separately for each spin
+ *   
+ *   nspin=4 (non-collinear/SOC):
+ *     - Single 4x4 Pauli matrix representation per atom
+ *     - occ has 4*(2l+1)^2 elements (spin_fold=4)
+ *     - get_locale uses spin=0, ipol indices for Pauli blocks
+ *     - mark_locale_dirty() always called (current_spin check always true)
+ *     - No current_spin toggling (all spins handled simultaneously)
+ * 
+ * @warning THREAD SAFETY: cal_HR_IJR() updates shared HR matrix entries.
+ *          Different iat0 may contribute to same HR(iat1, iat2, R), requiring
+ *          critical section protection for multithreaded correctness.
+ *          TODO: Consider refactoring to atom_row_list pattern (see nonlocal.cpp)
+ *          for better parallel performance instead of critical section.
+ */
 template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("DFTU", "contributeHR");
-    if (this->dftu->get_dmr(0) == nullptr && this->dftu->initialed_locale == false)
-    { // skip the calculation if dm_in_dftu is nullptr
+    // Early exit conditions:
+    // - get_dmr(0) == nullptr: DMR not available (typical in first iteration without file input)
+    // - !is_locale_initialized(): locale not read from file AND not yet computed from DMR
+    // When both true, skip DFT+U contribution entirely (first iteration, no file input)
+    const bool dmr_null = (this->dftu->get_dmr(0) == nullptr);
+    const bool locale_not_init = !this->dftu->is_locale_initialized();
+
+    if (dmr_null && locale_not_init)
+    {
         return;
     }
     else
     {
-        // will update this->dftu->locale and this->dftu->EU
+        // Reset DFT+U energy at start of each spin cycle
+        // For nspin=2: reset when current_spin==0 (start of spin-up calculation)
+        // For nspin=1/4: reset once (current_spin always 0)
 		if (this->current_spin == 0) 
 		{
             this->dftu->set_energy(0.0);
@@ -193,30 +251,43 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
-    // 1. calculate <psi|alpha> for each pair of atoms
+    // 1. Calculate <psi|alpha> two-center integrals for all atom pairs
+    //    This is reused in both occ and HR calculations
     this->cal_nlm_all(paraV);
-    // loop over all on-site atoms
+
+    // 2. Loop over all Hubbard-projector center atoms (iat0)
     int atom_index = 0;
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
-        // skip the atoms without plus-U
         auto tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         ModuleBase::timer::start("DFTU", "cal_occ");
-        // first iteration to calculate occupation matrix
+        // spin_fold: number of spin components in occ array
+        // nspin=4: 4 (Pauli matrix blocks), nspin=1/2: 1 (single spin channel)
         const int spin_fold = (this->nspin == 4) ? 4 : 1;
         std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
-        if (this->dftu->initialed_locale == false)
+        
+        // ============================================================
+        // BRANCH 1: Locale NOT initialized (compute from DMR)
+        // ============================================================
+        // This branch is taken when:
+        // - is_locale_initialized() == false (no file read or omc != 0)
+        // - DMR is available (get_dmr() != nullptr)
+        // Typical scenario: normal SCF iterations after first step
+        if (!this->dftu->is_locale_initialized())
         {
+            // TODO: UNSAFE - get_dmr(current_spin) assumes DMR has correct spin indexing.
+            // For nspin=2, current_spin must be correctly toggled (0 then 1).
+            // If current_spin is wrong, wrong spin channel's DMR is used.
             const hamilt::HContainer<double>* dmR_current = this->dftu->get_dmr(this->current_spin);
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
@@ -237,7 +308,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                                       R_index2[2] - R_index1[2]);
                     const hamilt::BaseMatrix<double>* tmp
                         = dmR_current->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                    // if not found , skip this pair of atoms
                     if (tmp != nullptr)
                     {
                         this->cal_occ(iat1, iat2, paraV, nlm1, nlm2, tmp->get_pointer(), occ);
@@ -245,46 +315,87 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                 }
             }
 #ifdef __MPI
-            // sum up the occupation matrix
+            // CRITICAL: MPI reduction required for distributed DMR calculations.
+            // Each process computes partial occ from its local DMR blocks.
+            // Without this, occ would be incomplete and DFT+U potential wrong.
+            // TODO: Verify that occ size is consistent across processes before reduction.
+            // TODO: Consider using MPI_IN_PLACE to avoid extra buffer allocation.
             Parallel_Reduce::reduce_all(occ.data(), occ.size());
 #endif
-            // save occ to dftu
-            for (int i = 0; i < occ.size(); i++)
+            // For nspin=1: occ computed from single spin channel, but should represent
+            // total occupation (both spins). Scale by 0.5 to account for this.
+            if (this->nspin == 1)
             {
-				if (this->nspin == 1) 
-				{
-					occ[i] *= 0.5;
-				}
-                this->dftu->locale[iat0][target_L][0][this->current_spin].c[i] = occ[i];
+                for (auto& v : occ) { v *= 0.5; }
             }
+            this->dftu->set_locale_flat(iat0, target_L, this->current_spin, occ);
         }
-        else // use readin locale to calculate occupation matrix
+        // ============================================================
+        // BRANCH 2: Locale IS initialized (use pre-read data)
+        // ============================================================
+        // This branch is taken when:
+        // - is_locale_initialized() == true (locale read from onsite.dm file)
+        // - OR omc != 0 (occupation matrix control with initial_onsite.dm)
+        // Typical scenario: first SCF iteration with file input, or restart calculation
+        else
         {
-            for (int i = 0; i < occ.size(); i++)
+            // nspin=4: Non-collinear case with Pauli matrix representation
+            // Locale stored as single 4x4 block per atom, with spin indices embedded
+            // in the matrix indices (ipol0, ipol1 for Pauli block indices)
+            if (this->nspin == 4)
             {
-                occ[i] = this->dftu->locale[iat0][target_L][0][this->current_spin].c[i];
+                // For nspin=4, locale is stored as 4 stacked tlp1^2 blocks
+                // at offsets 0, tlp1^2, 2*tlp1^2, 3*tlp1^2 for the 4 Pauli channels.
+                // Use get_locale_flat to read the stacked blocks directly
+                this->dftu->get_locale_flat(iat0, target_L, occ);
             }
-            // set initialed_locale to false to avoid using readin locale in next iteration
+            // nspin=1 or nspin=2: Collinear spin case
+            // Locale stored separately for each spin channel
+            else
+            {
+                for (int i = 0; i < static_cast<int>(occ.size()); i++)
+                {
+                    // TODO: UNSAFE - current_spin must be correct for nspin=2.
+                    // If current_spin is not toggled properly, wrong spin channel's locale is read.
+                    // This can happen if contributeHR() is called out of expected order.
+                    occ[i] = this->dftu->get_locale(iat0, target_L, 0, this->current_spin,
+                                                      i / (2 * target_L + 1), i % (2 * target_L + 1));
+                }
+            }
         }
         ModuleBase::timer::end("DFTU", "cal_occ");
 
-        // calculate VU
+        // 3. Calculate Hubbard potential VU from occupation matrix
+        // VU = U * (1/2 * delta(m,m') - occ(m,m')) for each spin channel
+        // Energy: EU = U * 1/2 * occ(m,m') * occ(m',m)
         ModuleBase::timer::start("DFTU", "cal_vu");
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU_tmp(occ.size());
 
-        // mohan add 2025-11-08
+        // TODO: GLOBAL STATE - Plus_U::get_energy()/set_energy() uses static member variable.
+        // This is NOT thread-safe for parallel SCF calculations.
+        // TODO: Refactor to use instance member or pass energy by reference.
         double u_energy = Plus_U::get_energy();
         this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), u_energy);
         Plus_U::set_energy(u_energy);
 
-        // transfer occ from pauli matrix format to normal format
+        // 4. Convert VU to appropriate data type (real or complex)
+        // For nspin=4 with complex Hamiltonian, VU needs Pauli matrix transformation
         std::vector<TR> VU(occ.size());
         this->transfer_vu(VU_tmp, VU);
 
-        // second iteration to calculate Hamiltonian matrix
-        // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
-        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // 5. Second iteration: Calculate Hamiltonian matrix contribution
+        // HR += <psi_I|beta_m> * VU(m,m') * <beta_m'|psi_{J,R}>
+        // for all atom pairs <I,J,R> within cutoff
+        // Note: different iat0 may contribute to the same HR(iat1, iat2, R), so we need to protect the update
+        // to avoid race conditions in multithreading. Reference: nonlocal.cpp for the atom_row_list pattern.
+        // TODO: CRITICAL SECTION PERFORMANCE - This critical section serializes HR updates.
+        // For systems with many Hubbard atoms, this becomes a bottleneck.
+        // Consider refactoring to atom_row_list pattern (see nonlocal.cpp lines 127-220):
+        //   1. Use #pragma omp for to distribute iat0 across threads
+        //   2. Each thread records its assigned iat0 in thread-local atom_row_list
+        //   3. When updating HR(iat1, iat2, R), skip if iat1 not in thread's atom_row_list
+        //   4. This eliminates race conditions without critical section
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
@@ -303,30 +414,51 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
                 hamilt::BaseMatrix<TR>* tmp = this->hR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                // if not found , skip this pair of atoms
                 if (tmp != nullptr)
                 {
-                    this->cal_HR_IJR(iat1, iat2, paraV, nlm1, nlm2, VU, tmp->get_pointer());
+#ifdef _OPENMP
+#pragma omp critical(dftu_hr_update)
+#endif
+                    {
+                        this->cal_HR_IJR(iat1, iat2, paraV, nlm1, nlm2, VU, tmp->get_pointer());
+                    }
                 }
             }
         }
         ModuleBase::timer::end("DFTU", "cal_vu");
     }
 
-    // energy correction for NSPIN=1
+    // 6. Post-processing: Energy correction and locale state management
+    // For nspin=1: DFT+U energy computed for single spin channel, but should count both spins
+    // set_double_energy() doubles the energy to account for degenerate spin-up/down
 	if (this->nspin == 1) 
 	{
         this->dftu->set_double_energy();
 	}
-	// for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
+	
+    // 7. Mark locale as dirty to force recomputation in next iteration
+    // This is called when:
+    // - nspin=4: Always (all spins handled simultaneously, current_spin==0==nspin-1)
+    // - nspin=2: When current_spin==1 (after spin-down calculation, last spin channel)
+    // - nspin=1: When current_spin==0==nspin-1 (always called)
+    // 
+    // Purpose: Ensure locale is recomputed from updated DMR in next SCF iteration,
+    // rather than using stale pre-read data from file.
+    // TODO: This logic is confusing. Consider explicit variable like `is_last_spin_channel`.
 	if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
 	{
-		this->dftu->initialed_locale = false;
+		this->dftu->mark_locale_dirty();
 	}
 
-    // update this->current_spin: only nspin=2 iterate change it between 0 and 1
-    // the key point is only nspin=2 calculate spin-up and spin-down separately,
-    // and won't calculate spin-up twice without spin-down
+    // 8. Spin channel toggling for nspin=2
+    // nspin=2 requires separate HR updates for spin-up (current_spin=0) and spin-down (current_spin=1)
+    // The HR matrix is updated twice per SCF iteration, once for each spin channel
+    // current_spin toggles: 0 -> 1 -> 0 -> 1 ...
+    // For nspin=1: current_spin always 0 (no toggling needed)
+    // For nspin=4: current_spin always 0 (all spins handled simultaneously via Pauli matrices)
+    // TODO: UNSAFE - This assumes contributeHR() is called in strict alternating order.
+    // If called out of order (e.g., due to parallel k-point distribution), current_spin may be wrong.
+    // TODO: Consider deriving current_spin from ik or explicit parameter instead of toggling.
 	if (this->nspin == 2) 
 	{
 		this->current_spin = 1 - this->current_spin;

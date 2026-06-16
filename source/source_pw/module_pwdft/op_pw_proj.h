@@ -54,9 +54,12 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     void cal_ps_dftu(const int npol, const int m) const;
 
-    void update_becp(const T* psi_in, const int npol, const int m) const;
+    /// one-time setup of DFT+U PW index arrays (orb_l_iat, ip_iat, ip_m, vu_begin_iat)
+    void setup_pw_dftu_indices() const;
 
-    void add_onsite_proj(T *hpsi_in, const int npol, const int m) const;
+    void update_becp(const T* psi_in, const int npol, const int m, const int npwx) const;
+
+    void add_onsite_proj(T *hpsi_in, const int npol, const int m, const int npwx) const;
 
     const int* isk = nullptr;
 
