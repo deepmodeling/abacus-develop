@@ -46,7 +46,7 @@ struct PerIContainers
             g[d].reserve(nat);
             for (int iat = 0; iat < nat; ++iat)
             {
-                owned[d].push_back(std::make_unique<hamilt::HContainer<double>>(&pv));
+                owned[d].push_back(make_unique<hamilt::HContainer<double>>(&pv));
                 g[d].push_back(owned[d].back().get());
             }
         }

@@ -1,5 +1,5 @@
-#ifndef WRITE_HS_R_TERMS_H
-#define WRITE_HS_R_TERMS_H
+#ifndef WRITE_H_TERMS_H
+#define WRITE_H_TERMS_H
 
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_pw/pw_basis.h"

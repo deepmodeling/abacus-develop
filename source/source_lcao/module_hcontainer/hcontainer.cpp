@@ -490,7 +490,6 @@ void HContainer<T>::add_value_union(const HContainer<T>& other, T factor)
     for (int iap = 0; iap < other.size_atom_pairs(); ++iap)
     {
         AtomPair<T> tmp = other.get_atom_pair(iap);
-        tmp.allocate(nullptr, true);
         result.insert_pair(tmp);
     }
     // 3) Rebuild result's contiguous buffer to cover the full union sparsity (zeroed).

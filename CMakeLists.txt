@@ -652,7 +652,7 @@ if(ENABLE_LIBRI)
   endif()
   abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                                  TEST_EXX_RADIAL=1)
-  if(DEFINED EXX_DEV)
+  if(EXX_DEV)
     abacus_add_feature_definitions(__EXX_DEV)
   endif()
 endif()

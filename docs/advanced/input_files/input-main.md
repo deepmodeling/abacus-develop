@@ -1881,7 +1881,7 @@
 
   The corresponding sequence of the orbitals can be seen in Basis Set.
 
-  Also controled by out_freq_ion and out_app_flag.
+  Also controlled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.
 - **Default**: 0
@@ -1942,7 +1942,7 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controled by out_freq_ion and out_app_flag.
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controlled by out_freq_ion and out_app_flag.
   - For gamma only case:
    - nspin = 1: hks1_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix;
    - nspin = 2: hks1_nao.txt and hks2_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix. Note that the code will not output sks2_nao.txt because it is the same as sks1_nao.txt;
@@ -2038,7 +2038,11 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+<<<<<<< HEAD
 - **Description**: Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+=======
+- **Description**: Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controlled by out_freq_ion and out_app_flag.
+>>>>>>> b1aa9e54a (small fixes)
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
 - **Default**: False 8
@@ -2050,7 +2054,7 @@
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix $dH(k)/d\tau_I=d\braket{\phi|\hat{H}|\phi}(k)/d\tau_I$ where $\tau_I$ is the Ith atom position with the dense format as `out_mat_dh`. The names are dhk[x/y/z]_iat[I][_ik]_nao.txt.
   - See also the term-separated output parameters: [`out_mat_dh_t`](#out_mat_dh_t), [`out_mat_dh_vl`](#out_mat_dh_vl), [`out_mat_dh_vnl`](#out_mat_dh_vnl), [`out_mat_dh_vh`](#out_mat_dh_vh), [`out_mat_dh_vxc`](#out_mat_dh_vxc) and [`out_mat_dh_exx`](#out_mat_dh_exx).
-  - If not gamma-only, also $\braket{\nabla\phi|\hat{H}\phi}(R)$ of sparse format as `out_mat_hs2` will also be output. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+  - If not gamma-only, also $\braket{\nabla\phi|\hat{H}\phi}(R)$ of sparse format as `out_mat_hs2` will also be output. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controlled by out_freq_ion and out_app_flag.
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
   - **Format**: `<enable> [precision] [iat1 iat2 ...]`
   - The first value (0/1) enables or disables output.
@@ -2111,7 +2115,7 @@
 
 - **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis, hybrid functional only (nspin ≠ 4)*
-    - Currently only avaliable when compiled with the personal developing branch of LibRI and -DEXX_DEV flag, waiting for the new release of LibRI to remove the flag.
+    - Currently only availablewhen compiled with the personal developing branch of LibRI and -DEXX_DEV flag, waiting for the new release of LibRI to remove the flag.
 - **Description**: Whether to print files containing the exact-exchange contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvexxk[x/y/z]_iat[I][_ik]_nao.txt.
 
 - **Default**: 0 8
@@ -2121,7 +2125,11 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+<<<<<<< HEAD
 - **Description**: Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+=======
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controlled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+>>>>>>> b1aa9e54a (small fixes)
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
 - **Default**: False 8

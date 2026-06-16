@@ -12,6 +12,13 @@
 #include <complex>
 #include <vector>
 
+///for lack of make_unique in c++11 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args &&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 template <typename T, typename Tdata>
 class Exx_LRI_Interface;
 
@@ -54,12 +61,12 @@ struct WriteDHParams
 #endif
 };
 
-// Returns 0-based atom indices to output (converted from the 1-based user-facing values stored at
-// param[2+]); empty vector (param.size() <= 2) means all atoms.  Out-of-range checking is done in
+// Returns 0-based atom indices to output (converted from the 1-based user-facing values stored at param[2+]); 
+// empty vector (param.size() <= 2) means all atoms.  Out-of-range checking is done in
 // write_dh_perI where nat is available: indices >= nat are warned about and silently skipped.
 inline std::vector<int> dh_atom_filter(const std::vector<int>& param)
 {
-    if (param.size() <= 2)
+    if (param.size() <= 2)  // param elements: [on/off][precition][iat1][iat2][...]
         return {};
     return std::vector<int>(param.begin() + 2, param.end());
 }

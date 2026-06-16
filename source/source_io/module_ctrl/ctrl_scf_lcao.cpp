@@ -293,8 +293,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 &dftu);
 
     //------------------------------------------------------------------
-    //! 7c) Output dH components (dT/dR, dV^NL/dR, dV^L/dR, dV^H/dR, dV^XC/dR)
+    //! 7c) Output atomic dH components (dT/dτ, dV^NL/dτ, dV^L/dτ, dV^H/dτ, dV^XC/dτ), only for nspin =1, 2 now
     //------------------------------------------------------------------
+    if( PARAM.inp.nspin < 4 )
     {
         WriteDHParams dh_params;
         dh_params.ucell = &ucell;
