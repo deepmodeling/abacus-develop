@@ -9,6 +9,10 @@ add_library(
     ${objects}
 )
 
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(lcao_extrap)
 endif()
