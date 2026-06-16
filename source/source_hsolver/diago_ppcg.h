@@ -128,6 +128,7 @@ private:
 
     // Inner product <x|y> (real part only).
     Real gamma_dot(const T* x, const T* y) const;
+    T complex_dot(const T* x, const T* y) const;
 
     // Gram matrix: out[i, j] = <a_i | b_j>.
     void gram(const T* a, const T* b,
@@ -181,6 +182,10 @@ private:
     void right_solve_upper_real(const std::vector<Real>& r,
                                 int n,
                                 std::vector<T>& x) const;
+
+    bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
+
+    void s_gram_schmidt(T* psi, T* hpsi, T* spsi, int ncol) const;
 
     void chol_qr_active(T* psi, const std::vector<int>& active_cols);
 

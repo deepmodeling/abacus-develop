@@ -355,6 +355,15 @@ DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
     return acc;
 }
 
+template <typename T, typename Device>
+T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
+{
+    T acc = T(0);
+    for (int i = 0; i < n_dim_; ++i)
+        acc += std::conj(x[i]) * y[i];
+    return acc;
+}
+
 // =============================================================================
 // Gram matrix: out[i, j] = <a_i | b_j>
 // =============================================================================
@@ -592,13 +601,21 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
 {
     // Try with increasing diagonal shifts; fall back to identity (no update)
     // if the subspace is too ill-conditioned.
-    // Save original M; dsygvd modifies it in-place before it may fail.
+    // Save originals; dsygvd modifies both matrices in-place before it may
+    // fail.
+    const std::vector<Real> k0 = subspace.k;
     const std::vector<Real> m0 = subspace.m;
-    const Real shifts[] = {static_cast<Real>(1e-10),
+    const Real shifts[] = {static_cast<Real>(0),
+                           static_cast<Real>(1e-10),
                            static_cast<Real>(1e-8),
                            static_cast<Real>(1e-6)};
-    for (int attempt = 0; attempt < 3; ++attempt)
+    for (const Real shift : shifts)
     {
+        subspace.k = k0;
+        subspace.m = m0;
+        for (int i = 0; i < dim; ++i)
+            subspace.m[i + i * dim] += shift;
+
         try
         {
             Lapack<Real>::sygvd(dim, subspace.k.data(), subspace.m.data(),
@@ -607,9 +624,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         }
         catch (const std::runtime_error&)
         {
-            subspace.m = m0;
-            for (int i = 0; i < dim; ++i)
-                subspace.m[i + i * dim] += shifts[attempt];
+            // Try the next diagonal shift.
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
@@ -721,6 +736,67 @@ void DiagoPPCG<T, Device>::right_solve_upper_real(
 }
 
 // ---------------------------------------------------------------------------
+// Check S-orthonormality of a column block.
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+bool DiagoPPCG<T, Device>::is_s_orthonormal(
+    const T* psi, const T* spsi, int ncol) const
+{
+    const Real orth_tol = static_cast<Real>(10)
+                        * std::sqrt(std::numeric_limits<Real>::epsilon());
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < ncol; ++i)
+        {
+            const T sij = complex_dot(psi + i * ld_psi_,
+                                      spsi + j * ld_psi_);
+            const T target = (i == j) ? T(1) : T(0);
+            if (std::abs(sij - target) > orth_tol)
+                return false;
+        }
+    }
+    return true;
+}
+
+// ---------------------------------------------------------------------------
+// Iterative S-Gram-Schmidt fallback with one reorthogonalization pass.
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::s_gram_schmidt(
+    T* psi, T* hpsi, T* spsi, int ncol) const
+{
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int pass = 0; pass < 2; ++pass)
+        {
+            apply_s_current(psi + j * ld_psi_, spsi + j * ld_psi_, 1);
+            for (int k = 0; k < j; ++k)
+            {
+                T coeff = complex_dot(psi + k * ld_psi_,
+                                      spsi + j * ld_psi_);
+                for (int ig = 0; ig < n_dim_; ++ig)
+                {
+                    psi [idx(ig, j, ld_psi_)] -= coeff * psi [idx(ig, k, ld_psi_)];
+                    hpsi[idx(ig, j, ld_psi_)] -= coeff * hpsi[idx(ig, k, ld_psi_)];
+                    spsi[idx(ig, j, ld_psi_)] -= coeff * spsi[idx(ig, k, ld_psi_)];
+                }
+            }
+        }
+        apply_s_current(psi + j * ld_psi_, spsi + j * ld_psi_, 1);
+        Real nrm = std::sqrt(std::max(
+            gamma_dot(psi + j * ld_psi_, spsi + j * ld_psi_),
+            static_cast<Real>(1e-30)));
+        Real inv_nrm = static_cast<Real>(1) / nrm;
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            psi [idx(ig, j, ld_psi_)] *= inv_nrm;
+            hpsi[idx(ig, j, ld_psi_)] *= inv_nrm;
+            spsi[idx(ig, j, ld_psi_)] *= inv_nrm;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Cholesky QR: S-orthonormalize active columns via Cholesky on S-gram
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
@@ -739,10 +815,22 @@ void DiagoPPCG<T, Device>::chol_qr_active(
     std::vector<Real> s(nact * nact, static_cast<Real>(0));
     gram(psi_a.data(), spsi_a.data(), nact, nact, s, nact);
 
-    Lapack<Real>::potrf(nact, s.data());
-    right_solve_upper_real(s, nact, psi_a);
-    right_solve_upper_real(s, nact, spsi_a);
-    right_solve_upper_real(s, nact, hpsi_a);
+    bool cholesky_ok = false;
+    try
+    {
+        Lapack<Real>::potrf(nact, s.data());
+        right_solve_upper_real(s, nact, psi_a);
+        right_solve_upper_real(s, nact, spsi_a);
+        right_solve_upper_real(s, nact, hpsi_a);
+        cholesky_ok = is_s_orthonormal(psi_a.data(), spsi_a.data(), nact);
+    }
+    catch (const std::runtime_error&)
+    {
+        cholesky_ok = false;
+    }
+
+    if (!cholesky_ok)
+        s_gram_schmidt(psi_a.data(), hpsi_a.data(), spsi_a.data(), nact);
 
     scatter_cols(psi, active_cols, psi_a);
     scatter_cols(spsi_.data(), active_cols, spsi_a);
@@ -764,29 +852,54 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
 
     std::vector<Real> eval(n_band_, static_cast<Real>(0));
-    Lapack<Real>::sygvd(n_band_, hsub.data(), ssub.data(), eval.data());
-
-    std::vector<T> psi_old(psi, psi + ld_psi_ * n_band_);
-    std::vector<T> spsi_old = spsi_;
-    std::vector<T> hpsi_old = hpsi_;
-
-    std::fill(psi, psi + ld_psi_ * n_band_, T(0));
-    set_zero(spsi_);
-    set_zero(hpsi_);
-
-    for (int j = 0; j < n_band_; ++j)
+    bool sygvd_ok = false;
+    try
     {
-        for (int i = 0; i < n_band_; ++i)
+        Lapack<Real>::sygvd(n_band_, hsub.data(), ssub.data(), eval.data());
+        sygvd_ok = true;
+    }
+    catch (const std::runtime_error&)
+    {
+        // Fallback: diagonal Rayleigh quotients.
+        // hsub and ssub may be corrupted by sygvd; re-form them.
+        gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
+        gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
+        for (int ii = 0; ii < n_band_; ++ii)
+            eval[ii] = hsub[ii + ii * n_band_]
+                     / std::max(ssub[ii + ii * n_band_],
+                                static_cast<Real>(1e-30));
+    }
+
+    if (sygvd_ok)
+    {
+        std::vector<T> psi_old(psi, psi + ld_psi_ * n_band_);
+        std::vector<T> spsi_old = spsi_;
+        std::vector<T> hpsi_old = hpsi_;
+
+        std::fill(psi, psi + ld_psi_ * n_band_, T(0));
+        set_zero(spsi_);
+        set_zero(hpsi_);
+
+        for (int j = 0; j < n_band_; ++j)
         {
-            const Real c = hsub[i + j * n_band_];
-            for (int ig = 0; ig < n_dim_; ++ig)
+            for (int i = 0; i < n_band_; ++i)
             {
-                psi[ idx(ig, j, ld_psi_)] += psi_old[ idx(ig, i, ld_psi_)] * c;
-                spsi_[idx(ig, j, ld_psi_)] += spsi_old[idx(ig, i, ld_psi_)] * c;
-                hpsi_[idx(ig, j, ld_psi_)] += hpsi_old[idx(ig, i, ld_psi_)] * c;
+                const Real c = hsub[i + j * n_band_];
+                for (int ig = 0; ig < n_dim_; ++ig)
+                {
+                    psi[ idx(ig, j, ld_psi_)] += psi_old[ idx(ig, i, ld_psi_)] * c;
+                    spsi_[idx(ig, j, ld_psi_)] += spsi_old[idx(ig, i, ld_psi_)] * c;
+                    hpsi_[idx(ig, j, ld_psi_)] += hpsi_old[idx(ig, i, ld_psi_)] * c;
+                }
             }
+            eigenvalue[j] = eval[j];
         }
-        eigenvalue[j] = eval[j];
+    }
+    else
+    {
+        // No rotation: just update eigenvalues with Rayleigh quotients.
+        for (int j = 0; j < n_band_; ++j)
+            eigenvalue[j] = eval[j];
     }
 
     // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
@@ -1064,6 +1177,11 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::orth_cholesky(
     T* psi, T* hpsi, T* spsi, int ncol) const
 {
+    // Save original vectors in case Cholesky fails numerically.
+    std::vector<T> psi_orig(psi, psi + ld_psi_ * ncol);
+    std::vector<T> hpsi_orig(hpsi, hpsi + ld_psi_ * ncol);
+    std::vector<T> spsi_orig(spsi, spsi + ld_psi_ * ncol);
+
     // Gram matrix of S-orthonormality: J_{ij} = <psi_i | S | psi_j>
     std::vector<Real> gram_s(ncol * ncol, static_cast<Real>(0));
     for (int j = 0; j < ncol; ++j)
@@ -1071,54 +1189,50 @@ void DiagoPPCG<T, Device>::orth_cholesky(
             gram_s[i + j * ncol] = gamma_dot(psi + i * ld_psi_,
                                               spsi + j * ld_psi_);
 
-    // Cholesky factorization: gram_s = U^T U  (U upper)
-    Lapack<Real>::potrf(ncol, gram_s.data());
-
-    // In-place triangular inverse: gram_s now holds U^{-1}
-    Lapack<Real>::trtri(ncol, gram_s.data());
-
-    // Right-multiply: result = input * U^{-1}
-    std::vector<T> tmp(ld_psi_ * ncol, T(0));
-    for (int j = 0; j < ncol; ++j)
+    bool cholesky_ok = false;
+    try
     {
-        for (int i = 0; i < ncol; ++i)
-        {
-            const Real uinv = gram_s[i + j * ncol];
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                tmp[idx(ig, j, ld_psi_)] += psi[ idx(ig, i, ld_psi_)] * uinv;
-            }
-        }
-    }
-    std::copy(tmp.begin(), tmp.end(), psi);
+        Lapack<Real>::potrf(ncol, gram_s.data());
+        Lapack<Real>::trtri(ncol, gram_s.data());
 
-    set_zero(tmp);
-    for (int j = 0; j < ncol; ++j)
-    {
-        for (int i = 0; i < ncol; ++i)
-        {
-            const Real uinv = gram_s[i + j * ncol];
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                tmp[idx(ig, j, ld_psi_)] += hpsi[idx(ig, i, ld_psi_)] * uinv;
+        std::vector<T> tmp(ld_psi_ * ncol, T(0));
+        for (int j = 0; j < ncol; ++j)
+            for (int i = 0; i < ncol; ++i) {
+                const Real uinv = gram_s[i + j * ncol];
+                for (int ig = 0; ig < n_dim_; ++ig)
+                    tmp[idx(ig, j, ld_psi_)] += psi[idx(ig, i, ld_psi_)] * uinv;
             }
-        }
-    }
-    std::copy(tmp.begin(), tmp.end(), hpsi);
+        std::copy(tmp.begin(), tmp.end(), psi);
 
-    set_zero(tmp);
-    for (int j = 0; j < ncol; ++j)
-    {
-        for (int i = 0; i < ncol; ++i)
-        {
-            const Real uinv = gram_s[i + j * ncol];
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                tmp[idx(ig, j, ld_psi_)] += spsi[idx(ig, i, ld_psi_)] * uinv;
+        set_zero(tmp);
+        for (int j = 0; j < ncol; ++j)
+            for (int i = 0; i < ncol; ++i) {
+                const Real uinv = gram_s[i + j * ncol];
+                for (int ig = 0; ig < n_dim_; ++ig)
+                    tmp[idx(ig, j, ld_psi_)] += hpsi[idx(ig, i, ld_psi_)] * uinv;
             }
-        }
+        std::copy(tmp.begin(), tmp.end(), hpsi);
+
+        set_zero(tmp);
+        for (int j = 0; j < ncol; ++j)
+            for (int i = 0; i < ncol; ++i) {
+                const Real uinv = gram_s[i + j * ncol];
+                for (int ig = 0; ig < n_dim_; ++ig)
+                    tmp[idx(ig, j, ld_psi_)] += spsi[idx(ig, i, ld_psi_)] * uinv;
+            }
+        std::copy(tmp.begin(), tmp.end(), spsi);
+
+        cholesky_ok = is_s_orthonormal(psi, spsi, ncol);
     }
-    std::copy(tmp.begin(), tmp.end(), spsi);
+    catch (const std::runtime_error&) { cholesky_ok = false; }
+
+    if (!cholesky_ok)
+    {
+        std::copy(psi_orig.begin(), psi_orig.end(), psi);
+        std::copy(hpsi_orig.begin(), hpsi_orig.end(), hpsi);
+        std::copy(spsi_orig.begin(), spsi_orig.end(), spsi);
+        s_gram_schmidt(psi, hpsi, spsi, ncol);
+    }
 }
 
 //==============================================================================
@@ -1428,6 +1542,19 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 catch (const std::runtime_error&)
                 {
                     // Fallback: diagonal Rayleigh quotients.
+                    // h_sub and s_sub may be corrupted by sygvd; re-form them.
+                    for (int jj = 0; jj < ncol; ++jj)
+                    {
+                        for (int ii = 0; ii < ncol; ++ii)
+                        {
+                            h_sub[ii + jj * ncol]
+                                = gamma_dot(psi_in + ii * ld_psi_,
+                                            hpsi_.data() + jj * ld_psi_);
+                            s_sub[ii + jj * ncol]
+                                = gamma_dot(psi_in + ii * ld_psi_,
+                                            spsi_.data() + jj * ld_psi_);
+                        }
+                    }
                     for (int ii = 0; ii < ncol; ++ii)
                         eval_cg[ii] = h_sub[ii + ii * ncol]
                                     / std::max(s_sub[ii + ii * ncol],
