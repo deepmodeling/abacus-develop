@@ -84,8 +84,9 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[10] = 0.0;
     psi_k[11] = 1.0;
 
-    // Call the function
-    module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
+    // Call the function with local ofstream
+    std::ofstream ofs("/dev/null");
+    module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, ofs);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);

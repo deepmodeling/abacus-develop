@@ -193,8 +193,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __MLALGO
     // need control parameter
     hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = p_hamilt;
-    std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
-    LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+    LCAO_Deepks_Interface<TK, TR> deepks_interface(&deepks.ld);
 
     deepks_interface.out_deepks_labels(pelec->f_en.etot,
                                        kv.get_nks(),

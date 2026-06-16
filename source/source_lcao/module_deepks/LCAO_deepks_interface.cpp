@@ -23,7 +23,7 @@
 #include <unordered_map>
 
 template <typename TK, typename TR>
-LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in) : ld(ld_in)
+LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(LCAO_Deepks<TK>* ld_in) : ld(ld_in)
 {
 }
 
