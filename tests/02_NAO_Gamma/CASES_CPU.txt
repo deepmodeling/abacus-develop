@@ -10,6 +10,7 @@ md_out_hk_syns
 md_out_hk_spin2
 relax_bfgs2
 relax_cell
+relax_wfc_extrap
 relax_old_cg
 relax_out_hk
 relax_out_hk_spin2
