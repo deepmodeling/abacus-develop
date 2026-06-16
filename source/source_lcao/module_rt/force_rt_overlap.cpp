@@ -13,6 +13,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      Parallel_Orbitals& pv,
                      UnitCell& ucell)
 {
+#ifdef __MPI
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
 
@@ -270,6 +271,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         delete[] tmp_out[dir];
     }
     return;
+#endif
 }
 template <>
 void cal_foverlap_rt(ModuleBase::matrix& foverlap,
