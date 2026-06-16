@@ -1,6 +1,7 @@
 add_library(
     operator_ks_lcao
     OBJECT
+    operator_lcao.cpp
     op_exx_lcao.cpp
     op_dftu_lcao.cpp
     meta_lcao.cpp
