@@ -32,7 +32,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                ucell->omega,
                                                ucell->tpiba,
                                                chr,
-                                               &(scaling_factor_xc));
+                                               &(scaling_factor_xc),
+                                               nspin,
+                                               domag,
+                                               domag_z);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
