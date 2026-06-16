@@ -12,7 +12,6 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_hsolver/hsolver_lcao.h"

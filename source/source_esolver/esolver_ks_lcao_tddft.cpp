@@ -2,6 +2,7 @@
 #include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
+#include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_current/td_current_io.h"
 #include "source_io/module_dipole/dipole_io.h"
@@ -16,6 +17,9 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleESolver
 {

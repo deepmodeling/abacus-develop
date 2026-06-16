@@ -7,16 +7,15 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "td_current_io.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
 #ifdef __LCAO
