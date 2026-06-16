@@ -2,6 +2,7 @@
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
+#include <vector>
 
 /************************************************
  *  serial unit test of functions in pw_basis.cpp
@@ -361,4 +362,42 @@ TEST_F(PWBasisTEST,CollectUniqgg)
 	EXPECT_EQ(pwb.ig_gge0,9);
 	pwb.collect_uniqgg();
 	EXPECT_EQ(pwb.ngg,78);
+}
+
+TEST_F(PWBasisTEST,ComplexTransformRoundTrip)
+{
+	double lat0 = 2.0;
+	ModuleBase::Matrix3 latvec(1.0,0.0,1.0,
+				0.0,2.0,0.0,
+				0.0,0.0,2.0);
+	double gridecut = 30.0;
+	bool gamma_only_in = false;
+	double pwecut_in = 20.0;
+	int distribution_type_in = 2;
+	bool xprime_in = false;
+
+	pwb.initgrids(lat0, latvec, gridecut);
+	pwb.initparameters(gamma_only_in, pwecut_in, distribution_type_in, xprime_in);
+	ASSERT_NO_THROW(pwb.setuptransform());
+
+	// Use reciprocal-space input because arbitrary real-space data is projected
+	// by the plane-wave cutoff and is not exactly recoverable.
+	std::vector<std::complex<double>> recip_in(pwb.npw);
+	std::vector<std::complex<double>> real_space(pwb.nrxx);
+	std::vector<std::complex<double>> recip_out(pwb.npw);
+	for (int ig = 0; ig < pwb.npw; ++ig)
+	{
+		const double real_part = (ig % 11 - 5) / 7.0;
+		const double imag_part = (ig % 13 - 6) / 9.0;
+		recip_in[ig] = std::complex<double>(real_part, imag_part);
+	}
+
+	pwb.recip2real(recip_in.data(), real_space.data());
+	pwb.real2recip(real_space.data(), recip_out.data());
+
+	for (int ig = 0; ig < pwb.npw; ++ig)
+	{
+		EXPECT_NEAR(recip_in[ig].real(), recip_out[ig].real(), 1e-10);
+		EXPECT_NEAR(recip_in[ig].imag(), recip_out[ig].imag(), 1e-10);
+	}
 }
