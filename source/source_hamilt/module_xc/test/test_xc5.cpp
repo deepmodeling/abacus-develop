@@ -1,9 +1,6 @@
 #include "../xc_functional.h"
 #include "../libxc_abacus.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "xctest.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
@@ -73,18 +70,16 @@ class XCTest_VXC : public XCTest
                 rhopw.gcar[i]= 1;
             }
 
-            XC_Functional::set_xc_type("PBE");
+            XC_Functional::set_xc_type("PBE", 1);
 
-            PARAM.input.nspin = 1;
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,1,false,false);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
-            PARAM.input.nspin = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,2,false,false);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
