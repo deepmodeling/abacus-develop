@@ -53,7 +53,8 @@ class Force_Stress_LCAO
 						Plus_U &dftu, // mohan add 2025-11-07
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
-                        ModuleSymmetry::Symmetry* symm);
+                        ModuleSymmetry::Symmetry* symm,
+                        hamilt::Hamilt<T>* p_hamilt = nullptr);
 
   private:
     int nat;
