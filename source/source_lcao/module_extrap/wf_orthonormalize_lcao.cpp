@@ -1,5 +1,6 @@
 #include "source_lcao/module_extrap/wf_orthonormalize_lcao.h"
 #include "source_base/timer.h"
+#include "source_base/module_external/blas_connector.h"
 
 #include <algorithm>
 #include <cmath>
@@ -67,36 +68,54 @@ void build_overlap_in_band_space(const double* overlap,
                                  const double* coeff,
                                  const int nactive_bands,
                                  const int nbasis,
+                                 std::vector<double>& coeff_s,
                                  std::vector<double>& metric)
 {
-    metric.assign(static_cast<std::size_t>(nactive_bands) * static_cast<std::size_t>(nactive_bands), 0.0);
-    std::vector<double> coeff_s(static_cast<std::size_t>(nactive_bands) * static_cast<std::size_t>(nbasis), 0.0);
+    coeff_s.resize(static_cast<std::size_t>(nactive_bands) * static_cast<std::size_t>(nbasis));
+    metric.resize(static_cast<std::size_t>(nactive_bands) * static_cast<std::size_t>(nactive_bands));
 
-    // Coefficients are stored as a row-major band-by-basis matrix C.  Build the
-    // band-space metric explicitly as O = C S C^T to avoid ambiguity about the
-    // row-major layout when using Fortran BLAS wrappers.
+    // All three arrays use row-major storage here:
+    //   C       : nactive_bands x nbasis
+    //   S       : nbasis x nbasis
+    //   O = CSC^T: nactive_bands x nactive_bands
+    // BlasConnector::gemm provides the row-major interface and handles the
+    // conversion to the underlying Fortran BLAS convention.
+    BlasConnector::gemm('N',
+                        'N',
+                        nactive_bands,
+                        nbasis,
+                        nbasis,
+                        1.0,
+                        coeff,
+                        nbasis,
+                        overlap,
+                        nbasis,
+                        0.0,
+                        coeff_s.data(),
+                        nbasis);
+    BlasConnector::gemm('N',
+                        'T',
+                        nactive_bands,
+                        nactive_bands,
+                        nbasis,
+                        1.0,
+                        coeff_s.data(),
+                        nbasis,
+                        coeff,
+                        nbasis,
+                        0.0,
+                        metric.data(),
+                        nactive_bands);
+
+    // O is mathematically symmetric.  Enforce symmetry explicitly so that the
+    // Cholesky path and diagnostics do not depend on round-off differences
+    // between the two BLAS-computed triangles.
     for (int ib = 0; ib < nactive_bands; ++ib)
     {
-        for (int mu = 0; mu < nbasis; ++mu)
+        for (int jb = 0; jb < ib; ++jb)
         {
-            double value = 0.0;
-            for (int nu = 0; nu < nbasis; ++nu)
-            {
-                value += coeff[idx(ib, nu, nbasis)] * overlap[idx(nu, mu, nbasis)];
-            }
-            coeff_s[idx(ib, mu, nbasis)] = value;
-        }
-    }
-
-    for (int ib = 0; ib < nactive_bands; ++ib)
-    {
-        for (int jb = 0; jb <= ib; ++jb)
-        {
-            double value = 0.0;
-            for (int mu = 0; mu < nbasis; ++mu)
-            {
-                value += coeff_s[idx(ib, mu, nbasis)] * coeff[idx(jb, mu, nbasis)];
-            }
+            const double value = 0.5 * (metric[idx(ib, jb, nactive_bands)]
+                                      + metric[idx(jb, ib, nactive_bands)]);
             metric[idx(ib, jb, nactive_bands)] = value;
             metric[idx(jb, ib, nactive_bands)] = value;
         }
@@ -206,10 +225,11 @@ void apply_inverse_cholesky_left(const std::vector<double>& lower,
 double max_orthonormality_deviation(const double* overlap,
                                     const double* coeff,
                                     const int nactive_bands,
-                                    const int nbasis)
+                                    const int nbasis,
+                                    std::vector<double>& coeff_s,
+                                    std::vector<double>& metric)
 {
-    std::vector<double> metric;
-    build_overlap_in_band_space(overlap, coeff, nactive_bands, nbasis, metric);
+    build_overlap_in_band_space(overlap, coeff, nactive_bands, nbasis, coeff_s, metric);
 
     double max_dev = 0.0;
     for (int i = 0; i < nactive_bands; ++i)
@@ -426,6 +446,8 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
 
     double max_deviation_all = 0.0;
     int max_active_bands = 0;
+    std::vector<double> coeff_s_workspace;
+    std::vector<double> metric_workspace;
     for (int istate = 0; istate < nstate; ++istate)
     {
         double* coeff_local = trial.data()
@@ -460,23 +482,29 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
         double max_dev = 0.0;
         {
             TimerGuard timer("WFN_Extrap", "cholesky_transform");
-            std::vector<double> metric;
-            build_overlap_in_band_space(overlap_global.data(), coeff_global.data(), nactive_bands, nbasis_global, metric);
-            fill_metric_diagnostics(metric, nactive_bands, result);
+            build_overlap_in_band_space(overlap_global.data(),
+                                        coeff_global.data(),
+                                        nactive_bands,
+                                        nbasis_global,
+                                        coeff_s_workspace,
+                                        metric_workspace);
+            fill_metric_diagnostics(metric_workspace, nactive_bands, result);
 
-            if (!cholesky_lower_in_place(metric, nactive_bands, pivot_threshold, result))
+            if (!cholesky_lower_in_place(metric_workspace, nactive_bands, pivot_threshold, result))
             {
                 result.status = WfcExtrapStatus::OrthogonalizationFailed;
                 result.failed_state = istate;
                 return result;
             }
 
-            apply_inverse_cholesky_left(metric, coeff_global.data(), nactive_bands, nbasis_global);
+            apply_inverse_cholesky_left(metric_workspace, coeff_global.data(), nactive_bands, nbasis_global);
 
             max_dev = max_orthonormality_deviation(overlap_global.data(),
                                                    coeff_global.data(),
                                                    nactive_bands,
-                                                   nbasis_global);
+                                                   nbasis_global,
+                                                   coeff_s_workspace,
+                                                   metric_workspace);
             if (!std::isfinite(max_dev) || max_dev > check_tolerance)
             {
                 result.status = WfcExtrapStatus::OrthogonalizationFailed;
