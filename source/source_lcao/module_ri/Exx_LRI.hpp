@@ -913,8 +913,9 @@ void Exx_LRI<Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI
     const UnitCell& ucell,
     const Parallel_Orbitals& pv)
 {
-    ModuleBase::TITLE("Exx_LRI", "cal_dHs");
-    ModuleBase::timer::start("Exx_LRI", "cal_dHs");
+    ModuleBase::TITLE("Exx_LRI", "cal_exx_dHs");
+    ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
+#ifdef __EXX_DEV
 
     const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell, pv);
 
@@ -976,7 +977,10 @@ void Exx_LRI<Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI
             }
         }
     }
-    ModuleBase::timer::end("Exx_LRI", "cal_dHs");
+    ModuleBase::timer::end("Exx_LRI", "cal_exx_dHs");
+#else
+	ModuleBase::WARNING_QUIT("cal_exx_dHs","Compile with the developing version of LibRI and -DEXX_DEV flag to calculate dHexx.");
+#endif
 }
 
 

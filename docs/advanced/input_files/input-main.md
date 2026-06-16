@@ -2111,6 +2111,7 @@
 
 - **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis, hybrid functional only (nspin ≠ 4)*
+    - Currently only avaliable when compiled with the personal developing branch of LibRI and -DEXX_DEV flag, waiting for the new release of LibRI to remove the flag.
 - **Description**: Whether to print files containing the exact-exchange contribution to the Hamiltonian derivative,  see [`out_mat_dh`](#out_mat_dh) for the same format. Output files: dvexxk[x/y/z]_iat[I][_ik]_nao.txt.
 
 - **Default**: 0 8
