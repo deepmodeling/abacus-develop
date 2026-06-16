@@ -5,6 +5,7 @@
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <complex>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,9 @@ void read_mat_npz(const Parallel_Orbitals* paraV,
                   hamilt::HContainer<double>& hR);
 
 void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR);
+void output_mat_npz(const UnitCell& ucell,
+                    std::string& zipname,
+                    const hamilt::HContainer<std::complex<double>>& hR);
 
 } // namespace ModuleIO
 

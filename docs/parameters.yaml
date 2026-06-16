@@ -3147,6 +3147,30 @@ parameters:
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis
+  - name: out_hr_npz
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+    default_value: "False"
+    unit: Ry
+    availability: Numerical atomic orbital basis (not gamma-only algorithm)
+  - name: out_hsr_npz
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+    default_value: "False"
+    unit: ""
+    availability: Numerical atomic orbital basis (not gamma-only algorithm)
+  - name: out_dm_npz
+    category: Output information
+    type: Boolean
+    description: |
+      Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+    default_value: "False"
+    unit: ""
+    availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_mul
     category: Output information
     type: Boolean
