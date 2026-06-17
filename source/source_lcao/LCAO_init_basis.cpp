@@ -102,12 +102,25 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     if (PARAM.inp.ks_solver == "scalapack_gvx")
     {
         const int kpar = (PARAM.globalv.kpar_lcao > 0) ? PARAM.globalv.kpar_lcao : 1;
-        const int np_total = pv.dim0 * pv.dim1;   // diagonalization world size
-        // Pools split the world evenly; if np_total is not divisible by kpar the
-        // pool size is ill-defined, so skip the (purely advisory) heuristic rather
-        // than estimate the grid from a truncated np_total/kpar.
-        const bool pool_well_defined = (kpar > 0 && np_total % kpar == 0);
-        const int np_pool = pool_well_defined ? np_total / kpar : 0; // processes per pool
+        // Processes that actually run ONE (per-pool) diagonalization:
+        //   kpar == 1 : the full diagonalization grid IS this ParaV grid (built on
+        //               DIAG_WORLD), so use pv.dim0 * pv.dim1 directly.
+        //   kpar  > 1 : hsolver's parakSolve re-splits MPI_COMM_WORLD into kpar pools
+        //               (Parallel_K2D -> divide_mpi_groups(NPROC, kpar)), NOT the
+        //               DIAG_WORLD grid -- each pool owns NPROC/kpar ranks. Deriving
+        //               the pool size from pv.dim0*pv.dim1/kpar would be wrong whenever
+        //               diago_proc < NPROC (then DIAG_WORLD != NPROC). When NPROC is
+        //               not divisible by kpar the pools are uneven (no single size),
+        //               so skip the purely advisory heuristic.
+        int np_pool = 0; // processes per pool (0 => skip the check)
+        if (kpar <= 1)
+        {
+            np_pool = pv.dim0 * pv.dim1;
+        }
+        else if (GlobalV::NPROC % kpar == 0)
+        {
+            np_pool = GlobalV::NPROC / kpar;
+        }
         if (np_pool > 1 && nlocal > 0)
         {
             // near-square factorization np_pool = p * q, p <= q (matches Parallel_2D)
