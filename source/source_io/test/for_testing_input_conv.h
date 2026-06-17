@@ -90,7 +90,6 @@ double BFGS_Basic::relax_bfgs_w2 = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmin = -1.0;
 double Ions_Move_Basic::relax_bfgs_init = -1.0;
-int Ions_Move_Basic::out_stru = 0;
 double Ions_Move_CG::RELAX_CG_THR = -1.0;
 std::string Lattice_Change_Basic::fixed_axes = "None";
 int ModuleSymmetry::Symmetry::symm_flag = 0;

@@ -1,20 +1,21 @@
-#ifndef BFGS_H
-#define BFGS_H
+#ifndef IONS_MOVE_BFGS2_H
+#define IONS_MOVE_BFGS2_H
 
 #include <vector>
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 
 
-class BFGS
+class Ions_Move_BFGS2
 {
 public:
     void allocate(const int _size);//initialize parameters
-    void relax_step(const ModuleBase::matrix& _force,UnitCell& ucell);//a full iteration step
+    bool relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running);//a full iteration step
     
 
 private:
@@ -36,7 +37,7 @@ private:
     std::vector<ModuleBase::Vector3<double>> dpos;
     
     void PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,std::vector<ModuleBase::Vector3<double>>& pos,std::vector<std::vector<double>>& H,std::vector<double>& pos0,std::vector<double>& force0,std::vector<double>& steplength,std::vector<ModuleBase::Vector3<double>>& dpos,int& size,UnitCell& ucell);//calculate the atomic displacement in one iteration step
-    void IsRestrain();//check if converged
+    bool IsRestrain();//check if converged
     void CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell);
     void GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos);
     void GetPostaud(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos_taud);
@@ -46,4 +47,4 @@ private:
     
 };
 
-#endif // BFGS_H
+#endif // IONS_MOVE_BFGS2_H
