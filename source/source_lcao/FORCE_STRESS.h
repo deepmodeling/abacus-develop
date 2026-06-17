@@ -54,6 +54,7 @@ class Force_Stress_LCAO
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm,
+                        const int td_stype = 0,
                         hamilt::Hamilt<T>* p_hamilt = nullptr);
 
   private:

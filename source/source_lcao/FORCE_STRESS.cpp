@@ -88,6 +88,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           Setup_DeePKS<T>& deepks,
                                           Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm,
+                                          const int td_stype,
                                           hamilt::Hamilt<T>* p_hamilt)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
@@ -204,7 +205,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         hamilt::Overlap<hamilt::OperatorLCAO<T, double>> tmp_overlap(
             nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
-        if(PARAM.inp.td_stype != 2)
+        if(td_stype != 2)
         {
             tmp_overlap.cal_force_stress(isforce, isstress, edmR, foverlap, soverlap);
         }
@@ -215,7 +216,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmR, fvnl_dbeta, svnl_dbeta);
         
-        if(PARAM.inp.td_stype == 2)
+        if(td_stype == 2)
         {
             hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<T, double>> tmp_hybrid(
                 nullptr, &kv, nullptr, nullptr, orb, &ucell, orb.cutoffs(), &gd, nullptr);
