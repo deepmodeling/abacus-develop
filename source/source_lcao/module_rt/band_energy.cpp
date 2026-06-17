@@ -3,6 +3,7 @@
 #include "evolve_elec.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __CUBLASMP
 #include "kernels/cuda/band_energy_kernel.cuh"
