@@ -37,6 +37,24 @@ class DiagoPPCG
 
     void init_iter(const int nband, const int nband_l, const int nbasis, const int ndim);
 
+    // ---- tunable parameters ----
+    /// Maximum inner iterations per diag() call when P-block is safe.
+    /// Default 3; set to 1 for ultra-conservative mode or higher for
+    /// difficult spectra.
+    void set_max_inner_iter(const int n) { max_inner_iter_ = n; }
+
+    /// Safety margin for P-block usage: P is enabled only when
+    /// 3 * n_band <= n_dim - p_safe_margin_.
+    /// Default 2; increase for better numerical stability at the cost of
+    /// slower convergence on well-conditioned problems.
+    void set_p_safe_margin(const int m) { p_safe_margin_ = m; }
+
+    /// Number of diag() passes performed by the factory (hsolver_pw).
+    /// Default 5; matching BPCG's multi-pass strategy.
+    void set_npass(const int n) { npass_ = n; }
+    int npass() const { return npass_; }
+    // ---- end tunable parameters ----
+
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     void diag(const HPsiFunc& hpsi_func,
@@ -49,6 +67,11 @@ class DiagoPPCG
     int n_band_l = 0;
     int n_basis = 0;
     int n_dim = 0;
+
+    // tunable parameters (see set_xxx methods above)
+    int max_inner_iter_ = 3;
+    int p_safe_margin_ = 2;
+    int npass_ = 5;
 
     ct::DataType r_type = ct::DataType::DT_INVALID;
     ct::DataType t_type = ct::DataType::DT_INVALID;
@@ -105,7 +128,7 @@ class DiagoPPCG
 
     void solve_projected(const int ncols);
 
-    void update_from_projected(const int ncols, const bool has_p, const bool update_p);
+    void update_from_projected(const int ncols, const bool has_p);
 
     void compute_residual_and_precond(const std::vector<double>& ethr_band, bool& not_conv);
 
