@@ -17,6 +17,7 @@ option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
 option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
@@ -33,6 +34,7 @@ option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(ENABLE_LIBCOMM "Enable LibComm" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
+option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -51,6 +53,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
+option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
@@ -69,7 +72,7 @@ if(ENABLE_RAPIDJSON)
     include(FetchContent)
     FetchContent_Declare(
       rapidjson
-      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a8b27f42fa16b96fc70aade9106cf7102f
+      URL https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a
     )
     set(RAPIDJSON_BUILD_TESTS
         OFF
@@ -234,6 +237,18 @@ if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
 
+if(ENABLE_DFTD4)
+  # DFTD4 requires enabling C and Fortran to work
+  enable_language(C)
+  enable_language(Fortran)
+  # Avoid custom-lapack fallback when resolving DFT-D4 dependencies
+  find_package(BLAS REQUIRED)
+  find_package(LAPACK REQUIRED)
+  find_package(dftd4 4.2.0 REQUIRED)
+  if(NOT TARGET dftd4::dftd4)
+    message(FATAL_ERROR "DFT-D4 was found, but target dftd4::dftd4 is missing.")
+  endif()
+endif()
 
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
@@ -266,7 +281,7 @@ if(ENABLE_ASAN)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE AND NOT MSVC)
   add_compile_options(-O3 -g)
 endif()
 
@@ -285,6 +300,14 @@ endif()
 
 if(ENABLE_NATIVE_OPTIMIZATION)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
+endif()
+
+# Windows (native build, e.g. MinGW-w64 or MSVC) portability defines:
+#   _USE_MATH_DEFINES     - expose M_PI and friends from <cmath>
+#   NOMINMAX              - stop <windows.h> defining min()/max() macros
+#   _CRT_SECURE_NO_WARNINGS - silence CRT "use _s function" deprecations
+if(WIN32)
+  add_compile_definitions(_USE_MATH_DEFINES NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(ENABLE_LCAO)
@@ -336,6 +359,50 @@ if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
+
+
+if(USE_KML)
+    add_compile_definitions(__KML)
+    message(STATUS "Huawei KML support enabled. Defining __KML.")
+#    TODO: Create FindKML.cmake
+#    if(NOT DEFINED KML_ROOT)
+#        if(DEFINED ENV{KML_ROOT})
+#            set(KML_ROOT $ENV{KML_ROOT})
+#        else()
+#            message(WARNING "KML_ROOT is not set. Trying default system paths for KML.")
+#        endif()
+#    endif()
+#
+#    find_library(KML_BLAS_LIB NAMES kblas PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_LAPACK_LIB NAMES klapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_SCALAPACK_LIB NAMES kscalapack_full PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#    find_library(KML_FFTW_LIB NAMES fftw3 PATHS ${KML_ROOT}/lib ${KML_ROOT}/lib64 NO_DEFAULT_PATH)
+#
+#    set(KML_LIBS_FOUND TRUE)
+#    foreach(LIB_VAR KML_BLAS_LIB KML_LAPACK_LIB KML_SCALAPACK_LIB KML_FFTW_LIB)
+#        if(NOT ${LIB_VAR})
+#            message(WARNING "${LIB_VAR} not found in KML_ROOT! Please check your KML installation.")
+#            set(KML_LIBS_FOUND FALSE)
+#        endif()
+#    endforeach()
+#
+#    if(KML_LIBS_FOUND)
+#        target_link_libraries(abacus PUBLIC
+#            ${KML_BLAS_LIB}
+#            ${KML_LAPACK_LIB}
+#            ${KML_SCALAPACK_LIB}
+#            ${KML_FFTW_LIB}
+#        )
+#        message(STATUS "Huawei KML libraries found and linked successfully.")
+#    else()
+#        message(FATAL_ERROR "Failed to find all required KML libraries. Aborting.")
+#    endif()
+#
+#    set(BLAS_libraries ${KML_BLAS_LIB})
+#    set(LAPACK_libraries ${KML_LAPACK_LIB})
+endif(USE_KML)
+
+
 if (USE_SW)
   add_compile_definitions(__SW)
   # IEEE-compliant FP: required for swFFT/DFTI numerical correctness on Sunway.
@@ -463,6 +530,15 @@ if(USE_CUDA)
     if (USE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
+    if (ENABLE_NCCL_PARALLEL_DEVICE)
+      if (NOT ENABLE_MPI)
+        message(FATAL_ERROR
+          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
+      endif()
+      add_compile_definitions(__NCCL_PARALLEL_DEVICE)
+      include(cmake/SetupNccl.cmake)
+      abacus_setup_nccl(${ABACUS_BIN_NAME})
+    endif()
     if (ENABLE_CUSOLVERMP)
       # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
       include(cmake/SetupCuSolverMp.cmake)
@@ -567,8 +643,13 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  find_package(ScaLAPACK REQUIRED)
-  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  # ScaLAPACK is a distributed-memory library and is only needed for the
+  # MPI build. A serial build (e.g. the native Windows serial version)
+  # must not require it.
+  if(ENABLE_MPI)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -774,6 +855,7 @@ target_link_libraries(
   planewave
   surchem
   neighbor
+  neighbor_search
   io_input
   io_basic
   io_advanced
@@ -786,6 +868,7 @@ target_link_libraries(
   module_pwdft
   module_ofdft
   module_stodft
+  module_dfpt
   psi
   psi_initializer
   psi_overall_init
@@ -828,7 +911,10 @@ if (USE_SW)
   list(APPEND math_libs gfortran)
 endif()
 
-list(APPEND math_libs m)
+# libm exists on Linux and MinGW-w64 but not in the MSVC CRT.
+if(NOT MSVC)
+  list(APPEND math_libs m)
+endif()
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
@@ -836,8 +922,12 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Create a symbolic link 'abacus' pointing to the actual executable
-install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+# Create a symbolic link 'abacus' pointing to the actual executable.
+# Skipped on Windows: symlink creation needs elevated/developer-mode
+# privileges there and the executable carries an .exe suffix anyway.
+if(NOT WIN32)
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+endif()
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()

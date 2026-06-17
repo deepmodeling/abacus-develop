@@ -33,6 +33,14 @@ class FFT_Bundle
     void setfft(std::string device_in, std::string precision_in);
 
     /**
+     * @brief Set the DSP cluster id for the FFT_DSP backend.
+     * @param id  cluster id, typically computed as (MPI rank % dsp_count).
+     *
+     * Caller-injected DSP routing info; only used when device == "dsp".
+     */
+    void set_dsp_cluster_id(int id) { this->dsp_cluster_id_ = id; }
+
+    /**
      * @brief Initialize the fft parameters.
      * @param nx_in  number of grid points in x direction.
      * @param ny_in  number of grid points in y direction.
@@ -202,6 +210,7 @@ class FFT_Bundle
 
     std::string device = "cpu";
     std::string precision = "double";
+    int dsp_cluster_id_ = 0;
 };
 // Use RAII (Resource Acquisition Is Initialization) to 
 // control the resources used by hthread when setting the DSP

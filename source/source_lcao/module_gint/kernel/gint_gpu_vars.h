@@ -2,11 +2,8 @@
 
 #include <cuda_runtime.h>
 #include "set_const_mem.cuh"
-#include "source_base/ylm.h"
 #include "source_cell/unitcell.h"
-#include "source_cell/atom_spec.h"
 #include "source_lcao/module_gint/biggrid_info.h"
-#include "gint_helper.cuh"
 
 namespace ModuleGint
 {

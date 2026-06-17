@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "source_io/module_qo/to_qo.h"
+#include "source_io/module_output/output.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private

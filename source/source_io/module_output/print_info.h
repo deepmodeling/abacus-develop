@@ -1,7 +1,6 @@
 #ifndef PRINT_INFO_H
 #define PRINT_INFO_H
 
-#include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"

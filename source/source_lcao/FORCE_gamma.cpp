@@ -1,5 +1,5 @@
 #include "FORCE.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -7,6 +7,7 @@
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
 #include "source_lcao/module_deepks/LCAO_deepks_io.h"
+#include "source_lcao/module_deepks/deepks_force.h"
 #endif
 #include "source_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "source_estate/elecstate_lcao.h"
@@ -216,8 +217,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
-        DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r,
-                                           ucell,
+        DeePKS_domain::cal_f_delta<double>(ucell,
                                            orb,
                                            gd,
                                            *this->ParaV,
@@ -225,10 +225,11 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            deepks.ld.deepks_param,
                                            kv->kvec_d,
                                            deepks.ld.phialpha,
-                                           deepks.ld.gedm,
                                            fvnl_dalpha,
                                            isstress,
-                                           svnl_dalpha);
+                                           svnl_dalpha,
+                                           deepks.ld.dm_r,
+                                           deepks.ld.gedm);
     }
 #endif
 

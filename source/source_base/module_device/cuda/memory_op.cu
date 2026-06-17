@@ -1,5 +1,5 @@
 #include "source_base/module_device/memory_op.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>

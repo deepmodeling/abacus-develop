@@ -8,7 +8,6 @@
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
 #include <torch/script.h>
@@ -45,7 +44,9 @@ void update_dmr(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                 const LCAO_Orbitals& orb,
                 const Parallel_Orbitals& pv,
                 const Grid_Driver& GridD,
-                hamilt::HContainer<double>* dmr_deepks);
+                hamilt::HContainer<double>* dmr_deepks,
+                const int nspin = 1,
+                const bool mag = false);
 
 // calculate projected density matrix: pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
 // 3 cases to skip calculation of pdm:

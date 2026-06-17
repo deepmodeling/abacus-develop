@@ -1,6 +1,7 @@
 #include "charge.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -135,6 +136,27 @@ void Charge::rho_mpi()
     }
 
     ModuleBase::timer::end("Charge", "rho_mpi");
+    return;
+}
+
+void Charge::kin_r_mpi()
+{
+    ModuleBase::TITLE("Charge", "kin_r_mpi");
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1)
+    {
+        return;
+    }
+    ModuleBase::timer::start("Charge", "kin_r_mpi");
+
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
+    {
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        {
+            reduce_diff_pools(this->kin_r[is]);
+        }
+    }
+
+    ModuleBase::timer::end("Charge", "kin_r_mpi");
     return;
 }
 #endif

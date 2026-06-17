@@ -5,8 +5,13 @@
 #define private public
 #define protected public
 #include "source_estate/elecstate_pw.h"
+#ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
+#endif
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/module_pwdft/vl_pw.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_pw/module_pwdft/soc.h"
 #include "source_io/module_parameter/parameter.h"
 // mock functions for testing
 int XC_Functional::func_type = 1;

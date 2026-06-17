@@ -3,13 +3,13 @@ on:
   pull_request:
     paths:
       - toolchain/**
-      - .github/workflows/toolchain_quick.yml
+      - .github/workflows/toolchain_quick.yaml
   push:
     branches:
       - develop
     paths:
       - toolchain/**
-      - .github/workflows/toolchain_quick.yml
+      - .github/workflows/toolchain_quick.yaml
   workflow_dispatch:
 jobs:
   lint-and-sanity:
@@ -43,7 +43,7 @@ jobs:
           shellcheck --version
           find toolchain -type f -name '*.sh' -print0 | xargs -0 -n1 shellcheck -x || true
 
-  dry-run-matrix:
+  pack-run-matrix:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -56,27 +56,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y dos2unix
-      - name: Dry run
+      - name: Pack run
         run: |
           set -euo pipefail
           cd toolchain
           rm -rf build install
           find . -type f -name '*.sh' -exec chmod +x {} +
           if [ "${{ matrix.variant }}" = "gnu" ]; then
-            ./toolchain_gnu.sh --dry-run --skip-system-checks
+            ./toolchain_gnu.sh --pack-run --skip-system-checks
           elif [ "${{ matrix.variant }}" = "intel" ]; then
-            ./toolchain_intel.sh --dry-run --skip-system-checks
+            ./toolchain_intel.sh --pack-run --skip-system-checks
           elif [ "${{ matrix.variant }}" = "cuda" ]; then
-            ./toolchain_gnu.sh --dry-run --skip-system-checks --enable-cuda --gpu-ver 70
+            ./toolchain_gnu.sh --pack-run --skip-system-checks --enable-cuda --gpu-ver 70
           fi
       - name: Upload setup
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: toolchain-${{ matrix.variant }}-dryrun
+          name: toolchain-${{ matrix.variant }}-packrun
           path: |
             toolchain/install/setup
             toolchain/compile.log
             toolchain/compile.err
           if-no-files-found: ignore
-

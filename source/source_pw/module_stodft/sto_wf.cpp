@@ -1,7 +1,7 @@
 #include "sto_wf.h"
 #include "source_base/parallel_comm.h" // use POOL_WORLD
 
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cassert>

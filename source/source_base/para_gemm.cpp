@@ -133,7 +133,7 @@ void PGemmCN<T, Device>::set_dimension(
             if (std::is_same<Device, base_device::DEVICE_GPU>::value)
             {
                 resmem_dev_op()(C_local_tmp_, size_C_local);
-#ifndef __CUDA_MPI
+#if !defined(__CUDA_MPI) && !defined(__NCCL_PARALLEL_DEVICE)
                 C_global_tmp_.resize(size_C_global);
 #endif
             }
@@ -277,38 +277,27 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
 
     if (this->gatherC)
     {
-#ifdef __CUDA_MPI
-        T* Clocal_mpi = C_local;
-        T* Cglobal_mpi = C;
-#else
-        T* Clocal_mpi = C_tmp_.data();
-        T* Cglobal_mpi = nullptr;
+        T* reduce_tmp = nullptr;
+        T* gather_tmp = nullptr;
+#if !defined(__CUDA_MPI) && !defined(__NCCL_PARALLEL_DEVICE)
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
-            syncmem_d2h_op()(Clocal_mpi, C_local, size_C_local);
-            Cglobal_mpi = C_global_tmp_.data();
-        }
-        else
-        {
-            Cglobal_mpi = C;
+            reduce_tmp = C_tmp_.data();
+            gather_tmp = C_global_tmp_.data();
         }
 #endif
         if (this->row_nproc > 1)
         {
-            Parallel_Common::reduce_data(Clocal_mpi, size_C_local, row_world);
+            Parallel_Common::reduce_dev<T, Device>(C_local, size_C_local, row_world, reduce_tmp);
         }
-        Parallel_Common::gatherv_data(Clocal_mpi,
-                                      size_C_local,
-                                      Cglobal_mpi,
-                                      recv_counts.data(),
-                                      displs.data(),
-                                      col_world);
-#ifndef __CUDA_MPI
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
-            syncmem_h2d_op()(C, Cglobal_mpi, size_C_global);
-        }
-#endif
+        Parallel_Common::gatherv_dev<T, Device>(C_local,
+                                                size_C_local,
+                                                C,
+                                                recv_counts.data(),
+                                                displs.data(),
+                                                col_world,
+                                                reduce_tmp,
+                                                gather_tmp);
     }
     else
     {

@@ -59,13 +59,8 @@ case "${with_gcc}" in
                 tar -xzf "${repack_filename}"
                 echo "Successfully extracted ${repack_filename}"
             else
-                if [ -f gcc-${gcc_ver}.tar.gz ]; then
-                    echo "gcc-${gcc_ver}.tar.gz is found"
-                else
-                    #download_pkg_from_ABACUS_org "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz"
-                    url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
-                    download_pkg_from_url "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
-                fi
+                url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
+                retrieve_package "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
             fi
             [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
             tar -xzf gcc-${gcc_ver}.tar.gz
@@ -236,7 +231,7 @@ export GCC_CFLAGS="${GCC_CFLAGS}"
 export GCC_LDFLAGS="${GCC_LDFLAGS}"
 export TSANFLAGS="${TSANFLAGS}"
 EOF
-    cat "${BUILDDIR}/setup_gcc" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_gcc" ${SETUPFILE}
 fi
 
 # ----------------------------------------------------------------------

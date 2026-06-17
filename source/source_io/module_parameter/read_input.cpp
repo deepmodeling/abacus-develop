@@ -271,7 +271,16 @@ void ReadInput::create_directory(const Parameter& param)
                                           out_wfc_dir,
                                           this->rank,
                                           param.input.mdp.md_restart,
-                                          param.input.out_alllog); // xiaohui add 2013-09-01
+                                          param.input.out_alllog,
+                                          param.globalv.global_out_dir,
+                                          param.globalv.global_stru_dir,
+                                          param.globalv.global_matrix_dir,
+                                          param.globalv.global_wfc_dir,
+                                          param.globalv.global_mlkedf_descriptor_dir,
+                                          param.globalv.global_deepks_label_elec_dir,
+                                          param.globalv.log_file,
+                                          param.input.of_ml_gene_data,
+                                          param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
     //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     struct stat st;
     if (stat(PARAM.inp.read_file_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))

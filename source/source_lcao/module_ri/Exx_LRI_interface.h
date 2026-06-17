@@ -2,6 +2,7 @@
 #define EXX_LRI_INTERFACE_H
 
 #include "Exx_LRI.h"
+#include "source_estate/module_charge/charge_mixing.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
@@ -38,7 +39,7 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info)
+    Exx_LRI_Interface(const Exx_Info_RI& info)
     {
         this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
     }
@@ -123,7 +124,8 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-    Mix_DMk_2D mix_DMk_2D;
+
+    Mix_DMk_2D<T> mix_DMk_2D;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;

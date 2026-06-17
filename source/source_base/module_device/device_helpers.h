@@ -22,13 +22,6 @@ namespace base_device
 class DeviceContext;
 
 /**
- * @brief Get the device type enum from DeviceContext (runtime version).
- * @param ctx Pointer to DeviceContext
- * @return AbacusDevice_t enum value
- */
-inline AbacusDevice_t get_device_type(const DeviceContext* ctx);
-
-/**
  * @brief Get the device type enum for a given device type (compile-time version).
  * @tparam Device The device type (DEVICE_CPU or DEVICE_GPU)
  * @param dev Pointer to device (used for template deduction)

@@ -3,7 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "cal_test.h"
 
 double Cal_Test::mporter=0.0;

@@ -1,4 +1,15 @@
 #include "LCAO_deepks_test.h"
+#include "source_lcao/module_deepks/deepks_check.h"
+#include "source_lcao/module_deepks/deepks_descriptor.h"
+#include "source_lcao/module_deepks/deepks_force.h"
+#include "source_lcao/module_deepks/deepks_fpre.h"
+#include "source_lcao/module_deepks/deepks_orbpre.h"
+#include "source_lcao/module_deepks/deepks_orbital.h"
+#include "source_lcao/module_deepks/deepks_pdm.h"
+#include "source_lcao/module_deepks/deepks_phialpha.h"
+#include "source_lcao/module_deepks/deepks_spre.h"
+#include "source_lcao/module_deepks/deepks_vdpre.h"
+#include "source_lcao/module_deepks/deepks_vdrpre.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 
@@ -329,11 +340,11 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
     {
         DeePKS_domain::cal_edelta_gedm(ucell.nat,
                                        this->ld.deepks_param,
+                                       this->ld.model_deepks,
+                                       this->ld.E_delta,
                                        descriptor,
                                        this->ld.pdm,
-                                       this->ld.model_deepks,
-                                       this->ld.gedm,
-                                       this->ld.E_delta);
+                                       this->ld.gedm);
     }
 
     std::ofstream ofs("E_delta.dat");
@@ -388,8 +399,7 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
     svnl_dalpha.create(3, 3);
     const int cal_stress = 1;
     const int nks = kv.nkstot;
-    DeePKS_domain::cal_f_delta<T>(this->ld.dm_r,
-                                  ucell,
+    DeePKS_domain::cal_f_delta<T>(ucell,
                                   ORB,
                                   Test_Deepks::GridD,
                                   ParaO,
@@ -397,10 +407,11 @@ void test_deepks<T>::check_f_delta_and_stress_delta()
                                   this->ld.deepks_param,
                                   kv.kvec_d,
                                   this->ld.phialpha,
-                                  this->ld.gedm,
                                   fvnl_dalpha,
                                   cal_stress,
-                                  svnl_dalpha);
+                                  svnl_dalpha,
+                                  this->ld.dm_r,
+                                  this->ld.gedm);
     std::ofstream ofs_f("F_delta.dat");
     std::ofstream ofs_s("stress_delta.dat");
     ofs_f << std::setprecision(10);

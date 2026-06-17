@@ -49,14 +49,14 @@ void Gint_dvlocal::cal_hr_gint_()
             dphi_z.resize(phi_len);
             phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), pvdpRx, PhiOperator::Triangular_Matrix::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), pvdpRy, PhiOperator::Triangular_Matrix::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), pvdpRz, PhiOperator::Triangular_Matrix::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), pvdpRx, PhiOperator::TriPart::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), pvdpRy, PhiOperator::TriPart::Upper);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), pvdpRz, PhiOperator::TriPart::Upper);
         }
     }
 }
 
-void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
+void Gint_dvlocal::cal_dvlocal_R_sparse(
     const int nspin,
     const int cspin,
     const int nlocal,
@@ -66,13 +66,13 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
     const Grid_Driver& gdriver,
     LCAO_HS_Arrays& hs_arrays)
 {
-    ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparseMatrix");
-    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparseMatrix");
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparseMatrix;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparseMatrix;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRz_sparseMatrix;
+    ModuleBase::TITLE("Gint", "cal_dvlocal_R_sparse");
+    ModuleBase::timer::start("Gint", "cal_dvlocal_R_sparse");
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRx_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRy_sparse;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> pvdpRz_sparse;
     
-    double temp_value_double = 0.0;
+    double tmp_d = 0.0;
 
     Vec3d tau1, dtau;
     for (int iap = 0; iap < pvdpRx.size_atom_pairs(); iap++)
@@ -107,37 +107,37 @@ void Gint_dvlocal::cal_dvlocal_R_sparseMatrix(
                     double temp_value = p_pvdpRx[iw_nowg];
                     if (std::abs(temp_value) > sparse_thr)
                     {
-                        pvdpRx_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value;
+                        pvdpRx_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
                     }
                     temp_value = p_pvdpRy[iw_nowg];
                     if (std::abs(temp_value) > sparse_thr)
                     {
-                        pvdpRy_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value;
+                        pvdpRy_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
                     }
                     temp_value = p_pvdpRz[iw_nowg];
                     if (std::abs(temp_value) > sparse_thr)
                     {
-                        pvdpRz_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value;
+                        pvdpRz_sparse[dR][start1 + iw][start2 + iw2] = temp_value;
                     }
                 }
             }
         }
     }
-    distribute_pvdpR_sparseMatrix(cspin, 0, nlocal, sparse_thr, pvdpRx_sparseMatrix, pv, hs_arrays);
-    distribute_pvdpR_sparseMatrix(cspin, 1, nlocal, sparse_thr, pvdpRy_sparseMatrix, pv, hs_arrays);
-    distribute_pvdpR_sparseMatrix(cspin, 2, nlocal, sparse_thr, pvdpRz_sparseMatrix, pv, hs_arrays);
-    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparseMatrix");
+    distribute_pvdpR_sparse(cspin, 0, nlocal, sparse_thr, pvdpRx_sparse, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 1, nlocal, sparse_thr, pvdpRy_sparse, pv, hs_arrays);
+    distribute_pvdpR_sparse(cspin, 2, nlocal, sparse_thr, pvdpRz_sparse, pv, hs_arrays);
+    ModuleBase::timer::end("Gint", "cal_dvlocal_R_sparse");
 }
 
 
-void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
+void Gint_dvlocal::distribute_pvdpR_sparse(
     const int cspin,
     const int dim,
     const int nlocal,
-    const double sparse_threshold,
+    const double sparse_thr,
     const std::map<Abfs::Vector3_Order<int>,
                     std::map<size_t, std::map<size_t, double>>>&
-        pvdpR_sparseMatrix,
+        pvdpR_sparse,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& hs_arrays)
 {
@@ -147,8 +147,8 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
     int count = 0;
     for (const auto& R_coor: hs_arrays.all_R_coor)
     {
-        auto iter = pvdpR_sparseMatrix.find(R_coor);
-        if (iter != pvdpR_sparseMatrix.end())
+        auto iter = pvdpR_sparse.find(R_coor);
+        if (iter != pvdpR_sparse.end())
         {
             for (auto& row_loop: iter->second)
             {
@@ -158,8 +158,8 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
 
         auto minus_R_coor = -1 * R_coor;
 
-        iter = pvdpR_sparseMatrix.find(minus_R_coor);
-        if (iter != pvdpR_sparseMatrix.end())
+        iter = pvdpR_sparse.find(minus_R_coor);
+        if (iter != pvdpR_sparse.end())
         {
             for (auto& row_loop: iter->second)
             {
@@ -186,8 +186,8 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
             {
                 tmp.assign(tmp.size(), 0);
 
-                auto iter = pvdpR_sparseMatrix.find(R_coor);
-                if (iter != pvdpR_sparseMatrix.end())
+                auto iter = pvdpR_sparse.find(R_coor);
+                if (iter != pvdpR_sparse.end())
                 {
 
                     if (trace_lo[row] >= 0)
@@ -203,8 +203,8 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
                     }
                 }
 
-                auto minus_R_iter = pvdpR_sparseMatrix.find(minus_R_coor);
-                if (minus_R_iter != pvdpR_sparseMatrix.end())
+                auto minus_R_iter = pvdpR_sparse.find(minus_R_coor);
+                if (minus_R_iter != pvdpR_sparse.end())
                 {
                     for (int col = 0; col < row; ++col)
                     {
@@ -231,13 +231,13 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
                     {
                         if (pv.global2local_col(col) >= 0)
                         {
-                            if (std::abs(tmp[col]) > sparse_threshold)
+                            if (std::abs(tmp[col]) > sparse_thr)
                             {
                                 if (dim == 0)
                                 {
                                     double& value = hs_arrays.dHRx_sparse[cspin][R_coor][row][col];
                                     value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
+                                    if (std::abs(value) <= sparse_thr)
                                     {
                                         hs_arrays.dHRx_sparse[cspin][R_coor][row].erase(col);
                                     }
@@ -246,7 +246,7 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
                                 {
                                     double& value = hs_arrays.dHRy_sparse[cspin][R_coor][row][col];
                                     value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
+                                    if (std::abs(value) <= sparse_thr)
                                     {
                                         hs_arrays.dHRy_sparse[cspin][R_coor][row].erase(col);
                                     }
@@ -255,7 +255,7 @@ void Gint_dvlocal::distribute_pvdpR_sparseMatrix(
                                 {
                                     double& value = hs_arrays.dHRz_sparse[cspin][R_coor][row][col];
                                     value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
+                                    if (std::abs(value) <= sparse_thr)
                                     {
                                         hs_arrays.dHRz_sparse[cspin][R_coor][row].erase(col);
                                     }

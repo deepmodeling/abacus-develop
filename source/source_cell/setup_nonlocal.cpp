@@ -161,7 +161,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
 
     delete[] tmpBeta_lm;
 
-    log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << std::endl;
+    log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS FOR ELEMENT " << atom->label << std::endl;
     return;
 }
 

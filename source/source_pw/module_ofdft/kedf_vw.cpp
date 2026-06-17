@@ -171,6 +171,7 @@ void KEDF_vW::tau_vw(const double* const* pphi, ModulePW::PW_Basis* pw_rho, doub
  */
 void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_vW", "vw_potential");
     ModuleBase::timer::start("KEDF_vW", "vw_potential");
 
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)

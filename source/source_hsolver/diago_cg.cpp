@@ -1,16 +1,16 @@
-#include <ATen/core/tensor_map.h>
-#include <ATen/core/tensor_utils.h>
-#include <ATen/kernels/lapack.h>
-#include <ATen/kernels/memory.h>
-#include <ATen/ops/einsum_op.h>
-#include <ATen/ops/linalg_op.h>
-#include <source_base/constants.h>
-#include <source_base/memory.h>
-#include <source_base/parallel_reduce.h>
-#include <source_base/timer.h>
-#include <source_base/tool_title.h>             // ModuleBase::TITLE
-#include <source_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
-#include <source_hsolver/diago_cg.h>
+#include "ATen/core/tensor_map.h"
+#include "ATen/core/tensor_utils.h"
+#include "ATen/kernels/lapack.h"
+#include "ATen/kernels/memory.h"
+#include "ATen/ops/einsum_op.h"
+#include "ATen/ops/linalg_op.h"
+#include "source_base/constants.h"
+#include "source_base/memory_recorder.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"             // ModuleBase::TITLE
+#include "source_base/global_function.h"        // ModuleBase::GlobalFunc::NOTE
+#include "source_hsolver/diago_cg.h"
 
 using namespace hsolver;
 
@@ -542,6 +542,9 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
                       << std::endl;
         }
         std::cout << " in DiagoCG, psi norm = " << psi_norm << std::endl;
+        std::cout << " This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+        std::cout << " the number of bands, leading to a rank-deficient problem." << std::endl;
+        std::cout << " Please increase ecutwfc or reduce nbands." << std::endl;
         std::cout << " If you use GNU compiler, it may due to the zdotc is unavailable." << std::endl;
         ModuleBase::WARNING_QUIT("schmit_orth", "psi_norm <= 0.0");
     }
