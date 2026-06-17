@@ -39,6 +39,11 @@ void XC_Functional::gradcorr(
 {
     ModuleBase::TITLE("XC_Functional","gradcorr");
 
+    if((func_type == 3 || func_type == 5) && nspin==4)
+    {
+        ModuleBase::WARNING_QUIT("gradcorr","meta-GGA has not been implemented for nspin = 4 yet");
+    }
+
     if(func_type == 0 || func_type == 1)
     {
         return;

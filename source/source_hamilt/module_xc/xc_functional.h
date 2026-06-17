@@ -49,8 +49,8 @@ class XC_Functional
         const Charge* const chr,
         const UnitCell *ucell, // charge density
         const int nspin,
-        const bool domag = false,
-        const bool domag_z = false);
+        const bool domag,
+        const bool domag_z);
 
 //-------------------
 //  xc_functional.cpp
@@ -70,9 +70,7 @@ class XC_Functional
         return func_type;
     };
 
-    static void set_xc_type(const std::string xc_func_in,
-                          const int nspin = 1,
-                          const std::string basis_type = "pw");
+    static void set_xc_type(const std::string xc_func_in);
 
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
@@ -211,10 +209,11 @@ class XC_Functional
         ModulePW::PW_Basis* rhopw,
         const UnitCell* ucell,
         std::vector<double>& stress_gga,
-        const bool is_stress = false,
-        const int nspin = 1,
-        const bool domag = false,
-        const bool domag_z = false);
+        const bool is_stress,
+        const int nspin,
+        const bool domag,
+        const bool domag_z);
+
     template <typename T, typename Device,
               typename Real = typename GetTypeReal<T>::type>
 

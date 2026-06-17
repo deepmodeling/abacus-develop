@@ -57,9 +57,7 @@ method. */
 
 // The setting values of functional id according to the index in LIBXC
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/
-void XC_Functional::set_xc_type(const std::string xc_func_in,
-                                const int nspin /*= 1*/,
-                                const std::string basis_type /*= "pw"*/)
+void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
     ModuleBase::TITLE("XC_Functional", "set_xc_type");
     //Note : due to the separation of gcx_spin and gcc_spin,
@@ -307,17 +305,14 @@ void XC_Functional::set_xc_type(const std::string xc_func_in,
     // {
     //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     // }
-    if((func_type == 3 || func_type == 5) && nspin==4)
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
-    }
 
-#ifndef __EXX
-    if((func_type == 4 || func_type == 5) && basis_type == "lcao")
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
-    }
-#endif
+    // Hybrid functional is now supported for both PW and LCAO basis
+    // #ifndef __EXX
+    // if((func_type == 4 || func_type == 5) && basis_type == "lcao")
+    // {
+    //     ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
+    // }
+    // #endif
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 

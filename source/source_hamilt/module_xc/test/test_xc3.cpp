@@ -87,7 +87,7 @@ class XCTest_GRADCORR : public XCTest
             v4.create(4,5);
             v4.zero_out();
 
-            XC_Functional::set_xc_type("PBE", nspin1);
+            XC_Functional::set_xc_type("PBE");
 
             XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z);
             XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,nspin1,domag,domag_z);

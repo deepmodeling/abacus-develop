@@ -19,10 +19,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const double &omega, // volume of cell
         const double tpiba,
         const Charge* const chr,
-        const std::map<int, double>* scaling_factor,
         const int nspin_in,
         const bool domag,
-        const bool domag_z)
+        const bool domag_z,
+        const std::map<int, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_libxc");

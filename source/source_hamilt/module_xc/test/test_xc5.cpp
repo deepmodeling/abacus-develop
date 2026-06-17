@@ -76,7 +76,7 @@ class XCTest_VXC : public XCTest
                 rhopw.gcar[i]= 1;
             }
 
-            XC_Functional::set_xc_type("PBE", nspin1);
+            XC_Functional::set_xc_type("PBE");
 
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
@@ -178,7 +178,7 @@ class XCTest_VXC_Libxc : public XCTest
                 rhopw.gcar[i]= 1;
             }
 
-            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE", nspin1);
+            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
 
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
@@ -288,7 +288,7 @@ class XCTest_VXC_meta : public XCTest
             chr.kin_r[1][3] = 0.51340429824;
             chr.kin_r[1][4] = 0.51141731056;
 
-            XC_Functional::set_xc_type("SCAN", nspin1);
+            XC_Functional::set_xc_type("SCAN");
 
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1);
