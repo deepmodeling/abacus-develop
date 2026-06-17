@@ -98,12 +98,6 @@ class Parallel_2D
         return coord[1];
     };
 
-    /// whether the parallelization is in serial mode
-    bool get_is_serial() const
-    {
-        return is_serial;
-    };
-
 #ifdef __MPI
 
     /// ScaLAPACK descriptor
@@ -166,10 +160,12 @@ class Parallel_2D
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
 
+  private:
     /// whether to use the serial mode
     bool is_serial = false;
 
   protected:
+
     /// map from global index to local index
     std::vector<int> global2local_row_;
     std::vector<int> global2local_col_;
