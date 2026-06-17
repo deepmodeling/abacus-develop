@@ -11,6 +11,10 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                             const HContainer<TR>* dmR,
                                                             ModuleBase::matrix& force)
 {
+    if(!cal_force)
+    {
+        return;
+    }
     Et = elecstate::H_TDDFT_pw::Et;
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     #pragma omp parallel
@@ -107,7 +111,7 @@ void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::ca
                                                                             double* force1,
                                                                             double* force2)
 {
-    return;
+    ModuleBase::WARNING_QUIT("TD_pot_hybrid", "Force calculation for noncollinear spin-polarized systems is not yet supported by the hybrid gauge.");
 }
 template <typename TK, typename TR>
 void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
