@@ -138,9 +138,17 @@ void init_basis_lcao(Parallel_Orbitals& pv,
             //                             tiny system on many processes cannot afford large
             //                             blocks (then balance wins and nb_lo == nb_hi).
             // recommended = the largest balanced block, capped at 64 for BLAS efficiency.
-            const int nb_hi = (nlocal >= 2 * p_col) ? nlocal / (2 * p_col) : 1;
-            const int nb_lo = (16 < nb_hi) ? 16 : nb_hi;
-            const int nb_opt = (nb_hi < 64) ? nb_hi : 64;
+            // For noncollinear nspin==4 the basis carries 2-component spinors that must
+            // stay paired inside one ScaLAPACK block, so the block size must be a multiple
+            // of 2 -- this is exactly why the autoset above and the fallback use nb2d=2 (not
+            // 1) for nspin==4. Snap the whole window to that granularity so the recommended
+            // value can never break the spinor blocking (an odd nb2d segfaults the nspin==4
+            // diagonalization).
+            const int nb_unit = (PARAM.inp.nspin == 4) ? 2 : 1;
+            auto snap = [nb_unit](int v) { v = v / nb_unit * nb_unit; return v < nb_unit ? nb_unit : v; };
+            const int nb_hi = snap((nlocal >= 2 * p_col) ? nlocal / (2 * p_col) : 1);
+            const int nb_lo = snap((16 < nb_hi) ? 16 : nb_hi);
+            const int nb_opt = snap((nb_hi < 64) ? nb_hi : 64);
             const int nb_cur = pv.nb;
 
             const char* issue = nullptr;
