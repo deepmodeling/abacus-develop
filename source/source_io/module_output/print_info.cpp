@@ -96,7 +96,9 @@ void print_parameters(
         }
         else
         {
-            std::cout << std::setw(16) << kv.get_nkstot();
+            const int nkstot = kv.get_nkstot();
+            const int nkpoints_real = (inp.nspin == 2) ? (nkstot / 2) : nkstot;
+            std::cout << std::setw(16) << nkpoints_real;
         }
 
         std::cout << std::setw(12) << GlobalV::NPROC
@@ -411,37 +413,6 @@ void print_kpar(const int &nks, const int &kpar_lcao)
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%\n";
         }
-    }
-
-    // 16) recommend the optimal kpar for k-point parallelism.
-    // kpar splits the processes into pools, each diagonalizing a subset of the nks
-    // k-points independently -> near-linear speedup of the k-point loop. The ceiling is
-    // the number of k-points, so the optimal kpar is the largest divisor of NPROC that
-    // does not exceed nks (more pools than k-points leaves pools idle). Perfect balance
-    // additionally wants nks % kpar == 0 (see the warning above); very large systems may
-    // prefer fewer pools to keep enough ranks per pool for the per-pool diagonalization.
-    // This is advisory only -- kpar fixes the MPI pool layout and cannot be changed here.
-    // start the downward divisor scan at min(nks, NPROC) so we skip the d > nks
-    // candidates outright instead of iterating all of [1, NPROC].
-    int kpar_opt = 1;
-    for (int d = (nks < GlobalV::NPROC) ? nks : GlobalV::NPROC; d >= 1; --d)
-    {
-        if (GlobalV::NPROC % d == 0)
-        {
-            kpar_opt = d;
-            break;
-        }
-    }
-    if (kpar_opt != kpar_lcao)
-    {
-        // Advisory only: many kpar choices are deliberate (e.g. keeping more ranks
-        // per pool for the per-pool diagonalization), so this is an info-level note
-        // rather than a WARNING. The genuinely problematic cases (nks not divisible
-        // by kpar, or kpar > nks leaving idle pools) are already flagged above.
-        GlobalV::ofs_running << " kpar advisory: current kpar = " << kpar_lcao << " (NPROC = "
-                             << GlobalV::NPROC << ", nks = " << nks << "). Recommended kpar = "
-                             << kpar_opt << " (largest divisor of NPROC <= nks) to parallelize"
-                             << " the k-point loop.\n";
     }
 }
 
