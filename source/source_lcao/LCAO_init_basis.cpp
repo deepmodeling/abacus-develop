@@ -156,10 +156,29 @@ void init_basis_lcao(Parallel_Orbitals& pv,
                 }
                 else
                 {
-                    GlobalV::ofs_warning << "init_basis_lcao: auto nb2d=" << nb_cur << " is " << issue
-                        << " for N=" << nlocal << ", kpar=" << kpar << "; auto-adjusted to nb2d=" << nb_opt << ".\n";
-                    pv.set(nlocal, nlocal, nb_opt, pv.blacs_ctxt);
-                    pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+                    // Re-distribute with the recommended block size, but validate it the
+                    // same way the initial distribution is validated above: set_nloc_wfc_Eij
+                    // returns non-zero when nb_opt is incompatible with the band/grid layout
+                    // (e.g. ceil(nbands/nb_opt) < process-grid width). nb_opt is derived from
+                    // the matrix dimension and grid alone, so it can violate that band
+                    // constraint on small systems. If it does, revert to the previously
+                    // validated nb2d -- leaving pv half-updated (new nb/nrow but stale
+                    // band sizes) would otherwise crash the later wavefunction setup.
+                    int retry = pv.set(nlocal, nlocal, nb_opt, pv.blacs_ctxt);
+                    retry += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+                    if (retry != 0)
+                    {
+                        pv.set(nlocal, nlocal, nb_cur, pv.blacs_ctxt);
+                        pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+                        GlobalV::ofs_warning << "init_basis_lcao: auto nb2d=" << nb_cur << " is " << issue
+                            << " for N=" << nlocal << ", kpar=" << kpar << "; recommended nb2d=" << nb_opt
+                            << " is incompatible with the band/grid layout, so nb2d=" << nb_cur << " is kept.\n";
+                    }
+                    else
+                    {
+                        GlobalV::ofs_warning << "init_basis_lcao: auto nb2d=" << nb_cur << " is " << issue
+                            << " for N=" << nlocal << ", kpar=" << kpar << "; auto-adjusted to nb2d=" << nb_opt << ".\n";
+                    }
                 }
             }
         }
