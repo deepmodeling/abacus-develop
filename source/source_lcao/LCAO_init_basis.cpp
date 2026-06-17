@@ -103,7 +103,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     {
         const int kpar = (PARAM.globalv.kpar_lcao > 0) ? PARAM.globalv.kpar_lcao : 1;
         const int np_total = pv.dim0 * pv.dim1;   // diagonalization world size
-        const int np_pool = (kpar > 0) ? np_total / kpar : np_total; // processes per pool
+        // Pools split the world evenly; if np_total is not divisible by kpar the
+        // pool size is ill-defined, so skip the (purely advisory) heuristic rather
+        // than estimate the grid from a truncated np_total/kpar.
+        const bool pool_well_defined = (kpar > 0 && np_total % kpar == 0);
+        const int np_pool = pool_well_defined ? np_total / kpar : 0; // processes per pool
         if (np_pool > 1 && nlocal > 0)
         {
             // near-square factorization np_pool = p * q, p <= q (matches Parallel_2D)

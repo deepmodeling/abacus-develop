@@ -421,10 +421,12 @@ void print_kpar(const int &nks, const int &kpar_lcao)
     // additionally wants nks % kpar == 0 (see the warning above); very large systems may
     // prefer fewer pools to keep enough ranks per pool for the per-pool diagonalization.
     // This is advisory only -- kpar fixes the MPI pool layout and cannot be changed here.
+    // start the downward divisor scan at min(nks, NPROC) so we skip the d > nks
+    // candidates outright instead of iterating all of [1, NPROC].
     int kpar_opt = 1;
-    for (int d = GlobalV::NPROC; d >= 1; --d)
+    for (int d = (nks < GlobalV::NPROC) ? nks : GlobalV::NPROC; d >= 1; --d)
     {
-        if (GlobalV::NPROC % d == 0 && d <= nks)
+        if (GlobalV::NPROC % d == 0)
         {
             kpar_opt = d;
             break;
@@ -432,12 +434,14 @@ void print_kpar(const int &nks, const int &kpar_lcao)
     }
     if (kpar_opt != kpar_lcao)
     {
+        // Advisory only: many kpar choices are deliberate (e.g. keeping more ranks
+        // per pool for the per-pool diagonalization), so this is an info-level note
+        // rather than a WARNING. The genuinely problematic cases (nks not divisible
+        // by kpar, or kpar > nks leaving idle pools) are already flagged above.
         GlobalV::ofs_running << " kpar advisory: current kpar = " << kpar_lcao << " (NPROC = "
                              << GlobalV::NPROC << ", nks = " << nks << "). Recommended kpar = "
                              << kpar_opt << " (largest divisor of NPROC <= nks) to parallelize"
                              << " the k-point loop.\n";
-        ModuleBase::WARNING("ModuleIO::print_kpar",
-                            "kpar is not optimal; see running log for the recommended value.");
     }
 }
 
