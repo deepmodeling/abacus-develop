@@ -34,6 +34,14 @@ class XCTest_GRADCORR : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            int nspin4 = 4;
+            bool domag = false;
+            bool domag_z = false;
+            bool domag_true = true;
+            
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -79,15 +87,15 @@ class XCTest_GRADCORR : public XCTest
             v4.create(4,5);
             v4.zero_out();
 
-            XC_Functional::set_xc_type("PBE", 1);
+            XC_Functional::set_xc_type("PBE", nspin1);
 
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,1,false,false);
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,1,false,false);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,nspin1,domag,domag_z);
 
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,2,false,false);
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true,2,false,false);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true,nspin2,domag,domag_z);
 
-            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,4,true,false);
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z);
         }
 };
 

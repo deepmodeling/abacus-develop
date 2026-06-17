@@ -29,6 +29,12 @@ class XCTest_VXC : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            bool domag = false;
+            bool domag_z = false;
+            
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -70,16 +76,16 @@ class XCTest_VXC : public XCTest
                 rhopw.gcar[i]= 1;
             }
 
-            XC_Functional::set_xc_type("PBE", 1);
+            XC_Functional::set_xc_type("PBE", nspin1);
 
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,1,false,false);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,2,false,false);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -125,6 +131,12 @@ class XCTest_VXC_Libxc : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            bool domag = false;
+            bool domag_z = false;
+            
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -166,16 +178,16 @@ class XCTest_VXC_Libxc : public XCTest
                 rhopw.gcar[i]= 1;
             }
 
-            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE", 1);
+            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE", nspin1);
 
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,1,false,false);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,2,false,false);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -221,6 +233,10 @@ class XCTest_VXC_meta : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -272,17 +288,17 @@ class XCTest_VXC_meta : public XCTest
             chr.kin_r[1][3] = 0.51340429824;
             chr.kin_r[1][4] = 0.51141731056;
 
-            XC_Functional::set_xc_type("SCAN", 1);
+            XC_Functional::set_xc_type("SCAN", nspin1);
 
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,1);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
             vtau1 = std::get<3>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,2);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
