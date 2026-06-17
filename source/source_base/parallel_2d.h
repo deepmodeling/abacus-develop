@@ -74,7 +74,44 @@ class Parallel_2D
         return nb;
     };
 
+    /// number of processes in row dimension of the MPI Cartesian grid
+    int get_dim0() const
+    {
+        return dim0;
+    };
+
+    /// number of processes in column dimension of the MPI Cartesian grid
+    int get_dim1() const
+    {
+        return dim1;
+    };
+
+    /// row coordinate in the BLACS grid
+    int get_coord_row() const
+    {
+        return coord[0];
+    };
+
+    /// column coordinate in the BLACS grid
+    int get_coord_col() const
+    {
+        return coord[1];
+    };
+
+    /// whether the parallelization is in serial mode
+    bool get_is_serial() const
+    {
+        return is_serial;
+    };
+
 #ifdef __MPI
+
+    /// ScaLAPACK descriptor
+    const int* get_desc() const
+    {
+        return desc;
+    };
+
     /**
      * @brief Initialize a BLACS grid with the given MPI communicator
      * and set up the info of a block-cyclic distribution.
