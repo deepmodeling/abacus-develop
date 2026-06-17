@@ -428,7 +428,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
     {
         for (int ipcol = 0; ipcol < pv.dim1; ++ipcol)
         {
-            if (iprow == pv.coord[0] && ipcol == pv.coord[1])
+            if (pv.blacs_in_this_processor(iprow, ipcol))
             {
                 BlasConnector::copy(pv.nloc_wfc, wfc_2d, mem_stride, wfc_block.data(), mem_stride);
                 naroc[0] = pv.nrow;

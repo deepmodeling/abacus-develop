@@ -98,6 +98,19 @@ class Parallel_2D
         return coord[1];
     };
 
+    /// check whether a given BLACS grid coordinate is this process
+    bool blacs_in_this_processor(const int iprow, const int ipcol) const
+    {
+        return iprow == coord[0] && ipcol == coord[1];
+    };
+
+    /// set process coordinate in the BLACS grid (intended for testing)
+    void set_coord(const int row, const int col)
+    {
+        coord[0] = row;
+        coord[1] = col;
+    };
+
 #ifdef __MPI
 
     /// ScaLAPACK descriptor
@@ -157,10 +170,9 @@ class Parallel_2D
     int dim0 = 0;
     int dim1 = 0;
 
+  private:
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
-
-  private:
     /// whether to use the serial mode
     bool is_serial = false;
 

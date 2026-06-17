@@ -252,7 +252,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
     }
     int col_b_bands = block / dim1;
-    if (coord[1] < block % dim1)
+    if (get_coord_col() < block % dim1)
     {
         col_b_bands++;
     }
@@ -264,7 +264,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     {
         end_id = block % dim1 - 1;
     }
-    if (coord[1] == end_id)
+    if (get_coord_col() == end_id)
     {
         this->ncol_bands = (col_b_bands - 1) * nb + (N_A - (block - 1) * nb);
     }
