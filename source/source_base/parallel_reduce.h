@@ -8,10 +8,50 @@
 #include <cassert>
 #include <complex>
 
-// using std::complex;
-
 namespace Parallel_Reduce
 {
+
+#ifdef __MPI
+template <typename T>
+struct MPI_Type;
+
+template <>
+struct MPI_Type<int>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<double>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<float>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<std::complex<double>>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<std::complex<float>>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<long long>
+{
+    static const MPI_Datatype value;
+};
+#endif
+
 /// reduce in all process
 template <typename T>
 void reduce_all(T& object);
