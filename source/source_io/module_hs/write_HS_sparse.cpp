@@ -1,11 +1,117 @@
 #include "write_HS_sparse.h"
 
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "single_R_io.h"
 
+#include <algorithm>
+#include <vector>
+
+namespace
+{
+template <typename Tdata>
+std::vector<long long> count_nonzeros_by_R(
+    const ModuleIO::SparseRMatrix<Tdata>& smat,
+    const std::set<ModuleIO::RCoordinate>& all_R_coor,
+    const bool reduce)
+{
+    std::vector<long long> nonzero_num(all_R_coor.size(), 0);
+    int count = 0;
+    for (const auto& R_coor: all_R_coor)
+    {
+        const auto iter = smat.find(R_coor);
+        if (iter != smat.end())
+        {
+            for (const auto& row_loop: iter->second)
+            {
+                nonzero_num[count] += row_loop.second.size();
+            }
+        }
+        ++count;
+    }
+
+    if (reduce)
+    {
+        Parallel_Reduce::reduce_all(nonzero_num.data(), static_cast<int>(nonzero_num.size()));
+    }
+    return nonzero_num;
+}
+
+int count_output_R(const std::vector<long long>& nonzero_num)
+{
+    int output_R_number = 0;
+    for (const long long count: nonzero_num)
+    {
+        if (count != 0)
+        {
+            ++output_R_number;
+        }
+    }
+    return output_R_number;
+}
+
+void open_sparse_file(std::ofstream& ofs, const ModuleIO::SparseWriteOptions& options)
+{
+    std::ios_base::openmode mode = std::ios::out;
+    if (options.binary)
+    {
+        mode |= std::ios::binary;
+    }
+    if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && options.istep)
+    {
+        mode |= std::ios::app;
+    }
+    ofs.open(options.filename.c_str(), mode);
+}
+
+void write_sparse_header(std::ofstream& ofs,
+                         const ModuleIO::SparseWriteOptions& options,
+                         const int nlocal,
+                         const int output_R_number)
+{
+    const int step = std::max(options.istep, 0);
+    if (options.binary)
+    {
+        ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
+    }
+    else
+    {
+        ofs << "STEP: " << step << std::endl;
+        ofs << "Matrix Dimension of " + options.label + "(R): " << nlocal
+            << std::endl;
+        ofs << "Matrix number of " + options.label + "(R): "
+            << output_R_number << std::endl;
+    }
+}
+
+void write_R_record(std::ofstream& ofs,
+                    const ModuleIO::RCoordinate& R_coor,
+                    const long long nonzero_count,
+                    const bool binary)
+{
+    int dRx = R_coor.x;
+    int dRy = R_coor.y;
+    int dRz = R_coor.z;
+    if (binary)
+    {
+        const int count = static_cast<int>(nonzero_count);
+        ofs.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+        ofs.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+        ofs.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&count), sizeof(int));
+    }
+    else
+    {
+        ofs << dRx << " " << dRy << " " << dRz << " " << nonzero_count
+            << std::endl;
+    }
+}
+} // namespace
 
 void ModuleIO::save_dH_sparse(const int& istep,
                               const Parallel_Orbitals& pv,
@@ -15,6 +121,11 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const std::string& fileflag) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
+    SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_thr;
+    single_R_options.binary = binary;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
     auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
@@ -307,45 +418,39 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1x[ispin],
                                     dHRx_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1x[ispin],
                                     dHRx_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
             if (dHy_nonzero_num[ispin][count] > 0) {
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1y[ispin],
                                     dHRy_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1y[ispin],
                                     dHRy_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
             if (dHz_nonzero_num[ispin][count] > 0) {
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1z[ispin],
                                     dHRz_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1z[ispin],
                                     dHRz_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
         }
@@ -380,108 +485,56 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
 template <typename Tdata>
 void ModuleIO::save_sparse(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, Tdata>>>& smat,
-    const std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-    const double& sparse_thr,
-    const bool& binary,
-    const std::string& filename,
+    const SparseRMatrix<Tdata>& smat,
+    const std::set<RCoordinate>& all_R_coor,
     const Parallel_Orbitals& pv,
-    const std::string& label,
-    const int& istep,
-    const bool& reduce) {
+    const SparseWriteOptions& options) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-
-    int total_R_num = all_R_coor.size();
-    std::vector<long long> nonzero_num(total_R_num, 0);
-    int count = 0;
-    for (auto& R_coor: all_R_coor) {
-        auto iter = smat.find(R_coor);
-        if (iter != smat.end()) {
-            for (auto& row_loop: iter->second) {
-                nonzero_num[count] += row_loop.second.size();
-            }
-        }
-        ++count;
-    }
-    if (reduce) {
-        Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+    const int nlocal = pv.get_global_row_size();
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_sparse",
+                                 "Parallel_Orbitals global row size must be positive.");
     }
 
-    int output_R_number = 0;
-    for (int index = 0; index < total_R_num; ++index) {
-        if (nonzero_num[index] != 0) {
-            ++output_R_number;
-        }
-    }
-
-    std::stringstream sss;
-    sss << filename;
+    const std::vector<long long> nonzero_num
+        = count_nonzeros_by_R(smat, all_R_coor, options.reduce);
+    const int output_R_number = count_output_R(nonzero_num);
     std::ofstream ofs;
-    if (!reduce || GlobalV::DRANK == 0) {
-        if (binary) {
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
-                && istep) {
-                ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
-            } else {
-                ofs.open(sss.str().c_str(), std::ios::binary);
-            }
-            ofs.write(reinterpret_cast<char*>(0), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
-        } else {
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
-                && istep) {
-                ofs.open(sss.str().c_str(), std::ios::app);
-            } else {
-                ofs.open(sss.str().c_str());
-            }
-            ofs << "STEP: " << std::max(istep, 0) << std::endl;
-            ofs << "Matrix Dimension of " + label + "(R): " << PARAM.globalv.nlocal
-                << std::endl;
-            ofs << "Matrix number of " + label + "(R): " << output_R_number
-                << std::endl;
-        }
+    if (!options.reduce || GlobalV::DRANK == 0)
+    {
+        open_sparse_file(ofs, options);
+        write_sparse_header(ofs, options, nlocal, output_R_number);
     }
 
-    count = 0;
-    for (auto& R_coor: all_R_coor) {
-        int dRx = R_coor.x;
-        int dRy = R_coor.y;
-        int dRz = R_coor.z;
-
-        if (nonzero_num[count] == 0) {
+    int count = 0;
+    for (const auto& R_coor: all_R_coor)
+    {
+        if (nonzero_num[count] == 0)
+        {
             count++;
             continue;
         }
 
-        if (!reduce || GlobalV::DRANK == 0) {
-            if (binary) {
-                ofs.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&nonzero_num[count]),
-                          sizeof(int));
-            } else {
-                ofs << dRx << " " << dRy << " " << dRz << " "
-                    << nonzero_num[count] << std::endl;
-            }
+        if (!options.reduce || GlobalV::DRANK == 0)
+        {
+            write_R_record(ofs, R_coor, nonzero_num[count], options.binary);
         }
 
         if (smat.count(R_coor))
         {
-            output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
+            output_single_R(ofs, smat.at(R_coor), pv, options);
         }
         else
         {
-            std::map<size_t, std::map<size_t, Tdata>> empty_map;
-            output_single_R(ofs, empty_map, sparse_thr, binary, pv, reduce);
+            SparseRBlock<Tdata> empty_map;
+            output_single_R(ofs, empty_map, pv, options);
         }
         ++count;
     }
-    if (!reduce || GlobalV::DRANK == 0) {
+    if (!options.reduce || GlobalV::DRANK == 0)
+    {
         ofs.close();
     }
 
@@ -489,25 +542,13 @@ void ModuleIO::save_sparse(
 }
 
 template void ModuleIO::save_sparse<double>(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, double>>>&,
-    const std::set<Abfs::Vector3_Order<int>>&,
-    const double&,
-    const bool&,
-    const std::string&,
+    const SparseRMatrix<double>&,
+    const std::set<RCoordinate>&,
     const Parallel_Orbitals&,
-    const std::string&,
-    const int&,
-    const bool&);
+    const SparseWriteOptions&);
 
 template void ModuleIO::save_sparse<std::complex<double>>(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, std::complex<double>>>>&,
-    const std::set<Abfs::Vector3_Order<int>>&,
-    const double&,
-    const bool&,
-    const std::string&,
+    const SparseRMatrix<std::complex<double>>&,
+    const std::set<RCoordinate>&,
     const Parallel_Orbitals&,
-    const std::string&,
-    const int&,
-    const bool&);
+    const SparseWriteOptions&);

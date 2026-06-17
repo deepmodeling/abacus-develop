@@ -679,7 +679,6 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs22.o\
       RI_2D_Comm.o\
       Mix_DMk_2D.o\
-      Mix_Matrix.o\
       symmetry_rotation.o\
       symmetry_rotation_output.o\
       symmetry_irreducible_sector.o\
