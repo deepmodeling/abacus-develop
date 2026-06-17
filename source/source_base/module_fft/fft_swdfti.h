@@ -6,6 +6,8 @@
 // setup, 2D-xy y-direction, r2c/c2r, box 3D) is inherited from FFT_CPU/FFTW.
 // Compiled only on Sunway (USE_SWDFTI) and selected by the FFT factory in
 // FFT_Bundle for device "cpu" -- so FFT_CPU itself stays free of any DFTI macro.
+#include <complex>
+
 #include "fft_cpu.h"
 
 namespace ModuleBase

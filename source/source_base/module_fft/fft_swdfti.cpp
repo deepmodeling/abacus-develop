@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <mutex>
 extern "C" {
 #include "swfft.h"   // xMath-SACA swFFT DFTI API (CPE)
 }
@@ -17,8 +18,9 @@ void FFT_SWDFTI<double>::setupFFT()
 
     if (std::getenv("ABACUS_NO_DFTI") != nullptr) { return; }   // A/B: keep FFTW
 
-    static int dfti_athread_inited = 0;
-    if (!dfti_athread_inited) { DftiInitAthread(DFTI_SPAWN_QUICK); dfti_athread_inited = 1; }
+    // thread-safe one-time CPE spawn (setupFFT may be reached from >1 thread)
+    static std::once_flag dfti_athread_once;
+    std::call_once(dfti_athread_once, []() { DftiInitAthread(DFTI_SPAWN_QUICK); });
 
     // batched 1D-z: ns transforms of length nz, contiguous (stride 1, distance nz), in-place
     DFTI_DESCRIPTOR_HANDLE hz = nullptr;
@@ -51,8 +53,19 @@ template <>
 void FFT_SWDFTI<double>::cleanFFT()
 {
     FFT_CPU<double>::cleanFFT();
-    this->dftiz = nullptr;
-    this->dftix = nullptr;
+    // release the DFTI descriptors before dropping the handles (else they leak)
+    if (this->dftiz != nullptr)
+    {
+        DFTI_DESCRIPTOR_HANDLE hz = (DFTI_DESCRIPTOR_HANDLE)this->dftiz;
+        DftiFreeDescriptor(&hz);
+        this->dftiz = nullptr;
+    }
+    if (this->dftix != nullptr)
+    {
+        DFTI_DESCRIPTOR_HANDLE hx = (DFTI_DESCRIPTOR_HANDLE)this->dftix;
+        DftiFreeDescriptor(&hx);
+        this->dftix = nullptr;
+    }
 }
 
 template <>

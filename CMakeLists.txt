@@ -901,10 +901,17 @@ if(ENABLE_RAPIDJSON)
 endif()
 
 if (USE_SW)
-  # CPE-DFTI engine: link the objcopy-ISOLATED xMath swfft (fftw_* renamed ->
-  # swfftpriv_*) so it provides DftiInitAthread/Compute* WITHOUT hijacking ABACUS
-  # FFTW (raw ${SW_MATH}/libswfft.a breaks the density FFT). Build per HOWTO.
-  target_link_libraries(${ABACUS_BIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/source/source_base/module_fft/libswfft_xmath_iso.a)
+  # CPE-DFTI engine: only needed when the SWDFTI backend is actually compiled in.
+  # Link the objcopy-ISOLATED xMath swfft (fftw_* renamed -> swfftpriv_*) so it
+  # provides DftiInitAthread/Compute* WITHOUT hijacking ABACUS FFTW (raw
+  # ${SW_MATH}/libswfft.a breaks the density FFT). Build per HOWTO.
+  if(USE_SWDFTI)
+    set(_swfft_iso ${CMAKE_CURRENT_SOURCE_DIR}/source/source_base/module_fft/libswfft_xmath_iso.a)
+    if(NOT EXISTS ${_swfft_iso})
+      message(FATAL_ERROR "USE_SWDFTI=ON but ${_swfft_iso} is missing; build it per HOWTO or set -DUSE_SWDFTI=OFF.")
+    endif()
+    target_link_libraries(${ABACUS_BIN_NAME} ${_swfft_iso})
+  endif()
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
   target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
