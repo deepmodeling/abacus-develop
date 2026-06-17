@@ -414,7 +414,7 @@ void toQO::calculate()
             std::string filename = out_dir_ + "/QO_ovlpR_" + std::to_string(iR) + ".dat";
             std::remove(filename.c_str());
         }
-        printf("toQO::calculate: calculation of S(k) done, run /tools/qo/postprocess.py to do representation "
+        printf("toQO::calculate: calculation of S(k) done, run /tools/01_NAO_generation/qo/postprocess.py to do representation "
                "transform.\n");
     }
 }

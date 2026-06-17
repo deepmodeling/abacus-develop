@@ -88,6 +88,7 @@
 #include <map>
 #include <tuple>
 #include <complex>
+#include <fstream>
 #include <memory>
 #include "source_cell/unitcell.h"
 #include "source_basis/module_nao/two_center_integrator.h"
@@ -218,8 +219,9 @@ namespace ModuleIO
                            const int rank = 0);
 
         private:
+            std::ofstream fallback_ofs_;
             // ofsrunning
-            std::ofstream* ofs_;
+            std::ofstream* ofs_ = nullptr;
             // the two-center-integrator
             std::unique_ptr<TwoCenterIntegrator> calculator_;
             // the spherical bessel transformer

@@ -89,7 +89,7 @@ jobs:
 
   full-build-cuda:
     if: contains(inputs.variants || 'gnu,intel,cuda', 'cuda')
-    runs-on: nvidia
+    runs-on: gpu
     steps:
       - name: Checkout
         uses: actions/checkout@v6

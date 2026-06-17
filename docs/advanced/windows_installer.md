@@ -4,7 +4,7 @@ A lightweight installer that brings ABACUS to Windows via WSL2 and
 conda-forge. No C++ toolchain, no MPI build, no manual dependency juggling —
 run `install-abacus.bat` once and type `abacus` from any Windows terminal.
 
-The scripts live in the repository under `tools/windows/`. This page is the
+The scripts live in the repository under `tools/04_windows_installation/`. This page is the
 user-facing documentation for the same scripts.
 
 ## How it works
@@ -89,7 +89,7 @@ The pipeline, end to end:
 ## Installation
 
 1. Clone or download this repository.
-2. In `tools/windows/`, right-click `install-abacus.bat` → **Run as administrator**.
+2. In `tools/04_windows_installation/`, right-click `install-abacus.bat` → **Run as administrator**.
 3. Answer the China-mirror prompt (`y` recommended inside Mainland China).
    Then pick an ABACUS version when prompted (leave blank for the latest on
    conda-forge; for a pinned install, type an exact version such as `3.7.4`).
@@ -217,7 +217,7 @@ Hyper-V virtualization layer used by WSL2 is disabled.
 ## File layout
 
 ```
-tools/windows/
+tools/04_windows_installation/
 ├── install-abacus.bat     # Windows entry point (admin, interactive)
 ├── uninstall-abacus.bat   # Clean removal, optionally including the distro
 ├── provision.sh           # Linux-side installer (runs as root in WSL)
