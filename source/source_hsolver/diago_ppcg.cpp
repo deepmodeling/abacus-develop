@@ -1,40 +1,6 @@
 #include "diago_ppcg.h"
 
-// -----------------------------------------------------------------------------
-// LAPACK Fortran bindings (CPU only)
-// -----------------------------------------------------------------------------
-extern "C"
-{
-void dsyevd_(const char* jobz, const char* uplo,
-             const int* n, double* a, const int* lda, double* w,
-             double* work, const int* lwork, int* iwork,
-             const int* liwork, int* info);
-
-void ssyevd_(const char* jobz, const char* uplo,
-             const int* n, float* a, const int* lda, float* w,
-             float* work, const int* lwork, int* iwork,
-             const int* liwork, int* info);
-
-void dsygvd_(const int* itype, const char* jobz, const char* uplo,
-             const int* n, double* a, const int* lda, double* b,
-             const int* ldb, double* w, double* work, const int* lwork,
-             int* iwork, const int* liwork, int* info);
-
-void ssygvd_(const int* itype, const char* jobz, const char* uplo,
-             const int* n, float* a, const int* lda, float* b,
-             const int* ldb, float* w, float* work, const int* lwork,
-             int* iwork, const int* liwork, int* info);
-
-void dpotrf_(const char* uplo, const int* n, double* a,
-             const int* lda, int* info);
-void spotrf_(const char* uplo, const int* n, float* a,
-             const int* lda, int* info);
-
-void dtrtri_(const char* uplo, const char* diag,
-             const int* n, double* a, const int* lda, int* info);
-void strtri_(const char* uplo, const char* diag,
-             const int* n, float* a, const int* lda, int* info);
-}
+#include "source_base/module_container/base/third_party/lapack.h"
 
 namespace hsolver {
 
@@ -43,8 +9,13 @@ namespace hsolver {
 // =============================================================================
 namespace {
 
+namespace lapackConnector = container::lapackConnector;
+
 template <typename Real>
 struct Lapack;
+
+template <typename Scalar>
+struct HermitianLapack;
 
 template <>
 struct Lapack<double>
@@ -59,8 +30,9 @@ struct Lapack<double>
         int liwork = -1;
         std::vector<double> work(1);
         std::vector<int> iwork(1);
-        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
         {
             lwork = std::max(1, 1 + 6 * n + 2 * n * n);
@@ -73,8 +45,9 @@ struct Lapack<double>
         }
         work.assign(static_cast<size_t>(lwork), 0.0);
         iwork.assign(static_cast<size_t>(liwork), 0);
-        dsyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
             throw std::runtime_error("PPCG: dsyevd failed.");
     }
@@ -91,8 +64,9 @@ struct Lapack<double>
         int liwork = -1;
         std::vector<double> work(1);
         std::vector<int> iwork(1);
-        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
         {
             lwork = std::max(1, 1 + 18 * n + 10 * n * n);
@@ -105,8 +79,9 @@ struct Lapack<double>
         }
         work.assign(static_cast<size_t>(lwork), 0.0);
         iwork.assign(static_cast<size_t>(liwork), 0);
-        dsygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
             throw std::runtime_error("PPCG: dsygvd failed.");
     }
@@ -131,7 +106,7 @@ struct Lapack<double>
                     a[i + i * lda] += shift * std::max(diag_max, 1.0);
             }
             info = 0;
-            dpotrf_(&uplo, &n, a, &lda, &info);
+            lapackConnector::potrf(uplo, n, a, lda, info);
             if (info == 0) return;
         }
         throw std::runtime_error("PPCG: dpotrf failed.");
@@ -143,7 +118,7 @@ struct Lapack<double>
         const char diag = 'N';
         const int lda = n;
         int info = 0;
-        dtrtri_(&uplo, &diag, &n, a, &lda, &info);
+        lapackConnector::trtri(uplo, diag, n, a, lda, info);
         if (info != 0)
             throw std::runtime_error("PPCG: dtrtri failed.");
     }
@@ -162,8 +137,9 @@ struct Lapack<float>
         int liwork = -1;
         std::vector<float> work(1);
         std::vector<int> iwork(1);
-        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
         {
             lwork = std::max(1, 1 + 6 * n + 2 * n * n);
@@ -176,8 +152,9 @@ struct Lapack<float>
         }
         work.assign(static_cast<size_t>(lwork), 0.0f);
         iwork.assign(static_cast<size_t>(liwork), 0);
-        ssyevd_(&jobz, &uplo, &n, a, &lda, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
             throw std::runtime_error("PPCG: ssyevd failed.");
     }
@@ -194,8 +171,9 @@ struct Lapack<float>
         int liwork = -1;
         std::vector<float> work(1);
         std::vector<int> iwork(1);
-        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
         {
             lwork = std::max(1, 1 + 18 * n + 10 * n * n);
@@ -208,8 +186,9 @@ struct Lapack<float>
         }
         work.assign(static_cast<size_t>(lwork), 0.0f);
         iwork.assign(static_cast<size_t>(liwork), 0);
-        ssygvd_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w,
-                work.data(), &lwork, iwork.data(), &liwork, &info);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, nullptr, 0,
+                               iwork.data(), liwork, info);
         if (info != 0)
             throw std::runtime_error("PPCG: ssygvd failed.");
     }
@@ -232,7 +211,7 @@ struct Lapack<float>
                     a[i + i * lda] += shift * std::max(diag_max, 1.0f);
             }
             info = 0;
-            spotrf_(&uplo, &n, a, &lda, &info);
+            lapackConnector::potrf(uplo, n, a, lda, info);
             if (info == 0) return;
         }
         throw std::runtime_error("PPCG: spotrf failed.");
@@ -244,9 +223,251 @@ struct Lapack<float>
         const char diag = 'N';
         const int lda = n;
         int info = 0;
-        strtri_(&uplo, &diag, &n, a, &lda, &info);
+        lapackConnector::trtri(uplo, diag, n, a, lda, info);
         if (info != 0)
             throw std::runtime_error("PPCG: strtri failed.");
+    }
+};
+
+template <>
+struct HermitianLapack<double> : Lapack<double> {};
+
+template <>
+struct HermitianLapack<float> : Lapack<float> {};
+
+template <>
+struct HermitianLapack<std::complex<double>>
+{
+    using Scalar = std::complex<double>;
+    using Real = double;
+
+    static void syevd(int n, Scalar* a, Real* w)
+    {
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+        int lwork = -1;
+        int lrwork = -1;
+        int liwork = -1;
+        std::vector<Scalar> work(1);
+        std::vector<Real> rwork(1);
+        std::vector<int> iwork(1);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 2 * n + n * n);
+            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = std::max(1, static_cast<int>(std::real(work[0])));
+            lrwork = std::max(1, static_cast<int>(rwork[0]));
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), Scalar(0));
+        rwork.assign(static_cast<size_t>(lrwork), Real(0));
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: zheevd failed.");
+    }
+
+    static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        const int ldb = n;
+        int info = 0;
+        int lwork = -1;
+        int lrwork = -1;
+        int liwork = -1;
+        std::vector<Scalar> work(1);
+        std::vector<Real> rwork(1);
+        std::vector<int> iwork(1);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 2 * n + n * n);
+            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = std::max(1, static_cast<int>(std::real(work[0])));
+            lrwork = std::max(1, static_cast<int>(rwork[0]));
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), Scalar(0));
+        rwork.assign(static_cast<size_t>(lrwork), Real(0));
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: zhegvd failed.");
+    }
+
+    static void potrf(int n, Scalar* a)
+    {
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+
+        Real diag_max = 0;
+        for (int i = 0; i < n; ++i)
+            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
+        std::vector<Scalar> a0(a, a + n * lda);
+
+        for (const Real shift : {0.0, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 1e-1, 1.0}) {
+            std::copy(a0.begin(), a0.end(), a);
+            if (shift > 0) {
+                for (int i = 0; i < n; ++i)
+                    a[i + i * lda] += Scalar(shift * std::max(diag_max, Real(1)), 0);
+            }
+            info = 0;
+            lapackConnector::potrf(uplo, n, a, lda, info);
+            if (info == 0) return;
+        }
+        throw std::runtime_error("PPCG: zpotrf failed.");
+    }
+
+    static void trtri(int n, Scalar* a)
+    {
+        const char uplo = 'U';
+        const char diag = 'N';
+        const int lda = n;
+        int info = 0;
+        lapackConnector::trtri(uplo, diag, n, a, lda, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: ztrtri failed.");
+    }
+};
+
+template <>
+struct HermitianLapack<std::complex<float>>
+{
+    using Scalar = std::complex<float>;
+    using Real = float;
+
+    static void syevd(int n, Scalar* a, Real* w)
+    {
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+        int lwork = -1;
+        int lrwork = -1;
+        int liwork = -1;
+        std::vector<Scalar> work(1);
+        std::vector<Real> rwork(1);
+        std::vector<int> iwork(1);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 2 * n + n * n);
+            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = std::max(1, static_cast<int>(std::real(work[0])));
+            lrwork = std::max(1, static_cast<int>(rwork[0]));
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), Scalar(0));
+        rwork.assign(static_cast<size_t>(lrwork), Real(0));
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: cheevd failed.");
+    }
+
+    static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
+    {
+        const int itype = 1;
+        const char jobz = 'V';
+        const char uplo = 'U';
+        const int lda = n;
+        const int ldb = n;
+        int info = 0;
+        int lwork = -1;
+        int lrwork = -1;
+        int liwork = -1;
+        std::vector<Scalar> work(1);
+        std::vector<Real> rwork(1);
+        std::vector<int> iwork(1);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+        {
+            lwork = std::max(1, 2 * n + n * n);
+            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
+            liwork = std::max(1, 3 + 5 * n);
+        }
+        else
+        {
+            lwork = std::max(1, static_cast<int>(std::real(work[0])));
+            lrwork = std::max(1, static_cast<int>(rwork[0]));
+            liwork = std::max(1, iwork[0]);
+        }
+        work.assign(static_cast<size_t>(lwork), Scalar(0));
+        rwork.assign(static_cast<size_t>(lrwork), Real(0));
+        iwork.assign(static_cast<size_t>(liwork), 0);
+        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
+                               work.data(), lwork, rwork.data(), lrwork,
+                               iwork.data(), liwork, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: chegvd failed.");
+    }
+
+    static void potrf(int n, Scalar* a)
+    {
+        const char uplo = 'U';
+        const int lda = n;
+        int info = 0;
+
+        Real diag_max = 0;
+        for (int i = 0; i < n; ++i)
+            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
+        std::vector<Scalar> a0(a, a + n * lda);
+
+        for (const Real shift : {0.0f, 1e-12f, 1e-10f, 1e-8f, 1e-6f, 1e-4f, 1e-3f, 1e-2f, 1e-1f, 1.0f}) {
+            std::copy(a0.begin(), a0.end(), a);
+            if (shift > 0) {
+                for (int i = 0; i < n; ++i)
+                    a[i + i * lda] += Scalar(shift * std::max(diag_max, Real(1)), 0);
+            }
+            info = 0;
+            lapackConnector::potrf(uplo, n, a, lda, info);
+            if (info == 0) return;
+        }
+        throw std::runtime_error("PPCG: cpotrf failed.");
+    }
+
+    static void trtri(int n, Scalar* a)
+    {
+        const char uplo = 'U';
+        const char diag = 'N';
+        const int lda = n;
+        int info = 0;
+        lapackConnector::trtri(uplo, diag, n, a, lda, info);
+        if (info != 0)
+            throw std::runtime_error("PPCG: ctrtri failed.");
     }
 };
 
@@ -370,14 +591,14 @@ T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
                                  int ncol_a, int ncol_b,
-                                 std::vector<Real>& out,
+                                 std::vector<T>& out,
                                  int ld_out) const
 {
-    out.assign(ld_out * ncol_b, static_cast<Real>(0));
+    out.assign(ld_out * ncol_b, T(0));
     for (int jb = 0; jb < ncol_b; ++jb)
         for (int ia = 0; ia < ncol_a; ++ia)
-            out[ia + jb * ld_out] = gamma_dot(a + ia * ld_psi_,
-                                               b + jb * ld_psi_);
+            out[ia + jb * ld_out] = complex_dot(a + ia * ld_psi_,
+                                                 b + jb * ld_psi_);
 }
 
 // =============================================================================
@@ -506,8 +727,8 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     const int l = static_cast<int>(cols.size());
     const int nblk = use_p ? 3 : 2;
     const int dim = nblk * l;
-    subspace.k.assign(dim * dim, static_cast<Real>(0));
-    subspace.m.assign(dim * dim, static_cast<Real>(0));
+    subspace.k.assign(dim * dim, T(0));
+    subspace.m.assign(dim * dim, T(0));
     subspace.eval.assign(dim, static_cast<Real>(0));
 
     std::vector<T> psi_l, spsi_l, hpsi_l;
@@ -562,15 +783,15 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         scale_to_unit_snorm(p_l, sp_l, hp_l, l);
 
     auto fill_sym = [&](const std::vector<T>& a, const std::vector<T>& b,
-                        int r0, int c0, std::vector<Real>& mat)
+                        int r0, int c0, std::vector<T>& mat)
     {
-        std::vector<Real> g;
+        std::vector<T> g;
         gram(a.data(), b.data(), l, l, g, l);
         for (int j = 0; j < l; ++j)
             for (int i = 0; i < l; ++i)
             {
                 mat[(r0 + i) + (c0 + j) * dim] = g[i + j * l];
-                mat[(c0 + j) + (r0 + i) * dim] = g[i + j * l];
+                mat[(c0 + j) + (r0 + i) * dim] = std::conj(g[i + j * l]);
             }
     };
 
@@ -601,10 +822,10 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
 {
     // Try with increasing diagonal shifts; fall back to identity (no update)
     // if the subspace is too ill-conditioned.
-    // Save originals; dsygvd modifies both matrices in-place before it may
+    // Save originals; sygvd modifies both matrices in-place before it may
     // fail.
-    const std::vector<Real> k0 = subspace.k;
-    const std::vector<Real> m0 = subspace.m;
+    const std::vector<T> k0 = subspace.k;
+    const std::vector<T> m0 = subspace.m;
     const Real shifts[] = {static_cast<Real>(0),
                            static_cast<Real>(1e-10),
                            static_cast<Real>(1e-8),
@@ -614,12 +835,13 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         subspace.k = k0;
         subspace.m = m0;
         for (int i = 0; i < dim; ++i)
-            subspace.m[i + i * dim] += shift;
+            subspace.m[i + i * dim] += T(shift);
 
         try
         {
-            Lapack<Real>::sygvd(dim, subspace.k.data(), subspace.m.data(),
-                                subspace.eval.data());
+            HermitianLapack<T>::sygvd(dim, subspace.k.data(),
+                                      subspace.m.data(),
+                                      subspace.eval.data());
             return;
         }
         catch (const std::runtime_error&)
@@ -628,9 +850,9 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
-    std::fill(subspace.k.begin(), subspace.k.end(), static_cast<Real>(0));
+    std::fill(subspace.k.begin(), subspace.k.end(), T(0));
     for (int i = 0; i < dim; ++i)
-        subspace.k[i + i * dim] = static_cast<Real>(1);
+        subspace.k[i + i * dim] = T(1);
     std::fill(subspace.eval.begin(), subspace.eval.end(), static_cast<Real>(0));
 }
 
@@ -646,7 +868,7 @@ void DiagoPPCG<T, Device>::update_one_block(
     const SmallSubspace& subspace)
 {
     const int dim = (use_p ? 3 : 2) * l;
-    const Real* eigvec = subspace.k.data();
+    const T* eigvec = subspace.k.data();
 
     std::vector<T> psi_l, spsi_l, hpsi_l;
     std::vector<T> w_l, sw_l, hw_l;
@@ -675,8 +897,8 @@ void DiagoPPCG<T, Device>::update_one_block(
     {
         for (int i = 0; i < l; ++i)
         {
-            const Real cpsi = eigvec[i + j * dim];
-            const Real cw   = eigvec[(l + i) + j * dim];
+            const T cpsi = eigvec[i + j * dim];
+            const T cw   = eigvec[(l + i) + j * dim];
 
             for (int ig = 0; ig < n_dim_; ++ig)
             {
@@ -693,7 +915,7 @@ void DiagoPPCG<T, Device>::update_one_block(
 
             if (use_p)
             {
-                const Real cp = eigvec[(2*l + i) + j * dim];
+                const T cp = eigvec[(2*l + i) + j * dim];
                 for (int ig = 0; ig < n_dim_; ++ig)
                 {
                     psi_new[idx(ig, j, ld_psi_)]  += p_l[ idx(ig, i, ld_psi_)] * cp;
@@ -719,8 +941,8 @@ void DiagoPPCG<T, Device>::update_one_block(
 // Back-substitute with upper triangular Cholesky factor: X *= R^{-1}
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::right_solve_upper_real(
-    const std::vector<Real>& r, int n, std::vector<T>& x) const
+void DiagoPPCG<T, Device>::right_solve_upper(
+    const std::vector<T>& r, int n, std::vector<T>& x) const
 {
     std::vector<T> b = x;
     for (int row = 0; row < n_dim_; ++row)
@@ -812,16 +1034,16 @@ void DiagoPPCG<T, Device>::chol_qr_active(
     copy_cols(spsi_.data(), active_cols, spsi_a);
     copy_cols(hpsi_.data(), active_cols, hpsi_a);
 
-    std::vector<Real> s(nact * nact, static_cast<Real>(0));
+    std::vector<T> s(nact * nact, T(0));
     gram(psi_a.data(), spsi_a.data(), nact, nact, s, nact);
 
     bool cholesky_ok = false;
     try
     {
-        Lapack<Real>::potrf(nact, s.data());
-        right_solve_upper_real(s, nact, psi_a);
-        right_solve_upper_real(s, nact, spsi_a);
-        right_solve_upper_real(s, nact, hpsi_a);
+        HermitianLapack<T>::potrf(nact, s.data());
+        right_solve_upper(s, nact, psi_a);
+        right_solve_upper(s, nact, spsi_a);
+        right_solve_upper(s, nact, hpsi_a);
         cholesky_ok = is_s_orthonormal(psi_a.data(), spsi_a.data(), nact);
     }
     catch (const std::runtime_error&)
@@ -846,8 +1068,8 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
 {
-    std::vector<Real> hsub(n_band_ * n_band_, static_cast<Real>(0));
-    std::vector<Real> ssub(n_band_ * n_band_, static_cast<Real>(0));
+    std::vector<T> hsub(n_band_ * n_band_, T(0));
+    std::vector<T> ssub(n_band_ * n_band_, T(0));
     gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
 
@@ -855,7 +1077,8 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     bool sygvd_ok = false;
     try
     {
-        Lapack<Real>::sygvd(n_band_, hsub.data(), ssub.data(), eval.data());
+        HermitianLapack<T>::sygvd(n_band_, hsub.data(), ssub.data(),
+                                  eval.data());
         sygvd_ok = true;
     }
     catch (const std::runtime_error&)
@@ -865,8 +1088,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
         gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
-            eval[ii] = hsub[ii + ii * n_band_]
-                     / std::max(ssub[ii + ii * n_band_],
+            eval[ii] = static_cast<Real>(std::real(hsub[ii + ii * n_band_]))
+                     / std::max(static_cast<Real>(
+                                    std::real(ssub[ii + ii * n_band_])),
                                 static_cast<Real>(1e-30));
     }
 
@@ -884,7 +1108,7 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         {
             for (int i = 0; i < n_band_; ++i)
             {
-                const Real c = hsub[i + j * n_band_];
+                const T c = hsub[i + j * n_band_];
                 for (int ig = 0; ig < n_dim_; ++ig)
                 {
                     psi[ idx(ig, j, ld_psi_)] += psi_old[ idx(ig, i, ld_psi_)] * c;
@@ -928,12 +1152,12 @@ DiagoPPCG<T, Device>::trace_of_active_projected(
     copy_cols(hpsi_.data(), active_cols, hpsi_a);
 
     const int nact = static_cast<int>(active_cols.size());
-    std::vector<Real> g(nact * nact, static_cast<Real>(0));
+    std::vector<T> g(nact * nact, T(0));
     gram(psi_a.data(), hpsi_a.data(), nact, nact, g, nact);
 
     Real tr = 0;
     for (int i = 0; i < nact; ++i)
-        tr += g[i + i * nact];
+        tr += static_cast<Real>(std::real(g[i + i * nact]));
     return tr;
 }
 
@@ -1183,22 +1407,22 @@ void DiagoPPCG<T, Device>::orth_cholesky(
     std::vector<T> spsi_orig(spsi, spsi + ld_psi_ * ncol);
 
     // Gram matrix of S-orthonormality: J_{ij} = <psi_i | S | psi_j>
-    std::vector<Real> gram_s(ncol * ncol, static_cast<Real>(0));
+    std::vector<T> gram_s(ncol * ncol, T(0));
     for (int j = 0; j < ncol; ++j)
         for (int i = 0; i < ncol; ++i)
-            gram_s[i + j * ncol] = gamma_dot(psi + i * ld_psi_,
-                                              spsi + j * ld_psi_);
+            gram_s[i + j * ncol] = complex_dot(psi + i * ld_psi_,
+                                                spsi + j * ld_psi_);
 
     bool cholesky_ok = false;
     try
     {
-        Lapack<Real>::potrf(ncol, gram_s.data());
-        Lapack<Real>::trtri(ncol, gram_s.data());
+        HermitianLapack<T>::potrf(ncol, gram_s.data());
+        HermitianLapack<T>::trtri(ncol, gram_s.data());
 
         std::vector<T> tmp(ld_psi_ * ncol, T(0));
         for (int j = 0; j < ncol; ++j)
             for (int i = 0; i < ncol; ++i) {
-                const Real uinv = gram_s[i + j * ncol];
+                const T uinv = gram_s[i + j * ncol];
                 for (int ig = 0; ig < n_dim_; ++ig)
                     tmp[idx(ig, j, ld_psi_)] += psi[idx(ig, i, ld_psi_)] * uinv;
             }
@@ -1207,7 +1431,7 @@ void DiagoPPCG<T, Device>::orth_cholesky(
         set_zero(tmp);
         for (int j = 0; j < ncol; ++j)
             for (int i = 0; i < ncol; ++i) {
-                const Real uinv = gram_s[i + j * ncol];
+                const T uinv = gram_s[i + j * ncol];
                 for (int ig = 0; ig < n_dim_; ++ig)
                     tmp[idx(ig, j, ld_psi_)] += hpsi[idx(ig, i, ld_psi_)] * uinv;
             }
@@ -1216,7 +1440,7 @@ void DiagoPPCG<T, Device>::orth_cholesky(
         set_zero(tmp);
         for (int j = 0; j < ncol; ++j)
             for (int i = 0; i < ncol; ++i) {
-                const Real uinv = gram_s[i + j * ncol];
+                const T uinv = gram_s[i + j * ncol];
                 for (int ig = 0; ig < n_dim_; ++ig)
                     tmp[idx(ig, j, ld_psi_)] += spsi[idx(ig, i, ld_psi_)] * uinv;
             }
@@ -1398,7 +1622,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 copy_cols(hpsi_.data(), active_cols, hpsi_a);
 
                 const int na = static_cast<int>(active_cols.size());
-                std::vector<Real> ga(ncol * na, static_cast<Real>(0));
+                std::vector<T> ga(ncol * na, T(0));
                 gram(psi_in, hpsi_a.data(), ncol, na, ga, ncol);
 
                 set_zero(w_);
@@ -1412,12 +1636,15 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                         w_[idx(ig, active_cols[ja], ld_psi_)] =
                             hpsi_a[idx(ig, ja, ld_psi_)] - sum;
                     }
-                    eigenvalue_in[active_cols[ja]] = ga[active_cols[ja] + ja * ncol];
+                    eigenvalue_in[active_cols[ja]] =
+                        static_cast<Real>(std::real(
+                            ga[active_cols[ja] + ja * ncol]));
                 }
 
                 Real trG1 = 0;
                 for (int ja = 0; ja < na; ++ja)
-                    trG1 += ga[active_cols[ja] + ja * ncol];
+                    trG1 += static_cast<Real>(std::real(
+                        ga[active_cols[ja] + ja * ncol]));
 
                 trdif = std::abs(trG1 - trG);
                 trG = trG1;
@@ -1518,26 +1745,27 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 // would invalidate the Polak-Ribiere conjugate-direction
                 // accumulators.  The Cholesky basis spans the same subspace,
                 // so the Ritz values are exact for this subspace.
-                std::vector<Real> h_sub(ncol * ncol, static_cast<Real>(0));
-                std::vector<Real> s_sub(ncol * ncol, static_cast<Real>(0));
+                std::vector<T> h_sub(ncol * ncol, T(0));
+                std::vector<T> s_sub(ncol * ncol, T(0));
                 for (int jj = 0; jj < ncol; ++jj)
                 {
                     for (int ii = 0; ii < ncol; ++ii)
                     {
                         h_sub[ii + jj * ncol]
-                            = gamma_dot(psi_in + ii * ld_psi_,
-                                        hpsi_.data() + jj * ld_psi_);
+                            = complex_dot(psi_in + ii * ld_psi_,
+                                          hpsi_.data() + jj * ld_psi_);
                         s_sub[ii + jj * ncol]
-                            = gamma_dot(psi_in + ii * ld_psi_,
-                                        spsi_.data() + jj * ld_psi_);
+                            = complex_dot(psi_in + ii * ld_psi_,
+                                          spsi_.data() + jj * ld_psi_);
                     }
                 }
 
                 std::vector<Real> eval_cg(ncol, static_cast<Real>(0));
                 try
                 {
-                    Lapack<Real>::sygvd(ncol, h_sub.data(), s_sub.data(),
-                                        eval_cg.data());
+                    HermitianLapack<T>::sygvd(ncol, h_sub.data(),
+                                              s_sub.data(),
+                                              eval_cg.data());
                 }
                 catch (const std::runtime_error&)
                 {
@@ -1548,17 +1776,19 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                         for (int ii = 0; ii < ncol; ++ii)
                         {
                             h_sub[ii + jj * ncol]
-                                = gamma_dot(psi_in + ii * ld_psi_,
-                                            hpsi_.data() + jj * ld_psi_);
+                                = complex_dot(psi_in + ii * ld_psi_,
+                                              hpsi_.data() + jj * ld_psi_);
                             s_sub[ii + jj * ncol]
-                                = gamma_dot(psi_in + ii * ld_psi_,
-                                            spsi_.data() + jj * ld_psi_);
+                                = complex_dot(psi_in + ii * ld_psi_,
+                                              spsi_.data() + jj * ld_psi_);
                         }
                     }
                     for (int ii = 0; ii < ncol; ++ii)
-                        eval_cg[ii] = h_sub[ii + ii * ncol]
-                                    / std::max(s_sub[ii + ii * ncol],
-                                              static_cast<Real>(1e-30));
+                        eval_cg[ii] =
+                            static_cast<Real>(std::real(h_sub[ii + ii * ncol]))
+                            / std::max(static_cast<Real>(
+                                           std::real(s_sub[ii + ii * ncol])),
+                                       static_cast<Real>(1e-30));
                 }
                 for (int ii = 0; ii < ncol; ++ii)
                     eigenvalue_in[ii] = eval_cg[ii];

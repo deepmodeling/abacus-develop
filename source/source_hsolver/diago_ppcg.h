@@ -133,7 +133,7 @@ private:
     // Gram matrix: out[i, j] = <a_i | b_j>.
     void gram(const T* a, const T* b,
               int ncol_a, int ncol_b,
-              std::vector<Real>& out, int ld_out) const;
+              std::vector<T>& out, int ld_out) const;
 
     // Gather / scatter columns.
     void copy_cols(const T* src, const std::vector<int>& cols,
@@ -157,8 +157,8 @@ private:
     // -------------------------------------------------------------------------
     struct SmallSubspace
     {
-        std::vector<Real> k;     // K matrix (projected H)
-        std::vector<Real> m;     // M matrix (projected S)
+        std::vector<T> k;        // K matrix (projected H)
+        std::vector<T> m;        // M matrix (projected S)
         std::vector<Real> eval;  // eigenvalues
     };
 
@@ -179,9 +179,8 @@ private:
                           bool use_p,
                           const SmallSubspace& subspace);
 
-    void right_solve_upper_real(const std::vector<Real>& r,
-                                int n,
-                                std::vector<T>& x) const;
+    void right_solve_upper(const std::vector<T>& r, int n,
+                           std::vector<T>& x) const;
 
     bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
 

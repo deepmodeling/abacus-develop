@@ -335,6 +335,49 @@ TEST_F(DiagoPPCG2x2Test, ConjugateGradient)
         << "2x2 CG: too many iterations";
 }
 
+TEST(DiagoPPCGComplexHermitianTest, ConjugateGradientKeepsImaginaryProjection)
+{
+    const int n_dim = 2;
+    const int nband = 2;
+    const int ld = n_dim;
+
+    // H = [[2, i], [-i, 3]].  Dropping Im(<x|Hy>) would incorrectly
+    // diagonalize diag(2, 3); the Hermitian eigenvalues are 2.5 +/- sqrt(1.25).
+    std::vector<T> H_mat(n_dim * n_dim, T(0));
+    H_mat[0 + 0 * n_dim] = T(2.0, 0.0);
+    H_mat[1 + 1 * n_dim] = T(3.0, 0.0);
+    H_mat[0 + 1 * n_dim] = T(0.0, 1.0);
+    H_mat[1 + 0 * n_dim] = T(0.0, -1.0);
+
+    std::vector<T> psi(ld * nband, T(0));
+    psi[0 + 0 * ld] = T(1.0, 0.0);
+    psi[1 + 1 * ld] = T(1.0, 0.0);
+
+    std::vector<Real> prec(n_dim, 2.0);
+    std::vector<double> ethr(nband, 1e-12);
+    std::vector<Real> eval(nband, 0.0);
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 10,
+        /* sbsize   = */ 2,
+        /* rr_step  = */ 1,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+    );
+
+    auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    solver.diag(h_op, nullptr, ld, nband, n_dim,
+                psi.data(), eval.data(), ethr, prec.data());
+
+    const Real delta = std::sqrt(1.25);
+    EXPECT_NEAR(eval[0], 2.5 - delta, 1e-10);
+    EXPECT_NEAR(eval[1], 2.5 + delta, 1e-10);
+}
+
 // =============================================================================
 // Test fixture: degenerate eigenvalues
 // H = I + J  (identity plus all-ones), 4×4.
