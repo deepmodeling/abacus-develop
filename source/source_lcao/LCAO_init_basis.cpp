@@ -82,36 +82,18 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     // ---- nb2d (ScaLAPACK 2D block-cyclic block size) load-balance check ----
     // ScaLAPACK diagonalizes the N x N matrix (N = nlocal) on a p x q process grid
-    // (p <= q) with square block size nb2d. With kpar k-point pools the diagonalization
-    // runs *per pool* on NPROC/kpar processes (Parallel_K2D::P2D_pool, whose block size
-    // is ParaV->get_block_size() == pv.nb), so the effective grid is the near-square
-    // factorization of NPROC/kpar -- exactly how Parallel_2D builds it. The long edge q
-    // governs load balance:
-    //   B = N / (nb2d * q)   blocks owned per process along q.
-    //   B <= 1 : one process owns a whole panel while others idle -> a catastrophic
-    //            load-imbalance "cliff" (nb2d too large; energy unaffected, time blows up).
-    // But nb2d also must not be too SMALL: blocks below ~16 lose BLAS/GEMM efficiency and
-    // explode block-cyclic communication (nb=1 = the slow "over-scatter" end). So the time-
-    // vs-nb2d curve is U-shaped and the healthy window is two-sided:
-    //     nb_lo = min(16, N/(2q))  <=  nb2d  <=  nb_hi = floor(N/(2q))
-    // recommended nb2d = min(64, nb_hi) (largest balanced block, capped for BLAS).
-    // This block-size U-curve is a property of the ScaLAPACK 2D block-cyclic *dense*
-    // diagonalization, so the check is restricted to ks_solver=scalapack_gvx. (genelpa/
-    // elpa do their own internal block tuning; lapack/cusolver/pexsi do not diagonalize
-    // on this distributed 2D grid, so the nb2d cliff does not apply to them.)
+    // (p <= q) with square block nb2d. The time-vs-nb2d curve is U-shaped: too large
+    // -> load-imbalance cliff (one process owns a whole panel); too small -> poor BLAS
+    // and heavy block-cyclic communication. Healthy window [nb_lo, nb_hi] below.
+    // Only scalapack_gvx diagonalizes on this 2D grid (genelpa/elpa tune internally;
+    // lapack/cusolver/pexsi do not), so the check is restricted to it.
     if (PARAM.inp.ks_solver == "scalapack_gvx")
     {
         const int kpar = (PARAM.globalv.kpar_lcao > 0) ? PARAM.globalv.kpar_lcao : 1;
-        // Processes that actually run ONE (per-pool) diagonalization:
-        //   kpar == 1 : the full diagonalization grid IS this ParaV grid (built on
-        //               DIAG_WORLD), so use pv.dim0 * pv.dim1 directly.
-        //   kpar  > 1 : hsolver's parakSolve re-splits MPI_COMM_WORLD into kpar pools
-        //               (Parallel_K2D -> divide_mpi_groups(NPROC, kpar)), NOT the
-        //               DIAG_WORLD grid -- each pool owns NPROC/kpar ranks. Deriving
-        //               the pool size from pv.dim0*pv.dim1/kpar would be wrong whenever
-        //               diago_proc < NPROC (then DIAG_WORLD != NPROC). When NPROC is
-        //               not divisible by kpar the pools are uneven (no single size),
-        //               so skip the purely advisory heuristic.
+        // Processes running one (per-pool) diagonalization:
+        //   kpar == 1 : the grid is this ParaV grid (built on DIAG_WORLD) -> pv.dim0*pv.dim1.
+        //   kpar  > 1 : hsolver re-splits MPI_COMM_WORLD into kpar pools of NPROC/kpar ranks
+        //               (not the DIAG_WORLD grid). Uneven pools (NPROC % kpar != 0) are skipped.
         int np_pool = 0; // processes per pool (0 => skip the check)
         if (kpar <= 1)
         {
@@ -128,22 +110,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
             while (p_row > 1 && np_pool % p_row != 0) { --p_row; }
             const int p_col = np_pool / p_row;    // long edge q (>= p_row)
 
-            // Healthy block-size window is two-sided (the nb2d-vs-time curve is U-shaped):
-            //   nb_hi = floor(N / (2*q))  upper bound -- keep >= 2 blocks per process
-            //                             (B >= 2); larger nb -> load imbalance "cliff".
-            //   nb_lo = min(16, nb_hi)    lower bound -- blocks below ~16 lose BLAS/GEMM
-            //                             efficiency (1x1 ops) and explode block-cyclic
-            //                             communication (panel count ~ N/nb); nb=1 is the
-            //                             slow "over-scatter" end. Capped by nb_hi because a
-            //                             tiny system on many processes cannot afford large
-            //                             blocks (then balance wins and nb_lo == nb_hi).
-            // recommended = the largest balanced block, capped at 64 for BLAS efficiency.
-            // For noncollinear nspin==4 the basis carries 2-component spinors that must
-            // stay paired inside one ScaLAPACK block, so the block size must be a multiple
-            // of 2 -- this is exactly why the autoset above and the fallback use nb2d=2 (not
-            // 1) for nspin==4. Snap the whole window to that granularity so the recommended
-            // value can never break the spinor blocking (an odd nb2d segfaults the nspin==4
-            // diagonalization).
+            // Two-sided window: nb_hi = floor(N/2q) keeps >= 2 blocks per process;
+            // nb_lo = min(16, nb_hi) avoids tiny blocks; recommended = min(64, nb_hi).
+            // nspin==4 carries 2-component spinors that must stay paired in one block
+            // (hence autoset/fallback use nb2d=2, not 1), so snap the window to a multiple
+            // of 2 -- an odd nb2d would break the spinor blocking and segfault.
             const int nb_unit = (PARAM.inp.nspin == 4) ? 2 : 1;
             auto snap = [nb_unit](int v) { v = v / nb_unit * nb_unit; return v < nb_unit ? nb_unit : v; };
             const int nb_hi = snap((nlocal >= 2 * p_col) ? nlocal / (2 * p_col) : 1);
@@ -161,12 +132,8 @@ void init_basis_lcao(Parallel_Orbitals& pv,
                 issue = "too small -> over-scatter (poor BLAS efficiency and heavy communication)";
             }
 
-            // Two cases, both reported via ofs_warning:
-            //   (1) user explicitly set nb2d (PARAM.inp.nb2d != 0): respect it -- do NOT
-            //       change the value -- but warn so the issue is visible.
-            //   (2) auto nb2d (PARAM.inp.nb2d == 0): correct it to nb_opt. pv.nb feeds both
-            //       the kpar==1 path and Parallel_K2D (ParaV->get_block_size()), so
-            //       resetting it here also fixes the per-pool diagonalization.
+            // user-set nb2d (!=0): keep the value, only warn. auto nb2d (==0): correct it
+            // to nb_opt (pv.nb feeds both the kpar==1 path and the per-pool Parallel_K2D).
             if (issue != nullptr)
             {
                 if (PARAM.inp.nb2d != 0)
@@ -177,14 +144,10 @@ void init_basis_lcao(Parallel_Orbitals& pv,
                 }
                 else
                 {
-                    // Re-distribute with the recommended block size, but validate it the
-                    // same way the initial distribution is validated above: set_nloc_wfc_Eij
-                    // returns non-zero when nb_opt is incompatible with the band/grid layout
-                    // (e.g. ceil(nbands/nb_opt) < process-grid width). nb_opt is derived from
-                    // the matrix dimension and grid alone, so it can violate that band
-                    // constraint on small systems. If it does, revert to the previously
-                    // validated nb2d -- leaving pv half-updated (new nb/nrow but stale
-                    // band sizes) would otherwise crash the later wavefunction setup.
+                    // Validate nb_opt like the initial distribution: set_nloc_wfc_Eij
+                    // returns non-zero if it is incompatible with the band/grid layout
+                    // (ceil(nbands/nb_opt) < grid width). If so, revert to the validated
+                    // nb_cur -- a half-updated pv would crash the later wavefunction setup.
                     int retry = pv.set(nlocal, nlocal, nb_opt, pv.blacs_ctxt);
                     retry += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
                     if (retry != 0)
