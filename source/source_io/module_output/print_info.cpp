@@ -412,6 +412,33 @@ void print_kpar(const int &nks, const int &kpar_lcao)
                          "%%%%%%%%%%%%\n";
         }
     }
+
+    // 16) recommend the optimal kpar for k-point parallelism.
+    // kpar splits the processes into pools, each diagonalizing a subset of the nks
+    // k-points independently -> near-linear speedup of the k-point loop. The ceiling is
+    // the number of k-points, so the optimal kpar is the largest divisor of NPROC that
+    // does not exceed nks (more pools than k-points leaves pools idle). Perfect balance
+    // additionally wants nks % kpar == 0 (see the warning above); very large systems may
+    // prefer fewer pools to keep enough ranks per pool for the per-pool diagonalization.
+    // This is advisory only -- kpar fixes the MPI pool layout and cannot be changed here.
+    int kpar_opt = 1;
+    for (int d = GlobalV::NPROC; d >= 1; --d)
+    {
+        if (GlobalV::NPROC % d == 0 && d <= nks)
+        {
+            kpar_opt = d;
+            break;
+        }
+    }
+    if (kpar_opt != kpar_lcao)
+    {
+        GlobalV::ofs_running << " kpar advisory: current kpar = " << kpar_lcao << " (NPROC = "
+                             << GlobalV::NPROC << ", nks = " << nks << "). Recommended kpar = "
+                             << kpar_opt << " (largest divisor of NPROC <= nks) to parallelize"
+                             << " the k-point loop.\n";
+        ModuleBase::WARNING("ModuleIO::print_kpar",
+                            "kpar is not optimal; see running log for the recommended value.");
+    }
 }
 
 } // namespace ModuleIO
