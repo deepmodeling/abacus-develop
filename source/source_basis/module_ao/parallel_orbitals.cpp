@@ -129,6 +129,11 @@ int Parallel_Orbitals::get_nrow_atom(int iat) const
     throw std::string("error in get_nrow_atom(iat)");
 }
 
+bool Parallel_Orbitals::is_invalid_atom_pair(int iat1, int iat2) const
+{
+    return get_nrow_atom(iat1) <= 0 || get_ncol_atom(iat2) <= 0;
+}
+
 // Get the global indexes of the rows of the parallel orbital matrix
 std::vector<int> Parallel_Orbitals::get_indexes_row() const
 {

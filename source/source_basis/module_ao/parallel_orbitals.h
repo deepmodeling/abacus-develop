@@ -74,6 +74,8 @@ public:
     int get_ncol_atom(int iat) const;
     int get_nrow_atom(int iat) const;
 
+    bool is_invalid_atom_pair(int iat1, int iat2) const;
+
     int get_nbands() const;
 
     int nbands;
