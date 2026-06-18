@@ -1,5 +1,9 @@
 #include "source_lcao/setup_exx.h"
 
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
+
 template <typename TK>
 Exx_NAO<TK>::Exx_NAO(){}
 

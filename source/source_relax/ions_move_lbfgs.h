@@ -1,10 +1,11 @@
-#ifndef LBFGS_H
-#define LBFGS_H
+#ifndef IONS_MOVE_LBFGS_H
+#define IONS_MOVE_LBFGS_H
 
 #include <vector>
 #include <tuple> 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 //#include "line_search.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -13,10 +14,10 @@
 #include "source_esolver/esolver_ks.h"
 
 /**
- * @class LBFGS
+ * @class Ions_Move_LBFGS
  * @brief Implements L-BFGS optimization algorithm for structural relaxation
  */
-class LBFGS
+class Ions_Move_LBFGS
 {
 public:
     /**
@@ -30,11 +31,12 @@ public:
      * @param _force Current force
      * @param ucell Unit cell to optimize
      * @param etot Current total energy
-     * @param p_esolver  Structure solver
+     * @param ofs_running Output stream for running log
      */
-    void relax_step(const ModuleBase::matrix _force,
+    bool relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
-                    const double &etot);
+                    const double &etot,
+                    std::ofstream& ofs_running);
 
 private:
     //LineSearch l_search;
@@ -74,10 +76,10 @@ private:
                       const double &etot);
 
     /**
-     * @brief Judge if the cell is restrain
-     * @param dpos Position displacements to constrain
+     * @brief Judge if the relaxation has converged
+     * @return true if converged, false otherwise
      */
-    void is_restrain();
+    bool is_restrain();
 
     /**
      * @brief Calculate maximum gradient component
