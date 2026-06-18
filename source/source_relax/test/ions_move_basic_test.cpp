@@ -4,22 +4,12 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_relax/ions_move_basic.h"
+#include "source_relax/relax_data.h"
 #include "for_test.h"
 
 /************************************************
  *  unit tests of namespace Ions_Move_Basic
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_Basic::setup_gradient()
- *   - Ions_Move_Basic::move_atoms()
- *   - Ions_Move_Basic::check_converged()
- *   - Ions_Move_Basic::terminate()
- *   - Ions_Move_Basic::setup_etot()
- *   - Ions_Move_Basic::dot_func()
- *   - Ions_Move_Basic::third_order()
- */
 
 // Define a fixture for the tests
 class IonsMoveBasicTest : public ::testing::Test
@@ -52,7 +42,10 @@ TEST_F(IonsMoveBasicTest, SetupGradient)
 {
     // Call the function being tested
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::setup_gradient(ucell, force, pos, grad);
+    std::ofstream ofs("test_setup_gradient.log");
+    Ions_Move_Basic::setup_gradient(ucell, force, pos, grad, ofs);
+    ofs.close();
+    std::remove("test_setup_gradient.log");
 
     // Check that the expected positions and gradients were generated
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
@@ -82,18 +75,18 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::move_atoms(ucell, move, pos);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_move_atoms.log");
+    Ions_Move_Basic::move_atoms(ucell, move, pos, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_move_atoms.log");
     std::string expected_output = "\n movement of ions (unit is Bohr) : \n         Atom              x              y  "
                                   "            z\n       move_1              0              1              2\n       "
                                   "move_2              3              4              5\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_move_atoms.log");
 
     EXPECT_THAT(output , ::testing::HasSubstr(expected_output));
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
@@ -109,26 +102,27 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
+    int update_iter = 1;
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
+    std::vector<double> etot_info(2, 0.0);
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         grad[i] = 0.0;
     }
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case1.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case1.log");
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
@@ -139,8 +133,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
+    EXPECT_EQ(update_iter, 1);
+    EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
 
@@ -149,25 +143,25 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
-    Ions_Move_Basic::ediff = 0.0;
+    int update_iter = 1;
+    std::vector<double> etot_info(2, 0.0);
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     PARAM.input.force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case2.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case2.log");
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
@@ -178,8 +172,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 2);
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
+    EXPECT_EQ(update_iter, 2);
+    EXPECT_EQ(converged, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
 
@@ -188,28 +182,28 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    Ions_Move_Basic::update_iter = 1;
-    Ions_Move_Basic::ediff = 1.0;
+    int update_iter = 1;
+    std::vector<double> etot_info = {1.0, 0.0};
     PARAM.input.test_relax_method = 1;
     PARAM.input.out_level = "ie";
     PARAM.input.force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
+    std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    Ions_Move_Basic::check_converged(ucell, grad);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
     std::string std_outout = testing::internal::GetCapturedStdout();
-    GlobalV::ofs_running.close();
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_check_converged_case3.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_check_converged_case3.log");
 
     std::string expected_ofs
-        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
+        = "                    old total energy (ry) = 0\n                    new total energy (ry) = 1\n              "
           "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n\n"
           " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is not "
           "converged yet (threshold is 25.7111)\n";
@@ -217,8 +211,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
+    EXPECT_EQ(update_iter, 1);
+    EXPECT_EQ(converged, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.1);
 }
 
@@ -226,20 +220,20 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 TEST_F(IonsMoveBasicTest, TerminateConverged)
 {
     // Initialize data
-    Ions_Move_Basic::converged = true;
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::update_iter = 5;
+    const bool converged = true;
+    const int istep = 2;
+    const int update_iter = 5;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::terminate(ucell);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_converged.log");
+    Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_converged.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_converged.log");
 
     std::string expected_ofs = " end of geometry optimization\n                                    istep = 2\n         "
                                "                update iteration = 5\n";
@@ -251,18 +245,20 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
 TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 {
     // Initialize data
-    Ions_Move_Basic::converged = false;
+    const bool converged = false;
+    const int istep = 10;
+    const int update_iter = 0;
 
     // Call the function being tested
-    GlobalV::ofs_running.open("log");
-    Ions_Move_Basic::terminate(ucell);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_terminate_not_converged.log");
+    Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
+    ofs.close();
 
     // Check the results
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_terminate_not_converged.log");
     std::string ofs_output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_terminate_not_converged.log");
 
     std::string expected_ofs = " the maximum number of steps has been reached.\n end of geometry optimization.\n";
 
@@ -273,80 +269,80 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 TEST_F(IonsMoveBasicTest, SetupEtotCase1)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::etot_p = 1.0;
-    Ions_Move_Basic::etot = 2.0;
-    Ions_Move_Basic::ediff = 0.0;
+    const int istep = 1;
+    std::vector<double> etot_info = {2.0, 1.0, 0.0};
     double energy_in = 3.0;
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    std::ofstream ofs("/dev/null");
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
+    ofs.close();
 
     // Check the results
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::ediff, 0.0);
+    EXPECT_DOUBLE_EQ(etot_info[1], 3.0);
+    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
+    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 0.0);
 }
 
 // Test the setup_etot() function case 2
 TEST_F(IonsMoveBasicTest, SetupEtotCase2)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::etot_p = 4.0;
-    Ions_Move_Basic::etot = 2.0;
-    Ions_Move_Basic::ediff = 0.0;
+    const int istep = 2;
+    std::vector<double> etot_info = {2.0, 4.0};
     double energy_in = 3.0;
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    std::ofstream ofs("/dev/null");
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
+    ofs.close();
 
     // Check the results
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::ediff, -1.0);
+    EXPECT_DOUBLE_EQ(etot_info[1], 2.0);
+    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
+    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 1.0);
 }
 
 // Test the setup_etot() function case 3
 TEST_F(IonsMoveBasicTest, SetupEtotCase3)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::etot_p = 1.0;
-    Ions_Move_Basic::etot = 2.0;
-    Ions_Move_Basic::ediff = 0.0;
+    const int istep = 2;
+    std::vector<double> etot_info = {2.0, 1.0};
     double energy_in = 3.0;
     bool judgement = true;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    std::ofstream ofs("/dev/null");
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
+    ofs.close();
 
     // Check the results
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 1.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::ediff, 0.0);
+    EXPECT_DOUBLE_EQ(etot_info[1], 2.0);
+    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
+    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 1.0);
 }
 
 // Test the setup_etot() function case 4
 TEST_F(IonsMoveBasicTest, SetupEtotCase4)
 {
     // Initialize data
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::etot_p = 1.0;
-    Ions_Move_Basic::etot = 2.0;
-    Ions_Move_Basic::ediff = 0.0;
+    const int istep = 2;
+    std::vector<double> etot_info = {2.0, 1.0};
     double energy_in = 3.0;
     bool judgement = false;
 
     // Call the function being tested
-    Ions_Move_Basic::setup_etot(energy_in, judgement);
+    std::ofstream ofs("/dev/null");
+    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
+    ofs.close();
 
     // Check the results
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot_p, 2.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::etot, 3.0);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::ediff, 1.0);
+    EXPECT_DOUBLE_EQ(etot_info[1], 2.0);
+    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
+    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 1.0);
 }
 
 // Test the dot_func() function

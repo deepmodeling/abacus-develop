@@ -50,6 +50,7 @@ class Charge_Mixing
                     double& tpiba_in);
 
     void close_kerker_gg0() { mixing_gg0 = 0.0; mixing_gg0_mag = 0.0; }
+    void conserve_setting() { mixing_beta = 0.01; mixing_beta_mag = 0.04; }
     /**
      * @brief initialize mixing, including constructing mixing and allocating memory for mixing data
      * @brief this function should be called at eachiterinit()
@@ -74,7 +75,20 @@ class Charge_Mixing
      */
     void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
     void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
-    
+
+    /**
+     * @brief allocate memory of uom_mdata
+     * @param uom_size size of DFT+U occupation matrix
+     */
+    void allocate_mixing_uom(int size_uom);
+
+    /**
+     * @brief DFT+U occupation matrix mixing
+     * @param uom_in output occupation matrix
+     * @param uom_save_in input occupation matrix
+     */
+    void mix_uom(std::vector<double>& uom_in, std::vector<double>& uom_save_in);
+
     /**
      * @brief Get the drho between rho and rho_save, similar for get_dkin
      *
@@ -118,6 +132,7 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
     Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
     Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
+    Base_Mixing::Mixing_Data uom_mdata;    ///< Mixing data for DFT+U occupation matrix
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
     //======================================

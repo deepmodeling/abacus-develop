@@ -283,6 +283,23 @@ AddTest(
   ../../source_basis/module_nao/real_gaunt_table.cpp
   ../../source_basis/module_nao/radial_collection.cpp
 )
+
+AddTest(
+  TARGET MODULE_IO_write_hs_r_compat_test
+  LIBS parameter base ${math_libs} device hcontainer
+  SOURCES
+  write_hs_r_compat_test.cpp
+  ../module_hs/write_HS_R.cpp
+  ../module_hs/write_HS_sparse.cpp
+  ../module_hs/single_R_io.cpp
+  ../module_dm/write_dmr.cpp
+  ../module_output/ucell_io.cpp
+  ../module_output/sparse_matrix.cpp
+  ../module_output/csr_reader.cpp
+  ../module_output/file_reader.cpp
+  ../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../source_lcao/module_hcontainer/test/tmp_mocks.cpp
+)
 endif()
 
 AddTest(

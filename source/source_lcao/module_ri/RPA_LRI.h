@@ -7,6 +7,7 @@
 #define RPA_LRI_H
 
 #include "LRI_CV.h"
+#include "source_hamilt/module_xc/exx_info_ri.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -34,7 +35,7 @@ template <typename T, typename Tdata> class RPA_LRI
     using TatomR = std::array<double, Ndim>; // tmp
 
   public:
-    RPA_LRI(const Exx_Info::Exx_Info_RI &info_in) : info(info_in)
+    RPA_LRI(const Exx_Info_RI &info_in) : info(info_in)
     {
     }
     ~RPA_LRI(){};
@@ -82,7 +83,9 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
-    const Exx_Info::Exx_Info_RI &info;
+    // WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
+    // Must not outlive GlobalC::exx_info. See exx_info.h for details.
+    const Exx_Info_RI &info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
