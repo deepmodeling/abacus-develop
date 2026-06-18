@@ -75,7 +75,7 @@ namespace PulayForceStress
                     double Ry = ra->info[iat][cb][1];
                     double Rz = ra->info[iat][cb][2];
                     // get BaseMatrix
-                    if (pv.get_nrow_atom(iat1) <= 0 || pv.get_ncol_atom(iat2) <= 0) { continue; }
+                    if (pv.is_invalid_atom_pair(iat1, iat2)) { continue; }
                     std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                     for (int is = 0; is < nspin_DMR; ++is)
                     {

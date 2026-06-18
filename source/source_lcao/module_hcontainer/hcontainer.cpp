@@ -145,7 +145,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV
             for (int j = 0; j < ucell_.nat; j++)
             {
                 //check if atom_pair(i, j) is empty in this process
-                if(paraV->get_nrow_atom(i) <= 0 || paraV->get_ncol_atom(j) <= 0)
+                if(paraV->is_invalid_atom_pair(i, j))
                 {
                     continue;
                 }
