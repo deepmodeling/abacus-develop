@@ -10,7 +10,9 @@
 
 // for EXX
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+// Exx_LRI_Interface forward declaration, full definition in Exx_LRI_interface.h (moved to .cpp)
+// mohan add 20260605
+template <typename TK, typename TR> class Exx_LRI_Interface;
 #endif
 
 template <typename TK>

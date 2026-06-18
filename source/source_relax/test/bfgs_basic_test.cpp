@@ -1,4 +1,5 @@
 #include "source_relax/ions_move_basic.h"
+#include "source_relax/relax_data.h"
 #include "gmock/gmock.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -12,44 +13,6 @@
 /************************************************
  *  unit tests of class BFGS_Basic
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - BFGS_Basic::allocate_basic()
- *   - BFGS_Basic::new_step()
- *   - BFGS_Basic::reset_hessian()
- *   - BFGS_Basic::save_bfgs()
- *   - BFGS_Basic::check_move()
- *   - BFGS_Basic::update_inverse_hessian()
- *   - BFGS_Basic::check_wolfe_conditions()
- *   - BFGS_Basic::compute_trust_radius()
- */
-
-int Ions_Move_Basic::dim = 0;
-bool Ions_Move_Basic::converged = false;
-double Ions_Move_Basic::largest_grad = 0.0;
-int Ions_Move_Basic::update_iter = 0;
-int Ions_Move_Basic::istep = 0;
-double Ions_Move_Basic::ediff = 0.0;
-double Ions_Move_Basic::etot = 0.0;
-double Ions_Move_Basic::etot_p = 0.0;
-double Ions_Move_Basic::trust_radius = 0.0;
-double Ions_Move_Basic::trust_radius_old = 0.0;
-double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
-double Ions_Move_Basic::relax_bfgs_rmin = -1.0;
-double Ions_Move_Basic::relax_bfgs_init = -1.0;
-double Ions_Move_Basic::best_xxx = 1.0;
-int Ions_Move_Basic::out_stru = 0;
-
-double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
-{
-    double result = 0.0;
-    for (int i = 0; i < dim_in; i++)
-    {
-        result += a[i] * b[i];
-    }
-    return result;
-}
 
 class BFGSBasicTest : public ::testing::Test
 {
@@ -73,14 +36,13 @@ TEST_F(BFGSBasicTest, TestAllocate)
     Ions_Move_Basic::dim = 4;
     bfgs.allocate_basic();
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, bfgs.pos);
-    EXPECT_NE(nullptr, bfgs.pos_p);
-    EXPECT_NE(nullptr, bfgs.grad);
-    EXPECT_NE(nullptr, bfgs.grad_p);
-    EXPECT_NE(nullptr, bfgs.move);
-    EXPECT_NE(nullptr, bfgs.move_p);
-    EXPECT_NE(nullptr, bfgs.inv_hess.c);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(bfgs.pos.size(), 4U);
+    EXPECT_EQ(bfgs.pos_p.size(), 4U);
+    EXPECT_EQ(bfgs.grad.size(), 4U);
+    EXPECT_EQ(bfgs.grad_p.size(), 4U);
+    EXPECT_EQ(bfgs.move.size(), 4U);
+    EXPECT_EQ(bfgs.move_p.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -95,7 +57,10 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianDeath)
 {
     Ions_Move_Basic::dim = 0;
     double lat0 = 1.0;
-    ASSERT_DEATH(bfgs.update_inverse_hessian(lat0), "");
+    std::ofstream ofs("test_log_update_inverse_hessian_death.log");
+    ASSERT_DEATH(bfgs.update_inverse_hessian(lat0, ofs), "");
+    ofs.close();
+    std::remove("test_log_update_inverse_hessian_death.log");
 }
 
 // Test function update_inverse_hessian() when sdoty = 0
@@ -105,18 +70,18 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase1)
     double lat0 = 1.0;
     bfgs.allocate_basic();
 
-    GlobalV::ofs_running.open("log");
-    bfgs.update_inverse_hessian(lat0);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_log_update_inverse_hessian_case1.log");
+    bfgs.update_inverse_hessian(lat0, ofs);
+    ofs.close();
 
     std::string expected_output
         = " WARINIG: unexpected behaviour in update_inverse_hessian\n Resetting bfgs history \n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_log_update_inverse_hessian_case1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
+    std::remove("test_log_update_inverse_hessian_case1.log");
 
     EXPECT_EQ(expected_output, output);
-    std::remove("log");
 }
 
 // Test function update_inverse_hessian()
@@ -128,7 +93,9 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
     bfgs.pos[0] = 2.0;
     bfgs.grad[0] = 2.0;
 
-    bfgs.update_inverse_hessian(lat0);
+    std::ofstream ofs("test_log_update_inverse_hessian_case2.log");
+    bfgs.update_inverse_hessian(lat0, ofs);
+    ofs.close();
 
     EXPECT_DOUBLE_EQ(bfgs.inv_hess(0, 0), 0.5);
     EXPECT_DOUBLE_EQ(bfgs.inv_hess(0, 1), 0.0);
@@ -139,22 +106,23 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
     EXPECT_DOUBLE_EQ(bfgs.inv_hess(2, 0), 0.0);
     EXPECT_DOUBLE_EQ(bfgs.inv_hess(2, 1), 0.0);
     EXPECT_DOUBLE_EQ(bfgs.inv_hess(2, 2), 0.0);
+    std::remove("test_log_update_inverse_hessian_case2.log");
 }
 
 // Test function check_wolfe_conditions()
 TEST_F(BFGSBasicTest, CheckWolfeConditions)
 {
     Ions_Move_Basic::dim = 3;
-    Ions_Move_Basic::etot = 10.0;
     PARAM.input.test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.pos[0] = 2.0;
     bfgs.grad[0] = 2.0;
     bfgs.move[0] = 1.0;
+    std::vector<double> etot_info = {10.0, 0.0};
 
-    GlobalV::ofs_running.open("log");
-    bfgs.check_wolfe_conditions();
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_log_check_wolfe_conditions.log");
+    bfgs.check_wolfe_conditions(ofs, etot_info);
+    ofs.close();
 
     std::string expected_output
         = "                            etot - etot_p = 10\n                    relax_bfgs_w1 * dot_p = -0\n            "
@@ -163,13 +131,14 @@ TEST_F(BFGSBasicTest, CheckWolfeConditions)
           "wolfe1 = 0\n                                   wolfe2 = 0\n                            etot - etot_p = 10\n "
           "                   relax_bfgs_w1 * dot_p = -0\n                                   wolfe1 = 0\n              "
           "                     wolfe2 = 0\n                wolfe condition satisfied = 0\n";
-    std::ifstream ifs("log");
+
+    std::ifstream ifs("test_log_check_wolfe_conditions.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
+    std::remove("test_log_check_wolfe_conditions.log");
 
     EXPECT_EQ(bfgs.wolfe_flag, false);
     EXPECT_EQ(expected_output, output);
-    std::remove("log");
 }
 
 // Test function reset_hessian()
@@ -219,7 +188,7 @@ TEST_F(BFGSBasicTest, SaveBfgs)
 TEST_F(BFGSBasicTest, NewStepCase1)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::update_iter = 0;
+    int update_iter = 0;
     Ions_Move_Basic::largest_grad = 0.0;
     Ions_Move_Basic::relax_bfgs_init = 0.3;
     Ions_Move_Basic::best_xxx = -0.4;
@@ -233,9 +202,11 @@ TEST_F(BFGSBasicTest, NewStepCase1)
     bfgs.inv_hess(1, 1) = -6.0;
 
     double lat0 = 1.0;
-    bfgs.new_step(lat0);
+    std::ofstream ofs("test_log.log");
+    std::vector<double> etot_info(2, 0.0);
+    bfgs.new_step(lat0, update_iter, ofs, etot_info);
 
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
+    EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(bfgs.tr_min_hit, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 0.2);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 0.4);
@@ -252,7 +223,7 @@ TEST_F(BFGSBasicTest, NewStepCase1)
 TEST_F(BFGSBasicTest, NewStepCase2)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::update_iter = 2;
+    int update_iter = 2;
     Ions_Move_Basic::largest_grad = 0.0;
     Ions_Move_Basic::relax_bfgs_init = 0.3;
     Ions_Move_Basic::best_xxx = -0.4;
@@ -266,9 +237,11 @@ TEST_F(BFGSBasicTest, NewStepCase2)
     bfgs.inv_hess(1, 1) = -6.0;
 
     double lat0 = 1.0;
-    bfgs.new_step(lat0);
+    std::ofstream ofs("test_log.log");
+    std::vector<double> etot_info(2, 0.0);
+    bfgs.new_step(lat0, update_iter, ofs, etot_info);
 
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 3);
+    EXPECT_EQ(update_iter, 3);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -1.0);
     EXPECT_DOUBLE_EQ(bfgs.move[0], -1.0);
     EXPECT_DOUBLE_EQ(bfgs.move[1], -2.0);
@@ -282,12 +255,15 @@ TEST_F(BFGSBasicTest, NewStepCase2)
 TEST_F(BFGSBasicTest, NewStepWarningQuit)
 {
     Ions_Move_Basic::dim = 2;
+    int update_iter = 0;
     bfgs.bfgs_ndim = 2;
     bfgs.allocate_basic();
     double lat0 = 1.0;
+    std::ofstream ofs("test_log.log");
+    std::vector<double> etot_info(2, 0.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step(lat0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.new_step(lat0, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }
@@ -296,8 +272,6 @@ TEST_F(BFGSBasicTest, NewStepWarningQuit)
 TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::etot = 0.0;
-    Ions_Move_Basic::etot_p = 0.0;
     bfgs.allocate_basic();
     bfgs.grad_p[0] = 1.0;
     bfgs.move_p[1] = 2.0;
@@ -307,8 +281,10 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
     bfgs.inv_hess(1, 1) = -6.0;
     bfgs.wolfe_flag = true;
     bfgs.relax_bfgs_w1 = 1.0;
+    std::vector<double> etot_info = {0.0, 0.0, 0.0};
 
-    bfgs.compute_trust_radius();
+    std::ofstream ofs("test_log.log");
+    bfgs.compute_trust_radius(ofs, etot_info);
 
     EXPECT_EQ(bfgs.tr_min_hit, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -324,8 +300,6 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
 TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::etot = 0.0;
-    Ions_Move_Basic::etot_p = 0.0;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
     PARAM.input.test_relax_method = 1;
@@ -340,8 +314,10 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
     bfgs.wolfe_flag = false;
     bfgs.relax_bfgs_w1 = 1.0;
     bfgs.tr_min_hit = false;
+    std::vector<double> etot_info = {0.0, 0.0, 0.0};
 
-    bfgs.compute_trust_radius();
+    std::ofstream ofs("test_log.log");
+    bfgs.compute_trust_radius(ofs, etot_info);
 
     EXPECT_EQ(bfgs.tr_min_hit, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 100.0);
@@ -357,8 +333,6 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
 TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
 {
     Ions_Move_Basic::dim = 2;
-    Ions_Move_Basic::etot = 0.0;
-    Ions_Move_Basic::etot_p = 0.0;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
     PARAM.input.test_relax_method = 1;
@@ -373,9 +347,11 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
     bfgs.wolfe_flag = false;
     bfgs.relax_bfgs_w1 = 1.0;
     bfgs.tr_min_hit = true;
+    std::vector<double> etot_info = {0.0, 0.0, 0.0};
 
+    std::ofstream ofs("test_log.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.compute_trust_radius(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.compute_trust_radius(ofs, etot_info), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs history already reset at previous step, we got trapped!"));
 }

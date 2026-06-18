@@ -12,38 +12,42 @@ Ions_Move_Methods::~Ions_Move_Methods()
 {
 }
 
-void Ions_Move_Methods::allocate(const int &natom)
+void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1)
 {
+    if (natom <= 0)
+    {
+        ModuleBase::WARNING_QUIT("Ions_Move_Methods::allocate", "natom must be greater than 0.");
+    }
     Ions_Move_Basic::dim = natom * 3;
 
-    if (Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] != "1")
+    if (relax_method_0 == "bfgs" && relax_method_1 != "1")
     {
         this->bfgs.allocate();
     }
-    else if (Ions_Move_Basic::relax_method[0] == "sd")
+    else if (relax_method_0 == "sd")
     {
         this->sd.allocate();
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg")
+    else if (relax_method_0 == "cg")
     {
-        this->cg.allocate();
+        this->cg.allocate(Ions_Move_Basic::dim);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
+    else if (relax_method_0 == "cg_bfgs")
     {
-        this->cg.allocate();
-        this->bfgs.allocate(); // added by pengfei  13-8-8
+        this->cg.allocate(Ions_Move_Basic::dim);
+        this->bfgs.allocate();
     }
-    else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
+    else if(relax_method_0 == "bfgs" && relax_method_1 == "1")
     {
         this->bfgs_trad.allocate(natom);       
     }
-    else if(Ions_Move_Basic::relax_method[0] == "lbfgs")
+    else if(relax_method_0 == "lbfgs")
     {
         this->lbfgs.allocate(natom);       
     }
     else
     {
-        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
+        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter relax_method is not correct.");
     }
     return;
 }
@@ -53,41 +57,39 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const int &force_step,
                                      const ModuleBase::matrix &f,
                                      const double &etot,
-                                     UnitCell &ucell)
+                                     UnitCell &ucell,
+                                     std::ofstream& ofs,
+                                     std::vector<std::string>& relax_method)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-    // Ions_Move_Basic::istep = istep;
-    Ions_Move_Basic::istep = force_step;
-    if (Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] != "1")
+    if (relax_method[0] == "bfgs" && relax_method[1] != "1")
     {
-        // move_ions
-        // output tau
-        // check all symmery
-        bfgs.start(ucell, f, etot);
+        converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "sd")
+    else if (relax_method[0] == "sd")
     {
-        sd.start(ucell, f, etot);
+        converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg")
+    else if (relax_method[0] == "cg")
     {
-        cg.start(ucell, f, etot);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
     }
-    else if (Ions_Move_Basic::relax_method[0] == "cg_bfgs")
+    else if (relax_method[0] == "cg_bfgs")
     {
-        cg.start(ucell, f, etot); // added by pengfei 13-8-10
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
     }
-    else if(Ions_Move_Basic::relax_method[0] == "bfgs"&&Ions_Move_Basic::relax_method[1] == "1")
+    else if (relax_method[0] == "bfgs" && relax_method[1] == "1")
     {
-        bfgs_trad.relax_step(f,ucell);        
+        converged_ = bfgs_trad.relax_step(f, ucell, ofs);        
     }
-    else if(Ions_Move_Basic::relax_method[0] == "lbfgs")
+    else if (relax_method[0] == "lbfgs")
     {
-        lbfgs.relax_step(f,ucell,etot);        
+        converged_ = lbfgs.relax_step(f, ucell, etot, ofs);        
     }
     else
     {
-        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
+        ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter relax_method is not correct.");
+        converged_ = false;
     }
     return;
 }

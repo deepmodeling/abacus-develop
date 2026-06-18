@@ -5,11 +5,14 @@
 #include "norm_psi.h"
 #include "propagator.h"
 #include "solve_propagation.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/hamilt_lcao.h"
+#include "gather_mat.h"
 #include "upsi.h"
 
 #include <complex>
