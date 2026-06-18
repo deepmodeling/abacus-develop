@@ -16,7 +16,8 @@ cal_r_overlap_R::~cal_r_overlap_R()
 }
 
 void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
-                                           const LCAO_Orbitals& orb)
+                                           const LCAO_Orbitals& orb,
+                                           const int lmax_extra)
 {
     const int ntype = orb.get_ntype();
     int lmax_orb = -1;
@@ -24,14 +25,18 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
     {
         lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
     }
+    // lmax_extra (default 0) covers integrals against a higher-L projector set
+    // (e.g. DeePKS alpha orbitals). lmax_eff == lmax_orb when lmax_extra <= lmax_orb,
+    // so the default reproduces the original orbital-only sizing exactly.
+    const int lmax_eff = std::max(lmax_orb, lmax_extra);
     const double dr = orb.get_dR();
     const double dk = orb.get_dk();
     const int kmesh = orb.get_kmesh() * 4 + 1;
     int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
-    const int Lmax = lmax_orb + 1;
-    const int Lmax_used = 2 * lmax_orb + 1;
+    const int Lmax = lmax_eff + 1;
+    const int Lmax_used = lmax_orb + lmax_eff + 1;
     Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
                                              dr,
                                              dk,
@@ -471,6 +476,201 @@ void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell,const Parallel_Orbital
 
     ModuleBase::timer::end("cal_r_overlap_R", "init_nonlocal");
     return;
+}
+
+void cal_r_overlap_R::init_alpha(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+{
+    ModuleBase::TITLE("cal_r_overlap_R", "init_alpha");
+    ModuleBase::timer::start("cal_r_overlap_R", "init_alpha");
+    this->ParaV = &pv;
+
+    // initialize_orb_table builds the spherical Bessel table (psb_) and Gaunt
+    // coefficients (MGT); construct_orbs_and_orb_r builds orbs[T][L][N] and orb_r.
+    // Both are reused as-is. We pass the alpha (descriptor) Lmax so the tables are
+    // sized for the orbital<->alpha integrals in one shot.
+    initialize_orb_table(ucell, orb, orb.Alpha[0].getLmax());
+    construct_orbs_and_orb_r(ucell,orb);
+    construct_orbs_and_alpha_and_orb_r(ucell,orb);
+
+    ModuleBase::timer::end("cal_r_overlap_R", "init_alpha");
+    return;
+}
+
+void cal_r_overlap_R::construct_orbs_and_alpha_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb)
+{
+    // orbs[T][L][N] and orb_r are already built by construct_orbs_and_orb_r (called
+    // before this in init_alpha). Here we only build the DeePKS projected orbitals
+    // orbs_alpha and the orbital<->alpha center-two-orbital tables.
+    // The spherical Bessel / Gaunt tables were already sized for the alpha Lmax by
+    // initialize_orb_table(ucell, orb, alpha_lmax) called from init_alpha.
+    const int alpha_lmax = orb.Alpha[0].getLmax();
+    orbs_alpha.resize(alpha_lmax + 1);
+    for (int L = 0; L <= alpha_lmax; ++L)
+    {
+        orbs_alpha[L].resize(orb.Alpha[0].getNchi(L));
+        for (int N = 0; N < orb.Alpha[0].getNchi(L); ++N)
+        {
+            // Alpha (descriptor) orbitals are ordinary numerical orbitals (Psi type),
+            // built the same way as orbs[T][L][N] (no Beta-style beta_r/r handling).
+            const auto& orb_origin = orb.Alpha[0].PhiLN(L, N);
+            orbs_alpha[L][N].set_orbital_info(orb_origin.getLabel(),
+                                              orb_origin.getType(),
+                                              orb_origin.getL(),
+                                              orb_origin.getChi(),
+                                              orb_origin.getNr(),
+                                              orb_origin.getRab(),
+                                              orb_origin.getRadial(),
+                                              Numerical_Orbital_Lm::Psi_Type::Psi,
+                                              orb_origin.getPsi(),
+                                              static_cast<int>(orb_origin.getNk() * kmesh_times) | 1,
+                                              orb_origin.getDk(),
+                                              orb_origin.getDruniform(),
+                                              false,
+                                              true,
+                                              PARAM.inp.cal_force);
+        }
+    }
+
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
+    {
+        for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
+        {
+            for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
+            {
+                for (int LB = 0; LB <= alpha_lmax; ++LB)
+                {
+                    for (int NB = 0; NB < orb.Alpha[0].getNchi(LB); ++NB)
+                    {
+                        center2_orb11_alpha[TA][LA][NA][LB].insert(
+                            std::make_pair(NB, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs_alpha[LB][NB], psb_, MGT)));
+                    }
+                }
+            }
+        }
+    }
+
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
+    {
+        for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
+        {
+            for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
+            {
+                for (int LB = 0; LB <= alpha_lmax; ++LB)
+                {
+                    for (int NB = 0; NB < orb.Alpha[0].getNchi(LB); ++NB)
+                    {
+                        center2_orb21_r_alpha[TA][LA][NA][LB].insert(std::make_pair(
+                            NB,
+                            Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs_alpha[LB][NB], psb_, MGT)));
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto& co1: center2_orb11_alpha)
+    {
+        for (auto& co2: co1.second)
+        {
+            for (auto& co3: co2.second)
+            {
+                for (auto& co4: co3.second)
+                {
+                    for (auto& co5: co4.second)
+                    {
+                        co5.second.init_radial_table();
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto& co1: center2_orb21_r_alpha)
+    {
+        for (auto& co2: co1.second)
+        {
+            for (auto& co3: co2.second)
+            {
+                for (auto& co4: co3.second)
+                {
+                    for (auto& co5: co4.second)
+                    {
+                        co5.second.init_radial_table();
+                    }
+                }
+            }
+        }
+    }
+}
+
+void cal_r_overlap_R::get_psi_r_alpha(const LCAO_Orbitals& orb,
+                                      std::vector<std::vector<double>>& nlm,
+                                      const ModuleBase::Vector3<double>& R1,
+                                      const int& T1,
+                                      const int& L1,
+                                      const int& m1,
+                                      const int& N1,
+                                      const ModuleBase::Vector3<double>& R2)
+{
+    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
+    double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
+    const ModuleBase::Vector3<double>& distance = R2 - R1;
+    const int alpha_lmax = orb.Alpha[0].getLmax();
+
+    // total number of alpha basis functions (including all m)
+    int nw_alpha = 0;
+    for (int L = 0; L <= alpha_lmax; ++L)
+    {
+        nw_alpha += orb.Alpha[0].getNchi(L) * (2 * L + 1);
+    }
+
+    nlm.resize(4);
+    for (int i = 0; i < 4; i++)
+    {
+        nlm[i].resize(nw_alpha);
+    }
+
+    // Iterate L0 -> N0 -> running-m to match TwoCenterIntegrator::snap (and thus the
+    // column order of phialpha and the inl_index order of gedm).
+    int index = 0;
+    for (int L0 = 0; L0 <= alpha_lmax; ++L0)
+    {
+        for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
+        {
+            for (int m0 = 0; m0 < 2 * L0 + 1; m0++)
+            {
+                double overlap_o
+                    = center2_orb11_alpha[T1][L1][N1][L0].at(N0).cal_overlap(origin_point, distance, m1, m0);
+
+                double overlap_x = -1 * factor
+                                   * center2_orb21_r_alpha[T1][L1][N1][L0].at(N0).cal_overlap(origin_point,
+                                                                                              distance,
+                                                                                              m1,
+                                                                                              1,
+                                                                                              m0); // m =  1
+
+                double overlap_y = -1 * factor
+                                   * center2_orb21_r_alpha[T1][L1][N1][L0].at(N0).cal_overlap(origin_point,
+                                                                                              distance,
+                                                                                              m1,
+                                                                                              2,
+                                                                                              m0); // m = -1
+
+                double overlap_z = factor
+                                   * center2_orb21_r_alpha[T1][L1][N1][L0].at(N0).cal_overlap(origin_point,
+                                                                                              distance,
+                                                                                              m1,
+                                                                                              0,
+                                                                                              m0); // m =  0
+
+                nlm[0][index] = overlap_o;
+                nlm[1][index] = overlap_x + (R1 * overlap_o).x;
+                nlm[2][index] = overlap_y + (R1 * overlap_o).y;
+                nlm[3][index] = overlap_z + (R1 * overlap_o).z;
+                index++;
+            }
+        }
+    }
 }
 
 ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_psi(const ModuleBase::Vector3<double>& R1,

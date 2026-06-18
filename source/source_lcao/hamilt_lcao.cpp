@@ -35,6 +35,7 @@
 #include "module_operator_lcao/op_dftu_lcao.h"
 #include "module_operator_lcao/op_exx_lcao.h"
 #include "module_operator_lcao/overlap.h"
+#include "module_operator_lcao/td_deepks_lcao.h"
 #include "module_operator_lcao/td_ekinetic_lcao.h"
 #include "module_operator_lcao/td_nonlocal_lcao.h"
 #include "module_operator_lcao/td_pot_hybrid.h"
@@ -348,6 +349,25 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                                              &grid_d,
                                                                              two_center_bundle.overlap_orb.get());
             this->getOperator()->add(td_ekinetic);
+
+#ifdef __MLALGO
+            // Add the DeePKS commutator -i[V_delta, r] to the velocity-gauge
+            // current. Registered between TDEkinetic and TDNonlocal so it shares
+            // the same TD sub-chain (cal_type lcao_tddft_periodic): it runs after
+            // TDEkinetic (which creates/zeroes current_term and forwards hR_tmp)
+            // and before TDNonlocal (which resets TD_info::evolve_once).
+            if (PARAM.inp.deepks_scf)
+            {
+                Operator<TK>* td_deepks = new TDDeePKS<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                            this->kv->kvec_d,
+                                                                            this->hR,
+                                                                            &ucell,
+                                                                            orb,
+                                                                            &grid_d,
+                                                                            &deepks.ld);
+                this->getOperator()->add(td_deepks);
+            }
+#endif
 
             Operator<TK>* td_nonlocal = new TDNonlocal<OperatorLCAO<TK, TR>>(this->hsk,
                                                                              this->kv->kvec_d,

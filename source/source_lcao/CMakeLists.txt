@@ -19,6 +19,7 @@ if(ENABLE_LCAO)
         module_operator_lcao/nonlocal.cpp
         module_operator_lcao/td_ekinetic_lcao.cpp
         module_operator_lcao/td_nonlocal_lcao.cpp
+        module_operator_lcao/td_deepks_lcao.cpp
         module_operator_lcao/td_pot_hybrid.cpp
         module_operator_lcao/dspin_lcao.cpp
         module_operator_lcao/dftu_lcao.cpp

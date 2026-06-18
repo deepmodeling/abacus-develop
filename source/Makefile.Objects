@@ -346,6 +346,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     overlap.o\
     td_ekinetic_lcao.o\
     td_nonlocal_lcao.o\
+    td_deepks_lcao.o\
     td_pot_hybrid.o\
     veff_lcao.o\
     meta_lcao.o\
