@@ -28,8 +28,8 @@ AtomPair<T>::AtomPair(const int& atom_i_, const int& atom_j_, const Parallel_Orb
     {
         throw std::string("Atom-pair not belong this process");
     }
-    this->row_size = this->paraV->get_row_size(atom_i);
-    this->col_size = this->paraV->get_col_size(atom_j);
+    this->row_size = this->paraV->get_nrow_atom(atom_i);
+    this->col_size = this->paraV->get_ncol_atom(atom_j);
     this->R_index.resize(0);
     this->R_index.push_back(ModuleBase::Vector3<int>(0, 0, 0));
     this->current_R = 0;
@@ -62,8 +62,8 @@ AtomPair<T>::AtomPair(const int& atom_i_,
     {
         throw std::string("Atom-pair not belong this process");
     }
-    this->row_size = this->paraV->get_row_size(atom_i);
-    this->col_size = this->paraV->get_col_size(atom_j);
+    this->row_size = this->paraV->get_nrow_atom(atom_i);
+    this->col_size = this->paraV->get_ncol_atom(atom_j);
     this->R_index.resize(0);
     this->R_index.push_back(ModuleBase::Vector3<int>(rx, ry, rz));
     this->current_R = 0;
@@ -94,8 +94,8 @@ AtomPair<T>::AtomPair(const int& atom_i_,
     {
         throw std::string("Atom-pair not belong this process");
     }
-    this->row_size = this->paraV->get_row_size(atom_i);
-    this->col_size = this->paraV->get_col_size(atom_j);
+    this->row_size = this->paraV->get_nrow_atom(atom_i);
+    this->col_size = this->paraV->get_ncol_atom(atom_j);
     this->R_index.resize(0);
     this->R_index.push_back(ModuleBase::Vector3<int>(R_index));
     this->current_R = 0;

@@ -9,8 +9,8 @@
  * - set_atomic_trace
  * - get_col_size
  * - get_row_size
- * - get_col_size(iat)
- * - get_row_size(iat)
+ * - get_ncol_atom(iat)
+ * - get_nrow_atom(iat)
  * - get_indexes_row
  * - get_indexes_col
  * - get_indexes_row(iat)
@@ -118,13 +118,13 @@ TEST_F(TestParaO, Divide2D)
                     auto global_col_array = po.get_indexes_col();
                     int local_index_trace_row = 0;
                     int local_index_trace_col = 0;
-                    // check get_col_size(iat) and get_row_size(iat)
+                    // check get_ncol_atom(iat) and get_nrow_atom(iat)
                     for (int i = 0; i < nat0; ++i)
                     {
                         auto atomic_row_array = po.get_indexes_row(i);
                         auto atomic_col_array = po.get_indexes_col(i);
-                        EXPECT_EQ(po.get_col_size(i), atomic_col_array.size());
-                        EXPECT_EQ(po.get_row_size(i), atomic_row_array.size());
+                        EXPECT_EQ(po.get_ncol_atom(i), atomic_col_array.size());
+                        EXPECT_EQ(po.get_nrow_atom(i), atomic_row_array.size());
                         for (int j = 0; j < atomic_row_array.size(); ++j)
                         {
                             //check global_index == global_index
@@ -184,12 +184,12 @@ TEST_F(TestParaO, Serial)
             po.set_atomic_trace(iat2iwt.data(), nat0, gr);
             EXPECT_EQ(po.get_col_size(), gr);
             EXPECT_EQ(po.get_row_size(), gr);
-            // check get_col_size(iat) and get_row_size(iat)
+            // check get_ncol_atom(iat) and get_nrow_atom(iat)
             for (int i = 0; i < nat0; ++i)
             {
-                std::cout<<__FILE__<<__LINE__<<" i = "<<i<<" size = "<<po.get_row_size(i)<<" "<<po.get_col_size(i)<<std::endl;
-                //EXPECT_EQ(po.get_col_size(i), nw);
-                //EXPECT_EQ(po.get_row_size(i), nw);
+                std::cout<<__FILE__<<__LINE__<<" i = "<<i<<" size = "<<po.get_nrow_atom(i)<<" "<<po.get_ncol_atom(i)<<std::endl;
+                //EXPECT_EQ(po.get_ncol_atom(i), nw);
+                //EXPECT_EQ(po.get_nrow_atom(i), nw);
             }
         }
     }

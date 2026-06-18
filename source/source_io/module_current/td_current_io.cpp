@@ -126,9 +126,9 @@ void ModuleIO::write_current(const UnitCell& ucell,
                 int row_ap = pv->atom_begin_row[iat1];
                 int col_ap = pv->atom_begin_col[iat2];
                 // get DMR
-                for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
+                for (int mu = 0; mu < pv->get_nrow_atom(iat1); ++mu)
                 {
-                    for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
+                    for (int nu = 0; nu < pv->get_ncol_atom(iat2); ++nu)
                     {
                         std::complex<double> dm2d1 = tmp_matrix->get_value(mu, nu);
 
@@ -304,9 +304,9 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
                         int row_ap = pv->atom_begin_row[iat1];
                         int col_ap = pv->atom_begin_col[iat2];
                         // get DMR
-                        for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
+                        for (int mu = 0; mu < pv->get_nrow_atom(iat1); ++mu)
                         {
-                            for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
+                            for (int nu = 0; nu < pv->get_ncol_atom(iat2); ++nu)
                             {
                                 std::complex<double> dm2d1 = tmp_matrix->get_value(mu, nu);
 

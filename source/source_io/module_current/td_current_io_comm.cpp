@@ -67,7 +67,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell.itia2iat(T2, I2);
-            if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+            if (pv->get_nrow_atom(iat1) <= 0 || pv->get_ncol_atom(iat2) <= 0)
             {
                 continue;
             }

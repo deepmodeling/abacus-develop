@@ -24,15 +24,15 @@ public:
     long nloc_Eij;
 
     int lastband_in_proc;
-	int lastband_number; 
+    int lastband_number; 
 
-    ///---------------------------------------
+    ///-------------------------------------
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(2D division)
-    ///---------------------------------------
+    ///-------------------------------------
     int nnr=1;
-	int * nlocdim = nullptr;
-	int * nlocstart = nullptr;
+	std::vector<int> nlocdim;
+	std::vector<int> nlocstart;
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands
@@ -68,13 +68,11 @@ public:
      * @brief dimension getters for 2D-block-cyclic division of Hamiltonian matrix
      * get_col_size() : total number of columns of Hamiltonian matrix in this processor
      * get_row_size() : total number of rows of Hamiltonian matrix in this processor
-     * get_col_size(iat) : number of columns of Hamiltonian matrix in atom iat
-     * get_row_size(iat) : number of rows of Hamiltonian matrix in atom iat
+     * get_ncol_atom(iat) : number of columns of Hamiltonian matrix in atom iat
+     * get_nrow_atom(iat) : number of rows of Hamiltonian matrix in atom iat
     */
-    int get_col_size()const { return this->ncol; };
-    int get_row_size()const { return this->nrow; };
-    int get_col_size(int iat) const;
-    int get_row_size(int iat) const;
+    int get_ncol_atom(int iat) const;
+    int get_nrow_atom(int iat) const;
 
     int get_nbands() const;
 
