@@ -89,6 +89,12 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
             nnmax_vec[iat]++;
         }
     );
+#ifdef __MPI
+    // Each MPI process only holds the rows (orbitals) assigned to it in the
+    // distributed matrix pv.  Sum contributions from all processes so the
+    // saved phialpha_r.npy contains the full nlocal × des_per_atom overlap.
+    Parallel_Reduce::reduce_all(overlap.data_ptr<double>(), overlap.numel());
+#endif
     iRmat = mapping_R(dRmat_tmp.unsqueeze(1) - dRmat_tmp.unsqueeze(2));
     ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha_iRmat");
     return;
