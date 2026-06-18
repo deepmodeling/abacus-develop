@@ -118,22 +118,6 @@ template void Parallel_Reduce::reduce_max<double>(double&);
 template void Parallel_Reduce::reduce_min_pool<double>(const int&, double&);
 template void Parallel_Reduce::reduce_max_pool<double>(const int&, double&);
 
-void Parallel_Reduce::reduce_int_diag(int& object)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_INT, MPI_SUM, DIAG_WORLD);
-#endif
-    return;
-}
-
-void Parallel_Reduce::reduce_int_grid(int* object, const int n)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_INT, MPI_SUM, GRID_WORLD);
-#endif
-    return;
-}
-
 void Parallel_Reduce::reduce_double_grid(double* object, const int n)
 {
 #ifdef __MPI

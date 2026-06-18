@@ -70,10 +70,6 @@ void reduce_min_pool(const int& nproc_in_pool, T& v);
 template <typename T>
 void reduce_max_pool(const int& nproc_in_pool, T& v);
 
-void reduce_int_diag(int& object); // mohan add 2012-01-12
-
-void reduce_int_grid(int* object, const int n); // mohan add 2012-01-12
-
 // reduce double only in this pool
 // (each pool contain different k points)
 void reduce_double_grid(double* object, const int n);
