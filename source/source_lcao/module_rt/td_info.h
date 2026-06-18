@@ -55,6 +55,15 @@ class TD_info
     {
         return this->current_term[i];
     }
+    // allocate memory for phase_hybrid.
+    template <typename TR>
+    void initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HContainer<TR>* hR);
+    
+    const std::map<ModuleBase::Vector3<int>, std::complex<double>>& get_phase_hybrid() const
+    {
+        return this->phase_hybrid;
+    }
+
     // set velocity HR.
     void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR)
     {
@@ -69,12 +78,6 @@ class TD_info
     {
       return istep;
     }
-
-    const UnitCell* get_ucell()
-    {
-        return this->ucell;
-    }
-
     // For TDDFT velocity gauge, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
@@ -82,8 +85,12 @@ class TD_info
     cal_r_overlap_R r_calculator;
 
   private:
-    /// @brief pointer to the unit cell
-    const UnitCell* ucell = nullptr;
+    /// @brief lattice vectors, used to calculate the extra phase for hybrid gauge
+    ModuleBase::Vector3<double>a1, a2, a3;
+    double lat0;
+
+    /// @brief store time-dependent phase for hybrid gauge
+    std::map<ModuleBase::Vector3<int>, std::complex<double>> phase_hybrid;
 
     /// @brief read At from output file
     void read_cart_At();

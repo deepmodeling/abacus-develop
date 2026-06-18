@@ -180,8 +180,13 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     const int rank)
 {
     
-    // ofs_running
     this->ofs_ = ptr_log;
+    if (this->ofs_ == nullptr)
+    {
+        this->fallback_ofs_.open("/dev/null");
+        this->ofs_ = &this->fallback_ofs_;
+    }
+
     *ofs_ << "\n\n\n\n";
     *ofs_ << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     *ofs_ << " |                                                                    |" << std::endl;
@@ -259,7 +264,7 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     const char dir,
     const int precision)
 {
-    if (!ofs->is_open())
+    if (ofs == nullptr || !ofs->is_open())
     {
         return;
     }
@@ -273,9 +278,9 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     // il and jl are indexes of the angular momentum,
     // iz and jz are indexes of the zeta functions
     // im and jm are indexes of the magnetic quantum numbers.
-    std::string fmtstr = "%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d%4d";
-    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e";
-    fmtstr += "%" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
+    std::string fmtstr = "%4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d";
+    fmtstr += " %" + std::to_string(precision*2) + "." + std::to_string(precision) + "e";
+    fmtstr += " %" + std::to_string(precision*2) + "." + std::to_string(precision) + "e\n";
     FmtCore fmt(fmtstr);
 
     // placeholders

@@ -81,10 +81,10 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
-										  surchem& solvent,
-										  Plus_U &dftu, // mohan add 2025-11-07
+                                          surchem& solvent,
+                                          Plus_U &dftu, // mohan add 2025-11-07
                                           Setup_DeePKS<T>& deepks,
-										  Exx_NAO<T> &exx_nao,
+                                          Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
@@ -276,17 +276,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         const int nks = (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) ? 1 : kv.get_nks();
         if (PARAM.globalv.gamma_only_local)
         {
-            DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r, ucell, orb, gd,
-                                               *flk.ParaV, nks, deepks.ld.deepks_param,
-                                               kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                               fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<double>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
         else
         {
-            DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r, ucell, orb, gd,
-                                                              *flk.ParaV, nks, deepks.ld.deepks_param,
-                                                              kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                                              fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<std::complex<double>>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
 
         if (isforce)
@@ -645,7 +669,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             // caoyu add 2021-06-03
             if (PARAM.inp.deepks_scf)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS 	FORCE", fvnl_dalpha, true);
+                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS     FORCE", fvnl_dalpha, true);
             }
 #endif
         }
@@ -768,7 +792,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_stress("VDW      STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
+                ModuleIO::print_stress("VDW      STRESS", stress_vdw, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.dft_plus_u)
             {
@@ -825,8 +849,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
         f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
-	}
-	else
+    }
+    else
 #endif
     {
         Forces<double, base_device::DEVICE_CPU> f_pw(nat);
@@ -842,29 +866,29 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
 template <>
 void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
-		const bool isforce,
-		const bool isstress,
-		const UnitCell& ucell,
-		const Grid_Driver& gd,
-		ForceStressArrays& fsr, // mohan add 2024-06-15
-		const elecstate::ElecState* pelec,
-		const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
-		const psi::Psi<double>* psi,
-		ModuleBase::matrix& foverlap,
-		ModuleBase::matrix& ftvnl_dphi,
-		ModuleBase::matrix& fvnl_dbeta,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& soverlap,
-		ModuleBase::matrix& stvnl_dphi,
-		ModuleBase::matrix& svnl_dbeta,
-		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& fvnl_dalpha,
-		ModuleBase::matrix& svnl_dalpha,
-		Setup_DeePKS<double>& deepks,
-		const TwoCenterBundle& two_center_bundle,
-		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals& pv,
-		const K_Vectors& kv)
+        const bool isforce,
+        const bool isstress,
+        const UnitCell& ucell,
+        const Grid_Driver& gd,
+        ForceStressArrays& fsr, // mohan add 2024-06-15
+        const elecstate::ElecState* pelec,
+        const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+        const psi::Psi<double>* psi,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& fvnl_dalpha,
+        ModuleBase::matrix& svnl_dalpha,
+        Setup_DeePKS<double>& deepks,
+        const TwoCenterBundle& two_center_bundle,
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& pv,
+        const K_Vectors& kv)
 {
 
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
@@ -876,29 +900,29 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 
 template <>
 void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOnly,
-		const bool isforce,
-		const bool isstress,
-		const UnitCell& ucell,
-		const Grid_Driver& gd,
-		ForceStressArrays& fsr, // mohan add 2024-06-15
-		const elecstate::ElecState* pelec,
-		const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
-		const psi::Psi<std::complex<double>>* psi,
-		ModuleBase::matrix& foverlap,
-		ModuleBase::matrix& ftvnl_dphi,
-		ModuleBase::matrix& fvnl_dbeta,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& soverlap,
-		ModuleBase::matrix& stvnl_dphi,
-		ModuleBase::matrix& svnl_dbeta,
-		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& fvnl_dalpha,
-		ModuleBase::matrix& svnl_dalpha,
-		Setup_DeePKS<std::complex<double>>& deepks,
-		const TwoCenterBundle& two_center_bundle,
-		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals& pv,
-		const K_Vectors& kv)
+        const bool isforce,
+        const bool isstress,
+        const UnitCell& ucell,
+        const Grid_Driver& gd,
+        ForceStressArrays& fsr, // mohan add 2024-06-15
+        const elecstate::ElecState* pelec,
+        const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+        const psi::Psi<std::complex<double>>* psi,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& fvnl_dalpha,
+        ModuleBase::matrix& svnl_dalpha,
+        Setup_DeePKS<std::complex<double>>& deepks,
+        const TwoCenterBundle& two_center_bundle,
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& pv,
+        const K_Vectors& kv)
 {
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,

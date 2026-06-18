@@ -927,7 +927,7 @@ void synchronize_ptrs<base_device::DEVICE_GPU>::operator()(
     cudaMemcpy(ptr_out, ptr_in, sizeof(void*) * size, cudaMemcpyHostToDevice);
 }
 
-template <typename FPTYPE>
+template <typename FPTYPE, int npol>
 __global__ void cal_stress_onsite(
         const int nkb,
         const int ntype,
@@ -942,26 +942,26 @@ __global__ void cal_stress_onsite(
         const thrust::complex<FPTYPE> *dbecp,
         FPTYPE *stress)
 {
-    const int ib = blockIdx.x / ntype; // index of loop-nbands
-    const int ib2  = ib * 2;
-    const int it = blockIdx.x % ntype; // index of loop-ntype
+    const int ib = blockIdx.x / ntype;
+    const int it = blockIdx.x % ntype;
     if(orbital_corr[it] == -1) return;
     const int orbital_l = orbital_corr[it];
     const int ip_begin = orbital_l * orbital_l;
     const int tlp1 = 2 * orbital_l + 1;
     const int tlp1_2 = tlp1 * tlp1;
 
-    int iat = 0; // calculate the begin of atomic index
-    int sum = 0; // calculate the begin of atomic-orbital index
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
-        vu += 4 * tlp1_2 * atom_na[ii];// step for vu
+        vu += npol * npol * tlp1_2 * atom_na[ii];
     }
 
     FPTYPE stress_var = 0;
     const FPTYPE fac = d_wg[ik * wg_nc + ib];
     const int nprojs = atom_nh[it];
+    const int ib2 = ib * npol;
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
         for (int mm = threadIdx.x; mm < tlp1_2; mm += blockDim.x) {
@@ -971,17 +971,23 @@ __global__ void cal_stress_onsite(
             const int ip2 = ip_begin + m2;
             const int inkb1 = sum + ip1 + ib2 * nkb;
             const int inkb2 = sum + ip2 + ib2 * nkb;
-            thrust::complex<FPTYPE> ps[4] = {vu[mm], vu[mm + tlp1_2], vu[mm + 2 * tlp1_2], vu[mm + 3 * tlp1_2]};
-            //out<<"\n ps = "<<ps;
-            const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb2];
-            const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[inkb2 + nkb];
-            const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb1 + nkb]) * becp[inkb2];
-            const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb1 + nkb]) * becp[inkb2 + nkb];
-            stress_var -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
+            if (npol == 2)
+            {
+                thrust::complex<FPTYPE> ps[4] = {vu[mm], vu[mm + tlp1_2], vu[mm + 2 * tlp1_2], vu[mm + 3 * tlp1_2]};
+                const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb2];
+                const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[inkb2 + nkb];
+                const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb1 + nkb]) * becp[inkb2];
+                const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb1 + nkb]) * becp[inkb2 + nkb];
+                stress_var -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
+            }
+            else
+            {
+                stress_var -= fac * (vu[mm] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
+            }
         }
         ++iat;
         sum+=nprojs;
-        vu += 4 * tlp1_2;
+        vu += npol * npol * tlp1_2;
     }//ia
     __syncwarp();
     warp_reduce(stress_var);
@@ -990,12 +996,13 @@ __global__ void cal_stress_onsite(
     }
 }
 
-template <typename FPTYPE>
+template <typename FPTYPE, int npol>
 __global__ void cal_stress_onsite(
         const int nkb,
         const int ntype,
         const int wg_nc,
         const int ik,
+        int spin_sign,
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
@@ -1004,12 +1011,11 @@ __global__ void cal_stress_onsite(
         const thrust::complex<FPTYPE> *dbecp,
         FPTYPE *stress)
 {
-    const int ib = blockIdx.x / ntype; // index of loop-nbands
-    const int ib2  = ib * 2;
-    const int it = blockIdx.x % ntype; // index of loop-ntype
+    const int ib = blockIdx.x / ntype;
+    const int it = blockIdx.x % ntype;
 
-    int iat = 0; // calculate the begin of atomic index
-    int sum = 0; // calculate the begin of atomic-orbital index
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
@@ -1018,20 +1024,32 @@ __global__ void cal_stress_onsite(
     FPTYPE stress_var = 0;
     const FPTYPE fac = d_wg[ik * wg_nc + ib];
     const int nprojs = atom_nh[it];
+    const int ib2 = ib * npol;
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
-        const thrust::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-        const thrust::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-        const thrust::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-        const thrust::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
-        for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x) {
-            const int inkb = sum + ip + ib2 * nkb;
-            //out<<"\n ps = "<<ps;
-            const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb]) * becp[inkb];
-            const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb]) * becp[inkb + nkb];
-            const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb + nkb]) * becp[inkb];
-            const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb + nkb]) * becp[inkb + nkb];
-            stress_var -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
+        if (npol == 2)
+        {
+            const thrust::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
+            const thrust::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
+            const thrust::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
+            const thrust::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+            for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x) {
+                const int inkb1 = sum + ip + ib2 * nkb;
+                const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb1];
+                const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[nkb + inkb1];
+                const thrust::complex<FPTYPE> dbb2 = conj(dbecp[nkb + inkb1]) * becp[inkb1];
+                const thrust::complex<FPTYPE> dbb3 = conj(dbecp[nkb + inkb1]) * becp[nkb + inkb1];
+                stress_var -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
+            }
+        }
+        else
+        {
+            const FPTYPE lambda_z = lambda[iat*3+2] * spin_sign;
+            for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x) {
+                const int inkb = sum + ip + ib2 * nkb;
+                const FPTYPE dbb = (conj(dbecp[inkb]) * becp[inkb]).real();
+                stress_var -= fac * lambda_z * dbb;
+            }
         }
         ++iat;
         sum+=nprojs;
@@ -1051,6 +1069,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int& ntype,
                     const int& wg_nc,
                     const int& ik,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
@@ -1060,19 +1079,38 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
 {
-    cal_stress_onsite<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
-             nkb,
-             ntype,
-             wg_nc,
-             ik,
-             atom_nh,
-             atom_na,
-             d_wg,
-             reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
-             orbital_corr,
-             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
-             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
-             stress);// array of data
+    if (npol == 1)
+    {
+        cal_stress_onsite<FPTYPE, 1><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
+                 nkb,
+                 ntype,
+                 wg_nc,
+                 ik,
+                 atom_nh,
+                 atom_na,
+                 d_wg,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
+                 orbital_corr,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
+                 stress);
+    }
+    else
+    {
+        cal_stress_onsite<FPTYPE, 2><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
+                 nkb,
+                 ntype,
+                 wg_nc,
+                 ik,
+                 atom_nh,
+                 atom_na,
+                 d_wg,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
+                 orbital_corr,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
+                 stress);
+    }
 
     CHECK_CUDA_SYNC();
 }
@@ -1084,26 +1122,53 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int& ntype,
                     const int& wg_nc,
                     const int& ik,
+                    const int& npol,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
                     const double* lambda,
+                    const int* isk,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
 {
-    cal_stress_onsite<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
-             nkb,
-             ntype,
-             wg_nc,
-             ik,
-             atom_nh,
-             atom_na,
-             d_wg,
-             lambda,
-             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
-             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
-             stress);// array of data
+    int spin_sign = 1;
+    if (isk != nullptr && npol == 1)
+    {
+        spin_sign = (isk[ik] == 0) ? 1 : -1;
+    }
+    if (npol == 1)
+    {
+        cal_stress_onsite<FPTYPE, 1><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
+                 nkb,
+                 ntype,
+                 wg_nc,
+                 ik,
+                 spin_sign,
+                 atom_nh,
+                 atom_na,
+                 d_wg,
+                 lambda,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
+                 stress);
+    }
+    else
+    {
+        cal_stress_onsite<FPTYPE, 2><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
+                 nkb,
+                 ntype,
+                 wg_nc,
+                 ik,
+                 spin_sign,
+                 atom_nh,
+                 atom_na,
+                 d_wg,
+                 lambda,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
+                 stress);
+    }
 
     CHECK_CUDA_SYNC();
 }

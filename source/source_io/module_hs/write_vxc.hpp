@@ -6,6 +6,9 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
+#ifdef __EXX
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#endif
 #include "source_psi/psi.h"
 #include "source_io/module_hs/write_HS.h"
 #include "source_io/module_output/filename.h" // use filename_output function

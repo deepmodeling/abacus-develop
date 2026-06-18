@@ -1,6 +1,8 @@
 #ifndef ATEN_KERNELS_EINSUM_OP_H_
 #define ATEN_KERNELS_EINSUM_OP_H_
 
+#include <unordered_map>
+
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 

@@ -2,7 +2,11 @@
 #include <vector>
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
-#include "gint_dvlocal.h"
+
+class Parallel_Orbitals;
+class UnitCell;
+class Grid_Driver;
+class LCAO_HS_Arrays;
 
 namespace ModuleGint
 {

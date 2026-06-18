@@ -8,6 +8,13 @@
 namespace spinconstrain
 {
 
+/**
+ * @brief Singleton instance accessor.
+ *
+ * @details Uses Meyers' Singleton pattern (local static variable).
+ * Guaranteed thread-safe initialization in C++11 and later.
+ * Each template instantiation (complex<double>, double) gets its own instance.
+ */
 template <typename TK>
 SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
 {
@@ -15,6 +22,25 @@ SpinConstrain<TK>& SpinConstrain<TK>::getScInstance()
     return instance;
 }
 
+/**
+ * @brief Calculate the spin constraint energy: E_scon = -sum_i (lambda_i . Mi_i).
+ *
+ * @details The constraint energy is the Lagrange multiplier term in the
+ * constrained DFT functional:
+ *   E'[rho] = E_DFT[rho] - sum_i lambda_i . (Mi_i - M_target_i)
+ *
+ * IMPORTANT: Returns 0.0 if magnetic moments are NOT yet converged.
+ * This is because the constraint energy is only physically meaningful
+ * when Mi ≈ M_target. Before convergence, the lambda values are still
+ * adjusting and the energy would be misleading.
+ *
+ * @par Output meaning
+ * - E_scon < 0: lambda and Mi are aligned (system resists the constraint)
+ * - E_scon > 0: lambda and Mi are anti-aligned (constraint assists the system)
+ * - E_scon = 0: not converged OR all lambda = 0 (no constraint needed)
+ *
+ * @return Constraint energy in Ry (0.0 if not converged)
+ */
 template <typename TK>
 double SpinConstrain<TK>::cal_escon()
 {
@@ -73,6 +99,164 @@ int SpinConstrain<TK>::get_nspin() const
 }
 
 template <typename TK>
+void SpinConstrain<TK>::set_npol(int npol)
+{
+    this->npol_ = npol;
+}
+
+template <typename TK>
+int SpinConstrain<TK>::get_npol() const
+{
+    return this->npol_;
+}
+
+/**
+ * @brief Get spin sign for k-point: determines whether this k-point is
+ * spin-up (+1) or spin-down (-1) in collinear (nspin=2) calculations.
+ *
+ * @details In collinear spin, the wavefunction is split into two k-point pools:
+ * - isk[ik] == 0: spin-up channel (majority spin) -> sign = +1
+ * - isk[ik] == 1: spin-down channel (minority spin) -> sign = -1
+ * For non-collinear (npol=2), always returns +1 since both components
+ * are handled together.
+ *
+ * @return +1 for spin-up, -1 for spin-down, +1 for non-collinear
+ */
+template <typename TK>
+int SpinConstrain<TK>::get_spin_sign(int ik) const
+{
+    if (this->npol_ == 2) return 1;
+    // npol == 1 (nspin == 2): isk[ik]==0 => spin-up (+1), isk[ik]==1 => spin-down (-1)
+    return (this->pelec->klist->isk[ik] == 0) ? 1 : -1;
+}
+
+/**
+ * @brief Accumulate magnetic moments from projector coefficients (becp) for one k-point.
+ *
+ * @par Algorithm (npol=2, non-collinear):
+ * For each atom, compute the 2x2 occupation matrix from becp coefficients:
+ *   occ[0] = sum_ih becp_up^*(ih) * becp_up(ih)   = <psi_up|P_at|psi_up>
+ *   occ[1] = sum_ih becp_up^*(ih) * becp_dn(ih)   = <psi_up|P_at|psi_dn>
+ *   occ[2] = sum_ih becp_dn^*(ih) * becp_up(ih)   = <psi_dn|P_at|psi_up>
+ *   occ[3] = sum_ih becp_dn^*(ih) * becp_dn(ih)   = <psi_dn|P_at|psi_dn>
+ * where P_at = sum_{l,m} |alpha_{l,m}><alpha_{l,m}| is the atomic projector.
+ *
+ * The magnetic moment is extracted via Pauli matrix traces:
+ *   Mx = Re(occ[1] + occ[2]), My = Im(occ[1] - occ[2]), Mz = Re(occ[0] - occ[3])
+ *
+ * @par Algorithm (npol=1, collinear):
+ * Only the z-component (spin projection) is computed:
+ *   occ = sum_ih |becp(ih)|^2 = <psi|P_at|psi>
+ *   Mz += weight * occ * spin_sign
+ * where spin_sign = +1 for spin-up, -1 for spin-down.
+ *
+ * @param becp Projector coefficients, layout: [ib * npol * nkb + spin * nkb + ih]
+ * @param nkb Total number of projectors across all atoms
+ * @param nbands Number of bands (occupied + unoccupied in the subspace)
+ * @param npol Number of spinor components (1 for collinear, 2 for non-collinear)
+ * @param ik K-point index (used for spin_sign lookup in collinear mode)
+ * @param wg_ik Band occupation weights for this k-point (from Fermi-Dirac)
+ * @param nh_iat Array of projector counts per atom: nh_iat[iat] = nproj for atom iat
+ */
+template <typename TK>
+void SpinConstrain<TK>::accumulate_Mi_from_becp(const std::complex<double>* becp,
+                                                  int nkb,
+                                                  int nbands,
+                                                  int npol,
+                                                  int ik,
+                                                  const double* wg_ik,
+                                                  const int* nh_iat)
+{
+    if (npol == 2)
+    {
+        for (int ib = 0; ib < nbands; ib++)
+        {
+            const double weight = wg_ik[ib];
+            int begin_ih = 0;
+            for (int iat = 0; iat < static_cast<int>(this->Mi_.size()); iat++)
+            {
+                std::complex<double> occ[4] = {ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
+                const int nh = nh_iat[iat];
+                for (int ih = 0; ih < nh; ih++)
+                {
+                    const int index = ib * 2 * nkb + begin_ih + ih;
+                    occ[0] += conj(becp[index]) * becp[index];
+                    occ[1] += conj(becp[index]) * becp[index + nkb];
+                    occ[2] += conj(becp[index + nkb]) * becp[index];
+                    occ[3] += conj(becp[index + nkb]) * becp[index + nkb];
+                }
+                this->Mi_[iat] += pauli_to_moment(occ, weight);
+                begin_ih += nh;
+            }
+        }
+    }
+    else // npol == 1
+    {
+        const int sign = this->get_spin_sign(ik);
+        for (int ib = 0; ib < nbands; ib++)
+        {
+            const double weight = wg_ik[ib];
+            int begin_ih = 0;
+            for (int iat = 0; iat < static_cast<int>(this->Mi_.size()); iat++)
+            {
+                double occ = 0.0;
+                const int nh = nh_iat[iat];
+                for (int ih = 0; ih < nh; ih++)
+                {
+                    const int index = ib * nkb + begin_ih + ih;
+                    occ += (conj(becp[index]) * becp[index]).real();
+                }
+                this->Mi_[iat].z += weight * occ * sign;
+                begin_ih += nh;
+            }
+        }
+    }
+}
+
+template <typename TK>
+int SpinConstrain<TK>::get_nw() const
+{
+    int nw = 0;
+    for (const auto& pair : this->orbitalCounts)
+    {
+        nw += pair.second;
+    }
+    return nw;
+}
+
+/**
+ * @brief Convert (itype, local_atom_index, orbital_index) to global orbital index.
+ *
+ * @details The global orbital index is used to access elements in distributed
+ * matrices (ScaLAPACK format). The mapping is:
+ *   iwt = sum_{t < itype} orbitalCounts[t]  +  iat * orbitalCounts[itype]  +  orbital_index
+ * where iat = get_iat(itype, local_atom_index).
+ *
+ * @return Global orbital index, or 0 if itype not found
+ */
+template <typename TK>
+int SpinConstrain<TK>::get_iwt(int itype, int iat, int orbital_index) const
+{
+    auto it1 = this->orbitalCounts.find(itype);
+    if (it1 == this->orbitalCounts.end())
+    {
+        return 0;
+    }
+    int offset = 0;
+    for (auto it = this->orbitalCounts.begin(); it != it1; ++it)
+    {
+        offset += it->second;
+    }
+    auto it2 = this->atomCounts.find(itype);
+    if (it2 == this->atomCounts.end())
+    {
+        return offset;
+    }
+    return offset + iat * it1->second + orbital_index;
+}
+
+/// @brief Get total number of atoms across all element types
+template <typename TK>
 int SpinConstrain<TK>::get_nat()
 {
     int nat = 0;
@@ -83,12 +267,25 @@ int SpinConstrain<TK>::get_nat()
     return nat;
 }
 
+/// @brief Get number of element types
 template <typename TK>
 int SpinConstrain<TK>::get_ntype()
 {
     return this->atomCounts.size();
 }
 
+/**
+ * @brief Validate atom count data integrity.
+ *
+ * @details Checks that atomCounts has been properly initialized and contains
+ * valid data. Called before any operation that depends on atom indexing.
+ *
+ * @par Error conditions
+ * - "atomCounts is not set": init_sc() was not called
+ * - "nat <= 0": no atoms in the system
+ * - "itype out of range": element type index exceeds ntype
+ * - "number of atoms <= 0": some element type has no atoms
+ */
 template <typename TK>
 void SpinConstrain<TK>::check_atomCounts()
 {
@@ -115,7 +312,24 @@ void SpinConstrain<TK>::check_atomCounts()
     }
 }
 
-// get iat
+/**
+ * @brief Convert (element_type, local_atom_index) to global atom index.
+ *
+ * @details Atoms in ABACUS are organized by element type. Within each type,
+ * atoms are indexed locally (0, 1, ..., nat_itype-1). This function maps
+ * to the global index that runs across all atoms (0, 1, ..., nat-1).
+ *
+ * Example: If type 0 has 2 Fe atoms and type 1 has 3 O atoms:
+ *   get_iat(0, 0) -> 0 (Fe_0)
+ *   get_iat(0, 1) -> 1 (Fe_1)
+ *   get_iat(1, 0) -> 2 (O_0)
+ *   get_iat(1, 1) -> 3 (O_1)
+ *   get_iat(1, 2) -> 4 (O_2)
+ *
+ * @param itype Element type index (0 to ntype-1)
+ * @param atom_index Local index within the element type
+ * @return Global atom index
+ */
 template <typename TK>
 int SpinConstrain<TK>::get_iat(int itype, int atom_index)
 {
@@ -170,7 +384,8 @@ const std::map<int, std::map<int, int>>& SpinConstrain<TK>::get_lnchiCounts() co
     return this->lnchiCounts;
 }
 
-// set sc_lambda from ScData
+// set sc_lambda from ScData (parsed from STRU file)
+// ScData is organized by element type; this function flattens it to per-atom arrays
 template <typename TK>
 void SpinConstrain<TK>::set_sc_lambda()
 {
@@ -193,7 +408,20 @@ void SpinConstrain<TK>::set_sc_lambda()
     }
 }
 
-// set target_mag from ScData
+/**
+ * @brief Set target magnetic moments from ScData (parsed from STRU file).
+ *
+ * @details Supports two specification modes:
+ * - mag_type=0: Direct Cartesian (mx, my, mz) in uB
+ * - mag_type=1: Spherical (|M|, theta, phi) converted to Cartesian:
+ *   Mx = |M| * sin(theta) * cos(phi)
+ *   My = |M| * sin(theta) * sin(phi)
+ *   Mz = |M| * cos(theta)
+ *   Angles are in degrees and converted to radians.
+ *
+ * Near-zero components (< 1e-14) are explicitly set to 0.0 to avoid
+ * floating-point noise in constraint checks.
+ */
 template <typename TK>
 void SpinConstrain<TK>::set_target_mag()
 {
@@ -233,7 +461,19 @@ void SpinConstrain<TK>::set_target_mag()
     }
 }
 
-// set constrain from ScData
+/**
+ * @brief Set constraint flags from ScData.
+ *
+ * @details The constrain array determines which components of each atom's
+ * magnetic moment are actively constrained:
+ * - constrain[ia].x = 1: Mx is constrained to target_mag[ia].x
+ * - constrain[ia].y = 1: My is constrained to target_mag[ia].y
+ * - constrain[ia].z = 1: Mz is constrained to target_mag[ia].z
+ * - constrain[ia].c = 0: component is free (determined by the system)
+ *
+ * Default is all zeros (no constraints). Components with constrain=0
+ * are excluded from the lambda optimization and RMS error calculation.
+ */
 template <typename TK>
 void SpinConstrain<TK>::set_constrain()
 {
@@ -310,7 +550,7 @@ void SpinConstrain<TK>::set_target_mag(const std::vector<ModuleBase::Vector3<dou
         for (int iat = 0; iat < nat; iat++)
         {
             this->target_mag_[iat].z
-                = target_mag_in[iat].x; /// this is wired because the UnitCell class set in x direction
+                = target_mag_in[iat].z;
         }
     }
     else if (this->nspin_ == 4)
@@ -359,7 +599,7 @@ const std::vector<ModuleBase::Vector3<int>>& SpinConstrain<TK>::get_constrain() 
     return this->constrain_;
 }
 
-/// zero atomic magnetic moment
+/// @brief Reset all atomic magnetic moments to zero. Called before each Mi calculation.
 template <typename TK>
 void SpinConstrain<TK>::zero_Mi()
 {
@@ -510,7 +750,20 @@ void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
     }
 }
 
-/// print Mi
+/**
+ * @brief Print magnetic moments per atom in formatted table.
+ *
+ * @par Output format
+ * - nspin=2: "ATOM   1    2.0000000000" (z-component only)
+ * - nspin=4: "ATOM   1    0.0010000000    0.0020000000    1.9990000000" (x, y, z)
+ *
+ * @par Interpretation
+ * - Positive Mi.z: spin aligned with z-axis (spin-up character)
+ * - Negative Mi.z: spin anti-aligned with z-axis (spin-down character)
+ * - Non-zero Mi.x/Mi.y: non-collinear spin components
+ * - Mi close to target_mag: constraint is well-satisfied
+ * - Mi far from target_mag: constraint is not yet converged
+ */
 template <typename TK>
 void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
 {
@@ -555,7 +808,25 @@ void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
     }
 }
 
-/// print magnetic force (defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+/**
+ * @brief Print the magnetic force (-lambda) per atom in eV/uB.
+ *
+ * @par Physical meaning
+ * The "magnetic force" is the derivative of the constrained Lagrangian
+ * with respect to the magnetic moment: dL/dMi = -lambda_i.
+ * It represents how much energy would change if the constraint were relaxed.
+ *
+ * @par Interpretation
+ * - Large |lambda|: The system strongly resists the target moment constraint
+ * - lambda ≈ 0: The system naturally has the target moment (no constraint needed)
+ * - Positive lambda.z: The constraint pushes the moment in the +z direction
+ * - Negative lambda.z: The constraint pushes the moment in the -z direction
+ *
+ * @par Typical values
+ * - Well-converged SCF: lambda ~ 0.01-1 eV/uB
+ * - Strongly constrained: lambda ~ 1-10 eV/uB
+ * - Diverging SCF: lambda growing without bound (check target_mag合理性)
+ */
 template <typename TK>
 void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
 {
@@ -598,6 +869,46 @@ void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
         table << this->atomLabels_ << mag_force_x << mag_force_y << mag_force_z;
         ofs_running << table.str() << std::endl;
     }
+}
+
+/**
+ * @brief Reset DeltaSpin operator initialization state.
+ *
+ * @details The DeltaSpin operator caches internal state (projector matrices, etc.)
+ * from a previous SCF iteration. When the constraint parameters change (e.g., new
+ * target moments or lambda values), the cached state may be invalid. This function
+ * forces the operator to reinitialize on the next call.
+ *
+ * @par When to call
+ * - After changing target_mag_ or constrain_ arrays
+ * - When restarting from a previous SCF calculation with different constraints
+ * - When switching between LCAO and PW basis sets
+ */
+template <typename TK>
+void SpinConstrain<TK>::reset_dspin_operator()
+{
+#ifdef __LCAO
+    if (this->p_operator == nullptr)
+    {
+        return;
+    }
+    if (this->nspin_ == 4)
+    {
+        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(this->p_operator);
+        if (dspin)
+        {
+            dspin->reset_initialized();
+        }
+    }
+    else if (this->nspin_ == 2)
+    {
+        auto* dspin = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator);
+        if (dspin)
+        {
+            dspin->reset_initialized();
+        }
+    }
+#endif
 }
 
 template class SpinConstrain<std::complex<double>>;

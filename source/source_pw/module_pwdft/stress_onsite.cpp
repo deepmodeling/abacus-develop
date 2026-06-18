@@ -99,18 +99,10 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
                 // Calculate dbecp_s = <psi|d(beta)/d(epsilon_ij)>
                 fs_tools->cal_dbecp_s(ik, num_occupied_bands, ipol, jpol);
                 
-                // Add DFT+U contribution if enabled
                 if (PARAM.inp.dft_plus_u)
                 {
-                    // Calculate DFT+U stress contribution
-                    double dftu_stress = fs_tools->cal_stress_dftu(
-                        ik,
-                        num_occupied_bands,
-                        dftu.orbital_corr.data(),
-                        dftu.get_eff_pot_pw(0),
-                        dftu.get_size_eff_pot_pw(),
-                        wg.c
-                    );
+                    double dftu_stress = onsite_projector->cal_stress_onsite_dftu(
+                        ik, num_occupied_bands, dftu, nks, wg.c);
                     
                     sigma_onsite[idx] += dftu_stress;
 #ifdef __DEBUG
@@ -118,23 +110,13 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
 #endif
                 }
                 
-                // Add spin constraint contribution if enabled
                 if (PARAM.inp.sc_mag_switch)
                 {
-                    // Get spin constraint instance
                     spinconstrain::SpinConstrain<std::complex<double>>& spin_constrain = 
                         spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
                     
-                    // Get lambda parameters
-                    const std::vector<ModuleBase::Vector3<double>>& lambda = spin_constrain.get_sc_lambda();
-                    
-                    // Calculate spin constraint stress contribution
-                    double dspin_stress = fs_tools->cal_stress_dspin(
-                        ik,
-                        num_occupied_bands,
-                        lambda.data(),
-                        wg.c
-                    );
+                    double dspin_stress = onsite_projector->cal_stress_onsite_dspin(
+                        ik, num_occupied_bands, spin_constrain.get_sc_lambda().data(), wg.c);
                     
                     sigma_onsite[idx] += dspin_stress;
                 }

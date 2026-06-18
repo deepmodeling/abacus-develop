@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/module_mixing/pulay_mixing.h"
+#include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -256,4 +257,36 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     }
 
     return false;
+}
+
+void Charge_Mixing::allocate_mixing_uom(int uom_size)
+{
+    ModuleBase::TITLE("Charge_Mixing", "allocate_mixing_uom");
+    ModuleBase::timer::start("Charge_Mixing", "allocate_mixing_uom");
+    // For nspin=2, uom_size already includes both spin channels
+    // (eff_pot_pw.size() = pot_index * 2 for nspin=2)
+    // So uom_fold should always be 1
+    this->mixing->init_mixing_data(this->uom_mdata, uom_size, sizeof(double));
+    this->uom_mdata.reset();
+    ModuleBase::timer::end("Charge_Mixing", "allocate_mixing_uom");
+    return;
+}
+
+void Charge_Mixing::mix_uom(std::vector<double>& uom_in, std::vector<double>& uom_save_in)
+{
+    ModuleBase::TITLE("Charge_Mixing", "mix_uom");
+    ModuleBase::timer::start("Charge_Mixing", "mix_uom");
+    double* uom_value_out = uom_in.data();
+    double* uom_value_in = uom_save_in.data();
+    // For all nspin cases, uom_array layout is already fully sized
+    // and mixing operates on the entire array
+    this->mixing->push_data(this->uom_mdata, uom_value_in, uom_value_out, nullptr, false);
+    this->mixing->mix_data(this->uom_mdata, uom_value_out);
+    ModuleBase::timer::end("Charge_Mixing", "mix_uom");
+#ifdef __MPI
+    // Synchronize mixed uom across all ranks to prevent divergence
+    // after multiple Pulay steps (same pattern as mix_dmr)
+    Parallel_Common::bcast_double(uom_in.data(), uom_in.size());
+#endif
+    return;
 }

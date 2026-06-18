@@ -8,34 +8,6 @@
 #include "source_lcao/spar_st.h"
 #include "write_HS_sparse.h"
 
-namespace {
-// Helper: Convert sparse map to HContainer
-template <typename T>
-hamilt::HContainer<T>* sparse_map_to_hcontainer(
-    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparse_map,
-    const Parallel_Orbitals& pv,
-    const int nbasis)
-{
-    hamilt::HContainer<T>* hc = new hamilt::HContainer<T>(&pv);
-    hc->set_zero();
-
-    for (const auto& r_entry : sparse_map)
-    {
-        const auto& R = r_entry.first;
-        for (const auto& row_entry : r_entry.second)
-        {
-            const size_t row = row_entry.first;
-            for (const auto& col_entry : row_entry.second)
-            {
-                hc->set_value(R.x, R.y, R.z, row, col_entry.first, col_entry.second);
-            }
-        }
-    }
-
-    return hc;
-}
-} // anonymous namespace
-
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.
 // If the absolute value of the matrix element is less than or equal to the
@@ -143,28 +115,28 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                           p_ham);
 
     const int istep = 0;
+    ModuleIO::SparseWriteOptions options;
+    options.filename = SR_filename;
+    options.label = "S";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     if (PARAM.inp.nspin == 4)
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
     else
     {
         ModuleIO::save_sparse(HS_Arrays.SR_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -206,15 +178,19 @@ void ModuleIO::output_TR(const int istep,
     }
 
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
+    ModuleIO::SparseWriteOptions options;
+    options.filename = sst.str();
+    options.label = "T";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
-                          sparse_thr,
-                          binary,
-                          sst.str().c_str(),
                           pv,
-                          "T",
-                          istep);
+                          options);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 

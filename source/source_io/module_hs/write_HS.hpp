@@ -280,11 +280,11 @@ void ModuleIO::save_mat(const int istep,
 #else
         if (app)
         {
-            std::ofstream out_matrix(filename.c_str(), std::ofstream::app);
+            out_matrix.open(filename.c_str(), std::ofstream::app);
         }
         else
         {
-            std::ofstream out_matrix(filename.c_str());
+            out_matrix.open(filename.c_str());
         }
 
         out_matrix << dim;

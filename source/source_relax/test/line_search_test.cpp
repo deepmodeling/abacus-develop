@@ -1,6 +1,7 @@
 #include "../line_search.h"
 
 #include <string>
+#include <fstream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -27,6 +28,7 @@ class TestTO : public testing::Test
     void SetUp()
     {
         Line_Search ls;
+        std::ofstream ofs_running;
 
         double x, xnew, y, f;
 
@@ -34,78 +36,78 @@ class TestTO : public testing::Test
         x = 0;
         y = 0;
         f = -2;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = 0;
         f = 2;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         // 3rd order, harmonic, dmove < 0
         x = 0;
         y = 0;
         f = 1;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = 2;
         f = 3;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         // 3rd order, harmonic, dmove > 4
         x = 0;
         y = 0;
         f = -20;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = -9;
         f = -18;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         // 3rd order, anharmonic, use dmove1 & dmove
         x = 0;
         y = 0;
         f = -1;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = 2;
         f = 3.5;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         // 3rd order, anharmonic, use dmove2 & dmoveh
         x = 0;
         y = 0;
         f = 4.5;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = 2;
         f = -1;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         // 3rd order, anharmonic, dmoveh > 4
         x = 0;
         y = 0;
         f = -20;
-        ls.line_search(1, x, y, f, xnew, 1e-10);
+        ls.line_search(1, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
 
         x = 1;
         y = -5;
         f = -18;
-        ls.line_search(0, x, y, f, xnew, 1e-10);
+        ls.line_search(0, x, y, f, xnew, 1e-10, ofs_running);
         xnew_arr.push_back(xnew);
     }
 };
@@ -125,6 +127,7 @@ class TestLS : public testing::Test
   protected:
     std::vector<double> xnew_arr;
     Line_Search ls;
+    std::ofstream ofs_running;
 
     double x = 0, xnew = 0;
 
@@ -163,14 +166,14 @@ TEST_F(TestLS, LineSearch)
 
         if (i < 3)
         {
-            ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10);
+            ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10, ofs_running);
             ind = ind + 3;
             xnew_arr.push_back(xnew);
         }
         else
         {
             testing::internal::CaptureStdout();
-            EXPECT_EXIT(ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10),
+            EXPECT_EXIT(ls.line_search(restart, rand[ind], rand[ind + 1], rand[ind + 2], xnew, 1e-10, ofs_running),
                         ::testing::ExitedWithCode(1),
                         "");
             std::string output = testing::internal::GetCapturedStdout();

@@ -34,6 +34,7 @@ option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(ENABLE_LIBCOMM "Enable LibComm" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
+option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -236,6 +237,18 @@ if(ENABLE_COVERAGE)
   add_coverage(${ABACUS_BIN_NAME})
 endif()
 
+if(ENABLE_DFTD4)
+  # DFTD4 requires enabling C and Fortran to work
+  enable_language(C)
+  enable_language(Fortran)
+  # Avoid custom-lapack fallback when resolving DFT-D4 dependencies
+  find_package(BLAS REQUIRED)
+  find_package(LAPACK REQUIRED)
+  find_package(dftd4 4.2.0 REQUIRED)
+  if(NOT TARGET dftd4::dftd4)
+    message(FATAL_ERROR "DFT-D4 was found, but target dftd4::dftd4 is missing.")
+  endif()
+endif()
 
 macro(set_if_higher VARIABLE VALUE)
   if(${VARIABLE} LESS ${VALUE})
@@ -268,7 +281,7 @@ if(ENABLE_ASAN)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE AND NOT MSVC)
   add_compile_options(-O3 -g)
 endif()
 
@@ -287,6 +300,14 @@ endif()
 
 if(ENABLE_NATIVE_OPTIMIZATION)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
+endif()
+
+# Windows (native build, e.g. MinGW-w64 or MSVC) portability defines:
+#   _USE_MATH_DEFINES     - expose M_PI and friends from <cmath>
+#   NOMINMAX              - stop <windows.h> defining min()/max() macros
+#   _CRT_SECURE_NO_WARNINGS - silence CRT "use _s function" deprecations
+if(WIN32)
+  add_compile_definitions(_USE_MATH_DEFINES NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(ENABLE_LCAO)
@@ -610,8 +631,13 @@ elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-  find_package(ScaLAPACK REQUIRED)
-  list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  # ScaLAPACK is a distributed-memory library and is only needed for the
+  # MPI build. A serial build (e.g. the native Windows serial version)
+  # must not require it.
+  if(ENABLE_MPI)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()
@@ -830,6 +856,7 @@ target_link_libraries(
   module_pwdft
   module_ofdft
   module_stodft
+  module_dfpt
   psi
   psi_initializer
   psi_overall_init
@@ -869,7 +896,10 @@ if (USE_SW)
   list(APPEND math_libs gfortran)
 endif()
 
-list(APPEND math_libs m)
+# libm exists on Linux and MinGW-w64 but not in the MSVC CRT.
+if(NOT MSVC)
+  list(APPEND math_libs m)
+endif()
 target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
 
 install(PROGRAMS ${ABACUS_BIN_PATH}
@@ -877,8 +907,12 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
         # DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Create a symbolic link 'abacus' pointing to the actual executable
-install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+# Create a symbolic link 'abacus' pointing to the actual executable.
+# Skipped on Windows: symlink creation needs elevated/developer-mode
+# privileges there and the executable carries an .exe suffix anyway.
+if(NOT WIN32)
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+endif()
 
 if(ENABLE_COVERAGE)
   coverage_evaluate()
