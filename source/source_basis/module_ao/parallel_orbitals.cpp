@@ -6,10 +6,7 @@
 
 Parallel_Orbitals::Parallel_Orbitals()
 {
-    this->loc_sizes = nullptr;
     // in multi-k, 2D-block-division variables for FT (R<->k)
-    this->nlocdim = nullptr;
-    this->nlocstart = nullptr;
     this->nnr = 1;
     this->ncol_bands = 0;
     this->nrow_bands=0;
@@ -17,16 +14,12 @@ Parallel_Orbitals::Parallel_Orbitals()
     this->nloc_Eij=0;
     this->lastband_in_proc=0;
     this->lastband_number=0;
-    this->loc_size=0;
     this->nbands = 0;
 
 }
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] loc_sizes;    
-    delete[] nlocdim;
-    delete[] nlocstart;
 }
 
 int Parallel_Orbitals::get_wfc_global_nbands() const

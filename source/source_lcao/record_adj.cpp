@@ -54,12 +54,10 @@ void Record_adj::for_2d(const UnitCell& ucell,
     if (!gamma_only)
     {
         // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
-        delete[] pv.nlocdim;
-        delete[] pv.nlocstart;
-        pv.nlocdim = new int[ucell.nat];
-        pv.nlocstart = new int[ucell.nat];
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocdim, ucell.nat);
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocstart, ucell.nat);
+        pv.nlocdim.resize(ucell.nat);
+        pv.nlocstart.resize(ucell.nat);
+        std::fill(pv.nlocdim.begin(), pv.nlocdim.end(), 0);
+        std::fill(pv.nlocstart.begin(), pv.nlocstart.end(), 0);
         pv.nnr = 0;
     }
     {

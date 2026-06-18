@@ -2,6 +2,7 @@
 #define _PARALLEL_ORBITALS_H_
 #include "source_base/parallel_2d.h"
 #include <fstream>
+#include <vector>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
@@ -48,9 +49,6 @@ public:
         const int& nbands,
         const int& lld);
 #endif
-
-    int* loc_sizes = nullptr;
-    int loc_size;
 
     int get_wfc_global_nbands () const;
     int get_wfc_global_nbasis () const;
