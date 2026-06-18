@@ -19,14 +19,41 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     const int atoms_num = biggrid_->get_atoms_num();
     atom_rcoords_.resize(atoms_num);
     is_atom_on_mgrid_.resize(biggrid_->get_mgrids_num() * atoms_num);
-    for(int i = 0; i < atoms_num; ++i)
+   /* for(int i = 0; i < atoms_num; ++i)
     {
         biggrid_->set_atom_relative_coords(biggrid_->get_atom(i), atom_rcoords_[i]);
         for(int j = 0; j < rows_; ++j)
         {
             is_atom_on_mgrid_[i * rows_ + j] = atom_rcoords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
         }
+    }*/
+    #pragma omp parallel for schedule(static)
+for(int i = 0; i < atoms_num; ++i)
+{
+    const auto atom =
+        biggrid_->get_atom(i);
+
+    biggrid_->set_atom_relative_coords(
+        atom,
+        atom_rcoords_[i]);
+
+    const double rcut2 =
+        atom->get_rcut() * atom->get_rcut();
+
+    for(int j = 0; j < rows_; ++j)
+    {
+        const auto& r =
+            atom_rcoords_[i][j];
+
+        const double dist2 =
+            r.x * r.x +
+            r.y * r.y +
+            r.z * r.z;
+
+        is_atom_on_mgrid_[i * rows_ + j]
+            = (dist2 <= rcut2);
     }
+}
 
     // init atom_pair_range_
     init_atom_pair_idx_();
@@ -136,7 +163,7 @@ void PhiOperator::cal_env_gamma(
     const vector<int>& trace_lo,
     double* rho) const
 {
-    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
+/*    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
         const int iw_start = atom->get_start_iw();
@@ -155,6 +182,39 @@ void PhiOperator::cal_env_gamma(
             }
         }
     }
+}*/
+
+for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
+{
+    const auto atom = biggrid_->get_atom(i);
+
+    const int iw_start = atom->get_start_iw();
+    const int start_idx = atoms_startidx_[i];
+    const int nw = atom->get_nw();
+
+    for(int j = 0; j < biggrid_->get_mgrids_num(); ++j)
+    {
+        if(is_atom_on_mgrid(i,j))
+        {
+            double tmp = 0.0;
+
+            const double* phi_row =
+                phi + j * cols_ + start_idx;
+
+            const int iw_lo =
+                trace_lo[iw_start];
+
+#pragma omp simd reduction(+:tmp)
+            for(int iw = 0; iw < nw; ++iw)
+            {
+                tmp += phi_row[iw]
+                     * wfc[iw_lo + iw];
+            }
+
+            rho[mgrid_lidx_[j]] += tmp;
+        }
+    }
+}
 }
 
 void PhiOperator::cal_env_k(

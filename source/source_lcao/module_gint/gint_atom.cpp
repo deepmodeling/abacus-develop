@@ -115,94 +115,163 @@ void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* ph
         }
     }
 }
-
 template <typename T>
 void GintAtom::set_phi_dphi(
-    const std::vector<Vec3d>& coords, const int stride,
-    T* phi, T* dphi_x, T* dphi_y, T* dphi_z) const
+    const std::vector<Vec3d>& coords,
+    const int stride,
+    T* phi,
+    T* dphi_x,
+    T* dphi_y,
+    T* dphi_z) const
 {
     const int num_mgrids = coords.size();
-    
-    // orb_ does not have the member variable dr_uniform
+
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
-    
-    const int nylm = std::pow(atom_->nwl + 1, 2);
-    std::vector<double> rly(nylm);
-    std::vector<double> grly(nylm * 3);
-    
-    for(int im = 0; im < num_mgrids; im++)
+    const double rcut = orb_->getRcut();
+
+    const int nylm = (atom_->nwl + 1) * (atom_->nwl + 1);
+
+#pragma omp parallel
     {
-        const Vec3d& coord = coords[im];
-        // 1e-9 is to avoid division by zero
-        const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
+        std::vector<double> rly(nylm);
+        std::vector<double> grly(nylm * 3);
 
-        if(dist > orb_->getRcut())
+#pragma omp for schedule(static)
+        for(int im = 0; im < num_mgrids; ++im)
         {
-            // if the distance is larger than the cutoff radius,
-            // the wave function values are all zeros
-            if(phi != nullptr)
+            const Vec3d& coord = coords[im];
+
+            double dist = coord.norm();
+            if(dist < 1e-9)
             {
-                ModuleBase::GlobalFunc::ZEROS(phi + im * stride, atom_->nw);
+                dist = 1e-9;
             }
-            ModuleBase::GlobalFunc::ZEROS(dphi_x + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(dphi_y + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(dphi_z + im * stride, atom_->nw);
-        }
-        else
-        {
-            // spherical harmonics
-            // TODO: vectorize the sph_harm function, 
-            // the vectorized function can be called once for all meshgrids in a biggrid
-            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord.x, coord.y, coord.z, rly.data(), grly.data());
 
-            // interpolation
+            if(dist > rcut)
+            {
+                if(phi != nullptr)
+                {
+                    ModuleBase::GlobalFunc::ZEROS(
+                        phi + im * stride,
+                        atom_->nw);
+                }
+
+                ModuleBase::GlobalFunc::ZEROS(
+                    dphi_x + im * stride,
+                    atom_->nw);
+
+                ModuleBase::GlobalFunc::ZEROS(
+                    dphi_y + im * stride,
+                    atom_->nw);
+
+                ModuleBase::GlobalFunc::ZEROS(
+                    dphi_z + im * stride,
+                    atom_->nw);
+
+                continue;
+            }
+
+            ModuleBase::Ylm::grad_rl_sph_harm(
+                atom_->nwl,
+                coord.x,
+                coord.y,
+                coord.z,
+                rly.data(),
+                grly.data());
+
             const double position = dist / dr_uniform;
+
             const int ip = static_cast<int>(position);
+
             const double x0 = position - ip;
             const double x1 = 1.0 - x0;
             const double x2 = 2.0 - x0;
             const double x3 = 3.0 - x0;
-            const double x12 = x1 * x2 / 6;
-            const double x03 = x0 * x3 / 2;
 
-            double tmp, dtmp;
+            const double x12 = x1 * x2 / 6.0;
+            const double x03 = x0 * x3 / 2.0;
+	    const double dist2 = dist * dist;
+            const double dist3 = dist2 * dist;
+
             for(int iw = 0; iw < atom_->nw; ++iw)
             {
-                // this is a new 'l', we need 1D orbital wave
-                // function from interpolation method.
+                double tmp_iw = 0.0;
+                double dtmp_iw = 0.0;
+
                 if(atom_->iw2_new[iw])
                 {
-                    auto psi_uniform = p_psi_uniform_[iw];
-                    auto dpsi_uniform = p_dpsi_uniform_[iw];
-                    // use Polynomia Interpolation method to get the
-                    // wave functions
+                    const auto psi_uniform = p_psi_uniform_[iw];
+                    const auto dpsi_uniform = p_dpsi_uniform_[iw];
 
-                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
-                        + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
+                    tmp_iw =
+                        x12 * (psi_uniform[ip] * x3
+                             + psi_uniform[ip + 3] * x0)
+                      + x03 * (psi_uniform[ip + 1] * x2
+                             - psi_uniform[ip + 2] * x1);
 
-                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
-                        + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
-                } // new l is used.
+                    dtmp_iw =
+                        x12 * (dpsi_uniform[ip] * x3
+                             + dpsi_uniform[ip + 3] * x0)
+                      + x03 * (dpsi_uniform[ip + 1] * x2
+                             - dpsi_uniform[ip + 2] * x1);
+                }
+                else
+                {
+                    continue;
+                }
 
-                // get the 'l' of this localized wave function
                 const int ll = atom_->iw2l[iw];
                 const int idx_lm = atom_->iw2_ylm[iw];
 
-                const double rl = pow_int(dist, ll);
-                const double tmprl = tmp / rl;
+                double rl;
 
-                // 3D wave functions
-                if(phi != nullptr)
+                switch(ll)
                 {
-                    phi[im * stride + iw] = tmprl * rly[idx_lm];
-                }
-                
-                // derivative of wave functions with respect to atom positions.
-                const double tmpdphi_rly = (dtmp - tmp * ll / dist) / rl * rly[idx_lm] / dist;
+                    case 0:
+                        rl = 1.0;
+                        break;
 
-                dphi_x[im * stride + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_lm*3];
-                dphi_y[im * stride + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_lm*3 + 1];
-                dphi_z[im * stride + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_lm*3 + 2];
+                    case 1:
+                        rl = dist;
+                        break;
+
+                    case 2:
+                        rl = dist2;
+                        break;
+
+                    case 3:
+                        rl = dist3;
+                        break;
+
+                    default:
+                        rl = pow_int(dist, ll);
+                        break;
+                }
+			const double tmprl = tmp_iw / rl;
+
+if(phi != nullptr)
+{
+    phi[im * stride + iw]
+        = tmprl * rly[idx_lm];
+}
+
+const double tmpdphi_rly =
+    (dtmp_iw - tmp_iw * ll / dist)
+    / rl
+    * rly[idx_lm]
+    / dist;
+
+dphi_x[im * stride + iw]
+    = tmpdphi_rly * coord.x
+    + tmprl * grly[idx_lm * 3];
+
+dphi_y[im * stride + iw]
+    = tmpdphi_rly * coord.y
+    + tmprl * grly[idx_lm * 3 + 1];
+
+dphi_z[im * stride + iw]
+    = tmpdphi_rly * coord.z
+    + tmprl * grly[idx_lm * 3 + 2];
             }
         }
     }

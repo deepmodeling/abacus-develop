@@ -235,57 +235,85 @@ void PhiOperatorGpu<Real>::phi_mul_phi(
     double* hr_d) const
 {
     // ap_num means number of atom pairs
-    int ap_num = 0;
-    int max_m = 0;
-    int max_n = 0;
-    int max_k = mgrids_num_;
-    CHECK_CUDA(cudaEventSynchronize(event_));
-    for (int i = 0; i < bgrid_batch_->get_batch_size(); i++)
+            
+int ap_num = 0;
+int max_m = 0;
+int max_n = 0;
+int max_k = mgrids_num_;
+CHECK_CUDA(cudaEventSynchronize(event_));
+const int batch_size = bgrid_batch_->get_batch_size();
+const auto atom_info_host = atoms_num_info_.get_host_ptr();
+const auto phi_start_host = atom_phi_start_.get_host_ptr();
+
+std::unordered_map<long long, int> offset_cache;
+
+for (int i = 0; i < batch_size; i++)
+{
+    auto bgrid = bgrid_batch_->get_bgrids()[i];
+    const int phi_len_mgrid = bgrid->get_phi_len();
+    const int mg_num = bgrid->get_mgrids_num();
+    const int nat_bgrid = bgrid->get_atoms_num();
+    auto* const atoms = bgrid->get_atoms();
+    const int pre_atoms = atom_info_host[i].y;
+
+    for (int ia_1 = 0; ia_1 < nat_bgrid; ia_1++)
     {
-        auto bgrid = bgrid_batch_->get_bgrids()[i];
-        // the length of phi on a mesh grid
-        const int phi_len_mgrid = bgrid->get_phi_len();
-        const int pre_atoms = atoms_num_info_.get_host_ptr()[i].y;
-        for (int ia_1 = 0; ia_1 < bgrid->get_atoms_num(); ia_1++)
+        auto atom_1 = atoms[ia_1];
+        const int iat_1 = atom_1->get_iat();
+        const int nw1 = atom_1->get_nw();
+       atom_1->get_R();
+
+        for (int ia_2 = 0; ia_2 < nat_bgrid; ia_2++)
         {
-            auto atom_1 = bgrid->get_atoms()[ia_1];
-            const int iat_1 = atom_1->get_iat();
-            const auto& r_1 = atom_1->get_R();
-            const int nw1 = atom_1->get_nw();
-            const int phi_1_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_1];
+            auto atom_2 = atoms[ia_2];
+            const int iat_2 = atom_2->get_iat();
+            if(iat_1 > iat_2)
+            { continue; }
 
-            for (int ia_2 = 0; ia_2 < bgrid->get_atoms_num(); ia_2++)
+            const int nw2 = atom_2->get_nw();
+            const int phi_2_offset = phi_start_host[pre_atoms + ia_2];
+            const auto& r_2 = atom_2->get_R();
+
+            
+            long long key = (long long)iat_1 * 10000 + iat_2;
+            int hr_offset = -1;
+            if (offset_cache.count(key))
             {
-                auto atom_2 = bgrid->get_atoms()[ia_2];
-                const int iat_2 = atom_2->get_iat();
-                const auto& r_2 = atom_2->get_R();
-                const int nw2 = atom_2->get_nw();
-
-                if(iat_1 > iat_2)
-                { continue; }
-                
-                int hr_offset = hRGint.find_matrix_offset(iat_1, iat_2, r_1 - r_2);
-                if (hr_offset == -1)
-                { continue; }
-
-                const int phi_2_offset = atom_phi_start_.get_host_ptr()[pre_atoms + ia_2];
-
-                gemm_A_.get_host_ptr()[ap_num] = phi_d + phi_1_offset;
-                gemm_B_.get_host_ptr()[ap_num] = phi_vldr3_d + phi_2_offset;
-                gemm_C_.get_host_ptr()[ap_num] = hr_d + hr_offset;
-                gemm_lda_.get_host_ptr()[ap_num] = phi_len_mgrid;
-                gemm_ldb_.get_host_ptr()[ap_num] = phi_len_mgrid;
-                gemm_ldc_.get_host_ptr()[ap_num] = nw2;
-                gemm_m_.get_host_ptr()[ap_num] = nw1;
-                gemm_n_.get_host_ptr()[ap_num] = nw2;
-                gemm_k_.get_host_ptr()[ap_num] = bgrid->get_mgrids_num();
-                ap_num++;
-
-                max_m = std::max(max_m, nw1);
-                max_n = std::max(max_n, nw2);
+                hr_offset = offset_cache[key];
             }
+            else
+            {
+                hr_offset = hRGint.find_matrix_offset(iat_1, iat_2, r_1 - r_2);
+                offset_cache[key] = hr_offset;
+            }
+
+            if (hr_offset == -1)
+            { continue; }
+
+            gemm_A_.gem_B_.get_host_ptr()[ap_num] = phi_vldr3_d + phi_2_offset;
+            gemm_C_.get_host_ptr()[ap_num] = hr_d + hr_offset;
+            gemm_lda_.get_host_ptr()[ap_num] = phi_len_mgrid;
+            gemm_ldb_.get_host_ptr()[ap_num] = phi_len_mgrid;
+            gemm_ldc_.get_host_ptr()[ap_num] = nw2;
+            gemm_m_.get_host_ptr()[ap_num] = nw1;
+            gemm_n_.get_host_ptr()[ap_num] = nw2;
+            gemm_k_.get_host_ptr()[ap_num] = mg_num;
+            ap_num++;
+
+            max_m = std::max(max_m, nw1);
+            max_n = std::max(max_n, nw2);
         }
     }
+}
+gemm_A_.reserve_host(ap_num);
+gemm_B_.reserve_host(ap_num);
+gemm_C_.reserve_host(ap_num);
+gemm_lda_.reserve_host(ap_num);
+gemm_ldb_.reserve_host(ap_num);
+gemm_ldc_.reserve_host(ap_num);
+gemm_m_.reserve_host(ap_num);
+gemm_n_.reserve_host(ap_num);
+gemm_k_.reserve_host(ap_num);
 
     gemm_A_.copy_host_to_device_async(ap_num);
     gemm_B_.copy_host_to_device_async(ap_num);
