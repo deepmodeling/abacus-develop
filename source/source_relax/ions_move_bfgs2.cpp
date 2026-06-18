@@ -239,7 +239,12 @@ void Ions_Move_BFGS2::Update(std::vector<double>& pos,
         }
     }
     double threshold=1e-7;
-    if(*max_element(dpos.begin(), dpos.end()) < threshold)
+    double max_abs_dpos = 0.0;
+    for (const double value : dpos)
+    {
+        max_abs_dpos = std::max(max_abs_dpos, std::abs(value));
+    }
+    if (max_abs_dpos < threshold)
     {
         return;
     } 
