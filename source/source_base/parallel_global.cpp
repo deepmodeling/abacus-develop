@@ -25,6 +25,7 @@ namespace Parallel_Global
 int mpi_number = 0;
 int omp_number = 0;
 } // namespace Parallel_Global
+#endif
 
 void Parallel_Global::split_diag_world(const int& diag_np,
                                        const int& nproc,

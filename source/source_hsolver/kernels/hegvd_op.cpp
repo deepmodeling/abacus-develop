@@ -1,6 +1,7 @@
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -28,15 +29,15 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
         int info = 0;
         int lwork = 2 * nstart + nstart * nstart;
         T* work = new T[lwork];
-        Parallel_Reduce::ZEROS(work, lwork);
+        std::fill(work, work + lwork, T(0));
 
         int lrwork = 1 + 5 * nstart + 2 * nstart * nstart;
         Real* rwork = new Real[lrwork];
-        Parallel_Reduce::ZEROS(rwork, lrwork);
+        std::fill(rwork, rwork + lrwork, Real(0));
 
         int liwork = 3 + 5 * nstart;
         int* iwork = new int[liwork];
-        Parallel_Reduce::ZEROS(iwork, liwork);
+        std::fill(iwork, iwork + liwork, 0);
 
         //===========================
         // calculate all eigenvalues
