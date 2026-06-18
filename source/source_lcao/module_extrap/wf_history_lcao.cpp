@@ -89,99 +89,94 @@ bool WfHistoryLCAO<TK>::latest_snapshot(WfSnapshotLCAO<TK>& snapshot) const
 }
 
 template <typename TK>
-WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* current_overlap,
-                                                             const Parallel_Orbitals& pv,
-                                                             psi::Psi<double>& psi,
-                                                             const ModuleBase::matrix& wg_now,
-                                                             const double pivot_threshold,
-                                                             const double check_tolerance)
+WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const TK*,
+                                                             const Parallel_Orbitals&,
+                                                             psi::Psi<TK>&,
+                                                             const ModuleBase::matrix&,
+                                                             const double,
+                                                             const double)
+{
+    WfExtrapApplyResult result;
+    result.status = WfcExtrapStatus::Unsupported;
+    return result;
+}
+
+template <>
+WfExtrapApplyResult WfHistoryLCAO<double>::try_use_prev_wf_gamma(const double* current_overlap,
+                                                                 const Parallel_Orbitals& pv,
+                                                                 psi::Psi<double>& psi,
+                                                                 const ModuleBase::matrix& wg_now,
+                                                                 const double pivot_threshold,
+                                                                 const double check_tolerance)
 {
     WfExtrapApplyResult result;
 
-    if constexpr (!std::is_same<TK, double>::value)
+    if (this->method_ != WfcExtrapMethod::UsePrevWf)
+    {
+        result.status = WfcExtrapStatus::Disabled;
+        return result;
+    }
+
+    if (this->snapshots_.empty())
+    {
+        result.status = WfcExtrapStatus::EmptyHistory;
+        return result;
+    }
+
+    if (current_overlap == nullptr || !(pivot_threshold >= 0.0) || !(check_tolerance > 0.0))
+    {
+        result.status = WfcExtrapStatus::InvalidInput;
+        return result;
+    }
+
+    // The first PR only supports the real Gamma-only path. In this path the
+    // first Psi dimension may label spin channels, but not physical k-points.
+    if (!psi.get_k_first())
     {
         result.status = WfcExtrapStatus::Unsupported;
         return result;
     }
-    else
+
+    const WfSnapshotLCAO<double>& snapshot = this->snapshots_.back();
+    result.snapshot_istep = snapshot.istep;
+
+    if (!snapshot.compatible_with(psi, wg_now))
     {
-        if (this->method_ != WfcExtrapMethod::UsePrevWf)
-        {
-            result.status = WfcExtrapStatus::Disabled;
-            return result;
-        }
+        result.status = WfcExtrapStatus::DimensionMismatch;
+        return result;
+    }
 
-        if (this->snapshots_.empty())
-        {
-            result.status = WfcExtrapStatus::EmptyHistory;
-            return result;
-        }
+    // Work on an owned trial Psi first. The caller's Psi is not overwritten
+    // unless the stored WFN can be loaded and reorthonormalized successfully.
+    psi::Psi<double> psi_trial(psi);
+    ModuleBase::timer::start("WFN_Extrap", "restore_snapshot");
+    const bool snapshot_loaded = snapshot.load_to(psi_trial);
+    ModuleBase::timer::end("WFN_Extrap", "restore_snapshot");
+    if (!snapshot_loaded)
+    {
+        result.status = WfcExtrapStatus::DimensionMismatch;
+        return result;
+    }
 
-        if (current_overlap == nullptr || !(pivot_threshold >= 0.0) || !(check_tolerance > 0.0))
-        {
-            result.status = WfcExtrapStatus::InvalidInput;
-            return result;
-        }
-
-        // The first PR only supports the real Gamma-only path.  In this path the
-        // first Psi dimension may label spin channels, but not physical k-points.
-        if (!psi.get_k_first())
-        {
-            result.status = WfcExtrapStatus::Unsupported;
-            return result;
-        }
-
-        const WfSnapshotLCAO<TK>& snapshot = this->snapshots_.back();
-        result.snapshot_istep = snapshot.istep;
-
-        if (!snapshot.compatible_with(psi, wg_now))
-        {
-            result.status = WfcExtrapStatus::DimensionMismatch;
-            return result;
-        }
-
-        // Work on an owned trial Psi first.  The caller's Psi is not overwritten
-        // unless the stored WFN can be loaded and reorthonormalized successfully.
-        psi::Psi<double> psi_trial(psi);
-        ModuleBase::timer::start("WFN_Extrap", "restore_snapshot");
-        const bool snapshot_loaded = snapshot.load_to(psi_trial);
-        ModuleBase::timer::end("WFN_Extrap", "restore_snapshot");
-        if (!snapshot_loaded)
-        {
-            result.status = WfcExtrapStatus::DimensionMismatch;
-            return result;
-        }
-
-        ModuleBase::timer::start("WFN_Extrap", "orthonormalize");
-        const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
-                                                                               pv,
-                                                                               psi_trial,
-                                                                               snapshot.wg,
-                                                                               1.0e-12,
-                                                                               pivot_threshold,
-                                                                               check_tolerance);
-        ModuleBase::timer::end("WFN_Extrap", "orthonormalize");
-        if (!orth_result.ok())
-        {
-            result.status = orth_result.status;
-            result.failed_state = orth_result.failed_state;
-            result.failed_pivot_index = orth_result.failed_pivot_index;
-            result.failed_pivot = orth_result.failed_pivot;
-            result.min_metric_diag = orth_result.min_metric_diag;
-            result.max_metric_diag = orth_result.max_metric_diag;
-            result.max_metric_abs = orth_result.max_metric_abs;
-            result.max_metric_asymmetry = orth_result.max_metric_asymmetry;
-            result.nstate = orth_result.nstate;
-            result.nbands = orth_result.nbands;
-            result.nbasis = orth_result.nbasis;
-            result.nactive_bands = orth_result.nactive_bands;
-            result.max_orthonormality_deviation = orth_result.max_deviation;
-            return result;
-        }
-
-        psi = psi_trial;
-        result.status = WfcExtrapStatus::Success;
-        result.failed_state = -1;
+    ModuleBase::timer::start("WFN_Extrap", "orthonormalize");
+    const WfOrthonormalizeResult orth_result = reorthonormalize_gamma_lcao(current_overlap,
+                                                                           pv,
+                                                                           psi_trial,
+                                                                           snapshot.wg,
+                                                                           1.0e-12,
+                                                                           pivot_threshold,
+                                                                           check_tolerance);
+    ModuleBase::timer::end("WFN_Extrap", "orthonormalize");
+    if (!orth_result.ok())
+    {
+        result.status = orth_result.status;
+        result.failed_state = orth_result.failed_state;
+        result.failed_pivot_index = orth_result.failed_pivot_index;
+        result.failed_pivot = orth_result.failed_pivot;
+        result.min_metric_diag = orth_result.min_metric_diag;
+        result.max_metric_diag = orth_result.max_metric_diag;
+        result.max_metric_abs = orth_result.max_metric_abs;
+        result.max_metric_asymmetry = orth_result.max_metric_asymmetry;
         result.nstate = orth_result.nstate;
         result.nbands = orth_result.nbands;
         result.nbasis = orth_result.nbasis;
@@ -189,6 +184,16 @@ WfExtrapApplyResult WfHistoryLCAO<TK>::try_use_prev_wf_gamma(const double* curre
         result.max_orthonormality_deviation = orth_result.max_deviation;
         return result;
     }
+
+    psi = psi_trial;
+    result.status = WfcExtrapStatus::Success;
+    result.failed_state = -1;
+    result.nstate = orth_result.nstate;
+    result.nbands = orth_result.nbands;
+    result.nbasis = orth_result.nbasis;
+    result.nactive_bands = orth_result.nactive_bands;
+    result.max_orthonormality_deviation = orth_result.max_deviation;
+    return result;
 }
 
 template <typename TK>

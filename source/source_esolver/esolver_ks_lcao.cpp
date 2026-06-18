@@ -100,7 +100,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     const auto wfc_extrap_method = ModuleExtrap::wfc_extrap_method_from_string(inp.wfc_extrap);
     if (wfc_extrap_method != ModuleExtrap::WfcExtrapMethod::None)
     {
-        this->wf_history_lcao_ = std::make_unique<ModuleExtrap::WfHistoryLCAO<TK>>(wfc_extrap_method);
+        this->wf_history_lcao_.reset(new ModuleExtrap::WfHistoryLCAO<TK>(wfc_extrap_method));
         GlobalV::ofs_running << " WFN extrapolation method: "
                              << ModuleExtrap::to_string(wfc_extrap_method) << std::endl;
     }
@@ -220,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     else if(PARAM.inp.esolver_type!="tddft")//initialize DMR from WFN history if required
     {
-        if constexpr (std::is_same<TK, double>::value)
+        if (std::is_same<TK, double>::value)
         {
             if (this->wf_history_lcao_ != nullptr)
             {

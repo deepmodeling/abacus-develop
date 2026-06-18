@@ -72,9 +72,9 @@ class WfHistoryLCAO
      * complex WFN snapshots, per-k S(k), and phase/convention handling, and should be
      * added in a separate path instead of silently reusing this helper.
      */
-    WfExtrapApplyResult try_use_prev_wf_gamma(const double* current_overlap,
+    WfExtrapApplyResult try_use_prev_wf_gamma(const TK* current_overlap,
                                               const Parallel_Orbitals& pv,
-                                              psi::Psi<double>& psi,
+                                              psi::Psi<TK>& psi,
                                               const ModuleBase::matrix& wg_now,
                                               double pivot_threshold = 1.0e-14,
                                               double check_tolerance = 1.0e-8);
