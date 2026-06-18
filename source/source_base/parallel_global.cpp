@@ -26,23 +26,6 @@ int mpi_number = 0;
 int omp_number = 0;
 } // namespace Parallel_Global
 
-void Parallel_Global::myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr)
-{
-    for (int i = 0; i < *len; i++)
-    {
-        //		(*inout).real()=(*inout).real()+(*in).real();
-        //		(*inout).imag()=(*inout).imag()+(*in).imag();
-
-        // mohan updat 2011-09-21
-        (*inout) = std::complex<double>((*inout).real() + (*in).real(), (*inout).imag() + (*in).imag());
-
-        in++;
-        inout++;
-    }
-    return;
-}
-#endif
-
 void Parallel_Global::split_diag_world(const int& diag_np,
                                        const int& nproc,
                                        const int& my_rank,
