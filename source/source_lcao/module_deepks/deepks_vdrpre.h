@@ -35,6 +35,7 @@ void prepare_phialpha_iRmat(const int nlocal,
                             const std::vector<hamilt::HContainer<double>*> phialpha,
                             const UnitCell& ucell,
                             const LCAO_Orbitals& orb,
+                            const Parallel_Orbitals& pv,
                             const Grid_Driver& GridD,
                             torch::Tensor& overlap,
                             torch::Tensor& iRmat);
