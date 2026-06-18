@@ -81,7 +81,7 @@ void Driver::driver_run()
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp);
+        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
     }
     else if (cal == "get_s")
     {

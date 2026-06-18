@@ -7,15 +7,11 @@
 #include "source_base/matrix.h"
 #include "source_lcao/hamilt_lcao.h"
 
-#include <memory>
-
 template <typename TK, typename TR>
 class LCAO_Deepks_Interface
 {
   public:
-    /// @brief Constructor for LCAO_Deepks_Interface
-    /// @param ld_in
-    LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in);
+    LCAO_Deepks_Interface(LCAO_Deepks<TK>* ld_in);
     /// @brief output deepks-related labels, descriptors and energy corrections
     /// @param[in] etot
     /// @param[in] nks
@@ -59,7 +55,7 @@ class LCAO_Deepks_Interface
     std::string get_filename(const std::string& file_type, const int& label_type, const int& iter);
 
   private:
-    std::shared_ptr<LCAO_Deepks<TK>> ld;
+    LCAO_Deepks<TK>* ld;
 };
 
 #endif

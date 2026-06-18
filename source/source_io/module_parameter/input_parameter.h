@@ -599,11 +599,16 @@ struct Input_para
     double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
     int nsc = 100;                  ///< maximum number of inner lambda loop
     int nsc_min = 2;                ///< minimum number of inner lambda loop
-    int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    bool sc_direction_only = false; ///< only optimize the direction of magnetization
+    // linear_scan parameters
+    double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)
+    double sc_scan_lambda_end = 1.0;    ///< end value for lambda scan (eV/uB)
+    int sc_scan_steps = 20;             ///< number of steps in lambda scan
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================

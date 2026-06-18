@@ -1,5 +1,6 @@
 #include "td_info.h"
 
+#include "source_base/libm/libm.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -20,7 +21,6 @@ std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
 
 TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
-    this->ucell = ucell_in;
     if (init_vecpot_file && istep == -1)
     {
         this->read_cart_At();
@@ -41,7 +41,7 @@ TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCA
     this->istep += estep_shift;
     if(out_current==2||elecstate::H_TDDFT_pw::stype == 2)
     {
-        r_calculator.init(*ucell, pv, orb);
+        r_calculator.init(*ucell_in, pv, orb);
     }
     return;
 }
@@ -108,6 +108,19 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
     if (out_vecpot == true)
     {
         this->output_cart_At(PARAM.globalv.global_out_dir);
+    }
+    // update hybrid gauge phase
+    if(elecstate::H_TDDFT_pw::stype == 2)
+    {
+        for(const auto& phase_pair : phase_hybrid)
+        {
+            const ModuleBase::Vector3<int>& r_index = phase_pair.first;
+            ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
+            const double arg_td = cart_At * dR * lat0;
+            double sinp, cosp;
+            ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
+            phase_hybrid[r_index] = std::complex<double>(cosp, sinp);
+        }
     }
 }
 
@@ -184,7 +197,30 @@ void TD_info::out_restart_info(const int nstep,
 
     return;
 }
+template <typename TR>
+void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HContainer<TR>* hR)
+{
+    this->a1 = ucell.a1;
+    this->a2 = ucell.a2;
+    this->a3 = ucell.a3;
+    this->lat0 = ucell.lat0;
+    for (int i = 0; i < hR->size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<TR>& tmp = hR->get_atom_pair(i);
+        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        {
+            const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
+            if(phase_hybrid.count(r_index))continue;
 
+
+            ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
+            const double arg_td = cart_At * dR * lat0;
+            double sinp, cosp;
+            ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
+            phase_hybrid[r_index] = std::complex<double>(cosp, sinp);
+        }
+    }
+}
 void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
                                           const Parallel_Orbitals* paraV)
 {
@@ -230,3 +266,9 @@ void TD_info::destroy_HS_R_td_sparse(void)
     HR_sparse_td_vel[0].swap(empty_HR_sparse_td_vel_up);
     HR_sparse_td_vel[1].swap(empty_HR_sparse_td_vel_down);
 }
+
+
+template
+void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell& ucell, const hamilt::HContainer<std::complex<double>>* hR);
+template
+void TD_info::initialize_phase_hybrid<double>(const UnitCell& ucell, const hamilt::HContainer<double>* hR);

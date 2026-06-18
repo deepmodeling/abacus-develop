@@ -9,6 +9,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -405,7 +406,27 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
     // 2) run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    bool skip_solve = run_deltaspin_lambda_loop_lcao<TK>(iter - 1, this->drho, PARAM.inp);
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        if (PARAM.inp.sc_lambda_strategy == "linear_scan")
+        {
+            sc.run_lambda_linear_scan(iter - 1);
+            skip_solve = true;
+        }
+        else if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            sc.run_lambda_loop(iter - 1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if (sc.mag_converged())
+        {
+            sc.run_lambda_loop(iter - 1);
+            skip_solve = true;
+        }
+    }
 
     // 3) run Hsolver
     if (!skip_solve)
@@ -413,6 +434,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
+    }
+    else
+    {
+        // Lambda loop updated the density matrix (DM) but not the real-space charge density.
+        // HSolver was skipped, so we need to sync rho from DM manually.
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
     }
 
     // 4) EXX

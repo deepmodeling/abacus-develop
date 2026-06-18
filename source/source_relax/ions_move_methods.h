@@ -1,12 +1,15 @@
 #ifndef IONS_MOVE_METHODS_H
 #define IONS_MOVE_METHODS_H
 
+#include <fstream>
+#include <iostream>
+#include <vector>
 #include "ions_move_basic.h"
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
-#include "bfgs.h"
-#include "lbfgs.h"
+#include "ions_move_bfgs2.h"
+#include "ions_move_lbfgs.h"
 
 class Ions_Move_Methods
 {
@@ -14,21 +17,23 @@ class Ions_Move_Methods
     Ions_Move_Methods();
     ~Ions_Move_Methods();
 
-    void allocate(const int &natom);
-    // void cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot);
+    void allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1);
     void cal_movement(const int &istep,
                       const int &force_step,
                       const ModuleBase::matrix &f,
                       const double &etot,
-                      UnitCell &ucell);
+                      UnitCell &ucell,
+                      std::ofstream& ofs,
+                      std::vector<std::string>& relax_method);
 
     bool get_converged() const
     {
-        return Ions_Move_Basic::converged;
+        return converged_;
     }
+
     double get_ediff() const
     {
-        return Ions_Move_Basic::ediff;
+        return etot_info_[0] - etot_info_[1];
     }
     double get_largest_grad() const
     {
@@ -38,16 +43,19 @@ class Ions_Move_Methods
     {
         return Ions_Move_Basic::trust_radius;
     }
-    double get_update_iter() const
+    int get_update_iter() const
     {
-        return Ions_Move_Basic::update_iter;
+        return update_iter_;
     }
 
   private:
     Ions_Move_BFGS bfgs;
     Ions_Move_CG cg;
     Ions_Move_SD sd;
-    BFGS bfgs_trad;
-    LBFGS lbfgs;
+    Ions_Move_BFGS2 bfgs_trad;
+    Ions_Move_LBFGS lbfgs;
+    bool converged_ = false;
+    int update_iter_ = 0;
+    std::vector<double> etot_info_{2, 0.0}; // [etot, etot_p]
 };
 #endif
