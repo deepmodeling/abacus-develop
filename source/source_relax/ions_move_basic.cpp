@@ -209,7 +209,7 @@ void Ions_Move_Basic::terminate(const bool converged, const int update_iter, con
     return;
 }
 
-void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement, const int istep, std::ofstream& ofs, std::vector<double>& etot_info)
+void Ions_Move_Basic::setup_etot(const double &energy_in, const int istep, std::vector<double>& etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)
@@ -224,10 +224,6 @@ void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement, 
     {
         etot_info[1] = etot_info[0];
         etot_info[0] = energy_in;
-        if (etot_info[1] > etot_info[0])
-        {
-            etot_info[1] = etot_info[0];
-        }
     }
 }
 

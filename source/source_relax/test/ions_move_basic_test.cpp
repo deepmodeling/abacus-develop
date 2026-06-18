@@ -265,78 +265,17 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
 }
 
-// Test the setup_etot() function case 1
-TEST_F(IonsMoveBasicTest, SetupEtotCase1)
-{
-    // Initialize data
-    const int istep = 1;
-    std::vector<double> etot_info = {2.0, 1.0, 0.0};
-    double energy_in = 3.0;
-    bool judgement = true;
-
-    // Call the function being tested
-    std::ofstream ofs("/dev/null");
-    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
-    ofs.close();
-
-    // Check the results
-    EXPECT_DOUBLE_EQ(etot_info[1], 3.0);
-    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
-    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 0.0);
-}
-
-// Test the setup_etot() function case 2
-TEST_F(IonsMoveBasicTest, SetupEtotCase2)
-{
-    // Initialize data
-    const int istep = 2;
-    std::vector<double> etot_info = {2.0, 4.0};
-    double energy_in = 3.0;
-    bool judgement = true;
-
-    // Call the function being tested
-    std::ofstream ofs("/dev/null");
-    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
-    ofs.close();
-
-    // Check the results
-    EXPECT_DOUBLE_EQ(etot_info[1], 2.0);
-    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
-    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 1.0);
-}
-
-// Test the setup_etot() function case 3
-TEST_F(IonsMoveBasicTest, SetupEtotCase3)
+// Test the setup_etot() function
+TEST_F(IonsMoveBasicTest, SetupEtot)
 {
     // Initialize data
     const int istep = 2;
     std::vector<double> etot_info = {2.0, 1.0};
     double energy_in = 3.0;
-    bool judgement = true;
 
     // Call the function being tested
     std::ofstream ofs("/dev/null");
-    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
-    ofs.close();
-
-    // Check the results
-    EXPECT_DOUBLE_EQ(etot_info[1], 2.0);
-    EXPECT_DOUBLE_EQ(etot_info[0], 3.0);
-    EXPECT_DOUBLE_EQ(etot_info[0] - etot_info[1], 1.0);
-}
-
-// Test the setup_etot() function case 4
-TEST_F(IonsMoveBasicTest, SetupEtotCase4)
-{
-    // Initialize data
-    const int istep = 2;
-    std::vector<double> etot_info = {2.0, 1.0};
-    double energy_in = 3.0;
-    bool judgement = false;
-
-    // Call the function being tested
-    std::ofstream ofs("/dev/null");
-    Ions_Move_Basic::setup_etot(energy_in, judgement, istep, ofs, etot_info);
+    Ions_Move_Basic::setup_etot(energy_in, istep, etot_info);
     ofs.close();
 
     // Check the results

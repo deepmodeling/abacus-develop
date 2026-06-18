@@ -77,7 +77,7 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
         ModuleBase::matrix stress(stress_in);
         Lattice_Change_Basic::setup_gradient(ucell, lat.data(), grad.data(), stress);
-        Lattice_Change_Basic::setup_etot(etot_in, 0, etot_info);
+        Lattice_Change_Basic::setup_etot(etot_in, etot_info);
 
         bool converged = false;
         if (flag == 0)
