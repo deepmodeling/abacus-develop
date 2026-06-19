@@ -468,10 +468,23 @@ TEST_F(HContainerTest, atompair_funcs)
         for(int iap = 0;iap<HR.size_atom_pairs();++iap)
         {
             hamilt::AtomPair<std::complex<double>>& tmp = HR.get_atom_pair(iap);
-            // row major case
-            tmp.add_to_matrix(&hk_data2[0], 4, std::complex<double>(1.0, 0.5), 0);
-            // colomn major case
-            tmp.add_to_matrix(&hk_data3[0], 4, std::complex<double>(1.0, 0.5), 1);
+            // Find the R_index that matches the current R
+            int r_index = -1;
+            for(int j = 0; j < tmp.get_R_size(); ++j)
+            {
+                if(tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
+                {
+                    r_index = j;
+                    break;
+                }
+            }
+            if(r_index >= 0)
+            {
+                // row major case - use thread-safe version with explicit R_index
+                tmp.add_to_matrix(r_index, &hk_data2[0], 4, std::complex<double>(1.0, 0.5), 0);
+                // colomn major case
+                tmp.add_to_matrix(r_index, &hk_data3[0], 4, std::complex<double>(1.0, 0.5), 1);
+            }
         }
     }
     HR.unfix_R();
@@ -500,7 +513,21 @@ TEST_F(HContainerTest, atompair_funcs)
         for(int iap = 0;iap<HR.size_atom_pairs();++iap)
         {
             auto tmp = HR.get_atom_pair(iap);
-            tmp.add_to_array(ptr1, std::complex<double>(1.0, 0.0));
+            // Find the R_index that matches the current R
+            int r_index = -1;
+            for(int j = 0; j < tmp.get_R_size(); ++j)
+            {
+                if(tmp.get_R_index(j) == ModuleBase::Vector3<int>(rx, ry, rz))
+                {
+                    r_index = j;
+                    break;
+                }
+            }
+            if(r_index >= 0)
+            {
+                // Use thread-safe version with explicit R_index
+                tmp.add_to_array(r_index, ptr1, std::complex<double>(1.0, 0.0));
+            }
             ptr1 += tmp.get_size();
         }
     }
