@@ -17,6 +17,17 @@ if (ENABLE_MPI)
             ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
+    TARGET MODULE_HSOLVER_ppcg_perf
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_ppcg_perf_test.cpp
+            ../diago_ppcg.cpp ../diago_bpcg.cpp ../diago_cg.cpp ../diago_david.cpp
+            ../para_linear_transform.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+            ../kernels/hegvd_op.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+  AddTest(
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  ${math_libs} base psi device container
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
