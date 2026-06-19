@@ -4,7 +4,6 @@
 
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_hsolver/diag_comm_info.h"
 
 namespace mtfunc
 {

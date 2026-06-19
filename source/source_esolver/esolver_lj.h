@@ -2,6 +2,7 @@
 #define ESOLVER_LJ_H
 
 #include "esolver.h"
+#include "source_cell/module_neighlist/unitcell_plus.h"
 
 namespace ModuleESolver
 {
@@ -13,6 +14,8 @@ namespace ModuleESolver
         {
             classname = "ESolver_LJ";
         }
+
+        UnitCellPlus change_from_ucell_to_ucell_plus(const UnitCell& ucell);
 
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 

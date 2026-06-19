@@ -81,7 +81,7 @@ void Driver::driver_run()
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp);
+        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
     }
     else if (cal == "get_s")
     {
@@ -124,13 +124,6 @@ void Driver::init_hardware()
 #endif
 
 #ifdef __DSP
-    if (GlobalV::NPROC > PARAM.inp.kpar && GlobalV::NPROC > PARAM.globalv.kpar_lcao)
-    {
-        ModuleBase::WARNING_QUIT(
-            "Driver::init_hardware",
-            "Number of processors must be equal to KPAR for DSP hardware initialization."
-        );
-    }
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
     mtfunc::dspInitHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
@@ -150,6 +143,6 @@ void Driver::finalize_hardware()
 
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
+    mtfunc::dspDestoryHandle(GlobalV::MY_RANK % PARAM.inp.dsp_count);
 #endif
 }

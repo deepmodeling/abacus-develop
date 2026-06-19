@@ -3,9 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 
 namespace elecstate
 {
@@ -16,7 +14,7 @@ bool H_TDDFT_pw::is_initialized = false;
 double H_TDDFT_pw::amp;
 
 // Used for calculating electric field force on ions, summing over directions
-vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
+std::vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
 
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 

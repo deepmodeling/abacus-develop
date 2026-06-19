@@ -2,6 +2,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "stress_func.h"
+#include "source_base/parallel_reduce.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>

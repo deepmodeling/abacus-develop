@@ -128,6 +128,13 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     {
         p_chgmix->init_mixing();
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+        if (inp.dft_plus_u && inp.mixing_dftu)
+        {
+            // enable mixing_dftu for DFT+U occupation mixing
+            dftu.enable_mixing();
+            // allocate memory for uom_mdata
+            p_chgmix->allocate_mixing_uom(dftu.get_size_eff_pot_pw());
+        }
     }
 
     // For mixing restart
@@ -158,9 +165,9 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 				{
 					dftu.uramping_update(); // update U by uramping if uramping > 0.01
 					std::cout << " U-Ramping! Current U = ";
-					for (int i = 0; i < dftu.U0.size(); i++)
+					for (int i = 0; i < dftu.get_num_u_types(); i++)
 					{
-						std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+						std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
 					}
 					std::cout << " eV " << std::endl;
 				}
@@ -184,13 +191,18 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mix_reset(); // init mixing
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         p_chgmix->mixing_restart_count = 0;
+        // enable mixing_dftu for DFT+U occupation mixing
+        if (inp.dft_plus_u && inp.mixing_dftu)
+        {
+            dftu.enable_mixing();
+        }
         // this output will be removed once the feeature is stable
         if (dftu.uramping > 0.01)
         {
             std::cout << " U-Ramping! Current U = ";
-            for (int i = 0; i < dftu.U0.size(); i++)
+            for (int i = 0; i < dftu.get_num_u_types(); i++)
             {
-                std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
             }
             std::cout << " eV " << std::endl;
         }
@@ -207,9 +219,9 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
             if (dftu.uramping > 0.01)
             {
                 std::cout << " U-Ramping! Current U = ";
-                for (int i = 0; i < dftu.U0.size(); i++)
+                for (int i = 0; i < dftu.get_num_u_types(); i++)
                 {
-                    std::cout << dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                    std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
                 }
                 std::cout << " eV " << std::endl;
             }

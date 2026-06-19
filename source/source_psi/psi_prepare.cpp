@@ -1,8 +1,9 @@
 #include "psi_prepare.h"
 
 #include "source_base/macros.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_global.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"

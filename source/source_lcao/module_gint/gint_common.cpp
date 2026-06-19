@@ -113,10 +113,10 @@ void compose_hr_gint(HContainer<T>& hr_gint)
 }
 
 template <typename T>
-void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
+void hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
 {
-    ModuleBase::TITLE("Gint", "transfer_hr_gint_to_hR");
-    ModuleBase::timer::start("Gint", "transfer_hr_gint_to_hR");
+    ModuleBase::TITLE("Gint", "hr_gint_to_hR");
+    ModuleBase::timer::start("Gint", "hr_gint_to_hR");
 #ifdef __MPI
     int size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -131,7 +131,7 @@ void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR)
 #else
     hR.add(hr_gint);
 #endif
-    ModuleBase::timer::end("Gint", "transfer_hr_gint_to_hR");
+    ModuleBase::timer::end("Gint", "hr_gint_to_hR");
 }
 
 
@@ -258,7 +258,7 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
 
 
 
-// C++11-compatible helpers for transfer_dm_2d_to_gint:
+// C++11-compatible helpers for dm_2d_to_gint:
 // SFINAE (enable_if) to select same-type vs cross-type code paths at compile time.
 
 // Same-type path (TGint == TDM): transfer directly
@@ -294,13 +294,13 @@ gather_dm(const HContainer<TDM>& dm_src, HContainer<TGint>& dm_dst,
 // gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
 template<typename TGint, typename TDM>
-void transfer_dm_2d_to_gint(
+void dm_2d_to_gint(
     const GintInfo& gint_info,
     const std::vector<HContainer<TDM>*>& dm,
     std::vector<HContainer<TGint>>& dm_gint)
 {
-    ModuleBase::TITLE("Gint", "transfer_dm_2d_to_gint");
-    ModuleBase::timer::start("Gint", "transfer_dm_2d_to_gint");
+    ModuleBase::TITLE("Gint", "dm_2d_to_gint");
+    ModuleBase::timer::start("Gint", "dm_2d_to_gint");
 
     if (PARAM.inp.nspin != 4)
     {
@@ -368,7 +368,7 @@ void transfer_dm_2d_to_gint(
         delete dm2d_tmp;
 #endif
     }
-    ModuleBase::timer::end("Gint", "transfer_dm_2d_to_gint");
+    ModuleBase::timer::end("Gint", "dm_2d_to_gint");
 }
 
 int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -480,10 +480,10 @@ void wfc_2d_to_gint(const T* wfc_2d,
 
 template void compose_hr_gint(HContainer<double>& hr_gint);
 template void compose_hr_gint(HContainer<float>& hr_gint);
-template void transfer_hr_gint_to_hR(
+template void hr_gint_to_hR(
     const HContainer<double>& hr_gint,
     HContainer<double>& hR);
-template void transfer_hr_gint_to_hR(
+template void hr_gint_to_hR(
     const HContainer<std::complex<double>>& hr_gint,
     HContainer<std::complex<double>>& hR);
 template void cast_hcontainer_values(
@@ -494,15 +494,15 @@ template void cast_hcontainer_values(
     HContainer<double>& dst);
 template HContainer<float> make_cast_hcontainer(const HContainer<double>& src);
 template HContainer<double> make_cast_hcontainer(const HContainer<float>& src);
-template void transfer_dm_2d_to_gint(
+template void dm_2d_to_gint(
     const GintInfo& gint_info,
     const std::vector<HContainer<double>*>& dm,
     std::vector<HContainer<double>>& dm_gint);
-template void transfer_dm_2d_to_gint(
+template void dm_2d_to_gint(
     const GintInfo& gint_info,
     const std::vector<HContainer<double>*>& dm,
     std::vector<HContainer<float>>& dm_gint);
-template void transfer_dm_2d_to_gint(
+template void dm_2d_to_gint(
     const GintInfo& gint_info,
     const std::vector<HContainer<std::complex<double>>*>& dm,
     std::vector<HContainer<std::complex<double>>>& dm_gint);

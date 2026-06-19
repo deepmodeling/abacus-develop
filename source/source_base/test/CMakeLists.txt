@@ -18,21 +18,21 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_tool_quit
   LIBS parameter 
-  SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp  
+  SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp  
 )
 AddTest(
   TARGET MODULE_BASE_tool_check
   LIBS parameter 
-  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
+  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp 
 )
 AddTest(
   TARGET MODULE_BASE_memory
-  SOURCES memory_test.cpp ../memory.cpp ../parallel_reduce.cpp
+  SOURCES memory_test.cpp ../memory_recorder.cpp ../parallel_reduce.cpp
 )
 ADDTest(
   TARGET MODULE_BASE_global_function
   LIBS parameter ${math_libs}
-  SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory_recorder.cpp ../timer.cpp
 )
 AddTest(
   TARGET MODULE_BASE_vector3
@@ -62,7 +62,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_complexarray
   LIBS parameter 
-  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp
 )
 AddTest(
   TARGET MODULE_BASE_complexmatrix
@@ -77,7 +77,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter 
-  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp ../memory.cpp ../global_variable.cpp
+  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp ../memory_recorder.cpp ../global_variable.cpp
 )
 AddTest(
   TARGET MODULE_BASE_ylmreal
@@ -157,19 +157,19 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_ylm
   LIBS parameter 
-  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
+  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_global_file
   LIBS parameter 
-  SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp
+  SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory_recorder.cpp ../timer.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_tool_title
   LIBS parameter 
-  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp  ../tool_quit.cpp  ../global_file.cpp ../memory.cpp
+  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp  ../tool_quit.cpp  ../global_file.cpp ../memory_recorder.cpp
 )
 
 AddTest(

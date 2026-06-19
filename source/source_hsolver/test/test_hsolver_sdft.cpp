@@ -280,7 +280,6 @@ class TestHSolverPW_SDFT : public ::testing::Test
             "scf",
             "pw",
             "cg",
-            false,
             PARAM.sys.use_uspp,
             PARAM.input.nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,

@@ -2,10 +2,7 @@
 #define DEEPKS_BASIC_H
 
 #ifdef __MLALGO
-#include "LCAO_deepks_io.h"
 #include "deepks_param.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/tool_title.h"
 #include "source_cell/unitcell.h"
 
 #include <torch/script.h>
@@ -40,11 +37,14 @@ void cal_gevdm(const int nat,
 /// calculate partial of energy correction to descriptors
 void cal_edelta_gedm(const int nat,
                      const DeePKS_Param& deepks_param,
+                     torch::jit::script::Module& model_deepks,
+                     double& E_delta,
                      const std::vector<torch::Tensor>& descriptor,
                      const std::vector<torch::Tensor>& pdm,
-                     torch::jit::script::Module& model_deepks,
                      double** gedm,
-                     double& E_delta);
+                     const std::vector<torch::Tensor>& descriptor_mag = {},
+                     const std::vector<torch::Tensor>& pdm_mag = {},
+                     double** gedm_mag = nullptr);
 void check_gedm(const DeePKS_Param& deepks_param, double** gedm);
 void cal_edelta_gedm_equiv(const int nat,
                            const DeePKS_Param& deepks_param,

@@ -19,7 +19,7 @@ namespace ModuleGint
 class PhiOperator
 {
     public:
-    enum class Triangular_Matrix{Upper, Lower, Full};
+    enum class TriPart{Upper, Lower, Full};
 
     // constructor
     PhiOperator()=default;
@@ -48,12 +48,17 @@ class PhiOperator
         double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
     // phi_dm(ir,iwt_2) = \sum_{iwt_1} phi(ir,iwt_1) * dm(iwt_1,iwt_2)
-    template<typename T>
+    // The phi_dm output is always double regardless of Tin: this keeps the
+    // downstream phi_dot_phi reading a uniform fp64 right-hand side. When
+    // Tin=float the GEMM still runs in fp32 (K is small ~10, so per-call
+    // accumulation in fp32 is fine); only the final write into phi_dm casts
+    // to double.
+    template<typename Tin>
     void phi_mul_dm(
-        const T*const phi,                  // phi(ir,iwt)
-        const HContainer<T>& dm,            // dm(iwt_1,iwt_2)
+        const Tin*const phi,                // phi(ir,iwt)
+        const HContainer<Tin>& dm,          // dm(iwt_1,iwt_2)
         const bool is_symm,
-        T*const phi_dm) const;              // phi_dm(ir,iwt)
+        double*const phi_dm) const;         // phi_dm(ir,iwt)
 
     // result(ir,iwt) = phi(ir,iwt) * vl(ir)
     template<typename T>
@@ -64,20 +69,25 @@ class PhiOperator
         T*const result) const;              // result(ir,iwt)
 
     // hr(iwt_i,iwt_j) = \sum_{ir} phi_i(ir,iwt_i) * phi_i(ir,iwt_j)
-    // this is a thread-safe function
-    template<typename T>
+    // this is a thread-safe function.
+    // The accumulator hr is always double: when Tin=float we want fp32 multiplies
+    // but fp64 accumulation across many biggrids to avoid catastrophic precision loss.
+    template<typename Tin>
     void phi_mul_phi(
-        const T*const phi_i,                // phi_i(ir,iwt)
-        const T*const phi_j,                // phi_j(ir,iwt)
-        HContainer<T>& hr,                  // hr(iwt_i,iwt_j)
-        const Triangular_Matrix triangular_matrix) const;
-
-    // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
-    template<typename Tin, typename Tout = Tin>
-    void phi_dot_phi(
         const Tin*const phi_i,              // phi_i(ir,iwt)
         const Tin*const phi_j,              // phi_j(ir,iwt)
-        Tout*const rho) const;              // rho(ir)
+        HContainer<double>& hr,             // hr(iwt_i,iwt_j)
+        const TriPart part) const;
+
+    // rho(ir) = \sum_{iwt} \phi_i(ir,iwt) * \phi_j(ir,iwt)
+    // phi_j is always double-typed (it is the output of phi_mul_dm, which now
+    // accumulates into a double buffer regardless of Tin). The inner dot
+    // product is accumulated in double too: fp32 phi_i + fp64 phi_j → fp64.
+    template<typename Tin>
+    void phi_dot_phi(
+        const Tin*const phi_i,              // phi_i(ir,iwt)
+        const double*const phi_j,           // phi_j(ir,iwt)
+        double*const rho) const;            // rho(ir)
 
     void phi_dot_dphi(
         const double* phi,
@@ -112,15 +122,15 @@ class PhiOperator
         double* rho) const;
 
     private:
-    void init_atom_pair_start_end_idx_();
+    void init_atom_pair_idx_();
 
     // get the index of the first and the last meshgrid that both atom a and atom b affect
-    // Note that atom_pair_start_end_idx_ only stores the cases where a <= b, so this function is needed to retrieve the value
+    // Note that atom_pair_range_ only stores the cases where a <= b, so this function is needed to retrieve the value
     const std::pair<int, int>& get_atom_pair_start_end_idx_(int a, int b) const
     {
         int x = std::min(a, b);
         int y = std::abs(a - b);
-        return atom_pair_start_end_idx_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
+        return atom_pair_range_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
     }
 
     bool is_atom_on_mgrid(int atom_idx, int mgrid_idx) const
@@ -137,14 +147,14 @@ class PhiOperator
     int cols_;
 
     // the local index of the meshgrids
-    std::vector<int> meshgrids_local_idx_;
+    std::vector<int> mgrid_lidx_;
 
     // the big grid that the phi matrix is associated with
     std::shared_ptr<const BigGrid> biggrid_;
 
     // the relative coordinates of the atoms and the meshgrids
-    // atoms_relative_coords_[i][j] is the relative coordinate of the jth meshgrid and the ith atom
-    std::vector<std::vector<Vec3d>> atoms_relative_coords_;
+    // atom_rcoords_[i][j] is the relative coordinate of the jth meshgrid and the ith atom
+    std::vector<std::vector<Vec3d>> atom_rcoords_;
 
     // record whether the atom affects the meshgrid
     // is_atom_on_mgrid_[i * rows_ + j] = true if the ith atom affects jhe ith meshgrid, otherwise false
@@ -159,7 +169,7 @@ class PhiOperator
     std::vector<int> atoms_phi_len_;
 
     // This data structure is used to store the index of the first and last meshgrid affected by each atom pair
-    std::vector<std::pair<int, int>> atom_pair_start_end_idx_;
+    std::vector<std::pair<int, int>> atom_pair_range_;
 };
 
 }

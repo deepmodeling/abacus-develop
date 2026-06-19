@@ -52,7 +52,7 @@ case "$with_libri" in
         # url construction rules:
         # - Branch names (master, main, develop) without v prefix
         # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${libri_ver}" =~ ^[0-9a-f]{40}$ ]]; then
+        if [[ "${libri_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${libri_ver}"
         else
             url="https://codeload.github.com/abacusmodeling/LibRI/tar.gz/v${libri_ver}"
@@ -61,13 +61,7 @@ case "$with_libri" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                echo "===> Notice: This version of LibRI is downloaded in GitHub Release <==="
-                download_pkg_from_url "${libri_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${libri_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -79,7 +73,7 @@ case "$with_libri" in
             cp -r $dirname/* "${pkg_install_dir}/"
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
-        LIBRI_CFLAGS="-I'${pkg_install_dir}'"
+        LIBRI_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
     __SYSTEM__)
         echo "==================== Finding LIBRI from system paths ===================="
@@ -107,7 +101,7 @@ case "$with_libri" in
         echo "==================== Linking LIBRI to user paths ===================="
         pkg_install_dir="${with_libri}"
         check_dir "${pkg_install_dir}"
-        LIBRI_CFLAGS="-I'${pkg_install_dir}'"
+        LIBRI_CFLAGS="-I'${pkg_install_dir}/include'"
         ;;
 esac
 if [ "$with_libri" != "__DONTUSE__" ]; then
@@ -115,12 +109,11 @@ if [ "$with_libri" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libri"
-export LIBRI_CFLAGS="${LIBRI_CFLAGS}"
 export LIBRI_ROOT="${pkg_install_dir}"
 EOF
+    filter_setup "${BUILDDIR}/setup_libri" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libri"

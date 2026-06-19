@@ -143,7 +143,9 @@ class RadialSet
      */
     virtual void to_numerical_orbital(Numerical_Orbital&,
                                       const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
-                                      const double lcao_dk = 0.01
+                                      const double lcao_dk = 0.01,
+                                      const bool out_element_info = false,
+                                      const bool cal_force = false
                                       ) const;
 
     /**

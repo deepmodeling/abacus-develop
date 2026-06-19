@@ -2,6 +2,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_pw_sdft.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate
 {

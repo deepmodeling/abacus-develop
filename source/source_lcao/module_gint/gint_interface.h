@@ -2,7 +2,11 @@
 #include <vector>
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
-#include "gint_dvlocal.h"
+
+class Parallel_Orbitals;
+class UnitCell;
+class Grid_Driver;
+class LCAO_HS_Arrays;
 
 namespace ModuleGint
 {
@@ -55,7 +59,7 @@ void cal_gint_fvl_meta(
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl);
 
-void cal_dvlocal_R_sparseMatrix(
+void cal_dvlocal_R_sparse(
     const int nspin,
     const int npol,
     const int current_spin,

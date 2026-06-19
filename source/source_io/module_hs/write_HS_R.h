@@ -9,7 +9,6 @@
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
 
 #ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "RI/global/Tensor.h" // for RI::Tensor
 #endif
 

@@ -5,11 +5,14 @@
 #include "norm_psi.h"
 #include "propagator.h"
 #include "solve_propagation.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
-#include "source_esolver/esolver_ks_lcao_tddft.h"             // use gatherMatrix
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/hamilt_lcao.h"
+#include "gather_mat.h"
 #include "upsi.h"
 
 #include <complex>
@@ -24,6 +27,8 @@ void evolve_psi(const int nband,
                 std::complex<double>* psi_k_laststep,
                 std::complex<double>* H_laststep,
                 std::complex<double>* S_laststep,
+                std::complex<double>* P_k,
+                const bool use_td_moving_gauge,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
@@ -86,7 +91,14 @@ void evolve_psi(const int nband,
         /// @brief solve the propagation equation
         /// @input Stmp, Htmp, psi_k_laststep
         /// @output psi_k
+        if (use_td_moving_gauge)
+        {
+            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, P_k, psi_k_laststep, psi_k);
+        }
+        else
+        {
         solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+        }
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

@@ -49,12 +49,8 @@ case "$with_fftw" in
         if verify_checksums "${install_lock_file}"; then
             echo "fftw-${fftw_ver} is already installed, skipping it."
         else
-            if [ -f ${fftw_pkg} ]; then
-                echo "${fftw_pkg} is found"
-            else
-                url="http://www.fftw.org/${fftw_pkg}"
-                download_pkg_from_url "${fftw_sha256}" "${fftw_pkg}" "${url}"
-            fi
+            url="http://www.fftw.org/${fftw_pkg}"
+            retrieve_package "${fftw_sha256}" "${fftw_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -150,7 +146,7 @@ export CP_LIBS="${FFTW_LIBS} \${CP_LIBS}"
 export FFTW_ROOT=${FFTW_ROOT:-${pkg_install_dir}}
 export FFTW3_ROOT=${pkg_install_dir}
 EOF
-    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_fftw" $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

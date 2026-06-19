@@ -2,11 +2,11 @@
 #include "source_base/libm/libm.h"
 namespace module_rt{
 template<typename TR>
-void folding_HR_td(const UnitCell& ucell,
-                const hamilt::HContainer<TR>& hR,
+void folding_HR_td(const hamilt::HContainer<TR>& hR,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const ModuleBase::Vector3<double>& cart_At,
+                const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
                 const int ncol,
                 const int hk_type)
 {
@@ -19,22 +19,14 @@ void folding_HR_td(const UnitCell& ucell,
         for(int ir = 0;ir < tmp.get_R_size(); ++ir )
         {
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
-
-            //new
-            //cal tddft phase for hybrid gauge
-            const int iat1 = tmp.get_atom_i();
-            const int iat2 = tmp.get_atom_j();
-            ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
-            const double arg_td = cart_At * dtau * ucell.lat0;
-            //new
-
             // cal k_phase
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
-            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI + arg_td;
+            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
             double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
+            kphase *= phase_hybrid.at(r_index);
 
             tmp.find_R(r_index);
             tmp.add_to_matrix(hk, ncol, kphase, hk_type);
@@ -79,6 +71,7 @@ void folding_partial_HR_td(const UnitCell& ucell,
                         std::complex<double>* hk,
                         const ModuleBase::Vector3<double>& kvec_d_in,
                         const ModuleBase::Vector3<double>& cart_At,
+                        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
                         const int ix,
                         const int ncol,
                         const int hk_type)
@@ -94,20 +87,14 @@ void folding_partial_HR_td(const UnitCell& ucell,
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
 
             //new
-            //cal tddft phase for mixing gague
-            const int iat1 = tmp.get_atom_i();
-            const int iat2 = tmp.get_atom_j();
-            ModuleBase::Vector3<double> dtau = ucell.cal_dtau(iat1, iat2, r_index);
-            const double arg_td = cart_At * dtau * ucell.lat0;
-
-            //new
             // cal k_phase
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
-            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI + arg_td;
+            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
             double sinp = 0.0, cosp = 0.0;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
+            kphase *= phase_hybrid.at(r_index);
             const ModuleBase::Vector3<double> dR_car = dR * ucell.latvec * ucell.lat0;
 
             tmp.find_R(r_index);
@@ -116,21 +103,21 @@ void folding_partial_HR_td(const UnitCell& ucell,
     }
 }
 template
-void folding_HR_td<double>(const UnitCell& ucell,
-                const hamilt::HContainer<double>& hR,
-                std::complex<double>* hk,
-                const ModuleBase::Vector3<double>& kvec_d_in,
-                const ModuleBase::Vector3<double>& At,
-                const int ncol,
-                const int hk_type);
+void folding_HR_td<double>(const hamilt::HContainer<double>& hR,
+                        std::complex<double>* hk,
+                        const ModuleBase::Vector3<double>& kvec_d_in,
+                        const ModuleBase::Vector3<double>& At,
+                        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+                        const int ncol,
+                        const int hk_type);
 template
-void folding_HR_td<std::complex<double>>(const UnitCell& ucell,
-                const hamilt::HContainer<std::complex<double>>& hR,
-                std::complex<double>* hk,
-                const ModuleBase::Vector3<double>& kvec_d_in,
-                const ModuleBase::Vector3<double>& At,
-                const int ncol,
-                const int hk_type);
+void folding_HR_td<std::complex<double>>(const hamilt::HContainer<std::complex<double>>& hR,
+                                        std::complex<double>* hk,
+                                        const ModuleBase::Vector3<double>& kvec_d_in,
+                                        const ModuleBase::Vector3<double>& At,
+                                        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+                                        const int ncol,
+                                        const int hk_type);
 template
 void folding_partial_HR<std::complex<double>>(const UnitCell& ucell,
                 const hamilt::HContainer<std::complex<double>>& hR,
@@ -153,6 +140,7 @@ void folding_partial_HR_td<std::complex<double>>(const UnitCell& ucell,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const ModuleBase::Vector3<double>& cart_At,
+                const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
                 const int ix,
                 const int ncol,
                 const int hk_type);
@@ -162,6 +150,7 @@ void folding_partial_HR_td<double>(const UnitCell& ucell,
                 std::complex<double>* hk,
                 const ModuleBase::Vector3<double>& kvec_d_in,
                 const ModuleBase::Vector3<double>& cart_At,
+                const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
                 const int ix,
                 const int ncol,
                 const int hk_type);

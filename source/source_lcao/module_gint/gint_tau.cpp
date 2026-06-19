@@ -11,7 +11,7 @@ void Gint_tau::cal_gint()
     ModuleBase::TITLE("Gint", "cal_gint_tau");
     ModuleBase::timer::start("Gint", "cal_gint_tau");
     init_dm_gint_();
-    transfer_dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
+    dm_2d_to_gint(*gint_info_, dm_vec_, dm_gint_vec_);
     cal_tau_();
     ModuleBase::timer::end("Gint", "cal_gint_tau");
 }

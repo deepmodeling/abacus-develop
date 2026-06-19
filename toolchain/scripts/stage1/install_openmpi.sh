@@ -52,11 +52,7 @@ case "${with_openmpi}" in
         if verify_checksums "${install_lock_file}"; then
             echo "openmpi-${openmpi_ver} is already installed, skipping it."
         else
-            if [ -f ${openmpi_pkg} ]; then
-                echo "${openmpi_pkg} is found"
-            else
-                download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
-            fi
+            retrieve_package "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -211,7 +207,7 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         fi
-        cat "${BUILDDIR}/setup_openmpi" >> ${SETUPFILE}
+        filter_setup "${BUILDDIR}/setup_openmpi" ${SETUPFILE}
     fi
 
     # ----------------------------------------------------------------------

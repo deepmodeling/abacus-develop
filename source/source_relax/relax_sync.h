@@ -7,6 +7,7 @@
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
+#include <fstream>
 
 class Relax
 {
@@ -20,7 +21,8 @@ class Relax
     bool relax_step(UnitCell& ucell,
                     const ModuleBase::matrix& force,
                     const ModuleBase::matrix& stress,
-                    const double etot_in);
+                    const double etot_in,
+                    std::ofstream& ofs_running);
 
   private:
     int istep = 0; // count ionic step
@@ -29,19 +31,19 @@ class Relax
     // constraints are considered here
     // also check if relaxation has converged
     // based on threshold in force & stress
-    bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+    bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, std::ofstream& ofs_running);
 
     // check whether previous line search is done
     bool check_line_search();
 
     // if line search not done : perform line search
-    void perform_line_search();
+    void perform_line_search(std::ofstream& ofs_running);
 
     // if line search done: find new search direction and make a trial move
-    void new_direction();
+    void new_direction(std::ofstream& ofs_running);
 
     // move ions and lattice vectors
-    void move_cell_ions(UnitCell& ucell, const bool is_new_dir);
+    void move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream& ofs_running);
 
     int nat = 0;         // number of atoms
     bool ltrial = false; // if last step is trial step

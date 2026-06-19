@@ -30,6 +30,23 @@
 #include "../complexmatrix.h"
 #include "../global_function.h"
 
+#include <limits>
+// =========================================================
+// Tolerances for LAPACK/ScaLAPACK eigenvalue routines
+// =========================================================
+// Huawei KML strictly validates input parameters.
+// It rejects abstol=0 and orfac=-1, which are standard
+// defaults in open-source LAPACK to trigger internal logic.
+// We must explicitly pass the mathematically equivalent defaults.
+#ifdef __KML
+    constexpr double LAPACK_ABSTOL = 2*std::numeric_limits<double>::min();          // 2*PDLAMCH('S')
+    constexpr double LAPACK_ORFAC  = 2.0e-12;                                       // Default value
+#else
+    constexpr double LAPACK_ABSTOL = 0.0;
+    constexpr double LAPACK_ORFAC  = -1.0;
+#endif
+// =========================================================
+
 //Naming convention of lapack subroutines : ammxxx, where
 //"a" specifies the data type:
 // - s stands for float

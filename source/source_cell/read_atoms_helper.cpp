@@ -123,7 +123,7 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
                 for (int ia = 0; ia < ucell.atoms[it].na; ia++)
                 {
                     ucell.atoms[it].mag[ia] = 1.0;
-                    ucell.atoms[it].m_loc_[ia].x = ucell.atoms[it].mag[ia];
+                    ucell.atoms[it].m_loc_[ia].z = ucell.atoms[it].mag[ia];
                     ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0);
                 }
             }

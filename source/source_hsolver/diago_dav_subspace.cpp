@@ -4,6 +4,7 @@
 
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/kernels/dsp/dsp_connector.h"
 // #include "source_base/module_container/ATen/kernels/lapack.h"
@@ -18,6 +19,7 @@
 
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/parallel_comm.h"
 #endif
 
 using namespace hsolver;
@@ -425,17 +427,54 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                                 nbase,
                                 notconv,
                                 psi_norm);
+
+        // Check for zero norms (GPU path: copy norms from device to host)
+        Real* psi_norm_host = nullptr;
+        resmem_real_h_op()(psi_norm_host, notconv);
+        syncmem_var_d2h_op()(psi_norm_host, psi_norm, notconv);
+        for (int i = 0; i < notconv; i++)
+        {
+            if (psi_norm_host[i] <= 1.0e-12)
+            {
+                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
+                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
+                delmem_real_h_op()(psi_norm_host);
+                delmem_real_op()(psi_norm);
+                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+            }
+        }
+        delmem_real_h_op()(psi_norm_host);
         delmem_real_op()(psi_norm);
     }
     else
 #endif
     {
         Real* psi_norm = nullptr;
+        resmem_real_h_op()(psi_norm, notconv);
+        setmem_real_h_op()(psi_norm, 0.0, notconv);
+
         normalize_op<T, Device>()(this->dim,
                                 psi_iter,
                                 nbase,
                                 notconv,
                                 psi_norm);
+
+        // Check for zero norms (CPU path)
+        for (int i = 0; i < notconv; i++)
+        {
+            if (psi_norm[i] <= 1.0e-12)
+            {
+                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
+                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
+                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
+                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
+                delmem_real_h_op()(psi_norm);
+                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+            }
+        }
+        delmem_real_h_op()(psi_norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]
@@ -545,62 +584,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         // Only on dsp hardware need an extra space to reduce data
         mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
-        auto* swap = new T[notconv * this->nbase_x];
-
-        syncmem_complex_op()(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-        if (std::is_same<T, double>::value)
-        {
-            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-            Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
-        }
-        else
-        {
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-
-            syncmem_complex_op()(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-        }
-        delete[] swap;
+        assert(this->diag_comm.comm == POOL_WORLD);
+        Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+        Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
 #endif
     }
 #endif

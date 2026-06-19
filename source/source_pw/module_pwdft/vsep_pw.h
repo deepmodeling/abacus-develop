@@ -1,6 +1,7 @@
 #ifndef VSEP_IN_PW
 #define VSEP_IN_PW
 
+#include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/sep_cell.h"

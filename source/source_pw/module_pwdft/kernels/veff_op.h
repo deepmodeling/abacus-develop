@@ -1,6 +1,7 @@
 #ifndef MODULE_HAMILT_VEFF_H
 #define MODULE_HAMILT_VEFF_H
 
+#include "source_base/module_device/types.h"
 #include "source_psi/psi.h"
 #include <complex>
 

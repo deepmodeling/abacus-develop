@@ -1,6 +1,5 @@
 #ifndef PSI_INIT_NAO_RANDOM_H
 #define PSI_INIT_NAO_RANDOM_H
-#include "source_cell/parallel_kpoints.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_init_nao.h"
 

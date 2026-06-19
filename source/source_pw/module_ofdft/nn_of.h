@@ -11,7 +11,8 @@ struct NN_OFImpl:torch::nn::Module{
         int ninpt, 
         int nnode,
         int nlayer,
-        torch::Device device
+        torch::Device device,
+        std::ostream& ofs_running
         );
     ~NN_OFImpl()
     {

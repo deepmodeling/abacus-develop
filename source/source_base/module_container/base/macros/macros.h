@@ -10,7 +10,14 @@
 #include <base/macros/rocm.h>
 #endif
 
-#include <ATen/core/tensor_types.h>
+// NOTE: Previously included <ATen/core/tensor_types.h> which pulled in
+// <base/macros/cuda.h> or <base/macros/rocm.h> transitively.
+// Now only includes <ATen/core/tensor_enums.h> which provides DataType,
+// DeviceType, DataTypeToEnum, DeviceTypeToEnum without GPU dependencies.
+// If you need GetTypeReal, PsiToContainer, ContainerToPsi, etc.,
+// include <ATen/core/tensor_types.h> directly.
+// mohan add 20260605
+#include <ATen/core/tensor_enums.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;      \
