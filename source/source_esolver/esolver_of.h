@@ -63,6 +63,7 @@ class ESolver_OF : public ESolver_FP
     int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                               // flag of TN
     Charge* ptemp_rho_ = nullptr;                 // used in line search
+    double** ptemp_phi_persistent_ = nullptr;     // P0-opt: persistent buffer
     psi::Psi<double>* psi_ = nullptr;             // sqrt(rho)
 
     // ----------------- used for convergence check -------------------

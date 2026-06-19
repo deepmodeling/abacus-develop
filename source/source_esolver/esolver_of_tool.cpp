@@ -109,6 +109,14 @@ void ESolver_OF::allocate_array()
     ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * PARAM.inp.nspin * this->pw_rho->npw);
+
+    // P0-opt: allocate persistent line-search buffer once, reused in optimize()
+    this->ptemp_phi_persistent_ = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        this->ptemp_phi_persistent_[is] = new double[this->pw_rho->nrxx];
+    }
+    ModuleBase::Memory::record("OFDFT::ptemp_phi_persistent_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
 }
 
 /**

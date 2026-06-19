@@ -50,6 +50,16 @@ ESolver_OF::~ESolver_OF()
     delete[] this->task_;
     delete this->ptemp_rho_;
 
+    // P0-opt: cleanup persistent line-search buffer
+    if (this->ptemp_phi_persistent_ != nullptr)
+    {
+        for (int i = 0; i < PARAM.inp.nspin; ++i)
+        {
+            delete[] this->ptemp_phi_persistent_[i];
+        }
+        delete[] this->ptemp_phi_persistent_;
+    }
+
     delete this->kedf_manager_;
 
     delete this->opt_cg_;
@@ -229,6 +239,13 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
             this->pdirect_[is] = new double[this->pw_rho->nrxx];
             this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
+
+            // P0-opt: reallocate persistent line-search buffer on cell change
+            if (this->ptemp_phi_persistent_ != nullptr)
+            {
+                delete[] this->ptemp_phi_persistent_[is];
+                this->ptemp_phi_persistent_[is] = new double[this->pw_rho->nrxx];
+            }
         }
     }
 
@@ -238,32 +255,55 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
+        const int nrxx = this->pw_rho->nrxx;
         if (PARAM.inp.init_chg != "file")
         {
-            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
+            const double rho0 = this->nelec_[is] / ucell.omega;
+            double* rho_is = this->chr.rho[is];
+            double* pphi_is = this->pphi_[is];
+            // P0-1: OpenMP parallel Ï initialization (uniform charge guess)
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+            for (int ibs = 0; ibs < nrxx; ++ibs)
             {
-                // Here we initialize rho to be uniform,
-                // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
-                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
+                rho_is[ibs] = rho0;
+                pphi_is[ibs] = sqrt(rho0);
             }
         }
         else
         {
-            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
+            double* pphi_is = this->pphi_[is];
+            const double* rho_is = this->chr.rho[is];
+            // P0-1: OpenMP parallel Ï initialization (from file charge density)
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+            for (int ibs = 0; ibs < nrxx; ++ibs)
             {
-                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
+                pphi_is[ibs] = sqrt(rho_is[ibs]);
             }
         }
     }
 
+    // P0-1 & P2-2: OpenMP parallel fused zeroing
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         this->pelec->eferm.set_efval(is, 0);
         this->theta_[is] = 0.;
-        ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
-        ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
-        ModuleBase::GlobalFunc::ZEROS(this->pdirect_[is], this->pw_rho->nrxx);
+        double* pdLdphi = this->pdLdphi_[is];
+        double* pdEdphi = this->pdEdphi_[is];
+        double* pdirect = this->pdirect_[is];
+        const int nrxx = this->pw_rho->nrxx;
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            pdLdphi[ir] = 0.0;
+            pdEdphi[ir] = 0.0;
+            pdirect[ir] = 0.0;
+        }
     }
     if (PARAM.inp.nspin == 1)
     {
@@ -292,15 +332,33 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         const double* vr_eff = this->pelec->pot->get_eff_v(is);
-        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+        double* pdEdphi = this->pdEdphi_[is];
+        const int nrxx = this->pw_rho->nrxx;
+
+        // P0-1: OpenMP parallelization â copy effective potential to dE/dphi
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            this->pdEdphi_[is][ir] = vr_eff[ir];
+            pdEdphi[ir] = vr_eff[ir];
         }
-        this->pelec->eferm.set_efval(is, this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]));
-        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+
+        this->pelec->eferm.set_efval(is, this->cal_mu(this->pphi_[is], pdEdphi, this->nelec_[is]));
+
+        const double eferm_val = this->pelec->eferm.get_efval(is);
+        double* pdLdphi = this->pdLdphi_[is];
+        const double* pphi = this->pphi_[is];
+
+        // P0-1 / P1-1: OpenMP parallelization + GPU target offload for dL/dphi
+#if defined(_OPENMP) && _OPENMP >= 201811
+#pragma omp target teams distribute parallel for simd     map(to: pdEdphi[0:nrxx], pphi[0:nrxx])     map(from: pdLdphi[0:nrxx])     firstprivate(eferm_val, nrxx)
+#elif defined(_OPENMP)
+#pragma omp parallel for simd
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            this->pdLdphi_[is][ir]
-                = this->pdEdphi_[is][ir] - 2. * this->pelec->eferm.get_efval(is) * this->pphi_[is][ir];
+            pdLdphi[ir] = pdEdphi[ir] - 2.0 * eferm_val * pphi[ir];
         }
     }
 
@@ -328,15 +386,23 @@ void ESolver_OF::optimize(UnitCell& ucell)
 {
     // (1) get |d0> with optimization algorithm
     this->get_direction(ucell);
+    // P0-opt: use persistent buffer instead of per-iteration new/delete
+    double** ptemp_phi = this->ptemp_phi_persistent_;
+
     // initialize temp_phi and temp_rho used in line search
-    double** ptemp_phi = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        ptemp_phi[is] = new double[this->pw_rho->nrxx];
-        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+        const double* pphi = this->pphi_[is];
+        double* rho = this->ptemp_rho_->rho[is];
+        const int nrxx = this->pw_rho->nrxx;
+        // P0-1: OpenMP parallel initialization
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            ptemp_phi[is][ir] = this->pphi_[is][ir];
-            this->ptemp_rho_->rho[is][ir] = ptemp_phi[is][ir] * ptemp_phi[is][ir];
+            ptemp_phi[is][ir] = pphi[ir];
+            rho[ir] = pphi[ir] * pphi[ir];
         }
     }
 
@@ -353,11 +419,7 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (4) call line search to find the best theta (step length)
     this->get_step_length(dEdtheta, ptemp_phi, ucell);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        delete[] ptemp_phi[is];
-    }
-    delete[] ptemp_phi;
+    // P0-opt: persistent buffer — no delete needed for ptemp_phi, reused next iteration
     delete[] dEdtheta;
 }
 
@@ -368,13 +430,23 @@ void ESolver_OF::optimize(UnitCell& ucell)
  */
 void ESolver_OF::update_rho()
 {
+    // P0-1 & P2-2: OpenMP parallelization with SIMD vectorization
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+        const double cos_theta = cos(this->theta_[is]);
+        const double sin_theta = sin(this->theta_[is]);
+        double* pphi = this->pphi_[is];
+        const double* pdirect = this->pdirect_[is];
+        double* rho = this->chr.rho[is];
+        const int nrxx = this->pw_rho->nrxx;
+
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
         {
-            this->pphi_[is][ir]
-                = this->pphi_[is][ir] * cos(this->theta_[is]) + this->pdirect_[is][ir] * sin(this->theta_[is]);
-            this->chr.rho[is][ir] = this->pphi_[is][ir] * this->pphi_[is][ir];
+            pphi[ir] = pphi[ir] * cos_theta + pdirect[ir] * sin_theta;
+            rho[ir] = pphi[ir] * pphi[ir];
         }
     }
     // // ------------ turn on symmetry may cause instability in optimization ------------
@@ -467,7 +539,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->kedf_manager_->get_energy_density(this->chr.rho, this->pphi_, this->pw_rho, this->chr.kin_r);
     }
 
-    // should not be here? mohan note 2025-03-03
+    // P0-1: OpenMP parallel rho_save copy
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
         this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
@@ -491,6 +566,10 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
                                         this->pelec->pot->get_eff_v()); // KEDF potential
         
         const double* vr_eff = this->pelec->pot->get_eff_v(0);
+        // P0-1: OpenMP parallel ML data extraction
+#ifdef _OPENMP
+#pragma omp parallel for simd
+#endif
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             this->pdEdphi_[0][ir] = vr_eff[ir];
@@ -524,13 +603,23 @@ double ESolver_OF::cal_energy()
 {
     this->pelec->cal_energies(2);
     double kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
-    double pseudopot_energy = 0.;                   // electron-ion interaction energy
+    // P0-1: Explicit OpenMP reduction for pseudopotential energy
+    double pseudopot_energy = 0.0;
+    const double* v_fixed = this->pelec->pot->get_fixed_v();
+    const double dV = this->dV_;
+    const int nrxx_e = this->pw_rho->nrxx;
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        pseudopot_energy += this->inner_product(this->pelec->pot->get_fixed_v(),
-                                                this->chr.rho[is],
-                                                this->pw_rho->nrxx,
-                                                this->dV_);
+        const double* rho_is = this->chr.rho[is];
+        double local_sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for simd reduction(+:local_sum)
+#endif
+        for (int ir = 0; ir < nrxx_e; ++ir)
+        {
+            local_sum += v_fixed[ir] * rho_is[ir];
+        }
+        pseudopot_energy += local_sum * dV;
     }
     Parallel_Reduce::reduce_pool(pseudopot_energy);
     this->pelec->f_en.ekinetic = kinetic_energy;
