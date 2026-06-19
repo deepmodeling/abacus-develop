@@ -20,6 +20,7 @@ set(_HSOLVER_TEST_FILES
   PEXSI-H-GammaOnly-Si2.dat
   PEXSI-S-GammaOnly-Si2.dat
   PEXSI-DM-GammaOnly-Si2.dat
+  generate_hsolver_test_report.sh
   diago_cg_parallel_test.sh
   diago_david_parallel_test.sh
   diago_lcao_parallel_test.sh
@@ -179,6 +180,7 @@ install(FILES GammaOnly-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 install(FILES KPoints-Si2-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+install(FILES generate_hsolver_test_report.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -216,6 +218,15 @@ add_test(NAME MODULE_HSOLVER_para_linear_trans
 )
 
 find_program(BASH bash)
+if (ENABLE_MPI AND BASH)
+  add_custom_target(MODULE_HSOLVER_test_report
+    COMMAND ${BASH} generate_hsolver_test_report.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS MODULE_HSOLVER_bpcg MODULE_HSOLVER_ppcg
+    COMMENT "Generate hsolver unit-test reports under the build directory"
+  )
+endif()
+
 if (ENABLE_MPI)
   add_test(NAME MODULE_HSOLVER_cg_parallel
         COMMAND ${BASH} diago_cg_parallel_test.sh

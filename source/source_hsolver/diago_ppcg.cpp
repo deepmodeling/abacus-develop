@@ -288,7 +288,7 @@ void DiagoPPCG<T, Device>::solve_projected(const int ncols)
 }
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::update_from_projected(const int ncols, const bool has_p)
+void DiagoPPCG<T, Device>::update_from_projected(const int ncols, const bool has_p, const bool update_p)
 {
     // Update X, HX from V, HV using the first n_band eigenvectors.
     // X_new = V * vcc(:, 1:nband)
@@ -326,6 +326,11 @@ void DiagoPPCG<T, Device>::update_from_projected(const int ncols, const bool has
                                     this->work.data<T>(),
                                     this->n_basis);
     syncmem_complex_op()(this->HX.data<T>(), this->work.data<T>(), this->n_band_l * this->n_basis);
+
+    if (!update_p)
+    {
+        return;
+    }
 
     // Update P (search directions) from blocks W and P (exclude X block to keep meaning)
     // P_new = W * Cw + P * Cp, where Cw = coeff(rows b..2b-1, cols 0..b-1)
@@ -527,6 +532,10 @@ void DiagoPPCG<T, Device>::compute_residual_and_precond(const std::vector<double
 
     // not_conv if any band residual above threshold
     not_conv = !this->check_convergence(this->R, ethr_band);
+    if (!not_conv)
+    {
+        return;
+    }
 
     // W = - M^{-1} R
     syncmem_complex_op()(this->W.data<T>(), this->R.data<T>(), this->n_band_l * this->n_basis);
@@ -652,24 +661,27 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     bool not_conv = true;
     this->compute_residual_and_precond(ethr_band, not_conv);
 
-    // HW = H W
-    this->apply_h(hpsi_func, this->W, this->HW, this->n_band_l);
-
-    // Keep W and HW consistent while improving conditioning.
-    this->orthonormalize_block(this->W, &this->HW, this->n_band_l);
-
     // Determine how many inner iterations to allow.
     // When 3*n_band fits in the ambient space the P block is safe and
     // 2-3 iterations accelerate convergence.  Otherwise stick to 1 to
     // avoid near-singular overlap matrices.
     const bool p_safe = (3 * this->n_band <= this->n_dim - this->p_safe_margin_);
     const int max_iter = p_safe ? this->max_inner_iter_ : 1;
+    const int max_w_cols = std::max(0, std::min(this->n_band_l, this->n_dim - this->n_band_l));
+    int active_w_cols = not_conv ? max_w_cols : 0;
+    if (not_conv && active_w_cols > 0)
+    {
+        // HW = H W
+        this->apply_h(hpsi_func, this->W, this->HW, active_w_cols);
+
+        // Keep W and HW consistent while improving conditioning.
+        this->orthonormalize_block(this->W, &this->HW, active_w_cols);
+    }
     for (int iter = 0; iter < max_iter && not_conv; ++iter)
     {
         const bool has_p = (iter > 0) && p_safe;
-        const int raw_ncols = has_p ? 3 * this->n_band : 2 * this->n_band;
-        const int ncols_max = std::max(this->n_dim - 2, this->n_band_l);
-        const int ncols = std::min(raw_ncols, ncols_max);
+        const int raw_ncols = this->n_band + active_w_cols + (has_p ? this->n_band : 0);
+        const int ncols = std::min(raw_ncols, this->n_dim);
 
         // Pack basis V/HV
         this->pack_basis(ncols, has_p);
@@ -679,21 +691,28 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         this->solve_projected(ncols);
 
         // Update X/HX and P/HP
-        this->update_from_projected(ncols, has_p);
+        const bool update_p = (iter + 1 < max_iter);
+        this->update_from_projected(ncols, has_p, update_p);
 
-        // Residual for next convergence check
-        this->compute_residual_and_precond(ethr_band, not_conv);
-
-        if (!not_conv || iter + 1 >= max_iter)
+        if (iter + 1 >= max_iter)
         {
             break;
         }
 
+        // Residual for next convergence check
+        this->compute_residual_and_precond(ethr_band, not_conv);
+
+        if (!not_conv)
+        {
+            break;
+        }
+
+        active_w_cols = max_w_cols;
         // Update HW for the next iteration
-        this->apply_h(hpsi_func, this->W, this->HW, this->n_band_l);
+        this->apply_h(hpsi_func, this->W, this->HW, active_w_cols);
 
         // Keep W and HW consistent
-        this->orthonormalize_block(this->W, &this->HW, this->n_band_l);
+        this->orthonormalize_block(this->W, &this->HW, active_w_cols);
     }
 
     // Final Rayleigh-Ritz on the current X subspace to ensure (X, eval) consistency.
