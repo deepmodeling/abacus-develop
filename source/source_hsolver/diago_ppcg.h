@@ -9,6 +9,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
+#include <functional>
 #include <source_base/macros.h>
 
 namespace hsolver {
