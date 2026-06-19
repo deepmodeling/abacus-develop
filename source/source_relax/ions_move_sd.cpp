@@ -32,8 +32,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     std::vector<double> grad(dim, 0.0);
     std::vector<double> move(dim, 0.0);
 
-    bool judgement = false;
-    Ions_Move_Basic::setup_etot(etot_in, judgement, istep, ofs, etot_info);
+    Ions_Move_Basic::setup_etot(etot_in, istep, etot_info);
     Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
 
     if (istep == 1 || etot_in <= energy_saved)

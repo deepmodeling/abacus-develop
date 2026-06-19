@@ -4,6 +4,7 @@
 #include "source_base/timer.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "source_io/module_hs/cal_r_overlap_R.h"
+#include "source_basis/module_nao/two_center_integrator.h"
 
 #include <map>
 // Class to store TDDFT infos, mainly for periodic system.
@@ -64,6 +65,15 @@ class TD_info
         return this->phase_hybrid;
     }
 
+    void calculate_grad_overlap(const Parallel_Orbitals& paraV,
+                                const UnitCell& ucell,
+                                const Grid_Driver& GridD,
+                                const std::vector<double>& orb_cutoff,
+                                const TwoCenterIntegrator* intor);
+    std::vector<hamilt::HContainer<double>*> get_grad_overlap() const
+    {
+      return this->grad_overlap;
+    }
     // set velocity HR.
     void set_velocity_HR(hamilt::HContainer<std::complex<double>>* HR)
     {
@@ -106,6 +116,9 @@ class TD_info
 
     /// @brief store the read in At_data
     static std::vector<ModuleBase::Vector3<double>> At_from_file;
+
+    /// @brief store the dS/dD matrix
+    std::vector<hamilt::HContainer<double>*> grad_overlap = {nullptr, nullptr, nullptr};
 
     /// @brief destory HSR data stored
     void destroy_HS_R_td_sparse();

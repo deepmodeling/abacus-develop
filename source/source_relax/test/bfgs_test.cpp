@@ -118,6 +118,35 @@ TEST_F(BFGSTest, DetermineStepScaling)
     EXPECT_NEAR(dpos[1][2], 0.05, 1e-12);
 }
 
+TEST_F(BFGSTest, UpdateUsesAbsoluteDisplacementThreshold)
+{
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 1;
+    ucell.lat0 = 1.0;
+    ucell.latvec.Identity();
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 1;
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(1, {1, 1, 1});
+    ucell.iat2it = new int[ucell.nat];
+    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it[0] = 0;
+    ucell.iat2ia[0] = 0;
+
+    bfgs.allocate(ucell.nat);
+    bfgs.sign = false;
+    bfgs.pos_taud[0].x = -1.0e-6;
+    bfgs.force0 = {0.0, 0.0, 0.0};
+
+    std::vector<double> pos = {0.0, 0.0, 0.0};
+    std::vector<double> force = {1.0, 0.0, 0.0};
+    const double initial_h00 = bfgs.H[0][0];
+
+    bfgs.Update(pos, force, bfgs.H, ucell);
+
+    EXPECT_NE(bfgs.H[0][0], initial_h00);
+}
+
 // Test GetPos and GetPostaud without creating extra helper class
 TEST_F(BFGSTest, GetPosAndPostaud)
 {

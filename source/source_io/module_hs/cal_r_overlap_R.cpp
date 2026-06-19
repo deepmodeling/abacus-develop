@@ -516,7 +516,47 @@ ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_psi(const ModuleBase::Vec
 
     return temp_prp;
 }
+ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_gradpsi(const ModuleBase::Vector3<double>& R1,
+                                                           const int& T1,
+                                                           const int& L1,
+                                                           const int& m1,
+                                                           const int& N1,
+                                                           const ModuleBase::Vector3<double>& R2,
+                                                           const int& T2,
+                                                           const int& L2,
+                                                           const int& m2,
+                                                           const int& N2,
+                                                           const ModuleBase::Vector3<double>& Efield,
+                                                           const ModuleBase::Vector3<double>& dR)
+{
+    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
+    double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
+    const ModuleBase::Vector3<double>& distance = R2 - R1;
 
+    ModuleBase::Vector3<double> grad_o = center2_orb11[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point, distance, m1, m2);
+
+    ModuleBase::Vector3<double> grad_rx = -1 * factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        1,
+                                                                                                        m2); // m =  1
+
+    ModuleBase::Vector3<double> grad_ry = -1 * factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        2,
+                                                                                                        m2); // m = -1
+
+    ModuleBase::Vector3<double> grad_rz = factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        0,
+                                                                                                        m2); // m =  0
+
+    ModuleBase::Vector3<double> temp_prp = Efield[0] * grad_rx + Efield[1] * grad_ry + Efield[2] * grad_rz + (Efield*(R1-dR)) * grad_o;
+
+    return temp_prp;
+}
 void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
                                      std::vector<std::vector<double>>& nlm,
                                      const ModuleBase::Vector3<double>& R1,

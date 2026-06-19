@@ -1,0 +1,86 @@
+# TDOFDFT Examples
+
+This directory contains examples for performing Time-Dependent Orbital-Free Density
+Functional Theory (TDOFDFT) calculations in ABACUS.
+
+## What is TDOFDFT?
+
+TDOFDFT extends OFDFT to the time domain by directly propagating the Madelung wavefunction. It is particularly suited for studying electronic stopping power (ESP) of warm dense matter (WDM), and other high-energy-density physics scenarios where the
+computational cost of KS-DFT becomes prohibitive.
+
+### Key Features:
+- Linear-scaling with system size (no orbitals, only electron density)
+- Supports Thomas-Fermi (TF), von Weizsäcker (VW), and other kinetic energy functionals
+- Current-dependent (CD) kinetic potential for improved dynamic response
+
+## Example Included
+
+### 1. 01_Al_proton_ESP
+- **System**: Al FCC 4×4×4 supercell (256 atoms) + a moving proton
+- **Purpose**: Calculate electronic stopping power by tracking the proton's kinetic energy
+  loss over time via TDOFDFT
+- **Workflow**:
+  1. Run `01_gs/` to get the ground-state charge density (`chg.cube`)
+  2. Copy `chg.cube` from `01_gs/OUT.autotest/` to `02_td/`
+  3. Run `02_td/` for the time-dependent proton dynamics
+  4. Use `get_kinetic.py` from `tools/02_postprocessing/tdofdft-tools/` to extract the
+     proton kinetic energy curve from `OUT.autotest/MD_dump`
+
+## Input Files
+
+Each subdirectory contains:
+- `INPUT`: Calculation parameters
+- `KPT`: k-point sampling
+- `STRU`: Atomic structure and pseudopotentials
+- `run.sh`: Script to run the calculation
+
+## Key INPUT Parameters
+
+- `esolver_type ofdft`: Ground-state OFDFT
+- `esolver_type tdofdft`: Time-dependent OFDFT
+- `of_kinetic tf+`: Use TF + VW kinetic functional (coefficients both = 1)
+- `of_cd 1`: Enable current-density-dependent kinetic potential
+- `of_mcd_alpha 2.0`: MCD correction factor (see Li et al., CPB 2026)
+- `nelec 768`: For Al 4×4×4 (256 atoms × 3 valence electrons); no electron added for proton
+- `init_chg file`: Read initial charge density from `chg.cube`
+
+## How to Run
+
+1. First, ground state:
+   ```bash
+   cd 01_Al_proton_ESP/01_gs
+   bash run.sh
+   ```
+
+2. Copy charge density:
+   ```bash
+   cp 01_gs/OUT.autotest/chg.cube 02_td/
+   ```
+
+3. Then, time-dependent:
+   ```bash
+   cd 01_Al_proton_ESP/02_td
+   bash run.sh
+   ```
+
+4. Extract kinetic energy curve:
+   ```bash
+   python3 ../../../../tools/02_postprocessing/tdofdft-tools/get_kinetic.py
+   ```
+
+## References
+
+- White, A. J., et al. "Time-dependent orbital-free density functional theory for
+  electronic stopping power: Comparison to the Mermin-Kohn-Sham theory at high
+  temperatures." Physical Review B 98.14 (2018): 144302.
+- Li, Yuanbo, et al. "Real-Time Time-Dependent Orbital-Free Density Functional
+  Theory with Revised Dynamic Kinetic Energy Potential: A Study of Electronic
+  Stopping Power." Chinese Physics B (2026).
+
+## Notes
+
+- The ground-state calculation uses a local pseudopotential (blps) for Al
+- The proton (H) uses `1/r` local potential only — it carries no electrons
+- Proton initial velocity is set to 1.3 a.u. along z in STRU
+- A larger `md_nstep` (~4500+) is needed for sufficient stopping dynamics
+- `pseudo_rcut 16` is set for the large Al supercell
