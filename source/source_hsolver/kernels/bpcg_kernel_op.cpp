@@ -1,7 +1,9 @@
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
-#include "source_base/module_external/blas_connector.h"
+
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
+
 #include <vector>
 namespace hsolver
 {
@@ -26,6 +28,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : epsilo_0, epsilo_1, epsilo_2)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -41,6 +46,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
             cos_theta = std::cos(theta);
             sin_theta = std::sin(theta);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -77,6 +85,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : epsilo)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -85,6 +96,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
             Parallel_Reduce::reduce_pool(epsilo);
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : err, beta)
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -95,6 +109,9 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             }
             Parallel_Reduce::reduce_pool(err);
             Parallel_Reduce::reduce_pool(beta);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -111,8 +128,16 @@ template <typename T>
 struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
+    void operator()(const int& nbase,
+                    const int& nbase_x,
+                    const int& notconv,
+                    T* result,
+                    const T* vectors,
+                    const Real* eigenvalues)
     {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2)
+#endif
         for (int m = 0; m < notconv; m++)
         {
             for (int idx = 0; idx < nbase; idx++)
@@ -124,59 +149,62 @@ struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct precondition_op<T, base_device::DEVICE_CPU> {
+struct precondition_op<T, base_device::DEVICE_CPU>
+{
     using Real = typename GetTypeReal<T>::type;
     void operator()(const int& dim,
-                   T* psi_iter,
-                   const int& nbase,
-                   const int& notconv,
-                   const Real* precondition,
-                   const Real* eigenvalues)
+                    T* psi_iter,
+                    const int& nbase,
+                    const int& notconv,
+                    const Real* precondition,
+                    const Real* eigenvalues)
     {
-        std::vector<Real> pre(dim, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for (int m = 0; m < notconv; m++)
         {
+            std::vector<Real> pre(dim, 0.0);
             for (size_t i = 0; i < dim; i++)
             {
                 Real x = std::abs(precondition[i] - eigenvalues[m]);
                 pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
             }
-            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU>()(
-                                                             dim,
-                                                             psi_iter + (nbase + m) * dim,
-                                                             psi_iter + (nbase + m) * dim,
-                                                             pre.data());
+            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU>()(dim,
+                                                                           psi_iter + (nbase + m) * dim,
+                                                                           psi_iter + (nbase + m) * dim,
+                                                                           pre.data());
         }
     }
 };
 
 template <typename T>
-struct normalize_op<T, base_device::DEVICE_CPU> {
+struct normalize_op<T, base_device::DEVICE_CPU>
+{
     void operator()(const int& dim,
-                   T* psi_iter,
-                   const int& nbase,
-                   const int& notconv,
-                   typename GetTypeReal<T>::type* psi_norm)
+                    T* psi_iter,
+                    const int& nbase,
+                    const int& notconv,
+                    typename GetTypeReal<T>::type* psi_norm)
     {
         using Real = typename GetTypeReal<T>::type;
         for (int m = 0; m < notconv; m++)
         {
             // Calculate norm using dot_real_op
-            Real psi_m_norm = ModuleBase::dot_real_op<T, base_device::DEVICE_CPU>()(
-                                                                dim,
-                                                                psi_iter + (nbase + m) * dim,
-                                                                psi_iter + (nbase + m) * dim,
-                                                                true);
+            Real psi_m_norm = ModuleBase::dot_real_op<T, base_device::DEVICE_CPU>()(dim,
+                                                                                    psi_iter + (nbase + m) * dim,
+                                                                                    psi_iter + (nbase + m) * dim,
+                                                                                    true);
             assert(psi_m_norm > 0.0);
             psi_m_norm = sqrt(psi_m_norm);
 
             // Normalize using vector_div_constant_op
-            ModuleBase::vector_div_constant_op<T, base_device::DEVICE_CPU>()(
-                                                              dim,
-                                                              psi_iter + (nbase + m) * dim,
-                                                              psi_iter + (nbase + m) * dim,
-                                                              psi_m_norm);
-            if (psi_norm) {
+            ModuleBase::vector_div_constant_op<T, base_device::DEVICE_CPU>()(dim,
+                                                                             psi_iter + (nbase + m) * dim,
+                                                                             psi_iter + (nbase + m) * dim,
+                                                                             psi_m_norm);
+            if (psi_norm)
+            {
                 psi_norm[m] = psi_m_norm;
             }
         }
@@ -187,13 +215,7 @@ template <typename T>
 struct refresh_hcc_scc_vcc_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int &n,
-                  T *hcc,
-                  T *scc,
-                  T *vcc,
-                  const int &ldh,
-                  const Real *eigenvalue,
-                  const T &one)
+    void operator()(const int& n, T* hcc, T* scc, T* vcc, const int& ldh, const Real* eigenvalue, const T& one)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(1) schedule(static)
