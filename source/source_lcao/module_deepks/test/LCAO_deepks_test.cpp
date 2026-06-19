@@ -308,6 +308,7 @@ void test_deepks<T>::check_vdrpre()
                                         this->ld.phialpha,
                                         ucell,
                                         ORB,
+                                        ParaO,
                                         Test_Deepks::GridD,
                                         overlap_out,
                                         iRmat);

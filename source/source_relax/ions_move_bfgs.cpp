@@ -51,7 +51,7 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         std::vector<double> pos_tmp(3 * ucell.nat);
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data(), ofs);
     }
-    Ions_Move_Basic::setup_etot(energy_in, false, istep, ofs, etot_info);
+    Ions_Move_Basic::setup_etot(energy_in, istep, etot_info);
     bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs, etot_info);
 
     if (converged)

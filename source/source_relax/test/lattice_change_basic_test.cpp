@@ -475,54 +475,14 @@ TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
     std::remove("test_terminate_not_converged.log");
 }
 
-TEST_F(LatticeChangeBasicTest, SetupEtotStressStep1)
-{
-    Lattice_Change_Basic::stress_step = 1;
-    double energy_in = 100.0;
-    std::vector<double> etot_info(2, 0.0);
 
-    Lattice_Change_Basic::setup_etot(energy_in, true, etot_info);
-
-    EXPECT_DOUBLE_EQ(energy_in, etot_info[1]);
-    EXPECT_DOUBLE_EQ(energy_in, etot_info[0]);
-    EXPECT_DOUBLE_EQ(0.0, etot_info[0] - etot_info[1]);
-}
-
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueHigherEnergy)
-{
-    Lattice_Change_Basic::stress_step = 2;
-    double energy_in = 90.0;
-    std::vector<double> etot_info = {0.0, 100.0};
-
-    Lattice_Change_Basic::setup_etot(energy_in, true, etot_info);
-
-    // When judgement=true and etot_p > etot, etot_p is updated to etot
-    EXPECT_DOUBLE_EQ(90.0, etot_info[0]);
-    EXPECT_DOUBLE_EQ(90.0, etot_info[1]);
-    EXPECT_DOUBLE_EQ(0.0, etot_info[0] - etot_info[1]);
-}
-
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementTrueLowerEnergy)
-{
-    Lattice_Change_Basic::stress_step = 2;
-    double energy_in = 100.0;
-    std::vector<double> etot_info = {0.0, 90.0};
-
-    Lattice_Change_Basic::setup_etot(energy_in, true, etot_info);
-
-    // When judgement=true and etot_p <= etot, etot_p is not updated
-    EXPECT_DOUBLE_EQ(100.0, etot_info[0]);
-    EXPECT_DOUBLE_EQ(90.0, etot_info[1]);
-    EXPECT_DOUBLE_EQ(10.0, etot_info[0] - etot_info[1]);
-}
-
-TEST_F(LatticeChangeBasicTest, SetupEtotJudgementFalse)
+TEST_F(LatticeChangeBasicTest, SetupEtot)
 {
     Lattice_Change_Basic::stress_step = 2;
     double energy_in = 80.0;
     std::vector<double> etot_info = {100.0, 90.0};
 
-    Lattice_Change_Basic::setup_etot(energy_in, false, etot_info);
+    Lattice_Change_Basic::setup_etot(energy_in, etot_info);
 
     EXPECT_DOUBLE_EQ(100.0, etot_info[1]);
     EXPECT_DOUBLE_EQ(80.0, etot_info[0]);

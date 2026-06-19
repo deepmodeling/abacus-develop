@@ -23,13 +23,17 @@ hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
 {
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
+    this->gridD = GridD_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
     assert(this->hsk != nullptr);
 #endif
     this->init_td();
     // initialize HR to allocate sparse Ekinetic matrix memory
-    this->initialize_HR(GridD_in);
+    if(hR_in != nullptr)
+    {
+        this->initialize_HR(GridD_in);
+    }
 }
 
 // destructor
@@ -289,6 +293,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik) {
     return;
 }
-
+#include "td_pot_hybrid_force.hpp"
+template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;
