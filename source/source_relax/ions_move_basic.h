@@ -76,7 +76,7 @@ void terminate(const bool converged, const int update_iter, const UnitCell &ucel
  * @param istep Current ionic step index
  * @param etot_info Energy information array [etot, etot_p, ediff]
  */
-void setup_etot(const double &energy_in, const bool judgement, const int istep, std::ofstream& ofs, std::vector<double>& etot_info);
+void setup_etot(const double &energy_in, const int istep, std::vector<double>& etot_info);
 
 /**
  * @brief Compute dot product of two vectors.

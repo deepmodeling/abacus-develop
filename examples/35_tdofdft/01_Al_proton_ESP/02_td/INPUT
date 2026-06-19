@@ -1,0 +1,43 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix		autotest
+calculation	md
+esolver_type	tdofdft
+
+symmetry	1
+pseudo_dir	../../../tests/PP_ORB
+pseudo_rcut	16
+nspin		1
+cal_force	1
+test_force	1
+cal_stress	1
+test_stress	1
+
+#Parameters (2.Iteration)
+ecutwfc		44
+scf_nmax	50
+
+#OFDFT
+of_kinetic	tf+
+of_method	tn
+of_conv		energy
+of_tole		2e-6
+of_cd		1
+of_mcd_alpha	2.0
+
+#Parameters (3.Basis)
+basis_type	pw
+
+init_vel	1
+init_chg	file
+read_file_dir	./
+
+md_restart	0
+md_type		nve
+md_nstep	4500
+md_dt		0.0005
+md_dumpfreq	1
+
+# Total charge: 256 Al * 3 valence electrons = 768
+# (proton contributes +1 charge, no valence electrons)
+nelec		768

@@ -343,7 +343,7 @@ void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement, std::vector<double>& etot_info)
+void Lattice_Change_Basic::setup_etot(const double &energy_in, std::vector<double>& etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)
@@ -357,19 +357,9 @@ void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgem
     }
     else
     {
-        if (judgement)
-        {
-            etot_info[0] = energy_in;
-            if (etot_info[1] > etot_info[0])
-            {
-                etot_info[1] = etot_info[0];
-            }
-        }
-        else // for bfgs
-        {
-            etot_info[1] = etot_info[0];
-            etot_info[0] = energy_in;
-        }
+
+        etot_info[1] = etot_info[0];
+        etot_info[0] = energy_in;
     }
 
     return;
