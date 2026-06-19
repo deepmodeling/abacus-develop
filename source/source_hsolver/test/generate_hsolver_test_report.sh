@@ -36,14 +36,27 @@ mkdir -p "$report_dir"
 
 xml_file="$report_dir/hsolver_unit_tests_${timestamp}.xml"
 log_file="$report_dir/hsolver_unit_tests_${timestamp}.log"
+ctest_has_junit=0
+if ctest --help 2>/dev/null | grep -q -- "--output-junit"; then
+    ctest_has_junit=1
+fi
 
 echo "Build directory : $build_dir"
 echo "Test regex      : $test_regex"
-echo "JUnit XML       : $xml_file"
+if [[ $ctest_has_junit -eq 1 ]]; then
+    echo "JUnit XML       : $xml_file"
+else
+    echo "JUnit XML       : skipped (--output-junit is not supported by this CTest)"
+fi
 echo "Text log        : $log_file"
 
-ctest --test-dir "$build_dir" -V -R "$test_regex" --output-junit "$xml_file" 2>&1 | tee "$log_file"
-status=${PIPESTATUS[0]}
+if [[ $ctest_has_junit -eq 1 ]]; then
+    ctest --test-dir "$build_dir" -V -R "$test_regex" --output-junit "$xml_file" 2>&1 | tee "$log_file"
+    status=${PIPESTATUS[0]}
+else
+    ctest --test-dir "$build_dir" -V -R "$test_regex" 2>&1 | tee "$log_file"
+    status=${PIPESTATUS[0]}
+fi
 
 if [[ $status -eq 0 ]]; then
     echo "Generated hsolver test reports in: $report_dir"
