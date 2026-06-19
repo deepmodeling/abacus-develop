@@ -9,7 +9,7 @@
 #include "source_io/module_output/cube_io.h"
 #ifdef USE_LIBXC
 #include <xc.h>
-#include "source_hamilt/module_xc/xc_functional_libxc.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 #ifdef _OPENMP
 #include <omp.h>

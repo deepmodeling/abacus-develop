@@ -26,28 +26,13 @@ void ReadInput::item_others()
         item.availability = "";
         read_sync_bool(input.sc_mag_switch);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_mag_switch)
-            {
-//                ModuleBase::WARNING_QUIT("ReadInput",
-//                                         "This feature is not stable yet and might lead to "
-//                                         "erroneous results.\n"
-//                                         " Please wait for the official release version.");
-                // if (para.input.nspin != 4 && para.input.nspin != 2)
-                // {
-                //     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or
-                //     4 when sc_mag_switch > 0");
-                // }
-                // if (para.input.calculation != "scf")
-                // {
-                //     ModuleBase::WARNING_QUIT("ReadInput", "calculation must
-                //     be scf when sc_mag_switch > 0");
-                // }
-                // if (para.input.nupdown > 0.0)
-                // {
-                //     ModuleBase::WARNING_QUIT("ReadInput", "nupdown should not
-                //     be set when sc_mag_switch > 0");
-                // }
-            }
+             if (para.input.sc_mag_switch)
+             {
+                 if (para.input.nspin != 4 && para.input.nspin != 2)
+                 {
+                     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or 4 when sc_mag_switch is true");
+                 }
+             }
         };
         this->add_item(item);
     }
@@ -118,25 +103,6 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("sc_scf_nmin");
-        item.annotation = "Minimum number of outer scf loop before "
-                          "initializing lambda loop";
-        item.category = "Spin-Constrained DFT";
-        item.type = "Integer";
-        item.description = "Minimum number of outer scf loop before initializing lambda loop";
-        item.default_value = "2";
-        item.unit = "";
-        item.availability = "sc_mag_switch is true";
-        read_sync_int(input.sc_scf_nmin);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_nmin < 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_nmin must >= 2");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("alpha_trial");
         item.annotation = "Initial trial step size for lambda in eV/uB^2";
         item.category = "Spin-Constrained DFT";
@@ -200,6 +166,80 @@ void ReadInput::item_others()
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_direction_only");
+        item.annotation = "only optimize the direction of magnetization";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Boolean";
+        item.description = R"(When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint.
+
+When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.)";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_bool(input.sc_direction_only);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_lambda_strategy");
+        item.annotation = "lambda update strategy for spin-constrained DFT";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Lambda update strategy for spin-constrained DFT:
+* bfgs: BFGS quasi-Newton method
+* linear_response: linear response (Scheme B)
+* augmented_lagrangian: augmented Lagrangian (Scheme C)
+* hybrid_delayed: hybrid delayed update (Scheme D)
+* linear_scan: linear sweep of lambda for testing magnetic moment response)";
+        item.default_value = "bfgs";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_string(input.sc_lambda_strategy);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
+            if (std::find(valid.begin(), valid.end(), para.input.sc_lambda_strategy) == valid.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, or linear_scan");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_lambda_start");
+        item.annotation = "start value for linear lambda scan (eV/uB)";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Float";
+        item.description = "Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "0.0";
+        item.unit = "eV/uB";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_double(input.sc_scan_lambda_start);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_lambda_end");
+        item.annotation = "end value for linear lambda scan (eV/uB)";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Float";
+        item.description = "Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "1.0";
+        item.unit = "eV/uB";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_double(input.sc_scan_lambda_end);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scan_steps");
+        item.annotation = "number of steps for linear lambda scan";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Integer";
+        item.description = "Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.";
+        item.default_value = "20";
+        item.unit = "";
+        item.availability = "sc_lambda_strategy is linear_scan";
+        read_sync_int(input.sc_scan_steps);
         this->add_item(item);
     }
 

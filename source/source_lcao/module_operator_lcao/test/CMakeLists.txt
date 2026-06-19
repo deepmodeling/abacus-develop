@@ -82,10 +82,10 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_dftu_test
-  LIBS parameter ${math_libs} psi base device container 
-  SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../module_hcontainer/func_folding.cpp 
-  ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp  
-  ../../../source_basis/module_ao/parallel_orbitals.cpp 
+  LIBS parameter ${math_libs} psi base device container
+  SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../module_hcontainer/func_folding.cpp
+  ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/ORB_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )

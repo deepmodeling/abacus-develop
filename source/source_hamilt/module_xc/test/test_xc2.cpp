@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
 #include "../xc_functional.h"
-#include "../xc_functional_libxc.h"
+#include "../libxc_abacus.h"
 #include "../exx_info.h"
 /************************************************
 *  unit test of functionals

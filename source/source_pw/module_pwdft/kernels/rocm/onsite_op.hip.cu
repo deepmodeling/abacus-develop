@@ -21,14 +21,26 @@ __global__ void onsite_op(const int npm,
 {
     const int ip = blockIdx.x;
     const int nbands = npm / npol;
-    for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
+    int iat = ip_iat[ip];
+    if (npol == 2)
     {
-        int ib2 = ib * npol;
-        int iat = ip_iat[ip];
-        const int psind = ip * npm + ib2;
-        const int becpind = ib2 * tnp + ip;
-        ps[psind] += lambda_coeff[iat * 4] * becp[becpind] + lambda_coeff[iat * 4 + 2] * becp[becpind + tnp];
-        ps[psind + 1] += lambda_coeff[iat * 4 + 1] * becp[becpind] + lambda_coeff[iat * 4 + 3] * becp[becpind + tnp];
+        for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
+        {
+            int ib2 = ib * npol;
+            const int psind = ip * npm + ib2;
+            const int becpind = ib2 * tnp + ip;
+            ps[psind] += lambda_coeff[iat * 4] * becp[becpind] + lambda_coeff[iat * 4 + 2] * becp[becpind + tnp];
+            ps[psind + 1] += lambda_coeff[iat * 4 + 1] * becp[becpind] + lambda_coeff[iat * 4 + 3] * becp[becpind + tnp];
+        }
+    }
+    else
+    {
+        for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
+        {
+            const int psind = ip * npm + ib;
+            const int becpind = ib * tnp + ip;
+            ps[psind] += lambda_coeff[iat] * becp[becpind];
+        }
     }
 }
 
@@ -49,25 +61,43 @@ __global__ void onsite_op(const int npm,
     if (m1 >= 0)
     {
         const int nbands = npm / npol;
-        for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
+        int iat = ip_iat[ip];
+        const thrust::complex<FPTYPE>* vu_iat = vu + vu_begin_iat[iat];
+        int orb_l = orb_l_iat[iat];
+        int tlp1 = 2 * orb_l + 1;
+        int tlp1_2 = tlp1 * tlp1;
+        int ip2_begin = ip - m1;
+        int ip2_end = ip - m1 + tlp1;
+
+        if (npol == 2)
         {
-            int ib2 = ib * npol;
-            int iat = ip_iat[ip];
-            const thrust::complex<FPTYPE>* vu_iat = vu + vu_begin_iat[iat];
-            int orb_l = orb_l_iat[iat];
-            int tlp1 = 2 * orb_l + 1;
-            int tlp1_2 = tlp1 * tlp1;
-            int ip2_begin = ip - m1;
-            int ip2_end = ip - m1 + tlp1;
-            const int psind = ip * npm + ib2;
-            for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+            for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
             {
-                const int becpind = ib2 * tnp + ip2;
-                int m2 = ip_m[ip2];
-                const int index_mm = m1 * tlp1 + m2;
-                ps[psind] += vu_iat[index_mm] * becp[becpind] + vu_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
-                ps[psind + 1] += vu_iat[index_mm + tlp1_2 * 1] * becp[becpind]
-                                 + vu_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
+                int ib2 = ib * npol;
+                const int psind = ip * npm + ib2;
+                for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+                {
+                    const int becpind = ib2 * tnp + ip2;
+                    int m2 = ip_m[ip2];
+                    const int index_mm = m1 * tlp1 + m2;
+                    ps[psind] += vu_iat[index_mm] * becp[becpind] + vu_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
+                    ps[psind + 1] += vu_iat[index_mm + tlp1_2 * 1] * becp[becpind]
+                                     + vu_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
+                }
+            }
+        }
+        else // npol == 1
+        {
+            for (int ib = threadIdx.x; ib < nbands; ib += blockDim.x)
+            {
+                const int psind = ip * npm + ib;
+                for (int ip2 = ip2_begin; ip2 < ip2_end; ip2++)
+                {
+                    const int becpind = ib * tnp + ip2;
+                    int m2 = ip_m[ip2];
+                    const int index_mm = m1 * tlp1 + m2;
+                    ps[psind] += vu_iat[index_mm] * becp[becpind];
+                }
             }
         }
     }

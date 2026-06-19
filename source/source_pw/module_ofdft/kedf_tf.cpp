@@ -100,6 +100,7 @@ void KEDF_TF::tau_tf(const double* const* prho, double* rtau_tf)
  */
 void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_TF", "tf_potential");
     ModuleBase::timer::start("KEDF_TF", "tf_potential");
     if (PARAM.inp.nspin == 1)
     {

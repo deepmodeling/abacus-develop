@@ -13,7 +13,7 @@
 #include <RI/global/Tensor_Multiply.h>
 
 void Exx_Opt_Orb::generate_matrix(
-	const Exx_Info::Exx_Info_Opt_ABFs &info,
+	const Exx_Info_Opt_ABFs &info,
 	const K_Vectors &kv,
 	const UnitCell &ucell,
 	const LCAO_Orbitals &orb) const
