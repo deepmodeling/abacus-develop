@@ -332,7 +332,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoPPCG<T, Device> ppcg(pre_condition.data());
         ppcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         // Multiple passes for robust convergence (same strategy as BPCG in unit tests)
-        for (int pass = 0; pass < std::min(5, this->diag_iter_max); ++pass)
+        for (int pass = 0; pass < ppcg.npass(); ++pass)
         {
             ppcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
         }
