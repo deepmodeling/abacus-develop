@@ -5,13 +5,17 @@ Functional Theory (TDOFDFT) calculations in ABACUS.
 
 ## What is TDOFDFT?
 
-TDOFDFT extends OFDFT to the time domain by directly propagating the Madelung wavefunction. It is particularly suited for studying electronic stopping power (ESP) of warm dense matter (WDM), and other high-energy-density physics scenarios where the
+TDOFDFT extends OFDFT to the time domain by directly propagating the time-dependent
+Pauli-like equations. It is particularly suited for studying electronic stopping power (ESP),
+warm dense matter (WDM), and other high-energy-density physics scenarios where the
 computational cost of KS-DFT becomes prohibitive.
 
 ### Key Features:
 - Linear-scaling with system size (no orbitals, only electron density)
+- Natural description of free-electron-like systems (e.g., metals, plasmas)
 - Supports Thomas-Fermi (TF), von Weizsäcker (VW), and other kinetic energy functionals
-- Current-dependent (CD) kinetic potential for improved dynamic response
+- Current-density-dependent (CD) kinetic potential for improved dynamic response
+- Mermin/CD correction (mcd) for finite-temperature effects
 
 ## Example Included
 
