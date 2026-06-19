@@ -23,3 +23,11 @@ AddTest(
   ../sltk_atom.cpp
   ../../../source_io/module_output/output.cpp
 )
+
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_sltk_bruteforce
+  LIBS parameter ${math_libs} base device cell_info
+  SOURCES sltk_bruteforce_test.cpp ../sltk_grid_driver.cpp ../sltk_grid.cpp
+    ../sltk_atom.cpp
+    ../../../source_io/module_output/output.cpp
+)

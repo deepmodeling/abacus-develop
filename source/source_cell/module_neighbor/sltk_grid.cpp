@@ -4,6 +4,126 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <limits>
+
+namespace
+{
+constexpr double minimum_cartesian_bin_edge = 0.1;
+constexpr std::size_t max_cartesian_bin_count = 1000000;
+
+int count_bins_for_range(const double coordinate_range, const double box_edge_length)
+{
+    if (coordinate_range <= 0.0 || box_edge_length <= 0.0)
+    {
+        return 1;
+    }
+
+    const double bin_count = std::floor(coordinate_range / box_edge_length) + 1.0;
+    if (!std::isfinite(bin_count)
+        || bin_count > static_cast<double>(std::numeric_limits<int>::max()))
+    {
+        return std::numeric_limits<int>::max();
+    }
+    return std::max(1, static_cast<int>(bin_count));
+}
+
+std::size_t saturated_bin_count_product(const int nx, const int ny, const int nz)
+{
+    if (nx <= 0 || ny <= 0 || nz <= 0)
+    {
+        return 0;
+    }
+
+    const std::size_t sx = static_cast<std::size_t>(nx);
+    const std::size_t sy = static_cast<std::size_t>(ny);
+    const std::size_t sz = static_cast<std::size_t>(nz);
+    const std::size_t max_size = std::numeric_limits<std::size_t>::max();
+    if (sx > max_size / sy)
+    {
+        return max_size;
+    }
+    const std::size_t xy = sx * sy;
+    if (xy > max_size / sz)
+    {
+        return max_size;
+    }
+    return xy * sz;
+}
+
+void set_box_counts_for_edge(const double range_x,
+                             const double range_y,
+                             const double range_z,
+                             const double box_edge_length,
+                             int& box_nx,
+                             int& box_ny,
+                             int& box_nz)
+{
+    box_nx = count_bins_for_range(range_x, box_edge_length);
+    box_ny = count_bins_for_range(range_y, box_edge_length);
+    box_nz = count_bins_for_range(range_z, box_edge_length);
+}
+
+double estimate_bin_count_for_edge(const double range_x,
+                                   const double range_y,
+                                   const double range_z,
+                                   const double box_edge_length)
+{
+    const double nx = std::floor(range_x / box_edge_length) + 1.0;
+    const double ny = std::floor(range_y / box_edge_length) + 1.0;
+    const double nz = std::floor(range_z / box_edge_length) + 1.0;
+    return nx * ny * nz;
+}
+
+double coarsen_edge_for_bin_cap(const double initial_edge,
+                                const double range_x,
+                                const double range_y,
+                                const double range_z)
+{
+    double edge = initial_edge;
+    const double max_range = std::max(range_x, std::max(range_y, range_z));
+
+    for (int iteration = 0; iteration < 16; ++iteration)
+    {
+        const double estimated_count = estimate_bin_count_for_edge(range_x, range_y, range_z, edge);
+        if (std::isfinite(estimated_count)
+            && estimated_count <= static_cast<double>(max_cartesian_bin_count))
+        {
+            return edge;
+        }
+
+        if (!std::isfinite(estimated_count))
+        {
+            return std::max(edge, max_range);
+        }
+
+        const double scale = std::max(2.0,
+                                      std::cbrt(estimated_count
+                                                / static_cast<double>(max_cartesian_bin_count)));
+        edge *= scale;
+    }
+
+    return std::max(edge, max_range);
+}
+
+double squared_distance(const FAtom& lhs, const FAtom& rhs)
+{
+    const double delta_x = lhs.x - rhs.x;
+    const double delta_y = lhs.y - rhs.y;
+    const double delta_z = lhs.z - rhs.z;
+    return delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
+}
+
+bool is_neighbor_by_current_rule(const double distance2, const double radius2)
+{
+    const bool is_not_zero_distance = distance2 != 0.0;
+    const bool is_within_search_radius = distance2 <= radius2;
+    return is_not_zero_distance && is_within_search_radius;
+}
+} // namespace
+
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 {
 }
@@ -36,6 +156,13 @@ void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radiu
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
 {
     //	ModuleBase::TITLE(GlobalV::ofs_running, "Atom_input", "Check_Expand_Condition");
+
+    glayerX = 0;
+    glayerX_minus = 0;
+    glayerY = 0;
+    glayerY_minus = 0;
+    glayerZ = 0;
+    glayerZ_minus = 0;
 
     if (!pbc)
     {
@@ -199,27 +326,32 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
     ModuleBase::GlobalFunc::OUT(ofs_in, "Min coordinates of atoms", x_min, y_min, z_min);
     ModuleBase::GlobalFunc::OUT(ofs_in, "Max coordinates of atoms", x_max, y_max, z_max);
 
-    this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
+    // Keep each Cartesian bin at least as wide as the search radius so a 27-bin scan is sufficient.
+    // Coarsen very sparse AABB grids to avoid allocating millions of empty bins.
+    this->box_edge_length = std::max(sradius, minimum_cartesian_bin_edge);
 
-/*  warning box algorithm   
-    this->box_nx = std::ceil((this->x_max - this->x_min) / box_edge_length) + 1;
-    this->box_ny = std::ceil((this->y_max - this->y_min) / box_edge_length) + 1;
-    this->box_nz = std::ceil((this->z_max - this->z_min) / box_edge_length) + 1;
-    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
-
-    atoms_in_box.resize(this->box_nx);
-    for (int i = 0; i < this->box_nx; i++)
+    const bool has_expanded_images = (glayerX + glayerX_minus) > 0 && (glayerY + glayerY_minus) > 0
+                                     && (glayerZ + glayerZ_minus) > 0;
+    if (has_expanded_images)
     {
-        atoms_in_box[i].resize(this->box_ny);
-        for (int j = 0; j < this->box_ny; j++)
+        const double range_x = std::max(0.0, this->x_max - this->x_min);
+        const double range_y = std::max(0.0, this->y_max - this->y_min);
+        const double range_z = std::max(0.0, this->z_max - this->z_min);
+
+        this->box_edge_length = coarsen_edge_for_bin_cap(this->box_edge_length, range_x, range_y, range_z);
+        set_box_counts_for_edge(range_x, range_y, range_z, this->box_edge_length, box_nx, box_ny, box_nz);
+        while (saturated_bin_count_product(box_nx, box_ny, box_nz) > max_cartesian_bin_count)
         {
-            atoms_in_box[i][j].resize(this->box_nz);
+            this->box_edge_length *= 2.0;
+            set_box_counts_for_edge(range_x, range_y, range_z, this->box_edge_length, box_nx, box_ny, box_nz);
         }
     }
- */
-    this->box_nx = glayerX + glayerX_minus;
-    this->box_ny = glayerY + glayerY_minus;
-    this->box_nz = glayerZ + glayerZ_minus;
+    else
+    {
+        this->box_nx = 0;
+        this->box_ny = 0;
+        this->box_nz = 0;
+    }
     ModuleBase::GlobalFunc::OUT(ofs_in, "Number of needed cells", box_nx, box_ny, box_nz);
 
     atoms_in_box.resize(this->box_nx);
@@ -245,18 +377,17 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
                         double y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
                         double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
                         FAtom atom(x, y, z, i, j, ix, iy, iz);
-                        int box_i_x, box_i_y, box_i_z;
-                        //this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
-                        box_i_x = ix + glayerX_minus;
-                        box_i_y = iy + glayerY_minus;
-                        box_i_z = iz + glayerZ_minus;
+                        int box_i_x = 0;
+                        int box_i_y = 0;
+                        int box_i_z = 0;
+                        this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
                         this->atoms_in_box[box_i_x][box_i_y][box_i_z].push_back(atom);
                     }
                 }
             }
         }
     }
-    
+
     this->all_adj_info.resize(ucell.ntype);
     for (int i = 0; i < ucell.ntype; i++)
     {
@@ -267,66 +398,73 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
     ModuleBase::timer::start("Grid", "constru_adj");
-
-    for  (int i_type = 0; i_type < ucell.ntype; i_type++)
+    for (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
         for (int j_atom = 0; j_atom < ucell.atoms[i_type].na; j_atom++)
         {
-
             FAtom atom(ucell.atoms[i_type].tau[j_atom].x,
-                     ucell.atoms[i_type].tau[j_atom].y,
-                     ucell.atoms[i_type].tau[j_atom].z,
-                     i_type,
-                     j_atom,
-                     0, 0 ,0);
+                       ucell.atoms[i_type].tau[j_atom].y,
+                       ucell.atoms[i_type].tau[j_atom].z,
+                       i_type,
+                       j_atom,
+                       0,
+                       0,
+                       0);
 
-            this->Construct_Adjacent_near_box(atom);
+            std::vector<FAtom*>& adjacent_atoms = this->all_adj_info[i_type][j_atom];
+            this->Construct_Adjacent_near_box(atom, adjacent_atoms);
         }
     }
     ModuleBase::timer::end("Grid", "constru_adj");
 }
 
-void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
+void Grid::Construct_Adjacent_near_box(const FAtom& fatom, std::vector<FAtom*>& adjacent_atoms)
 {
-    ModuleBase::timer::start("Grid", "adj_near_box");
+    if (box_nx <= 0 || box_ny <= 0 || box_nz <= 0)
+    {
+        return;
+    }
+
     int box_i_x=0;
     int box_i_y=0;
     int box_i_z=0;
     this->getBox(box_i_x, box_i_y, box_i_z, fatom.x, fatom.y, fatom.z);
 
-    for (int box_i_x_adj = 0; box_i_x_adj < glayerX + glayerX_minus; box_i_x_adj++)
+    const int box_x_begin = std::max(0, box_i_x - 1);
+    const int box_x_end = std::min(box_nx - 1, box_i_x + 1);
+    const int box_y_begin = std::max(0, box_i_y - 1);
+    const int box_y_end = std::min(box_ny - 1, box_i_y + 1);
+    const int box_z_begin = std::max(0, box_i_z - 1);
+    const int box_z_end = std::min(box_nz - 1, box_i_z + 1);
+
+    for (int box_i_x_adj = box_x_begin; box_i_x_adj <= box_x_end; box_i_x_adj++)
     {
-        for (int box_i_y_adj = 0; box_i_y_adj < glayerY + glayerY_minus; box_i_y_adj++)
+        for (int box_i_y_adj = box_y_begin; box_i_y_adj <= box_y_end; box_i_y_adj++)
         {
-            for (int box_i_z_adj = 0; box_i_z_adj < glayerZ + glayerZ_minus; box_i_z_adj++)
+            for (int box_i_z_adj = box_z_begin; box_i_z_adj <= box_z_end; box_i_z_adj++)
             {
-                for (auto &fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
+                for (auto& fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
                 {
-                    this->Construct_Adjacent_final(fatom, &fatom2);
+                    this->Construct_Adjacent_final(fatom, &fatom2, adjacent_atoms);
                 }
             }
         }
     }
-    ModuleBase::timer::end("Grid", "adj_near_box");
 }
 
 void Grid::Construct_Adjacent_final(const FAtom& fatom1,
-                                    FAtom* fatom2)
+                                    FAtom* fatom2,
+                                    std::vector<FAtom*>& adjacent_atoms) const
 {
-    double delta_x = fatom1.x - fatom2->x;
-    double delta_y = fatom1.y - fatom2->y;
-    double delta_z = fatom1.z - fatom2->z;
-
-    double dr = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
-
+    const double distance2 = squared_distance(fatom1, *fatom2);
 
     // 20241204 zhanghaochong
     // dr == 0 means the same atom
     // the atom itself is neighbour atom, but the order itself must on last in the list.
     // so we will add itself on find atom function, and skip here.
     // I dont know why, but if we add self here, test 701_LJ_MD_Anderson will assert
-    if (dr != 0.0 && dr <= this->sradius2)
+    if (is_neighbor_by_current_rule(distance2, this->sradius2))
     {
-        all_adj_info[fatom1.type][fatom1.natom].push_back(fatom2);
+        adjacent_atoms.push_back(fatom2);
     }
 }

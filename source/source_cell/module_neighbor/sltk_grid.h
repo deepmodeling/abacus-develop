@@ -4,10 +4,12 @@
 #include "source_cell/unitcell.h"
 #include "sltk_atom.h"
 
+#include <cmath>
 #include <functional>
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
+#include <vector>
 
 typedef std::vector<FAtom> AtomMap;
 
@@ -22,6 +24,19 @@ class Grid
 
     Grid& operator=(Grid&&) = default;
 
+    /**
+     * @brief Build the expanded-cell neighbor table for one UnitCell.
+     *
+     * @param [out] ofs Output stream used by ABACUS running logs.
+     * @param [in] ucell Unit cell whose atom positions are in lat0-scaled
+     * Cartesian coordinates.
+     * @param [in] radius_in Search radius in lat0 units.
+     * @param [in] boundary Whether periodic boundary images are included.
+     *
+     * @details The current implementation first estimates periodic image
+     * layers, then builds atom images in a Cartesian cell list, and finally
+     * constructs all_adj_info for every center atom.
+     */
     void init(std::ofstream& ofs, const UnitCell& ucell, const double radius_in, const bool boundary = true);
 
     // Data
@@ -37,18 +52,53 @@ class Grid
     double y_max=0.0;
     double z_max=0.0;
 
-    // The algorithm for searching neighboring atoms uses a "box" partitioning method. 
-    // Each box has an edge length of sradius, and the number of boxes in each direction is recorded here.
+    // Cartesian cell-list partitioning. Each bin edge is at least sradius so a
+    // 27-bin stencil is sufficient for Euclidean cutoff search.
     double box_edge_length=0.0;
     int box_nx=0;
     int box_ny=0;
     int box_nz=0;
 
-    void getBox(int& bx, int& by, int& bz, const double& x, const double& y, const double& z)
+    void getBox(int& bx, int& by, int& bz, const double& x, const double& y, const double& z) const
     {
-        bx = std::floor((x - x_min) / box_edge_length);
-        by = std::floor((y - y_min) / box_edge_length);
-        bz = std::floor((z - z_min) / box_edge_length);
+        if (box_edge_length <= 0.0 || box_nx <= 0 || box_ny <= 0 || box_nz <= 0)
+        {
+            bx = 0;
+            by = 0;
+            bz = 0;
+            return;
+        }
+
+        bx = static_cast<int>(std::floor((x - x_min) / box_edge_length));
+        by = static_cast<int>(std::floor((y - y_min) / box_edge_length));
+        bz = static_cast<int>(std::floor((z - z_min) / box_edge_length));
+
+        if (bx < 0)
+        {
+            bx = 0;
+        }
+        else if (bx >= box_nx)
+        {
+            bx = box_nx - 1;
+        }
+
+        if (by < 0)
+        {
+            by = 0;
+        }
+        else if (by >= box_ny)
+        {
+            by = box_ny - 1;
+        }
+
+        if (bz < 0)
+        {
+            bz = 0;
+        }
+        else if (bz >= box_nz)
+        {
+            bz = box_nz - 1;
+        }
     }
     // Stores the atoms after box partitioning.
     std::vector<std::vector<std::vector<AtomMap>>> atoms_in_box;
@@ -96,12 +146,32 @@ class Grid
   private:
     int test_grid;
 
+    /**
+     * @brief Build expanded atom images and resize neighbor storage.
+     */
     void setMemberVariables(std::ofstream& ofs_in, const UnitCell& ucell);
 
+    /**
+     * @brief Construct neighbor pointer lists for all atoms in the original cell.
+     */
     void Construct_Adjacent(const UnitCell& ucell);
-    void Construct_Adjacent_near_box(const FAtom& fatom);
-    void Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2);
 
+    /**
+     * @brief Scan the Cartesian cell-list stencil for one center atom.
+     */
+    void Construct_Adjacent_near_box(const FAtom& fatom, std::vector<FAtom*>& adjacent_atoms);
+
+    /**
+     * @brief Append fatom2 to adjacent_atoms when the current distance rule
+     * accepts the pair.
+     */
+    void Construct_Adjacent_final(const FAtom& fatom1,
+                                  FAtom* fatom2,
+                                  std::vector<FAtom*>& adjacent_atoms) const;
+
+    /**
+     * @brief Estimate positive and negative periodic image layers needed for sradius.
+     */
     void Check_Expand_Condition(const UnitCell& ucell);
     int glayerX=0;
     int glayerX_minus=0;
