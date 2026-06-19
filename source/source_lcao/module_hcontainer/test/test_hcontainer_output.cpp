@@ -101,27 +101,29 @@ TEST_F(OutputHContainerTest, Write)
         for (int iap = 0; iap < HR.size_atom_pairs(); ++iap)
         {
             hamilt::AtomPair<double>& tmp_ap = HR.get_atom_pair(iap);
+            const int r_index = tmp_ap.find_R(rx, ry, rz);
+            if (r_index < 0) continue;
             if (rx == 0 && ry == 1 && rz == 1)
             {
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 0), 0);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 4);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 7);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 1), 0);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[0], 0);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[1], 2);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[2], 2);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[3], 2);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 0, 0), 0);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 0, 1), 4);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 1, 0), 7);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 1, 1), 0);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[0], 0);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[1], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[2], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[3], 2);
             }
             else if (rx == 0 && ry == 0 && rz == 0)
             {
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 0), 5);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 6);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 0);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 1), 10);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[0], 2);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[1], 2);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[2], 2);
-                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[3], 2);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 0, 0), 5);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 0, 1), 6);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 1, 0), 0);
+                EXPECT_DOUBLE_EQ(tmp_ap.get_value(r_index, 1, 1), 10);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[0], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[1], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[2], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values(r_index))[3], 2);
             }
         }
         HR.unfix_R();

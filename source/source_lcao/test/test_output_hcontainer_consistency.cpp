@@ -264,17 +264,19 @@ TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
     reader_down.read();
 
     int nw = ucell.atoms[0].nw;
+    // Note: these HContainer only contain R=(0,0,0), so r_index is always 0
+    const int r_index_center = 0;
     for (int k = 0; k < nw; k++)
     {
         double exp_up = 1.0 * (k + 1) * 0.1;
         double exp_down = 3.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(hc_read_up->find_pair(0, 0)->get_pointer()[k * nw + k], exp_up, 1e-8);
-        EXPECT_NEAR(hc_read_down->find_pair(0, 0)->get_pointer()[k * nw + k], exp_down, 1e-8);
+        EXPECT_NEAR(hc_read_up->find_pair(0, 0)->get_pointer(r_index_center)[k * nw + k], exp_up, 1e-8);
+        EXPECT_NEAR(hc_read_down->find_pair(0, 0)->get_pointer(r_index_center)[k * nw + k], exp_down, 1e-8);
     }
 
     // Verify the two are independent
-    EXPECT_GT(std::abs(hc_read_up->find_pair(0, 0)->get_pointer()[0]
-                     - hc_read_down->find_pair(0, 0)->get_pointer()[0]), 1e-6);
+    EXPECT_GT(std::abs(hc_read_up->find_pair(0, 0)->get_pointer(r_index_center)[0]
+                     - hc_read_down->find_pair(0, 0)->get_pointer(r_index_center)[0]), 1e-6);
 
     delete hc_up;
     delete hc_down;

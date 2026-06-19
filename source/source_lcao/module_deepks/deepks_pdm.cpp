@@ -147,7 +147,6 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             }
             calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
 
-            dm_pair.find_R(dR);
             hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
             dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
 
