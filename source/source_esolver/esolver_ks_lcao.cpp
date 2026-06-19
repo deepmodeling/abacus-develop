@@ -9,6 +9,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -245,7 +246,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
                        this->pw_rho, this->solvent, this->dftu, this->deepks,
-                       this->exx_nao, &ucell.symm);
+                       this->exx_nao, &ucell.symm, PARAM.inp.td_stype,
+                       static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
     this->RA.delete_grid();

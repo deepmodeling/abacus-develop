@@ -102,6 +102,42 @@ void folding_partial_HR_td(const UnitCell& ucell,
         }
     }
 }
+void folding_partial_dot(const hamilt::HContainer<double>& dR,
+            std::complex<double>* dk,
+            const ModuleBase::Vector3<double>& kvec_d_in,
+            const int ncol,
+            const int hk_type,
+            const UnitCell* ucell,
+            const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+            const ModuleBase::Vector3<double>& At,
+            const ModuleBase::Vector3<double>& Et)
+{
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < dR.size_atom_pairs(); ++i)
+    {
+        hamilt::AtomPair<double>& tmp = dR.get_atom_pair(i);
+        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        {
+            const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
+            const int iat1 = tmp.get_atom_i();
+            const int iat2 = tmp.get_atom_j();
+            // cal k_phase
+            // if TK==std::complex<double>, kphase is e^{ikR}
+            const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);            
+            const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
+            double sinp, cosp;
+            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+            std::complex<double> kphase = std::complex<double>(cosp, sinp);
+            kphase *= phase_hybrid.at(r_index);
+            ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat1, r_index);
+            kphase *= Et * dtau * ucell->lat0;
+            tmp.find_R(r_index);
+            tmp.add_to_matrix(dk, ncol, kphase, hk_type);
+        }
+    }
+}
 template
 void folding_HR_td<double>(const hamilt::HContainer<double>& hR,
                         std::complex<double>* hk,

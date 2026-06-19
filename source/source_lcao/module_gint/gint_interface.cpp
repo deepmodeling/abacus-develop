@@ -9,6 +9,7 @@
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
 #include "gint_tau.h"
+#include "gint_dvlocal.h"
 
 #ifdef __CUDA
 #include "gint_vl_gpu.h"

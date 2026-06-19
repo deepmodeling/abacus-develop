@@ -2,6 +2,7 @@
 #include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
+#include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_current/td_current_io.h"
 #include "source_io/module_dipole/dipole_io.h"
@@ -16,6 +17,9 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleESolver
 {
@@ -102,6 +106,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
     td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
+    td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
     {
@@ -388,7 +393,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
 
     // Calculate energy-density matrix for RT-TDDFT
     if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
-        && PARAM.inp.td_edm == 0)
+        && PARAM.inp.td_edm == 0 && PARAM.inp.td_stype != 2)
     {
         if (use_tensor && use_lapack)
         {
