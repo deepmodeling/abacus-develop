@@ -1,5 +1,6 @@
 #include "source_hsolver/diago_ppcg.h"
 
+#include "ATen/kernels/lapack.h"
 #include "diago_iter_assist.h"
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -7,15 +8,11 @@
 #include "source_base/parallel_reduce.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h" // reuse normalize_op / apply_eigenvalues_op / precondition_op
 
-#include "source_base/module_container/base/third_party/lapack.h"
-
 #ifdef __MPI
 #include <mpi.h>
 #endif
 
 namespace hsolver {
-
-namespace lapackConnector = container::lapackConnector;
 
 template <typename T, typename Device>
 DiagoPPCG<T, Device>::DiagoPPCG(const Real* precondition)
@@ -159,12 +156,11 @@ void DiagoPPCG<T, Device>::orthonormalize_block(ct::Tensor& A, ct::Tensor* HA, c
 #endif
     this->pmmcn.multiply(static_cast<T>(1.0), A.data<T>(), A.data<T>(), static_cast<T>(0.0), gram.data<T>());
 
-    // Cholesky: gram = U^H U (upper), then invert U in-place -> gram holds inv(U) in upper triangle
-    int info = 0;
-    lapackConnector::potrf('U', ncols, gram.data<T>(), ncols, info);
-    assert(info == 0);
-    lapackConnector::trtri('U', 'N', ncols, gram.data<T>(), ncols, info);
-    assert(info == 0);
+    // Cholesky: gram = U^H U (upper), then invert U in-place -> gram holds inv(U) in upper triangle.
+    // Use the ATen LAPACK wrappers so CPU/GPU paths and error handling are consistent.
+    using ContainerDevice = typename container::PsiToContainer<Device>::type;
+    container::kernels::lapack_potrf<T, ContainerDevice>()('U', ncols, gram.data<T>(), ncols);
+    container::kernels::lapack_trtri<T, ContainerDevice>()('U', 'N', ncols, gram.data<T>(), ncols);
 
     // Zero out lower triangle so a dense GEMM applies only the upper-triangular factor.
     T* g = gram.data<T>();

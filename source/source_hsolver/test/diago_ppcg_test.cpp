@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 #include <complex>
+#include <cstdlib>
 #include <fstream>
 #include <random>
 
@@ -385,11 +386,7 @@ TEST(DiagoPPCGTest, readH)
     std::ifstream ifs;
     std::string filename = "H-KPoints-Si2.dat";
     ifs.open(filename);
-    if (!ifs.is_open())
-    {
-        std::cout << "Error opening file " << filename << std::endl;
-        exit(1);
-    }
+    ASSERT_TRUE(ifs.is_open()) << "Error opening file " << filename;
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
 
@@ -561,6 +558,11 @@ TEST(DiagoPPCGTest, TunableParameters)
 // ------------------------------------------------------------
 TEST(DiagoPPCGTest, ComprehensiveBenchmark)
 {
+    if (std::getenv("ABACUS_RUN_HSOLVER_BENCHMARK") == nullptr)
+    {
+        GTEST_SKIP() << "Set ABACUS_RUN_HSOLVER_BENCHMARK=1 to run the PPCG benchmark.";
+    }
+
     const int nband = 6;
     const int sizes[] = {60, 120, 240, 360, 480};
     const int n_sizes = 5;

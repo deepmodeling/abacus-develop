@@ -57,6 +57,7 @@ if (ENABLE_MPI)
     SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp ../diago_bpcg.cpp ../diago_david.cpp
             ../para_linear_transform.cpp ../diago_iter_assist.cpp
             ../kernels/hegvd_op.cpp
+            ../../source_base/module_container/ATen/kernels/lapack.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
