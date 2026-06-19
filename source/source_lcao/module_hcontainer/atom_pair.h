@@ -237,10 +237,8 @@ class AtomPair
 
     /**
      * @brief Add this->value[current_R] * kphase as a block matrix of hk.
-     *
-     * For row major dense matrix (hk_type == 0): value[current_R][i*col_size+j] -> hk[(row_ap+i) * ld_hk + col_ap + j]
-     * For column major dense matrix (hk_type == 1): value[current_R][i*col_size+j] -> hk[row_ap + i + (col_ap+j) *
-     * ld_hk] For sparse matrix (hk_type == 2): not implemented yet
+     * DEPRECATED: Use add_to_matrix(int R_index, ...) instead.
+     * This method uses current_R which is not thread-safe.
      *
      * @param hk Pointer to the target matrix.
      * @param ld_hk Leading dimension of the target matrix.
@@ -254,9 +252,47 @@ class AtomPair
 
     /**
      * @brief Add this->value[current_R] * kphase as a block matrix of hk.
+     * DEPRECATED: Use add_to_matrix(int R_index, ...) instead.
+     * This method uses current_R which is not thread-safe.
      * for non-collinear spin case only
      */
     void add_to_matrix(T* hk, const int ld_hk, const T& kphase, const int hk_type = 0) const;
+
+    /**
+     * @brief Add this->value[R_index] * kphase as a block matrix of hk.
+     * Thread-safe version: explicitly pass R_index instead of using current_R.
+     *
+     * For row major dense matrix (hk_type == 0): value[R_index][i*col_size+j] -> hk[(row_ap+i) * ld_hk + col_ap + j]
+     * For column major dense matrix (hk_type == 1): value[R_index][i*col_size+j] -> hk[row_ap + i + (col_ap+j) * ld_hk]
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the target matrix.
+     * @param ld_hk Leading dimension of the target matrix.
+     * @param kphase Complex scalar to be multiplied with the block matrix.
+     * @param hk_type The type of matrix layout (default: 0).
+     */
+    void add_to_matrix(const int R_index,
+                       std::complex<T>* hk,
+                       const int ld_hk,
+                       const std::complex<T>& kphase,
+                       const int hk_type = 0) const;
+
+    /**
+     * @brief Add this->value[R_index] * kphase as a block matrix of hk.
+     * Thread-safe version: explicitly pass R_index instead of using current_R.
+     * for non-collinear spin case only
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the target matrix.
+     * @param ld_hk Leading dimension of the target matrix.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     * @param hk_type The type of matrix layout (default: 0).
+     */
+    void add_to_matrix(const int R_index,
+                       T* hk,
+                       const int ld_hk,
+                       const T& kphase,
+                       const int hk_type = 0) const;
 
     void add_from_matrix(const std::complex<T>* hk,
                        const int ld_hk,
@@ -267,14 +303,39 @@ class AtomPair
 
     /**
      * @brief Add this->value[current_R] * kphase to an array.
+     * DEPRECATED: Use add_to_array(int R_index, ...) instead.
+     * This method uses current_R which is not thread-safe.
      * T = double or float
      */
     void add_to_array(std::complex<T>* target_array, const std::complex<T>& kphase) const;
     /**
      * @brief Add this->value[current_R] * kphase to an array.
+     * DEPRECATED: Use add_to_array(int R_index, ...) instead.
+     * This method uses current_R which is not thread-safe.
      * for non-collinear spin case only (T = std::complex<double> or complex<float>)
      */
     void add_to_array(T* target_array, const T& kphase) const;
+
+    /**
+     * @brief Add this->value[R_index] * kphase to an array.
+     * Thread-safe version: explicitly pass R_index instead of using current_R.
+     * T = double or float
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param target_array Pointer to the target array.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     */
+    void add_to_array(const int R_index, std::complex<T>* target_array, const std::complex<T>& kphase) const;
+    /**
+     * @brief Add this->value[R_index] * kphase to an array.
+     * Thread-safe version: explicitly pass R_index instead of using current_R.
+     * for non-collinear spin case only (T = std::complex<double> or complex<float>)
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param target_array Pointer to the target array.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     */
+    void add_to_array(const int R_index, T* target_array, const T& kphase) const;
 
     // comparation function, used for sorting
     bool operator<(const AtomPair& other) const;
