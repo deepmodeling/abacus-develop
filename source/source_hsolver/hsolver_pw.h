@@ -100,6 +100,13 @@ class HSolverPW
 
 
 
+    /// Saved extra bands per k-point for PPCG — MUST be static because
+    /// HSolverPW is reconstructed on the stack each SCF step (see
+    /// esolver_ks_pw.cpp:215).  Without static, saved bands are lost
+    /// and re-randomised every step, corrupting well-converged physical
+    /// bands through blocked-solve mixing.
+    static std::vector<std::vector<T>> ppcg_extra_bands;
+
     // K-point continuity related members
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;

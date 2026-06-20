@@ -106,6 +106,8 @@ void DiagoPPCG<T, Device>::init_iter(const int nband,
 
     resmem_real_h()(h_eigen, this->n_work);
     resmem_real_h()(h_err, this->n_work);
+    std::fill_n(h_eigen, this->n_work, Real(0));
+    std::fill_n(h_err,   this->n_work, Real(0));
 
     // pre-allocate per-band subspace caches (B1: avoid alloc/free in inner loop)
     resmem_op()(d_bv_cache, 3 * this->n_basis);
@@ -125,6 +127,7 @@ void DiagoPPCG<T, Device>::init_iter(const int nband,
 
     this->is_locked.assign(this->n_work, 0);
     this->converge_count.assign(this->n_work, 0);
+    this->ppcg_update_count = 0;
 
     // preconditioner: upload to device when running on GPU
 #if defined(__CUDA) || defined(__ROCM)
@@ -215,6 +218,55 @@ void DiagoPPCG<T, Device>::calc_hpsi(const HPsiFunc& hpsi_func,
     hpsi_func(psi_in, hpsi_out, this->n_basis, this->n_work);
 }
 
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::calc_hpsi(const HPsiFunc& hpsi_func,
+                                     T* psi_in, T* hpsi_out, int ncol) const
+{
+    hpsi_func(psi_in, hpsi_out, this->n_basis, ncol);
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::apply_hpsi_to_active(const HPsiFunc& hpsi_func,
+                                                T* vec_in, T* vec_out)
+{
+    // QE-style: only apply H to active (unlocked) columns.
+    // Pack unlocked columns into work, apply H, scatter back, zero locked cols.
+    std::vector<int> unlocked;
+    unlocked.reserve(this->n_work);
+    for (int ib = 0; ib < this->n_work; ++ib)
+        if (!this->is_locked[ib]) unlocked.push_back(ib);
+
+    const int nu = static_cast<int>(unlocked.size());
+    if (nu == 0) return;
+
+    // Pack → work (reuse work buffer as temp; it will be overwritten later)
+    for (int j = 0; j < nu; ++j)
+    {
+        const int ib = unlocked[j];
+        syncmem_op()(this->work + j * this->n_basis,
+                     vec_in + ib * this->n_basis, this->n_basis);
+    }
+
+    // H|work> → hpsi_new (reused as output temp)
+    setmem_op()(this->hpsi_new, 0, nu * this->n_basis);
+    hpsi_func(this->work, this->hpsi_new, this->n_basis, nu);
+
+    // Scatter back to vec_out at unlocked positions
+    for (int j = 0; j < nu; ++j)
+    {
+        const int ib = unlocked[j];
+        syncmem_op()(vec_out + ib * this->n_basis,
+                     this->hpsi_new + j * this->n_basis, this->n_basis);
+    }
+
+    // Zero locked columns in output
+    for (int ib = 0; ib < this->n_work; ++ib)
+    {
+        if (this->is_locked[ib])
+            setmem_op()(vec_out + ib * this->n_basis, 0, this->n_basis);
+    }
+}
+
 // ---- orthogonalization ------------------------------------------------------
 
 template <typename T, typename Device>
@@ -266,35 +318,199 @@ void DiagoPPCG<T, Device>::modified_gram_schmidt(T* psi_in, T* hpsi_in) const
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::orth_cholesky(T* psi_in, T* hpsi_in)
 {
+    // QE-style: only orthonormalise ACTIVE (unlocked) bands.
+    // Locked (converged) bands must be kept exactly as-is — rotating
+    // them together with active bands would slowly drift converged
+    // eigenpairs and introduce ghost eigenvalues.
+    std::vector<int> unlocked;
+    unlocked.reserve(this->n_work);
+    for (int ib = 0; ib < this->n_work; ++ib)
+        if (!this->is_locked[ib]) unlocked.push_back(ib);
+
+    const int nu = static_cast<int>(unlocked.size());
+    if (nu <= 1) return;
+
     const int nw = this->n_work;
+    const int nl = nw - nu;  // number of locked bands
 
-    // S = psi^H psi → device → host
-    T* d_s = nullptr;
-    resmem_op()(d_s, nw * nw);
-    setmem_op()(d_s, 0, nw * nw);
-    ModuleBase::gemm_op<T, Device>()('C', 'N', nw, nw, this->n_dim,
-                                     p_one<T>(), psi_in, this->n_basis,
-                                     psi_in, this->n_basis,
-                                     p_zero<T>(), d_s, nw);
-    std::vector<T> s(nw * nw);
-    syncmem_d2h()(s.data(), d_s, nw * nw);
-    delmem_op()(d_s);
+    if (nl == 0)
+    {
+        // ---- fast path: no locked bands, operate on all columns ----
+        T* d_s = nullptr;
+        resmem_op()(d_s, nw * nw);
+        setmem_op()(d_s, 0, nw * nw);
+        ModuleBase::gemm_op<T, Device>()('C', 'N', nw, nw, this->n_dim,
+                                         p_one<T>(), psi_in, this->n_basis,
+                                         psi_in, this->n_basis,
+                                         p_zero<T>(), d_s, nw);
+        std::vector<T> s(nw * nw);
+        syncmem_d2h()(s.data(), d_s, nw * nw);
+        delmem_op()(d_s);
 #ifdef __MPI
-    Parallel_Reduce::reduce_pool(s.data(), nw * nw);
+        Parallel_Reduce::reduce_pool(s.data(), nw * nw);
 #endif
+        // Regularise S to prevent potrf failure with badly conditioned psi.
+        {
+            Real s_max_diag = Real(0);
+            for (int i = 0; i < nw; ++i) s_max_diag = std::max(s_max_diag, std::abs(std::real(s[i + i * nw])));
+            Real s_reg = std::max(Real(1e-14), s_max_diag * Real(1e-12));
+            for (int i = 0; i < nw; ++i) s[i + i * nw] += T(s_reg);
+        }
+        ct::kernels::lapack_potrf<T, ct::DEVICE_CPU>()('U', nw, s.data(), nw);
+        for (int col = 0; col < nw; ++col)
+            for (int row = col + 1; row < nw; ++row)
+                s[row + col * nw] = T(0);
+        ct::kernels::lapack_trtri<T, ct::DEVICE_CPU>()('U', 'N', nw, s.data(), nw);
+        this->rotate_block(psi_in,  s.data(), this->work);
+        this->rotate_block(hpsi_in, s.data(), this->work);
+    }
+    else
+    {
+        // ---- general path: locked bands present — only orthonormalise unlocked ones,
+        //      after projecting out locked-band components ----
+        // 1. Pack unlocked psi → this->work (columns 0..nu-1)
+        for (int j = 0; j < nu; ++j) {
+            const int ib = unlocked[j];
+            syncmem_op()(this->work + j * this->n_basis,
+                         psi_in + ib * this->n_basis, this->n_basis);
+        }
 
-    ct::kernels::lapack_potrf<T, ct::DEVICE_CPU>()('U', nw, s.data(), nw);
-    for (int col = 0; col < nw; ++col)
-        for (int row = col + 1; row < nw; ++row)
-            s[row + col * nw] = T(0);
-    ct::kernels::lapack_trtri<T, ct::DEVICE_CPU>()('U', 'N', nw, s.data(), nw);
+        // 2. Orthogonalise unlocked psi against locked psi:
+        //    C = psi_locked^H * psi_unlocked  (nl × nu)
+        //    psi_unlocked -= psi_locked * C
+        if (nl > 0) {
+            T* d_c = nullptr;
+            resmem_op()(d_c, nl * nu);
+            setmem_op()(d_c, 0, nl * nu);
+            // Compute C using a packed locked-psi view.  Locked columns are at
+            // positions 0..nw-1 that are NOT in the unlocked list.
+            // For simplicity we pack locked columns into hpsi_new as scratch.
+            int lj = 0;
+            for (int ib = 0; ib < nw; ++ib)
+                if (this->is_locked[ib])
+                    syncmem_op()(this->hpsi_new + (lj++) * this->n_basis,
+                                 psi_in + ib * this->n_basis, this->n_basis);
+            ModuleBase::gemm_op<T, Device>()('C', 'N', nl, nu, this->n_dim,
+                                             p_one<T>(), this->hpsi_new, this->n_basis,
+                                             this->work, this->n_basis,
+                                             p_zero<T>(), d_c, nl);
+            std::vector<T> c(nl * nu);
+            syncmem_d2h()(c.data(), d_c, nl * nu);
+            delmem_op()(d_c);
+#ifdef __MPI
+            Parallel_Reduce::reduce_pool(c.data(), nl * nu);
+#endif
+            // psi_unlocked -= psi_locked * C   AND also correct hpsi
+            T* d_c2 = nullptr;
+            resmem_op()(d_c2, nl * nu);
+            syncmem_h2d()(d_c2, c.data(), nl * nu);
+            T neg1 = static_cast<T>(-1.0);
+            // 1) psi_u -= psi_l * C   (via GEMM into work)
+            ModuleBase::gemm_op<T, Device>()('N', 'N', this->n_dim, nu, nl,
+                                             &neg1, this->hpsi_new, this->n_basis,
+                                             d_c2, nl,
+                                             p_one<T>(), this->work, this->n_basis);
+            // 2) hpsi_u -= hpsi_l * C — critical: psi correction implies hpsi
+            //    must also be corrected, otherwise hpsi != H*psi after projection.
+            //    hpsi_new still holds psi_l, overwrite with hpsi_l, use p_new as scratch.
+            lj = 0;
+            for (int ib = 0; ib < nw; ++ib)
+                if (this->is_locked[ib])
+                    syncmem_op()(this->hpsi_new + (lj++) * this->n_basis,
+                                 hpsi_in + ib * this->n_basis, this->n_basis);
+            for (int j = 0; j < nu; ++j) {
+                const int ib = unlocked[j];
+                syncmem_op()(this->p_new + j * this->n_basis,
+                             hpsi_in + ib * this->n_basis, this->n_basis);
+            }
+            ModuleBase::gemm_op<T, Device>()('N', 'N', this->n_dim, nu, nl,
+                                             &neg1, this->hpsi_new, this->n_basis,
+                                             d_c2, nl,
+                                             p_one<T>(), this->p_new, this->n_basis);
+            for (int j = 0; j < nu; ++j) {
+                const int ib = unlocked[j];
+                syncmem_op()(hpsi_in + ib * this->n_basis,
+                             this->p_new + j * this->n_basis, this->n_basis);
+            }
+            delmem_op()(d_c2);
+        }
 
-    this->rotate_block(psi_in,  s.data(), this->work);
-    this->rotate_block(hpsi_in, s.data(), this->work);
+        // 3. S = psi_u^H * psi_u  (nu × nu)
+        T* d_s = nullptr;
+        resmem_op()(d_s, nu * nu);
+        setmem_op()(d_s, 0, nu * nu);
+        ModuleBase::gemm_op<T, Device>()('C', 'N', nu, nu, this->n_dim,
+                                         p_one<T>(), this->work, this->n_basis,
+                                         this->work, this->n_basis,
+                                         p_zero<T>(), d_s, nu);
+        std::vector<T> s(nu * nu);
+        syncmem_d2h()(s.data(), d_s, nu * nu);
+        delmem_op()(d_s);
+#ifdef __MPI
+        Parallel_Reduce::reduce_pool(s.data(), nu * nu);
+#endif
+        // Regularise S to prevent potrf failure with badly conditioned psi.
+        {
+            Real s_max_diag = Real(0);
+            for (int i = 0; i < nu; ++i) s_max_diag = std::max(s_max_diag, std::abs(std::real(s[i + i * nu])));
+            Real s_reg = std::max(Real(1e-14), s_max_diag * Real(1e-12));
+            for (int i = 0; i < nu; ++i) s[i + i * nu] += T(s_reg);
+        }
+
+        // 4. Cholesky: R = chol(S), then R^{-1}
+        ct::kernels::lapack_potrf<T, ct::DEVICE_CPU>()('U', nu, s.data(), nu);
+        for (int col = 0; col < nu; ++col)
+            for (int row = col + 1; row < nu; ++row)
+                s[row + col * nu] = T(0);
+        ct::kernels::lapack_trtri<T, ct::DEVICE_CPU>()('U', 'N', nu, s.data(), nu);
+
+        // 5. Rotate unlocked psi: psi_u = psi_u * R^{-1}
+        //    Use hpsi_new as output workspace
+        {
+            T* d_c = nullptr;
+            resmem_op()(d_c, nu * nu);
+            syncmem_h2d()(d_c, s.data(), nu * nu);
+            ModuleBase::gemm_op<T, Device>()('N', 'N',
+                this->n_dim, nu, nu,
+                p_one<T>(), this->work, this->n_basis,
+                d_c, nu,
+                p_zero<T>(), this->hpsi_new, this->n_basis);
+            delmem_op()(d_c);
+        }
+        for (int j = 0; j < nu; ++j) {
+            const int ib = unlocked[j];
+            syncmem_op()(psi_in + ib * this->n_basis,
+                         this->hpsi_new + j * this->n_basis, this->n_basis);
+        }
+
+        // 6. Pack unlocked hpsi, rotate, scatter
+        for (int j = 0; j < nu; ++j) {
+            const int ib = unlocked[j];
+            syncmem_op()(this->work + j * this->n_basis,
+                         hpsi_in + ib * this->n_basis, this->n_basis);
+        }
+        {
+            // Re-use s (still holds R^{-1}) → upload again
+            T* d_c = nullptr;
+            resmem_op()(d_c, nu * nu);
+            syncmem_h2d()(d_c, s.data(), nu * nu);
+            ModuleBase::gemm_op<T, Device>()('N', 'N',
+                this->n_dim, nu, nu,
+                p_one<T>(), this->work, this->n_basis,
+                d_c, nu,
+                p_zero<T>(), this->hpsi_new, this->n_basis);
+            delmem_op()(d_c);
+        }
+        for (int j = 0; j < nu; ++j) {
+            const int ib = unlocked[j];
+            syncmem_op()(hpsi_in + ib * this->n_basis,
+                         this->hpsi_new + j * this->n_basis, this->n_basis);
+        }
+    }
 }
 
 template <typename T, typename Device>
-bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in) const
+bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in, Real ortho_thr) const
 {
     const int nw = this->n_work;
 
@@ -320,7 +536,7 @@ bool DiagoPPCG<T, Device>::check_orthonormality(T* psi_in) const
                             - static_cast<T>(row == col ? 1.0 : 0.0);
             frob2 += std::norm(delta);
         }
-    return std::sqrt(frob2) < Real(1e-1);
+    return std::sqrt(frob2) < ortho_thr;
 }
 
 // ---- rotation ---------------------------------------------------------------
@@ -329,6 +545,11 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::rotate_block(T* block, const T* coeff,
                                         T* workspace) const
 {
+    // GEMM writes only n_dim rows; padding (n_dim..n_basis-1) is untouched.
+    // workspace (this->work) is reused across calls — zero it first so stale
+    // padding from previous operations doesn't pollute psi/hpsi after syncmem.
+    setmem_op()(workspace, 0, this->n_work * this->n_basis);
+
     // coeff is on host (small); upload → gemm → copy result back
     T* d_c = nullptr;
     resmem_op()(d_c, this->n_work * this->n_work);
@@ -373,33 +594,113 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(T* psi_in, T* hpsi_in)
     this->rotate_block(hpsi_in, hsub.data(), this->work);
 }
 
+// ---- subspace residual -------------------------------------------------------
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::compute_subspace_residual(T* psi_in)
+{
+    // QE post-Cholesky / post-RR style: subspace residual only for ACTIVE
+    // (unlocked) bands — G_u = psi_u^H * hpsi_u,  W_u = hpsi_u − psi_u * G_u.
+    // Computing the residual against ALL columns (including locked) strips away
+    // smooth locked-band components, leaving rough high-frequency noise that the
+    // preconditioner amplifies, eventually making S = psi^H*psi near-singular.
+    const int nw = this->n_work;
+    if (nw == 0) return;
+
+    // --- collect unlocked columns ------------------------------------------
+    std::vector<int> unlocked;
+    unlocked.reserve(nw);
+    for (int ib = 0; ib < nw; ++ib)
+        if (!this->is_locked[ib]) unlocked.push_back(ib);
+    const int nu = static_cast<int>(unlocked.size());
+
+    // zero locked W columns
+    for (int ib = 0; ib < nw; ++ib) {
+        if (this->is_locked[ib])
+            setmem_op()(this->w + ib * this->n_basis, 0, this->n_basis);
+    }
+    if (nu == 0) return;
+
+    // --- pack unlocked psi → work, unlocked hpsi → hpsi_new (temp) ---------
+    for (int j = 0; j < nu; ++j) {
+        const int ib = unlocked[j];
+        syncmem_op()(this->work     + j * this->n_basis,
+                     psi_in         + ib * this->n_basis, this->n_basis);
+        syncmem_op()(this->hpsi_new + j * this->n_basis,
+                     this->hpsi     + ib * this->n_basis, this->n_basis);
+    }
+
+    // 1. G_u = psi_u^H * hpsi_u  (nu × nu) → device → host → MPI reduce
+    T* d_g = nullptr;
+    resmem_op()(d_g, nu * nu);
+    setmem_op()(d_g, 0, nu * nu);
+    ModuleBase::gemm_op<T, Device>()('C', 'N', nu, nu, this->n_dim,
+                                     p_one<T>(), this->work, this->n_basis,
+                                     this->hpsi_new, this->n_basis,
+                                     p_zero<T>(), d_g, nu);
+    std::vector<T> g(nu * nu);
+    syncmem_d2h()(g.data(), d_g, nu * nu);
+    delmem_op()(d_g);
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(g.data(), nu * nu);
+#endif
+
+    // 2. h_eigen from G diagonal
+    for (int j = 0; j < nu; ++j) {
+        const int ib = unlocked[j];
+        this->h_eigen[ib] = std::real(g[j + j * nu]);
+    }
+
+    // 3. W_u = 1.0 * hpsi_u  −  psi_u * G_u   (write into p_new, scatter back)
+    setmem_op()(this->p_new, 0, nu * this->n_basis);
+    syncmem_op()(this->p_new, this->hpsi_new, nu * this->n_basis);
+
+    T* d_g2 = nullptr;
+    resmem_op()(d_g2, nu * nu);
+    syncmem_h2d()(d_g2, g.data(), nu * nu);
+    T neg1 = static_cast<T>(-1.0);
+    ModuleBase::gemm_op<T, Device>()('N', 'N', this->n_dim, nu, nu,
+                                     &neg1, this->work, this->n_basis,
+                                     d_g2, nu,
+                                     p_one<T>(), this->p_new, this->n_basis);
+    delmem_op()(d_g2);
+
+    // 4. Scatter W_u → w, zero padding
+    for (int j = 0; j < nu; ++j) {
+        const int ib = unlocked[j];
+        syncmem_op()(this->w + ib * this->n_basis,
+                     this->p_new + j * this->n_basis, this->n_basis);
+        setmem_op()(this->w + ib * this->n_basis + this->n_dim, 0,
+                    this->n_basis - this->n_dim);
+    }
+
+}
+
 // ---- preconditioned residual ------------------------------------------------
 
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::calc_preconditioned_residual(T* psi_in)
+void DiagoPPCG<T, Device>::calc_preconditioned_residual(T* psi_in, bool skip_residual)
 {
     const Real* prec = (this->device == base_device::GpuDevice)
                            ? this->d_precondition
                            : this->precondition;
 
+    // QE-style: compute subspace residual W = hpsi - psi*(psi^H*hpsi)
+    // before applying the preconditioner.  This guarantees W ⟂ span(psi).
+    // When skip_residual is true (post-RR), W was already computed in the
+    // RR step, so we only need error norms + preconditioner application.
+    if (!skip_residual)
+        this->compute_subspace_residual(psi_in);
+
+    // Apply preconditioner and compute per-band error norms.
+    // h_err is computed from the TRUE residual (before preconditioner flips the sign).
     for (int ib = 0; ib < this->n_work; ++ib)
     {
-        T* wi  = this->w + ib * this->n_basis;
-        T* xi  = psi_in   + ib * this->n_basis;
-        T* hxi = this->hpsi + ib * this->n_basis;
+        T* wi = this->w + ib * this->n_basis;
 
         if (this->is_locked[ib]) { this->zero_vector(wi); continue; }
 
-        // lambda = Re <xi | H | xi>
-        const Real lam = ModuleBase::dot_real_op<T, Device>()(this->n_dim, xi, hxi);
-        this->h_eigen[ib] = lam;
-
-        // wi = hxi - lam * xi
-        syncmem_op()(wi, hxi, this->n_dim);
-        T nlam = static_cast<T>(-lam);
-        ModuleBase::axpy_op<T, Device>()(this->n_dim, &nlam, xi, 1, wi, 1);
-
-        // err = ||wi||
+        // err = ||wi||  (true residual, before preconditioning)
         Real e2 = ModuleBase::dot_real_op<T, Device>()(this->n_dim, wi, wi);
         Parallel_Reduce::reduce_pool(e2);
         this->h_err[ib] = std::sqrt(std::max(Real(0), e2));
@@ -475,7 +776,7 @@ bool DiagoPPCG<T, Device>::solve_small_problem(const int adim,
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 {
-    if (!this->block_sizes.empty()) { this->update_vectors_blocked(psi_in); return; }
+    if (!this->block_sizes.empty()) { this->update_vectors_blocked(psi_in); this->ppcg_update_count++; return; }
 
     setmem_op()(this->p_new,    0, this->n_work * this->n_basis);
     setmem_op()(this->hp_new,   0, this->n_work * this->n_basis);
@@ -585,32 +886,15 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
                           ? 10
                           : std::max(1, this->block_sizes[0]);
 
-    // ---- Phase 1: classify unlocked bands by P-norm (2D vs 3D subspace) ----
-    std::vector<int> idx_2d, idx_3d;
-    idx_2d.reserve(this->n_band_l);
-    idx_3d.reserve(this->n_band_l);
+    // ---- Phase 1: collect all unlocked bands ----
+    // QE: dimp=2l for iter=1, dimp=3l for iter>1.  Match this exactly.
+    std::vector<int> all_unlocked;
+    all_unlocked.reserve(this->n_work);
+    for (int ib = 0; ib < this->n_work; ++ib)
+        if (!this->is_locked[ib]) all_unlocked.push_back(ib);
 
-    for (int ib = 0; ib < this->n_band_l; ++ib)
-    {
-        if (this->is_locked[ib]) continue;
-
-        // Per-band P-norm check — same threshold as per-band solver (adim=2 vs 3).
-        Real p_norm2 = 0;
-        {
-            const T* pi = this->p + ib * ldb;
-            for (int ig = 0; ig < this->n_dim; ++ig) {
-                const T& v = pi[ig];
-                p_norm2 += std::real(v) * std::real(v) + std::imag(v) * std::imag(v);
-            }
-        }
-#ifdef __MPI
-        Parallel_Reduce::reduce_pool(p_norm2);
-#endif
-        if (p_norm2 < Real(1e-30))
-            idx_2d.push_back(ib);
-        else
-            idx_3d.push_back(ib);
-    }
+    // 2D on first call (P=0), 3D thereafter — matches QE iter=1→2D, iter>1→3D
+    const int ndim_global = (this->ppcg_update_count == 0) ? 2 : 3;
 
     // ---- Phase 2: shared lambda — pack, solve, scatter one block ------------
     auto process_block = [&](const std::vector<int>& indices, int ndim_eff)
@@ -731,7 +1015,14 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
                 }
         }
 
-        for (int i = 0; i < ns; ++i) sv[i + i * ns] += T(1.0e-12);
+        // Scale regularization by max |S_ii| to handle near-singular S
+        // from P≈0 blocks. s_max ≈ 1 for orthonormal X; 1e-8 relative
+        // regularization prevents Cholesky failure without affecting accuracy.
+        Real s_max = Real(0);
+        for (int i = 0; i < ns; ++i)
+            s_max = std::max(s_max, std::abs(std::real(sv[i + i * ns])));
+        Real s_reg = std::max(Real(1e-11), s_max * Real(1e-9));
+        for (int i = 0; i < ns; ++i) sv[i + i * ns] += T(s_reg);
 
         std::vector<T>   ev(ns2, T(0));
         std::vector<Real> el(ns, Real(0));
@@ -792,18 +1083,12 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
         }
     };  // end process_block
 
-    // ---- Phase 3: process 2D and 3D groups in blocks -----------------------
-    for (size_t start = 0; start < idx_2d.size(); start += target_bs)
+    // ---- Phase 3: process all unlocked bands in blocks, uniform ndim ----
+    for (size_t start = 0; start < all_unlocked.size(); start += target_bs)
     {
-        size_t end = std::min(start + target_bs, idx_2d.size());
-        std::vector<int> block(idx_2d.begin() + start, idx_2d.begin() + end);
-        process_block(block, 2);
-    }
-    for (size_t start = 0; start < idx_3d.size(); start += target_bs)
-    {
-        size_t end = std::min(start + target_bs, idx_3d.size());
-        std::vector<int> block(idx_3d.begin() + start, idx_3d.begin() + end);
-        process_block(block, 3);
+        size_t end = std::min(start + target_bs, all_unlocked.size());
+        std::vector<int> block(all_unlocked.begin() + start, all_unlocked.begin() + end);
+        process_block(block, ndim_global);
     }
 
     // ---- Phase 4: locked bands — keep old values ---------------------------
@@ -812,75 +1097,6 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
         if (!this->is_locked[ib]) continue;
         this->copy_vector(this->work     + ib * ldb, psi_in    + ib * ldb);
         this->copy_vector(this->hpsi_new + ib * ldb, this->hpsi + ib * ldb);
-    }
-
-    // ---- Phase 5: extra (buffer) bands — per-band PPCG ---------------------
-    for (int ib = this->n_band_l; ib < this->n_work; ++ib)
-    {
-        T* xi  = psi_in      + ib * ldb;
-        T* hxi = this->hpsi  + ib * ldb;
-        T* wi  = this->w     + ib * ldb;
-        T* hwi = this->hw    + ib * ldb;
-        T* pi  = this->p     + ib * ldb;
-        T* hpi = this->hp    + ib * ldb;
-
-        T* xnew   = this->work     + ib * ldb;
-        T* hxnew  = this->hpsi_new + ib * ldb;
-        T* pnext  = this->p_new    + ib * ldb;
-        T* hpnext = this->hp_new   + ib * ldb;
-
-        if (this->is_locked[ib]) {
-            this->copy_vector(xnew, xi);
-            this->copy_vector(hxnew, hxi);
-            continue;
-        }
-
-        T* bv[3]  = { xi,  wi,  pi };
-        T* hbv[3] = { hxi, hwi, hpi };
-
-        Real p_norm = this->vector_norm(pi);
-        int  adim = (p_norm > Real(1e-15)) ? 3 : 2;
-
-        setmem_op()(this->d_bv_cache, 0, adim * ldb);
-        for (int j = 0; j < adim; ++j)
-            syncmem_op()(this->d_bv_cache + j * ldb, bv[j], ldb);
-
-        T hsmall[9], ssmall[9], coeff[9];
-        setmem_op()(this->d_tmp_cache, 0, 3);
-        for (int col = 0; col < adim; ++col) {
-            ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                p_one<T>(), this->d_bv_cache, ldb, hbv[col], 1,
-                p_zero<T>(), this->d_tmp_cache, 1);
-            T hc[3]; syncmem_d2h()(hc, this->d_tmp_cache, adim);
-            for (int r = 0; r < adim; ++r) hsmall[r + col * adim] = hc[r];
-
-            setmem_op()(this->d_tmp_cache, 0, 3);
-            ModuleBase::gemv_op<T, Device>()('C', this->n_dim, adim,
-                p_one<T>(), this->d_bv_cache, ldb, bv[col], 1,
-                p_zero<T>(), this->d_tmp_cache, 1);
-            syncmem_d2h()(hc, this->d_tmp_cache, adim);
-            for (int r = 0; r < adim; ++r) ssmall[r + col * adim] = hc[r];
-        }
-
-        Real eval[3];
-        this->solve_small_problem(adim, hsmall, ssmall, coeff, eval);
-        this->h_eigen[ib] = eval[0];
-
-        this->zero_vector(xnew);   this->zero_vector(hxnew);
-        this->zero_vector(pnext);  this->zero_vector(hpnext);
-
-        for (int j = 0; j < adim; ++j) {
-            this->axpy_vector(xnew,  bv[j],  coeff[j]);
-            this->axpy_vector(hxnew, hbv[j], coeff[j]);
-        }
-        if (adim >= 2) {
-            this->axpy_vector(pnext,  wi,  coeff[1]);
-            this->axpy_vector(hpnext, hwi, coeff[1]);
-        }
-        if (adim == 3) {
-            this->axpy_vector(pnext,  pi,  coeff[2]);
-            this->axpy_vector(hpnext, hpi, coeff[2]);
-        }
     }
 
     syncmem_op()(psi_in,  this->work,     this->n_work * ldb);
@@ -908,71 +1124,179 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     this->modified_gram_schmidt(psi_in, this->hpsi);
     this->rayleigh_ritz(psi_in, this->hpsi);
 
+    // ---- QE-style: compute post-RR residual W = HΨ - Ψ*diag(eigenvalues) ----
+    // RR has globally rotated the subspace.  We must recompute the true
+    // residual from the freshly rotated Ψ before any convergence decision.
+    for (int ib = 0; ib < this->n_work; ++ib) {
+        T* wi  = this->w + ib * this->n_basis;
+        T* xi  = psi_in + ib * this->n_basis;
+        T* hxi = this->hpsi + ib * this->n_basis;
+        syncmem_op()(wi, hxi, this->n_dim);
+        T neg_e = static_cast<T>(-this->h_eigen[ib]);
+        ModuleBase::axpy_op<T, Device>()(this->n_dim, &neg_e, xi, 1, wi, 1);
+        setmem_op()(wi + this->n_dim, 0, this->n_basis - this->n_dim);
+    }
+
+    // Compute h_err from post-RR W and lock converged physical bands.
+    for (int ib = 0; ib < this->n_work; ++ib) {
+        if (this->is_locked[ib]) { this->zero_vector(this->w + ib * this->n_basis); continue; }
+        Real e2 = ModuleBase::dot_real_op<T, Device>()(this->n_dim,
+                        this->w + ib * this->n_basis, this->w + ib * this->n_basis);
+        Parallel_Reduce::reduce_pool(e2);
+        this->h_err[ib] = std::sqrt(std::max(Real(0), e2));
+    }
+    syncmem_real_h2d()(this->d_err, this->h_err, this->n_work);
+
+    // DEBUG: trace extra band h_err
+    {
+        const int ex0 = this->n_band_l;
+        const int exN = this->n_work - 1;
+        std::cerr << "[PPCG INIT] n_extra=" << this->n_extra
+                  << " n_work=" << this->n_work
+                  << " n_band_l=" << this->n_band_l
+                  << " h_err[ex0]=" << this->h_err[ex0]
+                  << " h_err[exN]=" << this->h_err[exN]
+                  << std::endl;
+    }
+
+    // Initial locking: use SQRT(ethr) as lock tolerance, matching QE's lock_tol.
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        if (this->h_err[ib] <= std::sqrt(ethr_band[ib]))
+            this->is_locked[ib] = 1;
+    }
+
+    // ---- QE-style trace convergence init ----
+    // trG = Σ e_i for active (unlocked) physical bands after initial RR.
+    Real trG = 0;
+    int n_act = 0;
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        if (!this->is_locked[ib]) { trG += this->h_eigen[ib]; n_act++; }
+    }
+    // trtol = ethr * sqrt(nact), matching QE's trtol.
+    Real trtol = (n_act > 0) ? ethr_band[0] * std::sqrt(Real(n_act)) : Real(0);
+    Real trdif = Real(-1);  // -1 = "undefined", always trigger at least one more iter
+
+    std::cerr << "[PPCG INIT] n_extra=" << this->n_extra
+              << " n_work=" << this->n_work
+              << " trG=" << trG << " n_act=" << n_act
+              << " trtol=" << trtol << std::endl;
+
     int iter = 0;
     const int max_iter = std::max(1, DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
+    const int rr_period = 20;
+
+    // did_rr: true when the previous iteration ended with an RR step.
+    bool did_rr = false;
+
     for (; iter < max_iter; ++iter)
     {
-        // 1. preconditioned residuals
-        this->calc_preconditioned_residual(psi_in);
+        // ---- 1. preconditioned residuals ----
+        this->calc_preconditioned_residual(psi_in, /*skip_residual=*/did_rr);
+        did_rr = false;
 
-        // diagnostics
-        if (iter % 10 == 0 || iter == max_iter - 1)
+        // ---- diagnostics ----
+        if (iter % rr_period == 0 || iter % rr_period == (rr_period - 1) || iter == max_iter - 1)
         {
             int nl = 0;
             for (int ib = 0; ib < this->n_band_l; ++ib)
                 if (this->is_locked[ib]) nl++;
+            const char* tag = (iter % rr_period == 0 && iter > 0) ? " [post-RR]" : "";
             std::cerr << "[PPCG] iter=" << iter
                       << " err[0]=" << this->h_err[0]
                       << " err[end]=" << this->h_err[this->n_band_l - 1]
+                      << " err[extra]=" << (this->n_extra > 0 ? this->h_err[this->n_work - 1] : Real(0))
                       << " ethr=" << ethr_band[0]
                       << " locked=" << nl << "/" << this->n_band_l
-                      << " blocked=" << (!this->block_sizes.empty() ? "yes" : "no")
-                      << " dev=" << (this->device == base_device::GpuDevice ? "GPU" : "CPU")
+                      << " trdif=" << trdif << " trtol=" << trtol
+                      << tag
                       << std::endl;
         }
 
-        // 2. lock converged bands
-        for (int ib = 0; ib < this->n_band_l; ++ib)
-        {
-            if (this->is_locked[ib]) continue;
-            if (this->h_err[ib] <= ethr_band[ib])
-            {
-                if (++this->converge_count[ib] >= 2)
-                {
-                    this->is_locked[ib] = 1;
-                    this->h_err[ib] = Real(0);
-                }
-            }
-            else this->converge_count[ib] = 0;
+        // ---- 2. convergence: per-band residual OR trace stabilised ----
+        if (!this->test_error(ethr_band)) break;
+        if (trdif >= Real(0) && trdif <= trtol) {
+            std::cerr << "[PPCG] converged by trace: trdif=" << trdif
+                      << " <= trtol=" << trtol << std::endl;
+            break;
         }
 
-        // 3. global convergence
-        if (!this->test_error(ethr_band)) break;
-
-        // 4. project W, P to orthogonal complement
+        // ---- 3. project W, P to orthogonal complement ----
         this->project_to_orthogonal_complement(psi_in, this->w);
         this->project_to_orthogonal_complement(psi_in, this->p);
 
-        // 5. H|w>, H|p>
-        this->calc_hpsi(hpsi_func, this->w, this->hw);
-        this->calc_hpsi(hpsi_func, this->p, this->hp);
+        // ---- 4. H|w>, H|p> (QE-style: only active/unlocked columns) ----
+        this->apply_hpsi_to_active(hpsi_func, this->w, this->hw);
+        this->apply_hpsi_to_active(hpsi_func, this->p, this->hp);
 
-        // 6. subspace update
+        // ---- 5. subspace update ----
         this->update_vectors_from_ppcg_subspace(psi_in);
 
-        // 7. periodic re-orthonormalization
-        if ((iter + 1) % 15 == 0)
+        // ---- 6. periodic Rayleigh-Ritz + locking (paper §3.4) ----
+        if ((iter + 1) % rr_period == 0)
         {
             this->orth_cholesky(psi_in, this->hpsi);
             this->rayleigh_ritz(psi_in, this->hpsi);
+
+            // ---- Recompute W = HΨ - Ψ*diag(eigenvalues) after RR ----
+            for (int ib = 0; ib < this->n_work; ++ib) {
+                T* wi  = this->w + ib * this->n_basis;
+                T* xi  = psi_in + ib * this->n_basis;
+                T* hxi = this->hpsi + ib * this->n_basis;
+                syncmem_op()(wi, hxi, this->n_dim);
+                T neg_e = static_cast<T>(-this->h_eigen[ib]);
+                ModuleBase::axpy_op<T, Device>()(this->n_dim, &neg_e, xi, 1, wi, 1);
+                setmem_op()(wi + this->n_dim, 0, this->n_basis - this->n_dim);
+            }
+
+            // ---- Lock converged physical bands based on post-RR residual ----
+            // Use sqrt(ethr) matching QE's lock_tol.
+            std::fill(this->is_locked.begin(), this->is_locked.end(), 0);
+            for (int ib = 0; ib < this->n_band_l; ++ib) {
+                Real e2 = ModuleBase::dot_real_op<T, Device>()(this->n_dim,
+                                this->w + ib * this->n_basis, this->w + ib * this->n_basis);
+                Parallel_Reduce::reduce_pool(e2);
+                this->h_err[ib] = std::sqrt(std::max(Real(0), e2));
+                if (this->h_err[ib] <= std::sqrt(ethr_band[ib]))
+                    this->is_locked[ib] = 1;
+            }
+            syncmem_real_h2d()(this->d_err, this->h_err, this->n_work);
+
+            // ---- QE: after RR, trdif = -1, trG = Σ e_i(active) ----
+            trdif = Real(-1);
+            trG = 0; n_act = 0;
+            for (int ib = 0; ib < this->n_band_l; ++ib) {
+                if (!this->is_locked[ib]) { trG += this->h_eigen[ib]; n_act++; }
+            }
+            trtol = (n_act > 0) ? ethr_band[0] * std::sqrt(Real(n_act)) : Real(0);
+
+            // QE does NOT clear P after RR — old P directions are
+            // orthogonalised against the new psi in the next iteration.
+            // Clearing P would force a 2D restart and lose search info.
+
+            did_rr = true;
         }
-        else if (!this->check_orthonormality(psi_in))
+        else
         {
+            // ---- non-RR iteration: orthonormalise + recompute subspace residual ----
             this->orth_cholesky(psi_in, this->hpsi);
+            this->compute_subspace_residual(psi_in);
+
+            // ---- QE-style trace convergence: trG1 = Σ h_eigen(active) ----
+            Real trG1 = 0; n_act = 0;
+            for (int ib = 0; ib < this->n_band_l; ++ib) {
+                if (!this->is_locked[ib]) { trG1 += this->h_eigen[ib]; n_act++; }
+            }
+            trtol = (n_act > 0) ? ethr_band[0] * std::sqrt(Real(n_act)) : Real(0);
+            if (n_act > 0) {
+                trdif = std::abs(trG1 - trG);
+                trG = trG1;
+            } else {
+                trdif = Real(0);  // all bands converged
+            }
         }
     }
 
-    // final Rayleigh-Ritz + output
+    // ---- final Rayleigh-Ritz + output ----
     this->rayleigh_ritz(psi_in, this->hpsi);
     for (int ib = 0; ib < this->n_band_l; ++ib)
         eigenvalue_in[ib] = this->h_eigen[ib];
@@ -982,6 +1306,7 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::cerr << "[PPCG] done: niter=" << std::min(iter + 1, max_iter)
               << " final_err[0]=" << this->h_err[0]
               << " final_err[end]=" << this->h_err[this->n_band_l - 1]
+              << " final_err[extra]=" << (this->n_extra > 0 ? this->h_err[this->n_work - 1] : Real(0))
               << " eigen[0]=" << eigenvalue_in[0] << std::endl;
 
     return std::min(iter + 1, max_iter);
