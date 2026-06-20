@@ -112,9 +112,9 @@ InputAtoms NeighborSearch::ucell_to_input_atoms(const AtomProvider& ucell)
         for (int j = 0; j < ucell.get_na(i); j++)
         {
             NeighborAtom atom(
-                ucell.get_tauu(i,j).x,
-                ucell.get_tauu(i,j).y,
-                ucell.get_tauu(i,j).z,
+                ucell.get_tau(i,j).x,
+                ucell.get_tau(i,j).y,
+                ucell.get_tau(i,j).z,
                 i,
                 j,
                 atom_count
@@ -188,9 +188,9 @@ void NeighborSearch::set_member_variables(const AtomProvider& ucell)
                 {
                     for (int j = 0; j < ucell.get_na(i); j++)
                     {
-                        double atom_x = ucell.get_tauu(i,j).x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
-                        double atom_y = ucell.get_tauu(i,j).y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
-                        double atom_z = ucell.get_tauu(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
+                        double atom_x = ucell.get_tau(i,j).x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
+                        double atom_y = ucell.get_tau(i,j).y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
+                        double atom_z = ucell.get_tau(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
                         NeighborAtom atom(atom_x, atom_y, atom_z, i, j, atom_count);
                         if(ix==0 && iy==0 && iz==0)

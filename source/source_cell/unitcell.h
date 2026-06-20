@@ -38,7 +38,7 @@ class UnitCell : public AtomProvider {
         return ntype;
     }
 
-    ModuleBase::Vector3<double> get_tauu(int i, int j) const override {
+    ModuleBase::Vector3<double> get_tau(int i, int j) const override {
         return atoms[i].tau[j];
     }
 

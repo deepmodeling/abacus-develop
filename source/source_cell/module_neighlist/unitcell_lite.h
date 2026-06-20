@@ -81,7 +81,7 @@ public:
      * @return Cartesian coordinate of the atom in Bohr.
      * @note Asserts that i and j are in valid ranges.
      */
-    ModuleBase::Vector3<double> get_tauu(int i, int j) const override;
+    ModuleBase::Vector3<double> get_tau(int i, int j) const override;
 
     // ========== Setter methods ==========
 

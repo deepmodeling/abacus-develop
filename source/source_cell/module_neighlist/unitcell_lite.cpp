@@ -29,7 +29,7 @@ int UnitCellLite::get_ntype() const {
     return ntype_;
 }
 
-ModuleBase::Vector3<double> UnitCellLite::get_tauu(int i, int j) const {
+ModuleBase::Vector3<double> UnitCellLite::get_tau(int i, int j) const {
     assert(i >= 0 && i < ntype_);
     assert(j >= 0 && j < na_[i]);
     if (i == 0) {
