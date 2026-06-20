@@ -103,7 +103,7 @@ void compose_hr_gint(HContainer<T>& hr_gint)
                 {
                     for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
                     {
-                        lower_mat->get_value(icol, irow) = upper_ap->get_value(irow, icol);
+                        lower_mat->get_value(icol, irow) = upper_mat->get_value(irow, icol);
                     }
                 }
             }
