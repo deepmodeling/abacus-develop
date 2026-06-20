@@ -43,13 +43,13 @@ namespace elecstate
                         for (int ik = 0; ik < this->_nk; ++ik)
                         {
                             if (ik_in >= 0 && ik_in != ik) continue;
-                            // cal k_phase
-                            // if TK==std::complex<double>, kphase is e^{ikR}
+                            // Inverse Fourier transform: D(R) = (1/Nk) * sum_k D(k) * exp(-i*k*R)
+                            // See Sec. 3 of nao_lcao_force_stress_derivation.md
                             const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
                             const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                             double sinp = 0.0, cosp = 0.0;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                            const std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                            const std::complex<double> kphase = std::complex<double>(cosp, -sinp);
                             // set DMR element
                             std::complex<double>* tmp_DMR_pointer = tmp_matrix->get_pointer();
                             const std::complex<double>* tmp_DMK_pointer

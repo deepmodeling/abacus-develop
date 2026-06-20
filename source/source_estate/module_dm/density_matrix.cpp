@@ -110,13 +110,13 @@ void DensityMatrix_Tools::cal_DMR(
                 for(int ik = 0; ik < dm._nk; ++ik)
                 {
                     if(ik_in >= 0 && ik_in != ik) { continue; }
-                    // cal k_phase
-                    // if TK==std::complex<double>, kphase is e^{ikR}
+                    // Inverse Fourier transform: D(R) = (1/Nk) * sum_k D(k) * exp(-i*k*R)
+                    // See Sec. 3 of nao_lcao_force_stress_derivation.md
                     const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
                     const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    kphase_vec[ik][iR] = TK(cosp, sinp);
+                    kphase_vec[ik][iR] = TK(cosp, -sinp);
                 }
             }
 
@@ -265,13 +265,13 @@ void DensityMatrix_Tools::cal_DMR_td(
                 for(int ik = 0; ik < dm._nk; ++ik)
                 {
                     if(ik_in >= 0 && ik_in != ik) { continue; }
-                    // cal k_phase
-                    // if TK==std::complex<double>, kphase is e^{ikR}
+                    // Inverse Fourier transform: D(R) = (1/Nk) * sum_k D(k) * exp(-i*k*R)
+                    // See Sec. 3 of nao_lcao_force_stress_derivation.md
                     const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
                     const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    kphase_vec[ik][iR] = TK(cosp, sinp);
+                    kphase_vec[ik][iR] = TK(cosp, -sinp);
                     if(PARAM.inp.td_stype==2)
                     {
                         //phase for hybrid gauge tddft
@@ -422,13 +422,13 @@ void DensityMatrix_Tools::cal_DMR_full(
             for(int ik = 0; ik < dm._nk; ++ik)
             {
                 if(ik_in >= 0 && ik_in != ik) { continue; }
-                // cal k_phase
-                // if TK==std::complex<double>, kphase is e^{ikR}
-                const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
+                // Inverse Fourier transform: D(R) = (1/Nk) * sum_k D(k) * exp(-i*k*R)
+                // See Sec. 3 of nao_lcao_force_stress_derivation.md
+                const ModuleBase::Vector3<double> dR(R_index.x, R_index.y, R_index.z);
                 const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                 double sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                kphase_vec[ik][iR] = TK(cosp, sinp);
+                kphase_vec[ik][iR] = TK(cosp, -sinp);
             }
         }
 
