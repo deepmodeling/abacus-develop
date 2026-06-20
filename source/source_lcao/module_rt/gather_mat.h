@@ -2,6 +2,7 @@
 #define GATHER_MAT_H
 
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/matrixblock.h"
 
 namespace module_rt

@@ -5,6 +5,7 @@
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_gint/gint.h"
 #include <memory>
 #include "source_lcao/hamilt_lcao.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -16,6 +17,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 #ifdef __EXX
 template<>

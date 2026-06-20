@@ -1,3 +1,5 @@
+remove_definitions(-D__CUDA)
+
 if(ENABLE_LCAO)
 
 AddTest(
@@ -22,4 +24,17 @@ AddTest(
     ../spin_constrain.cpp
     ../template_helpers.cpp
 )
-endif() 
+
+AddTest(
+  TARGET deltaspin_pw_test
+  LIBS ${math_libs} base device parameter
+  SOURCES deltaspin_pw_test.cpp
+)
+
+AddTest(
+  TARGET deltaspin_core_test
+  LIBS ${math_libs} base device
+  SOURCES deltaspin_core_test.cpp
+)
+
+endif()
