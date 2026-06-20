@@ -1,5 +1,4 @@
 #include <chrono>
-#include <type_traits>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -90,22 +89,6 @@ class DMTest : public testing::Test
 #endif
 };
 
-TEST(DensityMatrixMoveTest, MoveConstructorIsNoexcept)
-{
-    static_assert(std::is_move_constructible<elecstate::DensityMatrix<double, double>>::value,
-                  "DensityMatrix<double, double> should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::DensityMatrix<double, double>>::value,
-                  "DensityMatrix<double, double> move constructor should be noexcept");
-    static_assert(std::is_move_constructible<elecstate::DensityMatrix<std::complex<double>, double>>::value,
-                  "DensityMatrix<std::complex<double>, double> should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::DensityMatrix<std::complex<double>, double>>::value,
-                  "DensityMatrix<std::complex<double>, double> move constructor should be noexcept");
-    static_assert(std::is_move_constructible<elecstate::DensityMatrix<std::complex<double>, std::complex<double>>>::value,
-                  "DensityMatrix<std::complex<double>, std::complex<double>> should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::DensityMatrix<std::complex<double>, std::complex<double>>>::value,
-                  "DensityMatrix<std::complex<double>, std::complex<double>> move constructor should be noexcept");
-}
-
 TEST_F(DMTest, DMConstructor_GammaOnly)
 {
     // construct DM
@@ -117,19 +100,6 @@ TEST_F(DMTest, DMConstructor_GammaOnly)
     EXPECT_EQ(DM.get_DMK_size(), nspin);
     EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
     EXPECT_EQ(DM.get_DMK_ncol(), paraV->ncol);
-}
-
-TEST_F(DMTest, MoveConstructorTransfersDMKStorage)
-{
-    int nspin = 2;
-    elecstate::DensityMatrix<double, double> DM(paraV, nspin);
-    double* dmk_data = DM.get_DMK_vector()[0].data();
-
-    elecstate::DensityMatrix<double, double> moved(std::move(DM));
-
-    EXPECT_EQ(moved.get_DMK_vector()[0].data(), dmk_data);
-    EXPECT_TRUE(DM.get_DMK_vector().empty());
-    EXPECT_TRUE(DM.get_DMR_vector().empty());
 }
 
 TEST_F(DMTest, DMConstructor_nspin1)

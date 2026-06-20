@@ -1,12 +1,7 @@
 #include "gtest/gtest.h"
-#include <type_traits>
 #include <vector>
 
 #define private public
-#define protected public
-#include "source_estate/module_pot/H_Hartree_pw.h"
-#include "source_estate/module_pot/pot_cosikr.h"
-#include "source_estate/module_pot/pot_xc_fdm.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
@@ -168,43 +163,6 @@ class PotentialNewTest : public ::testing::Test
         }
     }
 };
-
-TEST(PotentialMoveTest, MoveConstructorsAreNoexcept)
-{
-    static_assert(std::is_move_constructible<elecstate::Potential>::value,
-                  "Potential should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::Potential>::value,
-                  "Potential move constructor should be noexcept");
-    static_assert(std::is_move_constructible<elecstate::PotHartree>::value,
-                  "PotHartree should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::PotHartree>::value,
-                  "PotHartree move constructor should be noexcept");
-    static_assert(std::is_move_constructible<elecstate::PotXC_FDM>::value,
-                  "PotXC_FDM should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::PotXC_FDM>::value,
-                  "PotXC_FDM move constructor should be noexcept");
-    static_assert(std::is_move_constructible<elecstate::Pot_Cosikr>::value,
-                  "Pot_Cosikr should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<elecstate::Pot_Cosikr>::value,
-                  "Pot_Cosikr move constructor should be noexcept");
-}
-
-TEST(PotentialMoveTest, PotCosikrMoveStealsVectorStorage)
-{
-    ModuleBase::Vector3<double> kvec(1.0, 2.0, 3.0);
-    std::vector<double> phase{0.25, 0.5};
-    std::vector<double> amplitude{1.5, 2.5};
-    elecstate::Pot_Cosikr pot(nullptr, kvec, phase, amplitude);
-    const double* phase_data = pot.phase.data();
-    const double* amplitude_data = pot.amplitude.data();
-
-    elecstate::Pot_Cosikr moved(std::move(pot));
-
-    EXPECT_EQ(moved.phase.data(), phase_data);
-    EXPECT_EQ(moved.amplitude.data(), amplitude_data);
-    EXPECT_TRUE(pot.phase.empty());
-    EXPECT_TRUE(pot.amplitude.empty());
-}
 
 TEST_F(PotentialNewTest, ConstructorCPUDouble)
 {

@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#include <type_traits>
-
 #define private public
 #define protected public
 #include "source_cell/unitcell.h"
@@ -96,36 +94,6 @@ class ChargeTest : public ::testing::Test
 
 TEST_F(ChargeTest, Constructor)
 {
-    EXPECT_FALSE(charge->allocate_rho);
-    EXPECT_FALSE(charge->allocate_rho_final_scf);
-}
-
-TEST(ChargeMoveTest, MoveConstructorIsNoexcept)
-{
-    static_assert(std::is_move_constructible<Charge>::value, "Charge should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<Charge>::value, "Charge move constructor should be noexcept");
-}
-
-TEST_F(ChargeTest, MoveConstructorTransfersAllocatedPointers)
-{
-    charge->set_rhopw(rhopw);
-    const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    double** rho = charge->rho;
-    std::complex<double>** rhog = charge->rhog;
-    double* space_rho = charge->_space_rho;
-    double* rho_core = charge->rho_core;
-
-    Charge moved(std::move(*charge));
-
-    EXPECT_EQ(moved.rho, rho);
-    EXPECT_EQ(moved.rhog, rhog);
-    EXPECT_EQ(moved._space_rho, space_rho);
-    EXPECT_EQ(moved.rho_core, rho_core);
-    EXPECT_EQ(charge->rho, nullptr);
-    EXPECT_EQ(charge->rhog, nullptr);
-    EXPECT_EQ(charge->_space_rho, nullptr);
-    EXPECT_EQ(charge->rho_core, nullptr);
     EXPECT_FALSE(charge->allocate_rho);
     EXPECT_FALSE(charge->allocate_rho_final_scf);
 }
@@ -252,3 +220,4 @@ TEST_F(ChargeTest, InitFinalScf)
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);
 }
+

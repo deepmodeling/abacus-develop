@@ -11,7 +11,6 @@ AddTest(
   LIBS parameter ${math_libs} psi base device
   SOURCES test_gint_common.cpp
     tmp_mocks.cpp
-    ../gint.cpp
     ../gint_common.cpp
     ../../module_hcontainer/base_matrix.cpp
     ../../module_hcontainer/hcontainer.cpp

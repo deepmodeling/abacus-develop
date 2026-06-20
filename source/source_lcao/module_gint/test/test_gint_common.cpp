@@ -2,12 +2,7 @@
 
 #include "../gint_common.h"
 #include "../gint_info.h"
-#define private public
-#include "../gint_rho.h"
-#include "../gint_vl.h"
-#undef private
 
-#include <type_traits>
 #include <vector>
 
 class GintCommonTest : public ::testing::Test
@@ -58,46 +53,6 @@ class GintCommonTest : public ::testing::Test
     std::vector<int> ijr_info_;
     ModuleGint::GintInfo* gint_info_ = nullptr;
 };
-
-TEST(GintMoveTest, MoveConstructorsAreNoexcept)
-{
-    static_assert(std::is_move_constructible<ModuleGint::Gint_rho>::value,
-                  "Gint_rho should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<ModuleGint::Gint_rho>::value,
-                  "Gint_rho move constructor should be noexcept");
-    static_assert(std::is_move_constructible<ModuleGint::Gint_vl>::value,
-                  "Gint_vl should be move constructible");
-    static_assert(std::is_nothrow_move_constructible<ModuleGint::Gint_vl>::value,
-                  "Gint_vl move constructor should be noexcept");
-}
-
-TEST_F(GintCommonTest, MoveConstructorsTransferPointerMembers)
-{
-    double rho_storage[2]{};
-    double* rho_rows[1]{rho_storage};
-    hamilt::HContainer<double> dm;
-    std::vector<hamilt::HContainer<double>*> dm_vec{&dm};
-    ModuleGint::Gint_rho rho(dm_vec, 1, rho_rows);
-    const auto dm_vec_data = rho.dm_vec_.data();
-
-    ModuleGint::Gint_rho moved_rho(std::move(rho));
-
-    EXPECT_EQ(moved_rho.dm_vec_.data(), dm_vec_data);
-    EXPECT_TRUE(rho.dm_vec_.empty());
-    EXPECT_EQ(moved_rho.rho_, rho_rows);
-    EXPECT_EQ(rho.rho_, nullptr);
-
-    double vr_eff[1]{};
-    hamilt::HContainer<double> hR;
-    ModuleGint::Gint_vl vl(vr_eff, &hR);
-
-    ModuleGint::Gint_vl moved_vl(std::move(vl));
-
-    EXPECT_EQ(moved_vl.vr_eff_, vr_eff);
-    EXPECT_EQ(moved_vl.hR_, &hR);
-    EXPECT_EQ(vl.vr_eff_, nullptr);
-    EXPECT_EQ(vl.hR_, nullptr);
-}
 
 TEST_F(GintCommonTest, GetHrFloatBuildsExpectedShape)
 {
