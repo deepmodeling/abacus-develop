@@ -102,9 +102,10 @@ protected:
             if (ap)
             {
                 int nw = ucell.atoms[0].nw;
+                const int r_index = 0;  // R=(0,0,0)
                 for (int k = 0; k < nw; k++)
                 {
-                    ap->get_pointer()[k * nw + k] = scale * (k + 1) * 0.1;
+                    ap->get_pointer(r_index)[k * nw + k] = scale * (k + 1) * 0.1;
                 }
             }
         }
@@ -143,10 +144,11 @@ TEST_F(OutputHContainerTest, WriteReadConsistency)
         ASSERT_NE(ap_w, nullptr);
         ASSERT_NE(ap_r, nullptr);
 
+        const int r_index = 0;  // R=(0,0,0)
         for (int k = 0; k < nw; k++)
         {
-            EXPECT_NEAR(ap_w->get_pointer()[k * nw + k],
-                        ap_r->get_pointer()[k * nw + k], 1e-8)
+            EXPECT_NEAR(ap_w->get_pointer(r_index)[k * nw + k],
+                        ap_r->get_pointer(r_index)[k * nw + k], 1e-8)
                 << "Mismatch at atom " << i << " orbital " << k;
         }
     }
@@ -161,10 +163,11 @@ TEST_F(OutputHContainerTest, WriteReadConsistency)
             auto* ap_r = hc_read->find_pair(i, j);
             if (ap_w && ap_r)
             {
+                const int r_index = 0;  // R=(0,0,0)
                 for (int k = 0; k < nw * nw; k++)
                 {
-                    EXPECT_NEAR(ap_w->get_pointer()[k],
-                                ap_r->get_pointer()[k], 1e-10);
+                    EXPECT_NEAR(ap_w->get_pointer(r_index)[k],
+                                ap_r->get_pointer(r_index)[k], 1e-10);
                 }
             }
         }
@@ -227,11 +230,12 @@ TEST_F(OutputHContainerTest, PrecisionParameter)
     auto* ap_r = hc_read->find_pair(0, 0);
     ASSERT_NE(ap_r, nullptr);
 
+    const int r_index = 0;  // R=(0,0,0)
     for (int k = 0; k < nw; k++)
     {
         double expected = 1.23456789 * (k + 1) * 0.1;
         // 4-digit precision => ~1e-4 tolerance
-        EXPECT_NEAR(ap_r->get_pointer()[k * nw + k], expected, 5e-4)
+        EXPECT_NEAR(ap_r->get_pointer(r_index)[k * nw + k], expected, 5e-4)
             << "Low-precision round-trip failed at orbital " << k;
     }
 
