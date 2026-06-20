@@ -661,6 +661,85 @@ void AtomPair<T>::add_from_matrix(const T* hk, const int ld_hk, const T& kphase,
     }
 }
 
+// add_from_matrix with explicit R_index - thread-safe version
+template <typename T>
+void AtomPair<T>::add_from_matrix(const int R_index,
+                                  const std::complex<T>* hk,
+                                  const int ld_hk,
+                                  const std::complex<T>& kphase,
+                                  const int hk_type)
+{
+    const BaseMatrix<T>& matrix = values[R_index];
+    T* hr_tmp = matrix.get_pointer();
+    const std::complex<T>* hk_tmp = hk;
+    const T* hk_real_pointer = nullptr;
+    const T* hk_imag_pointer = nullptr;
+    const int ld_hk_2 = ld_hk * 2;
+    // row major
+    if (hk_type == 0)
+    {
+        hk_tmp += this->row_ap * ld_hk + this->col_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            hk_real_pointer = (T*)hk_tmp;
+            hk_imag_pointer = hk_real_pointer+1;
+            BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, 2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, -kphase.imag(), hk_imag_pointer, 2, hr_tmp, 1);
+            hk_tmp += ld_hk;
+            hr_tmp += this->col_size;
+        }
+    }
+    // column major
+    else if (hk_type == 1)
+    {
+        hk_tmp += this->col_ap * ld_hk + this->row_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            hk_real_pointer = (T*)hk_tmp;
+            hk_imag_pointer = hk_real_pointer+1;
+            BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, ld_hk_2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, -kphase.imag(), hk_imag_pointer, ld_hk_2, hr_tmp, 1);
+            hk_tmp ++;
+            hr_tmp += this->col_size;
+        }
+    }
+}
+
+// add_from_matrix with explicit R_index - thread-safe version
+template <typename T>
+void AtomPair<T>::add_from_matrix(const int R_index,
+                                  const T* hk,
+                                  const int ld_hk,
+                                  const T& kphase,
+                                  const int hk_type)
+{
+    const BaseMatrix<T>& matrix = values[R_index];
+    T* hr_tmp = matrix.get_pointer();
+    const T* hk_tmp = hk;
+    // row major
+    if (hk_type == 0)
+    {
+        hk_tmp += this->row_ap * ld_hk + this->col_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            BlasConnector::axpy(this->col_size, kphase, hk_tmp, 1, hr_tmp, 1);
+            hk_tmp += ld_hk;
+            hr_tmp += this->col_size;
+        }
+    }
+    // column major
+    else if (hk_type == 1)
+    {
+        hk_tmp += this->col_ap * ld_hk + this->row_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            BlasConnector::axpy(this->col_size, kphase, hk_tmp, ld_hk, hr_tmp, 1);
+            ++hk_tmp;
+            hr_tmp += this->col_size;
+        }
+    }
+}
+
 // add_to_matrix with explicit R_index - thread-safe version
 template <typename T>
 void AtomPair<T>::add_to_matrix(const int R_index,

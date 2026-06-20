@@ -293,6 +293,39 @@ class AtomPair
     void add_from_matrix(const T* hk, const int ld_hk, const T& kphase, const int hk_type = 0);
 
     /**
+     * @brief Add data from hk to this->value[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the source matrix.
+     * @param ld_hk Leading dimension of the source matrix.
+     * @param kphase Complex scalar to be multiplied with the source matrix.
+     * @param hk_type The type of matrix layout (default: 0).
+     */
+    void add_from_matrix(const int R_index,
+                         const std::complex<T>* hk,
+                         const int ld_hk,
+                         const std::complex<T>& kphase,
+                         const int hk_type = 0);
+
+    /**
+     * @brief Add data from hk to this->value[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     * for non-collinear spin case only
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the source matrix.
+     * @param ld_hk Leading dimension of the source matrix.
+     * @param kphase Scalar to be multiplied with the source matrix.
+     * @param hk_type The type of matrix layout (default: 0).
+     */
+    void add_from_matrix(const int R_index,
+                         const T* hk,
+                         const int ld_hk,
+                         const T& kphase,
+                         const int hk_type = 0);
+
+    /**
      * @brief Add this->value[R_index] * kphase to an array.
      * Thread-safe version: explicitly pass R_index.
      * T = double or float
