@@ -14,20 +14,19 @@ TEST(BinManagerUnit, InitAndBinning)
     BinManager bm;
     bm.init_bins(1.0, inside, ghost);
 
-    EXPECT_EQ(bm.nbinx, 1);
-    EXPECT_EQ(bm.nbiny, 1);
-    EXPECT_EQ(bm.nbinz, 1);
-    EXPECT_EQ(static_cast<int>(bm.bins.size()), bm.nbinx * bm.nbiny * bm.nbinz);
+    EXPECT_EQ(bm.get_nbinx(), 1);
+    EXPECT_EQ(bm.get_nbiny(), 1);
+    EXPECT_EQ(bm.get_nbinz(), 1);
+    EXPECT_EQ(bm.get_total_bins(), bm.get_nbinx() * bm.get_nbiny() * bm.get_nbinz());
 
     bm.do_binning(inside, ghost);
 
-    // compute bin index for first atom
-    int ix = std::min(std::max(int((inside[0].position_x - bm.x_min) / bm.bin_sizex), 0), bm.nbinx - 1);
-    int iy = std::min(std::max(int((inside[0].position_y - bm.y_min) / bm.bin_sizey), 0), bm.nbiny - 1);
-    int iz = std::min(std::max(int((inside[0].position_z - bm.z_min) / bm.bin_sizez), 0), bm.nbinz - 1);
-    int idx = ix * bm.nbiny * bm.nbinz + iy * bm.nbinz + iz;
-
-    EXPECT_GE(bm.bins[idx].atoms.size(), 1u);
+    // After binning, at least one atom should be in some bin
+    int total_atoms_in_bins = 0;
+    for (int i = 0; i < bm.get_total_bins(); ++i) {
+        total_atoms_in_bins += bm.get_bin_atom_count(i);
+    }
+    EXPECT_GE(total_atoms_in_bins, 2);
 }
 
 TEST(BinManagerUnit, InitBins)
@@ -42,9 +41,9 @@ TEST(BinManagerUnit, InitBins)
 
     BinManager bm;
     bm.init_bins(1.0, inside, ghost);
-    EXPECT_EQ(bm.nbinx, 5);
-    EXPECT_EQ(bm.nbiny, 1);
-    EXPECT_EQ(bm.nbinz, 1);
+    EXPECT_EQ(bm.get_nbinx(), 5);
+    EXPECT_EQ(bm.get_nbiny(), 1);
+    EXPECT_EQ(bm.get_nbinz(), 1);
 }
 
 TEST(BinManagerUnit, BuildNeighborsAndClear)
@@ -59,10 +58,10 @@ TEST(BinManagerUnit, BuildNeighborsAndClear)
 
     BinManager bm;
     bm.init_bins(1.0, inside, ghost);
-    EXPECT_EQ(bm.nbinx, 5);
-    EXPECT_EQ(bm.nbiny, 1);
-    EXPECT_EQ(bm.nbinz, 1);
-    EXPECT_EQ(static_cast<int>(bm.bins.size()), bm.nbinx * bm.nbiny * bm.nbinz);
+    EXPECT_EQ(bm.get_nbinx(), 5);
+    EXPECT_EQ(bm.get_nbiny(), 1);
+    EXPECT_EQ(bm.get_nbinz(), 1);
+    EXPECT_EQ(bm.get_total_bins(), bm.get_nbinx() * bm.get_nbiny() * bm.get_nbinz());
 
     bm.do_binning(inside, ghost);
 
@@ -77,7 +76,7 @@ TEST(BinManagerUnit, BuildNeighborsAndClear)
     EXPECT_EQ(nl.numneigh[2], 0);
 
     bm.clear();
-    EXPECT_EQ(bm.bins.size(), 0u);
+    EXPECT_EQ(bm.get_total_bins(), 0);
 }
 
 TEST(BinManagerUnit, EmptyAtomsBuildNeighbors)
@@ -141,9 +140,9 @@ TEST(BinManagerUnit, InitWithGhostOnly)
     BinManager bm;
     bm.init_bins(1.0, inside, ghost);
 
-    EXPECT_EQ(bm.nbinx, 3);
-    EXPECT_EQ(bm.nbiny, 1);
-    EXPECT_EQ(bm.nbinz, 1);
+    EXPECT_EQ(bm.get_nbinx(), 3);
+    EXPECT_EQ(bm.get_nbiny(), 1);
+    EXPECT_EQ(bm.get_nbinz(), 1);
 }
 
 TEST(BinManagerUnit, BuildNeighborsNoNeighborsFirstneighNull)
