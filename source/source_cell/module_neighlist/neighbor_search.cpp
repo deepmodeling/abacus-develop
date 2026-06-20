@@ -98,6 +98,15 @@ void NeighborSearch::set_width(double wx, double wy, double wz) {
 
 // ========== Internal methods ==========
 
+double NeighborSearch::cross_product_norm(double a1, double a2, double a3,
+                                          double b1, double b2, double b3)
+{
+    double c1 = a2 * b3 - a3 * b2;
+    double c2 = a3 * b1 - a1 * b3;
+    double c3 = a1 * b2 - a2 * b1;
+    return sqrt(c1 * c1 + c2 * c2 + c3 * c3);
+}
+
 InputAtoms NeighborSearch::ucell_to_input_atoms(const AtomProvider& ucell)
 {
     InputAtoms input_atoms;
@@ -138,27 +147,19 @@ InputAtoms NeighborSearch::ucell_to_input_atoms(const AtomProvider& ucell)
 
 void NeighborSearch::check_expand_condition(const AtomProvider& ucell)
 {
-    double a23_1 = ucell.get_latvec().e22 * ucell.get_latvec().e33 - ucell.get_latvec().e23 * ucell.get_latvec().e32;
-    double a23_2 = ucell.get_latvec().e21 * ucell.get_latvec().e33 - ucell.get_latvec().e23 * ucell.get_latvec().e31;
-    double a23_3 = ucell.get_latvec().e21 * ucell.get_latvec().e32 - ucell.get_latvec().e22 * ucell.get_latvec().e31;
-    double a23_norm = sqrt(a23_1 * a23_1 + a23_2 * a23_2 + a23_3 * a23_3);
-    double extend_v = a23_norm * search_radius_;
-    double extend_d1 = extend_v / ucell.get_omega() * ucell.get_lat0() * ucell.get_lat0() * ucell.get_lat0();
-    int extend_d11 = std::ceil(extend_d1);
+    const auto& lat = ucell.get_latvec();
+    const double omega = ucell.get_omega();
+    const double lat0 = ucell.get_lat0();
+    const double lat0_cubed = lat0 * lat0 * lat0;
 
-    double a31_1 = ucell.get_latvec().e32 * ucell.get_latvec().e13 - ucell.get_latvec().e33 * ucell.get_latvec().e12;
-    double a31_2 = ucell.get_latvec().e31 * ucell.get_latvec().e13 - ucell.get_latvec().e33 * ucell.get_latvec().e11;
-    double a31_3 = ucell.get_latvec().e31 * ucell.get_latvec().e12 - ucell.get_latvec().e32 * ucell.get_latvec().e11;
-    double a31_norm = sqrt(a31_1 * a31_1 + a31_2 * a31_2 + a31_3 * a31_3);
-    double extend_d2 = a31_norm * search_radius_ / ucell.get_omega() * ucell.get_lat0() * ucell.get_lat0() * ucell.get_lat0();
-    int extend_d22 = std::ceil(extend_d2);
+    double a23_norm = cross_product_norm(lat.e21, lat.e22, lat.e23, lat.e31, lat.e32, lat.e33);
+    int extend_d11 = std::ceil(a23_norm * search_radius_ / omega * lat0_cubed);
 
-    double a12_1 = ucell.get_latvec().e12 * ucell.get_latvec().e23 - ucell.get_latvec().e13 * ucell.get_latvec().e22;
-    double a12_2 = ucell.get_latvec().e11 * ucell.get_latvec().e23 - ucell.get_latvec().e13 * ucell.get_latvec().e21;
-    double a12_3 = ucell.get_latvec().e11 * ucell.get_latvec().e22 - ucell.get_latvec().e12 * ucell.get_latvec().e21;
-    double a12_norm = sqrt(a12_1 * a12_1 + a12_2 * a12_2 + a12_3 * a12_3);
-    double extend_d3 = a12_norm * search_radius_ / ucell.get_omega() * ucell.get_lat0() * ucell.get_lat0() * ucell.get_lat0();
-    int extend_d33 = std::ceil(extend_d3);
+    double a31_norm = cross_product_norm(lat.e31, lat.e32, lat.e33, lat.e11, lat.e12, lat.e13);
+    int extend_d22 = std::ceil(a31_norm * search_radius_ / omega * lat0_cubed);
+
+    double a12_norm = cross_product_norm(lat.e11, lat.e12, lat.e13, lat.e21, lat.e22, lat.e23);
+    int extend_d33 = std::ceil(a12_norm * search_radius_ / omega * lat0_cubed);
 
     glayerX_ = extend_d11 + positive_layer_offset;
     glayerY_ = extend_d22 + positive_layer_offset;

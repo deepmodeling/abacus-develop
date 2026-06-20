@@ -252,6 +252,16 @@ private:
      */
     void set_member_variables(const AtomProvider& ucell);
 
+    /**
+     * @brief Compute the norm of the cross product of two 3D vectors.
+     *
+     * @param a1, a2, a3 Components of the first vector.
+     * @param b1, b2, b3 Components of the second vector.
+     * @return Norm of the cross product.
+     */
+    static double cross_product_norm(double a1, double a2, double a3,
+                                     double b1, double b2, double b3);
+
     // ========== Data members ==========
 
     /// Search radius in lattice units

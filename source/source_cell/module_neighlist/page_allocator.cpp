@@ -30,7 +30,7 @@ int* PageAllocator::allocate(int n)
 
     if (pages_.empty()) 
     {
-	new_page_();
+        new_page_();
     }
 
     Page& p = pages_.back();

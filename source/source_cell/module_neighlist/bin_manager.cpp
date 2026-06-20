@@ -122,7 +122,7 @@ void BinManager::init_bins(
         {
             for (int iz = 0; iz < nbinz_; ++iz)
             {
-                int idx = ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
+                int idx = bin_index(ix, iy, iz);
 
                 bins_[idx].set_id(ix, iy, iz);
                 bins_[idx].clear_atoms();
@@ -153,13 +153,17 @@ void BinManager::do_binning(
             nbinz_ - 1
         );
 
-        int idx = ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
+        int idx = bin_index(ix, iy, iz);
 
         bins_[idx].add_atom(atom);
     };
 
     for (const auto& atom : inside_atoms) bin_atom(atom);
     for (const auto& atom : ghost_atoms) bin_atom(atom);
+}
+
+int BinManager::bin_index(int ix, int iy, int iz) const {
+    return ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
 }
 
 void BinManager::build_atom_neighbors(
@@ -173,9 +177,11 @@ void BinManager::build_atom_neighbors(
 
     neighbor_list.reset();
 
+    std::vector<int> neigh_tmp;
+
     for (int i = 0; i < atoms.size(); i++)
     {
-        std::vector<int> neigh_tmp;
+        neigh_tmp.clear();
 
         int ix = std::min(
             std::max(int((atoms[i].position_x - x_min_) / bin_sizex_), 0),
@@ -207,7 +213,7 @@ void BinManager::build_atom_neighbors(
                         jz < 0 || jz >= nbinz_)
                         continue;
 
-                    int nidx = jx * nbiny_ * nbinz_ + jy * nbinz_ + jz;
+                    int nidx = bin_index(jx, jy, jz);
 
                     for (const NeighborAtom& natom : bins_[nidx].get_atoms())
                     {

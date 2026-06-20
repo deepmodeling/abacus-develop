@@ -209,6 +209,15 @@ private:
 
     /// All bins in the 3D grid (stored as flat array)
     std::vector<Bin> bins_;
+
+    /**
+     * @brief Compute the flat index for a bin from its 3D coordinates.
+     * @param ix X index of the bin.
+     * @param iy Y index of the bin.
+     * @param iz Z index of the bin.
+     * @return Flat index in the bins_ array.
+     */
+    int bin_index(int ix, int iy, int iz) const;
 };
 
 #endif // BIN_MANAGER_H
