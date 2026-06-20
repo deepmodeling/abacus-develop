@@ -30,7 +30,10 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &ucell, stress_gga, is_stress, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z);
+    XC_Functional::gradcorr(
+        dum1, dum2, dum3, chr, rho_basis, &ucell,
+        stress_gga, is_stress,
+        PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z);
 
     for(int l = 0;l< 3;l++)
 	{
