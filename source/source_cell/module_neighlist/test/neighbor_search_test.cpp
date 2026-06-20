@@ -33,10 +33,10 @@ TEST(NeighborSearchTest, TwoAtomsNeighbor)
 
     auto &list = ns.get_neighbor_list();
 
-    ASSERT_EQ(list.numneigh.size(), 2);
+    ASSERT_EQ(list.get_nlocal(), 2);
 
-    EXPECT_EQ(list.numneigh[0], 8);
-    EXPECT_EQ(list.numneigh[1], 8);
+    EXPECT_EQ(list.get_numneigh(0), 8);
+    EXPECT_EQ(list.get_numneigh(1), 8);
 }
 
 TEST(NeighborSearchTest, NoNeighbor)
@@ -59,8 +59,8 @@ TEST(NeighborSearchTest, NoNeighbor)
 
     auto &list = ns.get_neighbor_list();
 
-    EXPECT_EQ(list.numneigh[0], 0);
-    EXPECT_EQ(list.numneigh[1], 0);
+    EXPECT_EQ(list.get_numneigh(0), 0);
+    EXPECT_EQ(list.get_numneigh(1), 0);
 }
 
 TEST(NeighborSearchUnit, DistanceBox)
@@ -146,7 +146,7 @@ TEST(NeighborSearchInit_WideZero_CentralInside, SingleAtomCell)
     ns.init(ucell, 0.1, 0);
     // central cell atom should be counted as inside
     EXPECT_EQ(ns.get_inside_atoms().size(), 1);
-    EXPECT_EQ(ns.get_neighbor_list().nlocal, static_cast<int>(ns.get_inside_atoms().size()));
+    EXPECT_EQ(ns.get_neighbor_list().get_nlocal(), static_cast<int>(ns.get_inside_atoms().size()));
 }
 
 TEST(NeighborSearchInit_MpiRankIndexing, RankValues)

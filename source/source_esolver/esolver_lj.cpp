@@ -77,9 +77,9 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         for (int ia = 0; ia < atom1->na; ++ia)
         {
             tau1 = atom1->tau[ia];
-            for (int ad = 0; ad < neighbor_list.numneigh[index]; ++ad)
+            for (int ad = 0; ad < neighbor_list.get_numneigh(index); ++ad)
             {
-                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.firstneigh[index][ad]];
+                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(index)[ad]];
                 tau2.x = neighbor_atom.position_x;
                 tau2.y = neighbor_atom.position_y;
                 tau2.z = neighbor_atom.position_z;

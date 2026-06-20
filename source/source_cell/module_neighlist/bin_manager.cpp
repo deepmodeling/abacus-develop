@@ -167,7 +167,7 @@ void BinManager::build_atom_neighbors(
     std::vector<NeighborAtom>& atoms
 )
 {
-    assert(atoms.size() == neighbor_list.numneigh.size());
+    assert(atoms.size() == static_cast<size_t>(neighbor_list.get_nlocal()));
 
     double sradius2 = sradius_ * sradius_;
 
@@ -228,7 +228,7 @@ void BinManager::build_atom_neighbors(
 
         int n = neigh_tmp.size();
 
-        int* ptr = neighbor_list.allocator.allocate(n);
+        int* ptr = neighbor_list.allocator_.allocate(n);
 
         for (int k = 0; k < n; k++)
         {
@@ -236,8 +236,8 @@ void BinManager::build_atom_neighbors(
             ptr[k] = neigh_tmp[k];
         }
 
-        neighbor_list.firstneigh[i] = ptr;
-        neighbor_list.numneigh[i] = n;
+        neighbor_list.firstneigh_[i] = ptr;
+        neighbor_list.numneigh_[i] = n;
     }
 }
 
