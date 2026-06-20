@@ -6,15 +6,16 @@
 #include "pot_cosikr.h"
 
 #include <cmath>
+#include <utility>
 
 namespace elecstate
 {
 
 Pot_Cosikr::Pot_Cosikr(
-		const ModulePW::PW_Basis* rho_basis_in,
-		const ModuleBase::Vector3<double> &kvec_d_in,
-		const std::vector<double> &phase_in,
-		const std::vector<double> &amplitude_in)
+			const ModulePW::PW_Basis* rho_basis_in,
+			const ModuleBase::Vector3<double> &kvec_d_in,
+			const std::vector<double> &phase_in,
+			const std::vector<double> &amplitude_in)
 	:kvec_d(kvec_d_in),
 	 phase(phase_in),
 	 amplitude(amplitude_in)
@@ -22,6 +23,14 @@ Pot_Cosikr::Pot_Cosikr(
 	this->rho_basis_ = rho_basis_in;
 	this->dynamic_mode = true;
 	this->fixed_mode = false;
+}
+
+Pot_Cosikr::Pot_Cosikr(Pot_Cosikr&& other) noexcept
+		: PotBase(std::move(other)),
+		  kvec_d(other.kvec_d),
+		  phase(std::move(other.phase)),
+		  amplitude(std::move(other.amplitude))
+{
 }
 
 

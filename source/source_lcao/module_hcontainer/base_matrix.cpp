@@ -18,7 +18,7 @@ BaseMatrix<T>::BaseMatrix(const int& nrow_, const int& ncol_, T* data_existed)
 
 // move constructor
 template <typename T>
-BaseMatrix<T>::BaseMatrix(BaseMatrix<T>&& matrix)
+BaseMatrix<T>::BaseMatrix(BaseMatrix<T>&& matrix) noexcept
 {
     this->nrow_local = matrix.nrow_local;
     this->ncol_local = matrix.ncol_local;

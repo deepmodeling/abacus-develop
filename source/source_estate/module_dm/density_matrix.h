@@ -89,6 +89,7 @@ class DensityMatrix
 			const int nspin, 
 			const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
 			const int nk);
+	DensityMatrix(DensityMatrix&& other) noexcept;
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
@@ -301,7 +302,7 @@ class DensityMatrix
     /**
      * @brief K_Vectors object, which is used to get k-point information
      */
-    const std::vector<ModuleBase::Vector3<double>> _kvec_d;
+    std::vector<ModuleBase::Vector3<double>> _kvec_d;
 
     /**
      * @brief Parallel_Orbitals object, which contain all information of 2D block cyclic distribution

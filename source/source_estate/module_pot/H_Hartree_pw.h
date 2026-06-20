@@ -57,6 +57,7 @@ class PotHartree : public PotBase
 {
   public:
     PotHartree(const ModulePW::PW_Basis* rho_basis_in);
+    PotHartree(PotHartree&& other) noexcept = default;
 
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff);
 };

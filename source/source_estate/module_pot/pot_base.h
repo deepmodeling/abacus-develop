@@ -22,6 +22,17 @@ class PotBase
 {
   public:
     PotBase(){}
+    PotBase(PotBase&& other) noexcept
+        : fixed_mode(other.fixed_mode),
+          dynamic_mode(other.dynamic_mode),
+          rho_basis_(other.rho_basis_),
+          rho_basis_smooth_(other.rho_basis_smooth_)
+    {
+        other.fixed_mode = false;
+        other.dynamic_mode = false;
+        other.rho_basis_ = nullptr;
+        other.rho_basis_smooth_ = nullptr;
+    }
     virtual ~PotBase(){}
 
     virtual void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff){}

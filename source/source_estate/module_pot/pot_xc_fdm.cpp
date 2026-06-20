@@ -6,6 +6,8 @@
 #include "pot_xc_fdm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
+#include <utility>
+
 namespace elecstate
 {
 
@@ -22,6 +24,14 @@ PotXC_FDM::PotXC_FDM(
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_0
 		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
+}
+
+PotXC_FDM::PotXC_FDM(PotXC_FDM&& other) noexcept
+    : PotBase(std::move(other)),
+      chg_0(other.chg_0),
+      v_xc_0(std::move(other.v_xc_0))
+{
+    other.chg_0 = nullptr;
 }
 
 void PotXC_FDM::cal_v_eff(

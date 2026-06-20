@@ -19,6 +19,7 @@ class Charge
   public:
 
     Charge();
+    Charge(Charge&& other) noexcept;
     ~Charge();
 
     //==========================================================

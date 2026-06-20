@@ -11,6 +11,7 @@
 #include "pot_ml_exx.h"
 
 #include <map>
+#include <utility>
 
 namespace elecstate
 {
@@ -36,6 +37,46 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
 
     // allocate memory for Potential.
     this->allocate();
+}
+
+Potential::Potential(Potential&& other) noexcept
+    : PotBase(std::move(other)),
+      v_eff_fixed(std::move(other.v_eff_fixed)),
+      v_eff(std::move(other.v_eff)),
+      veff_smooth(std::move(other.veff_smooth)),
+      vofk_smooth(std::move(other.vofk_smooth)),
+      v_xc(std::move(other.v_xc)),
+      s_veff_smooth(other.s_veff_smooth),
+      s_vofk_smooth(other.s_vofk_smooth),
+      d_veff_smooth(other.d_veff_smooth),
+      d_vofk_smooth(other.d_vofk_smooth),
+      vofk_eff(std::move(other.vofk_eff)),
+      fixed_done(other.fixed_done),
+      etxc_(other.etxc_),
+      vtxc_(other.vtxc_),
+      vl_of_0(other.vl_of_0),
+      components(std::move(other.components)),
+      ucell_(other.ucell_),
+      vloc_(other.vloc_),
+      structure_factors_(other.structure_factors_),
+      solvent_(other.solvent_),
+      vsep_cell(other.vsep_cell),
+      use_gpu_(other.use_gpu_)
+{
+    other.s_veff_smooth = nullptr;
+    other.s_vofk_smooth = nullptr;
+    other.d_veff_smooth = nullptr;
+    other.d_vofk_smooth = nullptr;
+    other.fixed_done = false;
+    other.etxc_ = nullptr;
+    other.vtxc_ = nullptr;
+    other.use_gpu_ = false;
+    other.vl_of_0 = 0.0;
+    other.ucell_ = nullptr;
+    other.vloc_ = nullptr;
+    other.structure_factors_ = nullptr;
+    other.solvent_ = nullptr;
+    other.vsep_cell = nullptr;
 }
 
 Potential::~Potential()

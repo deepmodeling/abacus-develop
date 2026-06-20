@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include "gint.h"
@@ -18,6 +19,15 @@ class Gint_rho : public Gint
         double **rho,
         bool is_dm_symm = true)
         : dm_vec_(dm_vec), nspin_(nspin), is_dm_symm_(is_dm_symm), rho_(rho) {}
+    Gint_rho(Gint_rho&& other) noexcept
+        : Gint(std::move(other)),
+          dm_vec_(std::move(other.dm_vec_)),
+          nspin_(other.nspin_),
+          is_dm_symm_(other.is_dm_symm_),
+          rho_(other.rho_)
+    {
+        other.rho_ = nullptr;
+    }
     
     void cal_gint();
 
@@ -36,7 +46,7 @@ class Gint_rho : public Gint
         const std::vector<double*>& rho_data) const;
 
     // input
-    const std::vector<HContainer<double>*> dm_vec_;
+    std::vector<HContainer<double>*> dm_vec_;
     const int nspin_;
     
     // if true, it means the DMR matrix is symmetric,

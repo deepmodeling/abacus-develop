@@ -9,6 +9,8 @@
 #include "source_base/constants.h"
 #include "source_cell/klist.h"
 
+#include <utility>
+
 namespace elecstate
 {
 
@@ -51,6 +53,29 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
         this->_DMK[ik].resize(this->_paraV->get_row_size() * this->_paraV->get_col_size());
     }
     ModuleBase::Memory::record("DensityMatrix::DMK", this->_DMK.size() * this->_DMK[0].size() * sizeof(TK));
+}
+
+template <typename TK, typename TR>
+DensityMatrix<TK, TR>::DensityMatrix(DensityMatrix<TK, TR>&& other) noexcept
+    : EDMK(std::move(other.EDMK)),
+#ifdef __PEXSI
+      pexsi_EDM(std::move(other.pexsi_EDM)),
+#endif
+      _DMR(std::move(other._DMR)),
+      _DMR_save(std::move(other._DMR_save)),
+      _DMR_grid(std::move(other._DMR_grid)),
+      _DMK(std::move(other._DMK)),
+      _kvec_d(std::move(other._kvec_d)),
+      _paraV(other._paraV),
+      _nspin(other._nspin),
+      _nk(other._nk),
+      dmr_origin_(std::move(other.dmr_origin_)),
+      dmr_tmp_(other.dmr_tmp_)
+{
+    other._paraV = nullptr;
+    other._nspin = 1;
+    other._nk = 0;
+    other.dmr_tmp_ = nullptr;
 }
 
 

@@ -31,12 +31,80 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <utility>
 #include <vector>
 
 Charge::Charge()
 {
     allocate_rho = false;
     allocate_rho_final_scf = false; // LiuXh add 20180619
+}
+
+Charge::Charge(Charge&& other) noexcept
+    : rho(other.rho),
+      rho_save(other.rho_save),
+      rhog(other.rhog),
+      rhog_save(other.rhog_save),
+      kin_r(other.kin_r),
+      kin_r_save(other.kin_r_save),
+      pgrid(other.pgrid),
+      _space_rho(other._space_rho),
+      _space_rho_save(other._space_rho_save),
+      _space_rhog(other._space_rhog),
+      _space_rhog_save(other._space_rhog_save),
+      _space_kin_r(other._space_kin_r),
+      _space_kin_r_save(other._space_kin_r_save),
+      nhat(other.nhat),
+      nhat_save(other.nhat_save),
+      rho_core(other.rho_core),
+      rhog_core(other.rhog_core),
+      prenspin(other.prenspin),
+      nrxx(other.nrxx),
+      nxyz(other.nxyz),
+      ngmc(other.ngmc),
+      nspin(other.nspin),
+      rhopw(other.rhopw),
+      cal_elf(other.cal_elf),
+      omega_(other.omega_),
+      allocate_rho(other.allocate_rho),
+      allocate_rho_final_scf(other.allocate_rho_final_scf)
+#ifdef __MPI
+      ,
+      rec(other.rec),
+      dis(other.dis)
+#endif
+{
+    other.rho = nullptr;
+    other.rho_save = nullptr;
+    other.rhog = nullptr;
+    other.rhog_save = nullptr;
+    other.kin_r = nullptr;
+    other.kin_r_save = nullptr;
+    other.pgrid = nullptr;
+    other._space_rho = nullptr;
+    other._space_rho_save = nullptr;
+    other._space_rhog = nullptr;
+    other._space_rhog_save = nullptr;
+    other._space_kin_r = nullptr;
+    other._space_kin_r_save = nullptr;
+    other.nhat = nullptr;
+    other.nhat_save = nullptr;
+    other.rho_core = nullptr;
+    other.rhog_core = nullptr;
+    other.prenspin = 1;
+    other.nrxx = 0;
+    other.nxyz = 0;
+    other.ngmc = 0;
+    other.nspin = 0;
+    other.rhopw = nullptr;
+    other.cal_elf = false;
+    other.omega_ = nullptr;
+    other.allocate_rho = false;
+    other.allocate_rho_final_scf = false;
+#ifdef __MPI
+    other.rec = nullptr;
+    other.dis = nullptr;
+#endif
 }
 
 Charge::~Charge()

@@ -63,6 +63,7 @@ class Potential : public PotBase
               double* etxc_in,
               double* vtxc_in,
               VSep* vsep_cell_in = nullptr);
+    Potential(Potential&& other) noexcept;
     ~Potential();
 
     // initialize potential when SCF begin

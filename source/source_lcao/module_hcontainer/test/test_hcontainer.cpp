@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <type_traits>
+
 /**
  * Unit test of HContainer
  * HContainer is a container of hamilt::AtomPair, in this test, we test the following functions:
@@ -45,6 +47,18 @@ class HContainerTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
 };
+
+TEST(HContainerMoveTest, MoveConstructorIsNoexcept)
+{
+    static_assert(std::is_nothrow_move_constructible<hamilt::BaseMatrix<double>>::value,
+                  "BaseMatrix<double> move constructor should be noexcept");
+    static_assert(std::is_nothrow_move_constructible<hamilt::AtomPair<double>>::value,
+                  "AtomPair<double> move constructor should be noexcept");
+    static_assert(std::is_nothrow_move_constructible<hamilt::HContainer<double>>::value,
+                  "HContainer<double> move constructor should be noexcept");
+    static_assert(std::is_nothrow_move_constructible<hamilt::HContainer<std::complex<double>>>::value,
+                  "HContainer<std::complex<double>> move constructor should be noexcept");
+}
 
 // using TEST_F to test HContainer::insert_pair
 TEST_F(HContainerTest, insert_pair)
