@@ -57,7 +57,7 @@ void scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& array,
                         std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
         result[i] = scalar * array[i];
@@ -70,7 +70,7 @@ void add_scalar_multiply_2d(const std::vector<ModuleBase::Vector3<double>>& arra
                             std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array_1.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
         result[i] = array_1[i] + scalar * array_2[i];
@@ -82,7 +82,7 @@ void subtract_2d(const std::vector<ModuleBase::Vector3<double>>& array_1,
                  std::vector<ModuleBase::Vector3<double>>& result)
 {
     int size = array_1.size();
-    result.reserve(size);
+    result.resize(size);
     for (int i = 0; i < size; i++)
     {
             result[i] = array_1[i] - array_2[i];

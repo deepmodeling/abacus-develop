@@ -24,12 +24,20 @@ Parallel_Orbitals::~Parallel_Orbitals()
 
 void Parallel_2D::set_serial(const int M_A, const int N_A)
 {
+    this->nrow = M_A;
+    this->ncol = N_A;
+    this->is_serial = true;
     this->global2local_row_.resize(M_A);
     this->global2local_row_[0] = 0;
     this->global2local_row_[1] = 1;
     this->global2local_row_[2] = -1;
     this->global2local_row_[3] = 2;
     this->global2local_row_[4] = -1; //Some rows have global2local_row_ < 0
+}
+
+int Parallel_2D::get_global_row_size() const
+{
+    return this->nrow;
 }
 
 TEST(ModuleIOTest, OutputSingleR)
@@ -44,16 +52,21 @@ TEST(ModuleIOTest, OutputSingleR)
     const double sparse_threshold = 1e-8;
     const bool binary = false;
     Parallel_Orbitals pv;
-    PARAM.sys.nlocal = 5;
-    pv.set_serial(PARAM.sys.nlocal, PARAM.sys.nlocal);
+    PARAM.sys.nlocal = 99;
+    pv.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},
         {3, {{1, 0.1}, {4, 0.7}}}
     };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = sparse_threshold;
+    options.binary = binary;
+    options.reduce = true;
+    options.temp_dir = "./";
 
     // Call function under test
-    ModuleIO::output_single_R(ofs, XR, sparse_threshold, binary, pv);
+    ModuleIO::output_single_R(ofs, XR, pv, options);
 
     // Close output file and open it for reading
     ofs.close();

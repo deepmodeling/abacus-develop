@@ -1,5 +1,5 @@
 #include "../xc_functional.h"
-#include "../xc_functional_libxc.h"
+#include "../libxc_abacus.h"
 #include "gtest/gtest.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
