@@ -42,6 +42,7 @@ jobs:
             ca-certificates \
             pkg-config \
             python-is-python3 \
+            python3-pip \
             ninja-build \
             xz-utils
 
@@ -106,6 +107,11 @@ jobs:
           #!/usr/bin/env bash
           set +e
 
+          if [ "$#" -lt 2 ] || [[ "$1" == -* ]]; then
+            echo "::error title=Invalid run_ctest.sh invocation::Expected: run_ctest.sh <group name> <ctest arguments...>"
+            exit 2
+          fi
+
           name="$1"
           shift
 
@@ -130,49 +136,49 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Integrated Tests Preparation" -R integrated_test
-          
+
       - name: Module_Base Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_Base Unittests" -R MODULE_BASE
-          
+
       - name: Module_IO Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_IO Unittests" -R MODULE_IO
-          
+
       - name: Module_HSolver Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_HSolver Unittests" -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
-          
+
       - name: Module_Cell Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_Cell Unittests" -R MODULE_CELL
-          
+
       - name: Module_MD Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_MD Unittests" -R MODULE_MD
-          
+
       - name: Module_Psi Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_Psi Unittests" -R MODULE_PSI
-          
+
       - name: Module_RI Unittests
         env:
           GTEST_COLOR: 'yes'
@@ -235,77 +241,77 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "Module_LR Unittests" -R MODULE_LR
-          
+
       - name: 01_PW Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "01_PW Test" -R 01_PW
-          
+
       - name: 02_NAO_Gamma Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "02_NAO_Gamma Test" -R 02_NAO_Gamma
-          
+
       - name: 03_NAO_multik Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "03_NAO_multik Test" -R 03_NAO_multik
-          
+
       - name: 04_FF Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "04_FF Test" -R 04_FF
-          
+
       - name: 05_rtTDDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "05_rtTDDFT Test" -R 05_rtTDDFT
-          
+
       - name: 06_SDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "06_SDFT Test" -R 06_SDFT
-          
+
       - name: 07_OFDFT Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "07_OFDFT Test" -R 07_OFDFT
-          
+
       - name: 08_EXX Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "08_EXX Test" -R 08_EXX
-          
+
       - name: 09_DeePKS Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "09_DeePKS Test" -R 09_DeePKS
-          
+
       - name: 10_others Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           "$RUNNER_TEMP/run_ctest.sh" "10_others Test" -R 10_others
-          
+
 #      - name: 17_DS_DFTU Test
 #        env:
 #          GTEST_COLOR: 'yes'
@@ -318,7 +324,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          "$RUNNER_TEMP/run_ctest.sh" -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          "$RUNNER_TEMP/run_ctest.sh" "Other Unittests" -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
 
       - name: Fail if any test group failed
         if: always()
