@@ -3,8 +3,6 @@
 #include "md_func.h"
 #include "source_base/timer.h"
 
-#include <random>
-
 Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
 {
 }
@@ -143,8 +141,8 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
         return;
     }
 
-    // Get degrees of freedom
-    int ndeg = frozen_freedom_;
+    // Get degrees of freedom (3N - frozen)
+    int ndeg = 3 * ucell.nat - frozen_freedom_;
 
     // Calculate kinetic energies
     double kin_energy = current_temp * ndeg * 0.5;  // in Hartree
@@ -160,34 +158,26 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
         factor = exp(-1.0 / taut);
     }
 
-    // Generate Gaussian random number
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    if (mdp.md_seed > 0)
-    {
-        gen.seed(mdp.md_seed + step_);
-    }
-    std::normal_distribution<double> gauss_dist(0.0, 1.0);
-    double rr = gauss_dist(gen);
+    // Generate Gaussian random numbers using MD_func
+    double rr = MD_func::gaussrand();
 
     // Calculate sum of squared Gaussian random numbers (ndeg - 1)
     double sumnoises = 0.0;
     for (int i = 0; i < ndeg - 1; ++i)
     {
-        double r = gauss_dist(gen);
+        double r = MD_func::gaussrand();
         sumnoises += r * r;
     }
 
-    // CSVR core formula
-    double resample = kin_energy
-                      + (1.0 - factor) * (kin_target * (sumnoises + rr * rr) / ndeg - kin_energy)
-                      + 2.0 * rr * sqrt(kin_energy * kin_target / ndeg * (1.0 - factor) * factor);
+    // CSVR core formula (simplified)
+    double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
+    double resample = factor + factor2 * (rr * rr + sumnoises) + 2.0 * rr * sqrt(factor * factor2);
 
     // Ensure non-negative
     resample = std::max(0.0, resample);
 
     // Calculate scaling factor
-    double scale = sqrt(resample / kin_energy);
+    double scale = sqrt(resample);
 
     // Apply velocity scaling
     for (int i = 0; i < ucell.nat; ++i)
