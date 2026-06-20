@@ -5,14 +5,14 @@
 #include "source_cell/sep_cell.h"
 #include "source_estate/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/module_neighlist/unitcell_interface.h"
+#include "source_cell/module_neighlist/atom_provider.h"
 
 #ifdef __LCAO
 #include "setup_nonlocal.h"
 #endif
 
 // provide the basic information about unitcell.
-class UnitCell : public IAtomProvider {
+class UnitCell : public AtomProvider {
   public:
     double get_lat0() const override {
         return lat0;

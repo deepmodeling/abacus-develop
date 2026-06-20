@@ -13,6 +13,7 @@ AddTest(
     neighbor_search_test.cpp
   ../neighbor_search.cpp
   ../bin_manager.cpp
+  ../unitcell_lite.cpp
 )
 
 AddTest(

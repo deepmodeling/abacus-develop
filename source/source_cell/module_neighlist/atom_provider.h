@@ -1,19 +1,18 @@
-#ifndef UNITCELL_INTERFACE_H
-#define UNITCELL_INTERFACE_H
+#ifndef ATOM_PROVIDER_H
+#define ATOM_PROVIDER_H
 
 
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 
 
-class IAtomProvider {
+class AtomProvider {
 public:
-    virtual ~IAtomProvider() = default;
+    virtual ~AtomProvider() = default;
 
     virtual double get_lat0() const = 0;
     virtual double get_omega() const = 0;
     virtual const ModuleBase::Matrix3& get_latvec() const = 0;
-
 
  
     virtual int get_natom() const = 0;
@@ -22,4 +21,4 @@ public:
     virtual ModuleBase::Vector3<double> get_tauu(int i,int j) const = 0;
 };
 
-#endif // UNITCELL_INTERFACE_H
+#endif // ATOM_PROVIDER_H
