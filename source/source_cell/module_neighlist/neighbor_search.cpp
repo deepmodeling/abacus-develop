@@ -160,9 +160,9 @@ void NeighborSearch::check_expand_condition(const AtomProvider& ucell)
     double extend_d3 = a12_norm * search_radius_ / ucell.get_omega() * ucell.get_lat0() * ucell.get_lat0() * ucell.get_lat0();
     int extend_d33 = std::ceil(extend_d3);
 
-    glayerX_ = extend_d11 + 1;
-    glayerY_ = extend_d22 + 1;
-    glayerZ_ = extend_d33 + 1;
+    glayerX_ = extend_d11 + positive_layer_offset;
+    glayerY_ = extend_d22 + positive_layer_offset;
+    glayerZ_ = extend_d33 + positive_layer_offset;
     glayerX_minus_ = extend_d11;
     glayerY_minus_ = extend_d22;
     glayerZ_minus_ = extend_d33;
@@ -245,9 +245,9 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
 
     for (size_t i = 0; i < all_atoms_.size(); i++)
     {
-        if(wide_x_ < 1e-8)
+        if(wide_x_ < coord_tolerance)
         {
-            if(std::abs(all_atoms_[i].position_x - atoms.x_low) < 1e-8)
+            if(std::abs(all_atoms_[i].position_x - atoms.x_low) < coord_tolerance)
             {
                 in_x = x_;
             }
@@ -263,9 +263,9 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
                 nx - 1
             );
         }
-        if(wide_y_ < 1e-8)
+        if(wide_y_ < coord_tolerance)
         {
-            if(std::abs(all_atoms_[i].position_y - atoms.y_low) < 1e-8)
+            if(std::abs(all_atoms_[i].position_y - atoms.y_low) < coord_tolerance)
             {
                 in_y = y_;
             }
@@ -281,9 +281,9 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
                 ny - 1
             );
         }
-        if(wide_z_ < 1e-8)
+        if(wide_z_ < coord_tolerance)
         {
-            if(std::abs(all_atoms_[i].position_z - atoms.z_low) < 1e-8)
+            if(std::abs(all_atoms_[i].position_z - atoms.z_low) < coord_tolerance)
             {
                 in_z = z_;
             }
@@ -320,7 +320,7 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
         }
     }
 
-    neighbor_list_.initialize(inside_atoms_.size(), all_atoms_.size() * 2);
+    neighbor_list_.initialize(inside_atoms_.size(), all_atoms_.size() * neighbor_reserve_factor);
 }
 
 void NeighborSearch::build_neighbors()

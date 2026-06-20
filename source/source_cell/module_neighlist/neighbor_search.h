@@ -258,16 +258,24 @@ private:
     double search_radius_ = 0.0;
 
     /// Position of this MPI domain in the 3D grid
-    int x_ = 0, y_ = 0, z_ = 0;
+    int x_ = 0;
+    int y_ = 0;
+    int z_ = 0;
 
     /// Width of this MPI domain
-    double wide_x_ = 0.0, wide_y_ = 0.0, wide_z_ = 0.0;
+    double wide_x_ = 0.0;
+    double wide_y_ = 0.0;
+    double wide_z_ = 0.0;
 
     /// Number of expansion layers in positive directions
-    int glayerX_ = 0, glayerY_ = 0, glayerZ_ = 0;
+    int glayerX_ = 0;
+    int glayerY_ = 0;
+    int glayerZ_ = 0;
 
     /// Number of expansion layers in negative directions
-    int glayerX_minus_ = 0, glayerY_minus_ = 0, glayerZ_minus_ = 0;
+    int glayerX_minus_ = 0;
+    int glayerY_minus_ = 0;
+    int glayerZ_minus_ = 0;
 
     /// All atoms including periodic images
     std::vector<NeighborAtom> all_atoms_;
@@ -283,6 +291,16 @@ private:
 
     /// Bin manager for efficient neighbor search
     BinManager bin_manager_;
+    // ========== Compile-time constants ==========
+
+    /// Tolerance for coordinate comparisons in lattice units
+    static constexpr double coord_tolerance = 1e-8;
+
+    /// Offset added to expansion layers in positive directions
+    static constexpr int positive_layer_offset = 1;
+
+    /// Reserve factor for neighbor list capacity estimation
+    static constexpr int neighbor_reserve_factor = 2;
 };
 
 #endif // NEIGHBOR_SEARCH_H
