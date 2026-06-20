@@ -75,7 +75,7 @@ class KEDF_WT
     double* kernel_ = nullptr;
 
 #ifdef __CUDA
-    void multi_kernel_gpu(const double* const* prho, double** rkernel_rho,
+    void multi_kernel_gpu(const double* const* prho, double** rkernel_rho, int nspin,
                           double exponent, ModulePW::PW_Basis* pw_rho);
     void free_gpu_buffers();
 

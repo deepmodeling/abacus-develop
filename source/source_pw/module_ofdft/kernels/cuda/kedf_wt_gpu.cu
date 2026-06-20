@@ -105,6 +105,7 @@ inline void cufft_check(cufftResult err, const char* file, int line)
 void KEDF_WT::multi_kernel_gpu(
     const double* const* prho,
     double** rkernel_rho,
+    int nspin,
     double exponent,
     ModulePW::PW_Basis* pw_rho)
 {
@@ -136,7 +137,7 @@ void KEDF_WT::multi_kernel_gpu(
     // d_result_ is double* but aliased as cuFFT complex buffer.
     auto* d_fft = reinterpret_cast<double2*>(d_result_);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is) {
+    for (int is = 0; is < nspin; ++is) {
         // Step 1: Copy input density H→D
         syncmem_d2d_h2d_op()(d_rho_, prho[is], nrxx);
 

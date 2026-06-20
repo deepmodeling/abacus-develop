@@ -459,7 +459,7 @@ void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, doub
 {
 #ifdef __CUDA
     if (pw_rho->get_device() == "gpu") {
-        this->multi_kernel_gpu(prho, rkernel_rho, exponent, pw_rho);
+        this->multi_kernel_gpu(prho, rkernel_rho, PARAM.inp.nspin, exponent, pw_rho);
         return;
     }
 #endif
