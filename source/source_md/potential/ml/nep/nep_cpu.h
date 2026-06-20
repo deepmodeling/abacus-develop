@@ -21,6 +21,12 @@
 class NEP
 {
 public:
+  enum class ForceParallelMode {
+    Serial,
+    Atomic,
+    ThreadLocal
+  };
+
   struct ParaMB {
     bool use_typewise_cutoff_zbl = false;
     double typewise_cutoff_zbl_factor = 0.65;
@@ -98,6 +104,16 @@ public:
   NEP(const std::string& potential_filename);
 
   void init_from_file(const std::string& potential_filename, const bool is_rank_0);
+
+  void set_force_parallel_mode(const ForceParallelMode mode)
+  {
+    force_parallel_mode = mode;
+  }
+
+  ForceParallelMode get_force_parallel_mode() const
+  {
+    return force_parallel_mode;
+  }
 
   void update_type_map(const int ntype, int* type_map, char** elements);
 
@@ -216,6 +232,7 @@ public:
   std::vector<double> charge_derivative;
   std::vector<double> parameters;
   std::vector<std::string> element_list;
+  ForceParallelMode force_parallel_mode = ForceParallelMode::ThreadLocal;
   void update_potential(double* parameters, ANN& ann);
   void allocate_memory(const int N);
 

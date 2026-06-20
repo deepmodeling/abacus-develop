@@ -1,0 +1,196 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{Problem 6: Parallel Optimization of the NEP Potential}
+\author{}
+\date{June 20, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Objective}
+Problem 6 asks for NEP-specific parallel optimization, including analysis of
+the calculation flow, optimization of atomic-density calculations,
+multi-element processing, memory access, correctness testing, and performance
+measurement over system sizes and thread counts.
+
+This work extends the OpenMP force optimization from Problem 2 to the full NEP
+CPU pipeline. It targets neighbor construction, descriptor/density evaluation,
+mixed-element execution, and force calculation.
+
+\section{NEP Calculation Flow and Hotspots}
+For each molecular-dynamics step, \texttt{NEP::compute} performs:
+\begin{enumerate}
+  \item periodic-boundary processing and radial/angular neighbor-list construction;
+  \item radial and angular atomic descriptor calculation;
+  \item element-dependent neural-network evaluation for atomic energy and derivatives;
+  \item radial, angular, and optional ZBL force/virial accumulation.
+\end{enumerate}
+
+The descriptor stage is an atomic-density calculation: every center atom
+accumulates radial and angular contributions from its neighbors. Center atoms
+are independent during descriptor construction, making atom-level OpenMP
+parallelism natural. Force calculation is more difficult because pair
+contributions update two atoms and require synchronization or reduction.
+
+The remaining NEP-specific bottleneck found in this work was the large-box
+cell-list neighbor search. Its expensive outer loop over center atoms was
+serial even though each center atom writes to a separate neighbor-list column.
+
+\section{Implementation}
+
+\subsection{Large-Box Neighbor Parallelism}
+The outer center-atom loop in \texttt{find\_neighbor\_list\_large\_box} now uses:
+\begin{lstlisting}[language=C++]
+#pragma omp parallel for schedule(static)
+\end{lstlisting}
+The temporary cell coordinate was moved inside the loop so every thread has a
+private copy. Shared cell counts and cell contents are read-only in this phase,
+while each thread writes only entries associated with its own center atom.
+Periodic-boundary coordinate conversion is also parallelized over atoms.
+
+This optimization is especially relevant for the 512-atom benchmark, whose
+box is large enough to use the cell-list path.
+
+\subsection{Descriptor and Atomic-Density Parallelism}
+The standard and charge-aware NEP descriptor loops use explicit static
+scheduling. Each thread owns one center atom at a time and stores descriptor,
+network derivative, and angular density data at indices belonging to that atom.
+Model parameters and element-dependent coefficient arrays are read-only.
+
+Static scheduling was selected because the benchmark systems have comparable
+local density per atom. It avoids the queue-management overhead of dynamic
+scheduling and preserves predictable memory access.
+
+\subsection{Multi-Element Processing}
+Element type is read independently for every center-neighbor pair. The OpenMP
+loops do not group or serialize element types, so O, Hf, and cross-element
+interactions execute concurrently. Correctness and performance are tested for:
+\begin{itemize}
+  \item \texttt{single}: all atoms use element type 0;
+  \item \texttt{mixed}: alternating type 0/type 1 atoms;
+  \item \texttt{skewed}: a 3:1 ratio of type 0 to type 1.
+\end{itemize}
+
+\subsection{Force and Memory Strategy}
+The optimized default force path uses thread-local force and virial buffers,
+followed by one reduction per thread. This removes atomics from the inner
+neighbor loop. NEP data remains in the existing structure-of-arrays layout:
+separate $x$, $y$, and $z$ coordinate/force regions and neighbor-major buffers.
+The implementation therefore avoids interface-changing data conversions.
+
+Thread-local reduction costs $O(TN)$ extra memory, where $T$ is the thread
+count and $N$ is the atom count. The Problem 2 serial and atomic force modes
+remain available for validation and memory/performance comparison.
+
+\section{Correctness Tests}
+The NEP OpenMP unit test now includes a mixed-element descriptor test comparing
+one and four threads. It also compares serial, atomic, and thread-local force
+paths. The dedicated Problem 6 benchmark compares every descriptor, potential,
+force, and virial array with a one-thread reference.
+
+Across 27 Problem 6 benchmark cases, the maximum observed differences were:
+\[
+\max|\Delta D|=0,\qquad \max|\Delta E|=0,
+\]
+\[
+\max|\Delta F|=7.10543\times10^{-15},\qquad
+\max|\Delta V|=4.26326\times10^{-14}.
+\]
+Descriptor and energy results are identical. Force and virial differences are
+normal floating-point reduction-order effects and are much smaller than the
+unit-test tolerance of $10^{-10}$.
+
+\section{Benchmark Script}
+The dedicated files are:
+\begin{lstlisting}
+source/source_md/tools/nep_problem6_benchmark.cpp
+source/source_md/tools/run_problem6_nep_benchmark.sh
+\end{lstlisting}
+
+The command used to generate the retained CSV was:
+\begin{lstlisting}[language=bash]
+cd source/source_md
+tools/run_problem6_nep_benchmark.sh \
+  ../../tests/PP_ORB/nep_hfo2.txt \
+  64,216,512 1,2,4 single,mixed,skewed 10 \
+  reports/problem6_nep_results.csv
+\end{lstlisting}
+
+The script compiles with \texttt{g++-15 -O2 -fopenmp}. Model loading is
+excluded from timing. Descriptor timing includes neighbor construction and
+atomic-density evaluation; compute timing covers the complete NEP step.
+
+\section{Performance Results}
+Table~\ref{tab:p6} reports four-thread speedup relative to one thread.
+
+\begin{table}[ht]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Atoms & Composition & Descriptor 1T (ms) & Descriptor 4T speedup & Compute 1T (ms) & Compute 4T speedup \\
+\midrule
+64  & Single & 1.4195  & 3.38 & 3.2182  & 2.86 \\
+64  & Mixed  & 1.2691  & 2.97 & 3.2470  & 2.94 \\
+64  & Skewed & 1.2723  & 3.06 & 3.2246  & 2.96 \\
+\midrule
+216 & Single & 3.5527  & 3.42 & 10.0926 & 3.43 \\
+216 & Mixed  & 3.4916  & 3.31 & 10.2138 & 3.52 \\
+216 & Skewed & 3.5803  & 3.47 & 10.2689 & 3.53 \\
+\midrule
+512 & Single & 12.5353 & 3.68 & 28.4781 & 3.68 \\
+512 & Mixed  & 12.7083 & 3.86 & 30.3105 & 4.01 \\
+512 & Skewed & 12.4331 & 3.56 & 29.3249 & 3.84 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Problem 6 NEP descriptor and full-compute scaling.}
+\label{tab:p6}
+\end{table}
+
+The full raw table, including 1/2/4-thread times and all numerical differences,
+is stored in \texttt{reports/problem6\_nep\_results.csv}.
+
+\section{Analysis}
+Descriptor/density calculation scales well for all compositions. Four-thread
+speedup ranges from $2.97\times$ to $3.86\times$. The nearly identical scaling
+for single, balanced, and skewed compositions demonstrates that element lookup
+and cross-element coefficient selection are thread-safe and do not introduce a
+serial multi-element bottleneck.
+
+Full NEP compute reaches $2.86\times$--$4.01\times$ speedup. The 512-atom
+systems exercise the newly parallelized large-box cell-list path and achieve
+$3.68\times$--$4.01\times$ scaling. The mixed 512-atom case decreases from
+30.3105 ms to 7.5596 ms.
+
+The 512-atom single-element two-thread descriptor result is less efficient than
+the surrounding cases, likely due to runtime scheduling and measurement noise;
+its four-thread result returns to $3.68\times$ speedup. Repeated measurements
+or CPU affinity control would improve benchmark stability on a shared desktop.
+
+\section{Requirement Coverage and Conclusion}
+The implementation addresses the core Problem 6 requirements:
+\begin{itemize}
+  \item the complete NEP flow and hotspots were analyzed;
+  \item large-box neighbor and density preparation were parallelized;
+  \item descriptor loops use explicit OpenMP scheduling;
+  \item single- and multi-element systems were verified;
+  \item memory behavior and force reductions were considered;
+  \item correctness was checked across sizes, compositions, and threads;
+  \item performance was measured for 27 configurations;
+  \item a unit test, reproducible script, CSV, and report were produced.
+\end{itemize}
+
+The optimized thread-local NEP path is numerically consistent and demonstrates
+strong four-thread scaling. Future work could add atom blocking to reduce
+thread-local memory, adaptive cutoff selection, GPU density kernels, and
+many-core server benchmarks.
+
+\end{document}

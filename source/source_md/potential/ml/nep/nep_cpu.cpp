@@ -53,6 +53,24 @@ void reduce_private_buffer(const std::vector<double>& source, double* target)
   }
 }
 
+inline void add_force_value(double* target, const int index, const double value, const bool atomic)
+{
+  if (target == nullptr) {
+    return;
+  }
+
+#if defined(_OPENMP)
+  if (atomic) {
+#pragma omp atomic update
+    target[index] += value;
+    return;
+  }
+#else
+  (void)atomic;
+#endif
+  target[index] += value;
+}
+
 void find_descriptor_small_box(
   const bool calculating_potential,
   const bool calculating_descriptor,
@@ -86,7 +104,7 @@ void find_descriptor_small_box(
   double* g_B_projection)
 {
 #if defined(_OPENMP)
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
 #endif
   for (int n1 = 0; n1 < N; ++n1) {
     int t1 = g_type[n1];
@@ -235,6 +253,7 @@ void find_descriptor_small_box(
 
 void find_force_radial_small_box(
   const bool is_dipole,
+  const NEP::ForceParallelMode mode,
   NEP::ParaMB& paramb,
   NEP::ANN& annmb,
   const int N,
@@ -253,27 +272,12 @@ void find_force_radial_small_box(
   double* g_fz,
   double* g_virial)
 {
-#if defined(_OPENMP)
-#pragma omp parallel
-  {
-    std::vector<double> fx_private(g_fx == nullptr ? 0 : N, 0.0);
-    std::vector<double> fy_private(g_fy == nullptr ? 0 : N, 0.0);
-    std::vector<double> fz_private(g_fz == nullptr ? 0 : N, 0.0);
-    std::vector<double> virial_private(g_virial == nullptr ? 0 : N * (is_dipole ? 3 : 9), 0.0);
-
-    double* fx = g_fx == nullptr ? nullptr : fx_private.data();
-    double* fy = g_fy == nullptr ? nullptr : fy_private.data();
-    double* fz = g_fz == nullptr ? nullptr : fz_private.data();
-    double* virial = g_virial == nullptr ? nullptr : virial_private.data();
-
-#pragma omp for schedule(static)
-#else
-  double* fx = g_fx;
-  double* fy = g_fy;
-  double* fz = g_fz;
-  double* virial = g_virial;
-#endif
-  for (int n1 = 0; n1 < N; ++n1) {
+  auto process_atom = [&](const int n1,
+                          double* fx,
+                          double* fy,
+                          double* fz,
+                          double* virial,
+                          const bool atomic_updates) {
     int t1 = g_type[n1];
     for (int i1 = 0; i1 < g_NN[n1]; ++i1) {
       int index = i1 * N + n1;
@@ -322,42 +326,70 @@ void find_force_radial_small_box(
       }
 #endif
 
-      if (fx) {
-        fx[n1] += f12[0];
-        fx[n2] -= f12[0];
-      }
-
-      if (fy) {
-        fy[n1] += f12[1];
-        fy[n2] -= f12[1];
-      }
-
-      if (fz) {
-        fz[n1] += f12[2];
-        fz[n2] -= f12[2];
-      }
+      add_force_value(fx, n1, f12[0], atomic_updates);
+      add_force_value(fx, n2, -f12[0], atomic_updates);
+      add_force_value(fy, n1, f12[1], atomic_updates);
+      add_force_value(fy, n2, -f12[1], atomic_updates);
+      add_force_value(fz, n1, f12[2], atomic_updates);
+      add_force_value(fz, n2, -f12[2], atomic_updates);
 
       if (virial) {
         if (!is_dipole) {
-          virial[n2 + 0 * N] -= r12[0] * f12[0];
-          virial[n2 + 1 * N] -= r12[0] * f12[1];
-          virial[n2 + 2 * N] -= r12[0] * f12[2];
-          virial[n2 + 3 * N] -= r12[1] * f12[0];
-          virial[n2 + 4 * N] -= r12[1] * f12[1];
-          virial[n2 + 5 * N] -= r12[1] * f12[2];
-          virial[n2 + 6 * N] -= r12[2] * f12[0];
-          virial[n2 + 7 * N] -= r12[2] * f12[1];
-          virial[n2 + 8 * N] -= r12[2] * f12[2];
+          add_force_value(virial, n2 + 0 * N, -r12[0] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 1 * N, -r12[0] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 2 * N, -r12[0] * f12[2], atomic_updates);
+          add_force_value(virial, n2 + 3 * N, -r12[1] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 4 * N, -r12[1] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 5 * N, -r12[1] * f12[2], atomic_updates);
+          add_force_value(virial, n2 + 6 * N, -r12[2] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 7 * N, -r12[2] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 8 * N, -r12[2] * f12[2], atomic_updates);
         } else {
           double r12_square = r12[0] * r12[0] + r12[1] * r12[1] + r12[2] * r12[2];
-          virial[n2 + 0 * N] -= r12_square * f12[0];
-          virial[n2 + 1 * N] -= r12_square * f12[1];
-          virial[n2 + 2 * N] -= r12_square * f12[2];
+          add_force_value(virial, n2 + 0 * N, -r12_square * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 1 * N, -r12_square * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 2 * N, -r12_square * f12[2], atomic_updates);
         }
       }
     }
+  };
+
+  if (mode == NEP::ForceParallelMode::Serial) {
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, false);
+    }
+    return;
   }
+
+  if (mode == NEP::ForceParallelMode::Atomic) {
 #if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, true);
+    }
+    return;
+  }
+
+#if defined(_OPENMP)
+#pragma omp parallel
+  {
+    std::vector<double> fx_private(g_fx == nullptr ? 0 : N, 0.0);
+    std::vector<double> fy_private(g_fy == nullptr ? 0 : N, 0.0);
+    std::vector<double> fz_private(g_fz == nullptr ? 0 : N, 0.0);
+    std::vector<double> virial_private(g_virial == nullptr ? 0 : N * (is_dipole ? 3 : 9), 0.0);
+
+#pragma omp for schedule(static)
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(
+        n1,
+        g_fx == nullptr ? nullptr : fx_private.data(),
+        g_fy == nullptr ? nullptr : fy_private.data(),
+        g_fz == nullptr ? nullptr : fz_private.data(),
+        g_virial == nullptr ? nullptr : virial_private.data(),
+        false);
+    }
+
 #pragma omp critical
     {
       reduce_private_buffer(fx_private, g_fx);
@@ -366,11 +398,16 @@ void find_force_radial_small_box(
       reduce_private_buffer(virial_private, g_virial);
     }
   }
+#else
+  for (int n1 = 0; n1 < N; ++n1) {
+    process_atom(n1, g_fx, g_fy, g_fz, g_virial, false);
+  }
 #endif
 }
 
 void find_force_angular_small_box(
   const bool is_dipole,
+  const NEP::ForceParallelMode mode,
   NEP::ParaMB& paramb,
   NEP::ANN& annmb,
   const int N,
@@ -391,27 +428,12 @@ void find_force_angular_small_box(
   double* g_fz,
   double* g_virial)
 {
-#if defined(_OPENMP)
-#pragma omp parallel
-  {
-    std::vector<double> fx_private(g_fx == nullptr ? 0 : N, 0.0);
-    std::vector<double> fy_private(g_fy == nullptr ? 0 : N, 0.0);
-    std::vector<double> fz_private(g_fz == nullptr ? 0 : N, 0.0);
-    std::vector<double> virial_private(g_virial == nullptr ? 0 : N * (is_dipole ? 3 : 9), 0.0);
-
-    double* fx = g_fx == nullptr ? nullptr : fx_private.data();
-    double* fy = g_fy == nullptr ? nullptr : fy_private.data();
-    double* fz = g_fz == nullptr ? nullptr : fz_private.data();
-    double* virial = g_virial == nullptr ? nullptr : virial_private.data();
-
-#pragma omp for schedule(static)
-#else
-  double* fx = g_fx;
-  double* fy = g_fy;
-  double* fz = g_fz;
-  double* virial = g_virial;
-#endif
-  for (int n1 = 0; n1 < N; ++n1) {
+  auto process_atom = [&](const int n1,
+                          double* fx,
+                          double* fy,
+                          double* fz,
+                          double* virial,
+                          const bool atomic_updates) {
 
     double Fp[MAX_DIM_ANGULAR] = {0.0};
     double sum_fxyz[NUM_OF_ABC * MAX_NUM_N];
@@ -474,42 +496,70 @@ void find_force_angular_small_box(
       }
 #endif
 
-      if (fx) {
-        fx[n1] += f12[0];
-        fx[n2] -= f12[0];
-      }
-
-      if (fy) {
-        fy[n1] += f12[1];
-        fy[n2] -= f12[1];
-      }
-
-      if (fz) {
-        fz[n1] += f12[2];
-        fz[n2] -= f12[2];
-      }
+      add_force_value(fx, n1, f12[0], atomic_updates);
+      add_force_value(fx, n2, -f12[0], atomic_updates);
+      add_force_value(fy, n1, f12[1], atomic_updates);
+      add_force_value(fy, n2, -f12[1], atomic_updates);
+      add_force_value(fz, n1, f12[2], atomic_updates);
+      add_force_value(fz, n2, -f12[2], atomic_updates);
 
       if (virial) {
         if (!is_dipole) {
-          virial[n2 + 0 * N] -= r12[0] * f12[0];
-          virial[n2 + 1 * N] -= r12[0] * f12[1];
-          virial[n2 + 2 * N] -= r12[0] * f12[2];
-          virial[n2 + 3 * N] -= r12[1] * f12[0];
-          virial[n2 + 4 * N] -= r12[1] * f12[1];
-          virial[n2 + 5 * N] -= r12[1] * f12[2];
-          virial[n2 + 6 * N] -= r12[2] * f12[0];
-          virial[n2 + 7 * N] -= r12[2] * f12[1];
-          virial[n2 + 8 * N] -= r12[2] * f12[2];
+          add_force_value(virial, n2 + 0 * N, -r12[0] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 1 * N, -r12[0] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 2 * N, -r12[0] * f12[2], atomic_updates);
+          add_force_value(virial, n2 + 3 * N, -r12[1] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 4 * N, -r12[1] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 5 * N, -r12[1] * f12[2], atomic_updates);
+          add_force_value(virial, n2 + 6 * N, -r12[2] * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 7 * N, -r12[2] * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 8 * N, -r12[2] * f12[2], atomic_updates);
         } else {
           double r12_square = r12[0] * r12[0] + r12[1] * r12[1] + r12[2] * r12[2];
-          virial[n2 + 0 * N] -= r12_square * f12[0];
-          virial[n2 + 1 * N] -= r12_square * f12[1];
-          virial[n2 + 2 * N] -= r12_square * f12[2];
+          add_force_value(virial, n2 + 0 * N, -r12_square * f12[0], atomic_updates);
+          add_force_value(virial, n2 + 1 * N, -r12_square * f12[1], atomic_updates);
+          add_force_value(virial, n2 + 2 * N, -r12_square * f12[2], atomic_updates);
         }
       }
     }
+  };
+
+  if (mode == NEP::ForceParallelMode::Serial) {
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, false);
+    }
+    return;
   }
+
+  if (mode == NEP::ForceParallelMode::Atomic) {
 #if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, true);
+    }
+    return;
+  }
+
+#if defined(_OPENMP)
+#pragma omp parallel
+  {
+    std::vector<double> fx_private(g_fx == nullptr ? 0 : N, 0.0);
+    std::vector<double> fy_private(g_fy == nullptr ? 0 : N, 0.0);
+    std::vector<double> fz_private(g_fz == nullptr ? 0 : N, 0.0);
+    std::vector<double> virial_private(g_virial == nullptr ? 0 : N * (is_dipole ? 3 : 9), 0.0);
+
+#pragma omp for schedule(static)
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(
+        n1,
+        g_fx == nullptr ? nullptr : fx_private.data(),
+        g_fy == nullptr ? nullptr : fy_private.data(),
+        g_fz == nullptr ? nullptr : fz_private.data(),
+        g_virial == nullptr ? nullptr : virial_private.data(),
+        false);
+    }
+
 #pragma omp critical
     {
       reduce_private_buffer(fx_private, g_fx);
@@ -518,10 +568,15 @@ void find_force_angular_small_box(
       reduce_private_buffer(virial_private, g_virial);
     }
   }
+#else
+  for (int n1 = 0; n1 < N; ++n1) {
+    process_atom(n1, g_fx, g_fy, g_fz, g_virial, false);
+  }
 #endif
 }
 
 void find_force_ZBL_small_box(
+  const NEP::ForceParallelMode mode,
   const int N,
   NEP::ParaMB& paramb,
   const NEP::ZBL& zbl,
@@ -537,30 +592,13 @@ void find_force_ZBL_small_box(
   double* g_virial,
   double* g_pe)
 {
-#if defined(_OPENMP)
-#pragma omp parallel
-  {
-    std::vector<double> fx_private(N, 0.0);
-    std::vector<double> fy_private(N, 0.0);
-    std::vector<double> fz_private(N, 0.0);
-    std::vector<double> virial_private(N * 9, 0.0);
-    std::vector<double> pe_private(N, 0.0);
-
-    double* fx = fx_private.data();
-    double* fy = fy_private.data();
-    double* fz = fz_private.data();
-    double* virial = virial_private.data();
-    double* pe = pe_private.data();
-
-#pragma omp for schedule(static)
-#else
-  double* fx = g_fx;
-  double* fy = g_fy;
-  double* fz = g_fz;
-  double* virial = g_virial;
-  double* pe = g_pe;
-#endif
-  for (int n1 = 0; n1 < N; ++n1) {
+  auto process_atom = [&](const int n1,
+                          double* fx,
+                          double* fy,
+                          double* fz,
+                          double* virial,
+                          double* pe,
+                          const bool atomic_updates) {
     int type1 = g_type[n1];
     int zi = paramb.atomic_numbers[type1] + 1;
     double pow_zi = pow(double(zi), 0.23);
@@ -604,25 +642,63 @@ void find_force_ZBL_small_box(
       }
       double f2 = fp * d12inv * 0.5;
       double f12[3] = {r12[0] * f2, r12[1] * f2, r12[2] * f2};
-      fx[n1] += f12[0];
-      fy[n1] += f12[1];
-      fz[n1] += f12[2];
-      fx[n2] -= f12[0];
-      fy[n2] -= f12[1];
-      fz[n2] -= f12[2];
-      virial[n2 + 0 * N] -= r12[0] * f12[0];
-      virial[n2 + 1 * N] -= r12[0] * f12[1];
-      virial[n2 + 2 * N] -= r12[0] * f12[2];
-      virial[n2 + 3 * N] -= r12[1] * f12[0];
-      virial[n2 + 4 * N] -= r12[1] * f12[1];
-      virial[n2 + 5 * N] -= r12[1] * f12[2];
-      virial[n2 + 6 * N] -= r12[2] * f12[0];
-      virial[n2 + 7 * N] -= r12[2] * f12[1];
-      virial[n2 + 8 * N] -= r12[2] * f12[2];
-      pe[n1] += f * 0.5;
+      add_force_value(fx, n1, f12[0], atomic_updates);
+      add_force_value(fx, n2, -f12[0], atomic_updates);
+      add_force_value(fy, n1, f12[1], atomic_updates);
+      add_force_value(fy, n2, -f12[1], atomic_updates);
+      add_force_value(fz, n1, f12[2], atomic_updates);
+      add_force_value(fz, n2, -f12[2], atomic_updates);
+      add_force_value(virial, n2 + 0 * N, -r12[0] * f12[0], atomic_updates);
+      add_force_value(virial, n2 + 1 * N, -r12[0] * f12[1], atomic_updates);
+      add_force_value(virial, n2 + 2 * N, -r12[0] * f12[2], atomic_updates);
+      add_force_value(virial, n2 + 3 * N, -r12[1] * f12[0], atomic_updates);
+      add_force_value(virial, n2 + 4 * N, -r12[1] * f12[1], atomic_updates);
+      add_force_value(virial, n2 + 5 * N, -r12[1] * f12[2], atomic_updates);
+      add_force_value(virial, n2 + 6 * N, -r12[2] * f12[0], atomic_updates);
+      add_force_value(virial, n2 + 7 * N, -r12[2] * f12[1], atomic_updates);
+      add_force_value(virial, n2 + 8 * N, -r12[2] * f12[2], atomic_updates);
+      add_force_value(pe, n1, f * 0.5, atomic_updates);
     }
+  };
+
+  if (mode == NEP::ForceParallelMode::Serial) {
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, g_pe, false);
+    }
+    return;
   }
+
+  if (mode == NEP::ForceParallelMode::Atomic) {
 #if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(n1, g_fx, g_fy, g_fz, g_virial, g_pe, true);
+    }
+    return;
+  }
+
+#if defined(_OPENMP)
+#pragma omp parallel
+  {
+    std::vector<double> fx_private(N, 0.0);
+    std::vector<double> fy_private(N, 0.0);
+    std::vector<double> fz_private(N, 0.0);
+    std::vector<double> virial_private(N * 9, 0.0);
+    std::vector<double> pe_private(N, 0.0);
+
+#pragma omp for schedule(static)
+    for (int n1 = 0; n1 < N; ++n1) {
+      process_atom(
+        n1,
+        fx_private.data(),
+        fy_private.data(),
+        fz_private.data(),
+        virial_private.data(),
+        pe_private.data(),
+        false);
+    }
+
 #pragma omp critical
     {
       reduce_private_buffer(fx_private, g_fx);
@@ -631,6 +707,10 @@ void find_force_ZBL_small_box(
       reduce_private_buffer(virial_private, g_virial);
       reduce_private_buffer(pe_private, g_pe);
     }
+  }
+#else
+  for (int n1 = 0; n1 < N; ++n1) {
+    process_atom(n1, g_fx, g_fy, g_fz, g_virial, g_pe, false);
   }
 #endif
 }
@@ -660,7 +740,7 @@ void find_descriptor_small_box(
   double* g_descriptor)
 {
 #if defined(_OPENMP)
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
 #endif
   for (int n1 = 0; n1 < N; ++n1) {
     int t1 = g_type[n1];
@@ -2516,7 +2596,7 @@ void NEP::compute(
     Fp.data(), sum_fxyz.data(), potential.data(), nullptr, nullptr, nullptr, false, nullptr);
 
   find_force_radial_small_box(
-    false, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(), r12.data(),
+    false, force_parallel_mode, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(), r12.data(),
     r12.data() + size_x12, r12.data() + size_x12 * 2, Fp.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS
     gnp_radial.data(),
@@ -2524,7 +2604,7 @@ void NEP::compute(
     force.data(), force.data() + N, force.data() + N * 2, virial.data());
 
   find_force_angular_small_box(
-    false, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
+    false, force_parallel_mode, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
     r12.data() + size_x12 * 3, r12.data() + size_x12 * 4, r12.data() + size_x12 * 5, Fp.data(),
     sum_fxyz.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS
@@ -2534,7 +2614,8 @@ void NEP::compute(
 
   if (zbl.enabled) {
     find_force_ZBL_small_box(
-      N, paramb, zbl, NN_angular.data(), NL_angular.data(), type.data(), r12.data() + size_x12 * 3,
+      force_parallel_mode, N, paramb, zbl, NN_angular.data(), NL_angular.data(), type.data(),
+      r12.data() + size_x12 * 3,
       r12.data() + size_x12 * 4, r12.data() + size_x12 * 5, force.data(), force.data() + N,
       force.data() + N * 2, virial.data(), potential.data());
   }
@@ -2704,7 +2785,8 @@ void NEP::compute(
 
   if (zbl.enabled) {
     find_force_ZBL_small_box(
-      N, paramb, zbl, NN_angular.data(), NL_angular.data(), type.data(), r12.data() + size_x12 * 3,
+      force_parallel_mode, N, paramb, zbl, NN_angular.data(), NL_angular.data(), type.data(),
+      r12.data() + size_x12 * 3,
       r12.data() + size_x12 * 4, r12.data() + size_x12 * 5, force.data(), force.data() + N,
       force.data() + N * 2, virial.data(), potential.data());
   }
@@ -2964,7 +3046,8 @@ void NEP::find_dipole(
     Fp.data(), sum_fxyz.data(), potential.data(), nullptr, nullptr, nullptr, false, nullptr);
 
   find_force_radial_small_box(
-    true, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(), r12.data(),
+    true, force_parallel_mode, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(),
+    r12.data(),
     r12.data() + size_x12, r12.data() + size_x12 * 2, Fp.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS
     gnp_radial.data(),
@@ -2972,7 +3055,7 @@ void NEP::find_dipole(
     nullptr, nullptr, nullptr, virial.data());
 
   find_force_angular_small_box(
-    true, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
+    true, force_parallel_mode, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
     r12.data() + size_x12 * 3, r12.data() + size_x12 * 4, r12.data() + size_x12 * 5, Fp.data(),
     sum_fxyz.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS
@@ -3033,7 +3116,8 @@ void NEP::find_polarizability(
     Fp.data(), sum_fxyz.data(), potential.data(), nullptr, nullptr, virial.data(), false, nullptr);
 
   find_force_radial_small_box(
-    false, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(), r12.data(),
+    false, force_parallel_mode, paramb, annmb, N, NN_radial.data(), NL_radial.data(), type.data(),
+    r12.data(),
     r12.data() + size_x12, r12.data() + size_x12 * 2, Fp.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS
     gnp_radial.data(),
@@ -3041,7 +3125,7 @@ void NEP::find_polarizability(
     nullptr, nullptr, nullptr, virial.data());
 
   find_force_angular_small_box(
-    false, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
+    false, force_parallel_mode, paramb, annmb, N, NN_angular.data(), NL_angular.data(), type.data(),
     r12.data() + size_x12 * 3, r12.data() + size_x12 * 4, r12.data() + size_x12 * 5, Fp.data(),
     sum_fxyz.data(),
 #ifdef USE_TABLE_FOR_RADIAL_FUNCTIONS

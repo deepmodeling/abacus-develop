@@ -171,6 +171,9 @@ void applyPbcOne(double& sx)
 
 void applyPbc(const int N, const double* box, double* x, double* y, double* z)
 {
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
   for (int n = 0; n < N; ++n) {
     double sx = box[9] * x[n] + box[10] * y[n] + box[11] * z[n];
     double sy = box[12] * x[n] + box[13] * y[n] + box[14] * z[n];
@@ -253,26 +256,30 @@ void find_neighbor_list_large_box(
     ++cellCount[cell[3]];
   }
 
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
   for (int n1 = 0; n1 < N; ++n1) {
     int count_radial = 0;
     int count_angular = 0;
+    int atom_cell[4];
     const double r1[3] = {g_x[n1], g_y[n1], g_z[n1]};
-    findCell(ebox, thickness, r1, cutoffInverse, numCells, cell);
+    findCell(ebox, thickness, r1, cutoffInverse, numCells, atom_cell);
     for (int k = -2; k <= 2; ++k) {
       for (int j = -2; j <= 2; ++j) {
         for (int i = -2; i <= 2; ++i) {
-          int neighborCell = cell[3] + (k * numCells[1] + j) * numCells[0] + i;
-          if (cell[0] + i < 0)
+          int neighborCell = atom_cell[3] + (k * numCells[1] + j) * numCells[0] + i;
+          if (atom_cell[0] + i < 0)
             neighborCell += numCells[0];
-          if (cell[0] + i >= numCells[0])
+          if (atom_cell[0] + i >= numCells[0])
             neighborCell -= numCells[0];
-          if (cell[1] + j < 0)
+          if (atom_cell[1] + j < 0)
             neighborCell += numCells[1] * numCells[0];
-          if (cell[1] + j >= numCells[1])
+          if (atom_cell[1] + j >= numCells[1])
             neighborCell -= numCells[1] * numCells[0];
-          if (cell[2] + k < 0)
+          if (atom_cell[2] + k < 0)
             neighborCell += numCells[3];
-          if (cell[2] + k >= numCells[2])
+          if (atom_cell[2] + k >= numCells[2])
             neighborCell -= numCells[3];
 
           for (int m = 0; m < cellCount[neighborCell]; ++m) {
@@ -345,7 +352,7 @@ void find_neighbor_list_small_box(
   double* g_z12_angular = r12.data() + size_x12 * 5;
 
 #if defined(_OPENMP)
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
 #endif
   for (int n1 = 0; n1 < N; ++n1) {
     double x1 = g_x[n1];

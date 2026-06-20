@@ -26,12 +26,13 @@ void set_omp_threads(const int num_threads)
 #endif
 }
 
-NepOutput compute_nep(const int num_threads)
+NepOutput compute_nep(const int num_threads, const NEP::ForceParallelMode mode)
 {
   set_omp_threads(num_threads);
 
   NEP nep;
   nep.init_from_file(NEP_TEST_MODEL_FILE, false);
+  nep.set_force_parallel_mode(mode);
 
   const std::vector<int> type = {0, 1, 0, 1, 0, 1};
   const std::vector<double> box = {
@@ -53,6 +54,28 @@ NepOutput compute_nep(const int num_threads)
   return output;
 }
 
+std::vector<double> compute_descriptor(const int num_threads)
+{
+  set_omp_threads(num_threads);
+
+  NEP nep;
+  nep.init_from_file(NEP_TEST_MODEL_FILE, false);
+
+  const std::vector<int> type = {0, 1, 0, 1, 0, 1};
+  const std::vector<double> box = {
+    10.0, 0.0, 0.0,
+    0.0, 10.0, 0.0,
+    0.0, 0.0, 10.0};
+  const std::vector<double> position = {
+    1.0, 3.1, 5.2, 6.9, 2.4, 7.3,
+    1.1, 2.8, 5.0, 7.1, 6.5, 3.7,
+    0.8, 3.5, 4.9, 6.8, 7.2, 2.6};
+
+  std::vector<double> descriptor(type.size() * nep.annmb.dim, 0.0);
+  nep.find_descriptor(type, box, position, descriptor);
+  return descriptor;
+}
+
 void expect_vectors_near(
   const std::vector<double>& reference,
   const std::vector<double>& actual,
@@ -69,10 +92,23 @@ void expect_vectors_near(
 
 TEST(NEPOpenMPTest, ForcePathMatchesSingleThread)
 {
-  const NepOutput serial = compute_nep(1);
-  const NepOutput parallel = compute_nep(4);
+  const NepOutput serial = compute_nep(1, NEP::ForceParallelMode::Serial);
+  const NepOutput atomic = compute_nep(4, NEP::ForceParallelMode::Atomic);
+  const NepOutput thread_local = compute_nep(4, NEP::ForceParallelMode::ThreadLocal);
 
-  expect_vectors_near(serial.potential, parallel.potential, 1.0e-12);
-  expect_vectors_near(serial.force, parallel.force, 1.0e-10);
-  expect_vectors_near(serial.virial, parallel.virial, 1.0e-10);
+  expect_vectors_near(serial.potential, atomic.potential, 1.0e-12);
+  expect_vectors_near(serial.force, atomic.force, 1.0e-10);
+  expect_vectors_near(serial.virial, atomic.virial, 1.0e-10);
+
+  expect_vectors_near(serial.potential, thread_local.potential, 1.0e-12);
+  expect_vectors_near(serial.force, thread_local.force, 1.0e-10);
+  expect_vectors_near(serial.virial, thread_local.virial, 1.0e-10);
+}
+
+TEST(NEPOpenMPTest, MixedElementDescriptorMatchesAcrossThreads)
+{
+  const std::vector<double> serial = compute_descriptor(1);
+  const std::vector<double> parallel = compute_descriptor(4);
+
+  expect_vectors_near(serial, parallel, 1.0e-12);
 }

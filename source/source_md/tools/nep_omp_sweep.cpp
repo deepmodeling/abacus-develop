@@ -115,20 +115,33 @@ double time_compute_ms(NEP& nep, const SystemData& system, const int repeats)
   return elapsed.count() / repeats;
 }
 
+const char* mode_name(const NEP::ForceParallelMode mode)
+{
+  switch (mode) {
+    case NEP::ForceParallelMode::Serial:
+      return "serial";
+    case NEP::ForceParallelMode::Atomic:
+      return "atomic";
+    case NEP::ForceParallelMode::ThreadLocal:
+      return "thread_local";
+  }
+  return "unknown";
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0]
-              << " MODEL_FILE [SIZES=64,216,512] [THREADS=1,2,4] [REPEATS=10]\n";
+              << " MODEL_FILE [SIZES=64,216,512] [THREADS=1,2,4] [REPEATS=20]\n";
     return 2;
   }
 
   const std::string model_file = argv[1];
   std::vector<int> sizes = parse_int_list(argc > 2 ? argv[2] : "64,216,512");
   std::vector<int> threads = parse_int_list(argc > 3 ? argv[3] : "1,2,4");
-  const int repeats = argc > 4 ? std::max(1, std::atoi(argv[4])) : 10;
+  const int repeats = argc > 4 ? std::max(1, std::atoi(argv[4])) : 20;
 
   if (sizes.empty()) {
     sizes.push_back(64);
@@ -137,7 +150,13 @@ int main(int argc, char** argv)
     threads.push_back(1);
   }
 
-  std::cout << "atoms,threads,repeats,avg_ms,speedup,max_potential_diff,max_force_diff,max_virial_diff\n";
+  const std::vector<NEP::ForceParallelMode> modes = {
+    NEP::ForceParallelMode::Serial,
+    NEP::ForceParallelMode::Atomic,
+    NEP::ForceParallelMode::ThreadLocal};
+
+  std::cout
+    << "atoms,mode,threads,repeats,avg_ms,speedup,max_potential_diff,max_force_diff,max_virial_diff\n";
 
   for (const int natom : sizes) {
     const SystemData system = make_system(natom);
@@ -145,32 +164,34 @@ int main(int argc, char** argv)
     set_num_threads(1);
     NEP reference_nep;
     reference_nep.init_from_file(model_file, false);
+    reference_nep.set_force_parallel_mode(NEP::ForceParallelMode::Serial);
     const NepOutput reference = compute_once(reference_nep, system);
+    const double serial_ms = time_compute_ms(reference_nep, system, repeats);
 
-    double serial_ms = 0.0;
-    std::vector<double> avg_times;
+    for (const NEP::ForceParallelMode mode : modes) {
+      for (const int num_threads : threads) {
+        set_num_threads(num_threads);
+        NEP nep;
+        nep.init_from_file(model_file, false);
+        nep.set_force_parallel_mode(mode);
 
-    for (const int num_threads : threads) {
-      set_num_threads(num_threads);
-      NEP nep;
-      nep.init_from_file(model_file, false);
+        const NepOutput output = compute_once(nep, system);
+        const double avg_ms =
+          (mode == NEP::ForceParallelMode::Serial && num_threads == 1)
+            ? serial_ms
+            : time_compute_ms(nep, system, repeats);
+        const double speedup = serial_ms / avg_ms;
 
-      const NepOutput output = compute_once(nep, system);
-      const double avg_ms = time_compute_ms(nep, system, repeats);
-
-      if (num_threads == 1 || serial_ms == 0.0) {
-        serial_ms = avg_ms;
+        std::cout << natom << ","
+                  << mode_name(mode) << ","
+                  << num_threads << ","
+                  << repeats << ","
+                  << avg_ms << ","
+                  << speedup << ","
+                  << max_abs_diff(reference.potential, output.potential) << ","
+                  << max_abs_diff(reference.force, output.force) << ","
+                  << max_abs_diff(reference.virial, output.virial) << "\n";
       }
-
-      const double speedup = serial_ms / avg_ms;
-      std::cout << natom << ","
-                << num_threads << ","
-                << repeats << ","
-                << avg_ms << ","
-                << speedup << ","
-                << max_abs_diff(reference.potential, output.potential) << ","
-                << max_abs_diff(reference.force, output.force) << ","
-                << max_abs_diff(reference.virial, output.virial) << "\n";
     }
   }
 
