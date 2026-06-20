@@ -1,18 +1,17 @@
 #ifndef SINGLE_R_IO_H
 #define SINGLE_R_IO_H
 
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include <map>
+#include "write_HS_sparse.h"
+
+#include <fstream>
 
 namespace ModuleIO
 {
     template <typename T>
     void output_single_R(std::ofstream& ofs,
-        const std::map<size_t, std::map<size_t, T>>& XR,
-        const double& sparse_threshold,
-        const bool& binary,
+        const SparseRBlock<T>& XR,
         const Parallel_Orbitals& pv,
-        const bool& reduce = true);
+        const SparseWriteOptions& options);
 }
 
 #endif

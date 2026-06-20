@@ -1,10 +1,9 @@
 #ifndef ATEN_CORE_TENSOR_ACCESSOR_H_
 #define ATEN_CORE_TENSOR_ACCESSOR_H_
 
-#include <cstddef> // Include the <cstddef> header file to define size_t
+#include <cstddef>
 #include <cstdint>
 #include <base/macros/macros.h>
-#include <base/utils/array_ref.h>
 
 namespace container {
 
@@ -33,12 +32,17 @@ class TensorAccessorBase {
             const index_t* strides)
             : data_(data), sizes_(sizes), strides_(strides) {}
     
-    AT_HOST int_array_ref sizes() const {
-        return {sizes_, N};
+    // NOTE: Previously returned int_array_ref (from <base/utils/array_ref.h>),
+    // which supported .size(), iteration, etc. Now returns raw const pointer.
+    // If you need array_ref functionality, include <base/utils/array_ref.h> directly
+    // and wrap the result: int_array_ref(accessor.sizes(), N).
+    // mohan add 20260605
+    AT_HOST_DEVICE const index_t* sizes() const {
+        return sizes_;
     }
 
-    AT_HOST int_array_ref strides() const {
-        return {strides_, N};
+    AT_HOST_DEVICE const index_t* strides() const {
+        return strides_;
     }
 
     AT_HOST_DEVICE index_t stride(index_t idx) const {

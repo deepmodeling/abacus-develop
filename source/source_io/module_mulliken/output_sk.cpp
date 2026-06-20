@@ -1,5 +1,6 @@
 #include "output_sk.h"
 
+#include "source_lcao/hamilt_lcao.h"
 #include "source_base/tool_quit.h"
 
 namespace ModuleIO

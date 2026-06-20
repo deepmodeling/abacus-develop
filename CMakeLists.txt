@@ -856,6 +856,7 @@ target_link_libraries(
   module_pwdft
   module_ofdft
   module_stodft
+  module_dfpt
   psi
   psi_initializer
   psi_overall_init

@@ -114,8 +114,8 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
      * Read the orbital file.
      *
      * For orbital file format, see
-     * (new) abacus-develop/tools/SIAB/PyTorchGradient/source/IO/print_orbital.py
-     * (old) abacus-develop/tools/SIAB/SimulatedAnnealing/source/src_spillage/Plot_Psi.cpp
+     * (new) abacus-develop/tools/01_NAO_generation/pytorch/IO/print_orbital.py
+     * (old) abacus-develop/tools/01_NAO_generation/SIAB/src_spillage/Plot_Psi.cpp
      *                                                                                  */
     int ngrid = 0; // number of grid points
     double dr = 0; // grid spacing
@@ -284,8 +284,8 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
 //      * Read the orbital file.
 //      *
 //      * For orbital file format, see
-//      * (new) abacus-develop/tools/SIAB/PyTorchGradient/source/IO/print_orbital.py
-//      * (old) abacus-develop/tools/SIAB/SimulatedAnnealing/source/src_spillage/Plot_Psi.cpp
+//      * (new) abacus-develop/tools/01_NAO_generation/pytorch/IO/print_orbital.py
+//      * (old) abacus-develop/tools/01_NAO_generation/SIAB/src_spillage/Plot_Psi.cpp
 //      *                                                                                  */
 //     int ngrid = 0; // number of grid points
 //     double dr = 0; // grid spacing
