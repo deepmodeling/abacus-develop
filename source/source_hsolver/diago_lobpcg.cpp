@@ -2790,7 +2790,9 @@ void DiagoLobpcg<T, Device>::diag(
         bool update_rejected = !std::isfinite(residual_after_update)
                           || residual_after_update > residual_limit;
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &update_rejected, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
+        int update_rejected_int = update_rejected ? 1 : 0;
+        MPI_Allreduce(MPI_IN_PLACE, &update_rejected_int, 1, MPI_INT, MPI_LOR, BP_WORLD);
+        update_rejected = (update_rejected_int != 0);
 #endif
         if (update_rejected) {
             auto restore_backup_state = [&]() {
@@ -2834,7 +2836,9 @@ void DiagoLobpcg<T, Device>::diag(
                     compressed_ok = std::isfinite(guarded_residual)
                                  && guarded_residual <= guarded_limit;
 #ifdef __MPI
-                    MPI_Allreduce(MPI_IN_PLACE, &compressed_ok, 1, MPI_C_BOOL, MPI_LAND, BP_WORLD);
+                    int compressed_ok_int = compressed_ok ? 1 : 0;
+                    MPI_Allreduce(MPI_IN_PLACE, &compressed_ok_int, 1, MPI_INT, MPI_LAND, BP_WORLD);
+                    compressed_ok = (compressed_ok_int != 0);
 #endif
                 } catch (const std::exception& e) {
                     this->diag_log("lobpcg_update_s compressed guard failed: " + std::string(e.what()),
