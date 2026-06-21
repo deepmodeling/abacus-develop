@@ -135,6 +135,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     ModuleBase::timer::start("Diago_DavSubspace", "first");
 
     syncmem_complex_2d_op()(this->psi_in_iter, this->dim, psi_in, psi_in_dmax, this->dim, this->n_band);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(this->n_band > 16)
+#endif
     for (int m = 0; m < this->n_band; m++)
     {
         unconv[m] = m;
@@ -153,6 +156,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     this->diag_zhegvx(nbase, this->notconv, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(this->n_band > 16)
+#endif
     for (size_t m = 0; m < this->n_band; m++)
     {
         eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
@@ -193,17 +199,21 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         ModuleBase::timer::start("Diago_DavSubspace", "check_update");
 
         this->notconv = 0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(this->n_band > 16)
+#endif
         for (int m = 0; m < this->n_band; m++)
         {
             convflag[m] = (std::abs(eigenvalue_iter[m] - eigenvalue_in_hsolver[m]) < ethr_band[m]);
-
+            eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
+        }
+        for (int m = 0; m < this->n_band; m++)
+        {
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
                 this->notconv++;
             }
-
-            eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
         }
 
         ModuleBase::timer::end("Diago_DavSubspace", "check_update");
@@ -630,6 +640,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                 std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
                 std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
 
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if(nbase > 32)
+#endif
                 for (size_t i = 0; i < nbase; i++)
                 {
                     for (size_t j = 0; j < nbase; j++)
@@ -647,6 +660,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                                       (*eigenvalue_iter).data(),
                                       this->vcc);
                 // reset:
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nbase > 32)
+#endif
                 for (size_t i = 0; i < nbase; i++)
                 {
                     for (size_t j = 0; j < nbase; j++)
@@ -676,6 +692,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                 h_diag.resize(nbase * nbase, *this->zero);
                 s_diag.resize(nbase * nbase, *this->zero);
                 vcc_tmp.resize(nbase * nbase, *this->zero);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if(nbase > 32)
+#endif
                 for (size_t i = 0; i < nbase; i++)
                 {
                     for (size_t j = 0; j < nbase; j++)
@@ -696,6 +715,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                           this->diago_subspace_bs);
             if (this->diag_comm.rank == 0)
             {
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if(nband * nbase > 1024)
+#endif
                 for (size_t i = 0; i < nband; i++)
                 {
                     for (size_t j = 0; j < nbase; j++)
@@ -799,6 +821,9 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
     }
     else
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(nbase > 64)
+#endif
         for (int i = 0; i < nbase; i++)
         {
             hcc[i * this->nbase_x + i] = eigenvalue_in_hsolver[i];

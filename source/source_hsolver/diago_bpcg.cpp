@@ -81,6 +81,9 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vecto
         _err_st = tmp_cpu.data();
         syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
     }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) reduction(||:not_conv) if(this->n_band_l > 64)
+#endif
     for (int ii = 0; ii < this->n_band_l; ii++) {
         if (_err_st[ii] > ethr_band[ii]) {
             not_conv = true;

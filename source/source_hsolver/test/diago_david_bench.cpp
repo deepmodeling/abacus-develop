@@ -12,6 +12,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_psi/psi.h"
+#include "source_base/parallel_comm.h"
 
 #include <chrono>
 #include <complex>
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
     setupmpi(argc, argv, nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
     MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
+    POOL_WORLD = MPI_COMM_WORLD;  // Required by DiagoDavid internal assertions
     GlobalV::NPROC_IN_POOL = nproc;
 #else
     MPI_Init(&argc, &argv);
@@ -95,15 +97,22 @@ int main(int argc, char** argv)
         }
     }
 
-    // MPI distribution
+    // MPI distribution: each process keeps full data for correct benchmark
     psi::Psi<std::complex<double>> psi_local;
     DIAGOTEST::npw_local = new int[nproc];
     double* precondition_local = nullptr;
 #ifdef __MPI
     DIAGOTEST::cal_division(DIAGOTEST::npw);
-    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
-    precondition_local = new double[DIAGOTEST::npw_local[myrank]];
-    DIAGOTEST::divide_psi<double>(hpsi_mock.precond(), precondition_local);
+    DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
+    for (int i = 0; i < nproc; i++) {
+        DIAGOTEST::npw_local[i] = DIAGOTEST::npw;
+    }
+    psi_local = psi;
+    precondition_local = new double[DIAGOTEST::npw];
+    for (int ig = 0; ig < DIAGOTEST::npw; ++ig)
+    {
+        precondition_local[ig] = hpsi_mock.precond()[ig];
+    }
 #else
     DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
     DIAGOTEST::npw_local[0] = DIAGOTEST::npw;

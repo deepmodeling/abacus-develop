@@ -5,7 +5,7 @@ remove_definitions(-D__EXX)
 if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
-    LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+    LIBS parameter  ${math_libs} base device psi MPI::MPI_CXX
     SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
   )
   AddTest(
@@ -207,14 +207,14 @@ if (USE_ELPA)
 else()
   AddTest(
       TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  ${math_libs} base device MPI::MPI_CXX psi
+      LIBS parameter  ${math_libs} base device psi MPI::MPI_CXX psi
       SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
     )
 endif()
 
 AddTest(
   TARGET MODULE_HSOLVER_linear_trans
-  LIBS parameter  ${math_libs} base device MPI::MPI_CXX
+  LIBS parameter  ${math_libs} base device psi MPI::MPI_CXX
   SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
 )
 
@@ -250,3 +250,39 @@ if (ENABLE_MPI)
     endif()
   endif()
 endif()
+
+  AddTest(
+    TARGET MODULE_HSOLVER_ppcg_bench
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES diago_ppcg_bench.cpp ../diago_ppcg.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+
+  AddTest(
+    TARGET MODULE_HSOLVER_bpcg_bench
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES bpcg_bench.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+
+  AddTest(
+    TARGET MODULE_HSOLVER_david_bench
+    LIBS parameter  ${math_libs} base device psi
+    SOURCES diago_david_bench.cpp ../diago_david.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+
+AddTest(
+  TARGET MODULE_HSOLVER_openmp_consistency
+  LIBS parameter ${math_libs} base device psi MPI::MPI_CXX
+  SOURCES diago_openmp_consistency_test.cpp ../diago_bpcg.cpp ../diago_david.cpp ../para_linear_transform.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+          ../../source_basis/module_pw/test/test_tool.cpp
+          ../../source_hamilt/operator.cpp
+          ../../source_pw/module_pwdft/op_pw.cpp
+)
