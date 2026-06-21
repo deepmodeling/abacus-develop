@@ -169,7 +169,7 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 	return m;
 }
 
-template <typename Tdata> 
+template <typename Tdata>
 std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<RI::Tensor<Tdata>>>>>> Matrix_Orbs21::cal_overlap_matrix_all(
 	const UnitCell &ucell,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A1,

@@ -98,9 +98,9 @@ namespace RI_Util
 		return coulomb_param_updated;
 	}
 
-	inline std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-            std::pair<bool, 
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+	inline std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+            std::pair<bool,
+                std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                     std::vector<std::map<std::string,std::string>>>>>
 	update_coulomb_settings(
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
@@ -108,7 +108,7 @@ namespace RI_Util
 		const K_Vectors *p_kv)
 	{
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
-			coulomb_param_updated = update_coulomb_param(coulomb_param, ucell, p_kv); 
+			coulomb_param_updated = update_coulomb_param(coulomb_param, ucell, p_kv);
 
 		// Separate the parameters into Center2 and Ewald methods
 		std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param_center2;
@@ -121,7 +121,7 @@ namespace RI_Util
 				{
 					for(auto &param : param_list.second)
 					{
-						if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "limits" 
+						if(param.at("singularity_correction") == "spencer" || param.at("singularity_correction") == "limits"
 							|| param.at("singularity_correction") == "revised_spencer")
 						{
 							coulomb_param_center2[param_list.first].push_back(param);
@@ -145,9 +145,9 @@ namespace RI_Util
 			}
 		}
 
-		std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-            std::pair<bool, 
-                std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+		std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+            std::pair<bool,
+                std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                     std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
 		const bool cal_center = !coulomb_param_center2.empty();

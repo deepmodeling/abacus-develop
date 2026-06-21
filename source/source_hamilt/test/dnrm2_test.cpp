@@ -8,14 +8,14 @@
 
 /**
  * - Tested Functions:
- *   - dnrm2(const int n, const double *x, const int incx): 
- *      - compute the Euclidean length (12 norm) of std::vector x, 
+ *   - dnrm2(const int n, const double *x, const int incx):
+ *      - compute the Euclidean length (12 norm) of std::vector x,
  *         with scaling of input to avoid destructive underflow and overflow
  */
 
 class EwaldTest : public ::testing::Test
 {
-    
+
 };
 
 TEST_F(EwaldTest,Dnrm2Test)
