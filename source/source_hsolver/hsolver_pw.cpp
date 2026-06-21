@@ -386,7 +386,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                   eigenvalue,
                                   this->ethr_band,
                                   this->diag_iter_max,
-                                  ("nscf" == this->calculation_type) ? 0 : -1,
+                                  ("nscf" == this->calculation_type) ? 0 : 5,
                                   nk_nums);
     }
     else if (this->method == "dav_subspace")

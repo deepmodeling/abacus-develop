@@ -250,7 +250,8 @@ class DiagoLobpcg
                                   ct::Tensor& pdir,
                                   ct::Tensor& hpdir,
                                   ct::Tensor& spdir,
-                                  ct::Tensor& eigen);
+                                  ct::Tensor& eigen,
+                                  bool force_compressed);
 
     /// psi = psi * U  (via plintrans).
     void rotate_wf(const ct::Tensor& hsub_in,
@@ -271,6 +272,8 @@ class DiagoLobpcg
                          ct::Tensor& hsub_out);
 
     bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
+
+    Real max_error(const ct::Tensor& err_in) const;
 
     void validate_ethr_band(const std::vector<double>& ethr_band) const;
 

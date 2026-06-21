@@ -1520,7 +1520,7 @@ bool DiagoLobpcg<T, Device>::test_error(
     const ct::Tensor& err_in, const std::vector<double>& ethr_band)
 {
     Real* _err_st = err_in.data<Real>();
-    bool  not_conv = false;
+    int notconv = 0;
     std::vector<Real> tmp_cpu;
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
         tmp_cpu.resize(this->n_band_l);
@@ -1528,11 +1528,34 @@ bool DiagoLobpcg<T, Device>::test_error(
         syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
     }
     for (int ii = 0; ii < this->n_band_l; ii++)
-        if (_err_st[ii] > ethr_band[ii]) not_conv = true;
+        if (_err_st[ii] > ethr_band[ii]) ++notconv;
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &not_conv, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &notconv, 1, MPI_INT, MPI_SUM, BP_WORLD);
 #endif
-    return not_conv;
+    return this->notconv_max >= 0 ? notconv > this->notconv_max : notconv > 0;
+}
+
+template <typename T, typename Device>
+typename DiagoLobpcg<T, Device>::Real DiagoLobpcg<T, Device>::max_error(
+    const ct::Tensor& err_in) const
+{
+    Real* err = err_in.data<Real>();
+    std::vector<Real> tmp_cpu;
+    if (err_in.device_type() == ct::DeviceType::GpuDevice) {
+        tmp_cpu.resize(this->n_band_l);
+        err = tmp_cpu.data();
+        syncmem_var_d2h_op()(err, err_in.data<Real>(), this->n_band_l);
+    }
+
+    Real max_residual = static_cast<Real>(0.0);
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        max_residual = std::max(max_residual, err[ib]);
+    }
+#ifdef __MPI
+    const MPI_Datatype real_type = std::is_same<Real, double>::value ? MPI_DOUBLE : MPI_FLOAT;
+    MPI_Allreduce(MPI_IN_PLACE, &max_residual, 1, real_type, MPI_MAX, BP_WORLD);
+#endif
+    return max_residual;
 }
 
 template <typename T, typename Device>
@@ -1947,7 +1970,8 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
     ct::Tensor& psi, ct::Tensor& hpsi, ct::Tensor& spsi,
     ct::Tensor& grad, ct::Tensor& hgrad, ct::Tensor& sgrad,
     ct::Tensor& pdir, ct::Tensor& hpdir, ct::Tensor& spdir,
-    ct::Tensor& eigen)
+    ct::Tensor& eigen,
+    const bool force_compressed)
 {
     const int n = this->n_band;
     const int nbs = this->n_basis;
@@ -2006,167 +2030,150 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
         hermitize(ssub_d, this->nsub, active_blocks * n);
     };
 
+    build_subspace(block_count);
     std::vector<Real> inv_subspace_norm;
     std::string scale_error;
-    build_subspace(block_count);
-    if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
-                                        inv_subspace_norm, scale_error)) {
-        if (block_count == 3) {
-            block_count = 2;
-            m = block_count * n;
-            build_subspace(block_count);
-            scale_error.clear();
-        }
+
+    auto solve_scaled_hegvd = [&]() -> bool {
         if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
                                             inv_subspace_norm, scale_error)) {
-            this->diag_log("lobpcg_update_s_parallel failed to normalize S_sub before hegvd",
-                           hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                           s_overlap_diagnostics(ssub_d, this->nsub, m),
-                           scale_error);
-            throw std::runtime_error("LOBPCG generalized parallel subspace overlap has invalid diagonal");
+            return false;
         }
-    }
-
-    std::vector<T> h_scaled(m * m, static_cast<T>(0.0));
-    std::vector<T> s_scaled(m * m, static_cast<T>(0.0));
-    for (int jc = 0; jc < m; ++jc) {
-        for (int ir = 0; ir < m; ++ir) {
-            h_scaled[jc * m + ir] = hsub_d[jc * this->nsub + ir];
-            s_scaled[jc * m + ir] = ssub_d[jc * this->nsub + ir];
+        auto spd_check = check_subspace_spd<T, ct_Device>(ssub_d, this->nsub, m);
+        if (!spd_check.ok) {
+            scale_error = subspace_spd_diagnostics(spd_check);
+            return false;
         }
-    }
-
-    std::vector<T> s_evec = s_scaled;
-    std::vector<Real> s_eval(m, static_cast<Real>(0.0));
-    try {
-        ct::kernels::lapack_heevd<T, ct_Device>()(m, s_evec.data(), m, s_eval.data());
-    } catch (const std::exception& e) {
-        this->diag_log("lobpcg_update_s_parallel S_sub heevd failed: " + std::string(e.what()),
-                       hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                       s_overlap_diagnostics(ssub_d, this->nsub, m),
-                       scale_error);
-        throw;
-    }
-    if (!finite_real_block(s_eval.data(), m) || !finite_scalar_block(s_evec.data(), m * m)) {
-        this->diag_log("lobpcg_update_s_parallel S_sub heevd produced non-finite values",
-                       hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                       s_overlap_diagnostics(ssub_d, this->nsub, m),
-                       "rank compression unavailable");
-        throw std::runtime_error("LOBPCG generalized parallel overlap diagonalization produced non-finite values");
-    }
-
-    const Real s_max = s_eval.empty() ? static_cast<Real>(0.0)
-                                      : *std::max_element(s_eval.begin(), s_eval.end());
-    const Real eps = std::numeric_limits<Real>::epsilon();
-    const Real rank_floor = std::max(std::abs(s_max) * static_cast<Real>(1.0e-10),
-                                     static_cast<Real>(100.0) * eps * std::max(static_cast<Real>(1.0),
-                                                                               std::abs(s_max)));
-    int first_kept = 0;
-    while (first_kept < m && s_eval[first_kept] <= rank_floor) {
-        ++first_kept;
-    }
-    int rank = m - first_kept;
-    if (rank < n && block_count == 3) {
-        block_count = 2;
-        m = block_count * n;
-        build_subspace(block_count);
-        scale_error.clear();
-        if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
-                                            inv_subspace_norm, scale_error)) {
-            this->diag_log("lobpcg_update_s_parallel failed to normalize restarted S_sub before compression",
-                           hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                           s_overlap_diagnostics(ssub_d, this->nsub, m),
-                           scale_error);
-            throw std::runtime_error("LOBPCG generalized restarted parallel subspace overlap has invalid diagonal");
+        try {
+            ct::kernels::lapack_hegvd<T, ct_Device>()(
+                m, this->nsub, hsub_d, ssub_d,
+                this->sub_eigen.data<Real>(), hsub_d);
+        } catch (const std::exception& e) {
+            scale_error = e.what();
+            return false;
         }
-        h_scaled.assign(m * m, static_cast<T>(0.0));
-        s_scaled.assign(m * m, static_cast<T>(0.0));
+        if (!finite_real_block(this->sub_eigen.data<Real>(), m)
+            || !finite_scalar_block(hsub_d, m * this->nsub)) {
+            scale_error = "hegvd produced non-finite values";
+            return false;
+        }
+        for (int jc = 0; jc < n; ++jc) {
+            for (int ir = 0; ir < m; ++ir) {
+                hsub_d[jc * this->nsub + ir] *= inv_subspace_norm[ir];
+            }
+        }
+        return true;
+    };
+
+    auto solve_compressed_heevd = [&]() {
+        std::vector<T> h_scaled(m * m, static_cast<T>(0.0));
+        std::vector<T> s_scaled(m * m, static_cast<T>(0.0));
         for (int jc = 0; jc < m; ++jc) {
             for (int ir = 0; ir < m; ++ir) {
                 h_scaled[jc * m + ir] = hsub_d[jc * this->nsub + ir];
                 s_scaled[jc * m + ir] = ssub_d[jc * this->nsub + ir];
             }
         }
-        s_evec = s_scaled;
-        s_eval.assign(m, static_cast<Real>(0.0));
+
+        std::vector<T> s_evec = s_scaled;
+        std::vector<Real> s_eval(m, static_cast<Real>(0.0));
         ct::kernels::lapack_heevd<T, ct_Device>()(m, s_evec.data(), m, s_eval.data());
-        const Real restart_s_max = s_eval.empty() ? static_cast<Real>(0.0)
-                                                  : *std::max_element(s_eval.begin(), s_eval.end());
-        const Real restart_rank_floor = std::max(std::abs(restart_s_max) * static_cast<Real>(1.0e-10),
-                                                 static_cast<Real>(100.0) * eps * std::max(static_cast<Real>(1.0),
-                                                                                           std::abs(restart_s_max)));
-        first_kept = 0;
-        while (first_kept < m && s_eval[first_kept] <= restart_rank_floor) {
+        if (!finite_real_block(s_eval.data(), m) || !finite_scalar_block(s_evec.data(), m * m)) {
+            throw std::runtime_error("LOBPCG generalized parallel overlap diagonalization produced non-finite values");
+        }
+
+        const Real s_max = s_eval.empty() ? static_cast<Real>(0.0)
+                                          : *std::max_element(s_eval.begin(), s_eval.end());
+        const Real eps = std::numeric_limits<Real>::epsilon();
+        const Real rank_floor = std::max(std::abs(s_max) * static_cast<Real>(1.0e-10),
+                                         static_cast<Real>(100.0) * eps * std::max(static_cast<Real>(1.0),
+                                                                                   std::abs(s_max)));
+        int first_kept = 0;
+        while (first_kept < m && s_eval[first_kept] <= rank_floor) {
             ++first_kept;
         }
-        rank = m - first_kept;
-    }
-    if (rank < n) {
-        this->diag_log("lobpcg_update_s_parallel compressed subspace rank is too small",
-                       hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                       s_overlap_diagnostics(ssub_d, this->nsub, m),
-                       "rank=" + std::to_string(rank) + " required=" + std::to_string(n));
-        throw std::runtime_error("LOBPCG generalized parallel compressed subspace lost rank");
-    }
-
-    std::vector<T> q(m * rank, static_cast<T>(0.0));
-    for (int jc = 0; jc < rank; ++jc) {
-        const int src_col = first_kept + jc;
-        const Real inv_sqrt = static_cast<Real>(1.0) / std::sqrt(s_eval[src_col]);
-        for (int ir = 0; ir < m; ++ir) {
-            q[jc * m + ir] = s_evec[src_col * m + ir] * inv_sqrt;
+        const int rank = m - first_kept;
+        if (rank < n) {
+            throw std::runtime_error("LOBPCG generalized parallel compressed subspace lost rank");
         }
-    }
 
-    std::vector<T> hq(m * rank, static_cast<T>(0.0));
-    ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     m, rank, m,
-                                     this->one,
-                                     h_scaled.data(), m,
-                                     q.data(), m,
-                                     this->zero,
-                                     hq.data(), m);
-    std::vector<T> h_comp(rank * rank, static_cast<T>(0.0));
-    ModuleBase::gemm_op<T, Device>()('C', 'N',
-                                     rank, rank, m,
-                                     this->one,
-                                     q.data(), m,
-                                     hq.data(), m,
-                                     this->zero,
-                                     h_comp.data(), rank);
-    hermitize(h_comp.data(), rank, rank);
+        std::vector<T> q(m * rank, static_cast<T>(0.0));
+        for (int jc = 0; jc < rank; ++jc) {
+            const int src_col = first_kept + jc;
+            const Real inv_sqrt = static_cast<Real>(1.0) / std::sqrt(s_eval[src_col]);
+            for (int ir = 0; ir < m; ++ir) {
+                q[jc * m + ir] = s_evec[src_col * m + ir] * inv_sqrt;
+            }
+        }
 
-    try {
+        std::vector<T> hq(m * rank, static_cast<T>(0.0));
+        ModuleBase::gemm_op<T, Device>()('N', 'N',
+                                         m, rank, m,
+                                         this->one,
+                                         h_scaled.data(), m,
+                                         q.data(), m,
+                                         this->zero,
+                                         hq.data(), m);
+        std::vector<T> h_comp(rank * rank, static_cast<T>(0.0));
+        ModuleBase::gemm_op<T, Device>()('C', 'N',
+                                         rank, rank, m,
+                                         this->one,
+                                         q.data(), m,
+                                         hq.data(), m,
+                                         this->zero,
+                                         h_comp.data(), rank);
+        hermitize(h_comp.data(), rank, rank);
+
         ct::kernels::lapack_heevd<T, ct_Device>()(
             rank, h_comp.data(), rank, this->sub_eigen.data<Real>());
-    } catch (const std::exception& e) {
-        this->diag_log("lobpcg_update_s_parallel compressed heevd failed: " + std::string(e.what()),
-                       hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
-                       hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                       "rank=" + std::to_string(rank));
-        throw;
-    }
-    if (!finite_real_block(this->sub_eigen.data<Real>(), rank)
-        || !finite_scalar_block(h_comp.data(), rank * rank)) {
-        this->diag_log("lobpcg_update_s_parallel compressed heevd produced non-finite values",
-                       hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
-                       hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                       "rank=" + std::to_string(rank));
-        throw std::runtime_error("LOBPCG generalized parallel compressed diagonalization produced non-finite values");
-    }
+        if (!finite_real_block(this->sub_eigen.data<Real>(), rank)
+            || !finite_scalar_block(h_comp.data(), rank * rank)) {
+            throw std::runtime_error("LOBPCG generalized parallel compressed diagonalization produced non-finite values");
+        }
 
-    std::vector<T> coeff_scaled(m * n, static_cast<T>(0.0));
-    ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     m, n, rank,
-                                     this->one,
-                                     q.data(), m,
-                                     h_comp.data(), rank,
-                                     this->zero,
-                                     coeff_scaled.data(), m);
-    setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
-    for (int jc = 0; jc < n; ++jc) {
-        for (int ir = 0; ir < m; ++ir) {
-            hsub_d[jc * this->nsub + ir] = coeff_scaled[jc * m + ir] * inv_subspace_norm[ir];
+        std::vector<T> coeff_scaled(m * n, static_cast<T>(0.0));
+        ModuleBase::gemm_op<T, Device>()('N', 'N',
+                                         m, n, rank,
+                                         this->one,
+                                         q.data(), m,
+                                         h_comp.data(), rank,
+                                         this->zero,
+                                         coeff_scaled.data(), m);
+        setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
+        for (int jc = 0; jc < n; ++jc) {
+            for (int ir = 0; ir < m; ++ir) {
+                hsub_d[jc * this->nsub + ir] = coeff_scaled[jc * m + ir];
+            }
+        }
+    };
+
+    if (force_compressed || !solve_scaled_hegvd()) {
+        bool solved = false;
+        if (!force_compressed && block_count == 3) {
+            block_count = 2;
+            m = block_count * n;
+            build_subspace(block_count);
+            scale_error.clear();
+            solved = solve_scaled_hegvd();
+        }
+        if (!solved) {
+            build_subspace(block_count);
+            try {
+                solve_compressed_heevd();
+                if (this->profile_enabled()) {
+                    this->diag_log("lobpcg_update_s_parallel used compressed S_sub fallback",
+                                   force_compressed ? "reason=forced-by-residual-guard"
+                                                    : ("reason=" + scale_error),
+                                   "active_blocks=" + std::to_string(block_count));
+                }
+            } catch (const std::exception& e) {
+                this->diag_log("lobpcg_update_s_parallel compressed fallback failed: " + std::string(e.what()),
+                               hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
+                               hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
+                               s_overlap_diagnostics(ssub_d, this->nsub, m)
+                                   + ", scaled-path reason=" + scale_error);
+                throw;
+            }
         }
     }
 
@@ -2636,6 +2643,28 @@ void DiagoLobpcg<T, Device>::diag(
     const int default_max_iter = (scf_iter > 1) ? this->nline : (this->nline * 20);
     const int max_iter = (this->max_iter > 0) ? this->max_iter : default_max_iter;
     int used_iter = 0;
+    const int psi_sz = this->n_basis * this->n_band_l;
+    const int eig_sz = this->n_band;
+    std::vector<T> best_psi(psi_sz), best_hpsi(psi_sz), best_spsi(psi_sz);
+    std::vector<Real> best_eigen(eig_sz);
+    Real best_residual = std::numeric_limits<Real>::max();
+    bool has_best_state = false;
+    auto save_best_state = [&]() {
+        std::copy(this->psi.data<T>(),  this->psi.data<T>()  + psi_sz, best_psi.data());
+        std::copy(this->hpsi.data<T>(), this->hpsi.data<T>() + psi_sz, best_hpsi.data());
+        std::copy(this->spsi.data<T>(), this->spsi.data<T>() + psi_sz, best_spsi.data());
+        std::copy(this->eigen.data<Real>(), this->eigen.data<Real>() + eig_sz, best_eigen.data());
+    };
+    auto restore_best_state = [&]() {
+        std::copy(best_psi.data(), best_psi.data() + psi_sz, this->psi.data<T>());
+        std::copy(best_hpsi.data(), best_hpsi.data() + psi_sz, this->hpsi.data<T>());
+        std::copy(best_spsi.data(), best_spsi.data() + psi_sz, this->spsi.data<T>());
+        std::copy(best_eigen.data(), best_eigen.data() + eig_sz, this->eigen.data<Real>());
+        setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
+        setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
+        setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
+        this->has_pdir = false;
+    };
     std::vector<double> effective_ethr_band = ethr_band;
     if (this->notconv_max < 0) {
         // SCF can refine the density across outer iterations; avoid chasing a tiny diagonalization threshold.
@@ -2644,7 +2673,6 @@ void DiagoLobpcg<T, Device>::diag(
             ethr = std::max(ethr, scf_generalized_residual_floor);
         }
     }
-
     for (int ntry = 0; ntry < max_iter; ++ntry) {
         used_iter = ntry + 1;
         t0 = LobpcgClock::now();
@@ -2652,11 +2680,14 @@ void DiagoLobpcg<T, Device>::diag(
                                  this->prec, this->grad, this->err_st);
         this->profile_log("S!=I", "residual", used_iter,
                           std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        const Real residual_before_update = this->max_error(this->err_st);
+        if (std::isfinite(residual_before_update) && residual_before_update < best_residual) {
+            best_residual = residual_before_update;
+            has_best_state = true;
+            save_best_state();
+        }
         if (!this->test_error(this->err_st, effective_ethr_band))
             break;
-
-        const int psi_sz = this->n_basis * this->n_band_l;
-        const int eig_sz = this->n_band;
 
         t0 = LobpcgClock::now();
         this->calc_spsi_with_block(spsi_func, this->grad.data<T>(), this->sgrad);
@@ -2685,7 +2716,7 @@ void DiagoLobpcg<T, Device>::diag(
                 this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
                                                this->grad, this->hgrad, this->sgrad,
                                                this->pdir, this->hpdir, this->spdir,
-                                               this->eigen);
+                                               this->eigen, false);
             } else {
                 this->lobpcg_update_s(this->psi, this->hpsi, this->spsi,
                                       this->grad, this->hgrad, this->sgrad,
@@ -2714,7 +2745,7 @@ void DiagoLobpcg<T, Device>::diag(
                     this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
                                                    this->grad, this->hgrad, this->sgrad,
                                                    this->pdir, this->hpdir, this->spdir,
-                                                   this->eigen);
+                                                   this->eigen, false);
                 } else {
                     this->lobpcg_update_s(this->psi, this->hpsi, this->spsi,
                                           this->grad, this->hgrad, this->sgrad,
@@ -2745,9 +2776,116 @@ void DiagoLobpcg<T, Device>::diag(
             }
         }
 
+        t0 = LobpcgClock::now();
+        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                 this->prec, this->grad, this->err_st);
+        this->profile_log("S!=I", "post_update_residual", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        const Real residual_after_update = this->max_error(this->err_st);
+        const Real residual_growth_limit = (this->n_band_l != this->n_band)
+            ? static_cast<Real>(1.05)
+            : static_cast<Real>(10.0);
+        const Real residual_limit = std::max(static_cast<Real>(1.0e-8),
+                                             residual_before_update * residual_growth_limit);
+        bool update_rejected = !std::isfinite(residual_after_update)
+                          || residual_after_update > residual_limit;
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, &update_rejected, 1, MPI_C_BOOL, MPI_LOR, BP_WORLD);
+#endif
+        if (update_rejected) {
+            auto restore_backup_state = [&]() {
+                std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
+                std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
+                std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
+                std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
+                setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
+                setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
+                setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
+                this->has_pdir = false;
+            };
+            this->diag_log("lobpcg_update_s rejected residual-increasing step",
+                           "before=" + std::to_string(residual_before_update)
+                               + ", after=" + std::to_string(residual_after_update)
+                               + ", limit=" + std::to_string(residual_limit),
+                           this->n_band_l != this->n_band ? "retry with compressed S_sub path"
+                                                          : "fallback to backed-up Rayleigh-Ritz state",
+                           "iteration=" + std::to_string(used_iter));
+            restore_backup_state();
+
+            Real guarded_residual = std::numeric_limits<Real>::max();
+            if (this->n_band_l != this->n_band) {
+                bool compressed_ok = false;
+                try {
+                    t0 = LobpcgClock::now();
+                    this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
+                                                   this->grad, this->hgrad, this->sgrad,
+                                                   this->pdir, this->hpdir, this->spdir,
+                                                   this->eigen, true);
+                    this->profile_log("S!=I", "lobpcg_update_compressed_guard", used_iter,
+                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+                    t0 = LobpcgClock::now();
+                    this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                             this->prec, this->grad, this->err_st);
+                    this->profile_log("S!=I", "compressed_guard_residual", used_iter,
+                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+                    guarded_residual = this->max_error(this->err_st);
+                    const Real guarded_limit = std::max(static_cast<Real>(1.0e-8),
+                                                        residual_before_update * residual_growth_limit);
+                    compressed_ok = std::isfinite(guarded_residual)
+                                 && guarded_residual <= guarded_limit;
+#ifdef __MPI
+                    MPI_Allreduce(MPI_IN_PLACE, &compressed_ok, 1, MPI_C_BOOL, MPI_LAND, BP_WORLD);
+#endif
+                } catch (const std::exception& e) {
+                    this->diag_log("lobpcg_update_s compressed guard failed: " + std::string(e.what()),
+                                   "fallback to backed-up Rayleigh-Ritz state",
+                                   "iteration=" + std::to_string(used_iter));
+                }
+                if (!compressed_ok) {
+                    restore_backup_state();
+                    t0 = LobpcgClock::now();
+                    this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                             this->prec, this->grad, this->err_st);
+                    this->profile_log("S!=I", "rollback_residual", used_iter,
+                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+                    guarded_residual = this->max_error(this->err_st);
+                } else {
+                    update_rejected = false;
+                }
+            } else {
+                t0 = LobpcgClock::now();
+                this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                         this->prec, this->grad, this->err_st);
+                this->profile_log("S!=I", "rollback_residual", used_iter,
+                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+                guarded_residual = this->max_error(this->err_st);
+            }
+            if (std::isfinite(guarded_residual) && guarded_residual < best_residual) {
+                best_residual = guarded_residual;
+                has_best_state = true;
+                save_best_state();
+            }
+        } else if (std::isfinite(residual_after_update) && residual_after_update < best_residual) {
+            best_residual = residual_after_update;
+            has_best_state = true;
+            save_best_state();
+        }
+        if (this->profile_enabled()) {
+            std::ostringstream oss;
+            oss << "residual_before=" << std::setprecision(12) << residual_before_update
+                << " residual_after=" << residual_after_update
+                << " best=" << best_residual
+                << " limit=" << residual_limit
+                << " rejected=" << (update_rejected ? 1 : 0)
+                << " has_pdir=" << (this->has_pdir ? 1 : 0);
+            this->diag_log("lobpcg_update_s residual trace",
+                           oss.str(),
+                           "iteration=" + std::to_string(used_iter));
+        }
+
         const bool has_next_iteration = (ntry + 1) < max_iter;
         const bool restart_next = has_next_iteration && scf_iter == 1 && ((ntry + 1) % this->nline == 0);
-        if (has_next_iteration && !restart_next) {
+        if (has_next_iteration && !restart_next && !update_rejected) {
             try {
                 t0 = LobpcgClock::now();
                 if (this->n_band_l != this->n_band) {
@@ -2786,6 +2924,22 @@ void DiagoLobpcg<T, Device>::diag(
                              this->prec, this->grad, this->err_st);
     this->profile_log("S!=I", "final_residual", used_iter,
                       std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+    Real final_residual = this->max_error(this->err_st);
+    const Real best_restore_tol = std::max(static_cast<Real>(1.0e-12),
+                                           std::abs(best_residual) * static_cast<Real>(1.0e-8));
+    if (has_best_state
+        && (!std::isfinite(final_residual) || final_residual > best_residual + best_restore_tol)) {
+        this->diag_log("DiagoLobpcg::diag(S!=I) restored best residual state",
+                       "final=" + std::to_string(final_residual),
+                       "best=" + std::to_string(best_residual),
+                       "context={" + this->diag_context + "}");
+        restore_best_state();
+        t0 = LobpcgClock::now();
+        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                 this->prec, this->grad, this->err_st);
+        this->profile_log("S!=I", "best_state_residual", used_iter,
+                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+    }
     this->report_not_converged("S!=I", used_iter, max_iter, effective_ethr_band);
     DiagoIterAssist<T, Device>::avg_iter += static_cast<Real>(used_iter);
 
