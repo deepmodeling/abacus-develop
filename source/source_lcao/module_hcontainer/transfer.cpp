@@ -46,8 +46,8 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int>* orb_indexes)
     {
         int atom = this->atom_i_index[irank][i];
         size_orb_indexes += 3;
-        size_orb_indexes += this->paraV->get_row_size(atom);
-        size_orb_indexes += this->paraV->get_col_size(atom);
+        size_orb_indexes += this->paraV->get_nrow_atom(atom);
+        size_orb_indexes += this->paraV->get_ncol_atom(atom);
     }
     orb_indexes->resize(size_orb_indexes);
     int* data = orb_indexes->data();
@@ -59,7 +59,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int>* orb_indexes)
         // atom index
         *data++ = atom;
         // size of row for this atom
-        *data = this->paraV->get_row_size(atom);
+        *data = this->paraV->get_nrow_atom(atom);
         if (*data++ > 0)
         {
             // indexes of row for this atom
@@ -70,7 +70,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int>* orb_indexes)
             }
         }
         // size of col for this atom
-        *data = this->paraV->get_col_size(atom);
+        *data = this->paraV->get_ncol_atom(atom);
         if (*data++ > 0)
         {
             // indexes of col for this atom
@@ -114,12 +114,12 @@ void HTransPara<T>::receive_ap_indexes(int irank, const int* ap_indexes_in, cons
         const int atom_i = *ap_data++;
         atom_set.insert(atom_i);
         const int number_atom_j = *ap_data++;
-        const int size_row = this->paraV->get_row_size(atom_i);
+        const int size_row = this->paraV->get_nrow_atom(atom_i);
         for (int j = 0; j < number_atom_j; ++j)
         {
             const int atom_j = *ap_data++;
             atom_set.insert(atom_j);
-            const int size_col = this->paraV->get_col_size(atom_j);
+            const int size_col = this->paraV->get_ncol_atom(atom_j);
             const int number_R = *ap_data++;
             if (size_row > 0 && size_col > 0)
             {
@@ -208,11 +208,11 @@ void HTransPara<T>::pack_data(int irank, T* values)
     {
         const int atom_i = *ap_data++;
         const int number_atom_j = *ap_data++;
-        const int size_row = this->paraV->get_row_size(atom_i);
+        const int size_row = this->paraV->get_nrow_atom(atom_i);
         for (int j = 0; j < number_atom_j; ++j)
         {
             const int atom_j = *ap_data++;
-            const int size_col = this->paraV->get_col_size(atom_j);
+            const int size_col = this->paraV->get_ncol_atom(atom_j);
             const int number_R = *ap_data++;
             for (int k = 0; k < number_R; ++k)
             {
@@ -252,12 +252,12 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
     for (int i = 0; i < number_atom; ++i)
     {
         const int atom_i = *ap_data++;
-        const int size_row = this->paraV->get_row_size(atom_i);
+        const int size_row = this->paraV->get_nrow_atom(atom_i);
         const int size_j = *ap_data++;
         for (int j = 0; j < size_j; ++j)
         {
             const int atom_j = *ap_data++;
-            const int size_col = this->paraV->get_col_size(atom_j);
+            const int size_col = this->paraV->get_ncol_atom(atom_j);
             const int number_R = *ap_data++;
             for (int k = 0; k < number_R; ++k)
             {

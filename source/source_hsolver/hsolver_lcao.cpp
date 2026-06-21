@@ -205,8 +205,9 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
     /// set psi_pool
     const int zero = 0;
+    int coord_col = k2d.get_p2D_pool()->get_coord_col();
     int ncol_bands_pool
-        = numroc_(&(nbands), &(nb2d), &(k2d.get_p2D_pool()->coord[1]), &zero, &(k2d.get_p2D_pool()->dim1));
+        = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {

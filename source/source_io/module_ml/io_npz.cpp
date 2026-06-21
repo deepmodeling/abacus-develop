@@ -431,8 +431,8 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
             if(atom_i > atom_j) continue;
             int start_i = serialV.atom_begin_row[atom_i];
             int start_j = serialV.atom_begin_col[atom_j];
-            int row_size = serialV.get_row_size(atom_i);
-            int col_size = serialV.get_col_size(atom_j);
+            int row_size = serialV.get_nrow_atom(atom_i);
+            int col_size = serialV.get_ncol_atom(atom_j);
             for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
@@ -454,8 +454,8 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
         int atom_j = hR.get_atom_pair(iap).get_atom_j();
         int start_i = paraV.atom_begin_row[atom_i];
         int start_j = paraV.atom_begin_col[atom_j];
-        int row_size = paraV.get_row_size(atom_i);
-        int col_size = paraV.get_col_size(atom_j);
+        int row_size = paraV.get_nrow_atom(atom_i);
+        int col_size = paraV.get_ncol_atom(atom_j);
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);

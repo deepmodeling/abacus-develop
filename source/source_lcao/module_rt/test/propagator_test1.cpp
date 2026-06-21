@@ -37,7 +37,7 @@ TEST(PropagatorTest, testPropagatorCN)
     pv = new Parallel_Orbitals();
     pv->nloc = nlocal * nlocal;
     pv->ncol = nlocal;
-    pv->coord[0] = pv->coord[1] = 0;
+    pv->set_coord(0, 0);
     PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
