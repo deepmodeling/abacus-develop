@@ -118,6 +118,31 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "No new default parameters")
 
+    def test_ignores_crlf_to_lf_only_changes_for_semantic_added_lines(self):
+        self.write("source/source_base/defaults.h", b"void update_solver(int step = 0);\r\n", mode="wb")
+        self.git("add", ".")
+        self.git("commit", "-m", "add crlf header")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("source/source_base/defaults.h", "void update_solver(int step = 0);\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("No new default parameters", result.stdout)
+
+    def test_staged_mode_ignores_crlf_to_lf_only_semantic_added_lines(self):
+        self.write("source/source_base/defaults.h", b"void update_solver(int step = 0);\r\n", mode="wb")
+        self.git("add", ".")
+        self.git("commit", "-m", "add crlf header")
+        self.write("source/source_base/defaults.h", "void update_solver(int step = 0);\n")
+        self.git("add", ".")
+
+        result = self.run_checker("--staged")
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("No new default parameters", result.stdout)
+
     def test_allows_for_loop_initializer_in_header(self):
         self.write(
             "source/source_base/loop_header.h",
@@ -231,6 +256,33 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--event-path", str(event))
 
         self.assert_blocked_by(result, "PR metadata completeness")
+
+    def test_blocks_empty_pr_template_from_event_payload(self):
+        for body in ("", None):
+            with self.subTest(body=body):
+                event = self.repo / "event.json"
+                event.write_text(json.dumps({"pull_request": {"body": body}}))
+
+                result = self.run_checker("--event-path", str(event))
+
+                self.assert_blocked_by(result, "PR metadata completeness")
+
+    def test_blocks_missing_pr_body_from_event_payload(self):
+        event = self.repo / "event.json"
+        event.write_text(json.dumps({"pull_request": {}}))
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assert_blocked_by(result, "PR metadata completeness")
+
+    def test_skips_pr_metadata_when_event_payload_is_not_a_pull_request(self):
+        event = self.repo / "event.json"
+        event.write_text(json.dumps({"workflow_run": {"name": "Agent Governance"}}))
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("PR metadata completeness", result.stdout)
 
     def test_accepts_filled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
@@ -468,6 +520,26 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--base", self.base, "--head", head)
 
         self.assert_warns_with_success(result, "Header dependency review")
+
+    def test_merge_base_scoped_comparison_excludes_base_branch_only_changes(self):
+        self.write("source/source_base/api.h", "void update_solver(int step = 0);\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add legacy default")
+        base_branch = self.git("branch", "--show-current").stdout.strip()
+        merge_base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.git("checkout", "-b", "feature")
+        self.write("docs/feature.md", "feature docs\n")
+        head = self.commit_change()
+        self.git("checkout", base_branch)
+        self.write("source/source_base/api.h", "void update_solver(int step);\n")
+        base_tip = self.commit_change()
+
+        base_tip_result = self.run_checker("--base", base_tip, "--head", head)
+        merge_base_result = self.run_checker("--base", merge_base, "--head", head)
+
+        self.assertIn("No new default parameters", base_tip_result.stdout)
+        self.assertNotIn("No new default parameters", merge_base_result.stdout)
+        self.assertEqual(merge_base_result.returncode, 0, merge_base_result.stdout + merge_base_result.stderr)
 
     def test_blocks_new_heterogeneous_file_without_cmake_linkage(self):
         self.write("source/module_hamilt/kernels/new_kernel.cu", "__global__ void k() {}\n")

@@ -22,9 +22,21 @@ jobs:
         id: governance
         run: |
           set +e
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          merge_base="$(git merge-base "$base_sha" "$head_sha")"
+          merge_base_status=$?
+          if [ "$merge_base_status" -ne 0 ]; then
+            {
+              echo "## Agent Governance Check"
+              echo
+              echo "Failed to compute the pull request merge base."
+            } > agent_governance_summary.md
+            exit "$merge_base_status"
+          fi
           python3 tools/03_code_analysis/agent_governance_check.py \
-            --base "${{ github.event.pull_request.base.sha }}" \
-            --head "${{ github.event.pull_request.head.sha }}" \
+            --base "$merge_base" \
+            --head "$head_sha" \
             --event-path "$GITHUB_EVENT_PATH" \
             --format markdown | tee agent_governance_summary.md
           status=${PIPESTATUS[0]}

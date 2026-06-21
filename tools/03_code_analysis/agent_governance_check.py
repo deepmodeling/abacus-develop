@@ -150,9 +150,9 @@ def parse_added_lines(diff_text: str) -> List[DiffLine]:
 
 def added_lines(root: Path, args: argparse.Namespace) -> List[DiffLine]:
     if args.staged:
-        output = git(["diff", "--cached", "-U0"], root).stdout
+        output = git(["diff", "--cached", "--ignore-cr-at-eol", "-U0"], root).stdout
     elif args.base and args.head:
-        output = git(["diff", "-U0", args.base, args.head], root).stdout
+        output = git(["diff", "--ignore-cr-at-eol", "-U0", args.base, args.head], root).stdout
     else:
         output = ""
     return parse_added_lines(output)
@@ -436,16 +436,20 @@ def check_input_parameter_docs(
     )
 
 
-def read_pr_body(event_path: Optional[str]) -> str:
+def read_pr_body(event_path: Optional[str]) -> Optional[str]:
     if not event_path:
-        return ""
+        return None
     try:
         with open(event_path, "r", encoding="utf-8") as handle:
             payload = json.load(handle)
     except (OSError, json.JSONDecodeError):
+        return None
+    if "pull_request" not in payload or not isinstance(payload["pull_request"], dict):
+        return None
+    body = payload["pull_request"].get("body")
+    if body is None:
         return ""
-    pr = payload.get("pull_request") or {}
-    return pr.get("body") or ""
+    return str(body)
 
 
 def pr_sections(body: str) -> Dict[str, str]:
@@ -482,8 +486,8 @@ def section_is_placeholder(content: str) -> bool:
     return not meaningful
 
 
-def check_pr_metadata(findings: List[Finding], body: str) -> None:
-    if not body:
+def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
+    if body is None:
         return
     required_sections = [
         "Linked Issue",
@@ -615,6 +619,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     statuses, changed = changed_paths(root, args)
     lines = added_lines(root, args)
     body = read_pr_body(args.event_path)
+    body_text = body or ""
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines)
@@ -622,11 +627,11 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
-    check_input_parameter_docs(findings, changed, statuses, lines, body)
+    check_input_parameter_docs(findings, changed, statuses, lines, body_text)
     check_pr_metadata(findings, body)
-    check_test_evidence_warning(findings, changed, body)
-    check_heterogeneous_test_warning(findings, changed, body)
-    check_documentation_warning(findings, changed, body)
+    check_test_evidence_warning(findings, changed, body_text)
+    check_heterogeneous_test_warning(findings, changed, body_text)
+    check_documentation_warning(findings, changed, body_text)
     return findings
 
 
