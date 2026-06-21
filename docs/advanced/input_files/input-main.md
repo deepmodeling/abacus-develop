@@ -634,7 +634,7 @@
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
+- **Description**: Divide all processors into bndpar groups, and bands will be distributed among each group for stochastic calculations and supported band-parallel PW solvers (`bpcg` and experimental `lobpcg`). It should be larger than 0.
 - **Default**: 1
 
 ### latname
@@ -977,7 +977,7 @@
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
+- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/lobpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
 - **Default**: 0.01
 
 ### diago_smooth_ethr
@@ -996,8 +996,8 @@
 ### pw_diag_nmax
 
 - **Type**: Integer
-- **Availability**: *basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg*
-- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
+- **Availability**: *basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg/lobpcg*
+- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/lobpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/lobpcg method.
 - **Default**: 50
 
 ### pw_diag_ndim
@@ -1112,6 +1112,7 @@
   - bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - dav: The Davidson algorithm.
   - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. pw_diag_ndim can be set to 2 for this method.
+  - lobpcg: The experimental Locally Optimal Block Preconditioned Conjugate Gradient method for CPU PW `std::complex<double>` calculations. It supports standard and generalized overlap problems, including USPP cases, and can use band parallelism through `bndpar`. GPU and float calculations are not supported yet.
 
   For numerical atomic orbitals basis,
 
