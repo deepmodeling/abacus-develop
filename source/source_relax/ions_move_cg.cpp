@@ -72,7 +72,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         }
 
         Ions_Move_Basic::setup_gradient(ucell, force, pos.data(), grad.data(), ofs);
-        Ions_Move_Basic::setup_etot(etot_in, 0, istep, ofs, etot_info);
+        Ions_Move_Basic::setup_etot(etot_in, istep, etot_info);
 
         bool converged = false;
         if (flag == 0)

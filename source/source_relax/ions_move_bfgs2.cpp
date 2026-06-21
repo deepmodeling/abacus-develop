@@ -80,6 +80,13 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucel
     this->UpdatePos(ucell);
     this->CalculateLargestGrad(_force,ucell);
     bool converged = this->IsRestrain(); 
+    if (converged)
+    {
+        ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+                    << " eV/Angstrom while threshold is "
+                    << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
+        ofs_running << "\n Ion relaxation is converged!" << std::endl;
+    }
    // print out geometry information during bfgs_trad relax 
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
     return converged;
@@ -239,7 +246,12 @@ void Ions_Move_BFGS2::Update(std::vector<double>& pos,
         }
     }
     double threshold=1e-7;
-    if(*max_element(dpos.begin(), dpos.end()) < threshold)
+    double max_abs_dpos = 0.0;
+    for (const double value : dpos)
+    {
+        max_abs_dpos = std::max(max_abs_dpos, std::abs(value));
+    }
+    if (max_abs_dpos < threshold)
     {
         return;
     } 

@@ -68,6 +68,6 @@ void terminate(const bool converged, std::ofstream& ofs);
  * @param judgement Flag for SD method (true) or BFGS (false)
  * @param etot_info Vector containing [etot, etot_p]
  */
-void setup_etot(const double &energy_in, const bool judgement, std::vector<double>& etot_info);
+void setup_etot(const double &energy_in, std::vector<double>& etot_info);
 } // namespace Lattice_Change_Basic
 #endif

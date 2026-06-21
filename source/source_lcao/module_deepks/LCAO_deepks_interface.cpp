@@ -629,7 +629,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                             torch::Tensor overlap_out;
                             torch::Tensor iRmat;
-                            DeePKS_domain::prepare_phialpha_iRmat(nlocal, R_size, deepks_param, phialpha, ucell, orb, GridD, overlap_out, iRmat);
+                            DeePKS_domain::prepare_phialpha_iRmat(nlocal, R_size, deepks_param, phialpha, ucell, orb, *ParaV, GridD, overlap_out, iRmat);
                             const std::string file_overlap = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_overlap, overlap_out, rank);
                             const std::string file_iRmat = PARAM.globalv.global_out_dir + "deepks_iRmat.npy";

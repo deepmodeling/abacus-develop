@@ -619,7 +619,7 @@ T* HContainer<T>::data(int atom_i, int atom_j) const
     AtomPair<T>* atom_ij = this->find_pair(atom_i, atom_j);
     if (atom_ij != nullptr)
     {
-        return atom_ij->get_pointer();
+        return atom_ij->get_pointer(0);
     }
     else
     {
