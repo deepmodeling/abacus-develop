@@ -141,6 +141,7 @@ class DiagoPPCG
     std::vector<char> is_locked;       ///< convergence lock flags
     std::vector<int> converge_count;   ///< consecutive convergence counters
     std::vector<int> block_sizes;      ///< block sizes for blocked variant
+    int ppcg_update_count = 0;         ///< counts PPCG subspace update calls
 
     /// Whether n_extra / block_sizes were explicitly set by user.
     bool n_extra_user_set = false;
@@ -221,18 +222,29 @@ class DiagoPPCG
     bool test_error(const std::vector<double>& ethr_band) const;
     /// hpsi_out = H |psi_in>
     void calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, T* hpsi_out) const;
+    /// hpsi_out = H |psi_in> with explicit column count (for active-only application).
+    void calc_hpsi(const HPsiFunc& hpsi_func, T* psi_in, T* hpsi_out, int ncol) const;
+    /// Apply H to only unlocked columns of vec_in, scatter result to vec_out.
+    /// Locked columns are zeroed in vec_out.
+    void apply_hpsi_to_active(const HPsiFunc& hpsi_func, T* vec_in, T* vec_out);
+    /// Compute subspace residual W = hpsi - psi * G  where G = psi^H * hpsi,
+    /// for unlocked bands only. Locked W columns stay zero. Updates h_eigen from diag(G).
+    void compute_subspace_residual(T* psi_in);
     /// Modified Gram-Schmidt orthonormalization.
     void modified_gram_schmidt(T* psi_in, T* hpsi_in) const;
-    /// Cholesky-based orthonormalization (more robust).
+    /// Cholesky-based orthonormalization. Only orthonormalises unlocked (active) columns;
+    /// locked columns are kept as-is after projecting unlocked columns against them.
     void orth_cholesky(T* psi_in, T* hpsi_in);
-    /// Check || <psi|psi> - I ||_F < 1e-1.
-    bool check_orthonormality(T* psi_in) const;
-    /// block_out = block * coeff  (gemm).
+    /// Check || <psi|psi> - I ||_F < ortho_thr.
+    bool check_orthonormality(T* psi_in, Real ortho_thr) const;
+    /// block_out = block * coeff  (gemm). Workspace is zeroed first for padding safety.
     void rotate_block(T* block, const T* coeff, T* workspace) const;
-    /// Rayleigh-Ritz: Hsub = psi^H hpsi, diagonalize, rotate.
+    /// Rayleigh-Ritz: Hsub = psi^H hpsi, diagonalize, rotate psi and hpsi.
     void rayleigh_ritz(T* psi_in, T* hpsi_in);
     /// Compute preconditioned residuals and Rayleigh quotients.
-    void calc_preconditioned_residual(T* psi_in);
+    /// When skip_residual is true, W is assumed already computed (post-RR) and
+    /// only error norms and preconditioning are applied.
+    void calc_preconditioned_residual(T* psi_in, bool skip_residual = false);
     /// v_i -= sum_j <x_j|v_i> x_j  for each v in block.
     void project_to_orthogonal_complement(T* psi_in, T* block) const;
     /// Solve 2×2 / 3×3 generalized eigenproblem.

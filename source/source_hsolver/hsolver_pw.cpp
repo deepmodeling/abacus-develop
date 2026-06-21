@@ -19,6 +19,8 @@
 
 
 #include <algorithm>
+#include <cstdio>
+#include <random>
 #include <vector>
 
 namespace hsolver
@@ -136,6 +138,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
 
             // solve eigenvector and eigenvalue for H(k)
+            if (this->method == "ppcg") {
+                std::cerr << "[PPCG] solving k-point " << ik << std::endl;
+            }
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             if (skip_charge)
@@ -174,6 +179,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
 
             // solve eigenvector and eigenvalue for H(k)
+            if (this->method == "ppcg") {
+                std::cerr << "[PPCG] solving k-point " << ik << std::endl;
+            }
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             // output iteration information and reset avg_iter
@@ -329,7 +337,50 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband_l = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
         const int ndim = psi.get_current_ngk();
+
+        // Optimal n_extra = 10% of nband_l (from parameter sweep), at least 1.
+        const int n_extra = std::max(1, static_cast<int>(nband_l * 0.1));
+        const int n_work = nband_l + n_extra;
+
+        // Allocate a local expanded buffer that includes extra (buffer) bands.
+        // PPCG needs psi with n_work columns; the original psi only has nband_l.
+        std::vector<T> psi_expanded(static_cast<size_t>(n_work) * nbasis);
+        // Copy physical bands from original psi.
+        for (int ib = 0; ib < nband_l; ++ib)
+            std::memcpy(psi_expanded.data() + static_cast<size_t>(ib) * nbasis,
+                        psi.get_pointer() + static_cast<size_t>(ib) * nbasis,
+                        nbasis * sizeof(T));
+
+        const int ik = psi.get_current_k();
+
+        // Initialize extra bands: carry over from previous SCF step when
+        // available, otherwise random init (first call).
+        if (ik >= static_cast<int>(this->ppcg_extra_bands.size()))
+            this->ppcg_extra_bands.resize(ik + 1);
+        if (!this->ppcg_extra_bands[ik].empty())
+        {
+            // Reuse extra bands from previous diag() — avoids corrupting
+            // well-converged physical bands with random directions.
+            const size_t extra_sz = static_cast<size_t>(n_extra) * nbasis;
+            std::memcpy(psi_expanded.data() + static_cast<size_t>(nband_l) * nbasis,
+                        this->ppcg_extra_bands[ik].data(),
+                        extra_sz * sizeof(T));
+        }
+        else
+        {
+            std::default_random_engine rng(static_cast<unsigned>(nband_l * 7 + 42));
+            std::uniform_real_distribution<Real> dist(Real(-1), Real(1));
+            for (int ib = nband_l; ib < n_work; ++ib) {
+                T* extra = psi_expanded.data() + static_cast<size_t>(ib) * nbasis;
+                for (int ig = 0; ig < ndim; ++ig)
+                    extra[ig] = T(dist(rng), dist(rng));
+                for (int ig = ndim; ig < nbasis; ++ig)
+                    extra[ig] = T(0);
+            }
+        }
+
         DiagoPPCG<T, Device> ppcg(pre_condition.data());
+        ppcg.set_n_extra(n_extra);
 
         // Enable blocked PPCG with optimal block size from parameter sweep.
         std::vector<int> bs;
@@ -342,8 +393,60 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         ppcg.set_block_sizes(bs);
 
         ppcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            ppcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band));
+        int niter
+            = ppcg.diag(hpsi_func, psi_expanded.data(), eigenvalue, this->ethr_band);
+        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(niter);
+
+        // ---- matrix dump on convergence failure (debugging tool) ----
+        const int max_iter = std::max(1, DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
+        if (niter >= max_iter && ndim > 0 && ndim <= 2000)
+        {
+            const int npw_mat = ndim;
+            std::vector<T> h_dense(static_cast<size_t>(npw_mat) * npw_mat, T(0));
+            std::vector<T> e_j(npw_mat, T(0));
+            std::vector<T> h_e_j(npw_mat, T(0));
+
+            for (int j = 0; j < npw_mat; ++j)
+            {
+                std::fill(e_j.begin(), e_j.end(), T(0));
+                e_j[j] = T(1.0);
+                hpsi_func(e_j.data(), h_e_j.data(), npw_mat, 1);
+                for (int i = 0; i < npw_mat; ++i)
+                    h_dense[i + static_cast<size_t>(j) * npw_mat] = h_e_j[i];
+            }
+
+            const int ik = psi.get_current_k();
+            char fname[256];
+            std::snprintf(fname, sizeof(fname),
+                          "hamiltonian_k%d_npw%d_nband%d.dat", ik, npw_mat, nband_l);
+
+            FILE* fp = std::fopen(fname, "wb");
+            if (fp)
+            {
+                std::fwrite(&npw_mat, sizeof(int), 1, fp);
+                std::fwrite(&nband_l, sizeof(int), 1, fp);
+                std::fwrite(pre_condition.data(), sizeof(Real), npw_mat, fp);
+                std::fwrite(h_dense.data(), sizeof(T),
+                            static_cast<size_t>(npw_mat) * npw_mat, fp);
+                std::fclose(fp);
+                std::cerr << "[PPCG] dumped Hamiltonian to " << fname << std::endl;
+            }
+        }
+
+        // Copy updated physical bands back to original psi.
+        for (int ib = 0; ib < nband_l; ++ib)
+            std::memcpy(psi.get_pointer() + static_cast<size_t>(ib) * nbasis,
+                        psi_expanded.data() + static_cast<size_t>(ib) * nbasis,
+                        nbasis * sizeof(T));
+
+        // Save extra bands for next SCF step (avoid random reinit).
+        {
+            const size_t extra_sz = static_cast<size_t>(n_extra) * nbasis;
+            this->ppcg_extra_bands[ik].resize(extra_sz);
+            std::memcpy(this->ppcg_extra_bands[ik].data(),
+                        psi_expanded.data() + static_cast<size_t>(nband_l) * nbasis,
+                        extra_sz * sizeof(T));
+        }
     }
     else if (this->method == "dav_subspace")
     {
@@ -562,6 +665,9 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int fro
     // Clean up porter
     delmem_complex_op()(porter);
 }
+
+template <typename T, typename Device>
+std::vector<std::vector<T>> HSolverPW<T, Device>::ppcg_extra_bands;
 
 template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
