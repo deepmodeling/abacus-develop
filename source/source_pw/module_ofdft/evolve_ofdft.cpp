@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include <complex>
 
+#include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
 
 // Data race fix: Cache shared member variables to local const variables before OpenMP parallel regions.
@@ -171,6 +172,9 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
         }
     }
 
+    const double t_temperature = PARAM.inp.mdp.md_tfirst;
+    const double kBT = (t_temperature > 0.0) ? ModuleBase::K_BOLTZMAN_AU * t_temperature : 0.0;
+
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -213,7 +217,7 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
         for (int ik = 0; ik < npw; ++ik)
         {
             recipCDPotential[ik]=recipCurrent_x[ik]*gcar[ik].x+recipCurrent_y[ik]*gcar[ik].y+recipCurrent_z[ik]*gcar[ik].z;
-            if (gg[ik]==0) 
+            if (gg[ik]==0)
             {
                 recipCDPotential[ik]=0.0;
             }
@@ -228,8 +232,13 @@ void Evolve_OFDFT::cal_CD_potential(std::vector<std::complex<double>>& psi_,
         {
             if (kF_r[ir] > 1e-12)
             {
-                rpot(is, ir) -= mCD_para*2.0*std::real(rCDPotential[ir])*std::pow(ModuleBase::PI,3)
-                            / (2.0*kF_r[ir]*kF_r[ir]);
+                double CT = 1.0;
+                if (kBT > 0.0)
+                {
+                    CT = std::pow(std::pow(1.69271 * std::sqrt(2.0 * kBT / (kF_r[ir] * kF_r[ir])), 3.6) + 1.0, 1.0 / 3.6);
+                }
+                rpot(is, ir) -= mCD_para * CT * 2.0 * std::real(rCDPotential[ir]) * std::pow(ModuleBase::PI, 3)
+                            / (2.0 * kF_r[ir] * kF_r[ir]);
             }
         }
     }
