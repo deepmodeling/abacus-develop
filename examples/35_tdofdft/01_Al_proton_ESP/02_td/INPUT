@@ -36,6 +36,7 @@ md_restart	0
 md_type		nve
 md_nstep	4500
 md_dt		0.0005
+md_tfirst	0
 md_dumpfreq	1
 
 # Total charge: 256 Al * 3 valence electrons = 768
