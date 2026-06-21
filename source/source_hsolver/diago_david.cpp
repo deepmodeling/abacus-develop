@@ -5,6 +5,7 @@
 #include "source_base/module_device/device.h"
 
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_hsolver/module_diag/diag_orthogonalizer.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h"
 
@@ -496,13 +497,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 
     // there is a nbase to nbase + notconv band orthogonalise
     // plan for SchmidtOrth
+    std::vector<int> pre_matrix_mm_m(notconv, 0);
+    std::vector<int> pre_matrix_mv_m(notconv, 1);
+    this->planSchmidtOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
+
     T* lagrange = nullptr;
     resmem_complex_op()(lagrange, notconv * (nbase + notconv));
     setmem_complex_op()(lagrange, 0, notconv * (nbase + notconv));
 
-    std::vector<int> pre_matrix_mm_m(notconv, 0);
-    std::vector<int> pre_matrix_mv_m(notconv, 1);
-    this->planSchmidtOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
     for (int m = 0; m < notconv; m++)
     {
         {
@@ -895,7 +897,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                      psi_m,
                                      1);
 
-    // psi_norm = psi_norm - lagrange_m · lagrange_m
+    // psi_norm = psi_norm - lagrange_m \cdot lagrange_m
     psi_norm -= ModuleBase::dot_real_op<T, Device>()(m, lagrange_m, lagrange_m, false);
 
     // for (int j = 0; j < m; j++)

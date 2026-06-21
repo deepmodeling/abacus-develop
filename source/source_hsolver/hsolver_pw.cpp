@@ -330,6 +330,17 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nbasis = psi.get_nbasis();
         const int ndim = psi.get_current_ngk();
         DiagoPPCG<T, Device> ppcg(pre_condition.data());
+
+        // Enable blocked PPCG with optimal block size from parameter sweep.
+        std::vector<int> bs;
+        int rem = nband_l;
+        while (rem > 0) {
+            int sz = std::min(10, rem);
+            bs.push_back(sz);
+            rem -= sz;
+        }
+        ppcg.set_block_sizes(bs);
+
         ppcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             ppcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band));

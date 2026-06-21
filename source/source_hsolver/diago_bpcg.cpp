@@ -1,4 +1,5 @@
 #include "source_hsolver/diago_bpcg.h"
+#include "source_hsolver/module_diag/diag_orthogonalizer.h"
 
 #include "diago_iter_assist.h"
 #include "source_base/global_function.h"
@@ -117,20 +118,14 @@ void DiagoBPCG<T, Device>::orth_cholesky(
 		ct::Tensor& hpsi_out,
 		ct::Tensor& hsub_out)
 {
-    // gemm: hsub_out(n_band x n_band) = psi_out^T(n_band x n_basis) * psi_out(n_basis x n_band)
-    this->pmmcn.multiply(1.0, psi_out.data<T>(), psi_out.data<T>(), 0.0, hsub_out.data<T>());
-
-    // set hsub matrix to lower format;
-    ct::kernels::set_matrix<T, ct_Device>()(
-        'L', hsub_out.data<T>(), this->n_band);
-
-    ct::kernels::lapack_potrf<T, ct_Device>()(
-        'U', this->n_band, hsub_out.data<T>(), this->n_band);
-    ct::kernels::lapack_trtri<T, ct_Device>()(
-        'U', 'N', this->n_band, hsub_out.data<T>(), this->n_band);
-
-    this->rotate_wf(hsub_out, psi_out, workspace_in);
-    this->rotate_wf(hsub_out, hpsi_out, workspace_in);
+    DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .cholesky_orth_parallel(workspace_in.data<T>(),
+                                psi_out.data<T>(),
+                                hpsi_out.data<T>(),
+                                hsub_out.data<T>(),
+                                this->n_band,
+                                this->pmmcn,
+                                this->plintrans);
 }
 
 template<typename T, typename Device>
@@ -167,13 +162,12 @@ void DiagoBPCG<T, Device>::orth_projection(
         ct::Tensor& hsub_in,
         ct::Tensor& grad_out)
 {
-    // gemm: hsub_in(n_band x n_band) = psi_in^T(n_band x n_basis) * grad_out(n_basis x n_band)
-    this->pmmcn.multiply(1.0, psi_in.data<T>(), grad_out.data<T>(), 0.0, hsub_in.data<T>());
-
-    // grad_out(n_basis x n_band) = 1.0 * grad_out(n_basis x n_band) - psi_in(n_basis x n_band) * hsub_in(n_band x
-    // n_band)
-    this->plintrans.act(-1.0, psi_in.data<T>(), hsub_in.data<T>(), 1.0, grad_out.data<T>());
-    return;
+    DiagOrthogonalizer<T, Device>(this->n_dim, this->n_basis)
+        .project_out_parallel(psi_in.data<T>(),
+                              grad_out.data<T>(),
+                              hsub_in.data<T>(),
+                              this->pmmcn,
+                              this->plintrans);
 }
 
 template<typename T, typename Device>

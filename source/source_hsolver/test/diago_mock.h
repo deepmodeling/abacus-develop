@@ -172,22 +172,22 @@ template<typename T>
 class HPsi
 {
     /**
-     * This calss used to produce the Hermite matrix, the initial 
-     * guess wave function, and the precondition by the random 
+     * This calss used to produce the Hermite matrix, the initial
+     * guess wave function, and the precondition by the random
      * number. The elements of Hermite matrix and wave function are
      * between -1.0 to 1.0, and the preconddition is between 1.0 to 2.0.
-     * 
+     *
      * The parameters in construct function or function create()
      * are same:
      *  - int nband/nbd: number of calculated bands
      *  - int npw: number of plane wave
-     *  - int sparsity: the sparsity of Halmit matrix, between 0 and 10. 
+     *  - int sparsity: the sparsity of Halmit matrix, between 0 and 10.
      *                  (0 means no sparsity, 10 means a diagonal matrix)
-     * 
+     *
      * After instantiation a HPsi, one can use below functions:
      *  - hamilt(): return the Hermite matrix (type: std::vector<T>)
      *  - precond(): return the precondition (type: Real Pointer)
-     * 
+     *
      */
     using Real = typename GetTypeReal<T>::type;
     public:
