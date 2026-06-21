@@ -149,6 +149,9 @@ elseif(USE_ROCM)
   )
 endif()
 
+# base library uses symbols from device library (memory_op, math_ylm_op)
+target_link_libraries(base PUBLIC device)
+
 if(ENABLE_COVERAGE)
   add_coverage(driver)
 endif()

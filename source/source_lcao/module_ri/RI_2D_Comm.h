@@ -78,6 +78,7 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
 		const Parallel_Orbitals& pv,
 		const ModuleBase::Vector3<double>& At,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
 		TK* hk);
 
     template<typename Tdata, typename TR>

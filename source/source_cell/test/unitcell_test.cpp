@@ -1658,7 +1658,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
         {
             EXPECT_DOUBLE_EQ(ucell->atoms[it].mag[ia], 1.0);
-            EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].x, 1.0);
+            EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].z, 1.0);
         }
     }
     // for nspin == 4

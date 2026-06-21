@@ -1,6 +1,8 @@
 #ifndef LINE_SEARCH_H
 #define LINE_SEARCH_H
 
+#include <fstream>
+
 class Line_Search
 {
   public:
@@ -12,7 +14,8 @@ class Line_Search
                      const double y,         // value of function at x
                      const double f,         // gradient of function at x
                      double& xnew,           // postion where function has to be evaluated
-                     const double conv_thr); // predicted change of function value of function at xnew
+                     const double conv_thr,  // predicted change of function value of function at xnew
+                     std::ofstream& ofs_running);
 
     bool first_order(const double x, const double y, const double f, double& xnew);
 
@@ -22,7 +25,7 @@ class Line_Search
 
     void update_brent(const double x, const double y, const double f);
 
-    bool brent(const double x, const double y, const double f, double& xnew, const double conv_thr);
+    bool brent(const double x, const double y, const double f, double& xnew, const double conv_thr, std::ofstream& ofs_running);
 
   private:
     int ls_step = 0;      // step of line search

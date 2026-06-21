@@ -19,3 +19,7 @@ add_library(
 if(ENABLE_COVERAGE)
   add_coverage(dftu)
 endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()

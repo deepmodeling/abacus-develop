@@ -251,6 +251,11 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(elec.f_en.evdw);
         }
+        else if (vdw_method == "d4")
+        {
+            titles.push_back("E_vdwD4");
+            energies_Ry.push_back(elec.f_en.evdw);
+        }
 
         // mohan add 20251108
 		if (PARAM.inp.dft_plus_u)

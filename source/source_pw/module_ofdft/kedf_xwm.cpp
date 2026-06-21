@@ -202,6 +202,7 @@ void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
  */
 void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_XWM", "xwm_potential");
     ModuleBase::timer::start("KEDF_XWM", "xwm_potential");
     double** w1Rho5_6 = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)

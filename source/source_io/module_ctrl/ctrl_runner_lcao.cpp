@@ -8,6 +8,9 @@
 #include "../module_energy/write_eband_terms.hpp"
 #include "../module_hs/write_vxc.hpp"
 #include "../module_hs/write_vxc_r.hpp"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleIO
 {
