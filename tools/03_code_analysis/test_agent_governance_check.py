@@ -76,6 +76,15 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "LF line endings")
 
+    def test_allows_escaped_crlf_text_in_changed_text_file(self):
+        self.write("source/source_base/escaped.cpp", 'const char* eol = "\\r\\n";\n')
+        self.write("source/source_base/CMakeLists.txt", "add_library(escaped escaped.cpp)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_allows_crlf_in_windows_scripts(self):
         self.write("tools/install.bat", b"echo ok\r\n", mode="wb")
         self.write("tools/install.cmd", b"echo ok\r\n", mode="wb")
@@ -574,6 +583,12 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--staged")
 
         self.assert_blocked_by(result, "No new cross-layer globals")
+
+    def test_rejects_staged_with_base_head(self):
+        result = self.run_checker("--staged", "--base", self.base, "--head", self.base)
+
+        self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("--staged cannot be combined with --base/--head", result.stderr)
 
 
 if __name__ == "__main__":

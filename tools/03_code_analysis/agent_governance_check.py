@@ -188,6 +188,10 @@ def is_text_path(path: str) -> bool:
     return suffix in TEXT_EXTENSIONS or path in {".gitattributes", ".gitignore"}
 
 
+def has_crlf_line_endings(content: bytes) -> bool:
+    return any(line.endswith(b"\r\n") for line in content.splitlines(keepends=True))
+
+
 def add_finding(
     findings: List[Finding],
     rule: str,
@@ -215,7 +219,7 @@ def check_line_endings(
             content = read_changed_file_bytes(root, path, args)
         except OSError:
             continue
-        if b"\r\n" in content:
+        if has_crlf_line_endings(content):
             add_finding(
                 findings,
                 "LF line endings",
@@ -696,6 +700,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Output format.",
     )
     args = parser.parse_args(argv)
+    if args.staged and (args.base or args.head):
+        parser.error("--staged cannot be combined with --base/--head")
     if bool(args.base) ^ bool(args.head):
         parser.error("--base and --head must be provided together")
     return args

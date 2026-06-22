@@ -27,8 +27,9 @@ reviews:
         weaken the rule grading matrix without an explicit rationale.
     - path: ".github/**"
       instructions: |
-        Check workflow and PR-template changes for consistency with AGENTS.md
-        and docs/developers_guide/agent_governance.md.
+        Check workflow, PR-template, CodeRabbit, and Copilot instruction
+        changes for consistency with AGENTS.md and
+        docs/developers_guide/agent_governance.md.
     - path: "tools/03_code_analysis/**"
       instructions: |
         Review governance checker changes for false positives, missing
@@ -42,3 +43,5 @@ knowledge_base:
     filePatterns:
       - "AGENTS.md"
       - "docs/developers_guide/agent_governance.md"
+      - ".github/copilot-instructions.md"
+      - ".github/instructions/*.instructions.md"

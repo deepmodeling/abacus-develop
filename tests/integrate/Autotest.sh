@@ -237,12 +237,12 @@ which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=`cat $cases_file | grep -E $case`
 failed=0
-failed_case_list=()
+failed_case_list=""
 ok=0
 fatal=0
-fatal_case_list=()
-fatal_detail_list=()
-case_status=() # record if the test case passed or not
+fatal_case_list=""
+fatal_detail_list=""
+case_status="" # record if the test case passed or not
 fatal_threshold=1
 report=""
 repo="$(realpath ..)/"
@@ -335,19 +335,19 @@ fi
 
 if [ -z $g ]
 then
-echo -e $case_status > test.sum
+printf "%b" "$case_status" > test.sum
 if [[ "$failed" -eq 0 && "$fatal" -eq 0 ]]
 then
     echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
 else
     echo -e "[WARNING]\e[0m    $failed test cases out of $[ $failed + $ok ] failed."
-    echo -e $failed_case_list
+    printf "%b" "$failed_case_list"
     if [ $fatal -gt 0 ]
     then
         echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
-        echo -e $fatal_case_list
+        printf "%b" "$fatal_case_list"
         echo -e "\e[0;31m[ERROR     ]\e[0m Fatal deviation details:"
-        echo -e $fatal_detail_list
+        printf "%b" "$fatal_detail_list"
     fi
     exit 1
 fi

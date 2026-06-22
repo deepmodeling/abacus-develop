@@ -13,7 +13,7 @@
 namespace elecstate
 {
 
-// ampitude * cos( 2pi*( k * r + phase ) )
+// amplitude * cos( 2pi*( k * r + phase ) )
 class Pot_Cosikr : public PotBase
 {
   public:

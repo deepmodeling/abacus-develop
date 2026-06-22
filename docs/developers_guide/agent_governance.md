@@ -119,11 +119,16 @@ ABACUS uses a layered review model:
 - `Agent Governance` is the deterministic GitHub Actions check for low-noise
   diff rules. Repository maintainers may make this workflow a required check in
   branch protection.
-- CodeRabbit is the minimal PR-triggered AI reviewer for semantic review hints.
-  Its repository configuration lives in `.coderabbit.yaml` and uses this
-  document plus `AGENTS.md` as review guidelines.
-- CodeRabbit comments are advisory by default. They do not replace maintainer
-  approval, exception approval, or numerical/test sufficiency review.
+- CodeRabbit is a PR-triggered AI reviewer for semantic review hints. Its
+  repository configuration lives in `.coderabbit.yaml` and uses this document
+  plus `AGENTS.md` as review guidelines.
+- GitHub Copilot code review is also present on upstream PRs. Repository-level
+  Copilot guidance lives in `.github/copilot-instructions.md`, and path-level
+  review guidance lives in `.github/instructions/*.instructions.md`. These
+  files point Copilot back to this governance document and the short
+  `AGENTS.md` entry point.
+- CodeRabbit and Copilot comments are advisory by default. They do not replace
+  maintainer approval, exception approval, or numerical/test sufficiency review.
 
 To activate CodeRabbit on real PRs, a repository or organization administrator
 must install the CodeRabbit GitHub App for `deepmodeling/abacus-develop` and
@@ -132,10 +137,16 @@ and new commits should receive automatic review according to `.coderabbit.yaml`;
 if automatic review does not start, maintainers may request it with
 `@coderabbitai review`.
 
-Copilot code review, Copilot coding-agent setup steps, Qodo, and PR-Agent are
-not part of the phase-one baseline. They require separate organization settings,
-secrets, or setup workflows and should be added only through a later governance
-change.
+To make Copilot follow the governance baseline, keep the Copilot custom
+instruction files synchronized with this document whenever the review contract
+changes. Copilot review behavior still depends on GitHub organization and
+repository settings, and pull request reviews use the custom instructions from
+the target base branch. New or changed instruction files therefore take effect
+for later reviews after they are present on the base branch.
+
+Copilot coding-agent setup steps, Qodo, and PR-Agent are not part of the
+phase-one baseline. They require separate organization settings, secrets, or
+setup workflows and should be added only through a later governance change.
 
 ## INPUT Parameter Changes
 
