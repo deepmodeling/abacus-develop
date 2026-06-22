@@ -8,6 +8,8 @@ pseudo_dir        ../../PP_ORB
 symmetry          1
 dft_functional    pbe
 #vdw_method                     d3_bj
+cal_force         1
+cal_stress        1
 
 #Parameters (2.Iteration)
 ecutwfc           20
