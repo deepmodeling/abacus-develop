@@ -11,6 +11,7 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
@@ -18,10 +19,72 @@
 
 
 #include <algorithm>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
 {
+
+namespace
+{
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+double run_ppcg_pw(const HPsiFunc& hpsi_func,
+                   const SPsiFunc& spsi_func,
+                   const int ld_psi,
+                   const int nband,
+                   const int dim,
+                   T* psi,
+                   Real* eigenvalue,
+                   const std::vector<double>& ethr_band,
+                   const Real* pre_condition,
+                   const double diag_thr,
+                   const int diag_iter_max,
+                   const int pw_diag_ndim,
+                   const bool gamma_only,
+                   std::true_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step = std::max(1, pw_diag_ndim);
+
+    DiagoPPCG<T, Device> ppcg(static_cast<Real>(diag_thr),
+                              diag_iter_max,
+                              sbsize,
+                              rr_step,
+                              gamma_only,
+                              PpcgStrategy::CONJUGATE_GRADIENT);
+
+    return ppcg.diag(hpsi_func,
+                     spsi_func,
+                     ld_psi,
+                     nband,
+                     dim,
+                     psi,
+                     eigenvalue,
+                     ethr_band,
+                     pre_condition);
+}
+
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+double run_ppcg_pw(const HPsiFunc&,
+                   const SPsiFunc&,
+                   const int,
+                   const int,
+                   const int,
+                   T*,
+                   Real*,
+                   const std::vector<double>&,
+                   const Real*,
+                   const double,
+                   const int,
+                   const int,
+                   const bool,
+                   std::false_type)
+{
+    ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK",
+                             "PPCG is currently implemented for CPU PW calculations only.");
+    return 0.0;
+}
+} // namespace
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -83,7 +146,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -378,6 +441,24 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                         david_maxiter,
                         ntry_max,
                         notconv_max));
+    }
+    else if (this->method == "ppcg")
+    {
+        DiagoIterAssist<T, Device>::avg_iter += run_ppcg_pw<T, Device, Real>(
+            hpsi_func,
+            spsi_func,
+            psi.get_nbasis(),
+            psi.get_nbands(),
+            psi.get_current_ngk(),
+            psi.get_pointer(),
+            eigenvalue,
+            this->ethr_band,
+            pre_condition.data(),
+            this->diag_thr,
+            this->diag_iter_max,
+            PARAM.inp.pw_diag_ndim,
+            PARAM.globalv.gamma_only_pw,
+            std::is_same<Device, base_device::DEVICE_CPU>());
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;

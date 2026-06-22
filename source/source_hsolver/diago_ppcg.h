@@ -1,6 +1,8 @@
 #ifndef DIAGO_PPCG_H
 #define DIAGO_PPCG_H
 
+#include "source_base/module_device/types.h"
+
 #include <vector>
 #include <functional>
 #include <cmath>
@@ -17,21 +19,17 @@ namespace hsolver {
 // -----------------------------------------------------------------------------
 //
 // Supports two algorithmic strategies:
-//   BLOCK_SUBSPACE — block subspace diagonalization (File 1 approach).
 //   CONJUGATE_GRADIENT — band-by-band Polak-Ribiere CG with line minimization
 //     (File 2 approach).
+//   BLOCK_SUBSPACE — block subspace diagonalization (File 1 approach).
 //
-// The block-subspace strategy tends to be more robust near convergence;
-// conjugate-gradient is more memory efficient for large systems.
+// CONJUGATE_GRADIENT is the default because it is the tested production path.
+// BLOCK_SUBSPACE is kept as an explicit experimental strategy.
 // -----------------------------------------------------------------------------
 
 enum class PpcgStrategy { BLOCK_SUBSPACE, CONJUGATE_GRADIENT };
 
-// Device tags (extensible for GPU backends).
-namespace base_device {
-    struct DEVICE_CPU {};
-    struct DEVICE_GPU {};
-}
+namespace base_device = ::base_device;
 
 template <typename T, typename Device>
 class DiagoPPCG
@@ -54,7 +52,7 @@ public:
               const int& sbsize,
               const int& rr_step,
               const bool gamma_g0_real,
-              const PpcgStrategy strategy = PpcgStrategy::BLOCK_SUBSPACE);
+              const PpcgStrategy strategy = PpcgStrategy::CONJUGATE_GRADIENT);
 
     // -------------------------------------------------------------------------
     // Main entry point

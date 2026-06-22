@@ -8,13 +8,9 @@
  *      Exact eigenvalues are the diagonal entries.  Simplest possible
  *      smoke test — should converge in very few iterations.
  *
- * Tests use the CONJUGATE_GRADIENT strategy which has a try/catch fallback
- * for LAPACK sygvd failures and is therefore more portable across different
- * LAPACK implementations.
- *
- * BLOCK_SUBSPACE strategy tests exist in git history but are disabled here
- * because they require a LAPACK with reliable dsygvd for small ill-conditioned
- * generalized eigenvalue problems.
+ * Tests primarily exercise the default CONJUGATE_GRADIENT strategy, with a
+ * BLOCK_SUBSPACE smoke test to keep the explicit experimental path finite on a
+ * small Hermitian problem.
  */
 
 #include "../diago_ppcg.h"
@@ -335,7 +331,7 @@ TEST_F(DiagoPPCG2x2Test, ConjugateGradient)
         << "2x2 CG: too many iterations";
 }
 
-TEST(DiagoPPCGComplexHermitianTest, ConjugateGradientKeepsImaginaryProjection)
+TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
 {
     const int n_dim = 2;
     const int nband = 2;
@@ -362,8 +358,7 @@ TEST(DiagoPPCGComplexHermitianTest, ConjugateGradientKeepsImaginaryProjection)
         /* max_iter = */ 10,
         /* sbsize   = */ 2,
         /* rr_step  = */ 1,
-        /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        /* gamma_g0 = */ false
     );
 
     auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
@@ -376,6 +371,49 @@ TEST(DiagoPPCGComplexHermitianTest, ConjugateGradientKeepsImaginaryProjection)
     const Real delta = std::sqrt(1.25);
     EXPECT_NEAR(eval[0], 2.5 - delta, 1e-10);
     EXPECT_NEAR(eval[1], 2.5 + delta, 1e-10);
+}
+
+TEST(DiagoPPCGComplexHermitianTest, BlockSubspaceSmokeNoNaN)
+{
+    const int n_dim = 2;
+    const int nband = 2;
+    const int ld = n_dim;
+
+    std::vector<T> H_mat(n_dim * n_dim, T(0));
+    H_mat[0 + 0 * n_dim] = T(2.0, 0.0);
+    H_mat[1 + 1 * n_dim] = T(3.0, 0.0);
+    H_mat[0 + 1 * n_dim] = T(0.0, 1.0);
+    H_mat[1 + 0 * n_dim] = T(0.0, -1.0);
+
+    std::vector<T> psi(ld * nband, T(0));
+    psi[0 + 0 * ld] = T(1.0, 0.0);
+    psi[1 + 1 * ld] = T(1.0, 0.0);
+
+    std::vector<Real> prec(n_dim, 2.0);
+    std::vector<double> ethr(nband, 1e-10);
+    std::vector<Real> eval(nband, 0.0);
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-10,
+        /* max_iter = */ 8,
+        /* sbsize   = */ 2,
+        /* rr_step  = */ 1,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
+    );
+
+    auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    solver.diag(h_op, nullptr, ld, nband, n_dim,
+                psi.data(), eval.data(), ethr, prec.data());
+
+    const Real delta = std::sqrt(1.25);
+    for (int i = 0; i < nband; ++i)
+        EXPECT_TRUE(std::isfinite(eval[i])) << "BLOCK_SUBSPACE produced NaN/Inf";
+    EXPECT_NEAR(eval[0], 2.5 - delta, 1e-8);
+    EXPECT_NEAR(eval[1], 2.5 + delta, 1e-8);
 }
 
 // =============================================================================
