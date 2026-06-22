@@ -25,6 +25,7 @@ class Ions_Move_Methods
                       UnitCell &ucell,
                       std::ofstream& ofs,
                       std::vector<std::string>& relax_method);
+    void reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs);
 
     bool get_converged() const
     {

@@ -37,6 +37,27 @@ void Ions_Move_BFGS::allocate()
     return;
 }
 
+void Ions_Move_BFGS::reset()
+{
+    if (init_done)
+    {
+        std::fill(pos.begin(), pos.end(), 0.0);
+        std::fill(pos_p.begin(), pos_p.end(), 0.0);
+        std::fill(grad.begin(), grad.end(), 0.0);
+        std::fill(grad_p.begin(), grad_p.end(), 0.0);
+        std::fill(move.begin(), move.end(), 0.0);
+        std::fill(move_p.begin(), move_p.end(), 0.0);
+
+        this->reset_hessian();
+    }
+    this->save_flag = false;
+    this->tr_min_hit = false;
+    this->first_step = true;
+
+    Ions_Move_Basic::trust_radius = 0.0;
+    Ions_Move_Basic::trust_radius_old = 0.0;
+}
+
 bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");

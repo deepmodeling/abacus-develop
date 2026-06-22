@@ -33,6 +33,11 @@ void Ions_Move_BFGS2::allocate(const int _size)
     is_initialized = true;
 }
 
+void Ions_Move_BFGS2::reset()
+{
+    is_initialized = false;
+}
+
 
 bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running) 
 {
