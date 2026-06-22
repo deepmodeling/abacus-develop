@@ -3194,6 +3194,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
@@ -3443,6 +3444,13 @@
 - **Type**: Real
 - **Description**: The damping parameter used to add fictitious force in the Langevin method.
 - **Default**: 1.0
+- **Unit**: fs
+
+### md_csvr_tau
+
+- **Type**: Real
+- **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling (longer relaxation time), smaller values give stronger coupling (shorter relaxation time). Recommended value: 100 * md_dt.
+- **Default**: 100.0
 - **Unit**: fs
 
 ### md_tolerance
