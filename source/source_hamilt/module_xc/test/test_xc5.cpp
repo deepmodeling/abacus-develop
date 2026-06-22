@@ -1,9 +1,6 @@
 #include "../xc_functional.h"
 #include "../libxc_abacus.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "xctest.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
@@ -23,7 +20,7 @@
 class XCTest_VXC : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -32,10 +29,16 @@ class XCTest_VXC : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            bool domag = false;
+            bool domag_z = false;
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
-            
+
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -75,16 +78,14 @@ class XCTest_VXC : public XCTest
 
             XC_Functional::set_xc_type("PBE");
 
-            PARAM.input.nspin = 1;
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
-            PARAM.input.nspin = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -121,7 +122,7 @@ TEST_F(XCTest_VXC, set_xc_type)
 class XCTest_VXC_Libxc : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -130,6 +131,12 @@ class XCTest_VXC_Libxc : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            bool domag = false;
+            bool domag_z = false;
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -173,16 +180,14 @@ class XCTest_VXC_Libxc : public XCTest
 
             XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
 
-            PARAM.input.nspin = 1;
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
-            PARAM.input.nspin = 2;
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -219,7 +224,7 @@ TEST_F(XCTest_VXC_Libxc, set_xc_type)
 class XCTest_VXC_meta : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1,vtau1;
 
@@ -228,6 +233,10 @@ class XCTest_VXC_meta : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -281,17 +290,15 @@ class XCTest_VXC_meta : public XCTest
 
             XC_Functional::set_xc_type("SCAN");
 
-            PARAM.input.nspin = 1;
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
             vtau1 = std::get<3>(etxc_vtxc_v);
 
-            PARAM.input.nspin = 2;
             etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -336,7 +343,7 @@ TEST_F(XCTest_VXC_meta, set_xc_type)
     EXPECT_NEAR(vtau2(1,1),0.01591158497,1.0e-8);
     EXPECT_NEAR(vtau2(1,2),0.07990709956,1.0e-8);
     EXPECT_NEAR(vtau2(1,3),0.04145463825,1.0e-8);
-    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);    
+    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);
 }
 
 

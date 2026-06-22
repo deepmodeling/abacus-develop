@@ -60,7 +60,10 @@ namespace XC_Functional_Libxc
         const double &omega, // volume of cell
         const double tpiba,
         const Charge* const chr, // charge density
-        const std::map<int, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
+        const int nspin,
+        const bool domag,
+        const bool domag_z,
+        const std::map<int, double>* scaling_factor);
 
     // for mGGA functional
     extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
@@ -68,7 +71,8 @@ namespace XC_Functional_Libxc
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
         const double tpiba,
-        const Charge* const chr);
+        const Charge* const chr,
+        const int nspin);
 
 
 //-------------------

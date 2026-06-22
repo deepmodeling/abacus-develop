@@ -63,8 +63,12 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_energy
-  LIBS parameter  ${math_libs} base device 
-  SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
+  LIBS parameter  ${math_libs} base device planewave_serial
+  SOURCES elecstate_energy_test.cpp
+    ../elecstate_energy.cpp
+    ../fp_energy.cpp
+    ../makov_payne.cpp
+    ../module_pot/H_Hartree_pw.cpp
 )
 
 AddTest(
