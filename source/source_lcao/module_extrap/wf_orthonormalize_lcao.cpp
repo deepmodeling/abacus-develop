@@ -247,13 +247,9 @@ double max_orthonormality_deviation(const double* overlap,
 WfcExtrapStatus allreduce_dense_vector(std::vector<double>& values, const Parallel_Orbitals& pv)
 {
 #ifdef __MPI
-    if (!pv.is_serial)
+    const MPI_Comm comm = pv.comm();
+    if (comm != MPI_COMM_NULL)
     {
-        const MPI_Comm comm = pv.comm();
-        if (comm == MPI_COMM_NULL)
-        {
-            return WfcExtrapStatus::InvalidInput;
-        }
         if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         {
             return WfcExtrapStatus::InvalidInput;
@@ -303,7 +299,8 @@ WfcExtrapStatus assemble_global_overlap(const double* overlap,
 
 int local_band_to_global(const int ib_local, const Parallel_Orbitals& pv)
 {
-    return (ib_local / pv.nb * pv.dim1 + pv.coord[1]) * pv.nb + ib_local % pv.nb;
+    const int block_size = pv.get_block_size();
+    return (ib_local / block_size * pv.get_dim1() + pv.get_coord_col()) * block_size + ib_local % block_size;
 }
 
 int local_wfc_col_to_global(const int ib_local, const Parallel_Orbitals& pv, const bool coeff_columns_are_basis)
