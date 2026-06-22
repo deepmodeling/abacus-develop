@@ -40,7 +40,7 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 continue;
             }
 
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

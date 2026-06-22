@@ -44,7 +44,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             const int iat2 = this->ucell->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -227,9 +227,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
                 const int gr0 = iat2iwt[iat1];
                 const int gc0 = iat2iwt[iat2];
 
-                // Does this rank store the (iat1,iat2,R) sub-block at all?  If so, cache the
-                // owner-only pointers (identical for every orbital pair within the block).
-                const bool owns_block = (paraV->get_row_size(iat1) > 0 && paraV->get_col_size(iat2) > 0);
+                const bool owns_block = !paraV->is_invalid_atom_pair(iat1, iat2);
                 double* dm_ptr = nullptr;
                 int col_size = 0;
                 // save the address of the (iat1,iat2,R) block in each dhR[d][iat] for quick access within the loop

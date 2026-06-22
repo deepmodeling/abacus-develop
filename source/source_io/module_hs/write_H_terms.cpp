@@ -48,7 +48,7 @@ static void setup_veff_hcontainer(hamilt::HContainer<double>& hR,
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             const int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -345,7 +345,7 @@ void write_h_vxc(WriteHParams& params)
 
     ModuleBase::matrix v_xc;
     double etxc, vtxc;
-    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell);
+    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z);
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {

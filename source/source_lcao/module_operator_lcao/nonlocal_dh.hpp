@@ -58,7 +58,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 const int iat2 = this->ucell->itia2iat(T2, I2);
                 const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
 
-                if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+                if (paraV->is_invalid_atom_pair(iat1, iat2))
                 {
                     continue;
                 }

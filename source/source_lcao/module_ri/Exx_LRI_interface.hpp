@@ -102,8 +102,8 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_dHs(const UnitCell& ucell,
     // build D(R) from the current mixed D(k) (mirrors the Ds construction in exx_iter_finish)
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
         = PARAM.globalv.gamma_only_local
-        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv, nspin)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv, nspin, this->exx_spacegroup_symmetry);
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin, this->exx_spacegroup_symmetry);
     this->cal_exx_dHs(Ds, ucell, pv);
 }
 
