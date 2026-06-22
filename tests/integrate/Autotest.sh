@@ -146,6 +146,7 @@ check_out(){
             echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
             let fatal++
             fatal_case_list+=$dir'\n'
+            fatal_detail_list+="$dir: key $key not found in output\n"
             break
         else
             compare_thr=$thr
@@ -179,6 +180,7 @@ check_out(){
 
                 if [ $(check_deviation_pass $deviation $fatal_thr) = 0 ]; then
                     ifatal=1
+                    fatal_detail_list+="$dir: $key cal=$cal ref=$ref deviation=$deviation\n"
                 fi
             else
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
@@ -239,6 +241,7 @@ failed_case_list=()
 ok=0
 fatal=0
 fatal_case_list=()
+fatal_detail_list=()
 case_status=() # record if the test case passed or not
 fatal_threshold=1
 report=""
@@ -343,6 +346,8 @@ else
     then
         echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
         echo -e $fatal_case_list
+        echo -e "\e[0;31m[ERROR     ]\e[0m Fatal deviation details:"
+        echo -e $fatal_detail_list
     fi
     exit 1
 fi
