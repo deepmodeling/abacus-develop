@@ -1,8 +1,5 @@
 #ifdef __MPI
 #include "../../../source_base/parallel_global.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "mpi.h"
 #endif
 #include "../../module_xc/xc_functional.h"
@@ -13,6 +10,11 @@
 #include "gtest/gtest.h"
 #include <fstream>
 #include <iostream>
+
+// Include parameter.h with private access for testing
+#define private public
+#include "source_io/module_parameter/parameter.h"
+#undef private
 /************************************************
  *  unit test of functions in cal_vel.cpp
  ***********************************************/

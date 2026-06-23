@@ -303,7 +303,7 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV.get_row_size(iat1) <= 0 || paraV.get_col_size(iat2) <= 0)
+            if (paraV.get_nrow_atom(iat1) <= 0 || paraV.get_ncol_atom(iat2) <= 0)
             {
                 continue;
             }

@@ -86,8 +86,8 @@ void DensityMatrix_Tools::cal_DMR(
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = dm._paraV->atom_begin_row[iat1];
             const int col_ap = dm._paraV->atom_begin_col[iat2];
-            const int row_size = dm._paraV->get_row_size(iat1);
-            const int col_size = dm._paraV->get_col_size(iat2);
+            const int row_size = dm._paraV->get_nrow_atom(iat1);
+            const int col_size = dm._paraV->get_ncol_atom(iat2);
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -241,8 +241,8 @@ void DensityMatrix_Tools::cal_DMR_td(
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = dm._paraV->atom_begin_row[iat1];
             const int col_ap = dm._paraV->atom_begin_col[iat2];
-            const int row_size = dm._paraV->get_row_size(iat1);
-            const int col_size = dm._paraV->get_col_size(iat2);
+            const int row_size = dm._paraV->get_nrow_atom(iat1);
+            const int col_size = dm._paraV->get_ncol_atom(iat2);
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -398,8 +398,8 @@ void DensityMatrix_Tools::cal_DMR_full(
         // get global indexes of whole matrix for each atom in this process
         const int row_ap = dm._paraV->atom_begin_row[iat1];
         const int col_ap = dm._paraV->atom_begin_col[iat2];
-        const int row_size = dm._paraV->get_row_size(iat1);
-        const int col_size = dm._paraV->get_col_size(iat2);
+        const int row_size = dm._paraV->get_nrow_atom(iat1);
+        const int col_size = dm._paraV->get_ncol_atom(iat2);
         const int mat_size = row_size * col_size;
         const int R_size = target_ap.get_R_size();
         assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -507,8 +507,8 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = this->_paraV->atom_begin_row[iat1];
             const int col_ap = this->_paraV->atom_begin_col[iat2];
-            const int row_size = this->_paraV->get_row_size(iat1);
-            const int col_size = this->_paraV->get_col_size(iat2);
+            const int row_size = this->_paraV->get_nrow_atom(iat1);
+            const int col_size = this->_paraV->get_ncol_atom(iat2);
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
             assert(R_size == 1);

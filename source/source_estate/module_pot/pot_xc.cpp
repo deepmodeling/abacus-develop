@@ -2,6 +2,7 @@
 
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef USE_LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
@@ -24,7 +25,8 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     {
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg);
+            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg,
+                                             PARAM.inp.nspin);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
@@ -36,7 +38,10 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     else
     {
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(nrxx_current, chg, ucell);
+            = XC_Functional::v_xc(nrxx_current, chg, ucell,
+                                  PARAM.inp.nspin,
+                                  PARAM.globalv.domag,
+                                  PARAM.globalv.domag_z);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

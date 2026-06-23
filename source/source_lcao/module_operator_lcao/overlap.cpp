@@ -54,7 +54,7 @@ void populate_atom_pairs(hamilt::HContainer<TR>* container,
             const int iat2 = ucell->itia2iat(T2, I2);
 
             // Skip if atom pair has no local orbitals in parallel distribution
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

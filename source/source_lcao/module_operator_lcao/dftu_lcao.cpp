@@ -495,7 +495,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = paraV->get_col_size(iat2) * is + is2;
+            step_trace[is * npol + is2] = paraV->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix
@@ -558,7 +558,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_occ(const int& iat1,
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = paraV->get_col_size(iat2) * is + is2;
+            step_trace[is * npol + is2] = paraV->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix
