@@ -7,6 +7,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
 
+// forward-declared: used below only as pointer/reference
 class Parallel_Grid;
 class Structure_Factor;
 
