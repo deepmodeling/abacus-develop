@@ -6,8 +6,11 @@
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+
+// Used below only as pointer/reference parameters; forward-declare instead of
+// including the (heavy) source_pw headers, which created a hamilt -> pw back-edge.
+class Parallel_Grid;
+class Structure_Factor;
 
 class surchem
 {
