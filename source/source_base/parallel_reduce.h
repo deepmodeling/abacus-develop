@@ -25,16 +25,6 @@ template <typename T>
 void reduce_min(T& v);
 template <typename T>
 void reduce_max(T& v);
-#ifdef __MPI
-template <typename T>
-void reduce_sum(T& object, MPI_Comm comm);
-template <typename T>
-void reduce_sum(T* object, const int n, MPI_Comm comm);
-template <typename T>
-void reduce_max(T& v, MPI_Comm comm);
-void reduce_bool_or(bool& v, MPI_Comm comm);
-void reduce_bool_and(bool& v, MPI_Comm comm);
-#endif
 template <typename T>
 void reduce_min_pool(const int& nproc_in_pool, T& v);
 template <typename T>

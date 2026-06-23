@@ -102,6 +102,45 @@ static void print_lobpcg_diag_message(const std::string& message)
     }
 }
 
+static void lobpcg_reduce_sum(int& value)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_SUM, BP_WORLD);
+#endif
+}
+
+static void lobpcg_reduce_max(float& value)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_FLOAT, MPI_MAX, BP_WORLD);
+#endif
+}
+
+static void lobpcg_reduce_max(double& value)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MAX, BP_WORLD);
+#endif
+}
+
+static void lobpcg_reduce_bool_or(bool& value)
+{
+#ifdef __MPI
+    int reduced = value ? 1 : 0;
+    MPI_Allreduce(MPI_IN_PLACE, &reduced, 1, MPI_INT, MPI_LOR, BP_WORLD);
+    value = (reduced != 0);
+#endif
+}
+
+static void lobpcg_reduce_bool_and(bool& value)
+{
+#ifdef __MPI
+    int reduced = value ? 1 : 0;
+    MPI_Allreduce(MPI_IN_PLACE, &reduced, 1, MPI_INT, MPI_LAND, BP_WORLD);
+    value = (reduced != 0);
+#endif
+}
+
 template <typename T>
 static LobpcgGeneralizedUpdateBuffers<T> make_generalized_update_buffers(T* x, T* hx, T* sx,
                                                                          T* p, T* hp, T* sp)
@@ -891,9 +930,7 @@ int DiagoLobpcg<T, Device>::run_lobpcg_loop(
             notconv_after_update,
             residual_after_update,
             residual_growth_limit);
-#ifdef __MPI
-        Parallel_Reduce::reduce_bool_or(update_rejected, BP_WORLD);
-#endif
+        lobpcg_reduce_bool_or(update_rejected);
         bool stop_after_rejected_update = false;
         if (update_rejected) {
             stop_after_rejected_update = this->handle_generalized_rejected_update(
@@ -1029,9 +1066,7 @@ bool DiagoLobpcg<T, Device>::handle_generalized_rejected_update(
                 guarded_notconv,
                 guarded_residual,
                 residual_growth_limit);
-#ifdef __MPI
-            Parallel_Reduce::reduce_bool_and(compressed_ok, BP_WORLD);
-#endif
+            lobpcg_reduce_bool_and(compressed_ok);
         } catch (const std::exception& e) {
             this->diag_log("lobpcg_update_s compressed guard failed: " + std::string(e.what()),
                            "fallback to backed-up Rayleigh-Ritz state",
@@ -1330,9 +1365,7 @@ bool DiagoLobpcg<T, Device>::restore_soft_locked_bands(
     }
 
     int restored_global = restored_local;
-#ifdef __MPI
-    Parallel_Reduce::reduce_sum(restored_global, BP_WORLD);
-#endif
+    lobpcg_reduce_sum(restored_global);
     if (restored_global > 0) {
         ++this->profile_stats.soft_lock_restores;
         this->profile_stats.soft_lock_restored_bands += restored_global;
@@ -2021,9 +2054,7 @@ typename DiagoLobpcg<T, Device>::Real DiagoLobpcg<T, Device>::max_error(
     }
 
     Real max_residual = max_residual_local(err, this->n_band_l);
-#ifdef __MPI
-    Parallel_Reduce::reduce_max(max_residual, BP_WORLD);
-#endif
+    lobpcg_reduce_max(max_residual);
     return max_residual;
 }
 
@@ -2043,9 +2074,7 @@ int DiagoLobpcg<T, Device>::count_not_converged(
     int notconv = count_not_converged_local(err,
                                             ethr_band.data(),
                                             this->n_band_l);
-#ifdef __MPI
-    Parallel_Reduce::reduce_sum(notconv, BP_WORLD);
-#endif
+    lobpcg_reduce_sum(notconv);
     return notconv;
 }
 
@@ -2066,10 +2095,8 @@ void DiagoLobpcg<T, Device>::report_not_converged(
             ++notconv;
         }
     }
-#ifdef __MPI
-    Parallel_Reduce::reduce_sum(notconv, BP_WORLD);
-    Parallel_Reduce::reduce_max(max_residual, BP_WORLD);
-#endif
+    lobpcg_reduce_sum(notconv);
+    lobpcg_reduce_max(max_residual);
     if (notconv <= 0) {
         return;
     }
