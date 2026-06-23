@@ -95,6 +95,15 @@ static int count_not_converged_local(
 
 static void print_lobpcg_diag_message(const std::string& message)
 {
+    bool print_message = true;
+#ifdef __MPI
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    print_message = (rank == 0);
+#endif
+    if (!print_message) {
+        return;
+    }
     std::cout << "\n " << message << std::endl;
     if (GlobalV::ofs_running.good()) {
         GlobalV::ofs_running << " " << message << std::endl;
@@ -2241,11 +2250,7 @@ void DiagoLobpcg<T, Device>::profile_summary(const char* problem_type,
     if (!this->diag_context.empty()) {
         oss << " context={" << this->diag_context << "}";
     }
-    std::cout << "\n " << oss.str() << std::endl;
-    if (GlobalV::ofs_running.good()) {
-        GlobalV::ofs_running << " " << oss.str() << std::endl;
-        GlobalV::ofs_running.flush();
-    }
+    print_lobpcg_diag_message(oss.str());
 
     for (const auto& stage : this->profile_stage_stats) {
         std::ostringstream stage_oss;

@@ -521,7 +521,7 @@ parameters:
       * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
       * dav: The Davidson algorithm.
       * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
-      * lobpcg: The experimental Locally Optimal Block Preconditioned Conjugate Gradient method for CPU PW `std::complex<double>` calculations. It supports standard and generalized overlap problems, including USPP cases, and can use band parallelism through `bndpar`. GPU and float calculations are not supported yet.
+      * lobpcg: The experimental Locally Optimal Block Preconditioned Conjugate Gradient method for CPU PW `std::complex<double>` USPP/generalized-overlap calculations. Non-USPP PW requests fall back to the existing BPCG solver. It can use band parallelism through `bndpar`; GPU and float calculations are not supported yet.
 
       For numerical atomic orbitals basis,
 
