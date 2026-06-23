@@ -2161,7 +2161,11 @@ void DiagoLobpcg<T, Device>::profile_accumulate_stage(const char* stage,
                                      return item.stage == stage;
                                  });
     if (stage_it == this->profile_stage_stats.end()) {
-        this->profile_stage_stats.push_back(ProfileStageStats{stage, 1, seconds});
+        ProfileStageStats stats;
+        stats.stage = stage;
+        stats.calls = 1;
+        stats.seconds = seconds;
+        this->profile_stage_stats.push_back(stats);
     } else {
         ++stage_it->calls;
         stage_it->seconds += seconds;
