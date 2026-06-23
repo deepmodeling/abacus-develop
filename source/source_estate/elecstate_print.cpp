@@ -1,4 +1,5 @@
 #include "elecstate.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"

@@ -1,4 +1,5 @@
 #include "sto_forces.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/mathzone.h"
 #include "source_cell/module_symmetry/symmetry.h"

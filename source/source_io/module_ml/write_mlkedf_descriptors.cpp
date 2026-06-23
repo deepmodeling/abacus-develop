@@ -1,6 +1,7 @@
 #ifdef __MLALGO
 
 #include "write_mlkedf_descriptors.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 
 #include "npy.hpp"
 #include "source_estate/module_charge/symmetry_rho.h"

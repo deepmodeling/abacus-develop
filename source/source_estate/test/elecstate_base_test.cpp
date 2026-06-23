@@ -1,4 +1,5 @@
 #include "gmock/gmock.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "gtest/gtest.h"
 #include <string>
 #define private public

@@ -2,6 +2,7 @@
 #include <iostream>
 #define private public
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #undef private
 #include <vector>
 

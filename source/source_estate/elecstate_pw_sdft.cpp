@@ -1,4 +1,5 @@
 #include "./elecstate_pw_sdft.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"

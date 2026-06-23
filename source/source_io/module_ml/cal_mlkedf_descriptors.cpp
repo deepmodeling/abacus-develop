@@ -1,4 +1,5 @@
 #include "cal_mlkedf_descriptors.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_charge/charge.h" // IWYU: elecstate.h no longer provides this transitively
 
 namespace ModuleIO

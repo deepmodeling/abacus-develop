@@ -1,6 +1,5 @@
 #include "source_pw/module_pwdft/setup_pot.h"
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
-#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"

@@ -1,7 +1,6 @@
 #include "elecstate.h"
 #include "module_pot/potential_new.h"                // ElecState::pot is now fwd-declared in elecstate.h
 #include "source_estate/module_charge/charge.h"      // ElecState::charge is now fwd-declared in elecstate.h
-#include "source_io/module_parameter/parameter.h"    // PARAM is no longer pulled in via elecstate.h
 #include "source_io/module_chgpot/write_init.h"
 
 namespace elecstate

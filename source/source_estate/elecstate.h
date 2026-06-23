@@ -4,18 +4,20 @@
 #include "fp_energy.h"
 #include "source_base/matrix.h"
 #include "source_psi/psi.h" // Psi<T> appears in virtual method signatures; psi.h is light (own_fan=2)
+#include "source_io/module_parameter/parameter.h" // PARAM/Input_para; kept (own_fan=4, cheap) to avoid churning ~120 downstream PARAM users
 
 #include <complex>
 #include <string>
 #include <vector>
 
-// Forward declarations keep this widely-included header lightweight; the
-// corresponding full definitions are pulled in by elecstate.cpp instead.
+// The heavy data headers (potential_new own_fan=58, klist=42, charge=37) are
+// forward-declared instead of included; their full definitions are pulled in by
+// elecstate.cpp. parameter.h is kept above because dropping it saves only 4 fan
+// but would force ~120 downstream files to add their own include.
 class Charge;
 class K_Vectors;
 class UnitCell;
 class Parallel_Grid;
-struct Input_para;
 namespace ModuleBase
 {
 class ComplexMatrix;

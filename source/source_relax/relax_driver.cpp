@@ -1,4 +1,5 @@
 #include "relax_driver.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_base/global_file.h"
 #include "source_io/module_output/cif_io.h"
 #include "source_io/module_json/output_info.h"

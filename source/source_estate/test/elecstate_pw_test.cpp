@@ -1,6 +1,8 @@
 #include <string>
 
 #include "gmock/gmock.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "gtest/gtest.h"
 #define private public
 #define protected public

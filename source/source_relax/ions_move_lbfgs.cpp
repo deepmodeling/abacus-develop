@@ -1,4 +1,5 @@
 #include "ions_move_lbfgs.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "matrix_methods.h"
 #include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"

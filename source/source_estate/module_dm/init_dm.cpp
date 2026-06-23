@@ -1,6 +1,5 @@
 #include "source_estate/module_dm/init_dm.h"
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
-#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/cal_ux.h"

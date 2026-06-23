@@ -1,4 +1,5 @@
 #include "spin_constrain.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 /**
  * @file init_sc.cpp

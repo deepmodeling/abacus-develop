@@ -1,6 +1,5 @@
 #include "elecstate_pw.h"
 #include "source_estate/module_charge/charge.h" // IWYU: elecstate.h no longer provides this transitively
-#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 
 namespace elecstate {
 

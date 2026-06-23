@@ -1,4 +1,5 @@
 #include "hamilt_pw.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "op_pw_ekin.h"
 #include "op_pw_exx.h"

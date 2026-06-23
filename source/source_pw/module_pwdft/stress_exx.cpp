@@ -1,5 +1,6 @@
 #include "source_hamilt/module_xc/exx_info.h"
-#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "op_pw_exx.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"

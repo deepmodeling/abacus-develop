@@ -1,4 +1,5 @@
 #include "source_main/driver.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_relax/relax_driver.h"

@@ -1,4 +1,6 @@
 #include "sto_iter.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/para_gemm.h"

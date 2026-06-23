@@ -1,4 +1,7 @@
 #include "elecstate.h"
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"

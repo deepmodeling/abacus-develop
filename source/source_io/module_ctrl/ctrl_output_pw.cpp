@@ -1,4 +1,5 @@
 #include "ctrl_output_pw.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "../module_wf/write_wfc_pw.h" // use write_wfc_pw

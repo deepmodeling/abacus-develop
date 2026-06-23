@@ -8,6 +8,7 @@
 #define EXX_LIP_HPP
 
 #include "exx_lip.h"
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
 #include "source_base/vector3.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"

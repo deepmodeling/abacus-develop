@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <vector>
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "RPA_LRI.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"

@@ -1,4 +1,5 @@
 #include "write_proj_band_lcao.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"

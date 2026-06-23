@@ -1,4 +1,6 @@
 #include "elecstate.h"
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_base/parallel_reduce.h"
 #include "module_pot/potential_new.h" // ElecState::pot is now fwd-declared in elecstate.h
 #include "source_estate/module_pot/H_Hartree_pw.h"

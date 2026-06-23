@@ -1,4 +1,5 @@
 #include "source_esolver/esolver_ks_lcao.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcao.h"

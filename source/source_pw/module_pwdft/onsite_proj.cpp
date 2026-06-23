@@ -5,6 +5,7 @@
 #include <map>
 #include <tuple>
 #include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_pw/module_pwdft/onsite_proj_print.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"

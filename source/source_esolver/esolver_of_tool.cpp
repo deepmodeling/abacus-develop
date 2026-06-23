@@ -1,4 +1,5 @@
 #include "esolver_of.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_base/formatter.h"
 #include "source_base/memory_recorder.h"

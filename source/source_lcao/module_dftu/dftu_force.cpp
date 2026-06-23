@@ -1,4 +1,5 @@
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #ifdef __LCAO
 #include "dftu.h"

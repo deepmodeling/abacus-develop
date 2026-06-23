@@ -1,4 +1,5 @@
 #include "exx_helper.h"
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_io/module_parameter/parameter.h" // use PARAM
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional

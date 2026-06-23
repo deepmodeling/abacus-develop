@@ -1,4 +1,7 @@
 #include "esolver_double_xc.h"
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_pot/potential_new.h" // IWYU: was transitively via elecstate.h
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"

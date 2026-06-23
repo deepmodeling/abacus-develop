@@ -1,4 +1,6 @@
 #include "source_base/libm/libm.h"
+#include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
