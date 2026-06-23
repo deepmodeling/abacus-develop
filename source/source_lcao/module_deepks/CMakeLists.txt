@@ -13,6 +13,7 @@ if(ENABLE_MLALGO)
       deepks_vdelta.cpp
       deepks_vdpre.cpp
       deepks_vdrpre.cpp
+      deepks_grad.cpp
       deepks_pdm.cpp
       deepks_phialpha.cpp
       LCAO_deepks_io.cpp

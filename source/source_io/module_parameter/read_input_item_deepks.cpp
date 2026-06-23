@@ -308,6 +308,24 @@ void ReadInput::item_deepks()
         this->add_item(item);
     }
     {
+        Input_Item item("deepks_grad");
+        item.annotation = "output descriptor-gradient label intermediates for DeePKS training";
+        item.category = "DeePKS";
+        item.type = "Boolean";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "NAO basis; requires deepks_out_labels >= 1 and deepks_v_delta < 0";
+        read_sync_bool(input.deepks_grad);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.deepks_grad && para.input.deepks_out_labels == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "deepks_grad requires deepks_out_labels 1");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("deepks_out_unittest");
         item.annotation = "if set 1, prints intermediate quantities that shall "
                           "be used for making unit test";

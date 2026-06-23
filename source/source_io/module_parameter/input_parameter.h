@@ -282,6 +282,7 @@ struct Input_para
     int deepks_bandgap = 0;       ///< for bandgap label. QO added 2021-12-15
     std::vector<int> deepks_band_range = {-1, 0}; ///< the range of bands to calculate bandgap
     int deepks_v_delta = 0;            ///< for v_delta label. xuan added
+    bool deepks_grad = false;          ///< output descriptor-gradient label intermediates for DeePKS training
     bool deepks_equiv = false;         ///< whether to use equivariant version of DeePKS
     bool deepks_out_unittest = false;  ///< if set to true, prints intermediate quantities that shall
                                        ///< be used for making unit test
