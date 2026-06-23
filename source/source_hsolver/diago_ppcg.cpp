@@ -1347,8 +1347,11 @@ void DiagoPPCG<T, Device>::line_minimize(
             continue;
         }
 
-        const T c0 = h2[0];
-        const T c1 = h2[1];
+        // Preserve band identity: choose the Ritz vector with the larger
+        // component along the incoming psi column, not always the lowest root.
+        const int kept = (std::norm(h2[2]) > std::norm(h2[0])) ? 1 : 0;
+        const T c0 = h2[kept * 2];
+        const T c1 = h2[1 + kept * 2];
 
         for (int ig = 0; ig < n_dim_; ++ig)
         {
