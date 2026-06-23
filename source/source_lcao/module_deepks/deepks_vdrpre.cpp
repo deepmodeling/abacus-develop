@@ -14,15 +14,15 @@
 #include "source_lcao/module_hcontainer/atom_pair.h"
 
 void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
-                                            const int R_size,
-                                            const DeePKS_Param& deepks_param,
-                                            const std::vector<hamilt::HContainer<double>*> phialpha,
-                                            const UnitCell& ucell,
-                                            const LCAO_Orbitals& orb,
-                                            const Parallel_Orbitals& pv,
-                                            const Grid_Driver& GridD,
-                                            torch::Tensor& overlap,
-                                            torch::Tensor& iRmat)
+                                           const int R_size,
+                                           const DeePKS_Param& deepks_param,
+                                           const std::vector<hamilt::HContainer<double>*> phialpha,
+                                           const UnitCell& ucell,
+                                           const LCAO_Orbitals& orb,
+                                           const Parallel_Orbitals& pv,
+                                           const Grid_Driver& GridD,
+                                           torch::Tensor& overlap,
+                                           torch::Tensor& iRmat)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha_iRmat");
     ModuleBase::timer::start("DeePKS_domain", "prepare_phialpha_iRmat");
@@ -30,27 +30,24 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
 
     // get the maximum nnmax
     std::vector<int> nnmax_vec(ucell.nat, 0);
-    DeePKS_domain::iterate_ad1(
-        ucell,
-        GridD,
-        orb,
-        false, // no trace_alpha
-        [&](const int iat,
-            const ModuleBase::Vector3<double>& tau0,
-            const int ibt,
-            const ModuleBase::Vector3<double>& tau1,
-            const int start,
-            const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
-            if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
-            {
-                return; // to next loop
-            }
-            nnmax_vec[iat]++;
-        }
-    );
-    
+    DeePKS_domain::iterate_ad1(ucell,
+                               GridD,
+                               orb,
+                               false, // no trace_alpha
+                               [&](const int iat,
+                                   const ModuleBase::Vector3<double>& tau0,
+                                   const int ibt,
+                                   const ModuleBase::Vector3<double>& tau1,
+                                   const int start,
+                                   const int nw_tot,
+                                   ModuleBase::Vector3<int> dR) {
+                                   if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
+                                   {
+                                       return; // to next loop
+                                   }
+                                   nnmax_vec[iat]++;
+                               });
+
     int nnmax = *std::max_element(nnmax_vec.begin(), nnmax_vec.end());
     overlap = torch::zeros({ucell.nat, nnmax, nlocal, deepks_param.des_per_atom}, dtype);
     torch::Tensor dRmat_tmp = torch::zeros({ucell.nat, nnmax, 3}, torch::kInt32);
@@ -58,42 +55,40 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
     auto dRmat_accessor = dRmat_tmp.accessor<int, 3>();
 
     std::fill(nnmax_vec.begin(), nnmax_vec.end(), 0);
-    DeePKS_domain::iterate_ad1(
-        ucell,
-        GridD,
-        orb,
-        false, // no trace_alpha
-        [&](const int iat,
-            const ModuleBase::Vector3<double>& tau0,
-            const int ibt,
-            const ModuleBase::Vector3<double>& tau1,
-            const int start,
-            const int nw_tot,
-            ModuleBase::Vector3<int> dR)
-        {
-            hamilt::BaseMatrix<double>* overlap_mat = phialpha[0]->find_matrix(iat, ibt, dR);
-            if (overlap_mat == nullptr)
-            {
-                return; // to next loop
-            }
-            dRmat_accessor[iat][nnmax_vec[iat]][0] = dR.x;
-            dRmat_accessor[iat][nnmax_vec[iat]][1] = dR.y;
-            dRmat_accessor[iat][nnmax_vec[iat]][2] = dR.z;
+    DeePKS_domain::iterate_ad1(ucell,
+                               GridD,
+                               orb,
+                               false, // no trace_alpha
+                               [&](const int iat,
+                                   const ModuleBase::Vector3<double>& tau0,
+                                   const int ibt,
+                                   const ModuleBase::Vector3<double>& tau1,
+                                   const int start,
+                                   const int nw_tot,
+                                   ModuleBase::Vector3<int> dR) {
+                                   hamilt::BaseMatrix<double>* overlap_mat = phialpha[0]->find_matrix(iat, ibt, dR);
+                                   if (overlap_mat == nullptr)
+                                   {
+                                       return; // to next loop
+                                   }
+                                   dRmat_accessor[iat][nnmax_vec[iat]][0] = dR.x;
+                                   dRmat_accessor[iat][nnmax_vec[iat]][1] = dR.y;
+                                   dRmat_accessor[iat][nnmax_vec[iat]][2] = dR.z;
 
-            for (int ix = 0; ix < nw_tot; ix++)
-            {
-                if (pv.global2local_row(start + ix) < 0 || pv.global2local_col(start + ix) < 0)
-                {
-                    continue;
-                }
-                for (int iy = 0; iy < deepks_param.des_per_atom; iy++)
-                {
-                    overlap_accessor[iat][nnmax_vec[iat]][start + ix][iy] = overlap_mat->get_value(ix, iy);
-                }
-            }
-            nnmax_vec[iat]++;
-        }
-    );
+                                   for (int ix = 0; ix < nw_tot; ix++)
+                                   {
+                                       if (pv.global2local_row(start + ix) < 0 || pv.global2local_col(start + ix) < 0)
+                                       {
+                                           continue;
+                                       }
+                                       for (int iy = 0; iy < deepks_param.des_per_atom; iy++)
+                                       {
+                                           overlap_accessor[iat][nnmax_vec[iat]][start + ix][iy]
+                                               = overlap_mat->get_value(ix, iy);
+                                       }
+                                   }
+                                   nnmax_vec[iat]++;
+                               });
 #ifdef __MPI
     Parallel_Reduce::reduce_all(overlap.data_ptr<double>(), overlap.numel());
 #endif
@@ -119,124 +114,153 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
     ModuleBase::TITLE("DeePKS_domain", "calc_vdr_precalc");
     ModuleBase::timer::start("DeePKS_domain", "calc_vdr_precalc");
 
-    torch::Tensor vdr_pdm = torch::zeros({R_size,
-                                          R_size,
-                                          R_size,
-                                          nlocal,
-                                          nlocal,
-                                          deepks_param.inlmax,
-                                          (2 * deepks_param.lmaxd + 1),
-                                          (2 * deepks_param.lmaxd + 1)},
-                                         torch::TensorOptions().dtype(torch::kFloat64));
-    auto accessor = vdr_pdm.accessor<double, 8>();
+    const int des_per_atom = deepks_param.des_per_atom;
 
-    DeePKS_domain::iterate_ad2(ucell,
-                               GridD,
-                               orb,
-                               false, // no trace_alpha
-                               [&](const int iat,
-                                   const ModuleBase::Vector3<double>& tau0,
-                                   const int ibt1,
-                                   const ModuleBase::Vector3<double>& tau1,
-                                   const int start1,
-                                   const int nw1_tot,
-                                   ModuleBase::Vector3<int> dR1,
-                                   const int ibt2,
-                                   const ModuleBase::Vector3<double>& tau2,
-                                   const int start2,
-                                   const int nw2_tot,
-                                   ModuleBase::Vector3<int> dR2) {
-                                   const int T0 = ucell.iat2it[iat];
-                                   const int I0 = ucell.iat2ia[iat];
-                                   if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr
-                                       || phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
-                                   {
-                                       return; // to next loop
-                                   }
+    // Shape: (R_size, R_size, R_size, nlocal, nlocal, nat, des_per_atom)
+    torch::Tensor vdr_prec = torch::zeros({R_size, R_size, R_size, nlocal, nlocal, nat, des_per_atom},
+                                          torch::TensorOptions().dtype(torch::kFloat64));
+    auto accessor = vdr_prec.accessor<double, 7>();
 
-                                   hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
-                                   hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
-                                   assert(overlap_1->get_col_size() == overlap_2->get_col_size());
-                                   ModuleBase::Vector3<int> dR = dR2 - dR1;
-                                   int iRx = DeePKS_domain::mapping_R(dR.x);
-                                   int iRy = DeePKS_domain::mapping_R(dR.y);
-                                   int iRz = DeePKS_domain::mapping_R(dR.z);
-                                   // Make sure the index is in range we need to save
-                                   if (iRx >= R_size || iRy >= R_size || iRz >= R_size)
-                                   {
-                                       return; // to next loop
-                                   }
+    DeePKS_domain::iterate_ad2(
+        ucell,
+        GridD,
+        orb,
+        false,
+        [&](const int iat,
+            const ModuleBase::Vector3<double>& tau0,
+            const int ibt1,
+            const ModuleBase::Vector3<double>& tau1,
+            const int start1,
+            const int nw1_tot,
+            ModuleBase::Vector3<int> dR1,
+            const int ibt2,
+            const ModuleBase::Vector3<double>& tau2,
+            const int start2,
+            const int nw2_tot,
+            ModuleBase::Vector3<int> dR2) {
+            if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr
+                || phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
+            {
+                return;
+            }
 
-                                   for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
-                                   {
-                                       const int iw1_all = start1 + iw1; // this is \mu
-                                       const int iw1_local = pv.global2local_row(iw1_all);
-                                       if (iw1_local < 0)
-                                       {
-                                           continue;
-                                       }
-                                       for (int iw2 = 0; iw2 < nw2_tot; ++iw2)
-                                       {
-                                           const int iw2_all = start2 + iw2; // this is \nu
-                                           const int iw2_local = pv.global2local_col(iw2_all);
-                                           if (iw2_local < 0)
-                                           {
-                                               continue;
-                                           }
+            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
+            assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
-                                           int ib = 0;
-                                           for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                                           {
-                                               for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                                               {
-                                                   const int inl = deepks_param.inl_index[T0](I0, L0, N0);
-                                                   const int nm = 2 * L0 + 1;
+            const ModuleBase::Vector3<int> dR = dR2 - dR1;
+            const int iRx = DeePKS_domain::mapping_R(dR.x);
+            const int iRy = DeePKS_domain::mapping_R(dR.y);
+            const int iRz = DeePKS_domain::mapping_R(dR.z);
+            if (iRx >= R_size || iRy >= R_size || iRz >= R_size)
+            {
+                return;
+            }
 
-                                                   for (int m1 = 0; m1 < nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
-                                                   {
-                                                       for (int m2 = 0; m2 < nm; ++m2) // nm = 1 for s, 3 for p, 5 for d
-                                                       {
-                                                           double tmp = overlap_1->get_value(iw1, ib + m1)
-                                                                        * overlap_2->get_value(iw2, ib + m2);
-                                                           accessor[iRx][iRy][iRz][iw1_all][iw2_all][inl][m1][m2]
-                                                               += tmp;
-                                                       }
-                                                   }
-                                                   ib += nm;
-                                               }
-                                           }
-                                       } // iw2
-                                   }     // iw1
-                               });
+            // Collect MPI-local orbital indices for row (ibt1) and col (ibt2).
+            std::vector<int> row_iw, row_iw_all, col_iw, col_iw_all;
+            row_iw.reserve(nw1_tot);
+            row_iw_all.reserve(nw1_tot);
+            col_iw.reserve(nw2_tot);
+            col_iw_all.reserve(nw2_tot);
+            for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
+            {
+                if (pv.global2local_row(start1 + iw1) >= 0)
+                {
+                    row_iw.push_back(iw1);
+                    row_iw_all.push_back(start1 + iw1);
+                }
+            }
+            for (int iw2 = 0; iw2 < nw2_tot; ++iw2)
+            {
+                if (pv.global2local_col(start2 + iw2) >= 0)
+                {
+                    col_iw.push_back(iw2);
+                    col_iw_all.push_back(start2 + iw2);
+                }
+            }
+            const int nrow = static_cast<int>(row_iw.size());
+            const int ncol = static_cast<int>(col_iw.size());
+            if (nrow == 0 || ncol == 0)
+            {
+                return;
+            }
+            const int npairs = nrow * ncol;
+
+            int ib = 0;
+            int nl = 0;
+            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
+            {
+                for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0, ++nl)
+                {
+                    const int nm = 2 * L0 + 1;
+                    const int nm2 = nm * nm;
+
+                    // T_flat[k1*ncol+k2, m1*nm+m2] = pa1[iw1,ib+m1] * pa2[iw2,ib+m2]
+                    std::vector<double> T_flat(npairs * nm2);
+                    for (int k1 = 0; k1 < nrow; ++k1)
+                    {
+                        const int iw1 = row_iw[k1];
+                        for (int k2 = 0; k2 < ncol; ++k2)
+                        {
+                            const int iw2 = col_iw[k2];
+                            const int k = k1 * ncol + k2;
+                            for (int m1 = 0; m1 < nm; ++m1)
+                            {
+                                const double a = overlap_1->get_value(iw1, ib + m1);
+                                for (int m2 = 0; m2 < nm; ++m2)
+                                {
+                                    T_flat[k * nm2 + m1 * nm + m2] = a * overlap_2->get_value(iw2, ib + m2);
+                                }
+                            }
+                        }
+                    }
+
+                    // gdata[v, m1*nm+m2] = gevdm[nl][iat, v, m1, m2]
+                    // gevdm[nl] shape: (nat, nm, nm, nm), contiguous.
+                    const double* gdata = gevdm[nl].data_ptr<double>() + static_cast<ptrdiff_t>(iat) * nm * nm2;
+
+                    // result[k, v] = sum_m T_flat[k, m] * gdata[v, m]
+                    std::vector<double> result(npairs * nm, 0.0);
+                    for (int k = 0; k < npairs; ++k)
+                    {
+                        const double* T_row = T_flat.data() + k * nm2;
+                        for (int v = 0; v < nm; ++v)
+                        {
+                            const double* g_row = gdata + v * nm2;
+                            double sum = 0.0;
+                            for (int m = 0; m < nm2; ++m)
+                            {
+                                sum += T_row[m] * g_row[m];
+                            }
+                            result[k * nm + v] = sum;
+                        }
+                    }
+
+                    for (int k1 = 0; k1 < nrow; ++k1)
+                    {
+                        const int iw1_all = row_iw_all[k1];
+                        for (int k2 = 0; k2 < ncol; ++k2)
+                        {
+                            const int iw2_all = col_iw_all[k2];
+                            const double* res_row = result.data() + (k1 * ncol + k2) * nm;
+                            for (int v = 0; v < nm; ++v)
+                            {
+                                accessor[iRx][iRy][iRz][iw1_all][iw2_all][iat][ib + v] += res_row[v];
+                            }
+                        }
+                    }
+
+                    ib += nm;
+                }
+            }
+        });
 
 #ifdef __MPI
-    const int size = R_size * R_size * R_size * nlocal * nlocal * deepks_param.inlmax * (2 * deepks_param.lmaxd + 1)
-                     * (2 * deepks_param.lmaxd + 1);
-    double* data_ptr = vdr_pdm.data_ptr<double>();
-    Parallel_Reduce::reduce_all(data_ptr, size);
+    Parallel_Reduce::reduce_all(vdr_prec.data_ptr<double>(), vdr_prec.numel());
 #endif
 
-    // transfer v_delta_pdm to v_delta_pdm_vector
-    int nlmax = deepks_param.inlmax / nat;
-    std::vector<torch::Tensor> vdr_pdm_vector;
-    for (int nl = 0; nl < nlmax; ++nl)
-    {
-        int nm = 2 * deepks_param.inl2l[nl] + 1;
-        torch::Tensor vdr_pdm_sliced
-            = vdr_pdm.slice(5, nl, deepks_param.inlmax, nlmax).slice(6, 0, nm, 1).slice(7, 0, nm, 1);
-        vdr_pdm_vector.push_back(vdr_pdm_sliced);
-    }
-
-    assert(vdr_pdm_vector.size() == nlmax);
-
-    // einsum for each nl:
-    std::vector<torch::Tensor> vdr_vector;
-    for (int nl = 0; nl < nlmax; ++nl)
-    {
-        vdr_vector.push_back(at::einsum("pqrxyamn, avmn->pqrxyav", {vdr_pdm_vector[nl], gevdm[nl]}));
-    }
-
-    vdr_precalc = torch::cat(vdr_vector, -1);
+    vdr_precalc = vdr_prec;
 
     ModuleBase::timer::end("DeePKS_domain", "calc_vdr_precalc");
     return;
