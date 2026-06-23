@@ -1,4 +1,5 @@
 #include "source_estate/setup_estate_pw.h"
+#include "source_estate/module_pot/potential_new.h" // new elecstate::Potential (was transitively via elecstate.h)
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_pw_sdft.h"

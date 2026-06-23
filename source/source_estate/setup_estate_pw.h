@@ -9,6 +9,7 @@
 #include "source_pw/module_pwdft/vsep_pw.h"
 
 class pseudopot_cell_vnl;
+class surchem; // used only as a reference param below (was transitively via elecstate.h)
 
 namespace elecstate
 {

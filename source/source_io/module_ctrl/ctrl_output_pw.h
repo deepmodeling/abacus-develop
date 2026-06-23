@@ -6,6 +6,8 @@
 #include "source_estate/elecstate_lcao.h"     // use pelec
 #include "source_psi/setup_psi_pw.h" // use Setup_Psi class
 
+class surchem; // used only as a reference param below (was transitively via elecstate.h)
+
 namespace ModuleIO
 {
 

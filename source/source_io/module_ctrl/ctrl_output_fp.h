@@ -3,6 +3,8 @@
 
 #include "source_estate/elecstate_lcao.h"
 
+class surchem; // used only as a reference param below (was transitively via elecstate.h)
+
 namespace ModuleIO
 {
 

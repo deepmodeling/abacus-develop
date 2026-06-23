@@ -15,6 +15,7 @@
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 class pseudopot_cell_vnl;
+class surchem; // used only as a reference param below (was transitively via elecstate.h)
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces

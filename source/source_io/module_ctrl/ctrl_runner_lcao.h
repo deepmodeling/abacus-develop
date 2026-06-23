@@ -10,6 +10,8 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
 #include "source_lcao/setup_dm.h" // for density matrix, mohan add 20251103
 
+class surchem; // used only as a reference param below (was transitively via elecstate.h)
+
 namespace ModuleIO
 {
 
