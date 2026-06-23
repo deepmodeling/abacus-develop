@@ -136,11 +136,6 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(const int nlocal,
 }
 
 // ---------------------------------------------------------------------------
-// cal_vdrpre_square: full B^T B square matrix for the gradient label.
-//   (B^T B)_{a1,a2} = sum_{R,mu,nu} B_{(mu,nu,R),a1} * B_{(mu,nu,R),a2}
-//   Computed as: flat(vdr_precalc)^T @ flat(vdr_precalc)
-//   where vdr_precalc[R,mu,nu,a,k] = sum_{mm'} gevdm[a,k,m,m'] * Theta[R,mu,nu,inl,mm']
-// ---------------------------------------------------------------------------
 void DeePKS_domain::cal_vdrpre_square(const int nlocal,
                                       const int nat,
                                       const int R_size,
@@ -156,8 +151,6 @@ void DeePKS_domain::cal_vdrpre_square(const int nlocal,
     ModuleBase::TITLE("DeePKS_domain", "cal_vdrpre_square");
     ModuleBase::timer::start("DeePKS_domain", "cal_vdrpre_square");
 
-    // Delegate Theta-building + gevdm contraction to cal_vdr_precalc.
-    // nks and kvec_d are vestigial in that function and are not used.
     torch::Tensor vdr_precalc;
     const std::vector<ModuleBase::Vector3<double>> kvec_d_dummy;
     DeePKS_domain::cal_vdr_precalc(nlocal,
@@ -173,13 +166,44 @@ void DeePKS_domain::cal_vdrpre_square(const int nlocal,
                                    pv,
                                    GridD,
                                    vdr_precalc);
-    // vdr_precalc: (R_size, R_size, R_size, nlocal, nlocal, nat, des_per_atom)
 
-    // B^T B = flat^T @ flat
     const int N_alpha = nat * deepks_param.des_per_atom;
-    torch::Tensor flat = vdr_precalc.reshape({-1, N_alpha});
-    vdrpre_square = flat.t().mm(flat);
-    // shape: (N_alpha, N_alpha) = (nat * des_per_atom, nat * des_per_atom)
+    const torch::Tensor flat = vdr_precalc.reshape({-1, N_alpha});
+    const int K = static_cast<int>(flat.size(0));
+    const double* flat_data = flat.data_ptr<double>();
+
+    // vdr_precalc is sparse: only (R, mu, nu) rows with actual phialpha overlaps
+    // are non-zero.  Collect them into a compact matrix M and compute M^T @ M
+    // instead of flat^T @ flat, skipping the work for the many zero rows.
+    std::vector<int> touched;
+    touched.reserve(K);
+    for (int k = 0; k < K; ++k)
+    {
+        const double* row = flat_data + k * N_alpha;
+        for (int j = 0; j < N_alpha; ++j)
+        {
+            if (row[j] != 0.0)
+            {
+                touched.push_back(k);
+                break;
+            }
+        }
+    }
+
+    const int ntouched = static_cast<int>(touched.size());
+    torch::Tensor M = torch::empty({ntouched, N_alpha}, torch::TensorOptions().dtype(torch::kFloat64));
+    double* M_data = M.data_ptr<double>();
+    for (int t = 0; t < ntouched; ++t)
+    {
+        const double* src = flat_data + touched[t] * N_alpha;
+        double* dst = M_data + t * N_alpha;
+        for (int j = 0; j < N_alpha; ++j)
+        {
+            dst[j] = src[j];
+        }
+    }
+
+    vdrpre_square = M.t().mm(M);
 
     ModuleBase::timer::end("DeePKS_domain", "cal_vdrpre_square");
 }
