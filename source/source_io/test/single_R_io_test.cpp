@@ -180,26 +180,28 @@ TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
     std::remove(filename.c_str());
 }
 
+void write_out_of_range_sparse_column(const char* filename)
+{
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<double> XR;
+    XR[0][5] = 1.0;
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = false;
+    options.temp_dir = "/tmp/";
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+}
+
 TEST(ModuleIOTest, OutputSingleRRejectsOutOfRangeColumn)
 {
     const char* filename = "/tmp/test_output_single_R_invalid.dat";
     std::remove(filename);
     EXPECT_EXIT(
-        {
-            GlobalV::DRANK = 0;
-            std::ofstream ofs(filename);
-            Parallel_Orbitals pv;
-            pv.set_serial(5, 5);
-            ModuleIO::SparseRBlock<double> XR = {
-                {0, {{5, 1.0}}}
-            };
-            ModuleIO::SparseWriteOptions options;
-            options.threshold = 1e-12;
-            options.binary = false;
-            options.reduce = false;
-            options.temp_dir = "/tmp/";
-            ModuleIO::output_single_R(ofs, XR, pv, options);
-        },
+        write_out_of_range_sparse_column(filename),
         ::testing::ExitedWithCode(1),
         "Sparse column index out of range");
     std::remove(filename);

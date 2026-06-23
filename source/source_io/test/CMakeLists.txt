@@ -306,9 +306,10 @@ endif()
 if(ENABLE_LIBRI)
 AddTest(
   TARGET MODULE_IO_restart_exx_csr_test
-  LIBS parameter base ${math_libs} device cell_info
+  LIBS parameter base ${math_libs} device
   SOURCES
   restart_exx_csr_test.cpp
+  tmp_mocks.cpp
 )
 endif()
 

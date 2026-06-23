@@ -24,6 +24,10 @@
 #include <string>
 #include <vector>
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 namespace sparse_format
 {
 void cal_dH(const UnitCell&,
@@ -189,15 +193,12 @@ void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, doub
 void init_sparse_output_globals(const int nspin = 1)
 {
     GlobalV::DRANK = 0;
-    PARAM.inp.nspin = nspin;
-    PARAM.inp.calculation = "scf";
-    PARAM.inp.out_app_flag = false;
+    PARAM.input.nspin = nspin;
+    PARAM.input.calculation = "scf";
+    PARAM.input.out_app_flag = false;
     PARAM.sys.global_out_dir = "./";
-    PARAM.globalv.global_out_dir = "./";
     PARAM.sys.global_matrix_dir = "./";
-    PARAM.globalv.global_matrix_dir = "./";
     PARAM.sys.nlocal = 2;
-    PARAM.globalv.nlocal = 2;
 }
 
 void remove_derivative_files(const std::string& fileflag)
@@ -789,4 +790,21 @@ TEST(WriteHsRCompatibility, HeaderStyleSamplesRemainDistinct)
     EXPECT_TRUE(starts_with(" --- Ionic Step 1 ---", " --- Ionic Step"));
     EXPECT_TRUE(starts_with("STEP: 0", "STEP:"));
     EXPECT_TRUE(starts_with("IONIC_STEP: 1", "IONIC_STEP:"));
+}
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+#endif
+
+    ::testing::InitGoogleTest(&argc, argv);
+    const int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+    return result;
 }
