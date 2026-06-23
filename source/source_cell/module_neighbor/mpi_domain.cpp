@@ -27,6 +27,24 @@ bool in_half_open_range(const double value,
     }
     return value >= lower && value < upper;
 }
+
+NeighborMpiComm null_comm()
+{
+#ifdef __MPI
+    return MPI_COMM_NULL;
+#else
+    return kSerialMpiCommNull;
+#endif
+}
+
+NeighborMpiComm world_comm()
+{
+#ifdef __MPI
+    return MPI_COMM_WORLD;
+#else
+    return kSerialMpiCommWorld;
+#endif
+}
 } // namespace
 
 MpiAtomRecord::MpiAtomRecord()
@@ -45,7 +63,7 @@ MpiAtomRecord::MpiAtomRecord(const double x_in,
 }
 
 MpiDomain::MpiDomain()
-    : cart_comm_(MPI_COMM_NULL),
+    : cart_comm_(null_comm()),
       owns_comm_(false),
       initialized_(false),
       rank_(0),
@@ -87,7 +105,7 @@ MpiDomain& MpiDomain::operator=(MpiDomain&& other)
         local_bounds_ = other.local_bounds_;
         ghost_cutoff_ = other.ghost_cutoff_;
 
-        other.cart_comm_ = MPI_COMM_NULL;
+        other.cart_comm_ = null_comm();
         other.owns_comm_ = false;
         other.initialized_ = false;
     }
@@ -112,12 +130,12 @@ void MpiDomain::reset()
         }
     }
 #endif
-    cart_comm_ = MPI_COMM_NULL;
+    cart_comm_ = null_comm();
     owns_comm_ = false;
     initialized_ = false;
 }
 
-void MpiDomain::initialize(MPI_Comm parent_comm,
+void MpiDomain::initialize(NeighborMpiComm parent_comm,
                            const std::array<double, 3>& global_lower,
                            const std::array<double, 3>& global_upper,
                            const double ghost_cutoff,
@@ -164,7 +182,7 @@ void MpiDomain::initialize(MPI_Comm parent_comm,
     rank_ = 0;
     dims_ = std::array<int, 3>{{1, 1, 1}};
     coords_ = std::array<int, 3>{{0, 0, 0}};
-    cart_comm_ = MPI_COMM_WORLD;
+    cart_comm_ = world_comm();
     owns_comm_ = false;
 #endif
 
@@ -199,7 +217,7 @@ int MpiDomain::size() const
     return size_;
 }
 
-MPI_Comm MpiDomain::cart_comm() const
+NeighborMpiComm MpiDomain::cart_comm() const
 {
     return cart_comm_;
 }

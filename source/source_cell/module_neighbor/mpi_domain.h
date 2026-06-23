@@ -6,16 +6,21 @@
 
 #ifdef __MPI
 #include <mpi.h>
-#else
-// Keep the interface buildable in serial configurations. Runtime MPI behavior is
-// implemented only when ABACUS is configured with ENABLE_MPI.
-typedef int MPI_Comm;
-const MPI_Comm MPI_COMM_WORLD = 0;
-const MPI_Comm MPI_COMM_NULL = -1;
 #endif
 
 namespace ModuleNeighbor
 {
+
+#ifdef __MPI
+using NeighborMpiComm = MPI_Comm;
+#else
+// Keep the serial interface buildable without defining global MPI symbols. Some
+// non-MPI unit tests include mpi.h after this header, so declaring MPI_Comm here
+// would conflict with the real OpenMPI typedef.
+using NeighborMpiComm = int;
+const NeighborMpiComm kSerialMpiCommWorld = 0;
+const NeighborMpiComm kSerialMpiCommNull = -1;
+#endif
 
 struct DomainBounds
 {
@@ -51,7 +56,7 @@ class MpiDomain
     MpiDomain& operator=(MpiDomain&& other);
     ~MpiDomain();
 
-    void initialize(MPI_Comm parent_comm,
+    void initialize(NeighborMpiComm parent_comm,
                     const std::array<double, 3>& global_lower,
                     const std::array<double, 3>& global_upper,
                     const double ghost_cutoff,
@@ -60,7 +65,7 @@ class MpiDomain
     bool initialized() const;
     int rank() const;
     int size() const;
-    MPI_Comm cart_comm() const;
+    NeighborMpiComm cart_comm() const;
     const std::array<int, 3>& dims() const;
     const std::array<int, 3>& coords() const;
     const std::array<int, 3>& periods() const;
@@ -83,7 +88,7 @@ class MpiDomain
     bool inside_expanded(const std::array<double, 3>& point) const;
     bool append_ghost_images(const MpiAtomRecord& atom, std::vector<MpiAtomRecord>& ghosts) const;
 
-    MPI_Comm cart_comm_;
+    NeighborMpiComm cart_comm_;
     bool owns_comm_;
     bool initialized_;
     int rank_;

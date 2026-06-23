@@ -1,6 +1,9 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../read_atoms_helper.h"
+#ifdef __LCAO
+#include "source_cell/setup_nonlocal.h"
+#endif
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 #include <sstream>
@@ -23,9 +26,11 @@ void output::printrm(std::ofstream& ofs, const std::string& description, const M
     // Mock implementation
 }
 
-// Mock InfoNonlocal class
+// Mock LCAO-only classes when the test is built with LCAO enabled.
+#ifdef __LCAO
 InfoNonlocal::InfoNonlocal() {}
 InfoNonlocal::~InfoNonlocal() {}
+#endif
 
 // Mock Magnetism class
 Magnetism::Magnetism() {}
