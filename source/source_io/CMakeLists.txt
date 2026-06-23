@@ -88,6 +88,7 @@ if(ENABLE_LCAO)
       module_hs/write_HS_R.cpp
       module_hs/write_HS_sparse.cpp
       module_hs/single_R_io.cpp
+      module_hs/rr_sparse_writer.cpp
       module_hs/cal_r_overlap_R.cpp
       module_hs/output_mat_sparse.cpp
       module_ctrl/ctrl_scf_lcao.cpp

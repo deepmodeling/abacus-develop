@@ -150,6 +150,36 @@ TEST(ModuleIOTest, OutputSingleRComplexKeepsHighPrecision)
     std::remove(filename.c_str());
 }
 
+TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
+{
+    const std::string filename = "test_output_single_R_precision.dat";
+    std::remove(filename.c_str());
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<std::complex<double>> XR = {
+        {0, {{1, std::complex<double>(1.234567890123456, -2.5)}}}
+    };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.precision = 8;
+    options.reduce = false;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ofs.close();
+
+    std::ifstream ifs(filename);
+    const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("(1.23456789e+00,-2.50000000e+00)"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("1.2345678901234560e+00")));
+
+    std::remove(filename.c_str());
+}
+
 TEST(ModuleIOTest, OutputSingleRRejectsOutOfRangeColumn)
 {
     const char* filename = "/tmp/test_output_single_R_invalid.dat";

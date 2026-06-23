@@ -8,6 +8,8 @@
 #include "source_base/global_variable.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_dm/write_dmr.h"
+#include "source_io/module_hs/output_mat_sparse.h"
+#include "source_io/module_hs/rr_sparse_writer.h"
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_hs/write_HS_sparse.h"
 #include "source_lcao/module_hcontainer/atom_pair.h"
@@ -182,6 +184,36 @@ void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, doub
 {
     hamilt::AtomPair<double> pair(0, 0, 0, 0, 0, &pv, values);
     matrix.insert_pair(pair);
+}
+
+void init_sparse_output_globals(const int nspin = 1)
+{
+    GlobalV::DRANK = 0;
+    PARAM.inp.nspin = nspin;
+    PARAM.inp.calculation = "scf";
+    PARAM.inp.out_app_flag = false;
+    PARAM.sys.global_out_dir = "./";
+    PARAM.globalv.global_out_dir = "./";
+    PARAM.sys.global_matrix_dir = "./";
+    PARAM.globalv.global_matrix_dir = "./";
+    PARAM.sys.nlocal = 2;
+    PARAM.globalv.nlocal = 2;
+}
+
+void remove_derivative_files(const std::string& fileflag)
+{
+    const std::vector<std::string> filenames = {
+        "d" + fileflag + "rxs1_nao.csr",
+        "d" + fileflag + "rys1_nao.csr",
+        "d" + fileflag + "rzs1_nao.csr",
+        "d" + fileflag + "rxs2_nao.csr",
+        "d" + fileflag + "rys2_nao.csr",
+        "d" + fileflag + "rzs2_nao.csr",
+    };
+    for (const std::string& filename: filenames)
+    {
+        std::remove(filename.c_str());
+    }
 }
 
 bool starts_with(const std::string& text, const std::string& prefix)
@@ -477,6 +509,279 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryCountsOnlyValuesAboveThreshold)
     EXPECT_EQ(read_binary_value<long long>(ifs), 2);
 
     std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, SaveDHSparseTextCountsOnlyValuesAboveThreshold)
+{
+    remove_derivative_files("h");
+    init_sparse_output_globals();
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 1.0;
+    arrays.dHRx_sparse[0][r_vector][0][1] = 1e-12;
+    arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
+    arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
+
+    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8);
+
+    const std::vector<std::string> lines = read_lines("dhrxs1_nao.csr");
+    ASSERT_GE(lines.size(), 7);
+    EXPECT_EQ(lines[0], "STEP: 5");
+    EXPECT_EQ(lines[1], "Matrix Dimension of dHx(R): 2");
+    EXPECT_EQ(lines[2], "Matrix number of dHx(R): 1");
+    EXPECT_EQ(lines[3], "0 0 0 2");
+    EXPECT_THAT(lines[4], testing::HasSubstr("1.00000000e+00"));
+    EXPECT_THAT(lines[4], testing::HasSubstr("-2.00000000e+00"));
+
+    std::istringstream column_stream(lines[5]);
+    std::vector<int> columns;
+    int column = 0;
+    while (column_stream >> column)
+    {
+        columns.push_back(column);
+    }
+    EXPECT_THAT(columns, testing::ElementsAre(0, 1));
+
+    std::istringstream indptr_stream(lines[6]);
+    std::vector<long long> indptr;
+    long long ptr = 0;
+    while (indptr_stream >> ptr)
+    {
+        indptr.push_back(ptr);
+    }
+    EXPECT_THAT(indptr, testing::ElementsAre(0, 1, 2));
+
+    const std::vector<std::string> y_lines = read_lines("dhrys1_nao.csr");
+    ASSERT_GE(y_lines.size(), 4);
+    EXPECT_EQ(y_lines[3], "0 0 0 0");
+
+    remove_derivative_files("h");
+}
+
+TEST(WriteHsRCompatibility, SaveDHSparseBinaryCountsOnlyValuesAboveThreshold)
+{
+    remove_derivative_files("h");
+    init_sparse_output_globals();
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 1.0;
+    arrays.dHRx_sparse[0][r_vector][0][1] = 1e-12;
+    arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
+    arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
+
+    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8);
+
+    std::ifstream ifs("dhrxs1_nao.csr", std::ios::binary);
+    ASSERT_TRUE(ifs.is_open());
+    EXPECT_EQ(read_binary_value<int>(ifs), 6);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), 1.0);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), -2.0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 0);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 1);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 2);
+
+    remove_derivative_files("h");
+}
+
+TEST(WriteHsRCompatibility, SaveDSSparseSocWritesAllDirections)
+{
+    remove_derivative_files("s");
+    init_sparse_output_globals(4);
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_soc_sparse[r_vector][0][0] = std::complex<double>(1.0, 0.0);
+    arrays.dHRy_soc_sparse[r_vector][0][1] = std::complex<double>(2.0, -1.0);
+    arrays.dHRz_soc_sparse[r_vector][1][1] = std::complex<double>(-3.0, 0.5);
+
+    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8);
+
+    const std::string x_output = read_file("dsrxs1_nao.csr");
+    const std::string y_output = read_file("dsrys1_nao.csr");
+    const std::string z_output = read_file("dsrzs1_nao.csr");
+    EXPECT_THAT(x_output, testing::HasSubstr("Matrix number of dHx(R): 1\n0 0 0 1\n"));
+    EXPECT_THAT(y_output, testing::HasSubstr("Matrix number of dHy(R): 1\n0 0 0 1\n"));
+    EXPECT_THAT(z_output, testing::HasSubstr("Matrix number of dHz(R): 1\n0 0 0 1\n"));
+    EXPECT_THAT(x_output, testing::HasSubstr("(1.00000000e+00,0.00000000e+00)"));
+    EXPECT_THAT(y_output, testing::HasSubstr("(2.00000000e+00,-1.00000000e+00)"));
+    EXPECT_THAT(z_output, testing::HasSubstr("(-3.00000000e+00,5.00000000e-01)"));
+
+    remove_derivative_files("s");
+}
+
+TEST(WriteHsRCompatibility, MatSparseOutputOptionsKeepLegacyDefaults)
+{
+    ModuleIO::MatSparseOutputOptions options;
+    EXPECT_FALSE(options.out_mat_dh);
+    EXPECT_FALSE(options.out_mat_ds);
+    EXPECT_FALSE(options.out_mat_t);
+    EXPECT_FALSE(options.out_mat_r);
+    EXPECT_EQ(options.dh_precision, 16);
+    EXPECT_EQ(options.ds_precision, 16);
+    EXPECT_EQ(options.t_precision, 16);
+    EXPECT_EQ(options.r_precision, 16);
+    EXPECT_DOUBLE_EQ(options.sparse_threshold, 1e-10);
+    EXPECT_FALSE(options.binary);
+}
+
+TEST(WriteHsRCompatibility, RRSparsePayloadDetectorSkipsEmptyBlocks)
+{
+    int empty_counts[3] = {0, 0, 0};
+    int x_only_counts[3] = {1, 0, 0};
+    int z_only_counts[3] = {0, 0, 2};
+
+    EXPECT_FALSE(ModuleIO::detail::rr_sparse_has_payload(empty_counts));
+    EXPECT_TRUE(ModuleIO::detail::rr_sparse_has_payload(x_only_counts));
+    EXPECT_TRUE(ModuleIO::detail::rr_sparse_has_payload(z_only_counts));
+}
+
+TEST(WriteHsRCompatibility, RRSparseTextFinalizerAllowsZeroBlocks)
+{
+    const std::string payload_filename = "rr_empty_payload.tmp";
+    const std::string output_filename = "rr_empty.csr";
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
+
+    std::ofstream payload(payload_filename.c_str());
+    payload.close();
+
+    ModuleIO::detail::finalize_rr_sparse_file(output_filename,
+                                              payload_filename,
+                                              9,
+                                              2,
+                                              0,
+                                              false,
+                                              false,
+                                              "WriteHsRCompatibility");
+
+    const std::vector<std::string> lines = read_lines(output_filename);
+    ASSERT_EQ(lines.size(), 3);
+    EXPECT_EQ(lines[0], "STEP: 9");
+    EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
+    EXPECT_EQ(lines[2], "Matrix number of r(R): 0");
+
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, RRSparseTextFinalizerKeepsSingleDirectionPayload)
+{
+    const std::string payload_filename = "rr_single_direction_payload.tmp";
+    const std::string output_filename = "rr_single_direction.csr";
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
+
+    std::ofstream payload(payload_filename.c_str());
+    payload << "1 0 -1\n";
+    payload << "1\n";
+    payload << " 4.00000000e+00\n";
+    payload << " 0\n";
+    payload << "0 1\n";
+    payload << "0\n";
+    payload << "0\n";
+    payload.close();
+
+    ModuleIO::detail::finalize_rr_sparse_file(output_filename,
+                                              payload_filename,
+                                              10,
+                                              2,
+                                              1,
+                                              false,
+                                              false,
+                                              "WriteHsRCompatibility");
+
+    const std::vector<std::string> lines = read_lines(output_filename);
+    ASSERT_EQ(lines.size(), 10);
+    EXPECT_EQ(lines[0], "STEP: 10");
+    EXPECT_EQ(lines[1], "Matrix Dimension of r(R): 2");
+    EXPECT_EQ(lines[2], "Matrix number of r(R): 1");
+    EXPECT_EQ(lines[3], "1 0 -1");
+    EXPECT_EQ(lines[4], "1");
+    EXPECT_EQ(lines[5], " 4.00000000e+00");
+    EXPECT_EQ(lines[8], "0");
+    EXPECT_EQ(lines[9], "0");
+
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, RRSparseBinaryFinalizerKeepsHeaderAndPayloadOrder)
+{
+    const std::string payload_filename = "rr_binary_payload.tmp";
+    const std::string output_filename = "rr_binary.csr";
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
+
+    std::ofstream payload(payload_filename.c_str(), std::ios::binary);
+    int dRx = 1;
+    int dRy = 2;
+    int dRz = 3;
+    int x_count = 1;
+    int y_count = 0;
+    int z_count = 0;
+    double value = 4.0;
+    int column = 1;
+    long long ptr0 = 0;
+    long long ptr1 = 1;
+    payload.write(reinterpret_cast<const char*>(&dRx), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&dRy), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&dRz), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&x_count), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&value), sizeof(double));
+    payload.write(reinterpret_cast<const char*>(&column), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&ptr0), sizeof(long long));
+    payload.write(reinterpret_cast<const char*>(&ptr1), sizeof(long long));
+    payload.write(reinterpret_cast<const char*>(&y_count), sizeof(int));
+    payload.write(reinterpret_cast<const char*>(&z_count), sizeof(int));
+    payload.close();
+
+    ModuleIO::detail::finalize_rr_sparse_file(output_filename,
+                                              payload_filename,
+                                              11,
+                                              2,
+                                              1,
+                                              true,
+                                              false,
+                                              "WriteHsRCompatibility");
+
+    std::ifstream ifs(output_filename, std::ios::binary);
+    ASSERT_TRUE(ifs.is_open());
+    EXPECT_EQ(read_binary_value<int>(ifs), 11);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_EQ(read_binary_value<int>(ifs), 3);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), 4.0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 0);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 1);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    ifs.close();
+
+    std::remove(payload_filename.c_str());
+    std::remove(output_filename.c_str());
 }
 
 TEST(WriteHsRCompatibility, HeaderStyleSamplesRemainDistinct)

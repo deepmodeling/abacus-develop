@@ -292,6 +292,7 @@ AddTest(
   ../module_hs/write_HS_R.cpp
   ../module_hs/write_HS_sparse.cpp
   ../module_hs/single_R_io.cpp
+  ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
   ../module_output/ucell_io.cpp
   ../module_output/sparse_matrix.cpp

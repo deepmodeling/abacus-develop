@@ -1,9 +1,11 @@
 #include "cal_r_overlap_R.h"
 
+#include "rr_sparse_writer.h"
 #include "single_R_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_base/mathzone_add1.h"
 
@@ -635,7 +637,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
 }
 
 
-void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
+void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const int precision)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR");
@@ -671,13 +673,13 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     ModuleIO::SparseWriteOptions single_R_options;
     single_R_options.threshold = sparse_threshold;
     single_R_options.binary = binary;
+    single_R_options.precision = precision;
     single_R_options.reduce = true;
     single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     std::stringstream tem1;
     tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
     std::ofstream ofs_tem1;
-    std::ifstream ifs_tem1;
 
     if (GlobalV::DRANK == 0)
     {
@@ -688,6 +690,11 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         else
         {
             ofs_tem1.open(tem1.str().c_str());
+        }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("cal_r_overlap_R::out_rR",
+                                     "Cannot open temporary sparse matrix file: " + tem1.str());
         }
     }
 
@@ -801,19 +808,22 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
         Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
-        if (rR_nonzero_num[0] || rR_nonzero_num[1] || rR_nonzero_num[2])
+        if (ModuleIO::detail::rr_sparse_has_payload(rR_nonzero_num))
         {
             output_R_number++;
 
-            if (binary)
+            if (GlobalV::DRANK == 0)
             {
-                ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-            }
-            else
-            {
-                ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                if (binary)
+                {
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+                }
+                else
+                {
+                    ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                }
             }
 
             for (int direction = 0; direction < 3; ++direction)
@@ -847,7 +857,6 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
     if (GlobalV::DRANK == 0)
     {
-        std::ofstream out_r;
         std::stringstream ssr;
         if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
@@ -859,47 +868,15 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
             ssr << PARAM.globalv.global_out_dir << "rr.csr";
         }
 
-        if (binary) // .dat
-        {
-            ofs_tem1.close();
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary);
-            }
-            out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
-
-            ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
-            out_r << ifs_tem1.rdbuf();
-            ifs_tem1.close();
-            out_r.close();
-        }
-        else // .txt
-        {
-            ofs_tem1.close();
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str());
-            }
-            out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
-            out_r << "Matrix number of r(R): " << output_R_number << std::endl;
-
-            ifs_tem1.open(tem1.str().c_str());
-            out_r << ifs_tem1.rdbuf();
-            ifs_tem1.close();
-            out_r.close();
-        }
+        ofs_tem1.close();
+        ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
+                                                  tem1.str(),
+                                                  step,
+                                                  PARAM.globalv.nlocal,
+                                                  output_R_number,
+                                                  binary,
+                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  "cal_r_overlap_R::out_rR");
 
         std::remove(tem1.str().c_str());
     }
@@ -908,7 +885,10 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     return;
 }
 
-void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
+void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
+                                   const int& istep,
+                                   const std::set<Abfs::Vector3_Order<int>>& output_R_coor,
+                                   const int precision)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR_other");
@@ -917,15 +897,35 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     ModuleBase::Vector3<double> tau1, tau2, dtau;
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
-    int output_R_number = output_R_coor.size();
+    int output_R_number = 0;
     int step = istep;
     ModuleIO::SparseWriteOptions single_R_options;
     single_R_options.threshold = sparse_threshold;
     single_R_options.binary = binary;
+    single_R_options.precision = precision;
     single_R_options.reduce = true;
     single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
-    std::ofstream out_r;
+    std::stringstream tem1;
+    tem1 << PARAM.globalv.global_out_dir << "tmp-rr-other.csr";
+    std::ofstream ofs_tem1;
+    if (GlobalV::DRANK == 0)
+    {
+        if (binary)
+        {
+            ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
+        }
+        else
+        {
+            ofs_tem1.open(tem1.str().c_str());
+        }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("cal_r_overlap_R::out_rR_other",
+                                     "Cannot open temporary sparse matrix file: " + tem1.str());
+        }
+    }
+
     std::stringstream ssr;
     if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
@@ -935,39 +935,6 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     else
     {
         ssr << PARAM.globalv.global_out_dir << "rr.csr";
-    }
-
-    if (GlobalV::DRANK == 0)
-    {
-        if (binary)
-        {
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary);
-            }
-            out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
-        }
-        else
-        {
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str());
-            }
-            out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
-            out_r << "Matrix number of r(R): " << output_R_number << std::endl;
-        }
     }
 
     for (auto& R_coor: output_R_coor)
@@ -1081,15 +1048,24 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
         Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
-        if (binary) // .dat
+        if (!ModuleIO::detail::rr_sparse_has_payload(rR_nonzero_num))
         {
-            out_r.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            continue;
         }
-        else // .txt
+        output_R_number++;
+
+        if (GlobalV::DRANK == 0)
         {
-            out_r << dRx << " " << dRy << " " << dRz << std::endl;
+            if (binary) // .dat
+            {
+                ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            }
+            else // .txt
+            {
+                ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+            }
         }
 
         for (int direction = 0; direction < 3; ++direction)
@@ -1098,17 +1074,17 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
             {
                 if (binary)
                 {
-                    out_r.write(reinterpret_cast<char*>(&rR_nonzero_num[direction]), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&rR_nonzero_num[direction]), sizeof(int));
                 }
                 else
                 {
-                    out_r << rR_nonzero_num[direction] << std::endl;
+                    ofs_tem1 << rR_nonzero_num[direction] << std::endl;
                 }
             }
 
             if (rR_nonzero_num[direction])
             {
-                ModuleIO::output_single_R(out_r,
+                ModuleIO::output_single_R(ofs_tem1,
                                           psi_r_psi_sparse[direction],
                                           *(this->ParaV),
                                           single_R_options);
@@ -1122,7 +1098,16 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
     if (GlobalV::DRANK == 0)
     {
-        out_r.close();
+        ofs_tem1.close();
+        ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
+                                                  tem1.str(),
+                                                  step,
+                                                  PARAM.globalv.nlocal,
+                                                  output_R_number,
+                                                  binary,
+                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  "cal_r_overlap_R::out_rR_other");
+        std::remove(tem1.str().c_str());
     }
 
     ModuleBase::timer::end("cal_r_overlap_R", "out_rR_other");
