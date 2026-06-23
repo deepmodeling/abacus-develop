@@ -1,4 +1,5 @@
 #include "source_lcao/setup_dm.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/cal_dm.h"
 #include "source_base/timer.h"
 #include "source_estate/module_dm/cal_dm_psi.h"

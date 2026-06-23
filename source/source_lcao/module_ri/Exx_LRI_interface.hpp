@@ -1,6 +1,7 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "Exx_LRI_interface.h"

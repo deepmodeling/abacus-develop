@@ -2,6 +2,7 @@
 #define ESOLVER_DOUBLE_XC_H
 
 #include "source_esolver/esolver_ks_lcao.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 
 namespace ModuleESolver
 {

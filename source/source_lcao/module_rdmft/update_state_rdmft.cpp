@@ -4,6 +4,8 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: was transitively via elecstate.h
 #include "source_lcao/module_rdmft/rdmft_tools.h"

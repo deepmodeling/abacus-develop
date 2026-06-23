@@ -1,4 +1,5 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 

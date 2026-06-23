@@ -1,4 +1,5 @@
 #include "spin_constrain.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/formatter.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"

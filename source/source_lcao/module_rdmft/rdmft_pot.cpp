@@ -4,6 +4,7 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_psi/psi.h"
 #include "source_estate/module_dm/cal_dm_psi.h"

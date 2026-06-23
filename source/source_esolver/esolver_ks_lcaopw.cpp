@@ -1,4 +1,5 @@
 #include "esolver_ks_lcaopw.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_pw/module_pwdft/elecond.h"

@@ -1,4 +1,5 @@
 #include "esolver_fp.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_estate/cal_ux.h"

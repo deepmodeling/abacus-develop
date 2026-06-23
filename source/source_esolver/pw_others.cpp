@@ -1,4 +1,5 @@
 #include "esolver_ks_pw.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_base/module_device/device.h"
 #include "source_io/module_bessel/numerical_basis.h"

@@ -1,4 +1,5 @@
 #include "esolver_gets.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/timer.h"

@@ -1,4 +1,6 @@
 #include "esolver_lrtd_lcao.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "utils/lr_util.h"
 #include "hamilt_casida.h"

@@ -1,4 +1,5 @@
 #include "elecstate_pw.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_basis/module_pw/pw_basis.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h

@@ -4,6 +4,7 @@
 #ifdef __MLALGO
 
 #include "pot_base.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 #include "source_io/module_ml/cal_mlkedf_descriptors.h"
 #include "source_pw/module_ofdft/ml_base.h"
 

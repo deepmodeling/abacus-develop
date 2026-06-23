@@ -1,4 +1,5 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/global_variable.h" // use GlobalC

@@ -1,4 +1,5 @@
 #include "hsolver_pw.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/parallel_comm.h"

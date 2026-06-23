@@ -1,4 +1,5 @@
 #include "elecstate_tools.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "occupy.h"
 #include "source_base/parallel_reduce.h"
 namespace elecstate

@@ -4,6 +4,8 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
+#include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"

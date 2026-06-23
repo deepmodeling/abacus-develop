@@ -1,4 +1,5 @@
 #include "get_wf_lcao.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_charge/charge.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/module_external/blacs_connector.h"

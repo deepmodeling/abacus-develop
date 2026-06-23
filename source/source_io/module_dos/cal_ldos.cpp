@@ -1,4 +1,5 @@
 #include "cal_ldos.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 #include "source_cell/unitcell.h" // IWYU: was transitively via elecstate.h
 #include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 

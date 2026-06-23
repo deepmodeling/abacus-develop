@@ -2,6 +2,7 @@
 #define ESOLVER_FP_H
 
 #include "esolver.h"
+#include "source_estate/module_charge/charge.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/timer_wrapper.h"
 

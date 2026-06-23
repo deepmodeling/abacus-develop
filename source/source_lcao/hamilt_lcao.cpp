@@ -1,4 +1,5 @@
 #include "source_lcao/hamilt_lcao.h"
+#include "source_cell/klist.h" // IWYU: was transitively via elecstate.h
 
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
