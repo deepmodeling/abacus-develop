@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 
 #define private public
@@ -149,6 +150,25 @@ template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
                                                  const int block_size);
 
 }
+
+namespace
+{
+template <typename T>
+class CopyOperator final : public hamilt::Operator<T, base_device::DEVICE_CPU>
+{
+  public:
+    void act(const int nbands,
+             const int nbasis,
+             const int npol,
+             const T* tmpsi_in,
+             T* tmhpsi,
+             const int ngk_ik = 0,
+             const bool is_first_node = false) const override
+    {
+        std::copy(tmpsi_in, tmpsi_in + static_cast<size_t>(nbands) * static_cast<size_t>(nbasis), tmhpsi);
+    }
+};
+} // namespace
 
 class TestHSolverPW : public ::testing::Test {
   public:

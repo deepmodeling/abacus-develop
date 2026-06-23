@@ -335,8 +335,9 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into bndpar groups, and bands (only stochastic orbitals now) "
-                          "will be distributed among each group. It should be larger than 0.";
+        item.description = "Divide all processors into bndpar groups, and bands will be distributed among each group "
+                          "for stochastic calculations and supported band-parallel PW solvers (`bpcg` and "
+                          "experimental `lobpcg`). It should be larger than 0.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {

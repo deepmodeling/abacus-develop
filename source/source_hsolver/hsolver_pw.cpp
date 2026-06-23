@@ -26,10 +26,25 @@
 namespace hsolver
 {
 
+template <typename T, typename Device, typename HPsiFunc>
+void run_bpcg_pw(const HPsiFunc& hpsi_func,
+                 psi::Psi<T, Device>& psi,
+                 const std::vector<typename GetTypeReal<T>::type>& pre_condition,
+                 typename GetTypeReal<T>::type* eigenvalue,
+                 const std::vector<double>& ethr_band)
+{
+    const int nband_l = psi.get_nbands();
+    const int nbasis = psi.get_nbasis();
+    const int ndim = psi.get_current_ngk();
+    DiagoBPCG<T, Device> bpcg(pre_condition.data());
+    bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
+    bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, ethr_band);
+}
+
 template <typename T, typename Device, typename HPsiFunc, typename SPsiFunc>
 typename std::enable_if<std::is_same<T, std::complex<double>>::value
                             && std::is_same<Device, base_device::DEVICE_CPU>::value,
-                        void>::type
+                        int>::type
 run_lobpcg_pw(const HPsiFunc& hpsi_func,
               const SPsiFunc& spsi_func,
               psi::Psi<T, Device>& psi,
@@ -47,6 +62,7 @@ run_lobpcg_pw(const HPsiFunc& hpsi_func,
     lobpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
     lobpcg.set_max_iter(diag_iter_max);
     lobpcg.set_notconv_max(notconv_max);
+    lobpcg.set_throw_on_notconv_exceed(notconv_max == 0);
     std::ostringstream context;
     context << "k=" << psi.get_current_k() + 1 << "/" << nk_nums
             << ", npw=" << ndim
@@ -56,13 +72,13 @@ run_lobpcg_pw(const HPsiFunc& hpsi_func,
             << ", max_iter=" << diag_iter_max
             << ", use_uspp=" << (PARAM.globalv.use_uspp ? 1 : 0);
     lobpcg.set_diag_context(context.str());
-    lobpcg.diag(hpsi_func, spsi_func, psi.get_pointer(), eigenvalue, ethr_band);
+    return lobpcg.diag(hpsi_func, spsi_func, psi.get_pointer(), eigenvalue, ethr_band);
 }
 
 template <typename T, typename Device, typename HPsiFunc, typename SPsiFunc>
 typename std::enable_if<!std::is_same<T, std::complex<double>>::value
                             || !std::is_same<Device, base_device::DEVICE_CPU>::value,
-                        void>::type
+                        int>::type
 run_lobpcg_pw(const HPsiFunc&,
               const SPsiFunc&,
               psi::Psi<T, Device>&,
@@ -75,6 +91,7 @@ run_lobpcg_pw(const HPsiFunc&,
 {
     ModuleBase::WARNING_QUIT("HSolverPW",
         "LOBPCG is currently implemented only for CPU complex<double> PW calculations.");
+    return 0;
 }
 
 template <typename T, typename Device>
@@ -370,24 +387,24 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     }
     else if (this->method == "bpcg")
     {
-        const int nband_l = psi.get_nbands();
-        const int nbasis = psi.get_nbasis();
-        const int ndim = psi.get_current_ngk();
-        DiagoBPCG<T, Device> bpcg(pre_condition.data());
-        bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
-        bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+        run_bpcg_pw<T, Device>(hpsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
     }
     else if (this->method == "lobpcg")
     {
-        run_lobpcg_pw<T, Device>(hpsi_func,
-                                  spsi_func,
-                                  psi,
-                                  pre_condition,
-                                  eigenvalue,
-                                  this->ethr_band,
-                                  this->diag_iter_max,
-                                  ("nscf" == this->calculation_type) ? 0 : 5,
-                                  nk_nums);
+        if (!PARAM.globalv.use_uspp) {
+            run_bpcg_pw<T, Device>(hpsi_func, psi, pre_condition, eigenvalue, this->ethr_band);
+        } else {
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+                run_lobpcg_pw<T, Device>(hpsi_func,
+                                         spsi_func,
+                                         psi,
+                                         pre_condition,
+                                         eigenvalue,
+                                         this->ethr_band,
+                                         this->diag_iter_max,
+                                         ("nscf" == this->calculation_type) ? 0 : 5,
+                                         nk_nums));
+        }
     }
     else if (this->method == "dav_subspace")
     {

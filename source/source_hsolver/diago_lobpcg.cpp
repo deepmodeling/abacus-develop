@@ -1,6 +1,5 @@
 #include "source_hsolver/diago_lobpcg.h"
 
-#include "diago_iter_assist.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -13,67 +12,148 @@
 #include <complex>
 #include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 namespace hsolver {
 
-using LobpcgClock = std::chrono::steady_clock;
-
-// ============================================================================
-// Band-major explicit-loop helpers used by serial generalized fallback paths.
-//
-// Psi is stored band-major:  psi_data[ib * n_basis + ig],
-// shape [n_band_l, n_basis].  ig >= n_dim must be zero-padded.
-//
-// Subspace matrices (C, V) are column-major for direct LAPACK use:
-//   C[col * ld + row]  =  C[j * nb + i]   (nb = leading dimension).
-// ============================================================================
-
-/// C(i,j) = sum_ig  conj( A(i,ig) ) * B(j,ig)    standard inner-product <A|B>
-template <typename T>
-static void inner_product_loop(int nb, int lda, int nvalid,
-                               T alpha, const T* A, const T* B,
-                               T beta, T* C)
-{
-    for (int j = 0; j < nb; ++j) {
-        for (int i = 0; i < nb; ++i) {
-            T sum = static_cast<T>(0.0);
-            for (int ig = 0; ig < nvalid; ++ig) {
-                sum += std::conj(A[i * lda + ig]) * B[j * lda + ig];
-            }
-            C[j * nb + i] = alpha * sum + beta * C[j * nb + i];
-        }
-    }
-}
-
-/// newRow_i = sum_k  V(k,i) * oldRow_k
-/// V col-major:  V(k,i) = V[i * nb + k]
-template <typename T>
-static void rotate_loop(int nb, int lda, int nvalid,
-                        int ldv, T alpha, const T* V, const T* A,
-                        T beta, T* C)
-{
-    for (int i = 0; i < nb; ++i) {
-        for (int ig = 0; ig < nvalid; ++ig) {
-            T sum = static_cast<T>(0.0);
-            for (int k = 0; k < nb; ++k)
-                sum += V[i * ldv + k] * A[k * lda + ig];
-            C[i * lda + ig] = (beta == static_cast<T>(0.0))
-                             ? alpha * sum
-                             : alpha * sum + beta * C[i * lda + ig];
-        }
-        for (int ig = nvalid; ig < lda; ++ig) {
-            C[i * lda + ig] = static_cast<T>(0.0);
-        }
-    }
-}
-
 // ============================================================================
 // File-static helpers
 // ============================================================================
+
+using LobpcgClock = std::chrono::steady_clock;
+
+static constexpr const char* LOBPCG_PROBLEM_GENERALIZED = "S!=I";
+static constexpr const char* LOBPCG_STAGE_ROLLBACK_BACKUP = "rollback_backup";
+static constexpr const char* LOBPCG_STAGE_ROLLBACK_RESTORE = "rollback_restore";
+static constexpr const char* LOBPCG_STAGE_FALLBACK_RESTORE = "fallback_restore";
+static constexpr const char* LOBPCG_STAGE_LOBPCG_UPDATE = "lobpcg_update";
+static constexpr const char* LOBPCG_STAGE_LOBPCG_UPDATE_RETRY = "lobpcg_update_retry";
+static constexpr const char* LOBPCG_STAGE_FALLBACK_RR = "fallback_rr";
+static constexpr const char* LOBPCG_STAGE_SOFT_LOCK_RESIDUAL = "soft_lock_residual";
+static constexpr const char* LOBPCG_STAGE_SOFT_LOCK_RECHECK = "soft_lock_recheck_residual";
+static constexpr const char* LOBPCG_STAGE_FINAL_RESIDUAL = "final_residual";
+static constexpr const char* LOBPCG_STAGE_BEST_STATE_RESIDUAL = "best_state_residual";
+
+template <typename T>
+struct LobpcgGeneralizedUpdateBuffers
+{
+    T* x = nullptr;
+    T* hx = nullptr;
+    T* sx = nullptr;
+    T* p = nullptr;
+    T* hp = nullptr;
+    T* sp = nullptr;
+};
+
+template <typename Real>
+static void copy_lowest_subspace_eigenvalues(const Real* sub, Real* eig, const int n)
+{
+    for (int ib = 0; ib < n; ++ib) {
+        eig[ib] = sub[ib];
+    }
+}
+
+static bool should_continue_for_notconv(const int notconv, const int notconv_max)
+{
+    return notconv_max >= 0 ? notconv > notconv_max : notconv > 0;
+}
+
+static bool notconv_exceeds_limit(const int notconv, const int notconv_max)
+{
+    return notconv_max >= 0 && notconv > notconv_max;
+}
+
+template <typename Real>
+static Real max_residual_local(const Real* residual, const int local_size)
+{
+    Real max_residual = static_cast<Real>(0.0);
+    for (int ib = 0; ib < local_size; ++ib) {
+        max_residual = std::max(max_residual, residual[ib]);
+    }
+    return max_residual;
+}
+
+template <typename Real>
+static int count_not_converged_local(
+    const Real* residual,
+    const double* threshold,
+    const int local_size)
+{
+    int notconv = 0;
+    for (int ib = 0; ib < local_size; ++ib) {
+        if (residual[ib] > static_cast<Real>(threshold[ib])) {
+            ++notconv;
+        }
+    }
+    return notconv;
+}
+
+static void print_lobpcg_diag_message(const std::string& message)
+{
+    std::cout << "\n " << message << std::endl;
+    if (GlobalV::ofs_running.good()) {
+        GlobalV::ofs_running << " " << message << std::endl;
+        GlobalV::ofs_running.flush();
+    }
+}
+
+template <typename T>
+static LobpcgGeneralizedUpdateBuffers<T> make_generalized_update_buffers(T* x, T* hx, T* sx,
+                                                                         T* p, T* hp, T* sp)
+{
+    LobpcgGeneralizedUpdateBuffers<T> buffers;
+    buffers.x = x;
+    buffers.hx = hx;
+    buffers.sx = sx;
+    buffers.p = p;
+    buffers.hp = hp;
+    buffers.sp = sp;
+    return buffers;
+}
+
+template <typename T, typename Device>
+static void zero_update_buffers(const LobpcgGeneralizedUpdateBuffers<T>& buffers, const int local_sz)
+{
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    using setmem_complex_op = ct::kernels::set_memory<T, ct_Device>;
+    setmem_complex_op()(buffers.x, static_cast<T>(0.0), local_sz);
+    setmem_complex_op()(buffers.hx, static_cast<T>(0.0), local_sz);
+    setmem_complex_op()(buffers.sx, static_cast<T>(0.0), local_sz);
+    setmem_complex_op()(buffers.p, static_cast<T>(0.0), local_sz);
+    setmem_complex_op()(buffers.hp, static_cast<T>(0.0), local_sz);
+    setmem_complex_op()(buffers.sp, static_cast<T>(0.0), local_sz);
+}
+
+template <typename T, typename Device>
+static void add_block_to(const T* src, T* dst, const int local_sz, const T* one)
+{
+    ModuleBase::axpy_op<T, Device>()(local_sz, one, src, 1, dst, 1);
+}
+
+template <typename T, typename Device>
+static void sync_generalized_update(ct::Tensor& psi,
+                                    ct::Tensor& hpsi,
+                                    ct::Tensor& spsi,
+                                    ct::Tensor& pdir,
+                                    ct::Tensor& hpdir,
+                                    ct::Tensor& spdir,
+                                    const LobpcgGeneralizedUpdateBuffers<T>& buffers,
+                                    const int local_sz)
+{
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
+    syncmem_complex_op()(psi.data<T>(),   buffers.x,  local_sz);
+    syncmem_complex_op()(hpsi.data<T>(),  buffers.hx, local_sz);
+    syncmem_complex_op()(spsi.data<T>(),  buffers.sx, local_sz);
+    syncmem_complex_op()(pdir.data<T>(),  buffers.p,  local_sz);
+    syncmem_complex_op()(hpdir.data<T>(), buffers.hp, local_sz);
+    syncmem_complex_op()(spdir.data<T>(), buffers.sp, local_sz);
+}
 
 template <typename T>
 static void mirror_lower(T* mat, int ld, int active_sub)
@@ -351,6 +431,29 @@ static bool finite_vector_block(const T* data, int nvec, int lda, int nvalid)
     return true;
 }
 
+template <typename T, typename Real>
+static int update_invalid_mask(const T* psi,
+                               const T* hpsi,
+                               const T* spsi,
+                               const Real* eigen,
+                               const int nvec,
+                               const int lda,
+                               const int nvalid,
+                               const int n)
+{
+    int invalid_mask =
+        (!finite_vector_block(psi, nvec, lda, nvalid) ? 1 : 0)
+      | (!finite_vector_block(hpsi, nvec, lda, nvalid) ? 2 : 0);
+    if (spsi != nullptr) {
+        invalid_mask |= !finite_vector_block(spsi, nvec, lda, nvalid) ? 4 : 0;
+    }
+    invalid_mask |= !finite_real_block(eigen, n) ? (spsi != nullptr ? 8 : 4) : 0;
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
+#endif
+    return invalid_mask;
+}
+
 template <typename T>
 static std::string vector_block_diagnostics(const char* name,
                                             const T* data,
@@ -404,36 +507,6 @@ static std::string vector_block_diagnostics(const char* name,
         << " finite_norm_max=" << max_norm
         << " max_abs=" << max_abs;
     return oss.str();
-}
-
-static void lobpcg_diag_log(const std::string& context,
-                            const std::string& line1,
-                            const std::string& line2,
-                            const std::string& line3 = std::string())
-{
-    std::ostringstream oss;
-    oss << " LOBPCG_DIAG " << context << '\n'
-        << "   " << line1 << '\n'
-        << "   " << line2 << '\n';
-    if (!line3.empty()) {
-        oss << "   " << line3 << '\n';
-    }
-    if (GlobalV::ofs_running.good()) {
-        GlobalV::ofs_running << oss.str();
-        GlobalV::ofs_running.flush();
-    }
-}
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::diag_log(const std::string& context,
-                                      const std::string& line1,
-                                      const std::string& line2,
-                                      const std::string& line3) const
-{
-    const std::string full_context = this->diag_context.empty()
-        ? context
-        : context + " [" + this->diag_context + "]";
-    lobpcg_diag_log(full_context, line1, line2, line3);
 }
 
 template <typename T>
@@ -596,6 +669,434 @@ static bool append_s_orthonormal_block(
 }
 
 // ============================================================================
+// Profiled state and fallback helpers
+// ============================================================================
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::profiled_save_state(State& state,
+                                                  const char* stage)
+{
+    const auto t0 = LobpcgClock::now();
+    this->save_state(state);
+    this->profile_accumulate_stage(stage,
+                                   std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::profiled_restore_state(const State& state,
+                                                     const bool reset_search,
+                                                     const char* stage)
+{
+    const auto t0 = LobpcgClock::now();
+    this->restore_state(state, reset_search);
+    this->profile_accumulate_stage(stage,
+                                   std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+}
+
+template <typename T, typename Device>
+bool DiagoLobpcg<T, Device>::update_best_state(State& state,
+                                                StateQuality& quality,
+                                                const int candidate_notconv,
+                                                const Real candidate_residual)
+{
+    if (!lobpcg_detail::state_is_better(candidate_notconv,
+                                        candidate_residual,
+                                        quality.valid,
+                                        quality.notconv,
+                                        quality.residual)) {
+        return false;
+    }
+    quality.residual = candidate_residual;
+    quality.notconv = candidate_notconv;
+    quality.valid = true;
+    this->save_state(state);
+    return true;
+}
+
+template <typename T, typename Device>
+template <typename Func>
+void DiagoLobpcg<T, Device>::profiled_call(const char* problem_type,
+                                            const char* stage,
+                                            const int iter,
+                                            const Func& func)
+{
+    const auto t0 = LobpcgClock::now();
+    func();
+    this->profile_log(problem_type, stage, iter,
+                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+}
+
+template <typename T, typename Device>
+template <typename UpdateFunc, typename RepairFunc>
+void DiagoLobpcg<T, Device>::update_subspace_with_fallback(const char* problem_type,
+                                                            const char* first_failure,
+                                                            const char* retry_failure,
+                                                            const bool always_log_failure,
+                                                            State& rollback_state,
+                                                            const int used_iter,
+                                                            const UpdateFunc& update_func,
+                                                            const RepairFunc& repair_func)
+{
+    try {
+        this->profiled_call(problem_type, LOBPCG_STAGE_LOBPCG_UPDATE, used_iter, update_func);
+    } catch (const std::exception& e1) {
+        if (always_log_failure || this->profile_enabled()) {
+            this->diag_log(std::string(first_failure) + ": " + e1.what(),
+                           "retry without previous search direction",
+                           "iteration=" + std::to_string(used_iter));
+        }
+        this->profiled_restore_state(rollback_state, true, LOBPCG_STAGE_ROLLBACK_RESTORE);
+
+        try {
+            this->profiled_call(problem_type, LOBPCG_STAGE_LOBPCG_UPDATE_RETRY, used_iter, update_func);
+        } catch (const std::exception& e2) {
+            if (always_log_failure || this->profile_enabled()) {
+                this->diag_log(std::string(retry_failure) + ": " + e2.what(),
+                               "fallback to Rayleigh-Ritz repair",
+                               "iteration=" + std::to_string(used_iter));
+            }
+            this->profiled_restore_state(rollback_state, false, LOBPCG_STAGE_FALLBACK_RESTORE);
+            this->profiled_call(problem_type, LOBPCG_STAGE_FALLBACK_RR, used_iter, repair_func);
+        }
+    }
+}
+
+template <typename T, typename Device>
+template <typename RecomputeFunc>
+void DiagoLobpcg<T, Device>::restore_best_state_if_needed(
+    const char* problem_type,
+    const char* diag_name,
+    State& best_state,
+    const StateQuality& best_quality,
+    const int used_iter,
+    Real& final_residual,
+    int& final_notconv,
+    const RecomputeFunc& recompute_final_quality)
+{
+    if (!lobpcg_detail::should_restore_best_state(best_quality.valid,
+                                                  final_notconv,
+                                                  final_residual,
+                                                  best_quality.notconv,
+                                                  best_quality.residual)) {
+        return;
+    }
+
+    this->diag_log(std::string(diag_name) + " restored best residual state",
+                   "final=" + std::to_string(final_residual)
+                       + ", final_notconv=" + std::to_string(final_notconv),
+                   "best=" + std::to_string(best_quality.residual)
+                       + ", best_notconv=" + std::to_string(best_quality.notconv),
+                   "context={" + this->diag_context + "}");
+    this->restore_state(best_state, true);
+    ++this->profile_stats.best_state_restores;
+    this->profiled_call(problem_type, LOBPCG_STAGE_BEST_STATE_RESIDUAL, used_iter, [&]() {
+        recompute_final_quality(final_residual, final_notconv);
+    });
+}
+
+template <typename T, typename Device>
+int DiagoLobpcg<T, Device>::run_lobpcg_loop(
+    const char* problem_type,
+    const char* diag_name,
+    const HPsiFunc& hpsi_func,
+    const SPsiFunc& spsi_func,
+    const std::vector<double>& effective_ethr_band,
+    const int scf_iter)
+{
+    const int default_max_iter = (scf_iter > 1) ? this->nline : (this->nline * 20);
+    const int max_iter = (this->max_iter > 0) ? this->max_iter : default_max_iter;
+    int used_iter = 0;
+    State rollback_state;
+    State best_state;
+    StateQuality best_quality;
+    std::string stop_reason;
+
+    auto compute_residual = [&]() {
+        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                 this->prec, this->grad, this->err_st);
+    };
+
+    for (int ntry = 0; ntry < max_iter; ++ntry) {
+        used_iter = ntry + 1;
+        this->profiled_call(problem_type, "residual", used_iter, compute_residual);
+        const Real residual_before_update = this->max_error(this->err_st);
+        const int notconv_before_update = this->count_not_converged(this->err_st, effective_ethr_band);
+        const bool continues_for_notconv =
+            should_continue_for_notconv(notconv_before_update, this->notconv_max);
+        this->update_best_state(best_state,
+                                best_quality,
+                                notconv_before_update,
+                                residual_before_update);
+        const std::vector<char> soft_lock_mask =
+            this->make_soft_lock_mask(this->err_st,
+                                      effective_ethr_band,
+                                      notconv_before_update);
+        if (!continues_for_notconv) {
+            break;
+        }
+
+        this->profile_record_active_bands(notconv_before_update);
+        this->profiled_call(problem_type, "grad_spsi", used_iter, [&]() {
+            this->calc_spsi_with_block(spsi_func, this->grad.data<T>(), this->sgrad);
+        });
+        this->profiled_call(problem_type, "grad_projection", used_iter, [&]() {
+            this->orth_projection_s(this->psi, this->spsi, this->tmp_hsub,
+                                    this->sgrad, this->grad);
+        });
+        this->profiled_call(problem_type, "grad_hpsi", used_iter, [&]() {
+            this->calc_hpsi_with_block(hpsi_func, this->grad.data<T>(), this->hgrad);
+        });
+        this->profiled_save_state(rollback_state, LOBPCG_STAGE_ROLLBACK_BACKUP);
+
+        this->update_subspace_with_fallback(
+            problem_type,
+            "lobpcg_update_s failed",
+            "lobpcg_update_s retry failed",
+            true,
+            rollback_state,
+            used_iter,
+            [&]() {
+                this->update_generalized_subspace(false);
+            },
+            [&]() {
+                this->repair_generalized_subspace(hpsi_func, spsi_func);
+            });
+
+        bool update_rejected = false;
+        this->profiled_call(problem_type,
+                            "post_update_residual",
+                            used_iter,
+                            compute_residual);
+        Real residual_after_update = this->max_error(this->err_st);
+        int notconv_after_update = this->count_not_converged(this->err_st, effective_ethr_band);
+        if (!soft_lock_mask.empty()
+            && this->restore_generalized_soft_locked_bands(rollback_state,
+                                                           soft_lock_mask,
+                                                           this->err_st,
+                                                           effective_ethr_band)) {
+            this->profiled_call(problem_type,
+                                LOBPCG_STAGE_SOFT_LOCK_RECHECK,
+                                used_iter,
+                                compute_residual);
+            residual_after_update = this->max_error(this->err_st);
+            notconv_after_update = this->count_not_converged(this->err_st, effective_ethr_band);
+        }
+        const Real residual_growth_limit = lobpcg_detail::generalized_residual_growth_limit<Real>();
+        const Real residual_limit = lobpcg_detail::residual_guard_limit(
+            residual_before_update,
+            residual_growth_limit);
+        update_rejected = lobpcg_detail::should_reject_residual_update(
+            notconv_before_update,
+            residual_before_update,
+            notconv_after_update,
+            residual_after_update,
+            residual_growth_limit);
+#ifdef __MPI
+        Parallel_Reduce::reduce_bool_or(update_rejected, BP_WORLD);
+#endif
+        bool stop_after_rejected_update = false;
+        if (update_rejected) {
+            stop_after_rejected_update = this->handle_generalized_rejected_update(
+                rollback_state,
+                best_state,
+                best_quality,
+                update_rejected,
+                used_iter,
+                notconv_before_update,
+                residual_before_update,
+                residual_after_update,
+                residual_limit,
+                residual_growth_limit,
+                effective_ethr_band);
+        } else {
+            this->update_best_state(best_state, best_quality,
+                                    notconv_after_update, residual_after_update);
+        }
+        if (this->profile_enabled()) {
+            std::ostringstream oss;
+            oss << "residual_before=" << std::setprecision(12) << residual_before_update
+                << " residual_after=" << residual_after_update
+                << " best=" << best_quality.residual
+                << " notconv_before=" << notconv_before_update
+                << " notconv_after=" << notconv_after_update
+                << " best_notconv=" << best_quality.notconv
+                << " limit=" << residual_limit
+                << " rejected=" << (update_rejected ? 1 : 0)
+                << " has_pdir=" << (this->has_pdir ? 1 : 0);
+            this->diag_log("lobpcg_update_s residual trace",
+                           oss.str(),
+                           "iteration=" + std::to_string(used_iter));
+        }
+        if (stop_after_rejected_update) {
+            ++this->profile_stats.residual_guard_stops;
+            this->diag_log("lobpcg_update_s stopped after residual-guard rollback",
+                           "no accepted updated state; returning control to outer SCF",
+                           "iteration=" + std::to_string(used_iter));
+            stop_reason = "stopped after residual-guard rollback";
+            break;
+        }
+
+        const bool has_next_iteration = (ntry + 1) < max_iter;
+        const bool restart_next = has_next_iteration && scf_iter == 1 && ((ntry + 1) % this->nline == 0);
+        if (has_next_iteration && !restart_next && !update_rejected) {
+            try {
+                this->profiled_call(problem_type, "p_projection", used_iter, [&]() {
+                    this->project_generalized_search_direction(hpsi_func, spsi_func);
+                });
+            } catch (const std::exception&) {
+                this->profiled_restore_state(rollback_state, true, LOBPCG_STAGE_ROLLBACK_RESTORE);
+            }
+        }
+        if (restart_next) {
+            this->clear_search_directions();
+        }
+    }
+
+    this->profiled_call(problem_type, LOBPCG_STAGE_FINAL_RESIDUAL, used_iter, compute_residual);
+    Real final_residual = this->max_error(this->err_st);
+    int final_notconv = this->count_not_converged(this->err_st, effective_ethr_band);
+    this->restore_best_state_if_needed(
+        problem_type,
+        diag_name,
+        best_state,
+        best_quality,
+        used_iter,
+        final_residual,
+        final_notconv,
+        [&](Real& residual, int& notconv) {
+            compute_residual();
+            residual = this->max_error(this->err_st);
+            notconv = this->count_not_converged(this->err_st, effective_ethr_band);
+        });
+    this->profile_summary(problem_type, used_iter, final_residual, final_notconv);
+    if (stop_reason.empty()
+        && !should_continue_for_notconv(final_notconv, this->notconv_max)) {
+        stop_reason = "stopped with allowed unconverged bands";
+    }
+    this->report_not_converged(problem_type,
+                               used_iter,
+                               max_iter,
+                               effective_ethr_band,
+                               stop_reason);
+    return used_iter;
+}
+
+template <typename T, typename Device>
+bool DiagoLobpcg<T, Device>::handle_generalized_rejected_update(
+    const State& rollback_state,
+    State& best_state,
+    StateQuality& best_quality,
+    bool& update_rejected,
+    const int used_iter,
+    const int notconv_before_update,
+    const Real residual_before_update,
+    const Real residual_after_update,
+    const Real residual_limit,
+    const Real residual_growth_limit,
+    const std::vector<double>& effective_ethr_band)
+{
+    ++this->profile_stats.residual_guard_rejections;
+    auto restore_backup_state = [&]() {
+        this->profiled_restore_state(rollback_state, true, LOBPCG_STAGE_ROLLBACK_RESTORE);
+    };
+    this->diag_log("lobpcg_update_s rejected residual-increasing step",
+                   "before=" + std::to_string(residual_before_update)
+                       + ", after=" + std::to_string(residual_after_update)
+                       + ", limit=" + std::to_string(residual_limit),
+                   this->n_band_l != this->n_band ? "retry with compressed S_sub path"
+                                                  : "fallback to backed-up Rayleigh-Ritz state",
+                   "iteration=" + std::to_string(used_iter));
+    restore_backup_state();
+
+    Real guarded_residual = std::numeric_limits<Real>::max();
+    bool stop_after_rejected_update = false;
+    if (this->n_band_l != this->n_band) {
+        bool compressed_ok = false;
+        ++this->profile_stats.compressed_guard_attempts;
+        try {
+            this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "lobpcg_update_compressed_guard", used_iter, [&]() {
+                this->update_generalized_subspace(true);
+            });
+            this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "compressed_guard_residual", used_iter, [&]() {
+                this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                         this->prec, this->grad, this->err_st);
+            });
+            guarded_residual = this->max_error(this->err_st);
+            const int guarded_notconv = this->count_not_converged(this->err_st, effective_ethr_band);
+            compressed_ok = lobpcg_detail::compressed_guard_is_acceptable(
+                notconv_before_update,
+                residual_before_update,
+                guarded_notconv,
+                guarded_residual,
+                residual_growth_limit);
+#ifdef __MPI
+            Parallel_Reduce::reduce_bool_and(compressed_ok, BP_WORLD);
+#endif
+        } catch (const std::exception& e) {
+            this->diag_log("lobpcg_update_s compressed guard failed: " + std::string(e.what()),
+                           "fallback to backed-up Rayleigh-Ritz state",
+                           "iteration=" + std::to_string(used_iter));
+        }
+        if (!compressed_ok) {
+            restore_backup_state();
+            this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "rollback_residual", used_iter, [&]() {
+                this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                         this->prec, this->grad, this->err_st);
+            });
+            guarded_residual = this->max_error(this->err_st);
+            stop_after_rejected_update = true;
+        } else {
+            update_rejected = false;
+            ++this->profile_stats.compressed_guard_accepts;
+        }
+    } else {
+        this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "rollback_residual", used_iter, [&]() {
+            this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
+                                     this->prec, this->grad, this->err_st);
+        });
+        guarded_residual = this->max_error(this->err_st);
+        stop_after_rejected_update = true;
+    }
+
+    const int guarded_notconv = this->count_not_converged(this->err_st, effective_ethr_band);
+    this->update_best_state(best_state, best_quality,
+                            guarded_notconv, guarded_residual);
+    return stop_after_rejected_update;
+}
+
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::diag_log(const std::string& context,
+                                      const std::string& line1,
+                                      const std::string& line2,
+                                      const std::string& line3) const
+{
+    const std::string full_context = this->diag_context.empty()
+        ? context
+        : context + " [" + this->diag_context + "]";
+    std::ostringstream oss;
+    oss << " LOBPCG_DIAG " << full_context << '\n'
+        << "   " << line1 << '\n'
+        << "   " << line2 << '\n';
+    if (!line3.empty()) {
+        oss << "   " << line3 << '\n';
+    }
+    if (GlobalV::ofs_running.good()) {
+        GlobalV::ofs_running << oss.str();
+        GlobalV::ofs_running.flush();
+    }
+}
+
+template <typename T, typename Device>
+std::string DiagoLobpcg<T, Device>::error_with_context(const std::string& message) const
+{
+    if (this->diag_context.empty()) {
+        return message;
+    }
+    return message + "; context={" + this->diag_context + "}";
+}
+
+// ============================================================================
 // Constructor / Destructor
 // ============================================================================
 
@@ -666,12 +1167,20 @@ void DiagoLobpcg<T, Device>::init_iter(int nband, int nband_l,
                               n_dim, n_band);
     this->plintrans.set_dimension(n_dim, nband_l, n_band_l, n_basis,
                                   BP_WORLD, false);
+    this->plintrans_batch2.set_dimension(2 * n_dim, nband_l, n_band_l, 2 * n_dim,
+                                         BP_WORLD, false);
+    this->plintrans_batch3.set_dimension(3 * n_dim, nband_l, n_band_l, 3 * n_dim,
+                                         BP_WORLD, false);
 #else
     this->pmmcn.set_dimension(n_band_l, n_basis,
                               n_band_l, n_basis,
                               n_dim, n_band);
     this->plintrans.set_dimension(n_dim, nband_l, n_band_l, n_basis,
                                   false);
+    this->plintrans_batch2.set_dimension(2 * n_dim, nband_l, n_band_l, 2 * n_dim,
+                                         false);
+    this->plintrans_batch3.set_dimension(3 * n_dim, nband_l, n_band_l, 3 * n_dim,
+                                         false);
 #endif
 }
 
@@ -680,10 +1189,225 @@ int DiagoLobpcg<T, Device>::local_band_start() const
 {
 #ifdef __MPI
     if (this->plintrans.nproc_col > 1) {
-        return this->plintrans.start_colB[GlobalV::MY_BNDGROUP];
+        return this->plintrans.start_colB[this->plintrans.rank_col];
     }
 #endif
     return 0;
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::clear_search_directions()
+{
+    const int psi_sz = this->n_basis * this->n_band_l;
+    setmem_complex_op()(this->pdir.data<T>(), static_cast<T>(0.0), psi_sz);
+    setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
+    setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
+    this->has_pdir = false;
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::save_state(std::vector<T>& psi_out,
+                                         std::vector<T>& hpsi_out,
+                                         std::vector<Real>& eigen_out)
+{
+    const int psi_sz = this->n_basis * this->n_band_l;
+    const int eig_sz = this->n_band;
+    psi_out.resize(psi_sz);
+    hpsi_out.resize(psi_sz);
+    eigen_out.resize(eig_sz);
+
+    syncmem_complex_d2h_op()(psi_out.data(), this->psi.data<T>(), psi_sz);
+    syncmem_complex_d2h_op()(hpsi_out.data(), this->hpsi.data<T>(), psi_sz);
+    syncmem_var_d2h_op()(eigen_out.data(), this->eigen.data<Real>(), eig_sz);
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::restore_state(const std::vector<T>& psi_in,
+                                            const std::vector<T>& hpsi_in,
+                                            const std::vector<Real>& eigen_in,
+                                            const bool reset_search)
+{
+    const int psi_sz = this->n_basis * this->n_band_l;
+    const int eig_sz = this->n_band;
+    syncmem_complex_h2d_op()(this->psi.data<T>(), psi_in.data(), psi_sz);
+    syncmem_complex_h2d_op()(this->hpsi.data<T>(), hpsi_in.data(), psi_sz);
+    syncmem_var_h2d_op()(this->eigen.data<Real>(), eigen_in.data(), eig_sz);
+    if (reset_search) {
+        this->clear_search_directions();
+    }
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::save_state(State& state)
+{
+    this->save_state(state.psi, state.hpsi, state.eigen);
+    const int psi_sz = this->n_basis * this->n_band_l;
+    state.spsi.resize(psi_sz);
+    syncmem_complex_d2h_op()(state.spsi.data(), this->spsi.data<T>(), psi_sz);
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::restore_state(const State& state,
+                                            const bool reset_search)
+{
+    this->restore_state(state.psi, state.hpsi, state.eigen, false);
+    const int psi_sz = this->n_basis * this->n_band_l;
+    syncmem_complex_h2d_op()(this->spsi.data<T>(), state.spsi.data(), psi_sz);
+    if (reset_search) {
+        this->clear_search_directions();
+    }
+}
+
+template <typename T, typename Device>
+std::vector<char> DiagoLobpcg<T, Device>::make_soft_lock_mask(
+    const ct::Tensor& err_in,
+    const std::vector<double>& ethr_band,
+    const int notconv) const
+{
+    if (this->n_band_l == this->n_band || notconv <= 0 || notconv >= this->n_band) {
+        return {};
+    }
+
+    std::vector<char> soft_lock_mask(this->n_band_l, 0);
+    const Real* err_d = err_in.data<Real>();
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        soft_lock_mask[ib] = err_d[ib] <= static_cast<Real>(ethr_band[ib]) ? 1 : 0;
+    }
+    return soft_lock_mask;
+}
+
+template <typename T, typename Device>
+bool DiagoLobpcg<T, Device>::restore_generalized_soft_locked_bands(
+    const State& state,
+    const std::vector<char>& soft_lock_mask,
+    const ct::Tensor& err_in,
+    const std::vector<double>& ethr_band)
+{
+    return this->restore_soft_locked_bands(state, soft_lock_mask, err_in, ethr_band);
+}
+
+template <typename T, typename Device>
+bool DiagoLobpcg<T, Device>::restore_soft_locked_bands(
+    const State& state,
+    const std::vector<char>& soft_lock_mask,
+    const ct::Tensor& err_in,
+    const std::vector<double>& ethr_band)
+{
+    if (soft_lock_mask.empty()) {
+        return false;
+    }
+
+    const Real* err_d = err_in.data<Real>();
+    Real* eigen_d = this->eigen.data<Real>();
+    T* psi_d = this->psi.data<T>();
+    T* hpsi_d = this->hpsi.data<T>();
+    T* spsi_d = this->spsi.data<T>();
+    int restored_local = 0;
+    const int local_start = this->local_band_start();
+
+    for (int ib = 0; ib < this->n_band_l; ++ib) {
+        if (soft_lock_mask[ib] == 0) {
+            continue;
+        }
+        const bool damaged = !std::isfinite(err_d[ib])
+            || err_d[ib] > static_cast<Real>(ethr_band[ib]);
+        if (!damaged) {
+            continue;
+        }
+
+        const int offset = ib * this->n_basis;
+        std::copy(state.psi.begin() + offset,
+                  state.psi.begin() + offset + this->n_basis,
+                  psi_d + offset);
+        std::copy(state.hpsi.begin() + offset,
+                  state.hpsi.begin() + offset + this->n_basis,
+                  hpsi_d + offset);
+        std::copy(state.spsi.begin() + offset,
+                  state.spsi.begin() + offset + this->n_basis,
+                  spsi_d + offset);
+        eigen_d[local_start + ib] = state.eigen[local_start + ib];
+        ++restored_local;
+    }
+
+    int restored_global = restored_local;
+#ifdef __MPI
+    Parallel_Reduce::reduce_sum(restored_global, BP_WORLD);
+#endif
+    if (restored_global > 0) {
+        ++this->profile_stats.soft_lock_restores;
+        this->profile_stats.soft_lock_restored_bands += restored_global;
+        this->clear_search_directions();
+    }
+    return restored_global > 0;
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::ensure_generalized_update_finite(const ct::Tensor& psi,
+                                                               const ct::Tensor& hpsi,
+                                                               const ct::Tensor& spsi,
+                                                               const ct::Tensor& eigen,
+                                                               const int nbs,
+                                                               const int n,
+                                                               const char* log_context,
+                                                               const char* error_message) const
+{
+    const int invalid_mask = update_invalid_mask(psi.data<T>(), hpsi.data<T>(), spsi.data<T>(),
+                                                 eigen.data<Real>(), this->n_band_l, nbs, this->n_dim, n);
+    if (invalid_mask == 0) {
+        return;
+    }
+    this->diag_log(log_context,
+                   vector_block_diagnostics("psi", psi.data<T>(), this->n_band_l, nbs, this->n_dim),
+                   vector_block_diagnostics("hpsi", hpsi.data<T>(), this->n_band_l, nbs, this->n_dim),
+                   vector_block_diagnostics("spsi", spsi.data<T>(), this->n_band_l, nbs, this->n_dim)
+                       + ", eigen_invalid=" + std::to_string((invalid_mask & 8) != 0)
+                       + ", invalid_mask=" + std::to_string(invalid_mask));
+    throw std::runtime_error(error_message);
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::update_generalized_subspace(const bool force_compressed)
+{
+    if (this->n_band_l != this->n_band) {
+        this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
+                                       this->grad, this->hgrad, this->sgrad,
+                                       this->pdir, this->hpdir, this->spdir,
+                                       this->eigen, force_compressed);
+    } else {
+        this->lobpcg_update_s(this->psi, this->hpsi, this->spsi,
+                              this->grad, this->hgrad, this->sgrad,
+                              this->pdir, this->hpdir, this->spdir,
+                              this->eigen);
+    }
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::repair_generalized_subspace(const HPsiFunc& hpsi_func,
+                                                          const SPsiFunc& spsi_func)
+{
+    this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
+    this->calc_spsi_with_block(spsi_func, this->psi.data<T>(), this->spsi);
+    if (this->n_band_l != this->n_band) {
+        this->generalized_rayleigh_ritz_parallel(this->psi, this->hpsi, this->spsi, this->eigen);
+    } else {
+        this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
+    }
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::project_generalized_search_direction(const HPsiFunc& hpsi_func,
+                                                                   const SPsiFunc& spsi_func)
+{
+    if (this->n_band_l != this->n_band) {
+        this->orth_projection_s_with_h(this->psi, this->hpsi, this->spsi,
+                                       this->tmp_hsub, this->hpdir,
+                                       this->spdir, this->pdir);
+    } else {
+        this->calc_spsi_with_block(spsi_func, this->pdir.data<T>(), this->spdir);
+        this->orth_projection_s(this->psi, this->spsi, this->tmp_hsub,
+                                this->spdir, this->pdir);
+        this->calc_hpsi_with_block(hpsi_func, this->pdir.data<T>(), this->hpdir);
+    }
 }
 
 // ============================================================================
@@ -720,7 +1444,7 @@ void DiagoLobpcg<T, Device>::calc_hpsi_with_block(
                                                  this->n_band_l,
                                                  this->n_basis,
                                                  this->n_dim));
-        throw std::runtime_error("LOBPCG hPsi produced non-finite values");
+        throw std::runtime_error(this->error_with_context("LOBPCG hPsi produced non-finite values"));
     }
 }
 
@@ -742,7 +1466,7 @@ void DiagoLobpcg<T, Device>::calc_spsi_with_block(
                                                  this->n_band_l,
                                                  this->n_basis,
                                                  this->n_dim));
-        throw std::runtime_error("LOBPCG sPsi produced non-finite values");
+        throw std::runtime_error(this->error_with_context("LOBPCG sPsi produced non-finite values"));
     }
 }
 
@@ -871,58 +1595,6 @@ void DiagoLobpcg<T, Device>::repair_initial_subspace_s(
     }
 }
 
-// ============================================================================
-// rayleigh_ritz (NC, S=I)
-//
-// psi_in is assumed orthonormal.  H_sub = <psi|H|psi>,  heevd,  rotate.
-// ============================================================================
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::rayleigh_ritz(
-    ct::Tensor& psi_inout, ct::Tensor& hpsi_inout, ct::Tensor& eigen_out)
-{
-    const int nb = this->n_band;
-    const int nbs = this->n_basis;
-    const int nvalid = this->n_dim;
-    const int local_sz = this->n_band_l * nbs;
-
-    this->pmmcn.multiply(1.0, psi_inout.data<T>(), hpsi_inout.data<T>(),
-                         0.0, this->tmp_hsub.data<T>());
-    mirror_lower(this->tmp_hsub.data<T>(), nb, nb);
-    clean_hermitian_diag(this->tmp_hsub.data<T>(), nb, nb);
-
-    // Force exact Hermitian symmetrization.
-    {
-        T* hsub = this->tmp_hsub.data<T>();
-        for (int jj = 0; jj < nb; ++jj) {
-            hsub[jj * nb + jj] = T(std::real(hsub[jj * nb + jj]), 0.0);
-            for (int ii = jj + 1; ii < nb; ++ii) {
-                T a = hsub[jj * nb + ii];
-                T b = std::conj(hsub[ii * nb + jj]);
-                T avg = static_cast<T>(0.5) * (a + b);
-                hsub[jj * nb + ii] = avg;
-                hsub[ii * nb + jj] = std::conj(avg);
-            }
-        }
-    }
-
-    try {
-        ct::kernels::lapack_heevd<T, ct_Device>()(
-            nb, this->tmp_hsub.data<T>(), nb, eigen_out.data<Real>());
-    } catch (const std::exception& e) {
-        this->diag_log("rayleigh_ritz heevd failed: " + std::string(e.what()),
-                        hermitian_matrix_diagnostics("H_sub", this->tmp_hsub.data<T>(), nb, nb),
-                        "S_sub unavailable for standard Rayleigh-Ritz");
-        throw;
-    }
-
-    this->rotate_wf(this->tmp_hsub, psi_inout, this->work);
-    syncmem_complex_op()(psi_inout.data<T>(), this->work.data<T>(), local_sz);
-
-    this->rotate_wf(this->tmp_hsub, hpsi_inout, this->work);
-    syncmem_complex_op()(hpsi_inout.data<T>(), this->work.data<T>(), local_sz);
-}
-
 template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz(
     ct::Tensor& psi_inout, ct::Tensor& hpsi_inout,
@@ -933,21 +1605,16 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz(
     const int nvalid = this->n_dim;
     const int local_sz = this->n_band_l * nbs;
 
-    for (int ii = 0; ii < nb * nb; ++ii) {
-        this->tmp_hsub.data<T>()[ii] = static_cast<T>(0.0);
-        this->tmp_ssub.data<T>()[ii] = static_cast<T>(0.0);
-    }
-
-    inner_product_loop<T>(nb, nbs, nvalid, this->one_,
-                          psi_inout.data<T>(), hpsi_inout.data<T>(),
-                          this->zero_, this->tmp_hsub.data<T>());
-    inner_product_loop<T>(nb, nbs, nvalid, this->one_,
-                          psi_inout.data<T>(), spsi_inout.data<T>(),
-                          this->zero_, this->tmp_ssub.data<T>());
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(this->tmp_hsub.data<T>(), nb * nb);
-    Parallel_Reduce::reduce_pool(this->tmp_ssub.data<T>(), nb * nb);
-#endif
+    this->pgemm_multiply(this->one_,
+                         psi_inout.data<T>(),
+                         hpsi_inout.data<T>(),
+                         this->zero_,
+                         this->tmp_hsub.data<T>());
+    this->pgemm_multiply(this->one_,
+                         psi_inout.data<T>(),
+                         spsi_inout.data<T>(),
+                         this->zero_,
+                         this->tmp_ssub.data<T>());
     hermitize(this->tmp_hsub.data<T>(), nb, nb);
     hermitize(this->tmp_ssub.data<T>(), nb, nb);
 
@@ -1004,20 +1671,13 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz(
         }
     }
 
-    rotate_loop<T>(nb, nbs, nvalid, nb, this->one_,
-                   this->hsub.data<T>(), psi_inout.data<T>(),
-                   this->zero_, this->work.data<T>());
+    const T* rotate_in[3] = {psi_inout.data<T>(), hpsi_inout.data<T>(), spsi_inout.data<T>()};
+    T* rotate_out[3] = {this->work.data<T>(), this->hwork.data<T>(), this->swork.data<T>()};
+    this->plintrans_batched_act(this->one_, rotate_in, 3,
+                                this->hsub.data<T>(), this->zero_, rotate_out);
     syncmem_complex_op()(psi_inout.data<T>(), this->work.data<T>(), local_sz);
-
-    rotate_loop<T>(nb, nbs, nvalid, nb, this->one_,
-                   this->hsub.data<T>(), hpsi_inout.data<T>(),
-                   this->zero_, this->work.data<T>());
-    syncmem_complex_op()(hpsi_inout.data<T>(), this->work.data<T>(), local_sz);
-
-    rotate_loop<T>(nb, nbs, nvalid, nb, this->one_,
-                   this->hsub.data<T>(), spsi_inout.data<T>(),
-                   this->zero_, this->work.data<T>());
-    syncmem_complex_op()(spsi_inout.data<T>(), this->work.data<T>(), local_sz);
+    syncmem_complex_op()(hpsi_inout.data<T>(), this->hwork.data<T>(), local_sz);
+    syncmem_complex_op()(spsi_inout.data<T>(), this->swork.data<T>(), local_sz);
 
     if (!finite_vector_block(psi_inout.data<T>(), nb, nbs, nvalid)
         || !finite_vector_block(hpsi_inout.data<T>(), nb, nbs, nvalid)
@@ -1044,24 +1704,18 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz_parallel(
     setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
     setmem_complex_op()(ssub_d, static_cast<T>(0.0), this->nsub * this->nsub);
 
-    this->pmmcn.multiply(this->one_,
+    this->pgemm_multiply(this->one_,
                          psi_inout.data<T>(),
                          hpsi_inout.data<T>(),
                          this->zero_,
                          this->tmp_hsub.data<T>());
-    this->pmmcn.multiply(this->one_,
+    this->pgemm_multiply(this->one_,
                          psi_inout.data<T>(),
                          spsi_inout.data<T>(),
                          this->zero_,
                          this->tmp_ssub.data<T>());
-    for (int jc = 0; jc < nb; ++jc) {
-        std::copy(this->tmp_hsub.data<T>() + jc * nb,
-                  this->tmp_hsub.data<T>() + jc * nb + nb,
-                  hsub_d + jc * this->nsub);
-        std::copy(this->tmp_ssub.data<T>() + jc * nb,
-                  this->tmp_ssub.data<T>() + jc * nb + nb,
-                  ssub_d + jc * this->nsub);
-    }
+    ModuleBase::matrixCopy<T, Device>()(nb, nb, this->tmp_hsub.data<T>(), nb, hsub_d, this->nsub);
+    ModuleBase::matrixCopy<T, Device>()(nb, nb, this->tmp_ssub.data<T>(), nb, ssub_d, this->nsub);
     hermitize(hsub_d, this->nsub, nb);
     hermitize(ssub_d, this->nsub, nb);
 
@@ -1111,33 +1765,15 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz_parallel(
         }
     }
 
-    setmem_complex_op()(this->tmp_hsub.data<T>(), static_cast<T>(0.0), nb * nb);
-    for (int jc = 0; jc < nb; ++jc) {
-        std::copy(hsub_d + jc * this->nsub,
-                  hsub_d + jc * this->nsub + nb,
-                  this->tmp_hsub.data<T>() + jc * nb);
-    }
+    ModuleBase::matrixCopy<T, Device>()(nb, nb, hsub_d, this->nsub, this->tmp_hsub.data<T>(), nb);
 
-    this->plintrans.act(this->one_,
-                        psi_inout.data<T>(),
-                        this->tmp_hsub.data<T>(),
-                        this->zero_,
-                        this->work.data<T>());
+    const T* rotate_in[3] = {psi_inout.data<T>(), hpsi_inout.data<T>(), spsi_inout.data<T>()};
+    T* rotate_out[3] = {this->work.data<T>(), this->hwork.data<T>(), this->swork.data<T>()};
+    this->plintrans_batched_act(this->one_, rotate_in, 3,
+                                this->tmp_hsub.data<T>(), this->zero_, rotate_out);
     syncmem_complex_op()(psi_inout.data<T>(), this->work.data<T>(), local_sz);
-
-    this->plintrans.act(this->one_,
-                        hpsi_inout.data<T>(),
-                        this->tmp_hsub.data<T>(),
-                        this->zero_,
-                        this->work.data<T>());
-    syncmem_complex_op()(hpsi_inout.data<T>(), this->work.data<T>(), local_sz);
-
-    this->plintrans.act(this->one_,
-                        spsi_inout.data<T>(),
-                        this->tmp_hsub.data<T>(),
-                        this->zero_,
-                        this->work.data<T>());
-    syncmem_complex_op()(spsi_inout.data<T>(), this->work.data<T>(), local_sz);
+    syncmem_complex_op()(hpsi_inout.data<T>(), this->hwork.data<T>(), local_sz);
+    syncmem_complex_op()(spsi_inout.data<T>(), this->swork.data<T>(), local_sz);
 
     if (!finite_vector_block(psi_inout.data<T>(), this->n_band_l, nbs, this->n_dim)
         || !finite_vector_block(hpsi_inout.data<T>(), this->n_band_l, nbs, this->n_dim)
@@ -1148,46 +1784,6 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz_parallel(
                        vector_block_diagnostics("spsi", spsi_inout.data<T>(), this->n_band_l, nbs, this->n_dim));
         throw std::runtime_error("LOBPCG generalized parallel initial rotation produced non-finite vectors");
     }
-}
-
-// ============================================================================
-// compute_residual — NC: R = HX - lambda*X,  grad = R ./ prec
-// ============================================================================
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::compute_residual(
-    const ct::Tensor& psi_in, const ct::Tensor& hpsi_in,
-    const ct::Tensor& eigen_in, const ct::Tensor& prec_in,
-    ct::Tensor& grad_out, ct::Tensor& err_out)
-{
-    const Real* _prec  = prec_in.data<Real>();
-    const Real* _eigen = eigen_in.data<Real>();
-    const T*    _psi   = psi_in.data<T>();
-    const T*    _hpsi  = hpsi_in.data<T>();
-    T*          _grad  = grad_out.data<T>();
-    Real*       _err   = err_out.data<Real>();
-    const int band_start = this->local_band_start();
-
-    for (int ib = 0; ib < this->n_band_l; ib++) {
-        const int  ioff   = ib * this->n_basis;
-        const Real lambda = _eigen[band_start + ib];
-        Real       err_j  = 0.0;
-        for (int ig = 0; ig < this->n_dim; ig++) {
-            const int idx = ioff + ig;
-            const T   r   = _hpsi[idx] - lambda * _psi[idx];
-            _grad[idx]    = r / std::max(_prec[ig],
-                                             static_cast<Real>(1e-8));
-            err_j        += std::norm(r);
-        }
-        for (int ig = this->n_dim; ig < this->n_basis; ig++)
-            _grad[ioff + ig] = static_cast<T>(0.0);
-        _err[ib] = err_j;
-    }
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(_err, this->n_band_l);
-#endif
-    for (int ib = 0; ib < this->n_band_l; ib++)
-        _err[ib] = std::sqrt(_err[ib]);
 }
 
 template <typename T, typename Device>
@@ -1243,31 +1839,6 @@ void DiagoLobpcg<T, Device>::compute_residual_s(
         _err[ib] = std::sqrt(_err[ib]);
 }
 
-// ============================================================================
-// orth_projection — grad -= psi * <psi|grad>   [S=I]
-//   inner(i,j) = <psi_i|grad_j>   (col-major)
-//   grad_j    -= sum_i psi_i * inner(i,j)
-// ============================================================================
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::orth_projection(
-    const ct::Tensor& psi_in, ct::Tensor& hsub_work, ct::Tensor& grad_out)
-{
-    const int nbs = this->n_basis;
-    const int nvalid = this->n_dim;
-
-    this->pmmcn.multiply(1.0, psi_in.data<T>(), grad_out.data<T>(),
-                         0.0, hsub_work.data<T>());
-    this->plintrans.act(-1.0, psi_in.data<T>(), hsub_work.data<T>(),
-                        1.0, grad_out.data<T>());
-    T* grad = grad_out.data<T>();
-    for (int jb = 0; jb < this->n_band_l; ++jb) {
-        for (int ig = nvalid; ig < nbs; ++ig) {
-            grad[jb * nbs + ig] = static_cast<T>(0.0);
-        }
-    }
-}
-
 template <typename T, typename Device>
 void DiagoLobpcg<T, Device>::orth_projection_s(
     const ct::Tensor& psi_in, const ct::Tensor& spsi_in,
@@ -1276,21 +1847,15 @@ void DiagoLobpcg<T, Device>::orth_projection_s(
     const int nbs = this->n_basis;
     const int nvalid = this->n_dim;
 
-    this->pmmcn.multiply(this->one_,
+    this->pgemm_multiply(this->one_,
                          psi_in.data<T>(),
                          sgrad_out.data<T>(),
                          this->zero_,
                          hsub_work.data<T>());
-    this->plintrans.act(this->neg_one_,
-                        psi_in.data<T>(),
-                        hsub_work.data<T>(),
-                        this->one_,
-                        grad_out.data<T>());
-    this->plintrans.act(this->neg_one_,
-                        spsi_in.data<T>(),
-                        hsub_work.data<T>(),
-                        this->one_,
-                        sgrad_out.data<T>());
+    const T* proj_in[2] = {psi_in.data<T>(), spsi_in.data<T>()};
+    T* proj_out[2] = {grad_out.data<T>(), sgrad_out.data<T>()};
+    this->plintrans_batched_act(this->neg_one_, proj_in, 2,
+                                hsub_work.data<T>(), this->one_, proj_out);
 
     T* grad = grad_out.data<T>();
     T* sgrad = sgrad_out.data<T>();
@@ -1311,26 +1876,15 @@ void DiagoLobpcg<T, Device>::orth_projection_s_with_h(
     const int nbs = this->n_basis;
     const int nvalid = this->n_dim;
 
-    this->pmmcn.multiply(this->one_,
+    this->pgemm_multiply(this->one_,
                          psi_in.data<T>(),
                          spdir_out.data<T>(),
                          this->zero_,
                          hsub_work.data<T>());
-    this->plintrans.act(this->neg_one_,
-                        psi_in.data<T>(),
-                        hsub_work.data<T>(),
-                        this->one_,
-                        pdir_out.data<T>());
-    this->plintrans.act(this->neg_one_,
-                        spsi_in.data<T>(),
-                        hsub_work.data<T>(),
-                        this->one_,
-                        spdir_out.data<T>());
-    this->plintrans.act(this->neg_one_,
-                        hpsi_in.data<T>(),
-                        hsub_work.data<T>(),
-                        this->one_,
-                        hpdir_out.data<T>());
+    const T* proj_in[3] = {psi_in.data<T>(), spsi_in.data<T>(), hpsi_in.data<T>()};
+    T* proj_out[3] = {pdir_out.data<T>(), spdir_out.data<T>(), hpdir_out.data<T>()};
+    this->plintrans_batched_act(this->neg_one_, proj_in, 3,
+                                hsub_work.data<T>(), this->one_, proj_out);
 
     T* pdir = pdir_out.data<T>();
     T* spdir = spdir_out.data<T>();
@@ -1354,7 +1908,7 @@ void DiagoLobpcg<T, Device>::rotate_wf(
 {
     const int nbs = this->n_basis;
     const int nvalid = this->n_dim;
-    this->plintrans.act(1.0, psi_out.data<T>(), hsub_in.data<T>(),
+    this->plintrans_act(1.0, psi_out.data<T>(), hsub_in.data<T>(),
                         0.0, workspace_in.data<T>());
     T* workspace = workspace_in.data<T>();
     for (int ib = 0; ib < this->n_band_l; ++ib) {
@@ -1364,75 +1918,6 @@ void DiagoLobpcg<T, Device>::rotate_wf(
     }
     syncmem_complex_op()(psi_out.data<T>(), workspace_in.data<T>(),
                          this->n_band_l * nbs);
-}
-
-// ============================================================================
-// orth_cholesky — S=I Cholesky orthonormalization
-// ============================================================================
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::orth_cholesky(
-    ct::Tensor& workspace_in, ct::Tensor& psi_out,
-    ct::Tensor& hpsi_out, ct::Tensor& hsub_out)
-{
-    const int nb  = this->n_band;
-    const int nbs = this->n_basis;
-    const int nvalid = this->n_dim;
-
-    try {
-        this->pmmcn.multiply(1.0, psi_out.data<T>(), psi_out.data<T>(),
-                             0.0, hsub_out.data<T>());
-        ct::kernels::set_matrix<T, ct_Device>()('L', hsub_out.data<T>(), nb);
-        ct::kernels::lapack_potrf<T, ct_Device>()('U', nb, hsub_out.data<T>(), nb);
-        ct::kernels::lapack_trtri<T, ct_Device>()('U', 'N', nb, hsub_out.data<T>(), nb);
-        this->rotate_wf(hsub_out, psi_out, workspace_in);
-        this->rotate_wf(hsub_out, hpsi_out, workspace_in);
-        return;
-    } catch (const std::exception&) {
-        // Fall back to modified Gram-Schmidt when Cholesky sees a near-dependent block.
-    }
-
-    T* psi_d  = psi_out.data<T>();
-    T* hpsi_d = hpsi_out.data<T>();
-    const Real eps = static_cast<Real>(100)
-                   * std::numeric_limits<Real>::epsilon();
-
-    for (int ib = 0; ib < nb; ++ib) {
-        for (int jb = 0; jb < ib; ++jb) {
-            T dot = static_cast<T>(0.0);
-            for (int ig = 0; ig < nvalid; ++ig) {
-                dot += std::conj(psi_d[jb * nbs + ig])
-                     * psi_d[ib * nbs + ig];
-            }
-#ifdef __MPI
-            Parallel_Reduce::reduce_pool(&dot, 1);
-#endif
-            for (int ig = 0; ig < nvalid; ++ig) {
-                psi_d[ib * nbs + ig]  -= dot * psi_d[jb * nbs + ig];
-                hpsi_d[ib * nbs + ig] -= dot * hpsi_d[jb * nbs + ig];
-            }
-        }
-
-        Real norm2 = static_cast<Real>(0.0);
-        for (int ig = 0; ig < nvalid; ++ig) {
-            norm2 += std::norm(psi_d[ib * nbs + ig]);
-        }
-#ifdef __MPI
-        Parallel_Reduce::reduce_pool(&norm2, 1);
-#endif
-        if (!(norm2 > eps)) {
-            throw std::runtime_error("orth_cholesky failed: dependent vectors");
-        }
-        const Real inv_norm = static_cast<Real>(1.0) / std::sqrt(norm2);
-        for (int ig = 0; ig < nvalid; ++ig) {
-            psi_d[ib * nbs + ig]  *= inv_norm;
-            hpsi_d[ib * nbs + ig] *= inv_norm;
-        }
-        for (int ig = nvalid; ig < nbs; ++ig) {
-            psi_d[ib * nbs + ig] = static_cast<T>(0.0);
-            hpsi_d[ib * nbs + ig] = static_cast<T>(0.0);
-        }
-    }
 }
 
 template <typename T, typename Device>
@@ -1519,20 +2004,8 @@ template <typename T, typename Device>
 bool DiagoLobpcg<T, Device>::test_error(
     const ct::Tensor& err_in, const std::vector<double>& ethr_band)
 {
-    Real* _err_st = err_in.data<Real>();
-    int notconv = 0;
-    std::vector<Real> tmp_cpu;
-    if (err_in.device_type() == ct::DeviceType::GpuDevice) {
-        tmp_cpu.resize(this->n_band_l);
-        _err_st = tmp_cpu.data();
-        syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
-    }
-    for (int ii = 0; ii < this->n_band_l; ii++)
-        if (_err_st[ii] > ethr_band[ii]) ++notconv;
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &notconv, 1, MPI_INT, MPI_SUM, BP_WORLD);
-#endif
-    return this->notconv_max >= 0 ? notconv > this->notconv_max : notconv > 0;
+    const int notconv = this->count_not_converged(err_in, ethr_band);
+    return should_continue_for_notconv(notconv, this->notconv_max);
 }
 
 template <typename T, typename Device>
@@ -1547,15 +2020,33 @@ typename DiagoLobpcg<T, Device>::Real DiagoLobpcg<T, Device>::max_error(
         syncmem_var_d2h_op()(err, err_in.data<Real>(), this->n_band_l);
     }
 
-    Real max_residual = static_cast<Real>(0.0);
-    for (int ib = 0; ib < this->n_band_l; ++ib) {
-        max_residual = std::max(max_residual, err[ib]);
-    }
+    Real max_residual = max_residual_local(err, this->n_band_l);
 #ifdef __MPI
-    const MPI_Datatype real_type = std::is_same<Real, double>::value ? MPI_DOUBLE : MPI_FLOAT;
-    MPI_Allreduce(MPI_IN_PLACE, &max_residual, 1, real_type, MPI_MAX, BP_WORLD);
+    Parallel_Reduce::reduce_max(max_residual, BP_WORLD);
 #endif
     return max_residual;
+}
+
+template <typename T, typename Device>
+int DiagoLobpcg<T, Device>::count_not_converged(
+    const ct::Tensor& err_in,
+    const std::vector<double>& ethr_band) const
+{
+    Real* err = err_in.data<Real>();
+    std::vector<Real> tmp_cpu;
+    if (err_in.device_type() == ct::DeviceType::GpuDevice) {
+        tmp_cpu.resize(this->n_band_l);
+        err = tmp_cpu.data();
+        syncmem_var_d2h_op()(err, err_in.data<Real>(), this->n_band_l);
+    }
+
+    int notconv = count_not_converged_local(err,
+                                            ethr_band.data(),
+                                            this->n_band_l);
+#ifdef __MPI
+    Parallel_Reduce::reduce_sum(notconv, BP_WORLD);
+#endif
+    return notconv;
 }
 
 template <typename T, typename Device>
@@ -1563,7 +2054,8 @@ void DiagoLobpcg<T, Device>::report_not_converged(
     const char* problem_type,
     const int used_iter,
     const int max_iter,
-    const std::vector<double>& ethr_band) const
+    const std::vector<double>& ethr_band,
+    const std::string& stop_reason) const
 {
     const Real* err = this->err_st.data<Real>();
     int notconv = 0;
@@ -1575,24 +2067,27 @@ void DiagoLobpcg<T, Device>::report_not_converged(
         }
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &notconv, 1, MPI_INT, MPI_SUM, BP_WORLD);
-    const MPI_Datatype real_type = std::is_same<Real, double>::value ? MPI_DOUBLE : MPI_FLOAT;
-    MPI_Allreduce(MPI_IN_PLACE, &max_residual, 1, real_type, MPI_MAX, BP_WORLD);
+    Parallel_Reduce::reduce_sum(notconv, BP_WORLD);
+    Parallel_Reduce::reduce_max(max_residual, BP_WORLD);
 #endif
-    if (notconv > 0) {
-        std::ostringstream msg;
-        msg << "DiagoLobpcg::diag(" << problem_type << ") reached max_iter="
-            << max_iter
-            << " after " << used_iter
-            << " iterations; notconv=" << notconv
-            << ", max_residual=" << max_residual;
-        if (!this->diag_context.empty()) {
-            msg << ", context={" << this->diag_context << "}";
-        }
-        std::cout << "\n " << msg.str() << std::endl;
-        if (this->notconv_max >= 0 && notconv > this->notconv_max) {
-            throw std::runtime_error(msg.str());
-        }
+    if (notconv <= 0) {
+        return;
+    }
+
+    std::ostringstream msg;
+    msg << "DiagoLobpcg::diag(" << problem_type << ") "
+        << (stop_reason.empty() ? std::string("reached max_iter=") + std::to_string(max_iter)
+                                : stop_reason)
+        << " after " << used_iter
+        << " iterations; notconv=" << notconv
+        << ", max_residual=" << max_residual;
+    if (!this->diag_context.empty()) {
+        msg << ", context={" << this->diag_context << "}";
+    }
+    print_lobpcg_diag_message(msg.str());
+    if (this->throw_on_notconv_exceed
+        && notconv_exceeds_limit(notconv, this->notconv_max)) {
+        throw std::runtime_error(msg.str());
     }
 }
 
@@ -1614,6 +2109,7 @@ void DiagoLobpcg<T, Device>::profile_log(const char* problem_type,
     if (!this->profile_enabled()) {
         return;
     }
+    this->profile_accumulate_stage(stage, seconds);
     std::ostringstream oss;
     oss << "LOBPCG_PROFILE " << problem_type
         << " iter=" << iter
@@ -1622,343 +2118,203 @@ void DiagoLobpcg<T, Device>::profile_log(const char* problem_type,
     if (!this->diag_context.empty()) {
         oss << " context={" << this->diag_context << "}";
     }
+    print_lobpcg_diag_message(oss.str());
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::profile_accumulate_stage(const char* stage,
+                                                      const double seconds) const
+{
+    if (!this->profile_enabled()) {
+        return;
+    }
+    auto stage_it = std::find_if(this->profile_stage_stats.begin(),
+                                 this->profile_stage_stats.end(),
+                                 [stage](const ProfileStageStats& item) {
+                                     return item.stage == stage;
+                                 });
+    if (stage_it == this->profile_stage_stats.end()) {
+        this->profile_stage_stats.push_back(ProfileStageStats{stage, 1, seconds});
+    } else {
+        ++stage_it->calls;
+        stage_it->seconds += seconds;
+    }
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::profile_record_active_bands(const int active_bands)
+{
+    if (!this->profile_enabled()) {
+        return;
+    }
+    ProfileStats& stats = this->profile_stats;
+    if (stats.active_band_update_samples == 0) {
+        stats.active_band_update_min = active_bands;
+        stats.active_band_update_max = active_bands;
+    } else {
+        stats.active_band_update_min = std::min(stats.active_band_update_min, active_bands);
+        stats.active_band_update_max = std::max(stats.active_band_update_max, active_bands);
+    }
+    ++stats.active_band_update_samples;
+    stats.active_band_update_sum += active_bands;
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::reset_profile_stats()
+{
+    this->profile_stats = ProfileStats{};
+    this->profile_stage_stats.clear();
+}
+
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::profile_summary(const char* problem_type,
+                                             const int used_iter,
+                                             const Real final_residual,
+                                             const int final_notconv) const
+{
+    if (!this->profile_enabled()) {
+        return;
+    }
+    std::ostringstream oss;
+    oss << "LOBPCG_PROFILE " << problem_type
+        << " summary"
+        << " used_iter=" << used_iter
+        << " final_residual=" << std::setprecision(12) << final_residual
+        << " final_notconv=" << final_notconv
+        << " pgemm_multiply_calls=" << this->profile_stats.pgemm_multiply_calls
+        << " plintrans_act_calls=" << this->profile_stats.plintrans_act_calls
+        << " residual_guard_rejections=" << this->profile_stats.residual_guard_rejections
+        << " residual_guard_stops=" << this->profile_stats.residual_guard_stops
+        << " compressed_guard_attempts=" << this->profile_stats.compressed_guard_attempts
+        << " compressed_guard_accepts=" << this->profile_stats.compressed_guard_accepts
+        << " compressed_fallbacks=" << this->profile_stats.compressed_fallbacks
+        << " allowed_notconv_polish_iterations="
+        << this->profile_stats.allowed_notconv_polish_iterations
+        << " best_state_restores=" << this->profile_stats.best_state_restores
+        << " soft_lock_restores=" << this->profile_stats.soft_lock_restores
+        << " soft_lock_restored_bands=" << this->profile_stats.soft_lock_restored_bands
+        << " active_band_update_samples="
+        << this->profile_stats.active_band_update_samples
+        << " active_band_update_sum="
+        << this->profile_stats.active_band_update_sum
+        << " active_band_update_min="
+        << this->profile_stats.active_band_update_min
+        << " active_band_update_max="
+        << this->profile_stats.active_band_update_max
+        << " active_band_update_avg="
+        << (this->profile_stats.active_band_update_samples > 0
+                ? static_cast<double>(this->profile_stats.active_band_update_sum)
+                      / static_cast<double>(this->profile_stats.active_band_update_samples)
+                : 0.0)
+        ;
+    if (!this->diag_context.empty()) {
+        oss << " context={" << this->diag_context << "}";
+    }
     std::cout << "\n " << oss.str() << std::endl;
     if (GlobalV::ofs_running.good()) {
         GlobalV::ofs_running << " " << oss.str() << std::endl;
         GlobalV::ofs_running.flush();
     }
+
+    for (const auto& stage : this->profile_stage_stats) {
+        std::ostringstream stage_oss;
+        stage_oss << "LOBPCG_PROFILE " << problem_type
+                  << " stage_summary"
+                  << " stage=" << stage.stage
+                  << " count=" << stage.calls
+                  << " seconds=" << std::fixed << std::setprecision(6)
+                  << stage.seconds
+                  << " avg_seconds="
+                  << (stage.calls > 0
+                          ? stage.seconds / static_cast<double>(stage.calls)
+                          : 0.0);
+        if (!this->diag_context.empty()) {
+            stage_oss << " context={" << this->diag_context << "}";
+        }
+        print_lobpcg_diag_message(stage_oss.str());
+    }
 }
 
-// ============================================================================
-// lobpcg_update — generalized R-R on subspace W = [X, Z, P]
-//
-// H_sub = <W|H|W>,  S_sub = <W|W>
-// H_sub C = S_sub C Lambda  (hegvd)
-// X_new = V_XX*X + V_ZX*Z + V_PX*P
-// P_new = V_ZX*Z + V_PX*P         (soft restart)
-// ============================================================================
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::pgemm_multiply(const T alpha,
+                                            const T* a,
+                                            const T* b,
+                                            const T beta,
+                                            T* c)
+{
+    ++this->profile_stats.pgemm_multiply_calls;
+    this->pmmcn.multiply(alpha, a, b, beta, c);
+}
 
 template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::lobpcg_update(
-    ct::Tensor& psi, ct::Tensor& hpsi,
-    ct::Tensor& grad, ct::Tensor& hgrad,
-    ct::Tensor& pdir, ct::Tensor& hpdir,
-    ct::Tensor& eigen)
+void DiagoLobpcg<T, Device>::plintrans_act(const T alpha,
+                                           const T* a,
+                                           const T* u,
+                                           const T beta,
+                                           T* b)
 {
-    const int n    = this->n_band;
-    const int nbs  = this->n_basis;
-    const int nvalid = this->n_dim;
-    const int local_sz = this->n_band_l * nbs;
-    const Real eps = static_cast<Real>(100)
-                   * std::numeric_limits<Real>::epsilon();
+    ++this->profile_stats.plintrans_act_calls;
+    this->plintrans.act(alpha, a, u, beta, b);
+}
 
-    if (this->n_band_l != this->n_band) {
-        int block_count = this->has_pdir ? 3 : 2;
-        int m = block_count * n;
-        const T* basis_blocks[3] = {psi.data<T>(), grad.data<T>(), pdir.data<T>()};
-        const T* hbasis_blocks[3] = {hpsi.data<T>(), hgrad.data<T>(), hpdir.data<T>()};
-
-        T* hsub_d = this->hsub.data<T>();
-        T* ssub_d = this->ssub.data<T>();
-
-        auto store_block = [=](const T* src, T* dst, const int iblock, const int jblock) {
-            for (int jc = 0; jc < n; ++jc) {
-                std::copy(src + jc * n,
-                          src + jc * n + n,
-                          dst + (jblock * n + jc) * this->nsub + iblock * n);
-            }
-        };
-        auto store_hermitian_block = [=](const T* src, T* dst, const int iblock, const int jblock) {
-            store_block(src, dst, iblock, jblock);
-            if (iblock == jblock) {
-                return;
-            }
-            for (int jc = 0; jc < n; ++jc) {
-                for (int ir = 0; ir < n; ++ir) {
-                    dst[(iblock * n + jc) * this->nsub + jblock * n + ir]
-                        = std::conj(src[ir * n + jc]);
-                }
-            }
-        };
-
-        auto build_subspace = [&](const int active_blocks) {
-            setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
-            setmem_complex_op()(ssub_d, static_cast<T>(0.0), this->nsub * this->nsub);
-            for (int jb = 0; jb < active_blocks; ++jb) {
-                for (int ib = 0; ib <= jb; ++ib) {
-                    this->pmmcn.multiply(this->one_,
-                                         basis_blocks[ib],
-                                         hbasis_blocks[jb],
-                                         this->zero_,
-                                         this->tmp_hsub.data<T>());
-                    store_hermitian_block(this->tmp_hsub.data<T>(), hsub_d, ib, jb);
-
-                    this->pmmcn.multiply(this->one_,
-                                         basis_blocks[ib],
-                                         basis_blocks[jb],
-                                         this->zero_,
-                                         this->tmp_ssub.data<T>());
-                    store_hermitian_block(this->tmp_ssub.data<T>(), ssub_d, ib, jb);
-                }
-            }
-            hermitize(hsub_d, this->nsub, active_blocks * n);
-            hermitize(ssub_d, this->nsub, active_blocks * n);
-        };
-
-        std::vector<Real> inv_subspace_norm;
-        std::string scale_error;
-        build_subspace(block_count);
-        if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
-                                            inv_subspace_norm, scale_error)) {
-            if (block_count == 3) {
-                block_count = 2;
-                m = block_count * n;
-                build_subspace(block_count);
-                scale_error.clear();
-            }
-            if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
-                                                inv_subspace_norm, scale_error)) {
-                this->diag_log("lobpcg_update failed to normalize S_sub before hegvd",
-                               hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                               s_overlap_diagnostics(ssub_d, this->nsub, m),
-                               scale_error);
-                throw std::runtime_error("LOBPCG subspace overlap has invalid diagonal before hegvd");
-            }
-        }
-        auto spd_check = check_subspace_spd<T, ct_Device>(ssub_d, this->nsub, m);
-        if (!spd_check.ok && block_count == 3) {
-            if (this->profile_enabled()) {
-                this->diag_log("lobpcg_update dropping P due to ill-conditioned S_sub",
-                               hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                               s_overlap_diagnostics(ssub_d, this->nsub, m),
-                               subspace_spd_diagnostics(spd_check));
-            }
-            block_count = 2;
-            m = block_count * n;
-            build_subspace(block_count);
-            scale_error.clear();
-            if (!scale_subspace_by_overlap_diag(hsub_d, ssub_d, this->nsub, m,
-                                                inv_subspace_norm, scale_error)) {
-                this->diag_log("lobpcg_update failed to normalize restarted S_sub before hegvd",
-                               hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                               s_overlap_diagnostics(ssub_d, this->nsub, m),
-                               scale_error);
-                throw std::runtime_error("LOBPCG restarted subspace overlap has invalid diagonal before hegvd");
-            }
-            spd_check = check_subspace_spd<T, ct_Device>(ssub_d, this->nsub, m);
-        }
-
-        if (!spd_check.ok) {
-            this->diag_log("lobpcg_update rejected ill-conditioned S_sub before hegvd",
-                           hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                           s_overlap_diagnostics(ssub_d, this->nsub, m),
-                           subspace_spd_diagnostics(spd_check));
-            throw std::runtime_error("LOBPCG subspace overlap is ill-conditioned before hegvd");
-        }
-
-        try {
-            ct::kernels::lapack_hegvd<T, ct_Device>()(
-                m, this->nsub, hsub_d, ssub_d,
-                this->sub_eigen.data<Real>(), hsub_d);
-        } catch (const std::exception& e) {
-            this->diag_log("lobpcg_update hegvd failed: " + std::string(e.what()),
-                            hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
-                            hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                            s_overlap_diagnostics(ssub_d, this->nsub, m));
-            throw;
-        }
-
-        if (!finite_real_block(this->sub_eigen.data<Real>(), m)
-            || !finite_scalar_block(hsub_d, m * this->nsub)) {
-            this->diag_log("lobpcg_update hegvd produced non-finite values",
-                           hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
-                           hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
-                           subspace_spd_diagnostics(spd_check));
-            throw std::runtime_error("LOBPCG subspace diagonalization produced non-finite values");
-        }
-        for (int jc = 0; jc < n; ++jc) {
-            for (int ir = 0; ir < m; ++ir) {
-                hsub_d[jc * this->nsub + ir] *= inv_subspace_norm[ir];
-            }
-        }
-
-        const Real* sub = this->sub_eigen.data<Real>();
-        Real* eig = eigen.data<Real>();
-        for (int ib = 0; ib < n; ++ib) {
-            eig[ib] = sub[ib];
-        }
-
-        T* x_new = this->work.data<T>();
-        T* hx_new = this->hwork.data<T>();
-        T* p_new = this->pwork.data<T>();
-        T* hp_new = this->hpwork.data<T>();
-        setmem_complex_op()(x_new, static_cast<T>(0.0), local_sz);
-        setmem_complex_op()(hx_new, static_cast<T>(0.0), local_sz);
-        setmem_complex_op()(p_new, static_cast<T>(0.0), local_sz);
-        setmem_complex_op()(hp_new, static_cast<T>(0.0), local_sz);
-
-        auto copy_coeff_block = [=](const int block, const int first_col, const int ncol, T* coeff) {
-            setmem_complex_op()(coeff, static_cast<T>(0.0), n * n);
-            for (int jc = 0; jc < ncol; ++jc) {
-                std::copy(hsub_d + (first_col + jc) * this->nsub + block * n,
-                          hsub_d + (first_col + jc) * this->nsub + block * n + n,
-                          coeff + (first_col + jc) * n);
-            }
-        };
-
-        for (int ib = 0; ib < block_count; ++ib) {
-            copy_coeff_block(ib, 0, n, this->tmp_hsub.data<T>());
-            this->plintrans.act(this->one_, basis_blocks[ib], this->tmp_hsub.data<T>(),
-                                ib == 0 ? this->zero_ : this->one_, x_new);
-            this->plintrans.act(this->one_, hbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                                ib == 0 ? this->zero_ : this->one_, hx_new);
-        }
-
-        const int tail_cols = m - n;
-        if (tail_cols > 0) {
-            for (int ib = 1; ib < block_count; ++ib) {
-                copy_coeff_block(ib, 0, n, this->tmp_hsub.data<T>());
-                this->plintrans.act(this->one_, basis_blocks[ib], this->tmp_hsub.data<T>(),
-                                    ib == 1 ? this->zero_ : this->one_, p_new);
-                this->plintrans.act(this->one_, hbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                                    ib == 1 ? this->zero_ : this->one_, hp_new);
-            }
-        }
-
-        syncmem_complex_op()(psi.data<T>(),   x_new,  local_sz);
-        syncmem_complex_op()(hpsi.data<T>(),  hx_new, local_sz);
-        syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
-        syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
-
-        int update_invalid_mask =
-            (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim) ? 1 : 0)
-          | (!finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim) ? 2 : 0)
-          | (!finite_real_block(eigen.data<Real>(), n) ? 4 : 0);
-#ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &update_invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
-#endif
-        if (update_invalid_mask != 0) {
-            throw std::runtime_error("LOBPCG band-parallel update produced non-finite values");
-        }
-
-        this->has_pdir = true;
+template <typename T, typename Device>
+void DiagoLobpcg<T, Device>::plintrans_batched_act(const T alpha,
+                                                   const T* const* a_blocks,
+                                                   const int block_count,
+                                                   const T* u,
+                                                   const T beta,
+                                                   T* const* b_blocks)
+{
+    if (block_count <= 1) {
+        this->plintrans_act(alpha, a_blocks[0], u, beta, b_blocks[0]);
         return;
     }
+    const int batch_rows = block_count * this->n_dim;
+    const int batch_size = batch_rows * this->n_band_l;
+    this->plintrans_batch_in.resize(batch_size);
+    this->plintrans_batch_out.resize(batch_size);
 
-    std::vector<T> basis;
-    std::vector<T> hbasis;
-    basis.reserve((this->has_pdir ? 3 : 2) * local_sz);
-    hbasis.reserve((this->has_pdir ? 3 : 2) * local_sz);
-
-    append_orthonormal_block<T>(n, nbs, nvalid, eps,
-                                psi.data<T>(), hpsi.data<T>(),
-                                basis, hbasis);
-    append_orthonormal_block<T>(n, nbs, nvalid, eps,
-                                grad.data<T>(), hgrad.data<T>(),
-                                basis, hbasis);
-    if (this->has_pdir) {
-        append_orthonormal_block<T>(n, nbs, nvalid, eps,
-                                    pdir.data<T>(), hpdir.data<T>(),
-                                    basis, hbasis);
+    const bool use_beta = beta != static_cast<T>(0.0);
+    for (int block = 0; block < block_count; ++block) {
+        ModuleBase::matrixCopy<T, Device>()(this->n_band_l,
+                                            this->n_dim,
+                                            a_blocks[block],
+                                            this->n_basis,
+                                            this->plintrans_batch_in.data() + block * this->n_dim,
+                                            batch_rows);
+        if (use_beta) {
+            ModuleBase::matrixCopy<T, Device>()(this->n_band_l,
+                                                this->n_dim,
+                                                b_blocks[block],
+                                                this->n_basis,
+                                                this->plintrans_batch_out.data() + block * this->n_dim,
+                                                batch_rows);
+        }
+    }
+    if (!use_beta) {
+        std::fill(this->plintrans_batch_out.begin(), this->plintrans_batch_out.end(), static_cast<T>(0.0));
+    }
+    ++this->profile_stats.plintrans_act_calls;
+    if (block_count == 2) {
+        this->plintrans_batch2.act(alpha, this->plintrans_batch_in.data(), u, beta, this->plintrans_batch_out.data());
+    } else if (block_count == 3) {
+        this->plintrans_batch3.act(alpha, this->plintrans_batch_in.data(), u, beta, this->plintrans_batch_out.data());
+    } else {
+        throw std::runtime_error("LOBPCG batched linear transform supports only 2 or 3 blocks");
     }
 
-    const int m = static_cast<int>(basis.size() / nbs);
-    if (m < n) {
-        throw std::runtime_error("LOBPCG standard subspace lost rank");
+    for (int block = 0; block < block_count; ++block) {
+        ModuleBase::matrixCopy<T, Device>()(this->n_band_l,
+                                            this->n_dim,
+                                            this->plintrans_batch_out.data() + block * this->n_dim,
+                                            batch_rows,
+                                            b_blocks[block],
+                                            this->n_basis);
+        for (int ib = 0; ib < this->n_band_l; ++ib) {
+            T* dst = b_blocks[block] + ib * this->n_basis;
+            std::fill(dst + this->n_dim, dst + this->n_basis, static_cast<T>(0.0));
+        }
     }
-
-    T* hsub_d = this->hsub.data<T>();
-    setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
-
-    ModuleBase::gemm_op<T, Device>()('C', 'N',
-                                     m, m, nvalid,
-                                     this->one,
-                                     basis.data(), nbs,
-                                     hbasis.data(), nbs,
-                                     this->zero,
-                                     hsub_d, this->nsub);
-#ifdef __MPI
-    for (int jc = 0; jc < m; ++jc) {
-        Parallel_Reduce::reduce_pool(hsub_d + jc * this->nsub, m);
-    }
-#endif
-    hermitize(hsub_d, this->nsub, m);
-
-    try {
-        ct::kernels::lapack_heevd<T, ct_Device>()(
-            m, hsub_d, this->nsub, this->sub_eigen.data<Real>());
-    } catch (const std::exception& e) {
-        this->diag_log("lobpcg_update heevd failed: " + std::string(e.what()),
-                        hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
-                        "S_sub unavailable after explicit orthonormalization");
-        throw;
-    }
-
-    if (!finite_real_block(this->sub_eigen.data<Real>(), m)
-        || !finite_scalar_block(hsub_d, m * this->nsub)) {
-        throw std::runtime_error("LOBPCG subspace diagonalization produced non-finite values");
-    }
-
-    const Real* sub = this->sub_eigen.data<Real>();
-    Real* eig = eigen.data<Real>();
-    for (int ib = 0; ib < n; ++ib) {
-        eig[ib] = sub[ib];
-    }
-
-    T* x_new = this->work.data<T>();
-    T* hx_new = this->hwork.data<T>();
-    T* p_new = this->pwork.data<T>();
-    T* hp_new = this->hpwork.data<T>();
-    setmem_complex_op()(x_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hx_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(p_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hp_new, static_cast<T>(0.0), local_sz);
-
-    ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     nvalid, n, m,
-                                     this->one,
-                                     basis.data(), nbs,
-                                     hsub_d, this->nsub,
-                                     this->zero,
-                                     x_new, nbs);
-    ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     nvalid, n, m,
-                                     this->one,
-                                     hbasis.data(), nbs,
-                                     hsub_d, this->nsub,
-                                     this->zero,
-                                     hx_new, nbs);
-
-    const int tail_cols = m - n;
-    if (tail_cols > 0) {
-        ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                         nvalid, n, tail_cols,
-                                         this->one,
-                                         basis.data() + n * nbs, nbs,
-                                         hsub_d + n, this->nsub,
-                                         this->zero,
-                                         p_new, nbs);
-        ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                         nvalid, n, tail_cols,
-                                         this->one,
-                                         hbasis.data() + n * nbs, nbs,
-                                         hsub_d + n, this->nsub,
-                                         this->zero,
-                                         hp_new, nbs);
-    }
-
-    syncmem_complex_op()(psi.data<T>(),   x_new,  local_sz);
-    syncmem_complex_op()(hpsi.data<T>(),  hx_new, local_sz);
-    syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
-    syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
-
-    if (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim)
-        || !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim)
-        || !finite_real_block(eigen.data<Real>(), n)) {
-        throw std::runtime_error("LOBPCG standard update produced non-finite values");
-    }
-
-    this->has_pdir = true;
 }
 
 // ============================================================================
@@ -1987,11 +2343,12 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
     T* ssub_d = this->ssub.data<T>();
 
     auto store_block = [=](const T* src, T* dst, const int iblock, const int jblock) {
-        for (int jc = 0; jc < n; ++jc) {
-            std::copy(src + jc * n,
-                      src + jc * n + n,
-                      dst + (jblock * n + jc) * this->nsub + iblock * n);
-        }
+        ModuleBase::matrixCopy<T, Device>()(n,
+                                            n,
+                                            src,
+                                            n,
+                                            dst + jblock * n * this->nsub + iblock * n,
+                                            this->nsub);
     };
     auto store_hermitian_block = [=](const T* src, T* dst, const int iblock, const int jblock) {
         store_block(src, dst, iblock, jblock);
@@ -2011,14 +2368,14 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
         setmem_complex_op()(ssub_d, static_cast<T>(0.0), this->nsub * this->nsub);
         for (int jb = 0; jb < active_blocks; ++jb) {
             for (int ib = 0; ib <= jb; ++ib) {
-                this->pmmcn.multiply(this->one_,
+                this->pgemm_multiply(this->one_,
                                      basis_blocks[ib],
                                      hbasis_blocks[jb],
                                      this->zero_,
                                      this->tmp_hsub.data<T>());
                 store_hermitian_block(this->tmp_hsub.data<T>(), hsub_d, ib, jb);
 
-                this->pmmcn.multiply(this->one_,
+                this->pgemm_multiply(this->one_,
                                      basis_blocks[ib],
                                      sbasis_blocks[jb],
                                      this->zero_,
@@ -2140,11 +2497,7 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
                                          this->zero,
                                          coeff_scaled.data(), m);
         setmem_complex_op()(hsub_d, static_cast<T>(0.0), this->nsub * this->nsub);
-        for (int jc = 0; jc < n; ++jc) {
-            for (int ir = 0; ir < m; ++ir) {
-                hsub_d[jc * this->nsub + ir] = coeff_scaled[jc * m + ir];
-            }
-        }
+        ModuleBase::matrixCopy<T, Device>()(n, m, coeff_scaled.data(), m, hsub_d, this->nsub);
     };
 
     if (force_compressed || !solve_scaled_hegvd()) {
@@ -2160,6 +2513,7 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
             build_subspace(block_count);
             try {
                 solve_compressed_heevd();
+                ++this->profile_stats.compressed_fallbacks;
                 if (this->profile_enabled()) {
                     this->diag_log("lobpcg_update_s_parallel used compressed S_sub fallback",
                                    force_compressed ? "reason=forced-by-residual-guard"
@@ -2177,83 +2531,52 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
         }
     }
 
-    const Real* sub = this->sub_eigen.data<Real>();
-    Real* eig = eigen.data<Real>();
-    for (int ib = 0; ib < n; ++ib) {
-        eig[ib] = sub[ib];
-    }
+    copy_lowest_subspace_eigenvalues(this->sub_eigen.data<Real>(), eigen.data<Real>(), n);
 
-    T* x_new = this->work.data<T>();
-    T* hx_new = this->hwork.data<T>();
-    T* sx_new = this->swork.data<T>();
-    T* p_new = this->pwork.data<T>();
-    T* hp_new = this->hpwork.data<T>();
-    T* sp_new = this->spwork.data<T>();
-    setmem_complex_op()(x_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hx_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(sx_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(p_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hp_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(sp_new, static_cast<T>(0.0), local_sz);
+    auto buffers = make_generalized_update_buffers(this->work.data<T>(),
+                                                   this->hwork.data<T>(),
+                                                   this->swork.data<T>(),
+                                                   this->pwork.data<T>(),
+                                                   this->hpwork.data<T>(),
+                                                   this->spwork.data<T>());
+    zero_update_buffers<T, Device>(buffers, local_sz);
 
     auto copy_coeff_block = [=](const int block, T* coeff) {
         setmem_complex_op()(coeff, static_cast<T>(0.0), n * n);
-        for (int jc = 0; jc < n; ++jc) {
-            std::copy(hsub_d + jc * this->nsub + block * n,
-                      hsub_d + jc * this->nsub + block * n + n,
-                      coeff + jc * n);
-        }
+        ModuleBase::matrixCopy<T, Device>()(n,
+                                            n,
+                                            hsub_d + block * n,
+                                            this->nsub,
+                                            coeff,
+                                            n);
     };
 
     for (int ib = 0; ib < block_count; ++ib) {
         copy_coeff_block(ib, this->tmp_hsub.data<T>());
-        this->plintrans.act(this->one_, basis_blocks[ib], this->tmp_hsub.data<T>(),
-                            ib == 0 ? this->zero_ : this->one_, x_new);
-        this->plintrans.act(this->one_, hbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                            ib == 0 ? this->zero_ : this->one_, hx_new);
-        this->plintrans.act(this->one_, sbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                            ib == 0 ? this->zero_ : this->one_, sx_new);
-    }
-
-    if (m > n) {
-        for (int ib = 1; ib < block_count; ++ib) {
-            copy_coeff_block(ib, this->tmp_hsub.data<T>());
-            this->plintrans.act(this->one_, basis_blocks[ib], this->tmp_hsub.data<T>(),
-                                ib == 1 ? this->zero_ : this->one_, p_new);
-            this->plintrans.act(this->one_, hbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                                ib == 1 ? this->zero_ : this->one_, hp_new);
-            this->plintrans.act(this->one_, sbasis_blocks[ib], this->tmp_hsub.data<T>(),
-                                ib == 1 ? this->zero_ : this->one_, sp_new);
+        const T* update_in[3] = {basis_blocks[ib], hbasis_blocks[ib], sbasis_blocks[ib]};
+        if (ib == 0) {
+            T* update_out[3] = {buffers.x, buffers.hx, buffers.sx};
+            this->plintrans_batched_act(this->one_, update_in, 3,
+                                        this->tmp_hsub.data<T>(),
+                                        this->zero_,
+                                        update_out);
+        } else {
+            T* update_out[3] = {buffers.p, buffers.hp, buffers.sp};
+            this->plintrans_batched_act(this->one_, update_in, 3,
+                                        this->tmp_hsub.data<T>(),
+                                        ib == 1 ? this->zero_ : this->one_,
+                                        update_out);
         }
     }
+    add_block_to<T, Device>(buffers.p, buffers.x, local_sz, this->one);
+    add_block_to<T, Device>(buffers.hp, buffers.hx, local_sz, this->one);
+    add_block_to<T, Device>(buffers.sp, buffers.sx, local_sz, this->one);
 
-    syncmem_complex_op()(psi.data<T>(),   x_new,  local_sz);
-    syncmem_complex_op()(hpsi.data<T>(),  hx_new, local_sz);
-    syncmem_complex_op()(spsi.data<T>(),  sx_new, local_sz);
-    syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
-    syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
-    syncmem_complex_op()(spdir.data<T>(), sp_new, local_sz);
-
-    bool psi_invalid = !finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim);
-    bool hpsi_invalid = !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim);
-    bool spsi_invalid = !finite_vector_block(spsi.data<T>(), this->n_band_l, nbs, this->n_dim);
-    bool eigen_invalid = !finite_real_block(eigen.data<Real>(), n);
-    int update_invalid_mask = (psi_invalid ? 1 : 0)
-                            | (hpsi_invalid ? 2 : 0)
-                            | (spsi_invalid ? 4 : 0)
-                            | (eigen_invalid ? 8 : 0);
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &update_invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
-#endif
-    if (update_invalid_mask != 0) {
-        this->diag_log("lobpcg_update_s_parallel produced non-finite values",
-                       vector_block_diagnostics("psi", psi.data<T>(), this->n_band_l, nbs, this->n_dim),
-                       vector_block_diagnostics("hpsi", hpsi.data<T>(), this->n_band_l, nbs, this->n_dim),
-                       vector_block_diagnostics("spsi", spsi.data<T>(), this->n_band_l, nbs, this->n_dim)
-                           + ", eigen_invalid=" + std::to_string((update_invalid_mask & 8) != 0)
-                           + ", invalid_mask=" + std::to_string(update_invalid_mask));
-        throw std::runtime_error("LOBPCG generalized parallel update produced non-finite values");
-    }
+    sync_generalized_update<T, Device>(psi, hpsi, spsi, pdir, hpdir, spdir, buffers, local_sz);
+    this->ensure_generalized_update_finite(
+        psi, hpsi, spsi, eigen, nbs, n,
+        "lobpcg_update_s_parallel produced non-finite values",
+        "LOBPCG generalized parallel update produced non-finite values");
 
     this->has_pdir = true;
 }
@@ -2275,9 +2598,10 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s(
     std::vector<T> basis;
     std::vector<T> hbasis;
     std::vector<T> sbasis;
-    basis.reserve((this->has_pdir ? 3 : 2) * local_sz);
-    hbasis.reserve((this->has_pdir ? 3 : 2) * local_sz);
-    sbasis.reserve((this->has_pdir ? 3 : 2) * local_sz);
+    const int block_capacity = this->has_pdir ? 3 : 2;
+    basis.reserve(block_capacity * local_sz);
+    hbasis.reserve(block_capacity * local_sz);
+    sbasis.reserve(block_capacity * local_sz);
 
     append_s_orthonormal_block<T>(n, nbs, nvalid, eps,
                                   psi.data<T>(), hpsi.data<T>(), spsi.data<T>(),
@@ -2345,46 +2669,37 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s(
         throw std::runtime_error("LOBPCG generalized subspace diagonalization produced non-finite values");
     }
 
-    const Real* sub = this->sub_eigen.data<Real>();
-    Real* eig = eigen.data<Real>();
-    for (int ib = 0; ib < n; ++ib) {
-        eig[ib] = sub[ib];
-    }
+    copy_lowest_subspace_eigenvalues(this->sub_eigen.data<Real>(), eigen.data<Real>(), n);
 
-    T* x_new = this->work.data<T>();
-    T* hx_new = this->hwork.data<T>();
-    T* sx_new = this->swork.data<T>();
-    T* p_new = this->pwork.data<T>();
-    T* hp_new = this->hpwork.data<T>();
-    T* sp_new = this->spwork.data<T>();
-    setmem_complex_op()(x_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hx_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(sx_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(p_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(hp_new, static_cast<T>(0.0), local_sz);
-    setmem_complex_op()(sp_new, static_cast<T>(0.0), local_sz);
+    auto buffers = make_generalized_update_buffers(this->work.data<T>(),
+                                                   this->hwork.data<T>(),
+                                                   this->swork.data<T>(),
+                                                   this->pwork.data<T>(),
+                                                   this->hpwork.data<T>(),
+                                                   this->spwork.data<T>());
+    zero_update_buffers<T, Device>(buffers, local_sz);
 
     ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     nvalid, n, m,
+                                     nvalid, n, n,
                                      this->one,
                                      basis.data(), nbs,
                                      hsub_d, this->nsub,
                                      this->zero,
-                                     x_new, nbs);
+                                     buffers.x, nbs);
     ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     nvalid, n, m,
+                                     nvalid, n, n,
                                      this->one,
                                      hbasis.data(), nbs,
                                      hsub_d, this->nsub,
                                      this->zero,
-                                     hx_new, nbs);
+                                     buffers.hx, nbs);
     ModuleBase::gemm_op<T, Device>()('N', 'N',
-                                     nvalid, n, m,
+                                     nvalid, n, n,
                                      this->one,
                                      sbasis.data(), nbs,
                                      hsub_d, this->nsub,
                                      this->zero,
-                                     sx_new, nbs);
+                                     buffers.sx, nbs);
 
     const int tail_cols = m - n;
     if (tail_cols > 0) {
@@ -2394,277 +2709,73 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s(
                                          basis.data() + n * nbs, nbs,
                                          hsub_d + n, this->nsub,
                                          this->zero,
-                                         p_new, nbs);
+                                         buffers.p, nbs);
         ModuleBase::gemm_op<T, Device>()('N', 'N',
                                          nvalid, n, tail_cols,
                                          this->one,
                                          hbasis.data() + n * nbs, nbs,
                                          hsub_d + n, this->nsub,
                                          this->zero,
-                                         hp_new, nbs);
+                                         buffers.hp, nbs);
         ModuleBase::gemm_op<T, Device>()('N', 'N',
                                          nvalid, n, tail_cols,
                                          this->one,
                                          sbasis.data() + n * nbs, nbs,
                                          hsub_d + n, this->nsub,
                                          this->zero,
-                                         sp_new, nbs);
+                                         buffers.sp, nbs);
+        add_block_to<T, Device>(buffers.p, buffers.x, local_sz, this->one);
+        add_block_to<T, Device>(buffers.hp, buffers.hx, local_sz, this->one);
+        add_block_to<T, Device>(buffers.sp, buffers.sx, local_sz, this->one);
     }
 
-    syncmem_complex_op()(psi.data<T>(),   x_new,  local_sz);
-    syncmem_complex_op()(hpsi.data<T>(),  hx_new, local_sz);
-    syncmem_complex_op()(spsi.data<T>(),  sx_new, local_sz);
-    syncmem_complex_op()(pdir.data<T>(),  p_new,  local_sz);
-    syncmem_complex_op()(hpdir.data<T>(), hp_new, local_sz);
-    syncmem_complex_op()(spdir.data<T>(), sp_new, local_sz);
-
-    if (!finite_vector_block(psi.data<T>(), this->n_band_l, nbs, this->n_dim)
-        || !finite_vector_block(hpsi.data<T>(), this->n_band_l, nbs, this->n_dim)
-        || !finite_vector_block(spsi.data<T>(), this->n_band_l, nbs, this->n_dim)
-        || !finite_real_block(eigen.data<Real>(), n)) {
-        throw std::runtime_error("LOBPCG generalized update produced non-finite values");
-    }
+    sync_generalized_update<T, Device>(psi, hpsi, spsi, pdir, hpdir, spdir, buffers, local_sz);
+    this->ensure_generalized_update_finite(
+        psi, hpsi, spsi, eigen, nbs, n,
+        "lobpcg_update_s produced non-finite values",
+        "LOBPCG generalized update produced non-finite values");
 
     this->has_pdir = true;
 }
 
-// ============================================================================
-// diag — main LOBPCG loop (NC, S=I)
-// ============================================================================
 
 template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::diag(
-    const HPsiFunc& hpsi_func, T* psi_in,
-    Real* eigenvalue_in, const std::vector<double>& ethr_band)
-{
-    this->validate_ethr_band(ethr_band);
-
-    this->has_pdir = false;
-    const int scf_iter = DiagoIterAssist<T, Device>::SCF_ITER;
-
-    this->psi = ct::TensorMap(psi_in, t_type, dev_type,
-                               {this->n_band_l, this->n_basis});
-
-    auto t0 = LobpcgClock::now();
-    this->calc_prec();
-    this->profile_log("S=I", "initial_calc_prec", 0,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-
-    t0 = LobpcgClock::now();
-    this->calc_hpsi_with_block(hpsi_func, psi_in, this->hpsi);
-    this->profile_log("S=I", "initial_hpsi", 0,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-    // Re-orthonormalize before initial R-R so H_sub is well-conditioned
-    t0 = LobpcgClock::now();
-    this->orth_cholesky(this->work, this->psi, this->hpsi, this->tmp_hsub);
-    this->profile_log("S=I", "initial_orth", 0,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-    t0 = LobpcgClock::now();
-    this->rayleigh_ritz(this->psi, this->hpsi, this->eigen);
-    this->profile_log("S=I", "initial_rr", 0,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-
-    setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0),
-                         this->n_basis * this->n_band_l);
-    setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0),
-                         this->n_basis * this->n_band_l);
-
-    const int default_max_iter = (scf_iter > 1) ? this->nline : (this->nline * 20);
-    const int max_iter = (this->max_iter > 0) ? this->max_iter : default_max_iter;
-    int used_iter = 0;
-
-    for (int ntry = 0; ntry < max_iter; ++ntry) {
-        used_iter = ntry + 1;
-        t0 = LobpcgClock::now();
-        this->compute_residual(this->psi, this->hpsi, this->eigen,
-                               this->prec, this->grad, this->err_st);
-        this->profile_log("S=I", "residual", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        if (!this->test_error(this->err_st, ethr_band))
-            break;
-
-        const int psi_sz = this->n_basis * this->n_band_l;
-        const int eig_sz = this->n_band;
-
-        t0 = LobpcgClock::now();
-        this->orth_projection(this->psi, this->tmp_hsub, this->grad);
-        this->profile_log("S=I", "grad_projection", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-
-        t0 = LobpcgClock::now();
-        this->calc_hpsi_with_block(hpsi_func, this->grad.data<T>(), this->hgrad);
-        this->profile_log("S=I", "grad_hpsi", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-
-        // Backup stable state in case lobpcg_update corrupts psi/hpsi
-        std::vector<T> psi_bak(psi_sz), hpsi_bak(psi_sz);
-        std::vector<Real> eigen_bak(eig_sz);
-        std::copy(this->psi.data<T>(),  this->psi.data<T>()  + psi_sz, psi_bak.data());
-        std::copy(this->hpsi.data<T>(), this->hpsi.data<T>() + psi_sz, hpsi_bak.data());
-        std::copy(this->eigen.data<Real>(), this->eigen.data<Real>() + eig_sz, eigen_bak.data());
-
-        try {
-            t0 = LobpcgClock::now();
-            this->lobpcg_update(this->psi, this->hpsi,
-                                 this->grad, this->hgrad,
-                                 this->pdir, this->hpdir,
-                                 this->eigen);
-            this->profile_log("S=I", "lobpcg_update", used_iter,
-                              std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        } catch (const std::exception& e1) {
-            std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-            std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-            std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-
-            setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-            setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-            this->has_pdir = false;
-
-            try {
-                t0 = LobpcgClock::now();
-                this->lobpcg_update(this->psi, this->hpsi,
-                                     this->grad, this->hgrad,
-                                     this->pdir, this->hpdir,
-                                     this->eigen);
-                this->profile_log("S=I", "lobpcg_update_retry", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-            } catch (const std::exception& e2) {
-                std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-                std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-                std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-
-                t0 = LobpcgClock::now();
-                this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
-                this->orth_cholesky(this->work, this->psi, this->hpsi, this->tmp_hsub);
-                this->rayleigh_ritz(this->psi, this->hpsi, this->eigen);
-                this->profile_log("S=I", "fallback_rr", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-            }
-        }
-
-        const bool has_next_iteration = (ntry + 1) < max_iter;
-        const bool restart_next = has_next_iteration && scf_iter == 1 && ((ntry + 1) % this->nline == 0);
-        if (restart_next) {
-            setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0),
-                                 this->n_basis * this->n_band_l);
-            setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0),
-                                 this->n_basis * this->n_band_l);
-            this->has_pdir = false;
-        }
-    }
-
-    t0 = LobpcgClock::now();
-    this->compute_residual(this->psi, this->hpsi, this->eigen,
-                           this->prec, this->grad, this->err_st);
-    this->profile_log("S=I", "final_residual", used_iter,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-    this->report_not_converged("S=I", used_iter, max_iter, ethr_band);
-    DiagoIterAssist<T, Device>::avg_iter += static_cast<Real>(used_iter);
-
-    syncmem_var_d2h_op()(eigenvalue_in,
-                          this->eigen.data<Real>() + this->local_band_start(),
-                          this->n_band_l);
-}
-
-template <typename T, typename Device>
-void DiagoLobpcg<T, Device>::diag(
+int DiagoLobpcg<T, Device>::diag(
     const HPsiFunc& hpsi_func, const SPsiFunc& spsi_func, T* psi_in,
     Real* eigenvalue_in, const std::vector<double>& ethr_band)
 {
     this->validate_ethr_band(ethr_band);
+    this->reset_profile_stats();
 
     this->has_pdir = false;
     this->psi = ct::TensorMap(psi_in, t_type, dev_type,
                                {this->n_band_l, this->n_basis});
 
     this->calc_spsi_with_block(spsi_func, psi_in, this->spsi);
-    {
-        const T* spsi_d = this->spsi.data<T>();
-        Real max_diff = static_cast<Real>(0.0);
-        Real max_ref = static_cast<Real>(0.0);
-        for (int ib = 0; ib < this->n_band_l; ++ib) {
-            const int ioff = ib * this->n_basis;
-            for (int ig = 0; ig < this->n_dim; ++ig) {
-                const int idx = ioff + ig;
-                max_diff = std::max(max_diff,
-                                    static_cast<Real>(std::abs(spsi_d[idx] - psi_in[idx])));
-                max_ref = std::max(max_ref,
-                                   static_cast<Real>(std::abs(psi_in[idx])));
-            }
-        }
-#ifdef __MPI
-        if (this->n_band_l != this->n_band) {
-            const MPI_Datatype real_type = std::is_same<Real, double>::value ? MPI_DOUBLE : MPI_FLOAT;
-            MPI_Allreduce(MPI_IN_PLACE, &max_diff, 1, real_type, MPI_MAX, BP_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, &max_ref, 1, real_type, MPI_MAX, BP_WORLD);
-        }
-#endif
-        const Real tol = static_cast<Real>(1.0e-12)
-                       * std::max(static_cast<Real>(1.0), max_ref);
-        if (max_diff <= tol) {
-            this->diag(hpsi_func, psi_in, eigenvalue_in, ethr_band);
-            return;
-        }
-    }
 
     const int scf_iter = DiagoIterAssist<T, Device>::SCF_ITER;
 
-    auto t0 = LobpcgClock::now();
-    this->calc_prec();
-    this->profile_log("S!=I", "initial_calc_prec", 0,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+    this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "initial_calc_prec", 0, [&]() {
+        this->calc_prec();
+    });
     if (this->n_band_l != this->n_band) {
-        t0 = LobpcgClock::now();
-        this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
-        this->profile_log("S!=I", "initial_hpsi", 0,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        t0 = LobpcgClock::now();
-        this->generalized_rayleigh_ritz_parallel(this->psi, this->hpsi, this->spsi, this->eigen);
-        this->profile_log("S!=I", "initial_rr_parallel", 0,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "initial_hpsi", 0, [&]() {
+            this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
+        });
+        this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "initial_rr_parallel", 0, [&]() {
+            this->generalized_rayleigh_ritz_parallel(this->psi, this->hpsi, this->spsi, this->eigen);
+        });
     } else {
-        t0 = LobpcgClock::now();
-        this->repair_initial_subspace_s(hpsi_func, spsi_func);
-        this->profile_log("S!=I", "initial_repair", 0,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        t0 = LobpcgClock::now();
-        this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
-        this->profile_log("S!=I", "initial_rr", 0,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
+        this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "initial_repair", 0, [&]() {
+            this->repair_initial_subspace_s(hpsi_func, spsi_func);
+        });
+        this->profiled_call(LOBPCG_PROBLEM_GENERALIZED, "initial_rr", 0, [&]() {
+            this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
+        });
     }
 
-    setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0),
-                         this->n_basis * this->n_band_l);
-    setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0),
-                         this->n_basis * this->n_band_l);
-    setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0),
-                         this->n_basis * this->n_band_l);
+    this->clear_search_directions();
 
-    const int default_max_iter = (scf_iter > 1) ? this->nline : (this->nline * 20);
-    const int max_iter = (this->max_iter > 0) ? this->max_iter : default_max_iter;
-    int used_iter = 0;
-    const int psi_sz = this->n_basis * this->n_band_l;
-    const int eig_sz = this->n_band;
-    std::vector<T> best_psi(psi_sz), best_hpsi(psi_sz), best_spsi(psi_sz);
-    std::vector<Real> best_eigen(eig_sz);
-    Real best_residual = std::numeric_limits<Real>::max();
-    bool has_best_state = false;
-    auto save_best_state = [&]() {
-        std::copy(this->psi.data<T>(),  this->psi.data<T>()  + psi_sz, best_psi.data());
-        std::copy(this->hpsi.data<T>(), this->hpsi.data<T>() + psi_sz, best_hpsi.data());
-        std::copy(this->spsi.data<T>(), this->spsi.data<T>() + psi_sz, best_spsi.data());
-        std::copy(this->eigen.data<Real>(), this->eigen.data<Real>() + eig_sz, best_eigen.data());
-    };
-    auto restore_best_state = [&]() {
-        std::copy(best_psi.data(), best_psi.data() + psi_sz, this->psi.data<T>());
-        std::copy(best_hpsi.data(), best_hpsi.data() + psi_sz, this->hpsi.data<T>());
-        std::copy(best_spsi.data(), best_spsi.data() + psi_sz, this->spsi.data<T>());
-        std::copy(best_eigen.data(), best_eigen.data() + eig_sz, this->eigen.data<Real>());
-        setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-        setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-        setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
-        this->has_pdir = false;
-    };
     std::vector<double> effective_ethr_band = ethr_band;
     if (this->notconv_max < 0) {
         // SCF can refine the density across outer iterations; avoid chasing a tiny diagonalization threshold.
@@ -2673,283 +2784,18 @@ void DiagoLobpcg<T, Device>::diag(
             ethr = std::max(ethr, scf_generalized_residual_floor);
         }
     }
-    for (int ntry = 0; ntry < max_iter; ++ntry) {
-        used_iter = ntry + 1;
-        t0 = LobpcgClock::now();
-        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                 this->prec, this->grad, this->err_st);
-        this->profile_log("S!=I", "residual", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        const Real residual_before_update = this->max_error(this->err_st);
-        if (std::isfinite(residual_before_update) && residual_before_update < best_residual) {
-            best_residual = residual_before_update;
-            has_best_state = true;
-            save_best_state();
-        }
-        if (!this->test_error(this->err_st, effective_ethr_band))
-            break;
-
-        t0 = LobpcgClock::now();
-        this->calc_spsi_with_block(spsi_func, this->grad.data<T>(), this->sgrad);
-        this->profile_log("S!=I", "grad_spsi", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        t0 = LobpcgClock::now();
-        this->orth_projection_s(this->psi, this->spsi, this->tmp_hsub,
-                                this->sgrad, this->grad);
-        this->profile_log("S!=I", "grad_projection", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        t0 = LobpcgClock::now();
-        this->calc_hpsi_with_block(hpsi_func, this->grad.data<T>(), this->hgrad);
-        this->profile_log("S!=I", "grad_hpsi", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-
-        std::vector<T> psi_bak(psi_sz), hpsi_bak(psi_sz), spsi_bak(psi_sz);
-        std::vector<Real> eigen_bak(eig_sz);
-        std::copy(this->psi.data<T>(),  this->psi.data<T>()  + psi_sz, psi_bak.data());
-        std::copy(this->hpsi.data<T>(), this->hpsi.data<T>() + psi_sz, hpsi_bak.data());
-        std::copy(this->spsi.data<T>(), this->spsi.data<T>() + psi_sz, spsi_bak.data());
-        std::copy(this->eigen.data<Real>(), this->eigen.data<Real>() + eig_sz, eigen_bak.data());
-
-        try {
-            t0 = LobpcgClock::now();
-            if (this->n_band_l != this->n_band) {
-                this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
-                                               this->grad, this->hgrad, this->sgrad,
-                                               this->pdir, this->hpdir, this->spdir,
-                                               this->eigen, false);
-            } else {
-                this->lobpcg_update_s(this->psi, this->hpsi, this->spsi,
-                                      this->grad, this->hgrad, this->sgrad,
-                                      this->pdir, this->hpdir, this->spdir,
-                                      this->eigen);
-            }
-            this->profile_log("S!=I", "lobpcg_update", used_iter,
-                              std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        } catch (const std::exception& e1) {
-            this->diag_log("lobpcg_update_s failed: " + std::string(e1.what()),
-                           "retry without previous search direction",
-                           "iteration=" + std::to_string(used_iter));
-            std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-            std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-            std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
-            std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-
-            setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-            setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-            setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
-            this->has_pdir = false;
-
-            try {
-                t0 = LobpcgClock::now();
-                if (this->n_band_l != this->n_band) {
-                    this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
-                                                   this->grad, this->hgrad, this->sgrad,
-                                                   this->pdir, this->hpdir, this->spdir,
-                                                   this->eigen, false);
-                } else {
-                    this->lobpcg_update_s(this->psi, this->hpsi, this->spsi,
-                                          this->grad, this->hgrad, this->sgrad,
-                                          this->pdir, this->hpdir, this->spdir,
-                                          this->eigen);
-                }
-                this->profile_log("S!=I", "lobpcg_update_retry", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-            } catch (const std::exception& e2) {
-                this->diag_log("lobpcg_update_s retry failed: " + std::string(e2.what()),
-                               "fallback to Rayleigh-Ritz repair",
-                               "iteration=" + std::to_string(used_iter));
-                std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-                std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-                std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
-                std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-
-                t0 = LobpcgClock::now();
-                this->calc_hpsi_with_block(hpsi_func, this->psi.data<T>(), this->hpsi);
-                this->calc_spsi_with_block(spsi_func, this->psi.data<T>(), this->spsi);
-                if (this->n_band_l != this->n_band) {
-                    this->generalized_rayleigh_ritz_parallel(this->psi, this->hpsi, this->spsi, this->eigen);
-                } else {
-                    this->generalized_rayleigh_ritz(this->psi, this->hpsi, this->spsi, this->eigen);
-                }
-                this->profile_log("S!=I", "fallback_rr", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-            }
-        }
-
-        t0 = LobpcgClock::now();
-        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                 this->prec, this->grad, this->err_st);
-        this->profile_log("S!=I", "post_update_residual", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-        const Real residual_after_update = this->max_error(this->err_st);
-        const Real residual_growth_limit = (this->n_band_l != this->n_band)
-            ? static_cast<Real>(1.05)
-            : static_cast<Real>(10.0);
-        const Real residual_limit = std::max(static_cast<Real>(1.0e-8),
-                                             residual_before_update * residual_growth_limit);
-        bool update_rejected = !std::isfinite(residual_after_update)
-                          || residual_after_update > residual_limit;
-#ifdef __MPI
-        int update_rejected_int = update_rejected ? 1 : 0;
-        MPI_Allreduce(MPI_IN_PLACE, &update_rejected_int, 1, MPI_INT, MPI_LOR, BP_WORLD);
-        update_rejected = (update_rejected_int != 0);
-#endif
-        if (update_rejected) {
-            auto restore_backup_state = [&]() {
-                std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-                std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-                std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
-                std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-                setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-                setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-                setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
-                this->has_pdir = false;
-            };
-            this->diag_log("lobpcg_update_s rejected residual-increasing step",
-                           "before=" + std::to_string(residual_before_update)
-                               + ", after=" + std::to_string(residual_after_update)
-                               + ", limit=" + std::to_string(residual_limit),
-                           this->n_band_l != this->n_band ? "retry with compressed S_sub path"
-                                                          : "fallback to backed-up Rayleigh-Ritz state",
-                           "iteration=" + std::to_string(used_iter));
-            restore_backup_state();
-
-            Real guarded_residual = std::numeric_limits<Real>::max();
-            if (this->n_band_l != this->n_band) {
-                bool compressed_ok = false;
-                try {
-                    t0 = LobpcgClock::now();
-                    this->lobpcg_update_s_parallel(this->psi, this->hpsi, this->spsi,
-                                                   this->grad, this->hgrad, this->sgrad,
-                                                   this->pdir, this->hpdir, this->spdir,
-                                                   this->eigen, true);
-                    this->profile_log("S!=I", "lobpcg_update_compressed_guard", used_iter,
-                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-                    t0 = LobpcgClock::now();
-                    this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                             this->prec, this->grad, this->err_st);
-                    this->profile_log("S!=I", "compressed_guard_residual", used_iter,
-                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-                    guarded_residual = this->max_error(this->err_st);
-                    const Real guarded_limit = std::max(static_cast<Real>(1.0e-8),
-                                                        residual_before_update * residual_growth_limit);
-                    compressed_ok = std::isfinite(guarded_residual)
-                                 && guarded_residual <= guarded_limit;
-#ifdef __MPI
-                    int compressed_ok_int = compressed_ok ? 1 : 0;
-                    MPI_Allreduce(MPI_IN_PLACE, &compressed_ok_int, 1, MPI_INT, MPI_LAND, BP_WORLD);
-                    compressed_ok = (compressed_ok_int != 0);
-#endif
-                } catch (const std::exception& e) {
-                    this->diag_log("lobpcg_update_s compressed guard failed: " + std::string(e.what()),
-                                   "fallback to backed-up Rayleigh-Ritz state",
-                                   "iteration=" + std::to_string(used_iter));
-                }
-                if (!compressed_ok) {
-                    restore_backup_state();
-                    t0 = LobpcgClock::now();
-                    this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                             this->prec, this->grad, this->err_st);
-                    this->profile_log("S!=I", "rollback_residual", used_iter,
-                                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-                    guarded_residual = this->max_error(this->err_st);
-                } else {
-                    update_rejected = false;
-                }
-            } else {
-                t0 = LobpcgClock::now();
-                this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                         this->prec, this->grad, this->err_st);
-                this->profile_log("S!=I", "rollback_residual", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-                guarded_residual = this->max_error(this->err_st);
-            }
-            if (std::isfinite(guarded_residual) && guarded_residual < best_residual) {
-                best_residual = guarded_residual;
-                has_best_state = true;
-                save_best_state();
-            }
-        } else if (std::isfinite(residual_after_update) && residual_after_update < best_residual) {
-            best_residual = residual_after_update;
-            has_best_state = true;
-            save_best_state();
-        }
-        if (this->profile_enabled()) {
-            std::ostringstream oss;
-            oss << "residual_before=" << std::setprecision(12) << residual_before_update
-                << " residual_after=" << residual_after_update
-                << " best=" << best_residual
-                << " limit=" << residual_limit
-                << " rejected=" << (update_rejected ? 1 : 0)
-                << " has_pdir=" << (this->has_pdir ? 1 : 0);
-            this->diag_log("lobpcg_update_s residual trace",
-                           oss.str(),
-                           "iteration=" + std::to_string(used_iter));
-        }
-
-        const bool has_next_iteration = (ntry + 1) < max_iter;
-        const bool restart_next = has_next_iteration && scf_iter == 1 && ((ntry + 1) % this->nline == 0);
-        if (has_next_iteration && !restart_next && !update_rejected) {
-            try {
-                t0 = LobpcgClock::now();
-                if (this->n_band_l != this->n_band) {
-                    this->orth_projection_s_with_h(this->psi, this->hpsi, this->spsi,
-                                                   this->tmp_hsub, this->hpdir,
-                                                   this->spdir, this->pdir);
-                } else {
-                    this->calc_spsi_with_block(spsi_func, this->pdir.data<T>(), this->spdir);
-                    this->orth_projection_s(this->psi, this->spsi, this->tmp_hsub,
-                                            this->spdir, this->pdir);
-                    this->calc_hpsi_with_block(hpsi_func, this->pdir.data<T>(), this->hpdir);
-                }
-                this->profile_log("S!=I", "p_projection", used_iter,
-                                  std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-            } catch (const std::exception&) {
-                std::copy(psi_bak.data(), psi_bak.data() + psi_sz, this->psi.data<T>());
-                std::copy(hpsi_bak.data(), hpsi_bak.data() + psi_sz, this->hpsi.data<T>());
-                std::copy(spsi_bak.data(), spsi_bak.data() + psi_sz, this->spsi.data<T>());
-                std::copy(eigen_bak.data(), eigen_bak.data() + eig_sz, this->eigen.data<Real>());
-                setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-                setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-                setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
-                this->has_pdir = false;
-            }
-        }
-        if (restart_next) {
-            setmem_complex_op()(this->pdir.data<T>(),  static_cast<T>(0.0), psi_sz);
-            setmem_complex_op()(this->hpdir.data<T>(), static_cast<T>(0.0), psi_sz);
-            setmem_complex_op()(this->spdir.data<T>(), static_cast<T>(0.0), psi_sz);
-            this->has_pdir = false;
-        }
-    }
-
-    t0 = LobpcgClock::now();
-    this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                             this->prec, this->grad, this->err_st);
-    this->profile_log("S!=I", "final_residual", used_iter,
-                      std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-    Real final_residual = this->max_error(this->err_st);
-    const Real best_restore_tol = std::max(static_cast<Real>(1.0e-12),
-                                           std::abs(best_residual) * static_cast<Real>(1.0e-8));
-    if (has_best_state
-        && (!std::isfinite(final_residual) || final_residual > best_residual + best_restore_tol)) {
-        this->diag_log("DiagoLobpcg::diag(S!=I) restored best residual state",
-                       "final=" + std::to_string(final_residual),
-                       "best=" + std::to_string(best_residual),
-                       "context={" + this->diag_context + "}");
-        restore_best_state();
-        t0 = LobpcgClock::now();
-        this->compute_residual_s(this->psi, this->hpsi, this->spsi, this->eigen,
-                                 this->prec, this->grad, this->err_st);
-        this->profile_log("S!=I", "best_state_residual", used_iter,
-                          std::chrono::duration<double>(LobpcgClock::now() - t0).count());
-    }
-    this->report_not_converged("S!=I", used_iter, max_iter, effective_ethr_band);
-    DiagoIterAssist<T, Device>::avg_iter += static_cast<Real>(used_iter);
+    const int used_iter = this->run_lobpcg_loop(
+        LOBPCG_PROBLEM_GENERALIZED,
+        "DiagoLobpcg::diag(S!=I)",
+        hpsi_func,
+        spsi_func,
+        effective_ethr_band,
+        scf_iter);
 
     syncmem_var_d2h_op()(eigenvalue_in,
                           this->eigen.data<Real>() + this->local_band_start(),
                           this->n_band_l);
+    return used_iter;
 }
 
 template class DiagoLobpcg<std::complex<double>, base_device::DEVICE_CPU>;

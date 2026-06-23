@@ -460,7 +460,7 @@ void ParameterHelp::show_general_help(std::ostream& os) {
     os << "  calculation    - Calculation type (scf, relax, md, nscf, etc.)\n";
     os << "  basis_type     - Basis set type (pw, lcao)\n";
     os << "  ecutwfc        - Energy cutoff for wavefunctions (Ry)\n";
-    os << "  ks_solver      - Kohn-Sham solver (cg, dav, genelpa, etc.)\n";
+    os << "  ks_solver      - Kohn-Sham solver (cg, dav, bpcg, lobpcg, genelpa, etc.)\n";
     os << "  scf_thr        - SCF convergence threshold\n";
     os << "  pseudo_dir     - Directory containing pseudopotential files\n";
     os << "\n";

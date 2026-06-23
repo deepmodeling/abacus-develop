@@ -1,8 +1,11 @@
 #ifndef DIAGO_LOBPCG_H_
 #define DIAGO_LOBPCG_H_
 
+#include <algorithm>
+#include <cmath>
 #include <complex>
 #include <functional>
+#include <limits>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -12,6 +15,7 @@
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
 #include "source_hamilt/hamilt.h"
+#include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/para_linear_transform.h"
 
@@ -20,6 +24,85 @@
 #include <source_base/macros.h>
 
 namespace hsolver {
+
+namespace lobpcg_detail {
+
+template <typename Real>
+inline Real generalized_residual_growth_limit()
+{
+    return static_cast<Real>(10.0);
+}
+
+template <typename Real>
+inline Real residual_guard_limit(const Real residual_before,
+                                 const Real residual_growth_limit)
+{
+    return std::max(static_cast<Real>(1.0e-8),
+                    residual_before * residual_growth_limit);
+}
+
+template <typename Real>
+inline bool state_is_better(const int candidate_notconv,
+                            const Real candidate_residual,
+                            const bool has_best_state,
+                            const int best_notconv,
+                            const Real best_residual)
+{
+    if (!std::isfinite(candidate_residual)) {
+        return false;
+    }
+    if (!has_best_state || candidate_notconv < best_notconv) {
+        return true;
+    }
+    if (candidate_notconv > best_notconv) {
+        return false;
+    }
+    const Real best_tol = std::max(static_cast<Real>(1.0e-12),
+                                   std::abs(best_residual) * static_cast<Real>(1.0e-8));
+    return candidate_residual < best_residual - best_tol;
+}
+
+template <typename Real>
+inline bool should_reject_residual_update(const int notconv_before,
+                                          const Real residual_before,
+                                          const int notconv_after,
+                                          const Real residual_after,
+                                          const Real residual_growth_limit)
+{
+    const Real residual_limit = residual_guard_limit(residual_before, residual_growth_limit);
+    return !std::isfinite(residual_after)
+        || (residual_after > residual_limit && notconv_after >= notconv_before);
+}
+
+template <typename Real>
+inline bool compressed_guard_is_acceptable(const int notconv_before,
+                                           const Real residual_before,
+                                           const int guarded_notconv,
+                                           const Real guarded_residual,
+                                           const Real residual_growth_limit)
+{
+    const Real guarded_limit = residual_guard_limit(residual_before, residual_growth_limit);
+    return std::isfinite(guarded_residual)
+        && (guarded_residual <= guarded_limit || guarded_notconv < notconv_before);
+}
+
+template <typename Real>
+inline bool should_restore_best_state(const bool has_best_state,
+                                      const int final_notconv,
+                                      const Real final_residual,
+                                      const int best_notconv,
+                                      const Real best_residual)
+{
+    const Real best_restore_tol = std::max(static_cast<Real>(1.0e-12),
+                                           std::abs(best_residual) * static_cast<Real>(1.0e-8));
+    return has_best_state
+        && (final_notconv > best_notconv
+            || !std::isfinite(final_residual)
+            || (final_notconv == best_notconv
+                && final_residual > best_residual + best_restore_tol));
+}
+
+} // namespace lobpcg_detail
 
 /**
  * @class DiagoLobpcg
@@ -69,14 +152,17 @@ class DiagoLobpcg
     /// Set allowed unconverged bands after max_iter. Negative means report only.
     void set_notconv_max(const int n) { this->notconv_max = n; }
 
+    /// Keep strict failure for NSCF/tests; SCF should report and let outer mixing continue.
+    void set_throw_on_notconv_exceed(const bool enabled) { this->throw_on_notconv_exceed = enabled; }
+
     void set_diag_context(const std::string& context) { this->diag_context = context; }
 
-    /// Generalized diagonalization. The standard problem is covered by S = I.
-    void diag(const HPsiFunc& hpsi_func,
-              const SPsiFunc& spsi_func,
-              T* psi_in,
-              Real* eigenvalue_in,
-              const std::vector<double>& ethr_band);
+    /// Generalized diagonalization for non-identity overlap S.
+    int diag(const HPsiFunc& hpsi_func,
+             const SPsiFunc& spsi_func,
+             T* psi_in,
+             Real* eigenvalue_in,
+             const std::vector<double>& ethr_band);
 
   private:
     // ---- dimensions ----
@@ -87,13 +173,56 @@ class DiagoLobpcg
     int nline    = 4;   ///< max inner iterations per SCF step
     int max_iter = 0;   ///< hard iteration limit; <=0 uses nline-based default
     int notconv_max = -1; ///< allowed unconverged bands; <0 reports only
+    bool throw_on_notconv_exceed = true; ///< throw when notconv exceeds notconv_max after max_iter
     int nsub     = 0;   ///< physical leading dim of hsub (= 3*n_band)
     bool has_pdir = false; ///< true when P block holds valid directions
     std::string diag_context;
 
+    struct ProfileStats
+    {
+        long long pgemm_multiply_calls = 0;
+        long long plintrans_act_calls = 0;
+        long long residual_guard_rejections = 0;
+        long long residual_guard_stops = 0;
+        long long compressed_guard_attempts = 0;
+        long long compressed_guard_accepts = 0;
+        long long compressed_fallbacks = 0;
+        long long allowed_notconv_polish_iterations = 0;
+        long long best_state_restores = 0;
+        long long soft_lock_restores = 0;
+        long long soft_lock_restored_bands = 0;
+        long long active_band_update_samples = 0;
+        long long active_band_update_sum = 0;
+        int active_band_update_min = 0;
+        int active_band_update_max = 0;
+    };
+    struct ProfileStageStats
+    {
+        std::string stage;
+        long long calls = 0;
+        double seconds = 0.0;
+    };
+    ProfileStats profile_stats;
+    mutable std::vector<ProfileStageStats> profile_stage_stats;
+    struct State
+    {
+        std::vector<T> psi;
+        std::vector<T> hpsi;
+        std::vector<T> spsi;
+        std::vector<Real> eigen;
+    };
+    struct StateQuality
+    {
+        Real residual = std::numeric_limits<Real>::max();
+        int notconv = std::numeric_limits<int>::max();
+        bool valid = false;
+    };
+
     // ---- parallel ops ----
     ModuleBase::PGemmCN<T, Device> pmmcn;
     PLinearTransform<T, Device> plintrans;
+    PLinearTransform<T, Device> plintrans_batch2;
+    PLinearTransform<T, Device> plintrans_batch3;
 
     // ---- type traits ----
     ct::DataType r_type   = ct::DataType::DT_INVALID;
@@ -137,6 +266,11 @@ class DiagoLobpcg
     ct::Tensor spwork  = {}; ///< [n_band_l, n_basis] (SP update)
     ct::Tensor tmp_hsub = {}; ///< scratch [n_band, n_band]
     ct::Tensor tmp_ssub = {}; ///< scratch [n_band, n_band]
+    std::vector<T> plintrans_batch_in;
+    std::vector<T> plintrans_batch_out;
+    std::vector<T> pgemm_batch_a;
+    std::vector<T> pgemm_batch_b;
+    std::vector<T> pgemm_batch_out;
 
     // ---- GEMM constants (following BPCG pattern) ----
     Device* ctx = {};
@@ -162,12 +296,6 @@ class DiagoLobpcg
     void repair_initial_subspace_s(const HPsiFunc& hpsi_func,
                                    const SPsiFunc& spsi_func);
 
-    /// Standard R-R: H_sub = psi^H * hpsi → heevd → rotate.
-    /// multiply(hpsi, psi) = psi^H * hpsi.
-    void rayleigh_ritz(ct::Tensor& psi_inout,
-                       ct::Tensor& hpsi_inout,
-                       ct::Tensor& eigen_out);
-
     /// Generalized R-R.
     void generalized_rayleigh_ritz(ct::Tensor& psi_inout,
                                    ct::Tensor& hpsi_inout,
@@ -180,15 +308,6 @@ class DiagoLobpcg
                                             ct::Tensor& spsi_inout,
                                             ct::Tensor& eigen_out);
 
-    /// NC residual: R = HX - X*Lambda, Z = R ./ prec.
-    /// CPU-only: direct loops.
-    void compute_residual(const ct::Tensor& psi_in,
-                          const ct::Tensor& hpsi_in,
-                          const ct::Tensor& eigen_in,
-                          const ct::Tensor& prec_in,
-                          ct::Tensor& grad_out,
-                          ct::Tensor& err_out);
-
     /// Generalized residual.
     void compute_residual_s(const ct::Tensor& psi_in,
                             const ct::Tensor& hpsi_in,
@@ -197,11 +316,6 @@ class DiagoLobpcg
                             const ct::Tensor& prec_in,
                             ct::Tensor& grad_out,
                             ct::Tensor& err_out);
-
-    /// grad -= psi * (psi^H * grad).  multiply(grad, psi) = psi^H * grad.
-    void orth_projection(const ct::Tensor& psi_in,
-                         ct::Tensor& hsub_work,
-                         ct::Tensor& grad_out);
 
     /// S-orthogonalize.
     void orth_projection_s(const ct::Tensor& psi_in,
@@ -217,16 +331,6 @@ class DiagoLobpcg
                                   ct::Tensor& hpdir_out,
                                   ct::Tensor& spdir_out,
                                   ct::Tensor& pdir_out);
-
-    /// Core subspace update (2-block first, then 3-block).
-    /// Orthonormalizes W = [X, Z, P] before Rayleigh-Ritz for stability.
-    void lobpcg_update(ct::Tensor& psi,
-                       ct::Tensor& hpsi,
-                       ct::Tensor& grad,
-                       ct::Tensor& hgrad,
-                       ct::Tensor& pdir,
-                       ct::Tensor& hpdir,
-                       ct::Tensor& eigen);
 
     /// Generalized subspace update for S != I.
     void lobpcg_update_s(ct::Tensor& psi,
@@ -258,12 +362,6 @@ class DiagoLobpcg
                    ct::Tensor& psi_out,
                    ct::Tensor& workspace_in);
 
-    /// S=I Cholesky: psi^H*psi → potrf(U) → trtri → psi *= U^{-1}, hpsi *= U^{-1}.
-    void orth_cholesky(ct::Tensor& workspace_in,
-                       ct::Tensor& psi_out,
-                       ct::Tensor& hpsi_out,
-                       ct::Tensor& hsub_out);
-
     /// S-Cholesky orthonormalization.
     void orth_cholesky_s(ct::Tensor& workspace_in,
                          ct::Tensor& psi_out,
@@ -275,25 +373,138 @@ class DiagoLobpcg
 
     Real max_error(const ct::Tensor& err_in) const;
 
+    int count_not_converged(const ct::Tensor& err_in,
+                            const std::vector<double>& ethr_band) const;
+
     void validate_ethr_band(const std::vector<double>& ethr_band) const;
 
     void diag_log(const std::string& context,
                   const std::string& line1,
                   const std::string& line2,
                   const std::string& line3 = std::string()) const;
+    std::string error_with_context(const std::string& message) const;
 
     void report_not_converged(const char* problem_type,
                               const int used_iter,
                               const int max_iter,
-                              const std::vector<double>& ethr_band) const;
+                              const std::vector<double>& ethr_band,
+                              const std::string& stop_reason) const;
 
     bool profile_enabled() const;
     void profile_log(const char* problem_type,
                      const char* stage,
                      const int iter,
                      const double seconds) const;
+    void profile_accumulate_stage(const char* stage,
+                                  const double seconds) const;
+    void profile_record_active_bands(const int active_bands);
+    void reset_profile_stats();
+    void profile_summary(const char* problem_type,
+                         const int used_iter,
+                         const Real final_residual,
+                         const int final_notconv) const;
+    void pgemm_multiply(const T alpha,
+                        const T* a,
+                        const T* b,
+                        const T beta,
+                        T* c);
+    void plintrans_act(const T alpha,
+                       const T* a,
+                       const T* u,
+                       const T beta,
+                       T* b);
+    void plintrans_batched_act(const T alpha,
+                               const T* const* a_blocks,
+                               const int block_count,
+                               const T* u,
+                               const T beta,
+                               T* const* b_blocks);
 
     int local_band_start() const;
+    void clear_search_directions();
+    void save_state(std::vector<T>& psi_out,
+                    std::vector<T>& hpsi_out,
+                    std::vector<Real>& eigen_out);
+    void restore_state(const std::vector<T>& psi_in,
+                       const std::vector<T>& hpsi_in,
+                       const std::vector<Real>& eigen_in,
+                       const bool reset_search);
+    void save_state(State& state);
+    void restore_state(const State& state,
+                       const bool reset_search);
+    std::vector<char> make_soft_lock_mask(const ct::Tensor& err_in,
+                                          const std::vector<double>& ethr_band,
+                                          const int notconv) const;
+    bool restore_generalized_soft_locked_bands(const State& state,
+                                               const std::vector<char>& soft_lock_mask,
+                                               const ct::Tensor& err_in,
+                                               const std::vector<double>& ethr_band);
+    bool restore_soft_locked_bands(const State& state,
+                                   const std::vector<char>& soft_lock_mask,
+                                   const ct::Tensor& err_in,
+                                   const std::vector<double>& ethr_band);
+    void profiled_save_state(State& state,
+                             const char* stage);
+    void profiled_restore_state(const State& state,
+                                const bool reset_search,
+                                const char* stage);
+    bool update_best_state(State& state,
+                           StateQuality& quality,
+                           const int candidate_notconv,
+                           const Real candidate_residual);
+    template <typename Func>
+    void profiled_call(const char* problem_type,
+                       const char* stage,
+                       const int iter,
+                       const Func& func);
+    template <typename UpdateFunc, typename RepairFunc>
+    void update_subspace_with_fallback(const char* problem_type,
+                                       const char* first_failure,
+                                       const char* retry_failure,
+                                       const bool always_log_failure,
+                                       State& rollback_state,
+                                       const int used_iter,
+                                       const UpdateFunc& update_func,
+                                       const RepairFunc& repair_func);
+    template <typename RecomputeFunc>
+    void restore_best_state_if_needed(const char* problem_type,
+                                      const char* diag_name,
+                                      State& best_state,
+                                      const StateQuality& best_quality,
+                                      const int used_iter,
+                                      Real& final_residual,
+                                      int& final_notconv,
+                                      const RecomputeFunc& recompute_final_quality);
+    int run_lobpcg_loop(const char* problem_type,
+                        const char* diag_name,
+                        const HPsiFunc& hpsi_func,
+                        const SPsiFunc& spsi_func,
+                        const std::vector<double>& effective_ethr_band,
+                        const int scf_iter);
+    bool handle_generalized_rejected_update(const State& rollback_state,
+                                            State& best_state,
+                                            StateQuality& best_quality,
+                                            bool& update_rejected,
+                                            const int used_iter,
+                                            const int notconv_before_update,
+                                            const Real residual_before_update,
+                                            const Real residual_after_update,
+                                            const Real residual_limit,
+                                            const Real residual_growth_limit,
+                                            const std::vector<double>& effective_ethr_band);
+    void ensure_generalized_update_finite(const ct::Tensor& psi,
+                                          const ct::Tensor& hpsi,
+                                          const ct::Tensor& spsi,
+                                          const ct::Tensor& eigen,
+                                          const int nbs,
+                                          const int n,
+                                          const char* log_context,
+                                          const char* error_message) const;
+    void update_generalized_subspace(const bool force_compressed);
+    void repair_generalized_subspace(const HPsiFunc& hpsi_func,
+                                     const SPsiFunc& spsi_func);
+    void project_generalized_search_direction(const HPsiFunc& hpsi_func,
+                                              const SPsiFunc& spsi_func);
 
     // ---- memory-op aliases ----
     using ct_Device = typename ct::PsiToContainer<Device>::type;
@@ -310,11 +521,6 @@ class DiagoLobpcg
     using syncmem_complex_h2d_op = ct::kernels::synchronize_memory<T, ct_Device, ct::DEVICE_CPU>;
     using syncmem_complex_d2h_op = ct::kernels::synchronize_memory<T, ct::DEVICE_CPU, ct_Device>;
 
-    /// Internal standard-problem path retained as an implementation detail.
-    void diag(const HPsiFunc& hpsi_func,
-              T* psi_in,
-              Real* eigenvalue_in,
-              const std::vector<double>& ethr_band);
 };
 
 } // namespace hsolver

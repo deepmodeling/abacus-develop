@@ -197,6 +197,18 @@ TEST_F(InputTest, Item_test)
         GlobalV::NPROC = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.bndpar, 1);
+
+        param.input.esolver_type = "ksdft";
+        param.input.ks_solver = "lobpcg";
+        param.input.bndpar = 2;
+        GlobalV::NPROC = 4;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.bndpar, 2);
+
+        param.input.ks_solver = "cg";
+        param.input.bndpar = 2;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.bndpar, 1);
     }
     { // dft_plus_dmft
         auto it = find_label("dft_plus_dmft", readinput.input_lists);
@@ -689,7 +701,40 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
+        param.input.ks_solver = "lobpcg";
+        param.input.basis_type = "pw";
+        param.input.device = "cpu";
+        param.input.precision = "double";
+        it->second.check_value(it->second, param);
+
+        param.input.ks_solver = "lobpcg";
+        param.input.basis_type = "pw";
+        param.input.device = "gpu";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("device=cpu"));
+        param.input.device = "cpu";
+
+        param.input.ks_solver = "lobpcg";
+        param.input.basis_type = "pw";
+        param.input.precision = "single";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("precision=double"));
+        param.input.precision = "double";
+
         param.input.ks_solver = "cg";
+        param.input.basis_type = "lcao";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.ks_solver = "lobpcg";
         param.input.basis_type = "lcao";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");

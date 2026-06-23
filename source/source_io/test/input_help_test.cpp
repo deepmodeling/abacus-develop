@@ -129,6 +129,7 @@ TEST_F(ParameterHelpTest, ShowGeneralHelp) {
     EXPECT_NE(output.find("-h"), std::string::npos);
     EXPECT_NE(output.find("-s"), std::string::npos);
     EXPECT_NE(output.find("Common INPUT parameters:"), std::string::npos);
+    EXPECT_NE(output.find("lobpcg"), std::string::npos);
 }
 
 // Test: Verify multiple common parameters exist
