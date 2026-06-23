@@ -48,16 +48,15 @@ void cal_vdrpre_square(const int nlocal,
 
 template <typename TR>
 void cal_phialpha_hamilt_proj(const int nlocal,
-                               const int nat,
-                               const DeePKS_Param& deepks_param,
-                               const std::vector<hamilt::HContainer<double>*>& phialpha,
-                               const hamilt::HContainer<TR>& hR,
-                               const UnitCell& ucell,
-                               const LCAO_Orbitals& orb,
-                               const Parallel_Orbitals& pv,
-                               const Grid_Driver& GridD,
-                               torch::Tensor& dot_phialpha_hamilt);
-
+                              const int nat,
+                              const DeePKS_Param& deepks_param,
+                              const std::vector<hamilt::HContainer<double>*>& phialpha,
+                              const hamilt::HContainer<TR>& hR,
+                              const UnitCell& ucell,
+                              const LCAO_Orbitals& orb,
+                              const Parallel_Orbitals& pv,
+                              const Grid_Driver& GridD,
+                              torch::Tensor& dot_phialpha_hamilt);
 
 } // namespace DeePKS_domain
 

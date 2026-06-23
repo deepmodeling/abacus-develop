@@ -14,36 +14,35 @@
 //         = <phialpha^I_{nl,m1} | H | phialpha^I_{nl,m2}>
 // ---------------------------------------------------------------------------
 template <typename TR>
-void DeePKS_domain::cal_phialpha_hamilt_proj(
-    const int nlocal,
-    const int nat,
-    const DeePKS_Param& deepks_param,
-    const std::vector<hamilt::HContainer<double>*>& phialpha,
-    const hamilt::HContainer<TR>& hR,
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    const Parallel_Orbitals& pv,
-    const Grid_Driver& GridD,
-    torch::Tensor& dot_phialpha_hamilt)
+void DeePKS_domain::cal_phialpha_hamilt_proj(const int nlocal,
+                                             const int nat,
+                                             const DeePKS_Param& deepks_param,
+                                             const std::vector<hamilt::HContainer<double>*>& phialpha,
+                                             const hamilt::HContainer<TR>& hR,
+                                             const UnitCell& ucell,
+                                             const LCAO_Orbitals& orb,
+                                             const Parallel_Orbitals& pv,
+                                             const Grid_Driver& GridD,
+                                             torch::Tensor& dot_phialpha_hamilt)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_phialpha_hamilt_proj");
     ModuleBase::timer::start("DeePKS_domain", "cal_phialpha_hamilt_proj");
 
-    using TorchScalar = typename std::conditional<
-        std::is_same<TR, double>::value, double, c10::complex<double>>::type;
+    using TorchScalar = typename std::conditional<std::is_same<TR, double>::value, double, c10::complex<double>>::type;
 
     const int inlmax = deepks_param.inlmax;
-    const int lmaxd  = deepks_param.lmaxd;
+    const int lmaxd = deepks_param.lmaxd;
     const int nm_max = 2 * lmaxd + 1;
 
-    const torch::Dtype dtype = std::is_same<TR, double>::value
-                               ? torch::kFloat64 : torch::kComplexDouble;
-    torch::Tensor dot_ph = torch::zeros({inlmax, nm_max, nm_max},
-                                        torch::TensorOptions().dtype(dtype));
+    const torch::Dtype dtype = std::is_same<TR, double>::value ? torch::kFloat64 : torch::kComplexDouble;
+    torch::Tensor dot_ph = torch::zeros({inlmax, nm_max, nm_max}, torch::TensorOptions().dtype(dtype));
     auto dot_ph_acc = dot_ph.accessor<TorchScalar, 3>();
 
     DeePKS_domain::iterate_ad2(
-        ucell, GridD, orb, false,
+        ucell,
+        GridD,
+        orb,
+        false,
         [&](const int iat,
             const ModuleBase::Vector3<double>& tau0,
             const int ibt1,
@@ -55,8 +54,7 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
             const ModuleBase::Vector3<double>& tau2,
             const int start2,
             const int nw2_tot,
-            ModuleBase::Vector3<int> dR2)
-        {
+            ModuleBase::Vector3<int> dR2) {
             if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr
                 || phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
             {
@@ -74,8 +72,7 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
                 return;
             }
 
-            const hamilt::BaseMatrix<TR>* h_mat
-                = hR.find_matrix(ibt1, ibt2, R_H.x, R_H.y, R_H.z);
+            const hamilt::BaseMatrix<TR>* h_mat = hR.find_matrix(ibt1, ibt2, R_H.x, R_H.y, R_H.z);
             if (h_mat == nullptr)
             {
                 return;
@@ -94,7 +91,7 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
                 for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                 {
                     const int inl = deepks_param.inl_index[T0](I0, L0, N0);
-                    const int nm  = 2 * L0 + 1;
+                    const int nm = 2 * L0 + 1;
 
                     for (int irow = 0; irow < row_size; ++irow)
                     {
@@ -107,14 +104,11 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
                             }
                             for (int m1 = 0; m1 < nm; ++m1)
                             {
-                                const double pa1_val
-                                    = pa1->get_value(row_indexes[irow], ib + m1);
+                                const double pa1_val = pa1->get_value(row_indexes[irow], ib + m1);
                                 for (int m2 = 0; m2 < nm; ++m2)
                                 {
-                                    dot_ph_acc[inl][m1][m2]
-                                        += static_cast<TorchScalar>(
-                                               pa1_val * h_val
-                                               * pa2->get_value(col_indexes[icol], ib + m2));
+                                    dot_ph_acc[inl][m1][m2] += static_cast<TorchScalar>(
+                                        pa1_val * h_val * pa2->get_value(col_indexes[icol], ib + m2));
                                 }
                             }
                         }
@@ -131,9 +125,8 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
     }
     else
     {
-        Parallel_Reduce::reduce_all(
-            reinterpret_cast<double*>(dot_ph.data_ptr<c10::complex<double>>()),
-            2 * dot_ph.numel());
+        Parallel_Reduce::reduce_all(reinterpret_cast<double*>(dot_ph.data_ptr<c10::complex<double>>()),
+                                    2 * dot_ph.numel());
     }
 #endif
 
@@ -142,42 +135,23 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(
     ModuleBase::timer::end("DeePKS_domain", "cal_phialpha_hamilt_proj");
 }
 
-template void DeePKS_domain::cal_phialpha_hamilt_proj<double>(
-    const int, const int, const DeePKS_Param&,
-    const std::vector<hamilt::HContainer<double>*>&,
-    const hamilt::HContainer<double>&,
-    const UnitCell&, const LCAO_Orbitals&,
-    const Parallel_Orbitals&, const Grid_Driver&,
-    torch::Tensor&);
-
-template void DeePKS_domain::cal_phialpha_hamilt_proj<std::complex<double>>(
-    const int, const int, const DeePKS_Param&,
-    const std::vector<hamilt::HContainer<double>*>&,
-    const hamilt::HContainer<std::complex<double>>&,
-    const UnitCell&, const LCAO_Orbitals&,
-    const Parallel_Orbitals&, const Grid_Driver&,
-    torch::Tensor&);
-
-
-
 // ---------------------------------------------------------------------------
 // cal_vdrpre_square: full B^T B square matrix for the gradient label.
 //   (B^T B)_{a1,a2} = sum_{R,mu,nu} B_{(mu,nu,R),a1} * B_{(mu,nu,R),a2}
 //   Computed as: flat(vdr_precalc)^T @ flat(vdr_precalc)
 //   where vdr_precalc[R,mu,nu,a,k] = sum_{mm'} gevdm[a,k,m,m'] * Theta[R,mu,nu,inl,mm']
 // ---------------------------------------------------------------------------
-void DeePKS_domain::cal_vdrpre_square(
-    const int nlocal,
-    const int nat,
-    const int R_size,
-    const DeePKS_Param& deepks_param,
-    const std::vector<hamilt::HContainer<double>*>& phialpha,
-    const std::vector<torch::Tensor>& gevdm,
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    const Parallel_Orbitals& pv,
-    const Grid_Driver& GridD,
-    torch::Tensor& vdrpre_square)
+void DeePKS_domain::cal_vdrpre_square(const int nlocal,
+                                      const int nat,
+                                      const int R_size,
+                                      const DeePKS_Param& deepks_param,
+                                      const std::vector<hamilt::HContainer<double>*>& phialpha,
+                                      const std::vector<torch::Tensor>& gevdm,
+                                      const UnitCell& ucell,
+                                      const LCAO_Orbitals& orb,
+                                      const Parallel_Orbitals& pv,
+                                      const Grid_Driver& GridD,
+                                      torch::Tensor& vdrpre_square)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_vdrpre_square");
     ModuleBase::timer::start("DeePKS_domain", "cal_vdrpre_square");
@@ -186,9 +160,19 @@ void DeePKS_domain::cal_vdrpre_square(
     // nks and kvec_d are vestigial in that function and are not used.
     torch::Tensor vdr_precalc;
     const std::vector<ModuleBase::Vector3<double>> kvec_d_dummy;
-    DeePKS_domain::cal_vdr_precalc(nlocal, nat, 1, R_size, deepks_param,
-                                   kvec_d_dummy, phialpha, gevdm,
-                                   ucell, orb, pv, GridD, vdr_precalc);
+    DeePKS_domain::cal_vdr_precalc(nlocal,
+                                   nat,
+                                   1,
+                                   R_size,
+                                   deepks_param,
+                                   kvec_d_dummy,
+                                   phialpha,
+                                   gevdm,
+                                   ucell,
+                                   orb,
+                                   pv,
+                                   GridD,
+                                   vdr_precalc);
     // vdr_precalc: (R_size, R_size, R_size, nlocal, nlocal, nat, des_per_atom)
 
     // B^T B = flat^T @ flat
@@ -199,5 +183,28 @@ void DeePKS_domain::cal_vdrpre_square(
 
     ModuleBase::timer::end("DeePKS_domain", "cal_vdrpre_square");
 }
+
+template void DeePKS_domain::cal_phialpha_hamilt_proj<double>(const int,
+                                                              const int,
+                                                              const DeePKS_Param&,
+                                                              const std::vector<hamilt::HContainer<double>*>&,
+                                                              const hamilt::HContainer<double>&,
+                                                              const UnitCell&,
+                                                              const LCAO_Orbitals&,
+                                                              const Parallel_Orbitals&,
+                                                              const Grid_Driver&,
+                                                              torch::Tensor&);
+
+template void DeePKS_domain::cal_phialpha_hamilt_proj<std::complex<double>>(
+    const int,
+    const int,
+    const DeePKS_Param&,
+    const std::vector<hamilt::HContainer<double>*>&,
+    const hamilt::HContainer<std::complex<double>>&,
+    const UnitCell&,
+    const LCAO_Orbitals&,
+    const Parallel_Orbitals&,
+    const Grid_Driver&,
+    torch::Tensor&);
 
 #endif
