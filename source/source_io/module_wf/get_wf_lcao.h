@@ -4,6 +4,10 @@
 #include "source_estate/elecstate.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
+// Used only as a pointer param; forward-declared instead of including
+// pw_basis_k.h. Was previously reachable transitively through elecstate.h.
+namespace ModulePW { class PW_Basis_K; }
+
 class Get_wf_lcao
 {
   public:

@@ -4,6 +4,11 @@
 #include "source_estate/elecstate.h"
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
+
+// Used only as a pointer member/param; forward-declared instead of including
+// pw_basis_k.h. Was previously reachable transitively through elecstate.h.
+namespace ModulePW { class PW_Basis_K; }
+
 namespace hsolver
 {
 

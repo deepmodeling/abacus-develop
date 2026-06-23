@@ -56,6 +56,11 @@
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-02
 #endif
 
+// Used only as a pointer member/param below; forward-declared instead of
+// including pw_basis_k.h (own_fan=24). Was previously reachable transitively
+// through elecstate.h's heavy includes.
+namespace ModulePW { class PW_Basis_K; }
+
 namespace spinconstrain
 {
 
