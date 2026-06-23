@@ -2,6 +2,7 @@
 #define MODULE_NEIGHBOR_MPI_DOMAIN_H
 
 #include <array>
+#include <map>
 #include <vector>
 
 #ifdef __MPI
@@ -34,6 +35,8 @@ struct MpiAtomRecord
     double y;
     double z;
     int global_index;
+    int type;
+    int natom;
     std::array<int, 3> pbc_shift;
     bool is_ghost;
 
@@ -43,7 +46,19 @@ struct MpiAtomRecord
                   const double z_in,
                   const int global_index_in,
                   const std::array<int, 3>& pbc_shift_in = std::array<int, 3>{{0, 0, 0}},
-                  const bool is_ghost_in = false);
+                  const bool is_ghost_in = false,
+                  const int type_in = -1,
+                  const int natom_in = -1);
+};
+
+struct MpiGhostExchangeStats
+{
+    int neighbor_rank_count = 0;
+    int nonempty_send_rank_count = 0;
+    int sent_atom_count = 0;
+    int received_ghost_count = 0;
+    int sent_payload_count = 0;
+    int received_payload_count = 0;
 };
 
 class MpiDomain
@@ -61,6 +76,11 @@ class MpiDomain
                     const std::array<double, 3>& global_upper,
                     const double ghost_cutoff,
                     const bool pbc);
+    void initialize_lattice(NeighborMpiComm parent_comm,
+                            const std::array<double, 3>& origin,
+                            const std::array<std::array<double, 3>, 3>& lattice_vectors,
+                            const double ghost_cutoff,
+                            const bool pbc);
 
     bool initialized() const;
     int rank() const;
@@ -69,24 +89,42 @@ class MpiDomain
     const std::array<int, 3>& dims() const;
     const std::array<int, 3>& coords() const;
     const std::array<int, 3>& periods() const;
+    // Bounds are stored in fractional coordinates. This representation remains
+    // valid for both orthogonal and triclinic lattice domains.
     const DomainBounds& local_bounds() const;
+    const std::array<double, 3>& fractional_ghost_padding() const;
     double ghost_cutoff() const;
 
+    std::array<double, 3> cartesian_to_fractional(const double x, const double y, const double z) const;
+    std::array<double, 3> fractional_to_cartesian(const double fx, const double fy, const double fz) const;
     bool owns(const double x, const double y, const double z) const;
     std::vector<int> select_local_atoms(const std::vector<MpiAtomRecord>& atoms) const;
 
-    // Baseline ghost exchange: each rank publishes its owned atoms, then every
-    // rank keeps the remote periodic images that touch its local ghost shell.
-    // This is intentionally simple and correctness-first; neighbor-only MPI
-    // exchange can replace the internals without changing this interface.
+    // Neighbor ghost exchange: each rank sends only the local atom images that
+    // overlap adjacent Cartesian ranks' ghost shells. The public contract stays
+    // the same as the earlier correctness baseline: return this rank's ghosts.
     std::vector<MpiAtomRecord> exchange_ghost_atoms(const std::vector<MpiAtomRecord>& local_atoms) const;
+    std::vector<MpiAtomRecord> exchange_ghost_atoms(const std::vector<MpiAtomRecord>& local_atoms,
+                                                    MpiGhostExchangeStats* stats) const;
 
   private:
     void reset();
     void compute_local_bounds();
-    bool inside_local(const std::array<double, 3>& point) const;
-    bool inside_expanded(const std::array<double, 3>& point) const;
-    bool append_ghost_images(const MpiAtomRecord& atom, std::vector<MpiAtomRecord>& ghosts) const;
+    std::array<double, 3> normalize_fractional(const std::array<double, 3>& fractional) const;
+    bool inside_local(const std::array<double, 3>& fractional) const;
+    DomainBounds bounds_for_coords(const std::array<int, 3>& coords) const;
+    bool inside_local_for_bounds(const DomainBounds& bounds,
+                                 const std::array<int, 3>& coords,
+                                 const std::array<double, 3>& fractional) const;
+    bool inside_expanded_for_bounds(const DomainBounds& bounds,
+                                    const std::array<double, 3>& fractional) const;
+    bool neighbor_from_direction(const std::array<int, 3>& direction,
+                                 int& neighbor_rank,
+                                 std::array<int, 3>& target_coords,
+                                 std::array<int, 3>& image_shift) const;
+    std::vector<int> neighbor_ranks() const;
+    std::map<int, std::vector<MpiAtomRecord>>
+    build_neighbor_send_records(const std::vector<MpiAtomRecord>& local_atoms) const;
 
     NeighborMpiComm cart_comm_;
     bool owns_comm_;
@@ -96,9 +134,11 @@ class MpiDomain
     std::array<int, 3> dims_;
     std::array<int, 3> coords_;
     std::array<int, 3> periods_;
-    std::array<double, 3> global_lower_;
-    std::array<double, 3> global_upper_;
-    std::array<double, 3> global_length_;
+    std::array<double, 3> origin_;
+    std::array<std::array<double, 3>, 3> lattice_vectors_;
+    // reciprocal_rows_[i] maps a Cartesian displacement to fractional axis i.
+    std::array<std::array<double, 3>, 3> reciprocal_rows_;
+    std::array<double, 3> fractional_ghost_padding_;
     DomainBounds local_bounds_;
     double ghost_cutoff_;
 };

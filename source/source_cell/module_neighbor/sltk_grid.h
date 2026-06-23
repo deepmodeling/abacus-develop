@@ -18,8 +18,26 @@ class Grid
   public:
     enum class NeighborBuildMode
     {
+        // Production route: build only AtomPack/GridStorage neighbor data.
+        // The legacy FAtom* containers stay empty in this mode.
         AtomPackOnly,
+        // Regression route: also build atoms_in_box/all_adj_info so tests can
+        // compare the new integer-indexed path with the original Grid output.
         AtomPackAndLegacy
+    };
+
+    enum class NeighborSearchMode
+    {
+        Full27,
+        Half14
+    };
+
+    enum class NeighborReferenceMode
+    {
+        // Production route: do not build the full 27-direction reference list.
+        None,
+        // Regression route: also build neighbor_pairs_27 for correctness checks.
+        Full27
     };
 
     // Constructors and destructor
@@ -34,7 +52,9 @@ class Grid
               const UnitCell& ucell,
               const double radius_in,
               const bool boundary = true,
-              const NeighborBuildMode build_mode = NeighborBuildMode::AtomPackAndLegacy);
+              const NeighborBuildMode build_mode = NeighborBuildMode::AtomPackOnly,
+              const NeighborSearchMode search_mode = NeighborSearchMode::Half14,
+              const NeighborReferenceMode reference_mode = NeighborReferenceMode::None);
 
     // Data
     bool pbc=false; // When pbc is set to false, periodic boundary conditions are explicitly ignored.
@@ -68,11 +88,12 @@ class Grid
     // Stores the adjacent information of atoms. [ntype][natom][adj list]
     std::vector<std::vector< std::vector<FAtom *> >> all_adj_info;
 
-    // Phase 2.1 flat search path. Grid_Driver::Find_atom() uses this
-    // integer-indexed route by default; the legacy FAtom* route above can still
-    // be built as a regression baseline.
+    // Phase 2.1 flat search path. neighbor_pairs is the current query result
+    // used by Grid_Driver::Find_atom(); neighbor_pairs_27 is filled only when a
+    // full-search reference is explicitly requested for regression checks.
     ModuleNeighbor::AtomPack atom_pack;
     ModuleNeighbor::GridStorage grid_storage;
+    std::vector<ModuleNeighbor::NeighborPair> neighbor_pairs;
     std::vector<ModuleNeighbor::NeighborPair> neighbor_pairs_27;
     std::vector<std::vector<std::vector<int>>> neighbor_pair_indices;
 
@@ -85,6 +106,7 @@ class Grid
         atoms_in_box.clear();
         atom_pack.clear();
         grid_storage.clear();
+        neighbor_pairs.clear();
         neighbor_pairs_27.clear();
         neighbor_pair_indices.clear();
     }
@@ -126,7 +148,9 @@ class Grid
     void Construct_Adjacent(const UnitCell& ucell);
     void Construct_Adjacent_near_box(const FAtom& fatom);
     void Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2);
-    void Build_AtomPack_Search_Path(const UnitCell& ucell);
+    void Build_AtomPack_Search_Path(const UnitCell& ucell,
+                                    const NeighborSearchMode search_mode,
+                                    const NeighborReferenceMode reference_mode);
     void Build_Legacy_Search_Path(const UnitCell& ucell);
 
     void Check_Expand_Condition(const UnitCell& ucell);
