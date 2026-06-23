@@ -6,6 +6,14 @@
 #include "source_psi/psi.h" // Psi<T> appears in virtual method signatures; psi.h is light (own_fan=2)
 #include "source_io/module_parameter/parameter.h" // PARAM/Input_para; kept (own_fan=4, cheap) to avoid churning ~120 downstream PARAM users
 
+// Base-layer leaf utilities (own_fan~0) that the old heavy includes used to
+// pull in transitively. Kept here so the ~100 downstream files using TITLE /
+// WARNING_QUIT / timer / GlobalFunc / Memory do not each need a new include;
+// global_function.h also transitively provides tool_title.h and tool_quit.h.
+#include "source_base/global_function.h"
+#include "source_base/timer.h"
+#include "source_base/memory_recorder.h"
+
 #include <complex>
 #include <string>
 #include <vector>
