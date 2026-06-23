@@ -27,9 +27,9 @@ namespace ModuleSymmetry
     inline void print_atompair_local(const Parallel_Orbitals& pv, const int iat1, const int iat2, const TR* tlocal, const std::string name)
     {
         GlobalV::ofs_running << name << std::endl;
-        for (int i = 0;i < pv.get_row_size(iat1);++i)
+        for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
         {
-            for (int j = 0;j < pv.get_col_size(iat2);++j) GlobalV::ofs_running << tlocal[j + i * pv.get_col_size(iat2)] << " ";
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j) GlobalV::ofs_running << tlocal[j + i * pv.get_ncol_atom(iat2)] << " ";
             GlobalV::ofs_running << "\n";
         }
     }
@@ -110,10 +110,10 @@ namespace ModuleSymmetry
         int abr1 = pv.atom_begin_row[iat1], abc2 = pv.atom_begin_col[iat2];
         if (abr1 >= 0 && abc2 >= 0)
         { // "pv.local2global_row(i) - iw1start": global index in current atom pair
-            for (int j = 0;j < pv.get_col_size(iat2);++j)
-                for (int i = 0;i < pv.get_row_size(iat1);++i)
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
+                for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
                     A[(pv.local2global_row(i + abr1) - iw1start) * atoms[it2].nw + (pv.local2global_col(j + abc2) - iw2start)]
-                    = Alocal_in[j + i * pv.get_col_size(iat2)];
+                    = Alocal_in[j + i * pv.get_ncol_atom(iat2)];
         }
         if (output) print_global(A.data(), atoms[it1].nw, atoms[it2].nw, "A before allreduce");
         Parallel_Reduce::reduce_all(A.data(), A.size());
@@ -156,9 +156,9 @@ namespace ModuleSymmetry
         iw2start = atoms[it2].stapos_wf + ia2 * atoms[it2].nw;
         if (abr1 >= 0 && abc2 >= 0)
         {// ap_in index for TAT but ap_out index for Alocal_out
-            for (int j = 0;j < pv.get_col_size(iat2);++j)
-                for (int i = 0;i < pv.get_row_size(iat1);++i)
-                    Alocal_out[j + i * pv.get_col_size(iat2)]
+            for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
+                for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
+                    Alocal_out[j + i * pv.get_ncol_atom(iat2)]
                     = TAT[(pv.local2global_row(i + abr1) - iw1start) * atoms[it2].nw + (pv.local2global_col(j + abc2) - iw2start)];
         }
     }
@@ -203,7 +203,7 @@ namespace ModuleSymmetry
                 { // out-of-range R can be added to irreducible sector to be calculated, but not in this test for lack of reference
                     TR* irptr = irap.get_HR_values(R[0], R[1], R[2]).get_pointer();
                     TR* ptr = ap_full.get_HR_values(R[0], R[1], R[2]).get_pointer();
-                    std::copy(ptr, ptr + pv->get_row_size(iat1) * pv->get_col_size(iat2), irptr);
+                    std::copy(ptr, ptr + pv->get_nrow_atom(iat1) * pv->get_ncol_atom(iat2), irptr);
                 }
         }
 

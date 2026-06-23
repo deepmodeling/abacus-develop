@@ -22,7 +22,7 @@ jobs:
         - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # We will handle submodules manually after fixing ownership
@@ -249,9 +249,16 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 10_others
           
+#      - name: 17_DS_DFTU Test
+#        env:
+#          GTEST_COLOR: 'yes'
+#          OMP_NUM_THREADS: '2'
+#        run: |
+#          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
+          
       - name: Other Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'

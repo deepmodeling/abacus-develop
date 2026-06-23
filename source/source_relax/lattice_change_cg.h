@@ -1,47 +1,42 @@
 #ifndef LATTICE_CHANGE_CG_H
 #define LATTICE_CHANGE_CG_H
 
+#include <fstream>
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
-class Lattice_Change_CG
+#include "cg_base.h"
+#include <vector>
+
+class Lattice_Change_CG : public CG_Base
 {
 
   public:
     Lattice_Change_CG();
-    ~Lattice_Change_CG();
+    ~Lattice_Change_CG() = default;
 
     void allocate(void);
-    void start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot);
+    bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs, std::vector<double>& etot_info);
 
   private:
-    double * lat0 = nullptr;
-    double * grad0 = nullptr;
-    double * cg_grad0 = nullptr;
-    double * move0 = nullptr;
-    double e0=0.0;
+    std::vector<double> lat0;
+    std::vector<double> grad0;
+    std::vector<double> cg_grad0;
+    std::vector<double> move0;
+    double e0 = 0.0;
 
-    // setup gradients.
-    void setup_cg_grad(double *grad,
-                       const double *grad0,
-                       double *cg_grad,
-                       const double *cg_grad0,
-                       const int &ncggrad,
-                       int &flag);
-
-    void setup_move(double *move, double *cg_gradn, const double &trust_radius);
-
-    void Brent(double &fa, double &fb, double &fc, double &xa, double &xb, double &xc, double &best_x, double &xpt);
-
-    void f_cal(const double *g0, const double *g1, const int &dim, double &f_value);
-
-    void third_order(const double &e0,
-                     const double &e1,
-                     const double &fa,
-                     const double &fb,
-                     const double x,
-                     double &best_x);
-                  
-    void normalize(double *cg_gradn, const double *cg_grad, int dim);
+    bool sd = false;
+    bool trial = false;
+    int ncggrad = 0;
+    int nbrent = 0;
+    double fa = 0.0;
+    double fb = 0.0;
+    double fc = 0.0;
+    double xa = 0.0;
+    double xb = 0.0;
+    double xc = 0.0;
+    double xpt = 0.0;
+    double steplength = 0.0;
+    double fmax = 0.0;
 };
 
 #endif

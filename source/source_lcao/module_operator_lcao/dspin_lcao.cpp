@@ -417,7 +417,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = this->paraV->get_col_size(iat2) * is + is2;
+            step_trace[is * npol + is2] = this->paraV->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix
@@ -579,8 +579,10 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                                             + kvec_d.z * bi_ad.R_index.z);
             const std::complex<double> phase(cos(arg), sin(arg));
 
-            for (const auto& [iw_global, nlm_vec] : bi_ad.nlm)
+            for (const auto& nlm_pair : bi_ad.nlm)
             {
+                const int iw_global = nlm_pair.first;
+                const std::vector<double>& nlm_vec = nlm_pair.second;
                 // Check if this global orbital index is in our local rows
                 const int iw_local = this->paraV->global2local_row(iw_global);
                 if (iw_local < 0) { continue;

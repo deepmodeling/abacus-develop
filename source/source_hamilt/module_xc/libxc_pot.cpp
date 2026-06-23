@@ -19,13 +19,16 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const double &omega, // volume of cell
         const double tpiba,
         const Charge* const chr,
+        const int nspin_in,
+        const bool domag,
+        const bool domag_z,
         const std::map<int, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_libxc");
 
     const int nspin =
-        (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
+        (nspin_in == 1 || ( nspin_in ==4 && !domag && !domag_z))
         ? 1 : 2;
 
     //----------------------------------------------------------
@@ -56,7 +59,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     // converting rho
     std::vector<double> rho;
     std::vector<double> amag;
-    if(1==nspin || 2==PARAM.inp.nspin)
+    if(1==nspin || 2==nspin_in)
     {
         rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     }
@@ -167,7 +170,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         v += std::get<1>(vtxc_v) * factor;
     } // end for( xc_func_type &func : funcs )
 
-    if(4==PARAM.inp.nspin)
+    if(4==nspin_in)
     {
         v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v);
     }
@@ -207,7 +210,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const int &nrxx, // number of real-space grid
     const double &omega, // volume of cell
     const double tpiba,
-    const Charge* const chr)
+    const Charge* const chr,
+    const int nspin)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
@@ -217,8 +221,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     //output of the subroutine
     double etxc = 0.0;
     double vtxc = 0.0;
-    ModuleBase::matrix v(PARAM.inp.nspin,nrxx);
-    ModuleBase::matrix vofk(PARAM.inp.nspin,nrxx);
+    ModuleBase::matrix v(nspin,nrxx);
+    ModuleBase::matrix vofk(nspin,nrxx);
 
     //----------------------------------------------------------
     // xc_func_type is defined in Libxc package
@@ -226,8 +230,6 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     // use can check on website, for example:
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
-
-    const int nspin = PARAM.inp.nspin;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
         /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED);

@@ -1788,7 +1788,7 @@
    - nspin = 1: pots1.cube;
    - nspin = 2: pots1.cube and pots2.cube;
    - nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
    - nspin = 1: pots1_ini.cube;
    - nspin = 2: pots1_ini.cube and pots2_ini.cube;
@@ -3194,6 +3194,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
@@ -3443,6 +3444,13 @@
 - **Type**: Real
 - **Description**: The damping parameter used to add fictitious force in the Langevin method.
 - **Default**: 1.0
+- **Unit**: fs
+
+### md_csvr_tau
+
+- **Type**: Real
+- **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling (longer relaxation time), smaller values give stronger coupling (shorter relaxation time). Recommended value: 100 * md_dt.
+- **Default**: 100.0
 - **Unit**: fs
 
 ### md_tolerance

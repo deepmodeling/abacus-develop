@@ -9,6 +9,7 @@ list(APPEND objects
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
+    makov_payne.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/H_Hartree_pw.cpp

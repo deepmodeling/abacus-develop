@@ -180,8 +180,13 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     const int rank)
 {
     
-    // ofs_running
     this->ofs_ = ptr_log;
+    if (this->ofs_ == nullptr)
+    {
+        this->fallback_ofs_.open("/dev/null");
+        this->ofs_ = &this->fallback_ofs_;
+    }
+
     *ofs_ << "\n\n\n\n";
     *ofs_ << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     *ofs_ << " |                                                                    |" << std::endl;
@@ -259,7 +264,7 @@ void ModuleIO::AngularMomentumCalculator::kernel(
     const char dir,
     const int precision)
 {
-    if (!ofs->is_open())
+    if (ofs == nullptr || !ofs->is_open())
     {
         return;
     }
