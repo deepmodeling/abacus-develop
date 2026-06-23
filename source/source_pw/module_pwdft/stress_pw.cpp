@@ -1,4 +1,5 @@
 #include "stress_pw.h"
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/timer.h"
 #include "source_base/global_variable.h" // use GlobalC

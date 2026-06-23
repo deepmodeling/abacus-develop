@@ -1,4 +1,5 @@
 #include "esolver_of.h"
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_io/module_parameter/parameter.h"
 
 namespace ModuleESolver

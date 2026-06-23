@@ -1,4 +1,5 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/formatter.h"
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState

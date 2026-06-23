@@ -1,4 +1,6 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 #include "../module_output/cube_io.h" // use write_vdata_palgrid
 #include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/symmetry_rho.h" // use Symmetry_rho

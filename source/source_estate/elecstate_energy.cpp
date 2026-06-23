@@ -5,6 +5,7 @@
 #include "makov_payne.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
+#include "module_pot/potential_new.h" // ElecState::pot is now fwd-declared in elecstate.h
 #include "source_io/module_parameter/parameter.h"
 
 #include <cmath>

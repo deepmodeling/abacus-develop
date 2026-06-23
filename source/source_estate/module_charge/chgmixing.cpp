@@ -1,4 +1,5 @@
 #include "source_estate/module_charge/chgmixing.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_estate/update_pot.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"

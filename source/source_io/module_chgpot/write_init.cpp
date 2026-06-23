@@ -15,6 +15,7 @@
 // =====================================================================
 
 #include "source_io/module_chgpot/write_init.h"
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_io/module_output/cube_io.h"
 #include "source_base/tool_quit.h"
 

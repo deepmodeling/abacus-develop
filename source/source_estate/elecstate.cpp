@@ -2,10 +2,31 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
+#include "source_estate/module_charge/charge.h"
+#include "module_pot/potential_new.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_big.h"
 #include "occupy.h"
 
 namespace elecstate
 {
+
+ElecState::ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
+{
+    this->charge = chr_in;
+    this->charge->set_rhopw(rhopw_in);
+    this->bigpw = bigpw_in;
+    this->eferm.two_efermi = PARAM.globalv.two_fermi;
+}
+
+ElecState::~ElecState()
+{
+    if (this->pot != nullptr)
+    {
+        delete this->pot;
+        this->pot = nullptr;
+    }
+}
 
 const double* ElecState::getRho(int spin) const
 {

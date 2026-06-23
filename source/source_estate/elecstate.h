@@ -2,14 +2,42 @@
 #define ELECSTATE_H
 
 #include "fp_energy.h"
-#include "source_cell/klist.h"
-#include "source_estate/module_charge/charge.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_psi/psi.h"
-#include "module_pot/potential_new.h"
+#include "source_base/matrix.h"
+
+#include <complex>
+#include <string>
+#include <vector>
+
+// Forward declarations keep this widely-included header lightweight; the
+// corresponding full definitions are pulled in by elecstate.cpp instead.
+class Charge;
+class K_Vectors;
+class UnitCell;
+class Parallel_Grid;
+struct Input_para;
+namespace ModuleBase
+{
+class ComplexMatrix;
+}
+namespace ModulePW
+{
+class PW_Basis;
+class PW_Basis_Big;
+} // namespace ModulePW
+namespace base_device
+{
+struct DEVICE_CPU;
+}
+namespace psi
+{
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class Psi;
+}
 
 namespace elecstate
 {
+
+class Potential;
 
 class ElecState
 {
@@ -17,21 +45,8 @@ class ElecState
     ElecState()
     {
     }
-    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in)
-    {
-        this->charge = chr_in;
-        this->charge->set_rhopw(rhopw_in);
-        this->bigpw = bigpw_in;
-        this->eferm.two_efermi = PARAM.globalv.two_fermi;
-    }
-    virtual ~ElecState()
-    {
-        if (this->pot != nullptr)
-        {
-            delete this->pot;
-            this->pot = nullptr;
-        }
-    }
+    ElecState(Charge* chr_in, ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis_Big* bigpw_in);
+    virtual ~ElecState();
     void init_ks(Charge* chr_in, // pointer for class Charge
                  const K_Vectors* klist_in,
                  int nk_in, // number of k points

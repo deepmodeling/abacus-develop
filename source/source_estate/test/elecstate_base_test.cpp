@@ -5,6 +5,8 @@
 #define protected public
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_estate/module_charge/charge.h"   // new Charge / charge->rho (no longer via elecstate.h)
+#include "source_estate/module_pot/potential_new.h" // Potential (no longer via elecstate.h)
 #include "source_estate/occupy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_fft/fft_bundle.h"

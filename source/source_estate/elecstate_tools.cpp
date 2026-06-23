@@ -1,4 +1,5 @@
 #include "elecstate_tools.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 #include "occupy.h"
 #include "source_base/parallel_reduce.h"
 namespace elecstate

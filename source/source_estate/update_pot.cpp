@@ -1,4 +1,5 @@
 #include "source_estate/update_pot.h"
+#include "source_estate/module_pot/potential_new.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_estate/cal_ux.h"
 
 void elecstate::update_pot(UnitCell& ucell, // unitcell 

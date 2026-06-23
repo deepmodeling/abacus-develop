@@ -1,4 +1,5 @@
 #include "cal_ldos.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "cal_dos.h"
 #include "../module_output/cube_io.h"

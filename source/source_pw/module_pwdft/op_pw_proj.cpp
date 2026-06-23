@@ -1,4 +1,5 @@
 #include "op_pw_proj.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"

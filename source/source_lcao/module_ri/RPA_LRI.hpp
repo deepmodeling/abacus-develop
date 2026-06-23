@@ -18,6 +18,7 @@
 #include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_psi/psi.h" // psi.get_nbasis() (no longer via elecstate.h)
 
 #if defined(__GLIBC__)
 #include <malloc.h>

@@ -1,5 +1,6 @@
 #include "elecstate.h"
 #include "source_base/parallel_reduce.h"
+#include "module_pot/potential_new.h" // ElecState::pot is now fwd-declared in elecstate.h
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"

@@ -1,4 +1,5 @@
 #include "hsolver_pw_sdft.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 
 #include "source_base/global_function.h"
 #include "source_base/parallel_device.h"

@@ -1,4 +1,5 @@
 #include "esolver_ks.h"
+#include "source_io/module_parameter/parameter.h" // IWYU: elecstate.h no longer provides this transitively
 #include "source_base/timer_wrapper.h"
 
 // for jason output information
