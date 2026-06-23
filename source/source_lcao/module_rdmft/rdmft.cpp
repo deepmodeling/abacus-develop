@@ -5,6 +5,7 @@
 
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
+#include "source_io/module_parameter/parameter.h" // PARAM (no longer via elecstate.h)
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"

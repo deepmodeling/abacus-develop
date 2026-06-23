@@ -3,6 +3,7 @@
 
 #include "fp_energy.h"
 #include "source_base/matrix.h"
+#include "source_psi/psi.h" // Psi<T> appears in virtual method signatures; psi.h is light (own_fan=2)
 
 #include <complex>
 #include <string>
@@ -24,15 +25,6 @@ namespace ModulePW
 class PW_Basis;
 class PW_Basis_Big;
 } // namespace ModulePW
-namespace base_device
-{
-struct DEVICE_CPU;
-}
-namespace psi
-{
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class Psi;
-}
 
 namespace elecstate
 {
