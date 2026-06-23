@@ -6,6 +6,7 @@
 #include <complex>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -15,7 +16,8 @@ inline void write_data(std::ofstream& ofs, const double& data)
 }
 inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
 {
-    ofs << " (" << data.real() << "," << data.imag() << ")";
+    ofs << " (" << std::fixed << std::scientific << std::setprecision(16)
+        << data.real() << "," << data.imag() << ")";
 }
 
 template<typename T>
@@ -65,6 +67,12 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             {
                 for (auto &value : iter->second)
                 {
+                    if (value.first >= static_cast<size_t>(nlocal))
+                    {
+                        std::cerr << "Sparse column index out of range." << std::endl;
+                        ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                                 "Sparse column index out of range.");
+                    }
                     line[value.first] = value.second;
                 }
             }

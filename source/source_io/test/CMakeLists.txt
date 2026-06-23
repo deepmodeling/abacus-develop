@@ -302,6 +302,15 @@ AddTest(
 )
 endif()
 
+if(ENABLE_LIBRI)
+AddTest(
+  TARGET MODULE_IO_restart_exx_csr_test
+  LIBS parameter base ${math_libs} device cell_info
+  SOURCES
+  restart_exx_csr_test.cpp
+)
+endif()
+
 AddTest(
   TARGET MODULE_IO_write_elf_logic_test
   SOURCES write_elf_logic_test.cpp

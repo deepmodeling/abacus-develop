@@ -8,6 +8,8 @@
 #include "single_R_io.h"
 
 #include <algorithm>
+#include <cmath>
+#include <complex>
 #include <vector>
 
 namespace
@@ -16,6 +18,7 @@ template <typename Tdata>
 std::vector<long long> count_nonzeros_by_R(
     const ModuleIO::SparseRMatrix<Tdata>& smat,
     const std::set<ModuleIO::RCoordinate>& all_R_coor,
+    const double threshold,
     const bool reduce)
 {
     std::vector<long long> nonzero_num(all_R_coor.size(), 0);
@@ -27,7 +30,13 @@ std::vector<long long> count_nonzeros_by_R(
         {
             for (const auto& row_loop: iter->second)
             {
-                nonzero_num[count] += row_loop.second.size();
+                for (const auto& col_value: row_loop.second)
+                {
+                    if (std::abs(col_value.second) > threshold)
+                    {
+                        ++nonzero_num[count];
+                    }
+                }
             }
         }
         ++count;
@@ -499,7 +508,7 @@ void ModuleIO::save_sparse(
     }
 
     const std::vector<long long> nonzero_num
-        = count_nonzeros_by_R(smat, all_R_coor, options.reduce);
+        = count_nonzeros_by_R(smat, all_R_coor, options.threshold, options.reduce);
     const int output_R_number = count_output_R(nonzero_num);
     std::ofstream ofs;
     if (!options.reduce || GlobalV::DRANK == 0)
