@@ -178,32 +178,6 @@ class DiagoLobpcg
     bool has_pdir = false; ///< true when P block holds valid directions
     std::string diag_context;
 
-    struct ProfileStats
-    {
-        long long pgemm_multiply_calls = 0;
-        long long plintrans_act_calls = 0;
-        long long residual_guard_rejections = 0;
-        long long residual_guard_stops = 0;
-        long long compressed_guard_attempts = 0;
-        long long compressed_guard_accepts = 0;
-        long long compressed_fallbacks = 0;
-        long long allowed_notconv_polish_iterations = 0;
-        long long best_state_restores = 0;
-        long long soft_lock_restores = 0;
-        long long soft_lock_restored_bands = 0;
-        long long active_band_update_samples = 0;
-        long long active_band_update_sum = 0;
-        int active_band_update_min = 0;
-        int active_band_update_max = 0;
-    };
-    struct ProfileStageStats
-    {
-        std::string stage;
-        long long calls = 0;
-        double seconds = 0.0;
-    };
-    ProfileStats profile_stats;
-    mutable std::vector<ProfileStageStats> profile_stage_stats;
     struct State
     {
         std::vector<T> psi;
@@ -390,19 +364,6 @@ class DiagoLobpcg
                               const std::vector<double>& ethr_band,
                               const std::string& stop_reason) const;
 
-    bool profile_enabled() const;
-    void profile_log(const char* problem_type,
-                     const char* stage,
-                     const int iter,
-                     const double seconds) const;
-    void profile_accumulate_stage(const char* stage,
-                                  const double seconds) const;
-    void profile_record_active_bands(const int active_bands);
-    void reset_profile_stats();
-    void profile_summary(const char* problem_type,
-                         const int used_iter,
-                         const Real final_residual,
-                         const int final_notconv) const;
     void pgemm_multiply(const T alpha,
                         const T* a,
                         const T* b,
@@ -443,32 +404,19 @@ class DiagoLobpcg
                                    const std::vector<char>& soft_lock_mask,
                                    const ct::Tensor& err_in,
                                    const std::vector<double>& ethr_band);
-    void profiled_save_state(State& state,
-                             const char* stage);
-    void profiled_restore_state(const State& state,
-                                const bool reset_search,
-                                const char* stage);
     bool update_best_state(State& state,
                            StateQuality& quality,
                            const int candidate_notconv,
                            const Real candidate_residual);
-    template <typename Func>
-    void profiled_call(const char* problem_type,
-                       const char* stage,
-                       const int iter,
-                       const Func& func);
     template <typename UpdateFunc, typename RepairFunc>
-    void update_subspace_with_fallback(const char* problem_type,
-                                       const char* first_failure,
+    void update_subspace_with_fallback(const char* first_failure,
                                        const char* retry_failure,
-                                       const bool always_log_failure,
                                        State& rollback_state,
                                        const int used_iter,
                                        const UpdateFunc& update_func,
                                        const RepairFunc& repair_func);
     template <typename RecomputeFunc>
-    void restore_best_state_if_needed(const char* problem_type,
-                                      const char* diag_name,
+    void restore_best_state_if_needed(const char* diag_name,
                                       State& best_state,
                                       const StateQuality& best_quality,
                                       const int used_iter,

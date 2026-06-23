@@ -497,7 +497,7 @@ class DiagoLobpcgTest : public ::testing::Test
             GTEST_SKIP() << "band-parallel LOBPCG test requires at least 2 MPI ranks";
 
         const int npw = 18;
-        const int nband = 10;
+        const int nband = 11;
         const int ld_psi = npw + 3;
         const int nband_l = nband / nproc + (rank < nband % nproc ? 1 : 0);
         const int band_start = nband / nproc * rank + std::min(rank, nband % nproc);
@@ -671,92 +671,6 @@ TEST(DiagoLobpcgDetailTest, GeneralizedResidualGuardAllowsObservedBp2Growth)
 
     EXPECT_TRUE(should_reject_residual_update(5, 0.023084, 5, 0.250000, growth_limit));
     EXPECT_FALSE(compressed_guard_is_acceptable(5, 0.023084, 5, 0.250000, growth_limit));
-}
-
-TEST_F(DiagoLobpcgTest, GeneralizedProfileSummaryReportsRollbackBackup)
-{
-    struct EnvGuard
-    {
-        explicit EnvGuard(const char* name_in)
-            : name(name_in)
-        {
-            const char* current = std::getenv(name);
-            if (current != nullptr)
-            {
-                had_value = true;
-                old_value = current;
-            }
-        }
-
-        ~EnvGuard()
-        {
-            if (had_value)
-            {
-                setenv(name, old_value.c_str(), 1);
-            }
-            else
-            {
-                unsetenv(name);
-            }
-        }
-
-        const char* name = nullptr;
-        bool had_value = false;
-        std::string old_value;
-    };
-
-    const int npw = 20;
-    const int nband = 5;
-    const int ld_psi = npw + 2;
-    std::vector<TestT> hmat, smat;
-    std::vector<TestReal> prec, e_ref;
-    build_generalized_problem(npw, 1.6, 0.02, 233, hmat, smat, prec, e_ref);
-
-    std::vector<TestT> psi(nband * ld_psi, {0.0, 0.0});
-    for (int ib = 0; ib < nband; ++ib)
-    {
-        psi[ib * ld_psi + ib] = {1.0, 0.0};
-    }
-
-    auto hpsi_func = [&](TestT* psi_in, TestT* hpsi_out,
-                          int ld_in, int nvec) {
-        matvec(hmat, psi_in, hpsi_out, npw, ld_in, nvec);
-    };
-    auto spsi_func = [&](const TestT* psi_in, TestT* spsi_out,
-                          int ld_in, int nvec) {
-        matvec(smat, psi_in, spsi_out, npw, ld_in, nvec);
-    };
-
-    std::vector<TestReal> eigens(nband, 0.0);
-    std::vector<double> ethr(nband, 0.0);
-    const int old_scf = hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER;
-    const auto old_avg_iter = hsolver::DiagoIterAssist<TestT, TestDevice>::avg_iter;
-    hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER = 1;
-    hsolver::DiagoIterAssist<TestT, TestDevice>::avg_iter = 0.0;
-
-    EnvGuard profile_guard("ABACUS_LOBPCG_PROFILE");
-    setenv("ABACUS_LOBPCG_PROFILE", "1", 1);
-
-    hsolver::DiagoLobpcg<TestT, TestDevice> lobpcg(prec.data());
-    lobpcg.init_iter(nband, nband, ld_psi, npw);
-    lobpcg.set_max_iter(1);
-    lobpcg.set_diag_context("generalized-profile-stage-summary");
-
-    testing::internal::CaptureStdout();
-    lobpcg.diag(hpsi_func, spsi_func, psi.data(), eigens.data(), ethr);
-    const std::string output = testing::internal::GetCapturedStdout();
-
-    hsolver::DiagoIterAssist<TestT, TestDevice>::SCF_ITER = old_scf;
-    hsolver::DiagoIterAssist<TestT, TestDevice>::avg_iter = old_avg_iter;
-
-    EXPECT_NE(output.find("LOBPCG_PROFILE S!=I summary used_iter=1"),
-              std::string::npos);
-    EXPECT_NE(output.find("LOBPCG_PROFILE S!=I stage_summary stage=rollback_backup count=1"),
-              std::string::npos);
-    EXPECT_NE(output.find("LOBPCG_PROFILE S!=I stage_summary stage=lobpcg_update count=1"),
-              std::string::npos);
-    EXPECT_NE(output.find("context={generalized-profile-stage-summary}"),
-              std::string::npos);
 }
 
 TEST_F(DiagoLobpcgTest, RejectsNonLocalEthrBandSize)
