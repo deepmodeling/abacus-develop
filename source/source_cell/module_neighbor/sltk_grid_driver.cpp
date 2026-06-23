@@ -88,7 +88,7 @@ void Grid_Driver::Find_atom_from_atom_pack(const UnitCell& ucell,
     const std::vector<int>& pair_indices = neighbor_pair_indices[ntype][nnumber];
     for (const int pair_index: pair_indices)
     {
-        const ModuleNeighbor::NeighborPair& pair = neighbor_pairs_27[pair_index];
+        const ModuleNeighbor::NeighborPair& pair = neighbor_pairs[pair_index];
         const int atom_index = pair.neighbor_index;
         if (atom_index < 0 || atom_index >= atom_pack.size())
         {

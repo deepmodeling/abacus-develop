@@ -37,7 +37,9 @@ void Grid::init(std::ofstream& ofs_in,
                 const UnitCell& ucell,
                 const double radius_in,
                 const bool boundary,
-                const NeighborBuildMode build_mode)
+                const NeighborBuildMode build_mode,
+                const NeighborSearchMode search_mode,
+                const NeighborReferenceMode reference_mode)
 {
     ModuleBase::TITLE("Grid", "init");
     ModuleBase::timer::start("Grid", "init");
@@ -53,7 +55,7 @@ void Grid::init(std::ofstream& ofs_in,
     ModuleBase::GlobalFunc::OUT(ofs_in, "Min number of cells", glayerX_minus, glayerY_minus, glayerZ_minus);
 
     this->setMemberVariables(ofs_in, ucell);
-    this->Build_AtomPack_Search_Path(ucell);
+    this->Build_AtomPack_Search_Path(ucell, search_mode, reference_mode);
     if (build_mode == NeighborBuildMode::AtomPackAndLegacy)
     {
         this->Build_Legacy_Search_Path(ucell);
@@ -387,14 +389,29 @@ void Grid::Construct_Adjacent_final(const FAtom& fatom1,
     }
 }
 
-void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell)
+void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell,
+                                      const NeighborSearchMode search_mode,
+                                      const NeighborReferenceMode reference_mode)
 {
-    // Build the Phase 2.1 integer-indexed path in the same init() pass as the
-    // legacy boxes. This keeps both paths comparable while Grid_Driver moves to
-    // AtomPack as the default query backend.
+    // Build the Phase 2.1 integer-indexed path. The production query list is
+    // neighbor_pairs; neighbor_pairs_27 is populated only when tests explicitly
+    // request a full-search reference.
     atom_pack = ModuleNeighbor::build_atom_pack_from_unitcell(ucell, sradius, pbc);
     grid_storage = ModuleNeighbor::build_grid_storage_from_atom_pack(atom_pack, box_edge_length);
-    neighbor_pairs_27 = ModuleNeighbor::build_neighbor_pairs_27(atom_pack, grid_storage, sradius);
+    if (search_mode == NeighborSearchMode::Full27)
+    {
+        neighbor_pairs = ModuleNeighbor::build_neighbor_pairs_27(atom_pack, grid_storage, sradius);
+    }
+    else
+    {
+        neighbor_pairs = ModuleNeighbor::build_neighbor_pairs_14(atom_pack, grid_storage, sradius);
+    }
+
+    neighbor_pairs_27.clear();
+    if (reference_mode == NeighborReferenceMode::Full27)
+    {
+        neighbor_pairs_27 = ModuleNeighbor::build_neighbor_pairs_27(atom_pack, grid_storage, sradius);
+    }
 
     // Convert the global pair list to per-center lookup indices so Find_atom()
     // can keep its existing single-atom query interface without scanning all
@@ -406,9 +423,9 @@ void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell)
         neighbor_pair_indices[it].resize(ucell.atoms[it].na);
     }
 
-    for (int pair_index = 0; pair_index < static_cast<int>(neighbor_pairs_27.size()); ++pair_index)
+    for (int pair_index = 0; pair_index < static_cast<int>(neighbor_pairs.size()); ++pair_index)
     {
-        const ModuleNeighbor::NeighborPair& pair = neighbor_pairs_27[pair_index];
+        const ModuleNeighbor::NeighborPair& pair = neighbor_pairs[pair_index];
         neighbor_pair_indices[pair.center_type][pair.center_natom].push_back(pair_index);
     }
 }

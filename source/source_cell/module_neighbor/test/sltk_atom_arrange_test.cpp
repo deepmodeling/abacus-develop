@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 #include "prepare_unitcell.h"
 #include "source_cell/read_stru.h"
+#include "synthetic_neighbor_unitcell.h"
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -81,8 +82,15 @@ void expect_grid_driver_default_path_matches_legacy(const UnitCell& ucell, const
 {
     std::ofstream ofs("grid_driver_atom_pack_compare.out");
     Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
-    grid_d.init(ofs, ucell, radius, pbc);
+    grid_d.init(ofs,
+                ucell,
+                radius,
+                pbc,
+                Grid::NeighborBuildMode::AtomPackAndLegacy,
+                Grid::NeighborSearchMode::Half14,
+                Grid::NeighborReferenceMode::Full27);
     ofs.close();
+    EXPECT_EQ(grid_d.neighbor_pairs, grid_d.neighbor_pairs_27);
 
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -138,6 +146,7 @@ void expect_grid_driver_atom_pack_only_path(const UnitCell& ucell, const double 
     EXPECT_TRUE(grid_d.atoms_in_box.empty());
     EXPECT_TRUE(grid_d.all_adj_info.empty());
     EXPECT_FALSE(grid_d.atom_pack.empty());
+    EXPECT_TRUE(grid_d.neighbor_pairs_27.empty());
     EXPECT_FALSE(grid_d.neighbor_pair_indices.empty());
 
     for (int it = 0; it < ucell.ntype; ++it)
@@ -169,6 +178,70 @@ void expect_grid_driver_atom_pack_only_path(const UnitCell& ucell, const double 
     }
 
     remove("grid_driver_atom_pack_only.out");
+}
+
+void expect_atom_pack_only_half14_matches_full27_reference(const UnitCell& ucell,
+                                                           const double radius,
+                                                           const bool pbc,
+                                                           const std::string& case_name)
+{
+    std::ofstream ofs_candidate("grid_driver_synthetic_half14_atom_pack_only.out");
+    Grid_Driver candidate(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    candidate.init(ofs_candidate,
+                   ucell,
+                   radius,
+                   pbc,
+                   Grid::NeighborBuildMode::AtomPackOnly,
+                   Grid::NeighborSearchMode::Half14);
+    ofs_candidate.close();
+
+    std::ofstream ofs_reference("grid_driver_synthetic_full27_reference.out");
+    Grid_Driver reference(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    reference.init(ofs_reference,
+                   ucell,
+                   radius,
+                   pbc,
+                   Grid::NeighborBuildMode::AtomPackAndLegacy,
+                   Grid::NeighborSearchMode::Full27,
+                   Grid::NeighborReferenceMode::Full27);
+    ofs_reference.close();
+
+    EXPECT_TRUE(candidate.atoms_in_box.empty());
+    EXPECT_TRUE(candidate.all_adj_info.empty());
+    EXPECT_TRUE(candidate.neighbor_pairs_27.empty());
+    EXPECT_FALSE(candidate.neighbor_pairs.empty());
+    EXPECT_EQ(reference.neighbor_pairs, reference.neighbor_pairs_27);
+    EXPECT_EQ(candidate.neighbor_pairs, reference.neighbor_pairs);
+
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            SCOPED_TRACE(case_name + ", pbc=" + std::to_string(pbc) + ", radius=" + std::to_string(radius)
+                         + ", type=" + std::to_string(it) + ", atom=" + std::to_string(ia));
+
+            AdjacentAtomInfo candidate_adjs;
+            AdjacentAtomInfo reference_adjs;
+            AdjacentAtomInfo legacy_adjs;
+            candidate.Find_atom(ucell, it, ia, &candidate_adjs);
+            reference.Find_atom(ucell, it, ia, &reference_adjs);
+            reference.Find_atom_from_legacy(ucell, it, ia, &legacy_adjs);
+
+            EXPECT_EQ(candidate_adjs.adj_num, reference_adjs.adj_num);
+            EXPECT_EQ(candidate_adjs.ntype.size(), reference_adjs.ntype.size());
+            EXPECT_EQ(candidate_adjs.natom.size(), reference_adjs.natom.size());
+            EXPECT_EQ(candidate_adjs.box.size(), reference_adjs.box.size());
+            EXPECT_EQ(candidate_adjs.adjacent_tau.size(), reference_adjs.adjacent_tau.size());
+            EXPECT_EQ(collect_adjacent_keys(candidate_adjs), collect_adjacent_keys(reference_adjs));
+            EXPECT_EQ(collect_adjacent_keys(candidate_adjs), collect_adjacent_keys(legacy_adjs));
+            expect_self_is_last(candidate_adjs, ucell, it, ia);
+            expect_self_is_last(reference_adjs, ucell, it, ia);
+            EXPECT_THROW(candidate.Find_atom_from_legacy(ucell, it, ia, nullptr), std::runtime_error);
+        }
+    }
+
+    remove("grid_driver_synthetic_half14_atom_pack_only.out");
+    remove("grid_driver_synthetic_full27_reference.out");
 }
 } // namespace
 
@@ -305,4 +378,22 @@ TEST_F(SltkAtomArrangeTest, GridDriverAtomPackOnlyPathWorksWithoutLegacyBuild)
 
     expect_grid_driver_atom_pack_only_path(*ucell, radius, true);
     expect_grid_driver_atom_pack_only_path(*ucell, 0.5, false);
+}
+
+TEST(SltkAtomArrangeSyntheticTest, AtomPackOnlyHalf14MatchesFull27ReferenceForSyntheticCells)
+{
+    SetGlobalV();
+    for (SyntheticNeighborCase test_case: make_synthetic_neighbor_cases())
+    {
+        UnitCell* ucell = test_case.prepare.SetUcellInfo();
+        unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+        for (const double radius: test_case.radii)
+        {
+            expect_atom_pack_only_half14_matches_full27_reference(*ucell, radius, true, test_case.name);
+            expect_atom_pack_only_half14_matches_full27_reference(*ucell, radius, false, test_case.name);
+        }
+
+        delete ucell;
+    }
 }
