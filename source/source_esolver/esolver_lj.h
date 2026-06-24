@@ -2,7 +2,8 @@
 #define ESOLVER_LJ_H
 
 #include "esolver.h"
-#include "source_cell/module_neighlist/unitcell_lite.h"
+#include "source_cell/module_neighlist/unitcell_plus.h"
+#include <vector>
 
 namespace ModuleESolver
 {
@@ -15,7 +16,7 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        UnitCellLite change_from_ucell_to_ucell_lite(const UnitCell& ucell);
+        UnitCellPlus change_from_ucell_to_ucell_plus(const UnitCell& ucell);
 
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
@@ -55,6 +56,8 @@ namespace ModuleESolver
         double lj_potential=0.0;
         ModuleBase::matrix lj_force;
         ModuleBase::matrix lj_virial;
+        std::vector<int> atom_type_index;   ///< global atom index to UnitCell atom type
+        std::vector<int> atom_local_index;  ///< global atom index to local index inside atom type
         //---------------------------------------------------
     };
 }

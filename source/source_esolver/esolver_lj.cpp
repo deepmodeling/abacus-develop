@@ -11,25 +11,27 @@
 namespace ModuleESolver
 {
 
-    UnitCellLite ESolver_LJ::change_from_ucell_to_ucell_lite(const UnitCell& ucell)
+    UnitCellPlus ESolver_LJ::change_from_ucell_to_ucell_plus(const UnitCell& ucell)
     {
-        UnitCellLite ucell_lite;
-        
-        // Set lattice parameters
-        ucell_lite.set_lattice(ucell.lat0, ucell.omega, ucell.latvec);
-        
-        // Build atom information
-        std::vector<int> na;
-        std::vector<ModuleBase::Vector3<double>> tau;
-        for (int i = 0; i < ucell.ntype; i++) {
-            na.push_back(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++) {
-                tau.push_back(ucell.atoms[i].tau[j]);
+        UnitCellPlus ucell_plus;
+        ucell_plus.lat0 = ucell.lat0;
+        ucell_plus.omega = ucell.omega;
+        ucell_plus.nat = ucell.nat;
+        for(int i=0;i<ucell.ntype;i++)
+        {
+            ucell_plus.na.push_back(ucell.atoms[i].na);
+        }
+        ucell_plus.ntype = ucell.ntype;
+        ucell_plus.latvec = ucell.latvec;
+        for(int i=0;i<ucell.ntype;i++)
+        {
+            for(int j=0;j<ucell.atoms[i].na;j++)
+            {
+                ucell_plus.tau.push_back(ucell.atoms[i].tau[j]);
             }
         }
-        ucell_lite.set_atoms(ucell.ntype, na, tau);
-        
-        return ucell_lite;
+        ucell_plus.compute_naa();
+        return ucell_plus;
     }
 
 void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
@@ -51,52 +53,97 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     // calculate the energy shift so that LJ energy is zero at rcut
     cal_en_shift(ucell.ntype, inp.mdp.lj_eshift);
+
+    // build flat atom index cache for OpenMP coordinate access in runner()
+    atom_type_index.resize(ucell.nat);
+    atom_local_index.resize(ucell.nat);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            atom_type_index[iat] = it;
+            atom_local_index[iat] = ia;
+            ++iat;
+        }
+    }
+    assert(ucell.nat == iat);
 }
 
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
-    UnitCellLite ucell_lite = change_from_ucell_to_ucell_lite(ucell);
+    UnitCellPlus ucell_plus = change_from_ucell_to_ucell_plus(ucell);
     NeighborSearch neighbor_search;
-    neighbor_search.init(ucell_lite, search_radius, 0);
+    neighbor_search.init(ucell_plus, search_radius, 0);
     neighbor_search.build_neighbors();
-
-    double distance = 0.0;
-    int index = 0;
 
     // Important! potential, force, virial must be zero per step
     lj_potential = 0;
     lj_force.zero_out();
     lj_virial.zero_out();
 
-    ModuleBase::Vector3<double> tau1, tau2, dtau;
-    const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
-    const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
-    for (int it = 0; it < ucell.ntype; ++it)
+    const int nat = ucell.nat;
+
+#pragma omp parallel if (nat >= 256)
     {
-        Atom* atom1 = &ucell.atoms[it];
-        for (int ia = 0; ia < atom1->na; ++ia)
+        double vl[9] = {0};
+        double pot_local = 0.0;
+
+#pragma omp for schedule(dynamic, 32)
+        for (int iat = 0; iat < nat; ++iat)
         {
-            tau1 = atom1->tau[ia];
-            for (int ad = 0; ad < neighbor_list.get_numneigh(index); ++ad)
+            const int it = atom_type_index[iat];
+            const int ia = atom_local_index[iat];
+            ModuleBase::Vector3<double> tau1 = ucell.atoms[it].tau[ia];
+
+            for (int ad = 0; ad < neighbor_search.neighbor_list.numneigh[iat]; ++ad)
             {
-                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(index)[ad]];
-                tau2.x = neighbor_atom.position_x;
-                tau2.y = neighbor_atom.position_y;
-                tau2.z = neighbor_atom.position_z;
-                int it2 = neighbor_atom.atom_type;
-                dtau = (tau1 - tau2) * ucell.lat0;
-                distance = dtau.norm();
+                const int neigh_idx = neighbor_search.neighbor_list.firstneigh[iat][ad];
+                ModuleBase::Vector3<double> tau2;
+                tau2.x = neighbor_search.all_atoms[neigh_idx].position_x;
+                tau2.y = neighbor_search.all_atoms[neigh_idx].position_y;
+                tau2.z = neighbor_search.all_atoms[neigh_idx].position_z;
+                int it2 = neighbor_search.all_atoms[neigh_idx].atom_type;
+
+                ModuleBase::Vector3<double> dtau = (tau1 - tau2) * ucell.lat0;
+                double distance = dtau.norm();
+
                 if (distance < lj_rcut(it, it2))
                 {
-                    lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                    pot_local += LJ_energy(distance, it, it2) - en_shift(it, it2);
                     ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
-                    lj_force(index, 0) += f_ij.x;
-                    lj_force(index, 1) += f_ij.y;
-                    lj_force(index, 2) += f_ij.z;
-                    LJ_virial(f_ij, dtau);
+                    lj_force(iat, 0) += f_ij.x;
+                    lj_force(iat, 1) += f_ij.y;
+                    lj_force(iat, 2) += f_ij.z;
+
+                    // per-thread virial accumulation
+                    vl[0] += dtau.x * f_ij.x;
+                    vl[1] += dtau.x * f_ij.y;
+                    vl[2] += dtau.x * f_ij.z;
+                    vl[3] += dtau.y * f_ij.x;
+                    vl[4] += dtau.y * f_ij.y;
+                    vl[5] += dtau.y * f_ij.z;
+                    vl[6] += dtau.z * f_ij.x;
+                    vl[7] += dtau.z * f_ij.y;
+                    vl[8] += dtau.z * f_ij.z;
                 }
             }
-            index++;
+        }
+
+#pragma omp atomic
+        lj_potential += pot_local;
+
+#pragma omp critical
+        {
+            lj_virial(0, 0) += vl[0];
+            lj_virial(0, 1) += vl[1];
+            lj_virial(0, 2) += vl[2];
+            lj_virial(1, 0) += vl[3];
+            lj_virial(1, 1) += vl[4];
+            lj_virial(1, 2) += vl[5];
+            lj_virial(2, 0) += vl[6];
+            lj_virial(2, 1) += vl[7];
+            lj_virial(2, 2) += vl[8];
         }
     }
 
