@@ -659,8 +659,11 @@ void DiagoLobpcg<T, Device>::calc_hpsi_with_block(
     const HPsiFunc& hpsi_func, T* psi_in, ct::Tensor& hpsi_out)
 {
     hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band_l);
-    if (!finite_vector_block(psi_in, this->n_band_l, this->n_basis, this->n_dim)
-        || !finite_vector_block(hpsi_out.data<T>(), this->n_band_l, this->n_basis, this->n_dim)) {
+    int invalid_mask =
+        (!finite_vector_block(psi_in, this->n_band_l, this->n_basis, this->n_dim) ? 1 : 0)
+      | (!finite_vector_block(hpsi_out.data<T>(), this->n_band_l, this->n_basis, this->n_dim) ? 2 : 0);
+    lobpcg_reduce_bit_or(invalid_mask);
+    if (invalid_mask != 0) {
         this->diag_log("calc_hpsi_with_block non-finite",
                         vector_block_diagnostics("psi_in",
                                                  psi_in,
@@ -681,8 +684,11 @@ void DiagoLobpcg<T, Device>::calc_spsi_with_block(
     const SPsiFunc& spsi_func, const T* psi_in, ct::Tensor& spsi_out)
 {
     spsi_func(psi_in, spsi_out.data<T>(), this->n_basis, this->n_band_l);
-    if (!finite_vector_block(psi_in, this->n_band_l, this->n_basis, this->n_dim)
-        || !finite_vector_block(spsi_out.data<T>(), this->n_band_l, this->n_basis, this->n_dim)) {
+    int invalid_mask =
+        (!finite_vector_block(psi_in, this->n_band_l, this->n_basis, this->n_dim) ? 1 : 0)
+      | (!finite_vector_block(spsi_out.data<T>(), this->n_band_l, this->n_basis, this->n_dim) ? 2 : 0);
+    lobpcg_reduce_bit_or(invalid_mask);
+    if (invalid_mask != 0) {
         this->diag_log("calc_spsi_with_block non-finite",
                         vector_block_diagnostics("psi_in",
                                                  psi_in,
@@ -1009,6 +1015,8 @@ void DiagoLobpcg<T, Device>::compute_residual_s(
     T*          _grad  = grad_out.data<T>();
     Real*       _err   = err_out.data<Real>();
     const int band_start = this->local_band_start();
+    int invalid_grad = 0;
+    std::string invalid_grad_context;
 
     for (int ib = 0; ib < this->n_band_l; ib++) {
         const int  ioff   = ib * this->n_basis;
@@ -1020,31 +1028,40 @@ void DiagoLobpcg<T, Device>::compute_residual_s(
             const Real denom = std::max(_prec[ig], static_cast<Real>(1e-8));
             _grad[idx] = r / denom;
             if (!std::isfinite(std::real(_grad[idx])) || !std::isfinite(std::imag(_grad[idx]))) {
-                std::ostringstream oss;
-                oss << "ib=" << ib
-                    << " ig=" << ig
-                    << " lambda=" << lambda
-                    << " prec=" << _prec[ig]
-                    << " denom=" << denom
-                    << " hpsi=(" << std::real(_hpsi[idx]) << "," << std::imag(_hpsi[idx]) << ")"
-                    << " spsi=(" << std::real(_spsi[idx]) << "," << std::imag(_spsi[idx]) << ")"
-                    << " residual=(" << std::real(r) << "," << std::imag(r) << ")"
-                    << " grad=(" << std::real(_grad[idx]) << "," << std::imag(_grad[idx]) << ")";
-                this->diag_log("compute_residual_s non-finite grad",
-                                oss.str(),
-                                vector_block_diagnostics("hpsi", _hpsi, this->n_band_l, this->n_basis, this->n_dim),
-                                vector_block_diagnostics("spsi", _spsi, this->n_band_l, this->n_basis, this->n_dim));
-                throw std::runtime_error("LOBPCG generalized residual produced non-finite gradient");
+                invalid_grad = 1;
+                if (invalid_grad_context.empty()) {
+                    std::ostringstream oss;
+                    oss << "ib=" << ib
+                        << " ig=" << ig
+                        << " lambda=" << lambda
+                        << " prec=" << _prec[ig]
+                        << " denom=" << denom
+                        << " hpsi=(" << std::real(_hpsi[idx]) << "," << std::imag(_hpsi[idx]) << ")"
+                        << " spsi=(" << std::real(_spsi[idx]) << "," << std::imag(_spsi[idx]) << ")"
+                        << " residual=(" << std::real(r) << "," << std::imag(r) << ")"
+                        << " grad=(" << std::real(_grad[idx]) << "," << std::imag(_grad[idx]) << ")";
+                    invalid_grad_context = oss.str();
+                }
+                _grad[idx] = static_cast<T>(0.0);
+            } else {
+                err_j += std::norm(r);
             }
-            err_j        += std::norm(r);
         }
         for (int ig = this->n_dim; ig < this->n_basis; ig++)
             _grad[ioff + ig] = static_cast<T>(0.0);
-        _err[ib] = err_j;
+        _err[ib] = invalid_grad == 0 ? err_j : static_cast<Real>(0.0);
     }
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(_err, this->n_band_l);
 #endif
+    lobpcg_reduce_bit_or(invalid_grad);
+    if (invalid_grad != 0) {
+        this->diag_log("compute_residual_s non-finite grad",
+                       invalid_grad_context.empty() ? "non-finite gradient on another rank" : invalid_grad_context,
+                       vector_block_diagnostics("hpsi", _hpsi, this->n_band_l, this->n_basis, this->n_dim),
+                       vector_block_diagnostics("spsi", _spsi, this->n_band_l, this->n_basis, this->n_dim));
+        throw std::runtime_error("LOBPCG generalized residual produced non-finite gradient");
+    }
     for (int ib = 0; ib < this->n_band_l; ib++)
         _err[ib] = std::sqrt(_err[ib]);
 }
@@ -1208,14 +1225,6 @@ void DiagoLobpcg<T, Device>::validate_ethr_band(const std::vector<double>& ethr_
         }
         throw std::invalid_argument(oss.str());
     }
-}
-
-template <typename T, typename Device>
-bool DiagoLobpcg<T, Device>::test_error(
-    const ct::Tensor& err_in, const std::vector<double>& ethr_band)
-{
-    const int notconv = this->count_not_converged(err_in, ethr_band);
-    return should_continue_for_notconv(notconv, this->notconv_max);
 }
 
 template <typename T, typename Device>

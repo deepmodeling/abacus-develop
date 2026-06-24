@@ -343,8 +343,6 @@ class DiagoLobpcg
                          ct::Tensor& spsi_out,
                          ct::Tensor& hsub_out);
 
-    bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
-
     Real max_error(const ct::Tensor& err_in) const;
 
     int count_not_converged(const ct::Tensor& err_in,

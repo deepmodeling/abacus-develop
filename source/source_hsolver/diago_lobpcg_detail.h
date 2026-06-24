@@ -138,6 +138,13 @@ static void lobpcg_reduce_bool_and(bool& value)
 #endif
 }
 
+static void lobpcg_reduce_bit_or(int& value)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_BOR, BP_WORLD);
+#endif
+}
+
 template <typename T>
 static LobpcgGeneralizedUpdateBuffers<T> make_generalized_update_buffers(T* x, T* hx, T* sx,
                                                                          T* p, T* hp, T* sp)
@@ -484,9 +491,7 @@ static int update_invalid_mask(const T* psi,
         invalid_mask |= !finite_vector_block(spsi, nvec, lda, nvalid) ? 4 : 0;
     }
     invalid_mask |= !finite_real_block(eigen, n) ? (spsi != nullptr ? 8 : 4) : 0;
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &invalid_mask, 1, MPI_INT, MPI_BOR, BP_WORLD);
-#endif
+    lobpcg_reduce_bit_or(invalid_mask);
     return invalid_mask;
 }
 
