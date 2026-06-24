@@ -20,10 +20,86 @@
 #include <type_traits>
 
 namespace hsolver {
+namespace lobpcg_detail {
 
 // ============================================================================
-// File-static helpers
+// Internal helpers
 // ============================================================================
+
+template <typename Real>
+inline Real generalized_residual_growth_limit()
+{
+    return static_cast<Real>(10.0);
+}
+
+template <typename Real>
+inline Real residual_guard_limit(const Real residual_before,
+                                 const Real residual_growth_limit)
+{
+    return std::max(static_cast<Real>(1.0e-8),
+                    residual_before * residual_growth_limit);
+}
+
+template <typename Real>
+inline bool state_is_better(const int candidate_notconv,
+                            const Real candidate_residual,
+                            const bool has_best_state,
+                            const int best_notconv,
+                            const Real best_residual)
+{
+    if (!std::isfinite(candidate_residual)) {
+        return false;
+    }
+    if (!has_best_state || candidate_notconv < best_notconv) {
+        return true;
+    }
+    if (candidate_notconv > best_notconv) {
+        return false;
+    }
+    const Real best_tol = std::max(static_cast<Real>(1.0e-12),
+                                   std::abs(best_residual) * static_cast<Real>(1.0e-8));
+    return candidate_residual < best_residual - best_tol;
+}
+
+template <typename Real>
+inline bool should_reject_residual_update(const int notconv_before,
+                                          const Real residual_before,
+                                          const int notconv_after,
+                                          const Real residual_after,
+                                          const Real residual_growth_limit)
+{
+    const Real residual_limit = residual_guard_limit(residual_before, residual_growth_limit);
+    return !std::isfinite(residual_after)
+        || (residual_after > residual_limit && notconv_after >= notconv_before);
+}
+
+template <typename Real>
+inline bool compressed_guard_is_acceptable(const int notconv_before,
+                                           const Real residual_before,
+                                           const int guarded_notconv,
+                                           const Real guarded_residual,
+                                           const Real residual_growth_limit)
+{
+    const Real guarded_limit = residual_guard_limit(residual_before, residual_growth_limit);
+    return std::isfinite(guarded_residual)
+        && (guarded_residual <= guarded_limit || guarded_notconv < notconv_before);
+}
+
+template <typename Real>
+inline bool should_restore_best_state(const bool has_best_state,
+                                      const int final_notconv,
+                                      const Real final_residual,
+                                      const int best_notconv,
+                                      const Real best_residual)
+{
+    const Real best_restore_tol = std::max(static_cast<Real>(1.0e-12),
+                                           std::abs(best_residual) * static_cast<Real>(1.0e-8));
+    return has_best_state
+        && (final_notconv > best_notconv
+            || !std::isfinite(final_residual)
+            || (final_notconv == best_notconv
+                && final_residual > best_residual + best_restore_tol));
+}
 
 static constexpr const char* LOBPCG_PROBLEM_GENERALIZED = "S!=I";
 
@@ -196,14 +272,6 @@ static void sync_generalized_update(ct::Tensor& psi,
     syncmem_complex_op()(pdir.data<T>(),  buffers.p,  local_sz);
     syncmem_complex_op()(hpdir.data<T>(), buffers.hp, local_sz);
     syncmem_complex_op()(spdir.data<T>(), buffers.sp, local_sz);
-}
-
-template <typename T>
-static void mirror_lower(T* mat, int ld, int active_sub)
-{
-    for (int c = 0; c < active_sub; c++)
-        for (int r = c + 1; r < active_sub; r++)
-            mat[c * ld + r] = std::conj(mat[r * ld + c]);
 }
 
 template <typename T>
@@ -551,104 +619,6 @@ static std::string vector_block_diagnostics(const char* name,
 }
 
 template <typename T>
-static bool append_orthonormal_block(
-    const int nvec, const int lda, const int nvalid,
-    const typename GetTypeReal<T>::type thresh,
-    const T* block, const T* hblock,
-    std::vector<T>& basis, std::vector<T>& hbasis)
-{
-    using Real = typename GetTypeReal<T>::type;
-    bool appended = false;
-    const Real thresh2 = thresh * thresh;
-
-    for (int ib = 0; ib < nvec; ++ib) {
-        std::vector<T> q(lda, static_cast<T>(0.0));
-        std::vector<T> hq(lda, static_cast<T>(0.0));
-        for (int ig = 0; ig < nvalid; ++ig) {
-            q[ig] = block[ib * lda + ig];
-            hq[ig] = hblock[ib * lda + ig];
-        }
-
-        const int nold = static_cast<int>(basis.size() / lda);
-        for (int pass = 0; pass < 2; ++pass) {
-            for (int jq = 0; jq < nold; ++jq) {
-                T dot = static_cast<T>(0.0);
-                for (int ig = 0; ig < nvalid; ++ig) {
-                    dot += std::conj(basis[jq * lda + ig]) * q[ig];
-                }
-#ifdef __MPI
-                Parallel_Reduce::reduce_pool(&dot, 1);
-#endif
-                for (int ig = 0; ig < nvalid; ++ig) {
-                    q[ig] -= dot * basis[jq * lda + ig];
-                    hq[ig] -= dot * hbasis[jq * lda + ig];
-                }
-            }
-        }
-
-        Real norm2 = static_cast<Real>(0.0);
-        for (int ig = 0; ig < nvalid; ++ig) {
-            norm2 += std::norm(q[ig]);
-        }
-#ifdef __MPI
-        Parallel_Reduce::reduce_pool(&norm2, 1);
-#endif
-        if (!std::isfinite(norm2) || norm2 <= thresh2) {
-            continue;
-        }
-
-        const Real inv_norm = static_cast<Real>(1.0) / std::sqrt(norm2);
-        for (int ig = 0; ig < lda; ++ig) {
-            basis.push_back(q[ig] * inv_norm);
-            hbasis.push_back(hq[ig] * inv_norm);
-        }
-        appended = true;
-    }
-
-    return appended;
-}
-
-template <typename T>
-static bool append_normalized_block(
-    const int nvec, const int lda, const int nvalid,
-    const typename GetTypeReal<T>::type thresh,
-    const T* block, const T* hblock,
-    std::vector<T>& basis, std::vector<T>& hbasis)
-{
-    using Real = typename GetTypeReal<T>::type;
-    bool appended = false;
-    const Real thresh2 = thresh * thresh;
-
-    for (int ib = 0; ib < nvec; ++ib) {
-        const T* src = block + ib * lda;
-        const T* hsrc = hblock + ib * lda;
-        Real norm2 = static_cast<Real>(0.0);
-        for (int ig = 0; ig < nvalid; ++ig) {
-            norm2 += std::norm(src[ig]);
-        }
-#ifdef __MPI
-        Parallel_Reduce::reduce_pool(&norm2, 1);
-#endif
-        if (!std::isfinite(norm2) || norm2 <= thresh2) {
-            continue;
-        }
-
-        const Real inv_norm = static_cast<Real>(1.0) / std::sqrt(norm2);
-        for (int ig = 0; ig < nvalid; ++ig) {
-            basis.push_back(src[ig] * inv_norm);
-            hbasis.push_back(hsrc[ig] * inv_norm);
-        }
-        for (int ig = nvalid; ig < lda; ++ig) {
-            basis.push_back(static_cast<T>(0.0));
-            hbasis.push_back(static_cast<T>(0.0));
-        }
-        appended = true;
-    }
-
-    return appended;
-}
-
-template <typename T>
 static bool append_s_orthonormal_block(
     const int nvec, const int lda, const int nvalid,
     const typename GetTypeReal<T>::type thresh,
@@ -709,6 +679,7 @@ static bool append_s_orthonormal_block(
     return appended;
 }
 
+} // namespace lobpcg_detail
 } // namespace hsolver
 
 #endif // DIAGO_LOBPCG_DETAIL_H_

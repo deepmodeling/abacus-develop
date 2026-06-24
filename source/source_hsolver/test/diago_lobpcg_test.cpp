@@ -1,5 +1,5 @@
 #include "../diago_iter_assist.h"
-#include "../diago_lobpcg.h"
+#include "../diago_lobpcg_detail.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_comm.h"
