@@ -8,17 +8,11 @@
 #include <type_traits>
 #include <vector>
 
-#include "source_base/kernels/math_kernel_op.h"
-#include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
-#include "source_hamilt/hamilt.h"
-#include "source_hsolver/diago_iter_assist.h"
-#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/para_linear_transform.h"
 
 #include <ATen/core/tensor.h>
-#include <ATen/core/tensor_map.h>
 #include <source_base/macros.h>
 
 namespace hsolver {
@@ -31,9 +25,6 @@ namespace hsolver {
  *   - First iteration:  W = [X, Z]           (2-block, no valid P yet)
  *   - Subsequent:       W = [X, Z, P]        (3-block)
  * where X = current eigenvectors, Z = preconditioned residual, P = search directions.
- *
- * @note Currently supports CPU only.
- *       GPU support is planned for subsequent phases.
  *
  * @tparam T      Complex floating-point type.
  * @tparam Device Must be base_device::DEVICE_CPU (GPU not yet supported).
@@ -57,11 +48,11 @@ class DiagoLobpcg
     using SPsiFunc = std::function<void(const T*, T*, const int, const int)>;
 
     /// Constructor: stores host preconditioner pointer.
-    explicit DiagoLobpcg(const Real* precondition);
+    explicit DiagoLobpcg(const Real* precondition) : h_prec_ptr(precondition) {}
 
-    ~DiagoLobpcg();
+    ~DiagoLobpcg() = default;
 
-    /// Allocate workspace and bind h_prec TensorMap (after n_basis is known).
+    /// Allocate workspace after n_basis is known.
     void init_iter(const int nband, const int nband_l, const int nbasis, const int ndim);
 
     /// Set max inner iterations per SCF step (default 4).
@@ -120,14 +111,13 @@ class DiagoLobpcg
     PLinearTransform<T, Device> plintrans_batch3;
 
     // ---- type traits ----
-    ct::DataType r_type   = ct::DataType::DT_INVALID;
-    ct::DataType t_type   = ct::DataType::DT_INVALID;
-    ct::DeviceType dev_type = ct::DeviceType::UnKnown;
+    ct::DataType r_type = ct::DataTypeToEnum<Real>::value;
+    ct::DataType t_type = ct::DataTypeToEnum<T>::value;
+    ct::DeviceType dev_type = ct::DeviceTypeToEnum<Device>::value;
 
     // ---- preconditioner ----
     ct::Tensor prec        = {};  ///< device copy [n_basis]
     const Real* h_prec_ptr = nullptr; ///< host pointer (saved in ctor)
-    ct::Tensor h_prec      = {};  ///< host TensorMap [n_basis] (bound in init_iter)
 
     // ---- eigenvalues & convergence ----
     ct::Tensor eigen     = {}; ///< output eigenvalues [n_band]
@@ -168,12 +158,10 @@ class DiagoLobpcg
     const T one_     = static_cast<T>(1.0);
     const T zero_    = static_cast<T>(0.0);
     const T neg_one_ = static_cast<T>(-1.0);
-    const T* one     = nullptr;
-    const T* zero    = nullptr;
+    const T* one     = &one_;
+    const T* zero    = &zero_;
 
     // ---- helpers ----
-
-    void calc_prec();
 
     void calc_hpsi_with_block(const HPsiFunc& hpsi_func,
                               T* psi_in,
@@ -247,47 +235,16 @@ class DiagoLobpcg
                                   ct::Tensor& eigen,
                                   bool force_compressed);
 
-    /// psi = psi * U  (via plintrans).
-    void rotate_wf(const ct::Tensor& hsub_in,
-                   ct::Tensor& psi_out,
-                   ct::Tensor& workspace_in);
-
-    /// S-Cholesky orthonormalization.
-    void orth_cholesky_s(ct::Tensor& workspace_in,
-                         ct::Tensor& psi_out,
-                         ct::Tensor& hpsi_out,
-                         ct::Tensor& spsi_out,
-                         ct::Tensor& hsub_out);
-
     Real max_error(const ct::Tensor& err_in) const;
 
     int count_not_converged(const ct::Tensor& err_in,
                             const std::vector<double>& ethr_band) const;
 
-    void validate_ethr_band(const std::vector<double>& ethr_band) const;
-
-    void diag_log(const std::string& context,
-                  const std::string& line1,
-                  const std::string& line2,
-                  const std::string& line3 = std::string()) const;
-    std::string error_with_context(const std::string& message) const;
-
-    void report_not_converged(const char* problem_type,
-                              const int used_iter,
+    void report_not_converged(const int used_iter,
                               const int max_iter,
                               const std::vector<double>& ethr_band,
                               const std::string& stop_reason) const;
 
-    void pgemm_multiply(const T alpha,
-                        const T* a,
-                        const T* b,
-                        const T beta,
-                        T* c);
-    void plintrans_act(const T alpha,
-                       const T* a,
-                       const T* u,
-                       const T beta,
-                       T* b);
     void plintrans_batched_act(const T alpha,
                                const T* const* a_blocks,
                                const int block_count,
@@ -297,19 +254,9 @@ class DiagoLobpcg
 
     int local_band_start() const;
     void clear_search_directions();
-    void save_state(std::vector<T>& psi_out,
-                    std::vector<T>& hpsi_out,
-                    std::vector<Real>& eigen_out);
-    void restore_state(const std::vector<T>& psi_in,
-                       const std::vector<T>& hpsi_in,
-                       const std::vector<Real>& eigen_in,
-                       const bool reset_search);
     void save_state(State& state);
     void restore_state(const State& state,
                        const bool reset_search);
-    std::vector<char> make_soft_lock_mask(const ct::Tensor& err_in,
-                                          const std::vector<double>& ethr_band,
-                                          const int notconv) const;
     bool restore_soft_locked_bands(const State& state,
                                    const std::vector<char>& soft_lock_mask,
                                    const ct::Tensor& err_in,
@@ -318,24 +265,7 @@ class DiagoLobpcg
                            StateQuality& quality,
                            const int candidate_notconv,
                            const Real candidate_residual);
-    template <typename UpdateFunc, typename RepairFunc>
-    void update_subspace_with_fallback(const char* first_failure,
-                                       const char* retry_failure,
-                                       State& rollback_state,
-                                       const int used_iter,
-                                       const UpdateFunc& update_func,
-                                       const RepairFunc& repair_func);
-    template <typename RecomputeFunc>
-    void restore_best_state_if_needed(const char* diag_name,
-                                      State& best_state,
-                                      const StateQuality& best_quality,
-                                      const int used_iter,
-                                      Real& final_residual,
-                                      int& final_notconv,
-                                      const RecomputeFunc& recompute_final_quality);
-    int run_lobpcg_loop(const char* problem_type,
-                        const char* diag_name,
-                        const HPsiFunc& hpsi_func,
+    int run_lobpcg_loop(const HPsiFunc& hpsi_func,
                         const SPsiFunc& spsi_func,
                         const std::vector<double>& effective_ethr_band,
                         const int scf_iter);
@@ -343,37 +273,19 @@ class DiagoLobpcg
                                             State& best_state,
                                             StateQuality& best_quality,
                                             bool& update_rejected,
-                                            const int used_iter,
                                             const int notconv_before_update,
                                             const Real residual_before_update,
-                                            const Real residual_after_update,
-                                            const Real residual_limit,
                                             const Real residual_growth_limit,
                                             const std::vector<double>& effective_ethr_band);
     void ensure_generalized_update_finite(const ct::Tensor& psi,
                                           const ct::Tensor& hpsi,
                                           const ct::Tensor& spsi,
                                           const ct::Tensor& eigen,
-                                          const int nbs,
-                                          const int n,
-                                          const char* log_context,
                                           const char* error_message) const;
     void update_generalized_subspace(const bool force_compressed);
-    void repair_generalized_subspace(const HPsiFunc& hpsi_func,
-                                     const SPsiFunc& spsi_func);
-    void project_generalized_search_direction(const HPsiFunc& hpsi_func,
-                                              const SPsiFunc& spsi_func);
 
-    // ---- memory-op aliases ----
+    // ---- device alias ----
     using ct_Device = typename ct::PsiToContainer<Device>::type;
-    using setmem_var_op    = ct::kernels::set_memory<Real, ct_Device>;
-    using syncmem_var_h2d_op = ct::kernels::synchronize_memory<Real, ct_Device, ct::DEVICE_CPU>;
-    using syncmem_var_d2h_op = ct::kernels::synchronize_memory<Real, ct::DEVICE_CPU, ct_Device>;
-
-    using setmem_complex_op    = ct::kernels::set_memory<T, ct_Device>;
-    using syncmem_complex_op   = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
-    using syncmem_complex_h2d_op = ct::kernels::synchronize_memory<T, ct_Device, ct::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = ct::kernels::synchronize_memory<T, ct::DEVICE_CPU, ct_Device>;
 
 };
 
