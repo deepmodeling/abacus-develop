@@ -1,8 +1,6 @@
 #ifndef DIAGO_LOBPCG_H_
 #define DIAGO_LOBPCG_H_
 
-#include <algorithm>
-#include <cmath>
 #include <complex>
 #include <functional>
 #include <limits>
@@ -56,7 +54,7 @@ class DiagoLobpcg
     /// @brief S * psi -> spsi.
     using SPsiFunc = std::function<void(const T*, T*, const int, const int)>;
 
-    /// Constructor — stores host preconditioner pointer.
+    /// Constructor: stores host preconditioner pointer.
     explicit DiagoLobpcg(const Real* precondition);
 
     ~DiagoLobpcg();
@@ -136,9 +134,9 @@ class DiagoLobpcg
 
     // ---- core blocks ----
     // Layout for {n_band_l, n_basis} tensors:
-    //   data[ib * n_basis + ig] — band-major contiguous.
-    //   BLAS view: n_basis rows × n_band_l cols, column-major.
-    ct::Tensor psi   = {};   ///< X (TensorMap → psi_in, no ownership)
+    //   data[ib * n_basis + ig]: band-major contiguous.
+    //   BLAS view: n_basis rows x n_band_l cols, column-major.
+    ct::Tensor psi   = {};   ///< X (TensorMap to psi_in, no ownership)
     ct::Tensor hpsi  = {};   ///< HX
     ct::Tensor spsi  = {};   ///< SX
     ct::Tensor grad  = {};   ///< Z = T(R)
@@ -149,8 +147,8 @@ class DiagoLobpcg
     ct::Tensor spdir = {};   ///< SP
 
     // ---- subspace matrices ----
-    ct::Tensor hsub = {};    ///< H_sub [nsub × nsub]
-    ct::Tensor ssub = {};    ///< S_sub [nsub × nsub]
+    ct::Tensor hsub = {};    ///< H_sub [nsub x nsub]
+    ct::Tensor ssub = {};    ///< S_sub [nsub x nsub]
 
     // ---- workspace ----
     ct::Tensor work    = {}; ///< [n_band_l, n_basis]
@@ -163,18 +161,13 @@ class DiagoLobpcg
     ct::Tensor tmp_ssub = {}; ///< scratch [n_band, n_band]
     std::vector<T> plintrans_batch_in;
     std::vector<T> plintrans_batch_out;
-    std::vector<T> pgemm_batch_a;
-    std::vector<T> pgemm_batch_b;
-    std::vector<T> pgemm_batch_out;
 
     // ---- GEMM constants (following BPCG pattern) ----
-    Device* ctx = {};
     const T one_     = static_cast<T>(1.0);
     const T zero_    = static_cast<T>(0.0);
     const T neg_one_ = static_cast<T>(-1.0);
     const T* one     = nullptr;
     const T* zero    = nullptr;
-    const T* neg_one = nullptr;
 
     // ---- helpers ----
 
@@ -372,14 +365,10 @@ class DiagoLobpcg
     // ---- memory-op aliases ----
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op    = ct::kernels::set_memory<Real, ct_Device>;
-    using resmem_var_op    = ct::kernels::resize_memory<Real, ct_Device>;
-    using delmem_var_op    = ct::kernels::delete_memory<Real, ct_Device>;
     using syncmem_var_h2d_op = ct::kernels::synchronize_memory<Real, ct_Device, ct::DEVICE_CPU>;
     using syncmem_var_d2h_op = ct::kernels::synchronize_memory<Real, ct::DEVICE_CPU, ct_Device>;
 
     using setmem_complex_op    = ct::kernels::set_memory<T, ct_Device>;
-    using delmem_complex_op    = ct::kernels::delete_memory<T, ct_Device>;
-    using resmem_complex_op    = ct::kernels::resize_memory<T, ct_Device>;
     using syncmem_complex_op   = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
     using syncmem_complex_h2d_op = ct::kernels::synchronize_memory<T, ct_Device, ct::DEVICE_CPU>;
     using syncmem_complex_d2h_op = ct::kernels::synchronize_memory<T, ct::DEVICE_CPU, ct_Device>;
