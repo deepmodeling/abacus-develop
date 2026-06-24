@@ -5,7 +5,6 @@
 #include <mpi.h>
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "tddft_test.h"
 
 /************************************************
@@ -39,7 +38,7 @@ TEST(BandEnergyTest, testBandEnergy)
     pv->dim1 = 1;
     pv->nb = 1;
     pv->blacs_ctxt = 0;
-    pv->coord[0] = pv->coord[1] = 0;
+    pv->set_coord(0, 0);
 
     int dim[2];
     dim[0] = nprow;
@@ -85,8 +84,9 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[10] = 0.0;
     psi_k[11] = 1.0;
 
-    // Call the function
-    module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
+    // Call the function with local ofstream
+    std::ofstream ofs("/dev/null");
+    module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, ofs);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);

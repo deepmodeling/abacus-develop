@@ -6,6 +6,10 @@
 #include "vdwd3.h"
 #include "source_base/tool_quit.h"
 
+#ifdef __DFTD4
+#include "vdwd4.h"
+#endif
+
 std::string parse_xcname(const std::string &xc_input,
                          const std::vector<std::string> &xc_psp)
 {
@@ -69,6 +73,28 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
         std::unique_ptr<Vdwd3> vdw_ptr = make_unique<Vdwd3>(ucell);
         vdw_ptr->parameter().initial_parameters(parse_xcname(input.dft_functional, xc_psp), input, plog);
         return vdw_ptr;
+    }
+    else if (input.vdw_method == "d4")
+    {
+#ifdef __DFTD4
+        std::vector<std::string> xc_psp(ucell.ntype);
+        for (int it = 0; it < ucell.ntype; it++)
+        {
+            xc_psp[it] = ucell.atoms[it].ncpp.xc_func;
+        }
+
+        std::string xc_name = input.vdw_d4_xc;
+        if (xc_name == "default")
+        {
+            xc_name = parse_xcname(input.dft_functional, xc_psp);
+        }
+
+        return vdw::make_unique<Vdwd4>(ucell, xc_name, input);
+#else
+        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
+                                 "DFT-D4 support was not enabled at build time. "
+                                 "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
+#endif
     }
     else if (input.vdw_method != "none")
     {

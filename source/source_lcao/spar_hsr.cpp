@@ -84,8 +84,8 @@ void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
         int atom_j = hR.get_atom_pair(iap).get_atom_j();
         int start_i = pv.atom_begin_row[atom_i];
         int start_j = pv.atom_begin_col[atom_j];
-        int row_size = pv.get_row_size(atom_i);
-        int col_size = pv.get_col_size(atom_j);
+        int row_size = pv.get_nrow_atom(atom_i);
+        int col_size = pv.get_ncol_atom(atom_j);
         for (int iR = 0; iR < hR.get_atom_pair(iap).get_R_size(); ++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);

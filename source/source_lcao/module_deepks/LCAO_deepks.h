@@ -79,6 +79,11 @@ class LCAO_Deepks
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm = nullptr; //[tot_Inl][(2l+1)*(2l+1)]
 
+    // magnetization-channel (rho_up - rho_dn) counterparts, used only for nspin=2
+    hamilt::HContainer<double>* dm_r_mag = nullptr;
+    std::vector<torch::Tensor> pdm_mag;
+    double** gedm_mag = nullptr;
+
     // functions for hr status: 1. get value; 2. set value;
     int get_hr_cal()
     {

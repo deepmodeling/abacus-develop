@@ -18,9 +18,9 @@ void Plus_U::output(const UnitCell &ucell)
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= orbital_corr[T] && orbital_corr[T] != -1)
+            if (L >= get_orbital_corr(T) && has_correlated_orbital(T))
             {
-				if (L != orbital_corr[T]) 
+				if (L != get_orbital_corr(T)) 
 				{
 					continue;
 				}
@@ -86,12 +86,12 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (orbital_corr[T] == -1) 
+		if (!has_correlated_orbital(T)) 
 		{
 			continue;
 		}
 		const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = orbital_corr[T];
+        const int LC = get_orbital_corr(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -101,7 +101,7 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-				if (l != orbital_corr[T]) 
+				if (l != get_orbital_corr(T)) 
 				{
 					continue;
 				}
@@ -290,11 +290,11 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
 
             T = ucell.iat2it[iat];
             const int NL = ucell.atoms[T].nwl + 1;
-            const int LC = orbital_corr[T];
+            const int LC = get_orbital_corr(T);
 
             for (int l = 0; l < NL; l++)
             {
-				if (l != orbital_corr[T]) 
+				if (l != get_orbital_corr(T)) 
 				{
 					continue;
 				}
@@ -410,7 +410,7 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (orbital_corr[T] == -1) 
+		if (!has_correlated_orbital(T)) 
 		{
 			continue;
 		}
@@ -418,11 +418,11 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            const int L = orbital_corr[T];
+            const int L = get_orbital_corr(T);
 
             for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
-				if (l != orbital_corr[T]) 
+				if (l != get_orbital_corr(T)) 
 				{
 					continue;
 				}

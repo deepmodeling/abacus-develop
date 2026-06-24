@@ -189,7 +189,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, PARAM.inp);
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->p_chgmix, this->kv.isk.data());
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -279,7 +279,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Calculate kinetic energy density tau for ELF if needed
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->pelec->cal_tau(*(this->stp.psi_cpu));
+        auto* elec_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto& psi = *this->stp.template get_psi_t<T, Device>();
+        elec_pw->cal_tau(psi);
     }
 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);

@@ -1,5 +1,6 @@
 #pragma once
 #include "restart_exx_csr.h"
+#include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/csr_reader.h"
 #include "source_io/module_hs/write_HS_sparse.h"
@@ -114,6 +115,22 @@ namespace ModuleIO
         ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
         std::set<Abfs::Vector3_Order<int>> all_R_coor;
         double sparse_threshold = 1e-10;
+        int matrix_dimension = 0;
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            matrix_dimension += ucell.atoms[it].na * ucell.atoms[it].nw * ucell.get_npol();
+        }
+        if (matrix_dimension <= 0)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::write_Hexxs_csr",
+                                     "LCAO matrix dimension must be positive.");
+        }
+        Parallel_Orbitals pv;
+        pv.set_serial(matrix_dimension, matrix_dimension);
+        const std::string::size_type last_slash = file_name.find_last_of("/\\");
+        const std::string temp_dir = last_slash == std::string::npos
+                                         ? ""
+                                         : file_name.substr(0, last_slash + 1);
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])
@@ -126,16 +143,19 @@ namespace ModuleIO
                     all_R_coor.insert(R);
                 }
             }
+            ModuleIO::SparseWriteOptions options;
+            options.filename = file_name + "_" + std::to_string(is) + ".csr";
+            options.label = "Hexxs_" + std::to_string(is);
+            options.threshold = sparse_threshold;
+            options.binary = false;
+            options.istep = -1;
+            options.reduce = false;
+            options.temp_dir = temp_dir;
             ModuleIO::save_sparse(
                 calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
                 all_R_coor,
-                sparse_threshold,
-                false, //binary
-                file_name + "_" + std::to_string(is) + ".csr",
-                Parallel_Orbitals(),
-                "Hexxs_" + std::to_string(is),
-                -1,
-                false);  //no reduce, one file for each process
+                pv,
+                options);
         }
     }
 }

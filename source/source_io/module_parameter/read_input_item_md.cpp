@@ -662,6 +662,20 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         this->add_item(item);
     }
     {
+        Input_Item item("md_csvr_tau");
+        item.annotation = "CSVR thermostat characteristic time scale";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = "The characteristic time scale for the CSVR (Canonical Sampling through Velocity "
+                          "Rescaling) thermostat. Larger values give weaker coupling, smaller values give "
+                          "stronger coupling. Recommended value: 100 * md_dt.";
+        item.default_value = "100.0";
+        item.unit = "fs";
+        item.availability = "md_thermostat = csvr";
+        read_sync_double(input.mdp.md_csvr_tau);
+        this->add_item(item);
+    }
+    {
         Input_Item item("md_tolerance");
         item.annotation = "tolerance for velocity rescaling (K)";
         item.category = "Molecular dynamics";

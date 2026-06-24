@@ -19,6 +19,7 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
                                             const std::vector<hamilt::HContainer<double>*> phialpha,
                                             const UnitCell& ucell,
                                             const LCAO_Orbitals& orb,
+                                            const Parallel_Orbitals& pv,
                                             const Grid_Driver& GridD,
                                             torch::Tensor& overlap,
                                             torch::Tensor& iRmat)
@@ -81,6 +82,10 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
 
             for (int ix = 0; ix < nw_tot; ix++)
             {
+                if (pv.global2local_row(start + ix) < 0 || pv.global2local_col(start + ix) < 0)
+                {
+                    continue;
+                }
                 for (int iy = 0; iy < deepks_param.des_per_atom; iy++)
                 {
                     overlap_accessor[iat][nnmax_vec[iat]][start + ix][iy] = overlap_mat->get_value(ix, iy);
@@ -89,6 +94,9 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
             nnmax_vec[iat]++;
         }
     );
+#ifdef __MPI
+    Parallel_Reduce::reduce_all(overlap.data_ptr<double>(), overlap.numel());
+#endif
     iRmat = mapping_R(dRmat_tmp.unsqueeze(1) - dRmat_tmp.unsqueeze(2));
     ModuleBase::timer::end("DeePKS_domain", "prepare_phialpha_iRmat");
     return;

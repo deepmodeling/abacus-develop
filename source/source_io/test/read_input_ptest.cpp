@@ -431,7 +431,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.sc_thr, 1e-4);
     EXPECT_EQ(param.inp.nsc, 50);
     EXPECT_EQ(param.inp.nsc_min, 4);
-    EXPECT_EQ(param.inp.sc_scf_nmin, 4);
     EXPECT_DOUBLE_EQ(param.inp.alpha_trial, 0.02);
     EXPECT_DOUBLE_EQ(param.inp.sccut, 4.0);
     EXPECT_EQ(param.inp.sc_scf_thr, 1e-3);

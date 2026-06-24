@@ -3,6 +3,7 @@
 #define EXX_ROTATE_ABFS_H
 
 #include "LRI_CV.h"
+#include "source_hamilt/module_xc/exx_info_ri.h"
 // #include "module_xc/exx_info.h"
 // #include "module_basis/module_ao/ORB_atomic_lm.h"
 #include "Exx_LRI.h"
@@ -27,7 +28,7 @@ class Moment_abfs
     using TAq = std::pair<TA, Tq>;
 
   public:
-    Moment_abfs(Exx_Info::Exx_Info_RI& info_in) : info(info_in) {};
+    Moment_abfs(Exx_Info_RI& info_in) : info(info_in) {};
     ~Moment_abfs() {};
     void cal_VR(
         const UnitCell& ucell,
@@ -67,7 +68,9 @@ class Moment_abfs
 
   private:
     // std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> VR;
-    Exx_Info::Exx_Info_RI& info;
+    // WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
+    // Must not outlive GlobalC::exx_info. See exx_info.h for details.
+    Exx_Info_RI& info;
 };
 #include "exx_rotate_abfs.hpp"
 
