@@ -396,10 +396,6 @@ class DiagoLobpcg
     std::vector<char> make_soft_lock_mask(const ct::Tensor& err_in,
                                           const std::vector<double>& ethr_band,
                                           const int notconv) const;
-    bool restore_generalized_soft_locked_bands(const State& state,
-                                               const std::vector<char>& soft_lock_mask,
-                                               const ct::Tensor& err_in,
-                                               const std::vector<double>& ethr_band);
     bool restore_soft_locked_bands(const State& state,
                                    const std::vector<char>& soft_lock_mask,
                                    const ct::Tensor& err_in,

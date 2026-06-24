@@ -149,10 +149,10 @@ int DiagoLobpcg<T, Device>::run_lobpcg_loop(
         Real residual_after_update = this->max_error(this->err_st);
         int notconv_after_update = this->count_not_converged(this->err_st, effective_ethr_band);
         if (!soft_lock_mask.empty()
-            && this->restore_generalized_soft_locked_bands(rollback_state,
-                                                           soft_lock_mask,
-                                                           this->err_st,
-                                                           effective_ethr_band)) {
+            && this->restore_soft_locked_bands(rollback_state,
+                                               soft_lock_mask,
+                                               this->err_st,
+                                               effective_ethr_band)) {
             compute_residual();
             residual_after_update = this->max_error(this->err_st);
             notconv_after_update = this->count_not_converged(this->err_st, effective_ethr_band);
@@ -519,16 +519,6 @@ std::vector<char> DiagoLobpcg<T, Device>::make_soft_lock_mask(
 }
 
 template <typename T, typename Device>
-bool DiagoLobpcg<T, Device>::restore_generalized_soft_locked_bands(
-    const State& state,
-    const std::vector<char>& soft_lock_mask,
-    const ct::Tensor& err_in,
-    const std::vector<double>& ethr_band)
-{
-    return this->restore_soft_locked_bands(state, soft_lock_mask, err_in, ethr_band);
-}
-
-template <typename T, typename Device>
 bool DiagoLobpcg<T, Device>::restore_soft_locked_bands(
     const State& state,
     const std::vector<char>& soft_lock_mask,
@@ -889,24 +879,6 @@ void DiagoLobpcg<T, Device>::generalized_rayleigh_ritz(
                         hermitian_matrix_diagnostics("S_sub", this->tmp_ssub.data<T>(), nb, nb),
                         s_overlap_diagnostics(this->tmp_ssub.data<T>(), nb, nb));
         throw std::runtime_error("LOBPCG generalized Rayleigh-Ritz failed in hegvd");
-    }
-
-    if (std::isfinite(std::real(this->hsub.data<T>()[0]))) {
-        bool large_eigvec = false;
-        const T* eigvec = this->hsub.data<T>();
-        for (int ii = 0; ii < nb * nb; ++ii) {
-            if (std::isfinite(std::real(eigvec[ii])) && std::isfinite(std::imag(eigvec[ii]))
-                && std::abs(eigvec[ii]) > static_cast<Real>(1.0e100)) {
-                large_eigvec = true;
-                break;
-            }
-        }
-        if (large_eigvec) {
-            this->diag_log("generalized_rayleigh_ritz huge eigenvectors before rotation",
-                            hermitian_matrix_diagnostics("H_sub", this->tmp_hsub.data<T>(), nb, nb),
-                            hermitian_matrix_diagnostics("S_sub", this->tmp_ssub.data<T>(), nb, nb),
-                            vector_block_diagnostics("eigvec", this->hsub.data<T>(), nb, nb, nb));
-        }
     }
 
     const T* rotate_in[3] = {psi_inout.data<T>(), hpsi_inout.data<T>(), spsi_inout.data<T>()};
@@ -1595,12 +1567,12 @@ void DiagoLobpcg<T, Device>::lobpcg_update_s_parallel(
             solved = solve_scaled_hegvd();
         }
         if (!solved) {
-                build_subspace(block_count);
-                try {
-                    solve_compressed_heevd();
-                } catch (const std::exception& e) {
-                    this->diag_log("lobpcg_update_s_parallel compressed fallback failed: " + std::string(e.what()),
-                                   hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
+            build_subspace(block_count);
+            try {
+                solve_compressed_heevd();
+            } catch (const std::exception& e) {
+                this->diag_log("lobpcg_update_s_parallel compressed fallback failed: " + std::string(e.what()),
+                               hermitian_matrix_diagnostics("H_sub", hsub_d, this->nsub, m),
                                hermitian_matrix_diagnostics("S_sub", ssub_d, this->nsub, m),
                                s_overlap_diagnostics(ssub_d, this->nsub, m)
                                    + ", scaled-path reason=" + scale_error);
