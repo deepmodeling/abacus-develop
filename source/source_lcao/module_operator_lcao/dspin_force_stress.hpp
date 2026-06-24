@@ -212,12 +212,14 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     if (cal_force)
     {
 #ifdef __MPI
-        // sum up the occupation matrix
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        for (int i = 0; i < force.nr * force.nc; i++)
+        if (this->nspin != 4)
         {
-            force.c[i] *= 2.0;
+            for (int i = 0; i < force.nr * force.nc; i++)
+            {
+                force.c[i] *= 2.0;
+            }
         }
     }
 
@@ -274,95 +276,43 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     }
     double tmp[3] = {0.0};
     // calculate the local matrix
-    // For nspin=4, the constraint force is F = lambda · dM/dR where:
-    //   Mx = DM_ud + DM_du,  My = -i*(DM_ud - DM_du),  Mz = DM_uu - DM_dd
-    // For real DM (dDM_ud = dDM_du), My contribution vanishes, so:
-    //   F = lambda_x * (dDM_ud + dDM_du) + lambda_z * (dDM_uu - dDM_dd)
-    // We convert lambda from Pauli basis to spinor basis:
-    //   lambda_uu = lambda_z,  lambda_dd = -lambda_z
-    //   lambda_ud = lambda_x,  lambda_du = lambda_x
-    if (nspin == 4)
+    for (int is = 1; is < nspin; is++)
     {
-        // lambda in spinor basis: (lambda_uu, lambda_ud, lambda_du, lambda_dd)
-        const double lambda_spinor[4] = {lambda[2], lambda[0], lambda[0], -lambda[2]};
-        for (int is = 0; is < 4; is++)
+        const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
+        const double* dm_pointer = dmR_pointer->get_pointer();
+        for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
         {
-            const double lambda_tmp = lambda_spinor[is];
-            if (std::abs(lambda_tmp) < 1e-15) continue;
-            const double* dm_pointer = dmR_pointer->get_pointer();
-            for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+            const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
+            for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
             {
-                const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-                for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
-                {
-                    const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
+                const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
 #ifdef __DEBUG
-                    assert(nlm1.size() == nlm2.size());
+                assert(nlm1.size() == nlm2.size());
 #endif
-                    const int length = nlm1.size() / 4;
-                    const int lmax = sqrt(length);
-                    int index = 0;
-                    for(int l = 0; l<lmax; l++)
-                    {
-                        for (int m = 0; m < 2*l+1; m++)
-                        {
-                            index = l*l + m;
-                            tmp[0] = lambda_tmp * nlm1[index + length] * nlm2[index] * dm_pointer[step_trace[is]];
-                            tmp[1] = lambda_tmp * nlm1[index + length * 2] * nlm2[index] * dm_pointer[step_trace[is]];
-                            tmp[2] = lambda_tmp * nlm1[index + length * 3] * nlm2[index] * dm_pointer[step_trace[is]];
-                            force1[0] += tmp[0];
-                            force1[1] += tmp[1];
-                            force1[2] += tmp[2];
-                            force2[0] -= tmp[0];
-                            force2[1] -= tmp[1];
-                            force2[2] -= tmp[2];
-                        }
-                    }
-                    dm_pointer += npol;
-                }
-                dm_pointer += (npol - 1) * col_indexes.size();
-            }
-        }
-    }
-    else
-    {
-        // nspin=1 or nspin=2: original logic
-        for (int is = 1; is < nspin; is++)
-        {
-            const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
-            const double* dm_pointer = dmR_pointer->get_pointer();
-            for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
-            {
-                const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-                for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+                const int length = nlm1.size() / 4;
+                const int lmax = sqrt(length);
+                int index = 0;
+                for(int l = 0; l<lmax; l++)
                 {
-                    const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
-#ifdef __DEBUG
-                    assert(nlm1.size() == nlm2.size());
-#endif
-                    const int length = nlm1.size() / 4;
-                    const int lmax = sqrt(length);
-                    int index = 0;
-                    for(int l = 0; l<lmax; l++)
+                    for (int m = 0; m < 2*l+1; m++)
                     {
-                        for (int m = 0; m < 2*l+1; m++)
-                        {
-                            index = l*l + m;
-                            tmp[0] = lambda_tmp * nlm1[index + length] * nlm2[index] * dm_pointer[step_trace[is]];
-                            tmp[1] = lambda_tmp * nlm1[index + length * 2] * nlm2[index] * dm_pointer[step_trace[is]];
-                            tmp[2] = lambda_tmp * nlm1[index + length * 3] * nlm2[index] * dm_pointer[step_trace[is]];
-                            force1[0] += tmp[0];
-                            force1[1] += tmp[1];
-                            force1[2] += tmp[2];
-                            force2[0] -= tmp[0];
-                            force2[1] -= tmp[1];
-                            force2[2] -= tmp[2];
-                        }
+                        index = l*l + m;
+                        tmp[0] = lambda_tmp * nlm1[index + length] * nlm2[index] * dm_pointer[step_trace[is]];
+                        tmp[1] = lambda_tmp * nlm1[index + length * 2] * nlm2[index] * dm_pointer[step_trace[is]];
+                        tmp[2] = lambda_tmp * nlm1[index + length * 3] * nlm2[index] * dm_pointer[step_trace[is]];
+                        // force1 = - VU * <d phi_{I,R1}/d R1|chi_m> * <chi_m'|phi_{J,R2}>
+                        // force2 = - VU * <phi_{I,R1}|d chi_m/d R0> * <chi_m'|phi_{J,R2>}
+                        force1[0] += tmp[0];
+                        force1[1] += tmp[1];
+                        force1[2] += tmp[2];
+                        force2[0] -= tmp[0];
+                        force2[1] -= tmp[1];
+                        force2[2] -= tmp[2];
                     }
-                    dm_pointer += npol;
                 }
-                dm_pointer += (npol - 1) * col_indexes.size();
+                dm_pointer += npol;
             }
+            dm_pointer += (npol - 1) * col_indexes.size();
         }
     }
 }
@@ -397,102 +347,48 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
         step_trace[3] = col_indexes.size() + 1;
     }
     // calculate the local matrix
-    // For nspin=4, convert lambda from Pauli basis to spinor basis
-    if (nspin == 4)
+    for (int is = 1; is < nspin; is++)
     {
-        const double lambda_spinor[4] = {lambda[2], lambda[0], lambda[0], -lambda[2]};
-        for (int is = 0; is < 4; is++)
+        const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
+        const double* dm_pointer = dmR_pointer->get_pointer();
+        for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
         {
-            const double lambda_tmp = lambda_spinor[is];
-            if (std::abs(lambda_tmp) < 1e-15) continue;
-            const double* dm_pointer = dmR_pointer->get_pointer();
-            for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+            const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
+            for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
             {
-                const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-                for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
-                {
-                    const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
+                const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
 #ifdef __DEBUG
-                    assert(nlm1.size() == nlm2.size());
+                assert(nlm1.size() == nlm2.size());
 #endif
-                    const int length = nlm1.size() / 4;
-                    const int lmax = sqrt(length);
-                    double tmp = lambda_tmp * dm_pointer[step_trace[is]];
-                    int index = 0;
-                    for(int l = 0; l<lmax; l++)
-                    {
-                        for (int m = 0; m < 2*l+1; m++)
-                        {
-                            index = l*l + m;
-                            stress[0]
-                                += tmp * (nlm1[index + length] * dis1.x * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.x);
-                            stress[1]
-                                += tmp * (nlm1[index + length] * dis1.y * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.y);
-                            stress[2]
-                                += tmp * (nlm1[index + length] * dis1.z * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.z);
-                            stress[3] += tmp
-                                         * (nlm1[index + length * 2] * dis1.y * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 2] * dis2.y);
-                            stress[4] += tmp
-                                         * (nlm1[index + length * 2] * dis1.z * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 2] * dis2.z);
-                            stress[5] += tmp
-                                         * (nlm1[index + length * 3] * dis1.z * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 3] * dis2.z);
-                        }
-                    }
-                    dm_pointer += npol;
-                }
-                dm_pointer += (npol - 1) * col_indexes.size();
-            }
-        }
-    }
-    else
-    {
-        // nspin=1 or nspin=2: original logic
-        for (int is = 1; is < nspin; is++)
-        {
-            const double lambda_tmp = nspin==2?lambda[2]:lambda[is-1];
-            const double* dm_pointer = dmR_pointer->get_pointer();
-            for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
-            {
-                const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-                for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+                const int length = nlm1.size() / 4;
+                const int lmax = sqrt(length);
+                double tmp = lambda_tmp * dm_pointer[step_trace[is]];
+                int index = 0;
+                for(int l = 0; l<lmax; l++)
                 {
-                    const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
-#ifdef __DEBUG
-                    assert(nlm1.size() == nlm2.size());
-#endif
-                    const int length = nlm1.size() / 4;
-                    const int lmax = sqrt(length);
-                    double tmp = lambda_tmp * dm_pointer[step_trace[is]];
-                    int index = 0;
-                    for(int l = 0; l<lmax; l++)
+                    for (int m = 0; m < 2*l+1; m++)
                     {
-                        for (int m = 0; m < 2*l+1; m++)
-                        {
-                            index = l*l + m;
-                            stress[0]
-                                += tmp * (nlm1[index + length] * dis1.x * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.x);
-                            stress[1]
-                                += tmp * (nlm1[index + length] * dis1.y * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.y);
-                            stress[2]
-                                += tmp * (nlm1[index + length] * dis1.z * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.z);
-                            stress[3] += tmp
-                                         * (nlm1[index + length * 2] * dis1.y * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 2] * dis2.y);
-                            stress[4] += tmp
-                                         * (nlm1[index + length * 2] * dis1.z * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 2] * dis2.z);
-                            stress[5] += tmp
-                                         * (nlm1[index + length * 3] * dis1.z * nlm2[index]
-                                            + nlm1[index] * nlm2[index + length * 3] * dis2.z);
-                        }
+                        index = l*l + m;
+                        stress[0]
+                            += tmp * (nlm1[index + length] * dis1.x * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.x);
+                        stress[1]
+                            += tmp * (nlm1[index + length] * dis1.y * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.y);
+                        stress[2]
+                            += tmp * (nlm1[index + length] * dis1.z * nlm2[index] + nlm1[index] * nlm2[index + length] * dis2.z);
+                        stress[3] += tmp
+                                     * (nlm1[index + length * 2] * dis1.y * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length * 2] * dis2.y);
+                        stress[4] += tmp
+                                     * (nlm1[index + length * 2] * dis1.z * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length * 2] * dis2.z);
+                        stress[5] += tmp
+                                     * (nlm1[index + length * 3] * dis1.z * nlm2[index]
+                                        + nlm1[index] * nlm2[index + length * 3] * dis2.z);
                     }
-                    dm_pointer += npol;
                 }
-                dm_pointer += (npol - 1) * col_indexes.size();
+                dm_pointer += npol;
             }
+            dm_pointer += (npol - 1) * col_indexes.size();
         }
     }
 }
