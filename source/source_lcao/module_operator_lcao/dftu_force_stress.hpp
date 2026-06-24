@@ -148,26 +148,6 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         this->cal_v_of_u(occ, tlp1, u_value, &VU[0], eu_tmp);
         if(this->nspin == 4) 
         {
-            // For nspin=4, VU from cal_v_of_u is in Pauli basis:
-            //   block 0 = V_0, block 1 = V_x, block 2 = V_y, block 3 = V_z
-            // The force formula is F = -Tr(VU * dDM/dR).
-            // Since DM is stored as BaseMatrix<double> (real, spinor basis),
-            // we need VU in spinor basis as well. The conversion is:
-            //   V_{up,up}   = 0.5 * (V_0 + V_z)
-            //   V_{down,down} = 0.5 * (V_0 - V_z)
-            //   V_{up,down}  = 0.5 * (V_x - i*V_y)  → Re = 0.5*V_x, Im = -0.5*V_y
-            //   V_{down,up}  = 0.5 * (V_x + i*V_y)  → Re = 0.5*V_x, Im = +0.5*V_y
-            // For real DM, only the real part of VU contributes to force.
-            // We convert VU in-place: block 0→V_uu, 1→V_ud(Re), 2→V_du(Re), 3→V_dd
-            const int m_size2 = tlp1 * tlp1;
-            std::vector<double> VU_pauli = VU; // save Pauli-basis VU
-            for (int m = 0; m < m_size2; m++)
-            {
-                VU[m]                  = 0.5 * (VU_pauli[m] + VU_pauli[m + 3 * m_size2]); // V_uu = 0.5*(V_0+V_z)
-                VU[m + m_size2]        = 0.5 * VU_pauli[m + m_size2];                     // Re(V_ud) = 0.5*V_x
-                VU[m + 2 * m_size2]    = 0.5 * VU_pauli[m + m_size2];                     // Re(V_du) = 0.5*V_x
-                VU[m + 3 * m_size2]    = 0.5 * (VU_pauli[m] - VU_pauli[m + 3 * m_size2]); // V_dd = 0.5*(V_0-V_z)
-            }
         }
 
         // second iteration to calculate force and stress
@@ -258,12 +238,14 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     if (cal_force)
     {
 #ifdef __MPI
-        // sum up the occupation matrix
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        for (int i = 0; i < force.nr * force.nc; i++)
+        if (this->nspin != 4)
         {
-            force.c[i] *= 2.0;
+            for (int i = 0; i < force.nr * force.nc; i++)
+            {
+                force.c[i] *= 2.0;
+            }
         }
     }
 
