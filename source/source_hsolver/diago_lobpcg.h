@@ -42,6 +42,8 @@ template <typename T = std::complex<double>, typename Device = base_device::DEVI
 class DiagoLobpcg
 {
   private:
+    static_assert(std::is_same<T, std::complex<double>>::value,
+                  "DiagoLobpcg currently supports std::complex<double> only.");
     static_assert(std::is_same<Device, base_device::DEVICE_CPU>::value,
                   "DiagoLobpcg currently supports CPU only.");
 
