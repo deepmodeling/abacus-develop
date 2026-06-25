@@ -11,6 +11,7 @@
 #include <ATen/core/tensor_map.h>
 #include <source_base/macros.h>
 
+#include <functional>
 #include <vector>
 
 namespace hsolver {
