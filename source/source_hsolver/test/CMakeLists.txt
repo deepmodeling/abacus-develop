@@ -35,6 +35,7 @@ if (ENABLE_MPI)
   if(USE_OPENMP)
     target_link_libraries(MODULE_HSOLVER_ppcg_bench PRIVATE OpenMP::OpenMP_CXX)
   endif()
+  target_compile_definitions(MODULE_HSOLVER_ppcg_bench PRIVATE PPCG_V2)
   add_executable(MODULE_HSOLVER_bpcg_bench
     diago_bpcg_bench.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
     ../../source_basis/module_pw/test/test_tool.cpp
