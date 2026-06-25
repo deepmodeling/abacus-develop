@@ -47,7 +47,7 @@ class DiagoPPCG
     explicit DiagoPPCG(const Real* precondition_in);
 
     /**
-     * @brief Destructor — frees all device and host allocations.
+     * @brief Destructor -- frees all device and host allocations.
      */
     ~DiagoPPCG();
 
@@ -107,7 +107,7 @@ class DiagoPPCG
     Device* ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    // ---- device-side working arrays (n_work × n_basis) ----
+    // ---- device-side working arrays (n_work x n_basis) ----
     T* hpsi = nullptr;      ///< H|psi>
     T* w = nullptr;         ///< preconditioned residual W = -K^{-1} R
     T* hw = nullptr;        ///< H|w>
@@ -126,8 +126,8 @@ class DiagoPPCG
     T* d_pack_basis = nullptr;  ///< [3*k_max*n_basis], k_max=DEFAULT_BLOCK_SIZE
     T* d_pack_hprod = nullptr;  ///< [3*k_max*n_basis]
     /// Pre-allocated Hsub / Ssub for blocked solve (max ns=30, ns2=900).
-    T* d_block_h = nullptr;     ///< [k_max² * 9]
-    T* d_block_s = nullptr;     ///< [k_max² * 9]
+    T* d_block_h = nullptr;     ///< [k_max^2 * 9]
+    T* d_block_s = nullptr;     ///< [k_max^2 * 9]
 
     /// device-side eigenvalues / errors [dim: n_work]
     Real* d_eigen = nullptr;
@@ -232,7 +232,7 @@ class DiagoPPCG
     void compute_subspace_residual(T* psi_in);
     /// Modified Gram-Schmidt orthonormalization.
     void modified_gram_schmidt(T* psi_in, T* hpsi_in) const;
-    /// Cholesky-based orthonormalization. Only orthonormalises unlocked (active) columns;
+    /// Cholesky-based orthonormalization. Only orthonormalizes unlocked (active) columns;
     /// locked columns are kept as-is after projecting unlocked columns against them.
     void orth_cholesky(T* psi_in, T* hpsi_in);
     /// Check || <psi|psi> - I ||_F < ortho_thr.
@@ -247,7 +247,7 @@ class DiagoPPCG
     void calc_preconditioned_residual(T* psi_in, bool skip_residual = false);
     /// v_i -= sum_j <x_j|v_i> x_j  for each v in block.
     void project_to_orthogonal_complement(T* psi_in, T* block) const;
-    /// Solve 2×2 / 3×3 generalized eigenproblem.
+    /// Solve 2x2 / 3x3 generalized eigenproblem.
     bool solve_small_problem(const int active_dim, T* hsmall, T* ssmall, T* coeff, Real* eval) const;
     /// Per-band PPCG subspace update.
     void update_vectors_from_ppcg_subspace(T* psi_in);

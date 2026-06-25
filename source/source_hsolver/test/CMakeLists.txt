@@ -208,7 +208,7 @@ if (USE_ELPA)
 else()
   AddTest(
       TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  ${math_libs} base device psi MPI::MPI_CXX psi
+      LIBS parameter  ${math_libs} base device psi MPI::MPI_CXX
       SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
     )
 endif()
@@ -251,8 +251,7 @@ if (ENABLE_MPI)
     endif()
   endif()
 endif()
-
-
+if (ENABLE_MPI)
 AddTest(
   TARGET MODULE_HSOLVER_openmp_consistency
   LIBS parameter ${math_libs} base device psi MPI::MPI_CXX
@@ -261,3 +260,4 @@ AddTest(
           ../../source_hamilt/operator.cpp
           ../../source_pw/module_pwdft/op_pw.cpp
 )
+endif()

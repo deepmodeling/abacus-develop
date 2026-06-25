@@ -3,6 +3,7 @@
  * Verifies that BPCG and Davidson produce identical results
  * across different OMP_NUM_THREADS values.
  */
+#include <cstdlib>
 #include "source_base/module_external/lapack_connector.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_psi/psi.h"

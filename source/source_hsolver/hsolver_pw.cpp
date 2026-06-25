@@ -38,7 +38,8 @@ void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
     const double ethr_limit = 1e-5;
     if (wk > 0.0)
     {
-        // Note: the idea of threshold for unoccupied bands (1e-5) comes from QE
+        // Note: a threshold for unoccupied bands (1e-5) ensures near-zero
+        // eigenvalues are skipped without affecting occupied bands.
         // In ABACUS, We applied a smoothing process to this truncation to avoid abrupt changes in energy errors between
         // different bands.
         const double ethr_unocc = std::max(ethr_limit, ethr);
@@ -138,9 +139,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            if (this->method == "ppcg") {
-                std::cerr << "[PPCG] solving k-point " << ik << std::endl;
-            }
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             if (skip_charge)
@@ -179,9 +177,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            if (this->method == "ppcg") {
-                std::cerr << "[PPCG] solving k-point " << ik << std::endl;
-            }
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
             // output iteration information and reset avg_iter
@@ -359,7 +354,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             this->ppcg_extra_bands.resize(ik + 1);
         if (!this->ppcg_extra_bands[ik].empty())
         {
-            // Reuse extra bands from previous diag() — avoids corrupting
+            // Reuse extra bands from previous diag() -- avoids corrupting
             // well-converged physical bands with random directions.
             const size_t extra_sz = static_cast<size_t>(n_extra) * nbasis;
             std::memcpy(psi_expanded.data() + static_cast<size_t>(nband_l) * nbasis,
@@ -429,7 +424,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                 std::fwrite(h_dense.data(), sizeof(T),
                             static_cast<size_t>(npw_mat) * npw_mat, fp);
                 std::fclose(fp);
-                std::cerr << "[PPCG] dumped Hamiltonian to " << fname << std::endl;
             }
         }
 

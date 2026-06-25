@@ -55,6 +55,7 @@ int main(int argc, char** argv)
     GlobalV::NPROC_IN_POOL = nproc;
 #else
     MPI_Init(&argc, &argv);
+    POOL_WORLD = MPI_COMM_WORLD;
 #endif
 
     int npw = (argc > 1) ? std::atoi(argv[1]) : 100;

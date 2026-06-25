@@ -234,7 +234,7 @@ int main(int argc, char** argv)
     delete[] DIAGOTEST::npw_local;
     delete[] precondition_local;
 
-    ModuleBase::destoryBLAShandle();
+    ModuleBase::destroyBLAShandle();
 
     MPI_Finalize();
     return 0;
