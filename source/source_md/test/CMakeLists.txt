@@ -49,7 +49,7 @@ list(APPEND depend_files
   ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_cell/module_neighlist/page_allocator.cpp
   ../../source_cell/module_neighlist/unitcell_lite.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
   ../../source_io/module_output/cif_io.cpp
@@ -103,7 +103,7 @@ AddTest(
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_base/output.cpp
   ${depend_files}
 )
 
@@ -114,7 +114,7 @@ AddTest(
   ../md_base.cpp
   ../msst.cpp
   ../../source_cell/update_cell.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_base/output.cpp
   ${depend_files}
 )
 

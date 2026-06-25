@@ -19,7 +19,6 @@ list(APPEND objects
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
-    module_output/output.cpp
     module_output/print_info.cpp
     module_output/read_cube.cpp
     module_chgpot/rhog_io.cpp

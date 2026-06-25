@@ -31,7 +31,7 @@ add_test(NAME MODULE_IO_read_exit_file_test_para_4
 AddTest(
   TARGET MODULE_IO_output_test
   LIBS parameter  ${math_libs} base device
-  SOURCES output_test.cpp ../module_output/output.cpp
+  SOURCES output_test.cpp
 )
 
 AddTest(
@@ -42,7 +42,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
 		../module_output/cif_io.cpp
 )
 
@@ -55,13 +55,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_dos_pw
   LIBS parameter  ${math_libs} base device symmetry
-  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../module_output/output.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  ${math_libs} base device symmetry cell_info
-  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../module_output/output.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp
 )
 
 AddTest(
@@ -92,7 +92,7 @@ add_test(NAME MODULE_IO_write_wfc_nao_para
 AddTest(
   TARGET MODULE_IO_write_orb_info
   LIBS parameter  ${math_libs} base device cell_info
-  SOURCES write_orb_info_test.cpp ../module_output/write_orb_info.cpp ../module_output/output.cpp
+  SOURCES write_orb_info_test.cpp ../module_output/write_orb_info.cpp
 )
 
 AddTest(
@@ -241,7 +241,7 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 AddTest(
   TARGET MODULE_IO_write_dmk
   LIBS parameter ${math_libs} base device cell_info
-  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../module_output/output.cpp ../module_output/ucell_io.cpp
+  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../module_output/ucell_io.cpp
 )
 
 add_test(
