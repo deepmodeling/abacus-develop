@@ -1327,10 +1327,23 @@ void DiagoPPCG<T, Device>::line_minimize(
 
         Real h_ii = gamma_dot(pj, hj);
         Real s_ii = gamma_dot(pj, sj);
-        Real h_ip = gamma_dot(pj, hpp);
-        Real s_ip = gamma_dot(pj, spp);
+        const T h_ip_c = complex_dot(pj, hpp);
+        const T s_ip_c = complex_dot(pj, spp);
         Real h_pp = gamma_dot(pp, hpp);
         Real s_pp = gamma_dot(pp, spp);
+
+        // Rotate the search direction so the first-order Rayleigh quotient
+        // derivative is real. The scalar alpha solve below stays unchanged for
+        // real problems, while complex PW states can use a complex step.
+        T phase = T(1);
+        const Real lambda = h_ii / std::max(s_ii, static_cast<Real>(1e-30));
+        const T q = h_ip_c - T(lambda) * s_ip_c;
+        const Real q_abs = std::abs(q);
+        if (q_abs > static_cast<Real>(1e-30))
+            phase = std::conj(q) / q_abs;
+
+        Real h_ip = static_cast<Real>(std::real(phase * h_ip_c));
+        Real s_ip = static_cast<Real>(std::real(phase * s_ip_c));
 
         // Coefficients of A alpha^2 + B alpha + C = 0
         const Real A = s_ip * h_pp - h_ip * s_pp;
@@ -1380,9 +1393,10 @@ void DiagoPPCG<T, Device>::line_minimize(
 
         for (int ig = 0; ig < n_dim_; ++ig)
         {
-            pj[ig] += alpha * pp[ig];
-            hj[ig] += alpha * hpp[ig];
-            sj[ig] += alpha * spp[ig];
+            const T step = T(alpha) * phase;
+            pj[ig] += step * pp[ig];
+            hj[ig] += step * hpp[ig];
+            sj[ig] += step * spp[ig];
         }
     }
 }
