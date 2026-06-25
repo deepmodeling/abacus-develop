@@ -26,7 +26,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_elecstate_magnetism
   LIBS parameter  ${math_libs} base device
-  SOURCES elecstate_magnetism_test.cpp ../magnetism.cpp
+  SOURCES elecstate_magnetism_test.cpp ../../source_cell/magnetism.cpp
 )
 
 AddTest(
