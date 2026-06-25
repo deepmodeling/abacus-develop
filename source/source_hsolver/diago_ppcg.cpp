@@ -1325,43 +1325,64 @@ void DiagoPPCG<T, Device>::line_minimize(
         const T* hpp = hp + off;
         const T* spp = sp + off;
 
-        std::vector<T> h2(4, T(0));
-        std::vector<T> s2(4, T(0));
-        std::vector<Real> eval2(2, Real(0));
+        Real h_ii = gamma_dot(pj, hj);
+        Real s_ii = gamma_dot(pj, sj);
+        Real h_ip = gamma_dot(pj, hpp);
+        Real s_ip = gamma_dot(pj, spp);
+        Real h_pp = gamma_dot(pp, hpp);
+        Real s_pp = gamma_dot(pp, spp);
 
-        h2[0] = complex_dot(pj, hj);
-        h2[1] = complex_dot(pp, hj);
-        h2[2] = complex_dot(pj, hpp);
-        h2[3] = complex_dot(pp, hpp);
-        s2[0] = complex_dot(pj, sj);
-        s2[1] = complex_dot(pp, sj);
-        s2[2] = complex_dot(pj, spp);
-        s2[3] = complex_dot(pp, spp);
+        // Coefficients of A alpha^2 + B alpha + C = 0
+        const Real A = s_ip * h_pp - h_ip * s_pp;
+        const Real B = s_ii * h_pp - h_ii * s_pp;
+        const Real C = s_ii * h_ip - h_ii * s_ip;
 
-        try
+        auto ray_quot = [&](Real a) -> Real {
+            return (h_ii + static_cast<Real>(2) * a * h_ip + a * a * h_pp)
+                 / std::max(s_ii + static_cast<Real>(2) * a * s_ip + a * a * s_pp,
+                            static_cast<Real>(1e-30));
+        };
+
+        Real alpha = 0;
+        Real alpha_linear = (std::abs(B) > static_cast<Real>(1e-30))
+                          ? -C / B : static_cast<Real>(0);
+
+        const Real tol = std::numeric_limits<Real>::epsilon() * static_cast<Real>(100);
+        if (std::abs(A) > tol * std::max(static_cast<Real>(1), std::abs(B)))
         {
-            HermitianLapack<T>::sygvd(2, h2.data(), s2.data(), eval2.data());
-        }
-        catch (const std::runtime_error&)
-        {
-            continue;
-        }
+            const Real disc = B * B - static_cast<Real>(4) * A * C;
+            if (disc >= static_cast<Real>(0))
+            {
+                const Real sqrt_disc = std::sqrt(disc);
+                const Real a1 = (-B + sqrt_disc) / (static_cast<Real>(2) * A);
+                const Real a2 = (-B - sqrt_disc) / (static_cast<Real>(2) * A);
 
-        // Preserve band identity: choose the Ritz vector with the larger
-        // component along the incoming psi column, not always the lowest root.
-        const int kept = (std::norm(h2[2]) > std::norm(h2[0])) ? 1 : 0;
-        const T c0 = h2[kept * 2];
-        const T c1 = h2[1 + kept * 2];
+                const Real r1 = ray_quot(a1);
+                const Real r2 = ray_quot(a2);
+                const Real r_lin = ray_quot(alpha_linear);
+
+                if (r1 < r2 && r1 < r_lin)
+                    alpha = a1;
+                else if (r2 < r1 && r2 < r_lin)
+                    alpha = a2;
+                else
+                    alpha = alpha_linear;
+            }
+            else
+            {
+                alpha = alpha_linear;
+            }
+        }
+        else
+        {
+            alpha = alpha_linear;
+        }
 
         for (int ig = 0; ig < n_dim_; ++ig)
         {
-            const T psi_old = pj[ig];
-            const T hpsi_old = hj[ig];
-            const T spsi_old = sj[ig];
-
-            pj[ig] = psi_old * c0 + pp[ig] * c1;
-            hj[ig] = hpsi_old * c0 + hpp[ig] * c1;
-            sj[ig] = spsi_old * c0 + spp[ig] * c1;
+            pj[ig] += alpha * pp[ig];
+            hj[ig] += alpha * hpp[ig];
+            sj[ig] += alpha * spp[ig];
         }
     }
 }
