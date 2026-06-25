@@ -2,6 +2,9 @@
 
 #include <array>
 #include <algorithm>
+#include <functional>
+#include <numeric>
+#include <regex>
 
 #include <ATen/ops/linalg_op.h>
 #include <ATen/core/tensor_types.h>

@@ -12,6 +12,7 @@
 #include "source_estate/module_pot/pot_xc.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_lcao/module_gint/gint_interface.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <iostream>
 #include <cmath>
@@ -211,7 +212,7 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driv
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell_in->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

@@ -70,11 +70,11 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
     return;
 }
-
+template <typename TR>
 void cal_dm_psi(const Parallel_Orbitals* ParaV,
                        const ModuleBase::matrix& wg,
                        const psi::Psi<std::complex<double>>& wfc,
-                       elecstate::DensityMatrix<std::complex<double>, double>& DM)
+                       elecstate::DensityMatrix<std::complex<double>, TR>& DM)
 {
     ModuleBase::TITLE("elecstate", "cal_dm_psi");
     ModuleBase::timer::start("elecstate", "cal_dm_psi");
@@ -268,5 +268,14 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            dm_out,
            nlocal);
 }
-
+template
+void cal_dm_psi(const Parallel_Orbitals* ParaV,
+                const ModuleBase::matrix& wg,
+                const psi::Psi<std::complex<double>>& wfc,
+                elecstate::DensityMatrix<std::complex<double>, std::complex<double>>& DM);
+template
+void cal_dm_psi(const Parallel_Orbitals* ParaV,
+                const ModuleBase::matrix& wg,
+                const psi::Psi<std::complex<double>>& wfc,
+                elecstate::DensityMatrix<std::complex<double>, double>& DM);
 } // namespace elecstate

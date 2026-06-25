@@ -16,7 +16,7 @@ jobs:
       image: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install requirements
         run: |
           set -euo pipefail
@@ -55,7 +55,7 @@ jobs:
       image: ghcr.io/deepmodeling/abacus-intel
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install requirements
         run: |
           set -euo pipefail
@@ -89,10 +89,10 @@ jobs:
 
   full-build-cuda:
     if: contains(inputs.variants || 'gnu,intel,cuda', 'cuda')
-    runs-on: nvidia
+    runs-on: gpu
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install requirements
         run: |
           set -euo pipefail

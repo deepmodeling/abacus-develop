@@ -1,8 +1,5 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "../xc_functional.h"
 #include "../exx_info.h"
 #include "xc3_mock.h"
@@ -37,6 +34,14 @@ class XCTest_GRADCORR : public XCTest
 
         void SetUp()
         {
+            // Define variables for parameters
+            int nspin1 = 1;
+            int nspin2 = 2;
+            int nspin4 = 4;
+            bool domag = false;
+            bool domag_z = false;
+            bool domag_true = true;
+            
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -84,17 +89,13 @@ class XCTest_GRADCORR : public XCTest
 
             XC_Functional::set_xc_type("PBE");
 
-            PARAM.input.nspin = 1;
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false);
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,nspin1,domag,domag_z);
 
-            PARAM.input.nspin = 2;
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false);
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true,nspin2,domag,domag_z);
 
-            PARAM.input.nspin = 4;
-            PARAM.sys.domag = true;
-            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false); 
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z);
         }
 };
 

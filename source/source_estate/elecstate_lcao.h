@@ -24,12 +24,7 @@ class ElecStateLCAO : public ElecState
         this->classname = "ElecStateLCAO";
     }
 
-    virtual ~ElecStateLCAO()
-    {
-    }
-
-    // update charge density for next scf step
-    // void getNewRho() override;
+    virtual ~ElecStateLCAO() = default;
 
     static int out_wfc_lcao;
     static bool need_psi_grid;

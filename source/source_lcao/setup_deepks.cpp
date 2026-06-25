@@ -86,6 +86,10 @@ void Setup_DeePKS<TK>::delta_e(const UnitCell& ucell,
     {
         this->ld.dpks_cal_e_delta_band(dm_vec, kv.get_nks());
         DeePKS_domain::update_dmr(kv.kvec_d, dm_vec, ucell, orb, pv, gd, this->ld.dm_r);
+        if (inp.nspin == 2 && !inp.deepks_equiv) // magnetization-channel real-space DM
+        {
+            DeePKS_domain::update_dmr(kv.kvec_d, dm_vec, ucell, orb, pv, gd, this->ld.dm_r_mag, 2, true);
+        }
         f_en.edeepks_scf = this->ld.E_delta - this->ld.e_delta_band;
         f_en.edeepks_delta = this->ld.E_delta;
     }

@@ -3,9 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 
 namespace elecstate
 {
@@ -109,6 +107,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     // time evolve
     H_TDDFT_pw::istep++;
     H_TDDFT_pw::istep_int = istep;
+    global_vext_time = {0.0, 0.0, 0.0};
 
     // judgement to skip vext
     if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
@@ -124,7 +123,7 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     trigo_count = 0;
     heavi_count = 0;
 
-    global_vext_time = {0.0, 0.0, 0.0};
+    
 
     for (auto direc: PARAM.inp.td_vext_dire)
     {
@@ -272,6 +271,7 @@ void H_TDDFT_pw::update_At()
     At = At + At_laststep / 2.0;
     At_laststep.set(0.0, 0.0, 0.0);
     Et.set(0.0, 0.0, 0.0);
+    global_vext_time = { 0.0, 0.0, 0.0 };
 
     // judgement to skip vext
     if (!PARAM.inp.td_vext || istep > tend || istep < tstart)
@@ -343,6 +343,7 @@ void H_TDDFT_pw::update_At()
         count++;
     }
     At = At + At_laststep / 2.0;
+    if(stype==2)global_vext_time = { Et[0],Et[1],Et[2] };
 
     ModuleBase::timer::end("H_TDDFT_pw", "update_At");
     return;

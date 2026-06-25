@@ -4,7 +4,7 @@
 #include "for_test.h"
 
 #define private public
-#include "source_relax/bfgs.h"
+#include "source_relax/ions_move_bfgs2.h"
 #undef private
 
 #define private public
@@ -12,14 +12,16 @@
 #undef private
 
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
+#include "source_relax/relax_data.h"
+#include <fstream>
 
 /************************************************
- *  unit tests for BFGS (no MockUnitCell)
+ *  unit tests for Ions_Move_BFGS2 (no MockUnitCell)
  ***********************************************/
 
 class BFGSTest : public ::testing::Test {
 protected:
-    BFGS bfgs;
+    Ions_Move_BFGS2 bfgs;
     void SetUp() override
     {
         // Initialize variables before each test
@@ -75,9 +77,11 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
     force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
 
+    std::ofstream ofs_running;
+
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(bfgs.is_initialized);
-    bfgs.relax_step(force, ucell);
+    bfgs.relax_step(force, ucell, ofs_running);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(bfgs.is_initialized);
 }
@@ -112,6 +116,35 @@ TEST_F(BFGSTest, DetermineStepScaling)
     EXPECT_NEAR(dpos[1][0], 0.05, 1e-12);
     EXPECT_NEAR(dpos[1][1], 0.05, 1e-12);
     EXPECT_NEAR(dpos[1][2], 0.05, 1e-12);
+}
+
+TEST_F(BFGSTest, UpdateUsesAbsoluteDisplacementThreshold)
+{
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 1;
+    ucell.lat0 = 1.0;
+    ucell.latvec.Identity();
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 1;
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(1, {1, 1, 1});
+    ucell.iat2it = new int[ucell.nat];
+    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it[0] = 0;
+    ucell.iat2ia[0] = 0;
+
+    bfgs.allocate(ucell.nat);
+    bfgs.sign = false;
+    bfgs.pos_taud[0].x = -1.0e-6;
+    bfgs.force0 = {0.0, 0.0, 0.0};
+
+    std::vector<double> pos = {0.0, 0.0, 0.0};
+    std::vector<double> force = {1.0, 0.0, 0.0};
+    const double initial_h00 = bfgs.H[0][0];
+
+    bfgs.Update(pos, force, bfgs.H, ucell);
+
+    EXPECT_NE(bfgs.H[0][0], initial_h00);
 }
 
 // Test GetPos and GetPostaud without creating extra helper class
@@ -229,7 +262,10 @@ TEST_F(BFGSTest, RelaxStepBasic)
     force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
     // Allocate and call relax_step
     bfgs.allocate(ucell.nat);
-    bfgs.relax_step(force, ucell);
+
+    std::ofstream ofs_running;
+
+    bfgs.relax_step(force, ucell, ofs_running);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)

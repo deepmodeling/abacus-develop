@@ -38,14 +38,42 @@ class Operator
     Operator();
     virtual ~Operator();
 
-    // this is the core function for Operator
-    //  do H|psi> from input |psi> ,
-    /// as default, different operators donate hPsi independently
-    /// run this->act function for the first operator and run all act() for other nodes in chain table
-    /// if this procedure is not suitable for your operator, just override this function.
-    /// output of hpsi would be first member of the returned tuple
+    /// @brief input type of hPsi: (psi_input, range, hpsi_pointer)
+    /// @details
+    /// hpsi_info bundles the input and output of hPsi():
+    /// - std::get<0>: pointer to psi::Psi<T, Device> (input wavefunction)
+    /// - std::get<1>: psi::Range specifying which bands to operate on
+    /// - std::get<2>: T* pointer to output hpsi buffer (can equal psi_in for in-place)
     typedef std::tuple<const psi::Psi<T, Device>*, const psi::Range, T*> hpsi_info;
 
+    /// @brief Core hot-path: compute H|psi> by traversing the operator chain.
+    /// @details
+    /// This is the central computational kernel of ABACUS, called O(n_bands * n_iter * n_kpoints)
+    /// times during a single SCF calculation. It accounts for 18-25% of total runtime.
+    ///
+    /// Algorithm:
+    /// 1. Unwrap the input hpsi_info to get psi, band range, and output buffer
+    /// 2. Allocate or reuse the temporary hpsi buffer via get_hpsi()
+    /// 3. Call act() on the first operator node (is_first_node=true) -- this node zeros hpsi
+    /// 4. Iterate through next_op linked list, calling act() on each subsequent node (is_first_node=false)
+    ///    Each node accumulates its contribution: hpsi += O|psi>
+    /// 5. If in_place mode, copy temporary hpsi back to the caller-provided buffer
+    /// 6. Return wrapped hpsi_info for downstream use
+    ///
+    /// The operator chain typically includes (in order):
+    /// Ekinetic → Veff → Nonlocal → Meta → OnsiteProj
+    ///
+    /// @param input hpsi_info tuple: (psi_input, band_range, hpsi_output_pointer)
+    ///   - psi_input: the wavefunction Psi object
+    ///   - band_range: which bands to compute (range_1 to range_2 inclusive)
+    ///   - hpsi_output_pointer: pre-allocated buffer for H|psi> result.
+    ///     If equal to psi_input pointer, in_place mode is used (temporary buffer allocated internally).
+    /// @return hpsi_info containing (internal_hpsi, range, caller_hpsi_pointer)
+    /// @note This function is performance-critical. The operator chain traversal is the innermost
+    ///       loop of iterative diagonalization methods (CG, Davidson, BPCG).
+    /// @note For PW calculations, each act() call may involve FFT transforms (Veff),
+    ///       BLAS3 gemm operations (Nonlocal), or element-wise vector ops (Ekinetic).
+    /// @see Operator::act(), HamiltPW, DiagoCG::diag()
     virtual hpsi_info hPsi(hpsi_info& input) const;
 
     virtual void init(const int ik_in);

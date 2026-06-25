@@ -17,6 +17,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_surchem/surchem.h"
+#include "source_pw/module_pwdft/structure_factor.h" // Structure_Factor member access (p_sf->strucFac)
 #include "source_hamilt/module_vdw/vdw.h"
 
 #ifdef _OPENMP

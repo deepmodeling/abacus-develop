@@ -57,7 +57,8 @@ void Relax::init_relax(const int nat_in)
 bool Relax::relax_step(UnitCell& ucell,
                        const ModuleBase::matrix& force,
                        const ModuleBase::matrix& stress,
-                       const double etot_in)
+                       const double etot_in,
+                       std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "relax_step");
 
@@ -67,7 +68,7 @@ bool Relax::relax_step(UnitCell& ucell,
         etot_p = etot;
     }
 
-    bool relax_done = this->setup_gradient(ucell, force, stress);
+    bool relax_done = this->setup_gradient(ucell, force, stress, ofs_running);
     if (relax_done)
     {
         return relax_done;
@@ -79,13 +80,13 @@ bool Relax::relax_step(UnitCell& ucell,
 
     if (ls_done)
     {
-        this->new_direction();
-        this->move_cell_ions(ucell, true);
+        this->new_direction(ofs_running);
+        this->move_cell_ions(ucell, true, ofs_running);
     }
     else
     {
-        this->perform_line_search();
-        this->move_cell_ions(ucell, false);
+        this->perform_line_search(ofs_running);
+        this->move_cell_ions(ucell, false, ofs_running);
         dmovel = dmove;
     }
 
@@ -94,7 +95,7 @@ bool Relax::relax_step(UnitCell& ucell,
     return relax_done;
 }
 
-bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
+bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "setup_gradient");
 
@@ -163,7 +164,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     }
 
 
-    GlobalV::ofs_running << "\n Largest force is " << max_grad << 
+    ofs_running << "\n Largest force is " << max_grad << 
              " eV/Angstrom while threshold is " << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
     //=========================================
     // set gradient for cell degrees of freedom
@@ -193,48 +194,28 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
         {
             // Note stress is given in the directions of lattice vectors
             // So we need to first convert to Cartesian and then apply the constraint
-            ModuleBase::Matrix3 stress_cart;
-            stress_cart.e11 = stress_ev(0, 0);
-            stress_cart.e12 = stress_ev(0, 1);
-            stress_cart.e13 = stress_ev(0, 2);
-            stress_cart.e21 = stress_ev(1, 0);
-            stress_cart.e22 = stress_ev(1, 1);
-            stress_cart.e23 = stress_ev(1, 2);
-            stress_cart.e31 = stress_ev(2, 0);
-            stress_cart.e32 = stress_ev(2, 1);
-            stress_cart.e33 = stress_ev(2, 2);
-
-            stress_cart = ucell.latvec * stress_cart;
+            ModuleBase::matrix stress_cart = ucell.latvec.to_matrix() * stress_ev;
 
             if (ucell.lc[0] == 0)
             {
-                stress_cart.e11 = 0;
-                stress_cart.e12 = 0;
-                stress_cart.e13 = 0;
+                stress_cart(0, 0) = 0;
+                stress_cart(0, 1) = 0;
+                stress_cart(0, 2) = 0;
             }
             if (ucell.lc[1] == 0)
             {
-                stress_cart.e21 = 0;
-                stress_cart.e22 = 0;
-                stress_cart.e23 = 0;
+                stress_cart(1, 0) = 0;
+                stress_cart(1, 1) = 0;
+                stress_cart(1, 2) = 0;
             }
             if (ucell.lc[2] == 0)
             {
-                stress_cart.e31 = 0;
-                stress_cart.e32 = 0;
-                stress_cart.e33 = 0;
+                stress_cart(2, 0) = 0;
+                stress_cart(2, 1) = 0;
+                stress_cart(2, 2) = 0;
             }
 
-            stress_cart = ucell.GT * stress_cart;
-            stress_ev(0, 0) = stress_cart.e11;
-            stress_ev(0, 1) = stress_cart.e12;
-            stress_ev(0, 2) = stress_cart.e13;
-            stress_ev(1, 0) = stress_cart.e21;
-            stress_ev(1, 1) = stress_cart.e22;
-            stress_ev(1, 2) = stress_cart.e23;
-            stress_ev(2, 0) = stress_cart.e31;
-            stress_ev(2, 1) = stress_cart.e32;
-            stress_ev(2, 2) = stress_cart.e33;
+            stress_ev = ucell.GT.to_matrix() * stress_cart;
         }
 
         for (int i = 0; i < 3; i++)
@@ -268,16 +249,16 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
             force_converged = false;
         }
 
-        GlobalV::ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << PARAM.inp.stress_thr << " kbar" << std::endl;
+        ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << PARAM.inp.stress_thr << " kbar" << std::endl;
     }
 
     if (force_converged)
     {
-        GlobalV::ofs_running << "\n Relaxation is converged!" << std::endl;
+        ofs_running << "\n Relaxation is converged!" << std::endl;
     }
     else
     {
-        GlobalV::ofs_running << "\n Relaxation is not converged yet!" << std::endl;
+        ofs_running << "\n Relaxation is not converged yet!" << std::endl;
     }
 
     return force_converged;
@@ -356,7 +337,7 @@ bool Relax::check_line_search()
     return true;
 }
 
-void Relax::perform_line_search()
+void Relax::perform_line_search(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "line_search");
 
@@ -385,13 +366,13 @@ void Relax::perform_line_search()
     double x = dmovel, y = etot;
     double xnew = 0.0, yd = 0.0;
 
-    brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva);
+    brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva, ofs_running);
     dmove = xnew;
 
     return;
 }
 
-void Relax::new_direction()
+void Relax::new_direction(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "new_direction");
     if (cg_step != 0)
@@ -472,7 +453,7 @@ void Relax::new_direction()
     // TODO: add a certain threshold for the progress.
     double xnew, yd = 1e-8;
 
-    this->ls.line_search(restart, x, y, f, xnew, yd);
+    this->ls.line_search(restart, x, y, f, xnew, yd, ofs_running);
 
     dmovel = 1.0;
     ltrial = true;
@@ -481,7 +462,7 @@ void Relax::new_direction()
     return;
 }
 
-void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
+void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "move_cell_ions");
 
@@ -635,7 +616,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     unitcell::update_pos_taud(ucell.lat,move_ion.data(),ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,GlobalV::ofs_running);
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
 
     // =================================================================
     // Step 4 : update G,GT and other stuff
@@ -694,7 +675,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // I do not want to change it
     if (if_cell_moves)
     {
-        unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
+        unitcell::setup_cell_after_vc(ucell, ofs_running);
+        ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
     }
 }
