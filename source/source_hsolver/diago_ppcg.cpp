@@ -343,7 +343,7 @@ void DiagoPPCG<T, Device>::diag_hsub(
 {
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
 
-    const int n = this->n_band;
+    int n = this->n_band;
     int lwork = 2 * n + n * n;
     if (lwork < 1 + 6 * n + 2 * n * n) {
         lwork = 1 + 6 * n + 2 * n * n;
