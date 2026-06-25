@@ -156,6 +156,10 @@ LCAO_Orbitals::LCAO_Orbitals() { this->Phi = new Numerical_Orbital[1]; }
 LCAO_Orbitals::~LCAO_Orbitals() { delete[] Phi; }
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+
+ModuleNeighbor::MpiDomain::MpiDomain() {}
+ModuleNeighbor::MpiDomain::~MpiDomain() {}
+
 // mock find_atom() function
 void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,

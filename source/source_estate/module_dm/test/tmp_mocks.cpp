@@ -77,6 +77,14 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 }
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+
+ModuleNeighbor::MpiDomain::MpiDomain()
+{
+}
+ModuleNeighbor::MpiDomain::~MpiDomain()
+{
+}
+
 // mock find_atom() function
 void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
