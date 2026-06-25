@@ -21,10 +21,11 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <random>
 #include <type_traits>
 #include <vector>
-
 namespace hsolver
 {
 
