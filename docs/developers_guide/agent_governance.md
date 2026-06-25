@@ -26,6 +26,11 @@ Untouched historical code is not a default blocker. Review tools may mention
 historical debt when it is relevant to the changed area, but they must separate
 that from blocking findings on new changes.
 
+When a PR edits code near historical violations, reviewers should identify which
+findings are new deterministic problems and which are pre-existing context. Fix
+only the new deterministic problems unless the PR intentionally includes a
+focused cleanup.
+
 ## Core Coding Rules
 
 - Do not introduce new cross-layer control through `GlobalV`, `GlobalC`, or
@@ -85,6 +90,13 @@ Implementations must use this matrix as the default baseline. Upgrading warnings
 to blockers or converting human-confirmation rules into mechanical blockers
 requires an explicit governance change.
 
+Deterministic errors require a code or documentation fix before merge unless a
+maintainer-approved exception is recorded. Deterministic warnings require a
+reviewable rationale or cleanup, but they do not become blockers without an
+explicit governance change. For header include warnings, the rationale should
+state whether the header needs a complete type, for example because it owns a
+value member rather than a pointer or reference.
+
 ## Automation Responsibilities
 
 Local hooks:
@@ -111,6 +123,37 @@ Human review:
 - Approve or reject exceptions.
 - Confirm module boundaries and high-risk design decisions.
 - Decide whether tests are sufficient for the scientific and numerical risk.
+
+## Existing Build And Toolchain References
+
+Agents and contributors should reuse ABACUS entry points that already exist in
+the repository:
+
+- CMake/CTest builds and test selection used by `.github/workflows/test.yml`,
+  such as `ctest --test-dir build -V -R MODULE_MD` for MD-focused changes.
+- Development containers and CI images based on `Dockerfile.gnu`,
+  `Dockerfile.intel`, `Dockerfile.cuda`, and
+  `ghcr.io/deepmodeling/abacus-*`.
+- Dependency and compiler setup under `toolchain/`, including the GNU, Intel,
+  and CUDA variants already covered by workflow checks.
+
+Do not add a new container recipe, toolchain path, or agent-specific skill for
+calculation tasks as part of governance-only work. If a future PR needs one, it
+must explain why the existing Docker/toolchain paths are insufficient.
+
+## CLI Verification
+
+When a usable ABACUS executable is present, INPUT and command-line changes
+should include the relevant CLI checks in the PR verification record:
+
+```bash
+./build/abacus --version
+./build/abacus -h <parameter>
+./build/abacus --check-input
+```
+
+Run `--check-input` from a directory containing a valid `INPUT` case. If no
+local executable or valid case is available, state that explicitly in the PR.
 
 ## AI PR Review Integration
 
@@ -158,6 +201,19 @@ or parsing behavior must include both:
 
 If the diff touches parameter internals but does not change user-visible INPUT
 behavior, the PR must state why no documentation update is required.
+
+## PR Self-Consistency
+
+Before requesting review, check that the PR description matches the diff:
+
+- New or changed INPUT behavior lists the changed parameters and links the YAML
+  and Markdown documentation updates.
+- Source changes list focused unit, case, or CLI verification commands with the
+  observed result.
+- Header include growth, `.hpp` propagation, missing tests, or other warnings
+  have either been fixed or have a rationale in the PR body.
+- Exceptions include reason, scope, risk, why the normal rule cannot be followed
+  now, a follow-up cleanup plan, and the requested approver.
 
 ## Exception Template
 

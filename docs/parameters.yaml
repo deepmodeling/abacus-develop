@@ -1379,6 +1379,7 @@ parameters:
       * berendsen: Berendsen thermostat, see md_nraise in detail.
       * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
       * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+      * csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
     default_value: nhc
     unit: ""
     availability: ""
@@ -1686,6 +1687,14 @@ parameters:
     default_value: "1.0"
     unit: fs
     availability: ""
+  - name: md_csvr_tau
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling, smaller values give stronger coupling. Recommended value: 100 * md_dt.
+    default_value: "100.0"
+    unit: fs
+    availability: md_thermostat = csvr
   - name: md_tolerance
     category: Molecular dynamics
     type: Real

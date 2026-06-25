@@ -2,6 +2,7 @@
 - [ ] I have read `AGENTS.md` and `docs/developers_guide/agent_governance.md`.
 - [ ] I have linked an issue or explained why this PR does not need one.
 - [ ] I have added adequate unit tests and/or case tests, or explained why not.
+- [ ] I have listed the exact verification commands run and their results.
 - [ ] I have described user-visible behavior changes, including INPUT parameter changes.
 - [ ] I have explained core-module impact for ESolver, HSolver, ElecState, Hamilt, Operator, Psi, or other `source/` changes.
 - [ ] I have requested any needed governance exception below.
@@ -11,6 +12,11 @@ Fix #...
 
 ### Unit Tests and/or Case Tests for my changes
 - A unit test is added for each new feature or bug fix.
+
+### Exact Verification Performed
+- Commands run:
+- Result summary:
+- Checks not run, with reason:
 
 ### What's changed?
 - Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
