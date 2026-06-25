@@ -781,16 +781,17 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
     setmem_op()(this->p_new,    0, this->n_work * this->n_basis);
     setmem_op()(this->hp_new,   0, this->n_work * this->n_basis);
     setmem_op()(this->hpsi_new, 0, this->n_work * this->n_basis);
+    setmem_op()(this->work,     0, this->n_work * this->n_basis);  // MPI: zero padding
 
+#ifdef __MPI
+    int my_rank = 0, n_ranks = 1;
+    MPI_Comm_rank(BP_WORLD, &my_rank);
+    MPI_Comm_size(BP_WORLD, &n_ranks);
+#endif
+
+    // QE band-group style: locked bands only on root, unlocked distributed
     for (int ib = 0; ib < this->n_work; ++ib)
     {
-        T* xi  = psi_in      + ib * this->n_basis;
-        T* hxi = this->hpsi  + ib * this->n_basis;
-        T* wi  = this->w     + ib * this->n_basis;
-        T* hwi = this->hw    + ib * this->n_basis;
-        T* pi  = this->p     + ib * this->n_basis;
-        T* hpi = this->hp    + ib * this->n_basis;
-
         T* xnew   = this->work     + ib * this->n_basis;
         T* hxnew  = this->hpsi_new + ib * this->n_basis;
         T* pnext  = this->p_new    + ib * this->n_basis;
@@ -798,12 +799,29 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
 
         if (this->is_locked[ib])
         {
+#ifdef __MPI
+            if (my_rank != 0) continue;  // only root preserves locked bands
+#endif
+            T* xi  = psi_in      + ib * this->n_basis;
+            T* hxi = this->hpsi  + ib * this->n_basis;
             this->copy_vector(xnew, xi);
             this->copy_vector(hxnew, hxi);
             this->zero_vector(pnext);
             this->zero_vector(hpnext);
             continue;
         }
+
+#ifdef __MPI
+        // Round-robin distribution of unlocked bands
+        if (ib % n_ranks != my_rank) continue;
+#endif
+
+        T* xi  = psi_in      + ib * this->n_basis;
+        T* hxi = this->hpsi  + ib * this->n_basis;
+        T* wi  = this->w     + ib * this->n_basis;
+        T* hwi = this->hw    + ib * this->n_basis;
+        T* pi  = this->p     + ib * this->n_basis;
+        T* hpi = this->hp    + ib * this->n_basis;
 
         const Real pnrm = this->vector_norm(pi);
         const int adim = (pnrm > Real(1.0e-12)) ? 3 : 2;
@@ -864,6 +882,17 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
         }
     }
 
+#ifdef __MPI
+    // QE-style mp_sum: collect partial results from all ranks
+    {
+        const int count = this->n_work * this->n_basis;
+        MPI_Allreduce(MPI_IN_PLACE, this->work,     count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+    }
+#endif
+
     syncmem_op()(psi_in,  this->work,     this->n_work * this->n_basis);
     syncmem_op()(this->hpsi, this->hpsi_new, this->n_work * this->n_basis);
     syncmem_op()(this->p,    this->p_new,    this->n_work * this->n_basis);
@@ -880,6 +909,7 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
     setmem_op()(this->p_new,    0, this->n_work * this->n_basis);
     setmem_op()(this->hp_new,   0, this->n_work * this->n_basis);
     setmem_op()(this->hpsi_new, 0, this->n_work * this->n_basis);
+    setmem_op()(this->work,     0, this->n_work * this->n_basis);  // MPI: zero padding
 
     const int ldb = this->n_basis;
     const int target_bs = this->block_sizes.empty()
@@ -1083,21 +1113,53 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
         }
     };  // end process_block
 
-    // ---- Phase 3: process all unlocked bands in blocks, uniform ndim ----
-    for (size_t start = 0; start < all_unlocked.size(); start += target_bs)
+    // ---- Phase 3: distribute blocks across MPI ranks (QE band-group style) ----
+    // Build the full block list, then each rank processes a round-robin subset.
     {
-        size_t end = std::min(start + target_bs, all_unlocked.size());
-        std::vector<int> block(all_unlocked.begin() + start, all_unlocked.begin() + end);
-        process_block(block, ndim_global);
+        std::vector<std::vector<int>> all_blocks;
+        for (size_t start = 0; start < all_unlocked.size(); start += target_bs) {
+            size_t end = std::min(start + target_bs, all_unlocked.size());
+            all_blocks.emplace_back(all_unlocked.begin() + start,
+                                    all_unlocked.begin() + end);
+        }
+
+#ifdef __MPI
+        int my_rank = 0, n_ranks = 1;
+        MPI_Comm_rank(BP_WORLD, &my_rank);
+        MPI_Comm_size(BP_WORLD, &n_ranks);
+
+        for (size_t bi = my_rank; bi < all_blocks.size(); bi += n_ranks)
+            process_block(all_blocks[bi], ndim_global);
+#else
+        for (auto& block : all_blocks)
+            process_block(block, ndim_global);
+#endif
     }
 
-    // ---- Phase 4: locked bands — keep old values ---------------------------
-    for (int ib = 0; ib < this->n_band_l; ++ib)
+    // ---- Phase 4: locked bands — only root rank keeps old values -----------
+    // QE-style: after mp_sum, locked values come exclusively from root.
+#ifdef __MPI
+    int my_rank = 0;
+    MPI_Comm_rank(BP_WORLD, &my_rank);
+    if (my_rank == 0)
+#endif
     {
-        if (!this->is_locked[ib]) continue;
-        this->copy_vector(this->work     + ib * ldb, psi_in    + ib * ldb);
-        this->copy_vector(this->hpsi_new + ib * ldb, this->hpsi + ib * ldb);
+        for (int ib = 0; ib < this->n_band_l; ++ib) {
+            if (!this->is_locked[ib]) continue;
+            this->copy_vector(this->work     + ib * ldb, psi_in    + ib * ldb);
+            this->copy_vector(this->hpsi_new + ib * ldb, this->hpsi + ib * ldb);
+        }
     }
+
+#ifdef __MPI
+    // QE-style mp_sum: collect partial results from all ranks.
+    // Only processed columns are non-zero on each rank, so SUM is correct.
+    const int count = this->n_work * ldb;
+    MPI_Allreduce(MPI_IN_PLACE, this->work,     count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+#endif
 
     syncmem_op()(psi_in,  this->work,     this->n_work * ldb);
     syncmem_op()(this->hpsi, this->hpsi_new, this->n_work * ldb);
