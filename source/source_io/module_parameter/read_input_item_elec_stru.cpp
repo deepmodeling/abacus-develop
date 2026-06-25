@@ -3,6 +3,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <cmath>
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -1227,6 +1229,25 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.unit = "Bohr";
         item.availability = "";
         read_sync_double(input.search_radius);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("neighbor_skin");
+        item.annotation = "Verlet neighbor-list skin";
+        item.category = "Numerical atomic orbitals related variables";
+        item.type = "Real";
+        item.description = "Extra radius used to reuse LCAO neighbor lists between ionic steps. "
+                           "A value of zero forces a full rebuild at every step.";
+        item.default_value = "3.0";
+        item.unit = "Bohr";
+        item.availability = "LCAO ionic-step calculations";
+        read_sync_double(input.neighbor_skin);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!std::isfinite(para.input.neighbor_skin) || para.input.neighbor_skin < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "neighbor_skin must be finite and non-negative.");
+            }
+        };
         this->add_item(item);
     }
     {

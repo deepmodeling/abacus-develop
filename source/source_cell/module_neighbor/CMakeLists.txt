@@ -7,6 +7,7 @@ add_library(
     sltk_grid_driver.cpp
     atom_pack.cpp
     mpi_domain.cpp
+    neighbor_rebuild_state.cpp
 )
 
 if(ENABLE_COVERAGE)

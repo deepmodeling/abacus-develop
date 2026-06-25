@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <fstream>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -42,6 +43,23 @@ TEST_F(InputTest, Item_test)
     Parameter param;
 
     std::string output = "";
+
+    { // neighbor_skin
+        auto it = find_label("neighbor_skin", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_DOUBLE_EQ(param.input.neighbor_skin, 3.0);
+        param.input.neighbor_skin = -0.1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        param.input.neighbor_skin = std::numeric_limits<double>::quiet_NaN();
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        param.input.neighbor_skin = 3.0;
+    }
 
     { // calculation
         auto it = find_label("calculation", readinput.input_lists);

@@ -37,6 +37,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::start("ESolver_KS_LCAO", "others");
 
+    // Special one-shot calculations rebuild gd without a Verlet skin. Invalidate
+    // any earlier reference so a later SCF path cannot reuse that shorter list.
+    this->neighbor_rebuild_state.reset();
+
     const std::string cal_type = PARAM.inp.calculation;
 
     if (cal_type == "test_memory")
@@ -87,6 +91,26 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                          search_radius,
                          PARAM.inp.test_atom_input);
 
+    const Grid_Driver* record_adj_grid_ptr = nullptr;
+#ifdef __MPI
+    const MPI_Comm record_adj_comm = this->pv.comm();
+    if (record_adj_comm != MPI_COMM_NULL)
+    {
+        int record_adj_comm_size = 1;
+        MPI_Comm_size(record_adj_comm, &record_adj_comm_size);
+        if (record_adj_comm_size > 1)
+        {
+            atom_arrange::search_mpi(PARAM.globalv.search_pbc,
+                                     GlobalV::ofs_running,
+                                     this->record_adj_grid,
+                                     ucell,
+                                     search_radius,
+                                     record_adj_comm);
+            record_adj_grid_ptr = &this->record_adj_grid;
+        }
+    }
+#endif
+
     // (3) Periodic condition search for each grid.
     gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
                                               this->pw_big->nby,
@@ -108,7 +132,12 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell,
+                    this->gd,
+                    this->pv,
+                    PARAM.globalv.gamma_only_local,
+                    orb_.cutoffs(),
+                    record_adj_grid_ptr);
 
     // 2. density matrix extrapolation
 

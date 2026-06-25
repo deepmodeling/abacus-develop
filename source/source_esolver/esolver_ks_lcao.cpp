@@ -45,6 +45,94 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 }
 
 template <typename TK, typename TR>
+const Grid_Driver* ESolver_KS_LCAO<TK, TR>::prepare_neighbor_grids(
+    UnitCell& ucell,
+    const double physical_radius_bohr,
+    const int istep)
+{
+    this->neighbor_rebuild_state.set_skin_bohr(PARAM.inp.neighbor_skin);
+
+    bool rebuild_neighbors = false;
+    const Grid_Driver* record_adj_grid_ptr = nullptr;
+#ifdef __MPI
+    const MPI_Comm record_adj_comm = this->pv.comm();
+    int record_adj_comm_size = 1;
+    if (record_adj_comm != MPI_COMM_NULL)
+    {
+        MPI_Comm_size(record_adj_comm, &record_adj_comm_size);
+    }
+    rebuild_neighbors = record_adj_comm_size > 1
+                            ? this->neighbor_rebuild_state.needs_rebuild_mpi(ucell,
+                                                                            physical_radius_bohr,
+                                                                            PARAM.globalv.search_pbc,
+                                                                            record_adj_comm)
+                            : this->neighbor_rebuild_state.needs_rebuild(ucell,
+                                                                        physical_radius_bohr,
+                                                                        PARAM.globalv.search_pbc);
+#else
+    rebuild_neighbors = this->neighbor_rebuild_state.needs_rebuild(ucell,
+                                                                    physical_radius_bohr,
+                                                                    PARAM.globalv.search_pbc);
+#endif
+
+    const ModuleNeighbor::NeighborRebuildReason reason = this->neighbor_rebuild_state.last_reason();
+    const double maximum_displacement
+        = this->neighbor_rebuild_state.stats().last_max_displacement_bohr;
+    if (rebuild_neighbors)
+    {
+        atom_arrange::search(PARAM.globalv.search_pbc,
+                             GlobalV::ofs_running,
+                             this->gd,
+                             ucell,
+                             physical_radius_bohr,
+                             PARAM.inp.test_atom_input,
+                             false,
+                             this->neighbor_rebuild_state.skin_bohr());
+#ifdef __MPI
+        if (record_adj_comm_size > 1)
+        {
+            atom_arrange::search_mpi(PARAM.globalv.search_pbc,
+                                     GlobalV::ofs_running,
+                                     this->record_adj_grid,
+                                     ucell,
+                                     physical_radius_bohr,
+                                     record_adj_comm,
+                                     nullptr,
+                                     this->neighbor_rebuild_state.skin_bohr());
+        }
+#endif
+        this->neighbor_rebuild_state.mark_rebuilt(ucell,
+                                                   physical_radius_bohr,
+                                                   PARAM.globalv.search_pbc);
+    }
+    else
+    {
+        this->neighbor_rebuild_state.mark_reused();
+    }
+
+#ifdef __MPI
+    if (record_adj_comm_size > 1)
+    {
+        record_adj_grid_ptr = &this->record_adj_grid;
+    }
+#endif
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        const ModuleNeighbor::NeighborRebuildStats& stats = this->neighbor_rebuild_state.stats();
+        GlobalV::ofs_running << " NEIGHBOR_VERLET step=" << istep
+                             << " decision=" << (rebuild_neighbors ? "rebuild" : "reuse")
+                             << " reason=" << ModuleNeighbor::neighbor_rebuild_reason_name(reason)
+                             << " max_displacement_bohr=" << maximum_displacement
+                             << " threshold_bohr=" << this->neighbor_rebuild_state.rebuild_threshold_bohr()
+                             << " skin_bohr=" << this->neighbor_rebuild_state.skin_bohr()
+                             << " rebuild_count=" << stats.rebuild_count
+                             << " reuse_count=" << stats.reuse_count << std::endl;
+    }
+    return record_adj_grid_ptr;
+}
+
+template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
@@ -114,9 +202,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
       PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL.get_rcutmax_Beta(),
       PARAM.globalv.gamma_only_local);
 
-    //! 3) use search_radius to search adj atoms
-    atom_arrange::search(PARAM.globalv.search_pbc, GlobalV::ofs_running,
-      this->gd, ucell, search_radius, PARAM.inp.test_atom_input);
+    //! 3) Build or reuse both replicated and local-center neighbor Grids.
+    const Grid_Driver* record_adj_grid_ptr
+        = this->prepare_neighbor_grids(ucell, search_radius, istep);
 
     //! 4) initialize NAO basis set
     // here new is a unique pointer, which will be deleted automatically
@@ -132,7 +220,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 7) For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell,
+                    this->gd,
+                    this->pv,
+                    PARAM.globalv.gamma_only_local,
+                    orb_.cutoffs(),
+                    record_adj_grid_ptr);
 
     // 8) initialize the Hamiltonian operators
     // if atom moves, then delete old pointer and add a new one

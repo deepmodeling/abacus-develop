@@ -5,6 +5,7 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -241,6 +242,21 @@ TEST_F(SltkGridTest, InitSmall)
     remove("test.out");
 }
 
+TEST_F(SltkGridTest, RejectsInvalidSearchRadii)
+{
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+    ofs.open("test_invalid_radius.out");
+    Grid grid(PARAM.input.test_grid);
+    EXPECT_THROW(grid.init(ofs, *ucell, -0.1, pbc), std::invalid_argument);
+    EXPECT_THROW(grid.init(ofs,
+                           *ucell,
+                           std::numeric_limits<double>::quiet_NaN(),
+                           pbc),
+                 std::invalid_argument);
+    ofs.close();
+    remove("test_invalid_radius.out");
+}
+
 TEST_F(SltkGridTest, OpenMPThreadCountKeepsNeighborSet)
 {
     unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
@@ -356,7 +372,9 @@ TEST_F(SltkGridTest, Half14DefaultMatchesFull27AndLegacyGrid)
     EXPECT_TRUE(grid_atom_pack_only.all_adj_info.empty());
     EXPECT_TRUE(grid_atom_pack_only.neighbor_pairs_27.empty());
     EXPECT_FALSE(grid_atom_pack_only.neighbor_pairs.empty());
-    EXPECT_FALSE(grid_atom_pack_only.neighbor_pair_indices.empty());
+    EXPECT_FALSE(grid_atom_pack_only.paged_neighbor_list.type_offset.empty());
+    EXPECT_EQ(grid_atom_pack_only.paged_neighbor_list.total_neighbors(),
+              static_cast<int>(grid_atom_pack_only.neighbor_pairs.size()));
 
     remove("test_pair_half14.out");
     remove("test_pair_full27.out");
@@ -455,11 +473,20 @@ TEST(SltkGridSyntheticTest, Half14Full27LightweightMetrics)
                 EXPECT_EQ(grid_half_only.neighbor_pairs, grid_full_only.neighbor_pairs);
                 EXPECT_EQ(grid_half_only.neighbor_pairs, grid_half_with_reference.neighbor_pairs);
                 EXPECT_EQ(grid_half_only.neighbor_pairs, grid_half_with_legacy.neighbor_pairs);
+                EXPECT_EQ(grid_half_only.paged_neighbor_list.total_neighbors(),
+                          static_cast<int>(grid_half_only.neighbor_pairs.size()));
+                EXPECT_EQ(grid_half_only.paged_neighbor_list.used_slots(),
+                          static_cast<int>(grid_half_only.neighbor_pairs.size()));
 
                 std::cout << "[neighbor-metrics] " << test_case.name << "," << pbc_case << "," << radius << ","
                           << grid_half_only.neighbor_pairs.size() << "," << grid_full_only.neighbor_pairs.size()
                           << "," << grid_half_only.atom_pack.size() << "," << grid_half_only.grid_storage.box_size()
                           << "," << half_us << "," << half_ref_us << "," << full_us << "," << with_legacy_us
+                          << "," << grid_half_only.paged_neighbor_list.page_count()
+                          << "," << grid_half_only.paged_neighbor_list.used_slots()
+                          << "," << grid_half_only.paged_neighbor_list.capacity_slots()
+                          << "," << grid_half_only.paged_neighbor_list.utilization()
+                          << "," << grid_half_only.paged_neighbor_list.memory_usage_bytes()
                           << "\n";
 
                 remove("metric_half14.out");

@@ -7,6 +7,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <set>
+#include <tuple>
 
 namespace
 {
@@ -21,6 +24,19 @@ int clamp_box_index(const int index, const int size)
         return size - 1;
     }
     return index;
+}
+
+int box_count_from_range(const double minimum,
+                         const double maximum,
+                         const double edge_length)
+{
+    const double count = std::floor((maximum - minimum) / edge_length) + 1.0;
+    if (!std::isfinite(count) || count < 1.0
+        || count > static_cast<double>(std::numeric_limits<int>::max()))
+    {
+        throw std::overflow_error("Grid box count exceeds the supported range.");
+    }
+    return static_cast<int>(count);
 }
 }
 
@@ -42,10 +58,16 @@ void Grid::init(std::ofstream& ofs_in,
                 const NeighborReferenceMode reference_mode)
 {
     ModuleBase::TITLE("Grid", "init");
+    if (!std::isfinite(radius_in) || radius_in < 0.0)
+    {
+        throw std::invalid_argument("Grid search radius must be finite and non-negative.");
+    }
     ModuleBase::timer::start("Grid", "init");
     this->pbc = boundary;
     this->sradius2 = radius_in * radius_in;
     this->sradius = radius_in;
+    this->query_radius2 = this->sradius2;
+    this->query_radius = this->sradius;
 
 //    ModuleBase::GlobalFunc::OUT(ofs_in, "PeriodicBoundary", this->pbc);
     ModuleBase::GlobalFunc::OUT(ofs_in, "Radius (unit: lattice constant)", sradius);
@@ -61,6 +83,128 @@ void Grid::init(std::ofstream& ofs_in,
         this->Build_Legacy_Search_Path(ucell);
     }
     ModuleBase::timer::end("Grid", "init");
+}
+
+void Grid::init_mpi(std::ofstream& ofs_in,
+                    const UnitCell& ucell,
+                    const double radius_in,
+                    const bool boundary,
+                    ModuleNeighbor::NeighborMpiComm communicator,
+                    ModuleNeighbor::MpiGhostExchangeStats* stats)
+{
+    ModuleBase::TITLE("Grid", "init_mpi");
+    if (!std::isfinite(radius_in) || radius_in < 0.0)
+    {
+        throw std::invalid_argument("Grid MPI search radius must be finite and non-negative.");
+    }
+    ModuleBase::timer::start("Grid", "init_mpi");
+
+    this->clear_atoms();
+    this->pbc = boundary;
+    this->sradius = radius_in;
+    this->sradius2 = radius_in * radius_in;
+    this->query_radius = radius_in;
+    this->query_radius2 = radius_in * radius_in;
+    this->box_edge_length = radius_in + 0.1;
+
+    const std::array<double, 3> origin{{0.0, 0.0, 0.0}};
+    const std::array<std::array<double, 3>, 3> lattice_vectors{{
+        std::array<double, 3>{{ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13}},
+        std::array<double, 3>{{ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23}},
+        std::array<double, 3>{{ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33}},
+    }};
+    mpi_domain_.initialize_lattice(communicator, origin, lattice_vectors, radius_in, boundary);
+
+    std::vector<ModuleNeighbor::MpiAtomRecord> all_records;
+    all_records.reserve(ucell.nat);
+    local_center_mask.resize(ucell.ntype);
+    int global_index = 0;
+    for (int type = 0; type < ucell.ntype; ++type)
+    {
+        local_center_mask[type].assign(ucell.atoms[type].na, false);
+        for (int natom = 0; natom < ucell.atoms[type].na; ++natom)
+        {
+            const ModuleBase::Vector3<double>& tau = ucell.atoms[type].tau[natom];
+            all_records.push_back(ModuleNeighbor::MpiAtomRecord(tau.x,
+                                                                 tau.y,
+                                                                 tau.z,
+                                                                 global_index,
+                                                                 std::array<int, 3>{{0, 0, 0}},
+                                                                 false,
+                                                                 type,
+                                                                 natom));
+            ++global_index;
+        }
+    }
+
+    const std::vector<int> local_indices = mpi_domain_.select_local_atoms(all_records);
+    std::vector<ModuleNeighbor::MpiAtomRecord> local_records;
+    local_records.reserve(local_indices.size());
+    for (const int index: local_indices)
+    {
+        local_records.push_back(all_records[index]);
+        local_center_mask[all_records[index].type][all_records[index].natom] = true;
+    }
+
+    const std::vector<ModuleNeighbor::MpiAtomRecord> ghosts
+        = mpi_domain_.exchange_ghost_atoms(local_records, stats);
+    const std::size_t initial_record_count = local_records.size() + ghosts.size();
+    if (initial_record_count
+        > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+        throw std::overflow_error("Grid MPI atom count exceeds the supported integer index range.");
+    }
+    atom_pack.reserve(static_cast<int>(initial_record_count));
+    for (const ModuleNeighbor::MpiAtomRecord& record: local_records)
+    {
+        atom_pack.append_mpi_record(record);
+    }
+    for (const ModuleNeighbor::MpiAtomRecord& record: ghosts)
+    {
+        atom_pack.append_mpi_record(record);
+    }
+
+    // Expand both local and received records with the UnitCell image layers.
+    // This covers self-rank images and combinations between a communicated
+    // shift and another periodic direction in multi-dimensional topologies.
+    Append_Periodic_Images(ucell, local_records);
+    Append_Periodic_Images(ucell, ghosts);
+
+    if (!atom_pack.empty())
+    {
+        grid_storage = ModuleNeighbor::build_grid_storage_from_atom_pack(atom_pack, box_edge_length);
+        neighbor_pairs = ModuleNeighbor::build_neighbor_pairs_14(atom_pack, grid_storage, sradius);
+        x_min = grid_storage.x_min;
+        y_min = grid_storage.y_min;
+        z_min = grid_storage.z_min;
+        x_max = grid_storage.x_max;
+        y_max = grid_storage.y_max;
+        z_max = grid_storage.z_max;
+        box_nx = grid_storage.box_nx;
+        box_ny = grid_storage.box_ny;
+        box_nz = grid_storage.box_nz;
+    }
+    else
+    {
+        grid_storage.clear();
+        neighbor_pairs.clear();
+        x_min = y_min = z_min = 0.0;
+        x_max = y_max = z_max = 0.0;
+        box_nx = box_ny = box_nz = 0;
+    }
+    neighbor_pairs_27.clear();
+    Build_Paged_Neighbor_List(ucell);
+    mpi_mode_ = true;
+
+    ModuleBase::GlobalFunc::OUT(ofs_in, "MPI local atoms", static_cast<int>(local_records.size()));
+    ModuleBase::GlobalFunc::OUT(ofs_in, "MPI ghost atoms", static_cast<int>(ghosts.size()));
+    ModuleBase::timer::end("Grid", "init_mpi");
+}
+
+bool Grid::is_local_center(const int type, const int natom) const
+{
+    return type >= 0 && type < static_cast<int>(local_center_mask.size()) && natom >= 0
+           && natom < static_cast<int>(local_center_mask[type].size()) && local_center_mask[type][natom];
 }
 
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
@@ -244,9 +388,9 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 
     this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
 
-    this->box_nx = std::max(1, static_cast<int>(std::floor((this->x_max - this->x_min) / box_edge_length)) + 1);
-    this->box_ny = std::max(1, static_cast<int>(std::floor((this->y_max - this->y_min) / box_edge_length)) + 1);
-    this->box_nz = std::max(1, static_cast<int>(std::floor((this->z_max - this->z_min) / box_edge_length)) + 1);
+    this->box_nx = box_count_from_range(this->x_min, this->x_max, box_edge_length);
+    this->box_ny = box_count_from_range(this->y_min, this->y_max, box_edge_length);
+    this->box_nz = box_count_from_range(this->z_min, this->z_max, box_edge_length);
     ModuleBase::GlobalFunc::OUT(ofs_in, "Number of needed cells", box_nx, box_ny, box_nz);
 
 }
@@ -393,9 +537,8 @@ void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell,
                                       const NeighborSearchMode search_mode,
                                       const NeighborReferenceMode reference_mode)
 {
-    // Build the Phase 2.1 integer-indexed path. The production query list is
-    // neighbor_pairs; neighbor_pairs_27 is populated only when tests explicitly
-    // request a full-search reference.
+    // neighbor_pairs is the active query list. Build the full 27-box list only
+    // when the caller requests an independent correctness reference.
     atom_pack = ModuleNeighbor::build_atom_pack_from_unitcell(ucell, sradius, pbc);
     grid_storage = ModuleNeighbor::build_grid_storage_from_atom_pack(atom_pack, box_edge_length);
     if (search_mode == NeighborSearchMode::Full27)
@@ -413,19 +556,79 @@ void Grid::Build_AtomPack_Search_Path(const UnitCell& ucell,
         neighbor_pairs_27 = ModuleNeighbor::build_neighbor_pairs_27(atom_pack, grid_storage, sradius);
     }
 
-    // Convert the global pair list to per-center lookup indices so Find_atom()
-    // can keep its existing single-atom query interface without scanning all
-    // neighbor pairs each time.
-    neighbor_pair_indices.clear();
-    neighbor_pair_indices.resize(ucell.ntype);
-    for (int it = 0; it < ucell.ntype; ++it)
+    local_center_mask.resize(ucell.ntype);
+    for (int type = 0; type < ucell.ntype; ++type)
     {
-        neighbor_pair_indices[it].resize(ucell.atoms[it].na);
+        local_center_mask[type].assign(ucell.atoms[type].na, true);
+    }
+    Build_Paged_Neighbor_List(ucell);
+}
+
+void Grid::Build_Paged_Neighbor_List(const UnitCell& ucell)
+{
+    std::vector<int> atom_counts(ucell.ntype, 0);
+    for (int type = 0; type < ucell.ntype; ++type)
+    {
+        atom_counts[type] = ucell.atoms[type].na;
+    }
+    paged_neighbor_list.build(neighbor_pairs, atom_counts);
+}
+
+void Grid::Append_Periodic_Images(
+    const UnitCell& ucell,
+    const std::vector<ModuleNeighbor::MpiAtomRecord>& records)
+{
+    if (!pbc || records.empty())
+    {
+        return;
     }
 
-    for (int pair_index = 0; pair_index < static_cast<int>(neighbor_pairs.size()); ++pair_index)
+    const std::vector<std::array<int, 3>> image_shifts
+        = ModuleNeighbor::build_periodic_image_shifts(ucell, sradius, true);
+
+    const std::array<std::array<double, 3>, 3> lattice_vectors{{
+        std::array<double, 3>{{ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13}},
+        std::array<double, 3>{{ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23}},
+        std::array<double, 3>{{ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33}},
+    }};
+    std::set<std::tuple<int, int, int, int, int, int>> existing;
+    for (int index = 0; index < atom_pack.size(); ++index)
     {
-        const ModuleNeighbor::NeighborPair& pair = neighbor_pairs[pair_index];
-        neighbor_pair_indices[pair.center_type][pair.center_natom].push_back(pair_index);
+        existing.insert(std::make_tuple(atom_pack.global_index[index],
+                                        atom_pack.type[index],
+                                        atom_pack.natom[index],
+                                        atom_pack.cell_x[index],
+                                        atom_pack.cell_y[index],
+                                        atom_pack.cell_z[index]));
+    }
+
+    for (const ModuleNeighbor::MpiAtomRecord& record: records)
+    {
+        for (const std::array<int, 3>& extra_shift: image_shifts)
+        {
+            if (extra_shift[0] == 0 && extra_shift[1] == 0 && extra_shift[2] == 0)
+            {
+                continue;
+            }
+            ModuleNeighbor::MpiAtomRecord image = record;
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                image.x += static_cast<double>(extra_shift[axis]) * lattice_vectors[axis][0];
+                image.y += static_cast<double>(extra_shift[axis]) * lattice_vectors[axis][1];
+                image.z += static_cast<double>(extra_shift[axis]) * lattice_vectors[axis][2];
+                image.pbc_shift[axis] += extra_shift[axis];
+            }
+            image.is_ghost = true;
+            const auto key = std::make_tuple(image.global_index,
+                                             image.type,
+                                             image.natom,
+                                             image.pbc_shift[0],
+                                             image.pbc_shift[1],
+                                             image.pbc_shift[2]);
+            if (existing.insert(key).second)
+            {
+                atom_pack.append_mpi_record(image);
+            }
+        }
     }
 }

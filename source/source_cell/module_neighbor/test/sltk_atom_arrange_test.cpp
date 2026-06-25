@@ -1,4 +1,5 @@
 #include "../sltk_atom_arrange.h"
+#include "../neighbor_rebuild_state.h"
 
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -147,7 +148,9 @@ void expect_grid_driver_atom_pack_only_path(const UnitCell& ucell, const double 
     EXPECT_TRUE(grid_d.all_adj_info.empty());
     EXPECT_FALSE(grid_d.atom_pack.empty());
     EXPECT_TRUE(grid_d.neighbor_pairs_27.empty());
-    EXPECT_FALSE(grid_d.neighbor_pair_indices.empty());
+    EXPECT_FALSE(grid_d.paged_neighbor_list.type_offset.empty());
+    EXPECT_EQ(grid_d.paged_neighbor_list.total_neighbors(),
+              static_cast<int>(grid_d.neighbor_pairs.size()));
 
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -396,4 +399,160 @@ TEST(SltkAtomArrangeSyntheticTest, AtomPackOnlyHalf14MatchesFull27ReferenceForSy
 
         delete ucell;
     }
+}
+
+TEST(NeighborRebuildStateTest, AppliesSkinThresholdAndInvalidatesMetadata)
+{
+    SyntheticNeighborCase test_case = make_synthetic_neighbor_cases()[0];
+    UnitCell* ucell = test_case.prepare.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    ModuleNeighbor::NeighborRebuildState state(3.0);
+    const double physical_radius_bohr = 9.5;
+    EXPECT_TRUE(state.needs_rebuild(*ucell, physical_radius_bohr, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::FirstBuild);
+    state.mark_rebuilt(*ucell, physical_radius_bohr, true);
+    EXPECT_EQ(state.stats().rebuild_count, 1);
+
+    ucell->atoms[0].tau[0].x += 0.10;
+    EXPECT_FALSE(state.needs_rebuild(*ucell, physical_radius_bohr, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::Reuse);
+    state.mark_reused();
+    EXPECT_EQ(state.stats().reuse_count, 1);
+    EXPECT_NEAR(state.stats().last_max_displacement_bohr, 1.0, 1.0e-12);
+
+    ucell->atoms[0].tau[0].x += 0.05;
+    EXPECT_FALSE(state.needs_rebuild(*ucell, physical_radius_bohr, true));
+    ucell->atoms[0].tau[0].x += 0.001;
+    EXPECT_TRUE(state.needs_rebuild(*ucell, physical_radius_bohr, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::DisplacementExceeded);
+
+    state.mark_rebuilt(*ucell, physical_radius_bohr, true);
+    EXPECT_TRUE(state.needs_rebuild(*ucell, physical_radius_bohr + 0.1, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::SearchRadiusChanged);
+    EXPECT_TRUE(state.needs_rebuild(*ucell, physical_radius_bohr, false));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::BoundaryChanged);
+    ucell->latvec.e11 += 0.01;
+    EXPECT_TRUE(state.needs_rebuild(*ucell, physical_radius_bohr, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::LatticeChanged);
+
+    delete ucell;
+}
+
+TEST(NeighborRebuildStateTest, SkinChangeAndZeroSkinForceRebuild)
+{
+    SyntheticNeighborCase test_case = make_synthetic_neighbor_cases()[0];
+    UnitCell* ucell = test_case.prepare.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    ModuleNeighbor::NeighborRebuildState state(3.0);
+    state.mark_rebuilt(*ucell, 9.5, true);
+    state.set_skin_bohr(2.0);
+    EXPECT_TRUE(state.needs_rebuild(*ucell, 9.5, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::SkinChanged);
+
+    state.mark_rebuilt(*ucell, 9.5, true);
+    state.set_skin_bohr(0.0);
+    EXPECT_TRUE(state.needs_rebuild(*ucell, 9.5, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::SkinDisabled);
+    state.mark_rebuilt(*ucell, 9.5, true);
+    EXPECT_TRUE(state.needs_rebuild(*ucell, 9.5, true));
+    EXPECT_EQ(state.last_reason(), ModuleNeighbor::NeighborRebuildReason::SkinDisabled);
+
+    EXPECT_THROW(state.set_skin_bohr(-0.1), std::invalid_argument);
+    delete ucell;
+}
+
+TEST(NeighborRebuildStateTest, UsesMinimumImageForPeriodicDisplacement)
+{
+    SyntheticNeighborCase test_case = make_synthetic_neighbor_cases()[0];
+    UnitCell* ucell = test_case.prepare.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+    ucell->atoms[0].tau[0] = ModuleBase::Vector3<double>(0.99, 0.0, 0.0);
+
+    ModuleNeighbor::NeighborRebuildState state(3.0);
+    state.mark_rebuilt(*ucell, 9.5, true);
+    ucell->atoms[0].tau[0].x = 0.01;
+    EXPECT_FALSE(state.needs_rebuild(*ucell, 9.5, true));
+    EXPECT_NEAR(state.stats().last_max_displacement_bohr, 0.2, 1.0e-12);
+
+    delete ucell;
+}
+
+TEST(NeighborRebuildStateTest, ReusedGridUsesCurrentCoordinatesAndPhysicalCutoff)
+{
+    SetGlobalV();
+    std::vector<SyntheticNeighborCase> cases = make_synthetic_neighbor_cases();
+    for (int case_index = 0; case_index < 2; ++case_index)
+    {
+        for (const bool pbc: {false, true})
+        {
+            UnitCell* ucell = cases[case_index].prepare.SetUcellInfo();
+            unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+            const double physical_radius = cases[case_index].radii[0];
+            const double skin = 0.30;
+            std::ofstream cached_output("grid_driver_verlet_cached.out");
+            Grid_Driver cached(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+            cached.init(cached_output, *ucell, physical_radius + skin, pbc);
+            cached.set_query_radius(physical_radius);
+            cached_output.close();
+            const std::vector<ModuleNeighbor::NeighborPair> cached_pairs = cached.neighbor_pairs;
+
+            ucell->atoms[0].tau[1].x += 0.05;
+            std::ofstream rebuilt_output("grid_driver_verlet_rebuilt.out");
+            Grid_Driver rebuilt(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+            rebuilt.init(rebuilt_output, *ucell, physical_radius, pbc);
+            rebuilt_output.close();
+
+            for (int atom = 0; atom < ucell->atoms[0].na; ++atom)
+            {
+                AdjacentAtomInfo cached_adjs;
+                AdjacentAtomInfo rebuilt_adjs;
+                cached.Find_atom(*ucell, 0, atom, &cached_adjs);
+                rebuilt.Find_atom(*ucell, 0, atom, &rebuilt_adjs);
+                EXPECT_EQ(collect_adjacent_keys(cached_adjs), collect_adjacent_keys(rebuilt_adjs));
+                expect_self_is_last(cached_adjs, *ucell, 0, atom);
+            }
+            EXPECT_EQ(cached.neighbor_pairs, cached_pairs);
+
+            remove("grid_driver_verlet_cached.out");
+            remove("grid_driver_verlet_rebuilt.out");
+            delete ucell;
+        }
+    }
+}
+
+TEST(NeighborRebuildStateTest, ReusedGridTracksPeriodicCoordinateWrapping)
+{
+    SetGlobalV();
+    SyntheticNeighborCase test_case = make_synthetic_neighbor_cases()[0];
+    UnitCell* ucell = test_case.prepare.SetUcellInfo();
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+    ucell->atoms[0].tau[0].x = 0.01;
+
+    std::ofstream cached_output("grid_driver_verlet_wrapped_cached.out");
+    Grid_Driver cached(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    cached.init(cached_output, *ucell, 1.25, true);
+    cached.set_query_radius(0.95);
+    cached_output.close();
+
+    ucell->atoms[0].tau[0].x = 0.99;
+    std::ofstream rebuilt_output("grid_driver_verlet_wrapped_rebuilt.out");
+    Grid_Driver rebuilt(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    rebuilt.init(rebuilt_output, *ucell, 0.95, true);
+    rebuilt_output.close();
+
+    for (int atom = 0; atom < ucell->atoms[0].na; ++atom)
+    {
+        AdjacentAtomInfo cached_adjs;
+        AdjacentAtomInfo rebuilt_adjs;
+        cached.Find_atom(*ucell, 0, atom, &cached_adjs);
+        rebuilt.Find_atom(*ucell, 0, atom, &rebuilt_adjs);
+        EXPECT_EQ(collect_adjacent_keys(cached_adjs), collect_adjacent_keys(rebuilt_adjs));
+    }
+
+    remove("grid_driver_verlet_wrapped_cached.out");
+    remove("grid_driver_verlet_wrapped_rebuilt.out");
+    delete ucell;
 }

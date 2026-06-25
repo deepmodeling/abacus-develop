@@ -70,17 +70,17 @@ class Grid_Driver : public Grid
                    const int nnumber,
                    AdjacentAtomInfo* adjs = nullptr) const;
 
-    // Phase 2.1 transition helper: query neighbors through the AtomPack +
-    // GridStorage path built by Grid::init(). This is now the default
-    // Find_atom() route; keep the named helper for direct regression checks.
+    // Query the AtomPack/GridStorage paged list built by Grid::init(). Candidate
+    // coordinates are refreshed from ucell and filtered by query_radius. The
+    // physical center atom is appended as the final AdjacentAtomInfo entry.
     void Find_atom_from_atom_pack(const UnitCell& ucell,
                                   const int ntype,
                                   const int nnumber,
                                   AdjacentAtomInfo* adjs = nullptr) const;
 
-    // Phase 2.1 transition helper: keep the legacy all_adj_info route available
-    // for correctness comparisons while AtomPack replaces FAtom* in production
-    // queries.
+    // Query the legacy all_adj_info list for correctness comparisons. This
+    // entry requires NeighborBuildMode::AtomPackAndLegacy and is not used by
+    // the default production path.
     void Find_atom_from_legacy(const UnitCell& ucell,
                                const int ntype,
                                const int nnumber,
