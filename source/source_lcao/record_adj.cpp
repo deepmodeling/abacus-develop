@@ -375,14 +375,8 @@ void Record_adj::for_2d(const UnitCell& ucell,
 
     if (!gamma_only)
     {
-        std::unique_ptr<int[]> new_nlocdim(new int[ucell.nat]);
-        std::unique_ptr<int[]> new_nlocstart(new int[ucell.nat]);
-        ModuleBase::GlobalFunc::ZEROS(new_nlocdim.get(), ucell.nat);
-        ModuleBase::GlobalFunc::ZEROS(new_nlocstart.get(), ucell.nat);
-        delete[] pv.nlocdim;
-        delete[] pv.nlocstart;
-        pv.nlocdim = new_nlocdim.release();
-        pv.nlocstart = new_nlocstart.release();
+        pv.nlocdim.assign(ucell.nat, 0);
+        pv.nlocstart.assign(ucell.nat, 0);
         pv.nnr = 0;
 
         for (int iat = 0; iat < ucell.nat; ++iat)
