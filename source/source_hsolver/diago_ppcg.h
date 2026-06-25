@@ -11,22 +11,26 @@
 #include <ATen/core/tensor_map.h>
 #include <source_base/macros.h>
 
+#include <vector>
+
 namespace hsolver {
 
 /**
  * @class DiagoPPCG
  * @brief A class for diagonalization using the Projected-PCG method.
  *
- * The PPCG method improves upon standard BPCG by:
- * 1. Tracking convergence per band and locking converged bands,
- *    so subsequent iterations only work on unconverged bands.
- * 2. Using an explicit projection step that removes components of
- *    converged eigenvectors from the search direction.
- * 3. Employing a Polak-Ribiere-style beta formula for conjugate
- *    direction mixing, corrected for the projection.
+ * Key differences from BPCG:
+ * 1. Polak-Ribiere beta formula for conjugate direction mixing (BPCG uses
+ *    Fletcher-Reeves), giving better convergence for non-quadratic problems.
+ * 2. Soft-locking of converged bands: once a band's residual falls below its
+ *    convergence threshold, its search direction is zeroed in subsequent
+ *    iterations, reducing the effective problem size.
+ * 3. Conjugate history (z_old, grad_old) is consistently rotated alongside
+ *    the wavefunctions during Cholesky orthonormalization, preserving the
+ *    conjugacy relationship across basis rotations.
  *
  * @tparam T The floating-point type used for calculations.
- * @tparam Device The device used for calculations (e.g., cpu or gpu).
+ * @tparam Device The device used for calculations (cpu only).
  */
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
 class DiagoPPCG
@@ -83,15 +87,11 @@ class DiagoPPCG
     /// needed for the Polak-Ribiere beta formula.
     ct::Tensor z_old = {};
 
-    /// Denominator for PR beta: <g_old, P^{-1} g_old> per band.
-    ct::Tensor beta_denom = {};
-
     /// Work array
     ct::Tensor work = {};
 
-    Device * ctx = {};
-    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
-    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
+    /// Per-band convergence mask: 1 = converged (locked), 0 = active.
+    std::vector<char> conv_mask;
 
     /// Update the precondition array from host to device.
     void calc_prec();
@@ -115,17 +115,9 @@ class DiagoPPCG
         ct::Tensor& psi_out,
         ct::Tensor& workspace_in);
 
-    /**
-     * @brief Compute the projected gradient for PPCG.
-     *
-     * Steps:
-     *  1. Normalize psi
-     *  2. Compute epsilo = <psi|H|psi>
-     *  3. g = H|psi> - epsilo * |psi>
-     *  4. Apply preconditioner: g = P^{-1} g
-     *  5. Compute Polak-Ribiere beta (projection-corrected)
-     *  6. Mix with previous gradient: d = g + beta * d_old
-     */
+    /// Compute the PPCG search direction with Polak-Ribiere mixing.
+    /// Converged bands (conv_mask[ib] == 1) are skipped and their
+    /// search direction is zeroed out (soft-locking).
     void calc_grad_with_block(
         const ct::Tensor& prec_in,
         ct::Tensor& err_out,
@@ -149,7 +141,9 @@ class DiagoPPCG
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out);
 
-    /// Cholesky orthonormalization of psi.
+    /// Cholesky orthonormalization of psi, hpsi, and conjugate history.
+    /// Also rotates z_old and grad_old by the Cholesky factor so that
+    /// conjugate history remains consistent with the current basis.
     void orth_cholesky(
         ct::Tensor& workspace_in,
         ct::Tensor& psi_out,
@@ -177,19 +171,16 @@ class DiagoPPCG
     /// Check convergence: returns true if any band still unconverged.
     bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
 
+    /// Update conv_mask from current err_st vs per-band thresholds.
+    void update_convergence(const std::vector<double>& ethr_band);
+
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;
-    using resmem_var_op = ct::kernels::resize_memory<Real, ct_Device>;
-    using delmem_var_op = ct::kernels::delete_memory<Real, ct_Device>;
     using syncmem_var_h2d_op = ct::kernels::synchronize_memory<Real, ct_Device, ct::DEVICE_CPU>;
     using syncmem_var_d2h_op = ct::kernels::synchronize_memory<Real, ct::DEVICE_CPU, ct_Device>;
 
     using setmem_complex_op = ct::kernels::set_memory<T, ct_Device>;
-    using delmem_complex_op = ct::kernels::delete_memory<T, ct_Device>;
-    using resmem_complex_op = ct::kernels::resize_memory<T, ct_Device>;
     using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
-
-    using gemm_op = ModuleBase::gemm_op<T, Device>;
 };
 
 } // namespace hsolver

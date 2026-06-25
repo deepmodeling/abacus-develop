@@ -11,6 +11,7 @@
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
 #include <ATen/ops/einsum_op.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -24,10 +25,6 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real* precondition_in)
     this->device_type    = ct::DeviceTypeToEnum<Device>::value;
 
     this->h_prec  = std::move(ct::TensorMap((void *) precondition_in, r_type, device_type, {this->n_basis}));
-
-    this->one = &one_;
-    this->zero = &zero_;
-    this->neg_one = &neg_one_;
 }
 
 template <typename T, typename Device>
@@ -44,7 +41,6 @@ void DiagoPPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
     this->beta          = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
     this->eigen         = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
     this->err_st        = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
-    this->beta_denom    = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
 
     this->hsub          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_band}));
 
@@ -57,6 +53,9 @@ void DiagoPPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
     this->prec          = std::move(ct::Tensor(r_type, device_type, {this->n_basis}));
 
     this->grad          = std::move(ct::Tensor(t_type, device_type, {this->n_band_l, this->n_basis}));
+
+    this->conv_mask.assign(this->n_band_l, 0);
+
 #ifdef __MPI
     this->pmmcn.set_dimension(BP_WORLD, POOL_WORLD, n_band_l, n_basis, n_band_l, n_basis, n_dim, n_band);
     this->plintrans.set_dimension(n_dim, nband_l, n_band_l, n_basis, BP_WORLD, false);
@@ -67,19 +66,25 @@ void DiagoPPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
 }
 
 template <typename T, typename Device>
+void DiagoPPCG<T, Device>::update_convergence(const std::vector<double>& ethr_band)
+{
+    Real* err = this->err_st.data<Real>();
+    for (int ib = 0; ib < this->n_band_l; ib++) {
+        if (err[ib] <= static_cast<Real>(ethr_band[ib])) {
+            this->conv_mask[ib] = 1;
+        }
+    }
+}
+
+template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band)
 {
     Real* _err_st = err_in.data<Real>();
     bool not_conv = false;
-    std::vector<Real> tmp_cpu;
-    if (err_in.device_type() == ct::DeviceType::GpuDevice) {
-        tmp_cpu.resize(this->n_band_l);
-        _err_st = tmp_cpu.data();
-        syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
-    }
     for (int ii = 0; ii < this->n_band_l; ii++) {
         if (_err_st[ii] > ethr_band[ii]) {
             not_conv = true;
+            break;
         }
     }
 #ifdef __MPI
@@ -123,6 +128,12 @@ void DiagoPPCG<T, Device>::orth_cholesky(
 
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
+
+    // Rotate conjugate history so that z_old and grad_old remain
+    // consistent with the rotated basis.  Without this, the PR beta
+    // formula would mix vectors from different bases.
+    this->rotate_wf(hsub_out, this->z_old, workspace_in);
+    this->rotate_wf(hsub_out, this->grad_old, workspace_in);
 }
 
 template <typename T, typename Device>
@@ -135,9 +146,12 @@ void DiagoPPCG<T, Device>::calc_grad_with_block(
         ct::Tensor& grad_out,
         ct::Tensor& grad_old_out)
 {
-    // PPCG-specific gradient computation using the Polak-Ribiere beta formula.
+    // PPCG gradient computation with Polak-Ribiere beta and soft-locking.
     //
-    // For each band i:
+    // Uses batched MPI reductions: scalars are collected into arrays and
+    // reduced in a single call per quantity, instead of per-band calls.
+    //
+    // For each active band i:
     //   1. Normalize psi_i
     //   2. Compute eps_i = <psi_i|H|psi_i>
     //   3. Raw residual: r_i = H|psi_i> - eps_i * psi_i
@@ -145,8 +159,8 @@ void DiagoPPCG<T, Device>::calc_grad_with_block(
     //   5. PR beta: beta_i = max(0, <z_i, r_i - r_old_i> / <z_old_i, r_old_i>)
     //   6. Search direction: d_i = z_i + beta_i * d_old_i
     //
-    // Key difference from BPCG: step 5 uses the Polak-Ribiere formula
-    // (projection-corrected) instead of the Fletcher-Reeves formula.
+    // Converged bands (conv_mask[ib] == 1) are soft-locked:
+    // their search direction is set to zero and error is set to 0.
 
     Real* prec = prec_in.data<Real>();
     Real* err_arr = err_out.data<Real>();
@@ -155,85 +169,111 @@ void DiagoPPCG<T, Device>::calc_grad_with_block(
     T* hpsi = hpsi_in.data<T>();
     T* grad_new = grad_out.data<T>();
     T* grad_old = grad_old_out.data<T>();
-    T* z_old_arr = this->z_old.template data<T>();
-    Real* beta_denom_arr = this->beta_denom.template data<Real>();
+    T* z_old_p = this->z_old.template data<T>();
 
-    for (int ib = 0; ib < this->n_band_l; ib++)
-    {
-        const int offset = ib * this->n_basis;
-        T* p_psi   = psi + offset;
-        T* p_hpsi  = hpsi + offset;
-        T* p_d_new = grad_new + offset;
-        T* p_d_old = grad_old + offset;
-        T* p_z_old = z_old_arr + offset;
+    const int nb = this->n_band_l;
+    const int ns = this->n_basis;
 
-        // Step 1: normalize psi
+    // Temporary arrays for batching MPI reductions
+    std::vector<Real> norms(nb, 0.0);
+    std::vector<Real> epsilos(nb, 0.0);
+    std::vector<Real> beta_num_zr(nb, 0.0);
+    std::vector<Real> beta_num_zo(nb, 0.0);
+    std::vector<Real> err_loc(nb, 0.0);
+    std::vector<Real> zPz_cur(nb, 0.0);  // <z_old, P * z_old> from current (possibly rotated) z_old
+
+    // ---- Phase 1: compute psi norms for active bands ----
+    for (int ib = 0; ib < nb; ib++) {
+        if (this->conv_mask[ib]) continue;
+        T* p_psi = psi + ib * ns;
         auto A = reinterpret_cast<const Real*>(p_psi);
-        Real norm = BlasConnector::dot(2 * this->n_basis, A, 1, A, 1);
-        Parallel_Reduce::reduce_pool(norm);
-        norm = 1.0 / sqrt(norm);
+        norms[ib] = BlasConnector::dot(2 * ns, A, 1, A, 1);
+    }
+    Parallel_Reduce::reduce_pool(norms.data(), nb);
 
-        // Step 2: compute epsilo = <psi|H|psi>
-        Real epsilo = 0.0;
-        for (int i = 0; i < this->n_basis; i++)
-        {
-            p_psi[i] *= norm;
-            p_hpsi[i] *= norm;
-            epsilo += std::real(p_hpsi[i] * std::conj(p_psi[i]));
+    // ---- Phase 2: normalize psi, hpsi and compute epsilos ----
+    for (int ib = 0; ib < nb; ib++) {
+        if (this->conv_mask[ib]) continue;
+        T* p_psi  = psi + ib * ns;
+        T* p_hpsi = hpsi + ib * ns;
+        Real nrm = 1.0 / std::sqrt(norms[ib]);
+        Real eps = 0.0;
+        for (int i = 0; i < ns; i++) {
+            p_psi[i]  *= nrm;
+            p_hpsi[i] *= nrm;
+            eps += std::real(p_hpsi[i] * std::conj(p_psi[i]));
         }
-        Parallel_Reduce::reduce_pool(epsilo);
+        epsilos[ib] = eps;
+    }
+    Parallel_Reduce::reduce_pool(epsilos.data(), nb);
 
-        // Step 3 & 4: compute raw residual r and preconditioned z = -P^{-1} r
-        // Simultaneously accumulate PR beta numerator:
-        //   num = <z_new, r_new - r_old> = <z_new, r_new> - <z_new, r_old>
-        Real beta_num_zr = 0.0;   // <z_new, r_new>
-        Real beta_num_zo = 0.0;   // <z_new, r_old>
-        Real err = 0.0;
+    // ---- Phase 3: residuals, preconditioned z, PR beta numerators, error ----
+    for (int ib = 0; ib < nb; ib++) {
+        if (this->conv_mask[ib]) continue;
+        T* p_psi   = psi   + ib * ns;
+        T* p_hpsi  = hpsi  + ib * ns;
+        T* p_d_new = grad_new + ib * ns;
+        T* p_z_old = z_old_p  + ib * ns;
+        Real eps   = epsilos[ib];
 
-        for (int i = 0; i < this->n_basis; i++)
-        {
-            T r_new = p_hpsi[i] - T(epsilo) * p_psi[i];      // unpreconditioned residual
-            T z_new = T(-1.0) * r_new / T(prec[i]);           // preconditioned residual
-            T r_old = T(prec[i]) * T(-1.0) * p_z_old[i];     // recover old raw residual from old preconditioned z
+        Real bzr = 0.0, bzo = 0.0, eloc = 0.0, zpz = 0.0;
+        for (int i = 0; i < ns; i++) {
+            T r_new = p_hpsi[i] - T(eps) * p_psi[i];
+            T z_new = T(-1.0) * r_new / T(prec[i]);
+            T r_old = T(prec[i]) * T(-1.0) * p_z_old[i];
 
-            beta_num_zr += std::real(z_new * std::conj(r_new));
-            beta_num_zo += std::real(z_new * std::conj(r_old));
-            err += std::norm(r_new);
+            bzr += std::real(z_new * std::conj(r_new));
+            bzo += std::real(z_new * std::conj(r_old));
+            eloc += std::norm(r_new);
+            zpz  += prec[i] * std::norm(p_z_old[i]);
 
             p_d_new[i] = z_new;
         }
-        Parallel_Reduce::reduce_pool(beta_num_zr);
-        Parallel_Reduce::reduce_pool(beta_num_zo);
-        Parallel_Reduce::reduce_pool(err);
+        beta_num_zr[ib] = bzr;
+        beta_num_zo[ib] = bzo;
+        err_loc[ib] = eloc;
+        zPz_cur[ib] = zpz;
+    }
+    Parallel_Reduce::reduce_pool(beta_num_zr.data(), nb);
+    Parallel_Reduce::reduce_pool(beta_num_zo.data(), nb);
+    Parallel_Reduce::reduce_pool(err_loc.data(), nb);
+    Parallel_Reduce::reduce_pool(zPz_cur.data(), nb);
 
-        // Step 5: Polak-Ribiere beta (clamped to [0, inf) for stability)
+    // ---- Phase 4: compute beta, mix directions, save state ----
+    for (int ib = 0; ib < nb; ib++) {
+        if (this->conv_mask[ib]) {
+            // Soft-locked: zero search direction, no error contribution.
+            T* p_d_new = grad_new + ib * ns;
+            std::fill(p_d_new, p_d_new + ns, T(0));
+            err_arr[ib]  = 0;
+            beta_arr[ib] = 0;
+            continue;
+        }
+
+        T* p_d_new = grad_new + ib * ns;
+        T* p_d_old = grad_old + ib * ns;
+        T* p_z_old = z_old_p  + ib * ns;
+
+        // PR denominator: <z_old, r_old> = -<z_old, P*z_old> = -zPz_cur.
+        // Recomputing from current z_old ensures consistency after
+        // Cholesky rotation of z_old in orth_cholesky.
+        Real denom = -zPz_cur[ib];
         Real beta_pr = 0.0;
-        Real denom = beta_denom_arr[ib];
-        if (std::abs(denom) > 1e-30)
-        {
-            beta_pr = (beta_num_zr - beta_num_zo) / denom;
+        if (std::abs(denom) > 1e-30) {
+            beta_pr = (beta_num_zr[ib] - beta_num_zo[ib]) / denom;
             if (beta_pr < 0.0) { beta_pr = 0.0; }
         }
 
-        // Step 6: mix with old search direction   d_new = z_new + beta_pr * d_old
-        for (int i = 0; i < this->n_basis; i++)
-        {
+        beta_arr[ib] = beta_pr;
+        err_arr[ib] = std::sqrt(err_loc[ib]);
+
+        // Mix: d_new = z_new + beta_pr * d_old
+        for (int i = 0; i < ns; i++) {
             p_d_new[i] += T(beta_pr) * p_d_old[i];
         }
-
-        // Store PR beta and denominator for next iteration.
-        // beta_denom_arr[ib] stores <z_cur, r_cur> which will be the
-        // denominator <z_old, r_old> in the next iteration.
-        beta_arr[ib] = beta_pr;
-        beta_denom_arr[ib] = beta_num_zr + 1e-30;
-        err_arr[ib] = sqrt(err);
-
-        // Save preconditioned z (before mixing) for next iteration's PR beta.
-        // We stored z_new in p_d_new before mixing; now copy back to z_old.
-        // Recover z_new from: z_new = d_new - beta_pr * d_old
-        // Since d_new = p_d_new and d_old = p_d_old, and beta_pr may be zero:
-        for (int i = 0; i < this->n_basis; i++)
-        {
+        // Save z_new (before mixing) for next iteration's PR beta.
+        // Recover: z_new = d_new - beta_pr * d_old
+        for (int i = 0; i < ns; i++) {
             p_z_old[i] = p_d_new[i] - T(beta_pr) * p_d_old[i];
         }
     }
@@ -253,7 +293,6 @@ void DiagoPPCG<T, Device>::orth_projection(
 {
     this->pmmcn.multiply(1.0, psi_in.data<T>(), grad_out.data<T>(), 0.0, hsub_in.data<T>());
     this->plintrans.act(-1.0, psi_in.data<T>(), hsub_in.data<T>(), 1.0, grad_out.data<T>());
-    return;
 }
 
 template <typename T, typename Device>
@@ -264,7 +303,6 @@ void DiagoPPCG<T, Device>::rotate_wf(
 {
     this->plintrans.act(1.0, psi_out.data<T>(), hsub_in.data<T>(), 0.0, workspace_in.data<T>());
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band_l * this->n_basis);
-    return;
 }
 
 template <typename T, typename Device>
@@ -284,8 +322,7 @@ void DiagoPPCG<T, Device>::diag_hsub(
         ct::Tensor& eigenvalue_out)
 {
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
-    ct::kernels::lapack_heevd<T, ct_Device>()(this->n_band, hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
-    return;
+    ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 }
 
 template <typename T, typename Device>
@@ -302,7 +339,6 @@ void DiagoPPCG<T, Device>::calc_hsub_with_block(
     this->diag_hsub(psi_out, hpsi_out, hsub_out, eigenvalue_out);
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
-    return;
 }
 
 template <typename T, typename Device>
@@ -315,7 +351,6 @@ void DiagoPPCG<T, Device>::calc_hsub_with_block_exit(
 {
     this->diag_hsub(psi_out, hpsi_out, hsub_out, eigenvalue_out);
     this->rotate_wf(hsub_out, psi_out, workspace_in);
-    return;
 }
 
 template <typename T, typename Device>
@@ -330,16 +365,15 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     this->calc_prec();
 
-    // Initial subspace diagonalization to get a good starting guess.
+    // Reset convergence mask for this diag call.
+    this->conv_mask.assign(this->n_band_l, 0);
+
+    // Initial subspace diagonalization.
     this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi,
                                this->hsub, this->work, this->eigen);
 
-    // Initialize PPCG state: first search direction is the steepest descent.
-    // grad_old and z_old start as zero; beta_denom starts as infinity so
-    // the first beta is computed as 0 (pure steepest descent).
     setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band_l);
     setmem_complex_op()(this->z_old.template data<T>(),    0, this->n_basis * this->n_band_l);
-    setmem_var_op()(this->beta_denom.template data<Real>(), std::numeric_limits<Real>::infinity(), this->n_band_l);
 
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?
@@ -349,46 +383,35 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     {
         ++ntry;
 
-        // PPCG step 1: compute the preconditioned conjugate direction.
-        //   Uses the Polak-Ribiere beta formula (projection-corrected):
-        //     beta_i = max(0, <z_i, r_i - r_old_i> / <z_old_i, r_old_i>)
-        //     d_i = z_i + beta_i * d_old_i
-        //   where z_i = -P^{-1} r_i is the preconditioned residual.
+        // Soft-lock bands that converged in the previous iteration.
+        if (ntry > 1) {
+            this->update_convergence(ethr_band);
+        }
+
         this->calc_grad_with_block(this->prec, this->err_st, this->beta,
                                    this->psi, this->hpsi, this->grad, this->grad_old);
 
-        // PPCG step 2: explicit projection.
-        //   Project the search direction d to be orthogonal to all current
-        //   approximate eigenvectors: d_i = d_i - sum_j <psi_j|d_i> psi_j.
-        //   This keeps the search within the relevant subspace.
         this->orth_projection(this->psi, this->hsub, this->grad);
 
-        // PPCG step 3: save the current search direction for the next iteration.
-        //   z_old is already saved inside calc_grad_with_block.
         syncmem_complex_op()(this->grad_old.template data<T>(),
                              this->grad.template data<T>(),
                              n_basis * n_band_l);
 
-        // PPCG step 4: apply H to the search direction.
         this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), this->hgrad);
 
-        // PPCG step 5: line minimization along the search direction.
-        //   psi_new = psi * cos(theta) + d * sin(theta)
-        //   where theta minimizes the Rayleigh quotient.
         this->line_minimize(this->grad, this->hgrad, this->psi, this->hpsi);
 
-        // PPCG step 6: Cholesky orthonormalization.
-        //   Ensures all bands remain orthonormal after the line minimization.
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
 
-        // Periodic subspace re-alignment in the first SCF iteration.
         if (current_scf_iter == 1 && ntry % this->nline == 0) {
             this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi,
                                        this->hsub, this->work, this->eigen);
+            // Reset convergence mask after subspace re-diagonalization
+            // because psi vectors have been rotated.
+            this->conv_mask.assign(this->n_band_l, 0);
         }
     } while (ntry < max_iter && this->test_error(this->err_st, ethr_band));
 
-    // Final subspace diagonalization and rotation to get accurate eigenvalues.
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
     int start_nband = 0;
@@ -399,15 +422,9 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     }
 #endif
     syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>() + start_nband, this->n_band_l);
-
-    return;
 }
 
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;
-#if ((defined __CUDA) || (defined __ROCM))
-template class DiagoPPCG<std::complex<float>, base_device::DEVICE_GPU>;
-template class DiagoPPCG<std::complex<double>, base_device::DEVICE_GPU>;
-#endif
 
 } // namespace hsolver
