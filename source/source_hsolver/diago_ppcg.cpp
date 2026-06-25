@@ -2,6 +2,9 @@
 
 #include "source_base/module_container/base/third_party/lapack.h"
 
+#include <cstdlib>
+#include <fstream>
+
 namespace hsolver {
 
 // =============================================================================
@@ -10,6 +13,29 @@ namespace hsolver {
 namespace {
 
 namespace lapackConnector = container::lapackConnector;
+
+template <typename T, typename Real>
+Real max_generalized_residual(
+    const T* hpsi,
+    const T* spsi,
+    const Real* eigenvalue,
+    int ld,
+    int n_dim,
+    int ncol)
+{
+    Real max_res = 0;
+    for (int j = 0; j < ncol; ++j)
+    {
+        Real nrm2 = 0;
+        for (int ig = 0; ig < n_dim; ++ig)
+        {
+            const T r = hpsi[ig + j * ld] - T(eigenvalue[j]) * spsi[ig + j * ld];
+            nrm2 += static_cast<Real>(std::norm(r));
+        }
+        max_res = std::max(max_res, std::sqrt(nrm2));
+    }
+    return max_res;
+}
 
 template <typename Real>
 struct Lapack;
@@ -1515,6 +1541,29 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     int iter = 1;
     std::vector<int> active_cols;
 
+    std::ofstream residual_trace;
+    if (const char* path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE"))
+    {
+        // Optional debug trace for plotting PPCG convergence curves.
+        residual_trace.open(path);
+        if (residual_trace)
+            residual_trace << "iteration,stage,max_residual\n";
+    }
+    auto record_residual = [&](int iteration, const char* stage) {
+        if (!residual_trace)
+            return;
+        residual_trace
+            << iteration << ','
+            << stage << ','
+            << max_generalized_residual(hpsi_.data(),
+                                        spsi_.data(),
+                                        eigenvalue_in,
+                                        ld_psi_,
+                                        n_dim_,
+                                        ncol)
+            << '\n';
+    };
+
     // ---------------------------------------------------------------------------
     // Strategy dispatch
     // ---------------------------------------------------------------------------
@@ -1525,6 +1574,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Recompute to keep hpsi/spi consistent with rotated psi.
         apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
         apply_s_current(psi_in, spsi_.data(), ncol);
+        record_residual(0, "initial_rr");
 
         Real trG = trace_of_active_projected(psi_in, active_cols);
         Real trdif = static_cast<Real>(-1);
@@ -1622,6 +1672,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 trG = 0;
                 for (const int c : active_cols)
                     trG += eigenvalue_in[c];
+                record_residual(iter, "rayleigh_ritz");
             }
             else
             {
@@ -1667,6 +1718,11 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
                     apply_s_current(psi_in, spsi_.data(), ncol);
                     trdif = static_cast<Real>(-1);
+                    record_residual(iter, "trace_rr");
+                }
+                else
+                {
+                    record_residual(iter, "block_update");
                 }
             }
 
@@ -1678,6 +1734,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Final consistency: ensure hpsi/spi match the converged psi.
         apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
         apply_s_current(psi_in, spsi_.data(), ncol);
+        record_residual(iter - 1, "final");
     }
     else // CONJUGATE_GRADIENT
     {
@@ -1688,6 +1745,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
         apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
         apply_s_current(psi_in, spsi_.data(), ncol);
+        record_residual(0, "initial_rr");
 
         std::vector<T> grad;
         calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
@@ -1738,6 +1796,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 grad_old_.clear();
                 z_old_.clear();
                 beta_denom_.clear();
+                record_residual(iter, "rayleigh_ritz");
             }
             else
             {
@@ -1803,6 +1862,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 }
                 for (int ii = 0; ii < ncol; ++ii)
                     eigenvalue_in[ii] = eval_cg[ii];
+                record_residual(iter, "cg_step");
             }
 
             // Compute new gradient.
