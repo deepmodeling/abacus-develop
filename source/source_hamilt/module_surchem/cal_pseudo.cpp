@@ -1,5 +1,7 @@
 #include "surchem.h"
 
+#include "source_pw/module_pwdft/structure_factor.h" // Structure_Factor member access (sf->strucFac)
+
 // atom_in surchem::GetAtom;
 
 void surchem::gauss_charge(const UnitCell& cell,
