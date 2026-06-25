@@ -31,6 +31,11 @@ void print_welcome_banner()
 #else
     const char* commit = "unknown";
 #endif
+    std::cout << std::endl
+              << "             ▄████▄ █████▄ ▄████▄ ▄█████ ██  ██ ▄█████ " << std::endl
+              << "             ██▄▄██ ██▄▄██ ██▄▄██ ██     ██  ██ ▀▀▀▄▄▄ " << std::endl
+              << "             ██  ██ ██▄▄█▀ ██  ██ ▀█████ ▀████▀ █████▀ " << std::endl
+              << std::endl;
     std::cout << "                                                                                     "
               << std::endl
               << "                              ABACUS " << version << std::endl
