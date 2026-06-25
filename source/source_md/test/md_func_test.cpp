@@ -142,6 +142,128 @@ TEST_F(MD_func_test, RescaleVel)
     EXPECT_DOUBLE_EQ(vel[3].z, 0.00013737032325207373);
 }
 
+TEST_F(MD_func_test, CalcKineticStateDeterministic)
+{
+    const int local_natom = 2;
+    double masses[local_natom] = {2.0, 4.0};
+    ModuleBase::Vector3<double> velocities[local_natom];
+    velocities[0].x = 1.0;
+    velocities[0].y = 2.0;
+    velocities[0].z = 3.0;
+    velocities[1].x = 0.5;
+    velocities[1].y = -1.0;
+    velocities[1].z = 2.0;
+
+    const MD_func::MDKineticState state = MD_func::calc_kinetic_state(local_natom, 0, masses, velocities);
+
+    EXPECT_DOUBLE_EQ(state.kinetic, 24.5);
+    EXPECT_DOUBLE_EQ(state.temperature, 49.0 / 6.0);
+}
+
+TEST_F(MD_func_test, CalcKineticStateFullyFrozen)
+{
+    const int local_natom = 2;
+    double masses[local_natom] = {2.0, 4.0};
+    ModuleBase::Vector3<double> velocities[local_natom];
+    velocities[0].x = 1.0;
+    velocities[0].y = 2.0;
+    velocities[0].z = 3.0;
+    velocities[1].x = 0.5;
+    velocities[1].y = -1.0;
+    velocities[1].z = 2.0;
+
+    const MD_func::MDKineticState state = MD_func::calc_kinetic_state(local_natom, 3 * local_natom, masses, velocities);
+
+    EXPECT_DOUBLE_EQ(state.kinetic, 0.0);
+    EXPECT_DOUBLE_EQ(state.temperature, 0.0);
+}
+
+TEST_F(MD_func_test, CalcStressStateDeterministic)
+{
+    const int local_natom = 2;
+    const double omega = 2.0;
+    double masses[local_natom] = {2.0, 4.0};
+    ModuleBase::Vector3<double> velocities[local_natom];
+    velocities[0].x = 1.0;
+    velocities[0].y = 2.0;
+    velocities[0].z = 3.0;
+    velocities[1].x = 0.5;
+    velocities[1].y = -1.0;
+    velocities[1].z = 2.0;
+
+    ModuleBase::matrix local_virial;
+    local_virial.create(3, 3);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            local_virial(i, j) = 1.0 + i * 3 + j;
+        }
+    }
+
+    const MD_func::MDStressState state
+        = MD_func::calc_stress_state(local_natom, omega, velocities, masses, local_virial);
+
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(0, 0), 3.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(0, 1), 2.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(0, 2), 10.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(1, 0), 2.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(1, 1), 12.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(1, 2), 4.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(2, 0), 10.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(2, 1), 4.0);
+    EXPECT_DOUBLE_EQ(state.temperature_tensor(2, 2), 34.0);
+
+    EXPECT_DOUBLE_EQ(state.stress(0, 0), 2.5);
+    EXPECT_DOUBLE_EQ(state.stress(0, 1), 3.0);
+    EXPECT_DOUBLE_EQ(state.stress(0, 2), 8.0);
+    EXPECT_DOUBLE_EQ(state.stress(1, 0), 5.0);
+    EXPECT_DOUBLE_EQ(state.stress(1, 1), 11.0);
+    EXPECT_DOUBLE_EQ(state.stress(1, 2), 8.0);
+    EXPECT_DOUBLE_EQ(state.stress(2, 0), 12.0);
+    EXPECT_DOUBLE_EQ(state.stress(2, 1), 10.0);
+    EXPECT_DOUBLE_EQ(state.stress(2, 2), 26.0);
+}
+
+TEST_F(MD_func_test, StateHelpersMatchExistingApis)
+{
+    for (int i = 0; i < natom; ++i)
+    {
+        allmass[i] = 1.5 + i;
+        vel[i].x = 0.1 * (i + 1);
+        vel[i].y = -0.2 * (i + 1);
+        vel[i].z = 0.3 * (i + 1);
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            virial(i, j) = 0.5 + i * 3 + j;
+        }
+    }
+
+    double kinetic_from_current_temp = 0.0;
+    const int local_frozen_freedom = 1;
+    const double temp_from_current_temp
+        = MD_func::current_temp(kinetic_from_current_temp, natom, local_frozen_freedom, allmass, vel);
+    const MD_func::MDKineticState kinetic_state
+        = MD_func::calc_kinetic_state(natom, local_frozen_freedom, allmass, vel);
+
+    EXPECT_DOUBLE_EQ(kinetic_from_current_temp, kinetic_state.kinetic);
+    EXPECT_DOUBLE_EQ(temp_from_current_temp, kinetic_state.temperature);
+
+    MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
+    const MD_func::MDStressState stress_state
+        = MD_func::calc_stress_state(ucell.nat, ucell.omega, vel, allmass, virial);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DOUBLE_EQ(stress(i, j), stress_state.stress(i, j));
+        }
+    }
+}
+
 TEST_F(MD_func_test, InitVelCase1)
 {
     ucell.init_vel = 1;

@@ -22,19 +22,19 @@ std::unique_ptr<MD_base> create_md_runner(const Parameter& param_in, UnitCell& u
     {
         return std::unique_ptr<MD_base>(new FIRE(param_in, unit_in));
     }
-    if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
+    else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
     {
         return std::unique_ptr<MD_base>(new Nose_Hoover(param_in, unit_in));
     }
-    if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
+    else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
     {
         return std::unique_ptr<MD_base>(new Verlet(param_in, unit_in));
     }
-    if (param_in.mdp.md_type == "langevin")
+    else if (param_in.mdp.md_type == "langevin")
     {
         return std::unique_ptr<MD_base>(new Langevin(param_in, unit_in));
     }
-    if (param_in.mdp.md_type == "msst")
+    else if (param_in.mdp.md_type == "msst")
     {
         return std::unique_ptr<MD_base>(new MSST(param_in, unit_in));
     }
