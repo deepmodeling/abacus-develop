@@ -15,6 +15,26 @@
 #include <cmath>
 #include <limits>
 
+namespace {
+
+inline void lapack_heevd(char* jobz, char* uplo, int* n,
+                         std::complex<double>* a, int* lda, double* w,
+                         std::complex<double>* work, int* lwork, double* rwork, int* lrwork,
+                         int* iwork, int* liwork, int* info)
+{
+    zheevd_(jobz, uplo, n, a, lda, w, work, lwork, rwork, lrwork, iwork, liwork, info);
+}
+
+inline void lapack_heevd(char* jobz, char* uplo, int* n,
+                         std::complex<float>* a, int* lda, float* w,
+                         std::complex<float>* work, int* lwork, float* rwork, int* lrwork,
+                         int* iwork, int* liwork, int* info)
+{
+    cheevd_(jobz, uplo, n, a, lda, w, work, lwork, rwork, lrwork, iwork, liwork, info);
+}
+
+} // anonymous namespace
+
 namespace hsolver {
 
 template <typename T, typename Device>
@@ -340,13 +360,10 @@ void DiagoPPCG<T, Device>::diag_hsub(
     iwork.zero();
 
     int info = 0;
-    container::lapackConnector::dnevd('V', 'U', n,
-                                       hsub_out.data<T>(), n,
-                                       eigenvalue_out.data<Real>(),
-                                       work.data<T>(), lwork,
-                                       rwork.data<Real>(), lrwork,
-                                       iwork.data<int>(), liwork,
-                                       info);
+    char jobz = 'V', uplo = 'U';
+    lapack_heevd(&jobz, &uplo, &n, hsub_out.data<T>(), &n, eigenvalue_out.data<Real>(),
+                 work.data<T>(), &lwork, rwork.data<Real>(), &lrwork,
+                 iwork.data<int>(), &liwork, &info);
 }
 
 template <typename T, typename Device>
