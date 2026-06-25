@@ -25,19 +25,30 @@ const NeighborMpiComm kSerialMpiCommNull = -1;
 
 struct DomainBounds
 {
+    // Fractional half-open interval [lower, upper) owned by one Cartesian rank.
     std::array<double, 3> lower;
     std::array<double, 3> upper;
 };
 
 struct MpiAtomRecord
 {
+    // Cartesian position in the same units as the lattice vectors supplied to
+    // MpiDomain::initialize_lattice().
     double x;
     double y;
     double z;
+
+    // Identity in the undistributed UnitCell. type and natom may remain -1
+    // when only global_index is required by the caller.
     int global_index;
     int type;
     int natom;
+
+    // Integer lattice translation applied to this record. Ghost exchange adds
+    // the target-rank periodic translation to any shift already stored here.
     std::array<int, 3> pbc_shift;
+
+    // True only for records received from another spatial owner.
     bool is_ghost;
 
     MpiAtomRecord();
@@ -53,11 +64,20 @@ struct MpiAtomRecord
 
 struct MpiGhostExchangeStats
 {
+    // Number of distinct ranks in the fractional ghost communication stencil.
     int neighbor_rank_count = 0;
+    // Number of stencil ranks that receive at least one record from this rank.
     int nonempty_send_rank_count = 0;
+    // Atom records sent across all target ranks. The same local atom is counted
+    // more than once when it overlaps multiple rank ghost shells.
     int sent_atom_count = 0;
+    // Ghost records retained after receiving and deduplicating payloads.
     int received_ghost_count = 0;
+    // Number of packed double elements sent, including all fields of every
+    // atom record. This is the MPI payload volume, not an atom count.
     int sent_payload_count = 0;
+    // Number of packed double elements received before atom unpacking and
+    // duplicate removal.
     int received_payload_count = 0;
 };
 
@@ -71,11 +91,19 @@ class MpiDomain
     MpiDomain& operator=(MpiDomain&& other);
     ~MpiDomain();
 
+    // Initialize an orthogonal domain whose lattice vectors are the three
+    // global box extents. The object duplicates parent_comm through a Cartesian
+    // communicator and owns that duplicate until reset or destruction.
     void initialize(NeighborMpiComm parent_comm,
                     const std::array<double, 3>& global_lower,
                     const std::array<double, 3>& global_upper,
                     const double ghost_cutoff,
                     const bool pbc);
+
+    // Initialize a general lattice domain. origin, lattice_vectors and
+    // ghost_cutoff must use one consistent Cartesian length unit. Spatial
+    // ownership is evaluated in fractional coordinates, including triclinic
+    // cells; pbc controls both rank topology and coordinate wrapping.
     void initialize_lattice(NeighborMpiComm parent_comm,
                             const std::array<double, 3>& origin,
                             const std::array<std::array<double, 3>, 3>& lattice_vectors,
@@ -97,13 +125,21 @@ class MpiDomain
 
     std::array<double, 3> cartesian_to_fractional(const double x, const double y, const double z) const;
     std::array<double, 3> fractional_to_cartesian(const double fx, const double fy, const double fz) const;
+
+    // Return whether the point belongs to this rank's fractional half-open
+    // interval. Periodic coordinates are normalized before the ownership test.
     bool owns(const double x, const double y, const double z) const;
+
+    // Return indices of input records owned by this rank, preserving input order.
     std::vector<int> select_local_atoms(const std::vector<MpiAtomRecord>& atoms) const;
 
-    // Neighbor ghost exchange: each rank sends only the local atom images that
-    // overlap adjacent Cartesian ranks' ghost shells. The public contract stays
-    // the same as the earlier correctness baseline: return this rank's ghosts.
+    // Send local atom images that overlap the required Cartesian-rank ghost
+    // stencil and return deduplicated ghost records received by this rank.
+    // local_atoms must contain only records owned by the calling rank.
     std::vector<MpiAtomRecord> exchange_ghost_atoms(const std::vector<MpiAtomRecord>& local_atoms) const;
+
+    // The optional statistics describe this rank's exchange only; callers must
+    // perform MPI reductions when global totals or maxima are required.
     std::vector<MpiAtomRecord> exchange_ghost_atoms(const std::vector<MpiAtomRecord>& local_atoms,
                                                     MpiGhostExchangeStats* stats) const;
 
@@ -122,6 +158,10 @@ class MpiDomain
                                  int& neighbor_rank,
                                  std::array<int, 3>& target_coords,
                                  std::array<int, 3>& image_shift) const;
+
+    // Number of rank layers needed on one axis to cover the fractional ghost
+    // padding. This may exceed one when the cutoff is wider than a subdomain.
+    int neighbor_offset_limit(int axis) const;
     std::vector<int> neighbor_ranks() const;
     std::map<int, std::vector<MpiAtomRecord>>
     build_neighbor_send_records(const std::vector<MpiAtomRecord>& local_atoms) const;

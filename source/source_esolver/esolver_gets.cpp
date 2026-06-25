@@ -94,8 +94,34 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                          search_radius,
                          PARAM.inp.test_atom_input);
 
+    Grid_Driver record_adj_grid;
+    const Grid_Driver* record_adj_grid_ptr = nullptr;
+#ifdef __MPI
+    const MPI_Comm record_adj_comm = this->pv.comm();
+    if (record_adj_comm != MPI_COMM_NULL)
+    {
+        int record_adj_comm_size = 1;
+        MPI_Comm_size(record_adj_comm, &record_adj_comm_size);
+        if (record_adj_comm_size > 1)
+        {
+            atom_arrange::search_mpi(PARAM.globalv.search_pbc,
+                                     GlobalV::ofs_running,
+                                     record_adj_grid,
+                                     ucell,
+                                     search_radius,
+                                     record_adj_comm);
+            record_adj_grid_ptr = &record_adj_grid;
+        }
+    }
+#endif
+
     Record_adj RA;
-    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell,
+              gd,
+              this->pv,
+              PARAM.globalv.gamma_only_local,
+              orb_.cutoffs(),
+              record_adj_grid_ptr);
 
     if (this->p_hamilt == nullptr)
     {

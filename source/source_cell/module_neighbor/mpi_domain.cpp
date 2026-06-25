@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -190,9 +191,14 @@ void MpiDomain::reset()
 #ifdef __MPI
     if (owns_comm_ && cart_comm_ != MPI_COMM_NULL)
     {
+        int mpi_initialized = 0;
         int mpi_finalized = 0;
-        MPI_Finalized(&mpi_finalized);
-        if (!mpi_finalized)
+        MPI_Initialized(&mpi_initialized);
+        if (mpi_initialized)
+        {
+            MPI_Finalized(&mpi_finalized);
+        }
+        if (mpi_initialized && !mpi_finalized)
         {
             MPI_Comm_free(&cart_comm_);
         }
@@ -229,9 +235,9 @@ void MpiDomain::initialize_lattice(NeighborMpiComm parent_comm,
                                    const bool pbc)
 {
     reset();
-    if (ghost_cutoff < 0.0)
+    if (!std::isfinite(ghost_cutoff) || ghost_cutoff < 0.0)
     {
-        throw std::invalid_argument("MpiDomain ghost cutoff must be non-negative.");
+        throw std::invalid_argument("MpiDomain ghost cutoff must be finite and non-negative.");
     }
 
     const std::array<double, 3> b_cross_c = cross(lattice_vectors[1], lattice_vectors[2]);
@@ -259,6 +265,10 @@ void MpiDomain::initialize_lattice(NeighborMpiComm parent_comm,
     periods_ = pbc ? std::array<int, 3>{{1, 1, 1}} : std::array<int, 3>{{0, 0, 0}};
 
 #ifdef __MPI
+    if (parent_comm == MPI_COMM_NULL)
+    {
+        throw std::invalid_argument("MpiDomain parent communicator must not be MPI_COMM_NULL.");
+    }
     MPI_Comm_size(parent_comm, &size_);
     MPI_Comm_rank(parent_comm, &rank_);
     dims_ = std::array<int, 3>{{0, 0, 0}};
@@ -451,24 +461,24 @@ bool MpiDomain::neighbor_from_direction(const std::array<int, 3>& direction,
     for (int axis = 0; axis < 3; ++axis)
     {
         target_coords[axis] += direction[axis];
-        if (target_coords[axis] < 0)
+        if (!periods_[axis])
         {
-            if (!periods_[axis])
+            if (target_coords[axis] < 0 || target_coords[axis] >= dims_[axis])
             {
                 return false;
             }
-            target_coords[axis] += dims_[axis];
-            image_shift[axis] = 1;
+            continue;
         }
-        else if (target_coords[axis] >= dims_[axis])
+
+        int quotient = target_coords[axis] / dims_[axis];
+        int remainder = target_coords[axis] % dims_[axis];
+        if (remainder < 0)
         {
-            if (!periods_[axis])
-            {
-                return false;
-            }
-            target_coords[axis] -= dims_[axis];
-            image_shift[axis] = -1;
+            remainder += dims_[axis];
+            --quotient;
         }
+        target_coords[axis] = remainder;
+        image_shift[axis] = -quotient;
     }
 
 #ifdef __MPI
@@ -479,21 +489,39 @@ bool MpiDomain::neighbor_from_direction(const std::array<int, 3>& direction,
     return neighbor_rank != rank_;
 }
 
+int MpiDomain::neighbor_offset_limit(const int axis) const
+{
+    if (axis < 0 || axis >= 3 || dims_[axis] <= 1
+        || fractional_ghost_padding_[axis] <= 0.0)
+    {
+        return 0;
+    }
+
+    // A cutoff wider than one subdomain needs more than the immediate
+    // Cartesian neighbors. Keep the usual one-layer exchange for small
+    // cutoffs and expand only when the fractional ghost shell requires it.
+    const double rank_layers
+        = std::ceil(fractional_ghost_padding_[axis] * static_cast<double>(dims_[axis]));
+    if (!std::isfinite(rank_layers)
+        || rank_layers >= static_cast<double>(dims_[axis] - 1))
+    {
+        return dims_[axis] - 1;
+    }
+    return static_cast<int>(rank_layers);
+}
+
 std::vector<int> MpiDomain::neighbor_ranks() const
 {
     std::vector<int> ranks;
-    const int dx_begin = dims_[0] == 1 ? 0 : -1;
-    const int dx_end = dims_[0] == 1 ? 0 : 1;
-    const int dy_begin = dims_[1] == 1 ? 0 : -1;
-    const int dy_end = dims_[1] == 1 ? 0 : 1;
-    const int dz_begin = dims_[2] == 1 ? 0 : -1;
-    const int dz_end = dims_[2] == 1 ? 0 : 1;
+    const int dx_limit = neighbor_offset_limit(0);
+    const int dy_limit = neighbor_offset_limit(1);
+    const int dz_limit = neighbor_offset_limit(2);
 
-    for (int dx = dx_begin; dx <= dx_end; ++dx)
+    for (int dx = -dx_limit; dx <= dx_limit; ++dx)
     {
-        for (int dy = dy_begin; dy <= dy_end; ++dy)
+        for (int dy = -dy_limit; dy <= dy_limit; ++dy)
         {
-            for (int dz = dz_begin; dz <= dz_end; ++dz)
+            for (int dz = -dz_limit; dz <= dz_limit; ++dz)
             {
                 if (dx == 0 && dy == 0 && dz == 0)
                 {
@@ -523,18 +551,15 @@ MpiDomain::build_neighbor_send_records(const std::vector<MpiAtomRecord>& local_a
     std::map<int, std::vector<MpiAtomRecord>> send_records;
     std::map<int, std::set<std::tuple<int, int, int, int, int, int>>> seen;
 
-    const int dx_begin = dims_[0] == 1 ? 0 : -1;
-    const int dx_end = dims_[0] == 1 ? 0 : 1;
-    const int dy_begin = dims_[1] == 1 ? 0 : -1;
-    const int dy_end = dims_[1] == 1 ? 0 : 1;
-    const int dz_begin = dims_[2] == 1 ? 0 : -1;
-    const int dz_end = dims_[2] == 1 ? 0 : 1;
+    const int dx_limit = neighbor_offset_limit(0);
+    const int dy_limit = neighbor_offset_limit(1);
+    const int dz_limit = neighbor_offset_limit(2);
 
-    for (int dx = dx_begin; dx <= dx_end; ++dx)
+    for (int dx = -dx_limit; dx <= dx_limit; ++dx)
     {
-        for (int dy = dy_begin; dy <= dy_end; ++dy)
+        for (int dy = -dy_limit; dy <= dy_limit; ++dy)
         {
-            for (int dz = dz_begin; dz <= dz_end; ++dz)
+            for (int dz = -dz_limit; dz <= dz_limit; ++dz)
             {
                 if (dx == 0 && dy == 0 && dz == 0)
                 {
@@ -569,8 +594,10 @@ MpiDomain::build_neighbor_send_records(const std::vector<MpiAtomRecord>& local_a
                     }
                     image.is_ghost = true;
 
+                    const bool is_periodic_image = image_shift[0] != 0 || image_shift[1] != 0 || image_shift[2] != 0;
                     if (!inside_expanded_for_bounds(target_bounds, fractional)
-                        || inside_local_for_bounds(target_bounds, target_coords, fractional))
+                        || (!is_periodic_image
+                            && inside_local_for_bounds(target_bounds, target_coords, fractional)))
                     {
                         continue;
                     }
@@ -652,6 +679,28 @@ std::vector<MpiAtomRecord> MpiDomain::exchange_ghost_atoms(const std::vector<Mpi
 
     std::vector<int> send_counts(size_, 0);
     std::vector<int> recv_counts(size_, 0);
+    int local_count_overflow = 0;
+    for (const int neighbor_rank: neighbors)
+    {
+        if (send_buffers[neighbor_rank].size()
+            > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            local_count_overflow = 1;
+            break;
+        }
+    }
+    int global_count_overflow = 0;
+    MPI_Allreduce(&local_count_overflow,
+                  &global_count_overflow,
+                  1,
+                  MPI_INT,
+                  MPI_MAX,
+                  cart_comm_);
+    if (global_count_overflow != 0)
+    {
+        throw std::overflow_error("MpiDomain ghost payload exceeds the MPI int count limit.");
+    }
+
     std::vector<MPI_Request> count_requests;
     count_requests.reserve(neighbors.size() * 2);
     for (const int neighbor_rank: neighbors)
@@ -671,6 +720,28 @@ std::vector<MpiAtomRecord> MpiDomain::exchange_ghost_atoms(const std::vector<Mpi
     if (!count_requests.empty())
     {
         MPI_Waitall(static_cast<int>(count_requests.size()), count_requests.data(), MPI_STATUSES_IGNORE);
+    }
+
+    int local_malformed_count = 0;
+    for (const int neighbor_rank: neighbors)
+    {
+        if (recv_counts[neighbor_rank] < 0
+            || recv_counts[neighbor_rank] % kPackedAtomFields != 0)
+        {
+            local_malformed_count = 1;
+            break;
+        }
+    }
+    int global_malformed_count = 0;
+    MPI_Allreduce(&local_malformed_count,
+                  &global_malformed_count,
+                  1,
+                  MPI_INT,
+                  MPI_MAX,
+                  cart_comm_);
+    if (global_malformed_count != 0)
+    {
+        throw std::runtime_error("MpiDomain received a malformed ghost payload count.");
     }
 
     std::vector<std::vector<double>> recv_buffers(size_);

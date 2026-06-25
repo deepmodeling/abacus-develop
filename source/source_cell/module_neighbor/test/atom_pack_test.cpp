@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <fstream>
+#include <limits>
+#include <numeric>
 #include <vector>
 
 #ifdef __LCAO
@@ -116,7 +118,128 @@ void expect_neighbor_pair_indices_match_pack(const std::vector<ModuleNeighbor::N
         EXPECT_EQ(pack.cell_z[pair.neighbor_index], pair.cell_z);
     }
 }
+
+std::vector<ModuleNeighbor::NeighborPair> make_paged_pairs(const int count)
+{
+    std::vector<ModuleNeighbor::NeighborPair> pairs(count);
+    for (int index = 0; index < count; ++index)
+    {
+        pairs[index].center_type = 0;
+        pairs[index].center_natom = 0;
+        pairs[index].neighbor_type = 0;
+        pairs[index].neighbor_natom = index;
+    }
+    return pairs;
+}
+
+std::vector<int> collect_paged_indices(const ModuleNeighbor::PagedNeighborList& list,
+                                       const int type,
+                                       const int natom)
+{
+    std::vector<int> indices;
+    list.for_each_pair_index(type, natom, [&](const int pair_index) { indices.push_back(pair_index); });
+    return indices;
+}
 } // namespace
+
+TEST(PagedNeighborListTest, HandlesPageBoundaries)
+{
+    for (const int count: std::vector<int>{0, 1, 31, 32, 33, 64, 65})
+    {
+        SCOPED_TRACE("count=" + std::to_string(count));
+        ModuleNeighbor::PagedNeighborList list;
+        const std::vector<ModuleNeighbor::NeighborPair> pairs = make_paged_pairs(count);
+        list.build(pairs, std::vector<int>{2});
+
+        EXPECT_EQ(list.center_size(), 2);
+        EXPECT_EQ(list.count(0, 0), count);
+        EXPECT_EQ(list.count(0, 1), 0);
+        EXPECT_EQ(list.total_neighbors(), count);
+        EXPECT_EQ(list.used_slots(), count);
+        EXPECT_EQ(list.page_count(), (count + ModuleNeighbor::PagedNeighborList::PAGE_SIZE - 1)
+                                         / ModuleNeighbor::PagedNeighborList::PAGE_SIZE);
+        EXPECT_EQ(list.capacity_slots(),
+                  list.page_count() * ModuleNeighbor::PagedNeighborList::PAGE_SIZE);
+
+        std::vector<int> expected(count);
+        std::iota(expected.begin(), expected.end(), 0);
+        EXPECT_EQ(collect_paged_indices(list, 0, 0), expected);
+        EXPECT_TRUE(collect_paged_indices(list, 0, 1).empty());
+        EXPECT_GE(list.utilization(), 0.0);
+        EXPECT_LE(list.utilization(), 1.0);
+        EXPECT_GE(list.memory_usage_bytes(), 0);
+    }
+}
+
+TEST(PagedNeighborListTest, SupportsMultipleCentersAndRepeatedBuild)
+{
+    std::vector<ModuleNeighbor::NeighborPair> pairs(4);
+    pairs[0].center_type = 0;
+    pairs[0].center_natom = 0;
+    pairs[1].center_type = 1;
+    pairs[1].center_natom = 0;
+    pairs[2].center_type = 0;
+    pairs[2].center_natom = 1;
+    pairs[3].center_type = 1;
+    pairs[3].center_natom = 0;
+
+    ModuleNeighbor::PagedNeighborList list;
+    list.build(pairs, std::vector<int>{2, 1});
+    EXPECT_EQ(collect_paged_indices(list, 0, 0), std::vector<int>{0});
+    EXPECT_EQ(collect_paged_indices(list, 0, 1), std::vector<int>{2});
+    EXPECT_EQ(collect_paged_indices(list, 1, 0), (std::vector<int>{1, 3}));
+
+    list.build(make_paged_pairs(33), std::vector<int>{1});
+    EXPECT_EQ(list.center_size(), 1);
+    EXPECT_EQ(list.page_count(), 2);
+    EXPECT_EQ(list.total_neighbors(), 33);
+
+    list.clear();
+    EXPECT_TRUE(list.empty());
+    EXPECT_EQ(list.page_count(), 0);
+    EXPECT_EQ(list.center_size(), 0);
+}
+
+TEST(PagedNeighborListTest, RejectsInvalidInputAndCorruptedPages)
+{
+    ModuleNeighbor::PagedNeighborList list;
+    EXPECT_THROW(list.build(make_paged_pairs(1), std::vector<int>{-1}), std::invalid_argument);
+    EXPECT_THROW(list.build(std::vector<ModuleNeighbor::NeighborPair>(),
+                            std::vector<int>{std::numeric_limits<int>::max(), 1}),
+                 std::overflow_error);
+
+    std::vector<ModuleNeighbor::NeighborPair> invalid_type = make_paged_pairs(1);
+    invalid_type[0].center_type = 1;
+    EXPECT_THROW(list.build(invalid_type, std::vector<int>{1}), std::out_of_range);
+
+    list.build(make_paged_pairs(33), std::vector<int>{1});
+    EXPECT_THROW(list.count(1, 0), std::out_of_range);
+    EXPECT_THROW(list.count(0, 1), std::out_of_range);
+
+    list.page_data[0] = -1;
+    EXPECT_THROW(collect_paged_indices(list, 0, 0), std::runtime_error);
+
+    list.build(make_paged_pairs(33), std::vector<int>{1});
+    list.page_next[0] = 0;
+    EXPECT_THROW(collect_paged_indices(list, 0, 0), std::runtime_error);
+}
+
+TEST(AtomPackTest, RejectsInvalidIntegerCapacityRequests)
+{
+    ModuleNeighbor::AtomPack pack;
+    EXPECT_THROW(pack.reserve(-1), std::invalid_argument);
+    pack.append_atom(0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, false);
+    EXPECT_THROW(ModuleNeighbor::build_grid_storage_from_atom_pack(
+                     pack,
+                     std::numeric_limits<double>::quiet_NaN()),
+                 std::invalid_argument);
+
+    ModuleNeighbor::GridStorage storage;
+    storage.box_nx = std::numeric_limits<int>::max();
+    storage.box_ny = 2;
+    storage.box_nz = 1;
+    EXPECT_THROW(storage.box_size(), std::overflow_error);
+}
 
 TEST(AtomPackTest, BuildsNonPeriodicPackWithoutImages)
 {

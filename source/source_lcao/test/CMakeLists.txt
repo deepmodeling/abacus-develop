@@ -50,4 +50,18 @@ AddTest(
   LIBS parameter ${math_libs} base device
   SOURCES test_init_chg_hr_error.cpp
 )
+
+AddTest(
+  TARGET MODULE_LCAO_record_adj_mpi
+  LIBS parameter ${math_libs} base device cell_info
+  SOURCES record_adj_mpi_test.cpp ../record_adj.cpp
+    ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/sltk_atom_arrange.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/sltk_grid_driver.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/sltk_grid.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/sltk_atom.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/atom_pack.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/module_neighbor/mpi_domain.cpp
+    ${ABACUS_SOURCE_DIR}/source_io/module_output/output.cpp
+)
 endif()

@@ -8,6 +8,8 @@
 // update the followig class in near future
 #include "source_cell/unitcell.h"
 
+#include <cmath>
+
 atom_arrange::atom_arrange()
 {
 }
@@ -64,12 +66,14 @@ void atom_arrange::search(const bool pbc_flag,
                           const UnitCell& ucell,
                           const double& search_radius_bohr,
                           const int& test_atom_in,
-                          const bool test_only)
+                          const bool test_only,
+                          const double skin_bohr)
 {
     ModuleBase::TITLE("atom_arrange", "search");
     ModuleBase::timer::start("atom_arrange", "search");
 
-    if (search_radius_bohr < 0.0)
+    if (!std::isfinite(search_radius_bohr) || !std::isfinite(skin_bohr)
+        || search_radius_bohr < 0.0 || skin_bohr < 0.0)
     {
         ModuleBase::WARNING_QUIT("atom_arrange::search", " search_radius_bohr < 0,forbidden");
     }
@@ -89,10 +93,12 @@ void atom_arrange::search(const bool pbc_flag,
     process will not expand the supercell, and the neighboring atoms will only consider those within the original unit cell.
     */
     const double radius_lat0unit = search_radius_bohr / ucell.lat0;
+    const double list_radius_lat0unit = (search_radius_bohr + skin_bohr) / ucell.lat0;
 
     // Atom_input at(ofs_in, ucell, pbc_flag, radius_lat0unit, test_atom_in);
 
-    grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
+    grid_d.init(ofs_in, ucell, list_radius_lat0unit, pbc_flag);
+    grid_d.set_query_radius(radius_lat0unit);
 
 	// The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
     ModuleBase::timer::end("atom_arrange", "search");
@@ -131,4 +137,34 @@ void atom_arrange::search(const bool pbc_flag,
     }
 
     return;
+}
+
+void atom_arrange::search_mpi(const bool pbc_flag,
+                              std::ofstream& ofs_in,
+                              Grid_Driver& grid_d,
+                              const UnitCell& ucell,
+                              const double& search_radius_bohr,
+                              ModuleNeighbor::NeighborMpiComm communicator,
+                              ModuleNeighbor::MpiGhostExchangeStats* stats,
+                              const double skin_bohr)
+{
+    ModuleBase::TITLE("atom_arrange", "search_mpi");
+    ModuleBase::timer::start("atom_arrange", "search_mpi");
+
+    if (!std::isfinite(search_radius_bohr) || !std::isfinite(skin_bohr)
+        || search_radius_bohr < 0.0 || skin_bohr < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("atom_arrange::search_mpi", " search_radius_bohr < 0,forbidden");
+    }
+    assert(ucell.nat > 0);
+
+    ofs_in << " SEARCH ADJACENT ATOMS WITH MPI DOMAIN DECOMPOSITION" << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "searching radius (Bohr)", search_radius_bohr);
+
+    const double radius_lat0unit = search_radius_bohr / ucell.lat0;
+    const double list_radius_lat0unit = (search_radius_bohr + skin_bohr) / ucell.lat0;
+    grid_d.init_mpi(ofs_in, ucell, list_radius_lat0unit, pbc_flag, communicator, stats);
+    grid_d.set_query_radius(radius_lat0unit);
+
+    ModuleBase::timer::end("atom_arrange", "search_mpi");
 }

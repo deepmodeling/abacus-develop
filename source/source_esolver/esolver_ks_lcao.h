@@ -11,6 +11,7 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 #include "source_lcao/setup_dm.h" // mohan add 2025-10-30
+#include "source_cell/module_neighbor/neighbor_rebuild_state.h"
 
 #include <memory>
 
@@ -58,6 +59,16 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     virtual void others(UnitCell& ucell, const int istep) override;
 
+    /**
+     * Rebuild or reuse the replicated and local-center neighbor Grids.
+     *
+     * The returned pointer is null in serial runs and otherwise refers to
+     * record_adj_grid, which remains valid until the next rebuild or reset.
+     */
+    const Grid_Driver* prepare_neighbor_grids(UnitCell& ucell,
+                                              double physical_radius_bohr,
+                                              int istep);
+
     //! Electronic wave functions (moved from base class)
     psi::Psi<TK>* psi = nullptr;
 
@@ -66,6 +77,13 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     //! Store information about Adjacent Atoms 
     Grid_Driver gd;
+
+    //! Local-center MPI Grid used only by Record_adj. The replicated gd remains
+    //! available to Hamiltonian, Gint, DeePKS and force consumers.
+    Grid_Driver record_adj_grid;
+
+    //! Verlet reference state shared by the replicated and MPI neighbor Grids.
+    ModuleNeighbor::NeighborRebuildState neighbor_rebuild_state;
 
     //! NAO orbitals: 2d block-cyclic distribution info
     Parallel_Orbitals pv;
