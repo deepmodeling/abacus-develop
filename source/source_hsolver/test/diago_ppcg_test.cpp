@@ -211,6 +211,165 @@ INSTANTIATE_TEST_SUITE_P(VerifyPPCG,
                              DiagoPPCGPrepare(8, 100, 0, 1e-5, 300, 5e-2)
                              ));
 
+// ============================================================
+// Block PPCG test
+// ============================================================
+class DiagoPPCGBlockPrepare
+{
+  public:
+    DiagoPPCGBlockPrepare(int nband, int npw, int sparsity, double eps, int maxiter, double threshold)
+        : nband(nband), npw(npw), sparsity(sparsity), eps(eps), maxiter(maxiter), threshold(threshold)
+    {
+#ifdef __MPI
+        MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+        MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+#endif
+    }
+
+    int nband, npw, sparsity, maxiter;
+    double eps, avg_iter;
+    double threshold;
+    int nprocs = 1, mypnum = 0;
+
+    void CompareEigenBlock(double *precondition)
+    {
+        // Reference eigenvalues from LAPACK
+        double *e_lapack = new double[npw];
+        auto ev = DIAGOTEST::hmatrix;
+        if (mypnum == 0)
+        {
+            lapackEigen(npw, ev, e_lapack);
+        }
+
+        // Initial guess (perturbed LAPACK eigenvectors)
+        ModuleBase::ComplexMatrix psiguess(nband, npw);
+        std::default_random_engine p(1);
+        std::uniform_int_distribution<unsigned> u(1, 10);
+        for (int i = 0; i < nband; i++)
+            for (int j = 0; j < npw; j++)
+            {
+                double rand = static_cast<double>(u(p)) / 10.;
+                psiguess(i, j) = ev[j * DIAGOTEST::h_nc + i] * rand;
+            }
+
+        double *en = new double[nband];
+        hamilt::Hamilt<std::complex<double>> *ha = new hamilt::HamiltPW<std::complex<double>>(
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+        psi::Psi<std::complex<double>> psi;
+        psi.resize(1, nband, npw);
+        for (int i = 0; i < nband; i++)
+            for (int j = 0; j < npw; j++)
+                psi(i, j) = psiguess(i, j);
+
+        psi::Psi<std::complex<double>> psi_local;
+        double *precondition_local;
+        DIAGOTEST::npw_local = new int[nprocs];
+#ifdef __MPI
+        DIAGOTEST::cal_division(DIAGOTEST::npw);
+        DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
+        precondition_local = new double[DIAGOTEST::npw_local[mypnum]];
+        DIAGOTEST::divide_psi<double>(precondition, precondition_local);
+#else
+        DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
+        DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
+        psi_local = psi;
+        precondition_local = new double[DIAGOTEST::npw];
+        for (int i = 0; i < DIAGOTEST::npw; i++)
+            precondition_local[i] = precondition[i];
+#endif
+
+        psi_local.fix_k(0);
+        using T = std::complex<double>;
+        const int dim = DIAGOTEST::npw;
+        const std::vector<T> &h_mat = DIAGOTEST::hmatrix_local;
+
+        auto hpsi_func = [h_mat, dim](T *psi_in, T *hpsi_out,
+                                      const int ld_psi, const int nvec)
+        {
+            auto one = std::make_unique<T>(1.0);
+            auto zero = std::make_unique<T>(0.0);
+            base_device::DEVICE_CPU *ctx = {};
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'N', 'N', dim, nvec, dim,
+                one.get(), h_mat.data(), dim,
+                psi_in, ld_psi,
+                zero.get(), hpsi_out, ld_psi);
+        };
+
+        auto spsi_func = [](T *psi_in, T *spsi_out,
+                            const int ld_psi, const int nvec)
+        {
+            for (int i = 0; i < ld_psi * nvec; i++)
+                spsi_out[i] = psi_in[i];
+        };
+
+        hsolver::DiagoPPCG<T> ppcg("pw", "scf");
+        std::vector<double> ethr_band(nband, 1e-5);
+
+        // Run Block PPCG
+        double avg_iter = ppcg.diag_block(hpsi_func,
+                                          spsi_func,
+                                          npw,
+                                          nband,
+                                          dim,
+                                          psi_local.get_pointer(),
+                                          en,
+                                          ethr_band,
+                                          precondition_local);
+
+        // Run multiple times
+        for (int r = 0; r < 3; r++)
+        {
+            avg_iter = ppcg.diag_block(hpsi_func,
+                                       spsi_func,
+                                       npw,
+                                       nband,
+                                       dim,
+                                       psi_local.get_pointer(),
+                                       en,
+                                       ethr_band,
+                                       precondition_local);
+        }
+
+        // Compare with LAPACK
+        for (int i = 0; i < nband; i++)
+        {
+            EXPECT_NEAR(en[i], e_lapack[i], threshold);
+        }
+
+        delete[] DIAGOTEST::npw_local;
+        delete[] precondition_local;
+        delete[] en;
+        delete[] e_lapack;
+        delete ha;
+    }
+};
+
+class DiagoPPCGBlockTest : public ::testing::TestWithParam<DiagoPPCGBlockPrepare>
+{
+};
+
+TEST_P(DiagoPPCGBlockTest, RandomHamilt)
+{
+    DiagoPPCGBlockPrepare dcp = GetParam();
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
+    hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
+
+    HPsi<std::complex<double>> hpsi(dcp.nband, dcp.npw, dcp.sparsity);
+    DIAGOTEST::hmatrix = hpsi.hamilt();
+    DIAGOTEST::npw = dcp.npw;
+
+    dcp.CompareEigenBlock(hpsi.precond());
+}
+
+INSTANTIATE_TEST_SUITE_P(VerifyPPCGBlock,
+                         DiagoPPCGBlockTest,
+                         ::testing::Values(
+                             DiagoPPCGBlockPrepare(4, 100, 0, 1e-5, 300, 5e-2),
+                             DiagoPPCGBlockPrepare(4, 100, 4, 1e-5, 300, 5e-2)
+                             ));
+
 int main(int argc, char **argv)
 {
     int nproc = 1, myrank = 0;

@@ -618,6 +618,422 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     return this->avg_iter_;
 }
 
+// ============================================================
+// Block PPCG: true simultaneous block algorithm
+// (Vecharynski–Yang–Pask, 2015)
+// ============================================================
+
+template <typename T, typename Device>
+double DiagoPPCG<T, Device>::diag_block(const HPsiFunc& hpsi_func,
+                                        const SPsiFunc& spsi_func,
+                                        const int ld_psi,
+                                        const int nband,
+                                        const int dim,
+                                        T* psi_in,
+                                        Real* eigenvalue_in,
+                                        const std::vector<double>& ethr_band,
+                                        const Real* prec)
+{
+    ModuleBase::TITLE("DiagoPPCG", "diag_block");
+    ModuleBase::timer::start("DiagoPPCG", "diag_block");
+
+    // ---- parameters ----
+    const int k = nband;          // block size = number of bands
+    const int two_k = 2 * k;      // subspace dimension for Rayleigh-Ritz
+    const int ld = ld_psi;        // leading dimension
+
+    this->n_band_ = k;
+    this->n_basis_ = dim;
+    this->ld_psi_ = ld;
+    this->hpsi_func_ = hpsi_func;
+    this->spsi_func_ = spsi_func;
+    this->notconv_ = 0;
+    this->avg_iter_ = 0.0;
+
+    const int max_iter = (this->pw_diag_nmax_ > 0)
+                             ? this->pw_diag_nmax_
+                             : DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+    const Real thr = this->pw_diag_thr_;
+
+    // ---- tensor views for I/O ----
+    auto psi_view = ct::TensorMap(psi_in,
+                                  ct::DataTypeToEnum<T>::value,
+                                  ct::DeviceTypeToEnum<ct_Device>::value,
+                                  ct::TensorShape({k, ld}));
+    auto eigen_view = ct::TensorMap(eigenvalue_in,
+                                    ct::DataTypeToEnum<Real>::value,
+                                    ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                                    ct::TensorShape({k}));
+
+    // ---- working memory helpers ----
+    auto alloc = [&](const std::string& tag, int n) {
+        auto t = ct::Tensor(ct::DataTypeToEnum<T>::value,
+                            ct::DeviceTypeToEnum<ct_Device>::value,
+                            {n});
+        ModuleBase::Memory::record("DiagoPPCG::block", n * sizeof(T));
+        return t;
+    };
+
+    // ---- allocate block arrays (each size = k * ld) ----
+    ct::Tensor X_t  = alloc("X",  k * ld);
+    ct::Tensor HX_t = alloc("HX", k * ld);
+    ct::Tensor SX_t = alloc("SX", k * ld);
+    ct::Tensor P_t  = alloc("P",  k * ld);
+    ct::Tensor HP_t = alloc("HP", k * ld);
+    ct::Tensor SP_t = alloc("SP", k * ld);
+    ct::Tensor Z_t  = alloc("Z",  k * ld);
+    ct::Tensor SZ_t = alloc("SZ", k * ld);
+    ct::Tensor Zo_t = alloc("Zo", k * ld);   // Z_old
+    ct::Tensor SZo_t= alloc("SZo",k * ld);   // SZ_old
+
+    T* const X   = X_t.data<T>();
+    T* const HX  = HX_t.data<T>();
+    T* const SX  = SX_t.data<T>();
+    T* const P   = P_t.data<T>();
+    T* const HP  = HP_t.data<T>();
+    T* const SP  = SP_t.data<T>();
+    T* const Z   = Z_t.data<T>();
+    T* const SZ  = SZ_t.data<T>();
+    T* const Zo_ = Zo_t.data<T>();
+    T* const SZo = SZo_t.data<T>();
+
+    // ---- misc working arrays ----
+    ct::Tensor lag_t = alloc("lag", k * k);   // Lagrange multipliers
+    T* const lag = lag_t.data<T>();
+
+    // Subspace matrices on CPU (for LAPACK)
+    ct::Tensor hcc_t(ct::DataTypeToEnum<T>::value,
+                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                     {two_k * two_k});
+    ct::Tensor scc_t(ct::DataTypeToEnum<T>::value,
+                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                     {two_k * two_k});
+    ct::Tensor vcc_t(ct::DataTypeToEnum<T>::value,
+                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                     {two_k * two_k});
+    ct::Tensor eig_t(ct::DataTypeToEnum<Real>::value,
+                     ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                     {two_k});
+    T* const hcc = hcc_t.data<T>();
+    T* const scc = scc_t.data<T>();
+    T* const vcc = vcc_t.data<T>();
+    Real* const eig_all = eig_t.data<Real>();
+
+    // ---- preconditioner ----
+    ct::Tensor prec_t;
+    const Real* prec_ptr = nullptr;
+    if (prec != nullptr) {
+        prec_t = ct::TensorMap(const_cast<Real*>(prec),
+                               ct::DataTypeToEnum<Real>::value,
+                               ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+                               ct::TensorShape({dim}))
+                     .template to_device<ct_Device>();
+        prec_ptr = prec_t.data<Real>();
+    } else {
+        prec_t = ct::Tensor(ct::DataTypeToEnum<Real>::value,
+                            ct::DeviceTypeToEnum<ct_Device>::value,
+                            {dim});
+        prec_t.set_value(static_cast<Real>(1.0));
+        prec_ptr = prec_t.data<Real>();
+    }
+
+    // Own constants
+    const T cone  = static_cast<T>(1.0);
+    const T czero = static_cast<T>(0.0);
+    const T cneg  = static_cast<T>(-1.0);
+    const T* const pcone  = &cone;
+    const T* const pczero = &czero;
+    const T* const pcneg  = &cneg;
+
+    // =========================================================
+    // STEP 1:  Copy initial guess and S-orthonormalize
+    // =========================================================
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(
+        X, psi_view.data<T>(), k * ld);
+
+    if (subspace_func_) {
+        subspace_func_(X, psi_view.data<T>(), dim, k, false);
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(
+            X, psi_view.data<T>(), k * ld);
+    }
+
+    // Compute HX = H*X, SX = S*X
+    hpsi_func(X, HX, ld, k);
+    spsi_func(X, SX, ld, k);
+
+    // Initial eigenvalues: λ_i = Re( X[:,i]^H * HX[:,i] )
+    // Since X is S-orthonormal, X^H * SX = I
+    for (int i = 0; i < k; ++i) {
+        Real re = 0.0;
+        for (int j = 0; j < dim; ++j) {
+            re += (std::conj(X[j + i * ld]) * HX[j + i * ld]).real();
+        }
+        eigenvalue_in[i] = re;
+    }
+
+    // =========================================================
+    // STEP 2:  Compute initial preconditioned residual Z
+    // =========================================================
+    // Z = HX - X * diag(λ)  (residual per band)
+    for (int i = 0; i < k; ++i) {
+        const Real lam = eigenvalue_in[i];
+        for (int j = 0; j < dim; ++j) {
+            Z[j + i * ld] = HX[j + i * ld] - static_cast<T>(lam) * X[j + i * ld];
+        }
+    }
+
+    // Precondition: Z[i] = Z[i] / prec[:]  (element-wise)
+    for (int i = 0; i < k; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            Z[j + i * ld] = Z[j + i * ld] / static_cast<T>(prec_ptr[j]);
+        }
+    }
+
+    // Orthogonalize Z against X:  lag = X^H * S * Z  →  Z -= X * lag
+    // First compute SZ = S*Z
+    spsi_func(Z, SZ, ld, k);
+
+    // lag[i][j] = X[:,i]^H * SZ[:,j] = (X^H * SZ)[i][j]
+    ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                     pcone, X, ld, SZ, ld,
+                                     pczero, lag, k);
+    // Z -= X * lag
+    ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                     pcneg, X, ld, lag, k,
+                                     pcone, Z, ld);
+    // Recompute SZ for the orthogonalized Z
+    spsi_func(Z, SZ, ld, k);
+
+    // Copy to Z_old, SZ_old
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(Zo_, Z, k * ld);
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(SZo, SZ, k * ld);
+
+    // Search direction P = Z
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(P, Z, k * ld);
+    // HP = H*P, SP = S*P
+    hpsi_func(P, HP, ld, k);
+    spsi_func(P, SP, ld, k);
+
+    // =========================================================
+    // STEP 3:  Main PPCG iteration
+    // =========================================================
+    Real old_eigenvalues[64];   // k <= 64 typical for PW
+    for (int i = 0; i < k; ++i) old_eigenvalues[i] = eigenvalue_in[i];
+
+    int iter = 0;
+    for (; iter < max_iter; ++iter)
+    {
+        // ---- 3a. Form 2k × 2k subspace matrices hcc, scc ----
+        // hcc = [X, P]^H * H * [X, P] = [X^H*HX , X^H*HP;
+        //                                P^H*HX , P^H*HP]
+        // scc = [X, P]^H * S * [X, P] = [X^H*SX , X^H*SP;
+        //                                P^H*SX , P^H*SP]
+
+        // Work matrix tmp_k2[k * k] for intermediate gemm results
+        T tmp_k2[4096]; // enough for k <= 64 → k*k <= 4096
+
+        // Block (0,0): X^H * HX
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, X, ld, HX, ld,
+                                         pczero, tmp_k2, k);
+        // Copy to hcc[0:k, 0:k] (column-major, ldh = two_k)
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                hcc[row + col * two_k] = tmp_k2[row + col * k];
+
+        // Block (0,1): X^H * HP  → hcc[0:k, k:2k]
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, X, ld, HP, ld,
+                                         pczero, tmp_k2, k);
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                hcc[row + (col + k) * two_k] = tmp_k2[row + col * k];
+
+        // Block (1,1): P^H * HP  → hcc[k:2k, k:2k]
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, P, ld, HP, ld,
+                                         pczero, tmp_k2, k);
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                hcc[(row + k) + (col + k) * two_k] = tmp_k2[row + col * k];
+
+        // Block (1,0) = Hermitian of (0,1)
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                hcc[(row + k) + col * two_k] = std::conj(hcc[row + (col + k) * two_k]);
+
+        // ---- Same for scc ----
+        // Block (0,0): X^H * SX
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, X, ld, SX, ld,
+                                         pczero, tmp_k2, k);
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                scc[row + col * two_k] = tmp_k2[row + col * k];
+
+        // Block (0,1): X^H * SP
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, X, ld, SP, ld,
+                                         pczero, tmp_k2, k);
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                scc[row + (col + k) * two_k] = tmp_k2[row + col * k];
+
+        // Block (1,1): P^H * SP
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, P, ld, SP, ld,
+                                         pczero, tmp_k2, k);
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                scc[(row + k) + (col + k) * two_k] = tmp_k2[row + col * k];
+
+        // Block (1,0) = Hermitian of (0,1)
+        for (int col = 0; col < k; ++col)
+            for (int row = 0; row < k; ++row)
+                scc[(row + k) + col * two_k] = std::conj(scc[row + (col + k) * two_k]);
+
+        // ---- 3b. Solve generalized EVP: hcc * Y = scc * Y * diag(Λ) ----
+        // Copy hcc → vcc (diag_hegvd overwrites hcc, stores eigenvectors in vcc)
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
+            vcc, hcc, two_k * two_k);
+
+        DiagoIterAssist<T, Device>::diag_hegvd(two_k, k, hcc, scc, two_k, eig_all, vcc);
+
+        // eig_all[0..k-1] are the k smallest eigenvalues (sorted ascending)
+        // vcc[:, 0..k-1] are the corresponding eigenvectors (2k × k)
+
+        // ---- 3c. Rotate X, HX, SX ----
+        // X_new  = X  * V1 + P  * V2   where V1=vcc[0:k,0:k], V2=vcc[k:2k,0:k]
+        // HX_new = HX * V1 + HP * V2
+        // SX_new = SX * V1 + SP * V2
+
+        // Temporary storage: temp[dim * k]
+        ct::Tensor temp_t = alloc("temp", dim * k);
+        T* const temp = temp_t.data<T>();
+
+        // X_new = X * V1  (gemm: dim×k = dim×k * k×k)
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, X, ld, vcc, two_k,
+                                         pczero, temp, dim);
+        // X_new += P * V2
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, P, ld, &vcc[k], two_k,
+                                         pcone, temp, dim);
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(X, temp, dim * k);
+
+        // HX_new = HX * V1 + HP * V2
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, HX, ld, vcc, two_k,
+                                         pczero, temp, dim);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, HP, ld, &vcc[k], two_k,
+                                         pcone, temp, dim);
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(HX, temp, dim * k);
+
+        // SX_new = SX * V1 + SP * V2
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, SX, ld, vcc, two_k,
+                                         pczero, temp, dim);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcone, SP, ld, &vcc[k], two_k,
+                                         pcone, temp, dim);
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(SX, temp, dim * k);
+
+        // ---- 3d. Convergence check ----
+        int nconv = 0;
+        for (int i = 0; i < k; ++i) {
+            const Real de = std::abs(eig_all[i] - old_eigenvalues[i]);
+            old_eigenvalues[i] = eig_all[i];
+            eigenvalue_in[i] = eig_all[i];
+            if (de < static_cast<Real>(ethr_band[i])) ++nconv;
+        }
+        this->avg_iter_ += 1.0;
+        if (nconv == k) break;  // all bands converged
+
+        // ---- 3e. Compute new preconditioned residual ----
+        // Z_new = HX - X * diag(eigenvalues)
+        for (int i = 0; i < k; ++i) {
+            const Real lam = eig_all[i];
+            for (int j = 0; j < dim; ++j) {
+                Z[j + i * ld] = HX[j + i * ld] - static_cast<T>(lam) * X[j + i * ld];
+            }
+        }
+
+        // Precondition (element-wise division)
+        for (int i = 0; i < k; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                Z[j + i * ld] = Z[j + i * ld] / static_cast<T>(prec_ptr[j]);
+            }
+        }
+
+        // Orthogonalize Z against X: lag = X^H * (S*Z)
+        spsi_func(Z, SZ, ld, k);
+        ModuleBase::gemm_op<T, Device>()('C', 'N', k, k, dim,
+                                         pcone, X, ld, SZ, ld,
+                                         pczero, lag, k);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, k, k,
+                                         pcneg, X, ld, lag, k,
+                                         pcone, Z, ld);
+        spsi_func(Z, SZ, ld, k);
+
+        // ---- 3f. Polak–Ribiere beta (block, single scalar) ----
+        // beta = max(0, trace(Z_new^H * SZ_new - Z_new^H * SZ_old)
+        //               / trace(Z_old^H * SZ_old) )
+        Real tr_num = 0.0, tr_den = 0.0;
+        for (int i = 0; i < k; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                tr_num += (std::conj(Z[j + i * ld]) * SZ[j + i * ld]
+                          - std::conj(Zo_[j + i * ld]) * SZo[j + i * ld]).real();
+                tr_den += (std::conj(Zo_[j + i * ld]) * SZo[j + i * ld]).real();
+            }
+        }
+        const Real beta = (tr_den > std::numeric_limits<Real>::epsilon())
+                              ? std::max(Real(0.0), tr_num / tr_den) : Real(0.0);
+
+        // ---- 3g. Update search direction ----
+        // P_new = Z_new + beta * P
+        // HP_new = H*P_new, SP_new = S*P_new
+        // But first: compute HP_new = H*Z_new + beta * HP
+        // (since HP_new = H*(Z_new + beta*P) = H*Z_new + beta*HP)
+
+        // Save old Z → Z_old, SZ → SZ_old
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(Zo_, Z, k * ld);
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(SZo, SZ, k * ld);
+
+        // Store H*Z_new in HP_temp, then combine
+        ct::Tensor HZ_t = alloc("HZ", dim * k);
+        hpsi_func(Z, HZ_t.data<T>(), ld, k);
+
+        // P_new = Z_new + beta * P
+        // Z currently holds Z_new
+        for (int i = 0; i < k * ld; ++i) {
+            P[i] = Z[i] + static_cast<T>(beta) * P[i];
+        }
+
+        // HP_new = H*Z_new + beta * HP
+        for (int i = 0; i < k * ld; ++i) {
+            HP[i] = HZ_t.data<T>()[i] + static_cast<T>(beta) * HP[i];
+        }
+        // SP_new = S*Z_new + beta * SP
+        for (int i = 0; i < k * ld; ++i) {
+            SP[i] = SZ[i] + static_cast<T>(beta) * SP[i];
+        }
+    }
+
+    // ---- convergence summary ----
+    if (iter >= max_iter) {
+        this->notconv_ = k;
+    }
+    this->avg_iter_ = (k > 0) ? this->avg_iter_ / k : 0.0;
+
+    // ---- write back ----
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(
+        psi_view.data<T>(), X, k * ld);
+
+    ModuleBase::timer::end("DiagoPPCG", "diag_block");
+    return this->avg_iter_;
+}
+
 // Template instantiations
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;

@@ -99,6 +99,25 @@ class DiagoPPCG
                 const std::vector<double>& ethr_band,
                 const Real* prec = nullptr);
 
+    /**
+     * @brief Block PPCG: solve all bands simultaneously using Rayleigh-Ritz
+     *        in the 2k-dimensional subspace [X, P].
+     *
+     * This is the true block PPCG algorithm (Vecharynski–Yang–Pask, 2015):
+     * instead of solving each band independently, all bands are updated
+     * together via a projected preconditioned conjugate gradient step
+     * followed by a subspace diagonalization.
+     */
+    double diag_block(const HPsiFunc& hpsi_func,
+                      const SPsiFunc& spsi_func,
+                      const int ld_psi,
+                      const int nband,
+                      const int dim,
+                      T* psi_in,
+                      Real* eigenvalue_in,
+                      const std::vector<double>& ethr_band,
+                      const Real* prec = nullptr);
+
   private:
     Device* ctx_ = {};
     int n_band_ = 0;
