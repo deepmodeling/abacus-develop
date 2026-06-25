@@ -322,7 +322,31 @@ void DiagoPPCG<T, Device>::diag_hsub(
         ct::Tensor& eigenvalue_out)
 {
     this->pmmcn.multiply(1.0, hpsi_in.data<T>(), psi_in.data<T>(), 0.0, hsub_out.data<T>());
-    ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
+
+    const int n = this->n_band;
+    int lwork = 2 * n + n * n;
+    if (lwork < 1 + 6 * n + 2 * n * n) {
+        lwork = 1 + 6 * n + 2 * n * n;
+    }
+    ct::Tensor work(t_type, device_type, {lwork});
+    work.zero();
+
+    int lrwork = 1 + 5 * n + 2 * n * n;
+    ct::Tensor rwork(r_type, device_type, {lrwork});
+    rwork.zero();
+
+    int liwork = 3 + 5 * n;
+    ct::Tensor iwork(ct::DataType::DT_INT, device_type, {liwork});
+    iwork.zero();
+
+    int info = 0;
+    container::lapackConnector::dnevd('V', 'U', n,
+                                       hsub_out.data<T>(), n,
+                                       eigenvalue_out.data<Real>(),
+                                       work.data<T>(), lwork,
+                                       rwork.data<Real>(), lrwork,
+                                       iwork.data<int>(), liwork,
+                                       info);
 }
 
 template <typename T, typename Device>
