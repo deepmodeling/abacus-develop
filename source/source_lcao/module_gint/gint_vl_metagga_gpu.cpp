@@ -15,7 +15,7 @@ void Gint_vl_metagga_gpu::cal_gint()
     init_hr_gint_();
     cal_hr_gint_();
     compose_hr_gint(hr_gint_);
-    transfer_hr_gint_to_hR(hr_gint_, *hR_);
+    hr_gint_to_hR(hr_gint_, *hR_);
     ModuleBase::timer::end("Gint", "cal_gint_vl");
 }
 

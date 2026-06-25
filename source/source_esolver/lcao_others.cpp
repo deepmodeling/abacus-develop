@@ -3,6 +3,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
@@ -185,6 +186,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
                    ucell,
+                   PARAM.inp.sc_direction_only,
                    &(this->pv),
                    PARAM.inp.nspin,
                    this->kv,
@@ -201,7 +203,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, 
+		    istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")

@@ -382,6 +382,15 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.default_value = "False";
         item.unit = "";
         item.availability = "Used only for KSDFT with plane wave basis";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.of_ml_gene_data
+                && (para.input.esolver_type != "ksdft" || para.input.basis_type != "pw" || GlobalV::NPROC != 1))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "of_ml_gene_data is only available for KSDFT with PW basis on a single MPI rank (NPROC = 1)");
+            }
+        };
         read_sync_bool(input.of_ml_gene_data);
         this->add_item(item);
     }

@@ -58,7 +58,6 @@ struct DiagConfig
     double tolerance = 1e-6;     ///< Convergence tolerance
     int max_iterations = 100;    ///< Maximum iterations
     int dav_ndim = 4;            ///< Davidson subspace dimension multiplier
-    bool use_paw = false;        ///< Use PAW method
     int nproc_in_pool = 1;       ///< Number of processes in pool
 };
 

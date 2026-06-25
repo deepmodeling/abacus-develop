@@ -57,11 +57,10 @@ void write_Vxc_R(const int nspin,
     double vtxc = 0.0;
     // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
     // potxc.cal_v_eff(&chg, &ucell, vr_xc);
-    elecstate::Potential* potxc
-        = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
+    elecstate::Potential potxc(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
     std::vector<std::string> compnents_list = {"xc"};
-    potxc->pot_register(compnents_list);
-    potxc->update_from_charge(&chg, &ucell);
+    potxc.pot_register(compnents_list);
+    potxc.update_from_charge(&chg, &ucell);
 
     // 2. allocate H(R)
     // (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
@@ -89,19 +88,18 @@ void write_Vxc_R(const int nspin,
 
     // 3. calculate the Vxc(R)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
-    std::vector<hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>*> vxcs_op_ao(nspin0);
     for (int is = 0; is < nspin0; ++is)
     {
-        vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(&vxc_k_ao,
-                                                                        kv.kvec_d,
-                                                                        potxc,
-                                                                        &vxcs_R_ao[is],
-                                                                        &ucell,
-                                                                        orb_cutoff,
-                                                                        &gd,
-                                                                        nspin);
-        vxcs_op_ao[is]->set_current_spin(is);
-        vxcs_op_ao[is]->contributeHR();
+        hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> vxcs_op_ao(&vxc_k_ao,
+                                                              kv.kvec_d,
+                                                              &potxc,
+                                                              &vxcs_R_ao[is],
+                                                              &ucell,
+                                                              orb_cutoff,
+                                                              &gd,
+                                                              nspin);
+        vxcs_op_ao.set_current_spin(is);
+        vxcs_op_ao.contributeHR();
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -147,15 +145,18 @@ void write_Vxc_R(const int nspin,
     {
         std::set<Abfs::Vector3_Order<int>> all_R_coor = sparse_format::get_R_range(vxcs_R_ao[is]);
         const std::string filename = "Vxc_R_spin" + std::to_string(is);
+        ModuleIO::SparseWriteOptions options;
+        options.filename = PARAM.globalv.global_out_dir + filename + ".csr";
+        options.label = filename;
+        options.threshold = sparse_thr;
+        options.binary = false;
+        options.istep = -1;
+        options.reduce = true;
+        options.temp_dir = PARAM.globalv.global_out_dir;
         ModuleIO::save_sparse(cal_HR_sparse(vxcs_R_ao[is], sparse_thr),
                               all_R_coor,
-                              sparse_thr,
-                              false, // binary
-                              PARAM.globalv.global_out_dir + filename + ".csr",
                               *pv,
-                              filename,
-                              -1,
-                              true); // all-reduce
+                              options);
     }
 }
 } // namespace ModuleIO

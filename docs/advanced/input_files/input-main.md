@@ -396,6 +396,8 @@
     - [sc\_scf\_thr](#sc_scf_thr)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
+    - [vdw\_d4\_xc](#vdw_d4_xc)
+    - [vdw\_d4\_model](#vdw_d4_model)
     - [vdw\_s6](#vdw_s6)
     - [vdw\_s8](#vdw_s8)
     - [vdw\_a1](#vdw_a1)
@@ -1361,14 +1363,14 @@
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, its total-energy criterion is applied as an additional convergence check only after the charge-density criterion (`scf_thr`) has been satisfied, and only from the second SCF iteration onward (`iter > 1`). For local-orbital calculations, 1e-6 is usually accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 - **Unit**: Ry if scf_thr_type=1, dimensionless if scf_thr_type=2
 
 ### scf_ene_thr
 
 - **Type**: Real
-- **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
+- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
 - **Default**: -1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 
@@ -1786,7 +1788,7 @@
    - nspin = 1: pots1.cube;
    - nspin = 2: pots1.cube and pots2.cube;
    - nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
    - nspin = 1: pots1_ini.cube;
    - nspin = 2: pots1_ini.cube and pots2_ini.cube;
@@ -3192,6 +3194,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
@@ -3443,6 +3446,13 @@
 - **Default**: 1.0
 - **Unit**: fs
 
+### md_csvr_tau
+
+- **Type**: Real
+- **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling (longer relaxation time), smaller values give stronger coupling (shorter relaxation time). Recommended value: 100 * md_dt.
+- **Default**: 100.0
+- **Unit**: fs
+
 ### md_tolerance
 
 - **Type**: Real
@@ -3640,10 +3650,27 @@
   - d2: Grimme's D2 dispersion correction method
   - d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
   - d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
+  - d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
   - none: no vdW correction
 
   > Note: ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
+
+  > Note: DFT-D4 support requires ABACUS to be configured with ENABLE_DFTD4=ON and a CMake-installed dftd4 library exporting dftd4-config.cmake. DFT-D4 damping parameters are loaded from the external library.
 - **Default**: none
+
+### vdw_d4_xc
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+- **Default**: default
+
+### vdw_d4_model
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
+- **Default**: d4
 
 ### vdw_s6
 
@@ -3737,7 +3764,7 @@
 
 - **Type**: String
 - **Availability**: *vdw_cutoff_type is set to radius*
-- **Description**: Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
+- **Description**: Defines the cutoff radius when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method. For DFT-D4, this controls the two-body dispersion cutoff, while the three-body cutoff is internally limited to the DFT-D4 default value of 40 Bohr.
 - **Unit**: defined by vdw_radius_unit (default Bohr)
 
 ### vdw_radius_unit
@@ -3759,8 +3786,8 @@
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Availability**: *vdw_method is set to d3_0 or d3_bj*
-- **Description**: The cutoff radius when calculating coordination numbers.
+- **Availability**: *vdw_method is set to d3_0, d3_bj, or d4*
+- **Description**: The cutoff radius when calculating coordination numbers. The default is 40 Bohr for DFT-D3 and 30 Bohr for DFT-D4.
 - **Default**: 40
 - **Unit**: defined by vdw_cn_thr_unit (default: Bohr)
 

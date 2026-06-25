@@ -58,6 +58,8 @@ struct MD_para
 
     double md_damp = 1.0; ///< Langevin damping parameter (time units)
 
+    double md_csvr_tau = 100.0; ///< CSVR thermostat characteristic time scale (in MD time units)
+
     double md_tolerance = 100.0; ///< tolerance for velocity rescaling (K)
     int md_nraise = 1;           ///< parameters used when md_type=nvt
 

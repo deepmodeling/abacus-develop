@@ -6,6 +6,7 @@
 #endif
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
+#include "source_io/module_output/output.h"
 #include <sstream>
 #include <fstream>
 

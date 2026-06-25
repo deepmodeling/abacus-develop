@@ -16,14 +16,14 @@ namespace ModuleGint
     
 
     template <typename T>
-    void transfer_hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR);
+    void hr_gint_to_hR(const HContainer<T>& hr_gint, HContainer<T>& hR);
     // for nspin=4 case
     void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_tmp ,
                          hamilt::HContainer<std::complex<double>>* hR,
                          const GintInfo& gint_info);
 
     template<typename TGint, typename TDM>
-    void transfer_dm_2d_to_gint(
+    void dm_2d_to_gint(
         const GintInfo& gint_info,
         const std::vector<HContainer<TDM>*>& dm,
         std::vector<HContainer<TGint>>& dm_gint);

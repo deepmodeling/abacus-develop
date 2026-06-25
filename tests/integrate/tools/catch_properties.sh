@@ -5,6 +5,7 @@
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
 SUM_CUBE_EXE="python3 ../../integrate/tools/sum_cube.py"
+COLLECT_NPY_MEANS="../../integrate/tools/collect_npy_means.py"
 
 
 sum_file(){
@@ -219,8 +220,8 @@ fi
 # echo $out_elf
 #-------------------------------
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
-	elf1ref=refelf.cube
-	elf1cal=OUT.autotest/elf.cube
+	elf1ref=refelftot.cube
+	elf1cal=OUT.autotest/elftot.cube
 	python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
 	echo "ComparePot1_pass $?" >>$1
 fi
@@ -644,6 +645,14 @@ if [ "$need_process_cube" = true ]; then
             echo "$cube $total_chg" >> $1
         done
     fi
+fi
+
+#--------------------------------------------
+# ML gene data descriptors (.npy)
+#--------------------------------------------
+descriptor_dir="OUT.autotest/MLKEDF_Descriptors"
+if [ -d "$descriptor_dir" ]; then
+	python3 $COLLECT_NPY_MEANS "$descriptor_dir" >> "$1"
 fi
 
 #--------------------------------------------

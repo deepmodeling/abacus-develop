@@ -12,7 +12,7 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -65,7 +65,7 @@ jobs:
         cd ..
 
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       if: ${{ ! cancelled() }}
       with:
         fail_ci_if_error: true

@@ -7,6 +7,11 @@
 #ifndef MODULE_HSOLVER_HEGVD_H
 #define MODULE_HSOLVER_HEGVD_H
 
+#include "source_base/parallel_reduce.h"
+#include "source_base/module_device/types.h"
+
+#include <cassert>
+
 // Note:
 // names follow the same style as standard LAPACK APIs:
 // -----------------------------------
@@ -26,8 +31,6 @@
 // And will be moved to a global module(module base) later.
 
 #include "source_base/macros.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/module_device/types.h"
 
 namespace hsolver
 {

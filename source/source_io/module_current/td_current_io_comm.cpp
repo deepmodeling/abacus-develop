@@ -1,22 +1,21 @@
-#include "td_current_io.h"
-#include "source_base/timer.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_rt/td_info.h"
 #include "source_base/libm/libm.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/tool_threading.h"
-#include "source_base/vector3.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
-#include "source_lcao/LCAO_domain.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_threading.h"
+#include "source_base/vector3.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_rt/td_folding.h"
+#include "source_lcao/module_rt/td_info.h"
+#include "td_current_io.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
 #endif
 #ifdef __LCAO
@@ -68,7 +67,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell.itia2iat(T2, I2);
-            if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+            if (pv->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -77,8 +76,7 @@ void ModuleIO::init_from_adj(const UnitCell& ucell,
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
-            if (ucell.cal_dtau(iat1, iat2, R_index2).norm() * ucell.lat0
-                < orb_cutoff_[T1] + orb_cutoff_[T2])
+            if (ucell.cal_dtau(iat1, iat2, R_index2).norm() * ucell.lat0 < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
                 is_adj[ad1] = true;
             }
@@ -169,20 +167,16 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
 
                     // std::cout<<"L1: "<<L1<<" L2: "<<L2<<" N1: "<<N1<<" N2: "<<N2<<" m1: "<<m1<<" m2:
                     // "<<m2<<std::endl;
-                    ModuleBase::Vector3<double> tmp_r = r_calculator.get_psi_r_psi(tau1 * ucell.lat0,
-                                                                                   T1,
-                                                                                   L1,
-                                                                                   m1,
-                                                                                   N1,
-                                                                                   tau2 * ucell.lat0,
-                                                                                   T2,
-                                                                                   L2,
-                                                                                   m2,
-                                                                                   N2);
+                    ModuleBase::Vector3<double> tmp_r
+                        = r_calculator
+                              .get_psi_r_psi(tau1 * ucell.lat0, T1, L1, m1, N1, tau2 * ucell.lat0, T2, L2, m2, N2);
                     for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
                     {
                         hamilt::BaseMatrix<double>* HlocR = rR[i_alpha]->find_matrix(iat1, iat2, r_index);
-                        if(HlocR!=nullptr)HlocR->add_element(iw1, iw2, tmp_r[i_alpha]);
+                        if (HlocR != nullptr)
+                        {
+                            HlocR->add_element(iw1, iw2, tmp_r[i_alpha]);
+                        }
                         // if (i_alpha == 2)
                         // {
                         //     std::cout << "iw1: " << iw1 << " iw2: " << iw2 << " i_alpha: " << i_alpha
@@ -197,14 +191,12 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
     ModuleBase::TITLE("ModuleIO", "set_rR_from_sR");
 }
 template <typename TR>
-void ModuleIO::sum_HR(
-    const UnitCell& ucell,
-    const Parallel_Orbitals& pv,
-    const K_Vectors& kv,
-    const hamilt::HContainer<TR>* hR,
-    hamilt::HContainer<std::complex<double>>* full_hR,
-    const Exx_NAO<std::complex<double>>& exx_nao
-)
+void ModuleIO::sum_HR(const UnitCell& ucell,
+                      const Parallel_Orbitals& pv,
+                      const K_Vectors& kv,
+                      const hamilt::HContainer<TR>* hR,
+                      hamilt::HContainer<std::complex<double>>* full_hR,
+                      const Exx_NAO<std::complex<double>>& exx_nao)
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
     ModuleBase::timer::start("ModuleIO", "sum_HR");
@@ -214,7 +206,9 @@ void ModuleIO::sum_HR(
 #ifdef __EXX
     const bool use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(kv.get_koffset(0), 1.0),
                                                                std::fmod(kv.get_koffset(1), 1.0),
-                                                               std::fmod(kv.get_koffset(2), 1.0)).norm()< 1e-10);
+                                                               std::fmod(kv.get_koffset(2), 1.0))
+                                       .norm()
+                                   < 1e-10);
     RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
     // reallocate full_hR for BvK used in EXX
     if (GlobalC::exx_info.info_global.cal_exx)
@@ -226,8 +220,7 @@ void ModuleIO::sum_HR(
             std::map<int, std::array<double, 3>> atoms_pos;
             for (int iat = 0; iat < ucell.nat; ++iat)
             {
-                atoms_pos[iat] = RI_Util::Vector3_to_array3(
-                    ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
+                atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
             }
             const std::array<std::array<double, 3>, 3> latvec = {RI_Util::Vector3_to_array3(ucell.a1),
                                                                  RI_Util::Vector3_to_array3(ucell.a2),
@@ -236,13 +229,15 @@ void ModuleIO::sum_HR(
             hamilt::reallocate_hcontainer(ucell.nat, full_hR, Rs_period, &cell_nearest);
         }
         else
+        {
             hamilt::reallocate_hcontainer(ucell.nat, full_hR, Rs_period);
+        }
     }
 #endif
     // add other hR
     add_HR(hR, full_hR);
     // add velocity complex hR
-    if (PARAM.inp.td_stype==1)
+    if (PARAM.inp.td_stype == 1)
     {
         if (TD_info::td_vel_op == nullptr)
         {
@@ -258,9 +253,25 @@ void ModuleIO::sum_HR(
         for (size_t is = 0; is != PARAM.inp.nspin; ++is)
         {
             if (use_cell_nearest)
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, exx_nao.exc->get_Hexxs(), pv, PARAM.globalv.npol, *full_hR, &cell_nearest);
+            {
+                RI_2D_Comm::add_HexxR(is,
+                                      GlobalC::exx_info.info_global.hybrid_alpha,
+                                      exx_nao.exc->get_Hexxs(),
+                                      pv,
+                                      PARAM.globalv.npol,
+                                      *full_hR,
+                                      &cell_nearest);
+            }
             else
-                RI_2D_Comm::add_HexxR(is, GlobalC::exx_info.info_global.hybrid_alpha, exx_nao.exc->get_Hexxs(), pv, PARAM.globalv.npol, *full_hR, nullptr);
+            {
+                RI_2D_Comm::add_HexxR(is,
+                                      GlobalC::exx_info.info_global.hybrid_alpha,
+                                      exx_nao.exc->get_Hexxs(),
+                                      pv,
+                                      PARAM.globalv.npol,
+                                      *full_hR,
+                                      nullptr);
+            }
         }
     }
 #endif
@@ -287,7 +298,9 @@ void ModuleIO::add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfu
             const hamilt::BaseMatrix<Tadd>* HlocR = hR->find_matrix(iat1, iat2, r_index.x, r_index.y, r_index.z);
 
             if (full_HlocR == nullptr || HlocR == nullptr)
+            {
                 ModuleBase::WARNING_QUIT("ModuleIO::add_HR", "HR cannot be nullptr!");
+            }
 
             for (int i = 0; i < atom_ij.get_row_size(); ++i)
             {
@@ -307,6 +320,7 @@ void ModuleIO::add_HR(const hamilt::HContainer<Tadd>* hR, hamilt::HContainer<Tfu
 // which may lead to some errors
 template <typename TR>
 void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
+                                    TD_info* td_p,
                                     const LCAO_Orbitals& orb,
                                     const Parallel_Orbitals* pv,
                                     const K_Vectors& kv,
@@ -325,7 +339,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     const std::complex<double> one_real = ModuleBase::ONE;
     const std::complex<double> neg_one_real = ModuleBase::NEG_ONE;
     const std::complex<double> zero_complex = ModuleBase::ZERO;
-    std::cout<<pv->nloc<<std::endl;
+
     std::complex<double>* hk = new std::complex<double>[pv->nloc];
     std::complex<double>* sk = new std::complex<double>[pv->nloc];
     std::complex<double>* partial_hk = new std::complex<double>[pv->nloc];
@@ -358,15 +372,23 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         ModuleBase::GlobalFunc::ZEROS(hk, pv->nloc);
         const int nrow = pv->get_row_size();
         if (elecstate::H_TDDFT_pw::stype == 2)
-            module_rt::folding_HR_td(ucell, hR, hk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+        {
+            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+        }
         else
+        {
             hamilt::folding_HR(hR, hk, kv.kvec_d[ik], nrow, 1);
+        }
         // 1.2 set S(k)
         ModuleBase::GlobalFunc::ZEROS(sk, pv->nloc);
         if (elecstate::H_TDDFT_pw::stype == 2)
-             module_rt::folding_HR_td(ucell, sR, sk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+        {
+            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+        }
         else
+        {
             hamilt::folding_HR(sR, sk, kv.kvec_d[ik], nrow, 1);
+        }
         // for (int ir = 0; ir < pv->nrow; ir++)
         // {
         //     const int iwt1 = pv->local2global_row(ir);
@@ -415,15 +437,39 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // 3.1 set partial_H(k)
             ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->nloc);
             if (elecstate::H_TDDFT_pw::stype == 2)
-                 module_rt::folding_partial_HR_td(ucell, hR, partial_hk, kv.kvec_d[ik], TD_info::cart_At, i_alpha, nrow, 1);
+            {
+                module_rt::folding_partial_HR_td(ucell,
+                                                 hR,
+                                                 partial_hk,
+                                                 kv.kvec_d[ik],
+                                                 TD_info::cart_At,
+                                                 td_p->get_phase_hybrid(),
+                                                 i_alpha,
+                                                 nrow,
+                                                 1);
+            }
             else
-                 module_rt::folding_partial_HR(ucell, hR, partial_hk, kv.kvec_d[ik], i_alpha, nrow, 1);
+            {
+                module_rt::folding_partial_HR(ucell, hR, partial_hk, kv.kvec_d[ik], i_alpha, nrow, 1);
+            }
             // 3.2 set partial S(k)
             ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->nloc);
             if (elecstate::H_TDDFT_pw::stype == 2)
-                 module_rt::folding_partial_HR_td(ucell, sR, partial_sk, kv.kvec_d[ik], TD_info::cart_At, i_alpha, nrow, 1);
+            {
+                module_rt::folding_partial_HR_td(ucell,
+                                                 sR,
+                                                 partial_sk,
+                                                 kv.kvec_d[ik],
+                                                 TD_info::cart_At,
+                                                 td_p->get_phase_hybrid(),
+                                                 i_alpha,
+                                                 nrow,
+                                                 1);
+            }
             else
-                 module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
+            {
+                module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
+            }
             //  if(i_alpha == 2)
             // {
             //     for(int ir=0;ir< pv->nrow; ir++)
@@ -445,9 +491,13 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             ModuleBase::GlobalFunc::ZEROS(rk, pv->nloc);
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (elecstate::H_TDDFT_pw::stype == 2)
-                module_rt::folding_HR_td(ucell, *rR[i_alpha], rk, kv.kvec_d[ik], TD_info::cart_At, nrow, 1);
+            {
+                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+            }
             else
+            {
                 hamilt::folding_HR(*rR[i_alpha], rk, kv.kvec_d[ik], nrow, 1); // set r(k)
+            }
             // if (i_alpha == 2)
             // {
             //     std::cout << "ik: " << ik << " i_alpha: " << i_alpha << std::endl;
@@ -753,7 +803,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                                   const LCAO_Orbitals& orb,
                                   const Parallel_Orbitals* pv,
                                   const K_Vectors& kv,
-                                  cal_r_overlap_R& r_calculator,
+                                  TD_info* td_p,
                                   const hamilt::HContainer<TR>& sR,
                                   const hamilt::HContainer<std::complex<double>>& hR,
                                   const psi::Psi<std::complex<double>>* psi,
@@ -782,9 +832,9 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         }
     }
     // set rR
-    set_rR_from_hR(ucell, GridD, orb, pv, r_calculator, &hR, rR);
+    set_rR_from_hR(ucell, GridD, orb, pv, td_p->r_calculator, &hR, rR);
     // set velocity_basis_k
-    cal_velocity_basis_k(ucell, orb, pv, kv, rR, sR, hR, velocity_basis_k);
+    cal_velocity_basis_k(ucell, td_p, orb, pv, kv, rR, sR, hR, velocity_basis_k);
     // set velocity_k
     cal_velocity_matrix(psi, pv, kv, velocity_basis_k, velocity_k);
 
@@ -793,33 +843,35 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
             for (size_t ib = 0; ib != PARAM.inp.nbands; ++ib)
+            {
                 current_k[ik][i_alpha] -= pelec->wg(ik, ib) * velocity_k[ik][i_alpha](ib, ib).real() / 2.0; // for unit
+            }
         }
     for (size_t i_alpha = 0; i_alpha < 3; ++i_alpha)
     {
         delete rR[i_alpha];
         for (int ik = 0; ik < kv.get_nks(); ik++)
+        {
             delete[] velocity_basis_k[ik][i_alpha];
+        }
     }
 
     ModuleBase::timer::end("ModuleIO", "cal_current_exx");
     ModuleBase::TITLE("ModuleIO", "cal_current_exx");
 }
 template <typename TR>
-void ModuleIO::write_current(
-    const UnitCell& ucell,
-    const Grid_Driver& GridD,
-    const int istep,
-    const psi::Psi<std::complex<double>>* psi,
-    const elecstate::ElecState* pelec,
-    const K_Vectors& kv,
-    const Parallel_Orbitals* pv,
-    const LCAO_Orbitals& orb,
-    cal_r_overlap_R& r_calculator,
-    const hamilt::HContainer<TR>* sR,
-    const hamilt::HContainer<TR>* hR,
-    const Exx_NAO<std::complex<double>>& exx_nao
-)
+void ModuleIO::write_current(const UnitCell& ucell,
+                             const Grid_Driver& GridD,
+                             const int istep,
+                             const psi::Psi<std::complex<double>>* psi,
+                             const elecstate::ElecState* pelec,
+                             const K_Vectors& kv,
+                             const Parallel_Orbitals* pv,
+                             const LCAO_Orbitals& orb,
+                             TD_info* td_p,
+                             const hamilt::HContainer<TR>* sR,
+                             const hamilt::HContainer<TR>* hR,
+                             const Exx_NAO<std::complex<double>>& exx_nao)
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
@@ -830,7 +882,7 @@ void ModuleIO::write_current(
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
     sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao);
-    cal_current_comm_k(ucell, GridD, orb, pv, kv, r_calculator, *sR, *full_hR, psi, pelec, current_k);
+    cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 
     int nspin0 = 1;
@@ -846,8 +898,8 @@ void ModuleIO::write_current(
             {
                 if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
                 {
-                    std::string filename = PARAM.globalv.global_out_dir + "currents" + std::to_string(is)
-                                           + "k" + std::to_string(ik) + "comm.txt";
+                    std::string filename = PARAM.globalv.global_out_dir + "currents" + std::to_string(is) + "k"
+                                           + std::to_string(ik) + "comm.txt";
                     std::ofstream fout;
                     fout.open(filename, std::ios::app);
                     fout << std::setprecision(16);
@@ -862,8 +914,12 @@ void ModuleIO::write_current(
 
     ModuleBase::Vector3<double> current_total;
     for (int dir = 0; dir < 3; dir++)
+    {
         for (int ik = 0; ik < kv.get_nks(); ik++)
+        {
             current_total[dir] += current_k[ik][dir];
+        }
+    }
     if (GlobalV::MY_RANK == 0)
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_tot_comm.txt";
@@ -878,35 +934,29 @@ void ModuleIO::write_current(
 
     ModuleBase::timer::end("ModuleIO", "write_current");
 }
-template 
-void ModuleIO::write_current<double>(
-        const UnitCell& ucell,
-        const Grid_Driver& GridD,
-        const int istep,
-        const psi::Psi<std::complex<double>>* psi,
-        const elecstate::ElecState* pelec,
-        const K_Vectors& kv,
-        const Parallel_Orbitals* pv,
-        const LCAO_Orbitals& orb,
-        cal_r_overlap_R& r_calculator,
-        const hamilt::HContainer<double>* sR,
-        const hamilt::HContainer<double>* hR,
-        const Exx_NAO<std::complex<double>>& exx_nao
-);
+template void ModuleIO::write_current<double>(const UnitCell& ucell,
+                                              const Grid_Driver& GridD,
+                                              const int istep,
+                                              const psi::Psi<std::complex<double>>* psi,
+                                              const elecstate::ElecState* pelec,
+                                              const K_Vectors& kv,
+                                              const Parallel_Orbitals* pv,
+                                              const LCAO_Orbitals& orb,
+                                              TD_info* td_p,
+                                              const hamilt::HContainer<double>* sR,
+                                              const hamilt::HContainer<double>* hR,
+                                              const Exx_NAO<std::complex<double>>& exx_nao);
 
-template 
-void ModuleIO::write_current<std::complex<double>>(
-        const UnitCell& ucell,
-        const Grid_Driver& GridD,
-        const int istep,
-        const psi::Psi<std::complex<double>>* psi,
-        const elecstate::ElecState* pelec,
-        const K_Vectors& kv,
-        const Parallel_Orbitals* pv,
-        const LCAO_Orbitals& orb,
-        cal_r_overlap_R& r_calculator,
-        const hamilt::HContainer<std::complex<double>>* sR,
-        const hamilt::HContainer<std::complex<double>>* hR,
-        const Exx_NAO<std::complex<double>>& exx_nao
-);
+template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
+                                                            const Grid_Driver& GridD,
+                                                            const int istep,
+                                                            const psi::Psi<std::complex<double>>* psi,
+                                                            const elecstate::ElecState* pelec,
+                                                            const K_Vectors& kv,
+                                                            const Parallel_Orbitals* pv,
+                                                            const LCAO_Orbitals& orb,
+                                                            TD_info* td_p,
+                                                            const hamilt::HContainer<std::complex<double>>* sR,
+                                                            const hamilt::HContainer<std::complex<double>>* hR,
+                                                            const Exx_NAO<std::complex<double>>& exx_nao);
 #endif //__LCAO

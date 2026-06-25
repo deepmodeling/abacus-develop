@@ -74,7 +74,9 @@ void FFT_Bundle::initfft(int nx_in,
         {
             ModuleBase::WARNING_QUIT("device", "now dsp fft is not supported for the float type");
         }
-        fft_double = make_unique<FFT_DSP<double>>();
+        auto dsp_fft = make_unique<FFT_DSP<double>>();
+        dsp_fft->cluster_id = this->dsp_cluster_id_;
+        fft_double = std::move(dsp_fft);
         fft_double->initfft(nx_in, ny_in, nz_in);
     }else
 #endif

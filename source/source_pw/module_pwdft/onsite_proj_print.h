@@ -2,7 +2,6 @@
 #define MODULEHAMILTPW_ONSITE_PROJ_PRINT_H
 
 #include "source_cell/unitcell.h"
-#include "source_base/global_variable.h"
 #include <vector>
 #include <string>
 #include <complex>

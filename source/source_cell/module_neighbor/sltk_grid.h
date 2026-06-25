@@ -4,7 +4,6 @@
 #include "atom_pack.h"
 #include "source_cell/unitcell.h"
 #include "sltk_atom.h"
-#include "sltk_util.h"
 
 #include <cmath>
 #include <functional>

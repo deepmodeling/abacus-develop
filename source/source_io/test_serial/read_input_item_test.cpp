@@ -1546,6 +1546,36 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.of_read_kernel, false);
     }
+    { // of_ml_gene_data
+        auto it = find_label("of_ml_gene_data", readinput.input_lists);
+
+        param.input.of_ml_gene_data = true;
+        param.input.esolver_type = "ofdft";
+        param.input.basis_type = "pw";
+        GlobalV::NPROC = 1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.of_ml_gene_data = true;
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "lcao";
+        GlobalV::NPROC = 1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.of_ml_gene_data = true;
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "pw";
+        GlobalV::NPROC = 2;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // dft_plus_u
         auto it = find_label("dft_plus_u", readinput.input_lists);
         param.input.dft_plus_u = 1;
@@ -1672,14 +1702,6 @@ TEST_F(InputTest, Item_test2)
     { // nsc_min
         auto it = find_label("nsc_min", readinput.input_lists);
         param.input.nsc_min = 0;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // sc_scf_nmin
-        auto it = find_label("sc_scf_nmin", readinput.input_lists);
-        param.input.sc_scf_nmin = 1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

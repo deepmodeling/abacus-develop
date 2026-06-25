@@ -27,6 +27,7 @@ void destroyGpuSolverHandle()
     }
 }
 
+#ifdef __LCAO
 static inline
 void xhegvd_wrapper(
     const cublasFillMode_t& uplo,
@@ -57,6 +58,7 @@ void xhegvd_wrapper(
     CHECK_CUDA(cudaFree(work));
     CHECK_CUDA(cudaFree(devInfo));
 }
+#endif
 
 static inline
 void xhegvd_wrapper (
@@ -122,6 +124,7 @@ void xhegvd_wrapper (
     CHECK_CUDA(cudaFree(devInfo));
 }
 
+#ifdef __LCAO
 static inline
 void xheevd_wrapper(
     const cublasFillMode_t& uplo,
@@ -148,6 +151,7 @@ void xheevd_wrapper(
     CHECK_CUDA(cudaFree(work));
     CHECK_CUDA(cudaFree(devInfo));
 }
+#endif
 
 static inline
 void xheevd_wrapper (

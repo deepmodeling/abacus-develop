@@ -38,7 +38,7 @@ TEST(PropagatorTest, testPropagatorETRS)
     pv->dim1 = 1;
     pv->nb = 1;
     pv->blacs_ctxt = 0;
-    pv->coord[0] = pv->coord[1] = 0;
+    pv->set_coord(0, 0);
 
     int dim[2];
     dim[0] = nprow;

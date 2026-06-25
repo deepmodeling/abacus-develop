@@ -3,7 +3,6 @@
 
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "pot_base.h"
@@ -175,6 +174,10 @@ class Potential : public PotBase
     const ModulePW::PW_Basis *get_rho_basis() const
     {
         return this->rho_basis_;
+    }
+    const UnitCell* get_ucell() const
+    {
+        return this->ucell_;
     }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy

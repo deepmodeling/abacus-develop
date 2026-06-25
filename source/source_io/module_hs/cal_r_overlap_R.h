@@ -1,7 +1,7 @@
 #ifndef CAL_R_OVERLAP_R_H
 #define CAL_R_OVERLAP_R_H
 
-#include "source_base/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs-vector3_order.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
@@ -14,7 +14,6 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "single_R_io.h"
 
 #include <map>
 #include <set>
@@ -45,6 +44,20 @@ class cal_r_overlap_R
       const int& L2,
       const int& m2,
       const int& N2
+    );
+    ModuleBase::Vector3<double> get_psi_r_gradpsi(
+      const ModuleBase::Vector3<double>& R1,
+      const int& T1,
+      const int& L1,
+      const int& m1,
+      const int& N1,
+      const ModuleBase::Vector3<double>& R2,
+      const int& T2,
+      const int& L2,
+      const int& m2,
+      const int& N2,
+      const ModuleBase::Vector3<double>& Efield,
+      const ModuleBase::Vector3<double>& dR
     );
     void get_psi_r_beta(
       const UnitCell& ucell,

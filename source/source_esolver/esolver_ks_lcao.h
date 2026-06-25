@@ -4,7 +4,6 @@
 #include "esolver_ks.h"
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
-#include "source_lcao/module_gint/gint.h" // gint
 #include "source_lcao/module_gint/gint_info.h"
 #include "source_estate/module_charge/gint_precision_controller.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008

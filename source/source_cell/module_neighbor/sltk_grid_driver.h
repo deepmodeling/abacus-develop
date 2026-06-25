@@ -2,11 +2,8 @@
 #define GRID_DRIVER_H
 
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/structure_factor.h"
-#include "sltk_atom.h"
 #include "sltk_grid.h"
 
 #include <memory>

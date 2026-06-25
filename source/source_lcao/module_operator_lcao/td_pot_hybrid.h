@@ -9,8 +9,6 @@
 #include "source_lcao/module_hcontainer/hcontainer.h"
 #include <vector>
 #include "source_io/module_hs/cal_r_overlap_R.h"
-#include "source_lcao/module_rt/td_info.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
 
 namespace hamilt
 {
@@ -68,6 +66,9 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     virtual void set_HR_fixed(void*) override;
 
+    void cal_force_stress(const bool cal_force,
+                          const HContainer<TR>* dmR,
+                          ModuleBase::matrix& force);
 
   private:
     const UnitCell* ucell = nullptr;
@@ -116,11 +117,23 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const int& iat2,
                     const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
+                    const ModuleBase::Vector3<double>& dR,
                     TR* hr_mat_p,
                     TR* sr_p);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;
+
+    void cal_force_IJR(const int& iat1,
+                    const int& iat2,
+                    const Parallel_Orbitals* paraV,
+                    const ModuleBase::Vector3<double>& dtau,     
+                    const ModuleBase::Vector3<double>& dR,                  
+                    TR* dmR_pointer,
+                    double* force1,
+                    double* force2);
+
+    const Grid_Driver* gridD = nullptr;
 };
 
 } // namespace hamilt

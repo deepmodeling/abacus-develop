@@ -3,7 +3,6 @@
 
 #include "FORCE.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_func.h"
@@ -54,7 +53,9 @@ class Force_Stress_LCAO
 						Plus_U &dftu, // mohan add 2025-11-07
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
-                        ModuleSymmetry::Symmetry* symm);
+                        ModuleSymmetry::Symmetry* symm,
+                        const int td_stype = 0,
+                        hamilt::Hamilt<T>* p_hamilt = nullptr);
 
   private:
     int nat;

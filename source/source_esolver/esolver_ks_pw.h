@@ -4,7 +4,6 @@
 #include "source_psi/setup_psi_pw.h" // mohan add 20251012
 #include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/exx_helper_base.h"
-#include "source_pw/module_pwdft/op_pw_vel.h"
 
 #include <memory>
 #include <source_base/macros.h>

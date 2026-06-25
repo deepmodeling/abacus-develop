@@ -124,7 +124,9 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
-        auto tmp_matrix_info = atom_pair.get_matrix_values();
+        const int r_index = atom_pair.find_R(rx, ry, rz);
+        if (r_index < 0) continue;
+        auto tmp_matrix_info = atom_pair.get_matrix_values(r_index);
         int* tmp_index = std::get<0>(tmp_matrix_info).data();
         T* tmp_data = std::get<1>(tmp_matrix_info);
         for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
