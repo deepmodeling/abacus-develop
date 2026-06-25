@@ -6,8 +6,13 @@
 
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/module_diag/diag_orthogonalizer.h"
+#include "source_hsolver/module_diag/diago_trace.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h"
+
+#include <algorithm>
+#include <string>
+#include <vector>
 
 
 using namespace hsolver;
@@ -131,6 +136,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         ModuleBase::TITLE("DiagoDavid", "diag_once");
     }
     ModuleBase::timer::start("DiagoDavid", "diag_once");
+    DiagoTrace trace("Davidson");
 
     // convflag[m] = true if the m th band is converged
     std::vector<bool> convflag(nband, false);
@@ -228,22 +234,39 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         ModuleBase::timer::start("DiagoDavid", "check_update");
 
         this->notconv = 0;
+        std::vector<Real> eigen_delta(nband, Real(0));
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if(nband > 16)
 #endif
         for (int m = 0; m < nband; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < ethr_band[m]);
+            eigen_delta[m] = std::abs(this->eigenvalue[m] - eigenvalue_in[m]);
+            convflag[m] = (eigen_delta[m] < ethr_band[m]);
             eigenvalue_in[m] = this->eigenvalue[m];
         }
+        Real max_delta = Real(0);
+        Real avg_delta = Real(0);
         for (int m = 0; m < nband; m++)
         {
+            max_delta = std::max(max_delta, eigen_delta[m]);
+            avg_delta += eigen_delta[m];
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
                 this->notconv++;
             }
         }
+        if (nband > 0)
+        {
+            avg_delta /= nband;
+        }
+        trace.record_iteration(dav_iter,
+                               nband,
+                               max_delta,
+                               avg_delta,
+                               nband - this->notconv,
+                               Real(-1),
+                               "nbase=" + std::to_string(nbase));
 
         ModuleBase::timer::end("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > nbase_x)

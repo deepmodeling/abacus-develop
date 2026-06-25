@@ -12,6 +12,9 @@
 #include <source_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
 #include <source_hsolver/diago_cg.h>
 #include <source_hsolver/module_diag/diag_orthogonalizer.h>
+#include <source_hsolver/module_diag/diago_trace.h>
+
+#include <string>
 
 using namespace hsolver;
 
@@ -62,6 +65,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
 {
     ModuleBase::TITLE("DiagoCG", "diag_once");
     ModuleBase::timer::start("DiagoCG", "diag_once");
+    DiagoTrace trace("CG");
 
     /// out : record for states of convergence
     this->notconv_ = 0;
@@ -164,6 +168,14 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
                                          phi_m,
                                          sphi,
                                          hphi); // Tensor&
+
+            trace.record_iteration(iter,
+                                   this->n_band_,
+                                   cg_norm,
+                                   cg_norm,
+                                   m + (converged ? 1 : 0),
+                                   Real(-1),
+                                   "band=" + std::to_string(m));
 
         } while (!converged && ++iter < pw_diag_nmax_);
 

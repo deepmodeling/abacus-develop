@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/module_diag/diago_trace.h"
 
 #include <ATen/kernels/lapack.h>
 
@@ -1180,6 +1181,7 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 {
     ModuleBase::TITLE("DiagoPPCG", "diag");
     ModuleBase::timer::start("DiagoPPCG", "diag");
+    DiagoTrace trace("PPCG");
 
     // ---- initial orthonormalization + Rayleigh-Ritz ----
     this->calc_hpsi(hpsi_func, psi_in, this->hpsi);
@@ -1238,6 +1240,35 @@ int DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // ---- 1. preconditioned residuals ----
         this->calc_preconditioned_residual(psi_in, /*skip_residual=*/did_rr);
         did_rr = false;
+
+        if (trace.enabled())
+        {
+            Real max_residual = Real(0);
+            Real avg_residual = Real(0);
+            int n_converged = 0;
+            for (int ib = 0; ib < this->n_band_l; ++ib)
+            {
+                max_residual = std::max(max_residual, this->h_err[ib]);
+                avg_residual += this->h_err[ib];
+                if (this->is_locked[ib])
+                {
+                    ++n_converged;
+                }
+            }
+            if (this->n_band_l > 0)
+            {
+                avg_residual /= this->n_band_l;
+            }
+            trace.record_iteration(iter,
+                                   this->n_band_l,
+                                   max_residual,
+                                   avg_residual,
+                                   n_converged,
+                                   Real(-1),
+                                   std::string("trdif=") + std::to_string(static_cast<double>(trdif))
+                                       + " trtol=" + std::to_string(static_cast<double>(trtol))
+                                       + (!this->block_sizes.empty() ? " blocked" : ""));
+        }
 
         // ---- 2. convergence: per-band residual OR trace stabilised ----
         if (!this->test_error(ethr_band)) break;

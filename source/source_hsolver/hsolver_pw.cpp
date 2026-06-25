@@ -13,6 +13,7 @@
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_ppcg.h"
+#include "source_hsolver/module_diag/diago_auto_selector.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 #include "source_estate/elecstate_tools.h"
@@ -21,6 +22,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <random>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
@@ -281,7 +283,42 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
     };
 
-    if (this->method == "cg")
+    std::string effective_method = this->method;
+    DiagoAutoSelectInput auto_input;
+    auto_input.current_method = this->method;
+    auto_input.calculation = this->calculation_type;
+    auto_input.nbands = nbands;
+    auto_input.nbasis = psi.get_nbasis();
+    auto_input.npw_total = npw_total;
+    auto_input.nproc_in_pool = this->nproc_in_pool;
+    auto_input.scf_iter = this->scf_iter;
+    auto_input.gpu_device = std::is_same<Device, base_device::DEVICE_GPU>::value;
+    const DiagoAutoSelectResult auto_result = DiagoAutoSelector::recommend_pw(auto_input);
+    if (DiagoAutoSelector::report_enabled() && GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << "[DiagoAutoSelector] current=" << this->method
+                             << " recommended=" << auto_result.method
+                             << " reason: " << auto_result.reason << std::endl;
+    }
+    if (DiagoAutoSelector::auto_select_enabled())
+    {
+        const bool crosses_dav_subspace = (this->method == "dav_subspace") != (auto_result.method == "dav_subspace");
+        if (crosses_dav_subspace)
+        {
+            if (GlobalV::MY_RANK == 0)
+            {
+                GlobalV::ofs_running << "[DiagoAutoSelector] keep current=" << this->method
+                                     << " because switching to/from dav_subspace after precondition setup "
+                                     << "would use an inconsistent preconditioner" << std::endl;
+            }
+        }
+        else
+        {
+            effective_method = auto_result.method;
+        }
+    }
+
+    if (effective_method == "cg")
     {
         // wrap the subspace_func into a lambda function
         // if S_orth is true, then assume psi is S-orthogonal, solve standard eigenproblem
@@ -318,7 +355,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // TODO: Double check tensormap's potential problem
         // ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
-    else if (this->method == "bpcg")
+    else if (effective_method == "bpcg")
     {
         const int nband_l = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
@@ -327,7 +364,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
-    else if (this->method == "ppcg")
+    else if (effective_method == "ppcg")
     {
         const int nband_l = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
@@ -442,7 +479,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                         extra_sz * sizeof(T));
         }
     }
-    else if (this->method == "dav_subspace")
+    else if (effective_method == "dav_subspace")
     {
         bool scf = this->calculation_type == "nscf" ? false : true;
 
@@ -466,7 +503,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                               this->ethr_band,
                               scf));
     }
-    else if (this->method == "dav")
+    else if (effective_method == "dav")
     {
         // Davidson iter parameters
 

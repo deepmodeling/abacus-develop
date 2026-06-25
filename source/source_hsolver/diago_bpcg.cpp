@@ -6,12 +6,15 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
+#include "source_hsolver/module_diag/diago_trace.h"
 #include "para_linear_transform.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
 #include <ATen/ops/einsum_op.h>
+#include <algorithm>
 #include <limits>
+#include <vector>
 
 namespace hsolver {
 
@@ -262,6 +265,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const std::vector<double>& ethr_band)
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
+    DiagoTrace trace("BPCG");
     // Get the pointer of the input psi
     this->psi = std::move(ct::TensorMap(psi_in /*psi_in.get_pointer()*/, t_type, device_type, {this->n_band_l, this->n_basis}));
 
@@ -290,6 +294,40 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // 5. Do precondition
         this->calc_grad_with_block(this->prec, this->err_st, this->beta,
                                  this->psi, this->hpsi, this->grad, this->grad_old);
+
+        if (trace.enabled())
+        {
+            std::vector<Real> err_host(this->n_band_l);
+            const Real* err_ptr = this->err_st.template data<Real>();
+            if (this->err_st.device_type() == ct::DeviceType::GpuDevice)
+            {
+                syncmem_var_d2h_op()(err_host.data(), this->err_st.template data<Real>(), this->n_band_l);
+                err_ptr = err_host.data();
+            }
+
+            Real max_residual = Real(0);
+            Real avg_residual = Real(0);
+            int n_converged = 0;
+            for (int ib = 0; ib < this->n_band_l; ++ib)
+            {
+                max_residual = std::max(max_residual, err_ptr[ib]);
+                avg_residual += err_ptr[ib];
+                if (err_ptr[ib] <= ethr_band[ib])
+                {
+                    ++n_converged;
+                }
+            }
+            if (this->n_band_l > 0)
+            {
+                avg_residual /= this->n_band_l;
+            }
+            trace.record_iteration(ntry,
+                                   this->n_band_l,
+                                   max_residual,
+                                   avg_residual,
+                                   n_converged,
+                                   Real(-1));
+        }
 
         // Orthogonalize column vectors g_i in matrix grad to column vectors p_j in matrix psi
         // for all 'j less or equal to i'.
