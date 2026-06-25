@@ -9,6 +9,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
+#include <ATen/kernels/lapack.h>
 #include <source_base/macros.h>
 
 #include <functional>
