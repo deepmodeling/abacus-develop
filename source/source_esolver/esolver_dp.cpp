@@ -59,7 +59,15 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     ModuleBase::TITLE("ESolver_DP", "runner");
     ModuleBase::timer::start("ESolver_DP", "runner");
 
+    // cell and coord are only needed by dp.compute() on rank 0
     std::vector<double> cell(9, 0.0);
+    std::vector<double> coord(3 * ucell.nat, 0.0);
+    int iat = 0;
+
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+    {
+#endif
     cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
     cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
     cell[2] = ucell.latvec.e13 * ucell.lat0_angstrom;
@@ -70,8 +78,6 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     cell[7] = ucell.latvec.e32 * ucell.lat0_angstrom;
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    std::vector<double> coord(3 * ucell.nat, 0.0);
-    int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
@@ -83,6 +89,9 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
         }
     }
     assert(ucell.nat == iat);
+#ifdef __MPI
+    }
+#endif
 
 #ifdef __DPMD
     std::vector<double> f, v;
