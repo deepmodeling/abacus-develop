@@ -468,4 +468,7 @@ void DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 template class DiagoPPCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoPPCG<std::complex<double>, base_device::DEVICE_CPU>;
 
+template class DiagoPPCG<std::complex<float>, base_device::DEVICE_GPU>;
+template class DiagoPPCG<std::complex<double>, base_device::DEVICE_GPU>;
+
 } // namespace hsolver
