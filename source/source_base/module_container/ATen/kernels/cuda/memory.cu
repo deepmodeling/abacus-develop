@@ -94,7 +94,7 @@ struct synchronize_memory<T, DEVICE_GPU, DEVICE_GPU> {
         const T *arr_in,
         const size_t& size)
     {
-        CHECK_CUDA(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice));
+        CHECK_CUDA(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToDevice));
     }
 };
 
