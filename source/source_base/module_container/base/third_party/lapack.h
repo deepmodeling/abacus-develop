@@ -228,7 +228,7 @@ void hegvd(const int itype, const char jobz, const char uplo, const int n,
             float* a, const int lda,
             float* b, const int ldb, float* w,
             float* work, int lwork, float* rwork, int lrwork,
-            int* iwork, int liwork, int& info)
+            int* iwork, int liwork, int info)
 {
     // call the fortran routine
     ssygvd_(&itype, &jobz, &uplo, &n,
@@ -242,7 +242,7 @@ void hegvd(const int itype, const char jobz, const char uplo, const int n,
             double* a, const int lda,
             double* b, const int ldb, double* w,
             double* work, int lwork, double* rwork, int lrwork,
-            int* iwork, int liwork, int& info)
+            int* iwork, int liwork, int info)
 {
     // call the fortran routine
     dsygvd_(&itype, &jobz, &uplo, &n,
@@ -255,7 +255,7 @@ void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<float>* a, const int lda,
             std::complex<float>* b, const int ldb, float* w,
             std::complex<float>* work, int lwork, float* rwork, int lrwork,
-            int* iwork, int liwork, int& info)
+            int* iwork, int liwork, int info)
 {
     // call the fortran routine
     chegvd_(&itype, &jobz, &uplo, &n,
@@ -269,7 +269,7 @@ void hegvd(const int itype, const char jobz, const char uplo, const int n,
             std::complex<double>* a, const int lda,
             std::complex<double>* b, const int ldb, double* w,
             std::complex<double>* work, int lwork, double* rwork, int lrwork,
-            int* iwork, int liwork, int& info)
+            int* iwork, int liwork, int info)
 {
     // call the fortran routine
     zhegvd_(&itype, &jobz, &uplo, &n,

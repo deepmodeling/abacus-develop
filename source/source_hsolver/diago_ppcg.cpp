@@ -40,7 +40,7 @@ Real max_generalized_residual(
 template <typename T>
 struct PpcgLapack
 {
-    using Real = typename ct::kernels::lapack_hegvd<T, base_device::DEVICE_CPU>::Real;
+    using Real = typename ct::kernels::lapack_hegvx<T, base_device::DEVICE_CPU>::Real;
 
     static void heevd(int n, T* a, Real* w)
     {
@@ -50,8 +50,8 @@ struct PpcgLapack
     static void hegvd(int n, T* a, T* b, Real* w)
     {
         std::vector<T> eigen_vec(n * n, T(0));
-        ct::kernels::lapack_hegvd<T, base_device::DEVICE_CPU>()(
-            n, n, a, b, w, eigen_vec.data());
+        ct::kernels::lapack_hegvx<T, base_device::DEVICE_CPU>()(
+            n, n, a, b, n, w, eigen_vec.data());
         std::copy(eigen_vec.begin(), eigen_vec.end(), a);
     }
 
