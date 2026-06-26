@@ -94,25 +94,21 @@ int main(int argc, char** argv)
         }
     }
 
-    // MPI distribution
+    // MPI distribution: each process keeps full data for a correct benchmark
     psi::Psi<std::complex<double>> psi_local;
     DIAGOTEST::npw_local = new int[nproc];
     double* precondition_local = nullptr;
-#ifdef __MPI
-    DIAGOTEST::cal_division(DIAGOTEST::npw);
-    DIAGOTEST::divide_hpsi(psi, psi_local, DIAGOTEST::hmatrix, DIAGOTEST::hmatrix_local);
-    precondition_local = new double[DIAGOTEST::npw_local[myrank]];
-    DIAGOTEST::divide_psi<double>(hpsi_mock.precond(), precondition_local);
-#else
     DIAGOTEST::hmatrix_local = DIAGOTEST::hmatrix;
-    DIAGOTEST::npw_local[0] = DIAGOTEST::npw;
+    for (int i = 0; i < nproc; ++i)
+    {
+        DIAGOTEST::npw_local[i] = DIAGOTEST::npw;
+    }
     psi_local = psi;
     precondition_local = new double[DIAGOTEST::npw];
     for (int ig = 0; ig < DIAGOTEST::npw; ++ig)
     {
         precondition_local[ig] = hpsi_mock.precond()[ig];
     }
-#endif
 
     psi_local.fix_k(0);
     using T = std::complex<double>;
