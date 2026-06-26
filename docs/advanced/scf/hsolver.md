@@ -4,7 +4,7 @@
 
 Method of explicit solving KS-equation can be chosen by variable "ks_solver" in INPUT file.
 
-When "basis_type = pw", `ks_solver` can be `cg`, `bpcg` or `dav`. The default setting `cg` is recommended, which is band-by-band conjugate gradient diagonalization method. There is a large probability that the use of setting of `dav` , which is block Davidson diagonalization method, can be tried to improve performance.  
+When "basis_type = pw", `ks_solver` can be `cg`, `bpcg`, `dav`, `dav_subspace`, or `ppcg`. The default setting `cg` is recommended, which is a band-by-band conjugate-gradient diagonalization method. The `dav` and `dav_subspace` settings use Davidson-style subspace diagonalization and can be tried to improve performance. The `ppcg` setting uses the projection preconditioned conjugate-gradient method and is currently available for CPU plane-wave calculations.
 
 When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 
