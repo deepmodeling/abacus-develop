@@ -887,10 +887,12 @@ void DiagoPPCG<T, Device>::update_vectors_from_ppcg_subspace(T* psi_in)
     // Collect partial results from all MPI ranks.
     {
         const int count = this->n_work * this->n_basis;
-        MPI_Allreduce(MPI_IN_PLACE, this->work,     count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+        const MPI_Datatype mpi_type = (sizeof(T) == sizeof(std::complex<float>))
+            ? MPI_C_FLOAT_COMPLEX : MPI_DOUBLE_COMPLEX;
+        MPI_Allreduce(MPI_IN_PLACE, this->work,     count, mpi_type, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, mpi_type, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, mpi_type, MPI_SUM, BP_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, mpi_type, MPI_SUM, BP_WORLD);
     }
 #endif
 
@@ -1153,13 +1155,15 @@ void DiagoPPCG<T, Device>::update_vectors_blocked(T* psi_in)
     }
 
 #ifdef __MPI
-    // Collect partial results from all MPI ranks..
+    // Collect partial results from all MPI ranks.
     // Only processed columns are non-zero on each rank, so SUM is correct.
     const int count = this->n_work * ldb;
-    MPI_Allreduce(MPI_IN_PLACE, this->work,     count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, MPI_DOUBLE_COMPLEX, MPI_SUM, BP_WORLD);
+    const MPI_Datatype mpi_type = (sizeof(T) == sizeof(std::complex<float>))
+        ? MPI_C_FLOAT_COMPLEX : MPI_DOUBLE_COMPLEX;
+    MPI_Allreduce(MPI_IN_PLACE, this->work,     count, mpi_type, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->hpsi_new, count, mpi_type, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->p_new,    count, mpi_type, MPI_SUM, BP_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, this->hp_new,   count, mpi_type, MPI_SUM, BP_WORLD);
 #endif
 
     syncmem_op()(psi_in,  this->work,     this->n_work * ldb);

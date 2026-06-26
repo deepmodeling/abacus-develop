@@ -432,7 +432,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         // ---- matrix dump on convergence failure (debugging tool) ----
         const int max_iter = std::max(1, DiagoIterAssist<T, Device>::PW_DIAG_NMAX);
-        if (niter >= max_iter && ndim > 0 && ndim <= 2000)
+        const char* dump_env = std::getenv("ABACUS_PPCG_DUMP_HAMILTONIAN");
+        if (dump_env != nullptr && dump_env[0] != '\0' && dump_env[0] != '0'
+            && niter >= max_iter && ndim > 0 && ndim <= 2000)
         {
             const int npw_mat = ndim;
             std::vector<T> h_dense(static_cast<size_t>(npw_mat) * npw_mat, T(0));
