@@ -476,12 +476,13 @@ if(USE_CUDA)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 89 90)
     endif()
   endif()
-  # CUDA 11.x requires GCC ≤ 10; GCC 11+ headers use C++17 constructs
-  # that nvcc cannot parse. Detect and use gcc-10 if available.
+  # CUDA 11.x requires GCC ≤ 10 as host compiler.
+  # Intel/Clang-based CXX compilers and GCC 11+ are unsupported by nvcc 11.5.
+  # Detect and use gcc-10 if available.
   find_program(GCC10_EXECUTABLE gcc-10)
   find_program(GPP10_EXECUTABLE g++-10)
   if(GCC10_EXECUTABLE AND GPP10_EXECUTABLE)
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -ccbin ${GPP10_EXECUTABLE}" CACHE STRING "" FORCE)
+    set(CMAKE_CUDA_HOST_COMPILER "${GPP10_EXECUTABLE}" CACHE STRING "CUDA host compiler (GCC 10 for nvcc 11.x compat)")
     message(STATUS "CUDA host compiler override: ${GPP10_EXECUTABLE}")
   endif()
   enable_language(CUDA)
