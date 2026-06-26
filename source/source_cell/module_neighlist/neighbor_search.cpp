@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <cassert>
+#include "source_base/timer.h"
 
 // ========== Getter methods ==========
 
@@ -171,6 +172,7 @@ void NeighborSearch::check_expand_condition(const AtomProvider& ucell)
 
 void NeighborSearch::set_member_variables(const AtomProvider& ucell)
 {
+    ModuleBase::timer::start("NeighborSearch", "set_member_variables");
     all_atoms_.clear();
 
     ModuleBase::Vector3<double> vec1(ucell.get_latvec().e11, ucell.get_latvec().e12, ucell.get_latvec().e13);
@@ -209,12 +211,14 @@ void NeighborSearch::set_member_variables(const AtomProvider& ucell)
             }
         }
     }
+    ModuleBase::timer::end("NeighborSearch", "set_member_variables");
 }
 
 // ========== Main public interface ==========
 
 void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
 {
+    ModuleBase::timer::start("NeighborSearch", "init");
     // clear possible residual data from previous runs
     inside_atoms_.clear();
     ghost_atoms_.clear();
@@ -322,13 +326,16 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
     }
 
     neighbor_list_.initialize(inside_atoms_.size(), all_atoms_.size() * neighbor_reserve_factor);
+    ModuleBase::timer::end("NeighborSearch", "init");
 }
 
 void NeighborSearch::build_neighbors()
 {
+    ModuleBase::timer::start("NeighborSearch", "build_neighbors");
     bin_manager_.init_bins(search_radius_, inside_atoms_, ghost_atoms_);
     bin_manager_.do_binning(inside_atoms_, ghost_atoms_);
     bin_manager_.build_atom_neighbors(neighbor_list_, inside_atoms_);
+    ModuleBase::timer::end("NeighborSearch", "build_neighbors");
 }
 
 // ========== Utility methods ==========
