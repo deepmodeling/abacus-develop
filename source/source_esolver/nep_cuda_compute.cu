@@ -14,6 +14,8 @@
  *  on CPU allows 2+3 to overlap with the next step's neighbor build via streams).
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "nep_cuda_compute.cuh"
 #include <cuda_runtime.h>
 
