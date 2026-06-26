@@ -253,13 +253,14 @@ void ReadInput::item_model()
     // vdW Correction
     {
         Input_Item item("vdw_method");
-        item.annotation = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj";
+        item.annotation = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj ; d4)";
         item.category = "vdW correction";
         item.type = "String";
         item.description = R"(Specifies the method used for Van der Waals (VdW) correction. Available options are:
 * d2: Grimme's D2 dispersion correction method
 * d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
 * d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
+* d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
 * none: no vdW correction
 
 [NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.)";
@@ -267,6 +268,41 @@ void ReadInput::item_model()
         item.unit = "";
         item.availability = "";
         read_sync_string(input.vdw_method);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_d4_xc");
+        item.annotation = "functional name passed to DFT-D4";
+        item.category = "vdW correction";
+        item.type = "String";
+        item.description = R"(Functional name used to load DFT-D4 damping parameters from the DFT-D4 library.
+If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.)";
+        item.default_value = "default";
+        item.unit = "";
+        item.availability = "vdw_method is set to d4";
+        read_sync_string(input.vdw_d4_xc);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_d4_model");
+        item.annotation = "DFT-D4 dispersion model";
+        item.category = "vdW correction";
+        item.type = "String";
+        item.description = R"(DFT-D4 dispersion model used by the external DFT-D4 library.
+Available options are:
+* d4: standard D4 model
+* d4s: smooth D4S model)";
+        item.default_value = "d4";
+        item.unit = "";
+        item.availability = "vdw_method is set to d4";
+        read_sync_string(input.vdw_d4_model);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_d4_model != "d4" && para.input.vdw_d4_model != "d4s"
+                && para.input.vdw_d4_model != "D4" && para.input.vdw_d4_model != "D4S")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_d4_model must be d4 or d4s");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -507,6 +543,13 @@ Namely, each line contains the element name and the corresponding parameter.)";
                 {
                     para.input.vdw_cutoff_radius = "95";
                 }
+                else if (para.input.vdw_method == "d4")
+                {
+                    // DFT-D4 uses separate real-space cutoffs internally.
+                    // This input controls the two-body cutoff; the wrapper keeps
+                    // the three-body cutoff at min(40 Bohr, vdw_cutoff_radius).
+                    para.input.vdw_cutoff_radius = "60";
+                }
                 else
                 {
                     para.input.vdw_cutoff_radius = "0";
@@ -589,7 +632,14 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.description = "The cutoff radius when calculating coordination numbers.";
         item.default_value = "40";
         item.unit = "defined by vdw_cn_thr_unit (default: Bohr)";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        item.availability = "vdw_method is set to d3_0, d3_bj, or d4";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (!item.is_read() && para.input.vdw_method == "d4")
+            {
+                // DFT-D4 library default for coordination numbers.
+                para.input.vdw_cn_thr = 30.0;
+            }
+        };
         read_sync_double(input.vdw_cn_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cn_thr <= 0)

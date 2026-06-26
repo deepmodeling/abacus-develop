@@ -100,6 +100,11 @@ void Verlet::apply_thermostat(void)
         t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
         thermalize(mdp.md_nraise, t_current, t_target);
     }
+    else if (mdp.md_thermostat == "csvr")
+    {
+        t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
+        apply_csvr(t_current, t_target);
+    }
     else
     {
         ModuleBase::WARNING_QUIT("Verlet", "No such thermostat!");
@@ -122,6 +127,62 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] *= fac;
+    }
+}
+
+
+void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
+{
+    // CSVR thermostat: Canonical Sampling through Velocity Rescaling
+    // Reference: G. Bussi, D. Donadio, M. Parrinello, J. Chem. Phys. 126, 014101 (2007)
+
+    if (current_temp <= 0.0 || target_temp <= 0.0)
+    {
+        return;
+    }
+
+    // Get degrees of freedom (3N - frozen)
+    int ndeg = 3 * ucell.nat - frozen_freedom_;
+
+    // Calculate kinetic energies
+    double kin_energy = current_temp * ndeg * 0.5;  // in Hartree
+    double kin_target = target_temp * ndeg * 0.5;   // in Hartree
+
+    // Calculate tau parameter (characteristic time scale / dt)
+    double taut = mdp.md_csvr_tau / mdp.md_dt;
+
+    // Calculate decay factor
+    double factor = 0.0;
+    if (taut > 0.1)
+    {
+        factor = exp(-1.0 / taut);
+    }
+
+    // Generate Gaussian random numbers using MD_func
+    double rr = MD_func::gaussrand();
+
+    // Calculate sum of squared Gaussian random numbers (ndeg - 1)
+    double sumnoises = 0.0;
+    for (int i = 0; i < ndeg - 1; ++i)
+    {
+        double r = MD_func::gaussrand();
+        sumnoises += r * r;
+    }
+
+    // CSVR core formula (simplified)
+    double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
+    double resample = factor + factor2 * (rr * rr + sumnoises) + 2.0 * rr * sqrt(factor * factor2);
+
+    // Ensure non-negative
+    resample = std::max(0.0, resample);
+
+    // Calculate scaling factor
+    double scale = sqrt(resample);
+
+    // Apply velocity scaling
+    for (int i = 0; i < ucell.nat; ++i)
+    {
+        vel[i] *= scale;
     }
 }
 

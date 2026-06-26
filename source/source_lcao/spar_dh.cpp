@@ -112,7 +112,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
             = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
         if (!PARAM.globalv.gamma_only_local) 
         {
-            ModuleGint::cal_dvlocal_R_sparseMatrix(
+            ModuleGint::cal_dvlocal_R_sparse(
                 PARAM.inp.nspin, PARAM.globalv.npol, current_spin, PARAM.globalv.nlocal,
                 sparse_thr, vr_eff1, pv, ucell, grid, HS_Arrays);
         }

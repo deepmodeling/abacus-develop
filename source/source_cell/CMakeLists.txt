@@ -1,5 +1,6 @@
 add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
+add_subdirectory(module_neighlist)
 
 add_library(
     cell
@@ -29,6 +30,8 @@ add_library(
     k_vector_utils.cpp
     sep.cpp
     sep_cell.cpp
+    qlist.cpp
+    qlist.h
 )
 
 if(ENABLE_COVERAGE)

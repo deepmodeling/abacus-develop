@@ -16,6 +16,7 @@ VPATH=./src_global:\
 ./source_basis/module_ao:\
 ./source_basis/module_nao:\
 ./source_cell/module_neighbor:\
+./source_cell/module_neighlist:\
 ./source_cell/module_symmetry:\
 ./source_cell:\
 ./source_base:\
@@ -86,6 +87,7 @@ ${OBJS_HAMILT}\
 ${OBJS_HSOLVER}\
 ${OBJS_MD}\
 ${OBJS_NEIGHBOR}\
+${OBJS_NEIGHBOR_SEARCH}\
 ${OBJS_PSI}\
 ${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
@@ -232,6 +234,7 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
+    makov_payne.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -410,6 +413,10 @@ OBJS_NEIGHBOR=sltk_atom.o\
     sltk_grid.o\
     sltk_grid_driver.o\
 
+OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
+    bin_manager.o\
+
+
 OBJS_ORBITAL=ORB_atomic.o\
       ORB_atomic_lm.o\
       ORB_gaunt_table.o\
@@ -454,10 +461,13 @@ OBJS_PW=fft_bundle.o\
     pw_transform.o\
     pw_transform_k.o\
 
-OBJS_RELAXATION=bfgs_basic.o\
+OBJS_RELAXATION=relax_data.o\
+    cg_base.o\
+    bfgs_basic.o\
     relax_driver.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
+    ions_move_bfgs2.o\
     ions_move_cg.o\
     ions_move_methods.o\
     ions_move_sd.o\
@@ -466,8 +476,7 @@ OBJS_RELAXATION=bfgs_basic.o\
     lattice_change_methods.o\
     relax_nsync.o\
     relax_sync.o\
-    bfgs.o\
-    lbfgs.o\
+    ions_move_lbfgs.o\
     matrix_methods.o\
     line_search.o\
 
@@ -496,20 +505,20 @@ OBJS_SYMMETRY=symm_other.o\
 
 OBJS_XC=xc_functional.o\
     xc_functional_op.o\
-    xc_functional_vxc.o\
-    xc_functional_gradcorr.o\
-    xc_functional_wrapper_xc.o\
-    xc_functional_wrapper_gcxc.o\
-    xc_functional_libxc.o\
-    xc_functional_libxc_tools.o\
-    xc_functional_libxc_vxc.o\
-    xc_functional_libxc_wrapper_xc.o\
-    xc_functional_libxc_wrapper_gcxc.o\
-    xc_functional_libxc_wrapper_tauxc.o\
-    xc_funct_exch_lda.o\
-    xc_funct_corr_lda.o\
-    xc_funct_exch_gga.o\
-    xc_funct_corr_gga.o\
+    xc_pot.o\
+    xc_grad.o\
+    xc_lda_wrap.o\
+    xc_gga_wrap.o\
+    libxc_setup.o\
+    libxc_tools.o\
+    libxc_pot.o\
+    libxc_lda_wrap.o\
+    libxc_gga_wrap.o\
+    libxc_mgga_wrap.o\
+    xc_lda_exch.o\
+    xc_lda_corr.o\
+    xc_gga_exch.o\
+    xc_gga_corr.o\
     xc_funct_hcth.o\
     exx_info.o\
 
@@ -671,7 +680,6 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       Matrix_Orbs22.o\
       RI_2D_Comm.o\
       Mix_DMk_2D.o\
-      Mix_Matrix.o\
       symmetry_rotation.o\
       symmetry_rotation_output.o\
       symmetry_irreducible_sector.o\

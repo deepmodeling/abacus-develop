@@ -94,7 +94,7 @@ export INTEL_CFLAGS="${INTEL_CFLAGS}"
 export INTEL_LDFLAGS="${INTEL_LDFLAGS}"
 export INTEL_LIBS="${INTEL_LIBS}"
 EOF
-    cat "${BUILDDIR}/setup_intel" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_intel" ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_intel"

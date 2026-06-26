@@ -4,7 +4,6 @@
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 #include "source_base/tool_check.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cassert>
@@ -58,6 +57,7 @@ void LCAO_Orbitals::init(
     const double& lcao_rmax_in,
     const bool& deepks_setorb,
     const int& out_mat_r,
+    const bool& out_element_info,
     const bool& force_flag,
     const int& my_rank
 )
@@ -86,7 +86,7 @@ void LCAO_Orbitals::init(
 #ifdef __MPI
     bcast_files(ntype, my_rank);
 #endif
-    Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, force_flag, my_rank);
+    Read_Orbitals(ofs_in, ntype, lmax, deepks_setorb, out_mat_r, out_element_info, force_flag, my_rank);
     return;
 }
 
@@ -156,6 +156,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
                                   const int& lmax_in,
                                   const bool& deepks_setorb,
                                   const int& out_mat_r,
+                                  const bool& out_element_info,
                                   const bool& force_flag, // mohan add 2021-05-07
                                   const int& my_rank)     // mohan add 2021-04-26
 {
@@ -247,7 +248,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
     this->Phi = new Numerical_Orbital[ntype];
     for (int it = 0; it < ntype; it++)
     {
-        this->Read_PAO(ofs_in, it, force_flag, my_rank);
+        this->Read_PAO(ofs_in, it, out_element_info, force_flag, my_rank);
         // caoyu add 2021-05-24	to reconstruct atom_arrange::set_sr_NL
         this->rcutmax_Phi = std::max(this->rcutmax_Phi, this->Phi[it].getRcut());
     }
@@ -263,7 +264,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
 
         delete[] this->Alpha;
         this->Alpha = new Numerical_Orbital[1]; // not related to atom type -- remain to be discussed
-        this->Read_Descriptor(ofs_in, force_flag, my_rank);
+        this->Read_Descriptor(ofs_in, out_element_info, force_flag, my_rank);
     }
 
     ModuleBase::timer::end("LCAO_Orbitals", "Read_Orbitals");
@@ -279,6 +280,7 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
 //-------------------------------------------------------
 void LCAO_Orbitals::Read_PAO(std::ofstream& ofs_in,
                              const int& it,
+                             const bool& out_element_info,
                              const bool& force_flag, // mohan add 2021-05-07
                              const int& my_rank)     // mohan add 2021-04-26
 {
@@ -311,7 +313,7 @@ void LCAO_Orbitals::Read_PAO(std::ofstream& ofs_in,
     int lmaxt = 0;
     int nchimaxt = 0;
 
-    this->read_orb_file(ofs_in, in_ao, it, lmaxt, nchimaxt, this->Phi, force_flag, my_rank);
+    this->read_orb_file(ofs_in, in_ao, it, lmaxt, nchimaxt, this->Phi, out_element_info, force_flag, my_rank);
 
     // lmax and nchimax for all types
     this->lmax = std::max(this->lmax, lmaxt);
@@ -323,6 +325,7 @@ void LCAO_Orbitals::Read_PAO(std::ofstream& ofs_in,
 
 // caoyu add 2021-3-16
 void LCAO_Orbitals::Read_Descriptor(std::ofstream& ofs_in,
+                                    const bool& out_element_info,
                                     const bool& force_flag, // mohan add 2021-05-07
                                     const int& my_rank)     // read descriptor basis
 {
@@ -355,7 +358,7 @@ void LCAO_Orbitals::Read_Descriptor(std::ofstream& ofs_in,
     this->lmax_d = 0;
     this->nchimax_d = 0;
 
-    this->read_orb_file(ofs_in, in_de, 0, this->lmax_d, this->nchimax_d, this->Alpha, force_flag, my_rank);
+    this->read_orb_file(ofs_in, in_de, 0, this->lmax_d, this->nchimax_d, this->Alpha, out_element_info, force_flag, my_rank);
 
     in_de.close();
 
@@ -368,6 +371,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
                                   int& lmax,
                                   int& nchimax,
                                   Numerical_Orbital* ao,
+                                  const bool& out_element_info,
                                   const bool& force_flag,
                                   const int& my_rank)
 {
@@ -588,7 +592,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
                                                  this->kmesh,
                                                  this->dk,
                                                  this->dr_uniform,
-                                                 PARAM.inp.out_element_info,
+                                                 out_element_info,
                                                  true,
                                                  force_flag); // delta k mesh in reciprocal space
 

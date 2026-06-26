@@ -144,7 +144,7 @@ export CP_CFLAGS="\${CP_CFLAGS} IF_MPI(${INTELMPI_CFLAGS}|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${INTELMPI_LDFLAGS}|)"
 export CP_LIBS="\${CP_LIBS} IF_MPI(${INTELMPI_LIBS}|)"
 EOF
-    cat "${BUILDDIR}/setup_intelmpi" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_intelmpi" ${SETUPFILE}
 fi
 
 load "${BUILDDIR}/setup_intelmpi"

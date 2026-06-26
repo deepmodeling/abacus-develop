@@ -19,9 +19,10 @@
 #include "source_lcao/hs_matrix_k.hpp"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
+// Exx_LRI forward declaration, full definition in Exx_LRI.h (moved to .cpp)
+// mohan add 20260605
+template <typename TR> class Exx_LRI;
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
-// there are some operator reload to print data in different formats
 #endif
 
 #include "source_estate/elecstate.h"

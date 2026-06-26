@@ -2,7 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/libm/libm.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/klist.h"
@@ -38,7 +38,7 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0)
+            if (this->_paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -90,7 +90,7 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
             const int T2 = ra.info[iat1][ad][3];
             const int I2 = ra.info[iat1][ad][4];
             int iat2 = ucell->itia2iat(T2, I2);
-            if (this->_paraV->get_row_size(iat1) <= 0 || this->_paraV->get_col_size(iat2) <= 0)
+            if (this->_paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

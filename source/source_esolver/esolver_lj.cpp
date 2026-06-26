@@ -4,10 +4,33 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
+#include "source_cell/module_neighlist/neighbor_search.h"
+
 
 
 namespace ModuleESolver
 {
+
+    UnitCellLite ESolver_LJ::change_from_ucell_to_ucell_lite(const UnitCell& ucell)
+    {
+        UnitCellLite ucell_lite;
+        
+        // Set lattice parameters
+        ucell_lite.set_lattice(ucell.lat0, ucell.omega, ucell.latvec);
+        
+        // Build atom information
+        std::vector<int> na;
+        std::vector<ModuleBase::Vector3<double>> tau;
+        for (int i = 0; i < ucell.ntype; i++) {
+            na.push_back(ucell.atoms[i].na);
+            for (int j = 0; j < ucell.atoms[i].na; j++) {
+                tau.push_back(ucell.atoms[i].tau[j]);
+            }
+        }
+        ucell_lite.set_atoms(ucell.ntype, na, tau);
+        
+        return ucell_lite;
+    }
 
 void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
@@ -32,7 +55,53 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
-    Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
+    UnitCellLite ucell_lite = change_from_ucell_to_ucell_lite(ucell);
+    NeighborSearch neighbor_search;
+    neighbor_search.init(ucell_lite, search_radius, 0);
+    neighbor_search.build_neighbors();
+
+    double distance = 0.0;
+    int index = 0;
+
+    // Important! potential, force, virial must be zero per step
+    lj_potential = 0;
+    lj_force.zero_out();
+    lj_virial.zero_out();
+
+    ModuleBase::Vector3<double> tau1, tau2, dtau;
+    const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
+    const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        Atom* atom1 = &ucell.atoms[it];
+        for (int ia = 0; ia < atom1->na; ++ia)
+        {
+            tau1 = atom1->tau[ia];
+            for (int ad = 0; ad < neighbor_list.get_numneigh(index); ++ad)
+            {
+                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(index)[ad]];
+                tau2.x = neighbor_atom.position_x;
+                tau2.y = neighbor_atom.position_y;
+                tau2.z = neighbor_atom.position_z;
+                int it2 = neighbor_atom.atom_type;
+                dtau = (tau1 - tau2) * ucell.lat0;
+                distance = dtau.norm();
+                if (distance < lj_rcut(it, it2))
+                {
+                    lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                    ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
+                    lj_force(index, 0) += f_ij.x;
+                    lj_force(index, 1) += f_ij.y;
+                    lj_force(index, 2) += f_ij.z;
+                    LJ_virial(f_ij, dtau);
+                }
+            }
+            index++;
+        }
+    }
+
+
+    /*Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
     atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          grid_neigh,
@@ -74,7 +143,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
             }
             index++;
         }
-    }
+    }*/
 
     lj_potential /= 2.0;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << lj_potential * ModuleBase::Ry_to_eV << " eV"

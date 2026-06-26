@@ -128,16 +128,9 @@ prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
   cat << EOF >> "${BUILDDIR}/setup_nep"
-export NEP_CFLAGS="${NEP_CFLAGS}"
-export NEP_LDFLAGS="${NEP_LDFLAGS}"
-export NEP_LIBS="${NEP_LIBS}"
-export CP_DFLAGS="\${CP_DFLAGS} -D__NEP"
-export CP_CFLAGS="\${CP_CFLAGS} \${NEP_CFLAGS}"
-export CP_LDFLAGS="\${CP_LDFLAGS} \${NEP_LDFLAGS}"
-export CP_LIBS="\${NEP_LIBS} \${CP_LIBS}"
 export NEP_ROOT="${pkg_install_dir}"
 EOF
-  cat "${BUILDDIR}/setup_nep" >> $SETUPFILE
+  filter_setup "${BUILDDIR}/setup_nep" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_nep"

@@ -15,7 +15,8 @@ namespace LR
         // convert the orbital object to the old class for Velocity_op
         LCAO_Orbitals orb;
         const auto& inp = PARAM.inp;
-        two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+        two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
+                                           inp.out_element_info, inp.cal_force);
         // actually this class calculates the velocity matrix v(R) at A=0
         Velocity_op<std::complex<double>> vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
         vR.calculate_vcomm_r(); // $<\mu, 0|[Vnl, r]|\nu, R>$

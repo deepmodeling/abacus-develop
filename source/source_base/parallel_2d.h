@@ -74,7 +74,51 @@ class Parallel_2D
         return nb;
     };
 
+    /// number of processes in row dimension of the MPI Cartesian grid
+    int get_dim0() const
+    {
+        return dim0;
+    };
+
+    /// number of processes in column dimension of the MPI Cartesian grid
+    int get_dim1() const
+    {
+        return dim1;
+    };
+
+    /// row coordinate in the BLACS grid
+    int get_coord_row() const
+    {
+        return coord[0];
+    };
+
+    /// column coordinate in the BLACS grid
+    int get_coord_col() const
+    {
+        return coord[1];
+    };
+
+    /// check whether a given BLACS grid coordinate is this process
+    bool blacs_in_this_processor(const int iprow, const int ipcol) const
+    {
+        return iprow == coord[0] && ipcol == coord[1];
+    };
+
+    /// set process coordinate in the BLACS grid (intended for testing)
+    void set_coord(const int row, const int col)
+    {
+        coord[0] = row;
+        coord[1] = col;
+    };
+
 #ifdef __MPI
+
+    /// ScaLAPACK descriptor
+    const int* get_desc() const
+    {
+        return desc;
+    };
+
     /**
      * @brief Initialize a BLACS grid with the given MPI communicator
      * and set up the info of a block-cyclic distribution.
@@ -126,13 +170,14 @@ class Parallel_2D
     int dim0 = 0;
     int dim1 = 0;
 
+  private:
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
-
     /// whether to use the serial mode
     bool is_serial = false;
 
   protected:
+
     /// map from global index to local index
     std::vector<int> global2local_row_;
     std::vector<int> global2local_col_;

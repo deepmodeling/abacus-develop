@@ -109,9 +109,11 @@ public:
      * use the k grid of NumericalRadial (which is FFT-compliant with r grid) to initialize
      * the k grid of Numerical_Orbital_Lm.
      */
-    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
+    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm,
                                  const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
-                                 const double lcao_dk = 0.01) const;
+                                 const double lcao_dk = 0.01,
+                                 const bool out_element_info = false,
+                                 const bool cal_force = false) const;
 
     /** 
      * @brief Sets a SphericalBesselTransformer.

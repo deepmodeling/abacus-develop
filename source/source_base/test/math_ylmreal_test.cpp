@@ -4,7 +4,7 @@
 #include"../matrix.h"
 #include"gtest/gtest.h"
 #include<math.h>
-#include "source_psi/psi.h"
+#include "source_base/module_device/types.h"
 
 #define doublethreshold 1e-12
 
