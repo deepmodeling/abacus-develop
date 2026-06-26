@@ -41,6 +41,7 @@ if(ENABLE_LCAO)
       set(cuda_objects
           ./kernels/hegvd_op.cpp
           ./kernels/cuda/diag_cusolver.cu
+          ./kernels/cuda/diago_kernels.cu
           diago_cusolver.cpp
           diago_cusolver.h
       )

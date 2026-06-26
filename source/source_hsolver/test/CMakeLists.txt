@@ -119,6 +119,15 @@ if (ENABLE_MPI)
     ../kernels/cuda/diag_cusolver.cu
   )
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
+
+  AddTest(
+    TARGET MODULE_HSOLVER_cuda_kernels
+    LIBS parameter  ${math_libs} base psi device container cusolver cublas
+    SOURCES diago_cuda_kernels_test.cpp
+    ../kernels/cuda/diago_kernels.cu
+  )
+  target_compile_definitions(MODULE_HSOLVER_cuda_kernels PRIVATE __CUDA __UT_USE_CUDA)
+  target_include_directories(MODULE_HSOLVER_cuda_kernels PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   endif()
 endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
