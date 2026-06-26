@@ -90,7 +90,27 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     dp_force.zero_out();
     dp_virial.zero_out();
 
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+    {
+        dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
+    }
+    // broadcast sizes first (only rank 0 has them after dp.compute)
+    int f_size = f.size();
+    int v_size = v.size();
+    Parallel_Common::bcast_int(f_size);
+    Parallel_Common::bcast_int(v_size);
+    if (GlobalV::MY_RANK != 0)
+    {
+        f.resize(f_size);
+        v.resize(v_size);
+    }
+    Parallel_Common::bcast_double(dp_potential);
+    Parallel_Common::bcast_double(f.data(), f_size);
+    Parallel_Common::bcast_double(v.data(), v_size);
+#else
     dp.compute(dp_potential, f, v, coord, atype, cell, fparam, aparam);
+#endif
 
     // rescale the energy, force, and stress
     const double fact_e = rescaling / ModuleBase::Ry_to_eV;
@@ -203,3 +223,4 @@ void ESolver_DP::type_map(const UnitCell& ucell)
     assert(ucell.nat == iat);
 }
 #endif
+
