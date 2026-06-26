@@ -50,3 +50,30 @@ AddTest(
     ../atom_pack.cpp ../mpi_domain.cpp ../neighbor_rebuild_state.cpp
     ../../../source_io/module_output/output.cpp
 )
+
+# Standalone performance probes used by the Phase 4 benchmark driver. They are
+# regular build targets rather than CTest tests because benchmark repetitions
+# and problem sizes are selected explicitly by the reporting script.
+add_executable(MODULE_CELL_NEIGHBOR_benchmark
+  neighbor_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
+target_link_libraries(MODULE_CELL_NEIGHBOR_benchmark
+  parameter ${math_libs} base device cell_info Threads::Threads)
+if(USE_OPENMP)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_benchmark OpenMP::OpenMP_CXX)
+endif()
+
+add_executable(MODULE_CELL_NEIGHBOR_mpi_benchmark
+  mpi_neighbor_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
+target_link_libraries(MODULE_CELL_NEIGHBOR_mpi_benchmark
+  parameter ${math_libs} base device cell_info Threads::Threads)
+if(USE_OPENMP)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_mpi_benchmark OpenMP::OpenMP_CXX)
+endif()
+
+add_executable(MODULE_CELL_NEIGHBOR_grid_path_benchmark
+  grid_path_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
+target_link_libraries(MODULE_CELL_NEIGHBOR_grid_path_benchmark
+  parameter ${math_libs} base device cell_info Threads::Threads)
+if(USE_OPENMP)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_grid_path_benchmark OpenMP::OpenMP_CXX)
+endif()

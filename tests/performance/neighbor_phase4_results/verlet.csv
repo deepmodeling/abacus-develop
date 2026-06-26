@@ -1,0 +1,7 @@
+case,skin_bohr,ranks,threads,exit_code,final_energy_ev,final_max_force_ev_per_angstrom,total_time_s,rebuild_count,reuse_count,final_structure_sha256,work_directory
+relax_si2,0.0,1,1,0,-207.0512034671983,0.0001473198,6.0,4,0,62ec57c34e697b17410f04ce4ad395a711ae9e97618ab79de6ba2bc4304736d7,/tmp/neighbor-verlet-small-final-work/relax_si2_skin_0
+relax_si2,3.0,1,1,0,-207.0512034671983,0.0001473198,7.0,1,3,62ec57c34e697b17410f04ce4ad395a711ae9e97618ab79de6ba2bc4304736d7,/tmp/neighbor-verlet-small-final-work/relax_si2_skin_3
+md_si8,0.0,1,1,0,-845.8115630215793,1.0201504080709052,17.0,10,0,2f176e3ced41b8ea363c8589f14ec7bdbb69e568c07138a43b10bef67d9b3cfd,/tmp/neighbor-verlet-small-final-work/md_si8_skin_0
+md_si8,3.0,1,1,0,-845.8115630215793,1.0201504080709052,17.0,1,9,2f176e3ced41b8ea363c8589f14ec7bdbb69e568c07138a43b10bef67d9b3cfd,/tmp/neighbor-verlet-small-final-work/md_si8_skin_3
+md_si64,0.0,1,1,0,-6843.216664538622,2.0463324717519202,301.0,20,0,60f7e02f0c5e052ce5a66247c8925246f835e1d059d693eb6d3b4ae6cff21e7d,/tmp/neighbor-verlet-si64-work/md_si64_skin_0
+md_si64,3.0,1,1,0,-6843.216664538622,2.0463324717519202,297.0,1,19,60f7e02f0c5e052ce5a66247c8925246f835e1d059d693eb6d3b4ae6cff21e7d,/tmp/neighbor-verlet-si64-work/md_si64_skin_3

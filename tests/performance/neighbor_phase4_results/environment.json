@@ -1,0 +1,86 @@
+{
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "current_repo": "/home/yangljf/homework/bxcx_project/final_project_workspace/abacus-develop",
+  "beta_repo": "/tmp/abacus-beta1-benchmark",
+  "arguments": {
+    "current_repo": ".",
+    "beta_repo": "/tmp/abacus-beta1-benchmark",
+    "output": "/tmp/neighbor-grid-final",
+    "kernel": null,
+    "mpi_kernel": null,
+    "current_abacus": null,
+    "beta_abacus": null,
+    "sections": [
+      "grid"
+    ],
+    "current_grid_kernel": "build-bxcx-tests/source/source_cell/module_neighbor/test/MODULE_CELL_NEIGHBOR_grid_path_benchmark",
+    "beta_grid_kernel": "/tmp/abacus-beta1-benchmark-build/source/source_cell/module_neighbor/test/MODULE_CELL_NEIGHBOR_grid_path_benchmark",
+    "grid_atoms": [
+      4096,
+      32768,
+      131072
+    ],
+    "grid_cells": [
+      "orthogonal",
+      "triclinic"
+    ],
+    "grid_radii": [
+      2.2,
+      3.4
+    ],
+    "grid_repeats": 10,
+    "beta_grid_repeats": 10,
+    "beta_grid_large_repeats": 3,
+    "beta_grid_full_repeat_max_atoms": 4096,
+    "beta_grid_max_atoms": 32768,
+    "kernel_atoms": [
+      4096,
+      32768,
+      131072
+    ],
+    "kernel_repeats": 10,
+    "mpi_atoms_per_rank": 4096,
+    "mpi_ranks": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "mpi_repeats": 5,
+    "mpi_scaling": [
+      "strong",
+      "weak"
+    ],
+    "mpi_cells": [
+      "orthogonal",
+      "triclinic"
+    ],
+    "mpi_strong_shape": [
+      64,
+      32,
+      32
+    ],
+    "version_cases": [
+      "si16",
+      "si64",
+      "si128"
+    ],
+    "version_ranks": [
+      1,
+      4
+    ],
+    "version_repeats": 3,
+    "timeout": 1200
+  },
+  "uname": "Linux LAPTOP-CD87QDHB 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n",
+  "lscpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           39 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  32\nOn-line CPU(s) list:                     0-31\nVendor ID:                               GenuineIntel\nModel name:                              Intel(R) Core(TM) i9-14900HX\nCPU family:                              6\nModel:                                   183\nThread(s) per core:                      2\nCore(s) per socket:                      16\nSocket(s):                               1\nStepping:                                1\nBogoMIPS:                                4838.39\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology tsc_reliable nonstop_tsc cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves avx_vnni vnmi umip waitpkg gfni vaes vpclmulqdq rdpid movdiri movdir64b fsrm md_clear serialize flush_l1d arch_capabilities\nVirtualization:                          VT-x\nHypervisor vendor:                       Microsoft\nVirtualization type:                     full\nL1d cache:                               768 KiB (16 instances)\nL1i cache:                               512 KiB (16 instances)\nL2 cache:                                32 MiB (16 instances)\nL3 cache:                                36 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-31\nVulnerability Gather data sampling:      Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Reg file data sampling:    Mitigation; Clear Register File\nVulnerability Retbleed:                  Mitigation; Enhanced IBRS\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected\n",
+  "memory": "               total        used        free      shared  buff/cache   available\nMem:            15Gi       2.7Gi       9.8Gi       5.8Mi       3.3Gi        12Gi\nSwap:          4.0Gi          0B       4.0Gi\n",
+  "compiler": "x86_64-conda-linux-gnu-c++ (conda-forge gcc 14.3.0-19) 14.3.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "mpi": "[LAPTOP-CD87QDHB:00023] pmix_ifinit: socket() failed with errno=1\nmpirun (Open MPI) 5.0.10\n\nReport bugs to https://www.open-mpi.org/community/help/\n\n",
+  "current_commit": "241c28a54fa194650ccf6a8f0044563ae31e464b",
+  "beta_commit": "78d71c9134a47dd63f76e69cc1a7025f302cc09d",
+  "current_worktree_dirty": true,
+  "current_neighbor_diff_sha256": "c2be3bda733fa8a43ddec20bff38b67718fb5267cf987995c80d2d79ea2f7b33",
+  "current_full_diff_sha256": "22ec8f3e6e242cee9b3650c2d1fc36c02fad6b135bd11daef26b3c80baf4b538"
+}

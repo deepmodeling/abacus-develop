@@ -8,4 +8,47 @@
 6. sumdat.sh is used to summarize the timing informations of examples in 'allcase' to a new file 'sum.dat'.
    usage: bash sumdat.sh allcase sum.dat
 
+Neighbor-search Phase 4 benchmark
+---------------------------------
 
+`neighbor_phase4_benchmark.py` runs the standalone Half14/Full27 probe, the
+beta.1 legacy/current Full27/current Half14 grid-path comparison, the
+single-node MPI scaling probe, and an optional beta.1/current ABACUS
+comparison. Keep the two ABACUS executables and the beta.1 legacy grid-path
+probe in separate Release build directories and use the same compiler and
+dependency environment.
+
+Example:
+
+```bash
+conda run -n bxcx python tests/performance/neighbor_phase4_benchmark.py \
+  --current-repo . \
+  --beta-repo /path/to/abacus-3.11.0-beta.1 \
+  --output /tmp/neighbor-phase4-results \
+  --sections grid kernel mpi version \
+  --current-grid-kernel /path/to/current/MODULE_CELL_NEIGHBOR_grid_path_benchmark \
+  --beta-grid-kernel /path/to/beta1/MODULE_CELL_NEIGHBOR_grid_path_benchmark \
+  --kernel /path/to/MODULE_CELL_NEIGHBOR_benchmark \
+  --mpi-kernel /path/to/MODULE_CELL_NEIGHBOR_mpi_benchmark \
+  --current-abacus /path/to/current/abacus_basic_para \
+  --beta-abacus /path/to/beta1/abacus_basic_para
+```
+
+Generate the Markdown report with:
+
+```bash
+python3 tests/performance/neighbor_phase4_report.py \
+  --results /tmp/neighbor-phase4-results \
+  --output /tmp/neighbor-phase4-results/Phase_4_Benchmark.md
+```
+
+The beta.1 LCAO comparison selects the serial LAPACK solver for one-rank runs.
+This avoids an ABI incompatibility between the current conda ScaLAPACK and the
+older beta.1 executable. MPI scaling is measured by the dedicated neighbor
+probe and must be run outside restricted sandboxes that block PMIx sockets.
+
+The beta.1 grid-path probe compiles the same
+`source/source_cell/module_neighbor/test/grid_path_benchmark.cpp` source in a
+temporary beta.1 worktree with `NEIGHBOR_BENCHMARK_BETA1` defined. The original
+beta.1 Grid has an O(N^2) full-scan path, so large beta.1 cases should be
+bounded with `--beta-grid-max-atoms`.
