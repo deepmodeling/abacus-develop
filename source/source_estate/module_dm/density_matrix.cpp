@@ -655,7 +655,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<double>(const std::complex<double> 
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();  // rho_0 = (rho_upup + rho_downdown).real()
     target_DMR_mat[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();  // rho_x = (rho_updown + rho_downup).real()
-    target_DMR_mat[icol + step_trace[2]] = -tmp[1].imag() + tmp[2].imag(); // rho_y = (i * (rho_updown - rho_downup)).real()
+    target_DMR_mat[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag(); // rho_y = Im(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();  // rho_z = (rho_upup - rho_downdown).real()
 }
 
@@ -664,7 +664,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<std::complex<double>>(const std::co
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0] + tmp[3];                                         // rho_0 = (rho_upup + rho_downdown)
     target_DMR_mat[icol + step_trace[1]] = tmp[1] + tmp[2];                                         // rho_x = (rho_updown + rho_downup)
-    target_DMR_mat[icol + step_trace[2]] = ModuleBase::IMAG_UNIT * (tmp[1].imag() - tmp[2].imag()); // rho_y = (i * (rho_updown - rho_downup))
+    target_DMR_mat[icol + step_trace[2]] = -ModuleBase::IMAG_UNIT * (tmp[1] - tmp[2]); // rho_y = -i*(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0] - tmp[3];                                         // rho_z = (rho_upup - rho_downdown)
 }
 
