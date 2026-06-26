@@ -6,6 +6,9 @@
 #ifdef __NEP
 #include "nep.h"
 #endif
+#ifdef __CUDA
+#include "neighbor_nep.h"
+#endif
 #include <vector>
 #include <string>
 
@@ -29,86 +32,44 @@ class ESolver_NEP : public ESolver
   }
 #endif
 
-    /**
-     * @brief Initialize the NEP solver with given input parameters and unit cell
-     *
-     * @param inp input parameters
-     * @param cell unitcell information
-     */
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-  
-    /**
-     * @brief Run the NEP solver for a given ion/md step and unit cell
-     *
-     * @param istep the current ion/md step
-     * @param cell unitcell information
-     */
     void runner(UnitCell& ucell, const int istep) override;
-
-    /**
-     * @brief get the total energy without ion kinetic energy
-     *
-     * @param etot the computed energy
-     * @return total energy without ion kinetic energy
-     */
     double cal_energy() override;
-
-    /**
-     * @brief get the computed atomic forces
-     *
-     * @param force the computed atomic forces
-     */
     void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
-
-    /**
-     * @brief get the computed lattice virials
-     *
-     * @param stress the computed lattice virials
-     */
     void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
-
-    /**
-     * @brief Prints the final total energy of the NEP model to the output file
-     *
-     * This function prints the final total energy of the NEP model in eV to the output file along with some formatting.
-     */
     void after_all_runners(UnitCell& ucell) override;
 
   private:
     void prepare_input_buffers(const UnitCell& ucell);
     void postprocess_outputs(const UnitCell& ucell);
-
-    /**
-     * @brief determine the type map of NEP model
-     *
-     * @param ucell unitcell information
-     */
     void type_map(const UnitCell& ucell);
 
-    /**
-     * @brief NEP related variables for ESolver_NEP class
-     *
-     * These variables are related to the NEP method and are used in the ESolver_NEP class to compute the potential
-     * energy and forces.
-     *
-     * @note These variables are only defined if the __NEP preprocessor macro is defined.
-     */
 #ifdef __NEP
-    NEP nep; ///< NEP object for NEP calculations
+    NEP nep;
 #endif
 
-    std::string nep_file;                ///< directory of NEP model file
-    std::vector<int> atype = {};         ///< atom type mapping for NEP model
-    double nep_potential;                ///< computed potential energy
-    ModuleBase::matrix nep_force;        ///< computed atomic forces
-    ModuleBase::matrix nep_virial;       ///< computed lattice virials
-    std::vector<double> _e;              ///< temporary storage for energy computation
-    std::vector<double> _f;              ///< temporary storage for force computation
-    std::vector<double> _v;              ///< temporary storage for virial computation
-    std::vector<double> cell;            ///< NEP cell matrix in column-major order
-    std::vector<double> coord;           ///< NEP coordinates in structure-of-arrays order
+    std::string nep_file;
+    std::vector<int> atype = {};
+    double nep_potential;
+    ModuleBase::matrix nep_force;
+    ModuleBase::matrix nep_virial;
+    std::vector<double> _e;
+    std::vector<double> _f;
+    std::vector<double> _v;
+    std::vector<double> cell;
+    std::vector<double> coord;
 #ifdef __CUDA
-    NepCudaPostprocessWorkspace cuda_postprocess_workspace; ///< persistent CUDA workspace for NEP postprocess
+    NepCudaPostprocessWorkspace cuda_postprocess_workspace;
+
+    // Neighbor list buffers for GPU compute path
+    static constexpr int NEP_GPU_MN = 1000;
+    int num_cells[3];
+    double ebox[18];
+    std::vector<int> g_NN_radial;
+    std::vector<int> g_NL_radial;
+    std::vector<int> g_NN_angular;
+    std::vector<int> g_NL_angular;
+    std::vector<double> r12;
 #endif
 };
 

@@ -29,6 +29,7 @@ endif()
 if(USE_CUDA)
   list(APPEND objects
       esolver_nep_postprocess.cu
+      nep_cuda_compute.cu
   )
 endif()
 
