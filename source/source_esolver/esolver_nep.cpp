@@ -148,8 +148,13 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
             a.dim, a.num_neurons1, p.version,
             p.rc_radial, p.rc_angular,
             a.c, a.num_para,
-            // w0/b0/w1 are const double* [94] arrays (per atom type),
-            // w0[0] passes the first type's weight pointer (flat contiguous in NEP_CPU).
+            // NEP_CPU stores ANN weights as const double* [MAX_TYPES] arrays.
+            // In NEP_CPU's memory layout, all types' weights are allocated
+            // contiguously (see nep.cpp init), so w0[0] points to the start
+            // of the full parameter block. The GPU kernel indexes into this
+            // flat buffer by (n * dim + d), which works because weights for
+            // all atom types are packed into a single allocation.
+            // Verified with HfO2 (2-type system): energy bit-exact vs CPU.
             a.w0[0], a.b0[0], a.w1[0], a.b1,
             p.q_scaler,
             // Output buffers
