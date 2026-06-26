@@ -79,7 +79,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
     {
         for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
         {
-            if (iprow == ParaV->coord[0] && ipcol == ParaV->coord[1])
+            if (ParaV->blacs_in_this_processor(iprow, ipcol))
             {
                 naroc[0] = this->ParaV->nrow;
                 naroc[1] = this->ParaV->ncol;

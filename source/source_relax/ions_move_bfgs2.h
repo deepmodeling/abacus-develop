@@ -15,6 +15,7 @@ class Ions_Move_BFGS2
 {
 public:
     void allocate(const int _size);//initialize parameters
+    void reset();
     bool relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running);//a full iteration step
     
 

@@ -248,9 +248,9 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         int col0 = pv.atom_begin_col[iat];
         const int row_size = pv.get_row_size();
         std::vector<std::complex<double>*> p_diag = {tmp_out[0], tmp_out[1], tmp_out[2]};
-        for(int mu = 0; mu < pv.get_row_size(iat); ++mu)
+        for(int mu = 0; mu < pv.get_nrow_atom(iat); ++mu)
         {
-            for(int nu = 0; nu < pv.get_col_size(iat); ++nu)
+            for(int nu = 0; nu < pv.get_ncol_atom(iat); ++nu)
             {
                 if(row_indexes[row0+mu]==col_indexes[col0+nu])
                 {

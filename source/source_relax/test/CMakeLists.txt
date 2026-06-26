@@ -87,6 +87,27 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_RELAX_ions_move_methods_test
+  LIBS parameter ${math_libs} base device
+  SOURCES ions_move_methods_test.cpp
+          ../ions_move_methods.cpp
+          ../ions_move_bfgs.cpp
+          ../ions_move_bfgs2.cpp
+          ../ions_move_cg.cpp
+          ../ions_move_sd.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../bfgs_basic.cpp
+          ../cg_base.cpp
+          ../matrix_methods.cpp
+          ../relax_data.cpp
+          ../../source_io/module_output/orb_io.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_cell/print_cell.cpp
+          ../../source_io/module_output/output.cpp
+)
+
+AddTest(
   TARGET MODULE_RELAX_ions_move_cg_test
   LIBS parameter ${math_libs} base device 
   SOURCES ions_move_cg_test.cpp 

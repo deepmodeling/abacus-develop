@@ -301,21 +301,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         std::cerr << "\n OPTX untested please test,";
     }
 
-    // if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
+    // if((func_type == 4 || func_type == 5) && basis_type == "pw")
     // {
     //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     // }
-    if((func_type == 3 || func_type == 5) && PARAM.inp.nspin==4)
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
-    }
 
-#ifndef __EXX
-    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "lcao")
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
-    }
-#endif
+    // Hybrid functional is now supported for both PW and LCAO basis
+    // #ifndef __EXX
+    // if((func_type == 4 || func_type == 5) && basis_type == "lcao")
+    // {
+    //     ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
+    // }
+    // #endif
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
