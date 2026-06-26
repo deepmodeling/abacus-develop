@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <numeric>
 #include <complex>
+#include <type_traits>
 
 namespace hsolver {
 
