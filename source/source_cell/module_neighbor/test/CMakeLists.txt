@@ -57,7 +57,7 @@ AddTest(
 add_executable(MODULE_CELL_NEIGHBOR_benchmark
   neighbor_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
 target_link_libraries(MODULE_CELL_NEIGHBOR_benchmark
-  parameter ${math_libs} base device cell_info Threads::Threads)
+  parameter ${math_libs} base device Threads::Threads)
 if(USE_OPENMP)
   target_link_libraries(MODULE_CELL_NEIGHBOR_benchmark OpenMP::OpenMP_CXX)
 endif()
@@ -65,13 +65,14 @@ endif()
 add_executable(MODULE_CELL_NEIGHBOR_mpi_benchmark
   mpi_neighbor_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
 target_link_libraries(MODULE_CELL_NEIGHBOR_mpi_benchmark
-  parameter ${math_libs} base device cell_info Threads::Threads)
+  parameter ${math_libs} base device Threads::Threads)
 if(USE_OPENMP)
   target_link_libraries(MODULE_CELL_NEIGHBOR_mpi_benchmark OpenMP::OpenMP_CXX)
 endif()
 
 add_executable(MODULE_CELL_NEIGHBOR_grid_path_benchmark
-  grid_path_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp)
+  grid_path_benchmark.cpp ../atom_pack.cpp ../mpi_domain.cpp
+  ../../../source_io/module_output/output.cpp)
 target_link_libraries(MODULE_CELL_NEIGHBOR_grid_path_benchmark
   parameter ${math_libs} base device cell_info Threads::Threads)
 if(USE_OPENMP)
