@@ -1,5 +1,5 @@
 remove_definitions(-D__MPI)
-install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_BASE_blas_connector
   LIBS parameter  ${math_libs} base device

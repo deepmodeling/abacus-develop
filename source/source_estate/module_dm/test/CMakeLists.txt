@@ -2,7 +2,7 @@ remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(TARGET MODULE_ESTATE_dm_io_test_serial)
   remove_definitions(-D__MPI)

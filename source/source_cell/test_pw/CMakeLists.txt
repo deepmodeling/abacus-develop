@@ -4,8 +4,8 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 remove_definitions(-D__LCAO)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES unitcell_test_pw_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unitcell_test_pw_para.sh ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_pw_para.sh COPYONLY)
 
 AddTest(
   TARGET MODULE_CELL_unitcell_test_pw

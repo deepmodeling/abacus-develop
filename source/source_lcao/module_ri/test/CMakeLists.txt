@@ -16,4 +16,4 @@ AddTest(
   LIBS parameter
   SOURCES abfs-vector3_order_test.cpp
 )
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

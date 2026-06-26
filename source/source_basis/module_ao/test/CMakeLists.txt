@@ -42,7 +42,7 @@ list(APPEND depend_files
   )
 
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
 AddTest(
@@ -83,13 +83,13 @@ AddTest(
     LIBS parameter ${math_libs} device base
 )
 
-install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_orbitals_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_orbitals_test.sh COPYONLY)
 find_program(BASH bash)
 add_test(NAME MODULE_AO_parallel_orbitals_test_para
       COMMAND ${BASH} parallel_orbitals_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
 

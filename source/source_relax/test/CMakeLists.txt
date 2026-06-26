@@ -4,7 +4,7 @@ remove_definitions(-D__MLALGO)
 remove_definitions(-D__CUDA)
 remove_definitions(-D__ROCM)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET MODULE_RELAX_relax_new_line_search

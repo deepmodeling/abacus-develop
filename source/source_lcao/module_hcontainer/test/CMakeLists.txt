@@ -35,7 +35,7 @@ AddTest(
   ../transfer.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
-install(FILES parallel_hcontainer_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_hcontainer_tests.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_hcontainer_tests.sh COPYONLY)
 find_program(BASH bash)
 add_test(NAME MODULE_LCAO_hcontainer_para_test
       COMMAND ${BASH} parallel_hcontainer_tests.sh
@@ -55,7 +55,7 @@ AddTest(
     ../../../source_io/module_output/sparse_matrix.cpp
 )
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
 endif() 

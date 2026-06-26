@@ -16,9 +16,9 @@ AddTest(
   SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp ../tool_quit.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp
 )
 
-install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_global_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_reduce_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_common_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_common_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_global_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_global_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_reduce_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_reduce_test.sh COPYONLY)
 
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_parallel_common_test
@@ -57,7 +57,7 @@ AddTest(
     LIBS parameter ${math_libs}
 )
 
-install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_2d_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_2d_test.sh COPYONLY)
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_parallel_2d_test_para
       COMMAND ${BASH} parallel_2d_test.sh
@@ -77,7 +77,7 @@ add_test(NAME MODULE_BASE_parallel_2d_test_para
     LIBS parameter MPI::MPI_CXX ${BLACS_LIB}
     SOURCES blacs_connector_test.cpp
   )
-  install(FILES blacs_connector_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/blacs_connector_test.sh ${CMAKE_CURRENT_BINARY_DIR}/blacs_connector_test.sh COPYONLY)
   add_test(NAME MODULE_BASE_blacs_connector_test
         COMMAND ${BASH} blacs_connector_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

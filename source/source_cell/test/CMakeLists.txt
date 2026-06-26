@@ -4,14 +4,14 @@ remove_definitions(-D__ROCM)
 remove_definitions(-D__EXX)
 
 find_program(BASH bash)
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_kpoints_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES klist_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES unitcell_test_parallel.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_read_sep_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_sep_cell_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bcast_atom_pseudo_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_pseudo_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bcast_atom_spec_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_spec_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_kpoints_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_kpoints_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/klist_test_para.sh ${CMAKE_CURRENT_BINARY_DIR}/klist_test_para.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unitcell_test_parallel.sh ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_parallel.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bcast_read_sep_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_read_sep_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bcast_sep_cell_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_sep_cell_test.sh COPYONLY)
 
 list(APPEND cell_simple_srcs
     ../unitcell.cpp

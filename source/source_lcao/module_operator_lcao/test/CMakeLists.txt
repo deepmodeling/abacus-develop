@@ -90,7 +90,7 @@ AddTest(
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 
-install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/parallel_operator_tests.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_operator_tests.sh COPYONLY)
 find_program(BASH bash)
 add_test(NAME MODULE_LCAO_operators_para_test
       COMMAND ${BASH} parallel_operator_tests.sh

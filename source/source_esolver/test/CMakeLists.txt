@@ -1,7 +1,7 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET MODULE_ESOLVER_esolver_dp_test
