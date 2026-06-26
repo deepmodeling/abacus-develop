@@ -19,6 +19,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __CUDA
+#include "neighbor_nep.h"
 // Forward-declare the CUDA kernel entry point (defined in nep_cuda_compute.cu).
 // Avoid including ".cuh" here — it has __device__ syntax that g++ cannot parse.
 extern void nep_cuda_compute(

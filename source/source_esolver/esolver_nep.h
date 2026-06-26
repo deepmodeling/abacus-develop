@@ -6,9 +6,6 @@
 #ifdef __NEP
 #include "nep.h"
 #endif
-#ifdef __CUDA
-#include "neighbor_nep.h"
-#endif
 #include <vector>
 #include <string>
 
