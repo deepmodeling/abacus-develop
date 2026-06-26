@@ -4,7 +4,7 @@ remove_definitions(-D__ROCM)
 AddTest(
   TARGET MODULE_RI_dm_mixing_test
   LIBS parameter base ${math_libs} device
-  SOURCES dm_mixing_test.cpp ../Mix_DMk_2D.cpp ../Mix_Matrix.cpp
+  SOURCES dm_mixing_test.cpp ../Mix_DMk_2D.cpp
 )
 AddTest(
   TARGET MODULE_RI_ri_cv_io_test

@@ -3,6 +3,7 @@
 #include "evolve_elec.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_io/module_parameter/parameter.h"
 
 #ifdef __CUBLASMP
 #include "kernels/cuda/band_energy_kernel.cuh"
@@ -129,7 +130,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
     {
         for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
         {
-            if (iprow == pv->coord[0] && ipcol == pv->coord[1])
+            if (pv->blacs_in_this_processor(iprow, ipcol))
             {
                 naroc[0] = pv->nrow;
                 naroc[1] = pv->ncol;
@@ -369,8 +370,8 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                                               pv->desc_Eij[4],
                                               pv->dim0,
                                               pv->dim1,
-                                              pv->coord[0],
-                                              pv->coord[1],
+                                              pv->get_coord_row(),
+                                              pv->get_coord_col(),
                                               nband,
                                               cublas_res.stream);
 

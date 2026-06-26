@@ -1,6 +1,6 @@
 #include "memory_op.h"
 
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/tool_threading.h"
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -450,6 +450,11 @@ int g_dsp_cluster_id = 0;
 void set_dsp_cluster_id(int id)
 {
     g_dsp_cluster_id = id;
+}
+
+int get_dsp_cluster_id()
+{
+    return g_dsp_cluster_id;
 }
 
 template <typename FPTYPE>

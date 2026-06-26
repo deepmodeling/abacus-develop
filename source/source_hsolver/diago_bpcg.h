@@ -1,6 +1,8 @@
 #ifndef DIAGO_BPCG_H_
 #define DIAGO_BPCG_H_
 
+#include <functional>
+
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"

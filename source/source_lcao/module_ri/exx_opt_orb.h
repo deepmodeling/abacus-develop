@@ -1,7 +1,7 @@
 #ifndef EXX_OPT_ORB_H
 #define EXX_OPT_ORB_H
 
-#include "../../source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/exx_info_opt_abfs.h"
 #include "../../source_base/matrix.h"
 #include "../../source_base/element_basis_index.h"
 #include "source_cell/klist.h"
@@ -15,7 +15,7 @@ class Exx_Opt_Orb
 {
 public:
 	void generate_matrix(
-		const Exx_Info::Exx_Info_Opt_ABFs &info,
+		const Exx_Info_Opt_ABFs &info,
 		const K_Vectors &kv,
 		const UnitCell &ucell,
 		const LCAO_Orbitals &orb) const;
@@ -40,7 +40,7 @@ private:
 		const std::vector<std::vector<RI::Tensor<double>>> & m_middle,
 		const std::vector<RI::Tensor<double>> & m_right ) const;
 	void print_matrix(
-		const Exx_Info::Exx_Info_Opt_ABFs &info,
+		const Exx_Info_Opt_ABFs &info,
 		const UnitCell& ucell,
 		const K_Vectors &kv,
 		const int Lmax,

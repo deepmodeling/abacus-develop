@@ -11,7 +11,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <regex.h>
+#include <regex>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -70,11 +70,11 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         str.push_back(section);
     }
 
-    // Compile the regular expression
-    regex_t reg;
-    regcomp(&reg, pattern.c_str(), REG_EXTENDED);
-    regmatch_t pmatch[1];
-    const size_t nmatch = 1;
+    // Compile the regular expression. std::regex (ECMAScript grammar) is
+    // portable; the previous POSIX <regex.h> implementation did not build on
+    // Windows/MinGW. The pattern is plain enough to behave identically here.
+    const std::regex reg(pattern);
+    std::smatch match;
 
     // Loop over each section and apply regex to extract numbers
     for (size_t i = 0; i < str.size(); ++i)
@@ -83,29 +83,31 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         {
             continue;
         }
-        int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
-        std::string sub_str = "";
 
-        // Extract the matched substring
-        for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
+        // Extract the first matched substring (mirrors the old regexec call)
+        std::string sub_str = "";
+        if (std::regex_search(str[i], match, reg))
         {
-            sub_str += str[i][j];
+            sub_str = match[0].str();
+        }
+
+        // A token that matches nothing is invalid input. Fail fast instead of
+        // feeding an empty string to the parsers below, which would push an
+        // indeterminate value into vec.
+        if (sub_str.empty())
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv::parse_expression",
+                                     "invalid token in expression: \"" + str[i] + "\"");
         }
 
         // Check if the substring contains multiplication (e.g., "2*3.14")
-        std::string sub_pattern("\\*");
-        regex_t sub_reg;
-        regcomp(&sub_reg, sub_pattern.c_str(), REG_EXTENDED);
-        regmatch_t sub_pmatch[1];
-        const size_t sub_nmatch = 1;
-
-        if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
+        if (sub_str.find('*') != std::string::npos)
         {
             size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
             assert(num >= 0);
-            T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
-            
+            T occ = static_cast<T>(stof(sub_str.substr(pos + 1, sub_str.size())));
+
             // Add the value to the vector `num` times
             for (size_t k = 0; k != num; k++)
             {
@@ -114,18 +116,20 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         }
         else
         {
-            // Handle scientific notation and convert to T
+            // Handle scientific notation and convert to T. Initialize occ and
+            // check the extraction so a malformed token fails fast rather than
+            // pushing an indeterminate value.
             std::stringstream convert;
             convert << sub_str;
-            T occ;
-            convert >> occ;
+            T occ{};
+            if (!(convert >> occ))
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv::parse_expression",
+                                         "failed to parse number: \"" + sub_str + "\"");
+            }
             vec.emplace_back(occ);
         }
-
-        regfree(&sub_reg);
     }
-
-    regfree(&reg);
 }
 
 #ifdef __LCAO

@@ -16,6 +16,7 @@ class Test_SETGRAD : public testing::Test
         std::vector<double> result;
         Input_para& input = PARAM.input;
         UnitCell ucell;
+        std::ofstream ofs;
 
         void SetUp()
         {
@@ -84,7 +85,7 @@ class Test_SETGRAD : public testing::Test
             ucell.lc[2] = 1;
 
             rl.init_relax(nat);
-            rl.relax_step(ucell,force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
 
             for(int i=0;i<3;i++)
             {
@@ -98,14 +99,14 @@ class Test_SETGRAD : public testing::Test
             ucell.latvec.Identity();
             input.fixed_axes = "shape";
             rl.init_relax(nat);
-            rl.relax_step(ucell,force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             push_result();
 
             //reset lattice vector
             ucell.latvec.Identity();
             input.fixed_axes = "volume";
             rl.init_relax(nat);
-            rl.relax_step(ucell,force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             push_result();
 
             //reset lattice vector
@@ -117,7 +118,7 @@ class Test_SETGRAD : public testing::Test
             ucell.lc[1] = 0;
             ucell.lc[2] = 0;
             rl.init_relax(nat);
-            rl.relax_step(ucell,force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             
             push_result();
         }
@@ -172,6 +173,7 @@ class Test_RELAX : public testing::Test
         Relax rl;
         std::vector<double> result;
         UnitCell ucell;
+        std::ofstream ofs;
 
         void SetUp()
         {
@@ -212,7 +214,7 @@ class Test_RELAX : public testing::Test
                 energy_file >> energy;
 
                 PARAM.input.fixed_ibrav = false;
-                rl.relax_step(ucell,force_in,stress_in,energy);
+                rl.relax_step(ucell,force_in,stress_in,energy, ofs);
                 result.push_back(ucell.atoms[0].taud[0].x);
                 result.push_back(ucell.atoms[0].taud[0].y);
                 result.push_back(ucell.atoms[0].taud[0].z);

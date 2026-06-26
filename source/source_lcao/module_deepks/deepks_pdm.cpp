@@ -92,7 +92,9 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                                const LCAO_Orbitals& orb,
                                const Parallel_Orbitals& pv,
                                const Grid_Driver& GridD,
-                               hamilt::HContainer<double>* dmr_deepks)
+                               hamilt::HContainer<double>* dmr_deepks,
+                               const int nspin,
+                               const bool mag)
 {
     dmr_deepks->set_zero();
     // save whether the pair with R has been calculated
@@ -145,9 +147,8 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             }
             calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
 
-            dm_pair.find_R(dR);
-            hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
-            dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
+            const int r_index = dm_pair.find_R(dR);
+            dm_pair.get_HR_values(r_index).set_zero(); // must reset to zero to avoid accumulation!
 
             for (int ik = 0; ik < dmk.size(); ik++)
             {
@@ -157,14 +158,18 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                     const double arg = -(kvec_d[ik] * ModuleBase::Vector3<double>(dR)) * ModuleBase::TWO_PI;
                     kphase = std::complex<double>(cos(arg), sin(arg));
                 }
+                if (mag && nspin == 2 && ik >= (int)(dmk.size() / nspin))
+                {
+                    kphase *= -1.0; // spin-down block enters with a minus sign
+                }
                 TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
                 }
                 else
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
                 }
             }
         }
@@ -480,7 +485,9 @@ template void DeePKS_domain::update_dmr<double>(const std::vector<ModuleBase::Ve
                                                 const LCAO_Orbitals& orb,
                                                 const Parallel_Orbitals& pv,
                                                 const Grid_Driver& GridD,
-                                                hamilt::HContainer<double>* dmr_deepks);
+                                                hamilt::HContainer<double>* dmr_deepks,
+                                                const int nspin,
+                                                const bool mag);
 
 template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                               const std::vector<std::vector<std::complex<double>>>& dmk,
@@ -488,7 +495,9 @@ template void DeePKS_domain::update_dmr<std::complex<double>>(const std::vector<
                                                               const LCAO_Orbitals& orb,
                                                               const Parallel_Orbitals& pv,
                                                               const Grid_Driver& GridD,
-                                                              hamilt::HContainer<double>* dmr_deepks);
+                                                              hamilt::HContainer<double>* dmr_deepks,
+                                                              const int nspin,
+                                                              const bool mag);
 
 template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              const DeePKS_Param& deepks_param,

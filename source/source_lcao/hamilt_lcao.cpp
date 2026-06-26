@@ -1,9 +1,13 @@
 #include "source_lcao/hamilt_lcao.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/setup_exx.h"
+#include "source_lcao/setup_deepks.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>
@@ -524,6 +528,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
             }
         }
         this->current_spin = this->kv->isk[ik];
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_current_spin(this->kv->isk[ik]);
     }
     this->getOperator()->init(ik);
     ModuleBase::timer::end("HamiltLCAO", "updateHk");

@@ -60,7 +60,7 @@ private:
 	using TatomR = std::array<double,Ndim>;		// tmp
 
 public:
-	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in) {}
+	Exx_LRI(const Exx_Info_RI& info_in) :info(info_in) {}
 	Exx_LRI operator=(const Exx_LRI&) = delete;
 	Exx_LRI operator=(Exx_LRI&&);
 
@@ -68,22 +68,13 @@ public:
 		const MPI_Comm &mpi_comm_in,
 		const UnitCell &ucell,
 		const K_Vectors &kv_in,
-		const LCAO_Orbitals& orb);
-	void init(
-		const MPI_Comm &mpi_comm_in,
-		const UnitCell &ucell,
-		const K_Vectors &kv_in,
 		const LCAO_Orbitals& orb,
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
-    void init_spencer(const MPI_Comm& mpi_comm_in,
-                      const UnitCell& ucell,
-                      const K_Vectors& kv_in,
-                      const LCAO_Orbitals& orb);
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
                       const LCAO_Orbitals& orb,
-                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in);
+                      const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
     void cal_cut_coulomb_cs(
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_cut_IJR,
@@ -114,7 +105,9 @@ public:
 
 
 private:
-	const Exx_Info::Exx_Info_RI &info;
+	// WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
+	// Must not outlive GlobalC::exx_info. See exx_info.h for details.
+	const Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
 	std::shared_ptr<ORB_gaunt_table> MGT;

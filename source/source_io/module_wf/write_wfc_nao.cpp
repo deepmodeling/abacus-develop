@@ -1,7 +1,7 @@
 #include "write_wfc_nao.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_2d.h"

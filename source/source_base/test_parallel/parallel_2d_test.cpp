@@ -79,8 +79,8 @@ TEST_F(test_para2d, Divide2D)
                     return nblock / np * nb + static_cast<int>(nblock % np > pcoord) * nb // full blocks' contribution
                            + static_cast<int>(nblock % np == pcoord) * (gsize % nb); // the last block's contribution
                 };
-                EXPECT_EQ(lr, cal_lsize(gr, nb, p2d.dim0, p2d.coord[0]));
-                EXPECT_EQ(lc, cal_lsize(gc, nb, p2d.dim1, p2d.coord[1]));
+                EXPECT_EQ(lr, cal_lsize(gr, nb, p2d.dim0, p2d.get_coord_row()));
+                EXPECT_EQ(lc, cal_lsize(gc, nb, p2d.dim1, p2d.get_coord_col()));
 
                 // 4. ScaLAPACK descriptor
                 EXPECT_EQ(p2d.desc[0], 1);

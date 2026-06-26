@@ -15,14 +15,17 @@
  * - print termination message
  */
 
-class spinconstrain::SpinConstrainTest : public testing::Test
+namespace spinconstrain
+{
+class SpinConstrainTest : public testing::Test
 {
   protected:
-    spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
-        = spinconstrain::SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
+}
 
-TEST_F(spinconstrain::SpinConstrainTest, PrintTermination)
+TEST_F(SpinConstrainTest, PrintTermination)
 {
     std::map<int, int> atomCounts = {
         {0, 1}
@@ -45,7 +48,7 @@ TEST_F(spinconstrain::SpinConstrainTest, PrintTermination)
     //EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000        -2.0000000000        -3.0000000000"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckRmsStop)
+TEST_F(SpinConstrainTest, CheckRmsStop)
 {
     double sc_thr = 1e-6;
     int nsc = 100;
@@ -69,7 +72,7 @@ TEST_F(spinconstrain::SpinConstrainTest, CheckRmsStop)
     EXPECT_THAT(output, testing::HasSubstr("Reach maximum number of steps ( 100 ), exit."));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, PrintHeader)
+TEST_F(SpinConstrainTest, PrintHeader)
 {
     testing::internal::CaptureStdout();
     sc.print_header();
@@ -78,7 +81,7 @@ TEST_F(spinconstrain::SpinConstrainTest, PrintHeader)
     EXPECT_THAT(output, testing::HasSubstr("Covergence criterion for the iteration: 1e-06"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction)
+TEST_F(SpinConstrainTest, CheckRestriction)
 {
     std::vector<ModuleBase::Vector3<double>> search = {
         {0.0, 0.0, 40}
@@ -91,7 +94,7 @@ TEST_F(spinconstrain::SpinConstrainTest, CheckRestriction)
     EXPECT_THAT(output, testing::HasSubstr("boundary after = 3"));
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CalAlphaOpt)
+TEST_F(SpinConstrainTest, CalAlphaOpt)
 {
     std::vector<ModuleBase::Vector3<int>> constrain = {
         {1, 1, 1}
@@ -123,7 +126,7 @@ TEST_F(spinconstrain::SpinConstrainTest, CalAlphaOpt)
     EXPECT_NEAR(expected_alpha_opt, actual_alpha_opt, 1e-14);
 }
 
-TEST_F(spinconstrain::SpinConstrainTest, CheckGradientDecay)
+TEST_F(SpinConstrainTest, CheckGradientDecay)
 {
     // Set up some data for testing
     std::vector<ModuleBase::Vector3<double>> new_spin = {

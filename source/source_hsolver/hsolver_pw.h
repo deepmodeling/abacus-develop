@@ -6,7 +6,6 @@
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include <unordered_map>
-#include "source_base/memory.h"
 
 namespace hsolver
 {

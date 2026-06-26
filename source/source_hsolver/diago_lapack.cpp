@@ -98,7 +98,7 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
-    const double abstol = 0, orfac = -1;
+    const double abstol = LAPACK_ABSTOL, orfac = LAPACK_ORFAC;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(PARAM.globalv.nlocal, 0);
@@ -206,7 +206,7 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     const char jobz = 'V', range = 'I', uplo = 'U';
     const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
-    const double abstol = 0, orfac = -1;
+    const double abstol = LAPACK_ABSTOL, orfac = LAPACK_ORFAC;
     
     const double vl = 0, vu = 0;
     std::vector<std::complex<double>> work(1, 0);

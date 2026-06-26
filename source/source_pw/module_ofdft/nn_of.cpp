@@ -1,14 +1,14 @@
 #include "nn_of.h"
 
-NN_OFImpl::NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, torch::Device device)
+NN_OFImpl::NN_OFImpl(int nrxx, int nrxx_vali, int ninpt, int nnode, int nlayer, torch::Device device, std::ostream& ofs_running)
 {
     this->nrxx = nrxx;
     this->nrxx_vali = nrxx_vali;
     this->ninpt = ninpt;
     this->nnode = nnode;
-    std::cout << "nnode = " << this->nnode << std::endl;
+    ofs_running << " nnode = " << this->nnode << " (number of nodes per hidden layer)" << std::endl;
     this->nlayer = nlayer;
-    std::cout << "nlayer = " << this->nlayer << std::endl;
+    ofs_running << " nlayer = " << this->nlayer << " (number of hidden layers)" << std::endl;
     this->nfc = nlayer + 1;
 
     this->inputs = torch::zeros({this->nrxx, this->ninpt}).to(device);
