@@ -25,6 +25,7 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
             Parallel_Reduce::reduce_pool(norm);
+            if (norm < 1e-30) continue; // skip bands with zero search direction (e.g. soft-locked in PPCG)
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
