@@ -4,6 +4,7 @@
 #include <limits>
 #include <cassert>
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -12,6 +13,33 @@
 namespace
 {
 const int neighbor_setup_openmp_threshold = 100000;
+
+int checked_positive_int_count(long long count, const std::string& name)
+{
+    if (count <= 0 || count > std::numeric_limits<int>::max())
+    {
+        ModuleBase::WARNING_QUIT(
+            "NeighborSearch",
+            name + " is outside the supported int range for neighbor-search indexing"
+        );
+    }
+    return static_cast<int>(count);
+}
+
+int checked_product_to_int(long long lhs, long long rhs, const std::string& name)
+{
+    checked_positive_int_count(lhs, name);
+    checked_positive_int_count(rhs, name);
+
+    if (lhs > std::numeric_limits<int>::max() / rhs)
+    {
+        ModuleBase::WARNING_QUIT(
+            "NeighborSearch",
+            name + " exceeds the supported int range for neighbor-search indexing"
+        );
+    }
+    return static_cast<int>(lhs * rhs);
+}
 }
 
 // ========== Getter methods ==========
@@ -206,12 +234,25 @@ void NeighborSearch::set_member_variables(const AtomProvider& ucell)
         }
     }
 
-    const int atoms_per_image = static_cast<int>(base_atoms.size());
-    const int nimage_x = glayerX_ + glayerX_minus_;
-    const int nimage_y = glayerY_ + glayerY_minus_;
-    const int nimage_z = glayerZ_ + glayerZ_minus_;
-    const int nimages = nimage_x * nimage_y * nimage_z;
-    const int total_atoms = nimages * atoms_per_image;
+    const int atoms_per_image = checked_positive_int_count(
+        static_cast<long long>(base_atoms.size()),
+        "atoms_per_image"
+    );
+    const int nimage_x = checked_positive_int_count(
+        static_cast<long long>(glayerX_) + static_cast<long long>(glayerX_minus_),
+        "nimage_x"
+    );
+    const int nimage_y = checked_positive_int_count(
+        static_cast<long long>(glayerY_) + static_cast<long long>(glayerY_minus_),
+        "nimage_y"
+    );
+    const int nimage_z = checked_positive_int_count(
+        static_cast<long long>(glayerZ_) + static_cast<long long>(glayerZ_minus_),
+        "nimage_z"
+    );
+    const int nimage_xy = checked_product_to_int(nimage_x, nimage_y, "nimage_x * nimage_y");
+    const int nimages = checked_product_to_int(nimage_xy, nimage_z, "nimages");
+    const int total_atoms = checked_product_to_int(nimages, atoms_per_image, "total_atoms");
 
 #ifdef _OPENMP
     const bool use_parallel = total_atoms >= neighbor_setup_openmp_threshold && omp_get_max_threads() > 1;
