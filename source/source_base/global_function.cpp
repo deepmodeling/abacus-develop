@@ -16,10 +16,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <cerrno>
-#include <unistd.h>
+#include "source_base/fs_compat.h"
 
 namespace ModuleBase
 {
@@ -68,7 +66,7 @@ void MAKE_DIR(const std::string &fn)
     //	ModuleBase::TITLE("global_function","MAKE_DIR");
     if (GlobalV::MY_RANK == 0)
     {
-        int ret = mkdir(fn.c_str(), 0755);
+        int ret = ModuleBase::make_directory(fn);
         if (ret != 0 && errno != EEXIST)
         {
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
