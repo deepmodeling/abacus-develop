@@ -137,6 +137,13 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
 {
     ModuleBase::TITLE("KEDF_LKT", "lkt_potential");
     ModuleBase::timer::start("KEDF_LKT", "lkt_potential");
+#ifdef __CUDA
+    if (pw_rho->get_device() == "gpu") {
+        this->lkt_potential_gpu(prho, pw_rho, rpotential);
+        ModuleBase::timer::end("KEDF_LKT", "lkt_potential");
+        return;
+    }
+#endif
     this->lkt_energy = 0.;
 
     if (PARAM.inp.nspin == 1)

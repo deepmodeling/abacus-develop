@@ -8,6 +8,10 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
+#ifdef __CUDA
+#include <cufft.h>
+#endif
+
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with Luo-Karasiev-Trickey (LKT) KEDF.
  * See Luo K, Karasiev V V, Trickey S B. Physical Review B, 2018, 98(4): 041111.
@@ -26,6 +30,9 @@ class KEDF_LKT
     ~KEDF_LKT()
     {
         free_buffers();
+#ifdef __CUDA
+        free_gpu_buffers();
+#endif
     }
 
     void set_para(double dV, double lkt_a);
@@ -64,5 +71,31 @@ class KEDF_LKT
     double* div_input_[3] = {nullptr, nullptr, nullptr}; // input for divergence()
     double* nabla_term_ = nullptr;     // divergence output, size nrxx
     int buffer_nrxx_ = 0;              // size of allocated buffers
+
+#ifdef __CUDA
+    // ── GPU acceleration ──
+    /// GPU-accelerated lkt_potential (cuFFT-based gradient + divergence).
+    void lkt_potential_gpu(const double* const* prho, ModulePW::PW_Basis* pw_rho,
+                           ModuleBase::matrix& rpotential);
+
+    /// Release persistent GPU buffers and cuFFT plans.
+    void free_gpu_buffers();
+
+    // Persistent GPU buffers (lazily allocated once, reused across SCF iterations)
+    double* d_rho_ = nullptr;            // real-space density       (nrxx doubles)
+    double* d_as_ = nullptr;             // a*s values               (nrxx doubles)
+    double* d_potential_ = nullptr;      // output potential         (nrxx doubles)
+    double* d_fft_save_ = nullptr;       // cuFFT complex workspace  (nrxx×2 doubles)
+    double* d_fft_work_ = nullptr;       // cuFFT complex workspace  (nrxx×2 doubles)
+    double* d_nabla_rho_[3] = {nullptr, nullptr, nullptr}; // gradient components (nrxx doubles each)
+    double* d_div_input_[3] = {nullptr, nullptr, nullptr}; // divergence input   (alias d_nabla_rho_)
+    double* d_gcar_ = nullptr;           // interleaved G vectors    (npw×3 doubles)
+    double* d_energy_partial_ = nullptr; // energy partial sums      (nblocks doubles)
+
+    cufftHandle cufft_plan_fwd_ = 0;    // cuFFT forward plan
+    cufftHandle cufft_plan_bwd_ = 0;    // cuFFT backward plan
+
+    bool gpu_allocated_ = false;
+#endif
 };
 #endif
