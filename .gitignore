@@ -1,5 +1,6 @@
 /build*
 build_info.h
+CMakeFiles/
 bin
 obj
 *.o
