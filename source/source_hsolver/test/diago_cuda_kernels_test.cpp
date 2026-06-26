@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <random>
 
 #if defined(__CUDACC__) || defined(__CUDA) || defined(__UT_USE_CUDA)
@@ -28,6 +29,9 @@
 #else
 #define CUDA_AVAILABLE 0
 #endif
+
+// Runtime GPU detection: set to false if no GPU device is available at runtime
+static bool g_gpu_available = false;
 
 namespace hsolver {
 namespace test {
@@ -185,6 +189,10 @@ protected:
     void SetUp() override
     {
 #if CUDA_AVAILABLE
+        // Skip GPU tests if no GPU device is available at runtime
+        if (!g_gpu_available) {
+            GTEST_SKIP() << "No CUDA-capable GPU device found. Skipping GPU tests.";
+        }
         cuda::init_diago_cuda_resources();
 #endif
     }
@@ -192,7 +200,9 @@ protected:
     void TearDown() override
     {
 #if CUDA_AVAILABLE
-        cuda::destroy_diago_cuda_resources();
+        if (g_gpu_available) {
+            cuda::destroy_diago_cuda_resources();
+        }
 #endif
     }
 };
@@ -648,5 +658,20 @@ TEST_F(DiagoCudaKernelsTest, LargeScaleStressTest)
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+
+#if CUDA_AVAILABLE
+    // Runtime GPU detection: gracefully skip all GPU tests if no device is available.
+    // This prevents crashes in CI environments with CUDA toolkit but no GPU.
+    int device_count = 0;
+    cudaError_t err = cudaGetDeviceCount(&device_count);
+    if (err == cudaSuccess && device_count > 0) {
+        g_gpu_available = true;
+        std::cout << "CUDA GPU detected: " << device_count << " device(s). Running GPU tests." << std::endl;
+    } else {
+        std::cout << "No CUDA GPU found (" << cudaGetErrorString(err)
+                  << ", count=" << device_count << "). Skipping all GPU tests." << std::endl;
+    }
+#endif
+
     return RUN_ALL_TESTS();
 }
