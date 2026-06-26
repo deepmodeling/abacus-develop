@@ -734,8 +734,9 @@ void nep_cuda_compute(
     int total_pairs_angular = N * MN;
     grid_size = (total_pairs_angular + block_size - 1) / block_size;
     nep_force_angular_kernel<<<grid_size, block_size>>>(
-        N, n_max_angular, basis_size_angular,
-        L_max, num_L, num_types, num_types_sq, num_c_radial, dim,
+        N, n_max_radial, n_max_angular, dim,
+        basis_size_angular,
+        L_max, num_L, num_types, num_types_sq, num_c_radial,
         d_type, d_NN_a, d_NL_a,
         d_x12_a, d_y12_a, d_z12_a,
         d_rc_a, d_ann_c,
@@ -927,8 +928,9 @@ void nep_cuda_compute_timed(
     int total_pairs_angular = N * MN;
     grid_size = (total_pairs_angular + block_size - 1) / block_size;
     nep_force_angular_kernel<<<grid_size, block_size>>>(
-        N, n_max_angular, basis_size_angular,
-        L_max, num_L, num_types, num_types_sq, num_c_radial, dim,
+        N, n_max_radial, n_max_angular, dim,
+        basis_size_angular,
+        L_max, num_L, num_types, num_types_sq, num_c_radial,
         d_type, d_NN_a, d_NL_a,
         d_x12_a, d_y12_a, d_z12_a,
         d_rc_a, d_ann_c,
