@@ -54,6 +54,7 @@ void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = fa
     const int lwork = work_tmp;
     double* work2 = new double[lwork];
     dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, &info);
+    ASSERT_EQ(info, 0);
     end = clock();
     if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
 }

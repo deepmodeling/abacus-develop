@@ -61,9 +61,11 @@ void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float *e, bool 
 // LAPACK reference for generalized eigenproblem when S is diagonal (complex<float>)
 void lapackGeneralEigen(int &npw, std::vector<std::complex<float>> &hm, const std::vector<std::complex<float>> &sdiag, float *e, bool outtime = false)
 {
+    ASSERT_GE(sdiag.size(), static_cast<size_t>(npw));
     // build transformed matrix tmp = S^{-1/2} H S^{-1/2}
     std::vector<std::complex<float>> tmp(npw * npw);
     for (int i = 0; i < npw; ++i) {
+        ASSERT_NE(sdiag[i], std::complex<float>(0.0f, 0.0f));
         std::complex<float> si = std::sqrt(sdiag[i]);
         for (int j = 0; j < npw; ++j) {
             std::complex<float> sj = std::sqrt(sdiag[j]);
@@ -79,6 +81,7 @@ void lapackGeneralEigen(int &npw, std::vector<std::complex<float>> &hm, const st
     int info = 0;
     char tmp_c1 = 'V', tmp_c2 = 'U';
     cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+    ASSERT_EQ(info, 0);
     end = clock();
     if (outtime) {
         std::cout << "Lapack General Run time: " << (float)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;

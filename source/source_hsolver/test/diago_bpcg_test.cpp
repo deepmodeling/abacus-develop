@@ -45,6 +45,7 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
     int info = 0;
     char tmp_c1 = 'V', tmp_c2 = 'U';
     zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
+    ASSERT_EQ(info, 0);
     end = clock();
     if (outtime) {
         std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
