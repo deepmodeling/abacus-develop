@@ -234,7 +234,6 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 11)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_STANDARD 14 CACHE STRING "CUDA C++ standard")
 
 add_executable(${ABACUS_BIN_NAME} source/source_main/main.cpp)
 if(ENABLE_COVERAGE)
@@ -477,8 +476,9 @@ if(USE_CUDA)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 89 90)
     endif()
   endif()
-  enable_language(CUDA)
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-std=c++14" CACHE STRING "" FORCE)
+  set(CMAKE_CUDA_STANDARD 14 CACHE STRING "CUDA C++ standard")
+  enable_language(CUDA)
   # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(TARGET ${ABACUS_BIN_NAME}
                PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
