@@ -11,7 +11,15 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_bpcg
     LIBS parameter  ${math_libs} base psi device container
-    SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp  
+    SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+            ../../source_hamilt/operator.cpp
+            ../../source_pw/module_pwdft/op_pw.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_bpcg_freq_benchmark
+    LIBS parameter  ${math_libs} base psi device container
+    SOURCES bpcg_freq_benchmark_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
