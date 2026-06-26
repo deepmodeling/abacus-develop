@@ -3,7 +3,7 @@
 #include "../module_wf/write_wfc_pw.h" // use write_wfc_pw
 #include "../module_dos/write_dos_pw.h" // use write_dos_pw
 #include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
-#include "source_pw/module_pwdft/onsite_projector.h" // use projector
+#include "source_pw/module_pwdft/onsite_proj.h" // use projector
 #include "../module_bessel/numerical_basis.h"
 #include "../module_bessel/numerical_descriptor.h"
 #include "../module_dos/cal_ldos.h"
@@ -361,7 +361,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                              inp.of_ml_yukawa_alpha,
                                              inp.of_ml_kernel_file,
                                              ucell.omega,
-                                             pw_rho);
+                                             pw_rho,
+                                             GlobalV::ofs_running);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
                                                stp.template get_psi_t<T, Device>(),

@@ -37,9 +37,6 @@ source "${INSTALLDIR}"/toolchain.env
 [ ${MPI_MODE} != "mpich" ] && exit 0
 [ -f "${BUILDDIR}/setup_mpich" ] && rm "${BUILDDIR}/setup_mpich"
 
-MPICH_CFLAGS=""
-MPICH_LDFLAGS=""
-MPICH_LIBS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -48,17 +45,12 @@ case "${with_mpich}" in
         echo "==================== Installing MPICH ===================="
         pkg_install_dir="${INSTALLDIR}/mpich-${mpich_ver}"
         #pkg_install_dir="${HOME}/apps/mpich/${mpich_ver}-intel"
-        install_lock_file="$pkg_install_dir/install_successful"
+        install_lock_file="${pkg_install_dir}/install_successful"
         url="https://www.mpich.org/static/downloads/${mpich_ver}/${mpich_pkg}"
         if verify_checksums "${install_lock_file}"; then
             echo "mpich-${mpich_ver} is already installed, skipping it."
         else
-            if [ -f ${mpich_pkg} ]; then
-                echo "${mpich_pkg} is found"
-            else
-                #download_pkg_from_ABACUS_org "${mpich_sha256}" "${mpich_pkg}"
-                download_pkg_from_url "${mpich_sha256}" "${mpich_pkg}" "${url}"
-            fi
+            retrieve_package "${mpich_sha256}" "${mpich_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -78,11 +70,8 @@ case "${with_mpich}" in
             ./configure \
                 --prefix="${pkg_install_dir}" \
                 --libdir="${pkg_install_dir}/lib" \
-                MPICC="" \
                 FFLAGS="${FCFLAGS} ${compat_flag}" \
                 FCFLAGS="${FCFLAGS} ${compat_flag}" \
-                --without-x \
-                --enable-gl=no \
                 --with-device=${MPICH_DEVICE} \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -176,14 +165,13 @@ EOF
     if [ "${with_mpich}" != "__SYSTEM__" ]; then
         cat << EOF >> "${BUILDDIR}/setup_mpich"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin":\${PATH}
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
-export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
-export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
-export CPATH="${pkg_install_dir}/include":\${CPATH}
+prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
+prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
+prepend_path CPATH "${pkg_install_dir}/include"
 EOF
     fi
-    cat "${BUILDDIR}/setup_mpich" >> ${SETUPFILE}
+    filter_setup "${BUILDDIR}/setup_mpich" ${SETUPFILE}
 fi
 
 # Update leak suppression file

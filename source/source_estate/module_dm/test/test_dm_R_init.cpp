@@ -113,8 +113,8 @@ TEST_F(DMTest, DMInit1)
     EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_i(), 2);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
-    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
-    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     delete kv;
 }
 
@@ -167,8 +167,8 @@ TEST_F(DMTest, DMInit2)
     EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_i(), 2);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
-    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
-    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     // release memory
     delete kv;
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
@@ -206,8 +206,8 @@ TEST_F(DMTest, DMInit3)
     EXPECT_EQ(DM1.get_DMR_pointer(2)->size_atom_pairs(), test_size * test_size);
     EXPECT_EQ(DM1.get_DMR_pointer(2)->get_atom_pair(2, 2).get_atom_i(), 2);
     EXPECT_EQ(DM1.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
-    EXPECT_EQ(DM1.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
-    EXPECT_EQ(DM1.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    EXPECT_EQ(DM1.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
+    EXPECT_EQ(DM1.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     //
     delete kv;
 }
@@ -242,7 +242,7 @@ TEST_F(DMTest, DMInit4)
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -260,8 +260,8 @@ TEST_F(DMTest, DMInit4)
     EXPECT_EQ(DM.get_DMR_pointer(2)->size_atom_pairs(), test_size * test_size);
     EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_atom_i(), 2);
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_atom_j(), 2);
-    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_row_size(2));
-    EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
+    EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_row_size(), paraV->get_nrow_atom(2));
+    EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     //
     delete kv;
 }

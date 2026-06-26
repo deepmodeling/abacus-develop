@@ -22,7 +22,6 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     this->ucell = ucell_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->hsk != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
     // Only initialize if hR_in is not nullptr (for force calculation, hR_in can be nullptr)
@@ -66,7 +65,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

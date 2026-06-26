@@ -54,7 +54,9 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
             castmem_var_d2h_op()(this->charge->kin_r[ii], this->kin_r[ii], this->charge->nrxx);
         }
     }
-    this->parallelK();
+#ifdef __MPI
+    this->charge->kin_r_mpi();
+#endif
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
 }
 

@@ -5,7 +5,6 @@
 
 #include "source_base/macros.h"
 
-#include "source_base/parallel_reduce.h"
 
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"

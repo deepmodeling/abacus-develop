@@ -9,6 +9,7 @@
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
 #include "gint_tau.h"
+#include "gint_dvlocal.h"
 
 #ifdef __CUDA
 #include "gint_vl_gpu.h"
@@ -108,7 +109,7 @@ void cal_gint_rho(
         Gint_rho_gpu gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     } else
-    #endif
+#endif
     {
         Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
@@ -178,7 +179,7 @@ void cal_gint_fvl_meta(
     }
 }
 
-void cal_dvlocal_R_sparseMatrix(
+void cal_dvlocal_R_sparse(
     const int nspin,
     const int npol,
     const int current_spin,
@@ -192,7 +193,7 @@ void cal_dvlocal_R_sparseMatrix(
 {
     Gint_dvlocal gint_dvlocal(vr_eff, nspin, npol);
     gint_dvlocal.cal_dvlocal();
-    gint_dvlocal.cal_dvlocal_R_sparseMatrix(
+    gint_dvlocal.cal_dvlocal_R_sparse(
         nspin, current_spin, nlocal, sparse_thr,
         pv, ucell, gdriver, hs_arrays);
 }

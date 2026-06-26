@@ -16,12 +16,12 @@ class BatchBigGrid
     int get_batch_size() const { return biggrids_.size(); }
     int get_atoms_num() const { return atoms_num_; }
     int get_phi_len() const { return phi_len_;}
-    int get_max_atoms_num_per_bgrid() const { return max_atoms_num_per_bgrid_; }
+    int get_max_atoms_per_bgrid() const { return max_atoms_per_bgrid_; }
     bool empty() {return atoms_num_ == 0; }
     static int get_max_batch_size() { return max_batch_size_; }
     static int get_max_atoms_num() { return max_atoms_num_; }
     static int get_max_phi_len() { return max_phi_len_; }
-    static int get_max_atom_pairs_num() { return max_atom_pairs_num_; }
+    static int get_max_atom_pairs_num() { return max_atom_pairs_; }
     static std::shared_ptr<const BigGridInfo> get_bgrid_info() { return BigGrid::get_bgrid_info(); }
     
     private:
@@ -35,7 +35,7 @@ class BatchBigGrid
     int atoms_num_ = 0;
 
     // the max number of atoms of a single biggrid
-    int max_atoms_num_per_bgrid_ = 0;
+    int max_atoms_per_bgrid_ = 0;
 
     // the max number of biggrids of a biggrids batch
     static int max_batch_size_;
@@ -44,7 +44,7 @@ class BatchBigGrid
     // the max number of total wavefunctions of a biggrids batch
     static int max_phi_len_;
     // the max number of atom pairs of a biggrids batch
-    static int max_atom_pairs_num_;
+    static int max_atom_pairs_;
 };
 
 }

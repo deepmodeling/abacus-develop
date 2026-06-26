@@ -8,7 +8,6 @@
 #include "source_base/module_container/ATen/kernels/lapack.h"
 
 #include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/diag_const_nums.h"
 
 #include <vector>
 #include <functional>

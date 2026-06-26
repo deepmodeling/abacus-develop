@@ -28,6 +28,7 @@
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
+    - [gint\_precision](#gint_precision)
     - [timer\_enable\_nvtx](#timer_enable_nvtx)
     - [cell\_factor](#cell_factor)
     - [dm\_to\_rho](#dm_to_rho)
@@ -231,6 +232,7 @@
     - [of\_vw\_weight](#of_vw_weight)
     - [of\_wt\_alpha](#of_wt_alpha)
     - [of\_wt\_beta](#of_wt_beta)
+    - [of\_extwt\_kappa](#of_extwt_kappa)
     - [of\_wt\_rho0](#of_wt_rho0)
     - [of\_hold\_rho0](#of_hold_rho0)
     - [of\_lkt\_a](#of_lkt_a)
@@ -394,6 +396,8 @@
     - [sc\_scf\_thr](#sc_scf_thr)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
+    - [vdw\_d4\_xc](#vdw_d4_xc)
+    - [vdw\_d4\_model](#vdw_d4_model)
     - [vdw\_s6](#vdw_s6)
     - [vdw\_s8](#vdw_s8)
     - [vdw\_a1](#vdw_a1)
@@ -759,6 +763,16 @@
   - double: double precision
 - **Default**: double
 
+### gint_precision
+
+- **Type**: String
+- **Availability**: *Used only for LCAO basis set on CPU.*
+- **Description**: Specifies the precision when performing grid integral in LCAO calculations.
+  - single: single precision
+  - double: double precision
+  - mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough
+- **Default**: double
+
 ### timer_enable_nvtx
 
 - **Type**: Boolean
@@ -982,8 +996,9 @@
 ### pw_diag_nmax
 
 - **Type**: Integer
+- **Availability**: *basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg*
 - **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
-- **Default**: 40
+- **Default**: 50
 
 ### pw_diag_ndim
 
@@ -1348,14 +1363,14 @@
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, its total-energy criterion is applied as an additional convergence check only after the charge-density criterion (`scf_thr`) has been satisfied, and only from the second SCF iteration onward (`iter > 1`). For local-orbital calculations, 1e-6 is usually accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 - **Unit**: Ry if scf_thr_type=1, dimensionless if scf_thr_type=2
 
 ### scf_ene_thr
 
 - **Type**: Real
-- **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
+- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
 - **Default**: -1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 
@@ -1773,7 +1788,7 @@
    - nspin = 1: pots1.cube;
    - nspin = 2: pots1.cube and pots2.cube;
    - nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
    - nspin = 1: pots1_ini.cube;
    - nspin = 2: pots1_ini.cube and pots2_ini.cube;
@@ -1790,15 +1805,20 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
-- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. The files are named as:
+- **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
   - For gamma only case:
-   - nspin = 1 and 4: dm_nao.csr;
-   - nspin = 2: dms1_nao.csr and dms2_nao.csr for the two spin channels.
+   - nspin = 1 and 4: dmg1_nao.txt;
+   - nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
   - For multi-k points case:
-   - nspin = 1 and 4: dmk1_nao.csr, dmk2_nao.csr, ...;
-   - nspin = 2: dmk1s1_nao.csr... and dmk1s2_nao.csr... for the two spin channels.
+   - nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+   - nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-  > Note: In the 3.10-LTS version, the parameter is named out_dm and the file names are SPIN1_DM and SPIN2_DM, etc.
+  Here, g{istep} denotes the geometry/step index in the output file name.
+
+  > Note: Version difference (develop vs 3.10-LTS):
+  >
+  > - In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+  > - In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
 - **Default**: False
 
 ### out_dmr
@@ -1922,12 +1942,12 @@
 
 ### out_mat_hs2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
-- **Default**: False
+- **Default**: False [8]
 - **Unit**: Ry
 
 ### out_mat_tk
@@ -1942,42 +1962,42 @@
 
 ### out_mat_r
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print the matrix representation of the position matrix into a file named rr.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
+- **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
 
   > Note: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Bohr
 
 ### out_mat_t
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_dh
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: 0 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_ds
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsrxs1.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry/Bohr
 
 ### out_mat_xc
@@ -1992,12 +2012,12 @@
 
 ### out_mat_xc2
 
-- **Type**: Boolean
+- **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital (NAO) basis*
-- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.s.
+- **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on.
 
   > Note: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
-- **Default**: False
+- **Default**: False 8
 - **Unit**: Ry
 
 ### out_mat_l
@@ -2384,7 +2404,8 @@
   - vw: von Weizsacker (vW) functional
   - tf+: TF + vW functional
   - wt: Wang-Teter (WT) functional
-  - xwm: XWM functional
+  - ext-wt: Extended Wang-Teter (ext-WT) functional
+  - xwm: Xu-Wang-Ma (XWM) functional
   - lkt: Luo-Karasiev-Trickey (LKT) functional
   - ml: Machine learning KEDF
   - mpn: MPN KEDF (automatically sets ml parameters)
@@ -2430,28 +2451,35 @@
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, xwm*
+- **Availability**: *OFDFT with of_kinetic=tf, tf+, wt, ext-wt, xwm*
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, lkt, xwm*
+- **Availability**: *OFDFT with of_kinetic=vw, tf+, wt, ext-wt, lkt, xwm*
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 
 ### of_wt_beta
 
 - **Type**: Real
-- **Availability**: *OFDFT with of_kinetic=wt*
+- **Availability**: *OFDFT with of_kinetic=wt, ext-wt*
 - **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
+
+### of_extwt_kappa
+
+- **Type**: Real
+- **Availability**: *OFDFT with of_kinetic=ext-wt*
+- **Description**: Parameter kappa for EXT-WT KEDF.
+- **Default**: $\dfrac{1}{2(4/3)^{1/3}-1} \approx 0.832$
 
 ### of_wt_rho0
 
@@ -3166,6 +3194,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
@@ -3417,6 +3446,13 @@
 - **Default**: 1.0
 - **Unit**: fs
 
+### md_csvr_tau
+
+- **Type**: Real
+- **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling (longer relaxation time), smaller values give stronger coupling (shorter relaxation time). Recommended value: 100 * md_dt.
+- **Default**: 100.0
+- **Unit**: fs
+
 ### md_tolerance
 
 - **Type**: Real
@@ -3614,10 +3650,27 @@
   - d2: Grimme's D2 dispersion correction method
   - d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
   - d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
+  - d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
   - none: no vdW correction
 
   > Note: ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
+
+  > Note: DFT-D4 support requires ABACUS to be configured with ENABLE_DFTD4=ON and a CMake-installed dftd4 library exporting dftd4-config.cmake. DFT-D4 damping parameters are loaded from the external library.
 - **Default**: none
+
+### vdw_d4_xc
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+- **Default**: default
+
+### vdw_d4_model
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
+- **Default**: d4
 
 ### vdw_s6
 
@@ -3711,7 +3764,7 @@
 
 - **Type**: String
 - **Availability**: *vdw_cutoff_type is set to radius*
-- **Description**: Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
+- **Description**: Defines the cutoff radius when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method. For DFT-D4, this controls the two-body dispersion cutoff, while the three-body cutoff is internally limited to the DFT-D4 default value of 40 Bohr.
 - **Unit**: defined by vdw_radius_unit (default Bohr)
 
 ### vdw_radius_unit
@@ -3733,8 +3786,8 @@
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Availability**: *vdw_method is set to d3_0 or d3_bj*
-- **Description**: The cutoff radius when calculating coordination numbers.
+- **Availability**: *vdw_method is set to d3_0, d3_bj, or d4*
+- **Description**: The cutoff radius when calculating coordination numbers. The default is 40 Bohr for DFT-D3 and 30 Bohr for DFT-D4.
 - **Default**: 40
 - **Unit**: defined by vdw_cn_thr_unit (default: Bohr)
 

@@ -1,6 +1,23 @@
 #ifndef SCALAPACK_CONNECTOR_H
 #define SCALAPACK_CONNECTOR_H
 
+#include <limits>
+// =========================================================
+// Tolerances for LAPACK/ScaLAPACK eigenvalue routines
+// =========================================================
+// Huawei KML strictly validates input parameters.
+// It rejects abstol=0 and orfac=-1, which are standard 
+// defaults in open-source ScaLAPACK to trigger internal logic.
+// We must explicitly pass the mathematically equivalent defaults.
+#ifdef __KML
+    constexpr double SCALAPACK_ABSTOL = 2*std::numeric_limits<double>::min();          // 2*PDLAMCH('S')
+    constexpr double SCALAPACK_ORFAC  = 2.0e-12;                                       // Default value
+#else
+    constexpr double SCALAPACK_ABSTOL = 0.0;
+    constexpr double SCALAPACK_ORFAC  = -1.0;
+#endif
+// =========================================================
+
 #ifdef __MPI
 
 #include <complex>

@@ -4,23 +4,10 @@
 #ifdef __MLALGO
 
 #include "deepks_basic.h"
-#include "deepks_check.h"
-#include "deepks_descriptor.h"
-#include "deepks_force.h"
-#include "deepks_fpre.h"
-#include "deepks_orbital.h"
-#include "deepks_orbpre.h"
 #include "deepks_param.h"
-#include "deepks_pdm.h"
-#include "deepks_phialpha.h"
-#include "deepks_spre.h"
 #include "deepks_vdelta.h"
-#include "deepks_vdpre.h"
-#include "deepks_vdrpre.h"
 #include "source_base/complexmatrix.h"
-#include "source_base/intarray.h"
 #include "source_base/matrix.h"
-#include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -91,6 +78,11 @@ class LCAO_Deepks
 
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm = nullptr; //[tot_Inl][(2l+1)*(2l+1)]
+
+    // magnetization-channel (rho_up - rho_dn) counterparts, used only for nspin=2
+    hamilt::HContainer<double>* dm_r_mag = nullptr;
+    std::vector<torch::Tensor> pdm_mag;
+    double** gedm_mag = nullptr;
 
     // functions for hr status: 1. get value; 2. set value;
     int get_hr_cal()

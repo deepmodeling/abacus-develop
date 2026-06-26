@@ -8,10 +8,50 @@
 #include <cassert>
 #include <complex>
 
-// using std::complex;
-
 namespace Parallel_Reduce
 {
+
+#ifdef __MPI
+template <typename T>
+struct MPI_Type;
+
+template <>
+struct MPI_Type<int>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<double>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<float>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<std::complex<double>>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<std::complex<float>>
+{
+    static const MPI_Datatype value;
+};
+
+template <>
+struct MPI_Type<long long>
+{
+    static const MPI_Datatype value;
+};
+#endif
+
 /// reduce in all process
 template <typename T>
 void reduce_all(T& object);
@@ -30,10 +70,6 @@ void reduce_min_pool(const int& nproc_in_pool, T& v);
 template <typename T>
 void reduce_max_pool(const int& nproc_in_pool, T& v);
 
-void reduce_int_diag(int& object); // mohan add 2012-01-12
-
-void reduce_int_grid(int* object, const int n); // mohan add 2012-01-12
-
 // reduce double only in this pool
 // (each pool contain different k points)
 void reduce_double_grid(double* object, const int n);
@@ -46,26 +82,6 @@ void gather_int_all(int& v, int* all);
 
 bool check_if_equal(double& v); // mohan add 2009-11-11
 
-template <class T, class TI>
-inline void ZEROS(std::complex<T>* u, const TI n)
-{
-    assert(n >= 0);
-    for (TI i = 0; i < n; i++)
-    {
-        u[i] = std::complex<T>(0.0, 0.0);
-    }
-    return;
-}
-
-template <class T, class TI>
-inline void ZEROS(T* u, const TI n)
-{
-    assert(n >= 0);
-    for (TI i = 0; i < n; i++)
-    {
-        u[i] = 0;
-    }
-}
 } // namespace Parallel_Reduce
 
 #endif

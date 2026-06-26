@@ -1,5 +1,5 @@
 #include "hcontainer.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 
 namespace hamilt
 {
@@ -145,7 +145,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV
             for (int j = 0; j < ucell_.nat; j++)
             {
                 //check if atom_pair(i, j) is empty in this process
-                if(paraV->get_row_size(i) <= 0 || paraV->get_col_size(j) <= 0)
+                if(paraV->is_invalid_atom_pair(i, j))
                 {
                     continue;
                 }
@@ -619,7 +619,7 @@ T* HContainer<T>::data(int atom_i, int atom_j) const
     AtomPair<T>* atom_ij = this->find_pair(atom_i, atom_j);
     if (atom_ij != nullptr)
     {
-        return atom_ij->get_pointer();
+        return atom_ij->get_pointer(0);
     }
     else
     {
@@ -831,6 +831,13 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs)
         const int atom_j = *ijr_p++;
         // get number of R
         const int number_R = *ijr_p++;
+        // skip atom pairs not belonging to this process
+        if (this->paraV->atom_begin_row[atom_i] == -1
+            || this->paraV->atom_begin_col[atom_j] == -1)
+        {
+            ijr_p += number_R * 3; // skip all R entries
+            continue;
+        }
         for (int k = 0; k < number_R; ++k)
         {
             int r_index[3];
@@ -882,7 +889,8 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& uc
     }
 }
 
-// T of HContainer can be double or std::complex<double>
+// T of HContainer can be double, float, or std::complex<double>
+template class HContainer<float>;
 template class HContainer<double>;
 template class HContainer<std::complex<double>>;
 

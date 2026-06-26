@@ -3,7 +3,7 @@ import re
 import shutil
 import unittest
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from ase.atoms import Atoms
@@ -22,6 +22,7 @@ from abacuslite.io.legacyio import (
     read_traj_from_md_dump,
     read_magmom_from_running_log,
     is_invalid_arr,
+    find_final_info_with_iter_header
 )
 
 def read_esolver_type_from_running_log(src: str | Path | List[str]) \
@@ -359,6 +360,30 @@ def read_stress_from_running_log(src: str | Path | List[str]) \
 
     return stresses
 
+def read_iter_header_from_running_log(src: str | Path | List[str]) \
+    -> List[Tuple[int, int]]:
+    '''
+    read the "iteration header" from the running log, useful for determining
+    which is the final iteration. The "iteration header" is defined as:
+    ```
+    --> #ION MOVE#         1  #ELEC ITER#         3
+    ```
+    '''
+    if isinstance(src, (str, Path)):
+        with open(src) as f:
+            raw = f.readlines()
+    else: # assume the src is the return of the readlines()
+        raw = src
+    # with open(fn) as f:
+    #     raw = f.readlines()
+    raw = [l.strip() for l in raw]
+    raw = [l for l in raw if l] # remove empty lines
+
+    HEADER_PAT = r'-->\s+#ION MOVE#\s+(\d+)\s+#ELEC ITER#\s+(\d+)'
+    res = [re.findall(HEADER_PAT, l) for l in raw]
+
+    return [(int(pack[0][0]), int(pack[0][1])) for pack in res if pack]
+
 def read_abacus_out(fileobj, 
                     index=slice(None), 
                     results_required=True,
@@ -439,9 +464,11 @@ def read_abacus_out(fileobj,
     # the simulation, which is, not exactly to be true for the NPT-MD
     # runs.
 
-    _, energies   = read_energies_from_running_log(abacus_lines)
-    # only keep the SCF converged energies
-    energies = [edct for edct in energies if 'E_KS(sigma->0)' in edct]
+    # only keep the energies of the final iteration for each ion step
+    energies = find_final_info_with_iter_header(
+        read_energies_from_running_log(abacus_lines)[1],
+        read_iter_header_from_running_log(abacus_lines)
+    )
     
     # read the magmom
     magmom = read_magmom_from_running_log(abacus_lines)
@@ -638,6 +665,13 @@ class TestLatestIO(unittest.TestCase):
         (self.testfiles / 'running_md.log').unlink()
         # (self.testfiles / 'eig_occ.txt').unlink()
         (self.testfiles / 'MD_dump').unlink()
+
+    def test_read_iter_header_from_running_log(self):
+        header = read_iter_header_from_running_log(
+            self.testfiles / 'lcao-symm0-nspin2-multik-cellrelax')
+        self.assertTupleEqual(header[0], (1, 1))
+        self.assertTupleEqual(header[1], (1, 2))
+        self.assertTupleEqual(header[2], (2, 1))
 
 if __name__ == '__main__':
     unittest.main()

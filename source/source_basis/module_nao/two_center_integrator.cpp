@@ -2,7 +2,6 @@
 
 #include "source_base/vector3.h"
 #include "source_base/ylm.h"
-#include "source_base/array_pool.h"
 
 TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),
@@ -69,12 +68,12 @@ void TwoCenterIntegrator::calculate(const int itype1,
     // generate all necessary real (solid) spherical harmonics
     const int lmax = l1 + l2;
 	std::vector<double> Rl_Y((lmax+1) * (lmax+1));
-	ModuleBase::Array_Pool<double> grad_Rl_Y((lmax+1) * (lmax+1), 3);
+	std::vector<double> grad_Rl_Y((lmax+1) * (lmax+1) * 3);
     std::vector<std::vector<double>> hess_Rl_Y;
 
     // R^l * Y is necessary anyway
     ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
-    if (grad_out || hess_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.get_ptr_2D());
+    if (grad_out || hess_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.data());
     if (hess_out) ModuleBase::Ylm::hes_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], hess_Rl_Y);
 
     double tmp[3] = {0.0, 0.0, 0.0};
@@ -104,7 +103,7 @@ void TwoCenterIntegrator::calculate(const int itype1,
                 for (int i = 0; i < 3; ++i)
                 {
                     grad_out[i] += sign * G * ( (*d_S_by_Rl) * uR[i] * Rl_Y[lm_idx]
-                                                + (*S_by_Rl) * grad_Rl_Y[lm_idx][i] );
+                                                + (*S_by_Rl) * grad_Rl_Y[lm_idx*3 + i] );
                 }
             }
 
@@ -133,8 +132,8 @@ void TwoCenterIntegrator::calculate(const int itype1,
                         else du_dR = 0.0;
 
                         double term2 = (*d_S_by_Rl) * (du_dR * Rl_Y[lm_idx]
-                                                      + uR[alpha] * grad_Rl_Y[lm_idx][beta]
-                                                      + uR[beta] * grad_Rl_Y[lm_idx][alpha]);
+                                                      + uR[alpha] * grad_Rl_Y[lm_idx*3 + beta]
+                                                      + uR[beta] * grad_Rl_Y[lm_idx*3 + alpha]);
                         double term3 = (*S_by_Rl) * H_full[idx];
 
                         hess_out[idx] += sign * G * (term1 + term2 + term3);

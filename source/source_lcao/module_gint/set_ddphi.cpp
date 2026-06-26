@@ -1,4 +1,3 @@
-#include "source_base/array_pool.h"
 #include "source_base/timer.h"
 #include "source_base/ylm.h"
 #include "gint_atom.h"
@@ -20,18 +19,20 @@ void GintAtom::set_ddphi(
     // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
 
-    std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
-    ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
+    const int nylm = std::pow(atom_->nwl + 1, 2);
+    std::vector<double> rly(nylm);
+    std::vector<double> grly(nylm * 3);
     // TODO: A better data structure such as a 3D tensor can be used to store dphi
     std::vector<std::vector<std::vector<double>>> dphi(atom_->nw, std::vector<std::vector<double>>(6, std::vector<double>(3)));
     Vec3d coord1;
-    ModuleBase::Array_Pool<double> displ(6, 3);
-    displ[0][0] = 0.0001; // in x direction
-    displ[1][0] = -0.0001;
-    displ[2][1] = 0.0001; // in y direction
-    displ[3][1] = -0.0001;
-    displ[4][2] = 0.0001; // in z direction
-    displ[5][2] = -0.0001;
+    constexpr double displ[6][3] = {
+        { 0.0001,  0.0,     0.0},    // +x
+        {-0.0001,  0.0,     0.0},    // -x
+        { 0.0,     0.0001,  0.0},    // +y
+        { 0.0,    -0.0001,  0.0},    // -y
+        { 0.0,     0.0,     0.0001}, // +z
+        { 0.0,     0.0,    -0.0001}  // -z
+    };
 
     for(int im = 0; im < num_mgrids; im++)
     {
@@ -59,7 +60,7 @@ void GintAtom::set_ddphi(
             coord1[2] = coord[2] + displ[i][2];
 
             // sphereical harmonics
-            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord1[0], coord1[1], coord1[2], rly.data(), grly.get_ptr_2D());
+            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord1[0], coord1[1], coord1[2], rly.data(), grly.data());
 
             const double dist1 = coord1.norm() < 1e-9 ? 1e-9 : coord1.norm();
 
@@ -99,9 +100,9 @@ void GintAtom::set_ddphi(
                 const double tmpdphi_rly = (dtmp - tmp * ll / dist1) / rl * rly[idx_lm] / dist1;
                 const double tmprl = tmp / rl;
 
-                dphi[iw][i][0] =  tmpdphi_rly * coord1[0] + tmprl * grly[idx_lm][0];
-                dphi[iw][i][1] =  tmpdphi_rly * coord1[1] + tmprl * grly[idx_lm][1];
-                dphi[iw][i][2] =  tmpdphi_rly * coord1[2] + tmprl * grly[idx_lm][2];
+                dphi[iw][i][0] =  tmpdphi_rly * coord1[0] + tmprl * grly[idx_lm*3];
+                dphi[iw][i][1] =  tmpdphi_rly * coord1[1] + tmprl * grly[idx_lm*3 + 1];
+                dphi[iw][i][2] =  tmpdphi_rly * coord1[2] + tmprl * grly[idx_lm*3 + 2];
             } // end iw
         }  // end i
 

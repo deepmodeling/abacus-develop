@@ -26,7 +26,7 @@ math_sphbes.o\
 math_polyint.o\
 math_ylmreal.o\
 ylm.o\
-memory.o\
+memory_recorder.o\
 matrix3.o\
 matrix.o\
 intarray.o\

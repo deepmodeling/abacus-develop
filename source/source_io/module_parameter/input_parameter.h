@@ -33,6 +33,7 @@ struct Input_para
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice";   ///< lattice name
+    std::string assume_isolated = "none"; ///< isolated-system correction: none or makov-payne
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
@@ -64,10 +65,13 @@ struct Input_para
     int diago_proc = 0;                             ///< the number of procs used to diag. mohan add 2012-01-13
     int nbspline = -1;                              ///< the order of B-spline basis(>=0) if it is -1 (default)
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
+    std::vector<double> koffset = {0.0, 0.0, 0.0};  ///< koffset for kspacing-generated k-point mesh
+    std::string kmesh_type = "gamma";               ///< k-point mesh type for kspacing-generated k-point mesh: gamma or mp
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
     std::string device = "auto";
     std::string precision = "double";
+    std::string gint_precision = "double";
     bool timer_enable_nvtx = false;
 
     // ==============   #Parameters (2.Electronic structure) ===========================
@@ -178,7 +182,7 @@ struct Input_para
     MD_para mdp;
     double ref_cell_factor = 1; ///< construct a reference cell bigger than the
                                 ///< initial cell liuyu 2023-03-21
-    bool cal_syns = false;      ///< calculate asynchronous S matrix to output
+    std::vector<int> cal_syns = {0, 8};  ///< calculate asynchronous S matrix to output {enable, precision}
     double dmax = 0.01;         ///< maximum displacement of all atoms in one step (bohr)
 
     // ==============   #Parameters (6.OFDFT) ===========================
@@ -195,6 +199,9 @@ struct Input_para
     double of_vw_weight = 1.0;                   ///< weight of vW KEDF
     double of_wt_alpha = 5. / 6.;                ///< parameter alpha of WT KEDF
     double of_wt_beta = 5. / 6.;                 ///< parameter beta of WT KEDF
+    double of_extwt_kappa = 1.0
+                            / (2.0 * std::pow(4. / 3., 1. / 3.) - 1.0);
+                                                 ///< parameter kappa of EXT-WT KEDF
     double of_wt_rho0 = 0.0;                     ///< set the average density of system, in Bohr^-3
     bool of_hold_rho0 = false;                   ///< If set to 1, the rho0 will be fixed even if the volume of
                                                  ///< system has changed, it will be set to 1 automatically if
@@ -387,21 +394,20 @@ struct Input_para
     std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
-    bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
-                                          ///< S(R) matrix in local basis.
-    bool out_mat_dh = false;
-    bool out_mat_ds = false;
+    std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
+    std::vector<int> out_mat_dh = {0, 8};   ///< output dH/dR matrices with precision
+    std::vector<int> out_mat_ds = {0, 8};   ///< output dS/dR matrices with precision
     bool out_mat_xc = false;      ///< output exchange-correlation matrix in
                                   ///< KS-orbital representation.
-    bool out_mat_xc2 = false;     ///< output exchange-correlation matrix Vxc(R) in NAO representation.
+    std::vector<int> out_mat_xc2 = {0, 8};  ///< output Vxc(R) matrix with precision
     bool out_eband_terms = false; ///< output the band energy terms separately
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;      ///< Assuming 8 digits precision is needed for matrices output
-    bool out_mat_t = false;
+    std::vector<int> out_mat_t = {0, 8};    ///< output T(R) matrix with precision
     bool out_element_info = false;        ///< output information of all elements
-    bool out_mat_r = false;               ///< jingan add 2019-8-14, output r(R) matrix.
+    std::vector<int> out_mat_r = {0, 8};    ///< output r(R) matrix with precision
     int out_wfc_lcao = 0;                 ///< output the wave functions in local basis.
     bool out_dipole = false;              ///< output the dipole or not
     bool out_efield = false;              ///< output the efield or not
@@ -504,7 +510,7 @@ struct Input_para
     //  vdw
     //  Peize Lin add 2014-03-31, jiyy update 2019-08-01
     // ==========================================================
-    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj)
+    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4)
     std::string vdw_s6 = "default";                         ///< scale parameter of d2/d3_0/d3_bj
     std::string vdw_s8 = "default";                         ///< scale parameter of d3_0/d3_bj
     std::string vdw_a1 = "default";                         ///< damping parameter of d3_0/d3_bj
@@ -521,6 +527,8 @@ struct Input_para
     std::string vdw_radius_unit = "Bohr";                   ///< unit of radius cutoff for periodic structure
     double vdw_cn_thr = 40.0;                               ///< radius cutoff for cn
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
+    std::string vdw_d4_xc = "default";                     ///< functional name passed to DFT-D4
+    std::string vdw_d4_model = "d4";                       ///< DFT-D4 dispersion model (d4 or d4s)
     ModuleBase::Vector3<int> vdw_cutoff_period = {3, 3, 3}; ///< periods of periodic structure
 
     // ==============   #Parameters (15.exx) ====================
@@ -592,11 +600,16 @@ struct Input_para
     double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
     int nsc = 100;                  ///< maximum number of inner lambda loop
     int nsc_min = 2;                ///< minimum number of inner lambda loop
-    int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    bool sc_direction_only = false; ///< only optimize the direction of magnetization
+    // linear_scan parameters
+    double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)
+    double sc_scan_lambda_end = 1.0;    ///< end value for lambda scan (eV/uB)
+    int sc_scan_steps = 20;             ///< number of steps in lambda scan
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================

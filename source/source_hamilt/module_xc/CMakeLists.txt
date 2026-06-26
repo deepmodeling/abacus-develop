@@ -2,21 +2,21 @@ add_library(
     xc_
     OBJECT
     xc_functional.cpp
-    xc_functional_vxc.cpp
-    xc_functional_gradcorr.cpp
-    xc_functional_wrapper_xc.cpp
-    xc_functional_wrapper_gcxc.cpp
-    xc_funct_exch_lda.cpp
-    xc_funct_corr_lda.cpp
-    xc_funct_exch_gga.cpp
-    xc_funct_corr_gga.cpp
-    xc_funct_hcth.cpp
-    xc_functional_libxc.cpp
-    xc_functional_libxc_tools.cpp
-    xc_functional_libxc_vxc.cpp
-    xc_functional_libxc_wrapper_xc.cpp
-    xc_functional_libxc_wrapper_gcxc.cpp
-    xc_functional_libxc_wrapper_tauxc.cpp
+    xc_pot.cpp
+    xc_grad.cpp
+    xc_lda_wrap.cpp
+    xc_gga_wrap.cpp
+    xc_lda_exch.cpp
+    xc_lda_corr.cpp
+    xc_gga_exch.cpp
+    xc_gga_corr.cpp
+    xc_hcth.cpp
+    libxc_setup.cpp
+    libxc_tools.cpp
+    libxc_pot.cpp
+    libxc_lda_wrap.cpp
+    libxc_gga_wrap.cpp
+    libxc_mgga_wrap.cpp
     exx_info.cpp
 )
 

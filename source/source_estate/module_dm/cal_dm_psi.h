@@ -2,6 +2,7 @@
 #define CAL_DM_PSI_H
 
 #include "source_base/matrix.h"
+#include "source_psi/psi.h"
 #include "density_matrix.h"
 
 namespace elecstate
@@ -10,7 +11,8 @@ namespace elecstate
     void cal_dm_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<double>& wfc, elecstate::DensityMatrix<double, double>& DM);
 
     // for Multi-k case where DMK is std::complex<double>
-    void cal_dm_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>& wfc, elecstate::DensityMatrix<std::complex<double>, double>& DM);
+    template <typename TR>
+    void cal_dm_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, const psi::Psi<std::complex<double>>& wfc, elecstate::DensityMatrix<std::complex<double>, TR>& DM);
 
     // for Gamma-Only case with MPI
     void psiMulPsiMpi(const psi::Psi<double>& psi1,

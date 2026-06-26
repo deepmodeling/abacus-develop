@@ -8,6 +8,7 @@
 #include "source_hamilt/hamilt.h" // use Hamiltonian
 #include "source_hamilt/hamilt_base.h" // use Hamiltonian base class
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace ModuleESolver
 {

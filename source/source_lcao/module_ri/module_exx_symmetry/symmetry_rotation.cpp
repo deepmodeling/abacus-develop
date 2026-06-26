@@ -454,7 +454,7 @@ namespace ModuleSymmetry
                 const int it2 = adjs.ntype[ad];
                 const int ia2 = adjs.natom[ad];
                 int iat2 = ucell.itia2iat(it2, ia2);
-                if (pv.get_row_size(iat1) && pv.get_col_size(iat2))
+                if (pv.get_nrow_atom(iat1) && pv.get_ncol_atom(iat2))
                 {
                     const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
                     if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0

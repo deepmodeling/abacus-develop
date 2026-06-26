@@ -3,7 +3,9 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 
 template <typename TK, typename TR>
@@ -21,13 +23,17 @@ hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
 {
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
+    this->gridD = GridD_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
     assert(this->hsk != nullptr);
 #endif
     this->init_td();
     // initialize HR to allocate sparse Ekinetic matrix memory
-    this->initialize_HR(GridD_in);
+    if(hR_in != nullptr)
+    {
+        this->initialize_HR(GridD_in);
+    }
 }
 
 // destructor
@@ -67,7 +73,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Gr
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }
@@ -127,12 +133,13 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int iat2 = ucell->itia2iat(T2, I2);
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad];
             ModuleBase::Vector3<double> dtau = this->ucell->cal_dtau(iat1, iat2, R_index2);
+            ModuleBase::Vector3<double> dR = this->ucell->cal_dtau(0, 0, R_index2);
 
             hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2);
             hamilt::BaseMatrix<TR>* tmp_overlap = this->SR->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_overlap->get_pointer());
+                this->cal_HR_IJR(iat1, iat2, paraV, dtau, dR, tmp->get_pointer(), tmp_overlap->get_pointer());
             }
             else
             {
@@ -150,6 +157,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
                                                                    const int& iat2,
                                                                    const Parallel_Orbitals* paraV,
                                                                    const ModuleBase::Vector3<double>& dtau,
+                                                                   const ModuleBase::Vector3<double>& dR,
                                                                    TR* hr_mat_p,
                                                                    TR* sr_p)
 {
@@ -209,7 +217,7 @@ void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& 
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 hr_mat_p[ipol * step_trace] += tmp_r * Et;
-                hr_mat_p[ipol * step_trace] -= ((dtau + tau1) * Et) * sr_p[ipol * step_trace] * this->ucell->lat0;
+                hr_mat_p[ipol * step_trace] -= (dR * Et) * sr_p[ipol * step_trace] * this->ucell->lat0;
             }
             hr_mat_p += npol;
             sr_p += npol;
@@ -285,6 +293,7 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik) {
     return;
 }
-
+#include "td_pot_hybrid_force.hpp"
+template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

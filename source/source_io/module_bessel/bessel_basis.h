@@ -6,7 +6,6 @@
 #ifndef BESSEL_BASIS_H
 #define BESSEL_BASIS_H
 #include "../../source_base/global_function.h"
-#include "../../source_base/global_variable.h"
 #include "../../source_base/realarray.h"
 
 #include "../../source_cell/unitcell.h"

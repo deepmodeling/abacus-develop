@@ -1,6 +1,5 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_psi/psi.h"
 #include "source_base/tool_quit.h"
 #include "source_base/module_container/base/third_party/cublas.h"
 
@@ -314,6 +313,9 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
+    if (cublas_handle == nullptr) {
+        CHECK_CUBLAS(cublasCreate(&cublas_handle));
+    }
     CHECK_CUBLAS(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
 }
 

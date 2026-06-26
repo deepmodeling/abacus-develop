@@ -3,23 +3,32 @@
 
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "source_estate/module_pot/potential_new.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/hs_matrix_k.hpp"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <memory>
 #include <vector>
 
-#include "source_lcao/setup_deepks.h" // mohan add 20251008
+// elecstate::Potential forward declaration, full definition in potential_new.h (moved to .cpp)
+// mohan add 20260605
+namespace elecstate { class Potential; }
 
-#ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
-#endif
+// elecstate::DensityMatrix forward declaration, full definition in density_matrix.h (moved to .cpp)
+// mohan add 20260605
+namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 
-#include "source_lcao/setup_exx.h" // for exx, mohan add 20251022
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-05
+// Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
+// mohan add 20260605
+template <typename TK> class Setup_DeePKS;
+// Plus_U forward declaration, full definition in module_dftu/dftu.h (moved to .cpp)
+// mohan add 20260605
+class Plus_U;
+
+// Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
+// mohan add 20260605
+template <typename TK> class Exx_NAO; 
 
 namespace hamilt
 {
@@ -43,16 +52,16 @@ class HamiltLCAO : public Hamilt<TK>
      */
     HamiltLCAO(const UnitCell& ucell,
                const Grid_Driver& grid_d,
-			   const Parallel_Orbitals* paraV,
-			   elecstate::Potential* pot_in,
-			   const K_Vectors& kv_in,
-			   const TwoCenterBundle& two_center_bundle,
+               const Parallel_Orbitals* paraV,
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in,
+               const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-			   elecstate::DensityMatrix<TK, double>* DM_in,
-			   Plus_U* p_dftu, // mohan add 2025-11-05
-			   Setup_DeePKS<TK> &deepks,
-			   const int istep, 
-			   Exx_NAO<TK> &exx_nao);
+               elecstate::DensityMatrix<TK, double>* DM_in,
+               Plus_U* p_dftu, // mohan add 2025-11-05
+               Setup_DeePKS<TK> &deepks,
+               const int istep, 
+               Exx_NAO<TK> &exx_nao);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
@@ -126,6 +135,11 @@ class HamiltLCAO : public Hamilt<TK>
     /// get hRS2 buffer for NSPIN=2 case (spin-up in first half, spin-down in second half)
     std::vector<TR>& getHRS2() { return this->hRS2; }
 
+    /// Get HR as a vector of HContainer pointers (one per spin).
+    /// For nspin=2, returns pointers to internally managed per-spin wrappers over hRS2.
+    /// Returned pointers are owned by this class; caller must NOT delete them.
+    std::vector<HContainer<TR>*> getHR_vector();
+
     /// refresh the status of HR
     void refresh(bool yes) override;
 
@@ -140,7 +154,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @param hk_type 0: SK is row-major, 1: SK is collumn-major
      * @return void
      */
-	void updateSk(const int ik, const int hk_type = 0);
+    void updateSk(const int ik, const int hk_type = 0);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
@@ -166,6 +180,11 @@ class HamiltLCAO : public Hamilt<TK>
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;
+
+    /// Per-spin HContainer wrappers for nspin=2 (owned by this class).
+    /// Rebuilt by getHR_vector() whenever hRS2 is resized.
+    std::unique_ptr<HContainer<TR>> hr_spin_up_;
+    std::unique_ptr<HContainer<TR>> hr_spin_dn_;
 
     int refresh_times = 1;
 

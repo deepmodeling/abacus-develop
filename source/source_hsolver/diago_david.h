@@ -51,7 +51,6 @@ class DiagoDavid
      * @param[in] david_ndim_in Dimension of the reduced basis set of Davidson.
      *                      `david_ndim_in` * `nband_in` is the maximum allowed size of
      *                      the reduced basis set before \b restart of Davidson.
-     * @param[in] use_paw_in Flag indicating whether to use PAW.
      * @param[in] diag_comm_in Communication information for diagonalization.
      *
      * @tparam T The data type of the matrices and arrays.
@@ -63,7 +62,6 @@ class DiagoDavid
                const int nband_in,
                const int dim_in,
                const int david_ndim_in,
-               const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
     /**
@@ -154,7 +152,6 @@ class DiagoDavid
       const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
-    bool use_paw = false;
     int test_david = 0;
 
     diag_comm_info diag_comm;

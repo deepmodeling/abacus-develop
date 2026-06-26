@@ -1,0 +1,23 @@
+INPUT_PARAMETERS 
+suffix            autotest
+calculation       scf
+init_wfc          random
+
+symmetry          1
+ecutwfc           5
+scf_thr           1e-06
+scf_nmax          30
+basis_type        pw
+latname           bco
+
+mixing_type       broyden
+mixing_beta       0.4
+
+smearing_method   gaussian
+smearing_sigma    0.02
+
+kspacing          0.6
+koffset           0.5 0.5 0.5
+kmesh_type        gamma
+pseudo_dir        ../../PP_ORB
+pw_seed           1

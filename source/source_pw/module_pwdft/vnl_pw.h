@@ -108,6 +108,10 @@ class pseudopot_cell_vnl
     std::complex<double>*** vkb_alpha;
     Structure_Factor* psf = nullptr;
 
+    // Column dimension of vkb matrix (= npwx), used as leading dimension in gemm/gemv.
+    // On GPU path vkb ComplexMatrix is not allocated to save CPU memory; this stores the dimension.
+    int vkbnc = 0;
+
     // other variables
     std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
 

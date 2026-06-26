@@ -3,7 +3,6 @@
 
 #include <string>
 #include "source_base/global_function.h"
-#include "source_base/abfs-vector3_order.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif

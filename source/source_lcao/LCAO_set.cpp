@@ -148,13 +148,25 @@ void LCAO_domain::init_hr_from_file(
     const Parallel_Orbitals* pv)
 {
     ModuleBase::TITLE("LCAO_domain", "init_hr_from_file");
+
+    // Check if file exists
+    std::ifstream test_file(hrfile);
+    if (!test_file.good())
+    {
+        std::string error_msg = "Cannot open Hamiltonian file: " + hrfile + "\n\n";
+        error_msg += "When using init_chg=hr, you need to provide Hamiltonian matrix files:\n";
+        error_msg += "  - For nspin=1: hrs1_nao.csr\n";
+        error_msg += "  - For nspin=2: hrs1_nao.csr (spin-up) and hrs2_nao.csr (spin-down)\n\n";
+        error_msg += "Solutions:\n";
+        error_msg += "  1. Run an SCF calculation first with 'out_mat_hs2 1' to generate HR files\n";
+        error_msg += "  2. Check that 'read_file_dir' points to the correct directory\n";
+        error_msg += "  3. Use 'init_chg file' or 'init_chg atomic' instead";
+        ModuleBase::WARNING_QUIT("LCAO_domain::init_hr_from_file", error_msg);
+    }
+    test_file.close();
+
     hmat->set_zero();
-    hamilt::Read_HContainer<TR> reader_hr(
-        hmat,
-        hrfile,
-        PARAM.globalv.nlocal,
-        &ucell
-    );
+    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell);
     reader_hr.read();
     return;
 }

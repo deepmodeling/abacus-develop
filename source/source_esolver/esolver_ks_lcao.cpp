@@ -1,4 +1,6 @@
 #include "esolver_ks_lcao.h"
+#include "source_base/module_external/blacs_connector.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
@@ -7,6 +9,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -149,8 +152,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
-    // since it depends on ionic positions
-    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    // since it depends on ionic positions.
+    // overlap_orb_alpha is only built when DeePKS is enabled (descriptor
+    // orbitals); guard the dereference so non-DeePKS runs don't form a
+    // reference from a null unique_ptr (undefined behaviour).
+    if (two_center_bundle_.overlap_orb_alpha)
+    {
+        this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    }
 
     // 10) prepare sc calculation
     init_deltaspin_lcao<TK>(ucell, PARAM.inp, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
@@ -185,7 +194,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                 this->chr, PARAM.inp.ks_solver);
         }
     }
-    else //if not, use the DMR calculated from last step
+    else if(PARAM.inp.esolver_type!="tddft")//if not, use the DMR calculated from last step
     {
         // 13.1.2) two cases are considered:
         // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
@@ -193,7 +202,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->dmat.dm->cal_DMR();
     }
     // 13.2) init_scf, should be before_scf? mohan add 2025-03-10
-    this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric,
+                          istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
@@ -236,7 +246,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
                        this->pw_rho, this->solvent, this->dftu, this->deepks,
-                       this->exx_nao, &ucell.symm);
+                       this->exx_nao, &ucell.symm, PARAM.inp.td_stype,
+                       static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
     this->RA.delete_grid();
@@ -308,6 +319,24 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, this->dftu, 
       this->dmat.dm->get_DMR_pointer(1)->get_nnr(), PARAM.inp); 
 
+    if (iter == 1)
+    {
+        this->gint_precision_controller_.set_mode(PARAM.inp.gint_precision);
+        this->gint_precision_controller_.reset_for_new_scf();
+        this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
+        if (PARAM.inp.gint_precision == "mix")
+        {
+            GlobalV::ofs_running << "\n >> Gint mixed-precision mode: starting SCF with fp32"
+                                 << " (will switch to fp64 when drho is small enough)" << std::endl;
+            std::cout << " >> NOTICE: Gint grid-integration starts with fp32 (mixed-precision mode)" << std::endl;
+        }
+        else if (PARAM.inp.gint_precision == "single")
+        {
+            GlobalV::ofs_running << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
+            std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)" << std::endl;
+        }
+    }
+
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
@@ -378,7 +407,27 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
     // 2) run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    bool skip_solve = run_deltaspin_lambda_loop_lcao<TK>(iter - 1, this->drho, PARAM.inp);
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        if (PARAM.inp.sc_lambda_strategy == "linear_scan")
+        {
+            sc.run_lambda_linear_scan(iter - 1);
+            skip_solve = true;
+        }
+        else if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            sc.run_lambda_loop(iter - 1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if (sc.mag_converged())
+        {
+            sc.run_lambda_loop(iter - 1);
+            skip_solve = true;
+        }
+    }
 
     // 3) run Hsolver
     if (!skip_solve)
@@ -386,6 +435,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
+    }
+    else
+    {
+        // Lambda loop updated the density matrix (DM) but not the real-space charge density.
+        // HSolver was skipped, so we need to sync rho from DM manually.
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
     }
 
     // 4) EXX
@@ -439,6 +494,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+    const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
+    this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
+    if (precision_switched)
+    {
+        GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = "
+                             << this->drho << ")" << std::endl;
+        std::cout << " >> NOTICE: Gint grid-integration precision switched from fp32 to fp64" << std::endl;
+    }
 
     // mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter except the last iter

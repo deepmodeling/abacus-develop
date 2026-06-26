@@ -1,5 +1,8 @@
 #include "forces.h"
 
+#include "source_base/global_variable.h"
+#include "source_base/parallel_reduce.h"
+#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/output_log.h"
 // new
@@ -14,6 +17,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_surchem/surchem.h"
+#include "source_pw/module_pwdft/structure_factor.h" // Structure_Factor member access (p_sf->strucFac)
 #include "source_hamilt/module_vdw/vdw.h"
 
 #ifdef _OPENMP
@@ -49,7 +53,6 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     ModuleBase::matrix forcecc(nat, 3);
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
-    ModuleBase::matrix forcepaw(nat, 3);
     ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential

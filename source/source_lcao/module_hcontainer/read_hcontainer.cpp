@@ -34,8 +34,8 @@ void Read_HContainer<T>::read()
     pv_serial.set_atomic_trace(this->_ucell->get_iat2iwt(), this->_ucell->nat, this->_nlocal);
     for (int iat = 0; iat < natom; ++iat)
     {
-        int row_size = pv_serial.get_row_size(iat);
-        int col_size = pv_serial.get_col_size(iat);
+        int row_size = pv_serial.get_nrow_atom(iat);
+        int col_size = pv_serial.get_ncol_atom(iat);
         for (int i = 0; i < row_size; ++i)
         {
             atom_index_row.push_back(iat);

@@ -124,7 +124,9 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
-        auto tmp_matrix_info = atom_pair.get_matrix_values();
+        const int r_index = atom_pair.find_R(rx, ry, rz);
+        if (r_index < 0) continue;
+        auto tmp_matrix_info = atom_pair.get_matrix_values(r_index);
         int* tmp_index = std::get<0>(tmp_matrix_info).data();
         T* tmp_data = std::get<1>(tmp_matrix_info);
         for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
@@ -142,6 +144,23 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     {
         _ofs << " " << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;
         sparse_matrix.printToCSR(_ofs, _precision);
+    }
+    else
+    {
+        // Write R-block header with 0 nonzero elements and empty CSR data
+        // to keep nR in file header consistent with actual R-block count
+        _ofs << " " << rx << " " << ry << " " << rz << " 0" << std::endl;
+        _ofs << " # CSR values" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR column indices" << std::endl;
+        _ofs << std::endl;
+        _ofs << " # CSR row pointers" << std::endl;
+        int nbasis = _hcontainer->get_nbasis();
+        for (int i = 0; i < nbasis + 1; i++)
+        {
+            _ofs << " 0";
+        }
+        _ofs << std::endl;
     }
     this->_hcontainer->unfix_R();
 }

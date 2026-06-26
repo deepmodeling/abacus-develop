@@ -1,9 +1,13 @@
 #include "source_lcao/hamilt_lcao.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/setup_exx.h"
+#include "source_lcao/setup_deepks.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>
@@ -478,6 +482,22 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     return;
 }
 
+template <typename TK, typename TR>
+std::vector<HContainer<TR>*> HamiltLCAO<TK, TR>::getHR_vector()
+{
+    if (PARAM.inp.nspin == 2)
+    {
+        const int nnr = this->hRS2.size() / 2;
+        this->hr_spin_up_.reset(new HContainer<TR>(*this->hR, this->hRS2.data()));
+        this->hr_spin_dn_.reset(new HContainer<TR>(*this->hR, this->hRS2.data() + nnr));
+        return {this->hr_spin_up_.get(), this->hr_spin_dn_.get()};
+    }
+    else
+    {
+        return {this->hR};
+    }
+}
+
 // case for multi-k-points
 template <typename TK, typename TR>
 void HamiltLCAO<TK, TR>::matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in)
@@ -508,6 +528,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
             }
         }
         this->current_spin = this->kv->isk[ik];
+        dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_current_spin(this->kv->isk[ik]);
     }
     this->getOperator()->init(ik);
     ModuleBase::timer::end("HamiltLCAO", "updateHk");

@@ -6,10 +6,10 @@
 #include "source_base/timer_wrapper.h"
 
 #include "source_basis/module_pw/pw_basis.h" // plane wave basis
-#include "source_cell/module_symmetry/symmetry.h" // symmetry analysis
 #include "source_estate/elecstate.h" // electronic states
 #include "source_estate/module_charge/charge_extra.h" // charge extrapolation
 #include "source_hamilt/module_surchem/surchem.h" // solvation model
+#include "source_pw/module_pwdft/parallel_grid.h" // Parallel_Grid (value member below)
 #include "source_pw/module_pwdft/vl_pw.h" // local pseudopotential
 #include "source_pw/module_pwdft/structure_factor.h" // structure factor
 

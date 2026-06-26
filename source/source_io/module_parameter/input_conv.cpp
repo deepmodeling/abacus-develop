@@ -7,6 +7,7 @@
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "../module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
@@ -24,7 +25,6 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI
@@ -60,7 +60,7 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2 == 1)
+    if (PARAM.inp.out_mat_hs2[0] == 1)
     {
         TD_info::out_mat_R = true;
     } else {
@@ -190,8 +190,6 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmax = PARAM.inp.relax_bfgs_rmax;
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
-    Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
-    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
 
 
@@ -413,6 +411,16 @@ void Input_Conv::Convert()
                         {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
                 }
             }
+            else if(PARAM.inp.basis_type == "pw" || PARAM.inp.basis_type == "lcao_in_pw")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])} }};
+                }
+            }
         }
     }
 #ifdef __EXX
@@ -505,6 +513,8 @@ void Input_Conv::Convert()
         {
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
+
+        GlobalC::exx_info.sync_from_global();
     }
 
     if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")

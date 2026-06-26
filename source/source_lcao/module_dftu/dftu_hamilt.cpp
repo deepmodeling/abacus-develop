@@ -11,7 +11,7 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 		const std::complex<double>* sk)
 {
     ModuleBase::TITLE("Plus_U", "cal_eff_pot_c");
-    if (!this->initialed_locale)
+    if (!is_locale_initialized())
     {
         return;
     }
@@ -50,11 +50,11 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 	}
 
 #ifdef __MPI
-  	pztranc_(&PARAM.globalv.nlocal, &PARAM.globalv.nlocal, 
-            &one, 
-            &VU[0], &one_int, &one_int, this->paraV->desc, 
-            &one, 
-            eff_pot, &one_int, &one_int, this->paraV->desc);
+   	ScalapackConnector::tranu(PARAM.globalv.nlocal, PARAM.globalv.nlocal, 
+            one, 
+            &VU[0], one_int, one_int, this->paraV->desc, 
+            one, 
+            eff_pot, one_int, one_int, this->paraV->desc);
 #endif
 
 	ModuleBase::timer::end("Plus_U", "cal_eff_pot_c");
@@ -64,7 +64,7 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk)
 {
     ModuleBase::TITLE("Plus_U", "cal_eff_pot_r");
-    if (!this->initialed_locale)
+    if (!is_locale_initialized())
     {
         return;
     }

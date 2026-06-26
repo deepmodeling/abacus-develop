@@ -11,7 +11,6 @@
 #include "simple_pexsi.h"
 
 extern MPI_Comm DIAG_WORLD;
-extern MPI_Comm GRID_WORLD;
 namespace pexsi
 {
 

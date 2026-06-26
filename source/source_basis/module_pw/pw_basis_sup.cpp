@@ -1,6 +1,5 @@
 #include "source_base/timer.h"
 #include "pw_basis.h"
-#include "source_io/module_parameter/parameter.h"
 namespace ModulePW
 {
 
@@ -61,7 +60,6 @@ void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
     this->distribution_method3(pw_rho);
     ModuleBase::CHECK_WARNING_QUIT((this->npw == 0),
                                    "pw_distributeg.cpp",
-                                   PARAM.inp.calculation,
                                    "Current core has no plane waves! Please reduce the cores.");
     ModuleBase::timer::end(this->classname, "distributeg");
     return;

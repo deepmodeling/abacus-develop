@@ -3,13 +3,13 @@
 
 #include "source_base/atom_in.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/matrix.h"
-#include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+
+// forward-declared: used below only as pointer/reference
+class Parallel_Grid;
+class Structure_Factor;
 
 class surchem
 {

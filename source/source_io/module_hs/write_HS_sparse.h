@@ -1,25 +1,34 @@
 #ifndef WRITE_HS_SPARSE_H
 #define WRITE_HS_SPARSE_H
 
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 
+#include <cstddef>
+#include <map>
+#include <set>
 #include <string>
 
 namespace ModuleIO
 {
+using RCoordinate = Abfs::Vector3_Order<int>;
 
-// jingan add 2021-6-4, modify 2021-12-2
-void save_HSR_sparse(const int& istep,
-                     const Parallel_Orbitals& pv,
-                     LCAO_HS_Arrays& HS_Arrays,
-                     const double& sparse_thr,
-                     const bool& binary,
-                     const std::string& SR_filename,
-                     const std::string& HR_filename_up,
-                     const std::string& HR_filename_down);
+template <typename T>
+using SparseRBlock = std::map<size_t, std::map<size_t, T>>;
+
+template <typename T>
+using SparseRMatrix = std::map<RCoordinate, SparseRBlock<T>>;
+
+struct SparseWriteOptions
+{
+    std::string filename;
+    std::string label;
+    double threshold = 0.0;
+    bool binary = false;
+    int istep = -1;
+    bool reduce = true;
+    std::string temp_dir;
+};
 
 void save_dH_sparse(const int& istep,
                     const Parallel_Orbitals& pv,
@@ -29,15 +38,10 @@ void save_dH_sparse(const int& istep,
                     const std::string& fileflag = "h");
 
 template <typename Tdata>
-void save_sparse(const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>& smat,
-                 const std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-                 const double& sparse_thr,
-                 const bool& binary,
-                 const std::string& filename,
+void save_sparse(const SparseRMatrix<Tdata>& smat,
+                 const std::set<RCoordinate>& all_R_coor,
                  const Parallel_Orbitals& pv,
-                 const std::string& label,
-                 const int& istep = -1,
-                 const bool& reduce = true);
+                 const SparseWriteOptions& options);
 } // namespace ModuleIO
 
 #endif

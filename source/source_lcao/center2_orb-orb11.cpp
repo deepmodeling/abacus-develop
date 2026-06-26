@@ -10,7 +10,6 @@
 #include "source_base/math_polyint.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/ylm.h"
-#include "source_base/array_pool.h"
 
 #include <cmath>
 
@@ -188,12 +187,12 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
     const int LAB2 = (LA + LB + 1) * (LA + LB + 1);
     std::vector<double> rly(LAB2);
     std::vector<ModuleBase::Vector3<double>> grly;
-    ModuleBase::Array_Pool<double> tmp_grly(LAB2, 3);
-    ModuleBase::Ylm::grad_rl_sph_harm(LA + LB, delta_R.x, delta_R.y, delta_R.z, rly.data(), tmp_grly.get_ptr_2D());
+    std::vector<double> tmp_grly(LAB2 * 3);
+    ModuleBase::Ylm::grad_rl_sph_harm(LA + LB, delta_R.x, delta_R.y, delta_R.z, rly.data(), tmp_grly.data());
+    grly.reserve(LAB2);
     for (int i=0; i<LAB2; ++i)
     {
-        ModuleBase::Vector3<double> ele(tmp_grly[i][0], tmp_grly[i][1], tmp_grly[i][2]);
-        grly.push_back(ele);
+        grly.emplace_back(tmp_grly[i*3], tmp_grly[i*3+1], tmp_grly[i*3+2]);
     }
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
