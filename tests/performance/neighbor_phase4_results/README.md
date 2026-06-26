@@ -1,14 +1,17 @@
 # Phase 4 近邻搜索性能 Benchmark 报告
 
+最后更新：2026-06-26
+
 ## 测试口径
 
 - 基线：ABACUS `3.11.0-beta.1`，提交 `78d71c9134a47dd63f76e69cc1a7025f302cc09d`。
 - 优化版：`final-project`，提交 `241c28a54fa194650ccf6a8f0044563ae31e464b`。
 - 优化版工作树：包含待提交修改；neighbor diff SHA-256 为 `c2be3bda733fa8a43ddec20bff38b67718fb5267cf987995c80d2d79ea2f7b33`。
+- CI 兼容修复：`Fix neighbor benchmark test dependencies`，提交 `c4b3358d8`；该修复只调整 benchmark 测试目标链接依赖，不改变近邻搜索算法路径或 benchmark 数据口径。
 - 两个版本使用相同编译器、依赖、Release 配置、算例和 CPU 绑定。
 - 当前版在解决上游 PR 冲突时包含少量 develop 接口适配、测试依赖和 mock 链接修复；这些修改未改变近邻搜索核心算法。
 - 本报告为单节点测试，不据此声称多节点扩展效率。
-- 时间采用正式重复运行的中位数；提交版原始数据位于 `docs/benchmark_results/phase4/`。
+- 时间采用正式重复运行的中位数；提交版原始数据位于 `tests/performance/neighbor_phase4_results/`。
 - beta.1 与当前 conda ScaLAPACK/MKL 组合存在 ABI 崩溃，因此整体版本对比统一使用单 rank LAPACK；MPI 由独立 neighbor probe 测量。
 
 ## 环境与方法
@@ -120,6 +123,8 @@
 - `MODULE_CELL_NEIGHBOR_mpi_grid` 在 1/2/4/8/16 ranks 下通过。
 - `MODULE_LCAO_record_adj_mpi` 在 1/2/4 ranks 下通过。
 - no-MPI 配置下 `cell`、`neighbor`、`hamilt_lcao` 和 `esolver` 构建通过。
+- GitHub PR check 已通过；此前失败的 `MODULE_CELL_NEIGHBOR_benchmark`、`MODULE_CELL_NEIGHBOR_mpi_benchmark` 和 `MODULE_CELL_NEIGHBOR_grid_path_benchmark` 链接问题已通过 `c4b3358d8` 修复。
+- 本地复核中，以上三个 benchmark 目标已重新构建通过；neighbor 相关 CTest `sltk_grid`、`sltk_atom_arrange`、`atom_pack`、`mpi_domain`、`mpi_neighbor_proto`、`mpi_grid` 均通过。
 
 ## 正确性与限制
 
@@ -130,11 +135,11 @@
 
 ## 原始结果
 
-- `docs/benchmark_results/phase4/environment.json`：硬件、软件、命令参数和提交号。
-- `docs/benchmark_results/phase4/summary.json`：各配置的中位数、最小值和最大值。
-- `docs/benchmark_results/phase4/version.csv`：beta.1 与当前版完整 ABACUS 运行结果。
-- `docs/benchmark_results/phase4/grid_paths.csv`：beta.1 legacy、current Full27 与 current Half14 的直接对比。
-- `docs/benchmark_results/phase4/kernel.csv`：Half14、Full27 与 reference 消融结果。
-- `docs/benchmark_results/phase4/mpi.csv`：MPI local/ghost、payload 和耗时结果。
-- `docs/benchmark_results/phase4/verlet.csv`：skin=0/3 的真实 relax/MD 对照。
+- `tests/performance/neighbor_phase4_results/environment.json`：硬件、软件、命令参数和提交号。
+- `tests/performance/neighbor_phase4_results/summary.json`：各配置的中位数、最小值和最大值。
+- `tests/performance/neighbor_phase4_results/version.csv`：beta.1 与当前版完整 ABACUS 运行结果。
+- `tests/performance/neighbor_phase4_results/grid_paths.csv`：beta.1 legacy、current Full27 与 current Half14 的直接对比。
+- `tests/performance/neighbor_phase4_results/kernel.csv`：Half14、Full27 与 reference 消融结果。
+- `tests/performance/neighbor_phase4_results/mpi.csv`：MPI local/ghost、payload 和耗时结果。
+- `tests/performance/neighbor_phase4_results/verlet.csv`：skin=0/3 的真实 relax/MD 对照。
 - 完整标准输出保存在本地 Benchmark 工作目录的 `logs/`，不纳入仓库。
