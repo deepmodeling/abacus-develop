@@ -112,7 +112,7 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
 
         // NEP model parameters (all public members of NEP class)
         const auto& p = nep.paramb;
-        const auto& a = nep.ann;
+        const auto& a = nep.annmb;
 
         nep_cuda_compute(
             N,
@@ -131,11 +131,9 @@ void ESolver_NEP::runner(UnitCell& ucell, const int istep)
             a.dim, a.num_neurons1, p.version,
             p.rc_radial, p.rc_angular,
             a.c, a.num_para,
-            // NOTE: w0/b0/w1/b1 type depends on how NEP and GPU kernel store weights.
-            // If this line fails to compile, try casting to (const double*) or (const double**).
-            reinterpret_cast<const double*>(a.w0),
-            reinterpret_cast<const double*>(a.b0),
-            a.w1, a.b1,
+            // w0/b0/w1 are const double* [94] arrays (per atom type),
+            // w0[0] passes the first type's weight pointer (flat contiguous in NEP_CPU).
+            a.w0[0], a.b0[0], a.w1[0], a.b1,
             p.q_scaler,
             // Output buffers
             _e.data(), _f.data(), _v.data());
