@@ -139,7 +139,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     DiagoTrace trace("Davidson");
 
     // convflag[m] = true if the m th band is converged
-    std::vector<bool> convflag(nband, false);
+    std::vector<int> convflag(nband, 0);
     // unconv[m] store the number of the m th unconverged band
     std::vector<int> unconv(nband);
 

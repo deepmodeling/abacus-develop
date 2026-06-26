@@ -121,7 +121,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     std::vector<Real> eigenvalue_iter(this->nbase_x, 0.0);
 
     // convflag[m] = true if the m th band is convergent
-    std::vector<bool> convflag(this->n_band, false);
+    std::vector<int> convflag(this->n_band, 0);
 
     // unconv[m] store the number of the m th unconvergent band
     std::vector<int> unconv(this->n_band);
