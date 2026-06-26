@@ -435,7 +435,7 @@ class DiagOrthogonalizer
                          PLinearTransform<T, Device>& plintrans) const
     {
         plintrans.act(1.0, block, coeff, 0.0, workspace);
-        syncmem_op()(block, workspace, this->lda_ * ncol);
+        syncmem_op()(block, workspace, this->lda_ * plintrans.ncolB);
     }
 
     int dim_ = 0;
