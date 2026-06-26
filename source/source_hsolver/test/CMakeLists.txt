@@ -14,7 +14,7 @@ if (ENABLE_MPI)
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_linear_transform.cpp  ../diago_iter_assist.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
+            ../../source_pw/module_pwdft/operator_pw/operator_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_ppcg
