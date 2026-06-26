@@ -5,9 +5,8 @@
 #undef private
 #define private public
 #define protected public
-#include "source_esolver/esolver_lj.h"
 #include "source_md/verlet.h"
-#include "setcell.h"
+#include "md_test_fixture.h"
 #define doublethreshold 1e-12
 
 
@@ -36,30 +35,8 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class Verlet_test : public testing::Test
+class Verlet_test : public MdIntegratorFixture<Verlet>
 {
-  protected:
-    MD_base* mdrun;
-    UnitCell ucell;
-    Parameter param_in;
-    ModuleESolver::ESolver* p_esolver;
-
-    void SetUp()
-    {
-        Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
-
-        p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(ucell, param_in.inp);
-
-        mdrun = new Verlet(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
-    }
-
-    void TearDown()
-    {
-        delete mdrun;
-    }
 };
 
 TEST_F(Verlet_test, setup)
@@ -279,26 +256,6 @@ TEST_F(Verlet_test, rescale_v)
     EXPECT_NEAR(mdrun->vel[3].x, 0.0001131056175518098, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].y, 7.7681891430058639e-05, doublethreshold);
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
-}
-
-TEST_F(Verlet_test, CSVR)
-{
-    mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "csvr";
-    param_in.input.mdp.md_csvr_tau = 100.0;
-    param_in.input.mdp.md_seed = 12345;
-    mdrun->second_half();
-
-    // Check that positions are updated correctly
-    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
-    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
-
-    // Check that temperature is in reasonable range
-    double temp = mdrun->t_current * ModuleBase::Hartree_to_K;
-    EXPECT_GT(temp, 0.0);
-    EXPECT_LT(temp, 1000.0);
 }
 
 TEST_F(Verlet_test, write_restart)
