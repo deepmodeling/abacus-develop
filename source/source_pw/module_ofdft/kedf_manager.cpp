@@ -103,6 +103,7 @@ void KEDF_Manager::init(
             this->lkt_ = new KEDF_LKT();
         }
         this->lkt_->set_para(dV, inp.of_lkt_a);
+        this->lkt_->init_buffers(pw_rho->nrxx);
     }
 #ifdef __MLALGO
     if (this->of_kinetic_ == "ml")

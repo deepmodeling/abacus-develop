@@ -11,6 +11,37 @@ void KEDF_LKT::set_para(double dV, double lkt_a)
     this->lkt_a_ = lkt_a;
 }
 
+// Allocate persistent working buffers (called once in init)
+void KEDF_LKT::init_buffers(const int nrxx)
+{
+    free_buffers(); // safety: free any existing buffers first
+    as_ = new double[nrxx];
+    nabla_term_ = new double[nrxx];
+    for (int i = 0; i < 3; ++i)
+    {
+        nabla_rho_[i] = new double[nrxx];
+        div_input_[i] = new double[nrxx];
+    }
+    buffer_nrxx_ = nrxx;
+}
+
+// Free working buffers
+void KEDF_LKT::free_buffers()
+{
+    delete[] as_;
+    delete[] nabla_term_;
+    for (int i = 0; i < 3; ++i)
+    {
+        delete[] nabla_rho_[i];
+        delete[] div_input_[i];
+        nabla_rho_[i] = nullptr;
+        div_input_[i] = nullptr;
+    }
+    as_ = nullptr;
+    nabla_term_ = nullptr;
+    buffer_nrxx_ = 0;
+}
+
 /**
  * @brief Get the energy of LKT KEDF
  * \f[ E_{LKT} = \int{tau_{TF}/\cosh(a * s)}, s = c_s * |\nabla \rho|/\rho^{4/3} \f]
@@ -21,21 +52,19 @@ void KEDF_LKT::set_para(double dV, double lkt_a)
  */
 double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
-    double energy = 0.;                    // in Ry
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        nabla_rho[i] = new double[pw_rho->nrxx];
-    }
+    double energy = 0.; // in Ry
 
     if (PARAM.inp.nspin == 1)
     {
-        this->nabla(prho[0], pw_rho, nabla_rho);
-        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+        this->nabla(prho[0], pw_rho, nabla_rho_);
+        this->get_as(prho[0], nabla_rho_, pw_rho->nrxx, as_);
+
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:energy) schedule(static)
+#endif
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            energy += std::pow(prho[0][ir], 5. / 3.) / std::cosh(as[ir]);
+            energy += std::pow(prho[0][ir], 5. / 3.) / std::cosh(as_[ir]);
         }
         energy *= this->dV_ * this->c_tf_;
     }
@@ -45,12 +74,6 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     }
     this->lkt_energy = energy;
     Parallel_Reduce::reduce_all(this->lkt_energy);
-
-    delete[] as;
-    for (int i = 0; i < 3; ++i) {
-        delete[] nabla_rho[i];
-}
-    delete[] nabla_rho;
 
     return this->lkt_energy;
 }
@@ -67,44 +90,28 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
  */
 double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
 {
-    double energy_den = 0.;                // in Ry
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        nabla_rho[i] = new double[pw_rho->nrxx];
-    }
-
-    this->nabla(prho[is], pw_rho, nabla_rho);
-    this->get_as(prho[is], nabla_rho, pw_rho->nrxx, as);
-    energy_den = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
-
-    delete[] as;
-    for (int i = 0; i < 3; ++i) {
-        delete[] nabla_rho[i];
-}
-    delete[] nabla_rho;
+    // Use the pre-allocated buffers for the full gradient computation
+    this->nabla(prho[is], pw_rho, nabla_rho_);
+    this->get_as(prho[is], nabla_rho_, pw_rho->nrxx, as_);
+    
+    double energy_den = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) / std::cosh(as_[ir]);
 
     return energy_den;
 }
 
 void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_lkt)
 {
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        nabla_rho[i] = new double[pw_rho->nrxx];
-    }
-
     if (PARAM.inp.nspin == 1)
     {
-        this->nabla(prho[0], pw_rho, nabla_rho);
-        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+        this->nabla(prho[0], pw_rho, nabla_rho_);
+        this->get_as(prho[0], nabla_rho_, pw_rho->nrxx, as_);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            double coshas = std::cosh(as[ir]);
+            double coshas = std::cosh(as_[ir]);
             rtau_lkt[ir] += std::pow(prho[0][ir], 5. / 3.) / coshas * this->c_tf_;
         }
     }
@@ -112,12 +119,6 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
     {
         // Waiting for update
     }
-
-    delete[] as;
-    for (int i = 0; i < 3; ++i) {
-        delete[] nabla_rho[i];
-}
-    delete[] nabla_rho;
 }
 
 /**
@@ -125,6 +126,8 @@ void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
  * and the LKT energy will be calculated and stored in this->lkt_energy
  * \f[ V_{LKT} =5/3 *\tau_{TF}/\rho * [1/\cosh(as)+5/4 * as * \tanh(as)/\cosh(as)] \f]
  * \f[ +\nabla\cdot(\tau_{TF} * a*\tanh(as)/\cosh(as) * s/|\nabla\rho|^2 * \nabla\rho). \f]
+ *
+ * Uses pre-allocated buffers and OpenMP parallelization.
  *
  * @param prho charge density
  * @param pw_rho pw basis
@@ -135,51 +138,62 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     ModuleBase::TITLE("KEDF_LKT", "lkt_potential");
     ModuleBase::timer::start("KEDF_LKT", "lkt_potential");
     this->lkt_energy = 0.;
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        nabla_rho[i] = new double[pw_rho->nrxx];
-    }
-    double* nabla_term = new double[pw_rho->nrxx];
 
     if (PARAM.inp.nspin == 1)
     {
-        this->nabla(prho[0], pw_rho, nabla_rho);
-        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+        this->nabla(prho[0], pw_rho, nabla_rho_);
+        this->get_as(prho[0], nabla_rho_, pw_rho->nrxx, as_);
 
+        // OpenMP-parallelized grid loop: prepare div_input_ from nabla_rho_,
+        // compute the first term of potential in the same pass
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            double coshas = std::cosh(as[ir]);
-            double tanhas = std::tanh(as[ir]);
+            double coshas = std::cosh(as_[ir]);
+            double tanhas = std::tanh(as_[ir]);
 
-            this->lkt_energy += std::pow(prho[0][ir], 5. / 3.) / coshas;
-            // add the first term
+            // add the first term of potential
             rpotential(0, ir) += 5.0 / 3.0 * this->c_tf_ * std::pow(prho[0][ir], 2. / 3.) / coshas
-                                 * (1. + 4.0 / 5.0 * as[ir] * tanhas);
-            // get the nabla_term
+                                 * (1. + 4.0 / 5.0 * as_[ir] * tanhas);
+
+            // prepare div_input_ for divergence()
             for (int i = 0; i < 3; ++i)
             {
-                if (as[ir] == 0)
+                if (as_[ir] == 0)
                 {
-                    nabla_rho[i][ir] = 0;
+                    div_input_[i][ir] = 0;
                 }
                 else
                 {
-                    nabla_rho[i][ir] = nabla_rho[i][ir] * tanhas / coshas / as[ir] / prho[0][ir] * this->c_tf_
-                                       * std::pow(this->s_coef_ * this->lkt_a_, 2);
+                    div_input_[i][ir] = nabla_rho_[i][ir] * tanhas / coshas / as_[ir] / prho[0][ir]
+                                        * this->c_tf_ * std::pow(this->s_coef_ * this->lkt_a_, 2);
                 }
             }
         }
 
-        this->divergence(nabla_rho, pw_rho, nabla_term);
-
+        // Energy accumulation (separate loop for correct reduction)
+        double energy_local = 0.;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:energy_local) schedule(static)
+#endif
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpotential(0, ir) += nabla_term[ir];
+            energy_local += std::pow(prho[0][ir], 5. / 3.) / std::cosh(as_[ir]);
         }
 
-        this->lkt_energy *= this->c_tf_ * this->dV_;
+        this->divergence(div_input_, pw_rho, nabla_term_);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            rpotential(0, ir) += nabla_term_[ir];
+        }
+
+        this->lkt_energy = energy_local * this->c_tf_ * this->dV_;
         Parallel_Reduce::reduce_all(this->lkt_energy);
     }
     else if (PARAM.inp.nspin == 2)
@@ -187,36 +201,35 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
         // Waiting for update
     }
 
-    delete[] as;
-    for (int i = 0; i < 3; ++i) {
-        delete[] nabla_rho[i];
-}
-    delete[] nabla_rho;
-    delete[] nabla_term;
-
     ModuleBase::timer::end("KEDF_LKT", "lkt_potential");
 }
 
 /**
  * @brief Get the stress of LKT KEDF, and store it into this->stress
  *
+ * Uses pre-allocated buffers and OpenMP parallelization.
+ *
  * @param prho charge density
  * @param pw_rho pw basis
  */
 void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
-    double* as = new double[pw_rho->nrxx]; // a*s
-    double** nabla_rho = new double*[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        nabla_rho[i] = new double[pw_rho->nrxx];
-    }
-    double* nabla_term = new double[pw_rho->nrxx];
-
     if (PARAM.inp.nspin == 1)
     {
-        this->nabla(prho[0], pw_rho, nabla_rho);
-        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+        this->nabla(prho[0], pw_rho, nabla_rho_);
+        this->get_as(prho[0], nabla_rho_, pw_rho->nrxx, as_);
+
+        // Pre-compute energy for stress diagonal
+        double lkt_energy_local = 0.;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:lkt_energy_local) schedule(static)
+#endif
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            lkt_energy_local += std::pow(prho[0][ir], 5. / 3.) / std::cosh(as_[ir]);
+        }
+        lkt_energy_local *= this->c_tf_ * this->dV_;
+        Parallel_Reduce::reduce_all(lkt_energy_local);
 
         for (int alpha = 0; alpha < 3; ++alpha)
         {
@@ -226,21 +239,24 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 
                 if (alpha == beta)
                 {
-                    this->stress(alpha, beta) = 2.0 / 3.0 / pw_rho->omega * this->lkt_energy;
+                    this->stress(alpha, beta) = 2.0 / 3.0 / pw_rho->omega * lkt_energy_local;
                 }
 
                 double integral_term = 0.;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:integral_term) schedule(static)
+#endif
                 for (int ir = 0; ir < pw_rho->nrxx; ++ir)
                 {
-                    double coef = std::tanh(as[ir]) / std::cosh(as[ir]);
-                    if (as[ir] != 0.)
+                    double coef = std::tanh(as_[ir]) / std::cosh(as_[ir]);
+                    if (as_[ir] != 0.)
                     {
-                        integral_term += -nabla_rho[alpha][ir] * nabla_rho[beta][ir] / as[ir] / prho[0][ir]
+                        integral_term += -nabla_rho_[alpha][ir] * nabla_rho_[beta][ir] / as_[ir] / prho[0][ir]
                                          * std::pow(this->s_coef_ * this->lkt_a_, 2) * coef;
                     }
                     if (alpha == beta)
                     {
-                        integral_term += 1.0 / 3.0 * as[ir] * std::pow(prho[0][ir], 5.0 / 3.0) * coef;
+                        integral_term += 1.0 / 3.0 * as_[ir] * std::pow(prho[0][ir], 5.0 / 3.0) * coef;
                     }
                 }
                 Parallel_Reduce::reduce_all(integral_term);
@@ -261,13 +277,6 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
     {
         // Waiting for update
     }
-
-    delete[] as;
-    for (int i = 0; i < 3; ++i) {
-        delete[] nabla_rho[i];
-}
-    delete[] nabla_rho;
-    delete[] nabla_term;
 }
 
 /**
@@ -325,6 +334,8 @@ void KEDF_LKT::divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rh
 /**
  * @brief Caculate as = lkt_a * s, s = c_s * |\nabla \rho|/\rho^{4/3}
  *
+ * OpenMP parallelized real-space loop.
+ *
  * @param [in] prho charge density
  * @param [in] pnabla_rho nabla rho
  * @param [in] nrxx the number of real space grid
@@ -332,6 +343,9 @@ void KEDF_LKT::divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rh
  */
 void KEDF_LKT::get_as(const double* prho, const double* const* pnabla_rho, const int nrxx, double* as)
 {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
     for (int ir = 0; ir < nrxx; ++ir)
     {
         as[ir] = std::sqrt(std::pow(pnabla_rho[0][ir], 2) + std::pow(pnabla_rho[1][ir], 2)

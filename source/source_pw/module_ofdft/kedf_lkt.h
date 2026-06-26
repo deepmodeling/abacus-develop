@@ -12,6 +12,9 @@
  * @brief A class which calculates the kinetic energy, potential, and stress with Luo-Karasiev-Trickey (LKT) KEDF.
  * See Luo K, Karasiev V V, Trickey S B. Physical Review B, 2018, 98(4): 041111.
  * @author sunliang on 2023-04-28
+ *
+ * Optimization: pre-allocated working buffers to eliminate per-call new/delete overhead;
+ * added OpenMP parallelization for real-space grid loops.
  */
 class KEDF_LKT
 {
@@ -22,9 +25,16 @@ class KEDF_LKT
     }
     ~KEDF_LKT()
     {
+        free_buffers();
     }
 
     void set_para(double dV, double lkt_a);
+
+    /// Allocate persistent working buffers (called once in init)
+    void init_buffers(const int nrxx);
+
+    /// Free working buffers
+    void free_buffers();
 
     double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
     double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
@@ -47,5 +57,12 @@ class KEDF_LKT
     const double s_coef_
         = 1.0 / (2. * std::pow(3 * std::pow(M_PI, 2.0), 1.0 / 3.0)); // coef of s, s=s_coef * |nabla rho|/rho^{4/3}
     double lkt_a_ = 1.3;
+
+    // Pre-allocated working buffers (eliminate per-call new/delete)
+    double* as_ = nullptr;             // a*s values, size nrxx
+    double* nabla_rho_[3] = {nullptr, nullptr, nullptr}; // gradient components
+    double* div_input_[3] = {nullptr, nullptr, nullptr}; // input for divergence()
+    double* nabla_term_ = nullptr;     // divergence output, size nrxx
+    int buffer_nrxx_ = 0;              // size of allocated buffers
 };
 #endif
