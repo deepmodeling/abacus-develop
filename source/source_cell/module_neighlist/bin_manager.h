@@ -218,6 +218,14 @@ private:
      * @return Flat index in the bins_ array.
      */
     int bin_index(int ix, int iy, int iz) const;
+
+    template <typename Emit>
+    void visit_neighbors(
+        int i,
+        const std::vector<NeighborAtom>& atoms,
+        double sradius2,
+        const Emit& emit
+    ) const;
 };
 
 #endif // BIN_MANAGER_H

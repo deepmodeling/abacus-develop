@@ -181,6 +181,66 @@ int BinManager::bin_index(int ix, int iy, int iz) const {
     return ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
 }
 
+template <typename Emit>
+void BinManager::visit_neighbors(
+    int i,
+    const std::vector<NeighborAtom>& atoms,
+    double sradius2,
+    const Emit& emit
+) const
+{
+    const int ix = std::min(
+        std::max(int((atoms[i].position_x - x_min_) / bin_sizex_), 0),
+        nbinx_ - 1
+    );
+
+    const int iy = std::min(
+        std::max(int((atoms[i].position_y - y_min_) / bin_sizey_), 0),
+        nbiny_ - 1
+    );
+
+    const int iz = std::min(
+        std::max(int((atoms[i].position_z - z_min_) / bin_sizez_), 0),
+        nbinz_ - 1
+    );
+
+    for (int dx = -1; dx <= 1; dx++)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                const int jx = ix + dx;
+                const int jy = iy + dy;
+                const int jz = iz + dz;
+
+                if (jx < 0 || jx >= nbinx_ ||
+                    jy < 0 || jy >= nbiny_ ||
+                    jz < 0 || jz >= nbinz_)
+                {
+                    continue;
+                }
+
+                const int nidx = bin_index(jx, jy, jz);
+
+                for (const NeighborAtom& natom : bins_[nidx].get_atoms())
+                {
+                    const double dx = atoms[i].position_x - natom.position_x;
+                    const double dy = atoms[i].position_y - natom.position_y;
+                    const double dz = atoms[i].position_z - natom.position_z;
+
+                    const double dist2 = dx * dx + dy * dy + dz * dz;
+
+                    if (dist2 <= sradius2 && dist2 != 0)
+                    {
+                        emit(natom.atom_id);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void BinManager::build_atom_neighbors(
     NeighborList& neighbor_list,
     std::vector<NeighborAtom>& atoms
@@ -191,60 +251,6 @@ void BinManager::build_atom_neighbors(
 
     const int nlocal = static_cast<int>(atoms.size());
     const double sradius2 = sradius_ * sradius_;
-
-    auto visit_neighbors = [&](const int i, const auto& emit)
-    {
-        const int ix = std::min(
-            std::max(int((atoms[i].position_x - x_min_) / bin_sizex_), 0),
-            nbinx_ - 1
-        );
-
-        const int iy = std::min(
-            std::max(int((atoms[i].position_y - y_min_) / bin_sizey_), 0),
-            nbiny_ - 1
-        );
-
-        const int iz = std::min(
-            std::max(int((atoms[i].position_z - z_min_) / bin_sizez_), 0),
-            nbinz_ - 1
-        );
-
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                for (int dz = -1; dz <= 1; dz++)
-                {
-                    const int jx = ix + dx;
-                    const int jy = iy + dy;
-                    const int jz = iz + dz;
-
-                    if (jx < 0 || jx >= nbinx_ ||
-                        jy < 0 || jy >= nbiny_ ||
-                        jz < 0 || jz >= nbinz_)
-                    {
-                        continue;
-                    }
-
-                    const int nidx = bin_index(jx, jy, jz);
-
-                    for (const NeighborAtom& natom : bins_[nidx].get_atoms())
-                    {
-                        const double dx = atoms[i].position_x - natom.position_x;
-                        const double dy = atoms[i].position_y - natom.position_y;
-                        const double dz = atoms[i].position_z - natom.position_z;
-
-                        const double dist2 = dx * dx + dy * dy + dz * dz;
-
-                        if (dist2 <= sradius2 && dist2 != 0)
-                        {
-                            emit(natom.atom_id);
-                        }
-                    }
-                }
-            }
-        }
-    };
 
     neighbor_list.reset();
 
@@ -258,7 +264,7 @@ void BinManager::build_atom_neighbors(
         for (int i = 0; i < nlocal; i++)
         {
             int count = 0;
-            visit_neighbors(i, [&](const int) { ++count; });
+            visit_neighbors(i, atoms, sradius2, [&](const int) { ++count; });
             neighbor_counts[i] = count;
         }
 
@@ -274,7 +280,7 @@ void BinManager::build_atom_neighbors(
         {
             int* ptr = neighbor_list.firstneigh_[i];
             int k = 0;
-            visit_neighbors(i, [&](const int atom_id)
+            visit_neighbors(i, atoms, sradius2, [&](const int atom_id)
             {
                 assert(ptr != nullptr);
                 ptr[k++] = atom_id;
@@ -292,7 +298,7 @@ void BinManager::build_atom_neighbors(
     for (int i = 0; i < nlocal; i++)
     {
         neigh_tmp.clear();
-        visit_neighbors(i, [&](const int atom_id) { neigh_tmp.push_back(atom_id); });
+        visit_neighbors(i, atoms, sradius2, [&](const int atom_id) { neigh_tmp.push_back(atom_id); });
 
         int n = neigh_tmp.size();
 
