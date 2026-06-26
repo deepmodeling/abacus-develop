@@ -75,17 +75,18 @@ void Verlet::apply_thermostat(void)
     {
         if (my_rank == 0)
         {
-            double deviation = 0.0;
+#pragma omp parallel for default(none) shared(ucell, mdp, md_tlast, allmass, ionmbl, vel) \
+            schedule(static) if (ucell.nat >= 256)
             for (int i = 0; i < ucell.nat; ++i)
             {
-                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
+                if (MD_func::uniform_rand_thread_safe() <= 1.0 / mdp.md_nraise)
                 {
-                    deviation = sqrt(md_tlast / allmass[i]);
+                    double deviation = sqrt(md_tlast / allmass[i]);
                     for (int k = 0; k < 3; ++k)
                     {
                         if (ionmbl[i][k])
                         {
-                            vel[i][k] = deviation * MD_func::gaussrand();
+                            vel[i][k] = deviation * MD_func::gaussrand_thread_safe();
                         }
                     }
                 }
@@ -160,14 +161,16 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
         factor = exp(-1.0 / taut);
     }
 
-    // Generate Gaussian random numbers using MD_func
-    double rr = MD_func::gaussrand();
+    // Generate Gaussian random numbers using thread-safe RNG
+    double rr = MD_func::gaussrand_thread_safe();
 
     // Calculate sum of squared Gaussian random numbers (ndeg - 1)
     double sumnoises = 0.0;
+#pragma omp parallel for default(none) shared(ndeg) reduction(+:sumnoises) \
+    schedule(static) if (ndeg >= 256)
     for (int i = 0; i < ndeg - 1; ++i)
     {
-        double r = MD_func::gaussrand();
+        double r = MD_func::gaussrand_thread_safe();
         sumnoises += r * r;
     }
 
@@ -181,7 +184,9 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     // Calculate scaling factor
     double scale = sqrt(resample);
 
-    // Apply velocity scaling
+    // Apply velocity scaling (embarrassingly parallel)
+#pragma omp parallel for default(none) shared(ucell, vel, scale) \
+    schedule(static) if (ucell.nat >= 256)
     for (int i = 0; i < ucell.nat; ++i)
     {
         vel[i] *= scale;

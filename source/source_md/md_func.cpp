@@ -4,6 +4,8 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <random>
+
 
 namespace MD_func
 {
@@ -38,6 +40,22 @@ double gaussrand()
     phase = 1 - phase;
 
     return xx;
+}
+
+double gaussrand_thread_safe()
+{
+    // thread_local guarantees each OpenMP thread gets its own RNG state,
+    // seeded independently via std::random_device.
+    thread_local std::mt19937 gen(std::random_device{}());
+    thread_local std::normal_distribution<double> dist(0.0, 1.0);
+    return dist(gen);
+}
+
+double uniform_rand_thread_safe()
+{
+    thread_local std::mt19937 gen(std::random_device{}());
+    thread_local std::uniform_real_distribution<double> dist(0.0, 1.0);
+    return dist(gen);
 }
 
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass)

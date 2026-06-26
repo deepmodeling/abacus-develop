@@ -26,6 +26,28 @@ namespace MD_func
 double gaussrand();
 
 /**
+ * @brief generate a Gaussian random number (thread-safe)
+ *
+ * Uses thread_local std::mt19937 and std::normal_distribution.
+ * Thread-safe alternative to gaussrand() for use inside
+ * #pragma omp parallel regions.
+ *
+ * @return Gaussian random number with mean 0 and variance 1
+ */
+double gaussrand_thread_safe();
+
+/**
+ * @brief generate a uniform random number in [0,1) (thread-safe)
+ *
+ * Uses thread_local std::mt19937 and std::uniform_real_distribution.
+ * Thread-safe alternative to std::rand() for use inside
+ * #pragma omp parallel regions.
+ *
+ * @return uniform random number in [0, 1)
+ */
+double uniform_rand_thread_safe();
+
+/**
  * @brief initialize the atomic velocities
  *
  * @param unit_in unitcell information

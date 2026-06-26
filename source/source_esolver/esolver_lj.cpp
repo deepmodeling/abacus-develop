@@ -133,18 +133,24 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 #pragma omp atomic
         lj_potential += pot_local;
 
-#pragma omp critical
-        {
-            lj_virial(0, 0) += vl[0];
-            lj_virial(0, 1) += vl[1];
-            lj_virial(0, 2) += vl[2];
-            lj_virial(1, 0) += vl[3];
-            lj_virial(1, 1) += vl[4];
-            lj_virial(1, 2) += vl[5];
-            lj_virial(2, 0) += vl[6];
-            lj_virial(2, 1) += vl[7];
-            lj_virial(2, 2) += vl[8];
-        }
+#pragma omp atomic
+        lj_virial(0, 0) += vl[0];
+#pragma omp atomic
+        lj_virial(0, 1) += vl[1];
+#pragma omp atomic
+        lj_virial(0, 2) += vl[2];
+#pragma omp atomic
+        lj_virial(1, 0) += vl[3];
+#pragma omp atomic
+        lj_virial(1, 1) += vl[4];
+#pragma omp atomic
+        lj_virial(1, 2) += vl[5];
+#pragma omp atomic
+        lj_virial(2, 0) += vl[6];
+#pragma omp atomic
+        lj_virial(2, 1) += vl[7];
+#pragma omp atomic
+        lj_virial(2, 2) += vl[8];
     }
 
 

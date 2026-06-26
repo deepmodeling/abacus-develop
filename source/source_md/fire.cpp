@@ -155,16 +155,16 @@ void FIRE::restart(const std::string& global_readin_dir)
 
 void FIRE::check_force(void)
 {
-    max = 0;
+    max = 0.0;
 
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for default(none) shared(force, nat) reduction(max:max) \
+    schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            if (max < std::abs(force[i][j]))
-            {
-                max = std::abs(force[i][j]);
-            }
+            max = std::max(max, std::abs(force[i][j]));
         }
     }
 

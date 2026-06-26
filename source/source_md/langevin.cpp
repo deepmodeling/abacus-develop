@@ -88,14 +88,16 @@ void Langevin::post_force()
     if (my_rank == 0)
     {
         double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-        ModuleBase::Vector3<double> fictitious_force;
+#pragma omp parallel for default(none) shared(ucell, allmass, vel, md_damp, \
+                                         t_target, md_dt, force, total_force) \
+    schedule(static) if (ucell.nat >= 256)
         for (int i = 0; i < ucell.nat; ++i)
         {
-            fictitious_force = -allmass[i] * vel[i] / md_damp;
+            ModuleBase::Vector3<double> fictitious_force = -allmass[i] * vel[i] / md_damp;
             for (int j = 0; j < 3; ++j)
             {
                 fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / md_damp / md_dt)
-                                       * (static_cast<double>(std::rand()) / RAND_MAX - 0.5);
+                                       * (MD_func::uniform_rand_thread_safe() - 0.5);
             }
             total_force[i] = force[i] + fictitious_force;
         }
