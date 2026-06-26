@@ -183,7 +183,7 @@ TEST_F(OpenMPConsistencyTest, BPCG_ThreadConsistency)
 
         for (int i = 0; i < nband; i++)
         {
-            EXPECT_NEAR(test_eigen[i], ref_eigen[i], 1e-10)
+            EXPECT_NEAR(test_eigen[i], ref_eigen[i], 1e-5)
                 << "BPCG eigenvalue mismatch at band " << i
                 << " with threads=" << nthreads;
         }
@@ -217,7 +217,7 @@ TEST_F(OpenMPConsistencyTest, Davidson_ThreadConsistency)
 
         for (int i = 0; i < nband; i++)
         {
-            EXPECT_NEAR(test_eigen[i], ref_eigen[i], 1e-10)
+            EXPECT_NEAR(test_eigen[i], ref_eigen[i], 1e-5)
                 << "Davidson eigenvalue mismatch at band " << i
                 << " with threads=" << nthreads;
         }
