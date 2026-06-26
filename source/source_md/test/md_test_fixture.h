@@ -1,14 +1,32 @@
 #ifndef MD_TEST_FIXTURE_H
 #define MD_TEST_FIXTURE_H
 
+#ifdef private
+#define MD_TEST_FIXTURE_RESTORE_PRIVATE
+#undef private
+#endif
+#ifdef protected
+#define MD_TEST_FIXTURE_RESTORE_PROTECTED
+#undef protected
+#endif
+
 #include "gtest/gtest.h"
+#include <memory>
+#include <vector>
+
+#ifdef MD_TEST_FIXTURE_RESTORE_PRIVATE
+#define private public
+#undef MD_TEST_FIXTURE_RESTORE_PRIVATE
+#endif
+#ifdef MD_TEST_FIXTURE_RESTORE_PROTECTED
+#define protected public
+#undef MD_TEST_FIXTURE_RESTORE_PROTECTED
+#endif
+
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_base.h"
 #include "setcell.h"
-
-#include <memory>
-#include <vector>
 
 class MdTestBase : public testing::Test
 {

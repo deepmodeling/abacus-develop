@@ -77,7 +77,7 @@ MDStressState calc_stress_state(const int& natom,
 {
     MDStressState state;
     temp_vector(natom, vel, allmass, state.temperature_tensor);
-    state.stress.create(3, 3);
+    state.stress.create(3, 3, false);
 
     for (int i = 0; i < 3; ++i)
     {
@@ -99,7 +99,17 @@ void compute_stress(const UnitCell& unit_in,
 {
     if (cal_stress)
     {
-        stress = calc_stress_state(unit_in.nat, unit_in.omega, vel, allmass, virial).stress;
+        ModuleBase::matrix temperature_tensor;
+        temp_vector(unit_in.nat, vel, allmass, temperature_tensor);
+        stress.create(3, 3, false);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                stress(i, j) = virial(i, j) + temperature_tensor(i, j) / unit_in.omega;
+            }
+        }
     }
 
     return;
@@ -504,7 +514,7 @@ void temp_vector(const int& natom,
                  const double* allmass,
                  ModuleBase::matrix& t_vector)
 {
-    t_vector.create(3, 3);
+    t_vector.create(3, 3, false);
 
     double t00 = 0.0;
     double t01 = 0.0;
