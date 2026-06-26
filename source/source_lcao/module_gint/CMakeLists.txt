@@ -51,6 +51,17 @@ add_library(
     ${objects}
 )
 
+option(GINT_SET_PHI_OPENMP "Enable OpenMP parallelization in GintAtom::set_phi (non-nested contexts only)" OFF)
+option(GINT_SET_PHI_SIMD "Enable omp simd on the orbital loop in GintAtom::set_phi" OFF)
+if(GINT_SET_PHI_OPENMP)
+  target_compile_definitions(gint PRIVATE GINT_SET_PHI_OPENMP)
+  message(STATUS "GintAtom::set_phi OpenMP optimization: ON")
+endif()
+if(GINT_SET_PHI_SIMD)
+  target_compile_definitions(gint PRIVATE GINT_SET_PHI_SIMD)
+  message(STATUS "GintAtom::set_phi SIMD hint: ON")
+endif()
+
 if(BUILD_TESTING)
   add_subdirectory(test)
 endif()

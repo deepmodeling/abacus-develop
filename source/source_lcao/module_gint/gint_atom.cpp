@@ -3,8 +3,84 @@
 #include "source_cell/unitcell.h"
 #include "gint_helper.h"
 
+#ifdef GINT_SET_PHI_OPENMP
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#endif
+
 namespace ModuleGint
 {
+
+namespace
+{
+
+template <typename T>
+void set_phi_at_meshgrid(
+    const Atom* atom,
+    const int nw,
+    const int nwl,
+    const double dr_uniform,
+    const double rcut,
+    const GintAtom::RadialBlock* blocks,
+    const int num_blocks,
+    const Vec3d& coord,
+    T* phi_row,
+    std::vector<double>& ylma)
+{
+    double dist = coord.norm();
+    if (dist < 1e-9)
+    {
+        dist = 1e-9;
+    }
+
+    if (dist > rcut)
+    {
+        ModuleBase::GlobalFunc::ZEROS(phi_row, nw);
+        return;
+    }
+
+    const double inv_dist = 1.0 / dist;
+    ModuleBase::Ylm::sph_harm(
+        nwl,
+        coord.x * inv_dist,
+        coord.y * inv_dist,
+        coord.z * inv_dist,
+        ylma);
+
+    const double position = dist / dr_uniform;
+    const int ip = static_cast<int>(position);
+    const double dx = position - ip;
+    const double dx2 = dx * dx;
+    const double dx3 = dx2 * dx;
+
+    const double c3 = 3.0 * dx2 - 2.0 * dx3;
+    const double c1 = 1.0 - c3;
+    const double c2 = (dx - 2.0 * dx2 + dx3) * dr_uniform;
+    const double c4 = (dx3 - dx2) * dr_uniform;
+
+    for (int ib = 0; ib < num_blocks; ++ib)
+    {
+        const auto& block = blocks[ib];
+        const double* psi_uniform = block.psi_uniform;
+        const double* dpsi_uniform = block.dpsi_uniform;
+        const double psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
+            + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
+
+        const int begin_iw = block.begin_iw;
+        const int end_iw = begin_iw + block.size;
+        const int ylm_begin = block.ylm_begin;
+#if defined(GINT_SET_PHI_SIMD)
+#pragma omp simd
+#endif
+        for (int iw = begin_iw; iw < end_iw; ++iw)
+        {
+            phi_row[iw] = psi * ylma[iw - begin_iw + ylm_begin];
+        }
+    }
+}
+
+} // namespace
 GintAtom::GintAtom(
     const Atom* atom,
     int it, int ia, int iat,
@@ -48,72 +124,78 @@ template <typename T>
 void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* phi) const
 {
     const int num_mgrids = coords.size();
+    if (num_mgrids == 0)
+    {
+        return;
+    }
 
-    // orb_ does not have the member variable dr_uniform
     const double dr_uniform = orb_->PhiLN(0, 0).dr_uniform;
-
-    // store the spherical harmonics
-    // it's outside the loop to reduce the vector allocation overhead
-    std::vector<double> ylma;
+    const double rcut = orb_->getRcut();
+    const int nw = atom_->nw;
+    const int nwl = atom_->nwl;
     const auto* blocks = radial_blocks_.data();
     const int num_blocks = radial_blocks_.size();
 
-    for(int im = 0; im < num_mgrids; im++)
+#if defined(GINT_SET_PHI_OPENMP) && defined(_OPENMP)
+    // cal_gint_rho/vl 已在 BigGrid 层做了 OpenMP 并行；默认关闭嵌套并行，
+    // 仅在非并行上下文中才启动格点级并行（例如单元测试或独立 profiling）。
+    if (omp_in_parallel())
     {
-        const Vec3d& coord = coords[im];
-        // 1e-9 is to avoid division by zero
-        const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
-        if(dist > orb_->getRcut())
-        {   
-            // if the distance is larger than the cutoff radius,
-            // the wave function values are all zeros
-            ModuleBase::GlobalFunc::ZEROS(phi + im * stride, atom_->nw);
-        }
-        else
+        std::vector<double> ylma;
+        for (int im = 0; im < num_mgrids; ++im)
         {
-            // spherical harmonics
-            // TODO: vectorize the sph_harm function, 
-            // the vectorized function can be called once for all meshgrids in a biggrid
-            ModuleBase::Ylm::sph_harm(atom_->nwl, coord.x/dist, coord.y/dist, coord.z/dist, ylma);
-            // interpolation
-
-            // these parameters are related to interpolation
-            // because once the distance from atom to grid point is known,
-            // we can obtain the parameters for interpolation and
-            // store them first! these operations can save lots of efforts.
-            const double position = dist / dr_uniform;
-            const int ip = static_cast<int>(position);
-            const double dx = position - ip;
-            const double dx2 = dx * dx;
-            const double dx3 = dx2 * dx;
-
-            const double c3 = 3.0 * dx2 - 2.0 * dx3;
-            const double c1 = 1.0 - c3;
-            const double c2 = (dx - 2.0 * dx2 + dx3) * dr_uniform;
-            const double c4 = (dx3 - dx2) * dr_uniform;
-
-            T* phi_row = phi + im * stride;
-            for (int ib = 0; ib < num_blocks; ++ib)
+            set_phi_at_meshgrid(
+                atom_,
+                nw,
+                nwl,
+                dr_uniform,
+                rcut,
+                blocks,
+                num_blocks,
+                coords[im],
+                phi + im * stride,
+                ylma);
+        }
+    }
+    else
+    {
+#pragma omp parallel if(num_mgrids > 1)
+        {
+            std::vector<double> ylma;
+#pragma omp for schedule(static)
+            for (int im = 0; im < num_mgrids; ++im)
             {
-                const auto& block = blocks[ib];
-                const double* psi_uniform = block.psi_uniform;
-                const double* dpsi_uniform = block.dpsi_uniform;
-                const double psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
-                    + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
-
-                const int begin_iw = block.begin_iw;
-                const int end_iw = begin_iw + block.size;
-                // Within one (L, N) block, m runs consecutively, so we can walk
-                // the Ylm buffer linearly instead of reading atom_->iw2_ylm[iw]
-                // for every orbital in the hot loop.
-                int idx_lm = block.ylm_begin;
-                for (int iw = begin_iw; iw < end_iw; ++iw, ++idx_lm)
-                {
-                    phi_row[iw] = psi * ylma[idx_lm];
-                }
+                set_phi_at_meshgrid(
+                    atom_,
+                    nw,
+                    nwl,
+                    dr_uniform,
+                    rcut,
+                    blocks,
+                    num_blocks,
+                    coords[im],
+                    phi + im * stride,
+                    ylma);
             }
         }
     }
+#else
+    std::vector<double> ylma;
+    for (int im = 0; im < num_mgrids; ++im)
+    {
+        set_phi_at_meshgrid(
+            atom_,
+            nw,
+            nwl,
+            dr_uniform,
+            rcut,
+            blocks,
+            num_blocks,
+            coords[im],
+            phi + im * stride,
+            ylma);
+    }
+#endif
 }
 
 template <typename T>
