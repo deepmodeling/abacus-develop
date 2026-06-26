@@ -574,7 +574,7 @@ TEST_F(DiagoCudaKernelsTest, BatchedDivPreconditioner_MatchesCPU)
     CHECK_CUDA(cudaMemcpy(d_in, in_vec.data(), vbytes, cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaMemcpy(d_prec, prec.data(), rbytes, cudaMemcpyHostToDevice));
 
-    cuda::batched_div_preconditioner_op<thrust::complex<Real>>(
+    cuda::batched_div_preconditioner_op<Real>(
         d_out, d_in, d_prec, n_basis, ld, n_band);
 
     std::vector<std::complex<Real>> gpu_out(ld * n_band);
