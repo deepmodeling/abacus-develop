@@ -136,7 +136,7 @@ std::vector<double> run_davidson(int nband, int npw,
     };
 
     std::vector<double> eigen(nband, 0.0);
-    std::vector<double> ethr_band(nband, 1e-5);
+    std::vector<double> ethr_band(nband, 1e-12);
     dav.diag(hpsi_func, spsi_func, npw, psi.get_pointer(), eigen.data(), ethr_band, 500);
 
     delete[] precondition_local;
