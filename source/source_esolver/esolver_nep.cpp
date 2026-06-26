@@ -19,7 +19,24 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __CUDA
-#include "nep_cuda_compute.cuh"
+// Forward-declare the CUDA kernel entry point (defined in nep_cuda_compute.cu).
+// Avoid including ".cuh" here — it has __device__ syntax that g++ cannot parse.
+extern void nep_cuda_compute(
+    int N,
+    const int *type,
+    const int *NN_radial, const int *NL_radial,
+    const int *NN_angular, const int *NL_angular,
+    const double *x12_radial, const double *y12_radial, const double *z12_radial,
+    const double *x12_angular, const double *y12_angular, const double *z12_angular,
+    int n_max_radial, int n_max_angular,
+    int basis_size_radial, int basis_size_angular,
+    int L_max, int num_L, int num_types, int num_types_sq, int num_c_radial,
+    int dim, int num_neurons1, int version,
+    const double *rc_radial, const double *rc_angular,
+    const double *ann_c, int num_para,
+    const double *w0, const double *b0, const double *w1, const double *b1,
+    const double *q_scaler,
+    double *potential, double *force, double *virial);
 #endif
 
 #include "source_base/parallel_common.h"
