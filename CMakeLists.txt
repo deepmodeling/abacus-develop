@@ -476,8 +476,14 @@ if(USE_CUDA)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 89 90)
     endif()
   endif()
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-std=c++14" CACHE STRING "" FORCE)
-  set(CMAKE_CUDA_STANDARD 14 CACHE STRING "CUDA C++ standard")
+  # CUDA 11.x requires GCC ≤ 10; GCC 11+ headers use C++17 constructs
+  # that nvcc cannot parse. Detect and use gcc-10 if available.
+  find_program(GCC10_EXECUTABLE gcc-10)
+  find_program(GPP10_EXECUTABLE g++-10)
+  if(GCC10_EXECUTABLE AND GPP10_EXECUTABLE)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -ccbin ${GPP10_EXECUTABLE}" CACHE STRING "" FORCE)
+    message(STATUS "CUDA host compiler override: ${GPP10_EXECUTABLE}")
+  endif()
   enable_language(CUDA)
   # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(TARGET ${ABACUS_BIN_NAME}
