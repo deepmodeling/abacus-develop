@@ -327,7 +327,7 @@ TEST_F(SltkGridTest, AtomPackNeighborPairsMatchLegacyGridAfterInit)
     remove("test_pair_non_pbc.out");
 }
 
-TEST_F(SltkGridTest, Half14DefaultMatchesFull27AndLegacyGrid)
+TEST_F(SltkGridTest, ExplicitHalf14MatchesFull27AndLegacyGrid)
 {
     unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
 
@@ -379,6 +379,27 @@ TEST_F(SltkGridTest, Half14DefaultMatchesFull27AndLegacyGrid)
     remove("test_pair_half14.out");
     remove("test_pair_full27.out");
     remove("test_pair_half14_atom_pack_only.out");
+}
+
+TEST_F(SltkGridTest, DefaultSearchUsesHalf14WithoutReferenceOrLegacy)
+{
+    unitcell::check_dtau(ucell->atoms, ucell->ntype, ucell->lat0, ucell->latvec);
+
+    std::ofstream ofs_default("test_pair_default_half14.out");
+    Grid grid_default(PARAM.input.test_grid);
+    grid_default.init(ofs_default, *ucell, radius, true);
+    ofs_default.close();
+
+    const std::vector<ModuleNeighbor::NeighborPair> expected
+        = ModuleNeighbor::build_neighbor_pairs_14(grid_default.atom_pack,
+                                                  grid_default.grid_storage,
+                                                  radius);
+    EXPECT_EQ(grid_default.neighbor_pairs, expected);
+    EXPECT_TRUE(grid_default.neighbor_pairs_27.empty());
+    EXPECT_TRUE(grid_default.atoms_in_box.empty());
+    EXPECT_TRUE(grid_default.all_adj_info.empty());
+
+    remove("test_pair_default_half14.out");
 }
 
 TEST(SltkGridSyntheticTest, SyntheticCellsKeepHalf14Full27AndLegacyConsistent)

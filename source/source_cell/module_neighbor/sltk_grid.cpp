@@ -172,6 +172,8 @@ void Grid::init_mpi(std::ofstream& ofs_in,
     if (!atom_pack.empty())
     {
         grid_storage = ModuleNeighbor::build_grid_storage_from_atom_pack(atom_pack, box_edge_length);
+        // MPI uses the same Half14 path as replicated Grid. Full27 remains
+        // available through the replicated regression interface.
         neighbor_pairs = ModuleNeighbor::build_neighbor_pairs_14(atom_pack, grid_storage, sradius);
         x_min = grid_storage.x_min;
         y_min = grid_storage.y_min;

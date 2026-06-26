@@ -239,6 +239,28 @@ TEST(AtomPackTest, RejectsInvalidIntegerCapacityRequests)
     storage.box_ny = 2;
     storage.box_nz = 1;
     EXPECT_THROW(storage.box_size(), std::overflow_error);
+
+    ModuleNeighbor::GridStorage tiny_edge
+        = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, 0.6);
+    tiny_edge.box_edge_length = 1.0e-20;
+    EXPECT_THROW(ModuleNeighbor::build_neighbor_pairs_27(pack, tiny_edge, 1.0),
+                 std::overflow_error);
+    EXPECT_THROW(ModuleNeighbor::build_neighbor_pairs_14(pack, tiny_edge, 1.0),
+                 std::overflow_error);
+}
+
+TEST(AtomPackTest, Half14KeepsFull27OrderForUnsortedCenters)
+{
+    ModuleNeighbor::AtomPack pack;
+    pack.append_atom(0.0, 0.0, 0.0, 1, 1, 0, 0, 0, 3, false);
+    pack.append_atom(0.5, 0.0, 0.0, 0, 1, 0, 0, 0, 1, false);
+    pack.append_atom(1.0, 0.0, 0.0, 1, 0, 0, 0, 0, 2, false);
+    pack.append_atom(1.5, 0.0, 0.0, 0, 0, 0, 0, 0, 0, false);
+
+    const ModuleNeighbor::GridStorage storage
+        = ModuleNeighbor::build_grid_storage_from_atom_pack(pack, 1.1);
+    EXPECT_EQ(ModuleNeighbor::build_neighbor_pairs_14(pack, storage, 1.0),
+              ModuleNeighbor::build_neighbor_pairs_27(pack, storage, 1.0));
 }
 
 TEST(AtomPackTest, BuildsNonPeriodicPackWithoutImages)

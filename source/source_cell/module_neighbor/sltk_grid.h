@@ -51,7 +51,8 @@ class Grid
     Grid& operator=(Grid&&) = default;
 
     // Build a replicated Grid. radius_in and all stored coordinates use lat0
-    // units. The default path builds only the Half14 AtomPack representation.
+    // units. Half14 is the production default after matching Full27 results
+    // and passing the 4K/32K/131K performance gate.
     void init(std::ofstream& ofs,
               const UnitCell& ucell,
               const double radius_in,

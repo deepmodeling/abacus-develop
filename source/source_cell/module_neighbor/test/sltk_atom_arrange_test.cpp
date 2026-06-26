@@ -383,7 +383,7 @@ TEST_F(SltkAtomArrangeTest, GridDriverAtomPackOnlyPathWorksWithoutLegacyBuild)
     expect_grid_driver_atom_pack_only_path(*ucell, 0.5, false);
 }
 
-TEST(SltkAtomArrangeSyntheticTest, AtomPackOnlyHalf14MatchesFull27ReferenceForSyntheticCells)
+TEST(SltkAtomArrangeSyntheticTest, ExplicitHalf14MatchesFull27ReferenceForSyntheticCells)
 {
     SetGlobalV();
     for (SyntheticNeighborCase test_case: make_synthetic_neighbor_cases())

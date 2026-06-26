@@ -137,6 +137,17 @@ void validate_neighbor_search_input(const GridStorage& storage, const double rad
     }
 }
 
+int neighbor_search_layer(const GridStorage& storage, const double radius)
+{
+    const double layer = std::ceil(radius / storage.box_edge_length);
+    if (!std::isfinite(layer)
+        || layer > static_cast<double>((std::numeric_limits<int>::max() - 1) / 2))
+    {
+        throw std::overflow_error("Neighbor search layer exceeds the supported range.");
+    }
+    return std::max(1, static_cast<int>(layer));
+}
+
 NeighborPair make_neighbor_pair(const AtomPack& pack, const int center, const int candidate)
 {
     // Keep explicit assignment for C++11 CI builds: NeighborPair has default
@@ -683,7 +694,7 @@ std::vector<NeighborPair> build_neighbor_pairs_27(const AtomPack& pack,
 
     std::vector<NeighborPair> pairs;
     const double radius2 = radius * radius;
-    const int search_layer = std::max(1, static_cast<int>(std::ceil(radius / storage.box_edge_length)));
+    const int search_layer = neighbor_search_layer(storage, radius);
 
     for (int center = 0; center < pack.size(); ++center)
     {
@@ -740,71 +751,169 @@ std::vector<NeighborPair> build_neighbor_pairs_14(const AtomPack& pack,
 {
     validate_neighbor_search_input(storage, radius);
 
-    std::vector<NeighborPair> pairs;
     const double radius2 = radius * radius;
-    const int search_layer = std::max(1, static_cast<int>(std::ceil(radius / storage.box_edge_length)));
+    const int search_layer = neighbor_search_layer(storage, radius);
+
+    // The half-domain stencil is independent of the current box. Build it once
+    // instead of re-evaluating the lexicographic direction test for every box.
+    std::vector<std::array<int, 3>> half_offsets;
+    const std::size_t stencil_width = static_cast<std::size_t>(2 * search_layer + 1);
+    if (stencil_width > std::numeric_limits<std::size_t>::max() / stencil_width
+        || stencil_width * stencil_width > std::numeric_limits<std::size_t>::max() / stencil_width)
+    {
+        throw std::overflow_error("Half14 stencil size exceeds the supported range.");
+    }
+    const std::size_t stencil_size = stencil_width * stencil_width * stencil_width;
+    half_offsets.reserve(stencil_size / 2 + 1);
+    for (int dbx = -search_layer; dbx <= search_layer; ++dbx)
+    {
+        for (int dby = -search_layer; dby <= search_layer; ++dby)
+        {
+            for (int dbz = -search_layer; dbz <= search_layer; ++dbz)
+            {
+                if (is_half_domain_offset(dbx, dby, dbz))
+                {
+                    half_offsets.push_back(std::array<int, 3>{{dbx, dby, dbz}});
+                }
+            }
+        }
+    }
+
+    // Periodic images and MPI ghosts are candidates only. Map origin-cell
+    // centers to compact slots so box pairs containing candidates only can be
+    // skipped before any distance calculation.
+    std::vector<int> center_slot(pack.size(), -1);
+    std::vector<int> center_indices;
+    center_indices.reserve(pack.size());
+    std::vector<int> box_center_count(storage.box_size(), 0);
+    for (int atom = 0; atom < pack.size(); ++atom)
+    {
+        if (!is_center_atom(pack, atom))
+        {
+            continue;
+        }
+        center_indices.push_back(atom);
+        ++box_center_count[storage.get_box_id_from_coord(pack.x[atom], pack.y[atom], pack.z[atom])];
+    }
+    std::sort(center_indices.begin(), center_indices.end(), [&pack](const int lhs, const int rhs) {
+        if (pack.type[lhs] != pack.type[rhs])
+        {
+            return pack.type[lhs] < pack.type[rhs];
+        }
+        if (pack.natom[lhs] != pack.natom[rhs])
+        {
+            return pack.natom[lhs] < pack.natom[rhs];
+        }
+        return lhs < rhs;
+    });
+    for (int slot = 0; slot < static_cast<int>(center_indices.size()); ++slot)
+    {
+        center_slot[center_indices[slot]] = slot;
+    }
+
+    // Accumulate by center. Local sort/unique removes duplicate periodic or
+    // ghost representations without paying for one global sort over all pairs.
+    std::vector<std::vector<NeighborPair>> pairs_by_center(center_indices.size());
+    const double grid_volume = static_cast<double>(storage.box_size())
+                               * storage.box_edge_length * storage.box_edge_length
+                               * storage.box_edge_length;
+    const double candidate_density = grid_volume > 0.0 ? pack.size() / grid_volume : 0.0;
+    const double sphere_volume = 4.0 / 3.0 * std::acos(-1.0) * radius * radius * radius;
+    const double estimated_neighbors = std::ceil(candidate_density * sphere_volume * 1.5);
+    const int center_reserve = static_cast<int>(
+        std::max(4.0, std::min(estimated_neighbors, 1024.0)));
+    for (std::vector<NeighborPair>& center_pairs: pairs_by_center)
+    {
+        center_pairs.reserve(center_reserve);
+    }
+    const auto append_pair = [&](const int center, const int candidate) {
+        const int slot = center_slot[center];
+        if (slot >= 0)
+        {
+            pairs_by_center[slot].push_back(make_neighbor_pair(pack, center, candidate));
+        }
+    };
 
     for (int base_box_id = 0; base_box_id < storage.box_size(); ++base_box_id)
     {
+        if (storage.box_count[base_box_id] == 0)
+        {
+            continue;
+        }
+
         int center_bx = 0;
         int center_by = 0;
         int center_bz = 0;
         box_id_to_indices(storage, base_box_id, center_bx, center_by, center_bz);
 
-        for (int dbx = -search_layer; dbx <= search_layer; ++dbx)
+        for (const std::array<int, 3>& offset: half_offsets)
         {
-            for (int dby = -search_layer; dby <= search_layer; ++dby)
+            const int bx = center_bx + offset[0];
+            const int by = center_by + offset[1];
+            const int bz = center_bz + offset[2];
+            if (bx < 0 || bx >= storage.box_nx || by < 0 || by >= storage.box_ny || bz < 0
+                || bz >= storage.box_nz)
             {
-                for (int dbz = -search_layer; dbz <= search_layer; ++dbz)
+                continue;
+            }
+
+            const int adj_box_id = storage.get_box_id(bx, by, bz);
+            if (storage.box_count[adj_box_id] == 0
+                || (box_center_count[base_box_id] == 0 && box_center_count[adj_box_id] == 0))
+            {
+                continue;
+            }
+
+            const int begin = storage.box_offset[base_box_id];
+            const int end = begin + storage.box_count[base_box_id];
+            const int adj_begin = storage.box_offset[adj_box_id];
+            const int adj_end = adj_begin + storage.box_count[adj_box_id];
+            for (int atom_offset = begin; atom_offset < end; ++atom_offset)
+            {
+                const int atom_a = storage.atoms_in_box[atom_offset];
+                const bool atom_a_is_center = center_slot[atom_a] >= 0;
+                const int candidate_begin = adj_box_id == base_box_id ? atom_offset + 1 : adj_begin;
+                for (int adj_offset = candidate_begin; adj_offset < adj_end; ++adj_offset)
                 {
-                    if (!is_half_domain_offset(dbx, dby, dbz))
+                    const int atom_b = storage.atoms_in_box[adj_offset];
+                    const bool atom_b_is_center = center_slot[atom_b] >= 0;
+                    if ((!atom_a_is_center && !atom_b_is_center)
+                        || !is_within_radius(pack, atom_a, atom_b, radius2))
                     {
                         continue;
                     }
 
-                    const int bx = center_bx + dbx;
-                    const int by = center_by + dby;
-                    const int bz = center_bz + dbz;
-                    if (bx < 0 || bx >= storage.box_nx || by < 0 || by >= storage.box_ny || bz < 0
-                        || bz >= storage.box_nz)
+                    if (atom_a_is_center)
                     {
-                        continue;
+                        append_pair(atom_a, atom_b);
                     }
-
-                    const int adj_box_id = storage.get_box_id(bx, by, bz);
-                    const int begin = storage.box_offset[base_box_id];
-                    const int end = begin + storage.box_count[base_box_id];
-                    const int adj_begin = storage.box_offset[adj_box_id];
-                    const int adj_end = adj_begin + storage.box_count[adj_box_id];
-                    for (int offset = begin; offset < end; ++offset)
+                    if (atom_b_is_center)
                     {
-                        const int atom_a = storage.atoms_in_box[offset];
-                        const int candidate_begin = adj_box_id == base_box_id ? offset + 1 : adj_begin;
-                        for (int adj_offset = candidate_begin; adj_offset < adj_end; ++adj_offset)
-                        {
-                            const int atom_b = storage.atoms_in_box[adj_offset];
-                            if (!is_within_radius(pack, atom_a, atom_b, radius2))
-                            {
-                                continue;
-                            }
-
-                            if (is_center_atom(pack, atom_a))
-                            {
-                                pairs.push_back(make_neighbor_pair(pack, atom_a, atom_b));
-                            }
-                            if (is_center_atom(pack, atom_b))
-                            {
-                                pairs.push_back(make_neighbor_pair(pack, atom_b, atom_a));
-                            }
-                        }
+                        append_pair(atom_b, atom_a);
                     }
                 }
             }
         }
     }
 
-    std::sort(pairs.begin(), pairs.end());
-    pairs.erase(std::unique(pairs.begin(), pairs.end()), pairs.end());
+    std::size_t pair_count = 0;
+    for (std::vector<NeighborPair>& center_pairs: pairs_by_center)
+    {
+        std::sort(center_pairs.begin(), center_pairs.end());
+        center_pairs.erase(std::unique(center_pairs.begin(), center_pairs.end()), center_pairs.end());
+        if (center_pairs.size() > std::numeric_limits<std::size_t>::max() - pair_count)
+        {
+            throw std::overflow_error("Half14 neighbor-pair count exceeds the supported range.");
+        }
+        pair_count += center_pairs.size();
+    }
+
+    std::vector<NeighborPair> pairs;
+    pairs.reserve(pair_count);
+    for (const std::vector<NeighborPair>& center_pairs: pairs_by_center)
+    {
+        pairs.insert(pairs.end(), center_pairs.begin(), center_pairs.end());
+    }
     return pairs;
 }
 
