@@ -141,6 +141,20 @@ Do not add a new container recipe, toolchain path, or agent-specific skill for
 calculation tasks as part of governance-only work. If a future PR needs one, it
 must explain why the existing Docker/toolchain paths are insufficient.
 
+## Local Runtime And MPI Testing
+
+Use `OMP_NUM_THREADS=1` as the default for ABACUS runtime, integration, and MPI
+tests unless the test explicitly requires another thread count. Agent sandboxes
+can interfere with process visibility, socket creation, and MPI launch behavior;
+when those details affect a result, rerun the command outside the restricted
+sandbox before diagnosing an ABACUS failure.
+
+OpenMPI `opal_ifinit: socket() failed errno=1` warnings from sandboxed
+MPI-linked builds or runs should be treated as sandbox artifacts first, not as
+project regressions. Do not relax existing integration tests or reference files
+just to make a failure pass. Update references only when the intended behavior
+changed and the PR explains why the new reference is correct.
+
 ## CLI Verification
 
 When a usable ABACUS executable is present, INPUT and command-line changes

@@ -58,6 +58,19 @@ rules. Read the complete governance document before making or reviewing changes:
   compiler setup, or calculation-task skill unless the PR explicitly requires
   and justifies it.
 
+## Local Runtime Testing
+
+- Set `OMP_NUM_THREADS=1` for ABACUS runtime, integration, and MPI tests unless
+  a test explicitly requires another value.
+- Run MPI/runtime tests outside restricted sandboxes when process visibility,
+  sockets, or MPI launch behavior matters.
+- Treat OpenMPI `opal_ifinit: socket() failed errno=1` warnings from sandboxed
+  MPI-linked builds or runs as expected sandbox artifacts; rerun outside the
+  sandbox before treating them as ABACUS failures.
+- Do not relax existing tests or references merely to make a failure pass.
+  Update references only when the intended behavior changed and the PR explains
+  why.
+
 ## Review And Exception Flow
 
 - Mechanical blockers are enforced by hook and CI only for new files, changed
