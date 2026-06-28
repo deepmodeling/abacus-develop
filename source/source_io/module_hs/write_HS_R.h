@@ -24,7 +24,8 @@ void output_dHR(const int& istep,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
                 const bool& binary = false,
-                const double& sparse_threshold = 1e-10);
+                const double& sparse_threshold = 1e-10,
+                const int precision = 16);
 
 void output_dSR(const int& istep,
                 const UnitCell& ucell,
@@ -35,7 +36,8 @@ void output_dSR(const int& istep,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
                 const bool& binary = false,
-                const double& sparse_thr = 1e-10);
+                const double& sparse_thr = 1e-10,
+                const int precision = 16);
 
 void output_TR(const int istep,
                const UnitCell& ucell,
@@ -46,7 +48,8 @@ void output_TR(const int istep,
                const LCAO_Orbitals& orb,
                const std::string& TR_filename = "trs1_nao.csr",
                const bool& binary = false,
-               const double& sparse_threshold = 1e-10);
+               const double& sparse_threshold = 1e-10,
+               const int precision = 16);
 
 template <typename TK>
 void output_SR(Parallel_Orbitals& pv,
@@ -54,7 +57,8 @@ void output_SR(Parallel_Orbitals& pv,
                hamilt::Hamilt<TK>* p_ham,
                const std::string& SR_filename = "srs1_nao.csr",
                const bool& binary = false,
-               const double& sparse_threshold = 1e-10);
+               const double& sparse_threshold = 1e-10,
+               const int precision = 16);
 
 /// Generate filename for HR/SR CSR output.
 std::string hsr_gen_fname(const std::string& prefix,

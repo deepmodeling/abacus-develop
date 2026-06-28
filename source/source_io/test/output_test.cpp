@@ -33,7 +33,7 @@ T* get_simple_array(int num)
 	return rand_array;
 }
 
-#include "../module_output/output.h"
+#include "../../source_base/output.h"
 
 class OutputTest : public testing::Test
 {

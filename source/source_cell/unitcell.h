@@ -3,7 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
 #include "source_cell/module_neighlist/atom_provider.h"
 

@@ -5,10 +5,10 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#include "../../source_base/realarray.h"
-#include "../../source_base/matrix3.h"
-#include "../../source_base/complexmatrix.h"
-#include "../../source_base/matrix.h"
+#include "realarray.h"
+#include "matrix3.h"
+#include "complexmatrix.h"
+#include "matrix.h"
 class output
 {
 public:

@@ -12,14 +12,6 @@
 
 namespace ModuleIO
 {
-template <typename TR>
-std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<TR>& hR)
-{
-    std::set<Abfs::Vector3_Order<int>> all_R_coor;
-
-    return all_R_coor;
-}
-
 template <typename T>
 std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>> cal_HR_sparse(const hamilt::HContainer<T>& hR,
                                                                                         const double sparse_thr)

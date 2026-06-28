@@ -135,7 +135,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep);
+        r_matrix.out_rR(ucell, gd, istep, PARAM.inp.out_mat_r[1]);
     }
 
     if (PARAM.inp.out_mat_ds[0])
@@ -149,7 +149,10 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              gd, // mohan add 2024-04-06
                              two_center_bundle_,
                              orb_,
-                             kv);
+                             kv,
+                             false,
+                             1e-10,
+                             PARAM.inp.out_mat_ds[1]);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

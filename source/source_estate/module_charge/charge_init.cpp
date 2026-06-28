@@ -11,7 +11,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_chgpot/rhog_io.h"
