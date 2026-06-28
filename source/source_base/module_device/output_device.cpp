@@ -7,6 +7,7 @@
 #include <base/macros/macros.h>
 #include <cstring>
 #include <iostream>
+#include <numeric>
 #include <set>
 #ifdef __MPI
 #include "mpi.h"

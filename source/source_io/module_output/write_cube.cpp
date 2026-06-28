@@ -2,7 +2,6 @@
 #include "source_base/parallel_comm.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <vector>
 
@@ -22,6 +21,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                                    const UnitCell* const ucell,
                                    const int precision,
                                    const int out_fermi,
+                                   const bool two_fermi,
                                    const bool reduce_all_pool)
 {
     ModuleBase::TITLE("ModuleIO", "write_vdata_palgrid");
@@ -73,7 +73,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
         ss << nspin << " # number of spin directions ";
         if (out_fermi == 1)
         {
-            if (PARAM.globalv.two_fermi)
+            if (two_fermi)
             {
                 if (is == 0)
                 {

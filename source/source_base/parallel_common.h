@@ -1,14 +1,16 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_PARALLEL_COMMON_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_PARALLEL_COMMON_H
+#ifndef PARALLEL_COMMON_H
+#define PARALLEL_COMMON_H
 
 #ifdef __MPI
 #include "mpi.h"
 #endif
+
 #include <complex>
 #include <string>
 
 namespace Parallel_Common
 {
+
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);

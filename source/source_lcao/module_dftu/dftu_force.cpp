@@ -9,7 +9,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_estate/module_charge/charge.h"
 
 #include <cmath>
@@ -252,7 +252,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = orbital_corr[it];
+            const int LC = get_orbital_corr(it);
 
             if (LC == -1)
                 continue;
@@ -262,7 +262,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != get_orbital_corr(it))
                         continue;
                     const int N = ucell.atoms[it].l_nchi[l];
 

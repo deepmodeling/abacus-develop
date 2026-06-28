@@ -80,7 +80,18 @@ void ReadInput::item_output()
             - nspin = 1: `tau.cube`;
             - nspin = 2: `taus1.cube`, and `taus2.cube`;
             - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
-    - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
+    - 2: On top of 1, also output the initial charge density files. The files are named as:
+        - out_freq_ion = 0:
+            - nspin = 1: `chg_ini.cube`;
+            - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+            - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+            - output at every step (overwrite same file)
+        - out_freq_ion > 0:
+            - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+            - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+            - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+            - output every out_freq_ion steps
+        Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
 The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -118,11 +129,19 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
  * nspin = 1: pots1.cube;
  * nspin = 2: pots1.cube and pots2.cube;
  * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-* 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+* 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
 * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
- * nspin = 1: pots1_ini.cube;
- * nspin = 2: pots1_ini.cube and pots2_ini.cube;
- * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+ * out_freq_ion = 0:
+   * nspin = 1: `pot_ini.cube`;
+   * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+   * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+   * output at every step (overwrite same file)
+ * out_freq_ion > 0:
+   * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+   * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+   * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+   * output every out_freq_ion steps
+ Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -553,7 +572,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output r(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
+        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False 8";
         item.unit = "Bohr";
@@ -591,7 +610,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output T(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
@@ -618,8 +637,8 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_dh");
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
@@ -653,7 +672,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
+        item.description = "Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.";
         item.default_value = "False 8";
         item.unit = "Ry/Bohr";
@@ -966,12 +985,14 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
 * nspin = 1:
-    * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+    * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
 * nspin = 2:
-    * elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-    * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+    * elfs1.cube, elfs2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+    * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
 * nspin = 4 (noncollinear):
-    * elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+    * elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+
+When `out_freq_ion > 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
 
 The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 
@@ -991,9 +1012,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft" && para.input.esolver_type != "tddft")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only available for ksdft, ofdft and tddft");
             }
         };
         sync_intvec(input.out_elf, 2, 0);

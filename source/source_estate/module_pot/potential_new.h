@@ -175,6 +175,10 @@ class Potential : public PotBase
     {
         return this->rho_basis_;
     }
+    const UnitCell* get_ucell() const
+    {
+        return this->ucell_;
+    }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 

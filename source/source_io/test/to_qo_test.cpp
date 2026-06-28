@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "source_io/module_qo/to_qo.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
@@ -23,7 +23,6 @@ Magnetism::~Magnetism() {}
 InfoNonlocal::InfoNonlocal() {}
 InfoNonlocal::~InfoNonlocal() {}
 #endif
-void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m) {}
 
 void define_fcc_cell(UnitCell& ucell)
 {    

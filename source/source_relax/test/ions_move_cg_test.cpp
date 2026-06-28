@@ -7,20 +7,10 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
 #undef private
+
 /************************************************
  *  unit tests of class Ions_Move_CG
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_CG::allocate()
- *   - Ions_Move_CG::start()
- *   - Ions_Move_CG::setup_cg_grad()
- *   - Ions_Move_CG::setup_move()
- *   - Ions_Move_CG::Brent()
- *   - Ions_Move_CG::f_cal()
- *   - Ions_Move_CG::third_order()
- */
 
 class IonsMoveCGTest : public ::testing::Test
 {
@@ -29,8 +19,8 @@ class IonsMoveCGTest : public ::testing::Test
     {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
-        Ions_Move_Basic::update_iter = 5;
-        im_cg.allocate();
+        update_iter = 5;
+        im_cg.allocate(Ions_Move_Basic::dim);
         PARAM.input.force_thr = 0.001;
 
         // ban the 'cout' 
@@ -62,33 +52,34 @@ class IonsMoveCGTest : public ::testing::Test
         ucell.lat.GT.Zero();
     }
     Ions_Move_CG im_cg;
+    int update_iter;
 };
 
 // Test whether the allocate() function can correctly allocate memory space
 TEST_F(IonsMoveCGTest, TestAllocate)
 {
-    Ions_Move_Basic::dim = 4;
-    im_cg.allocate();
+    const int dim = 4;
+    im_cg.allocate(dim);
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, im_cg.pos0);
-    EXPECT_NE(nullptr, im_cg.grad0);
-    EXPECT_NE(nullptr, im_cg.cg_grad0);
-    EXPECT_NE(nullptr, im_cg.move0);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(im_cg.pos0.size(), 4U);
+    EXPECT_EQ(im_cg.grad0.size(), 4U);
+    EXPECT_EQ(im_cg.cg_grad0.size(), 4U);
+    EXPECT_EQ(im_cg.move0.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
 TEST_F(IonsMoveCGTest, TestAllocateWithZeroDimension)
 {
-    Ions_Move_Basic::dim = 0;
-    ASSERT_DEATH(im_cg.allocate(), "");
+    const int dim = 0;
+    ASSERT_DEATH(im_cg.allocate(dim), "");
 }
 
 // Check that the arrays are correctly initialized to 0
 TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
 {
-    Ions_Move_Basic::dim = 3;
-    im_cg.allocate();
+    const int dim = 3;
+    im_cg.allocate(dim);
 
     // Check that the arrays are correctly initialized to 0
     EXPECT_DOUBLE_EQ(0.0, im_cg.pos0[0]);
@@ -101,17 +92,18 @@ TEST_F(IonsMoveCGTest, TestAllocateAndInitialize)
 TEST_F(IonsMoveCGTest, TestStartConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = true;
+    const int istep = 1;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg", "1"};
 
     // call function
-    GlobalV::ofs_running.open("TestStartConverged.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartConverged.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
@@ -127,8 +119,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
 
@@ -136,20 +127,20 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 TEST_F(IonsMoveCGTest, TestStartSd)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
-    Ions_Move_Basic::relax_method[0] = "cg_bfgs";
+    const int istep = 1;
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
     Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
 
     // call function
-    GlobalV::ofs_running.open("TestStartSd.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartSd.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -160,9 +151,8 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     std::remove("TestStartSd.log"); // mohan
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 1.0);
@@ -172,23 +162,29 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
+    const int istep = 1;
+    Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.1;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
-    Ions_Move_Basic::istep = 2;
+    std::ofstream ofs1("TestStartTrialGoto_temp1.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    ofs1.close();
+    std::remove("TestStartTrialGoto_temp1.log");
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     force(0, 0) = 0.001;
-    GlobalV::ofs_running.open("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    relax_method = {"cg_bfgs", "1"};
+    std::ofstream ofs("TestStartTrialGoto.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -199,11 +195,10 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     std::remove("TestStartTrialGoto.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 10.0);
 }
 
@@ -211,22 +206,26 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 TEST_F(IonsMoveCGTest, TestStartTrial)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
+    const int istep = 1;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
-    Ions_Move_Basic::istep = 2;
+    std::ofstream ofs1("TestStartTrial_temp1.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    ofs1.close();
+    std::remove("TestStartTrial_temp1.log");
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
-    GlobalV::ofs_running.open("TestStartTrial.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("TestStartTrial.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -237,11 +236,10 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     std::remove("TestStartTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
 }
 
@@ -249,24 +247,33 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
+    const int istep = 1;
+    Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.1;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
-    Ions_Move_Basic::istep = 2;
-    im_cg.start(ucell, force, etot);
+    std::ofstream ofs1("TestStartNoTrialGotoCase1_temp1.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    ofs1.close();
+    std::remove("TestStartNoTrialGotoCase1_temp1.log");
+    int istep_2 = 2;
+    std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    ofs2.close();
+    std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
-    GlobalV::ofs_running.open("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    relax_method = {"cg_bfgs", "1"};
+    std::ofstream ofs("TestStartNoTrialGotoCase1.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -277,11 +284,10 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     std::remove("TestStartNoTrialGotoCase1.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 490.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 490.0);
 }
 
@@ -289,23 +295,34 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
+    const int istep = 1;
+    Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    Ions_Move_Basic::best_xxx = 1.0;
+    Ions_Move_Basic::relax_bfgs_init = 1.0;
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
-    Ions_Move_Basic::istep = 2;
+    std::ofstream ofs1("TestStartNoTrialGotoCase2_temp1.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    ofs1.close();
+    std::remove("TestStartNoTrialGotoCase2_temp1.log");
+    int istep_2 = 2;
     im_cg.move0[0] = 10.0;
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.open("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    ofs2.close();
+    std::remove("TestStartNoTrialGotoCase2_temp2.log");
+    relax_method = {"cg_bfgs", "1"};
+    std::ofstream ofs("TestStartNoTrialGotoCase2.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -316,11 +333,10 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     std::remove("TestStartNoTrialGotoCase2.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 70.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
 }
 
@@ -328,24 +344,34 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 TEST_F(IonsMoveCGTest, TestStartNoTrial)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = false;
+    const int istep = 1;
+    Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
+    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    Ions_Move_Basic::best_xxx = 1.0;
+    Ions_Move_Basic::relax_bfgs_init = 1.0;
 
     // call function
     im_cg.move0[0] = 1.0;
-    im_cg.start(ucell, force, etot);
-    Ions_Move_Basic::istep = 2;
+    std::ofstream ofs1("TestStartNoTrial_temp1.log");
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    ofs1.close();
+    std::remove("TestStartNoTrial_temp1.log");
+    int istep_2 = 2;
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.open("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs2("TestStartNoTrial_temp2.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    ofs2.close();
+    std::remove("TestStartNoTrial_temp2.log");
+    std::ofstream ofs("TestStartNoTrial.log");
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
@@ -356,11 +382,10 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     std::remove("TestStartNoTrial.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
-    EXPECT_EQ(Ions_Move_Basic::relax_method[0], "bfgs");
+    EXPECT_EQ(update_iter, 5);
+    EXPECT_EQ(relax_method[0], "bfgs");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
-    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 1.0);
     EXPECT_NEAR(Ions_Move_Basic::relax_bfgs_init, 1.2345679012345678, 1e-12);
 }
 
@@ -374,7 +399,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000)
     int ncggrad = 50000; // multiple of 10000
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
     EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
@@ -394,7 +419,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
     int ncggrad = 100;
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], 1.25);
     EXPECT_DOUBLE_EQ(cggrad[1], 0.0);
@@ -414,7 +439,7 @@ TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
     int ncggrad = 100;
     int flag = 0;
 
-    im_cg.setup_cg_grad(grad, grad0, cggrad, cggrad0, ncggrad, flag);
+    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
 
     EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
     EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
@@ -571,9 +596,9 @@ TEST_F(IonsMoveCGTest, Fcal)
     Ions_Move_Basic::dim = 9;
     double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double g1[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double f_value;
+    double f_value = 0.0;
 
-    im_cg.f_cal(g0, g1, Ions_Move_Basic::dim, f_value);
+    im_cg.f_cal(Ions_Move_Basic::dim, g0, g1, f_value);
 
     EXPECT_DOUBLE_EQ(f_value, 3.0);
 }
@@ -584,9 +609,9 @@ TEST_F(IonsMoveCGTest, SetupMove)
     Ions_Move_Basic::dim = 9;
     double trust_radius = 1.0;
     double cg_gradn[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double move[9];
+    double move[9] = {0.0};
 
-    im_cg.setup_move(move, cg_gradn, trust_radius);
+    im_cg.setup_move(Ions_Move_Basic::dim, move, cg_gradn, trust_radius);
 
     EXPECT_DOUBLE_EQ(move[0], -1.0);
     EXPECT_DOUBLE_EQ(move[1], -1.0);

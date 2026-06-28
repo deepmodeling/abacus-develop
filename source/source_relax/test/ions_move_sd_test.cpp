@@ -7,16 +7,10 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
 #undef private
+
 /************************************************
  *  unit tests of class Ions_Move_SD
  ***********************************************/
-
-/**
- * - Tested Functions:
- *   - Ions_Move_SD::allocate()
- *   - Ions_Move_SD::start()
- *   - Ions_Move_SD::cal_tradius_sd()
- */
 
 class IonsMoveSDTest : public ::testing::Test
 {
@@ -25,7 +19,7 @@ class IonsMoveSDTest : public ::testing::Test
     {
         // Initialize variables before each test
         Ions_Move_Basic::dim = 6;
-        Ions_Move_Basic::update_iter = 5;
+        update_iter = 5;
         im_sd.allocate();
         PARAM.input.force_thr = 0.001;
     }
@@ -36,6 +30,7 @@ class IonsMoveSDTest : public ::testing::Test
     }
 
     Ions_Move_SD im_sd;
+    int update_iter;
 };
 
 // Test whether the allocate() function can correctly allocate memory space
@@ -44,9 +39,9 @@ TEST_F(IonsMoveSDTest, TestAllocate)
     Ions_Move_Basic::dim = 4;
     im_sd.allocate();
 
-    // Check if allocated arrays are not empty
-    EXPECT_NE(nullptr, im_sd.grad_saved);
-    EXPECT_NE(nullptr, im_sd.pos_saved);
+    // Check if allocated vectors are not empty
+    EXPECT_EQ(im_sd.grad_saved.size(), 4U);
+    EXPECT_EQ(im_sd.pos_saved.size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -73,32 +68,31 @@ TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
 TEST_F(IonsMoveSDTest, TestStartConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = true;
+    const int istep = 1;
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
 
     // call function
-    GlobalV::ofs_running.open("log");
-    im_sd.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_sd_start_converged.log");
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
                                   " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_sd_start_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_sd_start_converged.log");
 
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, true);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
+    EXPECT_EQ(update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], 0.0);
@@ -113,12 +107,12 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 TEST_F(IonsMoveSDTest, TestStartNotConverged)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
-    Ions_Move_Basic::converged = true;
+    const int istep = 1;
     UnitCell ucell;
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
     double etot = 0.0;
+    std::vector<double> etot_info(2, 0.0);
     for (int it = 0; it < ucell.ntype; it++)
     {
         Atom* atom = &ucell.atoms[it];
@@ -133,21 +127,20 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     }
 
     // call function
-    GlobalV::ofs_running.open("log");
-    im_sd.start(ucell, force, etot);
-    GlobalV::ofs_running.close();
+    std::ofstream ofs("test_sd_start_not_converged.log");
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
+    ofs.close();
 
     // Check output
     std::string expected_output = "\n Largest force is 25.7111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
-    std::ifstream ifs("log");
+    std::ifstream ifs("test_sd_start_not_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
-    std::remove("log");
+    std::remove("test_sd_start_not_converged.log");
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
-    EXPECT_EQ(Ions_Move_Basic::converged, false);
-    EXPECT_EQ(Ions_Move_Basic::update_iter, 6);
+    EXPECT_EQ(update_iter, 6);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 1.0);
     EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], -1.0);
@@ -168,12 +161,13 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
-    Ions_Move_Basic::istep = 1;
+    const int istep = 1;
     PARAM.input.out_level = "ie";
+    std::vector<double> etot_info(2, 0.0);
 
     // call function
     testing::internal::CaptureStdout();
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep, etot_info);
     std::string std_outout = testing::internal::GetCapturedStdout();
 
     // Check the results
@@ -186,12 +180,12 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 {
     // setup data
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::ediff = -1.0;
+    const int istep = 2;
+    std::vector<double> etot_info = {0.0, 1.0};
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep, etot_info);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -201,12 +195,12 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
 TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 {
     // setup data
-    Ions_Move_Basic::istep = 2;
-    Ions_Move_Basic::ediff = 1.0;
+    const int istep = 2;
+    std::vector<double> etot_info = {1.0, 0.0};
     PARAM.input.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd();
+    im_sd.cal_tradius_sd(istep, etot_info);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -216,11 +210,12 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
 TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 {
     // setup data
-    Ions_Move_Basic::istep = 0;
+    const int istep = 0;
+    std::vector<double> etot_info(2, 0.0);
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(im_sd.cal_tradius_sd(istep, etot_info), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

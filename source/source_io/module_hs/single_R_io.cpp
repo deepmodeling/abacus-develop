@@ -1,39 +1,51 @@
 #include "single_R_io.h"
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 
-inline void write_data(std::ofstream& ofs, const double& data)
+#include <complex>
+#include <cstdio>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+inline void write_data(std::ofstream& ofs, const double& data, const int precision)
 {
-    ofs << " " << std::fixed << std::scientific << std::setprecision(16) << data;
+    ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << data;
 }
-inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
+inline void write_data(std::ofstream& ofs, const std::complex<double>& data, const int precision)
 {
-    ofs << " (" << data.real() << "," << data.imag() << ")";
+    ofs << " (" << std::fixed << std::scientific << std::setprecision(precision)
+        << data.real() << "," << data.imag() << ")";
 }
 
 template<typename T>
 void ModuleIO::output_single_R(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, T>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
+    const SparseRBlock<T>& XR,
     const Parallel_Orbitals& pv,
-    const bool& reduce)
+    const SparseWriteOptions& options)
 {
-    T* line = nullptr;
+    const int nlocal = pv.get_global_row_size();
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                 "Parallel_Orbitals global row size must be positive.");
+    }
+
     std::vector<long long> indptr;
-    indptr.reserve(PARAM.globalv.nlocal + 1);
+    indptr.reserve(nlocal + 1);
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << PARAM.globalv.global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
+    tem1 << options.temp_dir << std::to_string(GlobalV::DRANK)
+         << "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (!reduce || GlobalV::DRANK == 0)
+    if (!options.reduce || GlobalV::DRANK == 0)
     {
-        if (binary)
+        if (options.binary)
         {
             ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
         }
@@ -41,45 +53,56 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         {
             ofs_tem1.open(tem1.str().c_str());
         }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                     "Cannot open temporary sparse index file: " + tem1.str());
+        }
     }
 
-    line = new T[PARAM.globalv.nlocal];
-    for(int row = 0; row < PARAM.globalv.nlocal; ++row)
+    std::vector<T> line(nlocal);
+    for(int row = 0; row < nlocal; ++row)
     {
-        ModuleBase::GlobalFunc::ZEROS(line, PARAM.globalv.nlocal);
+        ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
 
-        if (!reduce || pv.global2local_row(row) >= 0)
+        if (!options.reduce || pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
             {
                 for (auto &value : iter->second)
                 {
+                    if (value.first >= static_cast<size_t>(nlocal))
+                    {
+                        std::cerr << "Sparse column index out of range." << std::endl;
+                        ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                                 "Sparse column index out of range.");
+                    }
                     line[value.first] = value.second;
                 }
             }
         }
 
-		if (reduce) 
-		{
-			Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
-		}
+        if (options.reduce)
+        {
+            Parallel_Reduce::reduce_all(line.data(), nlocal);
+        }
 
-        if (!reduce || GlobalV::DRANK == 0)
+        if (!options.reduce || GlobalV::DRANK == 0)
         {
             long long nonzeros_count = 0;
-            for (int col = 0; col < PARAM.globalv.nlocal; ++col)
+            for (int col = 0; col < nlocal; ++col)
             {
-                if (std::abs(line[col]) > sparse_threshold)
+                if (std::abs(line[col]) > options.threshold)
                 {
-                    if (binary)
+                    if (options.binary)
                     {
                         ofs.write(reinterpret_cast<char*>(&line[col]), sizeof(T));
                         ofs_tem1.write(reinterpret_cast<char *>(&col), sizeof(int));
                     }
                     else
                     {
-                        write_data(ofs, line[col]);
+                        write_data(ofs, line[col], options.precision);
                         ofs_tem1 << " " << col;
                     }
 
@@ -93,14 +116,17 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         }
     }
 
-    delete[] line;
-
-    if (!reduce || GlobalV::DRANK == 0)
+    if (!options.reduce || GlobalV::DRANK == 0)
     {
-        if (binary)
+        if (options.binary)
         {
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
+            if (!ifs_tem1.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                         "Cannot read temporary sparse index file: " + tem1.str());
+            }
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
             for (auto &i : indptr)
@@ -114,6 +140,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             ofs_tem1 << std::endl;
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str());
+            if (!ifs_tem1.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                         "Cannot read temporary sparse index file: " + tem1.str());
+            }
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
             for (auto &i : indptr)
@@ -128,15 +159,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 }
 
 template void ModuleIO::output_single_R<double>(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, double>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
+    const SparseRBlock<double>& XR,
     const Parallel_Orbitals& pv,
-    const bool& reduce);
+    const SparseWriteOptions& options);
 
 template void ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
-    const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
-    const double& sparse_threshold,
-    const bool& binary,
+    const SparseRBlock<std::complex<double>>& XR,
     const Parallel_Orbitals& pv,
-    const bool& reduce);
+    const SparseWriteOptions& options);

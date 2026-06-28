@@ -191,7 +191,11 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                 GridD->Find_atom(ucell, atom1->tau[I1], T1, I1, &adjs);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 // Record_adj.for_2d() may not called in some case
-                int nnr = pv.nlocstart ? pv.nlocstart[iat1] : 0;
+                int nnr = 0;
+                if (!pv.nlocstart.empty())
+                {
+                    nnr = pv.nlocstart[iat1];
+                }
                 tau1 = atom1->tau[I1];
 
                 // psi2
