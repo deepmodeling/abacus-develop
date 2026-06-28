@@ -1,0 +1,9 @@
+INPUT_PARAMETERS
+suffix         CaOMgO
+calculation    cell-relax
+ecutwfc        100
+basis_type     lcao
+kspacing       0.5
+scf_nmax       100
+pseudo_dir     /home/chenshengjun/ABACUS-pot/apns-pseudopotentials-v1
+orbital_dir    /home/chenshengjun/ABACUS-pot/apns-orbitals-efficiency-v1

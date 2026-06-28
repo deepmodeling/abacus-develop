@@ -1,0 +1,154 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.4
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: unknown
+
+ Fri Jun 26 12:44:09 2026
+ MAKE THE DIR         : OUT.CaOMgO/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Silver 4116 CPU @ 2.10GHz (x2)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 18 * 18 * 18
+ DONE(0.197412   SEC) : SYMMETRY
+ DONE(0.197529   SEC) : SETUP UNITCELL
+ DONE(0.338119   SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Cell relaxation calculations
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 1       4               24          1             24            
+ ----------------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ----------------------------------------------------------------
+ TOTAL NBASE 18
+ ELEMENT ORBITALS        NBASE       NATOM       
+ Mg      2s1p-9au        5           1           
+ O       2s2p1d-6au      13          1           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.341056   SEC) : INIT PLANEWAVE
+ START CHARGE         : ATOMIC
+ DONE(0.578163   SEC) : CHARGE
+ DONE(0.584501   SEC) : POTENTIALS
+
+ ================================================================
+ RELAX STEP: 1 (CELL_CHANGE# 1 IONS_CHANGE# 1)
+ ================================================================
+ DONE(0.637705   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -4.77784726e+02   0.00000000e+00   2.3262e-01   0.55
+ GE2     -4.79454774e+02  -1.67004829e+00   1.6968e-01   0.56
+ GE3     -4.80056496e+02  -6.01722546e-01   3.1946e-02   0.52
+ GE4     -4.80064166e+02  -7.66980394e-03   2.0507e-03   0.53
+ GE5     -4.80064172e+02  -5.74934555e-06   2.6287e-04   0.52
+ GE6     -4.80064172e+02  -2.67023114e-07   2.4440e-05   0.53
+ GE7     -4.80064172e+02  -2.68242177e-09   1.3535e-06   0.53
+ GE8     -4.80064172e+02  -5.91646709e-11   1.9177e-07   0.52
+ GE9     -4.80064172e+02  -4.83371494e-13   6.2283e-09   0.58
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+         92.0528086193         0.0000000000         0.0000000000 
+          0.0000000000        92.0528086193         0.0000000000 
+          0.0000000000         0.0000000000        92.0528086193 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): 92.052809 kbar
+ ETOT DIFF (eV)              : 0.000000
+ LARGEST GRAD (eV/Angstrom)  : 0.000000
+ DONE(5.963216   SEC) : SETUP UNITCELL
+
+ ================================================================
+ RELAX STEP: 2 (CELL_CHANGE# 2 IONS_CHANGE# 1)
+ ================================================================
+ DONE(5.969863   SEC) : LOCAL POTENTIAL
+ DONE(6.016987   SEC) : SYMMETRY
+ DONE(6.017272   SEC) : INIT K-POINTS
+ DONE(6.073810   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -4.80086952e+02   0.00000000e+00   3.6331e-03   0.50
+ GE2     -4.80086966e+02  -1.43553097e-05   8.5542e-04   0.46
+ GE3     -4.80086966e+02  -6.28268866e-08   1.8543e-04   0.46
+ GE4     -4.80086967e+02  -1.08504072e-06   2.8394e-05   0.47
+ GE5     -4.80086967e+02  -1.71819231e-09   9.6991e-07   0.46
+ GE6     -4.80086967e+02   4.83371494e-13   1.2194e-07   0.46
+ GE7     -4.80086967e+02  -2.90022896e-13   1.4706e-08   0.47
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+        -34.9536570974         0.0000000000        -0.0000000000 
+         -0.0000000000       -34.9536570974        -0.0000000000 
+          0.0000000000        -0.0000000000       -34.9536570974 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): -34.953657 kbar
+ ETOT DIFF (eV)              : -0.022795
+ LARGEST GRAD (eV/Angstrom)  : 0.000000
+ DONE(9.778753   SEC) : SETUP UNITCELL
+
+ ================================================================
+ RELAX STEP: 3 (CELL_CHANGE# 3 IONS_CHANGE# 1)
+ ================================================================
+ DONE(9.785539   SEC) : LOCAL POTENTIAL
+ DONE(9.832752   SEC) : SYMMETRY
+ DONE(9.833043   SEC) : INIT K-POINTS
+ DONE(9.889964   SEC) : INIT SCF
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -4.80092302e+02   0.00000000e+00   4.7983e-03   0.52
+ GE2     -4.80092329e+02  -2.66690662e-05   1.1767e-03   0.48
+ GE3     -4.80092329e+02   1.17911902e-07   4.6208e-04   0.50
+ GE4     -4.80092335e+02  -6.30701569e-06   3.6290e-05   0.51
+ GE5     -4.80092335e+02  -2.32869051e-09   1.5403e-06   0.50
+ GE6     -4.80092335e+02  -2.24284373e-11   9.3534e-08   0.51
+ ----------------------------------------------------------------
+              Stress_x             Stress_y             Stress_z 
+ ----------------------------------------------------------------
+          0.1131552098         0.0000000000        -0.0000000000 
+          0.0000000000         0.1131552098        -0.0000000000 
+         -0.0000000000         0.0000000000         0.1131552098 
+ ----------------------------------------------------------------
+ TOTAL-PRESSURE (EXCLUDE KINETIC PART OF IONS): 0.113155 kbar
+ ETOT DIFF (eV)              : -0.005368
+ LARGEST GRAD (eV/Angstrom)  : 0.000000
+
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Geometry relaxation thresholds are reached within 2 steps.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ TIME STATISTICS
+--------------------------------------------------------------------
+    CLASS_NAME            NAME        TIME/s  CALLS   AVG/s  PER/%  
+--------------------------------------------------------------------
+                   total              13.33  35       0.38   100.00 
+ Driver            atomic_world       13.33  1        13.33  100.00 
+ ESolver_KS_LCAO   before_all_runners 0.55   1        0.55   4.09   
+ Symmetry          analy_sys          0.14   3        0.05   1.07   
+ Relax_Driver      relax_driver       12.74  1        12.74  95.60  
+ ESolver_KS        runner             11.45  3        3.82   85.90  
+ ESolver_KS_LCAO   before_scf         0.27   3        0.09   2.05   
+ HSolverLCAO       solve              10.94  22       0.50   82.09  
+ HamiltLCAO        updateHk           6.74   88       0.08   50.57  
+ OperatorLCAO      init               6.74   440      0.02   50.57  
+ Veff              contributeHR       6.70   22       0.30   50.25  
+ Gint              cal_gint_vl        6.70   22       0.30   50.25  
+ Gint              hr_gint_to_hR      1.36   22       0.06   10.24  
+ HSolverLCAO       hamiltSolvePsiK    0.34   88       0.00   2.56   
+ DiagoElpa         elpa_solve         0.22   88       0.00   1.62   
+ LCAO_domain       dm2rho             3.83   22       0.17   28.75  
+ Gint              cal_gint_rho       3.18   22       0.14   23.86  
+ ESolver_KS_LCAO   cal_force          1.29   3        0.43   9.66   
+ Force_Stress_LCAO getForceStress     1.29   3        0.43   9.66   
+ Gint              cal_gint_fvl       0.83   3        0.28   6.20   
+--------------------------------------------------------------------
+
+
+ START  Time  : Fri Jun 26 12:44:09 2026
+ FINISH Time  : Fri Jun 26 12:44:22 2026
+ TOTAL  Time  : 13
+ SEE INFORMATION IN : OUT.CaOMgO/
