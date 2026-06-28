@@ -34,6 +34,7 @@ AddTest(
   ../libxc_lda_wrap.cpp
   ../libxc_gga_wrap.cpp
   ../libxc_mgga_wrap.cpp
+  ../libxc_tools.cpp
   ../xc_gga_corr.cpp ../xc_lda_corr.cpp ../xc_gga_exch.cpp
   ../xc_lda_exch.cpp ../xc_hcth.cpp
   ../../../source_base/matrix.cpp
@@ -48,15 +49,29 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_SCAN
-  LIBS parameter MPI::MPI_CXX Libxc::xc
+  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container
   SOURCES test_xc4.cpp ../xc_functional.cpp ../xc_lda_wrap.cpp
     ../xc_gga_wrap.cpp
     ../libxc_setup.cpp
     ../libxc_lda_wrap.cpp
     ../libxc_gga_wrap.cpp
     ../libxc_mgga_wrap.cpp
-    ../xc_gga_corr.cpp ../xc_lda_corr.cpp 
-    ../xc_gga_exch.cpp ../xc_lda_exch.cpp ../xc_hcth.cpp 
+    ../libxc_tools.cpp
+    ../xc_grad.cpp
+    ../xc_pot.cpp
+    ../libxc_pot.cpp
+    ../xc_gga_corr.cpp ../xc_lda_corr.cpp
+    ../xc_gga_exch.cpp ../xc_lda_exch.cpp ../xc_hcth.cpp
+    ../../../source_base/matrix.cpp
+    ../../../source_base/memory_recorder.cpp
+    ../../../source_base/libm/branred.cpp
+    ../../../source_base/libm/sincos.cpp
+    ../../../source_base/module_external/blas_connector_base.cpp ../../../source_base/module_external/blas_connector_vector.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
+    ../../../source_base/module_fft/fft_bundle.cpp
+    ../../../source_base/module_fft/fft_cpu.cpp
+    ${FFT_SRC}
+    ../../../source_base/timer.cpp
+    xc_reduce_mock.cpp
 )
 
 AddTest(

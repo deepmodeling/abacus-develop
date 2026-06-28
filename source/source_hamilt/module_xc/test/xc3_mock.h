@@ -229,9 +229,17 @@ namespace Parallel_Reduce
     #endif
         return;
     }
+    template<>
+    void Parallel_Reduce::reduce_pool<float>(float& object)
+    {
+    #ifdef __MPI
+    	float swap = object;
+    	MPI_Allreduce(&swap , &object , 1, MPI_FLOAT , MPI_SUM , MPI_COMM_WORLD);
+    #endif
+        return;
+    }
     template void reduce_all<double>(double& object);
     template void reduce_all<double>(double* object, const int n);
-    template void reduce_pool<float>(float& object);
     template void reduce_pool<float>(float* object, const int n);
     template void reduce_pool<double>(double* object, const int n);
 }

@@ -250,6 +250,12 @@ class XC_Functional
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
 
+    static void laplacian_rho(
+        const std::complex<double>* rhog,
+        double* lapl,
+        const ModulePW::PW_Basis* rho_basis,
+        const double tpiba);
+
     static void noncolin_rho(
         double* rhoout1,
         double* rhoout2,

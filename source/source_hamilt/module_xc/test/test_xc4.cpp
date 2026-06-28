@@ -3,33 +3,8 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
 #include "../exx_info.h"
+#include "xc3_mock.h"
 
-/************************************************
-*  unit test of functionals
-***********************************************/
-
-// For more information of the functions, check the comment of xc_functional.h
-// mGGA Functional (SCAN) is tested under nspin = 1
-
-namespace ModuleBase
-{
-    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
-    void TITLE(const std::string &class_function_name,bool disable){};
-    void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
-}
-
-namespace GlobalV
-{
-    std::string BASIS_TYPE = "";
-    bool CAL_STRESS = false;
-    int CAL_FORCE = 0;
-    int NSPIN = 1;
-}
-
-namespace GlobalC
-{
-	Exx_Info exx_info;
-}
 
 class XCTest_SCAN : public XCTest
 {
@@ -44,11 +19,12 @@ class XCTest_SCAN : public XCTest
             std::vector<double> tau  = {0,0.02403590412,0.01672229351,0.01340429824,0.01141731056};
 
             for(int i=0;i<5;i++)
-            {
-                double e,v,v1,v2,v3;
-                double hybrid_alpha = 0.0;
-                double hse_omega = 0.0;
-                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],tau[i],e,v1,v2,v3,hybrid_alpha, hse_omega);
+             {
+                 double e,v,v1,v2,v3,v4;
+                 double hybrid_alpha = 0.0;
+                 double hse_omega = 0.0;
+                 double lapl_rho = 0.0;
+                 XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],lapl_rho,tau[i],e,v1,v2,v3,v4,hybrid_alpha, hse_omega);
                 e_.push_back(e);
                 v1_.push_back(v1);
                 v2_.push_back(v2);

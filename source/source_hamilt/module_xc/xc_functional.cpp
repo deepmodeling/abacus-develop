@@ -169,6 +169,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 5;
         use_libxc = true;
     }
+    else if ( xc_func == "SCANL")
+    {
+        func_id.push_back(XC_MGGA_X_SCANL);
+        func_id.push_back(XC_MGGA_C_SCANL);
+        func_type = 3;
+        use_libxc = true;
+        std::cout << "\n WARNING: meta-GGA functional [scanl] depends on the density Laplacian." << std::endl;
+        std::cout << " The vlapl potential uses a finite-difference Laplacian kernel to avoid" << std::endl;
+        std::cout << " |G|^2 amplification in reciprocal space. For maximum numerical stability," << std::endl;
+        std::cout << " consider using r2SCAN or SCAN instead." << std::endl;
+        std::cout << " Recommended: ecutwfc <= 80 Ry, mixing_tau = 1, Pulay mixing (beta 0.1-0.2)\n" << std::endl;
+    }
     else if( xc_func == "LC_PBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);

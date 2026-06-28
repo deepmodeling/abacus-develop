@@ -109,7 +109,25 @@ namespace XC_Functional_Libxc
     extern std::vector<double> convert_sigma(
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr);
 
-    // sgn for threshold mask
+    extern std::vector<double> cal_lapl(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const double tpiba,
+        const Charge* const chr);
+
+    extern std::vector<double> cal_lapl_fd(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const Charge* const chr);
+
+    extern std::vector<std::vector<double>> cal_rho_hessian(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const Charge* const chr);
+
     extern std::vector<double> cal_sgn(
         const double rho_threshold,
         const double grho_threshold,
@@ -214,13 +232,15 @@ namespace XC_Functional_Libxc
         const std::vector<int> &func_id,
         const double &rho,
         const double &grho,
+        const double &lapl_rho,
         const double &atau,
         double &sxc,
-        double &v1xc,
-        double &v2xc,
-        double &v3xc,
-        const double &hybrid_alpha,
-        const double &hse_omega);
+         double &v1xc,
+         double &v2xc,
+         double &v3xc,
+         double &vlapl,
+         const double &hybrid_alpha,
+         const double &hse_omega);
 
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
@@ -228,6 +248,8 @@ namespace XC_Functional_Libxc
         double rhodw,
         ModuleBase::Vector3<double> gdr1,
         ModuleBase::Vector3<double> gdr2,
+        double laplup,
+        double lapldw,
         double tauup,
         double taudw,
         double &sxc,
@@ -236,10 +258,12 @@ namespace XC_Functional_Libxc
         double &v2xcup,
         double &v2xcdw,
         double &v2xcud,
-        double &v3xcup,
-        double &v3xcdw,
-        const double &hybrid_alpha,
-        const double &hse_omega);
+         double &v3xcup,
+         double &v3xcdw,
+         double &vlaplup,
+         double &vlapldw,
+         const double &hybrid_alpha,
+         const double &hse_omega);
 
 } // namespace XC_Functional_Libxc
 
