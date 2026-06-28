@@ -25,7 +25,7 @@
 */
 
 #define private public
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #undef private
 Charge::Charge()
 {
