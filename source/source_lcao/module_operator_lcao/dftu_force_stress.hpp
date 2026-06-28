@@ -146,9 +146,6 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         std::vector<double> VU(occ.size());
         double eu_tmp = 0;
         this->cal_v_of_u(occ, tlp1, u_value, &VU[0], eu_tmp);
-        if(this->nspin == 4) 
-        {
-        }
 
         // second iteration to calculate force and stress
         // calculate Force for atom J
