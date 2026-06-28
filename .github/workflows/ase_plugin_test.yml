@@ -39,7 +39,7 @@ jobs:
 
       - name: Install external tools from toolchain
         run: |
-          apt update && apt install -y xz-utils
+          apt update && apt install -y xz-utils ninja-build
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
           ./scripts/stage4/install_stage4.sh
@@ -54,7 +54,7 @@ jobs:
           export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
           source toolchain/install/setup
           rm -rf build
-          cmake -B build
+          cmake -B build -G Ninja
           cmake --build build -j2
       
       - name: Install and Soft Link ABACUS
