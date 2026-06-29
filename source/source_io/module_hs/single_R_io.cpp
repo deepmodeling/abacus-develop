@@ -6,16 +6,18 @@
 #include <complex>
 #include <cstdio>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
-inline void write_data(std::ofstream& ofs, const double& data)
+inline void write_data(std::ofstream& ofs, const double& data, const int precision)
 {
-    ofs << " " << std::fixed << std::scientific << std::setprecision(16) << data;
+    ofs << " " << std::fixed << std::scientific << std::setprecision(precision) << data;
 }
-inline void write_data(std::ofstream& ofs, const std::complex<double>& data)
+inline void write_data(std::ofstream& ofs, const std::complex<double>& data, const int precision)
 {
-    ofs << " (" << data.real() << "," << data.imag() << ")";
+    ofs << " (" << std::fixed << std::scientific << std::setprecision(precision)
+        << data.real() << "," << data.imag() << ")";
 }
 
 template<typename T>
@@ -51,6 +53,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         {
             ofs_tem1.open(tem1.str().c_str());
         }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                     "Cannot open temporary sparse index file: " + tem1.str());
+        }
     }
 
     std::vector<T> line(nlocal);
@@ -65,6 +72,12 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             {
                 for (auto &value : iter->second)
                 {
+                    if (value.first >= static_cast<size_t>(nlocal))
+                    {
+                        std::cerr << "Sparse column index out of range." << std::endl;
+                        ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                                 "Sparse column index out of range.");
+                    }
                     line[value.first] = value.second;
                 }
             }
@@ -89,7 +102,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
                     }
                     else
                     {
-                        write_data(ofs, line[col]);
+                        write_data(ofs, line[col], options.precision);
                         ofs_tem1 << " " << col;
                     }
 
@@ -109,6 +122,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         {
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
+            if (!ifs_tem1.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                         "Cannot read temporary sparse index file: " + tem1.str());
+            }
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
             for (auto &i : indptr)
@@ -122,6 +140,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             ofs_tem1 << std::endl;
             ofs_tem1.close();
             ifs_tem1.open(tem1.str().c_str());
+            if (!ifs_tem1.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::output_single_R",
+                                         "Cannot read temporary sparse index file: " + tem1.str());
+            }
             ofs << ifs_tem1.rdbuf();
             ifs_tem1.close();
             for (auto &i : indptr)

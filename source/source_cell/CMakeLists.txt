@@ -23,6 +23,7 @@ add_library(
     cell_index.cpp
     check_atomic_stru.cpp
     update_cell.cpp
+    magnetism.cpp
     bcast_cell.cpp
     read_stru.cpp
     print_cell.cpp

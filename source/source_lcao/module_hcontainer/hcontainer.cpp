@@ -145,7 +145,7 @@ HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV
             for (int j = 0; j < ucell_.nat; j++)
             {
                 //check if atom_pair(i, j) is empty in this process
-                if(paraV->get_row_size(i) <= 0 || paraV->get_col_size(j) <= 0)
+                if(paraV->is_invalid_atom_pair(i, j))
                 {
                     continue;
                 }
@@ -619,7 +619,7 @@ T* HContainer<T>::data(int atom_i, int atom_j) const
     AtomPair<T>* atom_ij = this->find_pair(atom_i, atom_j);
     if (atom_ij != nullptr)
     {
-        return atom_ij->get_pointer();
+        return atom_ij->get_pointer(0);
     }
     else
     {

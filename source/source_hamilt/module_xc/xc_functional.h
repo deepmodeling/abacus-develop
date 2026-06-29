@@ -47,7 +47,10 @@ class XC_Functional
     static std::tuple<double, double, ModuleBase::matrix> v_xc(
         const int &nrxx, // number of real-space grid
         const Charge* const chr,
-        const UnitCell *ucell); // charge density
+        const UnitCell *ucell, // charge density
+        const int nspin,
+        const bool domag,
+        const bool domag_z);
 
 //-------------------
 //  xc_functional.cpp
@@ -206,7 +209,11 @@ class XC_Functional
         ModulePW::PW_Basis* rhopw,
         const UnitCell* ucell,
         std::vector<double>& stress_gga,
-        const bool is_stress = false);
+        const bool is_stress,
+        const int nspin,
+        const bool domag,
+        const bool domag_z);
+
     template <typename T, typename Device,
               typename Real = typename GetTypeReal<T>::type>
 

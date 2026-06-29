@@ -86,6 +86,13 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
     cutoff_cn_ = length_to_bohr(input.vdw_cn_thr, input.vdw_cn_thr_unit);
+
+    double valence_charge = 0.0;
+    for (int it = 0; it < ucell_.ntype; ++it)
+    {
+        valence_charge += ucell_.atoms[it].ncpp.zv * ucell_.atoms[it].na;
+    }
+    total_charge_ = valence_charge - input.nelec;
 }
 
 void Vdwd4::build_structure(std::vector<int>& numbers,
@@ -163,7 +170,7 @@ void Vdwd4::compute(double& energy_ha,
                                               ucell_.nat,
                                               numbers.data(),
                                               positions.data(),
-                                              nullptr,
+                                              &total_charge_,
                                               lattice.data(),
                                               periodic.data());
     check_dftd4_error(error, "dftd4_new_structure");

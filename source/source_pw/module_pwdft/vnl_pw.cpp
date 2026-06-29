@@ -6,7 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/memory_recorder.h"

@@ -1,5 +1,5 @@
 #include "symmetry_test_cases.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include "mpi.h"
 /************************************************
  *  unit test of class Symmetry
@@ -20,7 +20,6 @@
  * is different from its point group.
  ***********************************************/
 // mock the useless functions
-void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m){}
 pseudo::pseudo()
 {
 }

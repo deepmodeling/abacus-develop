@@ -29,7 +29,7 @@ void reallocate_hcontainer(const std::vector<std::map<int, std::map<TAC, RI::Ten
         for (auto& Htmp2: Htmp1.second)
         {
             const int& iat1 = Htmp2.first.first;
-            if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
+            if (pv->get_nrow_atom(iat0) > 0 && pv->get_ncol_atom(iat1) > 0)
             {
                 const Abfs::Vector3_Order<int>& R = RI_Util::array3_to_Vector3(
                     (cell_nearest ? cell_nearest->get_cell_nearest_discrete(iat0, iat1, Htmp2.first.second)
@@ -66,7 +66,7 @@ void reallocate_hcontainer(const int nat,
         {
             // complete the atom pairs that has orbitals in this processor but not in hR due to the adj_list
             // but adj_list is not enought for EXX, which is more nonlocal than Nonlocal
-            if (pv->get_row_size(iat0) > 0 && pv->get_col_size(iat1) > 0)
+            if (pv->get_nrow_atom(iat0) > 0 && pv->get_ncol_atom(iat1) > 0)
             {
                 for (auto& cell: Rs)
                 {

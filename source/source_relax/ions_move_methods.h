@@ -25,6 +25,7 @@ class Ions_Move_Methods
                       UnitCell &ucell,
                       std::ofstream& ofs,
                       std::vector<std::string>& relax_method);
+    void reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs);
 
     bool get_converged() const
     {
@@ -56,6 +57,6 @@ class Ions_Move_Methods
     Ions_Move_LBFGS lbfgs;
     bool converged_ = false;
     int update_iter_ = 0;
-    std::vector<double> etot_info_{2, 0.0}; // [etot, etot_p]
+    std::vector<double> etot_info_{0.0, 0.0}; // [etot, etot_p]
 };
 #endif
