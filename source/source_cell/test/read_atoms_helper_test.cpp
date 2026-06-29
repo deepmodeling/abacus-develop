@@ -3,7 +3,7 @@
 #include "../read_atoms_helper.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include <sstream>
 #include <fstream>
 
@@ -13,15 +13,6 @@ namespace elecstate {
         // Mock implementation - just return true
         return true;
     }
-}
-
-// Mock output class methods
-void output::printM3(std::ofstream& ofs, const std::string& description, const ModuleBase::Matrix3& m) {
-    // Mock implementation
-}
-
-void output::printrm(std::ofstream& ofs, const std::string& description, const ModuleBase::matrix& m, const double& limit) {
-    // Mock implementation
 }
 
 // Mock InfoNonlocal class

@@ -6,6 +6,11 @@
 #include "source_io/module_hs/single_R_io.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include <complex>
+#include <cstdio>
+#include <fstream>
+#include <sstream>
+#include <vector>
 /************************************************
  *  unit test of output_single_R
  ***********************************************/
@@ -114,6 +119,92 @@ TEST(ModuleIOTest, OutputSingleR)
     }
     EXPECT_THAT(indptr, testing::ElementsAre(0, 2, 4, 4, 6, 6));
     std::remove("test_output_single_R_0.dat");
+}
+
+TEST(ModuleIOTest, OutputSingleRComplexKeepsHighPrecision)
+{
+    const std::string filename = "test_output_single_R_complex.dat";
+    std::remove(filename.c_str());
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<std::complex<double>> XR = {
+        {0, {{1, std::complex<double>(1.234567890123456, -2.345678901234567)}}}
+    };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = false;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ofs.close();
+
+    std::ifstream ifs(filename);
+    const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("(1.2345678901234560e+00,-2.3456789012345669e+00)"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("(1.23457,-2.34568)")));
+
+    std::remove(filename.c_str());
+}
+
+TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
+{
+    const std::string filename = "test_output_single_R_precision.dat";
+    std::remove(filename.c_str());
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<std::complex<double>> XR = {
+        {0, {{1, std::complex<double>(1.234567890123456, -2.5)}}}
+    };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.precision = 8;
+    options.reduce = false;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ofs.close();
+
+    std::ifstream ifs(filename);
+    const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("(1.23456789e+00,-2.50000000e+00)"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("1.2345678901234560e+00")));
+
+    std::remove(filename.c_str());
+}
+
+void write_out_of_range_sparse_column(const char* filename)
+{
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<double> XR;
+    XR[0][5] = 1.0;
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = false;
+    options.temp_dir = "/tmp/";
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+}
+
+TEST(ModuleIOTest, OutputSingleRRejectsOutOfRangeColumn)
+{
+    const char* filename = "/tmp/test_output_single_R_invalid.dat";
+    std::remove(filename);
+    EXPECT_EXIT(
+        write_out_of_range_sparse_column(filename),
+        ::testing::ExitedWithCode(1),
+        "Sparse column index out of range");
+    std::remove(filename);
 }
 
 int main(int argc, char **argv)

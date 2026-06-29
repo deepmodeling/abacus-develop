@@ -3,6 +3,8 @@ add_library(
     OBJECT
     bin_manager.cpp
     neighbor_search.cpp
+    page_allocator.cpp
+    unitcell_lite.cpp
 )
 
 if(ENABLE_COVERAGE)

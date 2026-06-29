@@ -9,7 +9,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_estate/module_charge/charge.h"
 
 #include <cmath>

@@ -3,6 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_output/filename.h" // use filename_output function
 
@@ -122,6 +123,10 @@ void ModuleIO::save_mat(const int istep,
         if (drank == 0)
         {
             out_matrix = fopen(filename.c_str(), "wb");
+            if (out_matrix == nullptr)
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
+            }
             fwrite(&dim, sizeof(int), 1, out_matrix);
         }
 
@@ -179,6 +184,10 @@ void ModuleIO::save_mat(const int istep,
 // write .dat file without MPI
 #else
         FILE* out_matrix = fopen(filename.c_str(), "wb");
+        if (out_matrix == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
+        }
 
         fwrite(&dim, sizeof(int), 1, out_matrix);
 
@@ -206,6 +215,10 @@ void ModuleIO::save_mat(const int istep,
             else 
             {
                 out_matrix.open(filename.c_str());
+            }
+            if (!out_matrix.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
             }
             out_matrix << "#------------------------------------------------------------------------" << std::endl;
             out_matrix << "# ionic step " << istep+1 << std::endl; // istep starts from 0 
@@ -285,6 +298,10 @@ void ModuleIO::save_mat(const int istep,
         else
         {
             out_matrix.open(filename.c_str());
+        }
+        if (!out_matrix.is_open())
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
         }
 
         out_matrix << dim;
