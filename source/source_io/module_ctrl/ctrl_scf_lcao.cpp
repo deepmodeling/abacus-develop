@@ -234,7 +234,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_hsr_npz)
     {
-        std::string zipname = "output_SR.npz";
+        std::string zipname = PARAM.globalv.global_out_dir + "output_SR.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
@@ -243,7 +243,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
         {
-            std::string zipname = "output_HR" + std::to_string(ispin) + ".npz";
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_HR" + std::to_string(ispin) + ".npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
         }
     }
@@ -253,7 +254,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_DMR_vector();
         for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
         {
-            std::string zipname = "output_DM" + std::to_string(ispin) + ".npz";
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_DM" + std::to_string(ispin) + ".npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(dmr_vec[ispin]));
         }
     }
