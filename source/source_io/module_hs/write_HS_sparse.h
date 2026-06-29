@@ -25,6 +25,7 @@ struct SparseWriteOptions
     std::string label;
     double threshold = 0.0;
     bool binary = false;
+    int precision = 16;
     int istep = -1;
     bool reduce = true;
     std::string temp_dir;
@@ -35,7 +36,8 @@ void save_dH_sparse(const int& istep,
                     LCAO_HS_Arrays& HS_Arrays,
                     const double& sparse_thr,
                     const bool& binary,
-                    const std::string& fileflag = "h");
+                    const std::string& fileflag = "h",
+                    const int precision = 16);
 
 template <typename Tdata>
 void save_sparse(const SparseRMatrix<Tdata>& smat,
