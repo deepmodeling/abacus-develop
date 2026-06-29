@@ -419,6 +419,10 @@ fi
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
     echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
+        echo "CompareHR2_pass $?" >>$1
+    fi
     python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
