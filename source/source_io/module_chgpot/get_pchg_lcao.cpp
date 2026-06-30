@@ -1,6 +1,7 @@
 #include "get_pchg_lcao.h"
 
 #include "source_io/module_output/cube_io.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_lcao/module_gint/gint_interface.h"
@@ -95,7 +96,7 @@ void Get_pchg_lcao::begin(double** rho,
                 double ef_spin = ef_all_spin[is];
                 ModuleIO::write_vdata_palgrid(pgrid, 
 				rho_save[is].data(), is, nspin, 0, 
-				ssc.str(), ef_spin, ucell_in, precision);
+				ssc.str(), ef_spin, ucell_in, precision, 1, PARAM.globalv.two_fermi, false);
             }
         }
     }
@@ -192,7 +193,7 @@ void Get_pchg_lcao::begin(double** rho,
                                                       ssc.str(),
                                                       ef_spin,
                                                       ucell_in, 
-						      precision);
+						      precision, 1, PARAM.globalv.two_fermi, false);
                     }
                 }
             }
@@ -244,7 +245,7 @@ void Get_pchg_lcao::begin(double** rho,
                                                   ssc.str(),
                                                   ef_spin,
                                                   ucell_in, 
-						  precision);
+						  precision, 1, PARAM.globalv.two_fermi, false);
                 }
             }
         }

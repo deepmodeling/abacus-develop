@@ -11,7 +11,7 @@ concurrency:
 jobs:
   test:
     name: Test on CUDA Build
-    runs-on: nvidia
+    runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
@@ -21,7 +21,7 @@ jobs:
       
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 

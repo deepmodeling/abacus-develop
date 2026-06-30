@@ -51,6 +51,8 @@ relax_cell
 relax_cell_vdw2
 relax_cell_vdw3
 relax_cell_vdw3bj
+relax_cell_vdw4_d4
+relax_cell_vdw4_d4s
 md_nvt
 md_msst
 md_out_wf

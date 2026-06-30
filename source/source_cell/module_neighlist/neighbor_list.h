@@ -1,100 +1,42 @@
-#pragma once
+#ifndef NEIGHBOR_LIST_H
+#define NEIGHBOR_LIST_H
 
 #include <vector>
-#include<iostream>
-#include <cmath>
-#include <cassert>
+#include "page_allocator.h"
 
-class PageAllocator {
-public:
-    struct Page {
-        std::vector<int> data;
-        int capacity;
-        int offset;
-    };
-
-    std::vector<Page> pages;
-    int pgsize;
-
-    static constexpr int DEFAULT_PGSIZE = 1024;
-
-    // Default constructor
-    PageAllocator() : pgsize(DEFAULT_PGSIZE) {
-        if (pgsize > 0) new_page();
-    }
-
-    PageAllocator(int pgsize_) : pgsize(pgsize_) {
-        new_page();
-    }
-
-    ~PageAllocator() {
-        // no manual delete[]; vectors clean themselves
-    }
-
-    PageAllocator(const PageAllocator&) = delete;
-    PageAllocator& operator=(const PageAllocator&) = delete;
-
-    // Allow move
-    PageAllocator(PageAllocator&&) = default;
-    PageAllocator& operator=(PageAllocator&&) = default;
-
-    void new_page() {
-        Page p;
-        p.capacity = pgsize;
-        p.offset = 0;
-        p.data.resize(pgsize);
-        pages.push_back(std::move(p));
-    }
-
-    int* allocate(int n) {
-        if (n <= 0) return nullptr;
-        // reject requests larger than a single page
-        if (n > pgsize) {
-            std::cerr << "PageAllocator::allocate error: request " << n << " larger than page size " << pgsize << std::endl;
-            return nullptr;
-        }
-        if (pages.empty()) new_page();
-        Page& p = pages.back();
-        if (p.offset + n > p.capacity) {
-            new_page();
-            return allocate(n);
-        }
-        int* ptr = p.data.data() + p.offset;
-        p.offset += n;
-        return ptr;
-    }
-
-    void reset() {
-        pages.resize(1);
-        pages[0].offset = 0;
-    }
-};
-
-//////////////////////////////////////////////////////////////
-// Neighbor List
-//////////////////////////////////////////////////////////////
-
-class NeighborList {
+class NeighborList
+{
 public:
     NeighborList() = default;
     ~NeighborList() = default;
 
-    int nlocal;
-
-    std::vector<int> numneigh;
-    std::vector<int*> firstneigh;
-
-    PageAllocator allocator;
-
-    void initialize(int n, int pgsize) {
-        nlocal = n;
-    allocator = PageAllocator(pgsize);
-    // ensure neighbor containers are sized and initialized
-    numneigh.assign(n, 0);
-    firstneigh.assign(n, nullptr);
+    void initialize(int nlocal, int pgsize)
+    {
+        nlocal_ = nlocal;
+        allocator_ = PageAllocator(pgsize);
+        numneigh_.assign(nlocal, 0);
+        firstneigh_.assign(nlocal, nullptr);
     }
 
-    void reset() {
-        allocator.reset();
+    void reset()
+    {
+        allocator_.reset();
     }
+
+    int get_nlocal() const { return nlocal_; }
+    int get_numneigh(int i) const { return numneigh_[i]; }
+    int* get_firstneigh(int i) { return firstneigh_[i]; }
+    const int* get_firstneigh(int i) const { return firstneigh_[i]; }
+    PageAllocator& get_allocator() { return allocator_; }
+    const PageAllocator& get_allocator() const { return allocator_; }
+
+private:
+    int nlocal_ = 0;
+    std::vector<int> numneigh_;
+    std::vector<int*> firstneigh_;
+    PageAllocator allocator_;
+
+    friend class BinManager;
 };
+
+#endif // NEIGHBOR_LIST_H

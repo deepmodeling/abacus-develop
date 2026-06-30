@@ -49,7 +49,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        if(this->dftu->orbital_corr[T0] == -1)
+        if(!this->dftu->has_correlated_orbital(T0))
         {
             continue;
         }
@@ -71,11 +71,11 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-		if (target_L == -1) 
-		{
-			continue;
-		}
+        if (!this->dftu->has_correlated_orbital(T0))
+        {
+            continue;
+        }
+        const int target_L = this->dftu->get_orbital_corr(T0);
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index_all[iat0]];
 
@@ -139,35 +139,13 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         }
         // first iteration to calculate occupation matrix
         std::vector<double> occ(tlp1 * tlp1 * this->nspin, 0);
-        if(this->nspin ==2)
-        {
-            for (int i = 0; i < occ.size(); i++)
-            {
-                const int is = i / (tlp1 * tlp1);
-                const int ii = i % (tlp1 * tlp1);
-                occ[i] = this->dftu->locale[iat0][target_L][0][is].c[ii];
-            }
-        }
-        else
-        {
-            for (int i = 0; i < occ.size(); i++)
-            {
-                occ[i] = this->dftu->locale[iat0][target_L][0][0].c[i];
-            }
-        }
+        this->dftu->get_locale_flat(iat0, target_L, occ);
 
         // calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
         double eu_tmp = 0;
         this->cal_v_of_u(occ, tlp1, u_value, &VU[0], eu_tmp);
-        if(this->nspin == 4) 
-        {
-            for (int i = 0; i < VU.size(); i++)
-            {
-                VU[i] /= 2.0;
-            }
-        }
 
         // second iteration to calculate force and stress
         // calculate Force for atom J
@@ -257,12 +235,14 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     if (cal_force)
     {
 #ifdef __MPI
-        // sum up the occupation matrix
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        for (int i = 0; i < force.nr * force.nc; i++)
+        if (this->nspin != 4)
         {
-            force.c[i] *= 2.0;
+            for (int i = 0; i < force.nr * force.nc; i++)
+            {
+                force.c[i] *= 2.0;
+            }
         }
     }
 

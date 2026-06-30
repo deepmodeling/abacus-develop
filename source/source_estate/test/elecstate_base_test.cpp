@@ -117,9 +117,6 @@ void Charge::check_rho()
  *         - elecstate::ElecState::psiToRho()
  *         - elecstate::ElecState::print_psi()
  *         - elecstate::ElecState::getNewRho()
- *    - InitSCF: elecstate::ElecState::init_scf()
- *      - trivial calling to elecstate::ElecState::init_scf()
- *      - the production function is init charge and pot for scf calculation
  *    - FixedWeights: elecstate::ElecState::fixed_weights()
  *      - fix wg using external weights: ocp_kb
  *    - CalEBand: elecstate::ElecState::cal_eband()
@@ -187,7 +184,7 @@ TEST_F(ElecStateTest, Constructor)
     elecstate::ElecState* elecstate_new = new elecstate::ElecState(charge, rhopw, bigpw);
     EXPECT_EQ(elecstate_new->charge, charge);
     EXPECT_EQ(elecstate_new->bigpw, bigpw);
-    EXPECT_EQ(elecstate_new->eferm.two_efermi, PARAM.sys.two_fermi);
+    EXPECT_EQ(elecstate_new->eferm.two_efermi, PARAM.globalv.two_fermi);
     delete elecstate_new;
     delete bigpw;
     delete rhopw;
@@ -251,21 +248,6 @@ TEST_F(ElecStateTest, VirtualBaseFuncs)
     EXPECT_NO_THROW(elecstate->print_psi(psi_complex));
     EXPECT_NO_THROW(elecstate->print_psi(psi_real));
     EXPECT_NO_THROW(elecstate->getNewRho());
-}
-
-TEST_F(ElecStateTest, InitSCF)
-{
-    Charge* charge = new Charge;
-    elecstate->charge = charge;
-    elecstate->pot = new elecstate::Potential;
-    elecstate::Efermi efermi;
-    int istep = 0;
-    ModuleBase::ComplexMatrix strucfac;
-    elecstate->eferm = efermi;
-    ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(ucell, pgrid, strucfac, nullptr, symm));
-    // delete elecstate->pot is done in the destructor of elecstate
-    delete charge;
 }
 
 TEST_F(ElecStateTest, FixedWeights)

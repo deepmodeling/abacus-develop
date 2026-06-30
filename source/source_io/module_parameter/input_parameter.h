@@ -33,6 +33,7 @@ struct Input_para
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice";   ///< lattice name
+    std::string assume_isolated = "none"; ///< isolated-system correction: none or makov-payne
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
@@ -509,7 +510,7 @@ struct Input_para
     //  vdw
     //  Peize Lin add 2014-03-31, jiyy update 2019-08-01
     // ==========================================================
-    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj)
+    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4)
     std::string vdw_s6 = "default";                         ///< scale parameter of d2/d3_0/d3_bj
     std::string vdw_s8 = "default";                         ///< scale parameter of d3_0/d3_bj
     std::string vdw_a1 = "default";                         ///< damping parameter of d3_0/d3_bj
@@ -526,6 +527,8 @@ struct Input_para
     std::string vdw_radius_unit = "Bohr";                   ///< unit of radius cutoff for periodic structure
     double vdw_cn_thr = 40.0;                               ///< radius cutoff for cn
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
+    std::string vdw_d4_xc = "default";                     ///< functional name passed to DFT-D4
+    std::string vdw_d4_model = "d4";                       ///< DFT-D4 dispersion model (d4 or d4s)
     ModuleBase::Vector3<int> vdw_cutoff_period = {3, 3, 3}; ///< periods of periodic structure
 
     // ==============   #Parameters (15.exx) ====================
@@ -597,11 +600,16 @@ struct Input_para
     double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
     int nsc = 100;                  ///< maximum number of inner lambda loop
     int nsc_min = 2;                ///< minimum number of inner lambda loop
-    int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    bool sc_direction_only = false; ///< only optimize the direction of magnetization
+    // linear_scan parameters
+    double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)
+    double sc_scan_lambda_end = 1.0;    ///< end value for lambda scan (eV/uB)
+    int sc_scan_steps = 20;             ///< number of steps in lambda scan
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================

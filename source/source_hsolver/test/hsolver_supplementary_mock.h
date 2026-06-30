@@ -19,16 +19,6 @@ void ElecState::init_nelec_spin()
 
 
 
-void ElecState::init_scf(const UnitCell& ucell,
-                         const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac,
-                         const bool*,
-                         ModuleSymmetry::Symmetry&,
-                         const void*)
-{
-    return;
-}
-
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
                         int nk_in,

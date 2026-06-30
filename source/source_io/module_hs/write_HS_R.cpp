@@ -1,40 +1,13 @@
 #include "write_HS_R.h"
 
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/spar_st.h"
 #include "write_HS_sparse.h"
-
-namespace {
-// Helper: Convert sparse map to HContainer
-template <typename T>
-hamilt::HContainer<T>* sparse_map_to_hcontainer(
-    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparse_map,
-    const Parallel_Orbitals& pv,
-    const int nbasis)
-{
-    hamilt::HContainer<T>* hc = new hamilt::HContainer<T>(&pv);
-    hc->set_zero();
-
-    for (const auto& r_entry : sparse_map)
-    {
-        const auto& R = r_entry.first;
-        for (const auto& row_entry : r_entry.second)
-        {
-            const size_t row = row_entry.first;
-            for (const auto& col_entry : row_entry.second)
-            {
-                hc->set_value(R.x, R.y, R.z, row, col_entry.first, col_entry.second);
-            }
-        }
-    }
-
-    return hc;
-}
-} // anonymous namespace
 
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.
@@ -50,7 +23,8 @@ void ModuleIO::output_dSR(const int& istep,
                           const LCAO_Orbitals& orb,
                           const K_Vectors& kv,
                           const bool& binary,
-                          const double& sparse_thr)
+                          const double& sparse_thr,
+                          const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
@@ -58,7 +32,7 @@ void ModuleIO::output_dSR(const int& istep,
     sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
 
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s");
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s", precision);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -76,7 +50,8 @@ void ModuleIO::output_dHR(const int& istep,
                           const LCAO_Orbitals& orb,
                           const K_Vectors& kv,
                           const bool& binary,
-                          const double& sparse_thr)
+                          const double& sparse_thr,
+                          const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::start("ModuleIO", "output_dHR");
@@ -104,7 +79,7 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary);
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "h", precision);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -118,7 +93,8 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          hamilt::Hamilt<TK>* p_ham,
                          const std::string& SR_filename,
                          const bool& binary,
-                         const double& sparse_thr)
+                         const double& sparse_thr,
+                         const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
@@ -143,28 +119,29 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                           p_ham);
 
     const int istep = 0;
+    ModuleIO::SparseWriteOptions options;
+    options.filename = SR_filename;
+    options.label = "S";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.precision = precision;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     if (PARAM.inp.nspin == 4)
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
     else
     {
         ModuleIO::save_sparse(HS_Arrays.SR_sparse,
                               HS_Arrays.all_R_coor,
-                              sparse_thr,
-                              binary,
-                              SR_filename,
                               pv,
-                              "S",
-                              istep);
+                              options);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -182,7 +159,8 @@ void ModuleIO::output_TR(const int istep,
                          const LCAO_Orbitals& orb,
                          const std::string& TR_filename,
                          const bool& binary,
-                         const double& sparse_thr)
+                         const double& sparse_thr,
+                         const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::start("ModuleIO", "output_TR");
@@ -206,15 +184,20 @@ void ModuleIO::output_TR(const int istep,
     }
 
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
+    ModuleIO::SparseWriteOptions options;
+    options.filename = sst.str();
+    options.label = "T";
+    options.threshold = sparse_thr;
+    options.binary = binary;
+    options.precision = precision;
+    options.istep = istep;
+    options.reduce = true;
+    options.temp_dir = PARAM.globalv.global_out_dir;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
-                          sparse_thr,
-                          binary,
-                          sst.str().c_str(),
                           pv,
-                          "T",
-                          istep);
+                          options);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 
@@ -227,13 +210,15 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           hamilt::Hamilt<double>* p_ham,
                                           const std::string& SR_filename,
                                           const bool& binary,
-                                          const double& sparse_thr);
+                                          const double& sparse_thr,
+                                          const int precision);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,
                                                         const bool& binary,
-                                                        const double& sparse_thr);
+                                                        const double& sparse_thr,
+                                                        const int precision);
 
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
@@ -286,6 +271,11 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     else
     {
         ofs.open(fname, std::ios::app);
+    }
+    if (!ofs.is_open())
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_hcontainer_csr",
+                                 "Cannot open HContainer CSR file: " + fname);
     }
 
     ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;

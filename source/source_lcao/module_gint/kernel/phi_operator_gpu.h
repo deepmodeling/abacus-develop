@@ -1,13 +1,44 @@
 #pragma once
 #include <memory>
+#include <vector>
+#include <cstdint>
 #include <cuda_runtime.h>
 
+#include "source_lcao/module_gint/gint_type.h"   // Vec3i, used by PairInfo
 #include "source_lcao/module_gint/batch_biggrid.h"
 #include "gint_gpu_vars.h"
 #include "cuda_mem_wrapper.h"
 
 namespace ModuleGint
 {
+
+// Per-atom-pair metadata cached in PhiOperatorGpu::set_bgrid_batch() so that
+// phi_mul_phi / phi_mul_dm skip the O(bgrid * atoms^2) enumeration on every
+// call. Holds only the fields both callers need; HContainer lookups still
+// happen lazily in the hot path because they depend on hRGint / dm.
+struct PairInfo
+{
+    int phi_1_offset;
+    int phi_2_offset;
+    int phi_len_mgrid;
+    int iat_1;
+    int iat_2;
+    Vec3i r_diff;
+    uint16_t nw1;
+    uint16_t nw2;
+    uint8_t ia_le;   // (ia_1 <= ia_2) within the bgrid, for is_symm filter
+    uint8_t is_diag; // (ia_1 == ia_2), for phi_mul_dm is_symm alpha
+};
+
+// One non-empty (nw1, nw2) bucket produced by the counting sort in
+// phi_mul_phi / phi_mul_dm: a flattened shape key, the bucket's start offset in
+// the flat gemm_* arrays, and how many atom pairs landed in it.
+struct GemmShapeBucket
+{
+    int key;  // nw1 * nw_stride_ + nw2
+    int off;  // start offset in the gemm_* host/device arrays
+    int cnt;  // number of atom pairs in this bucket
+};
 
 template<typename Real = double>
 class PhiOperatorGpu
@@ -33,10 +64,12 @@ public:
         const Real* phi_d,
         Real* result_d) const;
     
-    // All GEMM accumulators (hr in phi_mul_phi, phi_dm in phi_mul_dm) are
-    // double-typed regardless of Real: when Real=float the multiplies stay in
-    // fp32 (cheap) but per-block reductions and device-side atomicAdd run in
-    // fp64 so the global reductions don't drift.
+    // The GEMM output buffers (hr in phi_mul_phi, phi_dm in phi_mul_dm) are
+    // always double, independent of Real. When Real=float the per-pair inner
+    // products are reduced in fp32 (cheap); the cross-pair accumulation into a
+    // shared hr/phi_dm element is what runs in fp64, via an atomicAdd into
+    // these double buffers, so summing many atom-pair contributions doesn't
+    // drift.
     void phi_mul_phi(
         const Real* phi_d,
         const Real* phi_vldr3_d,
@@ -80,6 +113,14 @@ private:
     
     int phi_len_;
 
+    // Stride for flattening a (nw1, nw2) pair into a single dense bucket key
+    // (`nw1 * nw_stride_ + nw2`), so shape-exact bucketing of phi_mul_phi /
+    // phi_mul_dm can index a flat table instead of hashing. Set once in the
+    // ctor to ucell.nwmax + 1 -- nwmax is the largest per-atom orbital count in
+    // the cell, so there is no artificial ceiling: the table is sized to the
+    // actual basis (typical nwmax ~25).
+    int nw_stride_ = 0;
+
     cudaStream_t stream_ = 0;
     cudaEvent_t event_;
 
@@ -102,19 +143,36 @@ private:
     // Mapping of the index of meshgrid in the batch of biggrids to the index of meshgrid in the local cell
     CudaMemWrapper<int> batch_mgrid_lidx_;
 
-    mutable CudaMemWrapper<int> gemm_m_;
-    mutable CudaMemWrapper<int> gemm_n_;
-    mutable CudaMemWrapper<int> gemm_k_;
     mutable CudaMemWrapper<int> gemm_lda_;
     mutable CudaMemWrapper<int> gemm_ldb_;
     mutable CudaMemWrapper<int> gemm_ldc_;
     mutable CudaMemWrapper<const Real*> gemm_A_;
     mutable CudaMemWrapper<const Real*> gemm_B_;
-    // Single C-pointer buffer: both phi_mul_phi (output hr) and phi_mul_dm
-    // (output phi_dm) write into double* accumulators, so a single shared
-    // gemm_C_ device buffer can serve both call sites.
+    // C accumulator pointers are always double*: both phi_mul_phi (hr) and
+    // phi_mul_dm (phi_dm) write into fp64 buffers via the GEMM's fp64 atomicAdd.
     mutable CudaMemWrapper<double*> gemm_C_;
     mutable CudaMemWrapper<Real> gemm_alpha_;
+
+    // Full (ia_1, ia_2) pair enumeration, rebuilt in set_bgrid_batch().
+    // Consumed by phi_mul_phi (TN, iat_1 <= iat_2 filter) and phi_mul_dm
+    // (NN, optional is_symm upper-triangle filter).
+    std::vector<PairInfo> pair_cache_;
+
+    // Scratch buffer reused across phi_mul_phi / phi_mul_dm calls to cache
+    // per-pair HContainer offsets from Pass 1 and replay them in Pass 2
+    // without a second find_matrix_offset() call.
+    mutable std::vector<int> pair_scratch_offset_;
+
+    // Dense (nw_stride_ * nw_stride_) counting-sort scratch shared by
+    // phi_mul_phi / phi_mul_dm. Sized once in the ctor and just re-zeroed per
+    // call, so the hot path never reallocates.
+    mutable std::vector<int> bucket_counts_;
+    mutable std::vector<int> bucket_base_;
+    mutable std::vector<int> bucket_cursor_;
+
+    // Compact list of non-empty buckets for the current call. Reused (cleared,
+    // not reallocated) by both phi_mul_phi and phi_mul_dm.
+    mutable std::vector<GemmShapeBucket> buckets_;
 };
 
 }

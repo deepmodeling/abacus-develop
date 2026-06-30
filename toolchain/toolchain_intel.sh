@@ -45,6 +45,9 @@ WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
 WITH_NEP="no"
 
+# Optional Features (DFT-D4 dispersion correction)
+WITH_DFTD4="install"
+
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
 # GPU_VERSION="75"  # Check your GPU compute capability
@@ -114,6 +117,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-libxc="$WITH_LIBXC" \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
+  --with-dftd4="$WITH_DFTD4" \
   --with-cereal="$WITH_CEREAL" \
   --with-rapidjson="$WITH_RAPIDJSON" \
   --with-libtorch="$WITH_LIBTORCH" \

@@ -1,6 +1,6 @@
 #include "pseudo.h"
 #include "source_base/tool_title.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include <cstdint>
 
 pseudo::pseudo()

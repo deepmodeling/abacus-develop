@@ -281,6 +281,26 @@ TEST_F(Verlet_test, rescale_v)
     EXPECT_NEAR(mdrun->vel[3].z, -2.8328663233253657e-05, doublethreshold);
 }
 
+TEST_F(Verlet_test, CSVR)
+{
+    mdrun->first_half(GlobalV::ofs_running);
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "csvr";
+    param_in.input.mdp.md_csvr_tau = 100.0;
+    param_in.input.mdp.md_seed = 12345;
+    mdrun->second_half();
+
+    // Check that positions are updated correctly
+    EXPECT_NEAR(mdrun->pos[0].x, -0.00054545529007222658, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].y, 0.00029590658162135359, doublethreshold);
+    EXPECT_NEAR(mdrun->pos[0].z, -5.7952328034033513e-05, doublethreshold);
+
+    // Check that temperature is in reasonable range
+    double temp = mdrun->t_current * ModuleBase::Hartree_to_K;
+    EXPECT_GT(temp, 0.0);
+    EXPECT_LT(temp, 1000.0);
+}
+
 TEST_F(Verlet_test, write_restart)
 {
     mdrun->step_ = 1;

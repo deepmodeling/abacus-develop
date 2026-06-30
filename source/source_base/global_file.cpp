@@ -8,11 +8,9 @@
 #ifdef __MPI
 #include <mpi.h>
 #endif
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <cerrno>
 #include <sstream>
+#include "source_base/fs_compat.h"
 #include "global_function.h"
 #include "global_variable.h"
 #include "source_base/parallel_common.h"
@@ -57,7 +55,7 @@ void ModuleBase::Global_File::make_dir_out(
 	{
 		if(rank==times)
 		{
-            int ret = mkdir(global_out_dir.c_str(), 0755);
+            int ret = ModuleBase::make_directory(global_out_dir);
 			if ( ret == 0 || errno == EEXIST )
 			{
 				std::cout << " MAKE THE DIR         : " << global_out_dir << std::endl;
@@ -95,7 +93,7 @@ void ModuleBase::Global_File::make_dir_out(
         {
             if(rank==times)
             {
-                int ret = mkdir(global_stru_dir.c_str(), 0755);
+                int ret = ModuleBase::make_directory(global_stru_dir);
                 if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE STRU DIR    : " << global_stru_dir << std::endl;
@@ -135,7 +133,7 @@ void ModuleBase::Global_File::make_dir_out(
         {
             if(rank==times)
             {
-                int ret = mkdir(global_matrix_dir.c_str(), 0755);
+                int ret = ModuleBase::make_directory(global_matrix_dir);
                 if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE MATRIX DIR    : " << global_matrix_dir << std::endl;
@@ -174,7 +172,7 @@ void ModuleBase::Global_File::make_dir_out(
         {
             if(rank==times)
             {
-                int ret = mkdir(global_wfc_dir.c_str(), 0755);
+                int ret = ModuleBase::make_directory(global_wfc_dir);
                 if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE WFC DIR    : " << global_wfc_dir << std::endl;
@@ -213,7 +211,7 @@ void ModuleBase::Global_File::make_dir_out(
         {
             if(rank==times)
             {
-                int ret = mkdir(global_mlkedf_descriptor_dir.c_str(), 0755);
+                int ret = ModuleBase::make_directory(global_mlkedf_descriptor_dir);
                 if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE MLKEDF DESCRIPTOR DIR    : " << global_mlkedf_descriptor_dir << std::endl;
@@ -254,7 +252,7 @@ void ModuleBase::Global_File::make_dir_out(
         {
             if(rank==times)
             {
-                int ret = mkdir(global_deepks_label_elec_dir.c_str(), 0755);
+                int ret = ModuleBase::make_directory(global_deepks_label_elec_dir);
                 if ( ret == 0 || errno == EEXIST )
                 {
                     std::cout << " MAKE THE DEEPKS LABELS (ELEC) DIR    : " << global_deepks_label_elec_dir << std::endl;
