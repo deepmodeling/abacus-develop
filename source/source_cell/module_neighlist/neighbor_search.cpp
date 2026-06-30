@@ -34,6 +34,11 @@ struct PeriodicInterval
 
 struct FractionalDomain
 {
+    FractionalDomain(const std::array<double, 3>& lo_in, const std::array<double, 3>& hi_in)
+        : lo(lo_in), hi(hi_in)
+    {
+    }
+
     std::array<double, 3> lo;
     std::array<double, 3> hi;
 };
@@ -101,7 +106,7 @@ std::vector<PeriodicInterval> split_periodic_interval(double lo, double hi)
         const double local_hi = std::min(1.0, hi - shift);
         if (local_lo < local_hi)
         {
-            intervals.push_back({local_lo, local_hi, shift});
+            intervals.push_back(PeriodicInterval(local_lo, local_hi, shift));
         }
     }
     return intervals;
@@ -122,6 +127,8 @@ bool inside_block(const OriginalAtom& atom,
            inside_interval(atom.frac[2], bz.lo, bz.hi);
 }
 } // namespace
+
+constexpr double NeighborSearch::coord_tolerance;
 
 // ========== Getter methods ==========
 
@@ -426,27 +433,41 @@ void NeighborSearch::set_local_member_variables_by_halo(const AtomProvider& ucel
     const double volume = std::abs(dot_product(a1, a2xa3));
     assert(volume > coord_tolerance);
 
-    const std::array<double, 3> heights = {
+    const std::array<double, 3> heights = {{
         volume / norm(a2xa3),
         volume / norm(a3xa1),
         volume / norm(a1xa2)
-    };
+    }};
 
-    std::array<double, 3> margin = {
+    std::array<double, 3> margin = {{
         search_radius_ / heights[0] + coord_tolerance,
         search_radius_ / heights[1] + coord_tolerance,
         search_radius_ / heights[2] + coord_tolerance
-    };
+    }};
 
-    FractionalDomain domain{
-        {static_cast<double>(x_) / nx, static_cast<double>(y_) / ny, static_cast<double>(z_) / nz},
-        {static_cast<double>(x_ + 1) / nx, static_cast<double>(y_ + 1) / ny, static_cast<double>(z_ + 1) / nz}
-    };
+    const std::array<double, 3> domain_lo = {{
+        static_cast<double>(x_) / nx,
+        static_cast<double>(y_) / ny,
+        static_cast<double>(z_) / nz
+    }};
+    const std::array<double, 3> domain_hi = {{
+        static_cast<double>(x_ + 1) / nx,
+        static_cast<double>(y_ + 1) / ny,
+        static_cast<double>(z_ + 1) / nz
+    }};
+    const FractionalDomain domain(domain_lo, domain_hi);
 
-    FractionalDomain halo{
-        {domain.lo[0] - margin[0], domain.lo[1] - margin[1], domain.lo[2] - margin[2]},
-        {domain.hi[0] + margin[0], domain.hi[1] + margin[1], domain.hi[2] + margin[2]}
-    };
+    const std::array<double, 3> halo_lo = {{
+        domain.lo[0] - margin[0],
+        domain.lo[1] - margin[1],
+        domain.lo[2] - margin[2]
+    }};
+    const std::array<double, 3> halo_hi = {{
+        domain.hi[0] + margin[0],
+        domain.hi[1] + margin[1],
+        domain.hi[2] + margin[2]
+    }};
+    const FractionalDomain halo(halo_lo, halo_hi);
 
     std::vector<OriginalAtom> original_atoms;
     original_atoms.reserve(ucell.get_natom());
@@ -456,11 +477,12 @@ void NeighborSearch::set_local_member_variables_by_halo(const AtomProvider& ucel
         {
             const ModuleBase::Vector3<double> cart = ucell.get_tau(it, ia);
             const ModuleBase::Vector3<double> frac = cart * inv_lat;
-            original_atoms.push_back({
-                {wrap_fractional(frac.x), wrap_fractional(frac.y), wrap_fractional(frac.z)},
-                it,
-                ia
-            });
+            const std::array<double, 3> wrapped_frac = {{
+                wrap_fractional(frac.x),
+                wrap_fractional(frac.y),
+                wrap_fractional(frac.z)
+            }};
+            original_atoms.push_back(OriginalAtom(wrapped_frac, it, ia));
         }
     }
 
