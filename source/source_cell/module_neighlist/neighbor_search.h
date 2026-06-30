@@ -46,6 +46,19 @@ public:
     void init(const AtomProvider& ucell, double sr, int mpi_rank);
 
     /**
+     * @brief Initialize the neighbor search with explicit MPI rank and size.
+     *
+     * This overload keeps the single-rank interface intact while allowing
+     * callers to decompose central atoms across MPI ranks.
+     *
+     * @param ucell Unit cell providing atom positions and lattice info.
+     * @param sr Search radius (cutoff distance) in Bohr.
+     * @param mpi_rank MPI rank of this process.
+     * @param mpi_size Total number of MPI processes.
+     */
+    void init(const AtomProvider& ucell, double sr, int mpi_rank, int mpi_size);
+
+    /**
      * @brief Build the neighbor list for all inside atoms.
      *
      * Must be called after init(). Uses binning to efficiently find
@@ -99,6 +112,22 @@ public:
      * @param nz Output: number of divisions in Z.
      */
     void decompose(int mpi_size, int& nx, int& ny, int& nz);
+
+    /**
+     * @brief Decompose MPI ranks only along directions with nonzero span.
+     *
+     * Directions whose atom-coordinate span is zero are assigned one domain
+     * layer so ownership is not duplicated across that direction.
+     *
+     * @param mpi_size Total number of MPI processes.
+     * @param span_x Atom-coordinate span in X.
+     * @param span_y Atom-coordinate span in Y.
+     * @param span_z Atom-coordinate span in Z.
+     * @param nx Output: number of divisions in X.
+     * @param ny Output: number of divisions in Y.
+     * @param nz Output: number of divisions in Z.
+     */
+    void decompose(int mpi_size, double span_x, double span_y, double span_z, int& nx, int& ny, int& nz);
 
     // ========== Getter methods ==========
 
@@ -251,6 +280,34 @@ private:
      * @param ucell Unit cell providing atom positions.
      */
     void set_member_variables(const AtomProvider& ucell);
+
+    /**
+     * @brief Generate only atoms needed by the local MPI domain.
+     *
+     * The resulting all_atoms_ is a rank-local index space containing local
+     * inside atoms and cutoff-relevant ghost/image atoms.
+     *
+     * @param ucell Unit cell providing atom positions.
+     * @param atoms Original unit-cell atom bounds.
+     * @param nx Number of MPI divisions in X.
+     * @param ny Number of MPI divisions in Y.
+     * @param nz Number of MPI divisions in Z.
+     */
+    void set_local_member_variables(const AtomProvider& ucell, const InputAtoms& atoms, int nx, int ny, int nz);
+
+    /**
+     * @brief Generate local atoms by querying fractional-coordinate halo bins.
+     *
+     * Ownership is still defined only for atoms in the primary unit cell. Periodic
+     * images are generated only when they overlap the local cutoff halo and are
+     * stored as ghost atoms.
+     *
+     * @param ucell Unit cell providing atom positions.
+     * @param nx Number of MPI divisions in fractional X.
+     * @param ny Number of MPI divisions in fractional Y.
+     * @param nz Number of MPI divisions in fractional Z.
+     */
+    void set_local_member_variables_by_halo(const AtomProvider& ucell, int nx, int ny, int nz);
 
     /**
      * @brief Compute the norm of the cross product of two 3D vectors.

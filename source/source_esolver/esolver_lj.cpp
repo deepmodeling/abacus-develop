@@ -5,7 +5,15 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_base/global_variable.h"
+#include "source_base/timer.h"
+#ifdef __MPI
+#include "source_base/parallel_reduce.h"
+#endif
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 
 namespace ModuleESolver
@@ -57,29 +65,54 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
 {
     UnitCellLite ucell_lite = change_from_ucell_to_ucell_lite(ucell);
     NeighborSearch neighbor_search;
-    neighbor_search.init(ucell_lite, search_radius, 0);
-    neighbor_search.build_neighbors();
-
-    double distance = 0.0;
-    int index = 0;
 
     // Important! potential, force, virial must be zero per step
     lj_potential = 0;
     lj_force.zero_out();
     lj_virial.zero_out();
 
+    double distance = 0.0;
     ModuleBase::Vector3<double> tau1, tau2, dtau;
-    const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
-    const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
-    for (int it = 0; it < ucell.ntype; ++it)
+
+#ifdef __MPI
+    if (GlobalV::NPROC > 1)
     {
-        Atom* atom1 = &ucell.atoms[it];
-        for (int ia = 0; ia < atom1->na; ++ia)
+        ModuleBase::timer::start("ESolverLJ", "mpi_total");
+        ModuleBase::timer::start("ESolverLJ", "neigh_init");
+        neighbor_search.init(ucell_lite, search_radius, GlobalV::MY_RANK, GlobalV::NPROC);
+        ModuleBase::timer::end("ESolverLJ", "neigh_init");
+        ModuleBase::timer::start("ESolverLJ", "neigh_bld");
+        neighbor_search.build_neighbors();
+        ModuleBase::timer::end("ESolverLJ", "neigh_bld");
+
+        const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
+        const std::vector<NeighborAtom>& inside_atoms = neighbor_search.get_inside_atoms();
+        const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
+
+        std::vector<int> atom_start(ucell.ntype + 1, 0);
+        for (int it = 0; it < ucell.ntype; ++it)
         {
-            tau1 = atom1->tau[ia];
-            for (int ad = 0; ad < neighbor_list.get_numneigh(index); ++ad)
+            atom_start[it + 1] = atom_start[it] + ucell.atoms[it].na;
+        }
+
+        std::vector<double> potential_by_atom(ucell.nat, 0.0);
+        std::vector<double> virial_by_atom(ucell.nat * 9, 0.0);
+
+        ModuleBase::timer::start("ESolverLJ", "force_loc");
+        for (int local_i = 0; local_i < neighbor_list.get_nlocal(); ++local_i)
+        {
+            const NeighborAtom& center_atom = inside_atoms[local_i];
+            const int it = center_atom.atom_type;
+            const int ia = center_atom.atom_index;
+            const int global_i = atom_start[it] + ia;
+
+            tau1.x = center_atom.position_x;
+            tau1.y = center_atom.position_y;
+            tau1.z = center_atom.position_z;
+
+            for (int ad = 0; ad < neighbor_list.get_numneigh(local_i); ++ad)
             {
-                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(index)[ad]];
+                const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(local_i)[ad]];
                 tau2.x = neighbor_atom.position_x;
                 tau2.y = neighbor_atom.position_y;
                 tau2.z = neighbor_atom.position_z;
@@ -88,16 +121,85 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
                 distance = dtau.norm();
                 if (distance < lj_rcut(it, it2))
                 {
-                    lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                    potential_by_atom[global_i] += LJ_energy(distance, it, it2) - en_shift(it, it2);
                     ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
-                    lj_force(index, 0) += f_ij.x;
-                    lj_force(index, 1) += f_ij.y;
-                    lj_force(index, 2) += f_ij.z;
-                    LJ_virial(f_ij, dtau);
+                    lj_force(global_i, 0) += f_ij.x;
+                    lj_force(global_i, 1) += f_ij.y;
+                    lj_force(global_i, 2) += f_ij.z;
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        for (int j = 0; j < 3; ++j)
+                        {
+                            virial_by_atom[global_i * 9 + i * 3 + j] += dtau[i] * f_ij[j];
+                        }
+                    }
                 }
             }
-            index++;
         }
+        ModuleBase::timer::end("ESolverLJ", "force_loc");
+
+        ModuleBase::timer::start("ESolverLJ", "reduce");
+        Parallel_Reduce::reduce_all(potential_by_atom.data(), static_cast<int>(potential_by_atom.size()));
+        Parallel_Reduce::reduce_all(lj_force.c, lj_force.nr * lj_force.nc);
+        Parallel_Reduce::reduce_all(virial_by_atom.data(), static_cast<int>(virial_by_atom.size()));
+        ModuleBase::timer::end("ESolverLJ", "reduce");
+
+        for (int iat = 0; iat < ucell.nat; ++iat)
+        {
+            lj_potential += potential_by_atom[iat];
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    lj_virial(i, j) += virial_by_atom[iat * 9 + i * 3 + j];
+                }
+            }
+        }
+        ModuleBase::timer::end("ESolverLJ", "mpi_total");
+    }
+    else
+#endif
+    {
+        ModuleBase::timer::start("ESolverLJ", "serial_tot");
+        ModuleBase::timer::start("ESolverLJ", "ser_neigh");
+        neighbor_search.init(ucell_lite, search_radius, 0);
+        neighbor_search.build_neighbors();
+        ModuleBase::timer::end("ESolverLJ", "ser_neigh");
+
+        int index = 0;
+        const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
+        const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
+        ModuleBase::timer::start("ESolverLJ", "ser_force");
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            Atom* atom1 = &ucell.atoms[it];
+            for (int ia = 0; ia < atom1->na; ++ia)
+            {
+                tau1 = atom1->tau[ia];
+                for (int ad = 0; ad < neighbor_list.get_numneigh(index); ++ad)
+                {
+                    const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(index)[ad]];
+                    tau2.x = neighbor_atom.position_x;
+                    tau2.y = neighbor_atom.position_y;
+                    tau2.z = neighbor_atom.position_z;
+                    int it2 = neighbor_atom.atom_type;
+                    dtau = (tau1 - tau2) * ucell.lat0;
+                    distance = dtau.norm();
+                    if (distance < lj_rcut(it, it2))
+                    {
+                        lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                        ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
+                        lj_force(index, 0) += f_ij.x;
+                        lj_force(index, 1) += f_ij.y;
+                        lj_force(index, 2) += f_ij.z;
+                        LJ_virial(f_ij, dtau);
+                    }
+                }
+                index++;
+            }
+        }
+        ModuleBase::timer::end("ESolverLJ", "ser_force");
+        ModuleBase::timer::end("ESolverLJ", "serial_tot");
     }
 
 
