@@ -17,7 +17,10 @@
 std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const int& nrxx,
     const Charge* const chr,
-    const UnitCell* ucell)
+    const UnitCell* ucell,
+    const int nspin,
+    const bool domag,
+    const bool domag_z)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
@@ -29,6 +32,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                ucell->omega,
                                                ucell->tpiba,
                                                chr,
+                                               nspin,
+                                               domag,
+                                               domag_z,
                                                &(scaling_factor_xc));
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
@@ -40,14 +46,14 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     //Exchange-Correlation potential Vxc(r) from n(r)
     double etxc = 0.0;
     double vtxc = 0.0;
-    ModuleBase::matrix v(PARAM.inp.nspin, nrxx);
+    ModuleBase::matrix v(nspin, nrxx);
 
     // the square of the e charge
     // in Rydeberg unit, so * 2.0.
     double e2 = 2.0;
     double vanishing_charge = 1.0e-10;
 
-    if (PARAM.inp.nspin == 1 || ( PARAM.inp.nspin ==4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z))
+    if (nspin == 1 || ( nspin ==4 && !domag && !domag_z))
     {
         // spin-unpolarized case
 #ifdef _OPENMP
@@ -71,7 +77,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
             } // endif
         } //enddo
     }
-    else if(PARAM.inp.nspin ==2)
+    else if(nspin ==2)
     {
         // spin-polarized case
 #ifdef _OPENMP
@@ -97,7 +103,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                 double vxc[2];
                 XC_Functional::xc_spin(arhox, zeta, exc, vxc[0], vxc[1]);
 
-                for (int is = 0;is < PARAM.inp.nspin;is++)
+                for (int is = 0;is < nspin;is++)
                 {
                     v(is, ir) = e2 * vxc[is];
                 }
@@ -107,7 +113,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
             }
         }
     }
-    else if(PARAM.inp.nspin == 4)
+    else if(nspin == 4)
     {
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:etxc) reduction(+:vtxc)
@@ -171,7 +177,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum);
+    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01

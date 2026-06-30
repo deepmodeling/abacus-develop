@@ -5,6 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
 #include "source_estate/cal_dm.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_deepks/deepks_check.h"
 #include "source_lcao/module_deepks/deepks_descriptor.h"
@@ -22,7 +23,7 @@
 #include <unordered_map>
 
 template <typename TK, typename TR>
-LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks<TK>> ld_in) : ld(ld_in)
+LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(LCAO_Deepks<TK>* ld_in) : ld(ld_in)
 {
 }
 
@@ -628,7 +629,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             int R_size = DeePKS_domain::get_R_size(*h_deltaR);
                             torch::Tensor overlap_out;
                             torch::Tensor iRmat;
-                            DeePKS_domain::prepare_phialpha_iRmat(nlocal, R_size, deepks_param, phialpha, ucell, orb, GridD, overlap_out, iRmat);
+                            DeePKS_domain::prepare_phialpha_iRmat(nlocal, R_size, deepks_param, phialpha, ucell, orb, *ParaV, GridD, overlap_out, iRmat);
                             const std::string file_overlap = PARAM.globalv.global_out_dir + "deepks_phialpha_r.npy";
                             LCAO_deepks_io::save_tensor2npy<double>(file_overlap, overlap_out, rank);
                             const std::string file_iRmat = PARAM.globalv.global_out_dir + "deepks_iRmat.npy";

@@ -57,16 +57,16 @@ namespace elecstate
                                   + col_ap * this->_paraV->nrow + row_ap;
                             // jump DMK to fill DMR
                             // DMR is row-major, DMK is column-major
-                            for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                            for (int mu = 0; mu < this->_paraV->get_nrow_atom(iat1); ++mu)
                             {
-                                BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                                BlasConnector::axpy(this->_paraV->get_ncol_atom(iat2),
                                     kphase,
                                     tmp_DMK_pointer,
                                     this->_paraV->get_row_size(),
                                     tmp_DMR_pointer,
                                     1);
                                 tmp_DMK_pointer += 1;
-                                tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                                tmp_DMR_pointer += this->_paraV->get_ncol_atom(iat2);
                             }
                         }
                     }

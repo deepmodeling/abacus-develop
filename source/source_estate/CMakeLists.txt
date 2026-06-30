@@ -9,6 +9,7 @@ list(APPEND objects
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
+    makov_payne.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/H_Hartree_pw.cpp
@@ -36,7 +37,6 @@ list(APPEND objects
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp
-    magnetism.cpp
     occupy.cpp
     cal_ux.cpp
     read_orb.cpp

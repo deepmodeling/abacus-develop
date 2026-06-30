@@ -9,6 +9,10 @@
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
 
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI.h"
+#endif
+
 #include <iostream>
 #include <cmath>
 #include <complex>
