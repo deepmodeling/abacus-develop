@@ -238,9 +238,9 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     {
         std::stringstream sst;
         sst << "initial_onsite.dm";
-        this->read_occup_m(cell,sst.str());
+        this->read_occup_m(cell, sst.str(), PARAM.inp.init_chg, PARAM.inp.nspin, PARAM.globalv.npol);
 #ifdef __MPI
-        this->local_occup_bcast(cell);
+        this->local_occup_bcast(cell, PARAM.inp.nspin, PARAM.globalv.npol);
 #endif
 
         mark_locale_initialized();
@@ -252,9 +252,9 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         {
             std::stringstream sst;
             sst << PARAM.globalv.global_readin_dir << "onsite.dm";
-            this->read_occup_m(cell,sst.str());
+            this->read_occup_m(cell, sst.str(), PARAM.inp.init_chg, PARAM.inp.nspin, PARAM.globalv.npol);
 #ifdef __MPI
-            this->local_occup_bcast(cell);
+            this->local_occup_bcast(cell, PARAM.inp.nspin, PARAM.globalv.npol);
 #endif
             mark_locale_initialized();
         }

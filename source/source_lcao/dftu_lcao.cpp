@@ -9,14 +9,14 @@ namespace ModuleESolver
 template <typename TK>
 void init_dftu_lcao(const int istep,
                      const int iter,
-                     const Input_para& inp,
+                     int dft_plus_u,
                      void* dftu,
                      void* dm,
                      const UnitCell& ucell,
                      double** rho,
                      const int nrxx)
 {
-    if (!inp.dft_plus_u)
+    if (!dft_plus_u)
     {
         return;
     }
@@ -36,15 +36,19 @@ void init_dftu_lcao(const int istep,
 template <typename TK>
 void finish_dftu_lcao(const int iter,
                        const bool conv_esolver,
-                       const Input_para& inp,
+                       int dft_plus_u,
+                       bool out_chg,
                        void* dftu,
                        const UnitCell& ucell,
                        const std::vector<std::vector<TK>>& dm_vec,
                        const K_Vectors& kv,
                        const double mixing_beta,
-                       void* hamilt_lcao)
+                       void* hamilt_lcao,
+                       const std::string& global_out_dir,
+                       int nspin,
+                       int npol)
 {
-    if (!inp.dft_plus_u)
+    if (!dft_plus_u)
     {
         return;
     }
@@ -54,7 +58,7 @@ void finish_dftu_lcao(const int iter,
     
     /// old DFT+U method calculates energy correction in esolver,
     /// new DFT+U method calculates energy in Hamiltonian
-    if (inp.dft_plus_u == 2)
+    if (dft_plus_u == 2)
     {
         if (dftu_ptr->omc != 2)
         {
@@ -63,7 +67,7 @@ void finish_dftu_lcao(const int iter,
         }
         dftu_ptr->cal_energy_correction(ucell, iter);
     }
-    dftu_ptr->output(ucell);
+    dftu_ptr->output(ucell, out_chg, global_out_dir, nspin, npol);
     
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
@@ -75,15 +79,16 @@ void finish_dftu_lcao(const int iter,
 /// Template instantiation
 template void init_dftu_lcao<double>(const int istep,
                                       const int iter,
-                                      const Input_para& inp,
+                                      int dft_plus_u,
                                       void* dftu,
                                       void* dm,
                                       const UnitCell& ucell,
                                       double** rho,
                                       const int nrxx);
+
 template void init_dftu_lcao<std::complex<double>>(const int istep,
                                                     const int iter,
-                                                    const Input_para& inp,
+                                                    int dft_plus_u,
                                                     void* dftu,
                                                     void* dm,
                                                     const UnitCell& ucell,
@@ -92,21 +97,29 @@ template void init_dftu_lcao<std::complex<double>>(const int istep,
 
 template void finish_dftu_lcao<double>(const int iter,
                                         const bool conv_esolver,
-                                        const Input_para& inp,
+                                        int dft_plus_u,
+                                        bool out_chg,
                                         void* dftu,
                                         const UnitCell& ucell,
                                         const std::vector<std::vector<double>>& dm_vec,
                                         const K_Vectors& kv,
                                         const double mixing_beta,
-                                        void* hamilt_lcao);
+                                        void* hamilt_lcao,
+                                        const std::string& global_out_dir,
+                                        int nspin,
+                                        int npol);
 template void finish_dftu_lcao<std::complex<double>>(const int iter,
                                                       const bool conv_esolver,
-                                                      const Input_para& inp,
+                                                      int dft_plus_u,
+                                                      bool out_chg,
                                                       void* dftu,
                                                       const UnitCell& ucell,
                                                       const std::vector<std::vector<std::complex<double>>>& dm_vec,
                                                       const K_Vectors& kv,
                                                       const double mixing_beta,
-                                                      void* hamilt_lcao);
+                                                      void* hamilt_lcao,
+                                                      const std::string& global_out_dir,
+                                                      int nspin,
+                                                      int npol);
 
 } // namespace ModuleESolver

@@ -5,7 +5,11 @@
 #include <iomanip>
 
 
-void Plus_U::output(const UnitCell& ucell)
+void Plus_U::output(const UnitCell& ucell,
+                    bool out_chg,
+                    const std::string& global_out_dir,
+                    int nspin,
+                    int npol)
 {
     ModuleBase::TITLE("Plus_U", "output");
 
@@ -53,15 +57,15 @@ void Plus_U::output(const UnitCell& ucell)
     }
 
     GlobalV::ofs_running << " Local Occupation Matrices for each atom" << std::endl;
-    this->write_occup_m(ucell, GlobalV::ofs_running, true);
+    this->write_occup_m(ucell, GlobalV::ofs_running, true, nspin, npol);
 
     // Write onsite.dm
     std::ofstream ofdftu;
-    if (PARAM.inp.out_chg[0])
+    if (out_chg)
     {
         if (GlobalV::MY_RANK == 0)
         {
-            ofdftu.open(PARAM.globalv.global_out_dir + "onsite.dm");
+            ofdftu.open(global_out_dir + "onsite.dm");
         }
     }
     if (!ofdftu)
@@ -69,7 +73,7 @@ void Plus_U::output(const UnitCell& ucell)
         std::cout << " Plus_U::write_occup_m. Can't create file onsite.dm" << std::endl;
         exit(0);
     }
-    this->write_occup_m(ucell, ofdftu);
+    this->write_occup_m(ucell, ofdftu, false, nspin, npol);
     ofdftu.close();
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -84,7 +88,9 @@ std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, in
 
 void Plus_U::write_occup_m(const UnitCell& ucell,
                            std::ofstream& ofs,
-                           bool diag)
+                           bool diag,
+                           int nspin,
+                           int npol)
 {
     ModuleBase::TITLE("Plus_U", "write_occup_m");
 
@@ -127,7 +133,7 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                     ofs << " L=" << l;
                     ofs << " ORBITAL=" << n << std::endl;
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    if (nspin == 1 || nspin == 2)
                     {
                         double sum0[2];
                         for (int is = 0; is < 2; is++)
@@ -145,13 +151,13 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
                                 sum0[is] = 0.0;
                                 ofs << " Eigenvalues for spin=" << is+1 << std::endl;
-				ofs << std::setprecision(8) << std::fixed;
+                                ofs << std::setprecision(8) << std::fixed;
                                 for (int i = 0; i < 2 * l + 1; i++)
                                 {
                                     ofs << std::setw(12) << eigenvalues[i];
                                     sum0[is] += eigenvalues[i];
                                 }
-				ofs << std::endl;
+                                ofs << std::endl;
                                 ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
                             ofs << " spin=" << is+1 << std::endl;
@@ -159,7 +165,7 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    ofs << std::setw(12) 
+                                    ofs << std::setw(12)
                                         << locale[iat][l][n][is](m0, m1);
                                 }
                                 ofs << std::endl;
@@ -169,10 +175,10 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                         {
                             ofs << std::setw(12) << std::setprecision(8)
                                 << std::fixed << " Magnetism for atom " << iat+1 << ": " << sum0[0] - sum0[1]
-				<< std::endl;
+                                << std::endl;
                         }
                     }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    else if (nspin == 4) // SOC
                     {
                         if (diag) // diagonalization for local occupation matrix and print the eigenvalues
                         {         // output the eigenvalues for rho , mag_x, mag_y, mag_z
@@ -191,32 +197,31 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 }
                                 std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
                                 sum0[is] = 0.0;
-                                ofs << "eigenvalues"
-                                    << "  " << is << std::endl;
+                                ofs << " Eigenvalues for is=" << is << std::endl;
+                                ofs << std::setprecision(8) << std::fixed;
                                 for (int i = 0; i < 2 * l + 1; i++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                        << eigenvalues[i];
+                                    ofs << std::setw(12) << eigenvalues[i];
                                     sum0[is] += eigenvalues[i];
                                 }
-                                ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                    << sum0[is] << std::endl;
+                                ofs << std::endl;
+                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
                             ofs << std::setw(12) << std::setprecision(8)
-                                << std::fixed << "atomic mag: " << iat << " "
+                                << std::fixed << " Magnetism for atom " << iat + 1 << ": "
                                 << sum0[1] << " " << sum0[2] << " " << sum0[3] << std::endl;
                         }
                         else
                         {
                             for (int m0 = 0; m0 < 2 * l + 1; m0++)
                             {
-                                for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                                for (int ipol0 = 0; ipol0 < npol; ipol0++)
                                 {
                                     const int m0_all = m0 + (2 * l + 1) * ipol0;
 
                                     for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                     {
-                                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                        for (int ipol1 = 0; ipol1 < npol; ipol1++)
                                         {
                                             int m1_all = m1 + (2 * l + 1) * ipol1;
                                             ofs << std::setw(12) << std::setprecision(8) << std::fixed
@@ -237,7 +242,10 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
 }
 
 void Plus_U::read_occup_m(const UnitCell& ucell,
-                          const std::string& fn)
+                          const std::string& fn,
+                          const std::string& init_chg,
+                          int nspin,
+                          int npol)
 {
     ModuleBase::TITLE("Plus_U", "read_occup_m");
 
@@ -258,7 +266,7 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
         }
         else
         {
-            if (PARAM.inp.init_chg == "file")
+            if (init_chg == "file")
             {
                 std::cout << "Plus_U::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
                           << std::endl;
@@ -326,7 +334,7 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
                             ifdftu >> zeta;
                             ifdftu.ignore(150, '\n');
 
-                            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                            if (nspin == 1 || nspin == 2)
                             {
                                 for (int is = 0; is < 2; is++)
                                 {
@@ -355,18 +363,18 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
                                     }
                                 }
                             }
-                            else if (PARAM.inp.nspin == 4) // SOC
+                            else if (nspin == 4) // SOC
                             {
                                 double value = 0.0;
                                 for (int m0 = 0; m0 < 2 * L + 1; m0++)
                                 {
-                                    for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                                    for (int ipol0 = 0; ipol0 < npol; ipol0++)
                                     {
                                         const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                         for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                         {
-                                            for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                            for (int ipol1 = 0; ipol1 < npol; ipol1++)
                                             {
                                                 int m1_all = m1 + (2 * L + 1) * ipol1;
                                                 ifdftu >> value;
@@ -410,7 +418,9 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     return;
 }
 
-void Plus_U::local_occup_bcast(const UnitCell& ucell)
+void Plus_U::local_occup_bcast(const UnitCell& ucell,
+                               int nspin,
+                               int npol)
 {
     ModuleBase::TITLE("Plus_U", "local_occup_bcast");
 
@@ -441,7 +451,7 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
                         continue;
                     }
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    if (nspin == 1 || nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -456,17 +466,17 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
                             }
                         }
                     }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    else if (nspin == 4) // SOC
                     {
                         for (int m0 = 0; m0 < 2 * L + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                            for (int ipol0 = 0; ipol0 < npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
 #ifdef __MPI

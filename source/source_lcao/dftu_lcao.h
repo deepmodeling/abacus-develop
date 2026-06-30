@@ -3,7 +3,6 @@
 
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "source_io/module_parameter/input_parameter.h"
 
 namespace ModuleESolver
 {
@@ -26,7 +25,7 @@ namespace ModuleESolver
 template <typename TK>
 void init_dftu_lcao(const int istep,
                      const int iter,
-                     const Input_para& inp,
+                     int dft_plus_u,
                      void* dftu,
                      void* dm,
                      const UnitCell& ucell,
@@ -41,7 +40,8 @@ void init_dftu_lcao(const int istep,
  *
  * @param iter Current SCF iteration
  * @param conv_esolver Whether ESolver has converged
- * @param inp Input parameters
+ * @param dft_plus_u DFT+U mode (0=disabled, 1=old, 2=new)
+ * @param out_chg Whether to output onsite.dm
  * @param dftu DFT+U object
  * @param ucell Unit cell
  * @param dm_vec Density matrix vector
@@ -52,13 +52,17 @@ void init_dftu_lcao(const int istep,
 template <typename TK>
 void finish_dftu_lcao(const int iter,
                        const bool conv_esolver,
-                       const Input_para& inp,
+                       int dft_plus_u,
+                       bool out_chg,
                        void* dftu,
                        const UnitCell& ucell,
                        const std::vector<std::vector<TK>>& dm_vec,
                        const K_Vectors& kv,
                        const double mixing_beta,
-                       void* hamilt_lcao);
+                       void* hamilt_lcao,
+                       const std::string& global_out_dir,
+                       int nspin,
+                       int npol);
 
 } // namespace ModuleESolver
 

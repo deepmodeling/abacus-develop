@@ -28,7 +28,7 @@ void iter_init_dftu_pw(const int iter,
     {
         dftu.cal_occ_pw(iter, psi, wg, ucell, p_chgmix, isk);
     }
-    dftu.output(ucell);
+    dftu.output(ucell, PARAM.inp.out_chg[0], PARAM.globalv.global_out_dir, PARAM.inp.nspin, PARAM.globalv.npol);
 }
 
 }
