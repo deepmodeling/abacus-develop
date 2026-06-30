@@ -12,6 +12,7 @@ if(ENABLE_LCAO)
         upsi.cpp
         td_info.cpp
         velocity_op.cpp
+        snap_projector_half_tddft.cpp
         snap_psibeta_half_tddft.cpp
         td_folding.cpp
         solve_propagation.cpp
